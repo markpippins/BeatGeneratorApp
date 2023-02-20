@@ -15,6 +15,10 @@ import java.util.stream.Collectors;
 @Service
 public class MIDIService implements IMIDIService {
 
+    public static final String DEVICES_INFO = "/devices/info";
+    public static final String DEVICE_NAMES = "/devices/names";
+    public static final String SERVICE_RESET = "/service/reset";
+    public static final String SERVICE_SELECT = "/service/select";
     static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
 
     //    public static void playTestNote() throws InvalidMidiDataException, MidiUnavailableException {
