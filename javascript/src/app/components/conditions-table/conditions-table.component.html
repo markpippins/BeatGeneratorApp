@@ -1,0 +1,59 @@
+<div class="debug" [style.min-width.px]="100" [style.min-height.px]="100">
+  <p>{{player.playerId}}</p>
+
+
+  <table class="debug">
+    <tr class="debug">
+      <th *ngFor="let col of conditionCols">
+        {{ col }}
+      </th>
+    </tr>
+<!--    <tr class="debug" *ngFor="let condition of player.conditions | keyvalue;">-->
+<!--      <td class="player-short-col">-->
+<!--        {{ condition.value.operator }}-->
+<!--      </td>-->
+<!--      <td class="player-short-col">-->
+<!--        {{ condition.value.comparison }}-->
+<!--      </td>-->
+<!--      <td class="player-short-col">-->
+<!--        {{ condition.value.value }}-->
+<!--      </td>-->
+<!--    </tr>-->
+  </table>
+  <!--    <ng-container-->
+  <!--      [matColumnDef]="col"-->
+  <!--      *ngFor="let col of playerCols">-->
+
+  <!--      <td mat-cell *matCellDef="let element ">-->
+  <!--        <input-->
+  <!--          matInput-->
+  <!--          placeholder="col"-->
+  <!--          [value]="element[col]"-->
+  <!--          [(ngModel)]="element[col]"-->
+  <!--        />-->
+  <!--    </ng-container>-->
+
+  <!--    <tr mat-header-row *matHeaderRowDef="playerCols"></tr>-->
+  <!--    <tr mat-row *matRowDef="let row; columns: playerCols"></tr>-->
+
+  <!--  <table mat-table [dataSource]="players">-->
+  <!--    <ng-container-->
+  <!--      [matColumnDef]="col"-->
+  <!--      *ngFor="let col of playerCols">-->
+  <!--      <th mat-header-cell *matHeaderCellDef>-->
+  <!--        {{ col }}-->
+  <!--      </th>-->
+
+  <!--      <td mat-cell *matCellDef="let element ">-->
+  <!--        <input-->
+  <!--          matInput-->
+  <!--          placeholder="col"-->
+  <!--          [value]="element[col]"-->
+  <!--          [(ngModel)]="element[col]"-->
+  <!--        />-->
+  <!--    </ng-container>-->
+
+  <!--    <tr mat-header-row *matHeaderRowDef="playerCols"></tr>-->
+  <!--    <tr mat-row *matRowDef="let row; columns: playerCols"></tr>-->
+  <!--  </table>-->
+</div>

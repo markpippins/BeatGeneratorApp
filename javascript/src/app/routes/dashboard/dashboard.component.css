@@ -1,0 +1,33 @@
+.pads-card, .status-card {
+  all: unset;
+  border-radius: 4px;
+  border: 1px solid #eee;
+  background-color: #fafafa;
+  height: 110px;
+  width: 275px;
+  /*margin: 0 8px 16px;*/
+  /*padding: 16px;*/
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: flex-start;
+  transition: all 0.2s ease-in-out;
+  line-height: 24px;
+}
+
+.status-card {
+  min-width: 525px;
+}
+.status-card-right {
+  min-width: 525px;
+  justify-self: flex-end;
+}
+
+.indicator-card {
+  max-height: 40px;
+  background-color: #1976d2;
+}
+
+.dashboard {
+  background-color: lavender;
+}

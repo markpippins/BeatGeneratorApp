@@ -1,0 +1,11 @@
+.selector-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto auto auto auto;
+  /*auto auto auto auto auto auto auto auto auto auto auto auto;*/
+  padding: 5px;
+  text-align: center;
+  height: 30px;
+  font-weight: normal;
+  font-size: smaller;
+}

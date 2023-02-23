@@ -1,0 +1,68 @@
+<!--<p>status-panel</p>-->
+<!--<div class="transport-container">-->
+<!--  <app-transport-control (clickEvent)="onClick($event)"></app-transport-control>-->
+<!--</div>-->
+<div class="card-container">
+  <div class="status-card" *ngIf="ticker != undefined">
+    <div class="status-rows">
+      <label class="status-label">Tick:</label>
+      <div class="status-item">
+        {{ ticker.tick }}
+      </div>
+      <label class="status-label">Beat:</label>
+      <div class="status-item">
+        {{ ticker.beat }}
+      </div>
+      <label class="status-label">Bar: </label>
+      <div class="status-item">
+        {{ ticker.bar }}
+      </div>
+      <div class="indicator-card">
+        <mat-radio-group [value]="ticker.beat" [(ngModel)]="ticker.beat">
+          <mat-radio-button
+            *ngFor="let beat of getBeats()"
+            [value]="beat"
+          ></mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!--&lt;!&ndash;      <div class="status-item">&ndash;&gt;-->
+<!--&lt;!&ndash;        <div><b>Bar Length: </b>{{ ticker.barLengthInTicks }}</div>&ndash;&gt;-->
+<!--&lt;!&ndash;      </div>&ndash;&gt;-->
+<!--&lt;!&ndash;      <div class="status-item">&ndash;&gt;-->
+<!--&lt;!&ndash;        <div><b>Beat / Bar: </b>{{ ticker.beatsPerBar }}</div>&ndash;&gt;-->
+<!--&lt;!&ndash;      </div>&ndash;&gt;-->
+<!--&lt;!&ndash;      <div class="status-item">&ndash;&gt;-->
+<!--&lt;!&ndash;        <span><b>Part Length: </b>{{ ticker.partLength }}</span>&ndash;&gt;-->
+<!--&lt;!&ndash;      </div>&ndash;&gt;-->
+<!--&lt;!&ndash;      <div class="status-item">&ndash;&gt;-->
+<!--&lt;!&ndash;        <span><b>Delay: </b>{{ ticker.delay }}</span>&ndash;&gt;-->
+<!--      </div>-->
+
+<!--      <div class="status-item">-->
+<!--        <div><b>Tick: </b>{{ ticker.tick }}</div>-->
+<!--      </div>-->
+<!--      <div class="status-item">-->
+<!--        <div><b>Tick: </b>{{ ticker.tick }}</div>-->
+<!--      </div>-->
+<!--      <div class="status-item">-->
+<!--        <div><b>Tick: </b>{{ ticker.tick }}</div>-->
+<!--      </div>-->
+<!--      <div class="status-item">-->
+<!--        <div><b>Tick: </b>{{ ticker.tick }}</div>-->
+<!--      </div>-->
+<!--    <div class="status-rows">-->
+<!--      <span><b>Delay: </b>{{ ticker.delay }}</span-->
+<!--      <span><b>Done: </b>{{ ticker.done }}</span-->
+<!--      <span><b>Max Tracks: </b>{{ ticker.maxTracks }}</span-->
+<!--      ><br/>-->
+<!--      <span><b>Playing: </b>{{ ticker.playing }}</span-->
+<!--      ><br/>-->
+<!--      <span><b>Stopped: </b>{{ ticker.stopped }}</span-->
+<!--      ><br/>-->
+<!--      <span><b>Swing: </b>{{ ticker.swing }}</span-->
+<!--      ><br/></div>-->
+

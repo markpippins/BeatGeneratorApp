@@ -1,0 +1,83 @@
+<div>
+  <table>
+    <tr>
+      <th *ngFor="let col of playerCols">
+        {{ col }}
+      </th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+    <tr *ngFor="let player of players;" (click)="onRowClick(player, $event)">
+      <td class="player-long-col">
+        {{ player.instrument }}
+      </td>
+      <td class="player-short-col">
+        {{ player.channel }}
+      </td>
+      <td class="player-short-col">
+        {{ player.preset }}
+      </td>
+      <td class="player-short-col">
+        {{ player.note }}
+      </td>
+      <td class="player-short-col">
+        {{ player.minVelocity }}
+      </td>
+      <td class="player-short-col">
+        {{ player.maxVelocity }}
+      </td>
+      <td>
+        <button id="add" (click)="onBtnClick(player, 'add')">
+          <mat-icon>add_circle</mat-icon>
+        </button>
+      </td>
+      <td>
+        <button id="remove" (click)="onBtnClick(player, 'remove')">
+          <mat-icon>remove_circle</mat-icon>
+        </button>
+      </td>
+      <td>
+        <button id="mute" (click)="onBtnClick(player, 'mute')">
+          <mat-icon>mute</mat-icon>
+        </button>
+      </td>
+    </tr>
+  </table>
+</div>
+  <!--    <ng-container-->
+  <!--      [matColumnDef]="col"-->
+  <!--      *ngFor="let col of playerCols">-->
+
+  <!--      <td mat-cell *matCellDef="let element ">-->
+  <!--        <input-->
+  <!--          matInput-->
+  <!--          placeholder="col"-->
+  <!--          [value]="element[col]"-->
+  <!--          [(ngModel)]="element[col]"-->
+  <!--        />-->
+  <!--    </ng-container>-->
+
+  <!--    <tr mat-header-row *matHeaderRowDef="playerCols"></tr>-->
+  <!--    <tr mat-row *matRowDef="let row; columns: playerCols"></tr>-->
+
+  <!--  <table mat-table [dataSource]="players">-->
+  <!--    <ng-container-->
+  <!--      [matColumnDef]="col"-->
+  <!--      *ngFor="let col of playerCols">-->
+  <!--      <th mat-header-cell *matHeaderCellDef>-->
+  <!--        {{ col }}-->
+  <!--      </th>-->
+
+  <!--      <td mat-cell *matCellDef="let element ">-->
+  <!--        <input-->
+  <!--          matInput-->
+  <!--          placeholder="col"-->
+  <!--          [value]="element[col]"-->
+  <!--          [(ngModel)]="element[col]"-->
+  <!--        />-->
+  <!--    </ng-container>-->
+
+  <!--    <tr mat-header-row *matHeaderRowDef="playerCols"></tr>-->
+  <!--    <tr mat-row *matRowDef="let row; columns: playerCols"></tr>-->
+  <!--  </table>-->

@@ -1,0 +1,40 @@
+<style>
+  :host {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-size: 14px;
+    color: #333;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+</style>
+<div class="content dashboard" role="main">
+  <!--  <p>main-content</p>-->
+  <!--  <p>dashboard</p>-->
+  <div class="card-container">
+    <div class="status-card" [style.min-height.px]="300">
+      <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
+    </div>
+    <div class="pads-card" [style.min-height.px]="300">
+      <app-conditions-panel [player]="selectedPlayer"></app-conditions-panel>
+    </div>
+  </div>
+  <div class="card-container">
+    <div class="pads-card">
+      <app-drum-grid></app-drum-grid>
+    </div>
+    <div class="pads-card">
+      <app-pads-panel></app-pads-panel>
+    </div>
+  </div>
+</div>
+<div class="card-container">
+  <div class="pads-card">
+    <app-slider-panel></app-slider-panel>
+  </div>
+</div>
+
+
+<!--  <div class="card highlight-card card-small">-->
+<!--  </div>-->
+
