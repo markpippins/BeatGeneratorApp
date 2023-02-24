@@ -1,14 +1,16 @@
 <div>
   <table>
-    <tr>
+    <tr >
       <th *ngFor="let col of playerCols">
         {{ col }}
       </th>
-      <th></th>
-      <th></th>
-      <th></th>
+      <th><b>+</b></th>
+      <th><b>-</b></th>
+      <th><b>*</b></th>
     </tr>
-    <tr *ngFor="let player of players;" (click)="onRowClick(player, $event)">
+    <tr *ngFor="let player of players;"
+        (mouseenter)="onPass(player)"
+        (click)="onRowClick(player, $event)">
       <td class="player-long-col">
         {{ player.instrument }}
       </td>
@@ -28,18 +30,18 @@
         {{ player.maxVelocity }}
       </td>
       <td>
-        <button id="add" (click)="onBtnClick(player, 'add')">
-          <mat-icon>add_circle</mat-icon>
+        <button [style.height.px]="20" id="add" (click)="onBtnClick(player, 'add')">
+<!--          <mat-icon>add_circle</mat-icon>-->
         </button>
       </td>
       <td>
-        <button id="remove" (click)="onBtnClick(player, 'remove')">
-          <mat-icon>remove_circle</mat-icon>
+        <button [style.height.px]="20" id="remove" (click)="onBtnClick(player, 'remove')">
+<!--          <mat-icon>remove_circle</mat-icon>-->
         </button>
       </td>
       <td>
-        <button id="mute" (click)="onBtnClick(player, 'mute')">
-          <mat-icon>mute</mat-icon>
+        <button [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'mute')">
+<!--          <mat-icon>mute</mat-icon>-->
         </button>
       </td>
     </tr>

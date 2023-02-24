@@ -8,9 +8,19 @@
     -moz-osx-font-smoothing: grayscale;
   }
 </style>
+
+<!--  <p>toolbar</p>-->
+<div class="toolbar" role="banner">
+  <app-transport-control></app-transport-control>
+  <app-status-panel></app-status-panel>
+</div>
+
+<!--  <p>main-content</p>-->
 <div class="content dashboard" role="main">
-  <!--  <p>main-content</p>-->
-  <!--  <p>dashboard</p>-->
+  <div class="card-container">
+    <div>
+    </div>
+  </div>
   <div class="card-container">
     <div class="status-card" [style.min-height.px]="300">
       <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
@@ -20,18 +30,18 @@
     </div>
   </div>
   <div class="card-container">
-    <div class="pads-card">
+    <div class="pads-card" [style.max-width.px]="230" [style.min-height.px]="280">
       <app-drum-grid></app-drum-grid>
     </div>
+  </div>
+  <div class="card-container" [style.max-width.px]="500" [style.min-height.px]="280">
     <div class="pads-card">
-      <app-pads-panel></app-pads-panel>
+      <app-slider-panel></app-slider-panel>
     </div>
   </div>
+
 </div>
 <div class="card-container">
-  <div class="pads-card">
-    <app-slider-panel></app-slider-panel>
-  </div>
 </div>
 
 

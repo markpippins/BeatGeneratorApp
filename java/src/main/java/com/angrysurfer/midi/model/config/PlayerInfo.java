@@ -21,9 +21,9 @@ public class PlayerInfo implements Serializable {
     private int preset;
     private String instrument;
     private int channel;
-    private Map<String, Eval> conditions = new HashMap<>();
+    private List<Eval> conditions = new ArrayList<>();
     private List<Integer> allowedControlMessages = new ArrayList<>();
-    private String playerId;
+    private int id;
 
     public PlayerInfo() {
 
@@ -37,7 +37,7 @@ public class PlayerInfo implements Serializable {
         def.setInstrument(player.getInstrumentName());
         def.setConditions(player.getConditions());
         def.setNote(player.getNote());
-        def.setPlayerId(player.getPlayerId());
+        def.setId(player.getId());
         return def;
     }
 }

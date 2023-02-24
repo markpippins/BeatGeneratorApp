@@ -1,7 +1,7 @@
 import { Condition } from './condition';
 
 export interface Player {
-  playerId: string;
+  id: number;
   preset: number;
   instrument: string;
   channel: number;

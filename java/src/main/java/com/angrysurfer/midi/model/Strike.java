@@ -35,8 +35,7 @@ public class Strike extends Player {
     }
 
     public Strike addCondition(Eval.Operator operator, Eval.Comparison comparison, Double value) {
-        Eval e = new Eval(operator, comparison, value);
-        getConditions().put(e.toString(), e);
+        getConditions().add(new Eval(getId() + getConditions().size(), operator, comparison, value));
         return this;
     }
 

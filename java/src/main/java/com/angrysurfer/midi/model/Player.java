@@ -19,12 +19,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 @Setter
 public abstract class Player implements Callable<Boolean>, Serializable {
-    Map<String, Eval> conditions = new HashMap<>();
+
+    int id;
+    List<Eval> conditions = new ArrayList<>();
     private int note;
     private int minVelocity = 110;
     private int maxVelocity = 127;
     @JsonIgnore
     private boolean even = true;
+
+    private boolean muted = false;
     @JsonIgnore
     private Double beat = 1.0;
     @JsonIgnore
@@ -37,8 +41,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @JsonIgnore
     private Ticker ticker;
     private List<Integer> allowedControlMessages = new ArrayList<>();
-    @JsonIgnore
-    private boolean muted = false;
     @JsonIgnore
     private int lastPlayedTick;
     @JsonIgnore
@@ -126,7 +128,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @JsonIgnore
     public boolean shouldFire(int tick, int bar) {
         AtomicBoolean play = new AtomicBoolean(getConditions().size() > 0);
-        getConditions().values().forEach(condition -> {
+        getConditions().forEach(condition -> {
             if (condition.getOperator().equals(Eval.Operator.TICK))
                 if (!condition.getComparison().evaluate(tick, condition.getValue()))
                     play.set(false);
@@ -143,11 +145,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                 if (!condition.getComparison().evaluate(getPosition(), condition.getValue()))
                     play.set(false);
         });
-
         return play.get();
-    }
-
-    public String getPlayerId() {
-        return this.toString();
     }
 }

@@ -21,6 +21,10 @@ import { PlayerTableComponent } from './components/player-table/player-table.com
 import {MatTableModule} from "@angular/material/table";
 import { ConditionsPanelComponent } from './components/conditions-panel/conditions-panel.component';
 import { ConditionsTableComponent } from './components/conditions-table/conditions-table.component';
+import { ConditionsSelectOptionComponent } from './components/widgets/conditions-select-option/conditions-select-option.component';
+import { SliderComponent } from './components/widgets/slider/slider.component';
+import {NgxSliderModule} from "@angular-slider/ngx-slider";
+import {MatSliderModule} from "@angular/material/slider";
 
 @NgModule({
   declarations: [
@@ -38,17 +42,21 @@ import { ConditionsTableComponent } from './components/conditions-table/conditio
     PlayerTableComponent,
     ConditionsPanelComponent,
     ConditionsTableComponent,
+    ConditionsSelectOptionComponent,
+    SliderComponent,
   ],
-    imports: [
-        BrowserModule,
-        HttpClientModule,
-        MatSelectModule,
-        FormsModule,
-        MatRadioModule,
-        MatIconModule,
-        MatInputModule,
-        MatTableModule
-    ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    MatSelectModule,
+    FormsModule,
+    MatRadioModule,
+    MatIconModule,
+    MatInputModule,
+    MatTableModule,
+    NgxSliderModule,
+    MatSliderModule
+  ],
   providers: [],
   bootstrap: [AppComponent]
 })

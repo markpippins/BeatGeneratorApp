@@ -31,3 +31,8 @@
 .dashboard {
   background-color: lavender;
 }
+
+.gridview .selected, .gridview tbody .selected {
+  background-color: #6ccbfb;
+  color: #fff;
+}

@@ -52,8 +52,9 @@ public class BeatGenerator extends Ticker {
     static int OPEN_HAT = 39;
     private List<Strike> pads = new ArrayList<>();
 
-    private List<Player> waitList = new ArrayList<>();
+    private List<Player> addList = new ArrayList<>();
 
+    private List<Player> removeList = new ArrayList<>();
     private Map<String, IMidiInstrument> instrumentMap = new HashMap<>();
 
     public BeatGenerator(int songLength) {
@@ -78,17 +79,23 @@ public class BeatGenerator extends Ticker {
 
     @Override
     public PlayerInfo addPlayer(String instrument) {
-        Strike player = new Strike(instrument.concat("closed-hat"), this, getInstrument(instrument), CLOSED_HAT, closedHatParams)
+        Strike player = new Strike(instrument.concat(Integer.toString(getPlayers().size())),
+                this, getInstrument(instrument), KICK + getPlayers().size(), closedHatParams)
                 .addCondition(BEAT, MODULO, 1.0);
-        waitList.add(player);
+
+        if (isPlaying())
+            addList.add(player);
+        else
+            getPlayers().add(player);
+
         return PlayerInfo.fromPlayer(player);
     }
 
     @Override
     public void onBarChange(int bar) {
-        if (!waitList.isEmpty()) {
-            getPlayers().addAll(waitList);
-            waitList.clear();
+        if (!addList.isEmpty()) {
+            getPlayers().addAll(addList);
+            addList.clear();
         }
     }
 
@@ -167,7 +174,7 @@ public class BeatGenerator extends Ticker {
     }
 
     public void start() {
-//        makeBeats();
+        makeBeats();
 //        saveConfig();
 //        saveBeat(getMidiEventSources().stream().map(p -> (Strike) p).toList());
         run();

@@ -1,0 +1,24 @@
+.control-header {
+  background-color: lavenderblush;
+  padding: 15px;
+  margin: 5px;
+  border-radius: 25px;
+}
+
+.control-container {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: auto auto auto auto auto auto auto auto;
+  /*auto auto auto auto auto auto auto auto;*!*/
+  background-color: lavender;
+  border-radius: 25px;
+  max-width: 950px;
+  margin-inside: 10px;
+}
+
+.control-slider {
+  height: 20px;
+  margin: 10px;
+  padding: 10px;
+}
+

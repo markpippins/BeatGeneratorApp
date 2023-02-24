@@ -9,11 +9,14 @@ import java.io.Serializable;
 @Setter
 public class Eval implements Serializable {
 
+    private int id;
     public Eval() {
 
     }
 
-    public Eval(Operator operator, Comparison comparison, Double value) {
+
+    public Eval(int id, Operator operator, Comparison comparison, Double value) {
+        setId(id);
         setOperator(operator);
         setComparison(comparison);
         setValue(value);
@@ -32,47 +35,35 @@ public class Eval implements Serializable {
         Comparison() {
         }
 
-        public boolean evaluate(Double a, Double b) {
-            boolean result;
-            switch (this) {
-                case EQUALS -> result = a.equals(b);
-                case GREATER_THAN -> result = a > b;
-                case LESS_THAN -> result = a < b;
-                case NOT_EQUALS -> result = !a.equals(b);
-                case MODULO -> result = a % b == 0;
-                default -> result = false;
-            }
-
-            return result;
-        }
-
         public boolean evaluate(Integer a, Double b) {
-            boolean result = false;
-
-            switch (this) {
-                case EQUALS -> result = a.equals(b.intValue());
-                case GREATER_THAN -> result = a > b;
-                case LESS_THAN -> result = a < b;
-                case NOT_EQUALS -> result = !a.equals(b.intValue());
-                case MODULO -> result = a % b == 0;
-            }
-
-            return result;
+            return evaluate(Double.valueOf(a), b);
         }
-
         public boolean evaluate(Integer a, Integer b) {
-            boolean result;
-            switch (this) {
-                case EQUALS -> result = a.equals(b);
-                case GREATER_THAN -> result = a > b;
-                case LESS_THAN -> result = a < b;
-                case NOT_EQUALS -> result = !a.equals(b);
-                case MODULO -> result = a % b == 0;
-                default -> result = false;
-            }
-
-            return result;
+            return evaluate(Double.valueOf(a), Double.valueOf(b));
         }
+        public boolean evaluate(Double a, Double b) {
+            switch (this) {
+                case EQUALS -> {
+                    return a.equals(b);
+                }
+                case GREATER_THAN -> {
+                    return a > b;
+                }
+                case LESS_THAN -> {
+                    return a < b;
+                }
+                case NOT_EQUALS -> {
+                    return  !a.equals(b);
+                }
+                case MODULO -> {
+                    return a % b == 0;
+                }
+                default -> {
+                    return false;
+                }
+            }
+        }
+
     }
 
     public enum Operator {TICK, POSITION, BEAT, BAR, PART, RANDOM}

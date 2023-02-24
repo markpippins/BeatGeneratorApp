@@ -1,25 +1,38 @@
-<div class="debug" [style.min-width.px]="100" [style.min-height.px]="100">
-  <p>{{player.playerId}}</p>
-
-
-  <table class="debug">
-    <tr class="debug">
+<div [style.min-width.px]="100" [style.min-height.px]="100">
+  <table>
+    <tr >
       <th *ngFor="let col of conditionCols">
-        {{ col }}
+        {{ col}}
       </th>
     </tr>
-<!--    <tr class="debug" *ngFor="let condition of player.conditions | keyvalue;">-->
-<!--      <td class="player-short-col">-->
-<!--        {{ condition.value.operator }}-->
-<!--      </td>-->
-<!--      <td class="player-short-col">-->
-<!--        {{ condition.value.comparison }}-->
-<!--      </td>-->
-<!--      <td class="player-short-col">-->
-<!--        {{ condition.value.value }}-->
-<!--      </td>-->
-<!--    </tr>-->
+    <tr class *ngFor="let condition of player?.conditions;">
+      <td>
+        <form>
+          <select id="operatorSelect-{{condition.id}}" (change)="onOperatorChange(condition, $event)">
+            <option *ngFor="let opt of getOperators()" [value]="opt">{{opt}}</option>
+          </select>
+        </form>
+      </td>
+      <td>
+        <form>
+          <select id="comparisonSelect-{{condition.id}}" (change)="onComparisonChange(condition, $event)">
+            <option *ngFor="let opt of getComparisons()" [value]="opt">{{opt}}</option>
+          </select>
+        </form>
+      </td>
+      <td class="player-short-col">
+        {{ condition.value }}
+      </td>
+    </tr>
   </table>
+
+<!--  <mat-option-->
+<!--    *ngFor="let item of getLookupItems(col)"-->
+<!--    [value]="item"-->
+<!--  >-->
+
+
+
   <!--    <ng-container-->
   <!--      [matColumnDef]="col"-->
   <!--      *ngFor="let col of playerCols">-->

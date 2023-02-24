@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Condition;
 
 public interface IBeatGeneratorService {
     boolean start();
@@ -34,9 +35,15 @@ public interface IBeatGeneratorService {
 
     PlayerInfo addPlayer(String instrument);
 
-    void updateCondition(String playerId,
-                         String conditionId,
+    void updateCondition(int playerId,
+                         int conditionId,
                          String newOperator,
                          String newComparison,
                          double newValue);
+
+    PlayerInfo removePlayer(int playerId);
+
+    PlayerInfo mutePlayer(int playerId);
+
+    List<Condition> getConditions(int playerId);
 }

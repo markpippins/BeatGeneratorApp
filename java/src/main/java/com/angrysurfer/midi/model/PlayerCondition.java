@@ -6,7 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PlayerCondition {
-    String playerId;
+    int id;
 
     String instrument;
 

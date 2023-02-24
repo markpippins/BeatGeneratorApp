@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import javax.sound.midi.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
 
 import static com.angrysurfer.midi.service.MidiInstrument.logger;
 
@@ -132,24 +133,42 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public void updateCondition(String playerId,
-                                String conditionId,
+    public void updateCondition(int playerId,
+                                int conditionId,
                                 String newOperator,
                                 String newComparison,
                                 double newValue) {
 
-        Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.toString().equals(playerId)).findAny();
+        Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
             Player player = playerOpt.get();
-
             AtomicBoolean found = new AtomicBoolean(false);
-            if (player.getConditions().containsKey(conditionId)) {
-                player.getConditions().get(conditionId).setOperator(Eval.Operator.valueOf(newOperator));
-                player.getConditions().get(conditionId).setComparison(Eval.Comparison.valueOf(newComparison));
-                player.getConditions().get(conditionId).setValue(newValue);
-                found.set(true);
+            Optional<Eval> condition = player.getConditions().stream().filter(c -> c.getId() == conditionId).findAny();
+            if (condition.isPresent()) {
+                condition.get().setOperator(Eval.Operator.valueOf(newOperator));
+                condition.get().setComparison(Eval.Comparison.valueOf(newComparison));
+                condition.get().setValue(newValue);
             }
         }
+    }
+
+    @Override
+    public PlayerInfo removePlayer(int playerId) {
+        Optional<Player> player = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
+        player.ifPresent(value -> beatGenerator.getRemoveList().add(value));
+        return null;
+    }
+
+    @Override
+    public PlayerInfo mutePlayer(int playerId) {
+        beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId)
+                .findAny().ifPresent(value -> value.setMuted(!value.isMuted()));
+        return null;
+    }
+
+    @Override
+    public List<Condition> getConditions(int playerId) {
+        return Collections.emptyList();
     }
 
     @Override

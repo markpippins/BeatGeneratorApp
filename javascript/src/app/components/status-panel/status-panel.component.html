@@ -2,31 +2,36 @@
 <!--<div class="transport-container">-->
 <!--  <app-transport-control (clickEvent)="onClick($event)"></app-transport-control>-->
 <!--</div>-->
-<div class="card-container">
-  <div class="status-card" *ngIf="ticker != undefined">
-    <div class="status-rows">
-      <label class="status-label">Tick:</label>
-      <div class="status-item">
+<div class="status-container">
+  <table>
+    <tr>
+      <td>
+        Tick:
+      </td>
+      <td>
         {{ ticker.tick }}
-      </div>
-      <label class="status-label">Beat:</label>
-      <div class="status-item">
+      </td>
+      <td>
+        Beat:
+      </td>
+      <td>
         {{ ticker.beat }}
-      </div>
-      <label class="status-label">Bar: </label>
-      <div class="status-item">
+      </td>
+      <td>
+        Bar:
+      </td>
+      <td>
         {{ ticker.bar }}
-      </div>
-      <div class="indicator-card">
-        <mat-radio-group [value]="ticker.beat" [(ngModel)]="ticker.beat">
-          <mat-radio-button
-            *ngFor="let beat of getBeats()"
-            [value]="beat"
-          ></mat-radio-button>
-        </mat-radio-group>
-      </div>
-
-    </div>
+      </td>
+    </tr>
+  </table>
+  <div class="indicator-card">
+    <mat-radio-group [value]="ticker.beat" [(ngModel)]="ticker.beat">
+      <mat-radio-button
+        *ngFor="let beat of getBeats()"
+        [value]="beat"
+      ></mat-radio-button>
+    </mat-radio-group>
   </div>
 </div>
 <!--&lt;!&ndash;      <div class="status-item">&ndash;&gt;-->

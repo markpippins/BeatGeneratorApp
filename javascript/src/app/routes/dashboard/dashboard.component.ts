@@ -74,7 +74,17 @@ export class DashboardComponent implements OnInit {
   }
 
   onPlayerSelected(player: Player) {
-    console.log(player.playerId)
+    console.log(player.id)
     this.selectedPlayer = player
   }
+
+  toggleClass(el: any, className: string) {
+    if (el.className.indexOf(className) >= 0) {
+      el.className = el.className.replace(className,"");
+    }
+    else {
+      el.className  += className;
+    }
+  }
+
 }

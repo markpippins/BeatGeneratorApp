@@ -34,7 +34,7 @@ border-width: medium;
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 45px;
   display: flex;
   align-items: flex-start;
   background-color: #1976d2;
@@ -67,7 +67,7 @@ body {
 
 .content {
   display: flex;
-  margin: 82px auto 32px;
+  margin: 65px auto 32px;
   padding: 0 16px;
   max-width: 960px;
   flex-direction: column;
@@ -89,6 +89,14 @@ svg.material-icons:not(:last-child) {
   fill: #888;
 }
 
+.status-container{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  /*margin-top: 16px;*/
+  border-style: dashed;
+  border-width: thin;
+}
 .card-container{
   display: flex;
   flex-wrap: wrap;

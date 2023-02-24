@@ -1,5 +1,5 @@
-export interface Condition extends Iterable<any> {
-  id: string;
+export interface Condition {
+  id: number;
   operator: string;
   comparison: string;
   value: number;
