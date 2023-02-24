@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
 import { AppComponent } from './app.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DashboardComponent } from './routes/dashboard/dashboard.component';
 import { SliderPanelComponent } from './components/slider-panel/slider-panel.component';
 import { ChannelSelectorComponent } from './components/widgets/channel-selector/channel-selector.component';
@@ -47,6 +48,7 @@ import {MatSliderModule} from "@angular/material/slider";
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     HttpClientModule,
     MatSelectModule,
     FormsModule,

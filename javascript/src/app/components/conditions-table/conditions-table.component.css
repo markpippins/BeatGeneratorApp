@@ -9,7 +9,7 @@ td, #customers th {
 
 tr:nth-child(even){background-color: #f2f2f2;}
 
-tr:hover {background-color: coral;}
+tr:hover {background-color: blue; color: white; }
 
 th {
   /*padding-top: 12px;*/
