@@ -39,6 +39,7 @@ export class PlayerTableComponent {
     console.log(player.id)
     switch (action) {
       case 'add': { this.midiService.addPlayerClicked().subscribe(); break}
+      case 'remove': { this.midiService.removePlayerClicked(player).subscribe(); break}
     }
   }
 

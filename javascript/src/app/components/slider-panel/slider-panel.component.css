@@ -7,13 +7,13 @@
 
 .control-container {
   display: grid;
-  gap: 40px;
-  grid-template-columns: auto auto auto auto auto auto auto auto;
+  gap: 5px;
+  grid-template-columns: auto auto auto auto auto auto;
   /*auto auto auto auto auto auto auto auto;*!*/
   background-color: lavender;
   border-radius: 25px;
   max-width: 950px;
-  margin-inside: 10px;
+  /*margin-inside: 10px;*/
 }
 
 .control-slider {

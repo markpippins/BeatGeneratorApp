@@ -93,9 +93,13 @@ public class BeatGenerator extends Ticker {
 
     @Override
     public void onBarChange(int bar) {
-        if (!addList.isEmpty()) {
-            getPlayers().addAll(addList);
-            addList.clear();
+        if (!getRemoveList().isEmpty()) {
+            getPlayers().removeAll(getRemoveList());
+            getRemoveList().clear();
+        }
+        if (!getAddList().isEmpty()) {
+            getPlayers().addAll(getAddList());
+            getAddList().clear();
         }
     }
 

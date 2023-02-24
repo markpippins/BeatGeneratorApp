@@ -1,8 +1,8 @@
-import {Component, Input} from '@angular/core';
-import {Options} from "@angular-slider/ngx-slider";
-import '@angular/animations';
-import {MidiService} from "../../../services/midi.service";
-import {MidiMessage} from "../../../models/midi-message";
+import {Component, Input} from '@angular/core'
+import {Options} from "@angular-slider/ngx-slider"
+import '@angular/animations'
+import {MidiService} from "../../../services/midi.service"
+import {MidiMessage} from "../../../models/midi-message"
 
 @Component({
   selector: 'app-slider',
@@ -11,20 +11,20 @@ import {MidiMessage} from "../../../models/midi-message";
 })
 export class SliderComponent {
   @Input()
-  channel!: number;
+  channel!: number
 
   @Input()
-  cc!: number;
+  cc!: number
 
   @Input()
-  label!: string;
-  value: number = 0;
+  label!: string
+  value: number = 1
   options: Options = {
     floor: 1,
     ceil: 127,
     vertical: true,
     hideLimitLabels: true,
-  };
+  }
 
   constructor(private midiService: MidiService) {
   }

@@ -155,7 +155,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     @Override
     public PlayerInfo removePlayer(int playerId) {
         Optional<Player> player = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
-        player.ifPresent(value -> beatGenerator.getRemoveList().add(value));
+        player.ifPresent(p -> beatGenerator.getRemoveList().add(p));
         return null;
     }
 

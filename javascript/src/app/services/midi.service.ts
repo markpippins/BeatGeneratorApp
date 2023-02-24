@@ -93,6 +93,14 @@ export class MidiService {
       params: params,
     });
   }
+
+  removePlayerClicked(player: Player) {
+    let params = new HttpParams();
+    params = params.append('playerId', player.id);
+    return this.http.get('http://localhost:8080/api/players/remove', {
+      params: params,
+    });
+  }
 }
 
 // updateConditionClicked(

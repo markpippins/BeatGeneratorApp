@@ -28,6 +28,6 @@ export class SliderPanelComponent implements OnInit {
       });
   }
   ngOnInit(): void {
-    this.onSelect(this.channel);
+    this.onSelect(3);
   }
 }
