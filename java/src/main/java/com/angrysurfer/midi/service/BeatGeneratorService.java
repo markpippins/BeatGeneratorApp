@@ -30,13 +30,15 @@ public class BeatGeneratorService implements IBeatGeneratorService {
 
     @Override
     public boolean start() {
-        if (!beatGenerator.isPlaying())
+        if (!beatGenerator.isPaused() && !beatGenerator.isPlaying())
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     beatGenerator.start();
                 }
             }).start();
+        else if (beatGenerator.isPaused())
+            beatGenerator.pause();
 
         return beatGenerator.isPlaying();
     }
@@ -51,15 +53,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
 
     @Override
     public boolean pause() {
-        if (beatGenerator.isPlaying()) {
-            beatGenerator.pause();
-            beatGenerator.setPlaying(false);
-        }
-        else if (beatGenerator.isPaused()) {
-            beatGenerator.setPaused(false);
-            beatGenerator.setPlaying(true);
-        }
-
+        beatGenerator.pause();
         return !beatGenerator.isPlaying();
     }
 

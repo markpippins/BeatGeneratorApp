@@ -148,8 +148,9 @@ public abstract class Ticker implements Runnable, Serializable {
     }
 
     public void pause() {
-        setPlaying(false);
-        setPaused(true);
+        setPlaying(!isPlaying());
+        setPaused(!isPaused());
+        setStopped(isPaused());
     }
 
     public abstract PlayerInfo addPlayer(String instrument);
