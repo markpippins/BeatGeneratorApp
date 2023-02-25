@@ -45,6 +45,8 @@ public abstract class Ticker implements Runnable, Serializable {
     private int swing = 25;
     private boolean playing = false;
     private boolean stopped = false;
+
+    private boolean paused = false;
     private MuteGroupList muteGroups = new MuteGroupList();
     private List<Player> waitList = new ArrayList<>();
 
@@ -103,7 +105,7 @@ public abstract class Ticker implements Runnable, Serializable {
         setStopped(false);
 
         IntStream.range(0, getSongLength()).forEach(i -> {
-            if (isPlaying())
+            if (!isStopped() && isPlaying())
                 try {
                     incrementTick();
                     getExecutor().invokeAll(getPlayers());
@@ -111,6 +113,13 @@ public abstract class Ticker implements Runnable, Serializable {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
+            else if (!isStopped() && isPaused()) {
+                try {
+                    Thread.sleep(2500);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         });
 
         setStopped(true);
@@ -140,6 +149,7 @@ public abstract class Ticker implements Runnable, Serializable {
 
     public void pause() {
         setPlaying(false);
+        setPaused(true);
     }
 
     public abstract PlayerInfo addPlayer(String instrument);

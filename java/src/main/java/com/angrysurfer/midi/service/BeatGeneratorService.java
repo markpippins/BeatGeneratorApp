@@ -51,8 +51,14 @@ public class BeatGeneratorService implements IBeatGeneratorService {
 
     @Override
     public boolean pause() {
-        if (beatGenerator.isPlaying())
+        if (beatGenerator.isPlaying()) {
             beatGenerator.pause();
+            beatGenerator.setPlaying(false);
+        }
+        else if (beatGenerator.isPaused()) {
+            beatGenerator.setPaused(false);
+            beatGenerator.setPlaying(true);
+        }
 
         return !beatGenerator.isPlaying();
     }

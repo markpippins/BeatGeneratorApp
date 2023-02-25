@@ -1,7 +1,9 @@
 <app-channel-selector (channelSelectEvent)="onSelect($event)"></app-channel-selector>
-<div class="control-container">
-  <div *ngFor="let item of instrument?.assignments | keyvalue">
-    <app-slider *ngIf="instrument != undefined && instrument.channel != undefined"
-                [channel]="instrument.channel" [label]="item.value" [cc]="item.key"></app-slider>
+<div>
+  <div class="control-container">
+    <div *ngFor="let item of instrument?.assignments | keyvalue">
+      <app-slider *ngIf="instrument != undefined && instrument.channel != undefined"
+                  [channel]="instrument.channel" [label]="item.value" [cc]="item.key"></app-slider>
+    </div>
   </div>
 </div>

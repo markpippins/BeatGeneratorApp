@@ -35,6 +35,10 @@ export class MidiService {
     return this.http.get('http://localhost:8080/api/ticker/stop');
   }
 
+  pauseClicked() {
+    return this.http.get('http://localhost:8080/api/ticker/pause');
+  }
+
   playerInfo() {
     return this.http.get<Player[]>('http://localhost:8080/api/players/info');
   }

@@ -42,6 +42,14 @@ export class DashboardComponent implements OnInit {
         break;
       }
 
+      case 'pause': {
+        this.midiService.pauseClicked().subscribe()
+        // this.isPlaying = false
+        // this.players = []
+        // this.playerConditions = []
+        break
+      }
+
       case 'record': {
         this.midiService.recordClicked().subscribe();
         this.isPlaying = false;
