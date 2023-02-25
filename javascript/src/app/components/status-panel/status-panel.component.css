@@ -67,7 +67,8 @@ th {
 }
 
 .fixed {
-  color: white;
+  color: #12d312;
+  background-color: black;
   font-weight: bold;
   text-align: center;
   min-width: 30px;
