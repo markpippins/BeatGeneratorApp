@@ -94,10 +94,17 @@ export class ConditionsTableComponent implements OnInit, AfterViewInit, AfterCon
 
   onOperatorChange(condition: Condition, event: { target: any }) {
     condition.operator = event.target.value
+    this.midiService.updateConditionClicked(this.player.id, condition.id, event.target.value, condition.comparison, condition.value).subscribe()
   }
 
   onComparisonChange(condition: Condition, event: { target: any }) {
     condition.comparison = event.target.value
+    this.midiService.updateConditionClicked(this.player.id, condition.id, condition.operator, event.target.value, condition.value).subscribe()
+  }
+
+  onValueChange(condition: Condition, event: { target: any }) {
+    condition.value = event.target.value
+    this.midiService.updateConditionClicked(this.player.id, condition.id, condition.operator, condition.comparison, event.target.value).subscribe()
   }
 
   onBtnClick(condition: Condition, add: string) {

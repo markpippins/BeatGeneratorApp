@@ -105,13 +105,13 @@ public class BeatController {
         service.clearPlayers();
     }
 
-    @GetMapping("/conditions/update")
+    @GetMapping("/condition/update")
     public void updateCondition(@RequestParam int playerId,
                                 @RequestParam int conditionId,
                                 @RequestParam String newOperator,
                                 @RequestParam String newComparison,
-                                @RequestParam double newValue) {
-        service.updateCondition(playerId, conditionId, newOperator, newComparison, newValue);
+                                @RequestParam String newValue) {
+        service.updateCondition(playerId, conditionId, newOperator, newComparison, Double.valueOf(newValue));
     }
 }
 

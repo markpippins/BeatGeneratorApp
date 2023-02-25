@@ -129,6 +129,19 @@ export class MidiService {
       params: params,
     });
   }
+
+  updateConditionClicked(playerId: number, conditionId: number, newOperator: string, newComparison: string, newValue: number) {
+    let params = new HttpParams();
+    params = params.append('playerId', playerId);
+    params = params.append('conditionId', conditionId);
+    params = params.append('newOperator', newOperator);
+    params = params.append('newComparison', newComparison);
+    params = params.append('newValue', newValue);
+    return this.http.get('http://localhost:8080/api/condition/update', {
+      params: params,
+    });
+  }
+
 }
 
   // updateConditionClicked(

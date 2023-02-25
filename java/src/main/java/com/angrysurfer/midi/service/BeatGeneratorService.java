@@ -1,6 +1,5 @@
 package com.angrysurfer.midi.service;
 
-import com.angrysurfer.midi.controller.PlayerUpdateDTO;
 import com.angrysurfer.midi.model.BeatGenerator;
 import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.condition.Comparison;
@@ -11,7 +10,6 @@ import com.angrysurfer.midi.model.config.TickerInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.sound.midi.*;
 import java.util.*;
@@ -146,7 +144,6 @@ public class BeatGeneratorService implements IBeatGeneratorService {
         Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
             Player player = playerOpt.get();
-            AtomicBoolean found = new AtomicBoolean(false);
             Optional<Condition> condition = player.getConditions().stream().filter(c -> c.getId() == conditionId).findAny();
             if (condition.isPresent()) {
                 condition.get().setOperator(Operator.valueOf(newOperator));
