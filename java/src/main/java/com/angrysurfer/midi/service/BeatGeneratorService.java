@@ -173,6 +173,21 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
+    public void next() {
+        this.beatGenerator.next();
+    }
+
+    @Override
+    public void save() {
+        beatGenerator.save();
+    }
+
+    @Override
+    public void saveBeat() {
+//        beatGenerator.saveBeat(getPlayers());
+    }
+
+    @Override
     public List<PlayerInfo> getPlayers() {
         return beatGenerator.getPlayers()
                 .stream().map(PlayerInfo::fromPlayer).toList();

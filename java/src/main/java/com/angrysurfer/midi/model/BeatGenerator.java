@@ -179,10 +179,18 @@ public class BeatGenerator extends Ticker {
     }
 
     public void start() {
-        makeBeats();
-//        saveConfig();
-//        saveBeat(getMidiEventSources().stream().map(p -> (Strike) p).toList());
+        saveConfig();
         run();
+    }
+
+    public void next() {
+        stop();
+        makeBeats();
+        run();
+    }
+
+    public void save() {
+        saveConfig();
     }
 
     public IMidiInstrument getInstrument(String name) {

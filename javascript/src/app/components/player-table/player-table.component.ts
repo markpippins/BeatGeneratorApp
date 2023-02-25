@@ -19,7 +19,7 @@ export class PlayerTableComponent {
     // 'add',
     // 'remove',
     // 'mute',
-    'id',
+    // 'id',
     'Instrument',
     'Channel',
     'Preset',
@@ -38,7 +38,6 @@ export class PlayerTableComponent {
   }
 
   onBtnClick(player: Player, action: string) {
-    console.log(player.id)
     switch (action) {
       case 'add': { this.midiService.addPlayerClicked().subscribe(); break}
       case 'remove': { this.midiService.removePlayerClicked(player).subscribe(); break}
@@ -49,4 +48,7 @@ export class PlayerTableComponent {
     this.playerSelectEvent.emit(player);
   }
 
+  initBtnClicked() {
+      this.midiService.addPlayerClicked().subscribe();
+  }
 }

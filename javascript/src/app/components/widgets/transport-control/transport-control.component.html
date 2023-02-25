@@ -1,112 +1,86 @@
-<div class="transport-container">
-  <div class="transport-item">
-    <button
-      id="record"
-      class="transport-button mat-button"
-      (click)="onClick('record')"
-      tabindex="0">
-      <mat-icon>fiber_manual_record</mat-icon>
-    </button>
-  </div>
-  <div class="transport-item">
-    <button
-      id="rewind"
-      class="transport-button mat-button"
-      (click)="onClick('rewind')"
-      tabindex="0">
-      <mat-icon>fast_rewind</mat-icon>
-    </button>
-  </div>
+<div class="transport-buttons">
 
-  <div class="transport-item">
-    <button
-      id="play"
-      class="transport-button mat-button"
-      (click)="onClick('play')"
-      tabindex="0">
-      <mat-icon>play_circle</mat-icon>
-    </button>
-  </div>
+  <button
+    id="record"
+    mat-mini-fab
+    (click)="onClick('record')"
+    tabindex="0">
+    <mat-icon>fiber_manual_record</mat-icon>
+  </button>
 
-  <div class="transport-item">
-    <button
-      id="forward"
-      class="transport-button mat-button"
-      (click)="onClick('forward')"
-      tabindex="0">
-      <mat-icon>fast_forward</mat-icon>
-    </button>
-  </div>
+  <button
+    id="rewind"
+    mat-mini-fab
+    (click)="onClick('rewind')"
+    tabindex="0">
+    <mat-icon>fast_rewind</mat-icon>
+  </button>
 
-  <div class="transport-item">
-    <button
-      id="pause"
-      class="transport-button mat-button"
-      (click)="onClick('pause')"
-      tabindex="0">
-      <mat-icon>pause_circle</mat-icon>
-    </button>
-  </div>
+  <button
+    id="play"
+    mat-mini-fab
+    (click)="onClick('play')"
+    tabindex="0">
+    <mat-icon>play_circle</mat-icon>
+  </button>
 
-  <div class="transport-item">
-    <button
-      id="stop"
-      class="transport-button mat-button"
-      (click)="onClick('stop')"
-      tabindex="0">
-      <mat-icon>stop</mat-icon>
-    </button>
-  </div>
+  <button
+    id="forward"
+    mat-mini-fab
+    (click)="onClick('forward')"
+    tabindex="0">
+    <mat-icon>fast_forward</mat-icon>
+  </button>
 
-  <div class="transport-item">
-    <button
-      id="loop"
-      class="transport-button mat-button"
-      (click)="onClick('loop')"
-      tabindex="0">
-      <mat-icon>loop</mat-icon>
-    </button>
-  </div>
+  <button
+    id="pause"
+    mat-mini-fab
+    (click)="onClick('pause')"
+    tabindex="0">
+    <mat-icon>pause_circle</mat-icon>
+  </button>
 
-  <div class="transport-item">
-    <button
-      id="snap"
-      class="transport-button mat-button"
-      (click)="onClick('snap')"
-      tabindex="0">
-      <mat-icon>camera_alt</mat-icon>
-    </button>
-  </div>
+  <button
+    id="stop"
+    mat-mini-fab
+    (click)="onClick('stop')"
+    tabindex="0">
+    <mat-icon>stop</mat-icon>
+  </button>
 
-  <div class="transport-item">
-    <button
-      id="add"
-      class="transport-button mat-button"
-      (click)="onClick('add')"
-      tabindex="0">
-      <mat-icon>add_circle</mat-icon>
-    </button>
-  </div>
+  <button
+    id="loop"
+    mat-mini-fab
+    (click)="onClick('loop')"
+    tabindex="0">
+    <mat-icon>loop</mat-icon>
+  </button>
 
-  <!--  <div class="transport-item">-->
-  <!--    <button-->
-  <!--      id="remove"-->
-  <!--      class="transport-button mat-button"-->
-  <!--      (click)="onClick('remove')"-->
-  <!--      tabindex="0">-->
-  <!--      <mat-icon>remove_circle</mat-icon>-->
-  <!--    </button>-->
-  <!--  </div>-->
-  <div class="transport-item">
-    <button
-      id="clear"
-      class="transport-button mat-button"
-      (click)="onClick('clear')"
-      tabindex="0">
-      <mat-icon>clear_all</mat-icon>
-    </button>
-  </div>
+  <button
+    id="snap"
+    mat-mini-fab
+    (click)="onClick('snap')"
+    tabindex="0">
+    <mat-icon>camera_alt</mat-icon>
+  </button>
+
+  <button
+    id="add"
+    mat-mini-fab
+    (click)="onClick('add')"
+    tabindex="0">
+    <mat-icon>add_circle</mat-icon>
+  </button>
+
+  <button
+    id="clear"
+    mat-mini-fab
+    (click)="onClick('clear')"
+    tabindex="0">
+    <mat-icon>clear_all</mat-icon>
+  </button>
 </div>
+
 <div class="branding-div">
   <label class="branding-label">Beat Generator, Mark Pippins, 2023</label>
 </div>

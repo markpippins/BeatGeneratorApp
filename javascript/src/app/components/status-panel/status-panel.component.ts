@@ -8,6 +8,9 @@ import {Ticker} from "../../models/ticker";
   styleUrls: ['./status-panel.component.css']
 })
 export class StatusPanelComponent implements OnInit {
+
+  statusColumns = ['Tick', 'Beat', 'Bar', 'Bar Length', 'Beats / Bar', 'Part Length', 'Delay', 'Max']
+
   @Output()
   ticker!: Ticker;
 

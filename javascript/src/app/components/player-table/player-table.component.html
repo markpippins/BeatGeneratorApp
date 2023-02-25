@@ -8,12 +8,13 @@
       <th><b>-</b></th>
       <th><b>*</b></th>
     </tr>
+
     <tr *ngFor="let player of players;"
         (mouseenter)="onPass(player)"
         (click)="onRowClick(player, $event)">
-      <td class="player-short-col">
-        {{ player.id }}
-      </td>
+<!--      <td class="player-short-col">-->
+<!--        {{ player.id }}-->
+<!--      </td>-->
       <td class="player-long-col">
         {{ player.instrument }}
       </td>
@@ -54,8 +55,29 @@
         </button>
       </td>
     </tr>
+    <tr *ngIf="players == undefined || players.length == 0">
+      <td class="player-short-col"></td>
+      <td class="player-short-col"></td>
+      <td class="player-short-col"></td>
+      <td class="player-short-col"></td>
+      <td class="player-short-col"></td>
+      <td class="player-short-col"></td>
+      <td class="player-short-col"></td>
+      <td class="player-short-col"></td>
+      <td>
+        <button [style.height.px]="20" id="add2" (click)="initBtnClicked()">
+          <!--          <mat-icon>add_circle</mat-icon>-->
+          +
+        </button>
+      </td>
+      <td class="player-short-col"></td>
+      <td class="player-short-col"></td>
+
+
+    </tr>
   </table>
 </div>
+
 <!--    <ng-container-->
 <!--      [matColumnDef]="col"-->
 <!--      *ngFor="let col of playerCols">-->

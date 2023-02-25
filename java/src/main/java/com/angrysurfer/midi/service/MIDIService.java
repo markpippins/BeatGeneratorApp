@@ -30,6 +30,9 @@ public class MIDIService implements IMIDIService {
     //    }
     @Override
     public List<MidiDevice> getMidiDevices() {
+
+        Sequencer seq;
+
         return Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {
             try {
                 return MidiSystem.getMidiDevice(info);

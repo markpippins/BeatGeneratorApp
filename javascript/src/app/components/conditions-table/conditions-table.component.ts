@@ -46,7 +46,6 @@ export class ConditionsTableComponent implements OnInit, AfterViewInit, AfterCon
   @Input()
   player!: Player
   conditionCols: string[] = [
-    'id',
     'Operator',
     'Comparison',
     'Value',
@@ -102,6 +101,10 @@ export class ConditionsTableComponent implements OnInit, AfterViewInit, AfterCon
   }
 
   onBtnClick(condition: Condition, add: string) {
+    this.midiService.addConditionClicked(this.player);
+  }
+
+  initBtnClick() {
     this.midiService.addConditionClicked(this.player);
   }
 }

@@ -1,12 +1,10 @@
 <!--<div class="pads-card" [style.max-width.px]="230" [style.min-height.px]="280">-->
 <!--  <app-drum-grid></app-drum-grid>-->
 <!--</div>-->
-<app-channel-selector (channelSelectEvent)="onSelect($event)"></app-channel-selector>
-<div class="panel-container">
-  <div class="control-container">
-    <div *ngFor="let item of instrument?.assignments | keyvalue">
-      <app-slider *ngIf="instrument != undefined && instrument.channel != undefined"
-                  [channel]="instrument.channel" [label]="item.value" [cc]="item.key"></app-slider>
-    </div>
+<div class="control-container">
+  <app-channel-selector (channelSelectEvent)="onSelect($event)"></app-channel-selector>
+  <div *ngFor="let item of instrument?.assignments | keyvalue">
+    <app-slider *ngIf="instrument != undefined && instrument.channel != undefined"
+                [channel]="instrument.channel" [label]="item.value" [cc]="item.key"></app-slider>
   </div>
 </div>

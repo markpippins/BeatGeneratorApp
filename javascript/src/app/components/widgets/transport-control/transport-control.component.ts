@@ -1,5 +1,7 @@
 import {Component, EventEmitter, Output} from '@angular/core'
 import {MidiService} from "../../../services/midi.service"
+import {MaterialIcon} from "material-icons";
+import {MatButtonModule} from "@angular/material/button";
 
 @Component({
   selector: 'app-transport-control',

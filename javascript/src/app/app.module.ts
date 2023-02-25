@@ -28,6 +28,7 @@ import {NgxSliderModule} from "@angular-slider/ngx-slider";
 import {MatSliderModule} from "@angular/material/slider";
 import { BeatSpecComponent } from './components/beat-spec/beat-spec.component';
 import { BeatSpecPanelComponent } from './components/beat-spec-panel/beat-spec-panel.component';
+import {MatButtonModule} from "@angular/material/button";
 
 @NgModule({
   declarations: [
@@ -50,19 +51,20 @@ import { BeatSpecPanelComponent } from './components/beat-spec-panel/beat-spec-p
     BeatSpecComponent,
     BeatSpecPanelComponent,
   ],
-  imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    HttpClientModule,
-    MatSelectModule,
-    FormsModule,
-    MatRadioModule,
-    MatIconModule,
-    MatInputModule,
-    MatTableModule,
-    NgxSliderModule,
-    MatSliderModule
-  ],
+    imports: [
+        BrowserModule,
+        BrowserAnimationsModule,
+        HttpClientModule,
+        MatSelectModule,
+        FormsModule,
+        MatRadioModule,
+        MatIconModule,
+        MatInputModule,
+        MatTableModule,
+        NgxSliderModule,
+        MatSliderModule,
+        MatButtonModule
+    ],
   providers: [],
   bootstrap: [AppComponent]
 })

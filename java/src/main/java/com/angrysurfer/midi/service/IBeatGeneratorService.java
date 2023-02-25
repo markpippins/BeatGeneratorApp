@@ -43,4 +43,10 @@ public interface IBeatGeneratorService {
     PlayerInfo mutePlayer(int playerId);
 
     List<Condition> getConditions(int playerId);
+
+    void next();
+
+    void save();
+
+    void saveBeat();
 }

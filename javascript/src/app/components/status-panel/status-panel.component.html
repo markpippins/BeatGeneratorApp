@@ -5,32 +5,9 @@
 <div class="status-container">
   <table class="status-table">
     <tr>
-      <th>
-        Tick
-      </th>
-      <th>
-        Beat
-      </th>
-      <th>
-        Bar
-      </th>
-      <th>
-        Bar Length
-      </th>
-      <th>
-        Beats / Bar
-      </th>
-      <th>
-        Part Length
-      </th>
-      <th>
-        Delay
-      </th>
-      <th>
-        Max
-      </th>
+      <th *ngFor="let col of statusColumns;">{{col}}</th>
     </tr>
-    <tr>
+    <tr *ngIf="ticker != undefined">
       <td class="fixed">
         {{ ticker.tick }}
       </td>

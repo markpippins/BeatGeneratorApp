@@ -36,6 +36,16 @@ public class BeatController {
         service.stop();
     }
 
+    @GetMapping(path = "/ticker/next")
+    public void next() {
+        service.next();
+    }
+
+    @GetMapping(path = "/beat/save")
+    public void saveBeat() {
+        service.saveBeat();
+    }
+
     @GetMapping(path = "/ticker/info")
     public @ResponseBody TickerInfo getTickerInfo() {
         return service.getTickerInfo();
