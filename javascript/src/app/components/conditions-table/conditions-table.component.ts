@@ -45,6 +45,8 @@ export class ConditionsTableComponent implements OnInit, AfterViewInit, AfterCon
     'Operator',
     'Comparison',
     'Value',
+    'add',
+    'remove'
   ]
 
 
