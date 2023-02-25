@@ -1,6 +1,7 @@
 import {AfterContentChecked, AfterViewInit, Component, Input, OnInit} from '@angular/core'
 import {Condition} from "../../models/condition"
 import {Player} from "../../models/player"
+import {MidiService} from "../../services/midi.service";
 
 @Component({
   selector: 'app-conditions-table',
@@ -8,6 +9,10 @@ import {Player} from "../../models/player"
   styleUrls: ['./conditions-table.component.css']
 })
 export class ConditionsTableComponent implements OnInit, AfterViewInit, AfterContentChecked {
+
+  constructor(private midiService: MidiService) {
+  }
+
   ngAfterContentChecked(): void {
     this.getConditions().forEach(condition => {
       let op = 'operatorSelect-' + condition.id
@@ -45,11 +50,7 @@ export class ConditionsTableComponent implements OnInit, AfterViewInit, AfterCon
     'Operator',
     'Comparison',
     'Value',
-    'add',
-    'remove'
   ]
-
-
   lookups: Map<string, string[]> = new Map()
 
   onClick(condition: Condition, $event: MouseEvent) {
@@ -98,5 +99,9 @@ export class ConditionsTableComponent implements OnInit, AfterViewInit, AfterCon
 
   onComparisonChange(condition: Condition, event: { target: any }) {
     condition.comparison = event.target.value
+  }
+
+  onBtnClick(condition: Condition, add: string) {
+    this.midiService.addConditionClicked(this.player);
   }
 }

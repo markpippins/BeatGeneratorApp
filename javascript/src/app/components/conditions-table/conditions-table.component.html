@@ -25,6 +25,18 @@
       <td class="player-short-col">
         {{ condition.value }}
       </td>
+      <td>
+        <button [style.height.px]="20" id="add" (click)="onBtnClick(condition, 'add')">
+          <!--          <mat-icon>add_circle</mat-icon>-->
+          +
+        </button>
+      </td>
+      <td>
+        <button [style.height.px]="20" id="remove" (click)="onBtnClick(condition, 'remove')">
+          -
+          <!--          <mat-icon>remove_circle</mat-icon>-->
+        </button>
+      </td>
     </tr>
   </table>
 

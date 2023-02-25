@@ -27,6 +27,7 @@ export class MidiService {
   delay(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
+
   startClicked() {
     return this.http.get('http://localhost:8080/api/ticker/start');
   }
@@ -105,9 +106,18 @@ export class MidiService {
       params: params,
     });
   }
+
+  addConditionClicked(player: Player) {
+    let params = new HttpParams();
+    params = params.append('playerId', player.id);
+    return this.http.get('http://localhost:8080/api/conditions/add', {
+      params: params,
+    });
+  }
 }
 
-// updateConditionClicked(
+
+  // updateConditionClicked(
 //   playerCondition: PlayerCondition,
 //   newOperator: string,
 //   newComparison: string,

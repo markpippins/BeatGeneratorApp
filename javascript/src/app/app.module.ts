@@ -26,6 +26,8 @@ import { ConditionsSelectOptionComponent } from './components/widgets/conditions
 import { SliderComponent } from './components/widgets/slider/slider.component';
 import {NgxSliderModule} from "@angular-slider/ngx-slider";
 import {MatSliderModule} from "@angular/material/slider";
+import { BeatSpecComponent } from './components/beat-spec/beat-spec.component';
+import { BeatSpecPanelComponent } from './components/beat-spec-panel/beat-spec-panel.component';
 
 @NgModule({
   declarations: [
@@ -45,6 +47,8 @@ import {MatSliderModule} from "@angular/material/slider";
     ConditionsTableComponent,
     ConditionsSelectOptionComponent,
     SliderComponent,
+    BeatSpecComponent,
+    BeatSpecPanelComponent,
   ],
   imports: [
     BrowserModule,
