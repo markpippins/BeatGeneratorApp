@@ -77,7 +77,11 @@ border-width: medium;
 }
 
 body {
- background-color: #a3d8ec;
+ /*background-color: #a3d8ec;*/
+
+  background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80');
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .content {

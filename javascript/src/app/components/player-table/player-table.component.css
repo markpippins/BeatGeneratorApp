@@ -14,7 +14,7 @@ tr:hover {background-color: blue; color: white; }
 th {
   /*padding-top: 12px;*/
   /*padding-bottom: 12px;*/
-  background-color: #04AA6D;
+  background-color: transparent;
   color: white;
   text-align: center;
   font-size: smaller;

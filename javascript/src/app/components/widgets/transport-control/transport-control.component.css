@@ -36,5 +36,6 @@
 
 .branding-label {
   padding: 2px;
-  border-style: groove;
+  color: silver;
+  /*border-style: groove;*/
 }
