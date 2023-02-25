@@ -7,6 +7,21 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  height: 100%;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  /*background: #70bg32;*/
+  background-repeat:no-repeat;
+  /*background: -webkit-linear-gradient( to left top, blue, red);*/
+  /*background: -moz-linear-gradient( to left top, blue, red);*/
+  /*background: -ms-linear-gradient( to left top, blue, red);*/
+  /*background: -o-linear-gradient( to left top, blue, red);*/
+  background: linear-gradient( to left top, #bac1c3, #99d2e6);
+}
+
 h1,
 h2,
 h3,
@@ -36,8 +51,8 @@ border-width: medium;
   right: 0;
   height: 45px;
   display: flex;
-  align-items: flex-start;
-  background-color: #1976d2;
+  align-items: center;
+  background-color: transparent;
   color: white;
   font-weight: 600;
 }
@@ -62,16 +77,17 @@ border-width: medium;
 }
 
 body {
-  background-color: lightsteelblue;
+  /*background-color: lightsteelblue;*/
 }
 
 .content {
   display: flex;
-  margin: 55px auto auto;
+  margin: 2px auto auto;
   /*padding: 0 16px;*/
   max-width: 960px;
   flex-direction: column;
   align-items: stretch;
+  gap: 4px;
   /*border-style: dashed;*/
   /*border-width: thin;*/
 }
@@ -93,17 +109,14 @@ svg.material-icons:not(:last-child) {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
-  /*margin-top: 16px;*/
-  border-style: dashed;
-  border-width: thin;
 }
 .card-container{
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
   /*margin-top: 16px;*/
-  border-style: dashed;
-  border-width: thin;
+  border-style: unset;
+  /*border-width: thin;*/
 }
 
 .card {
@@ -121,21 +134,21 @@ svg.material-icons:not(:last-child) {
   align-items: flex-start;
   transition: all 0.2s ease-in-out;
   line-height: 24px;
-  border-style: dotted;
-  border-width: thin;
+  /*border-style: dotted;*/
+  /*border-width: thin;*/
 }
 
 .card-container .card:not(:last-child) {
   margin-right: 0;
-  border-style: dashed;
-  border-width: thin;
+  /*border-style: dashed;*/
+  /*border-width: thin;*/
 }
 
 .card.card-small {
   height: 16px;
   width: 168px;
-  border-style: dashed;
-  border-width: thin;
+  /*border-style: dashed;*/
+  /*border-width: thin;*/
 }
 
 .card-container .card:not(.highlight-card) {
@@ -147,14 +160,14 @@ svg.material-icons:not(:last-child) {
 .card-container .card:not(.highlight-card):hover {
   transform: translateY(-3px);
   box-shadow: 0 4px 17px rgba(0, 0, 0, 0.35);
-  border-style: dashed;
-  border-width: thin;
+  /*border-style: dashed;*/
+  /*border-width: thin;*/
 }
 
 .card-container .card:not(.highlight-card):hover .material-icons path {
   fill: rgb(105, 103, 103);
-  border-style: dashed;
-  border-width: thin;
+  /*border-style: dashed;*/
+  /*border-width: thin;*/
 }
 
 .card.highlight-card {
@@ -165,14 +178,14 @@ svg.material-icons:not(:last-child) {
   width: auto;
   min-width: 30%;
   position: relative;
-  border-style: dashed;
-  border-width: thin;
+  /*border-style: dashed;*/
+  /*border-width: thin;*/
 }
 
 .card.card.highlight-card span {
   margin-left: 60px;
-  border-style: dashed;
-  border-width: thin;
+  /*border-style: dashed;*/
+  /*border-width: thin;*/
 }
 
 a,

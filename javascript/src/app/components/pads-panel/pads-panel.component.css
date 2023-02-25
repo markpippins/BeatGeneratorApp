@@ -14,7 +14,6 @@
 .pads-panel {
   display: flow;
   gap: 5px;
-  background-color: lightskyblue;
   padding: 10px;
   /*width: 50px;*/
   max-height: 300px;

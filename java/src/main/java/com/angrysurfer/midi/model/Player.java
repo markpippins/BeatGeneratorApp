@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Setter
 @MappedSuperclass
 public abstract class Player implements Callable<Boolean>, Serializable {
-
     static final Random rand = new Random();
     @Transient
     List<Condition> conditions = new ArrayList<>();
@@ -31,8 +30,8 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private int minVelocity = 110;
     private int maxVelocity = 127;
     @JsonIgnore
+    @Transient
     private boolean even = true;
-
     private boolean muted = false;
     @JsonIgnore
     @Transient
@@ -62,17 +61,14 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @Transient
     private Double lastPlayedBeat;
     private String name;
-
     public Player() {
 
     }
-
     public Player(String name, Ticker ticker, IMidiInstrument instrument) {
         setName(name);
         setInstrument(instrument);
         setTicker(ticker);
     }
-
     public Player(String name, Ticker ticker, IMidiInstrument instrument, List<Integer> allowedControlMessages) {
         this(name, ticker, instrument);
         setAllowedControlMessages(allowedControlMessages);
@@ -92,7 +88,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         double beatOffset = 1.0;
         getLastTick().set(tick);
 
-        if (shouldFire(tick, bar) &&
+        if (shouldPlay(tick, bar) &&
                 !isMuted() &&
                 getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers()
                         .stream().filter(e -> e.getLastPlayedTick() == tick)
@@ -142,7 +138,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     }
 
     @JsonIgnore
-    public boolean shouldFire(int tick, int bar) {
+    public boolean shouldPlay(int tick, int bar) {
         AtomicBoolean play = new AtomicBoolean(getConditions().size() > 0);
         getConditions().forEach(condition -> {
             switch (condition.getOperator()) {

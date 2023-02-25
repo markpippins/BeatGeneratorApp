@@ -3,6 +3,10 @@
   height: 50%;
   font-size: smaller;
 }
+.label {
+  font-size: smaller;
+}
+
 .slider {
   -webkit-appearance: none;
   width: 100%;
@@ -13,6 +17,7 @@
   opacity: 0.7;
   -webkit-transition: .2s;
   transition: opacity .2s;
+  font-size: smaller;
   /*transform: rotate(270deg);*/
 }
 
@@ -24,6 +29,7 @@
   border-radius: 50%;
   background: #04AA6D;
   cursor: pointer;
+  font-size: smaller;
 }
 
 .slider::-moz-range-thumb {
@@ -32,6 +38,7 @@
   border-radius: 50%;
   background: #04AA6D;
   cursor: pointer;
+  font-size: smaller;
 }
 
 .card:not(.highlight-card) {

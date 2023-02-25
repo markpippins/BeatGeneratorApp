@@ -33,3 +33,42 @@
   border-width: thin;
 }
 
+/*.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {*/
+/*  background-color: blue;*/
+/*}*/
+
+td, th {
+  border: 1px solid #ddd;
+  padding: 2px;
+}
+
+td input {
+  max-width: 60px;
+  text-align: right;
+  align-self: stretch;
+}
+
+th {
+  /*padding-top: 12px;*/
+  /*padding-bottom: 12px;*/
+  background-color: #04AA6D;
+  color: white;
+  text-align: center;
+  font-size: small;
+  font-weight: normal;
+}
+
+.player-short-col {
+  width: 60px;
+}
+
+.player-long-col {
+  width: 140px;
+}
+
+.fixed {
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  min-width: 30px;
+}

@@ -1,9 +1,10 @@
 <!--<ngx-slider class="control-slider">{{label}}</ngx-slider>-->
-<mat-label>{{label}}</mat-label>
+<mat-label class="label">{{label}}</mat-label>
 <div class="slider-card">
   <div class="slide-container slider">
-    <input [(ngModel)]="value" type="range" min="1" max="127" value=1 class="slider" (change)="onChange(this, $event)">
-<!--    <mat-label>{{value}}</mat-label>-->
+    <input class="slider" [(ngModel)]="value" type="range" min="1" max="127" value=1 class="slider"
+           (change)="onChange(this, $event)">
+    <!--    <mat-label>{{value}}</mat-label>-->
   </div>
 </div>
 <!--  [(value)]="value" [options]="options"-->
