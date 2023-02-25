@@ -1,2 +1,2 @@
-export class Strike {
+export interface Strike {
 }

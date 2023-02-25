@@ -16,9 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-import static com.angrysurfer.midi.model.Eval.Comparison.MODULO;
-import static com.angrysurfer.midi.model.Eval.Operator.BEAT;
-
 @Getter
 @Setter
 public abstract class Ticker implements Runnable, Serializable {

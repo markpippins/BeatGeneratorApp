@@ -7,9 +7,14 @@ td, #customers th {
   padding: 2px;
 }
 
-tr:nth-child(even){background-color: #f2f2f2;}
+tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
 
-tr:hover {background-color: blue; color: white; }
+tr:hover {
+  background-color: blue;
+  color: white;
+}
 
 th {
   /*padding-top: 12px;*/
@@ -28,3 +33,9 @@ th {
 .player-long-col {
   width: 140px;
 }
+
+/*.table-container {*/
+
+/*  !*min-width: 100px;*!*/
+/*  !*min-height: 100px;*!*/
+/*}*/

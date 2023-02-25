@@ -1,4 +1,4 @@
-<div [style.min-width.px]="100" [style.min-height.px]="100">
+<div class="table-container">
   <table>
     <tr >
       <th *ngFor="let col of conditionCols">
@@ -8,6 +8,9 @@
       <th><b>-</b></th>
     </tr>
     <tr class *ngFor="let condition of player?.conditions;">
+      <td class="player-short-col">
+        {{ condition.id }}
+      </td>
       <td>
         <form>
           <select id="operatorSelect-{{condition.id}}" (change)="onOperatorChange(condition, $event)">

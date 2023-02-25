@@ -24,10 +24,10 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.angrysurfer.midi.model.Eval.Comparison.EQUALS;
-import static com.angrysurfer.midi.model.Eval.Comparison.MODULO;
-import static com.angrysurfer.midi.model.Eval.Operator.BEAT;
-import static com.angrysurfer.midi.model.Eval.Operator.TICK;
+import static com.angrysurfer.midi.model.condition.Comparison.EQUALS;
+import static com.angrysurfer.midi.model.condition.Comparison.MODULO;
+import static com.angrysurfer.midi.model.condition.Operator.BEAT;
+import static com.angrysurfer.midi.model.condition.Operator.TICK;
 
 @Getter
 @Setter
@@ -82,6 +82,7 @@ public class BeatGenerator extends Ticker {
         Strike player = new Strike(instrument.concat(Integer.toString(getPlayers().size())),
                 this, getInstrument(instrument), KICK + getPlayers().size(), closedHatParams)
                 .addCondition(BEAT, MODULO, 1.0);
+        player.setId((long) getPlayers().size() + getWaitList().size() + 1);
 
         if (isPlaying())
             addList.add(player);

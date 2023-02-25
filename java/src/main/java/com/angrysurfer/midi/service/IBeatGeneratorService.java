@@ -1,10 +1,7 @@
 package com.angrysurfer.midi.service;
 
-import com.angrysurfer.midi.controller.ConditionDTO;
-import com.angrysurfer.midi.model.PlayerCondition;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;

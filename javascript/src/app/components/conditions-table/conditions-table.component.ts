@@ -34,7 +34,6 @@ export class ConditionsTableComponent implements OnInit, AfterViewInit, AfterCon
       'BEAT',
       'BAR',
       'PART',
-      'RANDOM',
     ])
     this.lookups.set('comparison', [
       'GREATER_THAN',
@@ -47,6 +46,7 @@ export class ConditionsTableComponent implements OnInit, AfterViewInit, AfterCon
   @Input()
   player!: Player
   conditionCols: string[] = [
+    'id',
     'Operator',
     'Comparison',
     'Value',

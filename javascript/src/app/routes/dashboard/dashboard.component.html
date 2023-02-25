@@ -22,10 +22,10 @@
     </div>
   </div>
   <div class="card-container">
-    <div class="status-card" [style.min-height.px]="300">
+    <div class="status-card" [style.min-height.px]="400">
       <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
     </div>
-    <div class="pads-card" [style.min-height.px]="300">
+    <div class="pads-card" [style.min-height.px]="300" [style.width.px]="350">
       <app-conditions-panel [player]="selectedPlayer"></app-conditions-panel>
     </div>
   </div>
@@ -33,10 +33,10 @@
     <div class="pads-card" [style.max-width.px]="230" [style.min-height.px]="280">
       <app-drum-grid></app-drum-grid>
     </div>
-  </div>
-  <div class="card-container" [style.max-width.px]="500" [style.min-height.px]="280">
-    <div>
-      <app-slider-panel></app-slider-panel>
+    <div class="card-container" [style.max-width.px]="500" [style.min-height.px]="280">
+      <div>
+        <app-slider-panel></app-slider-panel>
+      </div>
     </div>
   </div>
 

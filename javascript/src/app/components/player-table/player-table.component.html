@@ -11,6 +11,9 @@
     <tr *ngFor="let player of players;"
         (mouseenter)="onPass(player)"
         (click)="onRowClick(player, $event)">
+      <td class="player-short-col">
+        {{ player.id }}
+      </td>
       <td class="player-long-col">
         {{ player.instrument }}
       </td>
@@ -22,6 +25,9 @@
       </td>
       <td class="player-short-col">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
+      </td>
+      <td class="player-short-col">
+        <input type="number" min="0" max="100" step="1" value="{{ player.probability }}">
       </td>
       <td class="player-short-col">
         <input type="number" min="1" max="127" step="1" value="{{ player.minVelocity }}">

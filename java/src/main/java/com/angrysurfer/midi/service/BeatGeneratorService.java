@@ -1,8 +1,10 @@
 package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.BeatGenerator;
-import com.angrysurfer.midi.model.Eval;
+import com.angrysurfer.midi.model.condition.Comparison;
+import com.angrysurfer.midi.model.condition.Condition;
 import com.angrysurfer.midi.model.Player;
+import com.angrysurfer.midi.model.condition.Operator;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
 import org.slf4j.Logger;
@@ -12,7 +14,6 @@ import org.springframework.stereotype.Service;
 import javax.sound.midi.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Condition;
 
 import static com.angrysurfer.midi.service.MidiInstrument.logger;
 
@@ -143,10 +144,10 @@ public class BeatGeneratorService implements IBeatGeneratorService {
         if (playerOpt.isPresent()) {
             Player player = playerOpt.get();
             AtomicBoolean found = new AtomicBoolean(false);
-            Optional<Eval> condition = player.getConditions().stream().filter(c -> c.getId() == conditionId).findAny();
+            Optional<Condition> condition = player.getConditions().stream().filter(c -> c.getId() == conditionId).findAny();
             if (condition.isPresent()) {
-                condition.get().setOperator(Eval.Operator.valueOf(newOperator));
-                condition.get().setComparison(Eval.Comparison.valueOf(newComparison));
+                condition.get().setOperator(Operator.valueOf(newOperator));
+                condition.get().setComparison(Comparison.valueOf(newComparison));
                 condition.get().setValue(newValue);
             }
         }
@@ -167,7 +168,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public List<Condition> getConditions(int playerId) {
+    public List<java.util.concurrent.locks.Condition> getConditions(int playerId) {
         return Collections.emptyList();
     }
 

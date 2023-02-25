@@ -10,4 +10,6 @@ export interface Player {
   note: number;
   minVelocity: number;
   maxVelocity: number;
+  probability: number;
+
 }

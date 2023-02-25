@@ -1,6 +1,7 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {Player} from "../../models/player";
 import {MidiService} from "../../services/midi.service";
+import {Strike} from "../../models/strike";
 
 @Component({
   selector: 'app-player-table',
@@ -18,7 +19,7 @@ export class PlayerTableComponent {
     // 'add',
     // 'remove',
     // 'mute',
-    // 'id',
+    'id',
     'Instrument',
     'Channel',
     'Preset',
@@ -26,6 +27,7 @@ export class PlayerTableComponent {
     // 'operator',
     // 'comparison',
     // 'value',
+    'Prob.',
     'Min V',
     'Max V',
   ];
