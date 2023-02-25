@@ -162,4 +162,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         });
         return play.get();
     }
+
+    public abstract void setId(Long id);
 }

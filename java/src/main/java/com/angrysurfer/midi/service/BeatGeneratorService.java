@@ -1,20 +1,23 @@
 package com.angrysurfer.midi.service;
 
+import com.angrysurfer.midi.controller.PlayerUpdateDTO;
 import com.angrysurfer.midi.model.BeatGenerator;
+import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.condition.Comparison;
 import com.angrysurfer.midi.model.condition.Condition;
-import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.condition.Operator;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.sound.midi.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.angrysurfer.midi.controller.PlayerUpdateType.NOTE;
 import static com.angrysurfer.midi.service.MidiInstrument.logger;
 
 @Service
@@ -185,6 +188,17 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     @Override
     public void saveBeat() {
 //        beatGenerator.saveBeat(getPlayers());
+    }
+
+    @Override
+    public void updatePlayer(int playerId, int updateType, int updateValue) {
+        switch (updateType) {
+            case NOTE: {
+                Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
+                playerOpt.ifPresent(player -> player.setNote(updateValue));
+                break;
+            }
+        }
     }
 
     @Override

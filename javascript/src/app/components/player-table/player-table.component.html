@@ -16,7 +16,7 @@
 <!--        {{ player.id }}-->
 <!--      </td>-->
       <td class="player-long-col">
-        {{ player.instrument }}
+        {{ player.instrument }} {{ player.id}}
       </td>
       <td class="player-short-col">
         {{ player.channel }}
@@ -24,7 +24,7 @@
       <td class="player-short-col">
         {{ player.preset }}
       </td>
-      <td class="player-short-col">
+      <td class="player-short-col" (change)="noteChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
       </td>
       <td class="player-short-col">

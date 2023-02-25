@@ -15,10 +15,11 @@ export class SliderPanelComponent implements OnInit {
   channelSelectEvent = new EventEmitter<number>();
 
   @Input()
-  instrument?: Instrument | undefined;
+  instrument!: Instrument | undefined
 
   constructor(private midiService: MidiService) {}
   onSelect(selectedChannel: number) {
+    this.instrument = undefined
     this.channel = selectedChannel;
     this.midiService
       .instrumentInfo(selectedChannel - 1)

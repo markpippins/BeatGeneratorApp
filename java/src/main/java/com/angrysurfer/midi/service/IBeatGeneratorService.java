@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.service;
 
+import com.angrysurfer.midi.controller.PlayerUpdateDTO;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
 
@@ -49,4 +50,6 @@ public interface IBeatGeneratorService {
     void save();
 
     void saveBeat();
+
+    void updatePlayer(int playerId, int updateType, int updateValue);
 }

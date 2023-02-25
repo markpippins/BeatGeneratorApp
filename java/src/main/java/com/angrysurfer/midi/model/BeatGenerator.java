@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -32,6 +33,8 @@ import static com.angrysurfer.midi.model.condition.Operator.TICK;
 @Getter
 @Setter
 public class BeatGenerator extends Ticker {
+
+    static final AtomicLong playerCounter = new AtomicLong(-0);
     static final Random rand = new Random();
     static final String RAZZ = "Razzmatazz";
     static final String MICROFREAK = "MicroFreak";
@@ -82,7 +85,7 @@ public class BeatGenerator extends Ticker {
         Strike player = new Strike(instrument.concat(Integer.toString(getPlayers().size())),
                 this, getInstrument(instrument), KICK + getPlayers().size(), closedHatParams)
                 .addCondition(BEAT, MODULO, 1.0);
-        player.setId((long) getPlayers().size() + getWaitList().size() + 1);
+        player.setId(playerCounter.incrementAndGet());
 
         if (isPlaying())
             addList.add(player);
@@ -199,7 +202,6 @@ public class BeatGenerator extends Ticker {
 
     public void makeBeats() {
 
-
         IMidiInstrument fireball = getInstrument("Fireball");
         IMidiInstrument zero = getInstrument("Zero");
 
@@ -225,6 +227,9 @@ public class BeatGenerator extends Ticker {
                                 .addCondition(TICK, EQUALS, rand.nextInt(6, 8) * .25)
                 ).filter(h -> rand.nextBoolean())
                 .forEach(getPlayers()::add);
+        getPlayers().forEach(p -> {
+            p.setId(playerCounter.incrementAndGet());
+        });
         setBeatDivider(rand.nextInt(1, 4));
 
         try {

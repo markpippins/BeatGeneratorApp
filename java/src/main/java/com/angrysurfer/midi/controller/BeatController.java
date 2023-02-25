@@ -95,6 +95,11 @@ public class BeatController {
         return service.getConditions(playerId);
     }
 
+    @GetMapping("/player/update")
+    public void updatePlayer(@RequestParam int playerId, @RequestParam int updateType, @RequestParam int updateValue) {
+        service.updatePlayer(playerId, updateType, updateValue);
+    }
+
     @GetMapping("/players/clear")
     public void clearPlayers() {
         service.clearPlayers();

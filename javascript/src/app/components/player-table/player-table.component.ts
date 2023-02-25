@@ -51,4 +51,8 @@ export class PlayerTableComponent {
   initBtnClicked() {
       this.midiService.addPlayerClicked().subscribe();
   }
+
+  noteChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayerClicked(player.id, 1, event.target.value).subscribe()
+  }
 }

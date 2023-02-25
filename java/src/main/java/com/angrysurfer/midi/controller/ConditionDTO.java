@@ -6,9 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ConditionDTO {
-    String oldOperator;
-    String oldComparison;
-    double oldValue;
+    Long conditionId;
     String newOperator;
     String newComparison;
     double newValue;

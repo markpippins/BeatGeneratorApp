@@ -6,6 +6,7 @@ import {Instrument} from '../models/instrument';
 import {Ticker} from '../models/ticker';
 import {Condition} from '../models/condition';
 import {ConditionUpdate} from '../models/condition-update';
+import {PlayerUpdate} from "../models/player-update";
 
 @Injectable({
   providedIn: 'root',
@@ -30,6 +31,10 @@ export class MidiService {
 
   startClicked() {
     return this.http.get('http://localhost:8080/api/ticker/start');
+  }
+
+  nextClicked() {
+    return this.http.get('http://localhost:8080/api/ticker/next');
   }
 
   stopClicked() {
@@ -114,8 +119,17 @@ export class MidiService {
       params: params,
     });
   }
-}
 
+  updatePlayerClicked(playerId: number, updateType: number, updateValue: number) {
+    let params = new HttpParams();
+    params = params.append('playerId', playerId);
+    params = params.append('updateType', updateType);
+    params = params.append('updateValue', updateValue);
+    return this.http.get('http://localhost:8080/api/player/update', {
+      params: params,
+    });
+  }
+}
 
   // updateConditionClicked(
 //   playerCondition: PlayerCondition,

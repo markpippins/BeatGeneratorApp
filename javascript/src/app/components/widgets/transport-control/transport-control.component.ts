@@ -23,6 +23,7 @@ export class TransportControlComponent {
   onActionSelected(action: string) {
     switch (action) {
       case 'forward': {
+        this.midiService.nextClicked().subscribe()
         // this.toolBarTransportButtonClicked('stop')
         // this.delay(3000)
         // this.toolBarTransportButtonClicked('play')

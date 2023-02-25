@@ -120,8 +120,9 @@ svg.material-icons:not(:last-child) {
 }
 .card-container{
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
+  flex-wrap: nowrap;
+  justify-content: stretch;
+  padding: 2px;
   /*margin-top: 16px;*/
   /*border-style: unset;*/
   /*border-width: thin;*/
@@ -522,44 +523,18 @@ th {
 }
 
 
-
-.slide-container {
-  width: 100%; /* Width of the outside container */
-  height: 50%;
-  font-size: smaller;
+.slider {
+	width: 100px;
 }
+
 .label {
   font-size: smaller;
 }
 
-
-
-
-.slider-card {
-  all: unset;
-  border-radius: 4px;
-  /*border: 1px solid #eee;*/
-  background-color: #fafafa;
-  height: 8px;
-  width: 100px;
-  /*margin: 0 8px 16px;*/
-  padding: 2px;
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: flex-start;
-  transition: all 0.2s ease-in-out;
-  line-height: 24px;
-  /*border-style: dotted;*/
-  /*border-width: thin;*/
-  font-size: smaller;
-}
-
-
-.control-container {
+.slider-container {
   display: grid;
   gap: 10px;
-  grid-template-columns: auto auto auto auto auto auto;
+  grid-template-columns: auto auto auto auto auto auto auto auto;
   background-color: transparent;
   max-width: 920px;
   border: 1px solid #eee;
@@ -568,7 +543,7 @@ th {
 }
 
   /*border-radius: 25px;*/
-  /*margin-inside: 10px;*/
+  /*margin-inside: 10px;*/
 
   /*all: unset;*/
   /*border-radius: 4px;*/  /*background-color: #fafafa;*/

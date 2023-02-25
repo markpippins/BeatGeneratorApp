@@ -1,5 +1,5 @@
-<div class="selector-row" [style.width.px]="200" [style.height.px]="20">
-  <p>Channel</p>
+<div class="selector-row">
+<!--  <p>Channel</p>-->
   <!--  <mat-form-field appearance="outline" [style.width.px]="60">-->
   <!--    <mat-select (selectionChange)="onSelect($event, $event.value)" [(ngModel)]="channel">-->
   <!--      <mat-option *ngFor="let ch of midiChannels" [value]="ch">-->
@@ -15,5 +15,5 @@
   </form>
 
   <b *ngIf="instrument != undefined">{{ instrument.name }}</b>
-  <b *ngIf="instrument == undefined">No Instrument</b>
+  <b *ngIf="instrument == undefined"></b>
 </div>
