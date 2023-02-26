@@ -1,6 +1,8 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Instrument} from "../../models/instrument";
 import {MidiService} from "../../services/midi.service";
+import {KeyValue} from "@angular/common";
+import {Assignment} from "../../models/assignment";
 
 @Component({
   selector: 'app-slider-panel',
@@ -9,7 +11,7 @@ import {MidiService} from "../../services/midi.service";
 })
 export class SliderPanelComponent implements OnInit {
   @Input()
-  channel = 10;
+  channel = 1;
 
   @Output()
   channelSelectEvent = new EventEmitter<number>();
@@ -17,7 +19,12 @@ export class SliderPanelComponent implements OnInit {
   @Input()
   instrument!: Instrument | undefined
 
-  constructor(private midiService: MidiService) {}
+  @Input()
+  instruments!: Map<String, Instrument>
+
+  constructor(private midiService: MidiService) {
+  }
+
   onSelect(selectedChannel: number) {
     this.instrument = undefined
     this.channel = selectedChannel;
@@ -28,7 +35,13 @@ export class SliderPanelComponent implements OnInit {
         this.channelSelectEvent.emit(selectedChannel);
       });
   }
+
   ngOnInit(): void {
-    this.onSelect(3);
+    this.onSelect(10);
+    this.midiService
+      .allInstruments()
+      .subscribe(async (data) => {
+        this.instruments = data;
+      });
   }
 }

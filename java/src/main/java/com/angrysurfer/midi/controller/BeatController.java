@@ -81,22 +81,22 @@ public class BeatController {
     }
 
     @GetMapping("/players/remove")
-    public PlayerInfo removePlayer(@RequestParam int playerId) {
+    public PlayerInfo removePlayer(@RequestParam Long playerId) {
         return service.removePlayer(playerId);
     }
 
     @GetMapping("/players/mute")
-    public PlayerInfo mutePlayer(@RequestParam int playerId) {
+    public PlayerInfo mutePlayer(@RequestParam Long playerId) {
         return service.mutePlayer(playerId);
     }
 
     @GetMapping("/player/conditions")
-    public List<Condition> getConditions(@RequestParam int playerId) {
+    public List<Condition> getConditions(@RequestParam Long playerId) {
         return service.getConditions(playerId);
     }
 
     @GetMapping("/player/update")
-    public void updatePlayer(@RequestParam int playerId, @RequestParam int updateType, @RequestParam int updateValue) {
+    public void updatePlayer(@RequestParam Long playerId, @RequestParam int updateType, @RequestParam int updateValue) {
         service.updatePlayer(playerId, updateType, updateValue);
     }
 
@@ -105,8 +105,13 @@ public class BeatController {
         service.clearPlayers();
     }
 
+    @GetMapping("/conditions/add")
+    public void addPlayer(@RequestParam Long playerId) {
+        service.addCondition(playerId);
+    }
+
     @GetMapping("/condition/update")
-    public void updateCondition(@RequestParam int playerId,
+    public void updateCondition(@RequestParam Long playerId,
                                 @RequestParam int conditionId,
                                 @RequestParam String newOperator,
                                 @RequestParam String newComparison,

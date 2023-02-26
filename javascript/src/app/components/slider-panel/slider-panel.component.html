@@ -1,10 +1,11 @@
-<!--<div class="pads-card" [style.max-width.px]="230" [style.min-height.px]="280">-->
-<!--  <app-drum-grid></app-drum-grid>-->
-<!--</div>-->
-<div class="slider-container">
-  <app-channel-selector (channelSelectEvent)="onSelect($event)"></app-channel-selector>
-  <div *ngFor="let item of instrument?.assignments | keyvalue">
-    <app-slider *ngIf="instrument != undefined && instrument.channel != undefined"
-                [channel]="instrument.channel" [label]="item.value" [cc]="item.key"></app-slider>
+<mat-tab-group [style.width.px]="950">
+  <div *ngFor="let ins of instruments | keyvalue">
+  <mat-tab *ngIf="ins.value.hasAssignments" label="{{ins.value.name}}">
+    <div class="slider-container" [style.width.px]="900">
+      <app-slider *ngFor="let item of ins.value.assignments | keyvalue"
+                  [channel]="ins.value.channel" [label]="item.value" [cc]="item.key"></app-slider>
+    </div>
+  </mat-tab>
   </div>
-</div>
+</mat-tab-group>
+

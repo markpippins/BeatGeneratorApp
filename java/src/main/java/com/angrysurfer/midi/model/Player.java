@@ -123,6 +123,11 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         }
     }
 
+    public Player addCondition(Condition condition) {
+        getConditions().add(condition);
+        return this;
+    }
+
     protected int incrementAndGetPosition() {
         return ++position;
     }

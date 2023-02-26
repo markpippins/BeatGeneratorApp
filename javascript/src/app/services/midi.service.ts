@@ -62,6 +62,13 @@ export class MidiService {
     );
   }
 
+  allInstruments() {
+    let params = new HttpParams();
+    return this.http.get<Map<String, Instrument>>(
+      'http://localhost:8080/api/instruments/info');
+  }
+
+
   clearPlayers() {
     return this.http.get('http://localhost:8080/api/players/clear');
   }
@@ -141,6 +148,7 @@ export class MidiService {
       params: params,
     });
   }
+
 
 }
 

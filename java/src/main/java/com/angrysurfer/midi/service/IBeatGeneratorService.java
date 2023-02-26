@@ -32,17 +32,17 @@ public interface IBeatGeneratorService {
 
     PlayerInfo addPlayer(String instrument);
 
-    void updateCondition(int playerId,
+    void updateCondition(Long playerId,
                          int conditionId,
                          String newOperator,
                          String newComparison,
                          double newValue);
 
-    PlayerInfo removePlayer(int playerId);
+    PlayerInfo removePlayer(Long playerId);
 
-    PlayerInfo mutePlayer(int playerId);
+    PlayerInfo mutePlayer(Long playerId);
 
-    List<Condition> getConditions(int playerId);
+    List<Condition> getConditions(Long playerId);
 
     void next();
 
@@ -50,5 +50,7 @@ public interface IBeatGeneratorService {
 
     void saveBeat();
 
-    void updatePlayer(int playerId, int updateType, int updateValue);
+    void updatePlayer(Long playerId, int updateType, int updateValue);
+
+    void addCondition(Long playerId);
 }

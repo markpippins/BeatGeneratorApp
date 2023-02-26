@@ -65,4 +65,5 @@ public interface IMidiInstrument {
 
     void setHighestPreset(int preset);
 
+    public Integer getAssignmentCount();
 }

@@ -6,13 +6,14 @@
   height: 110px;
   width: 275px;
   /*margin: 0 8px 16px;*/
-  /*padding: 16px;*/
-  display: flex;
+  gap: 8px;
+  display: grid;
   flex-direction: row;
   justify-content: flex-start;
-  align-items: flex-start;
+  align-items: stretch;
   transition: all 0.2s ease-in-out;
   line-height: 24px;
+
 }
 
 .status-card {

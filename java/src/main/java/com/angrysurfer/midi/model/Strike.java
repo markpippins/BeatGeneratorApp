@@ -44,12 +44,6 @@ public class Strike extends Player {
         setMaxVelocity(maxVelocity);
     }
 
-    public Strike addCondition(Operator operator, Comparison comparison, Double value) {
-        getConditions().add(new Condition(operator, comparison, value));
-        getConditions().get(getConditions().size() - 1).setId((long) getConditions().size());
-        return this;
-    }
-
     @Override
     public void onTick(int tick, int bar) {
         drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));

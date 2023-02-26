@@ -22,7 +22,6 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
     static final Random rand = new Random();
     static Logger logger = LoggerFactory.getLogger(MidiInstrument.class.getCanonicalName());
 
-
     private Map<Integer, String> assignments = new HashMap<>();
     private Map<Integer, Integer[]> boundaries = new HashMap<>();
     @JsonIgnore
@@ -33,6 +32,8 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
     private int highestNote;
     private int highestPreset;
     private int preferredPreset;
+
+    private boolean hasAssignments;
 
     public MidiInstrument(String name, MidiDevice device, int channel) {
         setName(Objects.isNull(name) ? device.getDeviceInfo().getName() : name);
@@ -47,6 +48,7 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
         instrument.setLowestNote(instrumentDef.getLowestNote());
         instrument.setAssignments(instrumentDef.getAssignments());
         instrument.setBoundaries(instrumentDef.getBoundaries());
+        instrument.setHasAssignments(instrumentDef.getAssignments().size() > 0);
         return instrument;
     }
     @Override
@@ -129,6 +131,10 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
     @Override
     public void setBounds(int cc, int lowerBound, int upperBound) {
         getBoundaries().put(cc, new Integer[]{lowerBound, upperBound});
+    }
+    @Override
+    public Integer getAssignmentCount() {
+        return getAssignments().size();
     }
 
     private String lookupTarget(int key) {

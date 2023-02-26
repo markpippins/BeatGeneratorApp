@@ -13,10 +13,21 @@ import java.util.Map;
 @Getter
 @Setter
 public class MidiInstrumentInfo implements Serializable {
-    
+
+    boolean hasAssignments;
+    private Map<Integer, String> assignments = new HashMap<>();
+    private Map<Integer, Integer[]> boundaries = new HashMap<>();
+    private String deviceName;
+    private String name;
+    private int channel;
+    private int lowestNote;
+    private int highestNote;
+    private int highestPreset;
+    private int preferredPreset;
     public MidiInstrumentInfo() {
-        
+
     }
+
     public MidiInstrumentInfo(Player player) {
         setName(player.getInstrumentName());
         setAssignments(player.getInstrument().getAssignments());
@@ -28,15 +39,7 @@ public class MidiInstrumentInfo implements Serializable {
         setLowestNote(player.getInstrument().getLowestNote());
         setPreferredPreset(player.getInstrument().getPreferredPreset());
         setDeviceName(player.getInstrument().getDevice().getDeviceInfo().getName());
+        setHasAssignments(player.getInstrument().getAssignments().size() > 0);
     }
-    private Map<Integer, String> assignments = new HashMap<>();
-    private Map<Integer, Integer[]> boundaries = new HashMap<>();
-    private String deviceName;
-    private String name;
-    private int channel;
-    private int lowestNote;
-    private int highestNote;
-    private int highestPreset;
-    private int preferredPreset;
 }
 

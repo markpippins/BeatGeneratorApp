@@ -29,6 +29,7 @@ import {MatSliderModule} from "@angular/material/slider";
 import { BeatSpecComponent } from './components/beat-spec/beat-spec.component';
 import { BeatSpecPanelComponent } from './components/beat-spec-panel/beat-spec-panel.component';
 import {MatButtonModule} from "@angular/material/button";
+import {MatTabsModule} from "@angular/material/tabs";
 
 @NgModule({
   declarations: [
@@ -63,7 +64,8 @@ import {MatButtonModule} from "@angular/material/button";
         MatTableModule,
         NgxSliderModule,
         MatSliderModule,
-        MatButtonModule
+        MatButtonModule,
+        MatTabsModule
     ],
   providers: [],
   bootstrap: [AppComponent]

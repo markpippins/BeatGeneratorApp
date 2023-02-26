@@ -7,4 +7,5 @@ export interface Instrument {
   preferredPreset: number;
   assignments: Map<number, string>;
   boundaries: Map<number, number[]>;
+  hasAssignments: boolean;
 }

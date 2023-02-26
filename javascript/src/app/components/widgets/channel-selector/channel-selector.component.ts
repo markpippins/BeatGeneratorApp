@@ -23,7 +23,7 @@ export class ChannelSelectorComponent implements OnInit {
   constructor(private midiService: MidiService) {
   }
   ngOnInit(): void {
-    // this.onChannelChanged(10);
+    this.onChannelChanged(1);
   }
   selectionChange(event: { target: any; }) {
     this.onChannelChanged(event.target.value);

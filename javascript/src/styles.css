@@ -41,7 +41,7 @@ p {
 
 .debug {
 border-style: dashed;
-border-width: medium;
+border-width: thin;
 }
 
 .toolbar {
@@ -123,6 +123,18 @@ svg.material-icons:not(:last-child) {
   flex-wrap: nowrap;
   justify-content: stretch;
   padding: 2px;
+  /*margin-top: 16px;*/
+  /*border-style: unset;*/
+  /*border-width: thin;*/
+}
+
+.card-container2{
+  display: grid;
+  flex-wrap: nowrap;
+  justify-content: stretch;
+  padding: 2px;
+  grid-template-columns: auto;
+
   /*margin-top: 16px;*/
   /*border-style: unset;*/
   /*border-width: thin;*/
@@ -536,7 +548,7 @@ th {
   gap: 10px;
   grid-template-columns: auto auto auto auto auto auto auto auto;
   background-color: transparent;
-  max-width: 920px;
+  max-width: 500px;
   border: 1px solid #eee;
   padding: 16px;
   line-height: 24px;

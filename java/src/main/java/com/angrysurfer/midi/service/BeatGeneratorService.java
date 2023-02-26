@@ -135,7 +135,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public void updateCondition(int playerId,
+    public void updateCondition(Long playerId,
                                 int conditionId,
                                 String newOperator,
                                 String newComparison,
@@ -154,21 +154,21 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public PlayerInfo removePlayer(int playerId) {
+    public PlayerInfo removePlayer(Long playerId) {
         Optional<Player> player = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         player.ifPresent(p -> beatGenerator.getRemoveList().add(p));
         return null;
     }
 
     @Override
-    public PlayerInfo mutePlayer(int playerId) {
+    public PlayerInfo mutePlayer(Long playerId) {
         beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId)
                 .findAny().ifPresent(value -> value.setMuted(!value.isMuted()));
         return null;
     }
 
     @Override
-    public List<java.util.concurrent.locks.Condition> getConditions(int playerId) {
+    public List<java.util.concurrent.locks.Condition> getConditions(Long playerId) {
         return Collections.emptyList();
     }
 
@@ -188,13 +188,23 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public void updatePlayer(int playerId, int updateType, int updateValue) {
+    public void updatePlayer(Long playerId, int updateType, int updateValue) {
         switch (updateType) {
             case NOTE: {
                 Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
                 playerOpt.ifPresent(player -> player.setNote(updateValue));
                 break;
             }
+        }
+    }
+
+    @Override
+    public void addCondition(Long playerId) {
+        Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
+        if (playerOpt.isPresent()) {
+            Condition condition = new Condition();
+            condition.setId(getPlayers().stream().map(p -> p.getConditions().size()).count() + 1);
+            playerOpt.get().addCondition(condition);
         }
     }
 
