@@ -53,4 +53,6 @@ public interface IBeatGeneratorService {
     void updatePlayer(Long playerId, int updateType, int updateValue);
 
     void addCondition(Long playerId);
+
+    public void removeCondition(Long playerId, Long conditionId);
 }

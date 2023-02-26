@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import javax.sound.midi.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.angrysurfer.midi.controller.PlayerUpdateType.NOTE;
 import static com.angrysurfer.midi.service.MidiInstrument.logger;
@@ -203,8 +202,20 @@ public class BeatGeneratorService implements IBeatGeneratorService {
         Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
             Condition condition = new Condition();
+            condition.setOperator(Operator.BEAT);
+            condition.setComparison(Comparison.EQUALS);
+            condition.setValue(1.0);
             condition.setId(getPlayers().stream().map(p -> p.getConditions().size()).count() + 1);
             playerOpt.get().addCondition(condition);
+        }
+    }
+
+    @Override
+    public void removeCondition(Long playerId, Long conditionId) {
+        Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
+        if (playerOpt.isPresent()) {
+            Optional<Condition> conditionOpt = playerOpt.get().getConditions().stream().filter(c -> c.getId() == conditionId).findAny();
+            conditionOpt.ifPresent(condition -> playerOpt.get().getConditions().remove(condition));
         }
     }
 

@@ -106,8 +106,13 @@ public class BeatController {
     }
 
     @GetMapping("/conditions/add")
-    public void addPlayer(@RequestParam Long playerId) {
+    public void addCondition(@RequestParam Long playerId) {
         service.addCondition(playerId);
+    }
+
+    @GetMapping("/conditions/remove")
+    public void removeCondition(@RequestParam Long playerId, @RequestParam Long conditionId) {
+        service.removeCondition(playerId, conditionId);
     }
 
     @GetMapping("/condition/update")

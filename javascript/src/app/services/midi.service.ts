@@ -127,6 +127,15 @@ export class MidiService {
     });
   }
 
+  removeConditionClicked(player: Player, condition: Condition) {
+    let params = new HttpParams();
+    params = params.append('playerId', player.id);
+    params = params.append('conditionId', condition.id);
+    return this.http.get('http://localhost:8080/api/conditions/remove', {
+      params: params,
+    });
+  }
+
   updatePlayerClicked(playerId: number, updateType: number, updateValue: number) {
     let params = new HttpParams();
     params = params.append('playerId', playerId);

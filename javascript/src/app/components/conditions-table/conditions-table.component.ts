@@ -107,11 +107,20 @@ export class ConditionsTableComponent implements OnInit, AfterViewInit, AfterCon
     this.midiService.updateConditionClicked(this.player.id, condition.id, condition.operator, condition.comparison, event.target.value).subscribe()
   }
 
-  onBtnClick(condition: Condition, add: string) {
-    this.midiService.addConditionClicked(this.player);
+  btnClicked(condition: Condition, command: string) {
+    switch (command) {
+      case 'add': {
+        this.midiService.addConditionClicked(this.player).subscribe();
+        break;
+      }
+      case 'remove': {
+        this.midiService.removeConditionClicked(this.player, condition).subscribe();
+        break;
+      }
+    }
   }
 
   initBtnClick() {
-    this.midiService.addConditionClicked(this.player);
+    this.midiService.addConditionClicked(this.player).subscribe();
   }
 }
