@@ -358,9 +358,19 @@ svg#clouds {
 /*  background-color: #f2f2f2;*/
 /*}*/
 
+input, select {
+  background-color: transparent;
+  
+}
+
+input:hover, select:hover {
+  background-color: white;
+  color: blue;
+}
+
 table tr:hover {
-  background-color: blue;
-  color: white;
+  background-color: white;
+  color: blue;
 }
 
 table tr th:hover {
@@ -369,16 +379,8 @@ table tr th:hover {
 }
 
 td, th {
-  border: 1px solid #ddd;
-  padding: 2px;
-}
-
-th {
-  background-color: transparent;
-  color: white;
-  text-align: center;
-  font-size: smaller;
-  font-weight: normal;
+  /*border: 1px solid #ddd;*/
+  padding: 1px;
 }
 
 
@@ -453,7 +455,7 @@ th {
   display: grid;
   grid-template-columns: auto auto;
   background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.8);
+  /*border: 1px solid rgba(0, 0, 0, 0.8);*/
   padding: 5px;
   width: 50px;
   font-size: small;
@@ -473,27 +475,26 @@ th {
 /*  background-color: blue;*/
 /*}*/
 
-td, th {
-  border: 1px solid #ddd;
-  padding: 2px;
-}
-
 td input {
   max-width: 60px;
   text-align: right;
   align-self: stretch;
 }
 
+
 th {
   /*padding-top: 12px;*/
   /*padding-bottom: 12px;*/
-  /*background-color: blue;*/
-  border-style: hidden;
+  background-color: blue;
   color: white;
-  text-align: center;
+  font-size: small;
+  font-weight: normal;
+  color: white;
+  text-align: left;
   font-size: small;
   font-weight: normal;
 }
+
 
 .player-short-col {
   width: 40px;
@@ -511,13 +512,12 @@ th {
   min-width: 30px;
 }
 
-
 .slider {
 	width: 100px;
 }
 
 .label {
-  font-size: smaller;
+  font-size: small;
 }
 
 .slider-container {

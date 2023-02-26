@@ -188,10 +188,14 @@ public class BeatGenerator extends Ticker {
     }
 
     public void next() {
-        if (isPlaying() || isPaused())
-            stop();
+        if (isPlaying())
+            pause();
+
         makeBeats();
-        run();
+
+        setPaused(false);
+        setStopped(false);
+        setPlaying(true);
     }
 
     public void save() {

@@ -68,7 +68,6 @@ export class MidiService {
       'http://localhost:8080/api/instruments/info');
   }
 
-
   clearPlayers() {
     return this.http.get('http://localhost:8080/api/players/clear');
   }
@@ -157,25 +156,4 @@ export class MidiService {
       params: params,
     });
   }
-
-
 }
-
-  // updateConditionClicked(
-//   playerCondition: PlayerCondition,
-//   newOperator: string,
-//   newComparison: string,
-//   newValue: number
-// ) {
-//   let params = new HttpParams();
-//   params = params.append('playerId', playerCondition.playerId);
-//   params = params.append('oldOperator', playerCondition.operator);
-//   params = params.append('newOperator', newOperator);
-//   params = params.append('oldComparison', playerCondition.comparison);
-//   params = params.append('newComparison', newComparison);
-//   params = params.append('oldValue', playerCondition.value);
-//   params = params.append('newValue', newValue);
-//
-//   return this.http.get('http://localhost:8080/api/conditions/update', {
-//     params: params,
-//   });
