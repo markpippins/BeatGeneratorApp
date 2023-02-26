@@ -548,10 +548,10 @@ th {
   gap: 10px;
   grid-template-columns: auto auto auto auto auto auto auto auto;
   background-color: transparent;
-  max-width: 500px;
-  border: 1px solid #eee;
+  /*border: 1px solid #eee;*/
   padding: 16px;
   line-height: 24px;
+  align-self: stretch;
 }
 
   /*border-radius: 25px;*/

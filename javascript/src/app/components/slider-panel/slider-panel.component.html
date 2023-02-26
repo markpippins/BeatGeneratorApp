@@ -1,7 +1,7 @@
-<mat-tab-group [style.width.px]="950">
+<mat-tab-group>
   <div *ngFor="let ins of instruments | keyvalue">
   <mat-tab *ngIf="ins.value.hasAssignments" label="{{ins.value.name}}">
-    <div class="slider-container" [style.width.px]="900">
+    <div class="slider-container">
       <app-slider *ngFor="let item of ins.value.assignments | keyvalue"
                   [channel]="ins.value.channel" [label]="item.value" [cc]="item.key"></app-slider>
     </div>
