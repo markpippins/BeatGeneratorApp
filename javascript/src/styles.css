@@ -112,7 +112,7 @@ svg.material-icons:not(:last-child) {
   fill: #888;
 }
 
-.status-container{
+.default-container{
   display: grid;
   grid-template-columns: auto auto;
 

@@ -1,108 +1,108 @@
-<div class="table-container">
-  <table>
-    <tr>
-      <th *ngFor="let col of conditionCols">
-        {{ col}}
-      </th>
-      <th><b>+</b></th>
-      <th><b>-</b></th>
-    </tr>
+<table>
+  <tr>
+    <th *ngFor="let col of conditionCols">
+      {{ col}}
+    </th>
+    <th><b>+</b></th>
+    <th><b>-</b></th>
+  </tr>
 
-    <tr class *ngFor="let condition of player?.conditions;">
-<!--      <td class="player-short-col">-->
-<!--        {{ condition.id }}-->
-<!--      </td>-->
-      <td>
-        <form>
-          <select id="operatorSelect-{{condition.id}}" (change)="onOperatorChange(condition, $event)">
-            <option *ngFor="let opt of getOperators()" [value]="opt">{{opt}}</option>
-          </select>
-        </form>
-      </td>
-      <td>
-        <form>
-          <select id="comparisonSelect-{{condition.id}}" (change)="onComparisonChange(condition, $event)">
-            <option *ngFor="let opt of getComparisons()" [value]="opt">{{opt}}</option>
-          </select>
-        </form>
-      </td>
-      <td class="player-short-col">
-        <input type="number" step=".25" value={{condition.value}} (change)="onValueChange(condition, $event)" minlength="4" maxlength="8" size="10">
-
-
-      </td>
-      <td>
-        <button [style.height.px]="20" id="add" (click)="onBtnClick(condition, 'add')">
-          <!--          <mat-icon>add_circle</mat-icon>-->
-          +
-        </button>
-      </td>
-      <td>
-        <button [style.height.px]="20" id="remove" (click)="onBtnClick(condition, 'remove')">
-          -
-          <!--          <mat-icon>remove_circle</mat-icon>-->
-        </button>
-      </td>
-    </tr>
-    <tr *ngIf="player == undefined || player.conditions.length == 0">
-      <td class="player-short-col">
-      </td>
-      <td class="player-short-col">
-      </td>
-      <td class="player-short-col">
-      </td>
-      <td class="player-short-col">
-      </td>
-      <td>
-        <button *ngIf="player != undefined" [style.height.px]="20" id="add2" (click)="initBtnClick()"></button>
-        <div *ngIf="player == undefined" [style.height.px]="24"></div>
-      </td>
-      <td class="player-short-col">
-      </td>
-
-    </tr>
-  </table>
-
-  <!--  <mat-option-->
-  <!--    *ngFor="let item of getLookupItems(col)"-->
-  <!--    [value]="item"-->
-  <!--  >-->
+  <tr class *ngFor="let condition of player?.conditions;">
+    <!--      <td class="player-short-col">-->
+    <!--        {{ condition.id }}-->
+    <!--      </td>-->
+    <td>
+      <form>
+        <select id="operatorSelect-{{condition.id}}" (change)="onOperatorChange(condition, $event)">
+          <option *ngFor="let opt of getOperators()" [value]="opt">{{opt}}</option>
+        </select>
+      </form>
+    </td>
+    <td>
+      <form>
+        <select id="comparisonSelect-{{condition.id}}" (change)="onComparisonChange(condition, $event)">
+          <option *ngFor="let opt of getComparisons()" [value]="opt">{{opt}}</option>
+        </select>
+      </form>
+    </td>
+    <td class="player-short-col">
+      <input type="number" step=".25" value={{condition.value}} (change)="onValueChange(condition, $event)"
+             minlength="4" maxlength="8" size="10">
 
 
-  <!--    <ng-container-->
-  <!--      [matColumnDef]="col"-->
-  <!--      *ngFor="let col of playerCols">-->
+    </td>
+    <td>
+      <button [style.height.px]="20" id="add" (click)="onBtnClick(condition, 'add')">
+        <!--          <mat-icon>add_circle</mat-icon>-->
+        +
+      </button>
+    </td>
+    <td>
+      <button [style.height.px]="20" id="remove" (click)="onBtnClick(condition, 'remove')">
+        -
+        <!--          <mat-icon>remove_circle</mat-icon>-->
+      </button>
+    </td>
+  </tr>
+  <tr *ngIf="player == undefined || player.conditions.length == 0">
+    <td class="player-short-col">
+    </td>
+    <td class="player-short-col">
+    </td>
+    <td class="player-short-col">
+    </td>
+    <td class="player-short-col">
+    </td>
+    <td>
+      <button *ngIf="player != undefined" [style.height.px]="20" id="add2" (click)="initBtnClick()"></button>
+      <div *ngIf="player == undefined" [style.height.px]="24"></div>
+    </td>
+    <td class="player-short-col">
+    </td>
 
-  <!--      <td mat-cell *matCellDef="let element ">-->
-  <!--        <input-->
-  <!--          matInput-->
-  <!--          placeholder="col"-->
-  <!--          [value]="element[col]"-->
-  <!--          [(ngModel)]="element[col]"-->
-  <!--        />-->
-  <!--    </ng-container>-->
+  </tr>
+</table>
 
-  <!--    <tr mat-header-row *matHeaderRowDef="playerCols"></tr>-->
-  <!--    <tr mat-row *matRowDef="let row; columns: playerCols"></tr>-->
+<!--  <mat-option-->
+<!--    *ngFor="let item of getLookupItems(col)"-->
+<!--    [value]="item"-->
+<!--  >-->
 
-  <!--  <table mat-table [dataSource]="players">-->
-  <!--    <ng-container-->
-  <!--      [matColumnDef]="col"-->
-  <!--      *ngFor="let col of playerCols">-->
-  <!--      <th mat-header-cell *matHeaderCellDef>-->
-  <!--        {{ col }}-->
-  <!--      </th>-->
 
-  <!--      <td mat-cell *matCellDef="let element ">-->
-  <!--        <input-->
-  <!--          matInput-->
-  <!--          placeholder="col"-->
-  <!--          [value]="element[col]"-->
-  <!--          [(ngModel)]="element[col]"-->
-  <!--        />-->
-  <!--    </ng-container>-->
+<!--    <ng-container-->
+<!--      [matColumnDef]="col"-->
+<!--      *ngFor="let col of playerCols">-->
 
-  <!--    <tr mat-header-row *matHeaderRowDef="playerCols"></tr>-->
-  <!--    <tr mat-row *matRowDef="let row; columns: playerCols"></tr>-->
-  <!--  </table>-->
-</div>
+<!--      <td mat-cell *matCellDef="let element ">-->
+<!--        <input-->
+<!--          matInput-->
+<!--          placeholder="col"-->
+<!--          [value]="element[col]"-->
+<!--          [(ngModel)]="element[col]"-->
+<!--        />-->
+<!--    </ng-container>-->
+
+<!--    <tr mat-header-row *matHeaderRowDef="playerCols"></tr>-->
+<!--    <tr mat-row *matRowDef="let row; columns: playerCols"></tr>-->
+
+<!--  <table mat-table [dataSource]="players">-->
+<!--    <ng-container-->
+<!--      [matColumnDef]="col"-->
+<!--      *ngFor="let col of playerCols">-->
+<!--      <th mat-header-cell *matHeaderCellDef>-->
+<!--        {{ col }}-->
+<!--      </th>-->
+
+<!--      <td mat-cell *matCellDef="let element ">-->
+<!--        <input-->
+<!--          matInput-->
+<!--          placeholder="col"-->
+<!--          [value]="element[col]"-->
+<!--          [(ngModel)]="element[col]"-->
+<!--        />-->
+<!--    </ng-container>-->
+
+<!--    <tr mat-header-row *matHeaderRowDef="playerCols"></tr>-->
+<!--    <tr mat-row *matRowDef="let row; columns: playerCols"></tr>-->
+<!--  </table>-->
+

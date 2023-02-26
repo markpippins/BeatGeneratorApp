@@ -7,40 +7,37 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-</style>
+</style>  
 
 <div class="content dashboard" role="main">
-  <div class="status-container">
+  <div class="default-container">
     <app-transport-control></app-transport-control>
     <app-status-panel></app-status-panel>
   </div>
   <mat-tab-group>
 
+    <mat-tab label="Beats">
+      <div class="default-container">
+        <div>
+          <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
+        </div>
+        <div class="default-container">
+            <app-conditions-panel [player]="selectedPlayer"></app-conditions-panel>
+        </div>
+      </div>
+    </mat-tab>
+
     <mat-tab label="Sliders">
-      <div class="card-container">
+      <div class="default-container">
         <app-slider-panel></app-slider-panel>
       </div>
     </mat-tab>
 
-    <mat-tab label="Beats">
-      <div class="card-container">
-        <div class="status-card" [style.min-height.px]="600">
-          <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
-        </div>
-        <div class="card-container">
-          <div class="pads-card" [style.min-height.px]="600" [style.width.px]="325">
-            <app-conditions-panel [player]="selectedPlayer"></app-conditions-panel>
-          </div>
-        </div>
-      </div>
-    </mat-tab>
-
     <mat-tab label="Pads">
-      <div class="card-container2" [style.max-width.px]="230" [style.min-height.px]="280">
+      <div class="default-container" [style.max-width.px]="230" [style.min-height.px]="280">
         <app-drum-grid></app-drum-grid>
       </div>
     </mat-tab>
-
   </mat-tab-group>
   <div>
   </div>
