@@ -13,7 +13,6 @@ import java.util.Map;
 @Getter
 @Setter
 public class MidiInstrumentInfo implements Serializable {
-
     boolean hasAssignments;
     private Map<Integer, String> assignments = new HashMap<>();
     private Map<Integer, Integer[]> boundaries = new HashMap<>();

@@ -30,6 +30,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @JsonIgnore
     @Transient
     private boolean even = true;
+    @Transient
     private boolean muted = false;
     @JsonIgnore
     @Transient
