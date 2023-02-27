@@ -41,7 +41,7 @@ public class TickerInfo {
         info.setStopped(ticker.isStopped());
         info.setSongLength(ticker.getSongLength());
         info.setPartLength(ticker.getPartLength());
-        info.setBarLengthInTicks(ticker.getBarLengthInTicks());
+        info.setBarLengthInTicks(ticker.getBeatLengthInTicks());
         info.setPartLength(ticker.getPartLength());
         info.setBeatsPerBar(ticker.getBeatsPerBar());
         info.setTick(ticker.getTick());

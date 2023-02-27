@@ -78,7 +78,7 @@ public class BeatGenerator extends Ticker {
     public static void main(String[] args) {
         BeatGenerator gen = new BeatGenerator(64);
         if (new MIDIService().select(device))
-            IntStream.range(0, 16).forEach(i -> gen.start());
+            IntStream.range(0, 16).forEach(i -> gen.play());
     }
 
     @Override
@@ -177,11 +177,7 @@ public class BeatGenerator extends Ticker {
         }
     }
 
-    private Double nextValue(int bound) {
-        return rand.nextInt(bound * 4) * .25;
-    }
-
-    public void start() {
+    public void play() {
         saveConfig();
         run();
     }
@@ -191,10 +187,7 @@ public class BeatGenerator extends Ticker {
             pause();
 
         makeBeats();
-
-        setPaused(false);
-        setStopped(false);
-        setPlaying(true);
+        play();
     }
 
     public void save() {
@@ -256,33 +249,33 @@ public class BeatGenerator extends Ticker {
 
 //        if (rand.nextBoolean())
 //            result.add(new DrumPad(ticker, raz, CLOSED_HAT, closedHatParams, 100, 125)
-//                    .addCondition(TICK, MODULO, nextValue(4)));
+//                    .addRule(TICK, MODULO, nextValue(4)));
 //
 //        if (rand.nextBoolean())
 //            result.add(new DrumPad(ticker, raz, CLOSED_HAT, closedHatParams, 100, 125)
-//                    .addCondition(TICK, MODULO, nextValue(4))
-//                    .addCondition(BAR, EQUALS, nextValue(4)));
+//                    .addRule(TICK, MODULO, nextValue(4))
+//                    .addRule(BAR, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean())
 //            result.add(new DrumPad(ticker, raz, SNARE, snarePrams, 100, 125)
-//                    .addCondition(TICK, MODULO, nextValue(4)));
+//                    .addRule(TICK, MODULO, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, fireball, 51, fireballParams, 100, 125)
-//                .addCondition(BEAT, EQUALS, nextValue(4)));
+//                .addRule(BEAT, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, microfreak, 39, microFreakParams, 100, 125)
-//                .addCondition(BEAT, EQUALS, nextValue(4)));
+//                .addRule(BEAT, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, microfreak, 53, microFreakParams, 100, 125)
-//                .addCondition(BEAT, EQUALS, nextValue(4)));
+//                .addRule(BEAT, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean())
 //            result.add(new DrumPad(ticker, zero, 49, Collections.emptyList(), 100, 125)
-//                .addCondition(TICK, MODULO, nextValue(4))
-//                .addCondition(BEAT, LESS_THAN, nextValue(4)));
+//                .addRule(TICK, MODULO, nextValue(4))
+//                .addRule(BEAT, LESS_THAN, nextValue(4)));
 
 //        result.add(new DrumPad(ticker, raz, CLOSED_HAT, kickParams, 100, 125)
-//                .addCondition(TICK, MODULO, 2.0));
+//                .addRule(TICK, MODULO, 2.0));
 //
 
 //        IntStream.range(36, 44).forEach(drum -> {
@@ -290,7 +283,7 @@ public class BeatGenerator extends Ticker {
 //                IntStream.range(TICK, BAR + 1).forEach(div -> {
 //                    while (rand.nextBoolean()) {
 //                        DrumPad pad = new DrumPad(ticker, raz, drum, Collections.emptyList(), 100, 125);
-//                        pad.addCondition(rand.nextInt(MODULO + 1), rand.nextInt(BAR + 1), nextValue(4));
+//                        pad.addRule(rand.nextInt(MODULO + 1), rand.nextInt(BAR + 1), nextValue(4));
 //                        result.add(pad);
 //                    }
 //                });
@@ -299,63 +292,63 @@ public class BeatGenerator extends Ticker {
 //        if (rand.nextBoolean())
 //        if (rand.nextBoolean())
 //            result.add(new DrumPad(ticker, blackbox, KICK, kickParams, 100, 125)
-//                    .addCondition(BEAT, GREATER_THAN, nextValue(4))
-//                    .addCondition(BEAT, LESS_THAN, nextValue(4))
-//                    .addCondition(BAR, MODULO, nextValue(4))
-//                    .addCondition(TICK, MODULO, nextValue(4)));
+//                    .addRule(BEAT, GREATER_THAN, nextValue(4))
+//                    .addRule(BEAT, LESS_THAN, nextValue(4))
+//                    .addRule(BAR, MODULO, nextValue(4))
+//                    .addRule(TICK, MODULO, nextValue(4)));
 ////
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, KICK, kickParams, 100, 125)
-//                .addCondition(BAR, LESS_THAN, nextValue(4))
-//                .addCondition(BAR, GREATER_THAN, nextValue(4))
-//                .addCondition(TICK, MODULO, nextValue(4)));
+//                .addRule(BAR, LESS_THAN, nextValue(4))
+//                .addRule(BAR, GREATER_THAN, nextValue(4))
+//                .addRule(TICK, MODULO, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, blackbox, KICK, kickParams, 100, 125)
-//                .addCondition(BEAT, EQUALS, nextValue(4)));
+//                .addRule(BEAT, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, SNARE, snarePrams, 100, 125)
-//                .addCondition(BEAT, EQUALS, nextValue(4)));
+//                .addRule(BEAT, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, SNARE, snarePrams, 100, 125)
-//                .addCondition(BEAT, EQUALS, nextValue(4)));
+//                .addRule(BEAT, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, blackbox, SNARE, snarePrams, 100, 125)
-//                .addCondition(BEAT, EQUALS, nextValue(4)));
+//                .addRule(BEAT, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, CLOSED_HAT, closedHatParams, 100, 125)
-//                .addCondition(TICK, MODULO, nextValue(4)));
+//                .addRule(TICK, MODULO, nextValue(4)));
 
 //        if (rand.nextBoolean())
 //            result.add(new DrumPad(ticker, raz, OPEN_HAT, List.of(24, 25, 26, 27, 28, 29, 30, 31), 100, 125)
-//                    .addCondition(TICK, MODULO, nextValue(4)));
+//                    .addRule(TICK, MODULO, nextValue(4)));
 //
 //        if (rand.nextBoolean())
 //            result.add(new DrumPad(ticker, raz, OPEN_HAT, List.of(32, 33, 34, 35, 36, 37, 38, 39), 100, 125)
-//                    .addCondition(TICK, MODULO, nextValue(4)));
+//                    .addRule(TICK, MODULO, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, 41, razParams, 100, 125)
-//                .addCondition(TICK, MODULO, nextValue(4)));
+//                .addRule(TICK, MODULO, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, CLOSED_HAT, razParams, 100, 125)
-//                .addCondition(TICK, MODULO, nextValue(4)));
+//                .addRule(TICK, MODULO, nextValue(4)));
 //
 //        if (rand.nextBoolean())
-//            result.add(new DrumPad(ticker, raz, OPEN_HAT, razParams, 100, 125).addCondition(TICK, MODULO, nextValue(4)));
+//            result.add(new DrumPad(ticker, raz, OPEN_HAT, razParams, 100, 125).addRule(TICK, MODULO, nextValue(4)));
 
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, fireball, 51, fireballParams, 100, 125)
-//                .addCondition(BEAT, EQUALS, nextValue(4)));
+//                .addRule(BEAT, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, microfreak, 39, microFreakParams, 100, 125)
-//                .addCondition(BEAT, EQUALS, nextValue(4)));
+//                .addRule(BEAT, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, microfreak, 53, microFreakParams, 100, 125)
-//                .addCondition(BEAT, EQUALS, nextValue(4)));
+//                .addRule(BEAT, EQUALS, nextValue(4)));
 //
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, zero, 49, Collections.emptyList(), 100, 125)
-//                .addCondition(TICK, MODULO, nextValue(4))
-//                .addCondition(BEAT, LESS_THAN, nextValue(4)));
+//                .addRule(TICK, MODULO, nextValue(4))
+//                .addRule(BEAT, LESS_THAN, nextValue(4)));
 
 //        if (rand.nextBoolean()) result.add(new DrumPad(ticker, zero, 51, Collections.emptyList(), 100, 125)
-//                .addCondition(TICK, MODULO, nextValue(4)));
+//                .addRule(TICK, MODULO, nextValue(4)));
 
 //                        new DrumPad(ticker, raz, 37, List.of(16, 17, 18, 19, 20, 21, 22, 23)) {
 //                            @Override

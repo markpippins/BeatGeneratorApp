@@ -1,8 +1,7 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Instrument} from "../../models/instrument";
 import {MidiService} from "../../services/midi.service";
-import {KeyValue} from "@angular/common";
-import {Assignment} from "../../models/assignment";
+import {MatCheckboxChange} from "@angular/material/checkbox";
 
 @Component({
   selector: 'app-slider-panel',
@@ -21,6 +20,9 @@ export class SliderPanelComponent implements OnInit {
 
   @Input()
   instruments!: Map<String, Instrument>
+
+  @Output()
+  configModeOn = false;
 
   constructor(private midiService: MidiService) {
   }
@@ -43,5 +45,9 @@ export class SliderPanelComponent implements OnInit {
       .subscribe(async (data) => {
         this.instruments = data;
       });
+  }
+
+  change(event: MatCheckboxChange) {
+    this.configModeOn = !this.configModeOn
   }
 }

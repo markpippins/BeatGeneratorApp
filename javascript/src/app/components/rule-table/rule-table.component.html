@@ -1,23 +1,33 @@
 <table>
+  <tr *ngIf="player != undefined">
+    <th>
+      {{player.instrument}}
+      {{player.id}}
+    </th>
+    <th>
+      {{player.note}}
+    </th>
+
+  </tr>
   <tr>
     <th *ngFor="let col of ruleCols">
       {{ col}}
     </th>
-    <th><b>+</b></th>
-    <th><b>-</b></th>
+    <th></th>
+    <th></th>
   </tr>
 
-  <tr class *ngFor="let rule of player?.rules;">
+  <tr class="active-table-row"  *ngFor="let rule of player?.rules;">
     <td>
       <form>
-        <select id="operatorSelect-{{rule.id}}" (change)="onOperatorChange(rule, $event)">
+        <select id="operatorSelect-{{rule.id}}" [value]="OPERATOR[rule.operatorId]"  (change)="onOperatorChange(rule, $event)">
           <option *ngFor="let opt of OPERATOR" [value]="opt">{{opt}}</option>
         </select>
       </form>
     </td>
     <td>
       <form>
-        <select id="comparisonSelect-{{rule.id}}" (change)="onComparisonChange(rule, $event)">
+        <select id="comparisonSelect-{{rule.id}}" [value]="COMPARISON[rule.comparisonId]" (change)="onComparisonChange(rule, $event)">
           <option *ngFor="let opt of COMPARISON" [value]="opt">{{opt}}</option>
         </select>
       </form>
@@ -27,10 +37,10 @@
              minlength="4" maxlength="8" size="10">
     </td>
     <td>
-      <button [style.height.px]="20" id="add" (click)="btnClicked(rule, 'add')"></button>
+      <button [style.height.px]="20" id="add" (click)="btnClicked(rule, 'add')">+</button>
     </td>
     <td>
-      <button [style.height.px]="20" id="remove" (click)="btnClicked(rule, 'remove')"></button>
+      <button [style.height.px]="20" id="remove" (click)="btnClicked(rule, 'remove')">-</button>
     </td>
   </tr>
   <tr *ngIf="player == undefined || player.rules.length == 0">

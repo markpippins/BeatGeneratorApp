@@ -2,7 +2,7 @@ export interface Ticker {
   tick: number;
   done: boolean;
   bar: number;
-  barLengthInTicks: number;
+  beatLengthInTicks: number;
   beat: number;
   beatsPerBar: number;
   beatDivider: number;

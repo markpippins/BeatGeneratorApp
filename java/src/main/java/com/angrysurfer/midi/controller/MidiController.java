@@ -12,10 +12,10 @@ import java.util.List;
 @RequestMapping(path = "/api")
 @Controller
 @RestController
-public class MidiServiceController {
+public class MidiController {
     private IMIDIService midiService;
 
-    public MidiServiceController(IMIDIService midiService) {
+    public MidiController(IMIDIService midiService) {
         this.midiService = midiService;
     }
 

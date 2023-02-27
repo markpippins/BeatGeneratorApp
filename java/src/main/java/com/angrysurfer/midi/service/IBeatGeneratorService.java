@@ -1,22 +1,18 @@
 package com.angrysurfer.midi.service;
 
+import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Condition;
 
 public interface IBeatGeneratorService {
-    boolean start();
-
+    boolean play();
     boolean stop();
-
+    void next();
     boolean pause();
-
-    boolean skipAhead();
-
-    boolean skipBack();
+    boolean previous();
 
     TickerInfo getTickerInfo();
 
@@ -32,19 +28,17 @@ public interface IBeatGeneratorService {
 
     PlayerInfo addPlayer(String instrument);
 
-    void updateCondition(Long playerId,
-                         int conditionId,
-                         int operatorId,
-                         int comparisonId,
-                         double newValue);
+    void updateRule(Long playerId,
+                    int conditionId,
+                    int operatorId,
+                    int comparisonId,
+                    double newValue);
 
     PlayerInfo removePlayer(Long playerId);
 
     PlayerInfo mutePlayer(Long playerId);
 
-    List<Condition> getConditions(Long playerId);
-
-    void next();
+    List<Rule> getRules(Long playerId);
 
     void save();
 
@@ -52,7 +46,7 @@ public interface IBeatGeneratorService {
 
     void updatePlayer(Long playerId, int updateType, int updateValue);
 
-    void addCondition(Long playerId);
+    Rule addRule(Long playerId);
 
-    public void removeCondition(Long playerId, Long conditionId);
+    public void removeRule(Long playerId, Long conditionId);
 }

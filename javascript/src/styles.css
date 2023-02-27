@@ -95,8 +95,8 @@ body {
   gap: 4px;
   color: white;
   font-size: small;
-  /*border-style: dashed;*/
-  /*border-width: thin;*/
+  border-style: hidden;
+  border-width: thin;
 }
 
 svg.material-icons {
@@ -349,33 +349,34 @@ svg#clouds {
   }
 }
 
-/*.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {*/
-/*  background-color: blue;*/
-/*}*/
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+  background-color: blue;
+}
 
 
 /*tr:nth-child(even) {*/
 /*  background-color: #f2f2f2;*/
 /*}*/
 
-input, select {
-  background-color: transparent;
-  
-}
 
 input:hover, select:hover {
   background-color: white;
   color: blue;
 }
 
-table tr:hover {
-  background-color: white;
-  color: blue;
+.active-table-row:hover {
+  background-color: blue;
+  color: white;
+  font-size:normal;
+}
+
+table {
+	overflow: auto;
+	align-self: stretch;
 }
 
 table tr th:hover {
-  /*background-color: blue;*/
-  color: white;
+
 }
 
 td, th {
@@ -471,9 +472,6 @@ td, th {
   /*border-width: thin;*/
 }
 
-/*.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {*/
-/*  background-color: blue;*/
-/*}*/
 
 td input {
   max-width: 60px;
@@ -485,7 +483,7 @@ td input {
 th {
   /*padding-top: 12px;*/
   /*padding-bottom: 12px;*/
-  background-color: blue;
+  background-color: transparent;
   color: white;
   font-size: small;
   font-weight: normal;
@@ -495,6 +493,11 @@ th {
   font-weight: normal;
 }
 
+.active-table-row {
+}
+.selected {
+  background-color: #1976d2;
+}
 
 .player-short-col {
   width: 40px;
@@ -502,6 +505,16 @@ th {
 
 .player-long-col {
   width: 160px;
+}
+
+.player-short-selected-col {
+  width: 40px;
+  background-color: #12d312;
+}
+
+.player-long-selected-col {
+  width: 160px;
+  background-color: #12d312;
 }
 
 .fixed {

@@ -21,7 +21,7 @@
           <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
         </div>
         <div class="default-container">
-            <app-conditions-panel [player]="selectedPlayer"></app-conditions-panel>
+            <app-conditions-panel (ruleChangeEvent)="onPlayerSelected($event)" [player]="selectedPlayer"></app-conditions-panel>
         </div>
       </div>
     </mat-tab>
@@ -32,7 +32,7 @@
       </div>
     </mat-tab>
 
-    <mat-tab label="Pads">
+    <mat-tab label="Config">
       <div class="default-container" [style.max-width.px]="230" [style.min-height.px]="280">
 <!--        <app-drum-grid></app-drum-grid>-->
       </div>

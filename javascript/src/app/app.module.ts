@@ -30,6 +30,7 @@ import { BeatSpecPanelComponent } from './components/beat-spec-panel/beat-spec-p
 import {MatButtonModule} from "@angular/material/button";
 import {MatTabsModule} from "@angular/material/tabs";
 import { RuleTableComponent } from './components/rule-table/rule-table.component';
+import {MatCheckboxModule} from "@angular/material/checkbox";
 
 @NgModule({
   declarations: [
@@ -65,7 +66,8 @@ import { RuleTableComponent } from './components/rule-table/rule-table.component
         NgxSliderModule,
         MatSliderModule,
         MatButtonModule,
-        MatTabsModule
+        MatTabsModule,
+        MatCheckboxModule
     ],
   providers: [],
   bootstrap: [AppComponent]

@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sound.midi.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 @Getter
 @Setter
@@ -31,7 +31,7 @@ public abstract class Ticker implements Runnable, Serializable {
     private List<Player> players = new ArrayList<>();
     @JsonIgnore
     private ExecutorService executor;
-    private int barLengthInTicks = 64; //16384;
+    private int beatLengthInTicks = 16; //16384;
     private int beat;
     private int beatsPerBar = 4;
     private double beatDivider = 4.0;
@@ -70,14 +70,14 @@ public abstract class Ticker implements Runnable, Serializable {
             tick.incrementAndGet();
         }
 
-        if (tick.get() % (getBarLengthInTicks() / getBeatsPerBar()) == 0) {
+        if (tick.get() % (getBeatLengthInTicks() / getBeatsPerBar()) == 0) {
             if (getBeat() == getBeatsPerBar())
                 beat = 1;
             else beat += 1;
             onBeatChange(bar.get());
         }
 
-        if (tick.get() % getBarLengthInTicks() == 0) {
+        if (tick.get() % getBeatLengthInTicks() == 0) {
             synchronized (bar) {
                 bar.set(bar.get() + 1);
                 if (bar.get() >= getPartLength())
@@ -101,27 +101,65 @@ public abstract class Ticker implements Runnable, Serializable {
         setDone(false);
         setStopped(false);
 
-        IntStream.range(0, getSongLength()).forEach(i -> {
-            if (!isStopped() && isPlaying())
-                try {
-                    incrementTick();
-                    getExecutor().invokeAll(getPlayers());
-                    Thread.sleep(getDelay());
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            else if (!isStopped() && isPaused()) {
-                try {
-                    Thread.sleep(2500);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+        try {
+            Sequencer base = MidiSystem.getSequencer();
 
-        setStopped(true);
-        setPlaying(false);
-        setDone(true);
+            Sequence sequence = new Sequence(Sequence.PPQ, getBeatLengthInTicks());
+            Track track = sequence.createTrack();
+            track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 34, 127), 1000));
+            base.setTempoInBPM(120);
+            base.setSequence(sequence);
+            base.setLoopCount(100);
+            base.open();
+            base.start();
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (base.isRunning() && !isStopped() && isPlaying()) {
+                        if (base.getTickPosition() > getTick())
+                            try {
+                                incrementTick();
+                                getExecutor().invokeAll(getPlayers());
+//                                    Thread.sleep(getDelay());
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+//            else if (!isStopped() && isPaused()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                }
+            }).start();
+        } catch (MidiUnavailableException | InvalidMidiDataException e) {
+            throw new RuntimeException(e);
+        }
+
+//        IntStream.range(0, getSongLength()).forEach(i -> {
+//            if (!isStopped() && isPlaying())
+//                try {
+//                    incrementTick();
+//                    getExecutor().invokeAll(getPlayers());
+//                    Thread.sleep(getDelay());
+//                } catch (InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            else if (!isStopped() && isPaused()) {
+//                try {
+//                    Thread.sleep(2500);
+//                } catch (InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            }
+//        });
+
+//        setStopped(true);
+//        setPlaying(false);
+//        setDone(true);
     }
 
     @JsonIgnore
@@ -160,5 +198,6 @@ public abstract class Ticker implements Runnable, Serializable {
             this.getPlayers().clear();
         }
     }
+
 }
 

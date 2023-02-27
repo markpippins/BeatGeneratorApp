@@ -25,7 +25,7 @@ public class BeatGeneratorConfig implements Serializable {
     }
 
     public BeatGeneratorConfig(Ticker ticker, List<Strike> players) {
-        setBarLengthInTicks(ticker.getBarLengthInTicks());
+        setBarLengthInTicks(ticker.getBeatLengthInTicks());
         setBeatDivider(ticker.getBeatDivider());
         setDelay(ticker.getDelay());
         setMaxTracks(ticker.getMaxTracks());
@@ -36,7 +36,7 @@ public class BeatGeneratorConfig implements Serializable {
     }
 
     public void setup(Ticker ticker) {
-        ticker.setBarLengthInTicks(getBarLengthInTicks());
+        ticker.setBeatLengthInTicks(getBarLengthInTicks());
         ticker.setBeatDivider(getBeatDivider());
         ticker.setDelay(getDelay());
         ticker.setMaxTracks(getMaxTracks());

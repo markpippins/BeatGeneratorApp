@@ -13,6 +13,8 @@ export class PlayerTableComponent {
   @Output()
   playerSelectEvent = new EventEmitter<Player>();
 
+  selectedPlayer: Player | undefined;
+
   @Input()
   players!: Player[]
   playerCols: string[] = [
@@ -20,9 +22,9 @@ export class PlayerTableComponent {
     // 'remove',
     // 'mute',
     // 'id',
-    'Instrument',
-    'Channel',
-    'Preset',
+    'Ch',
+    'Strike',
+    'Pre',
     'Note',
     // 'operator',
     // 'comparison',
@@ -32,27 +34,62 @@ export class PlayerTableComponent {
     'Max V',
   ];
 
-  constructor(private midiService: MidiService) { }
-  onRowClick(player: Player, $event: MouseEvent) {
-    this.playerSelectEvent.emit(player);
+  constructor(private midiService: MidiService) {
+  }
+
+  onRowClick(player: Player, event: MouseEvent) {
+    let element = document.getElementById("player-row-" + player.id)
+    if (this.selectedPlayer == undefined) {
+      this.selectedPlayer = player
+      this.playerSelectEvent.emit(player);
+      this.toggleClass(element, 'selected')
+    } else {
+      this.selectedPlayer = undefined
+      this.toggleClass(element, 'active-table-row')
+    }
   }
 
   onBtnClick(player: Player, action: string) {
     switch (action) {
-      case 'add': { this.midiService.addPlayerClicked().subscribe(); break}
-      case 'remove': { this.midiService.removePlayerClicked(player).subscribe(); break}
+      case 'add': {
+        this.midiService.addPlayerClicked().subscribe();
+        break
+      }
+      case 'remove': {
+        this.midiService.removePlayerClicked(player).subscribe();
+        break
+      }
     }
   }
 
-  onPass(player: Player) {
-    this.playerSelectEvent.emit(player);
-  }
 
   initBtnClicked() {
-      this.midiService.addPlayerClicked().subscribe();
+    this.midiService.addPlayerClicked().subscribe();
   }
 
   noteChange(player: Player, event: { target: any; }) {
     this.midiService.updatePlayerClicked(player.id, 1, event.target.value).subscribe()
   }
+
+  onPass(player: Player, $event: MouseEvent) {
+    if (player != undefined)
+      this.playerSelectEvent.emit(player);
+  }
+
+  toggleClass(el: any, className: string) {
+    if (el.className.indexOf(className) >= 0) {
+      el.className = el.className.replace(className, "");
+    } else {
+      el.className += className;
+    }
+  }
+
+  setSelectValue(id: string, val: any) {
+    // @ts-ignore
+    let element = document.getElementById(id)
+    if (element != null) { // @ts-ignore
+      element.selectedIndex = val
+    }
+  }
+
 }

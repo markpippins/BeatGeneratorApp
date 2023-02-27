@@ -14,6 +14,9 @@ export class SliderComponent {
   channel!: number
 
   @Input()
+  configMode!: boolean
+
+  @Input()
   cc!: number
 
   @Input()

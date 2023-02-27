@@ -1,12 +1,10 @@
 package com.angrysurfer.midi.service;
 
-import com.angrysurfer.midi.model.BeatGenerator;
-import com.angrysurfer.midi.model.Player;
-import com.angrysurfer.midi.model.Comparison;
-import com.angrysurfer.midi.model.Rule;
-import com.angrysurfer.midi.model.Operator;
+import com.angrysurfer.midi.model.*;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
+import com.angrysurfer.midi.repo.RuleRepository;
+import com.angrysurfer.midi.repo.StrikeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -25,21 +23,29 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     private final BeatGenerator beatGenerator = new BeatGenerator(Integer.MAX_VALUE);
     private IMIDIService midiService;
 
-    public BeatGeneratorService(IMIDIService midiService) {
+    private StrikeRepository strikeRepository;
+
+    private RuleRepository ruleRepository;
+
+    public BeatGeneratorService(IMIDIService midiService, StrikeRepository strikeRepository,
+                                RuleRepository ruleRepository) {
         this.midiService = midiService;
+        this.ruleRepository = ruleRepository;
+        this.strikeRepository = strikeRepository;
     }
 
     @Override
-    public boolean start() {
+    public boolean play() {
         if (!beatGenerator.isPaused() && !beatGenerator.isPlaying())
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    beatGenerator.start();
+                    beatGenerator.play();
                 }
             }).start();
         else if (beatGenerator.isPaused())
             beatGenerator.pause();
+        else beatGenerator.play();
 
         return beatGenerator.isPlaying();
     }
@@ -59,12 +65,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public boolean skipAhead() {
-        return false;
-    }
-
-    @Override
-    public boolean skipBack() {
+    public boolean previous() {
         return false;
     }
 
@@ -134,11 +135,11 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public void updateCondition(Long playerId,
-                                int conditionId,
-                                int operatorId,
-                                int comparisonId,
-                                double newValue) {
+    public void updateRule(Long playerId,
+                           int conditionId,
+                           int operatorId,
+                           int comparisonId,
+                           double newValue) {
 
         Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
@@ -167,7 +168,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public List<java.util.concurrent.locks.Condition> getConditions(Long playerId) {
+    public List<Rule> getRules(Long playerId) {
         return Collections.emptyList();
     }
 
@@ -198,20 +199,24 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public void addCondition(Long playerId) {
-        Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
+    public Rule addRule(Long playerId) {
+        Rule rule = new Rule();
+
+        Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny();
         if (playerOpt.isPresent()) {
-            Rule rule = new Rule();
             rule.setOperatorId(Operator.BEAT);
             rule.setComparisonId(Comparison.EQUALS);
             rule.setValue(1.0);
-            rule.setId(getPlayers().stream().map(p -> p.getRules().size()).count() + 1);
+
+            rule = ruleRepository.save(rule);
             playerOpt.get().addCondition(rule);
         }
+
+        return rule;
     }
 
     @Override
-    public void removeCondition(Long playerId, Long conditionId) {
+    public void removeRule(Long playerId, Long conditionId) {
         Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
             Optional<Rule> conditionOpt = playerOpt.get().getRules().stream().filter(c -> c.getId() == conditionId).findAny();

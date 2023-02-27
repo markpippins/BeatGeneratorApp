@@ -1,12 +1,10 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Player} from '../models/player';
-import {subscribeOn} from 'rxjs';
 import {Instrument} from '../models/instrument';
 import {Ticker} from '../models/ticker';
 import {Evaluator} from '../models/evaluator';
-import {EvaluatorUpdate} from '../models/evaluator-update';
-import {PlayerUpdate} from "../models/player-update";
+import {Rule} from "../models/rule";
 
 @Injectable({
   providedIn: 'root',
@@ -121,9 +119,9 @@ export class MidiService {
   addRuleClicked(player: Player) {
     let params = new HttpParams();
     params = params.append('playerId', player.id);
-    return this.http.get('http://localhost:8080/api/rules/add', {
+    return this.http.get<Rule>('http://localhost:8080/api/rules/add', {
       params: params,
-    });
+    })
   }
 
   removeRuleClicked(player: Player, rule: Evaluator) {

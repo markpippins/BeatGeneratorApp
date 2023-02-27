@@ -9,19 +9,17 @@
       <th><b>*</b></th>
     </tr>
 
-    <tr *ngFor="let player of players;"
-        (mouseenter)="onPass(player)"
+    <tr *ngFor="let player of players;" class="active-table-row" id="player-row-{{player.id}}"
+        (mouseenter)="onPass(player, $event)"
         (click)="onRowClick(player, $event)">
-<!--      <td class="player-short-col">-->
-<!--        {{ player.id }}-->
-<!--      </td>-->
-      <td class="player-long-col">
-        {{ player.instrument }} {{ player.id}}
-      </td>
-      <td class="player-short-col">
+
+      <td class="player-short-col" id="player-col-channel-{{player.id}}">
         {{ player.channel }}
       </td>
-      <td class="player-short-col">
+      <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
+        {{ player.instrument }} {{ player.id}}
+      </td>
+      <td class="player-short-col" id="player-col-preset-{{player.id}}">
         {{ player.preset }}
       </td>
       <td class="player-short-col" (change)="noteChange(player, $event)">

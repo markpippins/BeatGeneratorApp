@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.controller;
 
+import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
 import com.angrysurfer.midi.service.BeatGeneratorService;
@@ -8,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Condition;
 
 @CrossOrigin("*")
 @RestController
@@ -22,8 +22,8 @@ public class BeatController {
     }
 
     @GetMapping(path = "/ticker/start")
-    public void start() {
-        service.start();
+    public void play() {
+        service.play();
     }
 
     @GetMapping(path = "/ticker/pause")
@@ -91,8 +91,8 @@ public class BeatController {
     }
 
     @GetMapping("/player/rules")
-    public List<Condition> getConditions(@RequestParam Long playerId) {
-        return service.getConditions(playerId);
+    public List<Rule> getRules(@RequestParam Long playerId) {
+        return service.getRules(playerId);
     }
 
     @GetMapping("/player/update")
@@ -106,13 +106,13 @@ public class BeatController {
     }
 
     @GetMapping("/rules/add")
-    public void addCondition(@RequestParam Long playerId) {
-        service.addCondition(playerId);
+    public Rule addRule(@RequestParam Long playerId) {
+        return service.addRule(playerId);
     }
 
     @GetMapping("/rules/remove")
     public void removeCondition(@RequestParam Long playerId, @RequestParam Long ruleId) {
-        service.removeCondition(playerId, ruleId);
+        service.removeRule(playerId, ruleId);
     }
 
     @GetMapping("/rule/update")
@@ -121,7 +121,7 @@ public class BeatController {
                            @RequestParam int operatorId,
                            @RequestParam int comparisonId,
                            @RequestParam String newValue) {
-        service.updateCondition(playerId, ruleId, operatorId, comparisonId, Double.parseDouble(newValue));
+        service.updateRule(playerId, ruleId, operatorId, comparisonId, Double.parseDouble(newValue));
     }
 }
 

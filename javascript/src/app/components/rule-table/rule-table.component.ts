@@ -1,7 +1,7 @@
-import {Component, Input} from '@angular/core';
-import {MidiService} from "../../services/midi.service";
-import {Player} from "../../models/player";
-import {Rule} from "../../models/rule";
+import {Component, EventEmitter, Input, Output} from '@angular/core'
+import {MidiService} from "../../services/midi.service"
+import {Player} from "../../models/player"
+import {Rule} from "../../models/rule"
 
 @Component({
   selector: 'app-rule-table',
@@ -10,6 +10,8 @@ import {Rule} from "../../models/rule";
 })
 export class RuleTableComponent {
 
+  @Output()
+  ruleChangeEvent = new EventEmitter<Player>()
   EQUALS = 0
   GREATER_THAN = 1
   LESS_THAN = 2
@@ -45,24 +47,10 @@ export class RuleTableComponent {
     })
   }
 
-  ngAfterViewInit(): void {
-  }
-
-  ngOnInit(): void {
-
-  }
-
-  // lookups: Map<string, string[]> = new Map()
-
-  onClick(rule: Rule, $event: MouseEvent) {
-    console.log(rule.operatorId)
-    console.log(rule.comparisonId)
-    console.log(rule.value)
-  }
-
   getRules(): Rule[] {
     return this.player == undefined ? [] : this.player.rules
   }
+
   setSelectValue(id: string, val: any) {
     // @ts-ignore
     let element = document.getElementById(id)
@@ -74,7 +62,7 @@ export class RuleTableComponent {
   onOperatorChange(rule: Rule, event: { target: any }) {
     let value = this.OPERATOR.indexOf(event.target.value)
     this.midiService.updateRuleClicked(this.player.id, rule.id, value, rule.comparisonId, rule.value).subscribe()
-    rule.operatorId=value
+    rule.operatorId = value
     // let op = 'operatorSelect-' + rule.id
     this.setSelectValue(event.target, value)
   }
@@ -82,7 +70,7 @@ export class RuleTableComponent {
   onComparisonChange(rule: Rule, event: { target: any }) {
     let value = this.COMPARISON.indexOf(event.target.value)
     this.midiService.updateRuleClicked(this.player.id, rule.id, rule.operatorId, value, rule.value).subscribe()
-    rule.comparisonId=value
+    rule.comparisonId = value
     this.setSelectValue(event.target, value)
   }
 
@@ -94,17 +82,24 @@ export class RuleTableComponent {
   btnClicked(rule: Rule, command: string) {
     switch (command) {
       case 'add': {
-        this.midiService.addRuleClicked(this.player).subscribe();
-        break;
+        this.midiService.addRuleClicked(this.player).subscribe(async (data) => {
+          this.player.rules.push(data)
+          this.ruleChangeEvent.emit(this.player)
+        })
+        break
       }
       case 'remove': {
-        this.midiService.removeRuleClicked(this.player, rule).subscribe();
-        break;
+        this.player.rules = this.player.rules.filter(r => r.id != rule.id)
+        this.midiService.removeRuleClicked(this.player, rule).subscribe()
+        this.ruleChangeEvent.emit(this.player)
+        break
       }
     }
   }
 
   initBtnClick() {
-    this.midiService.addRuleClicked(this.player).subscribe();
+    this.midiService.addRuleClicked(this.player).subscribe(async (data) => {
+      this.player.rules.push(data)
+    })
   }
 }

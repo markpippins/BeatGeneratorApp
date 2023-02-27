@@ -3,9 +3,9 @@
   <mat-tab *ngIf="ins.value.hasAssignments" label="{{ins.value.name}}">
     <div class="slider-container">
       <app-slider *ngFor="let item of ins.value.assignments | keyvalue"
-                  [channel]="ins.value.channel" [label]="item.value" [cc]="item.key"></app-slider>
+                  [configMode]="configModeOn" [channel]="ins.value.channel" [label]="item.value" [cc]="item.key"></app-slider>
     </div>
   </mat-tab>
   </div>
 </mat-tab-group>
-
+<!--<mat-checkbox (change)="change($event)">Group</mat-checkbox>-->
