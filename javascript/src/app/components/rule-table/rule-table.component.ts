@@ -72,13 +72,18 @@ export class RuleTableComponent {
   }
 
   onOperatorChange(rule: Rule, event: { target: any }) {
-    this.midiService.updateRuleClicked(this.player.id, rule.id, this.OPERATOR.indexOf(event.target.value), rule.comparisonId, rule.value).subscribe()
-    rule.operatorId=event.target.value
+    let value = this.OPERATOR.indexOf(event.target.value)
+    this.midiService.updateRuleClicked(this.player.id, rule.id, value, rule.comparisonId, rule.value).subscribe()
+    rule.operatorId=value
+    // let op = 'operatorSelect-' + rule.id
+    this.setSelectValue(event.target, value)
   }
 
   onComparisonChange(rule: Rule, event: { target: any }) {
-    this.midiService.updateRuleClicked(this.player.id, rule.id, rule.operatorId, this.COMPARISON.indexOf(event.target.value), rule.value).subscribe()
-    rule.comparisonId=event.target.value
+    let value = this.COMPARISON.indexOf(event.target.value)
+    this.midiService.updateRuleClicked(this.player.id, rule.id, rule.operatorId, value, rule.value).subscribe()
+    rule.comparisonId=value
+    this.setSelectValue(event.target, value)
   }
 
   onValueChange(rule: Rule, event: { target: any }) {

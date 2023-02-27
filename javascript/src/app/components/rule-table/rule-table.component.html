@@ -8,9 +8,6 @@
   </tr>
 
   <tr class *ngFor="let rule of player?.rules;">
-    <!--      <td class="player-short-col">-->
-    <!--        {{ rule.id }}-->
-    <!--      </td>-->
     <td>
       <form>
         <select id="operatorSelect-{{rule.id}}" (change)="onOperatorChange(rule, $event)">
@@ -49,6 +46,5 @@
     </td>
     <td class="player-short-col">
     </td>
-
   </tr>
 </table>
