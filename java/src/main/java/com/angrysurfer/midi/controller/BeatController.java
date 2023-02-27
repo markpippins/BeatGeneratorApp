@@ -90,7 +90,7 @@ public class BeatController {
         return service.mutePlayer(playerId);
     }
 
-    @GetMapping("/player/conditions")
+    @GetMapping("/player/rules")
     public List<Condition> getConditions(@RequestParam Long playerId) {
         return service.getConditions(playerId);
     }
@@ -105,23 +105,23 @@ public class BeatController {
         service.clearPlayers();
     }
 
-    @GetMapping("/conditions/add")
+    @GetMapping("/rules/add")
     public void addCondition(@RequestParam Long playerId) {
         service.addCondition(playerId);
     }
 
-    @GetMapping("/conditions/remove")
-    public void removeCondition(@RequestParam Long playerId, @RequestParam Long conditionId) {
-        service.removeCondition(playerId, conditionId);
+    @GetMapping("/rules/remove")
+    public void removeCondition(@RequestParam Long playerId, @RequestParam Long ruleId) {
+        service.removeCondition(playerId, ruleId);
     }
 
-    @GetMapping("/condition/update")
-    public void updateCondition(@RequestParam Long playerId,
-                                @RequestParam int conditionId,
-                                @RequestParam String newOperator,
-                                @RequestParam String newComparison,
-                                @RequestParam String newValue) {
-        service.updateCondition(playerId, conditionId, newOperator, newComparison, Double.valueOf(newValue));
+    @GetMapping("/rule/update")
+    public void updateRule(@RequestParam Long playerId,
+                           @RequestParam int ruleId,
+                           @RequestParam int operatorId,
+                           @RequestParam int comparisonId,
+                           @RequestParam String newValue) {
+        service.updateCondition(playerId, ruleId, operatorId, comparisonId, Double.parseDouble(newValue));
     }
 }
 

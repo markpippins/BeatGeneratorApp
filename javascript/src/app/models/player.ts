@@ -1,11 +1,11 @@
-import { Condition } from './condition';
+import { Rule } from './rule';
 
 export interface Player {
   id: number;
   preset: number;
   instrument: string;
   channel: number;
-  conditions: Condition[];
+  rules: Rule[];
   allowedControlMessages: number[];
   note: number;
   minVelocity: number;

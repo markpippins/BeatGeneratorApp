@@ -1,5 +1,5 @@
 export interface Constants {
-  CONDITION_COLUMNS: ['operator', 'comparison', 'value'];
+  CONDITION_COLUMNS: ['operator', 'comparison', 'value']
   PLAYER_COLUMNS: [
     'instrument',
     'channel',
@@ -7,6 +7,5 @@ export interface Constants {
     'note',
     'minVelocity',
     'maxVelocity'
-  ];
-  // 'add', 'remove', 'mute',
+  ]
 }

@@ -1,7 +1,5 @@
 package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.condition.Condition;
-import com.angrysurfer.midi.model.condition.Operator;
 import com.angrysurfer.midi.service.IMidiInstrument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.MappedSuperclass;
@@ -25,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class Player implements Callable<Boolean>, Serializable {
     static final Random rand = new Random();
     @Transient
-    List<Condition> conditions = new ArrayList<>();
+    List<Rule> rules = new ArrayList<>();
     private int note;
     private int minVelocity = 110;
     private int maxVelocity = 127;
@@ -61,20 +59,25 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @Transient
     private Double lastPlayedBeat;
     private String name;
+
     public Player() {
 
     }
+
     public Player(String name, Ticker ticker, IMidiInstrument instrument) {
         setName(name);
         setInstrument(instrument);
         setTicker(ticker);
     }
+
     public Player(String name, Ticker ticker, IMidiInstrument instrument, List<Integer> allowedControlMessages) {
         this(name, ticker, instrument);
         setAllowedControlMessages(allowedControlMessages);
     }
 
     public abstract Long getId();
+
+    public abstract void setId(Long id);
 
     public abstract void onTick(int tick, int bar);
 
@@ -123,8 +126,8 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         }
     }
 
-    public Player addCondition(Condition condition) {
-        getConditions().add(condition);
+    public Player addCondition(Rule rule) {
+        getRules().add(rule);
         return this;
     }
 
@@ -144,29 +147,27 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     @JsonIgnore
     public boolean shouldPlay(int tick, int bar) {
-        AtomicBoolean play = new AtomicBoolean(getConditions().size() > 0);
-        getConditions().forEach(condition -> {
-            switch (condition.getOperator()) {
-                case TICK -> {
-                    if (!condition.getComparison().evaluate(tick, condition.getValue()))
+        AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
+        getRules().forEach(rule -> {
+            switch (rule.getOperatorId()) {
+                case Operator.TICK -> {
+                    if (!Comparison.evaluate(rule.getComparisonId(), tick, rule.getValue()))
                         play.set(false);
                 }
-                case BEAT -> {
-                    if (!condition.getComparison().evaluate(getBeat(), condition.getValue()))
+                case Operator.BEAT -> {
+                    if (!Comparison.evaluate(rule.getComparisonId(), getBeat(), rule.getValue()))
                         play.set(false);
                 }
-                case BAR -> {
-                    if (!condition.getComparison().evaluate(bar, condition.getValue()))
+                case Operator.BAR -> {
+                    if (!Comparison.evaluate(rule.getComparisonId(), bar, rule.getValue()))
                         play.set(false);
                 }
-                case POSITION -> {
-                    if (!condition.getComparison().evaluate(getPosition(), condition.getValue()))
+                case Operator.POSITION -> {
+                    if (!Comparison.evaluate(rule.getComparisonId(), getPosition(), rule.getValue()))
                         play.set(false);
                 }
             }
         });
         return play.get();
     }
-
-    public abstract void setId(Long id);
 }

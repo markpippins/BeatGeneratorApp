@@ -21,7 +21,6 @@ import { PlayerPanelComponent } from './components/player-panel/player-panel.com
 import { PlayerTableComponent } from './components/player-table/player-table.component';
 import {MatTableModule} from "@angular/material/table";
 import { ConditionsPanelComponent } from './components/conditions-panel/conditions-panel.component';
-import { ConditionsTableComponent } from './components/conditions-table/conditions-table.component';
 import { ConditionsSelectOptionComponent } from './components/widgets/conditions-select-option/conditions-select-option.component';
 import { SliderComponent } from './components/widgets/slider/slider.component';
 import {NgxSliderModule} from "@angular-slider/ngx-slider";
@@ -30,6 +29,7 @@ import { BeatSpecComponent } from './components/beat-spec/beat-spec.component';
 import { BeatSpecPanelComponent } from './components/beat-spec-panel/beat-spec-panel.component';
 import {MatButtonModule} from "@angular/material/button";
 import {MatTabsModule} from "@angular/material/tabs";
+import { RuleTableComponent } from './components/rule-table/rule-table.component';
 
 @NgModule({
   declarations: [
@@ -46,11 +46,11 @@ import {MatTabsModule} from "@angular/material/tabs";
     PlayerPanelComponent,
     PlayerTableComponent,
     ConditionsPanelComponent,
-    ConditionsTableComponent,
     ConditionsSelectOptionComponent,
     SliderComponent,
     BeatSpecComponent,
     BeatSpecPanelComponent,
+    RuleTableComponent,
   ],
     imports: [
         BrowserModule,

@@ -1,6 +1,7 @@
 import {Component, OnInit, Output} from '@angular/core';
 import {MidiService} from "../../services/midi.service";
 import {Player} from "../../models/player";
+import {MatTabsModule} from '@angular/material/tabs';
 
 @Component({
   selector: 'app-dashboard',

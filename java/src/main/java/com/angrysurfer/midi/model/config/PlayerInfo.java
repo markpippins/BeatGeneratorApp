@@ -1,7 +1,7 @@
 package com.angrysurfer.midi.model.config;
 
 import com.angrysurfer.midi.model.Player;
-import com.angrysurfer.midi.model.condition.Condition;
+import com.angrysurfer.midi.model.Rule;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,7 +19,7 @@ public class PlayerInfo implements Serializable {
     private int preset;
     private String instrument;
     private int channel;
-    private List<Condition> conditions = new ArrayList<>();
+    private List<Rule> rules = new ArrayList<>();
     private List<Integer> allowedControlMessages = new ArrayList<>();
     private Long id;
     private boolean muted;
@@ -33,7 +33,7 @@ public class PlayerInfo implements Serializable {
         def.setPreset(player.getPreset());
         def.setChannel(player.getChannel());
         def.setInstrument(player.getInstrumentName());
-        def.setConditions(player.getConditions());
+        def.setRules(player.getRules());
         def.setNote(player.getNote());
         def.setId(player.getId());
         def.setMuted(player.isMuted());

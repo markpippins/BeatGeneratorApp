@@ -1,6 +1,5 @@
 package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.condition.Condition;
 import com.angrysurfer.midi.model.config.BeatGeneratorConfig;
 import com.angrysurfer.midi.model.config.MidiInstrumentList;
 import com.angrysurfer.midi.model.config.PlayerInfo;
@@ -26,10 +25,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.angrysurfer.midi.model.condition.Comparison.EQUALS;
-import static com.angrysurfer.midi.model.condition.Comparison.MODULO;
-import static com.angrysurfer.midi.model.condition.Operator.BEAT;
-import static com.angrysurfer.midi.model.condition.Operator.TICK;
+import static com.angrysurfer.midi.model.Comparison.EQUALS;
+import static com.angrysurfer.midi.model.Comparison.MODULO;
+import static com.angrysurfer.midi.model.Operator.BEAT;
+import static com.angrysurfer.midi.model.Operator.TICK;
 
 @Getter
 @Setter
@@ -127,7 +126,7 @@ public class BeatGenerator extends Ticker {
                 pad.setInstrument(instrument);
                 pad.setNote(drumPadDef.getNote());
                 pad.setPreset(drumPadDef.getPreset());
-                pad.setConditions(drumPadDef.getConditions());
+                pad.setRules(drumPadDef.getRules());
                 pad.setAllowedControlMessages(drumPadDef.getAllowedControlMessages());
                 pad.setMaxVelocity(drumPadDef.getMaxVelocity());
                 pad.setMinVelocity(drumPadDef.getMaxVelocity());
@@ -214,27 +213,27 @@ public class BeatGenerator extends Ticker {
         getPlayers().clear();
 
         Stream.of(new Strike("blackbox-kick", this, getInstrument("blackbox"), KICK, kickParams, 100, 125)
-                                .addCondition(new Condition(BEAT, MODULO, 2.0)),
+                                .addCondition(new Rule(BEAT, MODULO, 2.0)),
                         new Strike("raz-kick", this, getInstrument(RAZZ), SNARE, snarePrams, 100, 125)
-                                .addCondition(new Condition(BEAT, EQUALS, rand.nextInt(1, 4) * .25)),
+                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(1, 4) * .25)),
                         new Strike("raz-closed-hat", this, getInstrument(RAZZ), CLOSED_HAT, closedHatParams, 100, 125)
-                                .addCondition(new Condition(BEAT, MODULO, 3.0)),
+                                .addCondition(new Rule(BEAT, MODULO, 3.0)),
                         new Strike("blackbox-open-hat", this, getInstrument("blackbox"), OPEN_HAT, closedHatParams, 100, 125)
-                                .addCondition(new Condition(BEAT, EQUALS, rand.nextInt(4, 6) * .25))
-                                .addCondition(new Condition(TICK, MODULO, 3.0)),
+                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(4, 6) * .25))
+                                .addCondition(new Rule(TICK, MODULO, 3.0)),
                         new Strike("blackbox-snare", this, getInstrument("blackbox"), SNARE, snarePrams, 100, 125)
-                                .addCondition(new Condition(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
+                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
                         new Strike("raz-snare", this, getInstrument(RAZZ), SNARE, snarePrams, 100, 125)
-                                .addCondition(new Condition(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
+                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
                         new Strike("raz-closed-hat", this, getInstrument(RAZZ), CLOSED_HAT, closedHatParams, 100, 125)
-                                .addCondition(new Condition(BEAT, EQUALS, rand.nextInt(2, 8) * .25)),
+                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(2, 8) * .25)),
                         new Strike("blackbox-open-hat", this, getInstrument("blackbox"), OPEN_HAT, closedHatParams, 100, 125)
-                                .addCondition(new Condition(BEAT, MODULO, rand.nextInt(4, 6) * .25))
-                                .addCondition(new Condition(TICK, EQUALS, rand.nextInt(6, 8) * .25))).filter(h -> rand.nextBoolean())
+                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(4, 6) * .25))
+                                .addCondition(new Rule(TICK, EQUALS, rand.nextInt(6, 8) * .25))).filter(h -> rand.nextBoolean())
                 .forEach(getPlayers()::add);
         getPlayers().forEach(p -> {
             p.setId(playerCounter.incrementAndGet());
-            p.getConditions().forEach(c -> c.setId(conditionsCounter.incrementAndGet()));
+            p.getRules().forEach(c -> c.setId(conditionsCounter.incrementAndGet()));
         });
 
         setBeatDivider(rand.nextInt(1, 4));

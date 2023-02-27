@@ -4,8 +4,8 @@ import {Player} from '../models/player';
 import {subscribeOn} from 'rxjs';
 import {Instrument} from '../models/instrument';
 import {Ticker} from '../models/ticker';
-import {Condition} from '../models/condition';
-import {ConditionUpdate} from '../models/condition-update';
+import {Evaluator} from '../models/evaluator';
+import {EvaluatorUpdate} from '../models/evaluator-update';
 import {PlayerUpdate} from "../models/player-update";
 
 @Injectable({
@@ -118,19 +118,19 @@ export class MidiService {
     });
   }
 
-  addConditionClicked(player: Player) {
+  addRuleClicked(player: Player) {
     let params = new HttpParams();
     params = params.append('playerId', player.id);
-    return this.http.get('http://localhost:8080/api/conditions/add', {
+    return this.http.get('http://localhost:8080/api/rules/add', {
       params: params,
     });
   }
 
-  removeConditionClicked(player: Player, condition: Condition) {
+  removeRuleClicked(player: Player, rule: Evaluator) {
     let params = new HttpParams();
     params = params.append('playerId', player.id);
-    params = params.append('conditionId', condition.id);
-    return this.http.get('http://localhost:8080/api/conditions/remove', {
+    params = params.append('ruleId', rule.id);
+    return this.http.get('http://localhost:8080/api/rules/remove', {
       params: params,
     });
   }
@@ -145,14 +145,14 @@ export class MidiService {
     });
   }
 
-  updateConditionClicked(playerId: number, conditionId: number, newOperator: string, newComparison: string, newValue: number) {
+  updateRuleClicked(playerId: number, ruleId: number, operatorId: number, comparisonId: number, newValue: number) {
     let params = new HttpParams();
     params = params.append('playerId', playerId);
-    params = params.append('conditionId', conditionId);
-    params = params.append('newOperator', newOperator);
-    params = params.append('newComparison', newComparison);
+    params = params.append('ruleId', ruleId);
+    params = params.append('operatorId', operatorId);
+    params = params.append('comparisonId', comparisonId);
     params = params.append('newValue', newValue);
-    return this.http.get('http://localhost:8080/api/condition/update', {
+    return this.http.get('http://localhost:8080/api/rule/update', {
       params: params,
     });
   }

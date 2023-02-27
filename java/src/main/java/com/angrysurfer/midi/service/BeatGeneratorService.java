@@ -2,9 +2,9 @@ package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.BeatGenerator;
 import com.angrysurfer.midi.model.Player;
-import com.angrysurfer.midi.model.condition.Comparison;
-import com.angrysurfer.midi.model.condition.Condition;
-import com.angrysurfer.midi.model.condition.Operator;
+import com.angrysurfer.midi.model.Comparison;
+import com.angrysurfer.midi.model.Rule;
+import com.angrysurfer.midi.model.Operator;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
 import org.slf4j.Logger;
@@ -136,17 +136,17 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     @Override
     public void updateCondition(Long playerId,
                                 int conditionId,
-                                String newOperator,
-                                String newComparison,
+                                int operatorId,
+                                int comparisonId,
                                 double newValue) {
 
         Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
             Player player = playerOpt.get();
-            Optional<Condition> condition = player.getConditions().stream().filter(c -> c.getId() == conditionId).findAny();
+            Optional<Rule> condition = player.getRules().stream().filter(c -> c.getId() == conditionId).findAny();
             if (condition.isPresent()) {
-                condition.get().setOperator(Operator.valueOf(newOperator));
-                condition.get().setComparison(Comparison.valueOf(newComparison));
+                condition.get().setOperatorId(operatorId);
+                condition.get().setComparisonId(comparisonId);
                 condition.get().setValue(newValue);
             }
         }
@@ -201,12 +201,12 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     public void addCondition(Long playerId) {
         Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
-            Condition condition = new Condition();
-            condition.setOperator(Operator.BEAT);
-            condition.setComparison(Comparison.EQUALS);
-            condition.setValue(1.0);
-            condition.setId(getPlayers().stream().map(p -> p.getConditions().size()).count() + 1);
-            playerOpt.get().addCondition(condition);
+            Rule rule = new Rule();
+            rule.setOperatorId(Operator.BEAT);
+            rule.setComparisonId(Comparison.EQUALS);
+            rule.setValue(1.0);
+            rule.setId(getPlayers().stream().map(p -> p.getRules().size()).count() + 1);
+            playerOpt.get().addCondition(rule);
         }
     }
 
@@ -214,8 +214,8 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     public void removeCondition(Long playerId, Long conditionId) {
         Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
-            Optional<Condition> conditionOpt = playerOpt.get().getConditions().stream().filter(c -> c.getId() == conditionId).findAny();
-            conditionOpt.ifPresent(condition -> playerOpt.get().getConditions().remove(condition));
+            Optional<Rule> conditionOpt = playerOpt.get().getRules().stream().filter(c -> c.getId() == conditionId).findAny();
+            conditionOpt.ifPresent(rule -> playerOpt.get().getRules().remove(rule));
         }
     }
 

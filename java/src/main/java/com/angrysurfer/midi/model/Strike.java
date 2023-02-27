@@ -1,8 +1,5 @@
 package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.condition.Comparison;
-import com.angrysurfer.midi.model.condition.Condition;
-import com.angrysurfer.midi.model.condition.Operator;
 import com.angrysurfer.midi.service.IMidiInstrument;
 import jakarta.persistence.*;
 import lombok.Getter;

@@ -18,7 +18,7 @@ public class StrikeInfo extends PlayerInfo {
         def.setPreset(pad.getPreset());
         def.setChannel(pad.getChannel());
         def.setInstrument(pad.getInstrumentName());
-        def.setConditions(pad.getConditions());
+        def.setRules(pad.getRules());
         def.setMinVelocity(pad.getMinVelocity());
         def.setMaxVelocity(pad.getMaxVelocity());
         def.setNote(pad.getNote());

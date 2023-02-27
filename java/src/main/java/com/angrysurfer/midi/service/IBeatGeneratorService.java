@@ -34,8 +34,8 @@ public interface IBeatGeneratorService {
 
     void updateCondition(Long playerId,
                          int conditionId,
-                         String newOperator,
-                         String newComparison,
+                         int operatorId,
+                         int comparisonId,
                          double newValue);
 
     PlayerInfo removePlayer(Long playerId);
