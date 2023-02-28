@@ -103,7 +103,7 @@ export class MidiService {
   addPlayerClicked() {
     let params = new HttpParams();
     params = params.append('instrument', 'blackbox');
-    return this.http.get('http://localhost:8080/api/players/add', {
+    return this.http.get<Player>('http://localhost:8080/api/players/add', {
       params: params,
     });
   }

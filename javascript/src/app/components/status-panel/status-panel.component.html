@@ -9,6 +9,8 @@
     </tr>
     <tr *ngIf="ticker != undefined">
       <td class="fixed">
+      </td>
+      <td class="fixed">
         {{ ticker.tick }}
       </td>
       <td class="fixed">
@@ -18,19 +20,19 @@
         {{ ticker.bar }}
       </td>
       <td>
-        <input type="number" value="{{ ticker.beatLengthInTicks }}">
+        <input type="number" disabled="true" value="{{ ticker.ticksPerBeat }}">
       </td>
       <td>
-        <input type="number" value="{{ ticker.beatsPerBar }}">
+        <input type="number" disabled="true" value="{{ ticker.tempoInBPM }}">
       </td>
       <td>
-        <input type="number" value="{{ ticker.partLength }}">
+        <input type="number" disabled="true" value="{{ ticker.beatsPerBar }}">
       </td>
       <td>
-        <input type="number" value="{{ ticker.delay }}">
+        <input type="number" disabled="true" value="{{ ticker.partLength }}">
       </td>
       <td>
-        <input type="number" min="1" max="127" step="1" value="{{ ticker.maxTracks }}">
+        <input type="number" disabled="true" min="1" max="127" step="1" value="{{ ticker.maxTracks }}">
       </td>
     </tr>
   </table>
@@ -44,7 +46,7 @@
 <!--  </div>-->
 </div>
 <!--&lt;!&ndash;      <div class="status-item">&ndash;&gt;-->
-<!--&lt;!&ndash;        <div><b>Bar Length </b>{{ ticker.beatLengthInTicks }}</div>&ndash;&gt;-->
+<!--&lt;!&ndash;        <div><b>Bar Length </b>{{ ticker.ticksPerBeat }}</div>&ndash;&gt;-->
 <!--&lt;!&ndash;      </div>&ndash;&gt;-->
 <!--&lt;!&ndash;      <div class="status-item">&ndash;&gt;-->
 <!--&lt;!&ndash;        <div><b>Beat / Bar </b>{{ ticker.beatsPerBar }}</div>&ndash;&gt;-->

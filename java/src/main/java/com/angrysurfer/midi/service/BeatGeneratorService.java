@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import javax.sound.midi.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.angrysurfer.midi.controller.PlayerUpdateType.NOTE;
 import static com.angrysurfer.midi.service.MidiInstrument.logger;
@@ -26,6 +27,27 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     private StrikeRepository strikeRepository;
 
     private RuleRepository ruleRepository;
+
+
+    static final AtomicLong conditionsCounter = new AtomicLong(-0);
+    static final Random rand = new Random();
+    static final String RAZZ = "Razzmatazz";
+    static final String MICROFREAK = "MicroFreak";
+    static Logger logger = LoggerFactory.getLogger(BeatGenerator.class.getCanonicalName());
+    static Integer[] notes = new Integer[]{27, 22, 27, 23};// {-1, 33 - 24, 26 - 24, 21 - 24};
+    static List<Integer> microFreakParams = List.of(5, 9, 10, 12, 13, 23, 24, 28, 83, 91, 92, 93, 94, 102, 103);
+    static List<Integer> fireballParams = List.of(40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60);
+    static List<Integer> razParams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
+    static List<Integer> closedHatParams = List.of(24, 25, 26, 27, 28, 29, 30, 31);
+    static List<Integer> kickParams = List.of(1, 2, 3, 4, 12, 13, 14, 15);
+    static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
+    static String deviceName = "mrcc";
+//    static MidiDevice device = getDevice();
+
+    static int KICK = 36;
+    static int SNARE = 37;
+    static int CLOSED_HAT = 38;
+    static int OPEN_HAT = 39;
 
     public BeatGeneratorService(IMIDIService midiService, StrikeRepository strikeRepository,
                                 RuleRepository ruleRepository) {
@@ -131,7 +153,17 @@ public class BeatGeneratorService implements IBeatGeneratorService {
 
     @Override
     public PlayerInfo addPlayer(String instrument) {
-        return this.beatGenerator.addPlayer(instrument);
+        Rule rule = new Rule();
+        rule.setComparisonId(Comparison.EQUALS);
+        rule.setOperatorId(Operator.BEAT);
+        rule.setValue(1.0);
+        ruleRepository.save(rule);
+
+        Strike strike = new Strike(instrument.concat(Integer.toString(getPlayers().size())),
+                beatGenerator, beatGenerator.getInstrument(instrument), KICK + getPlayers().size(), closedHatParams);
+        strike.getRules().add(rule);
+        strike = strikeRepository.save(strike);
+        return this.beatGenerator.addPlayer(strike);
     }
 
     @Override

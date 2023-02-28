@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.service;
 
+import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;

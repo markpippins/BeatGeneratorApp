@@ -14,11 +14,11 @@ public class TickerInfo {
     public boolean done;
     private int bar;
     private int tick;
-    private int barLengthInTicks;
+    private int ticksPerBeat;
     private int beatsPerBar;
     private int beat;
     private double beatDivider;
-    private int delay;
+    private int tempoInBPM;
     private int partLength;
     private int maxTracks;
     private int songLength;
@@ -33,7 +33,7 @@ public class TickerInfo {
         info.setBar(ticker.getBar());
         info.setBeat(ticker.getBeat());
         info.setDone(ticker.isDone());
-        info.setDelay(ticker.getDelay());
+        info.setTempoInBPM(ticker.getTempoInBPM());
         info.setBeatDivider(ticker.getBeatDivider());
         info.setMaxTracks(ticker.getMaxTracks());
         info.setPlaying(ticker.isPlaying());
@@ -41,7 +41,7 @@ public class TickerInfo {
         info.setStopped(ticker.isStopped());
         info.setSongLength(ticker.getSongLength());
         info.setPartLength(ticker.getPartLength());
-        info.setBarLengthInTicks(ticker.getBeatLengthInTicks());
+        info.setTicksPerBeat(ticker.getTicksPerBeat());
         info.setPartLength(ticker.getPartLength());
         info.setBeatsPerBar(ticker.getBeatsPerBar());
         info.setTick(ticker.getTick());

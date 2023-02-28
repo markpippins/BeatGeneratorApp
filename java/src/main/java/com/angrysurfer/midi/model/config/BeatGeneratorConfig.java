@@ -1,7 +1,7 @@
 package com.angrysurfer.midi.model.config;
 
-import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.model.Strike;
+import com.angrysurfer.midi.model.Ticker;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,9 +13,10 @@ import java.util.List;
 @Setter
 public class BeatGeneratorConfig implements Serializable {
     List<StrikeInfo> players = new ArrayList<>();
-    private int delay;
+    private int tempoInBPM;
     private int songLength;
-    private int barLengthInTicks;
+    private int ticksPerBeat;
+    private int beatsPerBar;
     private int swing;
     private double beatDivider;
     private int maxTracks;
@@ -25,9 +26,10 @@ public class BeatGeneratorConfig implements Serializable {
     }
 
     public BeatGeneratorConfig(Ticker ticker, List<Strike> players) {
-        setBarLengthInTicks(ticker.getBeatLengthInTicks());
+        setTicksPerBeat(ticker.getTicksPerBeat());
+        setBeatsPerBar(ticker.getBeatsPerBar());
         setBeatDivider(ticker.getBeatDivider());
-        setDelay(ticker.getDelay());
+        setTempoInBPM(ticker.getTempoInBPM());
         setMaxTracks(ticker.getMaxTracks());
         setPartLength(ticker.getPartLength());
         setSongLength(ticker.getSongLength());
@@ -36,9 +38,10 @@ public class BeatGeneratorConfig implements Serializable {
     }
 
     public void setup(Ticker ticker) {
-        ticker.setBeatLengthInTicks(getBarLengthInTicks());
+        ticker.setTicksPerBeat(getTicksPerBeat());
+        ticker.setBeatsPerBar(getBeatsPerBar());
         ticker.setBeatDivider(getBeatDivider());
-        ticker.setDelay(getDelay());
+        ticker.setTempoInBPM(getTempoInBPM());
         ticker.setMaxTracks(getMaxTracks());
         ticker.setPartLength(getPartLength());
         ticker.setSongLength(getSongLength());

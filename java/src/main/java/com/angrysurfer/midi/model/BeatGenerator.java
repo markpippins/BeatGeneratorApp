@@ -9,10 +9,7 @@ import com.angrysurfer.midi.service.MidiInstrument;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
@@ -21,39 +18,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import static com.angrysurfer.midi.model.Comparison.EQUALS;
-import static com.angrysurfer.midi.model.Comparison.MODULO;
-import static com.angrysurfer.midi.model.Operator.BEAT;
-import static com.angrysurfer.midi.model.Operator.TICK;
 
 @Getter
 @Setter
 public class BeatGenerator extends Ticker {
-
-    static final AtomicLong conditionsCounter = new AtomicLong(-0);
-    static final AtomicLong playerCounter = new AtomicLong(-0);
-    static final Random rand = new Random();
-    static final String RAZZ = "Razzmatazz";
-    static final String MICROFREAK = "MicroFreak";
-    static Logger logger = LoggerFactory.getLogger(BeatGenerator.class.getCanonicalName());
-    static Integer[] notes = new Integer[]{27, 22, 27, 23};// {-1, 33 - 24, 26 - 24, 21 - 24};
-    static List<Integer> microFreakParams = List.of(5, 9, 10, 12, 13, 23, 24, 28, 83, 91, 92, 93, 94, 102, 103);
-    static List<Integer> fireballParams = List.of(40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60);
-    static List<Integer> razParams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
-    static List<Integer> closedHatParams = List.of(24, 25, 26, 27, 28, 29, 30, 31);
-    static List<Integer> kickParams = List.of(1, 2, 3, 4, 12, 13, 14, 15);
-    static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
     static String deviceName = "mrcc";
     static MidiDevice device = getDevice();
+
     static ObjectMapper mapper = new ObjectMapper();
-    static int KICK = 36;
-    static int SNARE = 37;
-    static int CLOSED_HAT = 38;
-    static int OPEN_HAT = 39;
     private List<Strike> pads = new ArrayList<>();
 
     private List<Player> addList = new ArrayList<>();
@@ -82,11 +56,7 @@ public class BeatGenerator extends Ticker {
     }
 
     @Override
-    public PlayerInfo addPlayer(String instrument) {
-        Strike player = new Strike(instrument.concat(Integer.toString(getPlayers().size())),
-                this, getInstrument(instrument), KICK + getPlayers().size(), closedHatParams);
-        player.setId(playerCounter.incrementAndGet());
-
+    public PlayerInfo addPlayer(Player player) {
         if (isPlaying())
             addList.add(player);
         else
@@ -186,7 +156,7 @@ public class BeatGenerator extends Ticker {
         if (isPlaying())
             pause();
 
-        makeBeats();
+//        makeBeats();
         play();
     }
 
@@ -198,53 +168,52 @@ public class BeatGenerator extends Ticker {
         return getInstrumentMap().get(name);
     }
 
-    public void makeBeats() {
-
-        IMidiInstrument fireball = getInstrument("Fireball");
-        IMidiInstrument zero = getInstrument("Zero");
-
-        getPlayers().clear();
-
-        Stream.of(new Strike("blackbox-kick", this, getInstrument("blackbox"), KICK, kickParams, 100, 125)
-                                .addCondition(new Rule(BEAT, MODULO, 2.0)),
-                        new Strike("raz-kick", this, getInstrument(RAZZ), SNARE, snarePrams, 100, 125)
-                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(1, 4) * .25)),
-                        new Strike("raz-closed-hat", this, getInstrument(RAZZ), CLOSED_HAT, closedHatParams, 100, 125)
-                                .addCondition(new Rule(BEAT, MODULO, 3.0)),
-                        new Strike("blackbox-open-hat", this, getInstrument("blackbox"), OPEN_HAT, closedHatParams, 100, 125)
-                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(4, 6) * .25))
-                                .addCondition(new Rule(TICK, MODULO, 3.0)),
-                        new Strike("blackbox-snare", this, getInstrument("blackbox"), SNARE, snarePrams, 100, 125)
-                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
-                        new Strike("raz-snare", this, getInstrument(RAZZ), SNARE, snarePrams, 100, 125)
-                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
-                        new Strike("raz-closed-hat", this, getInstrument(RAZZ), CLOSED_HAT, closedHatParams, 100, 125)
-                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(2, 8) * .25)),
-                        new Strike("blackbox-open-hat", this, getInstrument("blackbox"), OPEN_HAT, closedHatParams, 100, 125)
-                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(4, 6) * .25))
-                                .addCondition(new Rule(TICK, EQUALS, rand.nextInt(6, 8) * .25))).filter(h -> rand.nextBoolean())
-                .forEach(getPlayers()::add);
-        getPlayers().forEach(p -> {
-            p.setId(playerCounter.incrementAndGet());
-            p.getRules().forEach(c -> c.setId(conditionsCounter.incrementAndGet()));
-        });
-
-        setBeatDivider(rand.nextInt(1, 4));
-
-        try {
-            int razPreset = rand.nextInt(127);
-            getInstrument(RAZZ).programChange(razPreset, 127);
-            getPlayers().stream().filter(p -> p.getInstrument().equals(getInstrument(RAZZ)))
-                    .forEach(p -> p.setPreset(razPreset));
-
-            int microFreakPreset = rand.nextInt(127);
-            getInstrument(MICROFREAK).programChange(microFreakPreset, 127);
-            getPlayers().stream().filter(p -> p.getInstrument().equals(getInstrument(MICROFREAK)))
-                    .forEach(p -> p.setPreset(microFreakPreset));
-        } catch (InvalidMidiDataException | MidiUnavailableException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    public void makeBeats() {
+//
+//        IMidiInstrument fireball = getInstrument("Fireball");
+//        IMidiInstrument zero = getInstrument("Zero");
+//
+//        getPlayers().clear();
+//
+//        Stream.of(new Strike("blackbox-kick", this, getInstrument("blackbox"), KICK, kickParams, 100, 125)
+//                                .addCondition(new Rule(BEAT, MODULO, 2.0)),
+//                        new Strike("raz-kick", this, getInstrument(RAZZ), SNARE, snarePrams, 100, 125)
+//                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(1, 4) * .25)),
+//                        new Strike("raz-closed-hat", this, getInstrument(RAZZ), CLOSED_HAT, closedHatParams, 100, 125)
+//                                .addCondition(new Rule(BEAT, MODULO, 3.0)),
+//                        new Strike("blackbox-open-hat", this, getInstrument("blackbox"), OPEN_HAT, closedHatParams, 100, 125)
+//                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(4, 6) * .25))
+//                                .addCondition(new Rule(TICK, MODULO, 3.0)),
+//                        new Strike("blackbox-snare", this, getInstrument("blackbox"), SNARE, snarePrams, 100, 125)
+//                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
+//                        new Strike("raz-snare", this, getInstrument(RAZZ), SNARE, snarePrams, 100, 125)
+//                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
+//                        new Strike("raz-closed-hat", this, getInstrument(RAZZ), CLOSED_HAT, closedHatParams, 100, 125)
+//                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(2, 8) * .25)),
+//                        new Strike("blackbox-open-hat", this, getInstrument("blackbox"), OPEN_HAT, closedHatParams, 100, 125)
+//                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(4, 6) * .25))
+//                                .addCondition(new Rule(TICK, EQUALS, rand.nextInt(6, 8) * .25))).filter(h -> rand.nextBoolean())
+//                .forEach(getPlayers()::add);
+//        getPlayers().forEach(p -> {
+//            p.getRules().forEach(c -> c.setId(conditionsCounter.incrementAndGet()));
+//        });
+//
+//        setBeatDivider(rand.nextInt(1, 4));
+//
+//        try {
+//            int razPreset = rand.nextInt(127);
+//            getInstrument(RAZZ).programChange(razPreset, 127);
+//            getPlayers().stream().filter(p -> p.getInstrument().equals(getInstrument(RAZZ)))
+//                    .forEach(p -> p.setPreset(razPreset));
+//
+//            int microFreakPreset = rand.nextInt(127);
+//            getInstrument(MICROFREAK).programChange(microFreakPreset, 127);
+//            getPlayers().stream().filter(p -> p.getInstrument().equals(getInstrument(MICROFREAK)))
+//                    .forEach(p -> p.setPreset(microFreakPreset));
+//        } catch (InvalidMidiDataException | MidiUnavailableException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 }
 
 //        if (rand.nextBoolean())

@@ -2,11 +2,11 @@ export interface Ticker {
   tick: number;
   done: boolean;
   bar: number;
-  beatLengthInTicks: number;
+  ticksPerBeat: number;
   beat: number;
   beatsPerBar: number;
   beatDivider: number;
-  delay: number;
+  tempoInBPM: number;
   partLength: number;
   maxTracks: number;
   songLength: number;

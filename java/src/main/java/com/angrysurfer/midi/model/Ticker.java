@@ -21,6 +21,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class Ticker implements Runnable, Serializable {
     static final Random rand = new Random();
     static Logger logger = LoggerFactory.getLogger(Ticker.class.getCanonicalName());
+    static boolean initialized = false;
+    static Sequencer sequencer;
+
+    static {
+        try {
+            sequencer = MidiSystem.getSequencer();
+            initialized = true;
+        } catch (MidiUnavailableException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @JsonIgnore
     private final AtomicInteger bar = new AtomicInteger(0);
     @JsonIgnore
@@ -31,18 +43,17 @@ public abstract class Ticker implements Runnable, Serializable {
     private List<Player> players = new ArrayList<>();
     @JsonIgnore
     private ExecutorService executor;
-    private int beatLengthInTicks = 16; //16384;
+    private int ticksPerBeat = 16; //16384;
     private int beat;
     private int beatsPerBar = 4;
     private double beatDivider = 4.0;
-    private int delay = 65;
+    private int tempoInBPM = 120;
     private int partLength = 64;
     private int maxTracks = 128;
     private int songLength = 64;
     private int swing = 25;
     private boolean playing = false;
     private boolean stopped = false;
-
     private boolean paused = false;
     private MuteGroupList muteGroups = new MuteGroupList();
     private List<Player> waitList = new ArrayList<>();
@@ -70,14 +81,14 @@ public abstract class Ticker implements Runnable, Serializable {
             tick.incrementAndGet();
         }
 
-        if (tick.get() % (getBeatLengthInTicks() / getBeatsPerBar()) == 0) {
+        if (tick.get() % (getTicksPerBeat() / getBeatsPerBar()) == 0) {
             if (getBeat() == getBeatsPerBar())
                 beat = 1;
             else beat += 1;
             onBeatChange(bar.get());
         }
 
-        if (tick.get() % getBeatLengthInTicks() == 0) {
+        if (tick.get() % getTicksPerBeat() == 0) {
             synchronized (bar) {
                 bar.set(bar.get() + 1);
                 if (bar.get() >= getPartLength())
@@ -101,65 +112,39 @@ public abstract class Ticker implements Runnable, Serializable {
         setDone(false);
         setStopped(false);
 
-        try {
-            Sequencer base = MidiSystem.getSequencer();
+        if (initialized)
+            try {
+                Sequence sequence = new Sequence(Sequence.PPQ, getTicksPerBeat());
+                Track track = sequence.createTrack();
+                track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 34, 127), 1000));
+                sequencer.setTempoInBPM(120);
+                sequencer.setSequence(sequence);
+                sequencer.setLoopCount(100);
+                sequencer.open();
+                sequencer.start();
 
-            Sequence sequence = new Sequence(Sequence.PPQ, getBeatLengthInTicks());
-            Track track = sequence.createTrack();
-            track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 34, 127), 1000));
-            base.setTempoInBPM(120);
-            base.setSequence(sequence);
-            base.setLoopCount(100);
-            base.open();
-            base.start();
-
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (base.isRunning() && !isStopped() && isPlaying()) {
-                        if (base.getTickPosition() > getTick())
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (sequencer.isRunning() && !isStopped() && isPlaying()) {
+                            if (sequencer.getTickPosition() > getTick())
+                                try {
+                                    incrementTick();
+                                    getExecutor().invokeAll(getPlayers());
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
                             try {
-                                incrementTick();
-                                getExecutor().invokeAll(getPlayers());
-//                                    Thread.sleep(getDelay());
+                                Thread.sleep(100);
                             } catch (InterruptedException e) {
                                 throw new RuntimeException(e);
                             }
-//            else if (!isStopped() && isPaused()) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
                         }
                     }
-
-                }
-            }).start();
-        } catch (MidiUnavailableException | InvalidMidiDataException e) {
-            throw new RuntimeException(e);
-        }
-
-//        IntStream.range(0, getSongLength()).forEach(i -> {
-//            if (!isStopped() && isPlaying())
-//                try {
-//                    incrementTick();
-//                    getExecutor().invokeAll(getPlayers());
-//                    Thread.sleep(getDelay());
-//                } catch (InterruptedException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            else if (!isStopped() && isPaused()) {
-//                try {
-//                    Thread.sleep(2500);
-//                } catch (InterruptedException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }
-//        });
-
-//        setStopped(true);
-//        setPlaying(false);
-//        setDone(true);
+                }).start();
+            } catch (MidiUnavailableException | InvalidMidiDataException e) {
+                throw new RuntimeException(e);
+            }
     }
 
     @JsonIgnore
@@ -190,7 +175,7 @@ public abstract class Ticker implements Runnable, Serializable {
         }
     }
 
-    public abstract PlayerInfo addPlayer(String instrument);
+    public abstract PlayerInfo addPlayer(Player player);
 
 
     public void clearEventSources() {

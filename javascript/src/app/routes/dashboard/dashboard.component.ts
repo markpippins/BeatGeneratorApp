@@ -60,7 +60,10 @@ export class DashboardComponent implements OnInit {
       }
 
       case 'add': {
-        this.midiService.addPlayerClicked().subscribe();
+        this.midiService.addPlayerClicked().subscribe(async (data) => {
+            this.players.push(data)
+            this.selectedPlayer = data;
+        });
         break;
       }
 
@@ -76,7 +79,7 @@ export class DashboardComponent implements OnInit {
       // var update: boolean = this.isPlaying && this.players.length != (<Player[]>data).length
       this.players = data;
       // if (update && this.isPlaying) {
-      await this.midiService.delay(2500);
+      await this.midiService.delay(500);
       this.updateDisplay();
       // }
     });
