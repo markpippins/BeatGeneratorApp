@@ -183,7 +183,7 @@ public abstract class Ticker implements Runnable, Serializable {
         }
     }
 
-    public abstract PlayerInfo addPlayer(Player player);
+//    public abstract PlayerInfo addPlayer(Player player);
 
 
     public void clearEventSources() {

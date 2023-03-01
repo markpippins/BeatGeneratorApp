@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 public class BeatGeneratorConfig implements Serializable {
-    List<StrikeInfo> players = new ArrayList<>();
+    List<PlayerInfo> players = new ArrayList<>();
     private int tempoInBPM;
     private int songLength;
     private int ticksPerBeat;
@@ -34,7 +34,7 @@ public class BeatGeneratorConfig implements Serializable {
         setPartLength(ticker.getPartLength());
         setSongLength(ticker.getSongLength());
         setSwing(ticker.getSwing());
-        setPlayers(players.stream().map(StrikeInfo::fromStrike).toList());
+        setPlayers(players.stream().map(PlayerInfo::fromPlayer).toList());
     }
 
     public void setup(Ticker ticker) {

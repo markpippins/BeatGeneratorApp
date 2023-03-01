@@ -7,29 +7,33 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
 @Entity
 public class PlayerInfo implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Column(name = "id", nullable = false)
-    private Long id;
-
     // Strikes
     int note;
     int minVelocity = 110;
     int maxVelocity = 127;
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "id", nullable = false)
+    private Long id;
     private int preset;
     private String instrument;
     private int channel;
-    @Transient private List<Rule> rules = new ArrayList<>();
-    @Transient
-    private List<Integer> allowedControlMessages = new ArrayList<>();
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "post_edit", joinColumns = {@JoinColumn(name = "edit_id")}, inverseJoinColumns = {
+            @JoinColumn(name = "post_id")})
+    private Set<Rule> rules = new HashSet<>();
+    @ElementCollection
+    @CollectionTable(name = "allowedControlMessages")
+    private Set<Integer> allowedControlMessages = new HashSet<>();
     private boolean muted;
+
     public PlayerInfo() {
 
     }
@@ -47,7 +51,7 @@ public class PlayerInfo implements Serializable {
 //        info.setMaxVelocity(player.getMaxVelocity());
 //    }
 
-    static void copyValues(Player player, PlayerInfo info){
+    static void copyValues(Player player, PlayerInfo info) {
         info.setAllowedControlMessages(player.getAllowedControlMessages());
         info.setPreset(player.getPreset());
         info.setChannel(player.getChannel());

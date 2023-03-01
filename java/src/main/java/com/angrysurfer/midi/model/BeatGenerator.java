@@ -55,15 +55,12 @@ public class BeatGenerator extends Ticker {
             IntStream.range(0, 16).forEach(i -> gen.play());
     }
 
-    @Override
-    public PlayerInfo addPlayer(Player player) {
-//        if (isPlaying())
-//            addList.add(player);
-//        else
-            getPlayers().add(player);
-
-        return PlayerInfo.fromPlayer(player);
-    }
+//    @Override
+//    public PlayerInfo addPlayer(Player player) {
+////        getPlayers().add(player);
+//
+//        return  PlayerInfo.fromPlayer(player);
+//    }
 
     @Override
     public void onBarChange(int bar) {

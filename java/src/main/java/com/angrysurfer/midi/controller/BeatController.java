@@ -51,10 +51,10 @@ public class BeatController {
         return service.getTickerInfo();
     }
 
-    @GetMapping(path = "/players/info")
-    public @ResponseBody List<PlayerInfo> getPlayers() {
-        return service.getPlayers();
-    }
+//    @GetMapping(path = "/players/info")
+//    public @ResponseBody List<PlayerInfo> getPlayers() {
+//        return service.getPlayers();
+//    }
 
     @GetMapping(path = "/instruments/info")
     public @ResponseBody Map<String, IMidiInstrument> getInstruments() {
@@ -75,35 +75,35 @@ public class BeatController {
     public void sendMessage(@RequestParam int messageType, @RequestParam int channel, @RequestParam int data1, @RequestParam int data2) {
         service.sendMessage(messageType, channel, data1, data2);
     }
-    @GetMapping("/players/add")
-    public PlayerInfo addPlayer(@RequestParam String instrument) {
-        return service.addPlayer(instrument);
-    }
-
-    @GetMapping("/players/remove")
-    public List<PlayerInfo> removePlayer(@RequestParam Long playerId) {
-        return service.removePlayer(playerId);
-    }
-
-    @GetMapping("/players/mute")
-    public PlayerInfo mutePlayer(@RequestParam Long playerId) {
-        return service.mutePlayer(playerId);
-    }
-
-    @GetMapping("/player/rules")
-    public List<Rule> getRules(@RequestParam Long playerId) {
-        return service.getRules(playerId);
-    }
-
-    @GetMapping("/player/update")
-    public void updatePlayer(@RequestParam Long playerId, @RequestParam int updateType, @RequestParam int updateValue) {
-        service.updatePlayer(playerId, updateType, updateValue);
-    }
-
-    @GetMapping("/players/clear")
-    public void clearPlayers() {
-        service.clearPlayers();
-    }
+//    @GetMapping("/players/add")
+//    public PlayerInfo addPlayer(@RequestParam String instrument) {
+//        return service.addPlayer(instrument);
+//    }
+//
+//    @GetMapping("/players/remove")
+//    public List<PlayerInfo> removePlayer(@RequestParam Long playerId) {
+//        return service.removePlayer(playerId);
+//    }
+//
+//    @GetMapping("/players/mute")
+//    public PlayerInfo mutePlayer(@RequestParam Long playerId) {
+//        return service.mutePlayer(playerId);
+//    }
+//
+//    @GetMapping("/player/rules")
+//    public List<Rule> getRules(@RequestParam Long playerId) {
+//        return service.getRules(playerId);
+//    }
+//
+//    @GetMapping("/player/update")
+//    public void updatePlayer(@RequestParam Long playerId, @RequestParam int updateType, @RequestParam int updateValue) {
+//        service.updatePlayer(playerId, updateType, updateValue);
+//    }
+//
+//    @GetMapping("/players/clear")
+//    public void clearPlayers() {
+//        service.clearPlayers();
+//    }
 
     @GetMapping("/rules/add")
     public Rule addRule(@RequestParam Long playerId) {

@@ -82,11 +82,11 @@ export class PlayerTableComponent {
   }
 
   toggleClass(el: any, className: string) {
-    if (el.className.indexOf(className) >= 0) {
-      el.className = el.className.replace(className, "");
-    } else {
-      el.className += className;
-    }
+    // if (el.className.indexOf(className) >= 0) {
+    //   el.className = el.className.replace(className, "");
+    // } else {
+    //   el.className += className;
+    // }
   }
 
   setSelectValue(id: string, val: any) {

@@ -2,63 +2,38 @@ package com.angrysurfer.midi.model;
 
 import com.angrysurfer.midi.service.IMidiInstrument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
 @Setter
-@MappedSuperclass
 public abstract class Player implements Callable<Boolean>, Serializable {
     static final Random rand = new Random();
-    @Transient
-    List<Rule> rules = new ArrayList<>();
+    Set<Rule> rules = new HashSet<>();
     private int note;
     private int minVelocity = 110;
     private int maxVelocity = 127;
-    @JsonIgnore
-    @Transient
     private boolean even = true;
-    @Transient
     private boolean muted = false;
-    @JsonIgnore
-    @Transient
     private Double beat = 1.0;
-    @JsonIgnore
-    @Transient
     private int position = 0;
-    @JsonIgnore
-    @Transient
     private AtomicLong lastTick = new AtomicLong(0);
     private int preset;
-    @JsonIgnore
-    @Transient
     private IMidiInstrument instrument;
-    @JsonIgnore
-    @Transient
     private Ticker ticker;
-    @Transient
-    private List<Integer> allowedControlMessages = new ArrayList<>();
-    @JsonIgnore
-    @Transient
+    private Set<Integer> allowedControlMessages = new HashSet<>();
     private int lastPlayedTick;
-    @JsonIgnore
-    @Transient
     private int lastPlayedBar;
-    @JsonIgnore
-    @Transient
     private Double lastPlayedBeat;
     private String name;
 
@@ -72,7 +47,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         setTicker(ticker);
     }
 
-    public Player(String name, Ticker ticker, IMidiInstrument instrument, List<Integer> allowedControlMessages) {
+    public Player(String name, Ticker ticker, IMidiInstrument instrument, Set<Integer> allowedControlMessages) {
         this(name, ticker, instrument);
         setAllowedControlMessages(allowedControlMessages);
     }

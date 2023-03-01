@@ -4,6 +4,8 @@ import com.angrysurfer.midi.service.MidiInstrument;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashSet;
+
 @Getter
 @Setter
 public class Sample extends Strike {
@@ -13,7 +15,7 @@ public class Sample extends Strike {
     private boolean started = false;
 
     public Sample(String name, Ticker ticker, MidiInstrument instrument, int low, int high) {
-        super(name, ticker, instrument, low, instrument.getAssignments().keySet().stream().toList());
+        super(name, ticker, instrument, low, new HashSet<>(instrument.getAssignments().keySet()));
         setHighNote(high);
     }
 

@@ -26,12 +26,12 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     static Logger log = LoggerFactory.getLogger(BeatGeneratorService.class.getCanonicalName());
     static Logger logger = LoggerFactory.getLogger(BeatGenerator.class.getCanonicalName());
     static Integer[] notes = new Integer[]{27, 22, 27, 23};// {-1, 33 - 24, 26 - 24, 21 - 24};
-    static List<Integer> microFreakParams = List.of(5, 9, 10, 12, 13, 23, 24, 28, 83, 91, 92, 93, 94, 102, 103);
-    static List<Integer> fireballParams = List.of(40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60);
-    static List<Integer> razParams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
-    static List<Integer> closedHatParams = List.of(24, 25, 26, 27, 28, 29, 30, 31);
-    static List<Integer> kickParams = List.of(1, 2, 3, 4, 12, 13, 14, 15);
-    static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
+    static Set<Integer> microFreakParams = Set.of(5, 9, 10, 12, 13, 23, 24, 28, 83, 91, 92, 93, 94, 102, 103);
+    static Set<Integer> fireballParams = Set.of(40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60);
+    static Set<Integer> razParams = Set.of(16, 17, 18, 19, 20, 21, 22, 23);
+    static Set<Integer> closedHatParams = Set.of(24, 25, 26, 27, 28, 29, 30, 31);
+    static Set<Integer> kickParams = Set.of(1, 2, 3, 4, 12, 13, 14, 15);
+    static Set<Integer> snarePrams = Set.of(16, 17, 18, 19, 20, 21, 22, 23);
     static String deviceName = "mrcc";
     static int KICK = 36;
     static int SNARE = 37;
@@ -161,12 +161,13 @@ public class BeatGeneratorService implements IBeatGeneratorService {
         Strike strike = new Strike(instrument.concat(Integer.toString(getPlayers().size())),
                 beatGenerator, beatGenerator.getInstrument(instrument), KICK + getPlayers().size(), closedHatParams);
         strike.getRules().add(rule);
-        PlayerInfo info = this.beatGenerator.addPlayer(strike);
-        PlayerInfo result = playerInfoRepository.save(info);
-        TickerInfo.copyValues(beatGenerator, tickerInfo);
+        PlayerInfo info = playerInfoRepository.save(PlayerInfo.fromPlayer(strike));
+        strike.setId(info.getId());
+        this.beatGenerator.getPlayers().add(strike);
+        TickerInfo.copyValues(this.beatGenerator, this.tickerInfo);
+        this.tickerInfo.getPlayers().add(info);
         this.tickerInfo = tickerInfoRepo.save(tickerInfo);
-
-        return result;
+        return info;
     }
 
     @Override

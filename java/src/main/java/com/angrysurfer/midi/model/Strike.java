@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -27,13 +28,13 @@ public class Strike extends Player {
     public Strike() {
     }
 
-    public Strike(String name, Ticker ticker, IMidiInstrument instrument, int note, List<Integer> allowedControlMessages) {
+    public Strike(String name, Ticker ticker, IMidiInstrument instrument, int note, Set<Integer> allowedControlMessages) {
         super(name, ticker, instrument, allowedControlMessages);
         setNote(note);
     }
 
     public Strike(String name, Ticker ticker, IMidiInstrument instrument, int note,
-                  List<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
+                  Set<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
         super(name, ticker, instrument, allowableControlMessages);
         setName(name);
         setNote(note);

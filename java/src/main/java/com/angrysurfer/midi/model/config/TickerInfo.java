@@ -8,18 +8,23 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Getter
 @Setter
 @Entity
 public class TickerInfo {
     static Logger logger = LoggerFactory.getLogger(TickerInfo.class.getCanonicalName());
-
+    public boolean done;
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "ticker_player", joinColumns = {@JoinColumn(name = "ticker_id")})
+    Set<PlayerInfo> players = new HashSet<>();
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
-
-    public boolean done;
     private int bar;
     private long tick;
     private int ticksPerBeat;
@@ -35,6 +40,7 @@ public class TickerInfo {
     private boolean stopped;
     @Transient
     private MuteGroupList muteGroups;
+
     public static void copyValues(Ticker ticker, TickerInfo info) {
         info.setBar(ticker.getBar());
         info.setBeat((int) ticker.getBeat());
@@ -51,7 +57,9 @@ public class TickerInfo {
         info.setPartLength(ticker.getPartLength());
         info.setBeatsPerBar(ticker.getBeatsPerBar());
         info.setTick(ticker.getTick());
+//        info.setPlayers(ticker.getPlayers().stream().map(PlayerInfo::fromPlayer).collect(Collectors.toSet()));
     }
+
     public static TickerInfo fromTicker(Ticker ticker) {
         TickerInfo info = new TickerInfo();
         copyValues(ticker, info);
