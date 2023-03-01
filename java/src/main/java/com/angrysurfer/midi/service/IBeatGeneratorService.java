@@ -1,6 +1,5 @@
 package com.angrysurfer.midi.service;
 
-import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
@@ -35,7 +34,7 @@ public interface IBeatGeneratorService {
                     int comparisonId,
                     double newValue);
 
-    PlayerInfo removePlayer(Long playerId);
+    List<PlayerInfo> removePlayer(Long playerId);
 
     PlayerInfo mutePlayer(Long playerId);
 

@@ -52,11 +52,16 @@ export class PlayerTableComponent {
   onBtnClick(player: Player, action: string) {
     switch (action) {
       case 'add': {
-        this.midiService.addPlayerClicked().subscribe();
+        this.midiService.addPlayerClicked().subscribe(async (data) => {
+          this.players.push(data);
+        });
         break
       }
       case 'remove': {
-        this.midiService.removePlayerClicked(player).subscribe();
+        this.midiService.removePlayerClicked(player).subscribe(async (data) => {
+          this.players = data;
+        });
+        this.players = this.players.filter(p => p.id != player.id)
         break
       }
     }

@@ -14,25 +14,15 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.angrysurfer.midi.controller.PlayerUpdateType.NOTE;
-import static com.angrysurfer.midi.service.MidiInstrument.logger;
 
 @Service
 public class BeatGeneratorService implements IBeatGeneratorService {
-
-    static Logger log = LoggerFactory.getLogger(BeatGeneratorService.class.getCanonicalName());
-
-    private final BeatGenerator beatGenerator = new BeatGenerator(Integer.MAX_VALUE);
-    private IMIDIService midiService;
-
-    private StrikeRepository strikeRepository;
-
-    private RuleRepository ruleRepository;
-
 
     static final AtomicLong conditionsCounter = new AtomicLong(-0);
     static final Random rand = new Random();
     static final String RAZZ = "Razzmatazz";
     static final String MICROFREAK = "MicroFreak";
+    static Logger log = LoggerFactory.getLogger(BeatGeneratorService.class.getCanonicalName());
     static Logger logger = LoggerFactory.getLogger(BeatGenerator.class.getCanonicalName());
     static Integer[] notes = new Integer[]{27, 22, 27, 23};// {-1, 33 - 24, 26 - 24, 21 - 24};
     static List<Integer> microFreakParams = List.of(5, 9, 10, 12, 13, 23, 24, 28, 83, 91, 92, 93, 94, 102, 103);
@@ -42,12 +32,15 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     static List<Integer> kickParams = List.of(1, 2, 3, 4, 12, 13, 14, 15);
     static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
     static String deviceName = "mrcc";
-//    static MidiDevice device = getDevice();
-
     static int KICK = 36;
     static int SNARE = 37;
     static int CLOSED_HAT = 38;
     static int OPEN_HAT = 39;
+//    static MidiDevice device = getDevice();
+    private final BeatGenerator beatGenerator = new BeatGenerator(Integer.MAX_VALUE);
+    private IMIDIService midiService;
+    private StrikeRepository strikeRepository;
+    private RuleRepository ruleRepository;
 
     public BeatGeneratorService(IMIDIService midiService, StrikeRepository strikeRepository,
                                 RuleRepository ruleRepository) {
@@ -186,10 +179,11 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public PlayerInfo removePlayer(Long playerId) {
+    public List<PlayerInfo> removePlayer(Long playerId) {
         Optional<Player> player = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
-        player.ifPresent(p -> beatGenerator.getRemoveList().add(p));
-        return null;
+//        player.ifPresent(p -> beatGenerator.getRemoveList().add(p));
+        player.ifPresent(p -> beatGenerator.getPlayers().remove(p));
+        return getPlayers();
     }
 
     @Override

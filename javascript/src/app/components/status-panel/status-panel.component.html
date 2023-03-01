@@ -18,9 +18,9 @@
       <td class="fixed">
         {{ ticker.bar}}
       </td>
-      <td *ngIf="ticker.playing" class="green">
+      <td *ngIf="ticker.playing" class="active">
       </td>
-      <td *ngIf="!ticker.playing" class="red">
+      <td *ngIf="!ticker.playing" class="inactive">
       </td>
       <td>
         <input type="number" disabled="true" value="{{ ticker.ticksPerBeat }}">

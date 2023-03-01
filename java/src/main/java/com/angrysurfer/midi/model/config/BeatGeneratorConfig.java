@@ -34,7 +34,7 @@ public class BeatGeneratorConfig implements Serializable {
         setPartLength(ticker.getPartLength());
         setSongLength(ticker.getSongLength());
         setSwing(ticker.getSwing());
-        setPlayers(players.stream().map(StrikeInfo::fromDrumPad).toList());
+        setPlayers(players.stream().map(StrikeInfo::fromStrike).toList());
     }
 
     public void setup(Ticker ticker) {

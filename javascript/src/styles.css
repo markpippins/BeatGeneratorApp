@@ -525,11 +525,11 @@ th {
   text-align: center;
 }
 
-.red {
+.inactive {
   background-color: red;
 }
 
-.green {
+.active {
   background-color: lawngreen;
 }
 

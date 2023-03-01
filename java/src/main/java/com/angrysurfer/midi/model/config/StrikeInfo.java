@@ -12,17 +12,9 @@ public class StrikeInfo extends PlayerInfo {
     static Logger logger = LoggerFactory.getLogger(StrikeInfo.class.getCanonicalName());
     public StrikeInfo() {
     }
-    static StrikeInfo fromDrumPad(Strike pad) {
+    static StrikeInfo fromStrike(Strike strike) {
         StrikeInfo def = new StrikeInfo();
-        def.setAllowedControlMessages(pad.getAllowedControlMessages());
-        def.setPreset(pad.getPreset());
-        def.setChannel(pad.getChannel());
-        def.setInstrument(pad.getInstrumentName());
-        def.setRules(pad.getRules());
-        def.setMinVelocity(pad.getMinVelocity());
-        def.setMaxVelocity(pad.getMaxVelocity());
-        def.setNote(pad.getNote());
-
+        copyValues(strike, def);
         return def;
     }
 

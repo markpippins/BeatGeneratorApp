@@ -1,7 +1,10 @@
 package com.angrysurfer.midi.model;
 
 import com.angrysurfer.midi.model.config.PlayerInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -34,15 +37,14 @@ public abstract class Ticker implements Runnable, Serializable {
         }
     }
 
-    @JsonIgnore
     private final AtomicInteger bar = new AtomicInteger(0);
-    @JsonIgnore
+
     private final AtomicLong tick = new AtomicLong(0);
-    @JsonIgnore
+    
     public boolean done = false;
-    @JsonIgnore
+    
     private List<Player> players = new ArrayList<>();
-    @JsonIgnore
+
     private ExecutorService executor;
     private int ticksPerBeat = 96;
     private double beat = 0;
@@ -54,14 +56,21 @@ public abstract class Ticker implements Runnable, Serializable {
     private int maxTracks = 128;
     private int songLength = Integer.MAX_VALUE;
     private int swing = 25;
+    
     private boolean playing = false;
+    
     private boolean stopped = false;
+    
     private boolean paused = false;
     private MuteGroupList muteGroups = new MuteGroupList();
-    private List<Player> waitList = new ArrayList<>();
 
     public Ticker(int songLength) {
         setSongLength(songLength);
+        setExecutor(Executors.newFixedThreadPool(getMaxTracks()));
+    }
+
+    public Ticker() {
+        setSongLength(Integer.MAX_VALUE);
         setExecutor(Executors.newFixedThreadPool(getMaxTracks()));
     }
 
@@ -143,16 +152,19 @@ public abstract class Ticker implements Runnable, Serializable {
     private void createMuteGroups() {
     }
 
-    @JsonIgnore
+    
+    
     public synchronized int getBar() {
         return bar.get();
     }
 
-    @JsonIgnore
+    
+    
     public synchronized long getTick() {
         return tick.get();
     }
 
+    
     public double getBeatDivision() {
         return 1.0 / beatDivider;
     }
@@ -179,6 +191,5 @@ public abstract class Ticker implements Runnable, Serializable {
             this.getPlayers().clear();
         }
     }
-
 }
 

@@ -81,7 +81,7 @@ public class BeatController {
     }
 
     @GetMapping("/players/remove")
-    public PlayerInfo removePlayer(@RequestParam Long playerId) {
+    public List<PlayerInfo> removePlayer(@RequestParam Long playerId) {
         return service.removePlayer(playerId);
     }
 

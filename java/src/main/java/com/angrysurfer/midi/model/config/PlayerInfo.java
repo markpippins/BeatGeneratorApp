@@ -26,17 +26,22 @@ public class PlayerInfo implements Serializable {
     public PlayerInfo() {
 
     }
+    static void copyValues(Player player, PlayerInfo info){
+        info.setAllowedControlMessages(player.getAllowedControlMessages());
+        info.setPreset(player.getPreset());
+        info.setChannel(player.getChannel());
+        info.setInstrument(player.getInstrumentName());
+        info.setRules(player.getRules());
+        info.setNote(player.getNote());
+        info.setId(player.getId());
+        info.setMuted(player.isMuted());
+        info.setMinVelocity(player.getMinVelocity());
+        info.setMaxVelocity(player.getMaxVelocity());
+    }
 
     public static PlayerInfo fromPlayer(Player player) {
         PlayerInfo def = new PlayerInfo();
-        def.setAllowedControlMessages(player.getAllowedControlMessages());
-        def.setPreset(player.getPreset());
-        def.setChannel(player.getChannel());
-        def.setInstrument(player.getInstrumentName());
-        def.setRules(player.getRules());
-        def.setNote(player.getNote());
-        def.setId(player.getId());
-        def.setMuted(player.isMuted());
+        copyValues(player, def);
         return def;
     }
 }

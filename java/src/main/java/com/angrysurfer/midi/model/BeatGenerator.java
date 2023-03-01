@@ -57,9 +57,9 @@ public class BeatGenerator extends Ticker {
 
     @Override
     public PlayerInfo addPlayer(Player player) {
-        if (isPlaying())
-            addList.add(player);
-        else
+//        if (isPlaying())
+//            addList.add(player);
+//        else
             getPlayers().add(player);
 
         return PlayerInfo.fromPlayer(player);

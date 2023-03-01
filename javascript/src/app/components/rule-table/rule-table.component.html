@@ -3,19 +3,17 @@
     <th>
       {{player.instrument}}
       {{player.id}}
-    </th>
-    <th>
       {{player.note}}
     </th>
 
   </tr>
-  <tr>
-    <th *ngFor="let col of ruleCols">
-      {{ col}}
-    </th>
-    <th></th>
-    <th></th>
-  </tr>
+<!--  <tr>-->
+<!--    <th *ngFor="let col of ruleCols">-->
+<!--      {{ col}}-->
+<!--    </th>-->
+<!--    <th></th>-->
+<!--    <th></th>-->
+<!--  </tr>-->
 
   <tr class="active-table-row"  *ngFor="let rule of player?.rules;">
     <td>
