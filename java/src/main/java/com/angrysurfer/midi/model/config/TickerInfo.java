@@ -2,6 +2,7 @@ package com.angrysurfer.midi.model.config;
 
 import com.angrysurfer.midi.model.MuteGroupList;
 import com.angrysurfer.midi.model.Ticker;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -9,8 +10,15 @@ import org.slf4j.LoggerFactory;
 
 @Getter
 @Setter
+@Entity
 public class TickerInfo {
     static Logger logger = LoggerFactory.getLogger(TickerInfo.class.getCanonicalName());
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
+
     public boolean done;
     private int bar;
     private long tick;
@@ -25,11 +33,9 @@ public class TickerInfo {
     private int swing;
     private boolean playing;
     private boolean stopped;
+    @Transient
     private MuteGroupList muteGroups;
-
-    public static TickerInfo fromTicker(Ticker ticker) {
-        TickerInfo info = new TickerInfo();
-
+    public static void copyValues(Ticker ticker, TickerInfo info) {
         info.setBar(ticker.getBar());
         info.setBeat((int) ticker.getBeat());
         info.setDone(ticker.isDone());
@@ -45,7 +51,10 @@ public class TickerInfo {
         info.setPartLength(ticker.getPartLength());
         info.setBeatsPerBar(ticker.getBeatsPerBar());
         info.setTick(ticker.getTick());
-
+    }
+    public static TickerInfo fromTicker(Ticker ticker) {
+        TickerInfo info = new TickerInfo();
+        copyValues(ticker, info);
         return info;
     }
 

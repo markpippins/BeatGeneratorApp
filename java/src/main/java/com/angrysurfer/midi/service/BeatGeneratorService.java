@@ -5,6 +5,7 @@ import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
 import com.angrysurfer.midi.repo.RuleRepository;
 import com.angrysurfer.midi.repo.PlayerInfoRepository;
+import com.angrysurfer.midi.repo.TickerInfoRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -42,11 +43,16 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     private PlayerInfoRepository playerInfoRepository;
     private RuleRepository ruleRepository;
 
+    private TickerInfo tickerInfo;
+
+    private TickerInfoRepo tickerInfoRepo;
     public BeatGeneratorService(IMIDIService midiService, PlayerInfoRepository playerInfoRepository,
-                                RuleRepository ruleRepository) {
+                                RuleRepository ruleRepository, TickerInfoRepo tickerInfoRepo) {
         this.midiService = midiService;
         this.ruleRepository = ruleRepository;
         this.playerInfoRepository = playerInfoRepository;
+        this.tickerInfoRepo = tickerInfoRepo;
+        this.tickerInfo = TickerInfo.fromTicker(beatGenerator);
     }
 
     @Override
@@ -156,7 +162,11 @@ public class BeatGeneratorService implements IBeatGeneratorService {
                 beatGenerator, beatGenerator.getInstrument(instrument), KICK + getPlayers().size(), closedHatParams);
         strike.getRules().add(rule);
         PlayerInfo info = this.beatGenerator.addPlayer(strike);
-        return playerInfoRepository.save(info);
+        PlayerInfo result = playerInfoRepository.save(info);
+        TickerInfo.copyValues(beatGenerator, tickerInfo);
+        this.tickerInfo = tickerInfoRepo.save(tickerInfo);
+
+        return result;
     }
 
     @Override
