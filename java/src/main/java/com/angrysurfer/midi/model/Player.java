@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class Player implements Callable<Boolean>, Serializable {
     static final Random rand = new Random();
     Set<Rule> rules = new HashSet<>();
+    private int channel;
     private int note;
     private int minVelocity = 110;
     private int maxVelocity = 127;

@@ -1,7 +1,9 @@
 package com.angrysurfer.midi.model.config;
 
 import com.angrysurfer.midi.model.MuteGroupList;
+import com.angrysurfer.midi.model.Strike;
 import com.angrysurfer.midi.model.Ticker;
+import com.angrysurfer.midi.service.IMidiInstrument;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,6 +44,26 @@ public class TickerInfo {
     @Transient
     private MuteGroupList muteGroups;
 
+    public static void copyValues(TickerInfo info, Ticker ticker, Map<String, IMidiInstrument> instruments) {
+        ticker.setBeat((int) info.getBeat());
+        ticker.setDone(info.isDone());
+        ticker.setTempoInBPM(info.getTempoInBPM());
+        ticker.setBeatDivider(info.getBeatDivider());
+        ticker.setMaxTracks(info.getMaxTracks());
+        ticker.setPlaying(info.isPlaying());
+        ticker.setSwing(info.getSwing());
+        ticker.setStopped(info.isStopped());
+        ticker.setSongLength(info.getSongLength());
+        ticker.setPartLength(info.getPartLength());
+        ticker.setTicksPerBeat(info.getTicksPerBeat());
+        ticker.setPartLength(info.getPartLength());
+        ticker.setBeatsPerBar(info.getBeatsPerBar());
+        info.getPlayers().forEach(playerInfo -> {
+            Strike strike = new Strike();
+            PlayerInfo.copyValues(playerInfo, strike, instruments);
+        });
+    }
+
     public static void copyValues(Ticker ticker, TickerInfo info) {
         info.setBar(ticker.getBar());
         info.setBeat((int) ticker.getBeat());
@@ -57,7 +80,6 @@ public class TickerInfo {
         info.setPartLength(ticker.getPartLength());
         info.setBeatsPerBar(ticker.getBeatsPerBar());
         info.setTick(ticker.getTick());
-//        info.setPlayers(ticker.getPlayers().stream().map(PlayerInfo::fromPlayer).collect(Collectors.toSet()));
     }
 
     public static TickerInfo fromTicker(Ticker ticker) {

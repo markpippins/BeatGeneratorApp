@@ -38,11 +38,6 @@ public class PlayerController {
         return service.mutePlayer(playerId);
     }
 
-    @GetMapping("/player/rules")
-    public List<Rule> getRules(@RequestParam Long playerId) {
-        return service.getRules(playerId);
-    }
-
     @GetMapping("/player/update")
     public void updatePlayer(@RequestParam Long playerId, @RequestParam int updateType, @RequestParam int updateValue) {
         service.updatePlayer(playerId, updateType, updateValue);

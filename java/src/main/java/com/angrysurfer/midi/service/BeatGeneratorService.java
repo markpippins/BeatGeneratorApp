@@ -261,6 +261,15 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
+    public void loadTicker(long tickerId) {
+        Optional<TickerInfo> infoOpt = tickerInfoRepo.findById(tickerId);
+        if (infoOpt.isPresent()) {
+            TickerInfo info = infoOpt.get();
+            TickerInfo.copyValues(info, beatGenerator, beatGenerator.getInstrumentMap());
+        }
+    }
+
+    @Override
     public List<PlayerInfo> getPlayers() {
         return beatGenerator.getPlayers()
                 .stream().map(PlayerInfo::fromPlayer).toList();

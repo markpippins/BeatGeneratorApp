@@ -2,12 +2,14 @@ package com.angrysurfer.midi.model.config;
 
 import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
+import com.angrysurfer.midi.service.IMidiInstrument;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -50,6 +52,19 @@ public class PlayerInfo implements Serializable {
 //        info.setMinVelocity(player.getMinVelocity());
 //        info.setMaxVelocity(player.getMaxVelocity());
 //    }
+
+    static void copyValues(PlayerInfo info, Player player, Map<String, IMidiInstrument> instruments) {
+        player.setAllowedControlMessages(info.getAllowedControlMessages());
+        player.setPreset(info.getPreset());
+        player.setChannel(info.getChannel());
+        player.setInstrument(instruments.getOrDefault(info.getInstrument(), null));
+        player.setRules(info.getRules());
+        player.setNote(info.getNote());
+        player.setId(info.getId());
+        player.setMuted(info.isMuted());
+        player.setMinVelocity(info.getMinVelocity());
+        player.setMaxVelocity(info.getMaxVelocity());
+    }
 
     static void copyValues(Player player, PlayerInfo info) {
         info.setAllowedControlMessages(player.getAllowedControlMessages());
