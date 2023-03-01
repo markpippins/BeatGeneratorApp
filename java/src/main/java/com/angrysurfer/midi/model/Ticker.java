@@ -44,8 +44,8 @@ public abstract class Ticker implements Runnable, Serializable {
     private List<Player> players = new ArrayList<>();
     @JsonIgnore
     private ExecutorService executor;
-    private int ticksPerBeat = 24;
-    private double beat = 1.0;
+    private int ticksPerBeat = 96;
+    private double beat = 0;
     private double granularBeat = 1.0;
     private int beatsPerBar = 4;
     private double beatDivider = 4.0;
@@ -80,32 +80,15 @@ public abstract class Ticker implements Runnable, Serializable {
 
     private void onTickChange() {
         setBeat(getBeat() + (1.0 / getTicksPerBeat()));
-        if (this.beat == getBeatsPerBar())
+        if (this.beat == getBeatsPerBar()) {
             this.bar.set(this.bar.get() + 1);
-
-        if (getBeat() > getBeatsPerBar()) {
-            setBeat(1.0);
-            this.bar.set(this.bar.get() + 1);
+            onBarChange(this.bar.get());
         }
 
-//        if (getBeat() % 1.0 == 0)
-//            onBeatChange(bar.get());
-
-//        if (tick.get() % (getTicksPerBeat() / getBeatsPerBar()) == 0) {
-//            if (getBeat() == getBeatsPerBar())
-//                beat = 1;
-//            else beat += 1;
-//            onBeatChange(bar.get());
-//        }
-//
-//        if (tick.get() % getTicksPerBeat() == 0) {
-//            synchronized (bar) {
-//                bar.set(bar.get() + 1);
-//                if (bar.get() >= getPartLength())
-//                    bar.set(0);
-//                onBarChange(bar.get());
-//            }
-//        }
+        if (getBeat() > getBeatsPerBar()) {
+            setBeat(0);
+            this.bar.set(this.bar.get() + 1);
+        }
     }
 
     public abstract void onBarChange(int bar);
@@ -115,12 +98,11 @@ public abstract class Ticker implements Runnable, Serializable {
     @Override
     public void run() {
         reset();
+        createMuteGroups();
         setPlaying(true);
         setDone(false);
         setStopped(false);
-
         if (initialized)
-
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -149,13 +131,16 @@ public abstract class Ticker implements Runnable, Serializable {
                                 throw new RuntimeException(e);
                             }
                         try {
-                            Thread.sleep(100);
+                            Thread.sleep(50);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
                     }
                 }
             }).start();
+    }
+
+    private void createMuteGroups() {
     }
 
     @JsonIgnore

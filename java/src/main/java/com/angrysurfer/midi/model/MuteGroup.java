@@ -11,5 +11,4 @@ import java.util.List;
 public class MuteGroup { // should extend event
     private String name;
     private List<Player> players = new ArrayList<>();
-
 }

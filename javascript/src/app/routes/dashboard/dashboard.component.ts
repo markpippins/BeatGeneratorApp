@@ -79,7 +79,7 @@ export class DashboardComponent implements OnInit {
       // var update: boolean = this.isPlaying && this.players.length != (<Player[]>data).length
       this.players = data;
       // if (update && this.isPlaying) {
-      await this.midiService.delay(500);
+      await this.midiService.delay(1000);
       this.updateDisplay();
       // }
     });

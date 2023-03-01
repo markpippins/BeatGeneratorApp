@@ -16,7 +16,7 @@ export class RuleTableComponent {
   GREATER_THAN = 1
   LESS_THAN = 2
   MODULO = 3
-  COMPARISON = ["EQUALS", "GREATER_THAN", "LESS_THAN", "MODULO"]
+  COMPARISON = ["=", ">", "<", "%", "*", "/"]
   TICK = 0
   BEAT = 1
   BAR = 2
