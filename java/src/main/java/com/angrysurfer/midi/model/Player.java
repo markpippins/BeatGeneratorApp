@@ -16,6 +16,7 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
 @Setter
@@ -40,7 +41,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private int position = 0;
     @JsonIgnore
     @Transient
-    private AtomicInteger lastTick = new AtomicInteger(0);
+    private AtomicLong lastTick = new AtomicLong(0);
     private int preset;
     @JsonIgnore
     @Transient
@@ -80,14 +81,14 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     public abstract void setId(Long id);
 
-    public abstract void onTick(int tick, int bar);
+    public abstract void onTick(long tick, int bar);
 
     @Override
     public Boolean call() {
         setEven(!even);
         if (getLastTick().get() == getTicker().getTick())
             return Boolean.FALSE;
-        int tick = getTicker().getTick();
+        long tick = getTicker().getTick();
         int bar = getTicker().getBar();
         double beatOffset = 1.0;
         getLastTick().set(tick);
@@ -147,7 +148,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     }
 
     @JsonIgnore
-    public boolean shouldPlay(int tick, int bar) {
+    public boolean shouldPlay(long tick, int bar) {
         AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
         getRules().forEach(rule -> {
             switch (rule.getOperatorId()) {

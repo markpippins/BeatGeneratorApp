@@ -8,8 +8,7 @@
       <th *ngFor="let col of statusColumns;">{{col}}</th>
     </tr>
     <tr *ngIf="ticker != undefined">
-      <td class="fixed">
-      </td>
+
       <td class="fixed">
         {{ ticker.tick }}
       </td>
@@ -18,6 +17,10 @@
       </td>
       <td class="fixed">
         {{ ticker.bar }}
+      </td>
+      <td *ngIf="ticker.playing" class="green">
+      </td>
+      <td *ngIf="!ticker.playing" class="red">
       </td>
       <td>
         <input type="number" disabled="true" value="{{ ticker.ticksPerBeat }}">

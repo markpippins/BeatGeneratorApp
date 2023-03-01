@@ -42,7 +42,7 @@ public class Strike extends Player {
     }
 
     @Override
-    public void onTick(int tick, int bar) {
+    public void onTick(long tick, int bar) {
         drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
     }
 }

@@ -9,13 +9,14 @@ import {Ticker} from "../../models/ticker";
 })
 export class StatusPanelComponent implements OnInit {
 
-  statusColumns = ['Status', 'Tick', 'Beat', 'Bar', 'PPQ', 'BPM', 'Beats / Bar', 'Part Length', 'Max']
+  statusColumns = ['Tick', 'Beat', 'Bar', '', 'PPQ', 'BPM', 'Beats / Bar', 'Part Length', 'Max']
 
   @Output()
   ticker!: Ticker;
 
   @Output()
   clickEvent = new EventEmitter<string>();
+
   constructor(private midiService: MidiService) {
   }
 

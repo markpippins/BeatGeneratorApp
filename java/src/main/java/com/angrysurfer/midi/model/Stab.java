@@ -15,7 +15,7 @@ public class Stab extends Player {
     private Long id;
 
     @Override
-    public void onTick(int tick, int bar) {
+    public void onTick(long tick, int bar) {
 
     }
 }

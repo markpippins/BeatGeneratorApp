@@ -13,7 +13,7 @@ public class TickerInfo {
     static Logger logger = LoggerFactory.getLogger(TickerInfo.class.getCanonicalName());
     public boolean done;
     private int bar;
-    private int tick;
+    private long tick;
     private int ticksPerBeat;
     private int beatsPerBar;
     private int beat;
@@ -31,7 +31,7 @@ public class TickerInfo {
         TickerInfo info = new TickerInfo();
 
         info.setBar(ticker.getBar());
-        info.setBeat(ticker.getBeat());
+        info.setBeat((int) ticker.getBeat());
         info.setDone(ticker.isDone());
         info.setTempoInBPM(ticker.getTempoInBPM());
         info.setBeatDivider(ticker.getBeatDivider());

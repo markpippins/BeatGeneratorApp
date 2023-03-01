@@ -1,7 +1,5 @@
 import {Component, EventEmitter, Output} from '@angular/core'
 import {MidiService} from "../../../services/midi.service"
-import {MaterialIcon} from "material-icons";
-import {MatButtonModule} from "@angular/material/button";
 
 @Component({
   selector: 'app-transport-control',
@@ -11,7 +9,7 @@ import {MatButtonModule} from "@angular/material/button";
 export class TransportControlComponent {
   @Output()
   clickEvent = new EventEmitter<string>()
-
+  isPlaying = false;
   constructor(private midiService: MidiService) {
   }
 
@@ -31,12 +29,14 @@ export class TransportControlComponent {
       }
       case 'play': {
         this.midiService.startClicked().subscribe()
+        this.isPlaying = true
         // this.isPlaying = true
         // this.updateDisplay()
         break
       }
       case 'stop': {
         this.midiService.stopClicked().subscribe()
+        this.isPlaying = false
         // this.isPlaying = false
         // this.players = []
         // this.playerConditions = []

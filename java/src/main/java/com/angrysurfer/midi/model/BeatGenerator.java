@@ -77,6 +77,11 @@ public class BeatGenerator extends Ticker {
         }
     }
 
+    @Override
+    public void onBeatChange(long beat) {
+
+    }
+
     public void loadBeat(String fileName) {
 
         try {

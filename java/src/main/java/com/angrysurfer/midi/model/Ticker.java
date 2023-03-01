@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
 @Setter
@@ -36,21 +37,22 @@ public abstract class Ticker implements Runnable, Serializable {
     @JsonIgnore
     private final AtomicInteger bar = new AtomicInteger(0);
     @JsonIgnore
-    private final AtomicInteger tick = new AtomicInteger(0);
+    private final AtomicLong tick = new AtomicLong(0);
     @JsonIgnore
     public boolean done = false;
     @JsonIgnore
     private List<Player> players = new ArrayList<>();
     @JsonIgnore
     private ExecutorService executor;
-    private int ticksPerBeat = 16; //16384;
-    private int beat;
+    private int ticksPerBeat = 24;
+    private double beat = 1.0;
+    private double granularBeat = 1.0;
     private int beatsPerBar = 4;
     private double beatDivider = 4.0;
     private int tempoInBPM = 120;
-    private int partLength = 64;
+    private int partLength = 16;
     private int maxTracks = 128;
-    private int songLength = 64;
+    private int songLength = Integer.MAX_VALUE;
     private int swing = 25;
     private boolean playing = false;
     private boolean stopped = false;
@@ -76,34 +78,39 @@ public abstract class Ticker implements Runnable, Serializable {
         beat = 1;
     }
 
-    private void incrementTick() {
-        synchronized (tick) {
-            tick.incrementAndGet();
+    private void onTickChange() {
+        setBeat(getBeat() + (1.0 / getTicksPerBeat()));
+        if (this.beat == getBeatsPerBar())
+            this.bar.set(this.bar.get() + 1);
+
+        if (getBeat() > getBeatsPerBar()) {
+            setBeat(1.0);
+            this.bar.set(this.bar.get() + 1);
         }
 
-        if (tick.get() % (getTicksPerBeat() / getBeatsPerBar()) == 0) {
-            if (getBeat() == getBeatsPerBar())
-                beat = 1;
-            else beat += 1;
-            onBeatChange(bar.get());
-        }
+//        if (getBeat() % 1.0 == 0)
+//            onBeatChange(bar.get());
 
-        if (tick.get() % getTicksPerBeat() == 0) {
-            synchronized (bar) {
-                bar.set(bar.get() + 1);
-                if (bar.get() >= getPartLength())
-                    bar.set(0);
-                onBarChange(bar.get());
-            }
-        }
+//        if (tick.get() % (getTicksPerBeat() / getBeatsPerBar()) == 0) {
+//            if (getBeat() == getBeatsPerBar())
+//                beat = 1;
+//            else beat += 1;
+//            onBeatChange(bar.get());
+//        }
+//
+//        if (tick.get() % getTicksPerBeat() == 0) {
+//            synchronized (bar) {
+//                bar.set(bar.get() + 1);
+//                if (bar.get() >= getPartLength())
+//                    bar.set(0);
+//                onBarChange(bar.get());
+//            }
+//        }
     }
 
-    public void onBarChange(int bar) {
-    }
+    public abstract void onBarChange(int bar);
 
-    public void onBeatChange(int beat) {
-
-    }
+    public abstract void onBeatChange(long beat);
 
     @Override
     public void run() {
@@ -113,38 +120,42 @@ public abstract class Ticker implements Runnable, Serializable {
         setStopped(false);
 
         if (initialized)
-            try {
-                Sequence sequence = new Sequence(Sequence.PPQ, getTicksPerBeat());
-                Track track = sequence.createTrack();
-                track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 34, 127), 1000));
-                sequencer.setTempoInBPM(120);
-                sequencer.setSequence(sequence);
-                sequencer.setLoopCount(100);
-                sequencer.open();
-                sequencer.start();
 
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        while (sequencer.isRunning() && !isStopped() && isPlaying()) {
-                            if (sequencer.getTickPosition() > getTick())
-                                try {
-                                    incrementTick();
-                                    getExecutor().invokeAll(getPlayers());
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                    Sequence sequence = null;
+                    try {
+                        sequence = new Sequence(Sequence.PPQ, getTicksPerBeat());
+                        Track track = sequence.createTrack();
+                        track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 34, 127), 1000));
+                        sequencer.setTempoInBPM(getTempoInBPM());
+                        sequencer.setSequence(sequence);
+                        sequencer.setLoopCount(100);
+                        sequencer.open();
+                        sequencer.start();
+                    } catch (InvalidMidiDataException | MidiUnavailableException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    while (sequencer.isRunning() && !isStopped() && isPlaying()) {
+                        if (sequencer.getTickPosition() != getTick())
                             try {
-                                Thread.sleep(100);
+                                tick.set(sequencer.getTickPosition());
+                                onTickChange();
+                                getExecutor().invokeAll(getPlayers());
                             } catch (InterruptedException e) {
                                 throw new RuntimeException(e);
                             }
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
                         }
                     }
-                }).start();
-            } catch (MidiUnavailableException | InvalidMidiDataException e) {
-                throw new RuntimeException(e);
-            }
+                }
+            }).start();
     }
 
     @JsonIgnore
@@ -153,7 +164,7 @@ public abstract class Ticker implements Runnable, Serializable {
     }
 
     @JsonIgnore
-    public synchronized int getTick() {
+    public synchronized long getTick() {
         return tick.get();
     }
 

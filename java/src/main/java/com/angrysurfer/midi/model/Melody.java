@@ -36,7 +36,7 @@ public class Melody extends Player {
     }
 
     @Override
-    public void onTick(int tick, int bar) {
+    public void onTick(long tick, int bar) {
 
     }
 

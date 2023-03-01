@@ -10,13 +10,18 @@ public interface Comparison {
 
     static int MODULO = 3;
 
-    public static boolean evaluate(int comparisonType, Integer a, Double b) {
+    public static boolean evaluate(int comparisonType, Long a, Double b) {
         return evaluate(comparisonType, Double.valueOf(a), b);
     }
 
-    public static boolean evaluate(int comparisonType, Integer a, Integer b) {
+    public static boolean evaluate(int comparisonType, Integer a, Double b) {
+        return evaluate(comparisonType, Long.valueOf(a), b);
+    }
+
+    public static boolean evaluate(int comparisonType, Long a, Long b) {
         return evaluate(comparisonType, Double.valueOf(a), Double.valueOf(b));
     }
+
 
     public static boolean evaluate(int comparisonType, Double a, Double b) {
         switch (comparisonType) {

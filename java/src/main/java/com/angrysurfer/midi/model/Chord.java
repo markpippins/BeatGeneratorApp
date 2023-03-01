@@ -13,7 +13,7 @@ public class Chord extends Player {
     @Column(name = "id", nullable = false)
     private Long id;
     @Override
-    public void onTick(int tick, int bar) {
+    public void onTick(long tick, int bar) {
 
     }
 }

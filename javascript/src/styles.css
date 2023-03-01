@@ -111,6 +111,9 @@ svg.material-icons:not(:last-child) {
 .card svg.material-icons path {
   fill: #888;
 }
+.status-table {
+  margin-top: 4px;
+}
 
 .default-container{
   display: grid;
@@ -518,11 +521,16 @@ th {
 }
 
 .fixed {
-  color: #12d312;
   background-color: black;
-  font-weight: bold;
   text-align: center;
-  min-width: 30px;
+}
+
+.red {
+  background-color: red;
+}
+
+.green {
+  background-color: lawngreen;
 }
 
 .slider {
