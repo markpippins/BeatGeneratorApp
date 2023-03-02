@@ -1,10 +1,5 @@
 package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.config.PlayerInfo;
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -14,7 +9,6 @@ import javax.sound.midi.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,7 +17,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @Getter
 @Setter
 public abstract class Ticker implements Runnable, Serializable {
-    static final Random rand = new Random();
     static Logger logger = LoggerFactory.getLogger(Ticker.class.getCanonicalName());
     static boolean initialized = false;
     static Sequencer sequencer;
@@ -38,15 +31,12 @@ public abstract class Ticker implements Runnable, Serializable {
     }
 
     private final AtomicInteger bar = new AtomicInteger(0);
-
     private final AtomicLong tick = new AtomicLong(0);
-    
     public boolean done = false;
-    
+    private Long id;
     private List<Player> players = new ArrayList<>();
-
     private ExecutorService executor;
-    private int ticksPerBeat = 96;
+    private int ticksPerBeat = 24;
     private double beat = 0;
     private double granularBeat = 1.0;
     private int beatsPerBar = 4;
@@ -56,11 +46,11 @@ public abstract class Ticker implements Runnable, Serializable {
     private int maxTracks = 128;
     private int songLength = Integer.MAX_VALUE;
     private int swing = 25;
-    
+
     private boolean playing = false;
-    
+
     private boolean stopped = false;
-    
+
     private boolean paused = false;
     private MuteGroupList muteGroups = new MuteGroupList();
 
@@ -115,35 +105,26 @@ public abstract class Ticker implements Runnable, Serializable {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-
-                    Sequence sequence = null;
                     try {
-                        sequence = new Sequence(Sequence.PPQ, getTicksPerBeat());
+                        Sequence sequence = new Sequence(Sequence.PPQ, getTicksPerBeat());
                         Track track = sequence.createTrack();
-                        track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 34, 127), 1000));
+                        track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 0, 0), 1000));
                         sequencer.setTempoInBPM(getTempoInBPM());
                         sequencer.setSequence(sequence);
-                        sequencer.setLoopCount(100);
+                        sequencer.setLoopCount(Integer.MAX_VALUE);
                         sequencer.open();
                         sequencer.start();
-                    } catch (InvalidMidiDataException | MidiUnavailableException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    while (sequencer.isRunning() && !isStopped() && isPlaying()) {
-                        if (sequencer.getTickPosition() != getTick())
-                            try {
-                                tick.set(sequencer.getTickPosition());
+                        while (sequencer.isRunning() && !isStopped() && isPlaying()) {
+                            while (sequencer.getTickPosition() > getTick()) {
+                                tick.incrementAndGet();
                                 onTickChange();
                                 getExecutor().invokeAll(getPlayers());
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
                             }
-                        try {
-                            Thread.sleep(50);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
+                            Thread.sleep(5);
                         }
+                        sequencer.close();
+                    } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
+                        throw new RuntimeException(e);
                     }
                 }
             }).start();
@@ -152,19 +133,17 @@ public abstract class Ticker implements Runnable, Serializable {
     private void createMuteGroups() {
     }
 
-    
-    
+
     public synchronized int getBar() {
         return bar.get();
     }
 
-    
-    
+
     public synchronized long getTick() {
         return tick.get();
     }
 
-    
+
     public double getBeatDivision() {
         return 1.0 / beatDivider;
     }

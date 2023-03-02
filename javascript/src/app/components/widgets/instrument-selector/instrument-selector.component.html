@@ -1,1 +1,19 @@
-<p>instrument-selector works!</p>
+<div class="selector-row">
+  <!--  <p>Channel</p>-->
+  <!--  <mat-form-field appearance="outline" [style.width.px]="60">-->
+  <!--    <mat-select (selectionChange)="onSelect($event, $event.value)" [(ngModel)]="channel">-->
+  <!--      <mat-option *ngFor="let ch of midiChannels" [value]="ch">-->
+  <!--        {{ ch }}-->
+  <!--      </mat-option>-->
+  <!--    </mat-select>-->
+  <!--  </mat-form-field>-->
+
+  <form>
+    <select id="instrumentSelect" [value]="selectedInstrument" (change)="selectionChange($event)">
+      <option *ngFor="let inst of instruments | keyvalue" [value]="inst">{{inst.value.name}}</option>
+    </select>
+  </form>
+
+  <b *ngIf="selectedInstrument != undefined">{{ selectedInstrument.name }}</b>
+  <b *ngIf="selectedInstrument == undefined"></b>
+</div>

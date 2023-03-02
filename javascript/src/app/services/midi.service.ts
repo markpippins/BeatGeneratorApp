@@ -154,4 +154,8 @@ export class MidiService {
       params: params,
     });
   }
+
+  refreshClicked() {
+    return this.http.get('http://localhost:8080/api/ticker/info');
+  }
 }

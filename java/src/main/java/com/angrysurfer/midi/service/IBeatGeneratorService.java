@@ -50,5 +50,7 @@ public interface IBeatGeneratorService {
 
     public void removeRule(Long playerId, Long conditionId);
 
-    void loadTicker(long tickerId);
+    TickerInfo loadTicker(long tickerId);
+
+    TickerInfo newTicker();
 }

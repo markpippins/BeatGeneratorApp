@@ -14,10 +14,14 @@
         (click)="onRowClick(player, $event)">
 
       <td class="player-short-col" id="player-col-channel-{{player.id}}">
+        {{ player.id }}
+      </td>
+      <td class="player-short-col" id="player-col-channel-{{player.id}}">
         {{ player.channel }}
       </td>
       <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
-        {{ player.instrument }} {{ player.id}}
+<!--        {{ player.instrument }}-->
+        <app-instrument-selector></app-instrument-selector>
       </td>
       <td class="player-short-col" id="player-col-preset-{{player.id}}">
         {{ player.preset }}

@@ -11,7 +11,7 @@
 
 <div class="content dashboard" role="main">
   <div class="default-container">
-    <app-transport-control></app-transport-control>
+    <app-transport-control (clickEvent)="onActionSelected($event)"></app-transport-control>
     <app-status-panel></app-status-panel>
   </div>
   <mat-tab-group>

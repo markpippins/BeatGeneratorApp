@@ -38,7 +38,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     static int CLOSED_HAT = 38;
     static int OPEN_HAT = 39;
 //    static MidiDevice device = getDevice();
-    private final BeatGenerator beatGenerator = new BeatGenerator(Integer.MAX_VALUE);
+    private BeatGenerator beatGenerator = new BeatGenerator(Integer.MAX_VALUE);
     private IMIDIService midiService;
     private PlayerInfoRepository playerInfoRepository;
     private RuleRepository ruleRepository;
@@ -261,12 +261,25 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public void loadTicker(long tickerId) {
+    public TickerInfo loadTicker(long tickerId) {
+        TickerInfo result = null;
+
         Optional<TickerInfo> infoOpt = tickerInfoRepo.findById(tickerId);
         if (infoOpt.isPresent()) {
-            TickerInfo info = infoOpt.get();
-            TickerInfo.copyValues(info, beatGenerator, beatGenerator.getInstrumentMap());
+            result = infoOpt.get();
+            TickerInfo.copyValues(result, beatGenerator, beatGenerator.getInstrumentMap());
         }
+
+        return result;
+    }
+
+    @Override
+    public TickerInfo newTicker() {
+        this.beatGenerator = new BeatGenerator(Integer.MAX_VALUE);
+        TickerInfo result = TickerInfo.fromTicker(this.beatGenerator);
+        tickerInfoRepo.save(result);
+        this.beatGenerator.setId(tickerInfo.getId());
+        return result;
     }
 
     @Override

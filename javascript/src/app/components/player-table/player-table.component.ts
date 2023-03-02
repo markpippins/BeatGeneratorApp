@@ -21,9 +21,9 @@ export class PlayerTableComponent {
     // 'add',
     // 'remove',
     // 'mute',
-    // 'id',
+    'id',
     'Ch',
-    'Strike',
+    'Device',
     'Pre',
     'Note',
     // 'operator',
@@ -60,6 +60,19 @@ export class PlayerTableComponent {
       case 'remove': {
         this.midiService.removePlayerClicked(player).subscribe(async (data) => {
           this.players = data;
+          if (this.players.length == 0)
+            this.selectedPlayer = {
+              allowedControlMessages: [],
+              channel: 0,
+              id: 0,
+              instrument: "",
+              maxVelocity: 0,
+              minVelocity: 0,
+              note: 0,
+              preset: 0,
+              probability: 0,
+              rules: []
+            }
         });
         this.players = this.players.filter(p => p.id != player.id)
         break
@@ -69,7 +82,18 @@ export class PlayerTableComponent {
 
 
   initBtnClicked() {
-    this.midiService.addPlayerClicked().subscribe();
+    this.onBtnClick({
+      allowedControlMessages: [],
+      channel: 0,
+      id: 0,
+      instrument: "",
+      maxVelocity: 0,
+      minVelocity: 0,
+      note: 0,
+      preset: 0,
+      probability: 0,
+      rules: []
+    }, 'add')
   }
 
   noteChange(player: Player, event: { target: any; }) {

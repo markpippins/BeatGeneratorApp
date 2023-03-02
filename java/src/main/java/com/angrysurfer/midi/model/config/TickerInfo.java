@@ -45,6 +45,7 @@ public class TickerInfo {
     private MuteGroupList muteGroups;
 
     public static void copyValues(TickerInfo info, Ticker ticker, Map<String, IMidiInstrument> instruments) {
+        ticker.setId(info.getId());
         ticker.setBeat((int) info.getBeat());
         ticker.setDone(info.isDone());
         ticker.setTempoInBPM(info.getTempoInBPM());
@@ -65,6 +66,7 @@ public class TickerInfo {
     }
 
     public static void copyValues(Ticker ticker, TickerInfo info) {
+        info.setId(ticker.getId());
         info.setBar(ticker.getBar());
         info.setBeat((int) ticker.getBeat());
         info.setDone(ticker.isDone());
@@ -80,7 +82,11 @@ public class TickerInfo {
         info.setPartLength(ticker.getPartLength());
         info.setBeatsPerBar(ticker.getBeatsPerBar());
         info.setTick(ticker.getTick());
-    }
+//        info.getPlayers().forEach(playerInfo -> {
+//            Strike strike = new Strike();
+//            PlayerInfo.copyValues(playerInfo, strike, instruments);
+//        });
+     }
 
     public static TickerInfo fromTicker(Ticker ticker) {
         TickerInfo info = new TickerInfo();

@@ -80,26 +80,28 @@ export class RuleTableComponent {
   }
 
   btnClicked(rule: Rule, command: string) {
-    switch (command) {
-      case 'add': {
-        this.midiService.addRuleClicked(this.player).subscribe(async (data) => {
-          this.player.rules.push(data)
+    if (this.player.id > 0)
+      switch (command) {
+        case 'add': {
+          this.midiService.addRuleClicked(this.player).subscribe(async (data) => {
+            this.player.rules.push(data)
+            this.ruleChangeEvent.emit(this.player)
+          })
+          break
+        }
+        case 'remove': {
+          this.player.rules = this.player.rules.filter(r => r.id != rule.id)
+          this.midiService.removeRuleClicked(this.player, rule).subscribe()
           this.ruleChangeEvent.emit(this.player)
-        })
-        break
+          break
+        }
       }
-      case 'remove': {
-        this.player.rules = this.player.rules.filter(r => r.id != rule.id)
-        this.midiService.removeRuleClicked(this.player, rule).subscribe()
-        this.ruleChangeEvent.emit(this.player)
-        break
-      }
-    }
   }
 
   initBtnClick() {
-    this.midiService.addRuleClicked(this.player).subscribe(async (data) => {
-      this.player.rules.push(data)
-    })
+    if (this.player.id > 0)
+      this.midiService.addRuleClicked(this.player).subscribe(async (data) => {
+        this.player.rules.push(data)
+      })
   }
 }

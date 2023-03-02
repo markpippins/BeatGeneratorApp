@@ -1,4 +1,5 @@
 export interface Ticker {
+  id: number;
   tick: number;
   done: boolean;
   bar: number;
