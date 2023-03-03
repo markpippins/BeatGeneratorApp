@@ -1,4 +1,4 @@
-import {Component, EventEmitter, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {MidiService} from "../../services/midi.service";
 import {Ticker} from "../../models/ticker";
 
@@ -9,9 +9,12 @@ import {Ticker} from "../../models/ticker";
 })
 export class StatusPanelComponent implements OnInit {
 
-  statusColumns = ['id', 'Tick', 'Beat', 'Bar', '', 'PPQ', 'BPM', 'Beats / Bar', 'Part Length', 'Max']
+  statusColumns = ['Ticker', 'Tick', 'Beat', 'Bar', '', 'PPQ', 'BPM', 'Beats / Bar', 'Part Length', 'Max']
 
-  @Output()
+  @Input()
+  running = false
+
+  @Input()
   ticker!: Ticker;
 
   @Output()
@@ -31,9 +34,9 @@ export class StatusPanelComponent implements OnInit {
   }
 
   updateDisplay(): void {
-    this.midiService.tickerInfo().subscribe(async (data) => {
+    this.midiService.tickerStatus().subscribe(async (data) => {
       this.ticker = data;
-      await this.midiService.delay(this.ticker == undefined ? 5000 : 50);
+      await this.midiService.delay(this.running ? 5000 : 50);
       this.updateDisplay();
     });
   }

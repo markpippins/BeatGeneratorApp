@@ -31,8 +31,16 @@ export class MidiService {
     return this.http.get('http://localhost:8080/api/ticker/start');
   }
 
-  nextClicked() {
-    return this.http.get('http://localhost:8080/api/ticker/next');
+  nextClicked(currentTickerId: number) {
+    let params = new HttpParams();
+    params = params.append('currentTickerId', currentTickerId);
+    return this.http.get<Ticker>('http://localhost:8080/api/ticker/next', {params});
+  }
+
+  previousClicked(currentTickerId: number) {
+    let params = new HttpParams();
+    params = params.append('currentTickerId', currentTickerId);
+    return this.http.get<Ticker>('http://localhost:8080/api/ticker/previous', {params});
   }
 
   stopClicked() {
@@ -49,6 +57,10 @@ export class MidiService {
 
   tickerInfo() {
     return this.http.get<Ticker>('http://localhost:8080/api/ticker/info');
+  }
+
+  tickerStatus() {
+    return this.http.get<Ticker>('http://localhost:8080/api/ticker/status');
   }
 
   instrumentInfo(channel: number) {

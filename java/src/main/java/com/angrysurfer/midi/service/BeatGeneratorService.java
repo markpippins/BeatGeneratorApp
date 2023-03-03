@@ -3,8 +3,8 @@ package com.angrysurfer.midi.service;
 import com.angrysurfer.midi.model.*;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
-import com.angrysurfer.midi.repo.RuleRepository;
 import com.angrysurfer.midi.repo.PlayerInfoRepository;
+import com.angrysurfer.midi.repo.RuleRepository;
 import com.angrysurfer.midi.repo.TickerInfoRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,19 +12,14 @@ import org.springframework.stereotype.Service;
 
 import javax.sound.midi.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static com.angrysurfer.midi.controller.PlayerUpdateType.NOTE;
 
 @Service
 public class BeatGeneratorService implements IBeatGeneratorService {
-
-    static final AtomicLong conditionsCounter = new AtomicLong(-0);
-    static final Random rand = new Random();
     static final String RAZZ = "Razzmatazz";
     static final String MICROFREAK = "MicroFreak";
     static Logger log = LoggerFactory.getLogger(BeatGeneratorService.class.getCanonicalName());
-    static Logger logger = LoggerFactory.getLogger(BeatGenerator.class.getCanonicalName());
     static Integer[] notes = new Integer[]{27, 22, 27, 23};// {-1, 33 - 24, 26 - 24, 21 - 24};
     static Set<Integer> microFreakParams = Set.of(5, 9, 10, 12, 13, 23, 24, 28, 83, 91, 92, 93, 94, 102, 103);
     static Set<Integer> fireballParams = Set.of(40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60);
@@ -37,7 +32,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     static int SNARE = 37;
     static int CLOSED_HAT = 38;
     static int OPEN_HAT = 39;
-//    static MidiDevice device = getDevice();
+    //    static MidiDevice device = getDevice();
     private BeatGenerator beatGenerator = new BeatGenerator(Integer.MAX_VALUE);
     private IMIDIService midiService;
     private PlayerInfoRepository playerInfoRepository;
@@ -46,13 +41,14 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     private TickerInfo tickerInfo;
 
     private TickerInfoRepo tickerInfoRepo;
+
     public BeatGeneratorService(IMIDIService midiService, PlayerInfoRepository playerInfoRepository,
                                 RuleRepository ruleRepository, TickerInfoRepo tickerInfoRepo) {
         this.midiService = midiService;
         this.ruleRepository = ruleRepository;
         this.playerInfoRepository = playerInfoRepository;
         this.tickerInfoRepo = tickerInfoRepo;
-        this.tickerInfo = TickerInfo.fromTicker(beatGenerator);
+        this.tickerInfo = TickerInfo.fromTicker(beatGenerator, true);
     }
 
     @Override
@@ -92,7 +88,17 @@ public class BeatGeneratorService implements IBeatGeneratorService {
 
     @Override
     public TickerInfo getTickerInfo() {
-        return TickerInfo.fromTicker(beatGenerator);
+        return TickerInfo.fromTicker(beatGenerator, true);
+    }
+
+    @Override
+    public TickerInfo getTickerStatus() {
+        return TickerInfo.fromTicker(beatGenerator, false);
+    }
+
+    @Override
+    public List<TickerInfo> getAllTickerInfo() {
+        return tickerInfoRepo.findAll();
     }
 
     @Override
@@ -131,7 +137,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
                             ShortMessage message = new ShortMessage();
                             message.setMessage(messageType, channel, data1, data2);
                             device.getReceiver().send(message, 0L);
-                            logger.info(String.join(", ",
+                            log.info(String.join(", ",
                                     MidiMessage.lookupCommand(message.getCommand()),
                                     "Channel: ".concat(Integer.valueOf(message.getChannel()).toString()),
                                     "Data 1: ".concat(Integer.valueOf(message.getData1()).toString()),
@@ -164,7 +170,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
         PlayerInfo info = playerInfoRepository.save(PlayerInfo.fromPlayer(strike));
         strike.setId(info.getId());
         this.beatGenerator.getPlayers().add(strike);
-        TickerInfo.copyValues(this.beatGenerator, this.tickerInfo);
+        TickerInfo.copyValues(this.beatGenerator, this.tickerInfo, true);
         this.tickerInfo.getPlayers().add(info);
         this.tickerInfo = tickerInfoRepo.save(tickerInfo);
         return info;
@@ -209,8 +215,20 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
-    public void next() {
-        this.beatGenerator.next();
+    public TickerInfo next(long currentTickerId) {
+        TickerInfo result = tickerInfoRepo.getNextTicker(currentTickerId);
+        TickerInfo.copyValues(result, this.beatGenerator,
+                beatGenerator.getInstrumentMap());
+        return result;
+    }
+
+
+    @Override
+    public TickerInfo previous(long currentTickerId) {
+        TickerInfo result = tickerInfoRepo.getPreviousTicker(currentTickerId);
+        TickerInfo.copyValues(result, this.beatGenerator,
+                beatGenerator.getInstrumentMap());
+        return result;
     }
 
     @Override
@@ -276,7 +294,7 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     @Override
     public TickerInfo newTicker() {
         this.beatGenerator = new BeatGenerator(Integer.MAX_VALUE);
-        TickerInfo result = TickerInfo.fromTicker(this.beatGenerator);
+        TickerInfo result = TickerInfo.fromTicker(this.beatGenerator, true);
         tickerInfoRepo.save(result);
         this.beatGenerator.setId(tickerInfo.getId());
         return result;
@@ -313,10 +331,6 @@ public class BeatGeneratorService implements IBeatGeneratorService {
                             ShortMessage noteOff = new ShortMessage();
                             noteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, 127);
                             device.getReceiver().send(noteOff, 0L);
-
-//                             instrument.noteOn(channel, note);
-//                            Thread.sleep(2500);
-//                             instrument.noteOff(channel, note);
                         } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
                             throw new RuntimeException(e);
                         }

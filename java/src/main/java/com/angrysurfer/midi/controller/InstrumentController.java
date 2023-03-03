@@ -12,7 +12,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 public class InstrumentController {
-
     static Logger logger = LoggerFactory.getLogger(InstrumentController.class.getCanonicalName());
     private final BeatGeneratorService service;
 

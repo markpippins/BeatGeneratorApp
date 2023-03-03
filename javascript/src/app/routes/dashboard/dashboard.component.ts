@@ -2,6 +2,7 @@ import {Component, OnInit, Output} from '@angular/core'
 import {MidiService} from "../../services/midi.service"
 import {Player} from "../../models/player"
 import {MatTabsModule} from '@angular/material/tabs'
+import {Ticker} from "../../models/ticker";
 
 @Component({
   selector: 'app-dashboard',
@@ -16,6 +17,29 @@ export class DashboardComponent implements OnInit {
   @Output()
   selectedPlayer!: Player
 
+  tickerPointer = 0
+  @Output()
+  ticker: Ticker = {
+    bar: 0,
+    beat: 0,
+    beatDivider: 0,
+    beatsPerBar: 0,
+    done: false,
+    id: 0,
+    maxTracks: 0,
+    partLength: 0,
+    players: [],
+    playing: false,
+    songLength: 0,
+    stopped: false,
+    swing: 0,
+    tempoInBPM: 0,
+    tick: 0,
+    ticksPerBeat: 0
+  }
+
+  running = false
+
   constructor(private midiService: MidiService) {
   }
 
@@ -26,22 +50,41 @@ export class DashboardComponent implements OnInit {
   onActionSelected(action: string) {
     switch (action) {
       case 'forward': {
-        // this.toolBarTransportButtonClicked('stop')
-        // this.delay(3000)
-        // this.toolBarTransportButtonClicked('play')
+        this.midiService.nextClicked(this.ticker == undefined ? 0 : this.ticker.id).subscribe(async (data) => {
+          this.ticker = data;
+          this.players = this.ticker.players
+        })
+        break
+      }
+
+      case 'previous': {
+
+        this.midiService.previousClicked(this.ticker == undefined ? 0 : this.ticker.id).subscribe(async (data) => {
+          this.ticker = data;
+          this.players = this.ticker.players
+        })
         break
       }
 
       case 'play': {
         this.midiService.startClicked().subscribe()
         // this.updateDisplay()
+        let element = document.getElementById('transport-btn-play')
+        if (element != null) { // @ts-ignore
+          this.toggleClass(element, 'active')
+        }
+
         break
       }
 
       case 'stop': {
         this.midiService.stopClicked().subscribe()
         this.players = []
-        // this.playerConditions = []
+
+        let element = document.getElementById('transport-btn-play')
+        if (element != null) { // @ts-ignore
+          this.toggleClass(element, 'active')
+        }
         break
       }
 
@@ -73,6 +116,11 @@ export class DashboardComponent implements OnInit {
         // this.players.push(data)
         // this.selectedPlayer = data
         // })
+        break
+      }
+
+      case 'save': {
+        alert('save')
         break
       }
 

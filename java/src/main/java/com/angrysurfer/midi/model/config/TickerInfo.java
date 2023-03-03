@@ -10,6 +10,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -65,7 +66,7 @@ public class TickerInfo {
         });
     }
 
-    public static void copyValues(Ticker ticker, TickerInfo info) {
+    public static void copyValues(Ticker ticker, TickerInfo info, boolean copyPlayers) {
         info.setId(ticker.getId());
         info.setBar(ticker.getBar());
         info.setBeat((int) ticker.getBeat());
@@ -82,16 +83,12 @@ public class TickerInfo {
         info.setPartLength(ticker.getPartLength());
         info.setBeatsPerBar(ticker.getBeatsPerBar());
         info.setTick(ticker.getTick());
-//        info.getPlayers().forEach(playerInfo -> {
-//            Strike strike = new Strike();
-//            PlayerInfo.copyValues(playerInfo, strike, instruments);
-//        });
-     }
-
-    public static TickerInfo fromTicker(Ticker ticker) {
-        TickerInfo info = new TickerInfo();
-        copyValues(ticker, info);
-        return info;
+        info.setPlayers(copyPlayers ? ticker.getPlayers().stream().map(PlayerInfo::fromPlayer).collect(Collectors.toSet()) : Collections.emptySet());
     }
 
+    public static TickerInfo fromTicker(Ticker ticker, boolean copyPlayers) {
+        TickerInfo info = new TickerInfo();
+        copyValues(ticker, info, copyPlayers);
+        return info;
+    }
 }

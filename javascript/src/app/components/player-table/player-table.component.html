@@ -13,7 +13,7 @@
         (mouseenter)="onPass(player, $event)"
         (click)="onRowClick(player, $event)">
 
-      <td class="player-short-col" id="player-col-channel-{{player.id}}">
+      <td class="player-short-col" id="player-col-id-{{player.id}}">
         {{ player.id }}
       </td>
       <td class="player-short-col" id="player-col-channel-{{player.id}}">
@@ -24,7 +24,7 @@
         <app-instrument-selector></app-instrument-selector>
       </td>
       <td class="player-short-col" id="player-col-preset-{{player.id}}">
-        {{ player.preset }}
+        <input type="number" min="1" max="127" step="1" value="{{ player.preset}}">
       </td>
       <td class="player-short-col" (change)="noteChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">

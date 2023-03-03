@@ -1,2 +1,4 @@
-package com.angrysurfer.midi.service;public class TickerService {
+package com.angrysurfer.midi.service;
+
+public class TickerService {
 }

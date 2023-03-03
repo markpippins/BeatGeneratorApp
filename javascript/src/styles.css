@@ -78,15 +78,22 @@ border-width: thin;
 
 body {
  /*background-color: #a3d8ec;*/
-
+  height: 90%;
   /*background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80');*/
   background-repeat: no-repeat;
   background-size: cover;
   background-image: linear-gradient(to left, #f46864, #003954);
+  border-style: dashed;
+  border-width: thin;
+}
+
+.footer {
+
 }
 
 .content {
   display: flex;
+  height: 80%;
   margin: auto auto auto;
   /*padding: 0 16px;*/
   max-width: 960px;
@@ -95,7 +102,7 @@ body {
   gap: 4px;
   color: white;
   font-size: small;
-  border-style: hidden;
+  border-style: dashed;
   border-width: thin;
 }
 
@@ -376,6 +383,8 @@ input:hover, select:hover {
 table {
 	overflow: auto;
 	align-self: stretch;
+	border-style: dashed;
+	border-width: thin;
 }
 
 table tr th:hover {
@@ -527,10 +536,16 @@ th {
 
 .inactive {
   background-color: red;
+  border-radius: 25px;
 }
 
 .active {
-  background-color: lawngreen;
+  background-color: lime;
+  border-radius: 25px;
+}
+
+.neutral {
+  border-radius: 25px;
 }
 
 .slider {

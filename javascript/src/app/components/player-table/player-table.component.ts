@@ -21,7 +21,7 @@ export class PlayerTableComponent {
     // 'add',
     // 'remove',
     // 'mute',
-    'id',
+    'ID',
     'Ch',
     'Device',
     'Pre',

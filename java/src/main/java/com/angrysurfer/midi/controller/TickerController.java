@@ -1,11 +1,12 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.model.config.TickerInfo;
 import com.angrysurfer.midi.service.BeatGeneratorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @CrossOrigin("*")
 @RestController
@@ -26,11 +27,13 @@ public class TickerController {
         logger.info("/ticker/new");
         return service.newTicker();
     }
+
     @GetMapping(path = "/ticker/load")
     public TickerInfo load(@RequestParam long tickerId) {
         logger.info("/ticker/load");
         return service.loadTicker(tickerId);
     }
+
     @GetMapping(path = "/ticker/start")
     public void play() {
         logger.info("/ticker/start");
@@ -50,9 +53,21 @@ public class TickerController {
     }
 
     @GetMapping(path = "/ticker/next")
-    public void next() {
+    public TickerInfo next(@RequestParam long currentTickerId) {
         logger.info("/ticker/next");
-        service.next();
+        return service.next(currentTickerId);
+    }
+
+    @GetMapping(path = "/ticker/previous")
+    public TickerInfo previous(@RequestParam long currentTickerId) {
+        logger.info("/ticker/next");
+        return service.previous(currentTickerId);
+    }
+
+    @GetMapping(path = "/ticker/status")
+    public @ResponseBody TickerInfo getTickerStatus() {
+//        logger.info("/ticker/info");
+        return service.getTickerStatus();
     }
 
     @GetMapping(path = "/ticker/info")
@@ -60,5 +75,12 @@ public class TickerController {
 //        logger.info("/ticker/info");
         return service.getTickerInfo();
     }
+
+    @GetMapping(path = "/tickers/info")
+    public @ResponseBody List<TickerInfo> getAllTickerInfo() {
+//        logger.info("/ticker/info");
+        return service.getAllTickerInfo();
+    }
+
 }
 

@@ -29,10 +29,6 @@
   background-color: #1976d2;
 }
 
-.dashboard {
-  background-color: transparent;
-}
-
 .gridview .selected, .gridview tbody .selected {
   background-color: #6ccbfb;
   color: #fff;

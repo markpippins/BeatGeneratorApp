@@ -2,7 +2,6 @@ package com.angrysurfer.midi.model;
 
 import com.angrysurfer.midi.model.config.BeatGeneratorConfig;
 import com.angrysurfer.midi.model.config.MidiInstrumentList;
-import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.service.IMidiInstrument;
 import com.angrysurfer.midi.service.MIDIService;
 import com.angrysurfer.midi.service.MidiInstrument;
@@ -28,7 +27,7 @@ public class BeatGenerator extends Ticker {
     static MidiDevice device = getDevice();
 
     static ObjectMapper mapper = new ObjectMapper();
-    private List<Strike> pads = new ArrayList<>();
+    private List<Strike> strikes = new ArrayList<>();
 
     private List<Player> addList = new ArrayList<>();
 
@@ -54,13 +53,6 @@ public class BeatGenerator extends Ticker {
         if (new MIDIService().select(device))
             IntStream.range(0, 16).forEach(i -> gen.play());
     }
-
-//    @Override
-//    public PlayerInfo addPlayer(Player player) {
-////        getPlayers().add(player);
-//
-//        return  PlayerInfo.fromPlayer(player);
-//    }
 
     @Override
     public void onBarChange(int bar) {

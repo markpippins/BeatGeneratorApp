@@ -1,3 +1,5 @@
+import {Player} from "./player";
+
 export interface Ticker {
   id: number;
   tick: number;
@@ -15,4 +17,5 @@ export interface Ticker {
   playing: boolean;
   stopped: boolean;
   // muteGroups:
+  players: Player[];
 }

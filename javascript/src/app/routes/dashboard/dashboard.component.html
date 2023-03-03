@@ -11,8 +11,8 @@
 
 <div class="content dashboard" role="main">
   <div class="default-container">
+    <app-status-panel [running]="running" [ticker]="ticker"></app-status-panel>
     <app-transport-control (clickEvent)="onActionSelected($event)"></app-transport-control>
-    <app-status-panel></app-status-panel>
   </div>
   <mat-tab-group>
     <mat-tab label="Beats">
@@ -40,6 +40,9 @@
   </mat-tab-group>
   <div>
   </div>
+</div>
+<div class="footer">
+  footer
 </div>
 
 <!--  <div class="card highlight-card card-small">-->

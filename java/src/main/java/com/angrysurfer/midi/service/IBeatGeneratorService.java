@@ -10,7 +10,7 @@ import java.util.Map;
 public interface IBeatGeneratorService {
     boolean play();
     boolean stop();
-    void next();
+    TickerInfo next(long currentickerId);
     boolean pause();
     boolean previous();
 
@@ -53,4 +53,10 @@ public interface IBeatGeneratorService {
     TickerInfo loadTicker(long tickerId);
 
     TickerInfo newTicker();
+
+    TickerInfo getTickerStatus();
+
+    List<TickerInfo> getAllTickerInfo();
+
+    TickerInfo previous(long currentTickerId);
 }
