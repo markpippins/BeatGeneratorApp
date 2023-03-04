@@ -1,9 +1,12 @@
 package com.angrysurfer.midi.controller;
 
+import com.angrysurfer.midi.model.StepData;
 import com.angrysurfer.midi.service.BeatGeneratorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @CrossOrigin("*")
 @RestController
@@ -27,6 +30,15 @@ public class BeatController {
     public void playDrumNote(@RequestParam String instrument, @RequestParam int channel, @RequestParam int note) {
         logger.info("/drum/note");
         service.playDrumNote(instrument, channel, note);
+    }
+    @PostMapping(path = "/sequence/play")
+    public void setSteps(@RequestBody List<StepData> steps) {
+        service.setSteps(steps);
+    }
+
+    @PostMapping(path = "/steps/update")
+    public void addTrack(@RequestBody StepData step) {
+
     }
 
     @GetMapping("/messages/send")

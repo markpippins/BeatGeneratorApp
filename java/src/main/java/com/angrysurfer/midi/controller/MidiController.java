@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.controller;
 
+import com.angrysurfer.midi.model.StepData;
 import com.angrysurfer.midi.service.IMIDIService;
 import com.angrysurfer.midi.service.MIDIService;
 import org.springframework.stereotype.Controller;
@@ -38,4 +39,20 @@ public class MidiController {
     public @ResponseBody boolean select(String name) {
         return midiService.select(name);
     }
+
+//    @PostMapping(path = "/tracks/add")
+//    public void addTrack(@RequestBody List<StepData> steps) {
+//
+//    }
+//
+//    @PostMapping(path = "/sequence/play")
+//    public void playSequence(@RequestBody List<StepData> steps) {
+//        midiService.playSequence(steps);
+//    }
+//
+//    @PostMapping(path = "/steps/update")
+//    public void addTrack(@RequestBody StepData step) {
+//
+//    }
+
 }

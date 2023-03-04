@@ -1,1 +1,5 @@
-<p>beat-spec works!</p>
+
+<div class="interface-808">
+<app-beat-spec-panel *ngFor="let step of steps;" [stepData]=step (change)="onStepChanged(step)" (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>
+</div>
+<app-slider-panel></app-slider-panel>

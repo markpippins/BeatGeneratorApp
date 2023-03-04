@@ -52,13 +52,13 @@ export class PlayerTableComponent {
   onBtnClick(player: Player, action: string) {
     switch (action) {
       case 'add': {
-        this.midiService.addPlayerClicked().subscribe(async (data) => {
+        this.midiService.addPlayer().subscribe(async (data) => {
           this.players.push(data);
         });
         break
       }
       case 'remove': {
-        this.midiService.removePlayerClicked(player).subscribe(async (data) => {
+        this.midiService.removePlayer(player).subscribe(async (data) => {
           this.players = data;
           if (this.players.length == 0)
             this.selectedPlayer = {
@@ -97,7 +97,7 @@ export class PlayerTableComponent {
   }
 
   noteChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayerClicked(player.id, 1, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, 1, event.target.value).subscribe()
   }
 
   onPass(player: Player, $event: MouseEvent) {

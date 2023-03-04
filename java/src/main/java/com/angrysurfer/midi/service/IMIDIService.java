@@ -1,5 +1,7 @@
 package com.angrysurfer.midi.service;
 
+import com.angrysurfer.midi.model.StepData;
+
 import javax.sound.midi.MidiDevice;
 import java.util.List;
 
@@ -16,4 +18,5 @@ public interface IMIDIService {
 
     public boolean select(String name);
 
+//    void playSequence(List<StepData> steps);
 }

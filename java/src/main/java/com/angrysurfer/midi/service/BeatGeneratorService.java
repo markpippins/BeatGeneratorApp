@@ -232,6 +232,11 @@ public class BeatGeneratorService implements IBeatGeneratorService {
     }
 
     @Override
+    public void setSteps(List<StepData> steps) {
+//        this.beatGenerator.setSteps(steps);
+    }
+
+    @Override
     public void save() {
         beatGenerator.save();
     }
@@ -263,7 +268,9 @@ public class BeatGeneratorService implements IBeatGeneratorService {
             rule.setValue(1.0);
 
             rule = ruleRepository.save(rule);
-            playerOpt.get().addCondition(rule);
+            this.ruleRepository.save(rule);
+            playerOpt.get().addRule(rule);
+            this.playerInfoRepository.save(PlayerInfo.fromPlayer(playerOpt.get()));
         }
 
         return rule;

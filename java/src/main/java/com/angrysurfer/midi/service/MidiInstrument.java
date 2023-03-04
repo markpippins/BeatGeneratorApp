@@ -2,6 +2,7 @@ package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.config.MidiInstrumentInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +19,15 @@ import java.util.*;
 @Slf4j
 @Getter
 @Setter
+//@Entity
 public class MidiInstrument implements IMidiInstrument, Serializable {
     static final Random rand = new Random();
     static Logger logger = LoggerFactory.getLogger(MidiInstrument.class.getCanonicalName());
+
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @Column(name = "id", nullable = false)
+//    private Long id;
 
     private Map<Integer, String> assignments = new HashMap<>();
     private Map<Integer, Integer[]> boundaries = new HashMap<>();
@@ -35,6 +42,9 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
 
     private boolean hasAssignments;
 
+    public MidiInstrument() {
+
+    }
     public MidiInstrument(String name, MidiDevice device, int channel) {
         setName(Objects.isNull(name) ? device.getDeviceInfo().getName() : name);
         setDevice(device);

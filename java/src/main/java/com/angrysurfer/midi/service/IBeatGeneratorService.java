@@ -1,6 +1,7 @@
 package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.Rule;
+import com.angrysurfer.midi.model.StepData;
 import com.angrysurfer.midi.model.config.PlayerInfo;
 import com.angrysurfer.midi.model.config.TickerInfo;
 
@@ -59,4 +60,6 @@ public interface IBeatGeneratorService {
     List<TickerInfo> getAllTickerInfo();
 
     TickerInfo previous(long currentTickerId);
+
+    void setSteps(List<StepData> steps);
 }

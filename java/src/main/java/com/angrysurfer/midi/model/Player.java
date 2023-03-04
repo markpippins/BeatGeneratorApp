@@ -61,7 +61,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     @Override
     public Boolean call() {
-        setEven(!even);
+        setEven(getTicker().getTick() % 2 == 0);
         if (getLastTick().get() == getTicker().getTick())
             return Boolean.FALSE;
         long tick = getTicker().getTick();
@@ -104,7 +104,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         }
     }
 
-    public Player addCondition(Rule rule) {
+    public Player addRule(Rule rule) {
         getRules().add(rule);
         return this;
     }

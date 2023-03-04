@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.service;
 
+import com.angrysurfer.midi.model.StepData;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import javax.sound.midi.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -20,6 +22,17 @@ public class MIDIService implements IMIDIService {
     public static final String SERVICE_RESET = "/service/reset";
     public static final String SERVICE_SELECT = "/service/select";
     static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
+
+//    static Sequencer sequencer;
+//
+//    static {
+//        try {
+//            sequencer = MidiSystem.getSequencer();
+////            initialized = true;
+//        } catch (MidiUnavailableException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     //    public static void playTestNote() throws InvalidMidiDataException, MidiUnavailableException {
     //        int channel = 0;
@@ -100,6 +113,46 @@ public class MIDIService implements IMIDIService {
 
         return false;
     }
+
+//    @Override
+//    public void playSequence(List<StepData> steps) {
+//
+//        int channel = 4;
+//        int bpm = 120;
+//        int resolution = 24;
+//
+//        int barTicks = 4 * 24;
+//
+////        int startTick =
+//
+//
+//        try {
+//            Sequence sequence = new Sequence(Sequence.PPQ, resolution);
+//            Track track = sequence.createTrack();
+//            AtomicLong time = new AtomicLong(barTicks);
+//
+//            steps.forEach(s -> {
+//                try {
+//                    track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_ON, channel, s.getPitch(), 0), time.get()));
+//                    track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, channel, s.getPitch(), 0), time.get() + 50));
+//                } catch (InvalidMidiDataException e) {
+//                    throw new RuntimeException(e);
+//                }
+//
+//                time.addAndGet(1000);
+//            });
+//
+//            sequencer.setTempoInBPM(bpm);
+//            sequencer.setSequence(sequence);
+//            sequencer.setLoopCount(Integer.MAX_VALUE);
+////            sequencer.open();
+////            sequencer.start();
+////            sequencer.close();
+//
+//        } catch (InvalidMidiDataException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     public void sendMessage(IMidiInstrument instrument, int messageType, int data1, int data2) throws
             MidiUnavailableException, InvalidMidiDataException {

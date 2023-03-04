@@ -20,8 +20,7 @@
         {{ player.channel }}
       </td>
       <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
-<!--        {{ player.instrument }}-->
-        <app-instrument-selector></app-instrument-selector>
+        <app-instrument-selector instrumentName="{{player.instrument}}"></app-instrument-selector>
       </td>
       <td class="player-short-col" id="player-col-preset-{{player.id}}">
         <input type="number" min="1" max="127" step="1" value="{{ player.preset}}">

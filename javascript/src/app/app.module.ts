@@ -31,6 +31,9 @@ import {MatButtonModule} from "@angular/material/button";
 import {MatTabsModule} from "@angular/material/tabs";
 import { RuleTableComponent } from './components/rule-table/rule-table.component';
 import {MatCheckboxModule} from "@angular/material/checkbox";
+import {MatListModule} from "@angular/material/list";
+import { InstrumentSelectDialogComponent } from './components/instrument-select-dialog/instrument-select-dialog.component';
+import {MatToolbarModule} from "@angular/material/toolbar";
 
 @NgModule({
   declarations: [
@@ -52,6 +55,7 @@ import {MatCheckboxModule} from "@angular/material/checkbox";
     BeatSpecComponent,
     BeatSpecPanelComponent,
     RuleTableComponent,
+    InstrumentSelectDialogComponent,
   ],
     imports: [
         BrowserModule,
@@ -67,7 +71,9 @@ import {MatCheckboxModule} from "@angular/material/checkbox";
         MatSliderModule,
         MatButtonModule,
         MatTabsModule,
-        MatCheckboxModule
+        MatCheckboxModule,
+        MatListModule,
+        MatToolbarModule
     ],
   providers: [],
   bootstrap: [AppComponent]

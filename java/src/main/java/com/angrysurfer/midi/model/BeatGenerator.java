@@ -170,23 +170,23 @@ public class BeatGenerator extends Ticker {
 //        getPlayers().clear();
 //
 //        Stream.of(new Strike("blackbox-kick", this, getInstrument("blackbox"), KICK, kickParams, 100, 125)
-//                                .addCondition(new Rule(BEAT, MODULO, 2.0)),
+//                                .addRule(new Rule(BEAT, MODULO, 2.0)),
 //                        new Strike("raz-kick", this, getInstrument(RAZZ), SNARE, snarePrams, 100, 125)
-//                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(1, 4) * .25)),
+//                                .addRule(new Rule(BEAT, EQUALS, rand.nextInt(1, 4) * .25)),
 //                        new Strike("raz-closed-hat", this, getInstrument(RAZZ), CLOSED_HAT, closedHatParams, 100, 125)
-//                                .addCondition(new Rule(BEAT, MODULO, 3.0)),
+//                                .addRule(new Rule(BEAT, MODULO, 3.0)),
 //                        new Strike("blackbox-open-hat", this, getInstrument("blackbox"), OPEN_HAT, closedHatParams, 100, 125)
-//                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(4, 6) * .25))
-//                                .addCondition(new Rule(TICK, MODULO, 3.0)),
+//                                .addRule(new Rule(BEAT, EQUALS, rand.nextInt(4, 6) * .25))
+//                                .addRule(new Rule(TICK, MODULO, 3.0)),
 //                        new Strike("blackbox-snare", this, getInstrument("blackbox"), SNARE, snarePrams, 100, 125)
-//                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
+//                                .addRule(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
 //                        new Strike("raz-snare", this, getInstrument(RAZZ), SNARE, snarePrams, 100, 125)
-//                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
+//                                .addRule(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
 //                        new Strike("raz-closed-hat", this, getInstrument(RAZZ), CLOSED_HAT, closedHatParams, 100, 125)
-//                                .addCondition(new Rule(BEAT, EQUALS, rand.nextInt(2, 8) * .25)),
+//                                .addRule(new Rule(BEAT, EQUALS, rand.nextInt(2, 8) * .25)),
 //                        new Strike("blackbox-open-hat", this, getInstrument("blackbox"), OPEN_HAT, closedHatParams, 100, 125)
-//                                .addCondition(new Rule(BEAT, MODULO, rand.nextInt(4, 6) * .25))
-//                                .addCondition(new Rule(TICK, EQUALS, rand.nextInt(6, 8) * .25))).filter(h -> rand.nextBoolean())
+//                                .addRule(new Rule(BEAT, MODULO, rand.nextInt(4, 6) * .25))
+//                                .addRule(new Rule(TICK, EQUALS, rand.nextInt(6, 8) * .25))).filter(h -> rand.nextBoolean())
 //                .forEach(getPlayers()::add);
 //        getPlayers().forEach(p -> {
 //            p.getRules().forEach(c -> c.setId(conditionsCounter.incrementAndGet()));

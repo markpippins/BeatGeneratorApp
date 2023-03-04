@@ -61,7 +61,7 @@ export class RuleTableComponent {
 
   onOperatorChange(rule: Rule, event: { target: any }) {
     let value = this.OPERATOR.indexOf(event.target.value)
-    this.midiService.updateRuleClicked(this.player.id, rule.id, value, rule.comparisonId, rule.value).subscribe()
+    this.midiService.updateRule(this.player.id, rule.id, value, rule.comparisonId, rule.value).subscribe()
     rule.operatorId = value
     // let op = 'operatorSelect-' + rule.id
     this.setSelectValue(event.target, value)
@@ -69,21 +69,21 @@ export class RuleTableComponent {
 
   onComparisonChange(rule: Rule, event: { target: any }) {
     let value = this.COMPARISON.indexOf(event.target.value)
-    this.midiService.updateRuleClicked(this.player.id, rule.id, rule.operatorId, value, rule.value).subscribe()
+    this.midiService.updateRule(this.player.id, rule.id, rule.operatorId, value, rule.value).subscribe()
     rule.comparisonId = value
     this.setSelectValue(event.target, value)
   }
 
   onValueChange(rule: Rule, event: { target: any }) {
     rule.value = event.target.value
-    this.midiService.updateRuleClicked(this.player.id, rule.id, rule.operatorId, rule.comparisonId, event.target.value).subscribe()
+    this.midiService.updateRule(this.player.id, rule.id, rule.operatorId, rule.comparisonId, event.target.value).subscribe()
   }
 
   btnClicked(rule: Rule, command: string) {
     if (this.player.id > 0)
       switch (command) {
         case 'add': {
-          this.midiService.addRuleClicked(this.player).subscribe(async (data) => {
+          this.midiService.addRule(this.player).subscribe(async (data) => {
             this.player.rules.push(data)
             this.ruleChangeEvent.emit(this.player)
           })
@@ -91,7 +91,7 @@ export class RuleTableComponent {
         }
         case 'remove': {
           this.player.rules = this.player.rules.filter(r => r.id != rule.id)
-          this.midiService.removeRuleClicked(this.player, rule).subscribe()
+          this.midiService.removeRule(this.player, rule).subscribe()
           this.ruleChangeEvent.emit(this.player)
           break
         }
@@ -100,7 +100,7 @@ export class RuleTableComponent {
 
   initBtnClick() {
     if (this.player.id > 0)
-      this.midiService.addRuleClicked(this.player).subscribe(async (data) => {
+      this.midiService.addRule(this.player).subscribe(async (data) => {
         this.player.rules.push(data)
       })
   }

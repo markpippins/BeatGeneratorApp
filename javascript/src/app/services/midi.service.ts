@@ -5,6 +5,7 @@ import {Instrument} from '../models/instrument';
 import {Ticker} from '../models/ticker';
 import {Evaluator} from '../models/evaluator';
 import {Rule} from "../models/rule";
+import {StepData} from "../models/step-data";
 
 @Injectable({
   providedIn: 'root',
@@ -27,27 +28,27 @@ export class MidiService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  startClicked() {
+  start() {
     return this.http.get('http://localhost:8080/api/ticker/start');
   }
 
-  nextClicked(currentTickerId: number) {
+  next(currentTickerId: number) {
     let params = new HttpParams();
     params = params.append('currentTickerId', currentTickerId);
     return this.http.get<Ticker>('http://localhost:8080/api/ticker/next', {params});
   }
 
-  previousClicked(currentTickerId: number) {
+  previous(currentTickerId: number) {
     let params = new HttpParams();
     params = params.append('currentTickerId', currentTickerId);
     return this.http.get<Ticker>('http://localhost:8080/api/ticker/previous', {params});
   }
 
-  stopClicked() {
+  stop() {
     return this.http.get('http://localhost:8080/api/ticker/stop');
   }
 
-  pauseClicked() {
+  pause() {
     return this.http.get('http://localhost:8080/api/ticker/pause');
   }
 
@@ -108,11 +109,11 @@ export class MidiService {
       .subscribe();
   }
 
-  recordClicked() {
+  record() {
     return this.http.get('http://localhost:8080/api/players/clear');
   }
 
-  addPlayerClicked() {
+  addPlayer() {
     let params = new HttpParams();
     params = params.append('instrument', 'blackbox');
     return this.http.get<Player>('http://localhost:8080/api/players/add', {
@@ -120,7 +121,7 @@ export class MidiService {
     });
   }
 
-  removePlayerClicked(player: Player) {
+  removePlayer(player: Player) {
     let params = new HttpParams();
     params = params.append('playerId', player.id);
     return this.http.get<Player[]>('http://localhost:8080/api/players/remove', {
@@ -128,7 +129,7 @@ export class MidiService {
     });
   }
 
-  addRuleClicked(player: Player) {
+  addRule(player: Player) {
     let params = new HttpParams();
     params = params.append('playerId', player.id);
     return this.http.get<Rule>('http://localhost:8080/api/rules/add', {
@@ -136,7 +137,7 @@ export class MidiService {
     })
   }
 
-  removeRuleClicked(player: Player, rule: Evaluator) {
+  removeRule(player: Player, rule: Evaluator) {
     let params = new HttpParams();
     params = params.append('playerId', player.id);
     params = params.append('ruleId', rule.id);
@@ -145,7 +146,7 @@ export class MidiService {
     });
   }
 
-  updatePlayerClicked(playerId: number, updateType: number, updateValue: number) {
+  updatePlayer(playerId: number, updateType: number, updateValue: number) {
     let params = new HttpParams();
     params = params.append('playerId', playerId);
     params = params.append('updateType', updateType);
@@ -155,7 +156,7 @@ export class MidiService {
     });
   }
 
-  updateRuleClicked(playerId: number, ruleId: number, operatorId: number, comparisonId: number, newValue: number) {
+  updateRule(playerId: number, ruleId: number, operatorId: number, comparisonId: number, newValue: number) {
     let params = new HttpParams();
     params = params.append('playerId', playerId);
     params = params.append('ruleId', ruleId);
@@ -167,7 +168,15 @@ export class MidiService {
     });
   }
 
-  refreshClicked() {
+  refresh() {
     return this.http.get('http://localhost:8080/api/ticker/info');
+  }
+
+  addTrack(steps: StepData[]) {
+    return this.http.post<StepData[]>('http://localhost:8080/api/sequence/play', steps);
+  }
+
+  updateStep(step: StepData) {
+    return this.http.post<StepData>('http://localhost:8080/api/steps/update', step);
   }
 }

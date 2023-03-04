@@ -36,7 +36,7 @@ export class StatusPanelComponent implements OnInit {
   updateDisplay(): void {
     this.midiService.tickerStatus().subscribe(async (data) => {
       this.ticker = data;
-      await this.midiService.delay(this.running ? 5000 : 50);
+      await this.midiService.delay(this.ticker == undefined ? 5000 : 50);
       this.updateDisplay();
     });
   }

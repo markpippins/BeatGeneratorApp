@@ -2,7 +2,7 @@ import {Component, OnInit, Output} from '@angular/core'
 import {MidiService} from "../../services/midi.service"
 import {Player} from "../../models/player"
 import {MatTabsModule} from '@angular/material/tabs'
-import {Ticker} from "../../models/ticker";
+import {Ticker} from "../../models/ticker"
 
 @Component({
   selector: 'app-dashboard',
@@ -45,51 +45,54 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.updateDisplay()
+    this.onActionSelected('forward')
   }
 
   onActionSelected(action: string) {
     switch (action) {
       case 'forward': {
-        this.midiService.nextClicked(this.ticker == undefined ? 0 : this.ticker.id).subscribe(async (data) => {
-          this.ticker = data;
+        this.midiService.next(this.ticker == undefined ? 0 : this.ticker.id).subscribe(async (data) => {
+          this.ticker = data
           this.players = this.ticker.players
         })
         break
       }
 
       case 'previous': {
+        if (this.ticker != undefined && this.ticker.id > 0) {
+          this.midiService.previous(this.ticker.id).subscribe(async (data) => {
+            this.ticker = data
+            this.players = this.ticker.players
+          })
+        }
 
-        this.midiService.previousClicked(this.ticker == undefined ? 0 : this.ticker.id).subscribe(async (data) => {
-          this.ticker = data;
-          this.players = this.ticker.players
-        })
         break
       }
 
       case 'play': {
-        this.midiService.startClicked().subscribe()
-        // this.updateDisplay()
-        let element = document.getElementById('transport-btn-play')
-        if (element != null) { // @ts-ignore
-          this.toggleClass(element, 'active')
-        }
+        this.midiService.start().subscribe()
+        this.updateDisplay()
+        // let element = document.getElementById('transport-btn-play')
+        // if (element != null) { // @ts-ignore
+        //   this.toggleClass(element, 'active')
+        // }
 
         break
       }
 
       case 'stop': {
-        this.midiService.stopClicked().subscribe()
+        this.midiService.stop().subscribe()
         this.players = []
 
-        let element = document.getElementById('transport-btn-play')
-        if (element != null) { // @ts-ignore
-          this.toggleClass(element, 'active')
-        }
+        // let element = document.getElementById('transport-btn-play')
+        // if (element != null) { // @ts-ignore
+        //   this.toggleClass(element, 'active')
+        // }
         break
       }
 
       case 'pause': {
-        this.midiService.pauseClicked().subscribe()
+        this.midiService.pause().subscribe()
         // this.isPlaying = false
         // this.players = []
         // this.playerConditions = []
@@ -97,14 +100,14 @@ export class DashboardComponent implements OnInit {
       }
 
       case 'record': {
-        this.midiService.recordClicked().subscribe()
+        this.midiService.record().subscribe()
         // this.players = []
         // this.playerConditions = []
         break
       }
 
       case 'add': {
-        this.midiService.addPlayerClicked().subscribe(async (data) => {
+        this.midiService.addPlayer().subscribe(async (data) => {
           this.players.push(data)
           this.selectedPlayer = data
         })
@@ -148,7 +151,7 @@ export class DashboardComponent implements OnInit {
   updateDisplay(): void {
     this.midiService.playerInfo().subscribe(async (data) => {
       // var update: boolean = this.isPlaying && this.players.length != (<Player[]>data).length
-      this.players = data
+      // this.players = data
       // if (update && this.isPlaying) {
       // await this.midiService.delay(1000)
       // this.updateDisplay()
