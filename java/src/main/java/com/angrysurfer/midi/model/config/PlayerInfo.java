@@ -16,14 +16,18 @@ import java.util.Set;
 @Setter
 @Entity
 public class PlayerInfo implements Serializable {
-    // Strikes
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "id", nullable = false)
+    private Long id;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    private TickerInfo ticker;
+
+    private Long tickerId;
+
     int note;
     int minVelocity = 110;
     int maxVelocity = 127;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    private Long id;
     private int preset;
     private String instrument;
     private int channel;

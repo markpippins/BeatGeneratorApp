@@ -22,13 +22,16 @@ import java.util.stream.Collectors;
 public class TickerInfo {
     static Logger logger = LoggerFactory.getLogger(TickerInfo.class.getCanonicalName());
     public boolean done;
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "ticker_player", joinColumns = {@JoinColumn(name = "ticker_id")})
+//    @OneToMany(fetch = FetchType.EAGER)
+//    @JoinTable(name = "ticker_player", joinColumns = {@JoinColumn(name = "ticker_id")}, inverseJoinColumns = {
+//            @JoinColumn(name = "player_id")})
+    @Transient
     Set<PlayerInfo> players = new HashSet<>();
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
+
     private int bar;
     private long tick;
     private int ticksPerBeat;
@@ -44,6 +47,25 @@ public class TickerInfo {
     private boolean stopped;
     @Transient
     private MuteGroupList muteGroups;
+
+    public TickerInfo() {
+        setBeat(0);
+        setBar(0);
+        setTick(0);
+        setDone(false);
+        setPlaying(false);
+        setStopped(false);
+        setId(null);
+        setSwing(50);
+        setMaxTracks(24);
+        setPartLength(64);
+        setSongLength(Integer.MAX_VALUE);
+        setTempoInBPM(120);
+        setBeatDivider(4.0);
+        setBeatsPerBar(4);
+        setTicksPerBeat(24);
+//        setMuteGroups();
+    }
 
     public static void copyValues(TickerInfo info, Ticker ticker, Map<String, IMidiInstrument> instruments) {
         ticker.setId(info.getId());

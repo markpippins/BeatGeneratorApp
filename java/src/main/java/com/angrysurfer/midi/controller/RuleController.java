@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @CrossOrigin("*")
 @RestController
@@ -24,7 +25,7 @@ public class RuleController {
     }
 
     @GetMapping("/player/rules")
-    public List<Rule> getRules(@RequestParam Long playerId) {
+    public Set<Rule> getRules(@RequestParam Long playerId) {
         logger.info("/player/rules");
         return service.getRules(playerId);
     }

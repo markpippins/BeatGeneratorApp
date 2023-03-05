@@ -11,7 +11,7 @@ import lombok.Setter;
 @Entity
 public class ControlCode {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
     private String name;

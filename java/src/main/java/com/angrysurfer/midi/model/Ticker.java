@@ -59,17 +59,29 @@ public abstract class Ticker implements Runnable, Serializable {
         setExecutor(Executors.newFixedThreadPool(getMaxTracks()));
     }
 
-    private void reset() {
+    public void reset() {
+        setPaused(false);
         setDone(false);
         setPlaying(false);
         setStopped(false);
+        setId(null);
+        setSwing(50);
+        setMaxTracks(24);
+        setPartLength(64);
+        setSongLength(Integer.MAX_VALUE);
+        setBeat(1.0);
+        setTempoInBPM(120);
+        setBeatDivider(4.0);
+        setBeatsPerBar(4);
+        setTicksPerBeat(24);
+        setGranularBeat(1.0);
+
         synchronized (tick) {
             tick.set(1);
         }
         synchronized (bar) {
             bar.set(1);
         }
-        beat = 1;
     }
 
     private void onTickChange() {

@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class RangedParamTweaker extends Player {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
     @Override
