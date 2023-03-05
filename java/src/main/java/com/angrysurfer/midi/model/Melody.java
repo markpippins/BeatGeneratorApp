@@ -17,7 +17,7 @@ import java.util.Set;
 @Setter
 public class Melody extends Player {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 

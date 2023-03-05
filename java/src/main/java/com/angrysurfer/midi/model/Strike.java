@@ -19,7 +19,7 @@ public class Strike extends Player {
     static Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 

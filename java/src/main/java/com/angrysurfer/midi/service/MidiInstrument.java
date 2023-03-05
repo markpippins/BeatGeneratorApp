@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.service;
 
+import com.angrysurfer.midi.model.ControlCode;
 import com.angrysurfer.midi.model.config.MidiInstrumentInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -23,12 +24,7 @@ import java.util.*;
 public class MidiInstrument implements IMidiInstrument, Serializable {
     static final Random rand = new Random();
     static Logger logger = LoggerFactory.getLogger(MidiInstrument.class.getCanonicalName());
-
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    @Column(name = "id", nullable = false)
-//    private Long id;
-
+    private List<ControlCode> controlCodes = new ArrayList<>();
     private Map<Integer, String> assignments = new HashMap<>();
     private Map<Integer, Integer[]> boundaries = new HashMap<>();
     @JsonIgnore
@@ -59,6 +55,7 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
         instrument.setAssignments(instrumentDef.getAssignments());
         instrument.setBoundaries(instrumentDef.getBoundaries());
         instrument.setHasAssignments(instrumentDef.getAssignments().size() > 0);
+        instrument.setControlCodes(instrumentDef.getControlCodes());
         return instrument;
     }
     @Override

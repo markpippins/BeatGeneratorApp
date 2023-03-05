@@ -2,31 +2,23 @@ package com.angrysurfer.midi.model;
 
 import com.angrysurfer.midi.model.config.BeatGeneratorConfig;
 import com.angrysurfer.midi.model.config.MidiInstrumentList;
+import com.angrysurfer.midi.service.BeatGeneratorService;
 import com.angrysurfer.midi.service.IMidiInstrument;
 import com.angrysurfer.midi.service.MIDIService;
 import com.angrysurfer.midi.service.MidiInstrument;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 @Getter
 @Setter
 public class BeatGenerator extends Ticker {
-    static String deviceName = "mrcc";
-    static MidiDevice device = getDevice();
-
-    static ObjectMapper mapper = new ObjectMapper();
     private List<Strike> strikes = new ArrayList<>();
 
     private List<Player> addList = new ArrayList<>();
@@ -34,24 +26,9 @@ public class BeatGenerator extends Ticker {
     private List<Player> removeList = new ArrayList<>();
     private Map<String, IMidiInstrument> instrumentMap = new HashMap<>();
 
-    public BeatGenerator(int songLength) {
-        super(songLength);
-        if (new MIDIService().select(device))
-            setInstrumentMap(loadConfig());
-    }
-
-    static MidiDevice getDevice() {
-        try {
-            return MidiSystem.getMidiDevice(Stream.of(MidiSystem.getMidiDeviceInfo()).filter(info -> info.getName().toLowerCase().contains(deviceName)).toList().get(0));
-        } catch (MidiUnavailableException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static void main(String[] args) {
-        BeatGenerator gen = new BeatGenerator(64);
-        if (new MIDIService().select(device))
-            IntStream.range(0, 16).forEach(i -> gen.play());
+    public BeatGenerator(Map<String, IMidiInstrument> instrumentMap) {
+        super();
+        setInstrumentMap(instrumentMap);
     }
 
     @Override
@@ -81,12 +58,12 @@ public class BeatGenerator extends Ticker {
             }
 
             getPlayers().clear();
-            BeatGeneratorConfig config = mapper.readValue(new File(filepath), BeatGeneratorConfig.class);
+            BeatGeneratorConfig config = BeatGeneratorService.mapper.readValue(new File(filepath), BeatGeneratorConfig.class);
             config.setup(this);
 
             config.getPlayers().forEach(drumPadDef -> {
                 Strike pad = new Strike();
-                IMidiInstrument instrument = new MidiInstrument(null, getDevice(), drumPadDef.getChannel());
+                IMidiInstrument instrument = new MidiInstrument(null, BeatGeneratorService.getDevice(), drumPadDef.getChannel());
                 pad.setInstrument(instrument);
                 pad.setNote(drumPadDef.getNote());
                 pad.setPreset(drumPadDef.getPreset());
@@ -102,27 +79,13 @@ public class BeatGenerator extends Ticker {
         }
     }
 
-    public Map<String, IMidiInstrument> loadConfig() {
-        Map<String, IMidiInstrument> results = new HashMap<>();
-
-        try {
-            String filepath = "resources/config/midi.json";
-            MidiInstrumentList config = mapper.readValue(new File(filepath), MidiInstrumentList.class);
-            config.getInstruments().forEach(instrumentDef -> results.put(instrumentDef.getName(),
-                    MidiInstrument.fromMidiInstrumentDef(getDevice(), instrumentDef)));
-            return results;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public void saveBeat(List<Strike> pads) {
 
         try {
             String beatFile = "resources/beats/" + toString() + ".json";
             File file = new File(beatFile);
             if (file.exists()) file.delete();
-            Files.write(file.toPath(), Collections.singletonList(mapper.writerWithDefaultPrettyPrinter()
+            Files.write(file.toPath(), Collections.singletonList(BeatGeneratorService.mapper.writerWithDefaultPrettyPrinter()
                     .writeValueAsString(new BeatGeneratorConfig(this, pads))), StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -134,7 +97,7 @@ public class BeatGenerator extends Ticker {
             String instruments = "resources/config/midi-bak.json";
             File file = new File(instruments);
             if (file.exists()) file.delete();
-            Files.write(file.toPath(), Collections.singletonList(mapper.writerWithDefaultPrettyPrinter().
+            Files.write(file.toPath(), Collections.singletonList(BeatGeneratorService.mapper.writerWithDefaultPrettyPrinter().
                     writeValueAsString(new MidiInstrumentList(getPlayers()))), StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
             throw new RuntimeException(e);

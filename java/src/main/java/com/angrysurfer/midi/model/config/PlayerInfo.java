@@ -21,15 +21,15 @@ public class PlayerInfo implements Serializable {
     int minVelocity = 110;
     int maxVelocity = 127;
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
     private int preset;
     private String instrument;
     private int channel;
     @OneToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "post_edit", joinColumns = {@JoinColumn(name = "edit_id")}, inverseJoinColumns = {
-            @JoinColumn(name = "post_id")})
+    @JoinTable(name = "player_rule", joinColumns = {@JoinColumn(name = "rule_id")}, inverseJoinColumns = {
+            @JoinColumn(name = "player_id")})
     private Set<Rule> rules = new HashSet<>();
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")

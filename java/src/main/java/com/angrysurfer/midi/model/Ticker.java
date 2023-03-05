@@ -54,11 +54,6 @@ public abstract class Ticker implements Runnable, Serializable {
     private boolean paused = false;
     private MuteGroupList muteGroups = new MuteGroupList();
 
-    public Ticker(int songLength) {
-        setSongLength(songLength);
-        setExecutor(Executors.newFixedThreadPool(getMaxTracks()));
-    }
-
     public Ticker() {
         setSongLength(Integer.MAX_VALUE);
         setExecutor(Executors.newFixedThreadPool(getMaxTracks()));
