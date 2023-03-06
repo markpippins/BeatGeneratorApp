@@ -14,7 +14,6 @@ public class Rule implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
-
     private int operatorId;
     private int comparisonId;
     private Double value;

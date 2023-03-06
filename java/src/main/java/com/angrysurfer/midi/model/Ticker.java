@@ -60,6 +60,7 @@ public abstract class Ticker implements Runnable, Serializable {
     }
 
     public void reset() {
+        getPlayers().clear();
         setPaused(false);
         setDone(false);
         setPlaying(false);
@@ -75,7 +76,6 @@ public abstract class Ticker implements Runnable, Serializable {
         setBeatsPerBar(4);
         setTicksPerBeat(24);
         setGranularBeat(1.0);
-
         synchronized (tick) {
             tick.set(1);
         }

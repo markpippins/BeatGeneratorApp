@@ -19,24 +19,7 @@ export class DashboardComponent implements OnInit {
 
   tickerPointer = 0
   @Output()
-  ticker: Ticker = {
-    bar: 0,
-    beat: 0,
-    beatDivider: 0,
-    beatsPerBar: 0,
-    done: false,
-    id: 0,
-    maxTracks: 0,
-    partLength: 0,
-    players: [],
-    playing: false,
-    songLength: 0,
-    stopped: false,
-    swing: 0,
-    tempoInBPM: 0,
-    tick: 0,
-    ticksPerBeat: 0
-  }
+  ticker!: Ticker
 
   running = false
 

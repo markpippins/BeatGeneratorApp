@@ -19,7 +19,6 @@ import java.util.stream.IntStream;
 @Getter
 @Setter
 public class BeatGenerator extends Ticker {
-    private List<Strike> strikes = new ArrayList<>();
 
     private List<Player> addList = new ArrayList<>();
 

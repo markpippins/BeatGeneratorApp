@@ -8,6 +8,7 @@ import com.angrysurfer.midi.repo.PlayerInfoRepository;
 import com.angrysurfer.midi.repo.RuleRepository;
 import com.angrysurfer.midi.repo.TickerInfoRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.stream.Stream;
 import static com.angrysurfer.midi.controller.PlayerUpdateType.NOTE;
 
 @Service
+@Getter
 public class BeatGeneratorService {
     static final String RAZZ = "Razzmatazz";
     static final String MICROFREAK = "MicroFreak";
@@ -44,7 +46,7 @@ public class BeatGeneratorService {
     private IMIDIService midiService;
     private PlayerInfoRepository playerInfoRepository;
     private RuleRepository ruleRepository;
-    private TickerInfo tickerInfo;
+    //    private TickerInfo tickerInfo;
     private TickerInfoRepo tickerInfoRepo;
 
     public BeatGeneratorService(IMIDIService midiService, PlayerInfoRepository playerInfoRepository,
@@ -55,7 +57,6 @@ public class BeatGeneratorService {
         this.tickerInfoRepo = tickerInfoRepo;
 
         this.beatGenerator = makeBeatGenerator();
-        this.tickerInfo = TickerInfo.fromTicker(beatGenerator, false);
     }
 
     public static MidiDevice getDevice() {
@@ -68,7 +69,7 @@ public class BeatGeneratorService {
     }
 
     private BeatGenerator makeBeatGenerator() {
-        if (new MIDIService().select(device))
+        if (new MIDIService().select(getDevice()))
             return new BeatGenerator(loadConfig());
 
         return null;
@@ -104,59 +105,49 @@ public class BeatGeneratorService {
 
 
     public boolean play() {
-        if (!beatGenerator.isPaused() && !beatGenerator.isPlaying())
+        if (!getBeatGenerator().isPaused() && !getBeatGenerator().isPlaying())
             new Thread(new Runnable() {
 
                 public void run() {
-                    beatGenerator.play();
+                    getBeatGenerator().play();
                 }
             }).start();
-        else if (beatGenerator.isPaused())
-            beatGenerator.pause();
-        else beatGenerator.play();
+        else if (getBeatGenerator().isPaused())
+            getBeatGenerator().pause();
+        else getBeatGenerator().play();
 
-        return beatGenerator.isPlaying();
+        return getBeatGenerator().isPlaying();
     }
 
 
     public boolean stop() {
-        if (beatGenerator.isPlaying())
-            beatGenerator.stop();
+        if (getBeatGenerator().isPlaying())
+            getBeatGenerator().stop();
 
-        return beatGenerator.isPlaying();
+        return getBeatGenerator().isPlaying();
     }
 
 
     public boolean pause() {
-        beatGenerator.pause();
-        return !beatGenerator.isPlaying();
+        getBeatGenerator().pause();
+        return !getBeatGenerator().isPlaying();
     }
-
-
-    public boolean previous() {
-        return false;
-    }
-
 
     public TickerInfo getTickerInfo() {
-        return TickerInfo.fromTicker(beatGenerator, true);
+        return TickerInfo.fromTicker(beatGenerator, getPlayers());
     }
-
 
     public TickerInfo getTickerStatus() {
-        return TickerInfo.fromTicker(beatGenerator, false);
+        return TickerInfo.fromTicker(beatGenerator, Collections.emptyList());
     }
-
 
     public List<TickerInfo> getAllTickerInfo() {
         return tickerInfoRepo.findAll();
     }
 
-
     public Map<String, IMidiInstrument> getInstruments() {
-        return beatGenerator.getInstrumentMap();
+        return getBeatGenerator().getInstrumentMap();
     }
-
 
     public IMidiInstrument getInstrument(int channel) {
         try {
@@ -166,7 +157,6 @@ public class BeatGeneratorService {
             return null;
         }
     }
-
 
     public void sendMessage(int messageType, int channel, int data1, int data2) {
         IMidiInstrument instrument = getInstrument(channel);
@@ -204,23 +194,19 @@ public class BeatGeneratorService {
 
 
     public void clearPlayers() {
-        this.beatGenerator.clearEventSources();
+        this.getBeatGenerator().clearEventSources();
     }
-
 
     public PlayerInfo addPlayer(String instrument) {
         Strike strike = new Strike(instrument.concat(Integer.toString(getPlayers().size())),
-                beatGenerator, beatGenerator.getInstrument(instrument), KICK + getPlayers().size(), closedHatParams);
+                beatGenerator, getBeatGenerator().getInstrument(instrument), KICK + getPlayers().size(), closedHatParams);
+
         PlayerInfo playerInfo = PlayerInfo.fromPlayer(strike);
-        playerInfo.setTickerId(this.tickerInfo.getId());
+        playerInfo.setTickerId(this.getBeatGenerator().getId());
         playerInfoRepository.save(playerInfo);
 
         strike.setId(playerInfo.getId());
-//        strike.getRules().add(addRule(strike.getId()));
-        this.beatGenerator.getPlayers().add(strike);
-//        TickerInfo.copyValues(this.beatGenerator, this.tickerInfo, true);
-        this.tickerInfo.getPlayers().add(playerInfo);
-        this.tickerInfo = tickerInfoRepo.save(tickerInfo);
+        this.getBeatGenerator().getPlayers().add(strike);
         return playerInfo;
     }
 
@@ -231,7 +217,7 @@ public class BeatGeneratorService {
                            int comparisonId,
                            double newValue) {
 
-        Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
+        Optional<Player> playerOpt = getBeatGenerator().getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
             Player player = playerOpt.get();
             Optional<Rule> condition = player.getRules().stream().filter(c -> c.getId() == conditionId).findAny();
@@ -245,14 +231,14 @@ public class BeatGeneratorService {
 
 
     public List<PlayerInfo> removePlayer(Long playerId) {
-        Optional<Player> player = beatGenerator.getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny();
-        player.ifPresent(p -> beatGenerator.getPlayers().remove(p));
+        Optional<Player> player = getBeatGenerator().getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny();
+        player.ifPresent(p -> getBeatGenerator().getPlayers().remove(p));
         return getPlayers();
     }
 
 
     public PlayerInfo mutePlayer(Long playerId) {
-        beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId)
+        getBeatGenerator().getPlayers().stream().filter(p -> p.getId() == playerId)
                 .findAny().ifPresent(value -> value.setMuted(!value.isMuted()));
         return null;
     }
@@ -268,56 +254,93 @@ public class BeatGeneratorService {
 
 
     public TickerInfo next(long currentTickerId) {
-        this.beatGenerator.reset();
-        tickerInfo = tickerInfoRepo.getNextTicker(currentTickerId);
-        if (Objects.isNull(tickerInfo))
-            tickerInfo = tickerInfoRepo.save(new TickerInfo());
-        else {
-            tickerInfo.getPlayers().clear();
-            TickerInfo.copyValues(tickerInfo, this.beatGenerator,
-                    beatGenerator.getInstrumentMap());
-            List<PlayerInfo> players = playerInfoRepository.findByTickerId(tickerInfo.getId());
-            tickerInfo.getPlayers().addAll(players);
+        if (currentTickerId > 0)
+            saveCurrentRecord(currentTickerId);
+
+        Optional<TickerInfo> currentTickerInfo = tickerInfoRepo.findById(currentTickerId);
+
+        if ((getBeatGenerator().getPlayers().size() > 0) || currentTickerId == 0) {
+            this.getBeatGenerator().reset();
+            TickerInfo tickerInfo = tickerInfoRepo.getNextTicker(currentTickerId);
+            if (Objects.isNull(tickerInfo))
+                tickerInfo = tickerInfoRepo.save(new TickerInfo());
+            else {
+                tickerInfo.getPlayers().clear();
+                TickerInfo.copyToTicker(tickerInfo, this.beatGenerator,
+                        getBeatGenerator().getInstrumentMap());
+                List<PlayerInfo> players = playerInfoRepository.findByTickerId(tickerInfo.getId());
+                tickerInfo.getPlayers().addAll(players);
+
+                for (PlayerInfo info : tickerInfo.getPlayers()) {
+                    Strike strike = new Strike(info.getInstrument().concat(Integer.toString(getPlayers().size())),
+                            getBeatGenerator(), getBeatGenerator().getInstrument(info.getInstrument()), KICK + getPlayers().size(), closedHatParams);
+                    PlayerInfo.copyValues(info, strike, getInstruments());
+                    getBeatGenerator().getPlayers().add(strike);
+                }
+            }
+            this.getBeatGenerator().setId(tickerInfo.getId());
+            return tickerInfo;
         }
-        return tickerInfo;
+        return currentTickerInfo.orElseThrow();
     }
 
 
     public TickerInfo previous(long currentTickerId) {
-            TickerInfo result = tickerInfoRepo.getPreviousTicker(currentTickerId);
-            if (Objects.nonNull(result)) {
-                tickerInfo.getPlayers().clear();
-                this.beatGenerator.reset();
-                tickerInfo = result;
+        if (currentTickerId > 0)
+            saveCurrentRecord(currentTickerId);
 
-                List<PlayerInfo> players = playerInfoRepository.findByTickerId(result.getId());
+        if (currentTickerId > 1) {
+            TickerInfo tickerInfo = tickerInfoRepo.getPreviousTicker(currentTickerId);
+            if (Objects.nonNull(tickerInfo)) {
+                this.getBeatGenerator().reset();
+                this.getBeatGenerator().setId(tickerInfo.getId());
+                List<PlayerInfo> players = playerInfoRepository.findByTickerId(tickerInfo.getId());
                 tickerInfo.getPlayers().addAll(players);
-            TickerInfo.copyValues(result, this.beatGenerator,
-                    beatGenerator.getInstrumentMap());
+                TickerInfo.copyToTicker(tickerInfo, this.beatGenerator, getBeatGenerator().getInstrumentMap());
+            }
+
+            for (PlayerInfo info : tickerInfo.getPlayers()) {
+                Strike strike = new Strike(info.getInstrument().concat(Integer.toString(getPlayers().size())),
+                        getBeatGenerator(), getBeatGenerator().getInstrument(info.getInstrument()), KICK + getPlayers().size(), closedHatParams);
+                PlayerInfo.copyValues(info, strike, getInstruments());
+                getBeatGenerator().getPlayers().add(strike);
+            }
+
+            return tickerInfo;
         }
-        return result;
+
+        return tickerInfoRepo.findById(1L).orElseThrow();
+    }
+
+    private void saveCurrentRecord(long currentTickerId) {
+        Optional<TickerInfo> tickerInfoOpt = this.tickerInfoRepo.findById(currentTickerId);
+        if (tickerInfoOpt.isPresent()) {
+            TickerInfo info = tickerInfoOpt.get();
+            TickerInfo.copyFromTicker(getBeatGenerator(), info, getPlayers());
+            this.tickerInfoRepo.save(info);
+        }
     }
 
 
     public void setSteps(List<StepData> steps) {
-//        this.beatGenerator.setSteps(steps);
+//        this.getBeatGenerator().setSteps(steps);
     }
 
 
     public void save() {
-        beatGenerator.save();
+        getBeatGenerator().save();
     }
 
 
     public void saveBeat() {
-//        beatGenerator.saveBeat(getPlayers());
+//        getBeatGenerator().saveBeat(getPlayers());
     }
 
 
     public void updatePlayer(Long playerId, int updateType, int updateValue) {
         switch (updateType) {
             case NOTE: {
-                Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
+                Optional<Player> playerOpt = getBeatGenerator().getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
                 playerOpt.ifPresent(player -> player.setNote(updateValue));
                 break;
             }
@@ -328,7 +351,7 @@ public class BeatGeneratorService {
     public Rule addRule(Long playerId) {
         Rule rule = new Rule();
 
-        Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny();
+        Optional<Player> playerOpt = getBeatGenerator().getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny();
         if (playerOpt.isPresent()) {
             rule.setOperatorId(Operator.BEAT);
             rule.setComparisonId(Comparison.EQUALS);
@@ -337,7 +360,10 @@ public class BeatGeneratorService {
             rule = ruleRepository.save(rule);
             this.ruleRepository.save(rule);
             playerOpt.get().addRule(rule);
-            this.playerInfoRepository.save(PlayerInfo.fromPlayer(playerOpt.get()));
+
+            PlayerInfo info = getPlayers().stream().filter(p -> p.getId().equals(playerOpt.get().getId())).findFirst().orElseThrow();
+            info.getRules().add(rule);
+            this.playerInfoRepository.save(info);
         }
 
         return rule;
@@ -345,7 +371,7 @@ public class BeatGeneratorService {
 
 
     public void removeRule(Long playerId, Long conditionId) {
-        Optional<Player> playerOpt = beatGenerator.getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
+        Optional<Player> playerOpt = getBeatGenerator().getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
             Optional<Rule> conditionOpt = playerOpt.get().getRules().stream().filter(c -> c.getId() == conditionId).findAny();
             conditionOpt.ifPresent(rule -> playerOpt.get().getRules().remove(rule));
@@ -359,7 +385,7 @@ public class BeatGeneratorService {
         Optional<TickerInfo> infoOpt = tickerInfoRepo.findById(tickerId);
         if (infoOpt.isPresent()) {
             result = infoOpt.get();
-            TickerInfo.copyValues(result, beatGenerator, beatGenerator.getInstrumentMap());
+            TickerInfo.copyToTicker(result, beatGenerator, getBeatGenerator().getInstrumentMap());
         }
 
         return result;
@@ -367,23 +393,22 @@ public class BeatGeneratorService {
 
 
     public TickerInfo newTicker() {
-        this.beatGenerator.getPlayers().clear();
+        this.getBeatGenerator().reset();
         loadConfig();
         this.beatGenerator = makeBeatGenerator();
-        TickerInfo result = TickerInfo.fromTicker(this.beatGenerator, true);
+        TickerInfo result = new TickerInfo();
         tickerInfoRepo.save(result);
-        this.beatGenerator.setId(tickerInfo.getId());
+        this.getBeatGenerator().setId(result.getId());
         return result;
     }
 
 
     public List<PlayerInfo> getPlayers() {
-        return beatGenerator.getPlayers()
-                .stream().map(PlayerInfo::fromPlayer).toList();
+        return playerInfoRepository.findByTickerId(getBeatGenerator().getId());
     }
 
     public void playDrumNote(String instrumentName, int channel, int note) {
-        IMidiInstrument instrument = beatGenerator.getInstrument(instrumentName);
+        IMidiInstrument instrument = getBeatGenerator().getInstrument(instrumentName);
         log.info(String.join(", ", instrumentName, Integer.toString(channel), Integer.toString(note)));
         if (Objects.nonNull(instrument)) {
             List<MidiDevice> devices = this.midiService.findMidiDevice(instrument.getDevice().getDeviceInfo().getName());

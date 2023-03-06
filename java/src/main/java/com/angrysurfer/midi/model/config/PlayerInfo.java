@@ -20,9 +20,6 @@ public class PlayerInfo implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    private TickerInfo ticker;
-
     private Long tickerId;
 
     int note;
@@ -32,8 +29,7 @@ public class PlayerInfo implements Serializable {
     private String instrument;
     private int channel;
     @OneToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "player_rule", joinColumns = {@JoinColumn(name = "rule_id")}, inverseJoinColumns = {
-            @JoinColumn(name = "player_id")})
+    @JoinTable(name = "player_rules")
     private Set<Rule> rules = new HashSet<>();
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")
@@ -57,7 +53,7 @@ public class PlayerInfo implements Serializable {
 //        info.setMaxVelocity(player.getMaxVelocity());
 //    }
 
-    static void copyValues(PlayerInfo info, Player player, Map<String, IMidiInstrument> instruments) {
+    public static void copyValues(PlayerInfo info, Player player, Map<String, IMidiInstrument> instruments) {
         player.setAllowedControlMessages(info.getAllowedControlMessages());
         player.setPreset(info.getPreset());
         player.setChannel(info.getChannel());
@@ -70,7 +66,7 @@ public class PlayerInfo implements Serializable {
         player.setMaxVelocity(info.getMaxVelocity());
     }
 
-    static void copyValues(Player player, PlayerInfo info) {
+    public static void copyValues(Player player, PlayerInfo info) {
         info.setAllowedControlMessages(player.getAllowedControlMessages());
         info.setPreset(player.getPreset());
         info.setChannel(player.getChannel());

@@ -10,11 +10,9 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -22,11 +20,11 @@ import java.util.stream.Collectors;
 public class TickerInfo {
     static Logger logger = LoggerFactory.getLogger(TickerInfo.class.getCanonicalName());
     public boolean done;
-//    @OneToMany(fetch = FetchType.EAGER)
+    //    @OneToMany(fetch = FetchType.EAGER)
 //    @JoinTable(name = "ticker_player", joinColumns = {@JoinColumn(name = "ticker_id")}, inverseJoinColumns = {
 //            @JoinColumn(name = "player_id")})
     @Transient
-    Set<PlayerInfo> players = new HashSet<>();
+    private List<PlayerInfo> players = new ArrayList<>();
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
@@ -67,7 +65,7 @@ public class TickerInfo {
 //        setMuteGroups();
     }
 
-    public static void copyValues(TickerInfo info, Ticker ticker, Map<String, IMidiInstrument> instruments) {
+    public static void copyToTicker(TickerInfo info, Ticker ticker, Map<String, IMidiInstrument> instruments) {
         ticker.setId(info.getId());
         ticker.setBeat((int) info.getBeat());
         ticker.setDone(info.isDone());
@@ -88,7 +86,7 @@ public class TickerInfo {
         });
     }
 
-    public static void copyValues(Ticker ticker, TickerInfo info, boolean copyPlayers) {
+    public static void copyFromTicker(Ticker ticker, TickerInfo info, List<PlayerInfo> players) {
         info.setId(ticker.getId());
         info.setBar(ticker.getBar());
         info.setBeat((int) ticker.getBeat());
@@ -105,12 +103,13 @@ public class TickerInfo {
         info.setPartLength(ticker.getPartLength());
         info.setBeatsPerBar(ticker.getBeatsPerBar());
         info.setTick(ticker.getTick());
-        info.setPlayers(copyPlayers ? ticker.getPlayers().stream().map(PlayerInfo::fromPlayer).collect(Collectors.toSet()) : Collections.emptySet());
+        info.setPlayers(players);
+        //copyPlayers ? ticker.getPlayers().stream().map(PlayerInfo::fromPlayer).collect(Collectors.toSet()) : Collections.emptySet());
     }
 
-    public static TickerInfo fromTicker(Ticker ticker, boolean copyPlayers) {
+    public static TickerInfo fromTicker(Ticker ticker, List<PlayerInfo> players) {
         TickerInfo info = new TickerInfo();
-        copyValues(ticker, info, copyPlayers);
+        copyFromTicker(ticker, info, players);
         return info;
     }
 }
