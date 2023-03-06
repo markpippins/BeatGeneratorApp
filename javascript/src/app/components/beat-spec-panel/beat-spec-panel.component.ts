@@ -37,4 +37,8 @@ export class BeatSpecPanelComponent {
   onChange() {
     this.changeEvent.emit(this.stepData)
   }
+
+  onNoteScroll($event: Event) {
+    alert($event)
+  }
 }

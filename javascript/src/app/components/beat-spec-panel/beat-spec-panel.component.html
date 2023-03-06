@@ -5,7 +5,7 @@
   </div>
 <!--  <label>Pitch</label>-->
   <div>
-    <input class="beat-note-input" type="number" min="1" max="127" (change)="onChange()" [(ngModel)]="stepData.pitch">
+    <input class="beat-note-input" type="number" min="1" max="127" (scroll)="onNoteScroll($event)" (change)="onChange()" [(ngModel)]="stepData.pitch">
   </div>
 <!--  <label>Velocity</label>-->
   <div>

@@ -1,9 +1,7 @@
 package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.*;
-import com.angrysurfer.midi.model.config.MidiInstrumentList;
-import com.angrysurfer.midi.model.config.PlayerInfo;
-import com.angrysurfer.midi.model.config.TickerInfo;
+import com.angrysurfer.midi.model.config.*;
 import com.angrysurfer.midi.repo.PlayerInfoRepository;
 import com.angrysurfer.midi.repo.RuleRepository;
 import com.angrysurfer.midi.repo.TickerInfoRepo;
@@ -48,13 +46,19 @@ public class BeatGeneratorService {
     private RuleRepository ruleRepository;
     //    private TickerInfo tickerInfo;
     private TickerInfoRepo tickerInfoRepo;
+    private final MidiInstrumentInfoRepository midiInstrumentInfoRepository;
+    private final ControlCodeRepository controlCodeRepository;
 
     public BeatGeneratorService(IMIDIService midiService, PlayerInfoRepository playerInfoRepository,
-                                RuleRepository ruleRepository, TickerInfoRepo tickerInfoRepo) {
+                                RuleRepository ruleRepository, TickerInfoRepo tickerInfoRepo,
+                                MidiInstrumentInfoRepository midiInstrumentInfoRepository,
+                                ControlCodeRepository controlCodeRepository) {
         this.midiService = midiService;
         this.ruleRepository = ruleRepository;
         this.playerInfoRepository = playerInfoRepository;
         this.tickerInfoRepo = tickerInfoRepo;
+        this.midiInstrumentInfoRepository = midiInstrumentInfoRepository;
+        this.controlCodeRepository = controlCodeRepository;
 
         this.beatGenerator = makeBeatGenerator();
     }
@@ -83,17 +87,20 @@ public class BeatGeneratorService {
             MidiInstrumentList config = mapper.readValue(new File(filepath), MidiInstrumentList.class);
 
             config.getInstruments().forEach(instrumentDef -> {
+                instrumentDef = midiInstrumentInfoRepository.save(instrumentDef);
+                MidiInstrumentInfo finalInstrumentDef = instrumentDef;
                 instrumentDef.getAssignments().keySet().forEach(code -> {
                     ControlCode controlCode = new ControlCode();
                     controlCode.setControlCode(code);
-                    controlCode.setName(instrumentDef.getAssignments().get(code));
-                    if (instrumentDef.getBoundaries().containsKey(code)) {
-                        controlCode.setLowerBound(instrumentDef.getBoundaries().get(code)[0]);
-                        controlCode.setUpperBound(instrumentDef.getBoundaries().get(code)[1]);
+                    controlCode.setName(finalInstrumentDef.getAssignments().get(code));
+                    if (finalInstrumentDef.getBoundaries().containsKey(code)) {
+                        controlCode.setLowerBound(finalInstrumentDef.getBoundaries().get(code)[0]);
+                        controlCode.setUpperBound(finalInstrumentDef.getBoundaries().get(code)[1]);
                     }
-                    instrumentDef.getControlCodes().add(controlCode);
+                    controlCode = controlCodeRepository.save(controlCode);
+                    finalInstrumentDef.getControlCodes().add(controlCode);
                 });
-
+                instrumentDef = midiInstrumentInfoRepository.save(finalInstrumentDef);
                 results.put(instrumentDef.getName(), MidiInstrument.fromMidiInstrumentDef(getDevice(), instrumentDef));
             });
 
@@ -234,6 +241,7 @@ public class BeatGeneratorService {
     public List<PlayerInfo> removePlayer(Long playerId) {
         Optional<Player> player = getBeatGenerator().getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny();
         player.ifPresent(p -> getBeatGenerator().getPlayers().remove(p));
+        player.ifPresent(p -> playerInfoRepository.deleteById(p.getId()));
         return getPlayers();
     }
 
