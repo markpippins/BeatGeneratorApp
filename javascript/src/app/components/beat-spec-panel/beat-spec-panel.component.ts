@@ -1,6 +1,4 @@
-import {Component, EventEmitter, Input, Output, Renderer2} from '@angular/core';
-import {MatButtonModule} from "@angular/material/button";
-import {Player} from "../../models/player";
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {StepData} from "../../models/step-data";
 
 @Component({

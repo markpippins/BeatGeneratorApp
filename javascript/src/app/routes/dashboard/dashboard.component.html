@@ -18,6 +18,12 @@
     <app-transport-control (clickEvent)="onActionSelected($event)"></app-transport-control>
   </div>
   <mat-tab-group>
+    <mat-tab label="808 Style">
+      <div class="two-column-grid-container">
+        <app-beat-spec></app-beat-spec>
+      </div>
+    </mat-tab>
+
     <mat-tab label="Beats">
       <div class="two-column-grid-container">
         <div>
@@ -29,11 +35,6 @@
       </div>
     </mat-tab>
 
-    <mat-tab label="808 Style">
-      <div class="two-column-grid-container">
-        <app-beat-spec></app-beat-spec>
-      </div>
-    </mat-tab>
 
     <mat-tab label="Sliders">
       <div class="two-column-grid-container">

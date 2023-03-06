@@ -1,28 +1,34 @@
 <div class="lane-808">
-  <div class="beat-btn" (click)="onLaneBtnClick()">
-    <div id="beat-btn-{{stepData.step}}" class="inactive btn-led" [style.width.px]="15">
-      {{stepData.step}}
-    </div>
+<!--  <div class="btn-inactive">-->
+  <div id="beat-btn-{{stepData.step}}" class="btn-inactive">
+    <button mat-mini-fab  (click)="onLaneBtnClick()"><mat-icon>album</mat-icon></button>
   </div>
-  <label>Pitch</label>
+<!--  <label>Pitch</label>-->
   <div>
     <input class="beat-note-input" type="number" min="1" max="127" (change)="onChange()" [(ngModel)]="stepData.pitch">
   </div>
-  <label>Velocity</label>
+<!--  <label>Velocity</label>-->
   <div>
     <input class="beat-note-input" type="number" min="1" max="127" (change)="onChange()"
            [(ngModel)]="stepData.velocity">
   </div>
-  <label>Probably</label>
+<!--  <label>Probably</label>-->
   <div>
     <input class="beat-note-input" type="number" min="0" max="100" (change)="onChange()"
            [(ngModel)]="stepData.probability">
   </div>
-  <label>Gate Length</label>
+<!--  <label>Gate Length</label>-->
   <div>
     <input class="beat-note-input" type="number" min="0" max="100" (change)="onChange()" [(ngModel)]="stepData.gate">
   </div>
+
+<!--  <div class="beat-btn" (click)="onLaneBtnClick()">-->
+<!--    <div id="beat-btn-{{stepData.step}}" class="inactive btn-led" [style.width.px]="15">-->
+<!--      {{stepData.step}}-->
+<!--    </div>-->
+<!--  </div>-->
+
   <div>
-    <button class="lane-808 btn-808" mat-mini-fab (click)="onParamsBtnClick()"><mat-icon>edit</mat-icon></button>
+    <button class="lane-808 btn-808" mat-mini-fab (click)="onParamsBtnClick()"><mat-icon>camera</mat-icon></button>
   </div>
 </div>

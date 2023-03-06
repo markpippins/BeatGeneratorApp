@@ -82,7 +82,8 @@ body {
   /*background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80');*/
   background-repeat: no-repeat;
   background-size: cover;
-  background-image: linear-gradient(to left, #f46864, #003954);
+  background-color: #555556;
+  /*background-image: linear-gradient(to left, #f46864, #003954);*/
   /*border-style: dashed;*/
   /*border-width: thin;*/
 }
@@ -98,8 +99,8 @@ body {
   gap: 4px;
   color: white;
   font-size: small;
-  border-style: dashed;
-  border-width: thin;
+  /*border-style: dashed;*/
+  /*border-width: thin;*/
 }
 
 .content {
@@ -113,8 +114,8 @@ body {
   gap: 4px;
   color: white;
   font-size: small;
-  border-style: dashed;
-  border-width: thin;
+  /*border-style: dashed;*/
+  /*border-width: thin;*/
 }
 
 svg.material-icons {
@@ -516,16 +517,29 @@ td, th {
 
 .interface-808 {
   display: grid;
-  gap: 10px;
-  grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
+  gap: 2px;
+  grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
+}
+
+.side-panel-808 {
+  margin-top: 12px;
+  display: flex;
+  gap: 3px;
+  flex-flow: column;
+  font-size: small;
+  align-items: flex-start;
 }
 
 .lane-808 {
+  margin-top: 10px;
   display: flex;
-  gap: 10px;
+  gap: 2px;
+  padding: 2px;
   flex-flow: column;
-  font-size: smaller;
-  grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
+  font-size: small;
+  align-items: center;
+  border-style: groove;
+  border-width: thin;
 }
 
 .btn-808 {
@@ -588,8 +602,18 @@ th {
   text-align: center;
 }
 
+.btn-inactive {
+  color: #1da7c7;
+  border-radius: 25px;
+}
+
+.btn-active {
+  color: lime;
+  border-radius: 25px;
+}
+
 .inactive {
-  background-color: red;
+  background-color: #1da7c7;
   border-radius: 25px;
 }
 
@@ -609,7 +633,7 @@ th {
 .beat-btn {
   display: flex;
   align-items: center;
-  background-color: #888888;
+  /*background-color: #888888;*/
   height: 40px;
   width: 40px;
   font-size: small;

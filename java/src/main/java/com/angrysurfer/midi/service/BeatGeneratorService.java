@@ -220,11 +220,12 @@ public class BeatGeneratorService {
         Optional<Player> playerOpt = getBeatGenerator().getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
         if (playerOpt.isPresent()) {
             Player player = playerOpt.get();
-            Optional<Rule> condition = player.getRules().stream().filter(c -> c.getId() == conditionId).findAny();
-            if (condition.isPresent()) {
-                condition.get().setOperatorId(operatorId);
-                condition.get().setComparisonId(comparisonId);
-                condition.get().setValue(newValue);
+            Optional<Rule> rule = player.getRules().stream().filter(c -> c.getId() == conditionId).findAny();
+            if (rule.isPresent()) {
+                rule.get().setOperatorId(operatorId);
+                rule.get().setComparisonId(comparisonId);
+                rule.get().setValue(newValue);
+                ruleRepository.save(rule.get());
             }
         }
     }
@@ -340,7 +341,7 @@ public class BeatGeneratorService {
     public void updatePlayer(Long playerId, int updateType, int updateValue) {
         switch (updateType) {
             case NOTE: {
-                Optional<Player> playerOpt = getBeatGenerator().getPlayers().stream().filter(p -> p.getId() == playerId).findAny();
+                Optional<Player> playerOpt = getBeatGenerator().getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny();
                 playerOpt.ifPresent(player -> player.setNote(updateValue));
                 break;
             }
