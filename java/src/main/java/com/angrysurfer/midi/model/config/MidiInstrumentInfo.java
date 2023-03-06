@@ -36,10 +36,10 @@ public class MidiInstrumentInfo implements Serializable {
     private int highestPreset;
     private int preferredPreset;
 
-@OneToMany(fetch = FetchType.EAGER)
-@JoinTable(name = "instrument_control_code", joinColumns = {@JoinColumn(name = "control_code_id")}, inverseJoinColumns = {
-    @JoinColumn(name = "instrument_id")})
-private List<ControlCode> controlCodes = new ArrayList<>();
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "instrument_control_code", joinColumns = {@JoinColumn(name = "instrument_id")}, inverseJoinColumns = {
+            @JoinColumn(name = "control_code_id")})
+    private List<ControlCode> controlCodes = new ArrayList<>();
 
 
     public MidiInstrumentInfo() {

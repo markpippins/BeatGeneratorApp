@@ -39,6 +39,8 @@ public class BeatGeneratorService {
     static int SNARE = 37;
     static int CLOSED_HAT = 38;
     static int OPEN_HAT = 39;
+    private final MidiInstrumentInfoRepository midiInstrumentInfoRepository;
+    private final ControlCodeRepository controlCodeRepository;
     //    static MidiDevice device = getDevice();
     private BeatGenerator beatGenerator;
     private IMIDIService midiService;
@@ -46,8 +48,6 @@ public class BeatGeneratorService {
     private RuleRepository ruleRepository;
     //    private TickerInfo tickerInfo;
     private TickerInfoRepo tickerInfoRepo;
-    private final MidiInstrumentInfoRepository midiInstrumentInfoRepository;
-    private final ControlCodeRepository controlCodeRepository;
 
     public BeatGeneratorService(IMIDIService midiService, PlayerInfoRepository playerInfoRepository,
                                 RuleRepository ruleRepository, TickerInfoRepo tickerInfoRepo,
@@ -81,33 +81,37 @@ public class BeatGeneratorService {
 
     public Map<String, IMidiInstrument> loadConfig() {
         Map<String, IMidiInstrument> results = new HashMap<>();
+        if (midiInstrumentInfoRepository.findAll().isEmpty())
+            try {
+                String filepath = "resources/config/midi.json";
+                MidiInstrumentList config = mapper.readValue(new File(filepath), MidiInstrumentList.class);
 
-        try {
-            String filepath = "resources/config/midi.json";
-            MidiInstrumentList config = mapper.readValue(new File(filepath), MidiInstrumentList.class);
-
-            config.getInstruments().forEach(instrumentDef -> {
-                instrumentDef = midiInstrumentInfoRepository.save(instrumentDef);
-                MidiInstrumentInfo finalInstrumentDef = instrumentDef;
-                instrumentDef.getAssignments().keySet().forEach(code -> {
-                    ControlCode controlCode = new ControlCode();
-                    controlCode.setControlCode(code);
-                    controlCode.setName(finalInstrumentDef.getAssignments().get(code));
-                    if (finalInstrumentDef.getBoundaries().containsKey(code)) {
-                        controlCode.setLowerBound(finalInstrumentDef.getBoundaries().get(code)[0]);
-                        controlCode.setUpperBound(finalInstrumentDef.getBoundaries().get(code)[1]);
-                    }
-                    controlCode = controlCodeRepository.save(controlCode);
-                    finalInstrumentDef.getControlCodes().add(controlCode);
+                config.getInstruments().forEach(instrumentDef -> {
+                    instrumentDef = midiInstrumentInfoRepository.save(instrumentDef);
+                    MidiInstrumentInfo finalInstrumentDef = instrumentDef;
+                    instrumentDef.getAssignments().keySet().forEach(code -> {
+                        ControlCode controlCode = new ControlCode();
+                        controlCode.setControlCode(code);
+                        controlCode.setName(finalInstrumentDef.getAssignments().get(code));
+                        if (finalInstrumentDef.getBoundaries().containsKey(code)) {
+                            controlCode.setLowerBound(finalInstrumentDef.getBoundaries().get(code)[0]);
+                            controlCode.setUpperBound(finalInstrumentDef.getBoundaries().get(code)[1]);
+                        }
+                        controlCode = controlCodeRepository.save(controlCode);
+                        finalInstrumentDef.getControlCodes().add(controlCode);
+                    });
+                    instrumentDef = midiInstrumentInfoRepository.save(finalInstrumentDef);
+                    results.put(instrumentDef.getName(), MidiInstrument.fromMidiInstrumentDef(getDevice(), instrumentDef));
                 });
-                instrumentDef = midiInstrumentInfoRepository.save(finalInstrumentDef);
-                results.put(instrumentDef.getName(), MidiInstrument.fromMidiInstrumentDef(getDevice(), instrumentDef));
-            });
-
-            return results;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        else {
+            List<MidiInstrumentInfo> instruments = midiInstrumentInfoRepository.findAll();
+            instruments.forEach(i -> results.put(i.getName(), MidiInstrument.fromMidiInstrumentDef(getDevice(), i)));
         }
+
+        return results;
     }
 
 
