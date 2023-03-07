@@ -17,5 +17,5 @@ public class ControlCode {
     private Integer code;
     private Integer lowerBound;
     private Integer upperBound;
-
+    private Integer pad;
 }

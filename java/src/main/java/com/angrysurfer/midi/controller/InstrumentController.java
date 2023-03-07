@@ -4,7 +4,7 @@ import com.angrysurfer.midi.model.LookupItem;
 import com.angrysurfer.midi.model.MidiInstrumentInfo;
 import com.angrysurfer.midi.service.BeatGeneratorService;
 import com.angrysurfer.midi.service.MIDIService;
-import com.angrysurfer.midi.service.MidiInstrument;
+import com.angrysurfer.midi.model.MidiInstrument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;

@@ -47,9 +47,9 @@ public class TickerController {
     }
 
     @GetMapping(path = "/ticker/stop")
-    public void stop() {
+    public TickerInfo stop() {
         logger.info("/ticker/stop");
-        service.stop();
+        return service.stop();
     }
 
     @GetMapping(path = "/ticker/next")

@@ -1,7 +1,5 @@
-package com.angrysurfer.midi.service;
+package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.ControlCode;
-import com.angrysurfer.midi.model.MidiInstrumentInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +22,7 @@ public class MidiInstrument implements Serializable {
     static final Random rand = new Random();
     static Logger logger = LoggerFactory.getLogger(MidiInstrument.class.getCanonicalName());
     private List<ControlCode> controlCodes = new ArrayList<>();
+    private List<Pad> pads = new ArrayList<>();
     private Map<Integer, String> assignments = new HashMap<>();
     private Map<Integer, Integer[]> boundaries = new HashMap<>();
     @JsonIgnore
@@ -34,9 +33,7 @@ public class MidiInstrument implements Serializable {
     private int highestNote;
     private int highestPreset;
     private int preferredPreset;
-    private int pads;
     private boolean hasAssignments;
-
     public MidiInstrument() {
 
     }

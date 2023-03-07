@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.service;
 
+import com.angrysurfer.midi.model.MidiMessage;
 import com.angrysurfer.midi.model.*;
 import com.angrysurfer.midi.repo.PlayerInfoRepository;
 import com.angrysurfer.midi.repo.RuleRepository;
@@ -14,6 +15,7 @@ import javax.sound.midi.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.angrysurfer.midi.controller.PlayerUpdateType.NOTE;
@@ -40,21 +42,23 @@ public class BeatGeneratorService {
     static int OPEN_HAT = 39;
     private final MidiInstrumentInfoRepository midiInstrumentInfoRepository;
     private final ControlCodeRepository controlCodeRepository;
+    private final PadRepository padRepository;
     //    static MidiDevice device = getDevice();
     private BeatGenerator beatGenerator;
     private MIDIService midiService;
     private PlayerInfoRepository playerInfoRepository;
     private RuleRepository ruleRepository;
-    //    private TickerInfo tickerInfo;
     private TickerInfoRepo tickerInfoRepo;
 
     public BeatGeneratorService(MIDIService midiService, PlayerInfoRepository playerInfoRepository,
                                 RuleRepository ruleRepository, TickerInfoRepo tickerInfoRepo,
                                 MidiInstrumentInfoRepository midiInstrumentInfoRepository,
-                                ControlCodeRepository controlCodeRepository) {
+                                ControlCodeRepository controlCodeRepository,
+                                PadRepository padRepository) {
         this.midiService = midiService;
         this.ruleRepository = ruleRepository;
         this.playerInfoRepository = playerInfoRepository;
+        this.padRepository = padRepository;
         this.tickerInfoRepo = tickerInfoRepo;
         this.midiInstrumentInfoRepository = midiInstrumentInfoRepository;
         this.controlCodeRepository = controlCodeRepository;
@@ -100,6 +104,7 @@ public class BeatGeneratorService {
                         finalInstrumentDef.getControlCodes().add(controlCode);
                     });
                     instrumentDef = midiInstrumentInfoRepository.save(finalInstrumentDef);
+                    addPadInfo(instrumentDef);
                     results.put(instrumentDef.getName(), MidiInstrument.fromMidiInstrumentDef(getDevice(), instrumentDef));
                 });
             } catch (IOException e) {
@@ -113,6 +118,42 @@ public class BeatGeneratorService {
         return results;
     }
 
+    private void addPadInfo(MidiInstrumentInfo instrumentInfo) {
+        int padCount = instrumentInfo.getHighestNote() - instrumentInfo.getLowestNote();
+        if (padCount == 7) {
+            List<Pad> pads = new ArrayList<>(IntStream.range(0, 8).mapToObj(i -> new Pad()).toList());
+            instrumentInfo.getControlCodes().forEach(cc -> {
+                if (cc.getCode() > 0 && cc.getCode() < 16)
+                    pads.get(0).getControlCodes().add(cc.getCode());
+
+                if (cc.getCode() > 15 && cc.getCode() < 24)
+                    pads.get(1).getControlCodes().add(cc.getCode());
+
+                if (cc.getCode() > 23 && cc.getCode() < 29)
+                    pads.get(2).getControlCodes().add(cc.getCode());
+
+                if (cc.getCode() > 28 && cc.getCode() < 32)
+                    pads.get(3).getControlCodes().add(cc.getCode());
+
+                if (cc.getCode() > 31 && cc.getCode() < 40)
+                    pads.get(4).getControlCodes().add(cc.getCode());
+
+                if (cc.getCode() > 39 && cc.getCode() < 45)
+                    pads.get(3).getControlCodes().add(cc.getCode());
+
+                if (cc.getCode() > 44 && cc.getCode() < 56)
+                    pads.get(5).getControlCodes().add(cc.getCode());
+
+                if (cc.getCode() > 55 && cc.getCode() < 64)
+                    pads.get(6).getControlCodes().add(cc.getCode());
+
+                if (cc.getCode() > 63 && cc.getCode() < 72)
+                    pads.get(7).getControlCodes().add(cc.getCode());
+            });
+            pads.forEach(pad -> instrumentInfo.getPads().add(padRepository.save(pad)));
+            midiInstrumentInfoRepository.save(instrumentInfo);
+        }
+    }
 
     public boolean play() {
         if (!getBeatGenerator().isPaused() && !getBeatGenerator().isPlaying())
@@ -130,11 +171,10 @@ public class BeatGeneratorService {
     }
 
 
-    public boolean stop() {
+    public TickerInfo stop() {
         if (getBeatGenerator().isPlaying())
             getBeatGenerator().stop();
-
-        return getBeatGenerator().isPlaying();
+        return TickerInfo.fromTicker(getBeatGenerator(), getPlayers());
     }
 
 
@@ -200,11 +240,6 @@ public class BeatGeneratorService {
                 }).start();
             }
         }
-    }
-
-
-    public void clearPlayers() {
-        this.getBeatGenerator().clearEventSources();
     }
 
     public PlayerInfo addPlayer(String instrument) {
@@ -343,11 +378,9 @@ public class BeatGeneratorService {
         getBeatGenerator().save();
     }
 
-
     public void saveBeat() {
-//        getBeatGenerator().saveBeat(getPlayers());
+        getBeatGenerator().saveConfig();
     }
-
 
     public void updatePlayer(Long playerId, int updateType, int updateValue) {
         switch (updateType) {
@@ -451,5 +484,9 @@ public class BeatGeneratorService {
                 }).start();
             }
         }
+    }
+
+    public void clearPlayers() {
+        getBeatGenerator().getPlayers().clear();
     }
 }

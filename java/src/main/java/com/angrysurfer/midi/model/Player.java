@@ -1,6 +1,5 @@
 package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.service.MidiInstrument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,9 +7,7 @@ import lombok.Setter;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -20,6 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class Player implements Callable<Boolean>, Serializable {
     static final Random rand = new Random();
     Set<Rule> rules = new HashSet<>();
+    private List<Pad> pads = new ArrayList<>();
     private int channel;
     private int note;
     private int minVelocity = 110;

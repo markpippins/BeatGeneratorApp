@@ -1,7 +1,5 @@
 package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.ControlCode;
-import com.angrysurfer.midi.model.Player;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,12 +33,17 @@ public class MidiInstrumentInfo implements Serializable {
     private int highestNote;
     private int highestPreset;
     private int preferredPreset;
-    private int pads;
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "instrument_control_code", joinColumns = {@JoinColumn(name = "instrument_id")}, inverseJoinColumns = {
             @JoinColumn(name = "control_code_id")})
     private List<ControlCode> controlCodes = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "instrument_pad",
+            joinColumns = @JoinColumn(name = "pad_id"),
+            inverseJoinColumns = @JoinColumn(name = "instrument_id"))
+    private List<Pad> pads = new ArrayList<>();
 
     public MidiInstrumentInfo() {
 
@@ -58,6 +61,7 @@ public class MidiInstrumentInfo implements Serializable {
         setPreferredPreset(player.getInstrument().getPreferredPreset());
         setDeviceName(player.getInstrument().getDevice().getDeviceInfo().getName());
         setHasAssignments(player.getInstrument().getAssignments().size() > 0);
+        setPads(player.getInstrument().getPads());
     }
 }
 

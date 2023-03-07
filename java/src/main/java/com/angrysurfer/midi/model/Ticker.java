@@ -64,6 +64,9 @@ public abstract class Ticker implements Runnable, Serializable {
     }
 
     public void reset() {
+        tick.set(0);
+        bar.set(0);
+        setBeat(0);
         getPlayers().clear();
         setPaused(false);
         setDone(false);
@@ -73,7 +76,6 @@ public abstract class Ticker implements Runnable, Serializable {
         setMaxTracks(24);
         setPartLength(64);
         setSongLength(Integer.MAX_VALUE);
-        setBeat(1.0);
         setTempoInBPM(120);
         setBeatDivider(4.0);
         setBeatsPerBar(4);
@@ -159,25 +161,19 @@ public abstract class Ticker implements Runnable, Serializable {
     }
 
     public void stop() {
-        setPlaying(false);
         setStopped(true);
-        reset();
+        setPlaying(false);
+        setPaused(false);
+        setBeat(0);
+        tick.set(0);
+        bar.set(0);
+        setDone(false);
     }
-
     public void pause() {
         if (isPaused() || isPlaying()) {
             setPlaying(!isPlaying());
             setPaused(!isPaused());
             setStopped(isPaused());
-        }
-    }
-
-//    public abstract PlayerInfo addPlayer(Player player);
-
-
-    public void clearEventSources() {
-        synchronized (this.getPlayers()) {
-            this.getPlayers().clear();
         }
     }
 }

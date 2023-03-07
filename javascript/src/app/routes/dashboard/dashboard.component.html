@@ -20,13 +20,6 @@
 
   <mat-tab-group>
 
-    <mat-tab label="808 Style">
-      <div class="two-column-grid-container">
-        <app-beat-spec></app-beat-spec>
-      </div>
-    </mat-tab>
-
-
     <mat-tab label="Beats">
       <div class="two-column-grid-container">
         <div>
@@ -39,6 +32,11 @@
       </div>
     </mat-tab>
 
+    <mat-tab label="808 Style">
+      <div class="two-column-grid-container">
+        <app-beat-spec></app-beat-spec>
+      </div>
+    </mat-tab>
 
     <mat-tab label="Sliders">
       <div class="two-column-grid-container">
@@ -47,6 +45,7 @@
     </mat-tab>
 
     <mat-tab label="Config">
+      <app-device-panel></app-device-panel>
       <div class="two-column-grid-container" [style.max-width.px]="230" [style.min-height.px]="280">
         <!--        <app-drum-grid></app-drum-grid>-->
       </div>
@@ -56,7 +55,20 @@
   </div>
 </div>
 <div class="footer">
-  <!--  Ticker: {{ticker.id}}-->
+  <div class="status-bar">
+    <label>Ticker</label>
+    <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.id">
+    <label>Strikes</label>
+    <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.players.length">
+    <label></label>
+    <label class="status-label" *ngFor="let line of consoleOutput">{{line}}</label>
+  </div>
+  <!--    <pre *ngSwitchDefault>ng generate component xyz</pre>-->
+  <!--    <pre *ngSwitchCase="'material'">ng add @angular/material</pre>-->
+  <!--    <pre *ngSwitchCase="'pwa'">ng add @angular/pwa</pre>-->
+  <!--    <pre *ngSwitchCase="'dependency'">ng add _____</pre>-->
+  <!--    <pre *ngSwitchCase="'test'">ng test</pre>-->
+  <!--    <pre *ngSwitchCase="'build'">ng build</pre>-->
 </div>
 
 <!--  <div class="card highlight-card card-small">-->

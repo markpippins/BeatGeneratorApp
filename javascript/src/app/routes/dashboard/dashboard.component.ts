@@ -19,9 +19,29 @@ export class DashboardComponent implements OnInit {
 
   tickerPointer = 0
   @Output()
-  ticker!: Ticker
+  ticker: Ticker = {
+    bar: 0,
+    beat: 0,
+    beatDivider: 0,
+    beatsPerBar: 0,
+    done: false,
+    id: 0,
+    maxTracks: 0,
+    partLength: 0,
+    players: [],
+    playing: false,
+    songLength: 0,
+    stopped: false,
+    swing: 0,
+    tempoInBPM: 0,
+    tick: 0,
+    ticksPerBeat: 0
+  }
 
   running = false
+
+  @Output()
+  consoleOutput: string[] = []
 
   constructor(private midiService: MidiService) {
   }
@@ -32,9 +52,15 @@ export class DashboardComponent implements OnInit {
   }
 
   onActionSelected(action: string) {
+    this.consoleOutput.pop()
+    this.consoleOutput.push(action)
+
     switch (action) {
       case 'forward': {
-        this.midiService.next(this.ticker == undefined ? 0 : this.ticker.id).subscribe(async (data) => {
+        if (this.ticker.id > 0 && this.ticker.playing) {
+          this.consoleOutput.pop()
+          this.consoleOutput.push('ticker is currently playing')
+        } else this.midiService.next(this.ticker == undefined ? 0 : this.ticker.id).subscribe(async (data) => {
           this.clear();
           this.ticker = data
           this.players = this.ticker.players
@@ -69,9 +95,10 @@ export class DashboardComponent implements OnInit {
       }
 
       case 'stop': {
-        this.midiService.stop().subscribe()
-        this.players = []
-
+        this.midiService.stop().subscribe(data => {
+          this.ticker = data
+        })
+        // this.players = []
         // let element = document.getElementById('transport-btn-play')
         // if (element != null) { // @ts-ignore
         //   this.toggleClass(element, 'active')

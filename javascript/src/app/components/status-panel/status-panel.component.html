@@ -5,9 +5,35 @@
 <div class="two-column-grid-container">
   <table class="status-table">
     <tr>
-      <th *ngFor="let col of statusColumns;">{{col}}</th>
+      <!--      <th *ngFor="let col of statusColumns;">{{col}}</th>-->
+      <td *ngIf="ticker.playing" class="active">
+      </td>
+      <td *ngIf="!ticker.playing" class="inactive">
+      </td>
+      <td>Ticker</td>
+      <td>Tick</td>
+      <td>Bar</td>
+      <td>Beat</td>
+
+      <td *ngIf="ticker.playing" class="active">
+      </td>
+      <td *ngIf="!ticker.playing" class="inactive">
+      </td>
+      <td>PPQ</td>
+      <td>BPM</td>
+      <td>BPB</td>
+      <td>Part Len</td>
+      <td>Tracks</td>
+      <td *ngIf="ticker.playing" class="active">
+      </td>
+      <td *ngIf="!ticker.playing" class="inactive">
+      </td>
     </tr>
     <tr *ngIf="ticker != undefined">
+      <td *ngIf="ticker.playing" class="active">
+      </td>
+      <td *ngIf="!ticker.playing" class="inactive">
+      </td>
 
       <td class="fixed">
         {{ ticker.id }}
@@ -39,6 +65,10 @@
       </td>
       <td>
         <input type="number" disabled="true" min="1" max="127" step="1" value="{{ ticker.maxTracks }}">
+      </td>
+      <td *ngIf="ticker.playing" class="active">
+      </td>
+      <td *ngIf="!ticker.playing" class="inactive">
       </td>
     </tr>
   </table>

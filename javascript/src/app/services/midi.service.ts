@@ -7,6 +7,7 @@ import {Evaluator} from '../models/evaluator';
 import {Rule} from "../models/rule";
 import {StepData} from "../models/step-data";
 import {LookupItem} from "../models/lookup-item";
+import {Device} from "../models/device";
 
 @Injectable({
   providedIn: 'root',
@@ -46,7 +47,7 @@ export class MidiService {
   }
 
   stop() {
-    return this.http.get('http://localhost:8080/api/ticker/stop');
+    return this.http.get<Ticker>('http://localhost:8080/api/ticker/stop');
   }
 
   pause() {
@@ -63,6 +64,11 @@ export class MidiService {
 
   tickerStatus() {
     return this.http.get<Ticker>('http://localhost:8080/api/ticker/status');
+  }
+
+  allDevices() {
+    return this.http.get<Device[]>(
+      'http://localhost:8080/api/devices/info');
   }
 
   instrumentInfo(channel: number) {

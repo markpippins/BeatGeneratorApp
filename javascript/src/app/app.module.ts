@@ -34,6 +34,7 @@ import {MatCheckboxModule} from "@angular/material/checkbox";
 import {MatListModule} from "@angular/material/list";
 import { InstrumentSelectDialogComponent } from './components/instrument-select-dialog/instrument-select-dialog.component';
 import {MatToolbarModule} from "@angular/material/toolbar";
+import { DevicePanelComponent } from './components/device-panel/device-panel.component';
 
 @NgModule({
   declarations: [
@@ -56,6 +57,7 @@ import {MatToolbarModule} from "@angular/material/toolbar";
     BeatSpecPanelComponent,
     RuleTableComponent,
     InstrumentSelectDialogComponent,
+    DevicePanelComponent,
   ],
     imports: [
         BrowserModule,

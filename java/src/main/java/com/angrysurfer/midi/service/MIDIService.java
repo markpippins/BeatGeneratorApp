@@ -1,6 +1,7 @@
 package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.LookupItem;
+import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.model.MidiInstrumentInfo;
 import com.angrysurfer.midi.model.MidiInstrumentInfoRepository;
 import lombok.extern.slf4j.Slf4j;
