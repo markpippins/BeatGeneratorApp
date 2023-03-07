@@ -1,17 +1,27 @@
+<div>
+  <mat-tab-group>
+    <mat-tab *ngFor="let page of pages;" label="Track {{page}}">
 
-<div class="interface-808">
-  <div class="side-panel-808">
-    <div class="beat-btn" >
-<!--      <div id="beat-btn-{{stepData.step}}" class="inactive btn-led" [style.width.px]="15">-->
-<!--        {{stepData.step}}-->
-<!--      </div>-->
-    </div>
-    <label>Pitch</label>
-    <label>Velocity</label>
-    <label>Probability</label>
-    <label>Gate Length</label>
-  </div>
+      <div class="interface-808">
+        <div class="side-panel-808">
+          <app-instrument-selector></app-instrument-selector>
+          <label>Track {{page}}</label>
+          <mat-divider [style.height.px]="4"></mat-divider>
+          <label>Pitch</label>
+          <label>Velocity</label>
+          <label>Probability</label>
+          <label>Gate</label>
+        </div>
 
-  <app-beat-spec-panel *ngFor="let step of steps;" [stepData]=step (change)="onStepChanged(step)" (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>
+
+        <app-beat-spec-panel *ngFor="let step of steps;" [stepData]=step (change)="onStepChanged(step)"
+                             (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>
+      </div>
+
+    </mat-tab>
+  </mat-tab-group>
 </div>
-<app-slider-panel></app-slider-panel>
+<!--<app-pads-panel></app-pads-panel>-->
+<!--<app-drum-grid [channel]="10"></app-drum-grid>-->
+<app-slider-panel [channel]="10"></app-slider-panel>
+

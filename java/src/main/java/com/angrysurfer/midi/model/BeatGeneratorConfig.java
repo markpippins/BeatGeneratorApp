@@ -1,7 +1,5 @@
-package com.angrysurfer.midi.model.config;
+package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.Strike;
-import com.angrysurfer.midi.model.Ticker;
 import lombok.Getter;
 import lombok.Setter;
 

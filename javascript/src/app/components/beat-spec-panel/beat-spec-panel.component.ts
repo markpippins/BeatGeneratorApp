@@ -24,6 +24,9 @@ export class BeatSpecPanelComponent {
   onLaneBtnClick() {
     let element = document.getElementById("beat-btn-" + this.stepData.step)
     this.toggleClass(element, 'inactive', 'active')
+
+    element = document.getElementById("beat-led-" + this.stepData.step)
+    this.toggleClass(element, 'inactive', 'active')
   }
 
   toggleClass(el: any, classNameA: string, classNameB: string) {

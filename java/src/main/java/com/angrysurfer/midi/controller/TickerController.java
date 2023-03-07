@@ -1,6 +1,6 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.config.TickerInfo;
+import com.angrysurfer.midi.model.TickerInfo;
 import com.angrysurfer.midi.service.BeatGeneratorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

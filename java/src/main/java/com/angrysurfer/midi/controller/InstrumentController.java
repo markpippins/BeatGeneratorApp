@@ -1,11 +1,15 @@
 package com.angrysurfer.midi.controller;
 
+import com.angrysurfer.midi.model.LookupItem;
+import com.angrysurfer.midi.model.MidiInstrumentInfo;
 import com.angrysurfer.midi.service.BeatGeneratorService;
-import com.angrysurfer.midi.service.IMidiInstrument;
+import com.angrysurfer.midi.service.MIDIService;
+import com.angrysurfer.midi.service.MidiInstrument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @CrossOrigin("*")
@@ -13,22 +17,39 @@ import java.util.Map;
 @RequestMapping("/api")
 public class InstrumentController {
     static Logger logger = LoggerFactory.getLogger(InstrumentController.class.getCanonicalName());
-    private final BeatGeneratorService service;
+    private final BeatGeneratorService beatGeneratorService;
+    private final MIDIService midiService;
 
-    public InstrumentController(BeatGeneratorService service) {
-        this.service = service;
+    public InstrumentController(BeatGeneratorService service, MIDIService midiService) {
+        this.beatGeneratorService = service;
+        this.midiService = midiService;
     }
 
     @GetMapping(path = "/instruments/info")
-    public @ResponseBody Map<String, IMidiInstrument> getInstruments() {
+    public @ResponseBody Map<String, MidiInstrument> getInstruments() {
         logger.info("/instruments/info");
-        return service.getInstruments();
+        return beatGeneratorService.getInstruments();
     }
 
     @GetMapping(path = "/instrument/info")
-    public @ResponseBody IMidiInstrument getInstrument(int channel) {
+    public @ResponseBody MidiInstrument getInstrument(int channel) {
         logger.info("/instrument/info");
-        return service.getInstrument(channel);
+        return beatGeneratorService.getInstrument(channel);
+    }
+
+    @GetMapping(path = MIDIService.INSTRUMENT_LIST)
+    public @ResponseBody List<MidiInstrumentInfo> getInstrumentList() {
+        return midiService.getInstrumentList();
+    }
+
+    @GetMapping(path = MIDIService.INSTRUMENT_NAMES)
+    public @ResponseBody List<String> getInstrumentNames() {
+        return midiService.getInstrumentNames();
+    }
+
+    @GetMapping(path = MIDIService.INSTRUMENT_LOOKUP)
+    public @ResponseBody List<LookupItem> getInstrumentLookupItems() {
+        return midiService.getInstrumentLookupItems();
     }
 }
 

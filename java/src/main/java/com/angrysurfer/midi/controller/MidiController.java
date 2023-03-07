@@ -1,7 +1,7 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.StepData;
-import com.angrysurfer.midi.service.IMIDIService;
+import com.angrysurfer.midi.model.MidiInstrumentInfo;
+import com.angrysurfer.midi.model.MidiInstrumentList;
 import com.angrysurfer.midi.service.MIDIService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +14,9 @@ import java.util.List;
 @Controller
 @RestController
 public class MidiController {
-    private IMIDIService midiService;
+    private MIDIService midiService;
 
-    public MidiController(IMIDIService midiService) {
+    public MidiController(MIDIService midiService) {
         this.midiService = midiService;
     }
 

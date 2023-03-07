@@ -1,6 +1,8 @@
 package com.angrysurfer.midi.service;
 
-import com.angrysurfer.midi.model.StepData;
+import com.angrysurfer.midi.model.LookupItem;
+import com.angrysurfer.midi.model.MidiInstrumentInfo;
+import com.angrysurfer.midi.model.MidiInstrumentInfoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,12 +12,17 @@ import javax.sound.midi.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class MIDIService implements IMIDIService {
+public class MIDIService {
+
+    public static final String INSTRUMENT_LIST = "/instruments/all";
+
+    public static final String INSTRUMENT_LOOKUP = "/instruments/lookup";
+
+    public static final String INSTRUMENT_NAMES = "/instruments/names";
 
     public static final String DEVICES_INFO = "/devices/info";
     public static final String DEVICE_NAMES = "/devices/names";
@@ -23,25 +30,12 @@ public class MIDIService implements IMIDIService {
     public static final String SERVICE_SELECT = "/service/select";
     static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
 
-//    static Sequencer sequencer;
-//
-//    static {
-//        try {
-//            sequencer = MidiSystem.getSequencer();
-////            initialized = true;
-//        } catch (MidiUnavailableException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+    private MidiInstrumentInfoRepository midiInstrumentInfoRepository;
 
-    //    public static void playTestNote() throws InvalidMidiDataException, MidiUnavailableException {
-    //        int channel = 0;
-    //        int note = 60;
-    //        int velocity = 127; // velocity (i.e. volume); 127 = high
-    //        ShortMessage msg = new ShortMessage();
-    //        msg.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
-    //    }
-    @Override
+    public MIDIService(MidiInstrumentInfoRepository midiInstrumentInfoRepository) {
+        this.midiInstrumentInfoRepository = midiInstrumentInfoRepository;
+    }
+
     public List<MidiDevice> getMidiDevices() {
 
         Sequencer seq;
@@ -56,7 +50,7 @@ public class MIDIService implements IMIDIService {
         }).collect(Collectors.toList());
     }
 
-    @Override
+
     public List<MidiDevice> findMidiDevices(boolean receive, boolean transmit) {
         return getMidiDevices().stream().map(device -> {
             if ((transmit == (device.getMaxTransmitters() != 0) && receive == (device.getMaxReceivers() != 0)))
@@ -65,7 +59,7 @@ public class MIDIService implements IMIDIService {
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    @Override
+
     public List<MidiDevice> findMidiDevice(String name) {
         return findMidiDevices(true, false).stream()
                 .filter(d -> d.getDeviceInfo().getName().equals(name)).toList();
@@ -80,7 +74,7 @@ public class MIDIService implements IMIDIService {
         }
     }
 
-    @Override
+
     public boolean select(MidiDevice device) {
         reset();
         if (!device.isOpen()) {
@@ -96,17 +90,14 @@ public class MIDIService implements IMIDIService {
 
     public boolean select(String name) {
         reset();
-//            try (MidiDevice device = findMidiDevice(name)) {
         try {
             List<MidiDevice> devices = findMidiDevice(name);
-
             MidiDevice device = devices.get(0);
             if (!device.isOpen()) {
                 device.open();
                 MidiSystem.getTransmitter().setReceiver(device.getReceiver());
                 return device.isOpen();
             }
-
         } catch (MidiUnavailableException e) {
             throw new RuntimeException(e);
         }
@@ -114,7 +105,46 @@ public class MIDIService implements IMIDIService {
         return false;
     }
 
-//    @Override
+
+    public List<String> getInstrumentNames() {
+        return midiInstrumentInfoRepository.findAll().stream().map(i -> i.getName()).toList();
+    }
+
+    public void sendMessage(MidiInstrument instrument, int messageType, int data1, int data2) throws
+            MidiUnavailableException, InvalidMidiDataException {
+        instrument.sendToDevice(new ShortMessage(messageType, instrument.getChannel(), data1, data2));
+    }
+
+    public List<MidiInstrumentInfo> getInstrumentList() {
+        return midiInstrumentInfoRepository.findAll();
+    }
+
+    public List<LookupItem> getInstrumentLookupItems() {
+        return midiInstrumentInfoRepository.findAll().stream().map(ins -> new LookupItem(ins.getId(), ins.getName(), (long) ins.getChannel())).toList();
+    }
+}
+
+//    static Sequencer sequencer;
+//
+//    static {
+//        try {
+//            sequencer = MidiSystem.getSequencer();
+////            initialized = true;
+//        } catch (MidiUnavailableException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+
+//    public static void playTestNote() throws InvalidMidiDataException, MidiUnavailableException {
+//        int channel = 0;
+//        int note = 60;
+//        int velocity = 127; // velocity (i.e. volume); 127 = high
+//        ShortMessage msg = new ShortMessage();
+//        msg.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
+//    }
+
+
+//
 //    public void playSequence(List<StepData> steps) {
 //
 //        int channel = 4;
@@ -153,9 +183,3 @@ public class MIDIService implements IMIDIService {
 //            throw new RuntimeException(e);
 //        }
 //    }
-
-    public void sendMessage(IMidiInstrument instrument, int messageType, int data1, int data2) throws
-            MidiUnavailableException, InvalidMidiDataException {
-        instrument.sendToDevice(new ShortMessage(messageType, instrument.getChannel(), data1, data2));
-    }
-}

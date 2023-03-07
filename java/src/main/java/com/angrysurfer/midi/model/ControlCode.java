@@ -1,7 +1,6 @@
 package com.angrysurfer.midi.model;
 
 
-import com.angrysurfer.midi.model.config.MidiInstrumentInfo;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +14,7 @@ public class ControlCode {
     @Column(name = "id", nullable = false)
     private Long id;
     private String name;
-    private Integer controlCode;
+    private Integer code;
     private Integer lowerBound;
     private Integer upperBound;
 

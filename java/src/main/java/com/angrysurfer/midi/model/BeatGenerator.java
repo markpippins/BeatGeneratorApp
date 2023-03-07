@@ -1,10 +1,6 @@
 package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.config.BeatGeneratorConfig;
-import com.angrysurfer.midi.model.config.MidiInstrumentList;
 import com.angrysurfer.midi.service.BeatGeneratorService;
-import com.angrysurfer.midi.service.IMidiInstrument;
-import com.angrysurfer.midi.service.MIDIService;
 import com.angrysurfer.midi.service.MidiInstrument;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +10,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.stream.IntStream;
 
 @Getter
 @Setter
@@ -23,9 +18,9 @@ public class BeatGenerator extends Ticker {
     private List<Player> addList = new ArrayList<>();
 
     private List<Player> removeList = new ArrayList<>();
-    private Map<String, IMidiInstrument> instrumentMap = new HashMap<>();
+    private Map<String, MidiInstrument> instrumentMap = new HashMap<>();
 
-    public BeatGenerator(Map<String, IMidiInstrument> instrumentMap) {
+    public BeatGenerator(Map<String, MidiInstrument> instrumentMap) {
         super();
         setInstrumentMap(instrumentMap);
     }
@@ -62,7 +57,7 @@ public class BeatGenerator extends Ticker {
 
             config.getPlayers().forEach(drumPadDef -> {
                 Strike pad = new Strike();
-                IMidiInstrument instrument = new MidiInstrument(null, BeatGeneratorService.getDevice(), drumPadDef.getChannel());
+                MidiInstrument instrument = new MidiInstrument(null, BeatGeneratorService.getDevice(), drumPadDef.getChannel());
                 pad.setInstrument(instrument);
                 pad.setNote(drumPadDef.getNote());
                 pad.setPreset(drumPadDef.getPreset());
@@ -120,14 +115,14 @@ public class BeatGenerator extends Ticker {
         saveConfig();
     }
 
-    public IMidiInstrument getInstrument(String name) {
+    public MidiInstrument getInstrument(String name) {
         return getInstrumentMap().get(name);
     }
 
 //    public void makeBeats() {
 //
-//        IMidiInstrument fireball = getInstrument("Fireball");
-//        IMidiInstrument zero = getInstrument("Zero");
+//        MidiInstrument fireball = getInstrument("Fireball");
+//        MidiInstrument zero = getInstrument("Zero");
 //
 //        getPlayers().clear();
 //

@@ -1,6 +1,5 @@
-package com.angrysurfer.midi.model.config;
+package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.Strike;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -18,7 +17,7 @@ public class StrikeInfo extends PlayerInfo {
         return def;
     }
 
-//    static DrumPad fromDrumPadDef(DrumPadDef def, IMidiInstrument instrument) {
+//    static DrumPad fromDrumPadDef(DrumPadDef def, MidiInstrument instrument) {
 //        DrumPad pad = new DrumPad();
 //        pad.setAllowedControlMessages(pad.getAllowedControlMessages());
 //        pad.setPreset(def.getPreset());

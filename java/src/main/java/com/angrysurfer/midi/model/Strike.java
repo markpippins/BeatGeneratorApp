@@ -1,13 +1,12 @@
 package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.service.IMidiInstrument;
+import com.angrysurfer.midi.service.MidiInstrument;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -28,12 +27,12 @@ public class Strike extends Player {
     public Strike() {
     }
 
-    public Strike(String name, Ticker ticker, IMidiInstrument instrument, int note, Set<Integer> allowedControlMessages) {
+    public Strike(String name, Ticker ticker, MidiInstrument instrument, int note, Set<Integer> allowedControlMessages) {
         super(name, ticker, instrument, allowedControlMessages);
         setNote(note);
     }
 
-    public Strike(String name, Ticker ticker, IMidiInstrument instrument, int note,
+    public Strike(String name, Ticker ticker, MidiInstrument instrument, int note,
                   Set<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
         super(name, ticker, instrument, allowableControlMessages);
         setName(name);

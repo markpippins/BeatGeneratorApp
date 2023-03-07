@@ -17,12 +17,15 @@
     <app-status-panel [running]="running" [ticker]="ticker"></app-status-panel>
     <app-transport-control (clickEvent)="onActionSelected($event)"></app-transport-control>
   </div>
+
   <mat-tab-group>
+
     <mat-tab label="808 Style">
       <div class="two-column-grid-container">
         <app-beat-spec></app-beat-spec>
       </div>
     </mat-tab>
+
 
     <mat-tab label="Beats">
       <div class="two-column-grid-container">
@@ -30,7 +33,8 @@
           <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
         </div>
         <div class="two-column-grid-container">
-            <app-conditions-panel (ruleChangeEvent)="onPlayerSelected($event)" [player]="selectedPlayer"></app-conditions-panel>
+          <app-conditions-panel (ruleChangeEvent)="onPlayerSelected($event)"
+                                [player]="selectedPlayer"></app-conditions-panel>
         </div>
       </div>
     </mat-tab>
@@ -44,7 +48,7 @@
 
     <mat-tab label="Config">
       <div class="two-column-grid-container" [style.max-width.px]="230" [style.min-height.px]="280">
-<!--        <app-drum-grid></app-drum-grid>-->
+        <!--        <app-drum-grid></app-drum-grid>-->
       </div>
     </mat-tab>
   </mat-tab-group>
@@ -52,7 +56,7 @@
   </div>
 </div>
 <div class="footer">
-  Ticker: {{ticker.id}}
+  <!--  Ticker: {{ticker.id}}-->
 </div>
 
 <!--  <div class="card highlight-card card-small">-->

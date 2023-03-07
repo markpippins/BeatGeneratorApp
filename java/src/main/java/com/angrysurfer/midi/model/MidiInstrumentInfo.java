@@ -1,4 +1,4 @@
-package com.angrysurfer.midi.model.config;
+package com.angrysurfer.midi.model;
 
 import com.angrysurfer.midi.model.ControlCode;
 import com.angrysurfer.midi.model.Player;
@@ -35,7 +35,7 @@ public class MidiInstrumentInfo implements Serializable {
     private int highestNote;
     private int highestPreset;
     private int preferredPreset;
-
+    private int pads;
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "instrument_control_code", joinColumns = {@JoinColumn(name = "instrument_id")}, inverseJoinColumns = {
             @JoinColumn(name = "control_code_id")})

@@ -2,6 +2,7 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core'
 import {Instrument} from "../../../models/instrument"
 import {MidiService} from "../../../services/midi.service";
 import {Rule} from "../../../models/rule";
+import {LookupItem} from "../../../models/lookup-item";
 
 @Component({
   selector: 'app-instrument-selector',
@@ -10,13 +11,13 @@ import {Rule} from "../../../models/rule";
 })
 export class InstrumentSelectorComponent implements OnInit {
   selectedInstrument: Instrument | undefined
-  instruments!: Map<String, Instrument>
+  instruments!: LookupItem[]
   @Output()
   instrumentSelectEvent = new EventEmitter<Instrument>();
 
   @Input()
   instrumentName!: string
-  
+
   constructor(private midiService: MidiService) {
   }
 
@@ -25,7 +26,7 @@ export class InstrumentSelectorComponent implements OnInit {
   }
 
   onInstrumentChanged(instrument: Instrument) {
-    this.selectedInstrument = instrument;
+    // this.selectedInstrument = instrument;
     // this.midiService
     //   .instrumentInfo(this.channel - 1)
     //   .subscribe(async (data) => {
@@ -36,18 +37,8 @@ export class InstrumentSelectorComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.midiService.allInstruments().subscribe(async data => {
+    this.midiService.instrumentLookup().subscribe(async data => {
       this.instruments = data
-
-      let keys = [];
-      // @ts-ignore
-      for (let key of this.test_data)
-        keys.push(key);
-      console.log(keys);
-
-      //
-      // if (this.instruments[this.instrumentName] != undefined)
-      //   this.selectedInstrument = this.instruments.get(this.instrumentName)
     })
   }
 

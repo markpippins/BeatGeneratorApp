@@ -11,6 +11,13 @@ export class BeatSpecComponent implements OnInit {
   editStep: number | undefined
   stepCount: number = 16
   steps: StepData[] = []
+  pages = [1, 2, 3, 4, 5, 6, 7, 8]
+
+  rows: string[][] = [[
+    'Ride', 'Clap', 'Perc', 'Bass', 'Tom', 'Clap', 'Wood', 'P1',
+    'Ride', 'fx', 'Perc', 'Bass',
+    'Kick', 'Snare', 'Closed Hat', 'Open Hat',
+  ]];
 
   paramsBtnClicked(step: number) {
     this.editStep = step

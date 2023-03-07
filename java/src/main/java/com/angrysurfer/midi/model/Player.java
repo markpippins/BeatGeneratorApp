@@ -1,6 +1,6 @@
 package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.service.IMidiInstrument;
+import com.angrysurfer.midi.service.MidiInstrument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,7 +30,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private int position = 0;
     private AtomicLong lastTick = new AtomicLong(0);
     private int preset;
-    private IMidiInstrument instrument;
+    private MidiInstrument instrument;
     private Ticker ticker;
     private Set<Integer> allowedControlMessages = new HashSet<>();
     private int lastPlayedTick;
@@ -42,13 +42,13 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     }
 
-    public Player(String name, Ticker ticker, IMidiInstrument instrument) {
+    public Player(String name, Ticker ticker, MidiInstrument instrument) {
         setName(name);
         setInstrument(instrument);
         setTicker(ticker);
     }
 
-    public Player(String name, Ticker ticker, IMidiInstrument instrument, Set<Integer> allowedControlMessages) {
+    public Player(String name, Ticker ticker, MidiInstrument instrument, Set<Integer> allowedControlMessages) {
         this(name, ticker, instrument);
         setAllowedControlMessages(allowedControlMessages);
     }

@@ -35,8 +35,11 @@ export class DashboardComponent implements OnInit {
     switch (action) {
       case 'forward': {
         this.midiService.next(this.ticker == undefined ? 0 : this.ticker.id).subscribe(async (data) => {
+          this.clear();
           this.ticker = data
           this.players = this.ticker.players
+          if (this.players.length > 0)
+            this.selectedPlayer = this.players[0]
         })
         break
       }
@@ -44,11 +47,13 @@ export class DashboardComponent implements OnInit {
       case 'previous': {
         if (this.ticker != undefined && this.ticker.id > 0) {
           this.midiService.previous(this.ticker.id).subscribe(async (data) => {
+            this.clear();
             this.ticker = data
             this.players = this.ticker.players
+            if (this.players.length > 0)
+              this.selectedPlayer = this.players[0]
           })
         }
-
         break
       }
 
@@ -112,18 +117,7 @@ export class DashboardComponent implements OnInit {
 
       case 'clear': {
         this.midiService.clearPlayers().subscribe()
-        this.selectedPlayer = {
-          allowedControlMessages: [],
-          channel: 0,
-          id: 0,
-          instrument: "",
-          maxVelocity: 0,
-          minVelocity: 0,
-          note: 0,
-          preset: 0,
-          probability: 0,
-          rules: []
-        }
+        this.clear()
         break
       }
     }
@@ -157,5 +151,20 @@ export class DashboardComponent implements OnInit {
 
   refresh() {
     this.updateDisplay()
+  }
+
+  private clear() {
+    this.selectedPlayer = {
+      allowedControlMessages: [],
+      channel: 0,
+      id: 0,
+      instrument: "",
+      maxVelocity: 0,
+      minVelocity: 0,
+      note: 0,
+      preset: 0,
+      probability: 0,
+      rules: []
+    }
   }
 }

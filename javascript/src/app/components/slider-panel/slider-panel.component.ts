@@ -19,7 +19,7 @@ export class SliderPanelComponent implements OnInit {
   instrument!: Instrument | undefined
 
   @Input()
-  instruments!: Map<String, Instrument>
+  instruments!: Instrument[]
 
   @Output()
   configModeOn = false;

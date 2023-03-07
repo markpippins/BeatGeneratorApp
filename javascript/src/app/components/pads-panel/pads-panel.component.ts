@@ -20,15 +20,14 @@ export class PadsPanelComponent implements OnInit {
   channel: number = 10;
   instrument!: Instrument;
   channelSelectEvent = new EventEmitter<number>();
-  rows = [
-    ['13', '14', '15', '16'],
-    ['9', '10', '11', '12'],
-    ['5', '6', '7', '8'],
-    ['1', '2', '3', '4'],
-  ];
+  rows = [[
+    '13', '14', '15', '16',
+    '9', '10', '11', '12',
+    '5', '6', '7', '8',
+    '1', '2', '3', '4'
+  ]];
 
   getNote(row: string[], column: number) {
-
 
 
     return this.rows.indexOf(row) * 100 + column;

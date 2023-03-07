@@ -1,9 +1,6 @@
-package com.angrysurfer.midi.model.config;
+package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.MuteGroupList;
-import com.angrysurfer.midi.model.Strike;
-import com.angrysurfer.midi.model.Ticker;
-import com.angrysurfer.midi.service.IMidiInstrument;
+import com.angrysurfer.midi.service.MidiInstrument;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -65,7 +62,7 @@ public class TickerInfo {
 //        setMuteGroups();
     }
 
-    public static void copyToTicker(TickerInfo info, Ticker ticker, Map<String, IMidiInstrument> instruments) {
+    public static void copyToTicker(TickerInfo info, Ticker ticker, Map<String, MidiInstrument> instruments) {
         ticker.setId(info.getId());
         ticker.setBeat((int) info.getBeat());
         ticker.setDone(info.isDone());

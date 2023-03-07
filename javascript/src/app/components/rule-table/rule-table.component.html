@@ -1,31 +1,40 @@
 <table>
   <tr *ngIf="player != undefined">
     <th>
-      {{player.instrument}}
       {{player.id}}
+    </th>
+    <th>
+      {{player.instrument}}
+    </th>
+    <th>
       {{player.note}}
     </th>
-
+    <th></th>
+    <th></th>
+    <th></th>
   </tr>
-<!--  <tr>-->
-<!--    <th *ngFor="let col of ruleCols">-->
-<!--      {{ col}}-->
-<!--    </th>-->
-<!--    <th></th>-->
-<!--    <th></th>-->
-<!--  </tr>-->
+  <tr>
+    <th *ngFor="let col of ruleCols">
+      {{ col}}
+    </th>
+    <th></th>
+    <th></th>
+  </tr>
 
-  <tr class="active-table-row"  *ngFor="let rule of player?.rules;">
+  <tr class="active-table-row" *ngFor="let rule of player?.rules;">
+    <td class="player-short-col">{{rule.id}}</td>
     <td>
       <form>
-        <select id="operatorSelect-{{rule.id}}" [value]="OPERATOR[rule.operatorId]"  (change)="onOperatorChange(rule, $event)">
+        <select id="operatorSelect-{{rule.id}}" [value]="OPERATOR[rule.operatorId]"
+                (change)="onOperatorChange(rule, $event)">
           <option *ngFor="let opt of OPERATOR" [value]="opt">{{opt}}</option>
         </select>
       </form>
     </td>
     <td>
       <form>
-        <select id="comparisonSelect-{{rule.id}}" [value]="COMPARISON[rule.comparisonId]" (change)="onComparisonChange(rule, $event)">
+        <select id="comparisonSelect-{{rule.id}}" [value]="COMPARISON[rule.comparisonId]"
+                (change)="onComparisonChange(rule, $event)">
           <option *ngFor="let opt of COMPARISON" [value]="opt">{{opt}}</option>
         </select>
       </form>
@@ -42,6 +51,8 @@
     </td>
   </tr>
   <tr *ngIf="player == undefined || player.rules.length == 0">
+    <td class="player-short-col">
+    </td>
     <td class="player-short-col">
     </td>
     <td class="player-short-col">

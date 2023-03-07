@@ -1,6 +1,5 @@
-package com.angrysurfer.midi.model.config;
+package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.model.Player;
 import lombok.Getter;
 import lombok.Setter;
 

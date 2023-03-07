@@ -10,7 +10,7 @@
 
   <form>
     <select id="instrumentSelect" [value]="selectedInstrument" (change)="selectionChange($event)">
-      <option *ngFor="let inst of instruments | keyvalue" [value]="instrumentName">{{inst.value.name}}</option>
+      <option *ngFor="let instrument of instruments" [value]="instrument">{{instrument.desc}}</option>
     </select>
   </form>
 

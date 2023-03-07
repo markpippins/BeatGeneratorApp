@@ -6,6 +6,7 @@ import {Ticker} from '../models/ticker';
 import {Evaluator} from '../models/evaluator';
 import {Rule} from "../models/rule";
 import {StepData} from "../models/step-data";
+import {LookupItem} from "../models/lookup-item";
 
 @Injectable({
   providedIn: 'root',
@@ -74,9 +75,14 @@ export class MidiService {
   }
 
   allInstruments() {
+    return this.http.get<Instrument[]>(
+      'http://localhost:8080/api/instruments/all');
+  }
+
+  instrumentLookup() {
     let params = new HttpParams();
-    return this.http.get<Map<String, Instrument>>(
-      'http://localhost:8080/api/instruments/info');
+    return this.http.get<LookupItem[]>(
+      'http://localhost:8080/api/instruments/lookup');
   }
 
   clearPlayers() {

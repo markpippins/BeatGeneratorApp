@@ -1,9 +1,8 @@
 package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.ControlCode;
-import com.angrysurfer.midi.model.config.MidiInstrumentInfo;
+import com.angrysurfer.midi.model.MidiInstrumentInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,7 @@ import java.util.*;
 @Getter
 @Setter
 //@Entity
-public class MidiInstrument implements IMidiInstrument, Serializable {
+public class MidiInstrument implements Serializable {
     static final Random rand = new Random();
     static Logger logger = LoggerFactory.getLogger(MidiInstrument.class.getCanonicalName());
     private List<ControlCode> controlCodes = new ArrayList<>();
@@ -35,12 +34,13 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
     private int highestNote;
     private int highestPreset;
     private int preferredPreset;
-
+    private int pads;
     private boolean hasAssignments;
 
     public MidiInstrument() {
 
     }
+
     public MidiInstrument(String name, MidiDevice device, int channel) {
         setName(Objects.isNull(name) ? device.getDeviceInfo().getName() : name);
         setDevice(device);
@@ -58,42 +58,42 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
         instrument.setControlCodes(instrumentDef.getControlCodes());
         return instrument;
     }
-    @Override
+
     public String assignedControl(int cc) {
         return assignments.getOrDefault(cc, "NONE");
     }
 
-    @Override
+
     public void channelPressure(int data1, int data2) throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, getChannel(), data1, data2));
     }
 
-    @Override
+
     public void controlChange(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, getChannel(), data1, data2));
     }
 
-    @Override
+
     public void noteOn(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, getChannel(), data1, data2));
     }
 
-    @Override
+
     public void noteOff(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.NOTE_OFF, getChannel(), data1, data2));
     }
 
-    @Override
+
     public void polyPressure(int data1, int data2) throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.POLY_PRESSURE, getChannel(), data1, data2));
     }
 
-    @Override
+
     public void programChange(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.PROGRAM_CHANGE, getChannel(), data1, data2));
     }
 
-    @Override
+
     public void start() throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.START, getChannel(), 0, 0));
     }
@@ -102,7 +102,7 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
         sendToDevice(new ShortMessage(ShortMessage.STOP, getChannel(), 1, 1));
     }
 
-    @Override
+
     public void randomize(List<Integer> params) {
 
         new Thread(() -> params.forEach(cc ->
@@ -120,7 +120,7 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
         })).start();
     }
 
-    @Override
+
     public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
         logger.info(String.join(", ",
                 toString(),
@@ -130,16 +130,16 @@ public class MidiInstrument implements IMidiInstrument, Serializable {
         getDevice().getReceiver().send(message, new Date().getTime());
     }
 
-    @Override
+
     public void assign(int cc, String control) {
         getAssignments().put(cc, control);
     }
 
-    @Override
+
     public void setBounds(int cc, int lowerBound, int upperBound) {
         getBoundaries().put(cc, new Integer[]{lowerBound, upperBound});
     }
-    @Override
+
     public Integer getAssignmentCount() {
         return getAssignments().size();
     }

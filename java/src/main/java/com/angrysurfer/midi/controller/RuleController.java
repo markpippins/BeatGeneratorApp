@@ -1,15 +1,11 @@
 package com.angrysurfer.midi.controller;
 
 import com.angrysurfer.midi.model.Rule;
-import com.angrysurfer.midi.model.config.TickerInfo;
 import com.angrysurfer.midi.service.BeatGeneratorService;
-import com.angrysurfer.midi.service.IMidiInstrument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CrossOrigin("*")

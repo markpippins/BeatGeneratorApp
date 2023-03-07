@@ -1,7 +1,6 @@
 package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.*;
-import com.angrysurfer.midi.model.config.*;
 import com.angrysurfer.midi.repo.PlayerInfoRepository;
 import com.angrysurfer.midi.repo.RuleRepository;
 import com.angrysurfer.midi.repo.TickerInfoRepo;
@@ -43,13 +42,13 @@ public class BeatGeneratorService {
     private final ControlCodeRepository controlCodeRepository;
     //    static MidiDevice device = getDevice();
     private BeatGenerator beatGenerator;
-    private IMIDIService midiService;
+    private MIDIService midiService;
     private PlayerInfoRepository playerInfoRepository;
     private RuleRepository ruleRepository;
     //    private TickerInfo tickerInfo;
     private TickerInfoRepo tickerInfoRepo;
 
-    public BeatGeneratorService(IMIDIService midiService, PlayerInfoRepository playerInfoRepository,
+    public BeatGeneratorService(MIDIService midiService, PlayerInfoRepository playerInfoRepository,
                                 RuleRepository ruleRepository, TickerInfoRepo tickerInfoRepo,
                                 MidiInstrumentInfoRepository midiInstrumentInfoRepository,
                                 ControlCodeRepository controlCodeRepository) {
@@ -73,14 +72,14 @@ public class BeatGeneratorService {
     }
 
     private BeatGenerator makeBeatGenerator() {
-        if (new MIDIService().select(getDevice()))
+        if (midiService.select(getDevice()))
             return new BeatGenerator(loadConfig());
 
         return null;
     }
 
-    public Map<String, IMidiInstrument> loadConfig() {
-        Map<String, IMidiInstrument> results = new HashMap<>();
+    public Map<String, MidiInstrument> loadConfig() {
+        Map<String, MidiInstrument> results = new HashMap<>();
         if (midiInstrumentInfoRepository.findAll().isEmpty())
             try {
                 String filepath = "resources/config/midi.json";
@@ -91,7 +90,7 @@ public class BeatGeneratorService {
                     MidiInstrumentInfo finalInstrumentDef = instrumentDef;
                     instrumentDef.getAssignments().keySet().forEach(code -> {
                         ControlCode controlCode = new ControlCode();
-                        controlCode.setControlCode(code);
+                        controlCode.setCode(code);
                         controlCode.setName(finalInstrumentDef.getAssignments().get(code));
                         if (finalInstrumentDef.getBoundaries().containsKey(code)) {
                             controlCode.setLowerBound(finalInstrumentDef.getBoundaries().get(code)[0]);
@@ -149,18 +148,18 @@ public class BeatGeneratorService {
     }
 
     public TickerInfo getTickerStatus() {
-        return TickerInfo.fromTicker(beatGenerator, Collections.emptyList());
+        return TickerInfo.fromTicker(getBeatGenerator(), Collections.emptyList());
     }
 
     public List<TickerInfo> getAllTickerInfo() {
         return tickerInfoRepo.findAll();
     }
 
-    public Map<String, IMidiInstrument> getInstruments() {
+    public Map<String, MidiInstrument> getInstruments() {
         return getBeatGenerator().getInstrumentMap();
     }
 
-    public IMidiInstrument getInstrument(int channel) {
+    public MidiInstrument getInstrument(int channel) {
         try {
             return getInstruments().values().stream().filter(i -> i.getChannel() == channel).findAny().orElseThrow();
         } catch (NoSuchElementException e) {
@@ -170,7 +169,7 @@ public class BeatGeneratorService {
     }
 
     public void sendMessage(int messageType, int channel, int data1, int data2) {
-        IMidiInstrument instrument = getInstrument(channel);
+        MidiInstrument instrument = getInstrument(channel);
         if (Objects.nonNull(instrument)) {
             List<MidiDevice> devices = this.midiService.findMidiDevice(instrument.getDevice().getDeviceInfo().getName());
             if (!devices.isEmpty()) {
@@ -421,7 +420,7 @@ public class BeatGeneratorService {
     }
 
     public void playDrumNote(String instrumentName, int channel, int note) {
-        IMidiInstrument instrument = getBeatGenerator().getInstrument(instrumentName);
+        MidiInstrument instrument = getBeatGenerator().getInstrument(instrumentName);
         log.info(String.join(", ", instrumentName, Integer.toString(channel), Integer.toString(note)));
         if (Objects.nonNull(instrument)) {
             List<MidiDevice> devices = this.midiService.findMidiDevice(instrument.getDevice().getDeviceInfo().getName());

@@ -27,8 +27,9 @@ export class RuleTableComponent {
   @Input()
   player!: Player
   ruleCols: string[] = [
+    'ID',
     'Operator',
-    'Comparison',
+    'Op',
     'Value',
   ]
 

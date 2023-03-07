@@ -82,8 +82,8 @@ body {
   /*background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80');*/
   background-repeat: no-repeat;
   background-size: cover;
-  background-color: #555556;
-  /*background-image: linear-gradient(to left, #f46864, #003954);*/
+  background-color: #070813;
+  background-image: linear-gradient(to left, #f46864, #003954);
   /*border-style: dashed;*/
   /*border-width: thin;*/
 }
@@ -131,9 +131,17 @@ svg.material-icons:not(:last-child) {
   fill: #888;
 }
 
-.status-table {
-  margin-top: 4px;
-}
+/*table {*/
+/*  border-spacing: 0;*/
+/*}table {*/
+/*   align-self: stretch;*/
+/*   !*border-style: dashed;*!*/
+/*   !*border-width: thin;*!*/
+/* }*/
+
+/*.status-table {*/
+/*  margin-top: 4px;*/
+/*}*/
 
 .two-column-grid-container {
   display: grid;
@@ -388,10 +396,6 @@ input:hover, select:hover {
   color: white;
 }
 
-table {
-  border-spacing: 0;
-}
-
 tbody, thead tr {
   display: block;
 }
@@ -410,11 +414,6 @@ thead th:last-child {
   width: 156px; /* 140px + 16px scrollbar width */
 }
 
-table {
-  align-self: stretch;
-  /*border-style: dashed;*/
-  /*border-width: thin;*/
-}
 
 table tr th:hover {
 
@@ -517,16 +516,17 @@ td, th {
 
 .interface-808 {
   display: grid;
-  gap: 2px;
+  /*gap: 2px;*/
   grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
 }
 
 .side-panel-808 {
-  margin-top: 12px;
+  margin-top: 10px;
   display: flex;
-  gap: 3px;
+  gap: 5px;
+  flex-direction: column;
   flex-flow: column;
-  font-size: small;
+  font-size: smaller;
   align-items: flex-start;
 }
 
@@ -534,16 +534,30 @@ td, th {
   margin-top: 10px;
   display: flex;
   gap: 2px;
-  padding: 2px;
+  padding: 1px;
   flex-flow: column;
   font-size: small;
   align-items: center;
-  border-style: groove;
-  border-width: thin;
+  /*border-style: inset;*/
+  /*border-width: thin;*/
 }
 
 .btn-808 {
 
+}
+
+input {
+  background-color: transparent;
+  color: white;
+  text-align: center;
+  align-self: stretch;
+}
+
+select {
+  background-color: transparent;
+  color: white;
+  text-align: left;
+  align-self: stretch;
 }
 
 td input {
@@ -560,10 +574,7 @@ th {
   color: white;
   font-size: small;
   font-weight: normal;
-  color: white;
   text-align: left;
-  font-size: small;
-  font-weight: normal;
 }
 
 .active-table-row {
@@ -649,6 +660,7 @@ th {
 }
 
 .slider-container {
+  font-size: smaller;
   display: grid;
   gap: 10px;
   grid-template-columns: auto auto auto auto auto auto auto auto;

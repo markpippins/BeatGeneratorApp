@@ -1,6 +1,6 @@
 package com.angrysurfer.midi.repo;
 
-import com.angrysurfer.midi.model.config.PlayerInfo;
+import com.angrysurfer.midi.model.PlayerInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

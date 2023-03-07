@@ -1,33 +1,25 @@
 package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.service.IMidiInstrument;
+import com.angrysurfer.midi.service.MidiInstrument;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Entity
 @Getter
 @Setter
 public class Melody extends Player {
+    private final boolean notesOfOnNext = true;
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
-
-    private final boolean notesOfOnNext = true;
 //    @OneToMany(fetch = FetchType.EAGER)
 //    @Getter
 //    private Set<Integer> notes = new HashSet<>();
 //    private final List<Integer> notes = new ArrayList<>();
 
-    public Melody(String name, Ticker ticker, IMidiInstrument instrument) {
+    public Melody(String name, Ticker ticker, MidiInstrument instrument) {
         super(name, ticker, instrument);
     }
 
