@@ -2,6 +2,7 @@ import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {Player} from "../../models/player";
 import {MidiService} from "../../services/midi.service";
 import {Strike} from "../../models/strike";
+import { Instrument } from 'src/app/models/instrument';
 
 @Component({
   selector: 'app-player-table',
@@ -15,6 +16,13 @@ export class PlayerTableComponent {
 
   selectedPlayer: Player | undefined;
 
+  INSTRUMENT = 0;
+  NOTE = 1;
+  PROBABILITY = 2;
+  MIN_VELOCITY = 3;
+  MAX_VELOCITY = 4;
+  MUTE = 5;
+
   @Input()
   players!: Player[]
   playerCols: string[] = [
@@ -22,6 +30,7 @@ export class PlayerTableComponent {
     // 'remove',
     // 'mute',
     'ID',
+    'InstrumentId',
     'Ch',
     'Device',
     'Pre',
@@ -65,7 +74,7 @@ export class PlayerTableComponent {
               allowedControlMessages: [],
               channel: 0,
               id: 0,
-              instrument: "",
+              instrumentId: 0,
               maxVelocity: 0,
               minVelocity: 0,
               note: 0,
@@ -86,7 +95,7 @@ export class PlayerTableComponent {
       allowedControlMessages: [],
       channel: 0,
       id: 0,
-      instrument: "",
+      instrumentId: 0,
       maxVelocity: 0,
       minVelocity: 0,
       note: 0,
@@ -97,12 +106,16 @@ export class PlayerTableComponent {
   }
 
   noteChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, 1, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, this.NOTE, event.target.value).subscribe()
   }
 
   onPass(player: Player, $event: MouseEvent) {
     if (player != undefined)
       this.playerSelectEvent.emit(player);
+  }
+
+  onInstrumentSelected(player: Player) {
+    this.midiService.updatePlayer(player.id, this.INSTRUMENT, player.instrumentId).subscribe()
   }
 
   toggleClass(el: any, className: string) {

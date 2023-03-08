@@ -127,7 +127,7 @@ export class MidiService {
 
   addPlayer() {
     let params = new HttpParams();
-    params = params.append('instrument', 'blackbox');
+    params = params.append('instrument', 'Razzmatazz');
     return this.http.get<Player>('http://localhost:8080/api/players/add', {
       params: params,
     });

@@ -1,6 +1,7 @@
 import {ControlCode} from "./control-code";
 
 export interface Instrument {
+  id: number
   name: string;
   channel: number;
   lowestNote: number;

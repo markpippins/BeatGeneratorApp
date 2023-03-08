@@ -3,6 +3,7 @@ import {Instrument} from "../../../models/instrument"
 import {MidiService} from "../../../services/midi.service";
 import {Rule} from "../../../models/rule";
 import {LookupItem} from "../../../models/lookup-item";
+import { Player } from 'src/app/models/player';
 
 @Component({
   selector: 'app-instrument-selector',
@@ -10,44 +11,25 @@ import {LookupItem} from "../../../models/lookup-item";
   styleUrls: ['./instrument-selector.component.css']
 })
 export class InstrumentSelectorComponent implements OnInit {
-  selectedInstrument: Instrument | undefined
-  instruments!: LookupItem[]
+
   @Output()
-  instrumentSelectEvent = new EventEmitter<Instrument>();
+  instrumentSelectEvent = new EventEmitter<Player>();
+
+  instruments!: Instrument[]
 
   @Input()
-  instrumentName!: string
+  player!: Player
 
   constructor(private midiService: MidiService) {
   }
 
-  selectionChange(event: { target: any; }) {
-    this.onInstrumentChanged(event.target.value);
-  }
-
-  onInstrumentChanged(instrument: Instrument) {
-    // this.selectedInstrument = instrument;
-    // this.midiService
-    //   .instrumentInfo(this.channel - 1)
-    //   .subscribe(async (data) => {
-    //     this.instrument = data;
-    //     this.channelSelectEvent.emit(this.channel);
-    //     this.instrumentSelectEvent.emit(this.instrument);
-    //   });
-  }
-
   ngOnInit(): void {
-    this.midiService.instrumentLookup().subscribe(async data => {
+    this.midiService.allInstruments().subscribe(async data => {
       this.instruments = data
     })
   }
 
-
-  // onOperatorChange(rule: Rule, event: { target: any }) {
-  //   let value = this.OPERATOR.indexOf(event.target.value)
-  //   this.midiService.updateRule(this.player.id, rule.id, value, rule.comparisonId, rule.value).subscribe()
-  //   rule.operatorId = value
-  //   // let op = 'operatorSelect-' + rule.id
-  //   this.setSelectValue(event.target, value)
-  // }
+  onSelectionChange(event: Event) {
+    this.instrumentSelectEvent.emit(this.player);
+  }
 }

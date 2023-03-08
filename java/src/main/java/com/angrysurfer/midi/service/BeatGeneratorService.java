@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.angrysurfer.midi.controller.PlayerUpdateType.INSTRUMENT;
 import static com.angrysurfer.midi.controller.PlayerUpdateType.NOTE;
 
 @Service
@@ -150,6 +151,16 @@ public class BeatGeneratorService {
                 if (cc.getCode() > 63 && cc.getCode() < 72)
                     pads.get(7).getControlCodes().add(cc.getCode());
             });
+
+            pads.get(0).setName("Kick");
+            pads.get(1).setName("Snare");
+            pads.get(2).setName("Hi-Hat Closed");
+            pads.get(3).setName("Hi-Hat Open");
+            pads.get(4).setName("Ride");
+            pads.get(5).setName("Low Tom");
+            pads.get(6).setName("Mid Tom");
+            pads.get(7).setName("Hi Tom");
+
             pads.forEach(pad -> instrumentInfo.getPads().add(padRepository.save(pad)));
             midiInstrumentInfoRepository.save(instrumentInfo);
         }
@@ -383,10 +394,28 @@ public class BeatGeneratorService {
     }
 
     public void updatePlayer(Long playerId, int updateType, int updateValue) {
+        Optional<PlayerInfo> playerInfoOpt = playerInfoRepository.findById(playerId);
         switch (updateType) {
             case NOTE: {
-                Optional<Player> playerOpt = getBeatGenerator().getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny();
-                playerOpt.ifPresent(player -> player.setNote(updateValue));
+                playerInfoOpt.ifPresent(playerInfo -> {
+                    playerInfo.setNote(updateValue);
+                    playerInfoRepository.save(playerInfo);
+                    Optional<Player> player = getBeatGenerator().getPlayers().stream().filter(p->p.getId().equals(playerId)).findFirst();
+                    player.ifPresent(p -> p.setNote(updateValue));
+                });
+                break;
+            }
+            case INSTRUMENT: {
+                Optional<MidiInstrumentInfo> info = midiInstrumentInfoRepository.findById((long) updateValue);
+                info.ifPresent(inf -> {
+                    playerInfoOpt.ifPresent(playerInfo -> {
+                        playerInfo.setInstrument(inf.getName());
+                        playerInfoRepository.save(playerInfo);
+                        Optional<Player> player = getBeatGenerator().getPlayers().stream().filter(p->p.getId().equals(playerId)).findFirst();
+                        player.ifPresent(p -> p.setInstrument(getInstrument(inf.getChannel())));
+                    });
+                });
+
                 break;
             }
         }

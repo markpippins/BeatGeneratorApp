@@ -1,9 +1,10 @@
+import { Instrument } from './instrument';
 import { Rule } from './rule';
 
 export interface Player {
   id: number;
   preset: number;
-  instrument: string;
+  instrumentId: number;
   channel: number;
   rules: Rule[];
   allowedControlMessages: number[];

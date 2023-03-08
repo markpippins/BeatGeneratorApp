@@ -182,10 +182,10 @@ export class DashboardComponent implements OnInit {
 
   private clear() {
     this.selectedPlayer = {
+      id: 0,
+      instrumentId:0,
       allowedControlMessages: [],
       channel: 0,
-      id: 0,
-      instrument: "",
       maxVelocity: 0,
       minVelocity: 0,
       note: 0,

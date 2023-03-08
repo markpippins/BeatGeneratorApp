@@ -49,7 +49,7 @@ public class PlayerController {
         return service.mutePlayer(playerId);
     }
 
-    @GetMapping("/players/update")
+    @GetMapping("/player/update")
     public void updatePlayer(@RequestParam Long playerId, @RequestParam int updateType, @RequestParam int updateValue) {
         logger.info("/players/update");
         service.updatePlayer(playerId, updateType, updateValue);

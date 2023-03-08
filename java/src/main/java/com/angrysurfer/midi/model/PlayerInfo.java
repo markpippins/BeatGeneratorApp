@@ -17,20 +17,29 @@ public class PlayerInfo implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
-    private Long tickerId;
-
-    int note;
-    int minVelocity = 110;
-    int maxVelocity = 127;
-    private int preset;
-    private String instrument;
-    private int channel;
+    
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "player_rules")
     private Set<Rule> rules = new HashSet<>();
+    
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")
     private Set<Integer> allowedControlMessages = new HashSet<>();
+    
+    private Long tickerId;
+
+    private int note;
+
+    private int minVelocity = 110;
+    
+    private int maxVelocity = 127;
+    
+    private int preset;
+    
+    private String instrument;
+    
+    private int channel;
+    
     private boolean muted;
 
     public PlayerInfo() {
