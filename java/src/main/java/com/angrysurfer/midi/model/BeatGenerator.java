@@ -86,15 +86,15 @@ public class BeatGenerator extends Ticker {
     }
 
     public void saveConfig() {
-        try {
-            String instruments = "resources/config/midi-bak.json";
-            File file = new File(instruments);
-            if (file.exists()) file.delete();
-            Files.write(file.toPath(), Collections.singletonList(BeatGeneratorService.mapper.writerWithDefaultPrettyPrinter().
-                    writeValueAsString(new MidiInstrumentList(getPlayers()))), StandardOpenOption.CREATE_NEW);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        // try {
+        //     String instruments = "resources/config/midi-bak.json";
+        //     File file = new File(instruments);
+        //     if (file.exists()) file.delete();
+        //     Files.write(file.toPath(), Collections.singletonList(BeatGeneratorService.mapper.writerWithDefaultPrettyPrinter().
+        //             writeValueAsString(new MidiInstrumentList(getPlayers()))), StandardOpenOption.CREATE_NEW);
+        // } catch (IOException e) {
+        //     throw new RuntimeException(e);
+        // }
     }
 
     public void play() {

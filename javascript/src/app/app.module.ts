@@ -58,7 +58,7 @@ import { DevicePanelComponent } from './components/device-panel/device-panel.com
     RuleTableComponent,
     InstrumentSelectDialogComponent,
     DevicePanelComponent,
-  ],
+    ],
     imports: [
         BrowserModule,
         BrowserAnimationsModule,

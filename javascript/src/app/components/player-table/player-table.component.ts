@@ -16,6 +16,32 @@ export class PlayerTableComponent {
 
   selectedPlayer: Player | undefined;
 
+  DUMMY_PLAYER: Player = {
+    id: 0,
+    channel: 0,
+    maxVelocity: 0,
+    minVelocity: 0,
+    note: 0,
+    preset: 0,
+    probability: 0,
+    rules: [],
+    allowedControlMessages: [],
+    instrument: {
+      "id": 0,
+      "name": "",
+      "channel": 0,
+      "lowestNote": 0,
+      "highestNote": 0,
+      "highestPreset": 0,
+      "preferredPreset": 0,
+      "assignments": new Map() ,
+      "boundaries": new Map() ,
+      "hasAssignments": false,
+      "pads": 0,
+      "controlCodes": []
+    }
+  }
+
   INSTRUMENT = 0;
   NOTE = 1;
   PROBABILITY = 2;
@@ -70,18 +96,7 @@ export class PlayerTableComponent {
         this.midiService.removePlayer(player).subscribe(async (data) => {
           this.players = data;
           if (this.players.length == 0)
-            this.selectedPlayer = {
-              allowedControlMessages: [],
-              channel: 0,
-              id: 0,
-              instrumentId: 0,
-              maxVelocity: 0,
-              minVelocity: 0,
-              note: 0,
-              preset: 0,
-              probability: 0,
-              rules: []
-            }
+            this.selectedPlayer = this.DUMMY_PLAYER
         });
         this.players = this.players.filter(p => p.id != player.id)
         break
@@ -91,21 +106,16 @@ export class PlayerTableComponent {
 
 
   initBtnClicked() {
-    this.onBtnClick({
-      allowedControlMessages: [],
-      channel: 0,
-      id: 0,
-      instrumentId: 0,
-      maxVelocity: 0,
-      minVelocity: 0,
-      note: 0,
-      preset: 0,
-      probability: 0,
-      rules: []
-    }, 'add')
+    this.onBtnClick(this.DUMMY_PLAYER, 'add')
   }
 
-  noteChange(player: Player, event: { target: any; }) {
+  onInstrumentSelected(instrument: Instrument, player: Player) {
+    player.instrument = instrument
+    this.midiService.updatePlayer(player.id, this.INSTRUMENT, instrument.id).subscribe()
+  }
+
+
+  onNoteChange(player: Player, event: { target: any; }) {
     this.midiService.updatePlayer(player.id, this.NOTE, event.target.value).subscribe()
   }
 
@@ -114,9 +124,6 @@ export class PlayerTableComponent {
       this.playerSelectEvent.emit(player);
   }
 
-  onInstrumentSelected(player: Player) {
-    this.midiService.updatePlayer(player.id, this.INSTRUMENT, player.instrumentId).subscribe()
-  }
 
   toggleClass(el: any, className: string) {
     // if (el.className.indexOf(className) >= 0) {

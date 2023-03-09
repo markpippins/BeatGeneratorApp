@@ -17,18 +17,18 @@
         {{ player.id }}
       </td>
       <td class="player-short-col" id="player-col-id-{{player.id}}">
-        {{ player.instrumentId }}
+        {{ player.instrument.id }}
       </td>
-      <td class="player-short-col" id="player-col-channel-{{player.id}}">
+      <td class="player-short-col" id="player-col-instrument-id-{{player.id}}">
         {{ player.channel }}
       </td>
       <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
-        <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected(player)" [player]="player"></app-instrument-selector>
+        <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)" [player]="player"></app-instrument-selector>
       </td>
       <td class="player-short-col" id="player-col-preset-{{player.id}}">
         <input type="number" min="1" max="127" step="1" value="{{ player.preset}}">
       </td>
-      <td class="player-short-col" (change)="noteChange(player, $event)">
+      <td class="player-short-col" (change)="onNoteChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
       </td>
       <td class="player-short-col">

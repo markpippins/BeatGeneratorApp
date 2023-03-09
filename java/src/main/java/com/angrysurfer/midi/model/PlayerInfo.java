@@ -26,6 +26,10 @@ public class PlayerInfo implements Serializable {
     @CollectionTable(name = "allowedControlMessages")
     private Set<Integer> allowedControlMessages = new HashSet<>();
     
+    @ManyToOne
+	@JoinColumn(name = "instrument_id")
+    private MidiInstrument instrument;
+
     private Long tickerId;
 
     private int note;
@@ -35,9 +39,7 @@ public class PlayerInfo implements Serializable {
     private int maxVelocity = 127;
     
     private int preset;
-    
-    private String instrument;
-    
+        
     private int channel;
     
     private boolean muted;
@@ -76,7 +78,7 @@ public class PlayerInfo implements Serializable {
         info.setAllowedControlMessages(player.getAllowedControlMessages());
         info.setPreset(player.getPreset());
         info.setChannel(player.getChannel());
-        info.setInstrument(player.getInstrumentName());
+        info.setInstrument(player.getInstrument());
         info.setRules(player.getRules());
         info.setNote(player.getNote());
         info.setId(player.getId());

@@ -12,10 +12,13 @@ import { Player } from 'src/app/models/player';
 })
 export class InstrumentSelectorComponent implements OnInit {
 
+
   @Output()
-  instrumentSelectEvent = new EventEmitter<Player>();
+  instrumentSelectEvent = new EventEmitter<Instrument>();
 
   instruments!: Instrument[]
+
+  selectedInstrumentId !: number
 
   @Input()
   player!: Player
@@ -29,7 +32,8 @@ export class InstrumentSelectorComponent implements OnInit {
     })
   }
 
-  onSelectionChange(event: Event) {
-    this.instrumentSelectEvent.emit(this.player);
+  onSelectionChange(data: any) {
+    // alert("selected --->"+this.instruments[this.selectedInstrumentId].id+' '+this.instruments[this.selectedInstrumentId].name);
+    this.instrumentSelectEvent.emit(this.instruments[this.selectedInstrumentId])
   }
 }

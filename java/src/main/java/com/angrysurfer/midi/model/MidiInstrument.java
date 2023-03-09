@@ -1,6 +1,8 @@
 package com.angrysurfer.midi.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -17,23 +19,55 @@ import java.util.*;
 @Slf4j
 @Getter
 @Setter
-//@Entity
+@Entity
 public class MidiInstrument implements Serializable {
-    static final Random rand = new Random();
+
     static Logger logger = LoggerFactory.getLogger(MidiInstrument.class.getCanonicalName());
+
+    static final Random rand = new Random();
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "id", nullable = false)
+    private Long id;
+
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "instrument_control_code", joinColumns = {@JoinColumn(name = "instrument_id")}, inverseJoinColumns = {
+            @JoinColumn(name = "control_code_id")})
     private List<ControlCode> controlCodes = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "instrument_pad",
+            joinColumns = @JoinColumn(name = "pad_id"),
+            inverseJoinColumns = @JoinColumn(name = "instrument_id"))
     private List<Pad> pads = new ArrayList<>();
+
+    @Transient
     private Map<Integer, String> assignments = new HashMap<>();
+    @Transient
     private Map<Integer, Integer[]> boundaries = new HashMap<>();
+    
     @JsonIgnore
+    @Transient
     private MidiDevice device;
+    
     private String name;
+    
+    private String deviceName;
+
     private int channel;
+    
     private int lowestNote;
+    
     private int highestNote;
+    
     private int highestPreset;
+    
     private int preferredPreset;
+    
     private boolean hasAssignments;
+    
     public MidiInstrument() {
 
     }
@@ -45,16 +79,16 @@ public class MidiInstrument implements Serializable {
         logger.info(String.join(" ", getName(), "created on channel", Integer.toString(getChannel())));
     }
 
-    public static MidiInstrument fromMidiInstrumentDef(MidiDevice device, MidiInstrumentInfo instrumentDef) {
-        MidiInstrument instrument = new MidiInstrument(instrumentDef.getName(), device, instrumentDef.getChannel());
-        instrument.setHighestNote(instrumentDef.getHighestNote());
-        instrument.setLowestNote(instrumentDef.getLowestNote());
-        instrument.setAssignments(instrumentDef.getAssignments());
-        instrument.setBoundaries(instrumentDef.getBoundaries());
-        instrument.setHasAssignments(instrumentDef.getAssignments().size() > 0);
-        instrument.setControlCodes(instrumentDef.getControlCodes());
-        return instrument;
-    }
+    // public static MidiInstrument fromMidiInstrumentDef(MidiDevice device, MidiInstrumentInfo instrumentDef) {
+    //     MidiInstrument instrument = new MidiInstrument(instrumentDef.getName(), device, instrumentDef.getChannel());
+    //     instrument.setHighestNote(instrumentDef.getHighestNote());
+    //     instrument.setLowestNote(instrumentDef.getLowestNote());
+    //     instrument.setAssignments(instrumentDef.getAssignments());
+    //     instrument.setBoundaries(instrumentDef.getBoundaries());
+    //     instrument.setHasAssignments(instrumentDef.getAssignments().size() > 0);
+    //     instrument.setControlCodes(instrumentDef.getControlCodes());
+    //     return instrument;
+    // }
 
     public String assignedControl(int cc) {
         return assignments.getOrDefault(cc, "NONE");

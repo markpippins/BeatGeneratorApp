@@ -17,6 +17,8 @@ export class StatusPanelComponent implements OnInit {
   @Input()
   ticker!: Ticker;
 
+  connected = false;
+
   @Output()
   clickEvent = new EventEmitter<string>();
 
@@ -35,10 +37,16 @@ export class StatusPanelComponent implements OnInit {
 
   updateDisplay(): void {
     this.midiService.tickerStatus().subscribe(async (data) => {
+      this.connected = true
       this.ticker = data;
       await this.midiService.delay(this.ticker == undefined ? 5000 : this.ticker.playing ? 50: 1000);
       this.updateDisplay();
-    });
+    }, err => {
+        console.log(err)
+        this.connected = false
+    },
+    () => {
+      console.log('call complete')});
   }
 
   onClick(action: string) {

@@ -1,7 +1,5 @@
 package com.angrysurfer.midi.model;
 
-import lombok.Getter;
-
 public interface Operator {
     static int TICK = 0;
 

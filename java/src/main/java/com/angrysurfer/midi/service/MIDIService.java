@@ -2,8 +2,8 @@ package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.LookupItem;
 import com.angrysurfer.midi.model.MidiInstrument;
-import com.angrysurfer.midi.model.MidiInstrumentInfo;
-import com.angrysurfer.midi.model.MidiInstrumentInfoRepository;
+import com.angrysurfer.midi.repo.MidiInstrumentRepository;
+
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,10 +31,10 @@ public class MIDIService {
     public static final String SERVICE_SELECT = "/service/select";
     static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
 
-    private MidiInstrumentInfoRepository midiInstrumentInfoRepository;
+    private MidiInstrumentRepository midiInstrumentRepo;
 
-    public MIDIService(MidiInstrumentInfoRepository midiInstrumentInfoRepository) {
-        this.midiInstrumentInfoRepository = midiInstrumentInfoRepository;
+    public MIDIService(MidiInstrumentRepository midiInstrumentRepo) {
+        this.midiInstrumentRepo = midiInstrumentRepo;
     }
 
     public List<MidiDevice> getMidiDevices() {
@@ -106,7 +106,7 @@ public class MIDIService {
 
 
     public List<String> getInstrumentNames() {
-        return midiInstrumentInfoRepository.findAll().stream().map(i -> i.getName()).toList();
+        return midiInstrumentRepo.findAll().stream().map(i -> i.getName()).toList();
     }
 
     public void sendMessage(MidiInstrument instrument, int messageType, int data1, int data2) throws
@@ -114,12 +114,12 @@ public class MIDIService {
         instrument.sendToDevice(new ShortMessage(messageType, instrument.getChannel(), data1, data2));
     }
 
-    public List<MidiInstrumentInfo> getInstrumentList() {
-        return midiInstrumentInfoRepository.findAll();
+    public List<MidiInstrument> getInstrumentList() {
+        return midiInstrumentRepo.findAll();
     }
 
     public List<LookupItem> getInstrumentLookupItems() {
-        return midiInstrumentInfoRepository.findAll().stream().map(ins -> new LookupItem(ins.getId(), ins.getName(), (long) ins.getChannel())).toList();
+        return midiInstrumentRepo.findAll().stream().map(ins -> new LookupItem(ins.getId(), ins.getName(), (long) ins.getChannel())).toList();
     }
 }
 

@@ -1,6 +1,10 @@
-export interface Constants {
-  CONDITION_COLUMNS: ['operator', 'comparison', 'value']
-  PLAYER_COLUMNS: [
+import { Player } from "./player";
+
+export class Constants {
+
+  static CONDITION_COLUMNS = ['operator', 'comparison', 'value']
+
+  static PLAYER_COLUMNS = [
     'instrument',
     'channel',
     'preset',
@@ -8,4 +12,37 @@ export interface Constants {
     'minVelocity',
     'maxVelocity'
   ]
+
+  static DUMMY_PLAYER: Player = {
+    id: 0,
+    channel: 0,
+    maxVelocity: 0,
+    minVelocity: 0,
+    note: 0,
+    preset: 0,
+    probability: 0,
+    rules: [],
+    allowedControlMessages: [],
+    instrument: {
+      "id": 0,
+      "name": "",
+      "channel": 0,
+      "lowestNote": 0,
+      "highestNote": 0,
+      "highestPreset": 0,
+      "preferredPreset": 0,
+      "assignments": new Map() ,
+      "boundaries": new Map() ,
+      "hasAssignments": false,
+      "pads": 0,
+      "controlCodes": []
+    }
+  }
+
+  static INSTRUMENT = 0;
+  static NOTE = 1;
+  static PROBABILITY = 2;
+  static MIN_VELOCITY = 3;
+  static MAX_VELOCITY = 4;
+  static MUTE = 5;
 }

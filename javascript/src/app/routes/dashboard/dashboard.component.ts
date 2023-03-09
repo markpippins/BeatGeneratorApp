@@ -181,17 +181,33 @@ export class DashboardComponent implements OnInit {
   }
 
   private clear() {
-    this.selectedPlayer = {
-      id: 0,
-      instrumentId:0,
-      allowedControlMessages: [],
-      channel: 0,
-      maxVelocity: 0,
-      minVelocity: 0,
-      note: 0,
-      preset: 0,
-      probability: 0,
-      rules: []
+    this.selectedPlayer = this.DUMMY_PLAYER
+  }
+
+  DUMMY_PLAYER: Player = {
+    id: 0,
+    channel: 0,
+    maxVelocity: 0,
+    minVelocity: 0,
+    note: 0,
+    preset: 0,
+    probability: 0,
+    rules: [],
+    allowedControlMessages: [],
+    instrument: {
+      "id": 0,
+      "name": "",
+      "channel": 0,
+      "lowestNote": 0,
+      "highestNote": 0,
+      "highestPreset": 0,
+      "preferredPreset": 0,
+      "assignments": new Map() ,
+      "boundaries": new Map() ,
+      "hasAssignments": false,
+      "pads": 0,
+      "controlCodes": []
     }
   }
+
 }
