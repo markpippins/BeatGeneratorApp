@@ -2,6 +2,7 @@ import {Component, EventEmitter, Input, Output} from '@angular/core'
 import {MidiService} from "../../services/midi.service"
 import {Player} from "../../models/player"
 import {Rule} from "../../models/rule"
+import { UiService } from 'src/app/services/ui.service'
 
 @Component({
   selector: 'app-rule-table',
@@ -27,24 +28,24 @@ export class RuleTableComponent {
   @Input()
   player!: Player
   ruleCols: string[] = [
-    'ID',
+    // 'ID',
     'Operator',
     'Op',
     'Value',
   ]
 
-  constructor(private midiService: MidiService) {
+  constructor(private midiService: MidiService, private uiService: UiService) {
 
   }
 
   ngAfterContentChecked(): void {
     this.getRules().forEach(rule => {
       let op = 'operatorSelect-' + rule.id
-      this.setSelectValue(op, rule.operatorId)
+      this.uiService.setSelectValue(op, rule.operatorId)
     })
     this.getRules().forEach(rule => {
       let co = 'comparisonSelect-' + rule.id
-      this.setSelectValue(co, rule.comparisonId)
+      this.uiService.setSelectValue(co, rule.comparisonId)
     })
   }
 
@@ -52,27 +53,19 @@ export class RuleTableComponent {
     return this.player == undefined ? [] : this.player.rules
   }
 
-  setSelectValue(id: string, val: any) {
-    // @ts-ignore
-    let element = document.getElementById(id)
-    if (element != null) { // @ts-ignore
-      element.selectedIndex = val
-    }
-  }
-
   onOperatorChange(rule: Rule, event: { target: any }) {
     let value = this.OPERATOR.indexOf(event.target.value)
     this.midiService.updateRule(this.player.id, rule.id, value, rule.comparisonId, rule.value).subscribe()
     rule.operatorId = value
     // let op = 'operatorSelect-' + rule.id
-    this.setSelectValue(event.target, value)
+    this.uiService.setSelectValue(event.target, value)
   }
 
   onComparisonChange(rule: Rule, event: { target: any }) {
     let value = this.COMPARISON.indexOf(event.target.value)
     this.midiService.updateRule(this.player.id, rule.id, rule.operatorId, value, rule.value).subscribe()
     rule.comparisonId = value
-    this.setSelectValue(event.target, value)
+    this.uiService.setSelectValue(event.target, value)
   }
 
   onValueChange(rule: Rule, event: { target: any }) {
