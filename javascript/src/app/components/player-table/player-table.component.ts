@@ -68,18 +68,16 @@ export class PlayerTableComponent {
     'Max V',
   ];
 
-  constructor(private midiService: MidiService, private uiService: UiService) {
+  constructor(private midiService: MidiService, private uiService: UiService) {}
 
-    // .selected-table-row
-  }
-
-    onRowClick(player: Player, event: MouseEvent) {
-      let element = document.getElementById("player-row-" + player.id)
+  onRowClick(player: Player, event: MouseEvent) {
+    let element = document.getElementById("player-row-" + player.id)
     if (this.selectedPlayer == undefined) {
       this.selectedPlayer = player
       this.playerSelectEvent.emit(player);
       this.uiService.swapClass(element, 'selected', 'active')
     }
+
     else if (this.selectedPlayer != player) {
       // this.onRowClick(this.selectedPlayer, event)
       let current = document.getElementById("player-row-" + this.selectedPlayer.id)
