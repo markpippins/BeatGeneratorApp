@@ -1,4 +1,5 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
+import { UiService } from 'src/app/services/ui.service';
 import {StepData} from "../../models/step-data";
 
 @Component({
@@ -7,6 +8,8 @@ import {StepData} from "../../models/step-data";
   styleUrls: ['./beat-spec-panel.component.css']
 })
 export class BeatSpecPanelComponent {
+
+  constructor(private uiService: UiService) {}
 
   @Output()
   paramBtnClickEvent = new EventEmitter<number>();
@@ -23,18 +26,10 @@ export class BeatSpecPanelComponent {
 
   onLaneBtnClick() {
     let element = document.getElementById("beat-btn-" + this.stepData.step)
-    this.toggleClass(element, 'inactive', 'active')
+    this.uiService.swapClass(element, 'inactive', 'active')
 
     element = document.getElementById("beat-led-" + this.stepData.step)
-    this.toggleClass(element, 'inactive', 'active')
-  }
-
-  toggleClass(el: any, classNameA: string, classNameB: string) {
-    if (el.className.indexOf(classNameA) >= 0) {
-      el.className = el.className.replace(classNameA, classNameB);
-    } else if (el.className.indexOf(classNameB) >= 0) {
-      el.className = el.className.replace(classNameB, classNameA);
-    }
+    this.uiService.swapClass(element, 'inactive', 'active')
   }
 
   onChange() {

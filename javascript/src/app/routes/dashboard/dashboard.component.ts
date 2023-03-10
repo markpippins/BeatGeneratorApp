@@ -3,6 +3,7 @@ import {MidiService} from "../../services/midi.service"
 import {Player} from "../../models/player"
 import {MatTabsModule} from '@angular/material/tabs'
 import {Ticker} from "../../models/ticker"
+import { UiService } from 'src/app/services/ui.service'
 
 @Component({
   selector: 'app-dashboard',
@@ -43,7 +44,7 @@ export class DashboardComponent implements OnInit {
   @Output()
   consoleOutput: string[] = []
 
-  constructor(private midiService: MidiService) {
+  constructor(private midiService: MidiService, private uiService: UiService) {
   }
 
   ngOnInit(): void {
@@ -166,14 +167,6 @@ export class DashboardComponent implements OnInit {
   onPlayerSelected(player: Player) {
     console.log(player.id)
     this.selectedPlayer = player
-  }
-
-  toggleClass(el: any, className: string) {
-    if (el.className.indexOf(className) >= 0) {
-      el.className = el.className.replace(className, "")
-    } else {
-      el.className += className
-    }
   }
 
   refresh() {

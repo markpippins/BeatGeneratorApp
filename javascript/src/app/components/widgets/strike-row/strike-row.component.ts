@@ -3,6 +3,7 @@ import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
 import { Player } from 'src/app/models/player';
 import { MidiService } from 'src/app/services/midi.service';
+import { UiService } from 'src/app/services/ui.service';
 
 @Component({
   selector: 'app-strike-row',
@@ -41,7 +42,7 @@ export class StrikeRowComponent {
     'Max V',
   ];
 
-  constructor(private midiService: MidiService) {
+  constructor(private midiService: MidiService, uiService: UiService) {
   }
 
   // onRowClick(player: Player, event: MouseEvent) {
@@ -89,13 +90,6 @@ export class StrikeRowComponent {
       this.playerSelectEvent.emit(player);
   }
 
-  toggleClass(el: any, className: string) {
-    // if (el.className.indexOf(className) >= 0) {
-    //   el.className = el.className.replace(className, "");
-    // } else {
-    //   el.className += className;
-    // }
-  }
 
   onRowClick(player: Player, event: MouseEvent) {
     // let element = document.getElementById("player-row-" + player.id)
@@ -107,13 +101,5 @@ export class StrikeRowComponent {
     //   this.selectedPlayer = undefined
     //   this.toggleClass(element, 'active-table-row')
     // }
-  }
-
-  setSelectValue(id: string, val: any) {
-    // @ts-ignore
-    let element = document.getElementById(id)
-    if (element != null) { // @ts-ignore
-      element.selectedIndex = val
-    }
   }
 }

@@ -3,6 +3,7 @@ import {Player} from "../../models/player";
 import {MidiService} from "../../services/midi.service";
 import {Strike} from "../../models/strike";
 import { Instrument } from 'src/app/models/instrument';
+import { UiService } from 'src/app/services/ui.service';
 
 @Component({
   selector: 'app-player-table',
@@ -69,7 +70,7 @@ export class PlayerTableComponent {
     'Max V',
   ];
 
-  constructor(private midiService: MidiService) {
+  constructor(private midiService: MidiService, private uiService: UiService) {
   }
 
   onRowClick(player: Player, event: MouseEvent) {
@@ -77,10 +78,10 @@ export class PlayerTableComponent {
     if (this.selectedPlayer == undefined) {
       this.selectedPlayer = player
       this.playerSelectEvent.emit(player);
-      this.toggleClass(element, 'selected')
+      this.uiService.toggleClass(element, 'selected')
     } else {
       this.selectedPlayer = undefined
-      this.toggleClass(element, 'active-table-row')
+      this.uiService.toggleClass(element, 'active-table-row')
     }
   }
 
@@ -123,22 +124,4 @@ export class PlayerTableComponent {
     if (player != undefined)
       this.playerSelectEvent.emit(player);
   }
-
-
-  toggleClass(el: any, className: string) {
-    // if (el.className.indexOf(className) >= 0) {
-    //   el.className = el.className.replace(className, "");
-    // } else {
-    //   el.className += className;
-    // }
-  }
-
-  setSelectValue(id: string, val: any) {
-    // @ts-ignore
-    let element = document.getElementById(id)
-    if (element != null) { // @ts-ignore
-      element.selectedIndex = val
-    }
-  }
-
 }
