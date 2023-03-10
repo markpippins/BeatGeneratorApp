@@ -347,12 +347,11 @@ public class BeatGeneratorService {
         return currentTickerInfo.orElseThrow();
     }
 
-
     public TickerInfo previous(long currentTickerId) {
         if (currentTickerId > 0)
             saveCurrentRecord(currentTickerId);
 
-        if (currentTickerId > 1) {
+        if (currentTickerId >  1) {
             TickerInfo tickerInfo = tickerInfoRepo.getPreviousTicker(currentTickerId);
             if (Objects.nonNull(tickerInfo)) {
                 this.getBeatGenerator().reset();

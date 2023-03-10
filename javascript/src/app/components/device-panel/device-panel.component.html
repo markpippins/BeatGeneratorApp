@@ -1,15 +1,17 @@
-<table>
-  <tr>
-    <th>name</th>
-    <th>description</th>
-    <th>vendor</th>
-    <th>version</th>
-  </tr>
-  <tr *ngFor="let device of devices;">
-    <td>{{device.name}}</td>
-    <td>{{device.description}}</td>
-    <td>{{device.vendor}}</td>
-    <td>{{device.version}}</td>
-  </tr>
+<div>
+  <label>Interfaces</label>
+  <app-device-table [devices]="ports"></app-device-table>
+</div>
+<div>
+  <label>Synths</label>
+  <app-device-table [devices]="synths"></app-device-table>
+</div>
+<div>
+  <label>Other</label>
+  <app-device-table [devices]="other"></app-device-table>
+</div>
+<div>
+  <label>Unknown</label>
+  <app-device-table [devices]="unknown"></app-device-table>
+</div>
 
-</table>

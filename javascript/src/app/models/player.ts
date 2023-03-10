@@ -5,7 +5,6 @@ export interface Player {
   id: number;
   preset: number;
   instrument: Instrument;
-  channel: number;
   rules: Rule[];
   allowedControlMessages: number[];
   note: number;

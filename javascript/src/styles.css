@@ -79,11 +79,12 @@ p {
 body {
   /*background-color: #a3d8ec;*/
   height: 90%;
-  /*background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80');*/
+  background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80');
   background-repeat: no-repeat;
   background-size: cover;
   /*background-color: #3e4aea;*/
-  background-image: linear-gradient(to left, #f46864, #003954);
+  /* background-image: linear-gradient(to left, #f46864, #003954); */
+  background-image: linear-gradient(to left, #e89105, #2c0ad7);
   /*border-style: dashed;*/
   /*border-width: thin;*/
 }
@@ -110,17 +111,14 @@ body {
   /*max-width: 600px;*/
   /*border-radius: 6px;*/
   /*padding-top: 45px;*/
-  /*margin-top: 8px;*/
+  margin-top: 20px;
   overflow: hidden;
   border-style: inset;
   border-width: thin;
-  background-color: #131313;
+  color: black;
+  background-color: #a9a9a9;
 }
 
-
-.status-label {
-
-}
 
 .status-output {
   width: 40px;
@@ -220,6 +218,28 @@ svg.material-icons:not(:last-child) {
 .two-column-grid-container {
   display: flex;
   align-items: stretch;
+}
+
+.status-container {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.player-table-holder, .rule-table-holder {
+  background-color: transparent;
+  padding: 0px;
+  padding-top: 0px;
+  /* border-radius: 5px; */
+  margin-left: 0px;
+  margin-right: 0px;
+  /* border: 2px solid #f2f2f2; */
+  height: 200px;
+  overflow-y: auto;
+  align-self: stretch;
+  align-content: stretch;
+  /* border-style: inset;
+  border-width: thin; */
 }
 
 .card-container {
@@ -464,10 +484,21 @@ input:hover, select:hover {
   color: white;
 }
 
+.selected-table-row {
+  background-color: coral;
+  color: white;
+}
+
+.active-table-row {
+  background-color: transparent;
+  color: white;
+}
+
 .active-table-row:hover {
   background-color: blue;
   color: white;
 }
+
 
 tbody, thead tr {
   display: block;
@@ -488,13 +519,13 @@ thead th:last-child {
 }
 
 
-table tr th:hover {
+/* table tr th:hover {
 
-}
+} */
 
 td, th {
-  border: 1px solid #ddd;
-  padding: 1px;
+  /* border: 1px solid #ddd; */
+  /* padding: 1px; */
 }
 
 
@@ -540,7 +571,7 @@ td, th {
   font-style: oblique;
   text-align: left;
   margin-top: 4px;
-  /*align-self: stretch;*/
+  align-self: flex-start;
 }
 
 .branding-label {
@@ -589,7 +620,6 @@ td, th {
 }
 
 .interface-808 {
-  /*box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.2);*/
   display: grid;
   /*gap: 2px;*/
   grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
@@ -603,13 +633,14 @@ td, th {
   flex-flow: column;
   font-size: smaller;
   align-items: flex-start;
+  /* box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.2); */
 }
 
 .lane-808 {
   margin-top: 10px;
   display: flex;
   gap: 2px;
-  padding: 1px;
+  /* padding: 1px; */
   flex-flow: column;
   font-size: small;
   align-items: center;
@@ -650,9 +681,6 @@ th {
   font-size: small;
   font-weight: normal;
   text-align: left;
-}
-
-.active-table-row {
 }
 
 .selected {
@@ -743,6 +771,9 @@ th {
   padding: 16px;
   line-height: 24px;
   align-self: stretch;
+  height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /*border-radius: 25px;*/
@@ -760,3 +791,163 @@ th {
 /*transition: all 0.2s ease-in-out;*/
 
 
+/* Page title */
+/* ---------------------------------------------------------- */
+.title-holder {
+  border-bottom: 2px solid #f2f2f2;
+  margin-bottom: 10px;
+}
+
+.table-holder {
+  background-color: transparent;
+  padding: 0px;
+  padding-top: 0px;
+  border-radius: 5px;
+  margin-left: 0px;
+  margin-right: 0px;
+  border: 2px solid #f2f2f2;
+  height: 120px;
+  overflow-y: scroll;
+}
+.list-title {
+  font-size: 20px;
+  font-weight: bold;
+  line-height: normal;
+  letter-spacing: 0.5px;
+  margin: 5px;
+}
+/* ---------------------------------------------------------- */
+
+
+/* Table styles */
+/* ---------------------------------------------------------- */
+.table {
+  width: 100%;
+}
+
+.float-right {
+  float: right;
+}
+/* ---------------------------------------------------------- */
+
+/* Header styles */
+/* ---------------------------------------------------------- */
+.header-cell {
+  background-color: #393939;
+  color: white;
+}
+.header-cell:not(:first-child) {
+  padding-left: 0;
+}
+
+/* Style just the text in the header */
+.header-cell span {
+  font-weight: 600;
+  font-stretch: normal;
+  line-height: normal;
+  letter-spacing: 0.5px;
+}
+/* Round the top table corners */
+.header-cell:first-child {
+  border-top-left-radius: 5px;
+}
+.header-cell:last-child {
+  border-top-right-radius: 5px;
+}
+
+.header-row {
+  height: 3em;
+}
+
+.btn-icon {
+  height: 17px;
+  width: 17px;
+  background-color: #393939;
+  border: none;
+}
+
+.sort-icon {
+  height: 17px;
+  width: 17px;
+  color: white;
+}
+
+::ng-deep .sort-header-arrow {
+  position: relative;
+  left: -1.5rem;
+  display: none!important;
+  opacity: 0;
+}
+
+.header {
+  padding: 5px;
+}
+
+.header-cell {
+  /* color: red!important; */
+  /* display: flex; */
+  /* align-content: center; */
+}
+/* ---------------------------------------------------------- */
+
+
+/* Column styles */
+/* ---------------------------------------------------------- */
+.type-column {
+  width: 15%;
+  padding-right: 3rem;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+.name-column {
+  width: 30%;
+  padding-right: 3rem;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+.amount-column {
+  width: 15%;
+  padding-right: 3rem;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+.status-column {
+  width: 15%;
+  padding-right: 3rem;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+.date-column {
+  width: 20%;
+  padding-right: 3rem;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+.state-column {
+  width: 5%;
+}
+/* ---------------------------------------------------------- */
+
+/* Row styles */
+/* ---------------------------------------------------------- */
+.row:nth-child(2n) {
+  background-color: transparent;
+}
+/* ---------------------------------------------------------- */
+
+/* Cell styles */
+/* ---------------------------------------------------------- */
+.state-cell {
+  text-align: right;
+}
+.cell {
+  border: none;
+}
+
+.green-svg {
+  fill: #6dd400;
+}
+.gray-svg {
+  fill: #b2b4b6;
+}
+/* ---------------------------------------------------------- */

@@ -19,7 +19,6 @@ export class PlayerTableComponent {
 
   DUMMY_PLAYER: Player = {
     id: 0,
-    channel: 0,
     maxVelocity: 0,
     minVelocity: 0,
     note: 0,
@@ -58,29 +57,41 @@ export class PlayerTableComponent {
     // 'mute',
     // 'ID',
     'Device',
-    'Ch',
-    'Pre',
-    'Note',
+    // 'Ch',
+    'Preset',
+    'Pitch',
     // 'operator',
     // 'comparison',
     // 'value',
-    'Prob.',
+    'Probability',
     'Min V',
     'Max V',
   ];
 
   constructor(private midiService: MidiService, private uiService: UiService) {
+
+    // .selected-table-row
   }
 
-  onRowClick(player: Player, event: MouseEvent) {
-    let element = document.getElementById("player-row-" + player.id)
+    onRowClick(player: Player, event: MouseEvent) {
+      let element = document.getElementById("player-row-" + player.id)
     if (this.selectedPlayer == undefined) {
       this.selectedPlayer = player
       this.playerSelectEvent.emit(player);
-      this.uiService.toggleClass(element, 'selected')
-    } else {
+      this.uiService.swapClass(element, 'selected', 'active')
+    }
+    else if (this.selectedPlayer != player) {
+      // this.onRowClick(this.selectedPlayer, event)
+      let current = document.getElementById("player-row-" + this.selectedPlayer.id)
+      this.uiService.swapClass(current, 'selected', 'active')
+      this.selectedPlayer = player
+      this.playerSelectEvent.emit(player);
+      this.uiService.swapClass(element, 'selected', 'active')
+    }
+
+    else {
       this.selectedPlayer = undefined
-      this.uiService.toggleClass(element, 'active-table-row')
+      this.uiService.swapClass(element, 'selected', 'active')
     }
   }
 
@@ -104,7 +115,6 @@ export class PlayerTableComponent {
     }
   }
 
-
   initBtnClicked() {
     this.onBtnClick(this.DUMMY_PLAYER, 'add')
   }
@@ -114,13 +124,12 @@ export class PlayerTableComponent {
     this.midiService.updatePlayer(player.id, this.INSTRUMENT, instrument.id).subscribe()
   }
 
-
   onNoteChange(player: Player, event: { target: any; }) {
     this.midiService.updatePlayer(player.id, this.NOTE, event.target.value).subscribe()
   }
 
   onPass(player: Player, $event: MouseEvent) {
-    if (player != undefined)
+    if (player != undefined && this.selectedPlayer == undefined)
       this.playerSelectEvent.emit(player);
   }
 }

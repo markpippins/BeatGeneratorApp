@@ -1,12 +1,24 @@
 import { Injectable } from '@angular/core';
+import { Listener } from '../models/listener';
 
 @Injectable({
   providedIn: 'root'
 })
+
+
 export class UiService {
+
+  listeners: Listener[] = []
 
   constructor() { }
 
+  addListener(listener: Listener) {
+    this.listeners.push(listener)
+  }
+
+  notifyAll(message: string) {
+    this.listeners.forEach(l => l.notify(message))
+  }
 
   setSelectValue(id: string, val: any) {
     // @ts-ignore

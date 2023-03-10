@@ -1,0 +1,16 @@
+<div class="table-holder">
+<table>
+  <tr class="header-row">
+    <th class="header-cell">name</th>
+    <th class="header-cell">description</th>
+    <th class="header-cell">vendor</th>
+    <th class="header-cell">version</th>
+  </tr>
+  <tr class="row" *ngFor="let device of devices;">
+    <td>{{device.name}}</td>
+    <td>{{device.description}}</td>
+    <td>{{device.vendor}}</td>
+    <td>{{device.version}}</td>
+  </tr>
+</table>
+</div>

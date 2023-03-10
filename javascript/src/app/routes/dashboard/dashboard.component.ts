@@ -165,7 +165,6 @@ export class DashboardComponent implements OnInit {
   }
 
   onPlayerSelected(player: Player) {
-    console.log(player.id)
     this.selectedPlayer = player
   }
 
@@ -179,7 +178,6 @@ export class DashboardComponent implements OnInit {
 
   DUMMY_PLAYER: Player = {
     id: 0,
-    channel: 0,
     maxVelocity: 0,
     minVelocity: 0,
     note: 0,

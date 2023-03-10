@@ -35,6 +35,8 @@ import {MatListModule} from "@angular/material/list";
 import { InstrumentSelectDialogComponent } from './components/instrument-select-dialog/instrument-select-dialog.component';
 import {MatToolbarModule} from "@angular/material/toolbar";
 import { DevicePanelComponent } from './components/device-panel/device-panel.component';
+import { DeviceTableComponent } from './components/widgets/device-table/device-table.component';
+import { RandomizerPanelComponent } from './components/widgets/randomizer-panel/randomizer-panel.component';
 
 @NgModule({
   declarations: [
@@ -58,6 +60,8 @@ import { DevicePanelComponent } from './components/device-panel/device-panel.com
     RuleTableComponent,
     InstrumentSelectDialogComponent,
     DevicePanelComponent,
+    DeviceTableComponent,
+    RandomizerPanelComponent,
     ],
     imports: [
         BrowserModule,

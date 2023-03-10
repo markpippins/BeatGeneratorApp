@@ -22,6 +22,7 @@ export class BeatSpecPanelComponent {
 
   onParamsBtnClick() {
     this.paramBtnClickEvent.emit(this.stepData.step)
+    this.uiService.notifyAll(this.stepData.step.toString())
   }
 
   onLaneBtnClick() {

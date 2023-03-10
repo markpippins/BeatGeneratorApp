@@ -13,6 +13,10 @@
 <!--  <span>My Application</span>-->
 <!--</mat-toolbar>-->
 <div class="content dashboard" role="main">
+  <div class="branding-div">
+    <label class="branding-label">MultiSequencer, Mark Pippins, angrysurfer.com, 2023</label>
+  </div>
+
   <div class="two-column-grid-container">
     <app-status-panel [running]="running" [ticker]="ticker"></app-status-panel>
     <app-transport-control (clickEvent)="onActionSelected($event)"></app-transport-control>
@@ -22,54 +26,66 @@
 
     <mat-tab label="Beats">
       <div class="two-column-grid-container">
-        <div>
+        <div class="player-table-holder">
           <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
         </div>
         <div class="two-column-grid-container">
-          <app-conditions-panel (ruleChangeEvent)="onPlayerSelected($event)"
+          <div class="rule-table-holder">
+            <app-conditions-panel (ruleChangeEvent)="onPlayerSelected($event)"
                                 [player]="selectedPlayer"></app-conditions-panel>
+          </div>
         </div>
       </div>
-    </mat-tab>
-
-    <mat-tab label="808 Style">
+      <!-- <app-randomizer-panel></app-randomizer-panel> -->
       <div class="two-column-grid-container">
         <app-beat-spec></app-beat-spec>
       </div>
     </mat-tab>
 
-    <mat-tab label="Sliders">
+    <!-- <mat-tab label="808 Style">
+      <div class="two-column-grid-container">
+        <app-beat-spec></app-beat-spec>
+      </div>
+    </mat-tab> -->
+
+    <!-- <mat-tab label="Sliders">
       <div class="two-column-grid-container">
         <app-slider-panel></app-slider-panel>
       </div>
-    </mat-tab>
+    </mat-tab> -->
 
     <mat-tab label="Config">
-      <app-device-panel></app-device-panel>
-      <div class="two-column-grid-container" [style.max-width.px]="230" [style.min-height.px]="280">
+      <mat-tab-group>
+        <mat-tab label="MIDI Interfaces">
+          <app-device-panel></app-device-panel>
+        </mat-tab>
+      </mat-tab-group>
+          <div class="two-column-grid-container" [style.max-width.px]="230" [style.min-height.px]="280">
         <!--        <app-drum-grid></app-drum-grid>-->
       </div>
     </mat-tab>
   </mat-tab-group>
+
   <div>
+    <div class="status-bar">
+      <label>Ticker</label>
+      <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.id">
+      <label>Strikes</label>
+      <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.players.length">
+      <label></label>
+      <label class="status-label" *ngFor="let line of consoleOutput">{{line}}</label>
+    </div>
   </div>
 </div>
-<div class="footer">
-  <div class="status-bar">
-    <label>Ticker</label>
-    <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.id">
-    <label>Strikes</label>
-    <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.players.length">
-    <label></label>
-    <label class="status-label" *ngFor="let line of consoleOutput">{{line}}</label>
-  </div>
-  <!--    <pre *ngSwitchDefault>ng generate component xyz</pre>-->
+<!-- <div class="footer">
+
+</div> -->
+<!--    <pre *ngSwitchDefault>ng generate component xyz</pre>-->
   <!--    <pre *ngSwitchCase="'material'">ng add @angular/material</pre>-->
   <!--    <pre *ngSwitchCase="'pwa'">ng add @angular/pwa</pre>-->
   <!--    <pre *ngSwitchCase="'dependency'">ng add _____</pre>-->
   <!--    <pre *ngSwitchCase="'test'">ng test</pre>-->
   <!--    <pre *ngSwitchCase="'build'">ng build</pre>-->
-</div>
 
 <!--  <div class="card highlight-card card-small">-->
 <!--  </div>-->
