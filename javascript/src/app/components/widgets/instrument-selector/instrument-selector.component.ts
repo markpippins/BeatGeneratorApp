@@ -35,8 +35,10 @@ export class InstrumentSelectorComponent implements OnInit {
   }
 
   ngAfterContentChecked(): void {
-    let sel  = 'player_instrument-' + this.player.id
-    this.setIndexForInstrument()
+    if (this.instruments != undefined && this.player != undefined) {
+      let sel  = 'player_instrument-' + this.player.id
+      this.setIndexForInstrument()
+    }
   }
 
   onSelectionChange(data: any) {
