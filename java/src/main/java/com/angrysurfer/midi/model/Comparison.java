@@ -24,23 +24,32 @@ public interface Comparison {
 
 
     public static boolean evaluate(int comparisonType, Double a, Double b) {
+        
+        boolean result = false;
+
         switch (comparisonType) {
             case EQUALS -> {
-                return a.equals(b);
+                result =  a.equals(b);
+                break;
             }
             case GREATER_THAN -> {
-                return a > b;
+                result = a > b;
+                break;
             }
             case LESS_THAN -> {
-                return a < b;
+                result =  a < b;
+                break;
             }
             case MODULO -> {
-                return a % b == 0;
+                result =  a % b == 0;
+                break;
             }
             default -> {
-                return false;
+                result = false;
             }
         }
+
+        return result;
     }
 
 }

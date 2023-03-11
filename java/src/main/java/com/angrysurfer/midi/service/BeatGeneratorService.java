@@ -36,8 +36,8 @@ public class BeatGeneratorService {
     static Set<Integer> closedHatParams = Set.of(24, 25, 26, 27, 28, 29, 30, 31);
     static Set<Integer> kickParams = Set.of(1, 2, 3, 4, 12, 13, 14, 15);
     static Set<Integer> snarePrams = Set.of(16, 17, 18, 19, 20, 21, 22, 23);
-    static String deviceName = "mrcc";
-    public static MidiDevice device = getDevice();
+    // static String deviceName = "mrcc";
+    // public static MidiDevice device = getDevice();
     static int KICK = 36;
     static int SNARE = 37;
     static int CLOSED_HAT = 38;
@@ -65,30 +65,26 @@ public class BeatGeneratorService {
         this.midiInstrumentRepo = midiInstrumentRepository;
         this.controlCodeRepository = controlCodeRepository;
 
-        this.beatGenerator = makeBeatGenerator();
+        this.beatGenerator = new BeatGenerator();
+        this.beatGenerator.setInstrumentMap(loadConfig());
     }
 
-    public static MidiDevice getDevice() {
+    public static MidiDevice getDevice(String deviceName) {
         try {
-            return MidiSystem.getMidiDevice(Stream.of(MidiSystem.getMidiDeviceInfo()).
-                    filter(info -> info.getName().toLowerCase().contains(deviceName)).toList().get(0));
+            MidiDevice result = MidiSystem.getMidiDevice(Stream.of(MidiSystem.getMidiDeviceInfo()).
+                    filter(info -> info.getName().toLowerCase().contains(deviceName.toLowerCase())).toList().get(0));
+            return result;
         } catch (MidiUnavailableException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private BeatGenerator makeBeatGenerator() {
-        if (midiService.select(getDevice()))
-            return new BeatGenerator(loadConfig());
-
-        return null;
     }
 
     public Map<String, MidiInstrument> loadConfig() {
         Map<String, MidiInstrument> results = new HashMap<>();
         if (midiInstrumentRepo.findAll().isEmpty())
             try {
-                String filepath = "resources/config/midi.json";
+                String filepath = "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/config/midi.json";
+//                String filepath = "resources/config/midi.json";
                 MidiInstrumentList config = mapper.readValue(new File(filepath), MidiInstrumentList.class);
 
                 config.getInstruments().forEach(instrument -> {
@@ -112,11 +108,15 @@ public class BeatGeneratorService {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        else {
-            midiInstrumentRepo.findAll().forEach(instru -> results.put(instru.getName(), instru));
-        }
+        
+        else midiInstrumentRepo.findAll().forEach(instru -> results.put(instru.getName(), instru));
 
-        results.values().forEach(i -> i.setDevice(getDevice()));
+        results.values().forEach(i -> {
+            MidiDevice device = getDevice(i.getDeviceName()); 
+            if (midiService.select(device)) 
+                i.setDevice(device);
+        });
+
         return results;
     }
 
@@ -208,21 +208,22 @@ public class BeatGeneratorService {
     }
 
     public Map<String, MidiInstrument> getInstruments() {
-        return getBeatGenerator().getInstrumentMap();
+            return getBeatGenerator().getInstrumentMap();
     }
 
     public List<MidiInstrument> getAllInstruments() {
-        List<MidiInstrument> results = midiInstrumentRepo.findAll();
-        results.forEach(i -> i.setDevice(getDevice()));
+            List<MidiInstrument> results = midiInstrumentRepo.findAll();
+        results.forEach(i -> i.setDevice(getDevice(i.getDeviceName())));
         return results;
     }
 
     public MidiInstrument getInstrument(int channel) {
         Optional<MidiInstrument> instrument = midiInstrumentRepo.findByChannel(channel);
         if (instrument.isPresent())
-            instrument.get().setDevice(getDevice());
+            instrument.get().setDevice(getDevice(instrument.get().getDeviceName()));
         return instrument.orElseThrow();
     }
+
 
     public void sendMessage(int messageType, int channel, int data1, int data2) {
         MidiInstrument instrument = getInstrument(channel);
@@ -335,9 +336,10 @@ public class BeatGeneratorService {
                 tickerInfo.getPlayers().addAll(players);
 
                 for (PlayerInfo info : tickerInfo.getPlayers()) {
-                    Strike strike = new Strike(info.getInstrument().getName().concat(Integer.toString(getPlayers().size())),
-                            getBeatGenerator(), getInstrument(info.getChannel()), KICK + getPlayers().size(), closedHatParams);
-                    PlayerInfo.copyValues(info, strike, getInstruments());
+                    MidiInstrument instrument =  getInstrument(info.getChannel());
+                    Strike strike = new Strike(instrument.getName().concat(Integer.toString(getPlayers().size())),
+                            getBeatGenerator(), instrument, KICK + getPlayers().size(), closedHatParams);
+                        PlayerInfo.copyValues(info, strike, getInstruments());
                     getBeatGenerator().getPlayers().add(strike);
                 }
             }
@@ -361,9 +363,11 @@ public class BeatGeneratorService {
                 TickerInfo.copyToTicker(tickerInfo, this.beatGenerator, getBeatGenerator().getInstrumentMap());
             }
 
+
             for (PlayerInfo info : tickerInfo.getPlayers()) {
-                Strike strike = new Strike(info.getInstrument().getName().concat(Integer.toString(getPlayers().size())),
-                        getBeatGenerator(), getInstrument(info.getChannel()), KICK + getPlayers().size(), closedHatParams);
+                MidiInstrument instrument =  getInstrument(info.getChannel());
+                Strike strike = new Strike(instrument.getName().concat(Integer.toString(getPlayers().size())),
+                        getBeatGenerator(), instrument, KICK + getPlayers().size(), closedHatParams);
                 PlayerInfo.copyValues(info, strike, getInstruments());
                 getBeatGenerator().getPlayers().add(strike);
             }
@@ -385,16 +389,16 @@ public class BeatGeneratorService {
 
 
     public void setSteps(List<StepData> steps) {
-//        this.getBeatGenerator().setSteps(steps);
+    //    this.getBeatGenerator().setSteps(steps);
     }
 
 
     public void save() {
-        getBeatGenerator().save();
+        getBeatGenerator().saveConfig();;
     }
 
     public void saveBeat() {
-        getBeatGenerator().saveConfig();
+        getBeatGenerator().saveBeat();;
     }
 
     public void updatePlayer(Long playerId, int updateType, int updateValue) {
@@ -412,6 +416,7 @@ public class BeatGeneratorService {
             case INSTRUMENT: {
                 Optional<MidiInstrument> instrument = midiInstrumentRepo.findById((long) updateValue);
                 instrument.ifPresent(inst -> {
+                    inst.setDevice(getDevice(inst.getDeviceName()));
                     playerInfoOpt.ifPresent(playerInfo -> {
                         playerInfo.setInstrument(inst);
                         playerInfoRepository.save(playerInfo);
@@ -464,6 +469,7 @@ public class BeatGeneratorService {
         if (infoOpt.isPresent()) {
             result = infoOpt.get();
             TickerInfo.copyToTicker(result, beatGenerator, getBeatGenerator().getInstrumentMap());
+            getBeatGenerator().getInstrumentMap().values().forEach(i -> i.setDevice(getDevice(i.getDeviceName())));
         }
 
         return result;
@@ -471,9 +477,9 @@ public class BeatGeneratorService {
 
 
     public TickerInfo newTicker() {
-        this.getBeatGenerator().reset();
-        loadConfig();
-        this.beatGenerator = makeBeatGenerator();
+        this.beatGenerator = new BeatGenerator();
+        this.beatGenerator.setInstrumentMap(loadConfig());
+
         TickerInfo result = new TickerInfo();
         tickerInfoRepo.save(result);
         this.getBeatGenerator().setId(result.getId());
@@ -521,5 +527,9 @@ public class BeatGeneratorService {
 
     public void clearPlayers() {
         getBeatGenerator().getPlayers().clear();
+    }
+
+    public void saveConfig() {
+        getBeatGenerator().saveConfig();
     }
 }

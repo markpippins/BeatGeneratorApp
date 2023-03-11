@@ -37,6 +37,8 @@ import {MatToolbarModule} from "@angular/material/toolbar";
 import { DevicePanelComponent } from './components/device-panel/device-panel.component';
 import { DeviceTableComponent } from './components/widgets/device-table/device-table.component';
 import { RandomizerPanelComponent } from './components/widgets/randomizer-panel/randomizer-panel.component';
+import { ControlPanel808Component } from './components/widgets/control-panel808/control-panel808.component';
+import { ParamsPanel808Component } from './components/widgets/params-panel808/params-panel808.component';
 
 @NgModule({
   declarations: [
@@ -62,6 +64,8 @@ import { RandomizerPanelComponent } from './components/widgets/randomizer-panel/
     DevicePanelComponent,
     DeviceTableComponent,
     RandomizerPanelComponent,
+    ControlPanel808Component,
+    ParamsPanel808Component,
     ],
     imports: [
         BrowserModule,

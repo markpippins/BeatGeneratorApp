@@ -43,8 +43,8 @@ public class TickerInfo {
     private MuteGroupList muteGroups;
 
     public TickerInfo() {
-        setBeat(0);
-        setBar(0);
+        setBeat(1);
+        setBar(1);
         setTick(0);
         setDone(false);
         setPlaying(false);
@@ -63,6 +63,7 @@ public class TickerInfo {
 
     public static void copyToTicker(TickerInfo info, Ticker ticker, Map<String, MidiInstrument> instruments) {
         ticker.setId(info.getId());
+        // ticker.setBar((int) info.getBar());
         ticker.setBeat((int) info.getBeat());
         ticker.setDone(info.isDone());
         ticker.setTempoInBPM(info.getTempoInBPM());
@@ -84,8 +85,9 @@ public class TickerInfo {
 
     public static void copyFromTicker(Ticker ticker, TickerInfo info, List<PlayerInfo> players) {
         info.setId(ticker.getId());
-        info.setBar(ticker.getBar());
+        info.setTick(ticker.getTick());
         info.setBeat((int) ticker.getBeat());
+        info.setBar(ticker.getBar());
         info.setDone(ticker.isDone());
         info.setTempoInBPM(ticker.getTempoInBPM());
         info.setBeatDivider(ticker.getBeatDivider());
@@ -98,7 +100,6 @@ public class TickerInfo {
         info.setTicksPerBeat(ticker.getTicksPerBeat());
         info.setPartLength(ticker.getPartLength());
         info.setBeatsPerBar(ticker.getBeatsPerBar());
-        info.setTick(ticker.getTick());
         info.setPlayers(players);
         //copyPlayers ? ticker.getPlayers().stream().map(PlayerInfo::fromPlayer).collect(Collectors.toSet()) : Collections.emptySet());
     }

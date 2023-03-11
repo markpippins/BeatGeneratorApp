@@ -44,9 +44,12 @@ export class StatusPanelComponent implements OnInit {
     }, err => {
         console.log(err)
         this.connected = false
-    },
+        this.midiService.delay(5000);
+        this.updateDisplay();
+      },
     () => {
-      console.log('call complete')});
+      // console.log('call complete')
+    });
   }
 
   onClick(action: string) {

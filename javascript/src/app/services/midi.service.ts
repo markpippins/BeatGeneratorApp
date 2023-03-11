@@ -13,6 +13,8 @@ import {Device} from "../models/device";
   providedIn: 'root',
 })
 export class MidiService {
+
+
   httpOptions = {
     headers: new HttpHeaders({
       'Content-Type': 'application/json',
@@ -89,6 +91,12 @@ export class MidiService {
     let params = new HttpParams();
     return this.http.get<LookupItem[]>(
       'http://localhost:8080/api/instruments/lookup');
+  }
+
+  saveConfig() {
+    let params = new HttpParams();
+    return this.http.get<LookupItem[]>(
+      'http://localhost:8080/api/instruments/save');
   }
 
   clearPlayers() {

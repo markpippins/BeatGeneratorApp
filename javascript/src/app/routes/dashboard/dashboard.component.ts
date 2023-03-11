@@ -139,7 +139,7 @@ export class DashboardComponent implements OnInit {
       }
 
       case 'save': {
-        alert('save')
+        this.midiService.saveConfig().subscribe();
         break
       }
 

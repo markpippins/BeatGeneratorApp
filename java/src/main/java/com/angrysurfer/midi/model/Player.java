@@ -86,7 +86,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     }
 
     public void noteOn(int note, int velocity) {
-        try {
+       try {
             getInstrument().noteOn(note, velocity);
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
             throw new RuntimeException(e);

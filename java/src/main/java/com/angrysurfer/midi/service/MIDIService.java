@@ -24,11 +24,13 @@ public class MIDIService {
     public static final String INSTRUMENT_LOOKUP = "/instruments/lookup";
 
     public static final String INSTRUMENT_NAMES = "/instruments/names";
-
+    public static final String SAVE_CONFIG = "/instruments/save";
+    
     public static final String DEVICES_INFO = "/devices/info";
     public static final String DEVICE_NAMES = "/devices/names";
     public static final String SERVICE_RESET = "/service/reset";
     public static final String SERVICE_SELECT = "/service/select";
+    
     static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
 
     private MidiInstrumentRepository midiInstrumentRepo;
@@ -75,8 +77,8 @@ public class MIDIService {
 
 
     public boolean select(MidiDevice device) {
-        reset();
         if (!device.isOpen()) {
+            reset();
             try {
                 device.open();
                 MidiSystem.getTransmitter().setReceiver(device.getReceiver());
@@ -121,6 +123,7 @@ public class MIDIService {
     public List<LookupItem> getInstrumentLookupItems() {
         return midiInstrumentRepo.findAll().stream().map(ins -> new LookupItem(ins.getId(), ins.getName(), (long) ins.getChannel())).toList();
     }
+
 }
 
 //    static Sequencer sequencer;

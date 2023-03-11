@@ -79,51 +79,33 @@ public class MidiInstrument implements Serializable {
         logger.info(String.join(" ", getName(), "created on channel", Integer.toString(getChannel())));
     }
 
-    // public static MidiInstrument fromMidiInstrumentDef(MidiDevice device, MidiInstrumentInfo instrumentDef) {
-    //     MidiInstrument instrument = new MidiInstrument(instrumentDef.getName(), device, instrumentDef.getChannel());
-    //     instrument.setHighestNote(instrumentDef.getHighestNote());
-    //     instrument.setLowestNote(instrumentDef.getLowestNote());
-    //     instrument.setAssignments(instrumentDef.getAssignments());
-    //     instrument.setBoundaries(instrumentDef.getBoundaries());
-    //     instrument.setHasAssignments(instrumentDef.getAssignments().size() > 0);
-    //     instrument.setControlCodes(instrumentDef.getControlCodes());
-    //     return instrument;
-    // }
-
     public String assignedControl(int cc) {
         return assignments.getOrDefault(cc, "NONE");
     }
-
 
     public void channelPressure(int data1, int data2) throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, getChannel(), data1, data2));
     }
 
-
     public void controlChange(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, getChannel(), data1, data2));
     }
-
 
     public void noteOn(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, getChannel(), data1, data2));
     }
 
-
     public void noteOff(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.NOTE_OFF, getChannel(), data1, data2));
     }
-
 
     public void polyPressure(int data1, int data2) throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.POLY_PRESSURE, getChannel(), data1, data2));
     }
 
-
     public void programChange(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.PROGRAM_CHANGE, getChannel(), data1, data2));
     }
-
 
     public void start() throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.START, getChannel(), 0, 0));
@@ -132,7 +114,6 @@ public class MidiInstrument implements Serializable {
     public void stop() throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.STOP, getChannel(), 1, 1));
     }
-
 
     public void randomize(List<Integer> params) {
 

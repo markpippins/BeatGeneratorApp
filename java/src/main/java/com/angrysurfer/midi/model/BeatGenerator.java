@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 
+import javax.sound.midi.MidiDevice;
+
 @Getter
 @Setter
 public class BeatGenerator extends Ticker {
@@ -19,9 +21,8 @@ public class BeatGenerator extends Ticker {
     private List<Player> removeList = new ArrayList<>();
     private Map<String, MidiInstrument> instrumentMap = new HashMap<>();
 
-    public BeatGenerator(Map<String, MidiInstrument> instrumentMap) {
+    public BeatGenerator() {
         super();
-        setInstrumentMap(instrumentMap);
     }
 
     @Override
@@ -41,84 +42,94 @@ public class BeatGenerator extends Ticker {
 
     }
 
-    public void loadBeat(String fileName) {
+    public void loadBeat(String fileNamem, MidiDevice device) {
 
-        try {
-            String filepath = "resources/beats/" + toString() + ".json";
-            File file = new File(filepath);
-            if (!file.exists()) {
-                file.createNewFile();
-            }
+        // try {
+        //     String filepath = "resources/beats/" + toString() + ".json";
+        //     File file = new File(filepath);
+        //     if (!file.exists()) {
+        //         file.createNewFile();
+        //     }
 
-            getPlayers().clear();
-            BeatGeneratorConfig config = BeatGeneratorService.mapper.readValue(new File(filepath), BeatGeneratorConfig.class);
-            config.setup(this);
+        //     getPlayers().clear();
+        //     BeatGeneratorConfig config = BeatGeneratorService.mapper.readValue(new File(filepath), BeatGeneratorConfig.class);
+        //     config.setup(this);
 
-            config.getPlayers().forEach(drumPadDef -> {
-                Strike pad = new Strike();
-                MidiInstrument instrument = new MidiInstrument(null, BeatGeneratorService.getDevice(), drumPadDef.getChannel());
-                pad.setInstrument(instrument);
-                pad.setNote(drumPadDef.getNote());
-                pad.setPreset(drumPadDef.getPreset());
-                pad.setRules(drumPadDef.getRules());
-                pad.setAllowedControlMessages(drumPadDef.getAllowedControlMessages());
-                pad.setMaxVelocity(drumPadDef.getMaxVelocity());
-                pad.setMinVelocity(drumPadDef.getMaxVelocity());
-                pad.setTicker(this);
-                getPlayers().add(pad);
-            });
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        //     config.getPlayers().forEach(drumPadDef -> {
+        //         Strike pad = new Strike();
+        //         MidiInstrument instrument = new MidiInstrument(null, BeatGeneratorService.getDevice(), drumPadDef.getChannel());
+        //         instrument.setDevice(device);
+        //         pad.setInstrument(instrument);
+        //         pad.setNote(drumPadDef.getNote());
+        //         pad.setPreset(drumPadDef.getPreset());
+        //         pad.setRules(drumPadDef.getRules());
+        //         pad.setAllowedControlMessages(drumPadDef.getAllowedControlMessages());
+        //         pad.setMaxVelocity(drumPadDef.getMaxVelocity());
+        //         pad.setMinVelocity(drumPadDef.getMaxVelocity());
+        //         pad.setTicker(this);
+        //         getPlayers().add(pad);
+        //     });
+        // } catch (IOException e) {
+        //     throw new RuntimeException(e);
+        // }
     }
 
-    public void saveBeat(List<Strike> pads) {
+    public void saveBeat() {
 
         try {
+            List<Strike> strikes = new ArrayList<>();
+            getPlayers().stream().filter(p -> p instanceof Strike).forEach(s -> strikes.add((Strike) s));
             String beatFile = "resources/beats/" + toString() + ".json";
             File file = new File(beatFile);
             if (file.exists()) file.delete();
             Files.write(file.toPath(), Collections.singletonList(BeatGeneratorService.mapper.writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(new BeatGeneratorConfig(this, pads))), StandardOpenOption.CREATE_NEW);
+                    .writeValueAsString(new BeatGeneratorConfig(this, strikes))), StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void saveConfig() {
-        // try {
-        //     String instruments = "resources/config/midi-bak.json";
-        //     File file = new File(instruments);
-        //     if (file.exists()) file.delete();
-        //     Files.write(file.toPath(), Collections.singletonList(BeatGeneratorService.mapper.writerWithDefaultPrettyPrinter().
-        //             writeValueAsString(new MidiInstrumentList(getPlayers()))), StandardOpenOption.CREATE_NEW);
-        // } catch (IOException e) {
-        //     throw new RuntimeException(e);
-        // }
+        try {
+            String instruments = "resources/config/midi-bak.json";
+            File file = new File(instruments);
+            if (file.exists()) file.delete();
+            MidiInstrumentList list = new MidiInstrumentList();
+            list.getInstruments().addAll(getPlayers().stream().map(p -> p.getInstrument()).distinct().toList());
+            Files.write(file.toPath(), Collections.singletonList(BeatGeneratorService.mapper.writerWithDefaultPrettyPrinter().
+                    writeValueAsString(list)), StandardOpenOption.CREATE_NEW);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void play() {
-        saveConfig();
+        // saveConfig();
         run();
     }
 
-    public void next() {
-        if (isPlaying())
-            pause();
+//     public void next() {
+//         if (isPlaying())
+//             pause();
 
-//        makeBeats();
-        play();
-    }
+// //        makeBeats();
+//         play();
+//     }
 
-    public void save() {
-        saveConfig();
-    }
+    // public void save() {
+    //     saveConfig();
+    // }
 
     public MidiInstrument getInstrument(String name) {
         return getInstrumentMap().get(name);
     }
 
-//    public void makeBeats() {
+    // public BeatGenerator(Map<String, MidiInstrument> instrumentMap) {
+    //     super();
+    //     setInstrumentMap(instrumentMap);
+    // }
+
+    //    public void makeBeats() {
 //
 //        MidiInstrument fireball = getInstrument("Fireball");
 //        MidiInstrument zero = getInstrument("Zero");

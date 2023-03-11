@@ -64,7 +64,7 @@ public class PlayerInfo implements Serializable {
     public static void copyValues(PlayerInfo info, Player player, Map<String, MidiInstrument> instruments) {
         player.setAllowedControlMessages(info.getAllowedControlMessages());
         player.setPreset(info.getPreset());
-        player.setInstrument(instruments.getOrDefault(info.getInstrument(), null));
+        // player.setInstrument(instruments.getOrDefault(info.getInstrument(), null));
         player.setRules(info.getRules());
         player.setNote(info.getNote());
         player.setId(info.getId());

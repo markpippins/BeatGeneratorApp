@@ -1,7 +1,7 @@
 <div>
   <mat-tab-group>
     <mat-tab *ngFor="let page of pages;" label="Track {{page}}">
-
+      <app-control-panel808 class="control-panel808"></app-control-panel808>
       <div class="interface-808">
         <div class="side-panel-808">
           <!-- <app-instrument-selector></app-instrument-selector> -->
@@ -12,14 +12,14 @@
           <label>Velocity</label>
           <label>Probability</label>
           <label>Gate</label>
-          <!-- <input id="last-step-input-" + page type="number" min="1" max="64"> -->
+          <mat-divider [style.height.px]="10"></mat-divider>
         </div>
 
 
         <app-beat-spec-panel *ngFor="let step of steps;" [stepData]=step (change)="onStepChanged(step)"
                              (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>
       </div>
-
+      <!-- <app-params-panel808 class="control-panel808"></app-params-panel808> -->
     </mat-tab>
   </mat-tab-group>
 </div>

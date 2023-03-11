@@ -2,6 +2,8 @@ package com.angrysurfer.midi.controller;
 
 import com.angrysurfer.midi.model.StepData;
 import com.angrysurfer.midi.service.BeatGeneratorService;
+import com.angrysurfer.midi.service.MIDIService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -46,5 +48,12 @@ public class BeatController {
         logger.info("/messages/send");
         service.sendMessage(messageType, channel, data1, data2);
     }
+
+    
+    @GetMapping(path = MIDIService.SAVE_CONFIG)
+    public void saveConfig() {
+        service.saveConfig();
+    }
+
 }
 

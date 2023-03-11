@@ -65,8 +65,8 @@ public abstract class Ticker implements Runnable, Serializable {
 
     public void reset() {
         tick.set(0);
-        bar.set(0);
-        setBeat(0);
+        bar.set(1);
+        setBeat(1);
         getPlayers().clear();
         setPaused(false);
         setDone(false);
@@ -90,11 +90,13 @@ public abstract class Ticker implements Runnable, Serializable {
     }
 
     private void onTickChange() {
-        setBeat(getBeat() + (1.0 / getTicksPerBeat()));
+
         if (this.beat == getBeatsPerBar()) {
             this.bar.set(this.bar.get() + 1);
             onBarChange(this.bar.get());
         }
+
+        setBeat(getBeat() + (1.0 / getTicksPerBeat()));
 
         if (getBeat() > getBeatsPerBar()) {
             setBeat(0);
@@ -108,7 +110,7 @@ public abstract class Ticker implements Runnable, Serializable {
 
     @Override
     public void run() {
-        reset();
+        // reset();
         createMuteGroups();
         setPlaying(true);
         setDone(false);
@@ -164,11 +166,12 @@ public abstract class Ticker implements Runnable, Serializable {
         setStopped(true);
         setPlaying(false);
         setPaused(false);
-        setBeat(0);
+        setBeat(1);
         tick.set(0);
-        bar.set(0);
+        bar.set(1);
         setDone(false);
     }
+
     public void pause() {
         if (isPaused() || isPlaying()) {
             setPlaying(!isPlaying());
