@@ -12,8 +12,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.OneToMany;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
 public class Pattern {
     
     @Id
@@ -24,7 +28,7 @@ public class Pattern {
     @OneToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "pattern_steps", joinColumns = { @JoinColumn(name = "query_id") }, inverseJoinColumns = {
 			@JoinColumn(name = "step_id") })
-	private List<StepData> steps = new ArrayList();
+	private List<StepData> steps = new ArrayList<>();
 
     private int length;
 

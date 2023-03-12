@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
 @Setter
@@ -25,7 +24,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private boolean muted = false;
     private Double beat = 1.0;
     private int position = 0;
-    private AtomicLong lastTick = new AtomicLong(0);
+    private Long lastTick = 0L;
     private int preset;
     private MidiInstrument instrument;
     private Ticker ticker;
@@ -59,12 +58,11 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @Override
     public Boolean call() {
         setEven(getTicker().getTick() % 2 == 0);
-        if (getLastTick().get() == getTicker().getTick())
+        if (getLastTick() == getTicker().getTick())
             return Boolean.FALSE;
         long tick = getTicker().getTick();
         int bar = getTicker().getBar();
-        double beatOffset = 1.0;
-        getLastTick().set(tick);
+        setLastTick(tick);
 
         if (shouldPlay(tick, bar) &&
                 !isMuted() &&
@@ -74,8 +72,8 @@ public abstract class Player implements Callable<Boolean>, Serializable {
             onTick(tick, bar);
 
         setBeat(getBeat() + getTicker().getBeatDivision());
-        if (getBeat() >= getTicker().getBeatsPerBar() + beatOffset)
-            setBeat(beatOffset);
+        if (getBeat() >= getTicker().getBeatsPerBar() +  Constants.DEFAULT_BEAT_OFFSET)
+            setBeat(Constants.DEFAULT_BEAT_OFFSET);
 
         return Boolean.TRUE;
     }
