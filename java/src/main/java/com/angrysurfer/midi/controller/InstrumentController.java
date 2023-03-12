@@ -24,11 +24,11 @@ public class InstrumentController {
         this.midiService = midiService;
     }
 
-    @GetMapping(path = "/instruments/info")
-    public @ResponseBody Map<String, MidiInstrument> getInstruments() {
-        logger.info("/instruments/info");
-        return beatGeneratorService.getInstrumentMap();
-    }
+    // @GetMapping(path = "/instruments/info")
+    // public @ResponseBody Map<String, MidiInstrument> getInstruments() {
+    //     logger.info("/instruments/info");
+    //     return beatGeneratorService.getInstrumentMap();
+    // }
 
     @GetMapping(path = "/instrument/info")
     public @ResponseBody MidiInstrument getInstrument(int channel) {

@@ -51,7 +51,7 @@ public class BeatGeneratorService {
     private PlayerInfoRepository playerInfoRepository;
     private RuleRepository ruleRepository;
     private TickerInfoRepo tickerInfoRepo;
-    private Map<String, MidiInstrument> instrumentMap = new HashMap<>();
+    // private Map<String, MidiInstrument> instrumentMap = new HashMap<>();
 
     public BeatGeneratorService(MIDIService midiService, PlayerInfoRepository playerInfoRepository,
                                 RuleRepository ruleRepository, TickerInfoRepo tickerInfoRepo,
@@ -82,7 +82,7 @@ public class BeatGeneratorService {
 
     public void loadConfig() {
 
-        getInstrumentMap().clear();
+        // getInstrumentMap().clear();
         if (midiInstrumentRepo.findAll().isEmpty())
             try {
                 String filepath = "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/config/midi.json";
@@ -105,19 +105,19 @@ public class BeatGeneratorService {
                     });
                     instrument = midiInstrumentRepo.save(finalInstrumentDef);
                     addPadInfo(instrument);
-                    getInstrumentMap().put(instrument.getName(), instrument);
+                    // getInstrumentMap().put(instrument.getName(), instrument);
                 });
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         
-        else midiInstrumentRepo.findAll().forEach(instru -> getInstrumentMap().put(instru.getName(), instru));
+        // else midiInstrumentRepo.findAll().forEach(instru -> getInstrumentMap().put(instru.getName(), instru));
 
-        getInstrumentMap().values().forEach(i -> {
-            MidiDevice device = getDevice(i.getDeviceName()); 
-            if (midiService.select(device)) 
-                i.setDevice(device);
-        });
+        // getInstrumentMap().values().forEach(i -> {
+        //     MidiDevice device = getDevice(i.getDeviceName()); 
+        //     if (midiService.select(device)) 
+        //         i.setDevice(device);
+        // });
     }
 
     public void saveConfig() {
@@ -537,7 +537,7 @@ public class BeatGeneratorService {
         if (infoOpt.isPresent()) {
             result = infoOpt.get();
             TickerInfo.copyToTicker(result, ticker);
-            getInstrumentMap().values().forEach(i -> i.setDevice(getDevice(i.getDeviceName())));
+            // getInstrumentMap().values().forEach(i -> i.setDevice(getDevice(i.getDeviceName())));
         }
 
         return result;
