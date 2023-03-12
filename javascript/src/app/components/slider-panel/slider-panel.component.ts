@@ -4,6 +4,7 @@ import {MidiService} from "../../services/midi.service";
 import {MatCheckboxChange} from "@angular/material/checkbox";
 import { Listener } from 'src/app/models/listener';
 import { UiService } from 'src/app/services/ui.service';
+import { Constants } from 'src/app/models/constants';
 
 @Component({
   selector: 'app-slider-panel',
@@ -30,8 +31,8 @@ export class SliderPanelComponent implements OnInit, Listener {
 
   }
 
-  notify(message: string) {
-    alert(message)
+  notify(messageType: number, message: string) {
+
   }
 
   onSelect(selectedChannel: number) {

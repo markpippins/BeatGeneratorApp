@@ -27,7 +27,7 @@ public class BeatGeneratorConfig implements Serializable {
         setTicksPerBeat(ticker.getTicksPerBeat());
         setBeatsPerBar(ticker.getBeatsPerBar());
         setBeatDivider(ticker.getBeatDivider());
-        setTempoInBPM(ticker.getTempoInBPM());
+        setTempoInBPM((int) ticker.getTempoInBPM());
         setMaxTracks(ticker.getMaxTracks());
         setPartLength(ticker.getPartLength());
         setSongLength(ticker.getSongLength());
@@ -39,7 +39,7 @@ public class BeatGeneratorConfig implements Serializable {
         ticker.setTicksPerBeat(getTicksPerBeat());
         ticker.setBeatsPerBar(getBeatsPerBar());
         ticker.setBeatDivider(getBeatDivider());
-        ticker.setTempoInBPM(getTempoInBPM());
+        ticker.setTempoInBPM((float) getTempoInBPM());
         ticker.setMaxTracks(getMaxTracks());
         ticker.setPartLength(getPartLength());
         ticker.setSongLength(getSongLength());

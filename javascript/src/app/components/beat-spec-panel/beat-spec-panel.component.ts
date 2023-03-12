@@ -1,4 +1,5 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
+import { Constants } from 'src/app/models/constants';
 import { UiService } from 'src/app/services/ui.service';
 import {StepData} from "../../models/step-data";
 
@@ -22,7 +23,7 @@ export class BeatSpecPanelComponent {
 
   onParamsBtnClick() {
     this.paramBtnClickEvent.emit(this.stepData.step)
-    this.uiService.notifyAll(this.stepData.step.toString())
+    this.uiService.notifyAll(Constants.STEP_UPDATED, this.stepData.step.toString())
   }
 
   onLaneBtnClick() {

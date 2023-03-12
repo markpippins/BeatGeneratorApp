@@ -10,4 +10,6 @@ public interface MidiInstrumentRepository extends JpaRepository<MidiInstrument, 
 
     Optional<MidiInstrument> findByChannel(int channel);
 
+    Optional<MidiInstrument> findByName(String instrument);
+
 }

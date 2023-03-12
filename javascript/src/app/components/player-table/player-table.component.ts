@@ -1,74 +1,41 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Player} from "../../models/player";
 import {MidiService} from "../../services/midi.service";
 import {Strike} from "../../models/strike";
 import { Instrument } from 'src/app/models/instrument';
 import { UiService } from 'src/app/services/ui.service';
+import { Constants } from 'src/app/models/constants';
+import { Listener } from 'src/app/models/listener';
 
 @Component({
   selector: 'app-player-table',
   templateUrl: './player-table.component.html',
   styleUrls: ['./player-table.component.css']
 })
-export class PlayerTableComponent {
+export class PlayerTableComponent implements Listener, OnInit {
 
   @Output()
   playerSelectEvent = new EventEmitter<Player>();
 
   selectedPlayer: Player | undefined;
 
-  DUMMY_PLAYER: Player = {
-    id: 0,
-    maxVelocity: 0,
-    minVelocity: 0,
-    note: 0,
-    preset: 0,
-    probability: 0,
-    rules: [],
-    allowedControlMessages: [],
-    instrument: {
-      "id": 0,
-      "name": "",
-      "channel": 0,
-      "lowestNote": 0,
-      "highestNote": 0,
-      "highestPreset": 0,
-      "preferredPreset": 0,
-      "assignments": new Map() ,
-      "boundaries": new Map() ,
-      "hasAssignments": false,
-      "pads": 0,
-      "controlCodes": []
-    }
-  }
-
-  INSTRUMENT = 0;
-  NOTE = 1;
-  PROBABILITY = 2;
-  MIN_VELOCITY = 3;
-  MAX_VELOCITY = 4;
-  MUTE = 5;
 
   @Input()
   players!: Player[]
-  playerCols: string[] = [
-    // 'add',
-    // 'remove',
-    // 'mute',
-    // 'ID',
-    'Device',
-    // 'Ch',
-    'Preset',
-    'Pitch',
-    // 'operator',
-    // 'comparison',
-    // 'value',
-    'Probability',
-    'Min V',
-    'Max V',
-  ];
 
-  constructor(private midiService: MidiService, private uiService: UiService) {}
+  playerCols = Constants.PLAYER_COLUMNS
+
+  constructor(private midiService: MidiService, private uiService: UiService) {
+  }
+
+  notify(messageType: number, message: string) {
+    if (messageType == Constants.TICKER_SELECTED)
+      this.selectedPlayer = undefined
+  }
+
+  ngOnInit(): void {
+    this.uiService.addListener(this)
+  }
 
   onRowClick(player: Player, event: MouseEvent) {
     let element = document.getElementById("player-row-" + player.id)
@@ -105,7 +72,7 @@ export class PlayerTableComponent {
         this.midiService.removePlayer(player).subscribe(async (data) => {
           this.players = data;
           if (this.players.length == 0)
-            this.selectedPlayer = this.DUMMY_PLAYER
+            this.selectedPlayer = Constants.DUMMY_PLAYER
         });
         this.players = this.players.filter(p => p.id != player.id)
         break
@@ -114,16 +81,16 @@ export class PlayerTableComponent {
   }
 
   initBtnClicked() {
-    this.onBtnClick(this.DUMMY_PLAYER, 'add')
+    this.onBtnClick(Constants.DUMMY_PLAYER, 'add')
   }
 
   onInstrumentSelected(instrument: Instrument, player: Player) {
     player.instrument = instrument
-    this.midiService.updatePlayer(player.id, this.INSTRUMENT, instrument.id).subscribe()
+    this.midiService.updatePlayer(player.id, Constants.INSTRUMENT, instrument.id).subscribe()
   }
 
   onNoteChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, this.NOTE, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, Constants.NOTE, event.target.value).subscribe()
   }
 
   onPass(player: Player, $event: MouseEvent) {

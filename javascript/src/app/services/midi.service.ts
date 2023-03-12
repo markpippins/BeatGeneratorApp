@@ -176,6 +176,17 @@ export class MidiService {
     });
   }
 
+  updateTicker(tickerId: any, updateType: number, updateValue: any) {
+    let params = new HttpParams();
+    params = params.append('tickerId', tickerId);
+    params = params.append('updateType', updateType);
+    params = params.append('updateValue', updateValue);
+    return this.http.get('http://localhost:8080/api/ticker/update', {
+      params: params,
+    });
+  }
+
+
   updateRule(playerId: number, ruleId: number, operatorId: number, comparisonId: number, newValue: number) {
     let params = new HttpParams();
     params = params.append('playerId', playerId);

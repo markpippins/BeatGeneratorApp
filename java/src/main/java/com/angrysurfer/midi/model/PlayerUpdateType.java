@@ -1,4 +1,4 @@
-package com.angrysurfer.midi.controller;
+package com.angrysurfer.midi.model;
 
 public interface PlayerUpdateType {
     static int INSTRUMENT = 0;

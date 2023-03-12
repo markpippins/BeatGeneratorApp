@@ -1,6 +1,7 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {MidiService} from "../../services/midi.service";
 import {Ticker} from "../../models/ticker";
+import { Constants } from 'src/app/models/constants';
 
 @Component({
   selector: 'app-status-panel',
@@ -8,6 +9,9 @@ import {Ticker} from "../../models/ticker";
   styleUrls: ['./status-panel.component.css']
 })
 export class StatusPanelComponent implements OnInit {
+
+  ppqSelectionIndex !: number
+  ppqs = [1, 2, 4, 8, 12, 24, 48, 96]
 
   statusColumns = ['Ticker', 'Tick', 'Beat', 'Bar', '', 'PPQ', 'BPM', 'Beats / Bar', 'Part Length', 'Max']
 
@@ -20,13 +24,20 @@ export class StatusPanelComponent implements OnInit {
   connected = false;
 
   @Output()
-  clickEvent = new EventEmitter<string>();
+  ppqChangeEvent = new EventEmitter<number>();
+
+  @Output()
+  tempoChangeEvent = new EventEmitter<number>();
 
   constructor(private midiService: MidiService) {
   }
 
   ngOnInit(): void {
     this.updateDisplay()
+  }
+
+  ngAfterContentChecked(): void {
+      this.setIndexForPPQ()
   }
 
   getBeats() {
@@ -39,7 +50,7 @@ export class StatusPanelComponent implements OnInit {
     this.midiService.tickerStatus().subscribe(async (data) => {
       this.connected = true
       this.ticker = data;
-      await this.midiService.delay(this.ticker == undefined ? 5000 : this.ticker.playing ? 50: 1000);
+      await this.midiService.delay(this.ticker == undefined ? 5000 : this.connected && this.ticker.playing ? 50: 1000);
       this.updateDisplay();
     }, err => {
         console.log(err)
@@ -52,7 +63,30 @@ export class StatusPanelComponent implements OnInit {
     });
   }
 
-  onClick(action: string) {
-    this.clickEvent.emit(action);
+  onTempoChange(event: { target: any; }) {
+    this.midiService.updateTicker(this.ticker.id, Constants.PPQ, event.target.value).subscribe()
+    this.tempoChangeEvent.emit(event.target.value)
+  }
+
+  onBeatsPerBarChange(event: { target: any; }) {
+    this.midiService.updateTicker(this.ticker.id, Constants.BEATS_PER_BAR, event.target.value).subscribe()
+    this.tempoChangeEvent.emit(event.target.value)
+  }
+
+  onPartLengthChange(event: { target: any; }) {
+    this.midiService.updateTicker(this.ticker.id, Constants.PART_LENGTH, event.target.value).subscribe()
+    this.tempoChangeEvent.emit(event.target.value)
+  }
+
+  onPPQSelectionChange(data: any) {
+    alert(this.ppqSelectionIndex)
+    this.midiService.updateTicker(this.ticker.id, Constants.PPQ, this.ppqs[this.ppqSelectionIndex]).subscribe()
+    this.ppqChangeEvent.emit(this.ppqs[this.ppqSelectionIndex])
+  }
+
+  setIndexForPPQ() {
+    // this.ppqs.filter(i => i.id == this.player.instrument.id).forEach(ins => {
+    this.ppqSelectionIndex = this.ppqs.indexOf(this.ticker.ticksPerBeat);
+    // })
   }
 }

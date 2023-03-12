@@ -5,17 +5,16 @@ export class Constants {
   static CONDITION_COLUMNS = ['operator', 'comparison', 'value']
 
   static PLAYER_COLUMNS = [
-    'instrument',
-    'channel',
-    'preset',
-    'note',
-    'minVelocity',
-    'maxVelocity'
+    'Device',
+    'Preset',
+    'Pitch',
+    'Probability',
+    'Min. Vel.',
+    'Max. Vel.'
   ]
 
   static DUMMY_PLAYER: Player = {
     id: 0,
-    channel: 0,
     maxVelocity: 0,
     minVelocity: 0,
     note: 0,
@@ -45,4 +44,13 @@ export class Constants {
   static MIN_VELOCITY = 3;
   static MAX_VELOCITY = 4;
   static MUTE = 5;
+
+  static PPQ = 0
+  static BPM = 1
+  static BEATS_PER_BAR = 2
+  static PART_LENGTH = 3
+  static MAX_TRACKS = 4
+
+  static TICKER_SELECTED = 0
+  static STEP_UPDATED = 10
 }

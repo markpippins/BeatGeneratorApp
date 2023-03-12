@@ -6,7 +6,6 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -61,10 +60,9 @@ public class PlayerInfo implements Serializable {
 //        info.setMaxVelocity(player.getMaxVelocity());
 //    }
 
-    public static void copyValues(PlayerInfo info, Player player, Map<String, MidiInstrument> instruments) {
+    public static void copyValues(PlayerInfo info, Player player) {
         player.setAllowedControlMessages(info.getAllowedControlMessages());
         player.setPreset(info.getPreset());
-        // player.setInstrument(instruments.getOrDefault(info.getInstrument(), null));
         player.setRules(info.getRules());
         player.setNote(info.getNote());
         player.setId(info.getId());

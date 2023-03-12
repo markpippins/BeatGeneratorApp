@@ -27,7 +27,7 @@ public class InstrumentController {
     @GetMapping(path = "/instruments/info")
     public @ResponseBody Map<String, MidiInstrument> getInstruments() {
         logger.info("/instruments/info");
-        return beatGeneratorService.getInstruments();
+        return beatGeneratorService.getInstrumentMap();
     }
 
     @GetMapping(path = "/instrument/info")

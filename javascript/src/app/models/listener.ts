@@ -1,3 +1,3 @@
 export interface Listener {
-  notify(message: string): any
+  notify(messageType: number, message: string): any
 }

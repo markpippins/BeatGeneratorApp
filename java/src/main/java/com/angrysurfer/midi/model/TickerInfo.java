@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter
@@ -32,7 +31,7 @@ public class TickerInfo {
     private int beatsPerBar;
     private int beat;
     private double beatDivider;
-    private int tempoInBPM;
+    private float tempoInBPM;
     private int partLength;
     private int maxTracks;
     private int songLength;
@@ -45,33 +44,30 @@ public class TickerInfo {
     public TickerInfo() {
         setBeat(1);
         setBar(1);
-        setTick(0);
+        setTick(1);
         setDone(false);
         setPlaying(false);
         setStopped(false);
         setId(null);
-        setSwing(50);
-        setMaxTracks(24);
-        setPartLength(64);
-        setSongLength(Integer.MAX_VALUE);
-        setTempoInBPM(120);
-        setBeatDivider(4.0);
-        setBeatsPerBar(4);
-        setTicksPerBeat(24);
+        setSwing(Constants.DEFAULT_SWING);
+        setMaxTracks(Constants.DEFAULT_MAX_TRACKS);
+        setPartLength(Constants.DEFAULT_PART_LENGTH);
+        setSongLength(Constants.DEFAULT_SONG_LENGTH);
+        setTempoInBPM(Constants.DEFAULT_BPM);
+        setBeatDivider(Constants.DEFAULT_BEAT_DIVIDER);
+        setBeatsPerBar(Constants.DEFAULT_BEATS_PER_BAR);
+        setTicksPerBeat(Constants.DEFAULT_PPQ);
 //        setMuteGroups();
     }
 
-    public static void copyToTicker(TickerInfo info, Ticker ticker, Map<String, MidiInstrument> instruments) {
+    public static void copyToTicker(TickerInfo info, Ticker ticker) {
         ticker.setId(info.getId());
-        // ticker.setBar((int) info.getBar());
-        ticker.setBeat((int) info.getBeat());
+        ticker.setBar(info.getBar());
+        ticker.setBeat(info.getBeat());
         ticker.setDone(info.isDone());
-        ticker.setTempoInBPM(info.getTempoInBPM());
         ticker.setBeatDivider(info.getBeatDivider());
         ticker.setMaxTracks(info.getMaxTracks());
-        ticker.setPlaying(info.isPlaying());
         ticker.setSwing(info.getSwing());
-        ticker.setStopped(info.isStopped());
         ticker.setSongLength(info.getSongLength());
         ticker.setPartLength(info.getPartLength());
         ticker.setTicksPerBeat(info.getTicksPerBeat());
@@ -79,7 +75,7 @@ public class TickerInfo {
         ticker.setBeatsPerBar(info.getBeatsPerBar());
         info.getPlayers().forEach(playerInfo -> {
             Strike strike = new Strike();
-            PlayerInfo.copyValues(playerInfo, strike, instruments);
+            PlayerInfo.copyValues(playerInfo, strike);
         });
     }
 

@@ -1,128 +1,35 @@
-package com.angrysurfer.midi.model;
+// package com.angrysurfer.midi.model;
 
-import com.angrysurfer.midi.service.BeatGeneratorService;
-import lombok.Getter;
-import lombok.Setter;
+// import lombok.Getter;
+// import lombok.Setter;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
-import java.util.*;
+// import java.util.*;
 
-import javax.sound.midi.MidiDevice;
+// @Getter
+// @Setter
+// public class BeatGenerator extends Ticker {
 
-@Getter
-@Setter
-public class BeatGenerator extends Ticker {
 
-    private List<Player> addList = new ArrayList<>();
 
-    private List<Player> removeList = new ArrayList<>();
-    private Map<String, MidiInstrument> instrumentMap = new HashMap<>();
 
-    public BeatGenerator() {
-        super();
-    }
-
-    @Override
-    public void onBarChange(int bar) {
-        if (!getRemoveList().isEmpty()) {
-            getPlayers().removeAll(getRemoveList());
-            getRemoveList().clear();
-        }
-        if (!getAddList().isEmpty()) {
-            getPlayers().addAll(getAddList());
-            getAddList().clear();
-        }
-    }
-
-    @Override
-    public void onBeatChange(long beat) {
-
-    }
-
-    public void loadBeat(String fileNamem, MidiDevice device) {
-
-        // try {
-        //     String filepath = "resources/beats/" + toString() + ".json";
-        //     File file = new File(filepath);
-        //     if (!file.exists()) {
-        //         file.createNewFile();
-        //     }
-
-        //     getPlayers().clear();
-        //     BeatGeneratorConfig config = BeatGeneratorService.mapper.readValue(new File(filepath), BeatGeneratorConfig.class);
-        //     config.setup(this);
-
-        //     config.getPlayers().forEach(drumPadDef -> {
-        //         Strike pad = new Strike();
-        //         MidiInstrument instrument = new MidiInstrument(null, BeatGeneratorService.getDevice(), drumPadDef.getChannel());
-        //         instrument.setDevice(device);
-        //         pad.setInstrument(instrument);
-        //         pad.setNote(drumPadDef.getNote());
-        //         pad.setPreset(drumPadDef.getPreset());
-        //         pad.setRules(drumPadDef.getRules());
-        //         pad.setAllowedControlMessages(drumPadDef.getAllowedControlMessages());
-        //         pad.setMaxVelocity(drumPadDef.getMaxVelocity());
-        //         pad.setMinVelocity(drumPadDef.getMaxVelocity());
-        //         pad.setTicker(this);
-        //         getPlayers().add(pad);
-        //     });
-        // } catch (IOException e) {
-        //     throw new RuntimeException(e);
-        // }
-    }
-
-    public void saveBeat() {
-
-        try {
-            List<Strike> strikes = new ArrayList<>();
-            getPlayers().stream().filter(p -> p instanceof Strike).forEach(s -> strikes.add((Strike) s));
-            String beatFile = "resources/beats/" + toString() + ".json";
-            File file = new File(beatFile);
-            if (file.exists()) file.delete();
-            Files.write(file.toPath(), Collections.singletonList(BeatGeneratorService.mapper.writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(new BeatGeneratorConfig(this, strikes))), StandardOpenOption.CREATE_NEW);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void saveConfig() {
-        try {
-            String instruments = "resources/config/midi-bak.json";
-            File file = new File(instruments);
-            if (file.exists()) file.delete();
-            MidiInstrumentList list = new MidiInstrumentList();
-            list.getInstruments().addAll(getPlayers().stream().map(p -> p.getInstrument()).distinct().toList());
-            Files.write(file.toPath(), Collections.singletonList(BeatGeneratorService.mapper.writerWithDefaultPrettyPrinter().
-                    writeValueAsString(list)), StandardOpenOption.CREATE_NEW);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void play() {
-        // saveConfig();
-        run();
-    }
-
-//     public void next() {
-//         if (isPlaying())
-//             pause();
-
-// //        makeBeats();
-//         play();
+//     public BeatGenerator() {
+//         super();
+//     }
+//     @Override
+//     public void onBarChange(int bar) {
+//         if (!getRemoveList().isEmpty()) {
 //     }
 
-    // public void save() {
-    //     saveConfig();
-    // }
+//     @Override
+//     public void onBeatChange(long beat) {
 
-    public MidiInstrument getInstrument(String name) {
-        return getInstrumentMap().get(name);
-    }
+//     }
+// }
+
+
+    // public MidiInstrument getInstrument(String name) {
+    //     return getInstrumentMap().get(name);
+    // }
 
     // public BeatGenerator(Map<String, MidiInstrument> instrumentMap) {
     //     super();
@@ -175,7 +82,6 @@ public class BeatGenerator extends Ticker {
 //            throw new RuntimeException(e);
 //        }
 //    }
-}
 
 //        if (rand.nextBoolean())
 //            result.add(new DrumPad(ticker, raz, CLOSED_HAT, closedHatParams, 100, 125)

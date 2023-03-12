@@ -86,8 +86,8 @@ body {
   background-repeat: no-repeat;
   background-size: cover;
   /*background-color: #3e4aea;*/
-  background-image: linear-gradient(to left, #f46864, #003954);
-  /* background-image: linear-gradient(to left, #e89105, #2c0ad7); */
+  /* background-image: linear-gradient(to left, #f46864, #003954); */
+  background-image: linear-gradient(to left, #e89105, #2c0ad7);
   /*border-style: dashed;*/
   /*border-width: thin;*/
 }
@@ -713,9 +713,29 @@ th {
   background-color: #12d312;
 }
 
+.ticker-param {
+  background-color: blue;
+  text-align: right;
+  width: 40px;
+}
+
+.ticker-param-select {
+  background-color: blue;
+  text-align: right;
+  width: 50px;
+}
+
+
+.fixed:hover {
+  background-color: black;
+  text-align: right;
+  width: 40px;
+}
+
 .fixed {
   background-color: black;
-  text-align: center;
+  text-align: right;
+  width: 40px;
 }
 
 .btn-led {
