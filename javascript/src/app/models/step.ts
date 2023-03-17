@@ -1,6 +1,9 @@
-export interface StepData {
+export interface Step {
+  id: number
+  position: number
+  pageId: number
+  songId: number
   active: boolean
-  step: number
   pitch: number
   velocity: number
   probability: number

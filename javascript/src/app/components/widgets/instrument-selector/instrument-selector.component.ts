@@ -5,6 +5,7 @@ import {Rule} from "../../../models/rule";
 import {LookupItem} from "../../../models/lookup-item";
 import { Player } from 'src/app/models/player';
 import { UiService } from 'src/app/services/ui.service';
+import { Constants } from 'src/app/models/constants';
 
 @Component({
   selector: 'app-instrument-selector',
@@ -44,10 +45,11 @@ export class InstrumentSelectorComponent implements OnInit {
   onSelectionChange(data: any) {
     // alert("selected --->"+this.instruments[this.selectedInstrumentId].id+' '+this.instruments[this.selectedInstrumentId].name);
     this.instrumentSelectEvent.emit(this.instruments[this.selectionIndex])
+    this.uiService.notifyAll(Constants.STATUS, this.instruments[this.selectionIndex].name + ' selected.')
   }
 
   setIndexForInstrument() {
-    this.instruments.filter(i => i.id == this.player.instrument.id).forEach(ins => {
+    this.instruments.filter(i => i.id == this.player.instrumentId).forEach(ins => {
       this.selectionIndex = this.instruments.indexOf(ins);
     })
   }

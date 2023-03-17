@@ -1,5 +1,8 @@
 package com.angrysurfer.midi.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,10 +16,9 @@ public class Melody extends Player {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
-//    @OneToMany(fetch = FetchType.EAGER)
-//    @Getter
-//    private Set<Integer> notes = new HashSet<>();
-//    private final List<Integer> notes = new ArrayList<>();
+
+    @ElementCollection
+    private final List<Integer> notes = new ArrayList<>();
 
     public Melody(String name, Ticker ticker, MidiInstrument instrument) {
         super(name, ticker, instrument);

@@ -31,7 +31,7 @@
         </div>
         <div class="two-column-grid-container">
           <div class="rule-table-holder">
-            <app-conditions-panel (ruleChangeEvent)="onPlayerSelected($event)"
+            <app-conditions-panel *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
                                 [player]="selectedPlayer"></app-conditions-panel>
           </div>
         </div>
@@ -71,7 +71,7 @@
       <label>Ticker</label>
       <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.id">
       <label>Strikes</label>
-      <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.players.length">
+      <input *ngIf="players != undefined" class="status-output" [(ngModel)]="players.length">
       <label></label>
       <label class="status-label" *ngFor="let line of consoleOutput">{{line}}</label>
     </div>

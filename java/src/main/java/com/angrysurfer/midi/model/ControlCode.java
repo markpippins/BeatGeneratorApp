@@ -1,6 +1,8 @@
 package com.angrysurfer.midi.model;
 
 
+import java.io.Serializable;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class ControlCode {
+public class ControlCode implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)

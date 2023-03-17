@@ -2,13 +2,15 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {MidiService} from "../../services/midi.service";
 import {Ticker} from "../../models/ticker";
 import { Constants } from 'src/app/models/constants';
+import { UiService } from 'src/app/services/ui.service';
+import { Listener } from 'src/app/models/listener';
 
 @Component({
   selector: 'app-status-panel',
   templateUrl: './status-panel.component.html',
   styleUrls: ['./status-panel.component.css']
 })
-export class StatusPanelComponent implements OnInit {
+export class StatusPanelComponent implements OnInit, Listener {
 
   ppqSelectionIndex !: number
   ppqs = [1, 2, 4, 8, 12, 24, 48, 96]
@@ -29,7 +31,11 @@ export class StatusPanelComponent implements OnInit {
   @Output()
   tempoChangeEvent = new EventEmitter<number>();
 
-  constructor(private midiService: MidiService) {
+  constructor(private midiService: MidiService, private uiService: UiService) {
+  }
+
+  onNotify(messageType: number, message: string) {
+
   }
 
   ngOnInit(): void {
@@ -46,20 +52,44 @@ export class StatusPanelComponent implements OnInit {
     return beats.reverse();
   }
 
+  waiting = false;
+  nextCalled = false
+
   updateDisplay(): void {
-    this.midiService.tickerStatus().subscribe(async (data) => {
-      this.connected = true
-      this.ticker = data;
-      await this.midiService.delay(this.ticker == undefined ? 5000 : this.connected && this.ticker.playing ? 50: 1000);
-      this.updateDisplay();
-    }, err => {
-        console.log(err)
-        this.connected = false
-        this.midiService.delay(5000);
+    if (this.waiting)
+      return
+    this.waiting = true
+    this.midiService.tickerStatus().subscribe(
+      async (data) => {
+        let disconnected = !this.connected
+        this.ticker = data;
+        if (disconnected && !this.nextCalled) {
+          this.nextCalled = true
+          this.midiService.next(0).subscribe(async (data2) => {
+            this.connected = true
+            this.ticker = data2
+            this.uiService.notifyAll(Constants.CONNECTED, '')
+            this.waiting = false
+          })
+        }
+        await this.midiService.delay(5000);
+        this.waiting = false
         this.updateDisplay();
       },
-    () => {
-      // console.log('call complete')
+
+      async err => {
+        console.log(err)
+        this.connected = false
+        this.uiService.notifyAll(Constants.DISCONNECTED, '')
+        await this.midiService.delay(50000);
+        this.waiting = false
+        this.updateDisplay();
+      },
+
+      async () => {
+        await this.midiService.delay(50000);
+        this.waiting = false
+        this.updateDisplay();
     });
   }
 
@@ -79,7 +109,6 @@ export class StatusPanelComponent implements OnInit {
   }
 
   onPPQSelectionChange(data: any) {
-    alert(this.ppqSelectionIndex)
     this.midiService.updateTicker(this.ticker.id, Constants.PPQ, this.ppqs[this.ppqSelectionIndex]).subscribe()
     this.ppqChangeEvent.emit(this.ppqs[this.ppqSelectionIndex])
   }

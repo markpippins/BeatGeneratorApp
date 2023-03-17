@@ -1,7 +1,7 @@
 package com.angrysurfer.midi.controller;
 
 import com.angrysurfer.midi.model.PlayerInfo;
-import com.angrysurfer.midi.service.BeatGeneratorService;
+import com.angrysurfer.midi.service.PlayerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +13,9 @@ import java.util.List;
 @RequestMapping("/api")
 public class PlayerController {
     static Logger logger = LoggerFactory.getLogger(PlayerController.class.getCanonicalName());
-    private final BeatGeneratorService service;
+    private final PlayerService service;
 
-    public PlayerController(BeatGeneratorService service) {
+    public PlayerController(PlayerService service) {
         this.service = service;
     }
 
@@ -31,7 +31,12 @@ public class PlayerController {
         service.clearPlayers();
     }
 
-    @GetMapping("/players/add")
+    @GetMapping("/players/new")
+    public PlayerInfo addPlayer(@RequestParam Long instrumentId) {
+        logger.info("/players/new");
+        return service.addPlayer(instrumentId);
+    }
+        @GetMapping("/players/add")
     public PlayerInfo addPlayer(@RequestParam String instrument) {
         logger.info("/players/add");
         return service.addPlayer(instrument);

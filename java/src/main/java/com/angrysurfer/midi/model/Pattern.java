@@ -28,7 +28,7 @@ public class Pattern {
     @OneToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "pattern_steps", joinColumns = { @JoinColumn(name = "query_id") }, inverseJoinColumns = {
 			@JoinColumn(name = "step_id") })
-	private List<StepData> steps = new ArrayList<>();
+	private List<Step> steps = new ArrayList<>();
 
     private int length;
 

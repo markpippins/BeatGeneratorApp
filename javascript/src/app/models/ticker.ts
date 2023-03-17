@@ -16,6 +16,4 @@ export interface Ticker {
   swing: number;
   playing: boolean;
   stopped: boolean;
-  // muteGroups:
-  players: Player[];
 }

@@ -14,6 +14,17 @@ import java.util.Set;
 @Entity
 public class Strike extends Player {
     static final Random rand = new Random();
+
+    public static int KICK = 36;
+    public static int SNARE = 37;
+    public static int CLOSED_HAT = 38;
+    public static int OPEN_HAT = 39;
+
+    public static Set<Integer> razParams = Set.of(16, 17, 18, 19, 20, 21, 22, 23);
+    public static Set<Integer> closedHatParams = Set.of(24, 25, 26, 27, 28, 29, 30, 31);
+    public static Set<Integer> kickParams = Set.of(1, 2, 3, 4, 12, 13, 14, 15);
+    public static Set<Integer> snarePrams = Set.of(16, 17, 18, 19, 20, 21, 22, 23);
+
     static Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
 
     @Id
@@ -43,5 +54,7 @@ public class Strike extends Player {
     @Override
     public void onTick(long tick, int bar) {
         drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+        setLastPlayedBar(bar);
+        setLastPlayedBeat(getTicker().getBeat());
     }
 }

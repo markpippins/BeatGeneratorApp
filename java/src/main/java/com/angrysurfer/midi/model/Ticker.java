@@ -5,6 +5,10 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.*;
+
 import javax.sound.midi.*;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -16,31 +20,54 @@ import java.util.stream.IntStream;
 
 @Getter
 @Setter
+@Entity
 public class Ticker implements Runnable, Serializable {
-    static Logger logger = LoggerFactory.getLogger(Ticker.class.getCanonicalName());
-    static Sequencer sequencer;
 
+    @Transient
+    @JsonIgnore
+    static Logger logger = LoggerFactory.getLogger(Ticker.class.getCanonicalName());
+
+    @Transient
+    @JsonIgnore
     private List<Player> addList = new ArrayList<>();
 
+    @Transient
+    @JsonIgnore
     private List<Player> removeList = new ArrayList<>();
 
-
-    static {
-        try {
-            sequencer = MidiSystem.getSequencer();
-        } catch (MidiUnavailableException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
+    @Transient
     private int bar = 1;
+
+    @Transient
     private Long tick = 1L;
-    public boolean done = false;
+
+    @Transient
+    private boolean done = false;
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "id", nullable = false, unique = true)
     private Long id;
+
+    @Transient
+    @JsonIgnore
     private List<Player> players = new ArrayList<>();
+
+    // @OneToMany(fetch = FetchType.EAGER)
+    // @JoinTable(name = "ticker_player_info", joinColumns = {@JoinColumn(name = "ticker_id")}, inverseJoinColumns = {
+    // @JoinColumn(name = "player_id")})
+    // private List<PlayerInfo> playerInfos = new ArrayList<>();
+
+    @Transient
+    @JsonIgnore
     private ExecutorService executor;
-    private double beat = 0;
+
+    @Transient
+    private double beat = 1;
+
+    @Transient
     private double granularBeat = 1.0;
+
     private int beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
     private double beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
     private int partLength = Constants.DEFAULT_PART_LENGTH;
@@ -49,7 +76,15 @@ public class Ticker implements Runnable, Serializable {
     private int swing = Constants.DEFAULT_SWING;
     private int ticksPerBeat = Constants.DEFAULT_PPQ;
 
+    @Transient
+    @JsonIgnore
+    private Sequencer sequencer;
+
+    @Transient
     private boolean paused = false;
+
+    @Transient
+    @JsonIgnore
     private MuteGroupList muteGroups = new MuteGroupList();
 
     public Ticker() {
@@ -57,12 +92,9 @@ public class Ticker implements Runnable, Serializable {
         setExecutor(Executors.newFixedThreadPool(getMaxTracks()));
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public void reset() {
-        setTick(1L);
+        setId(null);
+        setTick(0L);
         setBar(1);
         setBeat(1);
         getPlayers().clear();
@@ -79,26 +111,11 @@ public class Ticker implements Runnable, Serializable {
     }
 
     public float getTempoInBPM() {
-        return sequencer.getTempoInBPM();
+        return getSequencer().getTempoInBPM();
     }
 
     public void setTempoInBPM(Float i) {
-        sequencer.setTempoInBPM(i);
-    }
-
-    private void onTickChange() {
-
-        if (getBeat() == getBeatsPerBar()) {
-            setBar(getBar() + 1);
-            onBarChange(getBar());
-        }
-
-        setBeat(getBeat() + (1.0 / getTicksPerBeat()));
-
-        if (getBeat() > getBeatsPerBar() + 1) {
-            setBeat(1);
-            // setBar(getBar() + 1);
-        }
+        getSequencer().setTempoInBPM(i);
     }
 
     public void onBarChange(int bar) {
@@ -121,33 +138,60 @@ public class Ticker implements Runnable, Serializable {
         // reset();
         createMuteGroups();
         setDone(false);
-        if (Objects.nonNull(sequencer))
+
+        if (Objects.nonNull(getSequencer()))
             new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    
+                    getPlayers().stream().map(p -> p.getInstrument().getDevice()).distinct().forEach(device -> { 
+                        if (!device.isOpen())
+                            try {
+                                device.open();
+                            } catch (MidiUnavailableException e) {
+                                logger.error(e.getMessage(), e);
+                            }} 
+                        );
+
                     try {
                         Sequence sequence = new Sequence(Sequence.PPQ, getTicksPerBeat());
                         Track track = sequence.createTrack();
-                        IntStream.range(1, 1000).forEach(i ->{
+                        IntStream.range(0, 100).forEach(i -> {
                             try {
                                 track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 0, 0), i * 1000));
                             } catch (InvalidMidiDataException e) {
+                                // TODO Auto-generated catch block
                                 e.printStackTrace();
                             }
                         });
-                        sequencer.setSequence(sequence);
-                        sequencer.setLoopCount(Integer.MAX_VALUE);
-                        sequencer.open();
-                        sequencer.start();
-                        while (sequencer.isRunning() && !isStopped() && isPlaying()) {
-                            if (sequencer.getTickPosition() == getTick() + 1) {
-                                onTickChange();
+                        
+                        
+                        setTick(1L);
+                        getSequencer().setSequence(sequence);
+                        getSequencer().setLoopCount(Integer.MAX_VALUE);
+                        getSequencer().open();
+                        getSequencer().start();
+                        while (getSequencer().isRunning()) {
+                            if (getSequencer().getTickPosition() > getTick()) {
+
+                                if (getBeat() >= getBeatsPerBar() + 1) {
+                                    setBeat(1.0);
+                                    setBar(getBar() + 1);
+                                    onBarChange(getBar());
+                                }
+
                                 getExecutor().invokeAll(getPlayers());
+
+                                setBeat(getBeat() == getBeatsPerBar() ? 1 : getBeat() + (1.0 / getTicksPerBeat()));
                                 setTick(getTick() + 1);
                             }
-                            Thread.sleep(10);
+                            Thread.sleep(5);
                         }
-                        sequencer.close();
+
+                        getSequencer().close();
+                        setTick(1L);
+                        setBar(1);
+                        setBeat(1.0);
                     } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
                         throw new RuntimeException(e);
                     }
@@ -163,6 +207,8 @@ public class Ticker implements Runnable, Serializable {
     }
 
     public void stop() {
+        if (getSequencer().isRunning())
+            getSequencer().stop();
         setPaused(false);
         setBeat(1);
         setTick(1L);
@@ -171,17 +217,12 @@ public class Ticker implements Runnable, Serializable {
     }
 
     public void pause() {
-        if (isPaused() || isPlaying()) {
+        if (isPaused() || isPlaying())
             setPaused(!isPaused());
-        }
     }
 
     public boolean isPlaying() {
-        return sequencer.isRunning();
-    }
-
-    public boolean isStopped() {
-        return !sequencer.isRunning();
+        return getSequencer().isRunning();
     }
 
 }

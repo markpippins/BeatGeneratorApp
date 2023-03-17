@@ -1,4 +1,7 @@
 import {Component, EventEmitter, Output} from '@angular/core'
+import { Constants } from 'src/app/models/constants'
+import { Listener } from 'src/app/models/listener'
+import { UiService } from 'src/app/services/ui.service'
 import {MidiService} from "../../../services/midi.service"
 
 @Component({
@@ -6,10 +9,25 @@ import {MidiService} from "../../../services/midi.service"
   templateUrl: './transport-control.component.html',
   styleUrls: ['./transport-control.component.css']
 })
-export class TransportControlComponent {
+export class TransportControlComponent implements Listener {
+
+  constructor(private uiService: UiService) {
+    uiService.addListener(this)
+  }
+
   @Output()
   clickEvent = new EventEmitter<string>()
+
+  connected = false;
+
   onClick(action: string) {
     this.clickEvent.emit(action)
+  }
+
+  onNotify(messageType: number, message: string) {
+    if (messageType == Constants.CONNECTED)
+      this.connected = true
+    else if (messageType == Constants.DISCONNECTED)
+      this.connected = false
   }
 }

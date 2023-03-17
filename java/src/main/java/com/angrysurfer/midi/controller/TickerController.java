@@ -1,7 +1,7 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.TickerInfo;
-import com.angrysurfer.midi.service.BeatGeneratorService;
+import com.angrysurfer.midi.model.Ticker;
+import com.angrysurfer.midi.service.PlayerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -19,21 +19,21 @@ public class TickerController {
     static Logger logger = LoggerFactory.getLogger(TickerController.class.getCanonicalName());
 
 
-    private final BeatGeneratorService service;
+    private final PlayerService service;
 
-    public TickerController(BeatGeneratorService service) {
+    public TickerController(PlayerService service) {
         this.service = service;
     }
 
     @GetMapping(path = "/ticker/new")
-    public TickerInfo newTicker() {
+    public Ticker newTicker() {
         if (requestsToLog.contains("new"))
             logger.info("/ticker/new");
         return service.newTicker();
     }
 
     @GetMapping(path = "/ticker/load")
-    public TickerInfo load(@RequestParam long tickerId) {
+    public Ticker load(@RequestParam long tickerId) {
         if (requestsToLog.contains("load"))
             logger.info("/ticker/load");
         return service.loadTicker(tickerId);
@@ -54,62 +54,67 @@ public class TickerController {
     }
 
     @GetMapping(path = "/ticker/stop")
-    public TickerInfo stop() {
+    public Ticker stop() {
         if (requestsToLog.contains("stop"))
            logger.info("/ticker/stop");
         return service.stop();
     }
 
     @GetMapping(path = "/ticker/next")
-    public TickerInfo next(@RequestParam long currentTickerId) {
+    public Ticker next(@RequestParam long currentTickerId) {
         if (requestsToLog.contains("next"))
            logger.info("/ticker/next");
         return service.next(currentTickerId);
     }
 
     @GetMapping(path = "/ticker/previous")
-    public TickerInfo previous(@RequestParam long currentTickerId) {
+    public Ticker previous(@RequestParam long currentTickerId) {
         if (requestsToLog.contains("previous"))
            logger.info("/ticker/next");
         return service.previous(currentTickerId);
     }
 
     @GetMapping(path = "/ticker/status")
-    public @ResponseBody TickerInfo getTickerStatus() {
+    public @ResponseBody Ticker getTickerStatus() {
         if (requestsToLog.contains("status"))
            logger.info("/ticker/status");
         return service.getTickerStatus();
     }
 
     @GetMapping(path = "/ticker/info")
-    public @ResponseBody TickerInfo getTickerInfo() {
+    public @ResponseBody Ticker getTicker() {
         if (requestsToLog.contains("info"))
            logger.info("/ticker/info");
-        return service.getTickerInfo();
+        return service.getTicker();
     }
 
     @GetMapping(path = "/ticker/log")
-    public void toggleShowTickerInfo(@RequestParam String requestType) {
+    public void toggleShowTicker(@RequestParam String requestType) {
         if (requestsToLog.contains(requestType))
             requestsToLog.remove(requestType);
         else 
             requestsToLog.add(requestType);
     }
 
-    @GetMapping(path = "/tickers/info")
-    public @ResponseBody List<TickerInfo> getAllTickerInfo() {
-        if (requestsToLog.contains("all-info"))
-            logger.info("/tickers/info");
-        return service.getAllTickerInfo();
-    }
+    // @GetMapping(path = "/tickers/info")
+    // public @ResponseBody List<Ticker> getAllTicker() {
+    //     if (requestsToLog.contains("all-info"))
+    //         logger.info("/tickers/info");
+    //     return service.getAllTickerInfos();
+    // }
 
     @GetMapping("/ticker/update")
-    public @ResponseBody TickerInfo updateTicker(@RequestParam Long tickerId, @RequestParam int updateType, @RequestParam int updateValue) {
+    public @ResponseBody Ticker updateTicker(@RequestParam Long tickerId, @RequestParam int updateType, @RequestParam int updateValue) {
         if (requestsToLog.contains("update"))
             logger.info("/ticker/update");
         return service.updateTicker(tickerId, updateType, updateValue);
     }
 
-
+    //  @MessageMapping("/tick")
+    //  @SendTo("/topic/messages")
+    //  public Ticker send() throws Exception {
+    //      // String time = new SimpleDateFormat("HH:mm").format(new Date());
+    //      return new Ticker();
+    //  }
 }
 

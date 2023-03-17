@@ -34,6 +34,8 @@ public class MidiInstrument implements Serializable {
             @JoinColumn(name = "control_code_id")})
     private List<ControlCode> controlCodes = new ArrayList<>();
 
+    
+    @JsonIgnore
     @ManyToMany
     @JoinTable(
             name = "instrument_pad",

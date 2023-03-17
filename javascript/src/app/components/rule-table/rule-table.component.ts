@@ -3,6 +3,7 @@ import {MidiService} from "../../services/midi.service"
 import {Player} from "../../models/player"
 import {Rule} from "../../models/rule"
 import { UiService } from 'src/app/services/ui.service'
+import { Constants } from 'src/app/models/constants'
 
 @Component({
   selector: 'app-rule-table',
@@ -59,6 +60,7 @@ export class RuleTableComponent {
     rule.operatorId = value
     // let op = 'operatorSelect-' + rule.id
     this.uiService.setSelectValue(event.target, value)
+    this.uiService.notifyAll(Constants.STATUS, this.OPERATOR[value] + ' selected.')
   }
 
   onComparisonChange(rule: Rule, event: { target: any }) {
@@ -66,6 +68,7 @@ export class RuleTableComponent {
     this.midiService.updateRule(this.player.id, rule.id, rule.operatorId, value, rule.value).subscribe()
     rule.comparisonId = value
     this.uiService.setSelectValue(event.target, value)
+    this.uiService.notifyAll(Constants.STATUS, this.COMPARISON[value] + ' selected.')
   }
 
   onValueChange(rule: Rule, event: { target: any }) {

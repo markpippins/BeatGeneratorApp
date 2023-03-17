@@ -1,7 +1,7 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.StepData;
-import com.angrysurfer.midi.service.BeatGeneratorService;
+import com.angrysurfer.midi.model.Step;
+import com.angrysurfer.midi.service.PlayerService;
 import com.angrysurfer.midi.service.MIDIService;
 
 import org.slf4j.Logger;
@@ -16,9 +16,9 @@ import java.util.List;
 public class BeatController {
     static Logger logger = LoggerFactory.getLogger(BeatController.class.getCanonicalName());
 
-    private final BeatGeneratorService service;
+    private final PlayerService service;
 
-    public BeatController(BeatGeneratorService service) {
+    public BeatController(PlayerService service) {
         this.service = service;
     }
 
@@ -34,22 +34,10 @@ public class BeatController {
         service.playDrumNote(instrument, channel, note);
     }
     @PostMapping(path = "/sequence/play")
-    public void setSteps(@RequestBody List<StepData> steps) {
+    public void setSteps(@RequestBody List<Step> steps) {
         service.setSteps(steps);
     }
 
-    @PostMapping(path = "/steps/update")
-    public void addTrack(@RequestBody StepData step) {
-
-    }
-
-    @GetMapping("/messages/send")
-    public void sendMessage(@RequestParam int messageType, @RequestParam int channel, @RequestParam int data1, @RequestParam int data2) {
-        logger.info("/messages/send");
-        service.sendMessage(messageType, channel, data1, data2);
-    }
-
-    
     @GetMapping(path = MIDIService.SAVE_CONFIG)
     public void saveConfig() {
         service.saveConfig();

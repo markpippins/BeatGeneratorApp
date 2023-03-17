@@ -13,31 +13,6 @@ export class Constants {
     'Max. Vel.'
   ]
 
-  static DUMMY_PLAYER: Player = {
-    id: 0,
-    maxVelocity: 0,
-    minVelocity: 0,
-    note: 0,
-    preset: 0,
-    probability: 0,
-    rules: [],
-    allowedControlMessages: [],
-    instrument: {
-      "id": 0,
-      "name": "",
-      "channel": 0,
-      "lowestNote": 0,
-      "highestNote": 0,
-      "highestPreset": 0,
-      "preferredPreset": 0,
-      "assignments": new Map() ,
-      "boundaries": new Map() ,
-      "hasAssignments": false,
-      "pads": 0,
-      "controlCodes": []
-    }
-  }
-
   static INSTRUMENT = 0;
   static NOTE = 1;
   static PROBABILITY = 2;
@@ -51,6 +26,10 @@ export class Constants {
   static PART_LENGTH = 3
   static MAX_TRACKS = 4
 
-  static TICKER_SELECTED = 0
-  static STEP_UPDATED = 10
+  static ERROR = 0
+  static CONNECTED = 1
+  static DISCONNECTED = 2
+  static STATUS = 3
+  static TICKER_SELECTED = 10
+  static STEP_UPDATED = 11
 }

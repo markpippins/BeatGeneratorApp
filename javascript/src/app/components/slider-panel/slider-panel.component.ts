@@ -31,7 +31,7 @@ export class SliderPanelComponent implements OnInit, Listener {
 
   }
 
-  notify(messageType: number, message: string) {
+  onNotify(messageType: number, message: string) {
 
   }
 

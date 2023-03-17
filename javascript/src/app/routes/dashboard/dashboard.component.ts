@@ -4,19 +4,21 @@ import {Player} from "../../models/player"
 import {MatTabsModule} from '@angular/material/tabs'
 import {Ticker} from "../../models/ticker"
 import { UiService } from 'src/app/services/ui.service'
+import { Constants } from 'src/app/models/constants'
+import { Listener } from 'src/app/models/listener'
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, Listener {
 
   @Output()
   players!: Player[]
 
   @Output()
-  selectedPlayer!: Player
+  selectedPlayer: Player | undefined
 
   tickerPointer = 0
   @Output()
@@ -29,7 +31,6 @@ export class DashboardComponent implements OnInit {
     id: 0,
     maxTracks: 0,
     partLength: 0,
-    players: [],
     playing: false,
     songLength: 0,
     stopped: false,
@@ -45,11 +46,31 @@ export class DashboardComponent implements OnInit {
   consoleOutput: string[] = []
 
   constructor(private midiService: MidiService, private uiService: UiService) {
+    uiService.addListener(this)
   }
+
 
   ngOnInit(): void {
     this.updateDisplay()
     this.onActionSelected('forward')
+  }
+
+  onNotify(messageType: number, message: string) {
+    this.consoleOutput.pop()
+    switch(messageType) {
+      case Constants.STATUS:
+        this.consoleOutput.push(message)
+        break
+
+      case Constants.CONNECTED:
+        this.consoleOutput.push('connected')
+        break
+
+      case Constants.DISCONNECTED:
+        this.consoleOutput.push('disconnected')
+        break
+
+      }
   }
 
   onActionSelected(action: string) {
@@ -64,10 +85,13 @@ export class DashboardComponent implements OnInit {
         } else this.midiService.next(this.ticker == undefined ? 0 : this.ticker.id).subscribe(async (data) => {
           this.clear();
           this.ticker = data
-          this.players = this.ticker.players
-          if (this.players.length > 0)
-            this.selectedPlayer = this.players[0]
+          this.midiService.playerInfo().subscribe(data => {
+            this.players = data
+            if (this.players.length > 0)
+              this.selectedPlayer = this.players[0]
+          })
         })
+        this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
         break
       }
 
@@ -76,11 +100,14 @@ export class DashboardComponent implements OnInit {
           this.midiService.previous(this.ticker.id).subscribe(async (data) => {
             this.clear();
             this.ticker = data
-            this.players = this.ticker.players
-            if (this.players.length > 0)
-              this.selectedPlayer = this.players[0]
+            this.midiService.playerInfo().subscribe(data => {
+              this.players = data
+              if (this.players.length > 0)
+                this.selectedPlayer = this.players[0]
+            })
           })
         }
+        this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
         break
       }
 
@@ -135,6 +162,7 @@ export class DashboardComponent implements OnInit {
         // this.players.push(data)
         // this.selectedPlayer = data
         // })
+        this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
         break
       }
 
@@ -173,32 +201,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private clear() {
-    this.selectedPlayer = this.DUMMY_PLAYER
-  }
-
-  DUMMY_PLAYER: Player = {
-    id: 0,
-    maxVelocity: 0,
-    minVelocity: 0,
-    note: 0,
-    preset: 0,
-    probability: 0,
-    rules: [],
-    allowedControlMessages: [],
-    instrument: {
-      "id": 0,
-      "name": "",
-      "channel": 0,
-      "lowestNote": 0,
-      "highestNote": 0,
-      "highestPreset": 0,
-      "preferredPreset": 0,
-      "assignments": new Map() ,
-      "boundaries": new Map() ,
-      "hasAssignments": false,
-      "pads": 0,
-      "controlCodes": []
-    }
+    this.selectedPlayer = undefined
   }
 
 }

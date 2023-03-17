@@ -11,17 +11,21 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class StepData {
+public class Step {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
 
+    private int position;
+
+    private Long pageId;
+
+    private Long songId;
+
     boolean active;
     
-    int step;
-
     int pitch;
 
     int velocity;
@@ -29,4 +33,16 @@ public class StepData {
     int probability;
 
     int gate;
+
+    public void copyValues(Step step) {
+        setId(step.getId());
+        setPosition(step.getPosition());
+        setPageId(step.getPageId());
+        setSongId(step.getSongId());
+        setActive(step.isActive());
+        setPitch(step.getPitch()); 
+        setVelocity(step.getVelocity());
+        setProbability(step.getProbability());
+        setGate(step.getGate()); 
+    }
 }

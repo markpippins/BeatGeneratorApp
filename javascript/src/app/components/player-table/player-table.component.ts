@@ -28,8 +28,8 @@ export class PlayerTableComponent implements Listener, OnInit {
   constructor(private midiService: MidiService, private uiService: UiService) {
   }
 
-  notify(messageType: number, message: string) {
-    if (messageType == Constants.TICKER_SELECTED)
+  onNotify(messageType: number, message: string) {
+    if (messageType == Constants.TICKER_SELECTED || messageType == Constants.DISCONNECTED)
       this.selectedPlayer = undefined
   }
 
@@ -72,20 +72,40 @@ export class PlayerTableComponent implements Listener, OnInit {
         this.midiService.removePlayer(player).subscribe(async (data) => {
           this.players = data;
           if (this.players.length == 0)
-            this.selectedPlayer = Constants.DUMMY_PLAYER
+            this.selectedPlayer = undefined
         });
         this.players = this.players.filter(p => p.id != player.id)
+        break
+      }
+      case 'mute': {
+        // alert('mute')
+        // this.midiService.removePlayer(player).subscribe(async (data) => {
+        //   this.players = data;
+        //   if (this.players.length == 0)
+        //     this.selectedPlayer = Constants.DUMMY_PLAYER
+        // });
+        // this.players = this.players.filter(p => p.id != player.id)
         break
       }
     }
   }
 
   initBtnClicked() {
-    this.onBtnClick(Constants.DUMMY_PLAYER, 'add')
+    this.onBtnClick({
+      id: 0,
+      maxVelocity: 0,
+      minVelocity: 0,
+      note: 0,
+      preset: 0,
+      probability: 0,
+      rules: [],
+      allowedControlMessages: [],
+      instrumentId: 0
+    }, 'add')
   }
 
   onInstrumentSelected(instrument: Instrument, player: Player) {
-    player.instrument = instrument
+    player.instrumentId = instrument.id
     this.midiService.updatePlayer(player.id, Constants.INSTRUMENT, instrument.id).subscribe()
   }
 

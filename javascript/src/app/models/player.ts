@@ -3,8 +3,8 @@ import { Rule } from './rule';
 
 export interface Player {
   id: number;
+  instrumentId: number;
   preset: number;
-  instrument: Instrument;
   rules: Rule[];
   allowedControlMessages: number[];
   note: number;

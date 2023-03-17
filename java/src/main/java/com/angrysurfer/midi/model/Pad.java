@@ -11,11 +11,16 @@ import java.util.List;
 @Setter
 @Entity
 public class Pad {
-    @ElementCollection
-    List<Integer> controlCodes = new ArrayList<>();
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
+
+    private int note;
+    
+    @ElementCollection
+    List<Integer> controlCodes = new ArrayList<>();
+
     private String name;
 }

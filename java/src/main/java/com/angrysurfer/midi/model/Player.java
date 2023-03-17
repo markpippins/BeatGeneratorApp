@@ -15,14 +15,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Setter
 public abstract class Player implements Callable<Boolean>, Serializable {
     static final Random rand = new Random();
-    Set<Rule> rules = new HashSet<>();
+    List<Rule> rules = new ArrayList<>();
     private List<Pad> pads = new ArrayList<>();
     private int note;
     private int minVelocity = 110;
     private int maxVelocity = 127;
     private boolean even = true;
     private boolean muted = false;
-    private Double beat = 1.0;
+    // private Double beat = 1.0;
     private int position = 0;
     private Long lastTick = 0L;
     private int preset;
@@ -64,17 +64,16 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         int bar = getTicker().getBar();
         setLastTick(tick);
 
-        if (shouldPlay(tick, bar) &&
+        if (shouldPlay() &&
                 !isMuted() &&
                 getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers()
                         .stream().filter(e -> e.getLastPlayedTick() == tick)
                         .toList().size() > 0))
             onTick(tick, bar);
 
-        setBeat(getBeat() + getTicker().getBeatDivision());
-        if (getBeat() >= getTicker().getBeatsPerBar() +  Constants.DEFAULT_BEAT_OFFSET)
-            setBeat(Constants.DEFAULT_BEAT_OFFSET);
-
+        // setBeat(getBeat() + getTicker().getBeatDivision());
+        // if (getBeat() >= getTicker().getBeatsPerBar() +  Constants.DEFAULT_BEAT_OFFSET)
+        //     setBeat(Constants.DEFAULT_BEAT_OFFSET);
         return Boolean.TRUE;
     }
 
@@ -99,14 +98,9 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         }
     }
 
-    public Player addRule(Rule rule) {
-        getRules().add(rule);
-        return this;
-    }
-
-    protected int incrementAndGetPosition() {
-        return ++position;
-    }
+    // protected int incrementAndGetPosition() {
+    //     return ++position;
+    // }
 
     @JsonIgnore
     public String getInstrumentName() {
@@ -119,20 +113,20 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     }
 
     @JsonIgnore
-    public boolean shouldPlay(long tick, int bar) {
+    public boolean shouldPlay() {
         AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
         getRules().forEach(rule -> {
             switch (rule.getOperatorId()) {
                 case Operator.TICK -> {
-                    if (!Comparison.evaluate(rule.getComparisonId(), tick, rule.getValue()))
+                    if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getTick(), rule.getValue()))
                         play.set(false);
                 }
                 case Operator.BEAT -> {
-                    if (!Comparison.evaluate(rule.getComparisonId(), getBeat(), rule.getValue()))
+                    if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat(), rule.getValue()))
                         play.set(false);
                 }
                 case Operator.BAR -> {
-                    if (!Comparison.evaluate(rule.getComparisonId(), bar, rule.getValue()))
+                    if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBar(), rule.getValue()))
                         play.set(false);
                 }
                 case Operator.POSITION -> {

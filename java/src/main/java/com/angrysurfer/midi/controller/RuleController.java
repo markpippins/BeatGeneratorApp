@@ -1,12 +1,12 @@
 package com.angrysurfer.midi.controller;
 
 import com.angrysurfer.midi.model.Rule;
-import com.angrysurfer.midi.service.BeatGeneratorService;
+import com.angrysurfer.midi.service.PlayerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Set;
+import java.util.List;
 
 @CrossOrigin("*")
 @RestController
@@ -14,14 +14,14 @@ import java.util.Set;
 public class RuleController {
     static Logger logger = LoggerFactory.getLogger(RuleController.class.getCanonicalName());
 
-    private final BeatGeneratorService service;
+    private final PlayerService service;
 
-    public RuleController(BeatGeneratorService service) {
+    public RuleController(PlayerService service) {
         this.service = service;
     }
 
     @GetMapping("/player/rules")
-    public Set<Rule> getRules(@RequestParam Long playerId) {
+    public List<Rule> getRules(@RequestParam Long playerId) {
         logger.info("/player/rules");
         return service.getRules(playerId);
     }

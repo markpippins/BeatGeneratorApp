@@ -5,8 +5,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Getter
 @Setter
@@ -17,14 +22,17 @@ public class PlayerInfo implements Serializable {
     @Column(name = "id", nullable = false)
     private Long id;
     
+
     @OneToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "player_rules")
-    private Set<Rule> rules = new HashSet<>();
+	@JoinTable(name = "player_rules", joinColumns = { @JoinColumn(name = "rule_id") }, inverseJoinColumns = {
+			@JoinColumn(name = "player_id") })
+    private List<Rule> rules = new ArrayList<>();
     
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")
     private Set<Integer> allowedControlMessages = new HashSet<>();
     
+    @JsonIgnore
     @ManyToOne
 	@JoinColumn(name = "instrument_id")
     private MidiInstrument instrument;
@@ -47,6 +55,10 @@ public class PlayerInfo implements Serializable {
 
     }
 
+    public Long getInstrumentId() {
+        return Objects.nonNull(getInstrument()) ? getInstrument().getId() : null;
+    }
+    
 //    static void copyValues(PlayerInfo player, Player info){
 //        info.setAllowedControlMessages(player.getAllowedControlMessages());
 //        info.setPreset(player.getPreset());

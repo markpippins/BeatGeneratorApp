@@ -5,7 +5,7 @@ import {Instrument} from '../models/instrument';
 import {Ticker} from '../models/ticker';
 import {Evaluator} from '../models/evaluator';
 import {Rule} from "../models/rule";
-import {StepData} from "../models/step-data";
+import {Step} from "../models/step";
 import {LookupItem} from "../models/lookup-item";
 import {Device} from "../models/device";
 
@@ -82,6 +82,15 @@ export class MidiService {
     );
   }
 
+  instrumentInfoById(instrumentId: number) {
+    let params = new HttpParams();
+    params = params.append('instrumentId', instrumentId);
+    return this.http.get<Instrument>(
+      'http://localhost:8080/api/instrument',
+      {params: params}
+    );
+  }
+
   allInstruments() {
     return this.http.get<Instrument[]>(
       'http://localhost:8080/api/instruments/all');
@@ -137,6 +146,14 @@ export class MidiService {
     let params = new HttpParams();
     params = params.append('instrument', 'Razzmatazz');
     return this.http.get<Player>('http://localhost:8080/api/players/add', {
+      params: params,
+    });
+  }
+
+  newPlayer(instrumentId: number) {
+    let params = new HttpParams();
+    params = params.append('instrumentId', instrumentId);
+    return this.http.get<Player>('http://localhost:8080/api/players/new', {
       params: params,
     });
   }
@@ -203,11 +220,11 @@ export class MidiService {
     return this.http.get('http://localhost:8080/api/ticker/info');
   }
 
-  addTrack(steps: StepData[]) {
-    return this.http.post<StepData[]>('http://localhost:8080/api/sequence/play', steps);
+  addTrack(steps: Step[]) {
+    return this.http.post<Step[]>('http://localhost:8080/api/sequence/play', steps);
   }
 
-  updateStep(step: StepData) {
-    return this.http.post<StepData>('http://localhost:8080/api/steps/update', step);
+  updateStep(step: Step) {
+    return this.http.post<Step>('http://localhost:8080/api/steps/update', step);
   }
 }
