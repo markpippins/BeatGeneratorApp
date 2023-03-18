@@ -21,8 +21,8 @@ public class Rule implements Serializable {
     private int comparisonId;
     private Double value;
 
-    @ManyToOne()
-    @JoinColumn(name = "player_id")
+    // @ManyToOne()
+    // @JoinColumn(name = "player_id")
     @JsonIgnore
     @Transient
     Player player;
@@ -37,8 +37,11 @@ public class Rule implements Serializable {
         setValue(value);
     }
 
-    public boolean isEqualTo(Rule otherRule) {
-        return Objects.equals(this.id, otherRule.getId()) && Objects.equals(this.operatorId, otherRule.getOperatorId()) 
-            && Objects.equals(this.comparisonId, otherRule.getComparisonId());
+    public boolean isEqualTo(Rule rule) {
+        return (
+            (this.getComparisonId() == rule.getComparisonId()) && 
+            (this.getOperatorId() == rule.getOperatorId()) &&
+            (getValue().equals(rule.getValue()))
+        );
     }
 }

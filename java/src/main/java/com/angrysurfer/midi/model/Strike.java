@@ -37,11 +37,6 @@ public class Strike extends Player {
 
 //    List<Ratchet> ratchets = new ArrayList<>();
 
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "strike_rules", joinColumns = { @JoinColumn(name = "rule_id") }, inverseJoinColumns = {
-           @JoinColumn(name = "strike_id") })    
-    private Set<Rule> rules = new HashSet<>();
-
 
     public Strike() {
     }

@@ -184,33 +184,26 @@ public class PlayerServiceTests {
 
     @Test
     public void whenNextTickerRequestedForTickWithPlayers_thenPlayersContainAddedRule() {
-        
+        playerService.newTicker();
+        // add data to current Ticker
         Long startingTickerId = playerService.getTicker().getId();
         Player player = playerService.addPlayer(RAZ);
-        Rule rule = playerService.addRule(player.getId());
+        playerService.addRule(player.getId());
 
         // move to next ticker, add player and rule
         Ticker ticker2 = playerService.next(startingTickerId);
         Player player2 = playerService.addPlayer(RAZ);
-        playerService.addRule(player.getId());
+        Rule rule = playerService.addRule(player2.getId());
 
         // return to starting ticker
-        Ticker orig = playerService.previous(ticker2.getId());
-        assertTrue(startingTickerId == orig.getId());
+        assertTrue(startingTickerId == playerService.previous(ticker2.getId()).getId());
 
         // advance again
-        Ticker ticker3 = playerService.next(orig.getId());
+        playerService.next(playerService.getTicker().getId());
 
-
-
-        player2 = ticker3.getPlayer(player2.getId());
-        boolean[] found = { false };
-        player2.getRules().forEach(r -> {
-            if (r.getId().equals(rule.getId()))
-                found[0] = true;
-        });
-
-        assertTrue(found[0]); 
+        Player player3 = playerService.getTicker().getPlayer(player2.getId());
+        Rule rule2 = player3.getRule(rule.getId());
+        assertTrue(rule.isEqualTo(rule2)); 
     }
 
     @Test

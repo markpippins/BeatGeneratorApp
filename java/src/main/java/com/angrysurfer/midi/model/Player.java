@@ -79,6 +79,15 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     public abstract void onTick(long tick, int bar);
 
+    // abstract public Set<Rule> getRules();
+
+    // abstract public void setRules(Set<Rule> rules);
+
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "player_rules", joinColumns = { @JoinColumn(name = "player_id") }, inverseJoinColumns = {
+           @JoinColumn(name = "rule_id") })    
+    private Set<Rule> rules = new HashSet<>();
+
     @Override
     public Boolean call() {
         setEven(getTicker().getTick() % 2 == 0);
@@ -122,11 +131,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         }
     }
 
-    abstract public Set<Rule> getRules();
-
-    abstract public void setRules(Set<Rule> rules);
-
-   
     public void setInstrument(MidiInstrument instrument) {
         this.instrument = instrument;
         setInstrumentName(instrument.getName());
@@ -161,5 +165,9 @@ public abstract class Player implements Callable<Boolean>, Serializable {
             }
         });
         return play.get();
+    }
+
+    public Rule getRule(Long ruleId) {
+        return getRules().stream().filter(r -> r.getId() == ruleId).findAny().orElseThrow();
     }
 }

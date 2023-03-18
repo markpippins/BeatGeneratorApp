@@ -133,15 +133,15 @@ public class PlayerService {
     }
 
     public Strike addPlayer(MidiInstrument midiInstrument) {
-        Set<Strike> players = getStrikeRepository().findByTickerId(getTicker().getId());
+        Set<Strike> strikes = getStrikeRepository().findByTickerId(getTicker().getId());
 
-        String name = midiInstrument.getName().concat(Integer.toString(players.size()));
+        String name = midiInstrument.getName().concat(Integer.toString(strikes.size()));
         Strike strike = new Strike(name, getTicker(), midiInstrument,
                 Strike.KICK + getTicker().getPlayers().size(), Strike.closedHatParams);
         strike.setTicker(getTicker());
         strike = getStrikeRepository().save(strike);
-        players.add(strike);
-        getTicker().setPlayers(players);
+        strikes.add(strike);
+        getTicker().setPlayers(strikes);
         return strike;
     }
 
@@ -164,10 +164,11 @@ public class PlayerService {
     }
 
     public void removeRule(Long playerId, Long ruleId) {
-        getRuleRepository().deleteById(ruleId);
-        getTicker().getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny()
-        .ifPresent(p -> p.getRules().stream().filter(c -> Objects.equals(c.getId(), ruleId)).findAny()
-        .ifPresent(rule -> p.getRules().remove(rule)));
+        Strike player = getTicker().getPlayer(playerId);
+        player.getRules().remove(player.getRule(ruleId));
+        strikeRepository.save(player);
+        // TODO: remove rule from database
+        // getRuleRepository().deleteById(ruleId);
     }
 
     public void updateRule(Long playerId,
@@ -212,8 +213,9 @@ public class PlayerService {
                 getTickerRepo().getNextTicker(currentTickerId) :
                 getTickerRepo().save(new Ticker()));
 
+            Set<Strike> strikes = getStrikeRepository().findByTickerId(getTicker().getId());
             getTicker().setSequencer(sequencer);
-            getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
+            getTicker().getPlayers().addAll(strikes);
         }
 
         return getTicker();
