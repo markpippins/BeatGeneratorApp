@@ -1,4 +1,4 @@
-package com.angrysurfer.midi;
+package com.angrysurfer.midi.test;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
