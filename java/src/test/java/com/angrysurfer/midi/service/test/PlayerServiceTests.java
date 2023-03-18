@@ -17,6 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.angrysurfer.BeatGeneratorApplication;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.model.Player;
+import com.angrysurfer.midi.model.PlayerUpdateType;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.service.MIDIService;
@@ -213,6 +214,15 @@ public class PlayerServiceTests {
         playerService.mutePlayer(player.getId());
         Player tickerPlayer = playerService.getTicker().getPlayer(player.getId());
         assertTrue(tickerPlayer.isMuted() != muted); 
+    }
+
+    @Test
+    public void whenPlayerUpdated_thenTickerReturnsPlayerWithUpdatedValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.NOTE, 50);
+
+        Player tickerPlayer = playerService.getTicker().getPlayer(player.getId());
+        assertTrue(tickerPlayer.getNote() == 50); 
     }
 
     @Test

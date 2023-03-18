@@ -1,20 +1,22 @@
 package com.angrysurfer.midi.model;
 
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.Set;
-
-@Entity
 @Getter
 @Setter
+@Entity
 public class Strike extends Player {
     static final Random rand = new Random();
 
@@ -37,6 +39,23 @@ public class Strike extends Player {
 
 //    List<Ratchet> ratchets = new ArrayList<>();
 
+    @JsonIgnore
+    @ManyToOne()
+    @JoinColumn(name = "ticker_id")
+    private Ticker ticker;
+
+    private Long persistTickerId;
+
+    // public Long getTickerId() {
+    //     return Objects.nonNull(getTicker()) ? getTicker().getId() : this.persistTickerId;
+    // }
+
+    public void setTicker(Ticker ticker)  {
+        this.ticker = ticker;
+        if (Objects.nonNull(ticker))
+            this.persistTickerId = ticker.getId();
+
+    }
 
     public Strike() {
     }

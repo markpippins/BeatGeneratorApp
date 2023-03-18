@@ -2,7 +2,6 @@ package com.angrysurfer.midi.service.test;
 
 import com.angrysurfer.midi.repo.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;

@@ -31,7 +31,7 @@ export class ChannelSelectorComponent implements OnInit {
   onChannelChanged(newChannel: number) {
     this.channel = newChannel;
     this.midiService
-      .instrumentInfo(this.channel - 1)
+      .instrumentInfoByChannel(this.channel - 1)
       .subscribe(async (data) => {
         this.instrument = data;
         this.channelSelectEvent.emit(this.channel);

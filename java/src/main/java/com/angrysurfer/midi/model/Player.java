@@ -38,6 +38,18 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Double lastPlayedBeat;
     private String name;
     private String instrumentName;
+    
+    // private Long tickerId;
+
+    // public Long getTickerId() {
+    //     return Objects.nonNull(getTicker()) ? getTicker().getId() : this.tickerId; 
+    // }
+
+    // public void setTicker(Ticker ticker) {
+    //     this.ticker = ticker;
+    //     if (Objects.nonNull(ticker))
+    //         this.tickerId = ticker.getId();
+    // }
 
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")
@@ -53,13 +65,9 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @JsonIgnore
-    @ManyToOne()
-    @JoinTable( name = "player_ticker", joinColumns = { @JoinColumn( name = "player_id" ) }, inverseJoinColumns = {
-       @JoinColumn( name = "ticker_id")})
-	@JoinColumn(name = "ticker_id")
-    private Ticker ticker;
-
+    public abstract Ticker getTicker();
+    public abstract void setTicker(Ticker ticker);
+    
     public Player() {
 
     }

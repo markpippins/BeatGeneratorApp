@@ -133,15 +133,15 @@ public class PlayerService {
     }
 
     public Strike addPlayer(MidiInstrument midiInstrument) {
-        Set<Strike> strikes = getStrikeRepository().findByTickerId(getTicker().getId());
+        // Set<Strike> strikes = getStrikeRepository().findByTickerId(getTicker().getId());
 
-        String name = midiInstrument.getName().concat(Integer.toString(strikes.size()));
+        String name = midiInstrument.getName().concat(Integer.toString(getTicker().getPlayers().size()));
         Strike strike = new Strike(name, getTicker(), midiInstrument,
                 Strike.KICK + getTicker().getPlayers().size(), Strike.closedHatParams);
         strike.setTicker(getTicker());
         strike = getStrikeRepository().save(strike);
-        strikes.add(strike);
-        getTicker().setPlayers(strikes);
+        getTicker().getPlayers().add(strike);
+        // getTicker().setPlayers(strikes);
         return strike;
     }
 
@@ -191,10 +191,10 @@ public class PlayerService {
     }
 
     public Set<Strike> removePlayer(Long playerId) {
-        Optional<Strike> strike = getTicker().getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny();
-        strike.ifPresent(p -> getTicker().getPlayers().remove(p));
-        strike.ifPresent(p -> getStrikeRepository().deleteById(p.getId()));
-        return getStrikeRepository().findByTickerId(getTicker().getId());
+        Player strike = getTicker().getPlayer(playerId);
+        getTicker().getPlayers().remove(strike);
+        getStrikeRepository().deleteById(strike.getId());
+        return getTicker().getPlayers();
     }
 
 
@@ -213,9 +213,9 @@ public class PlayerService {
                 getTickerRepo().getNextTicker(currentTickerId) :
                 getTickerRepo().save(new Ticker()));
 
-            Set<Strike> strikes = getStrikeRepository().findByTickerId(getTicker().getId());
-            getTicker().setSequencer(sequencer);
+            List<Strike> strikes = getStrikeRepository().findAll().stream().filter(s -> s.getPersistTickerId() == getTicker().getId()).toList();
             getTicker().getPlayers().addAll(strikes);
+            getTicker().setSequencer(sequencer);
         }
 
         return getTicker();
@@ -224,8 +224,10 @@ public class PlayerService {
     public synchronized Ticker previous(long currentTickerId) {
         if (currentTickerId >  (getTickerRepo().getMinimumTickerId())) {
             setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
+
+            List<Strike> strikes = getStrikeRepository().findAll().stream().filter(s -> s.getPersistTickerId() == getTicker().getId()).toList();
+            getTicker().getPlayers().addAll(strikes);
             getTicker().setSequencer(sequencer);
-            getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
         }
 
         return getTicker();

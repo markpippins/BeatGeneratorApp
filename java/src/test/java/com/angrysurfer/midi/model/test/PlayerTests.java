@@ -21,6 +21,7 @@ import com.angrysurfer.BeatGeneratorApplication;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
+import com.angrysurfer.midi.model.Ticker;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -79,6 +80,18 @@ public class PlayerTests {
         @Override
         public void setRules(Set<Rule> rules) {
           this.ruleSet = rules;
+        }
+
+        @Override
+        public Ticker getTicker() {
+          // TODO Auto-generated method stub
+          throw new UnsupportedOperationException("Unimplemented method 'getTicker'");
+        }
+
+        @Override
+        public void setTicker(Ticker ticker) {
+          // TODO Auto-generated method stub
+          throw new UnsupportedOperationException("Unimplemented method 'setTicker'");
         }};
       
 

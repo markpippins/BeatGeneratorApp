@@ -39,7 +39,7 @@ export class SliderPanelComponent implements OnInit, Listener {
     this.instrument = undefined
     this.channel = selectedChannel;
     this.midiService
-      .instrumentInfo(selectedChannel - 1)
+      .instrumentInfoByChannel(selectedChannel - 1)
       .subscribe(async (data) => {
         this.instrument = data;
         this.channelSelectEvent.emit(selectedChannel);

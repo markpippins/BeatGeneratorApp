@@ -72,7 +72,7 @@ export class StatusPanelComponent implements OnInit, Listener {
             this.waiting = false
           })
         }
-        await this.midiService.delay(5000);
+        await this.midiService.delay(this.connected && this.ticker != undefined && this.ticker.playing ? 250 : 500);
         this.waiting = false
         this.updateDisplay();
       },
@@ -81,16 +81,17 @@ export class StatusPanelComponent implements OnInit, Listener {
         console.log(err)
         this.connected = false
         this.uiService.notifyAll(Constants.DISCONNECTED, '')
-        await this.midiService.delay(50000);
+        await this.midiService.delay(500);
         this.waiting = false
         this.updateDisplay();
       },
 
-      async () => {
-        await this.midiService.delay(50000);
-        this.waiting = false
-        this.updateDisplay();
-    });
+    //   async () => {
+    //     await this.midiService.delay(500);
+    //     this.waiting = false
+    //     this.updateDisplay();
+    // }
+    );
   }
 
   onTempoChange(event: { target: any; }) {

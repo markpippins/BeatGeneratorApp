@@ -43,12 +43,6 @@ public class RuleTests {
     @Test
     public void whenX_thenY() {
       
-        Rule rule = new Rule();
-
-        // rule.
-
-
-        assertTrue(1 > 0);
     }
 
     // @Test

@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Getter
@@ -21,8 +19,6 @@ public class Rule implements Serializable {
     private int comparisonId;
     private Double value;
 
-    // @ManyToOne()
-    // @JoinColumn(name = "player_id")
     @JsonIgnore
     @Transient
     Player player;
@@ -38,10 +34,8 @@ public class Rule implements Serializable {
     }
 
     public boolean isEqualTo(Rule rule) {
-        return (
+        return (getValue().equals(rule.getValue()) &&
             (this.getComparisonId() == rule.getComparisonId()) && 
-            (this.getOperatorId() == rule.getOperatorId()) &&
-            (getValue().equals(rule.getValue()))
-        );
+            (this.getOperatorId() == rule.getOperatorId()));
     }
 }

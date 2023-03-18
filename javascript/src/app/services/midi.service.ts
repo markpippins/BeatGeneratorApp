@@ -73,11 +73,11 @@ export class MidiService {
       'http://localhost:8080/api/devices/info');
   }
 
-  instrumentInfo(channel: number) {
+  instrumentInfoByChannel(channel: number) {
     let params = new HttpParams();
     params = params.append('channel', channel);
     return this.http.get<Instrument>(
-      'http://localhost:8080/api/instrument/info',
+      'http://localhost:8080/api/channel/instrument/',
       {params: params}
     );
   }
