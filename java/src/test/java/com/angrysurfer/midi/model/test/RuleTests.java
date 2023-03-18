@@ -14,21 +14,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.angrysurfer.BeatGeneratorApplication;
+import com.angrysurfer.midi.model.Comparison;
+import com.angrysurfer.midi.model.Operator;
 import com.angrysurfer.midi.model.Rule;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(
-  webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-  classes = BeatGeneratorApplication.class)
-@AutoConfigureMockMvc
-@TestPropertySource(
-  locations = "classpath:application.properties")
 public class RuleTests {
-
-    @Autowired
-    RuleRepository ruleRepository;
-
 
     @Before
     public void setUp() {
@@ -41,19 +31,18 @@ public class RuleTests {
     }
 
     @Test
-    public void whenX_thenY() {
-      
+    public void whenRuleComparedToRuleWithSameValues_thenEqualToReturnsTrue() {
+      Rule a = new Rule(Operator.BAR, Comparison.EQUALS, 1.0);
+      Rule b = new Rule(Operator.BAR, Comparison.EQUALS, 1.0);
+      assertTrue(a.isEqualTo(b));
+      assertTrue(b.isEqualTo(a));
     }
 
-    // @Test
-    // public void whenMidiDevicesRetrievedByName_thenCorrectDeviceReturned() {
-    //     List<MidiDevice> devices = midiService.findMidiDevices(true, false);
-    //     assertTrue(devices.size() > 0);
-    //     devices.forEach(d -> {
-    //         String name = d.getDeviceInfo().getName();
-    //         MidiDevice device = midiService.findMidiOutDevice(name);
-    //         assertEquals(d, device);
-    //     });
-    // }
-
+    @Test
+    public void whenRuleComparedToRuleWithDifferentValues_thenEqualToReturnsFalse() {
+      Rule a = new Rule(Operator.BAR, Comparison.MODULO, 1.0);
+      Rule b = new Rule(Operator.BAR, Comparison.EQUALS, 2.0);
+      assertTrue(!a.isEqualTo(b));
+      assertTrue(!b.isEqualTo(a));
+    }
 }
