@@ -2,6 +2,7 @@ package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.*;
 import com.angrysurfer.midi.repo.*;
+import com.angrysurfer.midi.util.SequenceRunner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,7 +41,9 @@ public class PlayerService {
     private TickerRepo tickerRepo;
     private StepRepository stepDataRepository;
     private SongRepository songRepository;
-    static Sequencer sequencer;        
+    private SequenceRunner sequenceRunner;
+
+    // static Sequencer sequencer;        
 
 
     public PlayerService(MIDIService midiService, StrikeRepository strikeRepository,
@@ -79,26 +82,22 @@ public class PlayerService {
     }
 
     public void play() {
-        if (!getTicker().isPaused() && !getTicker().isPlaying())
-            new Thread(new Runnable() {
-                public void run() {
-                    getTicker().run();
-                }
-            }).start();
-        else if (getTicker().isPaused())
-            getTicker().pause();
-        else getTicker().run();
-        getTicker().isPlaying();
+        if (Objects.nonNull(getSequenceRunner()) && !getTicker().isPlaying())
+            new Thread(getSequenceRunner()).start();
+        else {
+            setSequenceRunner(new SequenceRunner(getTicker()));
+            new Thread(getSequenceRunner()).start();
+        }
     }
 
     public Ticker stop() {
         if (getTicker().isPlaying())
-            getTicker().stop();
+            getSequenceRunner().getSequencer().stop();
         return getTicker();
     }
 
     public void pause() {
-        getTicker().pause();
+        getSequenceRunner().pause();
         getTicker().isPlaying();
     }
 
@@ -122,7 +121,7 @@ public class PlayerService {
 
     public Strike addPlayer(String instrumentName) {
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-        // midiInstrument.setDevice(MIDIService.getDevice(midiInstrument.getDeviceName()));
+        midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
         return addPlayer(midiInstrument);
     }
 
@@ -215,7 +214,7 @@ public class PlayerService {
 
             List<Strike> strikes = getStrikeRepository().findAll().stream().filter(s -> s.getPersistTickerId() == getTicker().getId()).toList();
             getTicker().getPlayers().addAll(strikes);
-            getTicker().setSequencer(sequencer);
+            // getTicker().setSequencer(sequencer);
         }
 
         return getTicker();
@@ -227,7 +226,7 @@ public class PlayerService {
 
             List<Strike> strikes = getStrikeRepository().findAll().stream().filter(s -> s.getPersistTickerId() == getTicker().getId()).toList();
             getTicker().getPlayers().addAll(strikes);
-            getTicker().setSequencer(sequencer);
+            // getTicker().setSequencer(sequencer);
         }
 
         return getTicker();
@@ -290,7 +289,7 @@ public class PlayerService {
         tickerToUpdate = getTickerRepo().save(tickerToUpdate);
 
         if (getTicker().getId().equals(tickerToUpdate.getId())) {
-            tickerToUpdate.setSequencer(sequencer);
+            // tickerToUpdate.setSequencer(sequencer);
             setTicker(tickerToUpdate);
         }
             
@@ -326,14 +325,14 @@ public class PlayerService {
 
     public Ticker loadTicker(long tickerId) {
         getTickerRepo().findById(tickerId).ifPresent(this::setTicker);
-        getTicker().setSequencer(sequencer);            
+        // getTicker().setSequencer(sequencer);            
         return getTicker();
     }
 
 
     public Ticker newTicker() {
         setTicker(getTickerRepo().save(new Ticker()));
-        getTicker().setSequencer(sequencer);
+        // getTicker().setSequencer(sequencer);
         return getTicker();
     }
 

@@ -38,18 +38,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Double lastPlayedBeat;
     private String name;
     private String instrumentName;
-    
-    // private Long tickerId;
-
-    // public Long getTickerId() {
-    //     return Objects.nonNull(getTicker()) ? getTicker().getId() : this.tickerId; 
-    // }
-
-    // public void setTicker(Ticker ticker) {
-    //     this.ticker = ticker;
-    //     if (Objects.nonNull(ticker))
-    //         this.tickerId = ticker.getId();
-    // }
 
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")
@@ -67,7 +55,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     public abstract Ticker getTicker();
     public abstract void setTicker(Ticker ticker);
-    
+
     public Player() {
 
     }
@@ -86,10 +74,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     
 
     public abstract void onTick(long tick, int bar);
-
-    // abstract public Set<Rule> getRules();
-
-    // abstract public void setRules(Set<Rule> rules);
 
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "player_rules", joinColumns = { @JoinColumn(name = "player_id") }, inverseJoinColumns = {

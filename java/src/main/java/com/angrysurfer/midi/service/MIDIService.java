@@ -22,7 +22,18 @@ public class MIDIService {
 
     private MidiInstrumentRepository midiInstrumentRepo;
 
-    public MIDIService(MidiInstrumentRepository midiInstrumentRepo) {
+//    static Sequencer sequencer;
+
+//    static {
+//        try {
+//            sequencer = MidiSystem.getSequencer();
+// //            initialized = true;
+//        } catch (MidiUnavailableException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+
+public MIDIService(MidiInstrumentRepository midiInstrumentRepo) {
         this.midiInstrumentRepo = midiInstrumentRepo;
     }
 
@@ -180,16 +191,6 @@ public class MIDIService {
 // }
 
 
-//    static Sequencer sequencer;
-//
-//    static {
-//        try {
-//            sequencer = MidiSystem.getSequencer();
-////            initialized = true;
-//        } catch (MidiUnavailableException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
 
 //    public static void playTestNote() throws InvalidMidiDataException, MidiUnavailableException {
 //        int channel = 0;

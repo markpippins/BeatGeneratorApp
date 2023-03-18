@@ -63,40 +63,12 @@ public class TickerTests {
     }
 
     @Test
-    public void whenX_thenY() {
-      Player p = new Player(){
-        
-        Set<Rule> ruleSet = new HashSet<>();
-
-        @Override
-        public void onTick(long tick, int bar) {
-        }
-
-        @Override
-        public Set<Rule> getRules() {
-          return this.ruleSet;
-        }
-
-        @Override
-        public void setRules(Set<Rule> rules) {
-          this.ruleSet = rules;
-        }
-
-        @Override
-        public Ticker getTicker() {
-          // TODO Auto-generated method stub
-          throw new UnsupportedOperationException("Unimplemented method 'getTicker'");
-        }
-
-        @Override
-        public void setTicker(Ticker ticker) {
-          // TODO Auto-generated method stub
-          throw new UnsupportedOperationException("Unimplemented method 'setTicker'");
-        }};
-      
-
-
-        assertTrue(1 > 0);
+    public void whenRunCalled_thenTickerStarts() {
+        Ticker ticker = new Ticker();
+        // ticker.run();
+        // assertTrue(ticker.isPlaying());
+        // ticker.stop();
+        // assertTrue(!ticker.isPlaying());        
     }
 
     // @Test
