@@ -18,21 +18,6 @@ import java.util.stream.Stream;
 
 @Service
 public class MIDIService {
-    public static final String INSTRUMENT = "/instrument";
-
-    public static final String INSTRUMENT_LIST = "/instruments/all";
-
-    public static final String INSTRUMENT_INFO = "/instrument/info";
-
-    public static final String INSTRUMENT_LOOKUP = "/instruments/lookup";
-
-    public static final String INSTRUMENT_NAMES = "/instruments/names";
-    public static final String SAVE_CONFIG = "/instruments/save";
-    
-    public static final String DEVICES_INFO = "/devices/info";
-    public static final String DEVICE_NAMES = "/devices/names";
-    public static final String SERVICE_RESET = "/service/reset";
-    public static final String SERVICE_SELECT = "/service/select";
     
     static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
 
@@ -42,18 +27,17 @@ public class MIDIService {
         this.midiInstrumentRepo = midiInstrumentRepo;
     }
 
-    public static MidiDevice getDevice(String deviceName) {
-        try {
-            MidiDevice result = MidiSystem.getMidiDevice(Stream.of(MidiSystem.getMidiDeviceInfo()).
-                    filter(info -> info.getName().toLowerCase().contains(deviceName.toLowerCase())).toList().get(0));
-            return result;
-        } catch (MidiUnavailableException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    // public static MidiDevice getDevice(String deviceName) {
+    //     try {
+    //         MidiDevice result = MidiSystem.getMidiDevice(Stream.of(MidiSystem.getMidiDeviceInfo()).
+    //                 filter(info -> info.getName().toLowerCase().contains(deviceName.toLowerCase())).toList().get(0));
+    //         return result;
+    //     } catch (MidiUnavailableException e) {
+    //         throw new RuntimeException(e);
+    //     }
+    // }
 
-    public List<MidiDevice> getMidiDevices() {
-
+    public static List<MidiDevice> getMidiDevices() {
         return Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {
             try {
                 return MidiSystem.getMidiDevice(info);
@@ -61,11 +45,10 @@ public class MIDIService {
                 logger.error(ex.getMessage(), ex);
                 throw new RuntimeException(ex);
             }
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
-
-    public List<MidiDevice> findMidiDevices(boolean receive, boolean transmit) {
+    public static List<MidiDevice> findMidiDevices(boolean receive, boolean transmit) {
         return getMidiDevices().stream().map(device -> {
             if ((transmit == (device.getMaxTransmitters() != 0) && receive == (device.getMaxReceivers() != 0)))
                 return device;
@@ -73,13 +56,17 @@ public class MIDIService {
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-
-    public List<MidiDevice> findMidiDevice(String name) {
+    public static MidiDevice findMidiOutDevice(String name) {
         return findMidiDevices(true, false).stream()
-                .filter(d -> d.getDeviceInfo().getName().equals(name)).toList();
+                .filter(d -> d.getDeviceInfo().getName().equals(name)).findAny().orElseThrow();
     }
 
-    public void reset() {
+    public static MidiDevice findMidiInDevice(String name) {
+        return findMidiDevices(false, true).stream()
+                .filter(d -> d.getDeviceInfo().getName().equals(name)).findAny().orElseThrow();
+    }
+
+    public static void reset() {
         try {
             MidiSystem.getSequencer().getReceivers().forEach(Receiver::close);
         } catch (MidiUnavailableException e) {
@@ -89,7 +76,7 @@ public class MIDIService {
     }
 
 
-    public boolean select(MidiDevice device) {
+    public static boolean select(MidiDevice device) {
         if (!device.isOpen()) {
             reset();
             try {
@@ -102,11 +89,10 @@ public class MIDIService {
         return device.isOpen();
     }
 
-    public boolean select(String name) {
+    public static boolean select(String name) {
         reset();
         try {
-            List<MidiDevice> devices = findMidiDevice(name);
-            MidiDevice device = devices.get(0);
+            MidiDevice device = findMidiOutDevice(name);
             if (!device.isOpen()) {
                 device.open();
                 MidiSystem.getTransmitter().setReceiver(device.getReceiver());
@@ -121,15 +107,15 @@ public class MIDIService {
 
     public List<MidiInstrument> getAllInstruments() {
         List<MidiInstrument> results = midiInstrumentRepo.findAll();
-        results.forEach(i -> i.setDevice(MIDIService.getDevice(i.getDeviceName())));
+        results.forEach(i -> i.setDevice(findMidiOutDevice(i.getDeviceName())));
         return results;
     }
 
     
-    public MidiInstrument getInstrument(int channel) {
+    public MidiInstrument getInstrumentByChannel(int channel) {
         Optional<MidiInstrument> instrument = midiInstrumentRepo.findByChannel(channel);
         if (instrument.isPresent())
-            instrument.get().setDevice(getDevice(instrument.get().getDeviceName()));
+            instrument.get().setDevice(findMidiOutDevice(instrument.get().getDeviceName()));
         return instrument.orElseThrow();
     }
 
@@ -138,11 +124,11 @@ public class MIDIService {
     }
 
     public void sendMessage(int messageType, int channel, int data1, int data2) {
-        MidiInstrument instrument = getInstrument(channel);
+        MidiInstrument instrument = getInstrumentByChannel(channel);
         if (Objects.nonNull(instrument)) {
-            List<MidiDevice> devices = findMidiDevice(instrument.getDevice().getDeviceInfo().getName());
-            if (!devices.isEmpty()) {
-                MidiDevice device = devices.get(0);
+            // List<MidiDevice> devices = findMidiOutDevice(instrument.getDevice().getDeviceInfo().getName());
+            // if (!devices.isEmpty()) {
+                MidiDevice device = findMidiOutDevice(instrument.getDeviceName());
                 if (!device.isOpen())
                     try {
                         device.open();
@@ -168,7 +154,7 @@ public class MIDIService {
                     }
                 }).start();
             }   
-        }
+        // }
     }
 
     public List<String> getInstrumentNames() {
@@ -182,18 +168,18 @@ public class MIDIService {
 
     public List<MidiInstrument> getInstrumentList() {
         return midiInstrumentRepo.findAll();
-    }
-
-    // public MidiInstrument getInstrumentInfo(Long instrumentId) {
-    //     return midiInstrumentRepo.findById(instrumentId).orElseThrow();
-    // }
-    
+    }    
 
     public List<LookupItem> getInstrumentLookupItems() {
         return midiInstrumentRepo.findAll().stream().map(ins -> new LookupItem(ins.getId(), ins.getName(), (long) ins.getChannel())).toList();
     }
 
 }
+
+// public MidiInstrument getInstrumentInfo(Long instrumentId) {
+//     return midiInstrumentRepo.findById(instrumentId).orElseThrow();
+// }
+
 
 //    static Sequencer sequencer;
 //

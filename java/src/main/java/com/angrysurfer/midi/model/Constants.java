@@ -10,6 +10,58 @@ public class Constants {
     public static int DEFAULT_MAX_TRACKS = 128;
     public static int DEFAULT_SONG_LENGTH = Integer.MAX_VALUE;
     public static int DEFAULT_SWING = 25;
+
+    public static final String INSTRUMENT = "/instrument";
+    public static final String INSTRUMENT_LIST = "/instruments/all";
+    public static final String INSTRUMENT_INFO = "/instrument/info";
+    public static final String INSTRUMENT_LOOKUP = "/instruments/lookup";
+    public static final String INSTRUMENT_NAMES = "/instruments/names";
+
+    public static final String SAVE_CONFIG = "/instruments/save";
+    
+    public static final String DEVICES_INFO = "/devices/info";
+    public static final String DEVICE_NAMES = "/devices/names";
+
+    public static final String SERVICE_RESET = "/service/reset";
+    public static final String SERVICE_SELECT = "/service/select";
+	
+    public static final String RULES_FOR_PLAYER = "/player/rules";
+
+
+    public static final String ALL_PLAYERS =  "/players/info";
+    public static final String CLEAR_PLAYERS =  "/players/clear";
+
+    public static final String ADD_PLAYER = "/players/add";
+    public static final String REMOVE_PLAYER = "/players/remove";
+	public static final String UPDATE_PLAYER ="/player/update";
+	public static final String MUTE_PLAYER = "/players/mute";
+
+    public static final String ADD_TICKER ="/ticker/new";
+    public static final String DELETE_TICKER = "/rules/remove";
+	public static final String PREV_TICKER = "/ticker/previous";
+    public static final String NEXT_TICKER = "/ticker/next";
+    public static final String UPDATE_TICKER = "/ticker/update";
+
+    public static final String START_TICKER = "/ticker/start";
+    public static final String STOP_TICKER = "/ticker/stop";
+    public static final String PAUSE_TICKER = "/ticker/pause";
+	public static final String LOAD_TICKER = "/ticker/load";
+    public static final String TICKER_STATUS = "/ticker/status";
+    public static final String TICKER_INFO = "/ticker/info";
+    public static final String TICKER_LOG = "/ticker/log";
+
+    public static final String ADD_RULE = "/rules/add";
+    public static final String REMOVE_RULE = "/rules/remove";
+	public static final String UPDATE_RULE = "/rule/update";
+
+    public static final String GET_INSTRUMENT_BY_CHANNEL = "/channel/instrument";
+    public static final String GET_INSTRUMENT_BY_ID = "/id/instrument";
+
+    public static final String SEND_MESSAGE = "/messages/send";
+    public static final String SAVE_BEAT = "/beat/save";
+	public static final String PLAY_DRUM_NOTE = "/drums/note";
+    public static final String PLAY_SEQUENCE = "/sequence/play";
+
 }
 
 

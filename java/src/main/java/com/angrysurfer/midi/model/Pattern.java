@@ -1,7 +1,7 @@
 package com.angrysurfer.midi.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,7 +28,7 @@ public class Pattern {
     @OneToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "pattern_steps", joinColumns = { @JoinColumn(name = "query_id") }, inverseJoinColumns = {
 			@JoinColumn(name = "step_id") })
-	private List<Step> steps = new ArrayList<>();
+	private Set<Step> steps = new HashSet<>();
 
     private int length;
 

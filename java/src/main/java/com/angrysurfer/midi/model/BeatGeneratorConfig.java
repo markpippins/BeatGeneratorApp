@@ -4,13 +4,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
 public class BeatGeneratorConfig implements Serializable {
-    List<PlayerInfo> players = new ArrayList<>();
+    Set<Player> players = new HashSet<>();
     private int tempoInBPM;
     private int songLength;
     private int ticksPerBeat;
@@ -23,7 +23,7 @@ public class BeatGeneratorConfig implements Serializable {
     public BeatGeneratorConfig() {
     }
 
-    public BeatGeneratorConfig(Ticker ticker, List<Strike> players) {
+    public BeatGeneratorConfig(Ticker ticker, Set<Strike> players) {
         setTicksPerBeat(ticker.getTicksPerBeat());
         setBeatsPerBar(ticker.getBeatsPerBar());
         setBeatDivider(ticker.getBeatDivider());
@@ -32,7 +32,7 @@ public class BeatGeneratorConfig implements Serializable {
         setPartLength(ticker.getPartLength());
         setSongLength(ticker.getSongLength());
         setSwing(ticker.getSwing());
-        setPlayers(players.stream().map(PlayerInfo::fromPlayer).toList());
+        ticker.setPlayers(players);
     }
 
     public void setup(Ticker ticker) {

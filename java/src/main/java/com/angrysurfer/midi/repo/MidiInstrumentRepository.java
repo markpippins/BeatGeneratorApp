@@ -8,8 +8,8 @@ import com.angrysurfer.midi.model.MidiInstrument;
 
 public interface MidiInstrumentRepository extends JpaRepository<MidiInstrument, Long> {
 
-    Optional<MidiInstrument> findByChannel(int channel);
+    public Optional<MidiInstrument> findByChannel(int channel);
 
-    Optional<MidiInstrument> findByName(String instrument);
+    public Optional<MidiInstrument> findByName(String instrument);
 
 }

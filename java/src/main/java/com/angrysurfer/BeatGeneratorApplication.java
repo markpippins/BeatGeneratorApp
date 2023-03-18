@@ -34,7 +34,6 @@ public class BeatGeneratorApplication {
         SpringApplication.run(BeatGeneratorApplication.class, args);
     }
     
-    
 	@Bean
 	CommandLineRunner beatGeneratorSetup(MidiInstrumentRepository midiInstrumentRepo,
     PadRepository padRepository, 
@@ -45,10 +44,11 @@ public class BeatGeneratorApplication {
         this.controlCodeRepository = controlCodeRepository;
 
 		return args -> {
+            // load data
             if (midiInstrumentRepo.findAll().isEmpty())
                 try {
                     String filepath = "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/config/midi.json";
-    //                String filepath = "resources/config/midi.json";
+                    // String filepath = this.getClass().getResource("resources/config/midi.json").getPath();
                     MidiInstrumentList config = mapper.readValue(new File(filepath), MidiInstrumentList.class);
 
                     config.getInstruments().forEach(instrument -> {
@@ -72,6 +72,7 @@ public class BeatGeneratorApplication {
                     throw new RuntimeException(e);
                 }
 
+            // add ticker, player, rules
 		};
 	}
 

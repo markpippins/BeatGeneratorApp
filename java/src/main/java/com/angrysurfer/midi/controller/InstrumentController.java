@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.controller;
 
+import com.angrysurfer.midi.model.Constants;
 import com.angrysurfer.midi.model.LookupItem;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.service.MIDIService;
@@ -20,22 +21,22 @@ public class InstrumentController {
         this.midiService = midiService;
     }
 
-    @GetMapping(path = MIDIService.INSTRUMENT_LIST)
+    @GetMapping(path = Constants.INSTRUMENT_LIST)
     public @ResponseBody List<MidiInstrument> getInstrumentList() {
         return midiService.getInstrumentList();
     }
 
-    @GetMapping(path = MIDIService.INSTRUMENT)
+    @GetMapping(path = Constants.INSTRUMENT)
     public @ResponseBody MidiInstrument getInstrument(@RequestParam Long instrumentId) {
         return midiService.getInstrumentById(instrumentId);
     }
 
-    @GetMapping(path = MIDIService.INSTRUMENT_NAMES)
+    @GetMapping(path = Constants.INSTRUMENT_NAMES)
     public @ResponseBody List<String> getInstrumentNames() {
         return midiService.getInstrumentNames();
     }
 
-    @GetMapping(path = MIDIService.INSTRUMENT_LOOKUP)
+    @GetMapping(path = Constants.INSTRUMENT_LOOKUP)
     public @ResponseBody List<LookupItem> getInstrumentLookupItems() {
         return midiService.getInstrumentLookupItems();
     }

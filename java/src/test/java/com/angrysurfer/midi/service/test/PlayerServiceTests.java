@@ -107,7 +107,6 @@ public class PlayerServiceTests {
         assertEquals(0, tickerPlayer.getRules().size());
     }
 
-
     @Test
     public void whenRuleUpdated_thenPlayerCopyOfRuleShouldReflectIt() {
         Player player = playerService.addPlayer(RAZ);
@@ -125,8 +124,8 @@ public class PlayerServiceTests {
 
         assertEquals(tickerPlayer.getRules().stream().toList().get(0).getOperatorId(), operatorId);
         assertEquals(tickerPlayer.getRules().stream().toList().get(0).getComparisonId(), comparisonId);
-        assertEquals(tickerPlayer.getRules().stream().toList().get(0).getValue(), value, 0.0);
-}
+        assertEquals(tickerPlayer.getRules().stream().toList().get(0).getValue(), value, 0.0); 
+    }
 
     @Test
     public void whenNextTickerRequestedWithNoPlayers_thenSameTickerReturned() {
@@ -176,6 +175,37 @@ public class PlayerServiceTests {
         player = playerService.getTicker().getPlayer(player.getId());
         boolean[] found = { false };
         player.getRules().forEach(r -> {
+            if (r.getId().equals(rule.getId()))
+                found[0] = true;
+        });
+
+        assertTrue(found[0]); 
+    }
+
+    @Test
+    public void whenNextTickerRequestedForTickWithPlayers_thenPlayersContainAddedRule() {
+        
+        Long startingTickerId = playerService.getTicker().getId();
+        Player player = playerService.addPlayer(RAZ);
+        Rule rule = playerService.addRule(player.getId());
+
+        // move to next ticker, add player and rule
+        Ticker ticker2 = playerService.next(startingTickerId);
+        Player player2 = playerService.addPlayer(RAZ);
+        playerService.addRule(player.getId());
+
+        // return to starting ticker
+        Ticker orig = playerService.previous(ticker2.getId());
+        assertTrue(startingTickerId == orig.getId());
+
+        // advance again
+        Ticker ticker3 = playerService.next(orig.getId());
+
+
+
+        player2 = ticker3.getPlayer(player2.getId());
+        boolean[] found = { false };
+        player2.getRules().forEach(r -> {
             if (r.getId().equals(rule.getId()))
                 found[0] = true;
         });

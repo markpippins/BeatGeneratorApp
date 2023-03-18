@@ -1,8 +1,8 @@
 package com.angrysurfer.midi.controller;
 
+import com.angrysurfer.midi.model.Constants;
 import com.angrysurfer.midi.model.Step;
 import com.angrysurfer.midi.service.PlayerService;
-import com.angrysurfer.midi.service.MIDIService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,24 +22,26 @@ public class BeatController {
         this.service = service;
     }
 
-    @GetMapping(path = "/beat/save")
+    @GetMapping(path = Constants.SAVE_BEAT)
     public void saveBeat() {
-        logger.info("/beat/save");
+        logger.info(Constants.SAVE_BEAT);
         service.saveBeat();
     }
 
-    @GetMapping("/drums/note")
+    @GetMapping(Constants.PLAY_DRUM_NOTE)
     public void playDrumNote(@RequestParam String instrument, @RequestParam int channel, @RequestParam int note) {
-        logger.info("/drum/note");
+        logger.info(Constants.PLAY_DRUM_NOTE);
         service.playDrumNote(instrument, channel, note);
     }
-    @PostMapping(path = "/sequence/play")
+    @PostMapping(path = Constants.PLAY_SEQUENCE)
     public void setSteps(@RequestBody List<Step> steps) {
+        logger.info(Constants.PLAY_SEQUENCE);
         service.setSteps(steps);
     }
 
-    @GetMapping(path = MIDIService.SAVE_CONFIG)
+    @GetMapping(path = Constants.SAVE_CONFIG)
     public void saveConfig() {
+        logger.info(Constants.SAVE_CONFIG);
         service.saveConfig();
     }
 

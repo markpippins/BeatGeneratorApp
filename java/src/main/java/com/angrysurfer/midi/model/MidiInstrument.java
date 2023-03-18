@@ -26,7 +26,7 @@ public class MidiInstrument implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
     @OneToMany(fetch = FetchType.EAGER)
@@ -41,7 +41,7 @@ public class MidiInstrument implements Serializable {
             name = "instrument_pad",
             joinColumns = @JoinColumn(name = "pad_id"),
             inverseJoinColumns = @JoinColumn(name = "instrument_id"))
-    private List<Pad> pads = new ArrayList<>();
+    private Set<Pad> pads = new HashSet<>();
 
     @Transient
     private Map<Integer, String> assignments = new HashMap<>();
@@ -52,6 +52,7 @@ public class MidiInstrument implements Serializable {
     @Transient
     private MidiDevice device;
     
+    @Column(name = "name", unique = true)
     private String name;
     
     private String deviceName;
@@ -142,6 +143,12 @@ public class MidiInstrument implements Serializable {
         getDevice().getReceiver().send(message, new Date().getTime());
     }
 
+    boolean initialized = false;
+
+    public void setDevice(MidiDevice device){
+        this.device = device;
+        initialized = true;     
+    }
 
     public void assign(int cc, String control) {
         getAssignments().put(cc, control);

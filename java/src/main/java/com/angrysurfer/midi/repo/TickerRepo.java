@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TickerRepo extends JpaRepository<Ticker, Long> {
+    
     String NEXT_TICKER = "select * from ticker ti where ti.id = (select min(tii.id) from ticker tii WHERE tii.id > :currentTickerId)";
     @Query(value=NEXT_TICKER, nativeQuery = true)
     Ticker getNextTicker(@Param("currentTickerId") Long currentTickerId);

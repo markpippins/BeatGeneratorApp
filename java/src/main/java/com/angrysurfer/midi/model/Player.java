@@ -1,6 +1,8 @@
 package com.angrysurfer.midi.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,26 +15,50 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Getter
 @Setter
+//@Entity
+@MappedSuperclass
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public abstract class Player implements Callable<Boolean>, Serializable {
     static final Random rand = new Random();
-    List<Rule> rules = new ArrayList<>();
+
+
+    @Transient
     private List<Pad> pads = new ArrayList<>();
+
     private int note;
     private int minVelocity = 110;
     private int maxVelocity = 127;
     private boolean even = true;
     private boolean muted = false;
-    // private Double beat = 1.0;
     private int position = 0;
     private Long lastTick = 0L;
     private int preset;
-    private MidiInstrument instrument;
-    private Ticker ticker;
-    private Set<Integer> allowedControlMessages = new HashSet<>();
     private int lastPlayedTick;
     private int lastPlayedBar;
     private Double lastPlayedBeat;
     private String name;
+    private String instrumentName;
+
+    @ElementCollection
+    @CollectionTable(name = "allowedControlMessages")
+    private List<Integer> allowedControlMessages = new ArrayList<>();
+    
+    @JsonIgnore
+    @ManyToOne
+	@JoinColumn(name = "instrument_id")
+    private MidiInstrument instrument;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "id", nullable = false)
+    private Long id;
+
+    @JsonIgnore
+    @ManyToOne()
+    @JoinTable( name = "player_ticker", joinColumns = { @JoinColumn( name = "player_id" ) }, inverseJoinColumns = {
+       @JoinColumn( name = "ticker_id")})
+	@JoinColumn(name = "ticker_id")
+    private Ticker ticker;
 
     public Player() {
 
@@ -41,17 +67,15 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     public Player(String name, Ticker ticker, MidiInstrument instrument) {
         setName(name);
         setInstrument(instrument);
-        setTicker(ticker);
+        setInstrumentName(instrument.getName());
     }
 
-    public Player(String name, Ticker ticker, MidiInstrument instrument, Set<Integer> allowedControlMessages) {
+    public Player(String name, Ticker ticker, MidiInstrument instrument, List<Integer> allowedControlMessages) {
         this(name, ticker, instrument);
+        setInstrumentName(instrument.getName());
         setAllowedControlMessages(allowedControlMessages);
     }
-
-    public abstract Long getId();
-
-    public abstract void setId(Long id);
+    
 
     public abstract void onTick(long tick, int bar);
 
@@ -98,13 +122,14 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         }
     }
 
-    // protected int incrementAndGetPosition() {
-    //     return ++position;
-    // }
+    abstract public Set<Rule> getRules();
 
-    @JsonIgnore
-    public String getInstrumentName() {
-        return getInstrument().getName();
+    abstract public void setRules(Set<Rule> rules);
+
+   
+    public void setInstrument(MidiInstrument instrument) {
+        this.instrument = instrument;
+        setInstrumentName(instrument.getName());
     }
 
     @JsonIgnore
