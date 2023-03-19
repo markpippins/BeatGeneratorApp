@@ -183,12 +183,12 @@ export class DashboardComponent implements OnInit, Listener {
 
   updateDisplay(): void {
     this.midiService.playerInfo().subscribe(async (data) => {
-      // var update: boolean = this.isPlaying && this.players.length != (<Player[]>data).length
-      // this.players = data
-      // if (update && this.isPlaying) {
-      // await this.midiService.delay(1000)
-      // this.updateDisplay()
-      // }
+      var update: boolean = this.ticker.playing && this.players.length != (<Player[]>data).length
+      this.players = data
+      if (update && this.ticker.playing) {
+        await this.midiService.delay(1000)
+        this.updateDisplay()
+      }
     })
   }
 

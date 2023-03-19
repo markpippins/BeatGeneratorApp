@@ -298,7 +298,7 @@ public class PlayerService {
             case INSTRUMENT -> {
                 Optional<MidiInstrument> instrument = getMidiInstrumentRepo().findById((long) updateValue);
                 instrument.ifPresent(inst -> {
-                    inst.setDevice(MIDIService.findMidiOutDevice(inst.getDeviceName()));
+                    inst.setDevice(MIDIService.getDevice(inst.getDeviceName()));
                     playerOpt.ifPresent(strike -> {
                         strike.setInstrument(inst);
                         getStrikeRepository().save(strike);
@@ -330,7 +330,7 @@ public class PlayerService {
     public void playDrumNote(String instrumentName, int channel, int note) {
  
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-        midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
+        midiInstrument.setDevice(MIDIService.getDevice(midiInstrument.getDeviceName()));
 
         log.info(String.join(", ", instrumentName, Integer.toString(channel), Integer.toString(note)));
  
