@@ -36,9 +36,11 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private int lastPlayedBar;
     private Double lastPlayedBeat;
     private String name;
-    private String instrumentName;
     private int part;
     
+    @Transient   
+    private Set<Rule> rules = new HashSet<>();
+
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")
     private List<Integer> allowedControlMessages = new ArrayList<>();
@@ -65,20 +67,22 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     public Player(String name, Ticker ticker, MidiInstrument instrument) {
         setName(name);
         setInstrument(instrument);
-        setInstrumentName(instrument.getName());
     }
 
     public Player(String name, Ticker ticker, MidiInstrument instrument, List<Integer> allowedControlMessages) {
         this(name, ticker, instrument);
-        setInstrumentName(instrument.getName());
         setAllowedControlMessages(allowedControlMessages);
+    }
+
+    public void setInstrument(MidiInstrument instrument) {
+        this.instrument = instrument;
     }
 
     public abstract void onTick(long tick, int bar);
 
-    @Transient   
-    private Set<Rule> rules = new HashSet<>();
-
+    public Long getInstrumentId() {
+        return (Objects.nonNull(getInstrument()) ? getInstrument().getId() : null);
+    }
     public Rule getRule(Long ruleId) {
         return getRules().stream().filter(r -> r.getId() == ruleId).findAny().orElseThrow();
     }
@@ -124,11 +128,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void setInstrument(MidiInstrument instrument) {
-        this.instrument = instrument;
-        setInstrumentName(instrument.getName());
     }
 
     @JsonIgnore

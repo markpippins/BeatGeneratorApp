@@ -77,7 +77,7 @@ export class MidiService {
     let params = new HttpParams();
     params = params.append('channel', channel);
     return this.http.get<Instrument>(
-      'http://localhost:8080/api/instrument/channel/',
+      'http://localhost:8080/api/midi/instrument',
       {params: params}
     );
   }

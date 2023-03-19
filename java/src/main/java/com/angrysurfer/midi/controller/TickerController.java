@@ -19,7 +19,6 @@ public class TickerController {
 
     static Logger logger = LoggerFactory.getLogger(TickerController.class.getCanonicalName());
 
-
     private final PlayerService service;
 
     public TickerController(PlayerService service) {
