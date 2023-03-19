@@ -8,13 +8,8 @@ import java.util.Objects;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.angrysurfer.midi.model.Comparison;
-import com.angrysurfer.midi.model.Operator;
-import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.util.SequenceRunner;
 import com.angrysurfer.midi.model.Ticker;
 

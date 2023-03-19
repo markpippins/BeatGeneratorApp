@@ -2,11 +2,6 @@ package com.angrysurfer.midi.model.test;
 
 import com.angrysurfer.midi.repo.*;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.HashSet;
-import java.util.Set;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,8 +14,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.angrysurfer.BeatGeneratorApplication;
 import com.angrysurfer.midi.model.MidiInstrument;
-import com.angrysurfer.midi.model.Player;
-import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.Ticker;
 
 @RunWith(SpringRunner.class)

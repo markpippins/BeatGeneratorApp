@@ -130,14 +130,11 @@ public class PlayerServiceTests {
 
     @Test
     public void whenNextTickerRequestedWithNoPlayers_thenSameTickerReturned() {
-        // add player to current ticker to ensure we get new record when calling next()
-        playerService.addPlayer(RAZ);
-        Long id = playerService.getTicker().getId();
-        Ticker nextTicker = playerService.next(id);
-        assertTrue(nextTicker.getId() > id);
 
-        Ticker nextNextTicker = playerService.next(nextTicker.getId());
-        assertSame(nextTicker.getId(), nextNextTicker.getId());
+        Long id = playerService.getTicker().getId();
+        playerService.getTicker().getPlayers().clear();
+        Ticker nextTicker = playerService.next(id);
+        assertSame(nextTicker.getId(), id);
     }
 
     @Test
@@ -166,17 +163,18 @@ public class PlayerServiceTests {
         Rule rule = playerService.addRule(player.getId());
 
         // move to next ticker, add player and rule
-        Ticker ticker2 = playerService.next(startingTickerId);
-        playerService.addPlayer(RAZ);
-        playerService.addRule(player.getId());
+        Ticker nextTicker = playerService.next(startingTickerId);
+        Long nextTickerId = playerService.getTicker().getId();
+        playerService.addRule(playerService.addPlayer(RAZ).getId());
 
         // return to starting ticker
-        playerService.previous(ticker2.getId());
+        Ticker ticker = playerService.previous(nextTickerId);
+        playerService.getTicker();
 
-        player = playerService.getTicker().getPlayer(player.getId());
+        player = ticker.getPlayer(player.getId());
         boolean[] found = { false };
         player.getRules().forEach(r -> {
-            if (r.getId().equals(rule.getId()))
+            if (r.isEqualTo(rule))
                 found[0] = true;
         });
 

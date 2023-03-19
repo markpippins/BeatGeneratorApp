@@ -77,7 +77,7 @@ public class Ticker implements Serializable {
     }
 
     public Strike getPlayer(Long playerId) {
-        return getPlayers().stream().filter(p -> playerId == p.getId()).findFirst().orElseThrow();
+        return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
 
     public void reset() {

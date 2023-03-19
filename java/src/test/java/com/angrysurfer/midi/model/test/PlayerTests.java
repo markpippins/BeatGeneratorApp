@@ -7,6 +7,8 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import com.angrysurfer.midi.model.Comparison;
+import com.angrysurfer.midi.model.Operator;
 import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.Ticker;
@@ -14,39 +16,37 @@ import com.angrysurfer.midi.model.Ticker;
 public class PlayerTests {
 
     @Test
-    public void whenX_thenY() {
-      Player p = new Player(){
-        
-        Set<Rule> ruleSet = new HashSet<>();
+     public void whenRuleExistsForFirstBeat_thenOnTickCalledFirstBeat() {
 
-        @Override
-        public void onTick(long tick, int bar) {
-        }
+      boolean[] play = {false};
 
-        @Override
-        public Set<Rule> getRules() {
-          return this.ruleSet;
-        }
+      Player p = new Player() {
 
-        @Override
-        public void setRules(Set<Rule> rules) {
-          this.ruleSet = rules;
-        }
+        Ticker ticker = new Ticker();
 
         @Override
         public Ticker getTicker() {
-          // TODO Auto-generated method stub
-          throw new UnsupportedOperationException("Unimplemented method 'getTicker'");
+          return ticker;
         }
 
         @Override
         public void setTicker(Ticker ticker) {
-          // TODO Auto-generated method stub
-          throw new UnsupportedOperationException("Unimplemented method 'setTicker'");
-        }};
-      
+          this.ticker = ticker;
+        }
 
+        @Override
+        public void onTick(long tick, int bar) {
+          play[0] = true;
+        }
+   
+      };
 
-        assertTrue(1 > 0);
+      Rule r = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0);
+      p.getRules().add(r);
+      p.call();
+      assertTrue(play[0]);
+      play[0] = false;
+      p.call();
+      assertTrue(!play[0]);
     }
 }

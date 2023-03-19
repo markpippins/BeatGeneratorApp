@@ -121,16 +121,16 @@ public class PlayerService {
 
     public Strike addPlayer(String instrumentName) {
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-        midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
+        midiInstrument.setDevice(MIDIService.findMidiInDevice(midiInstrument.getDeviceName()));
         return addPlayer(midiInstrument);
     }
 
     public Strike addPlayer(Long instrumentId) {
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findById(instrumentId).orElseThrow();
-        midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
+        midiInstrument.setDevice(MIDIService.findMidiInDevice(midiInstrument.getDeviceName()));
         return addPlayer(midiInstrument);
     }
-
+ 
     public Strike addPlayer(MidiInstrument midiInstrument) {
         // Set<Strike> strikes = getStrikeRepository().findByTickerId(getTicker().getId());
 
@@ -206,15 +206,11 @@ public class PlayerService {
     public synchronized Ticker next(long currentTickerId) {
         if (currentTickerId == 0 || getTicker().getPlayers().size() > 0) {       
             Long maxTickerId = getTickerRepo().getMaximumTickerId();
-            int tickerCount = getTickerRepo().findAll().size();
-
-            setTicker( tickerCount > 0 && Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
+            // int tickerCount = getTickerRepo().findAll().size();
+            setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
                 getTickerRepo().getNextTicker(currentTickerId) :
                 getTickerRepo().save(new Ticker()));
-
-            List<Strike> strikes = getStrikeRepository().findAll().stream().filter(s -> s.getPersistTickerId() == getTicker().getId()).toList();
-            getTicker().getPlayers().addAll(strikes);
-            // getTicker().setSequencer(sequencer);
+            getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
         }
 
         return getTicker();
@@ -223,10 +219,7 @@ public class PlayerService {
     public synchronized Ticker previous(long currentTickerId) {
         if (currentTickerId >  (getTickerRepo().getMinimumTickerId())) {
             setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
-
-            List<Strike> strikes = getStrikeRepository().findAll().stream().filter(s -> s.getPersistTickerId() == getTicker().getId()).toList();
-            getTicker().getPlayers().addAll(strikes);
-            // getTicker().setSequencer(sequencer);
+            getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
         }
 
         return getTicker();
