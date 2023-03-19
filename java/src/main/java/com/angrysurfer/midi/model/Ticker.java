@@ -12,6 +12,8 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
 @Setter
@@ -31,13 +33,16 @@ public class Ticker implements Serializable {
     private Set<Strike> removeList = new HashSet<>();
 
     @Transient
-    private int bar = 1;
+    private AtomicInteger atomicBar = new AtomicInteger(1);
+
+    @Transient
+    private AtomicInteger atomicPart = new AtomicInteger(1);
 
     @Transient
     private double beat = 1;
 
     @Transient
-    private Long tick = 1L;
+    private AtomicLong atomicTick = new AtomicLong(1L);
 
     @Transient
     private boolean done = false;
@@ -49,7 +54,6 @@ public class Ticker implements Serializable {
     
     @Transient
     private Set<Strike> players = new HashSet<>();
-
 
     @Transient
     private double granularBeat = 1.0;
@@ -63,6 +67,7 @@ public class Ticker implements Serializable {
     private int ticksPerBeat = Constants.DEFAULT_PPQ;
     private float tempoInBPM = Constants.DEFAULT_BPM;
     private int loopCount  = Constants.DEFAULT_LOOP_COUNT;
+    private int parts = 4;
 
     @Transient
     private boolean playing = false;
@@ -95,6 +100,30 @@ public class Ticker implements Serializable {
         setTick(getTick() + 1);
     }
 
+    public void setTick(long tick) {
+        atomicTick.set(tick);
+    }
+
+    public Long getTick() {
+        return atomicTick.get();
+    }
+
+    public void setBar(int bar) {
+        atomicBar.set(bar);
+    }
+
+    public int getBar() {
+        return atomicBar.get();
+    }
+
+    private void setPart(int part) {
+        atomicPart.set(part);
+    }
+
+    public int getPart() {
+        return atomicPart.get();
+    }
+
     public void reset() {
         setId(null);
         setTick(0L);
@@ -116,7 +145,9 @@ public class Ticker implements Serializable {
     public void onBarChange() {
     
         setBar(getBar() + 1);
-
+        if (getBar() % getPartLength() == 0)
+            onPartChange();
+    
         if (!getRemoveList().isEmpty()) {
             getPlayers().removeAll(getRemoveList());
             getRemoveList().clear();
@@ -126,6 +157,10 @@ public class Ticker implements Serializable {
             getPlayers().addAll(getAddList());
             getAddList().clear();
         }    
+    }
+
+    public void onPartChange() {
+        setPart(getPart() < getParts() ? getPart() + 1 : 1);    
     }
 
     private void clearMuteGroups() {

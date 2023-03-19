@@ -50,6 +50,9 @@
       <td class="player-short-col" id="player-col-preset-{{player.id}}">
         <input type="number" min="1" max="127" step="1" value="{{ player.preset}}">
       </td>
+      <td class="player-short-col" id="player-col-part-{{player.id}}">
+        <input type="number" min="1" max="16" step="1" value="{{ player.part}}">
+      </td>
       <td class="player-short-col" (change)="onNoteChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
       </td>

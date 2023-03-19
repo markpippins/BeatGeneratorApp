@@ -7,6 +7,7 @@ export class Constants {
   static PLAYER_COLUMNS = [
     'Device',
     'Preset',
+    'Part',
     'Pitch',
     'Probability',
     'Min. Vel.',

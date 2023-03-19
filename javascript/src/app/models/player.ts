@@ -4,6 +4,7 @@ import { Rule } from './rule';
 export interface Player {
   id: number;
   instrumentId: number;
+  part: number;
   preset: number;
   rules: Rule[];
   allowedControlMessages: number[];

@@ -38,7 +38,8 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Double lastPlayedBeat;
     private String name;
     private String instrumentName;
-
+    private int part;
+    
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")
     private List<Integer> allowedControlMessages = new ArrayList<>();

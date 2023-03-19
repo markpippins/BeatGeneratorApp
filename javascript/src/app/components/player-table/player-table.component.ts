@@ -93,6 +93,7 @@ export class PlayerTableComponent implements Listener, OnInit {
   initBtnClicked() {
     this.onBtnClick({
       id: 0,
+      part: 1,
       maxVelocity: 0,
       minVelocity: 0,
       note: 0,
