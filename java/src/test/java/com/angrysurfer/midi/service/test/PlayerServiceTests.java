@@ -16,7 +16,9 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.angrysurfer.BeatGeneratorApplication;
+import com.angrysurfer.midi.model.Comparison;
 import com.angrysurfer.midi.model.MidiInstrument;
+import com.angrysurfer.midi.model.Operator;
 import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.PlayerUpdateType;
 import com.angrysurfer.midi.model.Rule;
@@ -90,6 +92,22 @@ public class PlayerServiceTests {
         assertNotNull(player.getTicker());
     }
     
+    @Test
+    public void whenMultipleRulesAdded_thenTickerCopyOfPlayerShouldContainThem() {
+        Player player = playerService.addPlayer(RAZ);
+        Rule r1 = playerService.addRule(player.getId());
+        r1.setComparisonId(Comparison.EQUALS);
+
+        Rule r2 = playerService.addRule(player.getId());
+        r2.setComparisonId(Comparison.GREATER_THAN);
+        
+        Rule r3 = playerService.addRule(player.getId());
+        r3.setComparisonId(Comparison.LESS_THAN);
+        
+        Player tickerPlayer = playerService.getTicker().getPlayer(player.getId());
+        assertEquals(3, tickerPlayer.getRules().size());
+    }
+
     @Test
     public void whenRuleAdded_thenTickerCopyOfPlayerShouldContainIt() {
         Player player = playerService.addPlayer(RAZ);
@@ -173,6 +191,7 @@ public class PlayerServiceTests {
         playerService.getTicker();
 
         player = ticker.getPlayer(player.getId());
+        // player.
         assertTrue(player.getRules().stream().anyMatch(r -> r.isEqualTo(rule))); 
     }
 

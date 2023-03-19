@@ -146,17 +146,13 @@ public class PlayerService {
     }
 
     public Rule addRule(Long playerId) {
-        Rule[] rule = { new Rule(Operator.BEAT, Comparison.EQUALS, 1.0) };
-
-        getTicker().getPlayers().stream().filter(p -> Objects.equals(p.getId(), playerId)).findAny()
-            .ifPresent(p -> {
-                rule[0].setPlayer(p);
-                getRuleRepository().save(rule[0]);
-                p.getRules().add(rule[0]);
-                getStrikeRepository().save(p);
-            });
-        
-        return rule[0];
+        Rule rule = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0);
+        Strike player = getTicker().getPlayer(playerId);
+        rule.setPlayer(player);
+        getRuleRepository().save(rule);
+        player.getRules().add(rule);
+        getStrikeRepository().save(player);        
+        return rule;
     }
 
     public void removeRule(Long playerId, Long ruleId) {
@@ -207,6 +203,7 @@ public class PlayerService {
                 getTickerRepo().getNextTicker(currentTickerId) :
                 getTickerRepo().save(new Ticker()));
             getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
+            getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
         }
 
         return getTicker();
@@ -216,6 +213,7 @@ public class PlayerService {
         if (currentTickerId >  (getTickerRepo().getMinimumTickerId())) {
             setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
             getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
+            getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
         }
 
         return getTicker();

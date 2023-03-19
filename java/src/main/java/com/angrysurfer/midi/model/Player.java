@@ -75,9 +75,10 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     public abstract void onTick(long tick, int bar);
 
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "player_rules", joinColumns = { @JoinColumn(name = "player_id") }, inverseJoinColumns = {
-           @JoinColumn(name = "rule_id") })    
+    // @OneToMany(fetch = FetchType.EAGER)
+    // @JoinTable(name = "player_rules", joinColumns = { @JoinColumn(name = "rule_id") }, inverseJoinColumns = {
+    //        @JoinColumn(name = "player_id") })
+    @Transient   
     private Set<Rule> rules = new HashSet<>();
 
     @Override

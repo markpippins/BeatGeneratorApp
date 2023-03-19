@@ -44,16 +44,8 @@ public class Strike extends Player {
     @JoinColumn(name = "ticker_id")
     private Ticker ticker;
 
-    private Long persistTickerId;
-
-    // public Long getTickerId() {
-    //     return Objects.nonNull(getTicker()) ? getTicker().getId() : this.persistTickerId;
-    // }
-
     public void setTicker(Ticker ticker)  {
         this.ticker = ticker;
-        if (Objects.nonNull(ticker))
-            this.persistTickerId = ticker.getId();
 
     }
 
