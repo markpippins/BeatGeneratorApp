@@ -11,13 +11,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 @Getter
 @Setter
 @Entity
-public class Strike extends Player {
+public class Strike extends Player implements Serializable {
     static final Random rand = new Random();
 
     public static int KICK = 36;
@@ -39,15 +40,6 @@ public class Strike extends Player {
 
 //    List<Ratchet> ratchets = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToOne()
-    @JoinColumn(name = "ticker_id")
-    private Ticker ticker;
-
-    public void setTicker(Ticker ticker)  {
-        this.ticker = ticker;
-
-    }
 
     public Strike() {
     }

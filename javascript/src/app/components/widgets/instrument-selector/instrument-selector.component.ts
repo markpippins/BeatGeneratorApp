@@ -14,8 +14,6 @@ import { Constants } from 'src/app/models/constants';
 })
 export class InstrumentSelectorComponent implements OnInit {
 
-
-
   @Output()
   instrumentSelectEvent = new EventEmitter<Instrument>();
 

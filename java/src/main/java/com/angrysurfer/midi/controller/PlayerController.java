@@ -6,6 +6,8 @@ import com.angrysurfer.midi.model.Strike;
 import com.angrysurfer.midi.service.PlayerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
@@ -34,9 +36,9 @@ public class PlayerController {
     }
 
     @GetMapping(Constants.ADD_PLAYER)
-    public Player addPlayer(@RequestParam String instrument) {
+    public ResponseEntity<Player> addPlayer(@RequestParam String instrument) {
         logger.info(Constants.ADD_PLAYER);
-        return service.addPlayer(instrument);
+        return new ResponseEntity<Player>(service.addPlayer(instrument), HttpStatus.OK);
     }
 
     @GetMapping(Constants.REMOVE_PLAYER)
@@ -52,9 +54,9 @@ public class PlayerController {
     }
 
     @GetMapping(Constants.UPDATE_PLAYER)
-    public void updatePlayer(@RequestParam Long playerId, @RequestParam int updateType, @RequestParam int updateValue) {
+    public Player updatePlayer(@RequestParam Long playerId, @RequestParam int updateType, @RequestParam int updateValue) {
         logger.info(Constants.UPDATE_PLAYER);
-        service.updatePlayer(playerId, updateType, updateValue);
+        return service.updatePlayer(playerId, updateType, updateValue);
     }
 
 }

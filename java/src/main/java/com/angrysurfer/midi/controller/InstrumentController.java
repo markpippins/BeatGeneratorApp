@@ -1,7 +1,6 @@
 package com.angrysurfer.midi.controller;
 
 import com.angrysurfer.midi.model.Constants;
-import com.angrysurfer.midi.model.LookupItem;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.service.MIDIService;
 import org.slf4j.Logger;
@@ -36,9 +35,9 @@ public class InstrumentController {
         return midiService.getInstrumentNames();
     }
 
-    @GetMapping(path = Constants.INSTRUMENT_LOOKUP)
-    public @ResponseBody List<LookupItem> getInstrumentLookupItems() {
-        return midiService.getInstrumentLookupItems();
-    }
+    // @GetMapping(path = Constants.INSTRUMENT_LOOKUP)
+    // public @ResponseBody List<LookupItem> getInstrumentLookupItems() {
+    //     return midiService.getInstrumentLookupItems();
+    // }
 }
 

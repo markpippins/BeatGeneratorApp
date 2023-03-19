@@ -52,11 +52,11 @@ public class MidiController {
         return service.getInstrumentByChannel(channel);
     }
 
-    @GetMapping(path = Constants.GET_INSTRUMENT_BY_ID)
-    public @ResponseBody MidiInstrument getInstrumentById(Long id) {
-        // logger.info("/instrument/info");
-        return service.getInstrumentById(id);
-    }
+    // @GetMapping(path = Constants.GET_INSTRUMENT_BY_ID)
+    // public @ResponseBody MidiInstrument getInstrumentById(Long id) {
+    //     // logger.info("/instrument/info");
+    //     return service.getInstrumentById(id);
+    // }
 }
 
 

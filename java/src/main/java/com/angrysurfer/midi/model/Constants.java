@@ -54,8 +54,8 @@ public class Constants {
     public static final String REMOVE_RULE = "/rules/remove";
 	public static final String UPDATE_RULE = "/rule/update";
 
-    public static final String GET_INSTRUMENT_BY_CHANNEL = "/channel/instrument";
-    public static final String GET_INSTRUMENT_BY_ID = "/id/instrument";
+    public static final String GET_INSTRUMENT_BY_CHANNEL = "/midi/instrument";
+    // public static final String GET_INSTRUMENT_BY_ID = "/instrument";
 
     public static final String SEND_MESSAGE = "/messages/send";
     public static final String SAVE_BEAT = "/beat/save";

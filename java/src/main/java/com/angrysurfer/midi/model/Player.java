@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class Player implements Callable<Boolean>, Serializable {
     static final Random rand = new Random();
 
-
     @Transient
     private List<Pad> pads = new ArrayList<>();
 
@@ -48,14 +47,16 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @ManyToOne
 	@JoinColumn(name = "instrument_id")
     private MidiInstrument instrument;
+    
+    @JsonIgnore
+    @ManyToOne()
+    @JoinColumn(name = "ticker_id")
+    private Ticker ticker;
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
-
-    public abstract Ticker getTicker();
-    public abstract void setTicker(Ticker ticker);
 
     public Player() {
 
@@ -72,7 +73,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         setInstrumentName(instrument.getName());
         setAllowedControlMessages(allowedControlMessages);
     }
-    
 
     public abstract void onTick(long tick, int bar);
 

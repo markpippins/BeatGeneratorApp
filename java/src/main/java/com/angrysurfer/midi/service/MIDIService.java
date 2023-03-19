@@ -1,6 +1,5 @@
 package com.angrysurfer.midi.service;
 
-import com.angrysurfer.midi.model.LookupItem;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.repo.MidiInstrumentRepository;
 
@@ -170,10 +169,6 @@ public class MIDIService {
     public List<MidiInstrument> getInstrumentList() {
         return midiInstrumentRepo.findAll();
     }    
-
-    public List<LookupItem> getInstrumentLookupItems() {
-        return midiInstrumentRepo.findAll().stream().map(ins -> new LookupItem(ins.getId(), ins.getName(), (long) ins.getChannel())).toList();
-    }
 
 }
 

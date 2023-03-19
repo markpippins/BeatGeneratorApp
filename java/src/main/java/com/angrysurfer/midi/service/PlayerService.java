@@ -43,8 +43,6 @@ public class PlayerService {
     private SongRepository songRepository;
     private SequenceRunner sequenceRunner;
 
-    // static Sequencer sequencer;        
-
 
     public PlayerService(MIDIService midiService, StrikeRepository strikeRepository,
                                 RuleRepository ruleRepository, TickerRepo tickerRepo, 
@@ -104,7 +102,7 @@ public class PlayerService {
     public Ticker getTickerInfo() {
         return getTicker();
     }
-    
+
     public Ticker getTickerStatus() {
         return getTicker();
     }
@@ -284,42 +282,36 @@ public class PlayerService {
         return tickerToUpdate;
     }
 
-    public void updatePlayer(Long playerId, int updateType, int updateValue) {
-        Optional<Strike> playerOpt = strikeRepository.findById(playerId);
+    public Player updatePlayer(Long playerId, int updateType, int updateValue) {
+        Strike strike = getTicker().getPlayer(playerId); 
+        // strikeRepository.findById(playerId).orElseThrow();
         switch (updateType) {
             case NOTE -> {
-                playerOpt.ifPresent(strike -> {
-                    strike.setNote(updateValue);
-                    getStrikeRepository().save(strike);
-                    getTicker().getPlayers().stream().filter(p -> Objects.nonNull(p.getId()) && p.getId().equals(playerId)).findFirst().ifPresent(p -> p.setNote(updateValue));
-                });
-
+                strike.setNote(updateValue);
+                break;
             }
             case INSTRUMENT -> {
                 Optional<MidiInstrument> instrument = getMidiInstrumentRepo().findById((long) updateValue);
                 instrument.ifPresent(inst -> {
                     inst.setDevice(MIDIService.getDevice(inst.getDeviceName()));
-                    playerOpt.ifPresent(strike -> {
                         strike.setInstrument(inst);
-                        getStrikeRepository().save(strike);
                         getTicker().getPlayers().stream().filter(p -> Objects.nonNull(p.getId()) && p.getId().equals(playerId)).findFirst().ifPresent(p -> p.setInstrument(inst));
-                    });
                 });
 
             }
         }
+
+        getStrikeRepository().save(strike);
+        return strike;
     }
 
     public Ticker loadTicker(long tickerId) {
         getTickerRepo().findById(tickerId).ifPresent(this::setTicker);
-        // getTicker().setSequencer(sequencer);            
         return getTicker();
     }
 
-
     public Ticker newTicker() {
         setTicker(getTickerRepo().save(new Ticker()));
-        // getTicker().setSequencer(sequencer);
         return getTicker();
     }
 
