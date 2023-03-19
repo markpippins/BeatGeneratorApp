@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import org.junit.Test;
 
@@ -18,7 +21,7 @@ public class PlayerTests {
     @Test
      public void whenRuleExistsForFirstBeat_thenOnTickCalledFirstBeat() {
 
-      boolean[] play = {false};
+      AtomicBoolean play = new AtomicBoolean(false);
 
       Player p = new Player() {
 
@@ -36,7 +39,7 @@ public class PlayerTests {
 
         @Override
         public void onTick(long tick, int bar) {
-          play[0] = true;
+          play.set(true);
         }
    
       };
@@ -44,9 +47,9 @@ public class PlayerTests {
       Rule r = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0);
       p.getRules().add(r);
       p.call();
-      assertTrue(play[0]);
-      play[0] = false;
+      assertTrue(play.get());
+      play.set(false);
       p.call();
-      assertTrue(!play[0]);
+      assertTrue(!play.get());
     }
 }

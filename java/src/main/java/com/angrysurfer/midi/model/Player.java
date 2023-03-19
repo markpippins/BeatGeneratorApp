@@ -75,11 +75,12 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     public abstract void onTick(long tick, int bar);
 
-    // @OneToMany(fetch = FetchType.EAGER)
-    // @JoinTable(name = "player_rules", joinColumns = { @JoinColumn(name = "rule_id") }, inverseJoinColumns = {
-    //        @JoinColumn(name = "player_id") })
     @Transient   
     private Set<Rule> rules = new HashSet<>();
+
+    public Rule getRule(Long ruleId) {
+        return getRules().stream().filter(r -> r.getId() == ruleId).findAny().orElseThrow();
+    }
 
     @Override
     public Boolean call() {
@@ -160,7 +161,4 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         return play.get();
     }
 
-    public Rule getRule(Long ruleId) {
-        return getRules().stream().filter(r -> r.getId() == ruleId).findAny().orElseThrow();
-    }
 }

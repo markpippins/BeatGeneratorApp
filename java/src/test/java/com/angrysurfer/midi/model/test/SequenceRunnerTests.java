@@ -16,7 +16,7 @@ import com.angrysurfer.midi.model.Ticker;
 public class SequenceRunnerTests {
 
     @Test
-    public void whenGetMasterSequenceCalled_thenSquenceIsReturned() {
+    public void whenGetMasterSequenceCalled_thenSequenceIsReturned() {
 
       Ticker ticker = new Ticker();
       SequenceRunner runner = new SequenceRunner(ticker);
@@ -28,7 +28,7 @@ public class SequenceRunnerTests {
     }
 
     @Test
-    public void whenBeforStartCalled_thenTickerHasSequencer() {
+    public void whenBeforeStartCalled_thenRunnerHasOpenSequencer() {
 
       Ticker ticker = new Ticker();
       SequenceRunner runner = new SequenceRunner(ticker);
@@ -39,8 +39,10 @@ public class SequenceRunnerTests {
         e.printStackTrace();
       }
 
-      assertNotNull(runner.getSequencer());
+      assertTrue(runner.getSequencer().isOpen());
     }
+
+    
 
     // @Test
     // public void whenRunCalled_thenSequencerIsRunning() {

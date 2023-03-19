@@ -73,37 +73,25 @@ public class SequenceRunner implements Runnable {
     }
 
     public Sequence getMasterSequence() throws InvalidMidiDataException {
-        Sequence sequence = new Sequence(Sequence.PPQ, this.ticker.getTicksPerBeat());
-
+        Sequence sequence = new Sequence(Sequence.PPQ, this.ticker.getTicksPerBeat());        
         Track track = sequence.createTrack();
-        IntStream.range(0, 100).forEach(i -> {
-            try {
-                track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 0, 0), i * 1000));
-            } catch (InvalidMidiDataException e) {
-                logger.error(e.getMessage(), e);
-            }
-        });
-
+        track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 0, 0), 1000));
         return sequence;
     }
 
     public void beforeStart() throws InvalidMidiDataException, MidiUnavailableException {
         Sequence master = getMasterSequence();
         sequencer.setSequence(master);
-        sequencer.setLoopCount(Integer.MAX_VALUE);
+        sequencer.setLoopCount(this.ticker.getLoopCount());
         sequencer.setTempoInBPM(this.ticker.getTempoInBPM());
-        sequencer.open();
 
-        this.ticker.setPlaying(true);
-        this.ticker.setTick(1L);
+        sequencer.open();
+        this.ticker.beforeStart();
     }
 
     public void afterEnd() {
         sequencer.close();
-        this.ticker.setPlaying(false);
-        this.ticker.setTick(1L);
-        this.ticker.setBar(1);
-        this.ticker.setBeat(1.0);
+        this.ticker.afterEnd();
     }
 
     @Override
@@ -116,17 +104,9 @@ public class SequenceRunner implements Runnable {
             sequencer.start();
             while (sequencer.isRunning()) {
                 if (sequencer.getTickPosition() > this.ticker.getTick()) {
-
-                    if (this.ticker.getBeat() >= this.ticker.getBeatsPerBar() + 1) {
-                        this.ticker.setBeat(1.0);
-                        this.ticker.setBar(this.ticker.getBar() + 1);
-                        this.ticker.onBarChange(this.ticker.getBar());
-                    }
-
+                    this.ticker.beforeTick();
                     this.executor.invokeAll(this.ticker.getPlayers());
-
-                    this.ticker.setBeat(this.ticker.getBeat() == this.ticker.getBeatsPerBar() ? 1 : this.ticker.getBeat() + (1.0 / this.ticker.getTicksPerBeat()));
-                    this.ticker.setTick(this.ticker.getTick() + 1);
+                    this.ticker.afterTick();
                 }
                 Thread.sleep(5);
             }

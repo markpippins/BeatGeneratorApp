@@ -34,6 +34,9 @@ public class Ticker implements Serializable {
     private int bar = 1;
 
     @Transient
+    private double beat = 1;
+
+    @Transient
     private Long tick = 1L;
 
     @Transient
@@ -47,8 +50,6 @@ public class Ticker implements Serializable {
     @Transient
     private Set<Strike> players = new HashSet<>();
 
-    @Transient
-    private double beat = 1;
 
     @Transient
     private double granularBeat = 1.0;
@@ -60,8 +61,9 @@ public class Ticker implements Serializable {
     private int songLength = Constants.DEFAULT_MAX_TRACKS;
     private int swing = Constants.DEFAULT_SWING;
     private int ticksPerBeat = Constants.DEFAULT_PPQ;
-    private float tempoInBPM = Float.valueOf(120);
-    
+    private float tempoInBPM = Constants.DEFAULT_BPM;
+    private int loopCount  = Constants.DEFAULT_LOOP_COUNT;
+
     @Transient
     private boolean playing = false;
     
@@ -78,6 +80,19 @@ public class Ticker implements Serializable {
 
     public Strike getPlayer(Long playerId) {
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
+    }
+
+    public void beforeTick() {
+    }
+
+    public void afterTick() {
+        setBeat(getBeat() == getBeatsPerBar() + Constants.DEFAULT_BEAT_OFFSET ? 
+            Constants.DEFAULT_BEAT_OFFSET : getBeat() + (1.0 / getTicksPerBeat()));
+        if (getBeat() - Constants.DEFAULT_BEAT_OFFSET >= getBeatsPerBar()) {
+            setBeat(1.0);
+            onBarChange();
+        }
+        setTick(getTick() + 1);
     }
 
     public void reset() {
@@ -98,8 +113,10 @@ public class Ticker implements Serializable {
         setGranularBeat(1.0);
     }
 
-    public void onBarChange(int bar) {
+    public void onBarChange() {
     
+        setBar(getBar() + 1);
+
         if (!getRemoveList().isEmpty()) {
             getPlayers().removeAll(getRemoveList());
             getRemoveList().clear();
@@ -124,6 +141,24 @@ public class Ticker implements Serializable {
         return 1.0 / beatDivider;
     }
 
+    public void afterEnd() {
+        setPlaying(false);
+        setTick(1L);
+        setBar(1);
+        setBeat(1.0);
+    }
+
+    public void beforeStart() {
+        setPlaying(true);
+        setTick(1L);
+    }
+
+    public void onStop() {
+        setPlaying(false);
+        setTick(1L);
+        setBar(1);
+        setBeat(1.0);
+    }
 
 
 }

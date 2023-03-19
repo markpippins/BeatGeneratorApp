@@ -3,6 +3,8 @@ package com.angrysurfer.midi.service.test;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.stream.IntStream;
+
 import org.junit.After;
 
 import com.angrysurfer.midi.repo.*;
@@ -165,6 +167,16 @@ public class PlayerServiceTests {
     }
 
     @Test
+    public void whenNextTickerRequestedWithPlayers_thenNextTickerCanBeRequested() {
+        IntStream.range(0, 99).forEach(i -> {
+            playerService.addPlayer(RAZ);
+            Long id = playerService.getTicker().getId();
+            Ticker nextTicker = playerService.next(id);
+            assertTrue(nextTicker.getId() > id); 
+        });
+    }
+
+    @Test
     public void whenPreviousTickerRequestedWith_thenTickerWithLowerIdReturned() {
         playerService.addPlayer(RAZ);
         Long id = playerService.getTicker().getId();
@@ -187,11 +199,8 @@ public class PlayerServiceTests {
         playerService.addRule(playerService.addPlayer(RAZ).getId());
 
         // return to starting ticker
-        Ticker ticker = playerService.previous(nextTickerId);
-        playerService.getTicker();
-
-        player = ticker.getPlayer(player.getId());
-        // player.
+        playerService.previous(nextTickerId);
+        player = playerService.getTicker().getPlayer(player.getId());
         assertTrue(player.getRules().stream().anyMatch(r -> r.isEqualTo(rule))); 
     }
 
