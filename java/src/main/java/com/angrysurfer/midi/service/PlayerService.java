@@ -132,15 +132,12 @@ public class PlayerService {
     }
  
     public Strike addPlayer(MidiInstrument midiInstrument) {
-        // Set<Strike> strikes = getStrikeRepository().findByTickerId(getTicker().getId());
-
         String name = midiInstrument.getName().concat(Integer.toString(getTicker().getPlayers().size()));
         Strike strike = new Strike(name, getTicker(), midiInstrument,
                 Strike.KICK + getTicker().getPlayers().size(), Strike.closedHatParams);
         strike.setTicker(getTicker());
         strike = getStrikeRepository().save(strike);
         getTicker().getPlayers().add(strike);
-        // getTicker().setPlayers(strikes);
         return strike;
     }
 
@@ -206,7 +203,6 @@ public class PlayerService {
     public synchronized Ticker next(long currentTickerId) {
         if (currentTickerId == 0 || getTicker().getPlayers().size() > 0) {       
             Long maxTickerId = getTickerRepo().getMaximumTickerId();
-            // int tickerCount = getTickerRepo().findAll().size();
             setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
                 getTickerRepo().getNextTicker(currentTickerId) :
                 getTickerRepo().save(new Ticker()));

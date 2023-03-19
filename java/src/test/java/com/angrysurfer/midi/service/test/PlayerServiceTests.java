@@ -3,6 +3,7 @@ package com.angrysurfer.midi.service.test;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import org.junit.After;
 
 import com.angrysurfer.midi.repo.*;
 import org.junit.Before;
@@ -77,7 +78,7 @@ public class PlayerServiceTests {
             midiInstrumentRepository.save(raz);
         }
     }
-
+    
     @Test
     public void whenTickerRetrieved_thenItHasBeenSaved() {
         assertNotNull(playerService.getTicker());
@@ -163,7 +164,7 @@ public class PlayerServiceTests {
         Rule rule = playerService.addRule(player.getId());
 
         // move to next ticker, add player and rule
-        Ticker nextTicker = playerService.next(startingTickerId);
+        playerService.next(startingTickerId);
         Long nextTickerId = playerService.getTicker().getId();
         playerService.addRule(playerService.addPlayer(RAZ).getId());
 
@@ -172,13 +173,7 @@ public class PlayerServiceTests {
         playerService.getTicker();
 
         player = ticker.getPlayer(player.getId());
-        boolean[] found = { false };
-        player.getRules().forEach(r -> {
-            if (r.isEqualTo(rule))
-                found[0] = true;
-        });
-
-        assertTrue(found[0]); 
+        assertTrue(player.getRules().stream().anyMatch(r -> r.isEqualTo(rule))); 
     }
 
     @Test
