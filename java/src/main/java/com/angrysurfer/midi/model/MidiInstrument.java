@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 import java.io.Serializable;
 import java.util.*;
@@ -141,7 +142,9 @@ public class MidiInstrument implements Serializable {
                 MidiMessage.lookupCommand(message.getCommand()),
                 message.getCommand() != ShortMessage.NOTE_ON && message.getCommand() != ShortMessage.NOTE_OFF ? lookupTarget(message.getData1()) : Integer.toString(message.getData1()),
                 Integer.toString(message.getData2())));
-        getDevice().getReceiver().send(message, new Date().getTime());
+        
+        Receiver reciever = getDevice().getReceiver();
+        reciever.send(message, new Date().getTime());
     }
 
     boolean initialized = false;

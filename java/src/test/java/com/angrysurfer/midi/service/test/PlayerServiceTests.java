@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.stream.IntStream;
 
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiUnavailableException;
+
 import com.angrysurfer.midi.repo.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,6 +71,8 @@ public class PlayerServiceTests {
     static String RAZ = "raz";
     static String ZERO = "zero";
 
+    Long razId;
+
     @Before
     public void setUp() {
         playerRepository.deleteAll();
@@ -76,10 +81,23 @@ public class PlayerServiceTests {
             MidiInstrument raz = new MidiInstrument();
             raz.setName(RAZ);
             raz.setDeviceName("MRCC 880");
-            raz.setChannel(9);
-            midiInstrumentRepository.save(raz);
+            raz.setChannel(15);
+            raz = midiInstrumentRepository.save(raz);
+            razId = raz.getId();
         }
     }
+    
+    @Test
+    public void whenInstrumentRequestedDeviceIsInitialized() {
+        MidiInstrument raz = midiService.getInstrumentByChannel(15);
+        try {
+            raz.noteOn(60, 0);
+        } catch (InvalidMidiDataException | MidiUnavailableException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+}
+
     
     @Test
     public void whenTickerRetrieved_thenItHasBeenSaved() {
@@ -259,6 +277,32 @@ public class PlayerServiceTests {
         Player player3 = playerService.getTicker().getPlayer(player2.getId());
         Rule rule2 = player3.getRule(rule.getId());
         assertTrue(rule.isEqualTo(rule2)); 
+    }
+
+    @Test
+    public void whenNextTickerRequestedForTickerWithPlayers_thenPlayerDoesNotContainRemovedRule() {
+        playerService.newTicker();
+        // add data to current Ticker
+        Long startingTickerId = playerService.getTicker().getId();
+        Player player = playerService.addPlayer(RAZ);
+        playerService.addRule(player.getId());
+
+        // move to next ticker, add player and rule
+        Ticker ticker2 = playerService.next(startingTickerId);
+        Player player2 = playerService.addPlayer(RAZ);
+        Rule rule = playerService.addRule(player2.getId());
+
+        //remove rule
+        playerService.removeRule(player2.getId(), rule.getId());
+        // return to starting ticker
+        assertTrue(startingTickerId == playerService.previous(ticker2.getId()).getId());
+
+        // advance again
+        playerService.next(playerService.getTicker().getId());
+
+        Player player3 = playerService.getTicker().getPlayer(player2.getId());
+        // Rule rule2 = player3.getRule(rule.getId());
+        assertTrue(player3.getRules().isEmpty()); 
     }
 
     @Test

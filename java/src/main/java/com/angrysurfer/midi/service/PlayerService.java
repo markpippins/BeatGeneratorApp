@@ -84,6 +84,9 @@ public class PlayerService {
     }
 
     public void play() {
+        this.ticker.getPlayers().forEach(p -> p.getInstrument()
+            .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
+
         if (Objects.nonNull(getSequenceRunner()) && !getTicker().isPlaying())
             new Thread(getSequenceRunner()).start();
         else {
@@ -304,7 +307,7 @@ public class PlayerService {
             
             case INSTRUMENT -> {
                 MidiInstrument instrument = getMidiInstrumentRepo().findById((long) updateValue).orElseThrow(null);
-                instrument.setDevice(MIDIService.getDevice(instrument.getDeviceName()));
+                instrument.setDevice(MIDIService.findMidiOutDevice(instrument.getDeviceName()));
                 strike.setInstrument(instrument);
                 break;
             }
@@ -360,7 +363,7 @@ public class PlayerService {
     public void playDrumNote(String instrumentName, int channel, int note) {
  
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-        midiInstrument.setDevice(MIDIService.getDevice(midiInstrument.getDeviceName()));
+        midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
 
         log.info(String.join(", ", instrumentName, Integer.toString(channel), Integer.toString(note)));
  

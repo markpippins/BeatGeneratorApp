@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class MIDIService {
@@ -27,14 +26,14 @@ public class MIDIService {
         this.midiInstrumentRepo = midiInstrumentRepo;
     }
 
-    public static MidiDevice getDevice(String deviceName) {
-        try {
-            return MidiSystem.getMidiDevice(Stream.of(MidiSystem.getMidiDeviceInfo()).
-                    filter(info -> info.getName().toLowerCase().contains(deviceName.toLowerCase())).toList().get(0));
-        } catch (MidiUnavailableException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    // public static MidiDevice getDevice(String deviceName) {
+    //     try {
+    //         return MidiSystem.getMidiDevice(Stream.of(MidiSystem.getMidiDeviceInfo()).
+    //                 filter(info -> info.getName().toLowerCase().contains(deviceName.toLowerCase())).toList().get(0));
+    //     } catch (MidiUnavailableException e) {
+    //         throw new RuntimeException(e);
+    //     }
+    // }
 
     public static List<MidiDevice> getMidiDevices() {
         return Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {

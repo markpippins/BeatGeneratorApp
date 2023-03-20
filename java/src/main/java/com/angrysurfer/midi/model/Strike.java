@@ -5,12 +5,10 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
+
 @Getter
 @Setter
 @Entity
@@ -29,7 +27,12 @@ public class Strike extends Player {
 
     static Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
 
+    private int ratchetCount;
+    
+    private int ratchetInterval;
+
     public Strike() {
+    
     }
 
     public Strike(String name, Ticker ticker, MidiInstrument instrument, int note, List<Integer> allowedControlMessages) {
@@ -40,7 +43,6 @@ public class Strike extends Player {
     public Strike(String name, Ticker ticker, MidiInstrument instrument, int note,
             List<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
         super(name, ticker, instrument, allowableControlMessages);
-        setName(name);
         setNote(note);
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
@@ -49,18 +51,5 @@ public class Strike extends Player {
     @Override
     public void onTick(long tick, int bar) {
         drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
-    }
-
-    @Override
-    public Integer getChannel() {
-        if (Objects.nonNull(getInstrument()) || getInstrument().isInitialized()) 
-            return getInstrument().getChannel(); 
-            
-        return 9;
-    }
-
-
-    public void setInstrument(MidiInstrument instrument) {
-        super.setInstrument(instrument);
     }
 }

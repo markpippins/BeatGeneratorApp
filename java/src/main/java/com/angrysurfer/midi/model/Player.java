@@ -48,7 +48,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private List<Integer> allowedControlMessages = new ArrayList<>();
     
     // TODO: replace part with an array of parts
-    
+
     @ElementCollection
     @CollectionTable(name = "playerParts")
     private List<Integer> playerParts = new ArrayList<>();
@@ -139,7 +139,10 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     @JsonIgnore
     public Integer getChannel() {
-        return getInstrument().getChannel();
+        if (Objects.nonNull(getInstrument()) || getInstrument().isInitialized()) 
+            return getInstrument().getChannel(); 
+            
+        return 0;
     }
 
     @JsonIgnore

@@ -3,8 +3,6 @@ package com.angrysurfer.midi.util;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.IntStream;
-
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiSystem;
@@ -18,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.midi.model.Ticker;
+import com.angrysurfer.midi.service.MIDIService;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -62,14 +61,19 @@ public class SequenceRunner implements Runnable {
     }
 
     public void ensureDevicesOpen() {
-        this.ticker.getPlayers().stream().map(p -> p.getInstrument().getDevice()).distinct().forEach(device -> { 
-            if (!device.isOpen())
-                try {
-                    device.open();
-                } catch (MidiUnavailableException e) {
-                    logger.error(e.getMessage(), e);
-                }} 
-            );
+
+        this.ticker.getPlayers().stream().map(p -> p.getInstrument().getDevice()).distinct().forEach(d -> {
+            MIDIService.select(d);
+        });
+
+        // this.ticker.getPlayers().stream().map(p -> p.getInstrument().getDevice()).distinct().forEach(device -> { 
+        //     if (!device.isOpen())
+        //         try {
+        //             device.open();
+        //         } catch (MidiUnavailableException e) {
+        //             logger.error(e.getMessage(), e);
+        //         }} 
+        //     );
     }
 
     public Sequence getMasterSequence() throws InvalidMidiDataException {
