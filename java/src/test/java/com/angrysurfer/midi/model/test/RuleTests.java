@@ -6,8 +6,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.angrysurfer.midi.model.Comparison;
-import com.angrysurfer.midi.model.Operator;
+import com.angrysurfer.midi.util.Comparison;
+import com.angrysurfer.midi.util.Operator;
 import com.angrysurfer.midi.model.Rule;
 
 public class RuleTests {

@@ -78,13 +78,10 @@ export class PlayerTableComponent implements Listener, OnInit {
         break
       }
       case 'mute': {
-        // alert('mute')
-        // this.midiService.removePlayer(player).subscribe(async (data) => {
-        //   this.players = data;
-        //   if (this.players.length == 0)
-        //     this.selectedPlayer = Constants.DUMMY_PLAYER
-        // });
-        // this.players = this.players.filter(p => p.id != player.id)
+        if (this.selectedPlayer != undefined) {
+          this.selectedPlayer.muted = !this.selectedPlayer.muted
+          this.midiService.updatePlayer(this.selectedPlayer?.id, Constants.MUTE, this.selectedPlayer.muted ? 1 : 0)
+        }
         break
       }
     }
@@ -93,6 +90,8 @@ export class PlayerTableComponent implements Listener, OnInit {
   initBtnClicked() {
     this.onBtnClick({
       id: 0,
+      tickerId: 0,
+      instrumentId: 0,
       part: 1,
       maxVelocity: 0,
       minVelocity: 0,
@@ -101,7 +100,9 @@ export class PlayerTableComponent implements Listener, OnInit {
       probability: 0,
       rules: [],
       allowedControlMessages: [],
-      instrumentId: 0
+      parts: [],
+      muted: false,
+      name: ''
     }, 'add')
   }
 
@@ -112,6 +113,26 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   onNoteChange(player: Player, event: { target: any; }) {
     this.midiService.updatePlayer(player.id, Constants.NOTE, event.target.value).subscribe()
+  }
+
+  onPartChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.PART, event.target.value).subscribe()
+  }
+
+  onPresetChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.PROBABILITY, event.target.value).subscribe()
+  }
+
+  onMinVelocityChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.MIN_VELOCITY, event.target.value).subscribe()
+  }
+
+  onMaxVelocityChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.MAX_VELOCITY, event.target.value).subscribe()
+  }
+
+  onProbabilityChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.PROBABILITY, event.target.value).subscribe()
   }
 
   onPass(player: Player, $event: MouseEvent) {

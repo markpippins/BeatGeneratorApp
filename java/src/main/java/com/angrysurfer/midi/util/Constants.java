@@ -1,4 +1,4 @@
-package com.angrysurfer.midi.model;
+package com.angrysurfer.midi.util;
 
 public class Constants {
     public static final double DEFAULT_BEAT_OFFSET = 1.0;

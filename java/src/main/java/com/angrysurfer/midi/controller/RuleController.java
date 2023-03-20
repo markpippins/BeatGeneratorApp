@@ -1,8 +1,9 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.Constants;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.service.PlayerService;
+import com.angrysurfer.midi.util.Constants;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;

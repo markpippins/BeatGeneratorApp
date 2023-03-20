@@ -6,8 +6,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 
-import com.angrysurfer.midi.model.Comparison;
-import com.angrysurfer.midi.model.Operator;
+import com.angrysurfer.midi.util.Comparison;
+import com.angrysurfer.midi.util.Operator;
 import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.Ticker;

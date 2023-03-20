@@ -1,4 +1,4 @@
-package com.angrysurfer.midi.model;
+package com.angrysurfer.midi.util;
 
 public interface TickerUpdateType {
     static int PPQ = 0;

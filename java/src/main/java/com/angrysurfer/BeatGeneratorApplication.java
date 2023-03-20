@@ -13,12 +13,12 @@ import org.springframework.context.annotation.Bean;
 
 import com.angrysurfer.midi.model.ControlCode;
 import com.angrysurfer.midi.model.MidiInstrument;
-import com.angrysurfer.midi.model.MidiInstrumentList;
 import com.angrysurfer.midi.model.Pad;
 import com.angrysurfer.midi.model.Strike;
 import com.angrysurfer.midi.repo.ControlCodeRepository;
 import com.angrysurfer.midi.repo.MidiInstrumentRepository;
 import com.angrysurfer.midi.repo.PadRepository;
+import com.angrysurfer.midi.util.MidiInstrumentList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootApplication

@@ -1,8 +1,9 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.Constants;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.service.MIDIService;
+import com.angrysurfer.midi.util.Constants;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 

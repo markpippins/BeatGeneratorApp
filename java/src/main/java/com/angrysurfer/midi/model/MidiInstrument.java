@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.model;
 
+import com.angrysurfer.midi.util.MidiMessage;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;

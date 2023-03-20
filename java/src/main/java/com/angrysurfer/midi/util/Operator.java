@@ -1,4 +1,4 @@
-package com.angrysurfer.midi.model;
+package com.angrysurfer.midi.util;
 
 public interface Operator {
     static int TICK = 0;

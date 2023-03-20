@@ -29,9 +29,8 @@ public class MIDIService {
 
     public static MidiDevice getDevice(String deviceName) {
         try {
-            MidiDevice result = MidiSystem.getMidiDevice(Stream.of(MidiSystem.getMidiDeviceInfo()).
+            return MidiSystem.getMidiDevice(Stream.of(MidiSystem.getMidiDeviceInfo()).
                     filter(info -> info.getName().toLowerCase().contains(deviceName.toLowerCase())).toList().get(0));
-            return result;
         } catch (MidiUnavailableException e) {
             throw new RuntimeException(e);
         }

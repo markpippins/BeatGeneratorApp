@@ -1,4 +1,4 @@
-package com.angrysurfer.midi.model;
+package com.angrysurfer.midi.util;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -6,6 +6,10 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.angrysurfer.midi.model.Player;
+import com.angrysurfer.midi.model.Strike;
+import com.angrysurfer.midi.model.Ticker;
 
 @Getter
 @Setter

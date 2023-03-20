@@ -5,11 +5,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 
 import java.io.Serializable;
 import java.util.List;
@@ -18,7 +14,7 @@ import java.util.Random;
 @Getter
 @Setter
 @Entity
-public class Strike extends Player implements Serializable {
+public class Strike extends Player {
     static final Random rand = new Random();
 
     public static int KICK = 36;
@@ -32,14 +28,6 @@ public class Strike extends Player implements Serializable {
     public static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
 
     static Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
-
-    // @Id
-    // @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    // @Column(name = "id", nullable = false)
-    // private Long id;
-
-//    List<Ratchet> ratchets = new ArrayList<>();
-
 
     public Strike() {
     }
@@ -61,8 +49,6 @@ public class Strike extends Player implements Serializable {
     @Override
     public void onTick(long tick, int bar) {
         drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
-        setLastPlayedBar(bar);
-        setLastPlayedBeat(getTicker().getBeat());
     }
 
     @Override

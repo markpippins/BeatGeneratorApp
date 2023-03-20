@@ -1,9 +1,10 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.Constants;
 import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Strike;
 import com.angrysurfer.midi.service.PlayerService;
+import com.angrysurfer.midi.util.Constants;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;

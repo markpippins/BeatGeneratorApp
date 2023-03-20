@@ -1,5 +1,7 @@
 package com.angrysurfer.midi.model;
 
+import com.angrysurfer.midi.util.Comparison;
+import com.angrysurfer.midi.util.Operator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
@@ -15,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Getter
 @Setter
-//@Entity
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public abstract class Player implements Callable<Boolean>, Serializable {
@@ -32,11 +33,12 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private int position = 0;
     private Long lastTick = 0L;
     private int preset;
+    private int probability;
     private int lastPlayedTick;
     private int lastPlayedBar;
     private Double lastPlayedBeat;
     private String name;
-    private int part;
+    private int part = 1;
     
     @Transient   
     private Set<Rule> rules = new HashSet<>();
@@ -44,6 +46,12 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")
     private List<Integer> allowedControlMessages = new ArrayList<>();
+    
+    // TODO: replace part with an array of parts
+    
+    @ElementCollection
+    @CollectionTable(name = "playerParts")
+    private List<Integer> playerParts = new ArrayList<>();
     
     @JsonIgnore
     @ManyToOne
@@ -89,23 +97,22 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     @Override
     public Boolean call() {
-        setEven(getTicker().getTick() % 2 == 0);
         if (getLastTick() == getTicker().getTick())
             return Boolean.FALSE;
+        
         long tick = getTicker().getTick();
         int bar = getTicker().getBar();
         setLastTick(tick);
+        setEven(tick % 2 == 0);
 
-        if (shouldPlay() &&
-                !isMuted() &&
-                getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers()
-                        .stream().filter(e -> e.getLastPlayedTick() == tick)
-                        .toList().size() > 0))
-            onTick(tick, bar);
+        if (shouldPlay() && !isMuted() && 
+            getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers().stream().filter(e -> e.getLastPlayedTick() == tick)
+                .toList().size() > 0)) {
+                    onTick(tick, bar);
+                    setLastPlayedBar(bar);
+                    setLastPlayedBeat(getTicker().getBeat());
+                }
 
-        // setBeat(getBeat() + getTicker().getBeatDivision());
-        // if (getBeat() >= getTicker().getBeatsPerBar() +  Constants.DEFAULT_BEAT_OFFSET)
-        //     setBeat(Constants.DEFAULT_BEAT_OFFSET);
         return Boolean.TRUE;
     }
 

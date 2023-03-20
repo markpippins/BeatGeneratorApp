@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.midi.util.Constants;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
@@ -77,7 +78,7 @@ public class Ticker implements Serializable {
 
     @Transient
     @JsonIgnore
-    private MuteGroupList muteGroups = new MuteGroupList();
+    private Set<MuteGroup> muteGroups = new HashSet<>();
 
     public Ticker() {
         setSongLength(Integer.MAX_VALUE);

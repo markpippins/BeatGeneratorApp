@@ -5,8 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.stream.IntStream;
 
-import org.junit.After;
-
 import com.angrysurfer.midi.repo.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,15 +16,15 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.angrysurfer.BeatGeneratorApplication;
-import com.angrysurfer.midi.model.Comparison;
 import com.angrysurfer.midi.model.MidiInstrument;
-import com.angrysurfer.midi.model.Operator;
 import com.angrysurfer.midi.model.Player;
-import com.angrysurfer.midi.model.PlayerUpdateType;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.service.MIDIService;
 import com.angrysurfer.midi.service.PlayerService;
+import com.angrysurfer.midi.util.Comparison;
+import com.angrysurfer.midi.util.PlayerUpdateType;
+import com.angrysurfer.midi.util.TickerUpdateType;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -95,7 +93,7 @@ public class PlayerServiceTests {
     }
     
     @Test
-    public void whenMultipleRulesAdded_thenTickerCopyOfPlayerShouldContainThem() {
+    public void whenMultipleRulesAdded_thenPlayerShouldContainThem() {
         Player player = playerService.addPlayer(RAZ);
         Rule r1 = playerService.addRule(player.getId());
         r1.setComparisonId(Comparison.EQUALS);
@@ -111,42 +109,77 @@ public class PlayerServiceTests {
     }
 
     @Test
-    public void whenRuleAdded_thenTickerCopyOfPlayerShouldContainIt() {
+    public void whenRuleAddTried_thenEnsureThatExistingRulesHaveBeenInitialized() {
         Player player = playerService.addPlayer(RAZ);
         playerService.addRule(player.getId());
-        Player tickerPlayer = playerService.getTicker().getPlayer(player.getId());
-        assertEquals(1, tickerPlayer.getRules().size());
+        playerService.addRule(player.getId());
+        playerService.addRule(player.getId());
+        playerService.addRule(player.getId());
+        playerService.addRule(player.getId());
+
+        assertEquals(2, player.getRules().size());
     }
 
     @Test
-    public void whenRuleRemoved_thenTickerCopyOfPlayerShouldNotContainIt() {
+    public void whenRuleAdded_thenPlayerShouldContainIt() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.addRule(player.getId());
+        assertEquals(1, player.getRules().size());
+    }
+
+    @Test
+    public void whenRuleRemoved_thenPlayerShouldNotContainIt() {
         Player player = playerService.addPlayer(RAZ);
         Rule rule = playerService.addRule(player.getId());
-        Player tickerPlayer = playerService.getTicker().getPlayer(player.getId());
-        assertEquals(1, tickerPlayer.getRules().size());
+        assertEquals(1, player.getRules().size());
 
-        playerService.removeRule(tickerPlayer.getId(), rule.getId());
-        assertEquals(0, tickerPlayer.getRules().size());
+        playerService.removeRule(player.getId(), rule.getId());
+        assertEquals(0, player.getRules().size());
     }
 
     @Test
-    public void whenRuleUpdated_thenPlayerCopyOfRuleShouldReflectIt() {
+    public void whenRuleValueUpdated_thenRuleShouldReflectIt() {
         Player player = playerService.addPlayer(RAZ);
         playerService.addRule(player.getId());
-        Player tickerPlayer = playerService.getTicker().getPlayer(player.getId());
 
-        assertTrue(tickerPlayer.getRules().size() > 0);
-        Rule rule = tickerPlayer.getRules().stream().toList().get(0);
-        int operatorId = rule.getOperatorId() + 1;
-        int comparisonId = rule.getComparisonId() + 1;
+        assertTrue(player.getRules().size() > 0);
+        Rule rule = player.getRules().stream().toList().get(0);
         double value = rule.getValue() + 1;
 
-        playerService.updateRule(tickerPlayer.getId(), rule.getId(), operatorId,
-                comparisonId, value);
+        playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
+                rule.getComparisonId(), value);
 
-        assertEquals(tickerPlayer.getRules().stream().toList().get(0).getOperatorId(), operatorId);
-        assertEquals(tickerPlayer.getRules().stream().toList().get(0).getComparisonId(), comparisonId);
-        assertEquals(tickerPlayer.getRules().stream().toList().get(0).getValue(), value, 0.0); 
+        assertEquals(player.getRules().stream().toList().get(0).getValue(), value, 0.0); 
+    }
+
+    @Test
+    public void whenRuleOperatorUpdated_thenRuleShouldReflectIt() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.addRule(player.getId());
+
+        assertTrue(player.getRules().size() > 0);
+        Rule rule = player.getRules().stream().toList().get(0);
+        int operatorId = rule.getOperatorId() + 1;
+
+        playerService.updateRule(player.getId(), rule.getId(), operatorId,
+                rule.getComparisonId(), rule.getValue());
+
+        assertEquals(player.getRules().stream().toList().get(0).getOperatorId(), operatorId);
+    }
+
+    @Test
+    public void whenRuleComparisonUpdated_thenRuleShouldReflectIt() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.addRule(player.getId());
+
+        assertTrue(player.getRules().size() > 0);
+        Rule rule = player.getRules().stream().toList().get(0);
+        int comparisonId = rule.getComparisonId() + 1;
+
+        playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
+                comparisonId, rule.getValue());
+
+        assertEquals(player.getRules().stream().toList().get(0).getComparisonId(), comparisonId);
     }
 
     @Test
@@ -205,7 +238,7 @@ public class PlayerServiceTests {
     }
 
     @Test
-    public void whenNextTickerRequestedForTickWithPlayers_thenPlayersContainAddedRule() {
+    public void whenNextTickerRequestedForTickerWithPlayers_thenPlayersContainAddedRule() {
         playerService.newTicker();
         // add data to current Ticker
         Long startingTickerId = playerService.getTicker().getId();
@@ -229,21 +262,68 @@ public class PlayerServiceTests {
     }
 
     @Test
-    public void whenPlayerMuted_thenTickerReturnsMutedPlayer() {
+    public void whenPlayerMuted_thenMutedPlayer() {
         Player player = playerService.addPlayer(RAZ);
         boolean muted = player.isMuted();
         playerService.mutePlayer(player.getId());
-        Player tickerPlayer = playerService.getTicker().getPlayer(player.getId());
-        assertTrue(tickerPlayer.isMuted() != muted); 
+        assertTrue(player.isMuted() != muted); 
     }
 
     @Test
-    public void whenPlayerUpdated_thenTickerReturnsPlayerWithUpdatedValues() {
+    public void whenPlayerPartUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.PART, 2);
+        assertTrue(player.getPart() == 2); 
+    }
+
+    @Test
+    public void whenPlayerMinVelUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.MIN_VELOCITY, 50);
+        assertTrue(player.getMinVelocity() == 50); 
+    }
+
+    @Test
+    public void whenPlayerMaxVelUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.MAX_VELOCITY, 50);
+        assertTrue(player.getMaxVelocity() == 50); 
+    }
+
+    @Test
+    public void whenPlayerPresetUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.PRESET, 50);
+        assertTrue(player.getPreset() == 50); 
+    }
+
+    @Test
+    public void whenPlayerNoteUpdated_thenPlayerUpdatedWithNewValues() {
         Player player = playerService.addPlayer(RAZ);
         playerService.updatePlayer(player.getId(), PlayerUpdateType.NOTE, 50);
+        assertTrue(player.getNote() == 50); 
+    }
 
-        Player tickerPlayer = playerService.getTicker().getPlayer(player.getId());
-        assertTrue(tickerPlayer.getNote() == 50); 
+    @Test
+    public void whenPlayerMuted_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.MUTE, 1);
+        assertTrue(player.isMuted()); 
+    }
+    
+    @Test
+    public void whenPlayerUnmuted_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.MUTE, 0);
+        assertFalse(player.isMuted()); 
+    }
+    
+
+    @Test
+    public void whenPlayerProbabilityUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.PROBABILITY, 50);
+        assertTrue(player.getProbability() == 50); 
     }
 
     @Test
@@ -278,14 +358,14 @@ public class PlayerServiceTests {
     }
 
     @Test
-    public void whenNewTickerCalled_thenGetTickerReturnsTickerWithNewId() {
+    public void whenNewTickerCalled_thenGetTickerWithNewId() {
         Long id = playerService.getTicker().getId();
         playerService.newTicker();
         assertTrue(playerService.getTicker().getId() > id); 
     }
 
     @Test
-    public void whenLoadTickerCalled_thenGetTickerReturnsRequestedTicker() {
+    public void whenLoadTickerCalled_thenGetRequestedTicker() {
         Long id = playerService.getTicker().getId();
         playerService.newTicker();
         assertTrue(playerService.getTicker().getId() > id);
@@ -293,4 +373,32 @@ public class PlayerServiceTests {
         playerService.loadTicker(id);
         assertTrue(playerService.getTicker().getId() == id);
     }
+
+    @Test
+    public void whenTickerBeatsPerBarUpdated_thenChangeReflectedInTicker() {
+        playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.BEATS_PER_BAR, 16);
+        assertEquals(16, playerService.getTicker().getBeatsPerBar()); 
+    }
+
+    @Test
+    public void whenTickerBPMUpdated_thenChangeReflectedInTicker() {
+        playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.BPM, 16);
+        assertTrue(16 == playerService.getTicker().getTempoInBPM()); 
+    }
+    @Test
+    public void whenTickerMaxTracksUpdated_thenChangeReflectedInTicker() {
+        playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.MAX_TRACKS, 16);
+        assertEquals(16, playerService.getTicker().getMaxTracks()); 
+    }
+    @Test
+    public void whenTickePartLengthUpdated_thenChangeReflectedInTicker() {
+        playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.PART_LENGTH, 25);
+        assertEquals(25, playerService.getTicker().getPartLength()); 
+    }
+    @Test
+    public void whenTickerPPQUpdated_thenChangeReflectedInTicker() {
+        playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.PPQ, 16);
+        assertEquals(16, playerService.getTicker().getTicksPerBeat()); 
+    }
+
 }

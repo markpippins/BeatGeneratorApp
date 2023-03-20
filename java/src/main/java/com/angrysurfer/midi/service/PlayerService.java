@@ -2,6 +2,10 @@ package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.*;
 import com.angrysurfer.midi.repo.*;
+import com.angrysurfer.midi.util.BeatGeneratorConfig;
+import com.angrysurfer.midi.util.Comparison;
+import com.angrysurfer.midi.util.MidiInstrumentList;
+import com.angrysurfer.midi.util.Operator;
 import com.angrysurfer.midi.util.SequenceRunner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -13,8 +17,8 @@ import org.springframework.stereotype.Service;
 
 import javax.sound.midi.*;
 
-import static com.angrysurfer.midi.model.PlayerUpdateType.*;
-import static com.angrysurfer.midi.model.TickerUpdateType.*;
+import static com.angrysurfer.midi.util.PlayerUpdateType.*;
+import static com.angrysurfer.midi.util.TickerUpdateType.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -146,11 +150,18 @@ public class PlayerService {
     public Rule addRule(Long playerId) {
         Rule rule = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0);
         Strike player = getTicker().getPlayer(playerId);
-        rule.setPlayer(player);
-        getRuleRepository().save(rule);
-        player.getRules().add(rule);
-        getStrikeRepository().save(player);        
-        return rule;
+        List<Rule> matches = player.getRules().stream().filter(r -> r.isEqualTo(rule)).toList();
+        
+        if (matches.size() < 2) {
+            rule.setPlayer(player);
+            getRuleRepository().save(rule);
+            player.getRules().add(rule);
+            getStrikeRepository().save(player);
+    
+            return rule;
+        }
+
+        return matches.get(0);
     }
 
     public void removeRule(Long playerId, Long ruleId) {
@@ -269,16 +280,16 @@ public class PlayerService {
 
             case PART_LENGTH: tickerToUpdate.setPartLength(updateValue);
                 break;
+
+            case MAX_TRACKS: tickerToUpdate.setMaxTracks(updateValue);
+            break;
         }
 
         tickerToUpdate = getTickerRepo().save(tickerToUpdate);
 
-        if (getTicker().getId().equals(tickerToUpdate.getId())) {
-            // tickerToUpdate.setSequencer(sequencer);
+        if (getTicker().getId().equals(tickerToUpdate.getId()))
             setTicker(tickerToUpdate);
-        }
             
-
         return tickerToUpdate;
     }
 
@@ -290,19 +301,46 @@ public class PlayerService {
                 strike.setNote(updateValue);
                 break;
             }
+            
             case INSTRUMENT -> {
-                Optional<MidiInstrument> instrument = getMidiInstrumentRepo().findById((long) updateValue);
-                instrument.ifPresent(inst -> {
-                    inst.setDevice(MIDIService.getDevice(inst.getDeviceName()));
-                        strike.setInstrument(inst);
-                        getTicker().getPlayers().stream().filter(p -> Objects.nonNull(p.getId()) && p.getId().equals(playerId)).findFirst().ifPresent(p -> p.setInstrument(inst));
-                });
+                MidiInstrument instrument = getMidiInstrumentRepo().findById((long) updateValue).orElseThrow(null);
+                instrument.setDevice(MIDIService.getDevice(instrument.getDeviceName()));
+                strike.setInstrument(instrument);
+                break;
+            }
 
+            case PRESET -> {                
+                strike.setPreset(updateValue);
+                break;
+            }
+
+            case PROBABILITY -> {                
+                strike.setProbability(updateValue);
+                break;
+            }
+
+            case MIN_VELOCITY -> {                
+                strike.setMinVelocity(updateValue);
+                break;
+            }
+
+            case MAX_VELOCITY -> {                
+                strike.setMaxVelocity(updateValue);
+                break;
+            }
+
+            case PART -> {                
+                strike.setPart(updateValue);
+                break;
+            }
+
+            case MUTE -> {                
+                strike.setMuted(updateValue > 0 ? true : false);
+                break;
             }
         }
 
-        getStrikeRepository().save(strike);
-        return strike;
+        return getStrikeRepository().save(strike);
     }
 
     public Ticker loadTicker(long tickerId) {

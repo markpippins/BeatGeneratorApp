@@ -489,7 +489,7 @@ input:hover, select:hover {
 }
 
 .selected-table-row {
-  background-color: coral;
+  background-color: blue;
   color: white;
 }
 

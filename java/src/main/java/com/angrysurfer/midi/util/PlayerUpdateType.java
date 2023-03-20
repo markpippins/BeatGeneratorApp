@@ -1,4 +1,4 @@
-package com.angrysurfer.midi.model;
+package com.angrysurfer.midi.util;
 
 public interface PlayerUpdateType {
     static int INSTRUMENT = 0;
@@ -7,4 +7,7 @@ public interface PlayerUpdateType {
     static int MIN_VELOCITY = 3;
     static int MAX_VELOCITY = 4;
     static int MUTE = 5;
+    static int PART  = 6;
+    static int PRESET  = 7;
+    
 }

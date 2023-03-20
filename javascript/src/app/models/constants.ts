@@ -20,12 +20,14 @@ export class Constants {
   static MIN_VELOCITY = 3;
   static MAX_VELOCITY = 4;
   static MUTE = 5;
+  static PART = 6;
+  static LEVEL = 7;
 
   static PPQ = 0
   static BPM = 1
   static BEATS_PER_BAR = 2
   static PART_LENGTH = 3
-  static MAX_TRACKS = 4
+  static MAX_TRACKS = 64
 
   static ERROR = 0
   static CONNECTED = 1

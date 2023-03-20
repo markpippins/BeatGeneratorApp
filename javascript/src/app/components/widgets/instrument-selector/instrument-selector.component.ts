@@ -41,7 +41,6 @@ export class InstrumentSelectorComponent implements OnInit {
   }
 
   onSelectionChange(data: any) {
-    // alert("selected --->"+this.instruments[this.selectedInstrumentId].id+' '+this.instruments[this.selectedInstrumentId].name);
     this.instrumentSelectEvent.emit(this.instruments[this.selectionIndex])
     this.uiService.notifyAll(Constants.STATUS, this.instruments[this.selectionIndex].name + ' selected.')
   }
