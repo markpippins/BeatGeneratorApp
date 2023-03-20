@@ -3,6 +3,8 @@ package com.angrysurfer.midi.util;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
+
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiSystem;
@@ -79,7 +81,14 @@ public class SequenceRunner implements Runnable {
     public Sequence getMasterSequence() throws InvalidMidiDataException {
         Sequence sequence = new Sequence(Sequence.PPQ, this.ticker.getTicksPerBeat());        
         Track track = sequence.createTrack();
-        track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 0, 0), 1000));
+        IntStream.range(0, 1000).forEach(i -> {
+            try {
+                track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 0, 0), i * 1000));
+            } catch (InvalidMidiDataException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        });
         return sequence;
     }
 

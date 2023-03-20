@@ -2,6 +2,9 @@ package com.angrysurfer.midi.model.test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
@@ -14,38 +17,93 @@ import com.angrysurfer.midi.model.Ticker;
 
 public class PlayerTests {
 
-    @Test
-     public void whenRuleExistsForFirstBeat_thenOnTickCalledFirstBeat() {
+  ExecutorService executor = Executors.newFixedThreadPool(16);
 
-      AtomicBoolean play = new AtomicBoolean(false);
+  @Test
+  public void whenRuleExistsForFirstBeat_thenOnTickCalledFirstBeat() {
 
-      Player p = new Player() {
+    AtomicBoolean play = new AtomicBoolean(false);
+    Player p = new Player() {
 
-        Ticker ticker = new Ticker();
+      Ticker ticker = new Ticker();
 
-        @Override
-        public Ticker getTicker() {
-          return ticker;
-        }
+      @Override
+      public Ticker getTicker() {
+        return ticker;
+      }
 
-        @Override
-        public void setTicker(Ticker ticker) {
-          this.ticker = ticker;
-        }
+      @Override
+      public void setTicker(Ticker ticker) {
+        this.ticker = ticker;
+      }
 
-        @Override
-        public void onTick(long tick, int bar) {
-          play.set(true);
-        }
-   
-      };
+      @Override
+      public void onTick(long tick, int bar) {
+        play.set(true);
+      }
 
-      Rule r = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0);
-      p.getRules().add(r);
-      p.call();
-      assertTrue(play.get());
-      play.set(false);
-      p.call();
-      assertTrue(!play.get());
+    };
+
+    Rule r = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0);
+    p.getRules().add(r);
+    p.call();
+    assertTrue(play.get());
+    play.set(false);
+    p.call();
+    assertTrue(!play.get());
+  }
+
+  @Test
+  public void whenRuleExistsForFirstBeat_thenOnTickForAllPlayersCalledFirstBeat() {
+
+    AtomicBoolean play1 = new AtomicBoolean(false);
+    AtomicBoolean play2 = new AtomicBoolean(false);
+    AtomicBoolean play3 = new AtomicBoolean(false);
+
+    Ticker ticker = new Ticker();
+    ticker.setBeat(1);
+    ticker.setTick(1L);
+    ticker.setBar(1);
+    Player p1 = new Player() {
+      @Override
+      public void onTick(long tick, int bar) {
+        play1.set(true);
+      }
+
+    };
+    p1.setTicker(ticker);
+
+    Player p2 = new Player() {
+      @Override
+      public void onTick(long tick, int bar) {
+        play2.set(true);
+      }
+
+    };
+    p2.setTicker(ticker);
+
+    Player p3 = new Player() {
+      @Override
+      public void onTick(long tick, int bar) {
+        play3.set(true);
+      }
+
+    };
+    p3.setTicker(ticker);
+
+    p1.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0));
+    p2.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0));
+    p3.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0));
+    
+    try {
+      executor.invokeAll(List.of(p1, p2, p3));
+    } catch (InterruptedException e) {
+      e.printStackTrace();
     }
+
+    assertTrue(play1.get());
+    assertTrue(play2.get());
+    assertTrue(play3.get());
+
+  }
 }

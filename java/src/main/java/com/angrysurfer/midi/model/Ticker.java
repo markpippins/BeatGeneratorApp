@@ -93,7 +93,7 @@ public class Ticker implements Serializable {
 
     public void afterTick() {
         setBeat(getBeat() == getBeatsPerBar() + Constants.DEFAULT_BEAT_OFFSET ? 
-            Constants.DEFAULT_BEAT_OFFSET : getBeat() + (1.0 / getTicksPerBeat()));
+            Constants.DEFAULT_BEAT_OFFSET : getBeat() + .125 / 2);
         if (getBeat() - Constants.DEFAULT_BEAT_OFFSET >= getBeatsPerBar()) {
             setBeat(1.0);
             onBarChange();

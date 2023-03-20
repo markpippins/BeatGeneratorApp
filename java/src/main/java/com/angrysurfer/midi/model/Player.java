@@ -10,6 +10,10 @@ import lombok.Setter;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -21,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public abstract class Player implements Callable<Boolean>, Serializable {
     static final Random rand = new Random();
+    static Logger logger = LoggerFactory.getLogger(Player.class.getCanonicalName());
 
     @Transient
     private List<Pad> pads = new ArrayList<>();
@@ -105,14 +110,14 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         setLastTick(tick);
         setEven(tick % 2 == 0);
 
-        if (shouldPlay() && !isMuted() && 
-            getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers().stream().filter(e -> e.getLastPlayedTick() == tick)
-                .toList().size() > 0)) {
+        if (shouldPlay() && !isMuted()) {
+            // getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers().stream().filter(e -> e.getLastPlayedTick() == tick)
+                // .toList().size() > 0)) {
                     onTick(tick, bar);
                     setLastPlayedBar(bar);
                     setLastPlayedBeat(getTicker().getBeat());
                 }
-
+        logger.info(String.format("%s not playing tick %s, beat %s, bar %s", getName(), tick, getTicker().getBeat(), getTicker().getBar()));
         return Boolean.TRUE;
     }
 

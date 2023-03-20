@@ -77,27 +77,13 @@ export class DashboardComponent implements OnInit, Listener {
     this.consoleOutput.pop()
     this.consoleOutput.push(action)
 
-    switch (action) {
-      case 'forward': {
-        if (this.ticker.id > 0 && this.ticker.playing) {
-          this.consoleOutput.pop()
-          this.consoleOutput.push('ticker is currently playing')
-        } else this.midiService.next(this.ticker == undefined ? 0 : this.ticker.id).subscribe(async (data) => {
-          this.clear();
-          this.ticker = data
-          this.midiService.playerInfo().subscribe(data => {
-            this.players = data
-            if (this.players.length > 0)
-              this.selectedPlayer = this.players[0]
-          })
-        })
-        this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
-        break
-      }
-
-      case 'previous': {
-        if (this.ticker != undefined && this.ticker.id > 0) {
-          this.midiService.previous(this.ticker.id).subscribe(async (data) => {
+    if (this.ticker != undefined)
+      switch (action) {
+        case 'forward': {
+          if (this.ticker.id > 0 && this.ticker.playing) {
+            this.consoleOutput.pop()
+            this.consoleOutput.push('ticker is currently playing')
+          } else this.midiService.next(this.ticker.id).subscribe(async (data) => {
             this.clear();
             this.ticker = data
             this.midiService.playerInfo().subscribe(data => {
@@ -106,77 +92,92 @@ export class DashboardComponent implements OnInit, Listener {
                 this.selectedPlayer = this.players[0]
             })
           })
+          this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
+          break
         }
-        this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
-        break
-      }
 
-      case 'play': {
-        this.midiService.start().subscribe()
-        this.updateDisplay()
-        // let element = document.getElementById('transport-btn-play')
-        // if (element != null) { // @ts-ignore
-        //   this.toggleClass(element, 'active')
-        // }
+        case 'previous': {
+          if (this.ticker != undefined && this.ticker.id > 0) {
+            this.midiService.previous(this.ticker.id).subscribe(async (data) => {
+              this.clear();
+              this.ticker = data
+              this.midiService.playerInfo().subscribe(data => {
+                this.players = data
+                if (this.players.length > 0)
+                  this.selectedPlayer = this.players[0]
+              })
+            })
+          }
+          this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
+          break
+        }
 
-        break
-      }
+        case 'play': {
+          this.midiService.start().subscribe()
+          this.updateDisplay()
+          // let element = document.getElementById('transport-btn-play')
+          // if (element != null) { // @ts-ignore
+          //   this.toggleClass(element, 'active')
+          // }
 
-      case 'stop': {
-        this.midiService.stop().subscribe(data => {
-          this.ticker = data
-        })
-        // this.players = []
-        // let element = document.getElementById('transport-btn-play')
-        // if (element != null) { // @ts-ignore
-        //   this.toggleClass(element, 'active')
-        // }
-        break
-      }
+          break
+        }
 
-      case 'pause': {
-        this.midiService.pause().subscribe()
-        // this.isPlaying = false
-        // this.players = []
-        // this.playerConditions = []
-        break
-      }
+        case 'stop': {
+          this.midiService.stop().subscribe(data => {
+            this.ticker = data
+          })
+          // this.players = []
+          // let element = document.getElementById('transport-btn-play')
+          // if (element != null) { // @ts-ignore
+          //   this.toggleClass(element, 'active')
+          // }
+          break
+        }
 
-      case 'record': {
-        this.midiService.record().subscribe()
-        // this.players = []
-        // this.playerConditions = []
-        break
-      }
+        case 'pause': {
+          this.midiService.pause().subscribe()
+          // this.isPlaying = false
+          // this.players = []
+          // this.playerConditions = []
+          break
+        }
 
-      case 'add': {
-        this.midiService.addPlayer().subscribe(async (data) => {
-          this.players.push(data)
-          this.selectedPlayer = data
-        })
-        break
-      }
+        case 'record': {
+          this.midiService.record().subscribe()
+          // this.players = []
+          // this.playerConditions = []
+          break
+        }
 
-      case 'refresh': {
-        // this.midiService.refreshClicked().subscribe(async (data) => {
-        // this.players.push(data)
-        // this.selectedPlayer = data
-        // })
-        this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
-        break
-      }
+        case 'add': {
+          this.midiService.addPlayer().subscribe(async (data) => {
+            this.players.push(data)
+            this.selectedPlayer = data
+          })
+          break
+        }
 
-      case 'save': {
-        this.midiService.saveConfig().subscribe();
-        break
-      }
+        case 'refresh': {
+          // this.midiService.refreshClicked().subscribe(async (data) => {
+          // this.players.push(data)
+          // this.selectedPlayer = data
+          // })
+          this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
+          break
+        }
 
-      case 'clear': {
-        this.midiService.clearPlayers().subscribe()
-        this.clear()
-        break
+        case 'save': {
+          this.midiService.saveConfig().subscribe();
+          break
+        }
+
+        case 'clear': {
+          this.midiService.clearPlayers().subscribe()
+          this.clear()
+          break
+        }
       }
-    }
 
     this.updateDisplay()
   }

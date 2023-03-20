@@ -73,29 +73,20 @@ public class TickerTests {
     public void whenTime_thenPartCyclesBackToOne() {
 
       AtomicInteger bar = new AtomicInteger(1);
-      Ticker ticker = new Ticker() {
-        @Override
-        public void onBarChange() {
-            super.onBarChange();
-            bar.incrementAndGet();
-        }
-      };
+      Ticker ticker = new Ticker();
 
       ticker.setBeatsPerBar(4);
       ticker.setTicksPerBeat(4);
       ticker.setPartLength(4);
 
       int expectedPart = 1;
-
       ticker.beforeStart();
-      
-      // 
+
       IntStream.range(0, 16 * ticker.getBeatsPerBar() * ticker.getTicksPerBeat()).forEach(i -> {
         ticker.beforeTick();
         ticker.afterTick();
       });
 
-    //   ticker.afterEnd();
       assertEquals(expectedPart, ticker.getPart());
     }
 
