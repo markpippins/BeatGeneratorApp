@@ -81,11 +81,10 @@ public class SequenceRunner implements Runnable {
     public Sequence getMasterSequence() throws InvalidMidiDataException {
         Sequence sequence = new Sequence(Sequence.PPQ, this.ticker.getTicksPerBeat());        
         Track track = sequence.createTrack();
-        IntStream.range(0, 1000).forEach(i -> {
+        IntStream.range(0, 10).forEach(i -> {
             try {
                 track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 0, 0), i * 1000));
             } catch (InvalidMidiDataException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         });
@@ -115,7 +114,7 @@ public class SequenceRunner implements Runnable {
         try {
             beforeStart();
             sequencer.start();
-            while (sequencer.isRunning()) {
+            while (sequencer.isRunning() && ticker.isPlaying()) {
                 if (sequencer.getTickPosition() > this.ticker.getTick()) {
                     this.ticker.beforeTick();
                     this.executor.invokeAll(this.ticker.getPlayers());
@@ -130,15 +129,18 @@ public class SequenceRunner implements Runnable {
         }
     }
 
-    public void stop() {
+    public Ticker stop() {
         if (Objects.nonNull(sequencer) && sequencer.isRunning())
             sequencer.stop();
 
+        this.ticker.setPlaying(false);
         this.ticker.setPaused(false);
         this.ticker.setBeat(1);
         this.ticker.setTick(1L);
         this.ticker.setBar(1);
         this.ticker.setDone(false);
+
+        return this.ticker;
     }
 
     public void pause() {

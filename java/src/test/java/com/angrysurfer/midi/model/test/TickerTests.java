@@ -35,7 +35,7 @@ public class TickerTests {
         ticker.afterTick();
       });
 
-      ticker.afterEnd();
+      // ticker.afterEnd();
       assertEquals(expectedBar, bar.get());
     }
 

@@ -27,7 +27,7 @@ public class PlayerController {
     @GetMapping(path = Constants.ALL_PLAYERS)
     public @ResponseBody Set<Strike> getPlayers() {
         logger.info(Constants.ALL_PLAYERS);
-        return service.getPlayers();
+        return (service.getPlayers());
     }
 
     @GetMapping(Constants.CLEAR_PLAYERS)
@@ -49,15 +49,15 @@ public class PlayerController {
     }
 
     @GetMapping(Constants.MUTE_PLAYER)
-    public Player mutePlayer(@RequestParam Long playerId) {
+    public ResponseEntity<Player> mutePlayer(@RequestParam Long playerId) {
         logger.info(Constants.MUTE_PLAYER);
-        return service.mutePlayer(playerId);
+        return new ResponseEntity<Player>(service.mutePlayer(playerId), HttpStatus.OK);
     }
 
     @GetMapping(Constants.UPDATE_PLAYER)
-    public Player updatePlayer(@RequestParam Long playerId, @RequestParam int updateType, @RequestParam int updateValue) {
+    public ResponseEntity<Player> updatePlayer(@RequestParam Long playerId, @RequestParam int updateType, @RequestParam int updateValue) {
         logger.info(Constants.UPDATE_PLAYER);
-        return service.updatePlayer(playerId, updateType, updateValue);
+        return new ResponseEntity<Player>(service.updatePlayer(playerId, updateType, updateValue), HttpStatus.OK);
     }
 
 }

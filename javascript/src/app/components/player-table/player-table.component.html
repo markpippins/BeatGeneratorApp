@@ -4,6 +4,7 @@
       <th></th>
       <th></th>
       <th></th>
+      <th></th>
       <th *ngFor="let col of playerCols">
         {{ col }}
       </th>
@@ -30,6 +31,12 @@
           <button [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'mute')">
             <!--          <mat-icon>mute</mat-icon>-->
             M
+          </button>
+        </td>
+        <td>
+          <button [style.height.px]="20" id="audition" (click)="onBtnClick(player, 'audition')">
+            <!--          <mat-icon>mute</mat-icon>-->
+            P
           </button>
         </td>
 

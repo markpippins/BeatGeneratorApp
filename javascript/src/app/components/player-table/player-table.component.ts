@@ -6,6 +6,7 @@ import { Instrument } from 'src/app/models/instrument';
 import { UiService } from 'src/app/services/ui.service';
 import { Constants } from 'src/app/models/constants';
 import { Listener } from 'src/app/models/listener';
+import { MidiMessage } from 'src/app/models/midi-message';
 
 @Component({
   selector: 'app-player-table',
@@ -84,6 +85,15 @@ export class PlayerTableComponent implements Listener, OnInit {
         }
         break
       }
+
+      case 'audition': {
+        if (this.selectedPlayer != undefined) {
+          // this.selectedPlayer.muted = !this.selectedPlayer.muted
+          this.midiService.sendMessage(MidiMessage.NOTE_ON, this.selectedPlayer.channel, this.selectedPlayer.note, 120)
+          this.midiService.sendMessage(MidiMessage.NOTE_OFF, this.selectedPlayer.channel, this.selectedPlayer.note, 120)
+        }
+        break
+      }
     }
   }
 
@@ -102,7 +112,8 @@ export class PlayerTableComponent implements Listener, OnInit {
       allowedControlMessages: [],
       parts: [],
       muted: false,
-      name: ''
+      name: '',
+      channel: 0
     }, 'add')
   }
 

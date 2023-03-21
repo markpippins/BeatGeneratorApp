@@ -281,7 +281,7 @@ public class PlayerServiceTests {
 
     @Test
     public void whenNextTickerRequestedForTickerWithPlayers_thenPlayerDoesNotContainRemovedRule() {
-        playerService.newTicker();
+        // playerService.newTicker();
         // add data to current Ticker
         Long startingTickerId = playerService.getTicker().getId();
         Player player = playerService.addPlayer(RAZ);

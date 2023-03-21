@@ -100,6 +100,10 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         return getRules().stream().filter(r -> r.getId() == ruleId).findAny().orElseThrow();
     }
 
+    public int getChannel() {
+        return Objects.nonNull(instrument) ? instrument.getChannel() : 0;
+    }
+
     @Override
     public Boolean call() {
         if (getLastTick() == getTicker().getTick())
@@ -117,7 +121,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                     setLastPlayedBar(bar);
                     setLastPlayedBeat(getTicker().getBeat());
                 }
-        logger.info(String.format("%s not playing tick %s, beat %s, bar %s", getName(), tick, getTicker().getBeat(), getTicker().getBar()));
+        // logger.info(String.format("%s not playing tick %s, beat %s, bar %s", getName(), tick, getTicker().getBeat(), getTicker().getBar()));
         return Boolean.TRUE;
     }
 
@@ -140,14 +144,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @JsonIgnore
-    public Integer getChannel() {
-        if (Objects.nonNull(getInstrument()) || getInstrument().isInitialized()) 
-            return getInstrument().getChannel(); 
-            
-        return 0;
     }
 
     @JsonIgnore

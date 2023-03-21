@@ -5,6 +5,7 @@ export interface Player {
   id: number
   tickerId: number
   instrumentId: number
+  channel: number
   part: number
   preset: number
   rules: Rule[]
