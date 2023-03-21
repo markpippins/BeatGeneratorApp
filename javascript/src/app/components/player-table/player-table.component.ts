@@ -81,7 +81,7 @@ export class PlayerTableComponent implements Listener, OnInit {
       case 'mute': {
         if (this.selectedPlayer != undefined) {
           this.selectedPlayer.muted = !this.selectedPlayer.muted
-          this.midiService.updatePlayer(this.selectedPlayer?.id, Constants.MUTE, this.selectedPlayer.muted ? 1 : 0)
+          this.midiService.updatePlayer(this.selectedPlayer?.id, Constants.MUTE, this.selectedPlayer.muted ? 1 : 0).subscribe()
         }
         break
       }
@@ -102,7 +102,6 @@ export class PlayerTableComponent implements Listener, OnInit {
       id: 0,
       tickerId: 0,
       instrumentId: 0,
-      part: 1,
       maxVelocity: 0,
       minVelocity: 0,
       note: 0,
@@ -113,7 +112,10 @@ export class PlayerTableComponent implements Listener, OnInit {
       parts: [],
       muted: false,
       name: '',
-      channel: 0
+      channel: 0,
+      swing: 0,
+      level: 0,
+      active: false
     }, 'add')
   }
 
@@ -134,6 +136,10 @@ export class PlayerTableComponent implements Listener, OnInit {
     this.midiService.updatePlayer(player.id, Constants.PROBABILITY, event.target.value).subscribe()
   }
 
+  onLevelChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.LEVEL, event.target.value).subscribe()
+  }
+
   onMinVelocityChange(player: Player, event: { target: any; }) {
     this.midiService.updatePlayer(player.id, Constants.MIN_VELOCITY, event.target.value).subscribe()
   }
@@ -144,6 +150,10 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   onProbabilityChange(player: Player, event: { target: any; }) {
     this.midiService.updatePlayer(player.id, Constants.PROBABILITY, event.target.value).subscribe()
+  }
+
+  onSwingChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.SWING, event.target.value).subscribe()
   }
 
   onPass(player: Player, $event: MouseEvent) {

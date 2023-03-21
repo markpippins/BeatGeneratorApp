@@ -160,7 +160,7 @@ public class PlayerService {
     }
 
     public Rule addRule(Long playerId) {
-        Rule rule = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0);
+        Rule rule = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0);
         Strike player = getTicker().getPlayer(playerId);
         List<Rule> matches = player.getRules().stream().filter(r -> r.isEqualTo(rule)).toList();
         
@@ -188,11 +188,90 @@ public class PlayerService {
         // getRuleRepository().deleteById(ruleId);
     }
 
+
+    public Ticker updateTicker(Long tickerId, int updateType, int updateValue) {
+
+        Ticker ticker = getTickerRepo().findById(tickerId).orElseThrow();
+
+        switch (updateType) {
+            case PPQ : ticker.setTicksPerBeat(updateValue);
+                break;
+
+            case BPM: ticker.setTempoInBPM(Float.valueOf(updateValue));
+                break;
+
+            case BEATS_PER_BAR: ticker.setBeatsPerBar(updateValue);
+                break;
+
+            case PART_LENGTH: ticker.setPartLength(updateValue);
+                break;
+
+            case MAX_TRACKS: ticker.setMaxTracks(updateValue);
+            break;
+        }
+
+        ticker = getTickerRepo().save(ticker);
+
+        if (getTicker().getId().equals(ticker.getId()))
+            setTicker(ticker);
+            
+        return ticker;
+    }
+
+    public Player updatePlayer(Long playerId, int updateType, int updateValue) {
+        Strike strike = getTicker().getPlayer(playerId); 
+        // strikeRepository.findById(playerId).orElseThrow();
+        switch (updateType) {
+            case NOTE -> {
+                strike.setNote(updateValue);
+                break;
+            }
+            
+            case INSTRUMENT -> {
+                MidiInstrument instrument = getMidiInstrumentRepo().findById((long) updateValue).orElseThrow(null);
+                instrument.setDevice(MIDIService.findMidiOutDevice(instrument.getDeviceName()));
+                strike.setInstrument(instrument);
+                break;
+            }
+
+            case PRESET -> {                
+                strike.setPreset(updateValue);
+                break;
+            }
+
+            case PROBABILITY -> {                
+                strike.setProbability(updateValue);
+                break;
+            }
+
+            case MIN_VELOCITY -> {                
+                strike.setMinVelocity(updateValue);
+                break;
+            }
+
+            case MAX_VELOCITY -> {                
+                strike.setMaxVelocity(updateValue);
+                break;
+            }
+
+            case MUTE -> {                
+                strike.setMuted(updateValue > 0 ? true : false);
+                break;
+            }
+        }
+
+        getStrikeRepository().save(strike);
+        getTickerRepo().save(getTicker());
+
+        return strike;
+    }
+
     public void updateRule(Long playerId,
                            Long ruleId,
                            int operatorId,
                            int comparisonId,
-                           double newValue) {
+                           double newValue,
+                           int part) {
 
         Strike strike = getTicker().getPlayer(playerId);
 
@@ -201,6 +280,8 @@ public class PlayerService {
         rule.setOperatorId(operatorId);
         rule.setComparisonId(comparisonId);
         rule.setValue(newValue);
+        rule.setPart(part);
+
         getRuleRepository().save(rule);
         
     }
@@ -280,88 +361,6 @@ public class PlayerService {
 
     public void clearPlayers() {
         getTicker().getPlayers().clear();
-    }
-
-    public Ticker updateTicker(Long tickerId, int updateType, int updateValue) {
-
-        Ticker ticker = getTickerRepo().findById(tickerId).orElseThrow();
-
-        switch (updateType) {
-            case PPQ : ticker.setTicksPerBeat(updateValue);
-                break;
-
-            case BPM: ticker.setTempoInBPM(Float.valueOf(updateValue));
-                break;
-
-            case BEATS_PER_BAR: ticker.setBeatsPerBar(updateValue);
-                break;
-
-            case PART_LENGTH: ticker.setPartLength(updateValue);
-                break;
-
-            case MAX_TRACKS: ticker.setMaxTracks(updateValue);
-            break;
-        }
-
-        ticker = getTickerRepo().save(ticker);
-
-        if (getTicker().getId().equals(ticker.getId()))
-            setTicker(ticker);
-            
-        return ticker;
-    }
-
-    public Player updatePlayer(Long playerId, int updateType, int updateValue) {
-        Strike strike = getTicker().getPlayer(playerId); 
-        // strikeRepository.findById(playerId).orElseThrow();
-        switch (updateType) {
-            case NOTE -> {
-                strike.setNote(updateValue);
-                break;
-            }
-            
-            case INSTRUMENT -> {
-                MidiInstrument instrument = getMidiInstrumentRepo().findById((long) updateValue).orElseThrow(null);
-                instrument.setDevice(MIDIService.findMidiOutDevice(instrument.getDeviceName()));
-                strike.setInstrument(instrument);
-                break;
-            }
-
-            case PRESET -> {                
-                strike.setPreset(updateValue);
-                break;
-            }
-
-            case PROBABILITY -> {                
-                strike.setProbability(updateValue);
-                break;
-            }
-
-            case MIN_VELOCITY -> {                
-                strike.setMinVelocity(updateValue);
-                break;
-            }
-
-            case MAX_VELOCITY -> {                
-                strike.setMaxVelocity(updateValue);
-                break;
-            }
-
-            case PART -> {                
-                strike.setPart(updateValue);
-                break;
-            }
-
-            case MUTE -> {                
-                strike.setMuted(updateValue > 0 ? true : false);
-                break;
-            }
-        }
-
-        getStrikeRepository().save(strike);
-        getTickerRepo().save(getTicker());
-
-        return strike;
     }
 
     public Ticker loadTicker(long tickerId) {

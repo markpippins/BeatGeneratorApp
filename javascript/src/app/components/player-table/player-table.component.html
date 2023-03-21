@@ -4,7 +4,6 @@
       <th></th>
       <th></th>
       <th></th>
-      <th></th>
       <th *ngFor="let col of playerCols">
         {{ col }}
       </th>
@@ -27,16 +26,10 @@
             <!--          <mat-icon>remove_circle</mat-icon>-->
           </button>
         </td>
-        <td>
+        <td *ngIf="player.active == false">
           <button [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'mute')">
             <!--          <mat-icon>mute</mat-icon>-->
             M
-          </button>
-        </td>
-        <td>
-          <button [style.height.px]="20" id="audition" (click)="onBtnClick(player, 'audition')">
-            <!--          <mat-icon>mute</mat-icon>-->
-            P
           </button>
         </td>
 
@@ -57,14 +50,23 @@
       <td class="player-short-col" id="player-col-preset-{{player.id}}" (change)="onPresetChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.preset}}">
       </td>
-      <td class="player-short-col" id="player-col-part-{{player.id}}" (change)="onPartChange(player, $event)">
-        <input type="number" min="1" max="16" step="1" value="{{ player.part}}">
-      </td>
       <td class="player-short-col" (change)="onNoteChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
       </td>
+      <td>
+        <button [style.height.px]="20" id="audition" (click)="onBtnClick(player, 'audition')">
+          <!--          <mat-icon>mute</mat-icon>-->
+          P
+        </button>
+      </td>
       <td class="player-short-col" (change)="onProbabilityChange(player, $event)">
         <input type="number" min="0" max="100" step="1" value="{{ player.probability }}">
+      </td>
+      <td class="player-short-col" (change)="onSwingChange(player, $event)">
+        <input type="number" min="0" max="100" step="1" value="{{ player.swing }}">
+      </td>
+      <td class="player-short-col" (change)="onLevelChange(player, $event)">
+        <input type="number" min="1" max="127" step="1" value="{{ player.level }}">
       </td>
       <td class="player-short-col" (change)="onMinVelocityChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.minVelocity }}">

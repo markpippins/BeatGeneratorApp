@@ -45,9 +45,10 @@ public class RuleController {
                            @RequestParam Long ruleId,
                            @RequestParam int operatorId,
                            @RequestParam int comparisonId,
-                           @RequestParam String newValue) {
+                           @RequestParam String newValue,
+                           @RequestParam int part) {
         logger.info(Constants.UPDATE_RULE);
-        service.updateRule(playerId, ruleId, operatorId, comparisonId, Double.parseDouble(newValue));
+        service.updateRule(playerId, ruleId, operatorId, comparisonId, Double.parseDouble(newValue), part);
     }
 }
 

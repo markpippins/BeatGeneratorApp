@@ -3,4 +3,6 @@ export interface Rule {
   operatorId: number;
   comparisonId: number;
   value: number;
+
+  part: number
 }

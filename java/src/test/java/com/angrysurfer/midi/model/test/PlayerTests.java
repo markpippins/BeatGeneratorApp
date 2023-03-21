@@ -44,7 +44,7 @@ public class PlayerTests {
 
     };
 
-    Rule r = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0);
+    Rule r = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0);
     p.getRules().add(r);
     p.call();
     assertTrue(play.get());
@@ -91,9 +91,9 @@ public class PlayerTests {
     };
     p3.setTicker(ticker);
 
-    p1.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0));
-    p2.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0));
-    p3.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0));
+    p1.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
+    p2.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
+    p3.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
     
     try {
       executor.invokeAll(List.of(p1, p2, p3));

@@ -6,7 +6,6 @@ export interface Player {
   tickerId: number
   instrumentId: number
   channel: number
-  part: number
   preset: number
   rules: Rule[]
   allowedControlMessages: number[]
@@ -17,4 +16,7 @@ export interface Player {
   probability: number
   muted: boolean
   name: string
+  swing: number
+  level: number
+  active: boolean
 }

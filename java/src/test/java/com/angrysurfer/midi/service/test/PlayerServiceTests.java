@@ -165,7 +165,7 @@ public class PlayerServiceTests {
         double value = rule.getValue() + 1;
 
         playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
-                rule.getComparisonId(), value);
+                rule.getComparisonId(), value, rule.getPart());
 
         assertEquals(player.getRules().stream().toList().get(0).getValue(), value, 0.0); 
     }
@@ -180,9 +180,24 @@ public class PlayerServiceTests {
         int operatorId = rule.getOperatorId() + 1;
 
         playerService.updateRule(player.getId(), rule.getId(), operatorId,
-                rule.getComparisonId(), rule.getValue());
+                rule.getComparisonId(), rule.getValue(), rule.getPart());
 
         assertEquals(player.getRules().stream().toList().get(0).getOperatorId(), operatorId);
+    }
+
+    @Test
+    public void whenRulePartUpdated_thenRuleShouldReflectIt() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.addRule(player.getId());
+
+        assertTrue(player.getRules().size() > 0);
+        Rule rule = player.getRules().stream().toList().get(0);
+        int part = rule.getPart() + 1;
+
+        playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
+                part, rule.getValue(), rule.getPart());
+
+        assertEquals(player.getRules().stream().toList().get(0).getPart(), part);
     }
 
     @Test
@@ -195,7 +210,7 @@ public class PlayerServiceTests {
         int comparisonId = rule.getComparisonId() + 1;
 
         playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
-                comparisonId, rule.getValue());
+                comparisonId, rule.getValue(), rule.getPart());
 
         assertEquals(player.getRules().stream().toList().get(0).getComparisonId(), comparisonId);
     }
@@ -311,13 +326,6 @@ public class PlayerServiceTests {
         boolean muted = player.isMuted();
         playerService.mutePlayer(player.getId());
         assertTrue(player.isMuted() != muted); 
-    }
-
-    @Test
-    public void whenPlayerPartUpdated_thenPlayerUpdatedWithNewValues() {
-        Player player = playerService.addPlayer(RAZ);
-        playerService.updatePlayer(player.getId(), PlayerUpdateType.PART, 2);
-        assertTrue(player.getPart() == 2); 
     }
 
     @Test

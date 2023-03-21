@@ -18,10 +18,12 @@ public class Rule implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
+
     private Long playerId;
     private int operatorId;
     private int comparisonId;
     private Double value;
+    private int part = 0;
 
     @Transient
     @JsonIgnore
@@ -31,10 +33,11 @@ public class Rule implements Serializable {
 
     }
 
-    public Rule(int operatorId, int comparisonId, Double value) {
+    public Rule(int operatorId, int comparisonId, Double value, int part) {
         setOperatorId(operatorId);
         setComparisonId(comparisonId);
         setValue(value);
+        setPart(part);
     }
 
     public void setPlayer(Player player) {

@@ -7,11 +7,13 @@ export class Constants {
   static PLAYER_COLUMNS = [
     'Device',
     'Preset',
-    'Part',
     'Pitch',
-    'Probability',
-    'Min. Vel.',
-    'Max. Vel.'
+    '',
+    'Swing',
+    'Prob',
+    'Level',
+    'Min. V',
+    'Max. V'
   ]
 
   static INSTRUMENT = 0;
@@ -22,6 +24,7 @@ export class Constants {
   static MUTE = 5;
   static PART = 6;
   static LEVEL = 7;
+  static SWING = 8;
 
   static PPQ = 0
   static BPM = 1

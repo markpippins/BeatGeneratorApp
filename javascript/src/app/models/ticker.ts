@@ -16,4 +16,5 @@ export interface Ticker {
   swing: number;
   playing: boolean;
   stopped: boolean;
+  activePlayerIds: number[]
 }

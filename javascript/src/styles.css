@@ -489,7 +489,7 @@ input:hover, select:hover {
 }
 
 .selected-table-row {
-  background-color: blue;
+  background-color: coral;
   color: white;
 }
 
@@ -675,7 +675,7 @@ select {
 }
 
 td input {
-  max-width: 60px;
+  max-width: 40px;
   text-align: right;
   align-self: stretch;
 }

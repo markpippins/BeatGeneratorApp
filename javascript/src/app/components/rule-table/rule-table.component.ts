@@ -33,6 +33,7 @@ export class RuleTableComponent {
     'Operator',
     'Op',
     'Value',
+    'Part'
   ]
 
   constructor(private midiService: MidiService, private uiService: UiService) {
@@ -56,7 +57,7 @@ export class RuleTableComponent {
 
   onOperatorChange(rule: Rule, event: { target: any }) {
     let value = this.OPERATOR.indexOf(event.target.value)
-    this.midiService.updateRule(this.player.id, rule.id, value, rule.comparisonId, rule.value).subscribe()
+    this.midiService.updateRule(this.player.id, rule.id, value, rule.comparisonId, rule.value, rule.part).subscribe()
     rule.operatorId = value
     // let op = 'operatorSelect-' + rule.id
     this.uiService.setSelectValue(event.target, value)
@@ -65,7 +66,7 @@ export class RuleTableComponent {
 
   onComparisonChange(rule: Rule, event: { target: any }) {
     let value = this.COMPARISON.indexOf(event.target.value)
-    this.midiService.updateRule(this.player.id, rule.id, rule.operatorId, value, rule.value).subscribe()
+    this.midiService.updateRule(this.player.id, rule.id, rule.operatorId, value, rule.value, rule.part).subscribe()
     rule.comparisonId = value
     this.uiService.setSelectValue(event.target, value)
     this.uiService.notifyAll(Constants.STATUS, this.COMPARISON[value] + ' selected.')
@@ -73,8 +74,14 @@ export class RuleTableComponent {
 
   onValueChange(rule: Rule, event: { target: any }) {
     rule.value = event.target.value
-    this.midiService.updateRule(this.player.id, rule.id, rule.operatorId, rule.comparisonId, event.target.value).subscribe()
+    this.midiService.updateRule(this.player.id, rule.id, rule.operatorId, rule.comparisonId, event.target.value, rule.part).subscribe()
   }
+
+  onPartChange(rule: Rule, event: { target: any }) {
+    rule.part = event.target.value
+    this.midiService.updateRule(this.player.id, rule.id, rule.operatorId, rule.comparisonId, rule.value, rule.part).subscribe()
+  }
+
 
   btnClicked(rule: Rule, command: string) {
     if (this.player.id > 0)

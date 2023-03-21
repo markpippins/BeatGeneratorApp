@@ -37,7 +37,8 @@ export class DashboardComponent implements OnInit, Listener {
     swing: 0,
     tempoInBPM: 0,
     tick: 0,
-    ticksPerBeat: 0
+    ticksPerBeat: 0,
+    activePlayerIds: []
   }
 
   running = false
@@ -186,6 +187,7 @@ export class DashboardComponent implements OnInit, Listener {
     this.midiService.playerInfo().subscribe(async (data) => {
       var update: boolean = this.ticker.playing && this.players.length != (<Player[]>data).length
       this.players = data
+      this.players.forEach(p => p.active = p.id in this.ticker.activePlayerIds)
       if (update && this.ticker.playing) {
         await this.midiService.delay(1000)
         this.updateDisplay()

@@ -35,6 +35,10 @@
       <input type="number" step=".25" value={{rule.value}} (change)="onValueChange(rule, $event)"
              minlength="4" maxlength="8" size="10">
     </td>
+    <td class="player-short-col">
+      <input type="number" step="1" value={{rule.part}} (change)="onPartChange(rule, $event)"
+             minlength="4" maxlength="8" size="10">
+    </td>
   </tr>
   <tr *ngIf="player == undefined || player.rules.length == 0">
     <td class="player-short-col">

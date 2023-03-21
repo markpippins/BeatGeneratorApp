@@ -24,16 +24,16 @@ public class RuleTests {
 
     @Test
     public void whenRuleComparedToRuleWithSameValues_thenEqualToReturnsTrue() {
-      Rule a = new Rule(Operator.BAR, Comparison.EQUALS, 1.0);
-      Rule b = new Rule(Operator.BAR, Comparison.EQUALS, 1.0);
+      Rule a = new Rule(Operator.BAR, Comparison.EQUALS, 1.0, 0);
+      Rule b = new Rule(Operator.BAR, Comparison.EQUALS, 1.0, 0);
       assertTrue(a.isEqualTo(b));
       assertTrue(b.isEqualTo(a));
     }
 
     @Test
     public void whenRuleComparedToRuleWithDifferentValues_thenEqualToReturnsFalse() {
-      Rule a = new Rule(Operator.BAR, Comparison.MODULO, 1.0);
-      Rule b = new Rule(Operator.BAR, Comparison.EQUALS, 2.0);
+      Rule a = new Rule(Operator.BAR, Comparison.MODULO, 1.0, 0);
+      Rule b = new Rule(Operator.BAR, Comparison.EQUALS, 2.0, 0);
       assertTrue(!a.isEqualTo(b));
       assertTrue(!b.isEqualTo(a));
     }

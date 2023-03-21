@@ -72,7 +72,7 @@ export class StatusPanelComponent implements OnInit, Listener {
             this.waiting = false
           })
         }
-        await this.midiService.delay(this.connected && this.ticker != undefined && this.ticker.playing ? 250 : 500);
+        await this.midiService.delay(this.connected && this.ticker != undefined && this.ticker.playing ? 50 : 500);
         this.waiting = false
         this.updateDisplay();
       },
@@ -118,5 +118,9 @@ export class StatusPanelComponent implements OnInit, Listener {
     // this.ppqs.filter(i => i.id == this.player.instrument.id).forEach(ins => {
     this.ppqSelectionIndex = this.ppqs.indexOf(this.ticker.ticksPerBeat);
     // })
+  }
+
+  getRounded(value: number) {
+    return Math.round(this.ticker.beat)
   }
 }

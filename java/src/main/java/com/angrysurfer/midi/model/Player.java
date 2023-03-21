@@ -38,13 +38,14 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private int position = 0;
     private Long lastTick = 0L;
     private int preset;
-    private int probability;
+    private int probability = 100;
     private int lastPlayedTick;
     private int lastPlayedBar;
     private Double lastPlayedBeat;
     private String name;
-    private int part = 1;
-    
+    private int swing = 50;
+    private int level = 100;
+
     @Transient   
     private Set<Rule> rules = new HashSet<>();
 
@@ -97,7 +98,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         return (Objects.nonNull(getInstrument()) ? getInstrument().getId() : null);
     }
     public Rule getRule(Long ruleId) {
-        return getRules().stream().filter(r -> r.getId() == ruleId).findAny().orElseThrow();
+        return getRules().stream().filter(r -> r.getId().equals(ruleId)).findAny().orElseThrow();
     }
 
     public int getChannel() {
@@ -114,9 +115,12 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         setLastTick(tick);
         setEven(tick % 2 == 0);
 
+        if (getTicker().getActivePlayerIds().contains(this.getId()))
+            getTicker().getActivePlayerIds().remove(this.getId());
         if (shouldPlay() && !isMuted()) {
             // getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers().stream().filter(e -> e.getLastPlayedTick() == tick)
                 // .toList().size() > 0)) {
+                    getTicker().getActivePlayerIds().add(this.getId());
                     onTick(tick, bar);
                     setLastPlayedBar(bar);
                     setLastPlayedBeat(getTicker().getBeat());
@@ -149,26 +153,27 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @JsonIgnore
     public boolean shouldPlay() {
         AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
-        getRules().forEach(rule -> {
-            switch (rule.getOperatorId()) {
-                case Operator.TICK -> {
-                    if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getTick(), rule.getValue()))
-                        play.set(false);
+        getRules().stream().filter(r -> r.getPart() == 0 || r.getPart() == getTicker().getPart()).forEach(rule -> {
+                switch (rule.getOperatorId()) {
+                    case Operator.TICK -> {
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getTick(), rule.getValue()))
+                            play.set(false);
+                    }
+                    case Operator.BEAT -> {
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat(), rule.getValue()))
+                            play.set(false);
+                    }
+                    case Operator.BAR -> {
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBar(), rule.getValue()))
+                            play.set(false);
+                    }
+                    case Operator.POSITION -> {
+                        if (!Comparison.evaluate(rule.getComparisonId(), getPosition(), rule.getValue()))
+                            play.set(false);
+                    }
                 }
-                case Operator.BEAT -> {
-                    if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat(), rule.getValue()))
-                        play.set(false);
-                }
-                case Operator.BAR -> {
-                    if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBar(), rule.getValue()))
-                        play.set(false);
-                }
-                case Operator.POSITION -> {
-                    if (!Comparison.evaluate(rule.getComparisonId(), getPosition(), rule.getValue()))
-                        play.set(false);
-                }
-            }
-        });
+            });
+
         return play.get();
     }
 

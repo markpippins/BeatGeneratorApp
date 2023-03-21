@@ -3,7 +3,7 @@
 <!--  <app-transport-control (clickEvent)="onClick($event)"></app-transport-control>-->
 <!--</div>-->
 <div class="two-column-grid-container">
-  <table *ngIf="connected" class="status-table">
+  <table class="status-table">
     <tr>
       <!--      <th *ngFor="let col of statusColumns;">{{col}}</th>-->
       <td *ngIf="ticker.playing" class="active">
@@ -42,7 +42,7 @@
         <input class="fixed" type="number" disabled="true" value="{{ ticker.tick }}">
       </td>
       <td>
-        <input class="fixed" type="number" disabled="true" value="{{ ticker.beat}}">
+        <input class="fixed" type="number" disabled="true" value="{{ getRounded(ticker.beat)}}">
       </td>
       <td>
         <input class="fixed" type="number" disabled="true" value="{{ ticker.bar }}">

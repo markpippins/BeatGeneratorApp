@@ -56,6 +56,9 @@ public class Ticker implements Serializable {
     @Transient
     private Set<Strike> players = new HashSet<>();
 
+    @Transient 
+    Set<Long> activePlayerIds = new HashSet<>();
+
     @Transient
     private double granularBeat = 1.0;
 

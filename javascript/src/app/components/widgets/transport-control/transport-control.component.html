@@ -1,12 +1,4 @@
-<div *ngIf="connected == true" class="transport-buttons">
-  <button
-    id="transport-btn-record"
-    mat-mini-fab
-    (click)="onClick('record')"
-    tabindex="0">
-    <mat-icon>fiber_manual_record</mat-icon>
-  </button>
-
+<div class="transport-buttons">
   <button
     id="transport-btn-rewind"
     mat-mini-fab
@@ -15,22 +7,12 @@
     <mat-icon>fast_rewind</mat-icon>
   </button>
 
-  <div id="transport-btn-play" class="neutral">
-    <button
-      mat-mini-fab
-      (click)="onClick('play')"
-      tabindex="0">
-      <mat-icon>play_circle</mat-icon>
-    </button>
-  </div>
-
-
   <button
-    id="transport-btn-forward"
+    id="transport-btn-record"
     mat-mini-fab
-    (click)="onClick('forward')"
+    (click)="onClick('record')"
     tabindex="0">
-    <mat-icon>fast_forward</mat-icon>
+    <mat-icon>fiber_manual_record</mat-icon>
   </button>
 
   <button
@@ -47,6 +29,23 @@
     (click)="onClick('stop')"
     tabindex="0">
     <mat-icon>stop</mat-icon>
+  </button>
+
+  <div id="transport-btn-play" class="neutral">
+    <button
+      mat-mini-fab
+      (click)="onClick('play')"
+      tabindex="0">
+      <mat-icon>play_circle</mat-icon>
+    </button>
+  </div>
+
+  <button
+    id="transport-btn-forward"
+    mat-mini-fab
+    (click)="onClick('forward')"
+    tabindex="0">
+    <mat-icon>fast_forward</mat-icon>
   </button>
 
   <button
