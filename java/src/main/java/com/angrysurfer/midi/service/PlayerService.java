@@ -129,23 +129,22 @@ public class PlayerService {
 
     public Ticker getTicker() {
         if (Objects.isNull(ticker))
-            setTicker(getTickerRepo().save(new Ticker()));
+            setTicker(newTicker());
         return ticker;
     }
 
     public Strike addPlayer(String instrumentName) {
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-        midiInstrument.setDevice(MIDIService.findMidiInDevice(midiInstrument.getDeviceName()));
         return addPlayer(midiInstrument);
     }
 
     public Strike addPlayer(Long instrumentId) {
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findById(instrumentId).orElseThrow();
-        midiInstrument.setDevice(MIDIService.findMidiInDevice(midiInstrument.getDeviceName()));
         return addPlayer(midiInstrument);
     }
  
     public Strike addPlayer(MidiInstrument midiInstrument) {
+        midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
         String name = midiInstrument.getName().concat(Integer.toString(getTicker().getPlayers().size()));
         Strike strike = new Strike(name, getTicker(), midiInstrument,
                 Strike.KICK + getTicker().getPlayers().size(), Strike.closedHatParams);
@@ -306,7 +305,7 @@ public class PlayerService {
             Long maxTickerId = getTickerRepo().getMaximumTickerId();
             setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
                 getTickerRepo().getNextTicker(currentTickerId) :
-                getTickerRepo().save(new Ticker()));
+                newTicker());
             getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
             getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
             sequenceRunner = new SequenceRunner(getTicker());

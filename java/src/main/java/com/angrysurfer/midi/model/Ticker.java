@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.midi.util.Constants;
+import com.angrysurfer.midi.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
@@ -33,14 +34,18 @@ public class Ticker implements Serializable {
     @JsonIgnore
     private Set<Strike> removeList = new HashSet<>();
 
+    // @Transient
+    // private AtomicInteger atomicBar = new AtomicInteger(1);
+
+
     @Transient
-    private AtomicInteger atomicBar = new AtomicInteger(1);
+    private Cycler beatCycler = new Cycler();
+
+    @Transient
+    private Cycler barCycler = new Cycler();
 
     @Transient
     private AtomicInteger atomicPart = new AtomicInteger(1);
-
-    @Transient
-    private double beat = 1;
 
     @Transient
     private AtomicLong atomicTick = new AtomicLong(1L);
@@ -95,13 +100,16 @@ public class Ticker implements Serializable {
     }
 
     public void afterTick() {
-        setBeat(getBeat() == getBeatsPerBar() + Constants.DEFAULT_BEAT_OFFSET ? 
-            Constants.DEFAULT_BEAT_OFFSET : getBeat() + .125 / 2);
-        if (getBeat() - Constants.DEFAULT_BEAT_OFFSET >= getBeatsPerBar()) {
-            setBeat(1.0);
-            onBarChange();
-        }
         setTick(getTick() + 1);
+        if (getTick() % getTicksPerBeat() == 0) {
+            getBeatCycler().advance();
+            if (getBeatCycler().get() % getBeatsPerBar() == 0) 
+                onBarChange();
+        }
+    }
+
+    public double getBeat() {
+        return getBeatCycler().get();
     }
 
     public void setTick(long tick) {
@@ -112,12 +120,12 @@ public class Ticker implements Serializable {
         return atomicTick.get();
     }
 
-    public void setBar(int bar) {
-        atomicBar.set(bar);
-    }
+    // public void setBar(int bar) {
+    //     atomicBar.set(bar);
+    // }
 
     public int getBar() {
-        return atomicBar.get();
+        return getBarCycler().get();
     }
 
     private void setPart(int part) {
@@ -131,8 +139,8 @@ public class Ticker implements Serializable {
     public void reset() {
         setId(null);
         setTick(0L);
-        setBar(1);
-        setBeat(1);
+        getBeatCycler().reset();
+        getBarCycler().reset();
         getPlayers().clear();
         setPaused(false);
         setDone(false);
@@ -147,8 +155,9 @@ public class Ticker implements Serializable {
     }
 
     public void onBarChange() {
-    
-        setBar(getBar() + 1);
+
+        getBarCycler().advance();
+
         if (getBar() % getPartLength() == 0)
             onPartChange();
     
@@ -183,11 +192,14 @@ public class Ticker implements Serializable {
     public void afterEnd() {
         setPlaying(false);
         setTick(1L);
-        setBar(1);
-        setBeat(1.0);
+        getBeatCycler().reset();
+        getBarCycler().reset();
     }
 
     public void beforeStart() {
+        getBeatCycler().setLength(getBeatsPerBar());
+        getBarCycler().setLength(getPartLength() * getBeatsPerBar());
+
         setPlaying(true);
         setTick(1L);
     }
@@ -195,8 +207,8 @@ public class Ticker implements Serializable {
     public void onStop() {
         setPlaying(false);
         setTick(1L);
-        setBar(1);
-        setBeat(1.0);
+        getBarCycler().reset();
+        getBeatCycler().reset();
     }
 
 

@@ -61,9 +61,9 @@ public class PlayerTests {
     AtomicBoolean play3 = new AtomicBoolean(false);
 
     Ticker ticker = new Ticker();
-    ticker.setBeat(1);
     ticker.setTick(1L);
-    ticker.setBar(1);
+    ticker.getBarCycler().reset();
+    ticker.getBeatCycler().reset();
     Player p1 = new Player() {
       @Override
       public void onTick(long tick, int bar) {

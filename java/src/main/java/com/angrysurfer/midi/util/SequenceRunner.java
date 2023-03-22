@@ -135,9 +135,9 @@ public class SequenceRunner implements Runnable {
 
         this.ticker.setPlaying(false);
         this.ticker.setPaused(false);
-        this.ticker.setBeat(1);
         this.ticker.setTick(1L);
-        this.ticker.setBar(1);
+        this.ticker.getBeatCycler().reset();
+        this.ticker.getBarCycler().reset();
         this.ticker.setDone(false);
 
         return this.ticker;

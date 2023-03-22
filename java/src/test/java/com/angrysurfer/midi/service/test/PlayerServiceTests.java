@@ -195,9 +195,9 @@ public class PlayerServiceTests {
         int part = rule.getPart() + 1;
 
         playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
-                part, rule.getValue(), rule.getPart());
+                part, rule.getValue(), part);
 
-        assertEquals(player.getRules().stream().toList().get(0).getPart(), part);
+        assertEquals(player.getRule(rule.getId()).getPart(), part);
     }
 
     @Test
