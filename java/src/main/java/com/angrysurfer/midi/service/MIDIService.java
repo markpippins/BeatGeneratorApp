@@ -48,6 +48,7 @@ public class MIDIService {
 
     public static List<MidiDevice> findMidiDevices(boolean receive, boolean transmit) {
         return getMidiDevices().stream().map(device -> {
+            logger.info(device.getDeviceInfo().getName());
             if ((transmit == (device.getMaxTransmitters() != 0) && receive == (device.getMaxReceivers() != 0)))
                 return device;
             else return null;
@@ -56,12 +57,12 @@ public class MIDIService {
 
     public static MidiDevice findMidiOutDevice(String name) {
         return findMidiDevices(true, false).stream()
-                .filter(d -> d.getDeviceInfo().getName().equals(name)).findAny().orElseThrow();
+                .filter(d -> d.getDeviceInfo().getName().equals(name)).findAny()
+                .orElse(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals("gervill")).findFirst().orElseThrow());
     }
 
     public static MidiDevice findMidiInDevice(String name) {
-        return findMidiDevices(false, true).stream()
-                .filter(d -> d.getDeviceInfo().getName().equals(name)).findAny().orElseThrow();
+        return findMidiDevices(false, true).stream().filter(d -> d.getDeviceInfo().getName().equals(name)).findAny().orElseThrow();
     }
 
     public static void reset() {
@@ -112,7 +113,7 @@ public class MIDIService {
     
     public MidiInstrument getInstrumentByChannel(int channel) {
         Optional<MidiInstrument> instrument = midiInstrumentRepo.findByChannel(channel);
-        if (instrument.isPresent())
+         if (instrument.isPresent())
             instrument.get().setDevice(findMidiOutDevice(instrument.get().getDeviceName()));
         return instrument.orElseThrow();
     }

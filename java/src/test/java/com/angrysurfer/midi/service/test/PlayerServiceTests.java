@@ -15,6 +15,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,6 +42,8 @@ import com.angrysurfer.midi.util.TickerUpdateType;
 @TestPropertySource(
   locations = "classpath:application.properties")
 public class PlayerServiceTests {
+
+    static Logger logger = LoggerFactory.getLogger(PlayerServiceTests.class.getCanonicalName());
 
     @Autowired
     PlayerService playerService;
@@ -88,12 +92,17 @@ public class PlayerServiceTests {
     
     @Test
     public void whenInstrumentRequestedDeviceIsInitialized() {
-        MidiInstrument raz = midiService.getInstrumentByChannel(15);
+        MidiInstrument raz = midiService.getInstrumentByChannel(9);
         try {
-            raz.noteOn(60, 0);
-        } catch (InvalidMidiDataException | MidiUnavailableException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            if (!raz.getDevice().isOpen())
+                raz.getDevice().open();
+
+            raz.noteOn(45, 120);
+            Thread.sleep(500);
+            raz.noteOff(45, 120);
+            
+        } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
+            logger.error(e.getMessage());
         }
 }
 
