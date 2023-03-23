@@ -30,21 +30,33 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @Transient
     private List<Pad> pads = new ArrayList<>();
 
-    private int note;
-    private int minVelocity = 110;
-    private int maxVelocity = 127;
-    private boolean even = true;
-    private boolean muted = false;
-    private int position = 0;
-    private Long lastTick = 0L;
-    private int preset;
-    private int probability = 100;
-    private int lastPlayedTick;
-    private int lastPlayedBar;
-    private Double lastPlayedBeat;
     private String name;
     private int swing = 50;
     private int level = 100;
+    private int note = 60;
+    private int minVelocity = 110;
+    private int maxVelocity = 127;
+    private int preset = 1;
+    private int probability = 100;
+
+
+    @Transient
+    private boolean muted = false;
+
+    @Transient
+    private int position = 0;
+
+    @Transient
+    private Long lastTick = 0L;
+
+    @Transient
+    private Long lastPlayedTick;
+
+    @Transient
+    private Long lastPlayedBar;
+
+    @Transient
+    private double lastPlayedBeat;
 
     @Transient   
     private Set<Rule> rules = new HashSet<>();
@@ -52,12 +64,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")
     private List<Integer> allowedControlMessages = new ArrayList<>();
-    
-    // TODO: replace part with an array of parts
-
-    @ElementCollection
-    @CollectionTable(name = "playerParts")
-    private List<Integer> playerParts = new ArrayList<>();
     
     @JsonIgnore
     @ManyToOne
@@ -92,7 +98,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         this.instrument = instrument;
     }
 
-    public abstract void onTick(long tick, int bar);
+    public abstract void onTick(long tick, long bar);
 
     public Long getInstrumentId() {
         return (Objects.nonNull(getInstrument()) ? getInstrument().getId() : null);
@@ -110,22 +116,20 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         if (getLastTick() == getTicker().getTick())
             return Boolean.FALSE;
         
-        long tick = getTicker().getTick();
-        int bar = getTicker().getBar();
-        setLastTick(tick);
-        setEven(tick % 2 == 0);
+            
+        if (shouldPlay() && !isMuted() &&
+            getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers()
+                .stream().filter(e -> e.getLastPlayedTick() == getTicker().getTick())
+                    .toList().size() > 0)) {
+                        getTicker().getActivePlayerIds().add(getId());
+                        setLastPlayedBar(getTicker().getBar());
+                        setLastPlayedBeat(getTicker().getBeat());
+                        setLastPlayedTick(getTicker().getTick());
+                        onTick(getTicker().getTick(), getTicker().getBar());
+                    }
 
-        if (getTicker().getActivePlayerIds().contains(this.getId()))
-            getTicker().getActivePlayerIds().remove(this.getId());
-        if (shouldPlay() && !isMuted()) {
-            // getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers().stream().filter(e -> e.getLastPlayedTick() == tick)
-                // .toList().size() > 0)) {
-                    getTicker().getActivePlayerIds().add(this.getId());
-                    onTick(tick, bar);
-                    setLastPlayedBar(bar);
-                    setLastPlayedBeat(getTicker().getBeat());
-                }
-        // logger.info(String.format("%s not playing tick %s, beat %s, bar %s", getName(), tick, getTicker().getBeat(), getTicker().getBar()));
+        setLastTick(getTicker().getTick());
+                // logger.info(String.format("%s not playing tick %s, beat %s, bar %s", getName(), tick, getTicker().getBeat(), getTicker().getBar()));
         return Boolean.TRUE;
     }
 
@@ -159,14 +163,17 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                         if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getTick(), rule.getValue()))
                             play.set(false);
                     }
+                    
                     case Operator.BEAT -> {
                         if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat(), rule.getValue()))
                             play.set(false);
                     }
+
                     case Operator.BAR -> {
                         if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBar(), rule.getValue()))
                             play.set(false);
                     }
+                    
                     case Operator.POSITION -> {
                         if (!Comparison.evaluate(rule.getComparisonId(), getPosition(), rule.getValue()))
                             play.set(false);

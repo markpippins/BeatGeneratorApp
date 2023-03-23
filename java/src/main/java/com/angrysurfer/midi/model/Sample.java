@@ -19,7 +19,7 @@ public class Sample extends Strike {
     }
 
     @Override
-    public void onTick(long tick, int bar) {
+    public void onTick(long tick, long bar) {
 
     }
 }

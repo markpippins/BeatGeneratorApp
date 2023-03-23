@@ -3,6 +3,7 @@ package com.angrysurfer.midi.service.test;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -12,6 +13,8 @@ import com.angrysurfer.midi.repo.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -68,7 +71,7 @@ public class PlayerServiceTests {
     @Autowired
     SongRepository songRepository;
 
-    static String RAZ = "raz";
+    static String RAZ = "razzmatazz";
     static String ZERO = "zero";
 
     Long razId;
@@ -76,15 +79,11 @@ public class PlayerServiceTests {
     @Before
     public void setUp() {
         playerRepository.deleteAll();
-
-        if (!midiInstrumentRepository.findByName(RAZ).isPresent()) {
-            MidiInstrument raz = new MidiInstrument();
-            raz.setName(RAZ);
-            raz.setDeviceName("MRCC 880");
-            raz.setChannel(15);
-            raz = midiInstrumentRepository.save(raz);
-            razId = raz.getId();
-        }
+    }
+    
+    @Before
+    public void tearDown() {
+        playerRepository.deleteAll();
     }
     
     @Test
@@ -272,7 +271,7 @@ public class PlayerServiceTests {
 
     @Test
     public void whenNextTickerRequestedForTickerWithPlayers_thenPlayersContainAddedRule() {
-        playerService.newTicker();
+        // playerService.newTicker();
         // add data to current Ticker
         Long startingTickerId = playerService.getTicker().getId();
         Player player = playerService.addPlayer(RAZ);
@@ -284,7 +283,10 @@ public class PlayerServiceTests {
         Rule rule = playerService.addRule(player2.getId());
 
         // return to starting ticker
-        assertTrue(startingTickerId == playerService.previous(ticker2.getId()).getId());
+        Ticker previous = playerService.previous(ticker2.getId());
+        Long prevId = previous.getId();
+
+        assertEquals(startingTickerId, prevId);
 
         // advance again
         playerService.next(playerService.getTicker().getId());
@@ -310,7 +312,7 @@ public class PlayerServiceTests {
         //remove rule
         playerService.removeRule(player2.getId(), rule.getId());
         // return to starting ticker
-        assertTrue(startingTickerId == playerService.previous(ticker2.getId()).getId());
+        assertEquals(startingTickerId, playerService.previous(ticker2.getId()).getId());
 
         // advance again
         playerService.next(playerService.getTicker().getId());
@@ -423,13 +425,13 @@ public class PlayerServiceTests {
         assertTrue(playerService.getTicker().getId() > id);
         
         playerService.loadTicker(id);
-        assertTrue(playerService.getTicker().getId() == id);
+        assertTrue(playerService.getTicker().getId().equals(id));
     }
 
     @Test
     public void whenTickerBeatsPerBarUpdated_thenChangeReflectedInTicker() {
         playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.BEATS_PER_BAR, 16);
-        assertEquals(16, playerService.getTicker().getBeatsPerBar()); 
+        assertTrue(16 == playerService.getTicker().getBeatsPerBar()); 
     }
 
     @Test
@@ -440,17 +442,17 @@ public class PlayerServiceTests {
     @Test
     public void whenTickerMaxTracksUpdated_thenChangeReflectedInTicker() {
         playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.MAX_TRACKS, 16);
-        assertEquals(16, playerService.getTicker().getMaxTracks()); 
+        assertTrue(16 == playerService.getTicker().getMaxTracks()); 
     }
     @Test
     public void whenTickePartLengthUpdated_thenChangeReflectedInTicker() {
         playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.PART_LENGTH, 25);
-        assertEquals(25, playerService.getTicker().getPartLength()); 
+        assertTrue(25 == playerService.getTicker().getPartLength()); 
     }
     @Test
     public void whenTickerPPQUpdated_thenChangeReflectedInTicker() {
         playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.PPQ, 16);
-        assertEquals(16, playerService.getTicker().getTicksPerBeat()); 
+        assertTrue(16 == playerService.getTicker().getTicksPerBeat()); 
     }
 
 }

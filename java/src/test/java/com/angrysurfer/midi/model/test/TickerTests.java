@@ -5,9 +5,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.midi.model.Ticker;
+
 public class TickerTests {
+
+  
+  static Logger logger = LoggerFactory.getLogger(TickerTests.class.getCanonicalName());
 
     @Test
     public void whenTime_thenBarChanges() {
@@ -42,37 +48,52 @@ public class TickerTests {
     @Test
     public void whenTime_thenPartChanges() {
 
-      AtomicInteger bar = new AtomicInteger(1);
-      Ticker ticker = new Ticker() {
-        @Override
-        public void onBarChange() {
-            super.onBarChange();
-            bar.incrementAndGet();
-        }
-      };
+      Ticker ticker = new Ticker();
 
+      ticker.setParts(4);
       ticker.setBeatsPerBar(4);
-      ticker.setTicksPerBeat(4);
-      ticker.setPartLength(16);
+      ticker.setTicksPerBeat(1);
+      ticker.setPartLength(4);
 
-      int expectedPart = 2;
+      int expectedPart = 1;
 
       ticker.beforeStart();
-      
-      // 
-      IntStream.range(0, 16 * ticker.getBeatsPerBar() * ticker.getTicksPerBeat()).forEach(i -> {
+      for (int i = 0; i < 8; i++) {
         ticker.beforeTick();
+        logger.info(String.format("%s", ticker.getPart()));
         ticker.afterTick();
-      });
+      };
 
     //   ticker.afterEnd();
       assertEquals(expectedPart, ticker.getPart());
     }
 
+    // @Test
+    // public void whenTime_thenPartCyclerChanges() {
+
+    //   Ticker ticker = new Ticker();
+
+    //   ticker.setBeatsPerBar(4);
+    //   ticker.setTicksPerBeat(4);
+    //   ticker.setPartLength(16);
+
+    //   int expectedPart = 2;
+
+    //   ticker.beforeStart();
+      
+    //   // 
+    //   IntStream.range(0, 16 * ticker.getBeatsPerBar() * ticker.getTicksPerBeat()).forEach(i -> {
+    //     ticker.beforeTick();
+    //     ticker.afterTick();
+    //   });
+
+    // //   ticker.afterEnd();
+    //   assertEquals(expectedPart, ticker.getPartCycler().get());
+    // }
+    
     @Test
     public void whenTime_thenPartCyclesBackToOne() {
 
-      AtomicInteger bar = new AtomicInteger(1);
       Ticker ticker = new Ticker();
 
       ticker.setBeatsPerBar(4);

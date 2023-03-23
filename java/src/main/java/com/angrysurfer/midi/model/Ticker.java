@@ -14,41 +14,39 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
 @Setter
 @Entity
 public class Ticker implements Serializable {
 
-    @Transient
     @JsonIgnore
+    @Transient
     static Logger logger = LoggerFactory.getLogger(Ticker.class.getCanonicalName());
 
-    @Transient
     @JsonIgnore
+    @Transient
     private Set<Strike> addList = new HashSet<>();
 
-    @Transient
     @JsonIgnore
+    @Transient
     private Set<Strike> removeList = new HashSet<>();
 
-    // @Transient
-    // private AtomicInteger atomicBar = new AtomicInteger(1);
-
-
+    @JsonIgnore
     @Transient
     private Cycler beatCycler = new Cycler();
 
+    @JsonIgnore
     @Transient
     private Cycler barCycler = new Cycler();
 
+    @JsonIgnore
     @Transient
-    private AtomicInteger atomicPart = new AtomicInteger(1);
+    private Cycler partCycler = new Cycler();
 
+    @JsonIgnore
     @Transient
-    private AtomicLong atomicTick = new AtomicLong(1L);
+    private Cycler tickCycler = new Cycler();
 
     @Transient
     private boolean done = false;
@@ -67,19 +65,18 @@ public class Ticker implements Serializable {
     @Transient
     private double granularBeat = 1.0;
 
-    private int beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
-    private double beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
-    private int partLength = Constants.DEFAULT_PART_LENGTH;
-    private int maxTracks = Constants.DEFAULT_MAX_TRACKS;
-    private int songLength = Constants.DEFAULT_MAX_TRACKS;
-    private int swing = Constants.DEFAULT_SWING;
-    private int ticksPerBeat = Constants.DEFAULT_PPQ;
-    private float tempoInBPM = Constants.DEFAULT_BPM;
-    private int loopCount  = Constants.DEFAULT_LOOP_COUNT;
-    private int parts = 4;
+    private Integer bars = 4;
+    private Integer beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
+    private Double beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
+    private Integer partLength = 4;// Constants.DEFAULT_PART_LENGTH;
+    private Integer maxTracks = Constants.DEFAULT_MAX_TRACKS;
+    private Integer songLength = Constants.DEFAULT_MAX_TRACKS;
+    private Integer swing = Constants.DEFAULT_SWING;
+    private Integer ticksPerBeat = Constants.DEFAULT_PPQ;
+    private Float tempoInBPM = Constants.DEFAULT_BPM;
+    private Integer loopCount  = Constants.DEFAULT_LOOP_COUNT;
+    private Integer parts = 4;
 
-    @Transient
-    private boolean playing = false;
     
     @Transient
     private boolean paused = false;
@@ -96,51 +93,31 @@ public class Ticker implements Serializable {
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
 
-    public void beforeTick() {
-    }
-
-    public void afterTick() {
-        setTick(getTick() + 1);
-        if (getTick() % getTicksPerBeat() == 0) {
-            getBeatCycler().advance();
-            if (getBeatCycler().get() % getBeatsPerBar() == 0) 
-                onBarChange();
-        }
-    }
-
     public double getBeat() {
         return getBeatCycler().get();
     }
 
-    public void setTick(long tick) {
-        atomicTick.set(tick);
-    }
-
     public Long getTick() {
-        return atomicTick.get();
+        return getTickCycler().get();
     }
 
-    // public void setBar(int bar) {
-    //     atomicBar.set(bar);
-    // }
 
-    public int getBar() {
+    public Long getBar() {
         return getBarCycler().get();
     }
 
-    private void setPart(int part) {
-        atomicPart.set(part);
-    }
-
-    public int getPart() {
-        return atomicPart.get();
+    public Long getPart() {
+        return getPartCycler().get();
+        // return atomicPart.get();
     }
 
     public void reset() {
         setId(null);
-        setTick(0L);
+        // setTick(0L);
+        getTickCycler().reset();
         getBeatCycler().reset();
         getBarCycler().reset();
+        getPartCycler().reset();
         getPlayers().clear();
         setPaused(false);
         setDone(false);
@@ -152,28 +129,7 @@ public class Ticker implements Serializable {
         setBeatDivider(Constants.DEFAULT_BEAT_DIVIDER);
         setBeatsPerBar(Constants.DEFAULT_BEATS_PER_BAR);
         setGranularBeat(1.0);
-    }
-
-    public void onBarChange() {
-
-        getBarCycler().advance();
-
-        if (getBar() % getPartLength() == 0)
-            onPartChange();
-    
-        if (!getRemoveList().isEmpty()) {
-            getPlayers().removeAll(getRemoveList());
-            getRemoveList().clear();
-        }
         
-        if (!getAddList().isEmpty()) {
-            getPlayers().addAll(getAddList());
-            getAddList().clear();
-        }    
-    }
-
-    public void onPartChange() {
-        setPart(getPart() < getParts() ? getPart() + 1 : 1);    
     }
 
     private void clearMuteGroups() {
@@ -190,27 +146,65 @@ public class Ticker implements Serializable {
     }
 
     public void afterEnd() {
-        setPlaying(false);
-        setTick(1L);
+        // setTick(1L);
+        getTickCycler().reset();
         getBeatCycler().reset();
         getBarCycler().reset();
     }
 
     public void beforeStart() {
-        getBeatCycler().setLength(getBeatsPerBar());
-        getBarCycler().setLength(getPartLength() * getBeatsPerBar());
-
-        setPlaying(true);
-        setTick(1L);
+        getBarCycler().setLength(getBeatsPerBar());
+        getBeatCycler().setLength(4);
+        getPartCycler().setLength(getPartLength());
     }
 
     public void onStop() {
-        setPlaying(false);
-        setTick(1L);
-        getBarCycler().reset();
         getBeatCycler().reset();
     }
 
 
+    public void beforeTick() {
+    }
+
+    public void afterTick() {
+        if (getTick() % getTicksPerBeat() == 0) 
+            onBeatChange();  
+                      
+        getTickCycler().advance();
+    }
+
+    
+    public void onBeatChange() {
+ 
+        if (getBeatCycler().get() % getBeatsPerBar() == 0) 
+            onBarChange();
+
+        getBeatCycler().advance();
+   }
+
+
+    public void onBarChange() {
+        updatePlayerConfig();
+        if (getBar() % getPartLength() == 0)
+                onPartChange();
+
+        getBarCycler().advance();
+    }
+
+    public void onPartChange() {
+        getPartCycler().advance();        
+    }
+
+    private void updatePlayerConfig() {
+        if (!getRemoveList().isEmpty()) {
+            getPlayers().removeAll(getRemoveList());
+            getRemoveList().clear();
+        }
+        
+        if (!getAddList().isEmpty()) {
+            getPlayers().addAll(getAddList());
+            getAddList().clear();
+        }    
+    }
 }
 

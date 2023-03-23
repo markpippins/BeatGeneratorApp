@@ -96,7 +96,7 @@ public class SequenceRunner implements Runnable {
         sequencer.setSequence(master);
         sequencer.setLoopCount(this.ticker.getLoopCount());
         sequencer.setTempoInBPM(this.ticker.getTempoInBPM());
-
+        
         sequencer.open();
         this.ticker.beforeStart();
     }
@@ -114,7 +114,7 @@ public class SequenceRunner implements Runnable {
         try {
             beforeStart();
             sequencer.start();
-            while (sequencer.isRunning() && ticker.isPlaying()) {
+            while (sequencer.isRunning() && sequencer.isRunning()) {
                 if (sequencer.getTickPosition() > this.ticker.getTick()) {
                     this.ticker.beforeTick();
                     this.executor.invokeAll(this.ticker.getPlayers());
@@ -133,13 +133,11 @@ public class SequenceRunner implements Runnable {
         if (Objects.nonNull(sequencer) && sequencer.isRunning())
             sequencer.stop();
 
-        this.ticker.setPlaying(false);
         this.ticker.setPaused(false);
-        this.ticker.setTick(1L);
         this.ticker.getBeatCycler().reset();
         this.ticker.getBarCycler().reset();
         this.ticker.setDone(false);
-
+        this.ticker.reset();
         return this.ticker;
     }
 

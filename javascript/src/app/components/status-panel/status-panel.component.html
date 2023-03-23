@@ -12,8 +12,9 @@
       </td>
       <td>Ticker</td>
       <td>Tick</td>
-      <td>Beat</td>
       <td>Bar</td>
+      <td>Beat</td>
+      <td>Part</td>
 
       <td *ngIf="ticker.playing" class="active">
       </td>
@@ -42,10 +43,13 @@
         <input class="fixed" type="number" disabled="true" value="{{ ticker.tick }}">
       </td>
       <td>
+        <input class="fixed" type="number" disabled="true" value="{{ ticker.bar }}">
+      </td>
+      <td>
         <input class="fixed" type="number" disabled="true" value="{{ getRounded(ticker.beat)}}">
       </td>
       <td>
-        <input class="fixed" type="number" disabled="true" value="{{ ticker.bar }}">
+        <input class="fixed" type="number" disabled="true" value="{{ ticker.part }}">
       </td>
       <td *ngIf="ticker.playing" class="active">
       </td>

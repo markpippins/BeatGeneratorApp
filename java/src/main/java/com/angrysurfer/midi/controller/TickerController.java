@@ -26,12 +26,12 @@ public class TickerController {
         this.service = service;
     }
 
-    @GetMapping(path = Constants.ADD_TICKER)
-    public Ticker newTicker() {
-        if (requestsToLog.contains("new"))
-            logger.info(Constants.ADD_TICKER);
-        return service.newTicker();
-    }
+    // @GetMapping(path = Constants.ADD_TICKER)
+    // public Ticker newTicker() {
+    //     if (requestsToLog.contains("new"))
+    //         logger.info(Constants.ADD_TICKER);
+    //     return service.newTicker();
+    // }
 
     @GetMapping(path = Constants.LOAD_TICKER)
     public Ticker load(@RequestParam long tickerId) {

@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.midi.util.Operator;
+
 import jakarta.persistence.*;
 
 import java.util.*;
@@ -27,9 +29,9 @@ public class Strike extends Player {
 
     static Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
 
-    private int ratchetCount;
+    private Integer ratchetCount = 0;
     
-    private int ratchetInterval;
+    private Integer ratchetInterval = 0;
 
     public Strike() {
     
@@ -49,7 +51,10 @@ public class Strike extends Player {
     }
 
     @Override
-    public void onTick(long tick, int bar) {
-        drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+    public void onTick(long tick, long bar) {
+        if (getRules().stream().filter(r -> r.getOperatorId() == Operator.TICK).findAny().isPresent())
+            drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+        else if (4 * getTicker().getTick() % getTicker().getTicksPerBeat() == 0)
+            drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
     }
 }

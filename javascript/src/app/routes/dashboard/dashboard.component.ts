@@ -38,7 +38,8 @@ export class DashboardComponent implements OnInit, Listener {
     tempoInBPM: 0,
     tick: 0,
     ticksPerBeat: 0,
-    activePlayerIds: []
+    activePlayerIds: [],
+    part: 0
   }
 
   running = false

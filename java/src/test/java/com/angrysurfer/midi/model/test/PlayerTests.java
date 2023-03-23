@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.IntStream;
 
 import org.junit.Test;
 
@@ -22,27 +23,15 @@ public class PlayerTests {
   @Test
   public void whenRuleExistsForFirstBeat_thenOnTickCalledFirstBeat() {
 
+
     AtomicBoolean play = new AtomicBoolean(false);
     Player p = new Player() {
-
-      Ticker ticker = new Ticker();
-
       @Override
-      public Ticker getTicker() {
-        return ticker;
-      }
-
-      @Override
-      public void setTicker(Ticker ticker) {
-        this.ticker = ticker;
-      }
-
-      @Override
-      public void onTick(long tick, int bar) {
+      public void onTick(long tick, long bar) {
         play.set(true);
       }
-
     };
+    p.setTicker(new Ticker());
 
     Rule r = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0);
     p.getRules().add(r);
@@ -60,13 +49,19 @@ public class PlayerTests {
     AtomicBoolean play2 = new AtomicBoolean(false);
     AtomicBoolean play3 = new AtomicBoolean(false);
 
-    Ticker ticker = new Ticker();
-    ticker.setTick(1L);
+    Ticker ticker = new Ticker() {
+      @Override
+      public double getBeat() { 
+        return 1.0;
+      }
+    };
+
     ticker.getBarCycler().reset();
     ticker.getBeatCycler().reset();
+
     Player p1 = new Player() {
       @Override
-      public void onTick(long tick, int bar) {
+      public void onTick(long tick, long bar) {
         play1.set(true);
       }
 
@@ -75,7 +70,7 @@ public class PlayerTests {
 
     Player p2 = new Player() {
       @Override
-      public void onTick(long tick, int bar) {
+      public void onTick(long tick, long bar) {
         play2.set(true);
       }
 
@@ -84,12 +79,12 @@ public class PlayerTests {
 
     Player p3 = new Player() {
       @Override
-      public void onTick(long tick, int bar) {
+      public void onTick(long tick, long bar) {
         play3.set(true);
       }
-
     };
     p3.setTicker(ticker);
+    
 
     p1.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
     p2.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));

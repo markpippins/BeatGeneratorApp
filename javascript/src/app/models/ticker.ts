@@ -5,6 +5,7 @@ export interface Ticker {
   tick: number;
   done: boolean;
   bar: number;
+  part: number
   ticksPerBeat: number;
   beat: number;
   beatsPerBar: number;
