@@ -1,6 +1,7 @@
 package com.angrysurfer.midi.model;
 
 import com.angrysurfer.midi.util.Comparison;
+import com.angrysurfer.midi.util.Cycler;
 import com.angrysurfer.midi.util.Operator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -39,6 +40,9 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private int preset = 1;
     private int probability = 100;
 
+    @JsonIgnore
+    @Transient
+    private Cycler subCycler = new Cycler();
 
     @Transient
     private boolean muted = false;
@@ -111,28 +115,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         return Objects.nonNull(instrument) ? instrument.getChannel() : 0;
     }
 
-    @Override
-    public Boolean call() {
-        if (getLastTick() == getTicker().getTick())
-            return Boolean.FALSE;
-        
-            
-        if (shouldPlay() && !isMuted() &&
-            getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers()
-                .stream().filter(e -> e.getLastPlayedTick() == getTicker().getTick())
-                    .toList().size() > 0)) {
-                        getTicker().getActivePlayerIds().add(getId());
-                        setLastPlayedBar(getTicker().getBar());
-                        setLastPlayedBeat(getTicker().getBeat());
-                        setLastPlayedTick(getTicker().getTick());
-                        onTick(getTicker().getTick(), getTicker().getBar());
-                    }
-
-        setLastTick(getTicker().getTick());
-                // logger.info(String.format("%s not playing tick %s, beat %s, bar %s", getName(), tick, getTicker().getBeat(), getTicker().getBar()));
-        return Boolean.TRUE;
-    }
-
     public void drumNoteOn(int note, int velocity) {
         noteOn(note, velocity);
         noteOff(note, velocity);
@@ -154,9 +136,35 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         }
     }
 
+    @Override
+    public Boolean call() {
+        if (getLastTick() == getTicker().getTick())
+            return Boolean.FALSE;
+        
+            
+        if (shouldPlay() && !isMuted() &&
+            getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers()
+                .stream().filter(e -> e.getLastPlayedTick() == getTicker().getTick())
+                    .toList().size() > 0)) {
+                        getTicker().getActivePlayerIds().add(getId());
+                        setLastPlayedBar(getTicker().getBar());
+                        setLastPlayedBeat(getTicker().getBeat());
+                        setLastPlayedTick(getTicker().getTick());
+                        onTick(getTicker().getTick(), getTicker().getBar());
+                    }
+
+        setLastTick(getTicker().getTick());
+        getSubCycler().advance();
+                // logger.info(String.format("%s not playing tick %s, beat %s, bar %s", getName(), tick, getTicker().getBeat(), getTicker().getBar()));
+        return Boolean.TRUE;
+    }
+
     @JsonIgnore
     public boolean shouldPlay() {
-        AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
+
+        double beat = getTicker().getBeat() + (getSubCycler().get() - 1) * 0.0625;
+
+        AtomicBoolean play = new AtomicBoolean(true);
         getRules().stream().filter(r -> r.getPart() == 0 || r.getPart() == getTicker().getPart()).forEach(rule -> {
                 switch (rule.getOperatorId()) {
                     case Operator.TICK -> {
@@ -165,8 +173,9 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                     }
                     
                     case Operator.BEAT -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat(), rule.getValue()))
-                            play.set(false);
+                        if (!Comparison.evaluate(rule.getComparisonId(), beat, rule.getValue())) 
+                            // if (getTicker().getBeatCounter().get() / getTicker().getBeatsPerBar() % getSubCycler().getLength() == 0)
+                                play.set(false);
                     }
 
                     case Operator.BAR -> {

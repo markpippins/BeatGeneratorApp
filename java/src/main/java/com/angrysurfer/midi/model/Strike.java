@@ -52,9 +52,9 @@ public class Strike extends Player {
 
     @Override
     public void onTick(long tick, long bar) {
-        if (getRules().stream().filter(r -> r.getOperatorId() == Operator.TICK).findAny().isPresent())
+        // if (getRules().stream().filter(r -> r.getOperatorId() == Operator.TICK).findAny().isPresent())
             drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
-        else if (4 * getTicker().getTick() % getTicker().getTicksPerBeat() == 0)
-            drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+        // else if (4 * getTicker().getTick() % getTicker().getTicksPerBeat() == 0)
+        //     drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
     }
 }

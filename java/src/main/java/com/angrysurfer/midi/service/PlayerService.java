@@ -167,6 +167,7 @@ public class PlayerService {
         strike.setTicker(getTicker());
         strike = getStrikeRepository().save(strike);
         getTicker().getPlayers().add(strike);
+        strike.getSubCycler().setLength(16);
         return strike;
     }
 

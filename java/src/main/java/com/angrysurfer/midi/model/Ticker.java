@@ -38,6 +38,10 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
+    private Cycler beatCounter = new Cycler();
+
+    @JsonIgnore
+    @Transient
     private Cycler barCycler = new Cycler();
 
     @JsonIgnore
@@ -65,10 +69,10 @@ public class Ticker implements Serializable {
     @Transient
     private double granularBeat = 1.0;
 
-    private Integer bars = 4;
+    private Integer bars = 8;
     private Integer beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
     private Double beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
-    private Integer partLength = 4;// Constants.DEFAULT_PART_LENGTH;
+    private Integer partLength = 2;// Constants.DEFAULT_PART_LENGTH;
     private Integer maxTracks = Constants.DEFAULT_MAX_TRACKS;
     private Integer songLength = Constants.DEFAULT_MAX_TRACKS;
     private Integer swing = Constants.DEFAULT_SWING;
@@ -112,23 +116,24 @@ public class Ticker implements Serializable {
     }
 
     public void reset() {
-        setId(null);
+        // setId(null);
         // setTick(0L);
         getTickCycler().reset();
         getBeatCycler().reset();
         getBarCycler().reset();
         getPartCycler().reset();
-        getPlayers().clear();
-        setPaused(false);
-        setDone(false);
-        setSwing(Constants.DEFAULT_SWING);
-        setMaxTracks(Constants.DEFAULT_MAX_TRACKS);
-        setPartLength(Constants.DEFAULT_PART_LENGTH);
-        setSongLength(Constants.DEFAULT_SONG_LENGTH);
-        setTempoInBPM(Constants.DEFAULT_BPM);
-        setBeatDivider(Constants.DEFAULT_BEAT_DIVIDER);
-        setBeatsPerBar(Constants.DEFAULT_BEATS_PER_BAR);
-        setGranularBeat(1.0);
+        getBeatCounter().reset();
+        // getPlayers().clear();
+        // setPaused(false);
+        // setDone(false);
+        // setSwing(Constants.DEFAULT_SWING);
+        // setMaxTracks(Constants.DEFAULT_MAX_TRACKS);
+        // setPartLength(Constants.DEFAULT_PART_LENGTH);
+        // setSongLength(Constants.DEFAULT_SONG_LENGTH);
+        // setTempoInBPM(Constants.DEFAULT_BPM);
+        // setBeatDivider(Constants.DEFAULT_BEAT_DIVIDER);
+        // setBeatsPerBar(Constants.DEFAULT_BEATS_PER_BAR);
+        // setGranularBeat(1.0);
         
     }
 
@@ -156,6 +161,7 @@ public class Ticker implements Serializable {
         getBarCycler().setLength(getBeatsPerBar());
         getBeatCycler().setLength(4);
         getPartCycler().setLength(getPartLength());
+        getPlayers().forEach(p -> p.getSubCycler().setLength(16));
     }
 
     public void onStop() {
@@ -169,17 +175,17 @@ public class Ticker implements Serializable {
     public void afterTick() {
         if (getTick() % getTicksPerBeat() == 0) 
             onBeatChange();  
-                      
+
         getTickCycler().advance();
     }
 
     
     public void onBeatChange() {
- 
-        if (getBeatCycler().get() % getBeatsPerBar() == 0) 
-            onBarChange();
-
         getBeatCycler().advance();
+        getBeatCounter().advance();
+ 
+        if (getBeat() % Constants.DEFAULT_BEATS_PER_BAR == 0) 
+            onBarChange();
    }
 
 
