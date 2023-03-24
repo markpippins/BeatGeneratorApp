@@ -423,23 +423,6 @@ public class PlayerServiceTests {
     }
 
     @Test
-    public void whenNewTickerCalled_thenGetTickerWithNewId() {
-        Long id = playerService.getTicker().getId();
-        playerService.newTicker();
-        assertTrue(playerService.getTicker().getId() > id); 
-    }
-
-    @Test
-    public void whenLoadTickerCalled_thenGetRequestedTicker() {
-        Long id = playerService.getTicker().getId();
-        playerService.newTicker();
-        assertTrue(playerService.getTicker().getId() > id);
-        
-        playerService.loadTicker(id);
-        assertTrue(playerService.getTicker().getId().equals(id));
-    }
-
-    @Test
     public void whenTickerBeatsPerBarUpdated_thenChangeReflectedInTicker() {
         playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.BEATS_PER_BAR, 16);
         assertTrue(16 == playerService.getTicker().getBeatsPerBar()); 

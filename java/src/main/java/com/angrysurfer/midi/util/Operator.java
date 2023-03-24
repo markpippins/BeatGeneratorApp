@@ -6,5 +6,5 @@ public interface Operator {
     static int BEAT = 1;
     static int BAR = 2;
     static int PART = 3;
-    static int POSITION = 4;
+    static int ACTUAL_BAR = 4;
 }

@@ -2,6 +2,7 @@ package com.angrysurfer.midi.controller;
 
 import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.service.PlayerService;
+import com.angrysurfer.midi.service.TickerService;
 import com.angrysurfer.midi.util.Constants;
 
 import org.slf4j.Logger;
@@ -22,8 +23,11 @@ public class TickerController {
 
     private final PlayerService service;
 
-    public TickerController(PlayerService service) {
+    private final TickerService tickerService;
+
+    public TickerController(PlayerService service, TickerService tickerService) {
         this.service = service;
+        this.tickerService = tickerService;
     }
 
     // @GetMapping(path = Constants.ADD_TICKER)
@@ -37,56 +41,56 @@ public class TickerController {
     public Ticker load(@RequestParam long tickerId) {
         if (requestsToLog.contains("load"))
             logger.info(Constants.LOAD_TICKER);
-        return service.loadTicker(tickerId);
+        return tickerService.loadTicker(tickerId);
     }
 
     @GetMapping(path = Constants.START_TICKER)
     public void start() {
         if (requestsToLog.contains("start"))
             logger.info(Constants.START_TICKER);
-        service.play();
+            tickerService.play();
     }
 
     @GetMapping(path = Constants.PAUSE_TICKER)
     public void pause() {
         if (requestsToLog.contains("pause"))
            logger.info(Constants.PAUSE_TICKER);
-        service.pause();
+           tickerService.pause();
     }
 
     @GetMapping(path = Constants.STOP_TICKER)
     public Ticker stop() {
         if (requestsToLog.contains("stop"))
            logger.info(Constants.STOP_TICKER);
-        return service.stop();
+        return tickerService.stop();
     }
 
     @GetMapping(path = Constants.NEXT_TICKER)
     public Ticker next(@RequestParam long currentTickerId) {
         if (requestsToLog.contains("next"))
            logger.info(Constants.NEXT_TICKER);
-        return service.next(currentTickerId);
+        return tickerService.next(currentTickerId);
     }
 
     @GetMapping(path = Constants.PREV_TICKER)
     public Ticker previous(@RequestParam long currentTickerId) {
         if (requestsToLog.contains("previous"))
            logger.info(Constants.PREV_TICKER);
-        return service.previous(currentTickerId);
+        return tickerService.previous(currentTickerId);
     }
 
     @GetMapping(path = Constants.TICKER_STATUS)
     public @ResponseBody Ticker getTickerStatus() {
         if (requestsToLog.contains("status"))
            logger.info(Constants.TICKER_STATUS);
-        return service.getTickerStatus();
+        return tickerService.getTickerStatus();
     }
 
     @GetMapping(path = Constants.TICKER_INFO)
     public @ResponseBody Ticker getTicker() {
         if (requestsToLog.contains("info"))
            logger.info(Constants.TICKER_INFO);
-        return service.getTicker();
+        return tickerService.getTicker();
     }
 
     @GetMapping(path = Constants.TICKER_LOG)
@@ -101,7 +105,7 @@ public class TickerController {
     public @ResponseBody Ticker updateTicker(@RequestParam Long tickerId, @RequestParam int updateType, @RequestParam int updateValue) {
         if (requestsToLog.contains("update"))
             logger.info(Constants.UPDATE_TICKER);
-        return service.updateTicker(tickerId, updateType, updateValue);
+        return tickerService.updateTicker(tickerId, updateType, updateValue);
     }
 
 }

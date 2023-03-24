@@ -183,9 +183,10 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                             play.set(false);
                     }
                     
-                    case Operator.POSITION -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), getPosition(), rule.getValue()))
-                            play.set(false);
+                    case Operator.ACTUAL_BAR -> {
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeatCounter().get() / getTicker().getBeatsPerBar(), 
+                            rule.getValue()))
+                                play.set(false);
                     }
                 }
             });

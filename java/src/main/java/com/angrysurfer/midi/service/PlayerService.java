@@ -40,7 +40,7 @@ public class PlayerService {
     private final MidiInstrumentRepository midiInstrumentRepo;
     private final ControlCodeRepository controlCodeRepository;
     private final PadRepository padRepository;
-    private Ticker ticker;
+    // private Ticker ticker;
     private Song song;
     private MIDIService midiService;
     private StrikeRepository strikeRepository;
@@ -50,6 +50,7 @@ public class PlayerService {
     private SongRepository songRepository;
     private SequenceRunner sequenceRunner;
     private ArrayList<SequenceRunner> sequenceRunners = new ArrayList<>(); 
+    private TickerService tickerService;
 
     public PlayerService(MIDIService midiService, StrikeRepository strikeRepository,
                                 RuleRepository ruleRepository, TickerRepo tickerRepo, 
@@ -57,7 +58,8 @@ public class PlayerService {
                                 ControlCodeRepository controlCodeRepository,
                                 PadRepository padRepository,
                                 StepRepository stepRepository,
-                                SongRepository songRepository) {
+                                SongRepository songRepository,
+                                TickerService tickerService) {
 
         this.midiService = midiService;
         this.tickerRepo = tickerRepo;
@@ -68,6 +70,7 @@ public class PlayerService {
         this.controlCodeRepository = controlCodeRepository;
         this.stepDataRepository = stepRepository;
         this.songRepository = songRepository;
+        this.tickerService = tickerService;
     }
 
 
@@ -92,7 +95,7 @@ public class PlayerService {
         sequenceRunner = new SequenceRunner(getTicker());
         sequenceRunners.add(getSequenceRunner());
 
-        this.ticker.getPlayers().forEach(p -> p.getInstrument()
+        getTicker().getPlayers().forEach(p -> p.getInstrument()
             .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
 
         if (Objects.nonNull(getSequenceRunner()) && !getSequenceRunner().isPlaying())
@@ -131,13 +134,14 @@ public class PlayerService {
     }
 
     public Ticker getTicker() {
-        if (Objects.isNull(ticker)) {
-            stopRunningSequencers();
-            ticker = getTickerRepo().save(new Ticker());
-            sequenceRunner = new SequenceRunner(ticker);
-        }
+        // if (Objects.isNull(ticker)) {
+        //     stopRunningSequencers();
+        //     ticker = getTickerRepo().save(new Ticker());
+        //     sequenceRunner = new SequenceRunner(ticker);
+        // }
         
-        return ticker;
+        // return ticker;
+        return getTickerService().getTicker();
     }
 
     public Strike addPlayer(String instrumentName) {
@@ -323,7 +327,7 @@ public class PlayerService {
         if (currentTickerId == 0 || getTicker().getPlayers().size() > 0) {       
             stopRunningSequencers();
             Long maxTickerId = getTickerRepo().getMaximumTickerId();
-            setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
+            getTickerService().setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
                 getTickerRepo().getNextTicker(currentTickerId) :
                 null);
             getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
@@ -337,7 +341,7 @@ public class PlayerService {
     public synchronized Ticker previous(long currentTickerId) {
         if (currentTickerId >  (getTickerRepo().getMinimumTickerId())) {
             stopRunningSequencers();
-            setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
+            getTickerService().setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
             getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
             getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
             sequenceRunner = new SequenceRunner(getTicker());
@@ -383,8 +387,9 @@ public class PlayerService {
     }
 
     public Ticker loadTicker(long tickerId) {
-        getTickerRepo().findById(tickerId).ifPresent(this::setTicker);
-        return getTicker();
+        // getTickerRepo().findById(tickerId).ifPresent(this::setTicker);
+        // return getTicker();
+        return tickerService.loadTicker(tickerId);
     }
 
     public Set<Strike> getPlayers() {
@@ -424,8 +429,8 @@ public class PlayerService {
     }
 
 
-    public Ticker newTicker() {
-        setTicker(null);
-        return getTicker();
-    } 
+    // public Ticker newTicker() {
+    //     setTicker(null);
+    //     return getTicker();
+    // } 
 }

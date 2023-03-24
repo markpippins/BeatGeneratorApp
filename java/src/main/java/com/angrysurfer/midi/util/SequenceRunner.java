@@ -63,19 +63,7 @@ public class SequenceRunner implements Runnable {
     }
 
     public void ensureDevicesOpen() {
-
-        this.ticker.getPlayers().stream().map(p -> p.getInstrument().getDevice()).distinct().forEach(d -> {
-            MIDIService.select(d);
-        });
-
-        // this.ticker.getPlayers().stream().map(p -> p.getInstrument().getDevice()).distinct().forEach(device -> { 
-        //     if (!device.isOpen())
-        //         try {
-        //             device.open();
-        //         } catch (MidiUnavailableException e) {
-        //             logger.error(e.getMessage(), e);
-        //         }} 
-        //     );
+        this.ticker.getPlayers().stream().map(p -> p.getInstrument().getDevice()).distinct().forEach(d -> MIDIService.select(d));
     }
 
     public Sequence getMasterSequence() throws InvalidMidiDataException {
