@@ -89,49 +89,49 @@ public class PlayerService {
         }    
     }
 
-    public void play() {
+    // public void play() {
         
-        stopRunningSequencers();
-        sequenceRunner = new SequenceRunner(getTicker());
-        sequenceRunners.add(getSequenceRunner());
+    //     stopRunningSequencers();
+    //     sequenceRunner = new SequenceRunner(getTicker());
+    //     sequenceRunners.add(getSequenceRunner());
 
-        getTicker().getPlayers().forEach(p -> p.getInstrument()
-            .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
+    //     getTicker().getPlayers().forEach(p -> p.getInstrument()
+    //         .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
 
-        if (Objects.nonNull(getSequenceRunner()) && !getSequenceRunner().isPlaying())
-            new Thread(getSequenceRunner()).start();
-        else {
-            setSequenceRunner(new SequenceRunner(getTicker()));
-            new Thread(getSequenceRunner()).start();
-        }
-    }
+    //     if (Objects.nonNull(getSequenceRunner()) && !getSequenceRunner().isPlaying())
+    //         new Thread(getSequenceRunner()).start();
+    //     else {
+    //         setSequenceRunner(new SequenceRunner(getTicker()));
+    //         new Thread(getSequenceRunner()).start();
+    //     }
+    // }
 
-    private void stopRunningSequencers() {
-        sequenceRunners.forEach(sr -> sr.stop());
-        sequenceRunners.clear();
-    }
+    // private void stopRunningSequencers() {
+    //     sequenceRunners.forEach(sr -> sr.stop());
+    //     sequenceRunners.clear();
+    // }
 
-    public Ticker stop() {
-        stopRunningSequencers();
-        return getTicker();
-    }
+    // public Ticker stop() {
+    //     stopRunningSequencers();
+    //     return getTicker();
+    // }
 
-    public void pause() {
-        getSequenceRunner().pause();
-        getSequenceRunner().isPlaying();
-    }
+    // public void pause() {
+    //     getSequenceRunner().pause();
+    //     getSequenceRunner().isPlaying();
+    // }
 
-    public Ticker getTickerInfo() {
-        return getTicker();
-    }
+    // public Ticker getTickerInfo() {
+    //     return getTicker();
+    // }
 
-    public Ticker getTickerStatus() {
-        return getTicker();
-    }
+    // public Ticker getTickerStatus() {
+    //     return getTicker();
+    // }
 
-    public List<Ticker> getAllTickerInfo() {
-        return getTickerRepo().findAll();
-    }
+    // public List<Ticker> getAllTickerInfo() {
+    //     return getTickerRepo().findAll();
+    // }
 
     public Ticker getTicker() {
         // if (Objects.isNull(ticker)) {
@@ -323,32 +323,32 @@ public class PlayerService {
         return strike;
     }
 
-    public synchronized Ticker next(long currentTickerId) {
-        if (currentTickerId == 0 || getTicker().getPlayers().size() > 0) {       
-            stopRunningSequencers();
-            Long maxTickerId = getTickerRepo().getMaximumTickerId();
-            getTickerService().setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
-                getTickerRepo().getNextTicker(currentTickerId) :
-                null);
-            getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
-            getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
-            sequenceRunner = new SequenceRunner(getTicker());
-        }
+    // public synchronized Ticker next(long currentTickerId) {
+    //     if (currentTickerId == 0 || getTicker().getPlayers().size() > 0) {       
+    //         stopRunningSequencers();
+    //         Long maxTickerId = getTickerRepo().getMaximumTickerId();
+    //         getTickerService().setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
+    //             getTickerRepo().getNextTicker(currentTickerId) :
+    //             null);
+    //         getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
+    //         getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
+    //         sequenceRunner = new SequenceRunner(getTicker());
+    //     }
 
-        return getTicker();
-    }
+    //     return getTicker();
+    // }
 
-    public synchronized Ticker previous(long currentTickerId) {
-        if (currentTickerId >  (getTickerRepo().getMinimumTickerId())) {
-            stopRunningSequencers();
-            getTickerService().setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
-            getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
-            getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
-            sequenceRunner = new SequenceRunner(getTicker());
-        }
+    // public synchronized Ticker previous(long currentTickerId) {
+    //     if (currentTickerId >  (getTickerRepo().getMinimumTickerId())) {
+    //         stopRunningSequencers();
+    //         getTickerService().setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
+    //         getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
+    //         getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
+    //         sequenceRunner = new SequenceRunner(getTicker());
+    //     }
 
-        return getTicker();
-    }
+    //     return getTicker();
+    // }
 
     public void setSteps(List<Step> steps) {
     //    this.getBeatGenerator().setSteps(steps);

@@ -106,12 +106,6 @@ public class PlayerServiceTests {
                 logger.error(e.getMessage());
             }
         });
-}
-
-    
-    @Test
-    public void whenTickerRetrieved_thenItHasBeenSaved() {
-        assertNotNull(playerService.getTicker());
     }
 
     @Test
@@ -223,114 +217,6 @@ public class PlayerServiceTests {
                 comparisonId, rule.getValue(), rule.getPart());
 
         assertEquals(player.getRules().stream().toList().get(0).getComparisonId(), comparisonId);
-    }
-
-    @Test
-    public void whenNextTickerRequestedWithNoPlayers_thenSameTickerReturned() {
-
-        Long id = playerService.getTicker().getId();
-        playerService.getTicker().getPlayers().clear();
-        Ticker nextTicker = playerService.next(id);
-        assertSame(nextTicker.getId(), id);
-    }
-
-    @Test
-    public void whenNextTickerRequestedWithPlayers_thenNewTickerReturned() {
-        playerService.addPlayer(RAZ);
-        Long id = playerService.getTicker().getId();
-        Ticker nextTicker = playerService.next(id);
-        assertTrue(nextTicker.getId() > id); 
-    }
-
-    @Test
-    public void whenNextTickerRequestedWithPlayers_thenNextTickerCanBeRequested() {
-        IntStream.range(0, 99).forEach(i -> {
-            playerService.addPlayer(RAZ);
-            Long id = playerService.getTicker().getId();
-            Ticker nextTicker = playerService.next(id);
-            assertTrue(nextTicker.getId() > id); 
-        });
-    }
-
-    @Test
-    public void whenPreviousTickerRequestedWith_thenTickerWithLowerIdReturned() {
-        playerService.addPlayer(RAZ);
-        Long id = playerService.getTicker().getId();
-        Ticker nextTicker = playerService.next(id);
-        assertTrue(nextTicker.getId() > id); 
-
-        Ticker prevTicker = playerService.previous(nextTicker.getId());
-        assertTrue(prevTicker.getId() < nextTicker.getId()); 
-    }
-
-    @Test
-    public void whenPreviousTickerRequestedForTickWithPlayers_thenPlayersContainAddedRule() {
-        Long startingTickerId = playerService.getTicker().getId();
-        Player player = playerService.addPlayer(RAZ);
-        Rule rule = playerService.addRule(player.getId());
-
-        // move to next ticker, add player and rule
-        playerService.next(startingTickerId);
-        Long nextTickerId = playerService.getTicker().getId();
-        playerService.addRule(playerService.addPlayer(RAZ).getId());
-
-        // return to starting ticker
-        playerService.previous(nextTickerId);
-        player = playerService.getTicker().getPlayer(player.getId());
-        assertTrue(player.getRules().stream().anyMatch(r -> r.isEqualTo(rule))); 
-    }
-
-    @Test
-    public void whenNextTickerRequestedForTickerWithPlayers_thenPlayersContainAddedRule() {
-        // playerService.newTicker();
-        // add data to current Ticker
-        Long startingTickerId = playerService.getTicker().getId();
-        Player player = playerService.addPlayer(RAZ);
-        playerService.addRule(player.getId());
-
-        // move to next ticker, add player and rule
-        Ticker ticker2 = playerService.next(startingTickerId);
-        Player player2 = playerService.addPlayer(RAZ);
-        Rule rule = playerService.addRule(player2.getId());
-
-        // return to starting ticker
-        Ticker previous = playerService.previous(ticker2.getId());
-        Long prevId = previous.getId();
-
-        assertEquals(startingTickerId, prevId);
-
-        // advance again
-        playerService.next(playerService.getTicker().getId());
-
-        Player player3 = playerService.getTicker().getPlayer(player2.getId());
-        Rule rule2 = player3.getRule(rule.getId());
-        assertTrue(rule.isEqualTo(rule2)); 
-    }
-
-    @Test
-    public void whenNextTickerRequestedForTickerWithPlayers_thenPlayerDoesNotContainRemovedRule() {
-        // playerService.newTicker();
-        // add data to current Ticker
-        Long startingTickerId = playerService.getTicker().getId();
-        Player player = playerService.addPlayer(RAZ);
-        playerService.addRule(player.getId());
-
-        // move to next ticker, add player and rule
-        Ticker ticker2 = playerService.next(startingTickerId);
-        Player player2 = playerService.addPlayer(RAZ);
-        Rule rule = playerService.addRule(player2.getId());
-
-        //remove rule
-        playerService.removeRule(player2.getId(), rule.getId());
-        // return to starting ticker
-        assertEquals(startingTickerId, playerService.previous(ticker2.getId()).getId());
-
-        // advance again
-        playerService.next(playerService.getTicker().getId());
-
-        Player player3 = playerService.getTicker().getPlayer(player2.getId());
-        // Rule rule2 = player3.getRule(rule.getId());
-        assertTrue(player3.getRules().isEmpty()); 
     }
 
     @Test

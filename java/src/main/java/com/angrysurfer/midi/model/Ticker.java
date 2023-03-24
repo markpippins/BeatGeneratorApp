@@ -46,11 +46,23 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
+    private Cycler barCounter = new Cycler();
+
+    @JsonIgnore
+    @Transient
     private Cycler partCycler = new Cycler();
 
     @JsonIgnore
     @Transient
+    private Cycler partCounter = new Cycler();
+
+    @JsonIgnore
+    @Transient
     private Cycler tickCycler = new Cycler();
+
+    @JsonIgnore
+    @Transient
+    private Cycler tickCounter = new Cycler();
 
     @Transient
     private boolean done = false;
@@ -101,18 +113,32 @@ public class Ticker implements Serializable {
         return getBeatCycler().get();
     }
 
+    public Long getBeatCount() {
+        return getBeatCounter().get();
+    } 
+
     public Long getTick() {
         return getTickCycler().get();
     }
 
+    public Long getTickCount() {
+        return getTickCounter().get();
+    }
 
     public Long getBar() {
         return getBarCycler().get();
     }
 
+    public Long getBarCount() {
+        return getBarCounter().get();
+    } 
+
     public Long getPart() {
         return getPartCycler().get();
-        // return atomicPart.get();
+    }
+
+    public Long getPartCount() {
+        return getPartCounter().get();
     }
 
     public void reset() {
@@ -122,7 +148,12 @@ public class Ticker implements Serializable {
         getBeatCycler().reset();
         getBarCycler().reset();
         getPartCycler().reset();
+
+        getTickCounter().reset();
         getBeatCounter().reset();
+        getBeatCounter().reset();
+        getBarCounter().reset();
+        getPartCounter().reset();
         // getPlayers().clear();
         // setPaused(false);
         // setDone(false);
@@ -178,6 +209,7 @@ public class Ticker implements Serializable {
             onBeatChange();  
 
         getTickCycler().advance();
+        getTickCounter().advance();
     }
 
     
@@ -196,10 +228,12 @@ public class Ticker implements Serializable {
                 onPartChange();
 
         getBarCycler().advance();
+        getBarCounter().advance();
     }
 
     public void onPartChange() {
-        getPartCycler().advance();        
+        getPartCycler().advance();      
+        getPartCounter().advance();  
     }
 
     private void updatePlayerConfig() {

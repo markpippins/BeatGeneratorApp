@@ -21,12 +21,9 @@ public class TickerController {
 
     static Logger logger = LoggerFactory.getLogger(TickerController.class.getCanonicalName());
 
-    private final PlayerService service;
-
     private final TickerService tickerService;
 
-    public TickerController(PlayerService service, TickerService tickerService) {
-        this.service = service;
+    public TickerController(TickerService tickerService) {
         this.tickerService = tickerService;
     }
 

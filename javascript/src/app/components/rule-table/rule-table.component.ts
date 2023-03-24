@@ -24,7 +24,9 @@ export class RuleTableComponent {
   BAR = 2
   PART = 3
   POSITION = 4
-  OPERATOR = ["TICK", "BEAT", "BAR", "PART", "POSITION"]
+  OPERATOR = ["Tick", "Beat", "Bar", "Part", "Bar Count"]
+
+  interval = 0.25
 
   @Input()
   player!: Player
@@ -35,6 +37,8 @@ export class RuleTableComponent {
     'Value',
     'Part'
   ]
+
+  intervalSet = false;
 
   constructor(private midiService: MidiService, private uiService: UiService) {
 
@@ -49,7 +53,17 @@ export class RuleTableComponent {
       let co = 'comparisonSelect-' + rule.id
       this.uiService.setSelectValue(co, rule.comparisonId)
     })
+
+    // if (!this.intervalSet)
+    //   this.updateDisplay();
   }
+
+  // updateDisplay(): void {
+  //   this.midiService.tickerStatus().subscribe(data => {
+  //       this.interval = 1 / data.ticksPerBeat
+  //       this.intervalSet = true;
+  //     });
+  // }
 
   getRules(): Rule[] {
     return this.player == undefined ? [] : this.player.rules

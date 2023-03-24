@@ -30,7 +30,7 @@ export class DashboardComponent implements OnInit, Listener {
     done: false,
     id: 0,
     maxTracks: 0,
-    partLength: 0,
+    partLength: 4,
     playing: false,
     songLength: 0,
     stopped: false,
@@ -39,7 +39,14 @@ export class DashboardComponent implements OnInit, Listener {
     tick: 0,
     ticksPerBeat: 0,
     activePlayerIds: [],
-    part: 0
+    part: 0,
+    bars: 16,
+    parts: 4,
+    beats: 0,
+    barCount: 0,
+    beatCount: 0,
+    tickCount: 0,
+    partCount: 0
   }
 
   running = false
@@ -50,7 +57,6 @@ export class DashboardComponent implements OnInit, Listener {
   constructor(private midiService: MidiService, private uiService: UiService) {
     uiService.addListener(this)
   }
-
 
   ngOnInit(): void {
     this.updateDisplay()
