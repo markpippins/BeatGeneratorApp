@@ -133,7 +133,7 @@ export class PlayerTableComponent implements Listener, OnInit {
   }
 
   onPresetChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.PROBABILITY, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, Constants.PRESET, event.target.value).subscribe()
   }
 
   onLevelChange(player: Player, event: { target: any; }) {

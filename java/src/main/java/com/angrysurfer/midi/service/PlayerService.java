@@ -207,13 +207,16 @@ public class PlayerService {
 
     public Ticker updateTicker(Long tickerId, int updateType, int updateValue) {
 
-        Ticker ticker = getTickerRepo().findById(tickerId).orElseThrow();
+        Ticker ticker = getTicker().getId().equals(tickerId) ? getTicker() : getTickerRepo().findById(tickerId).orElseThrow();
 
         switch (updateType) {
             case PPQ : ticker.setTicksPerBeat(updateValue);
                 break;
 
-            case BPM: ticker.setTempoInBPM(Float.valueOf(updateValue));
+            case BPM: 
+                ticker.setTempoInBPM(Float.valueOf(updateValue));
+                if (Objects.nonNull(getSequenceRunner()) && ticker.getId().equals(getTicker().getId()))
+                    getSequenceRunner().getSequencer().setTempoInBPM(updateValue);
                 break;
 
             case BEATS_PER_BAR: ticker.setBeatsPerBar(updateValue);
@@ -226,12 +229,7 @@ public class PlayerService {
             break;
         }
 
-        ticker = getTickerRepo().save(ticker);
-
-        if (getTicker().getId().equals(ticker.getId()))
-            setTicker(ticker);
-            
-        return ticker;
+        return getTickerRepo().save(ticker);
     }
 
     public Player updatePlayer(Long playerId, int updateType, int updateValue) {
@@ -253,7 +251,7 @@ public class PlayerService {
             case PRESET -> {                
                 strike.setPreset(updateValue);
                 try {
-                    strike.getInstrument().programChange(updateValue, updateValue);
+                    strike.getInstrument().programChange(updateValue, 0);
                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
                     logger.error(e.getMessage(), e);
                 }

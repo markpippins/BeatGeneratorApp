@@ -13,7 +13,7 @@ import { Listener } from 'src/app/models/listener';
 export class StatusPanelComponent implements OnInit, Listener {
 
   ppqSelectionIndex !: number
-  ppqs = [1, 2, 4, 8, 12, 24, 48, 96]
+  ppqs = [1, 2, 4, 8, 12, 24, 32, 48, 96]
 
   statusColumns = ['Ticker', 'Tick', 'Beat', 'Bar', '', 'PPQ', 'BPM', 'Beats / Bar', 'Part Length', 'Max']
 
@@ -95,7 +95,7 @@ export class StatusPanelComponent implements OnInit, Listener {
   }
 
   onTempoChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.PPQ, event.target.value).subscribe()
+    this.midiService.updateTicker(this.ticker.id, Constants.BPM, event.target.value).subscribe()
     this.tempoChangeEvent.emit(event.target.value)
   }
 

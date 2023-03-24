@@ -4,6 +4,9 @@ import com.angrysurfer.midi.model.*;
 import com.angrysurfer.midi.repo.PatternRepository;
 import com.angrysurfer.midi.repo.SongRepository;
 import com.angrysurfer.midi.repo.StepRepository;
+import com.angrysurfer.midi.util.StepUpdateType;
+import com.angrysurfer.midi.util.StepUpdateType.*;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -34,29 +37,31 @@ public class SongService {
         this.songRepository = songRepository;
     }
 
-    public Step updateStep(Step step) {
-        Step result;
+    public Step updateStep(Long stepId, int updateType, int updateValue) {
+        Step step = stepDataRepository.findById(stepId).orElse(new Step());
+        
+        switch (updateType) {
+            case StepUpdateType.ACTIVE : step.setActive(!step.isActive());;
+                break;
 
-        if (Objects.isNull(step.getId()) || step.getId() == 0)
-            result = stepDataRepository.save(step);            
+            case StepUpdateType.GATE : step.setGate(updateValue);
+                break;
 
-        else {
-            result = stepDataRepository.findById(step.getId()).orElseThrow();
-            result.copyValues(step);
-            result = stepDataRepository.save(step);
+            case  StepUpdateType.PITCH: step.setPitch(updateValue);
+                break;
+
+            case  StepUpdateType.PROBABILITY: step.setProbability(updateValue);
+                break;
+
+            case  StepUpdateType.VELOCITY: step.setVelocity(updateValue);
+                break;
         }
 
-        
-        Map<Integer, Step> page;
-
-        if (steps.containsKey(step.getPage()))
-            page = steps.get(step.getPage());
-        else page = new HashMap<>();
-
-        steps.put(step.getPage(), page);
+        Map<Integer, Step> page = steps.containsKey(step.getPage()) ? steps.get(step.getPage()) : new HashMap<>();
         page.put(step.getPosition(), step);
-
-        return result;
+        steps.put(step.getPage(), page);
+         
+        return stepDataRepository.save(step);
     }
 
     public Song loadSong(long songId) {

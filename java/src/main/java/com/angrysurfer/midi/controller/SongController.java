@@ -27,9 +27,9 @@ public class SongController {
     }
 
     
-    @PostMapping(path = "/steps/update")
-    public void addTrack(@RequestBody Step step) {
-        service.updateStep(step);
+    @GetMapping(path = "/steps/update")
+    public Step updateStep(@RequestParam long stepId, int updateType, int updateValue) {
+        return service.updateStep(stepId, updateType, updateValue);
     }
     
     @GetMapping(path = "/song/new")

@@ -8,6 +8,8 @@ public interface PlayerUpdateType {
     static int MAX_VELOCITY = 4;
     static int MUTE = 5;
     static int PART  = 6;
-    static int PRESET  = 7;
+    static int LEVEL  = 7;
+    static int SWING = 8;
+    static int PRESET  = 9;
     
 }

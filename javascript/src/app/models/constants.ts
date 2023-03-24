@@ -25,6 +25,13 @@ export class Constants {
   static PART = 6;
   static LEVEL = 7;
   static SWING = 8;
+  static PRESET = 9;
+
+  static STEP_ACTIVE = 0;
+  static STEP_GATE = 1;
+  static STEP_PITCH = 2;
+  static STEP_VELOCITY = 3;
+  static STEP_PROBABILITY = 4;
 
   static PPQ = 0
   static BPM = 1

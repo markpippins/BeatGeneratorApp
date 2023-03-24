@@ -37,8 +37,8 @@ export class BeatSpecComponent implements OnInit {
   }
 
   onStepChanged(step: Step) {
-    this.midiService.updateStep(step).subscribe(async data => {
-      // this.steps[data.page][data.position] = data
-    })
+    // this.midiService.updateStep(step).subscribe(async data => {
+    //   this.steps[step.position] = data
+    // })
   }
 }

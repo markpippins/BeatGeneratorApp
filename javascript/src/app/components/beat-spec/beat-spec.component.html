@@ -16,7 +16,7 @@
         </div>
 
 
-        <app-beat-spec-panel *ngFor="let step of steps;" [page]=page [stepData]=step (change)="onStepChanged(step)"
+        <app-beat-spec-panel *ngFor="let step of steps;" [page]=page [stepData]=step (changeEvent)="onStepChanged(step)"
                              (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>
       </div>
       <!-- <app-params-panel808 class="control-panel808"></app-params-panel808> -->
