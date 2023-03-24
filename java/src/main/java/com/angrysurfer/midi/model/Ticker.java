@@ -158,6 +158,7 @@ public class Ticker implements Serializable {
     }
 
     public void beforeStart() {
+        getTickCycler().setLength(getTicksPerBeat());
         getBarCycler().setLength(getBeatsPerBar());
         getBeatCycler().setLength(4);
         getPartCycler().setLength(getPartLength());

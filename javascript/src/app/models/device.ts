@@ -3,4 +3,8 @@ export interface Device {
   vendor: string
   description: string
   version: number
+  maxReceivers: number
+  maxTransmitters: number
+  receivers: String
+  transmitters: String
 }

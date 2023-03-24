@@ -105,6 +105,7 @@ export class DashboardComponent implements OnInit, Listener {
               this.ticker = data
               this.midiService.playerInfo().subscribe(data => {
                 this.players = data
+                DashboardComponent.sortById(this.players)
                 if (this.players.length > 0)
                   this.selectedPlayer = this.players[0]
               })
@@ -161,11 +162,7 @@ export class DashboardComponent implements OnInit, Listener {
         }
 
         case 'refresh': {
-          // this.midiService.refreshClicked().subscribe(async (data) => {
-          // this.players.push(data)
-          // this.selectedPlayer = data
-          // })
-          this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
+          this.updateDisplay();
           break
         }
 
@@ -208,4 +205,15 @@ export class DashboardComponent implements OnInit, Listener {
     this.selectedPlayer = undefined
   }
 
+  static sortById(data: any[]): any[] {
+    return data.sort((a, b) => {
+      if (a.id > b.id) {
+        return 1;
+      }
+      if (a.id < b.id) {
+        return -1;
+      }
+      return 0;
+    });
+  }
 }

@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.service;
 
+import com.angrysurfer.midi.model.MidiDeviceInfo;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.repo.MidiInstrumentRepository;
 
@@ -35,6 +36,17 @@ public class MIDIService {
     //     }
     // }
 
+    public static List<MidiDeviceInfo> getMidiDeviceInfos() {
+        return Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {
+            try {
+                return new MidiDeviceInfo(MidiSystem.getMidiDevice(info));
+            } catch (MidiUnavailableException ex) {
+                logger.error(ex.getMessage(), ex);
+                throw new RuntimeException(ex);
+            }
+        }).toList();
+    }
+    
     public static List<MidiDevice> getMidiDevices() {
         return Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {
             try {
@@ -111,20 +123,50 @@ public class MIDIService {
     }
 
     
-    public MidiInstrument getInstrumentByChannel(int channel) {
-        Optional<MidiInstrument> instrument = midiInstrumentRepo.findByChannel(channel);
-         if (instrument.isPresent())
-            instrument.get().setDevice(findMidiOutDevice(instrument.get().getDeviceName()));
-        return instrument.orElseThrow();
+    public List<MidiInstrument> getInstrumentByChannel(int channel) {
+        return midiInstrumentRepo.findByChannel(channel);
     }
 
     public MidiInstrument getInstrumentById(Long id) {
         return midiInstrumentRepo.findById(id).orElseThrow();
     }
 
-    public void sendMessage(int messageType, int channel, int data1, int data2) {
-        MidiInstrument instrument = getInstrumentByChannel(channel);
+    public void sendMessageToInstrument(Long instrumentId, int messageType, int data1, int data2) {
+        MidiInstrument instrument = getInstrumentById(instrumentId);
         if (Objects.nonNull(instrument)) {
+            // List<MidiDevice> devices = findMidiOutDevice(instrument.getDevice().getDeviceInfo().getName());
+            // if (!devices.isEmpty()) {
+                MidiDevice device = findMidiOutDevice(instrument.getDeviceName());
+                if (!device.isOpen())
+                    try {
+                        device.open();
+                        MidiSystem.getTransmitter().setReceiver(device.getReceiver());
+                    } catch (MidiUnavailableException e) {
+                        throw new RuntimeException(e);
+                    }
+                new Thread(new Runnable() {
+
+                    public void run() {
+                        try {
+                            ShortMessage message = new ShortMessage();
+                            message.setMessage(messageType, instrument.getChannel(), data1, data2);
+                            device.getReceiver().send(message, 0L);
+                            // log.info(String.join(", ",
+                            //         MidiMessage.lookupCommand(message.getCommand()),
+                            //         "Channel: ".concat(Integer.valueOf(message.getChannel()).toString()),
+                            //         "Data 1: ".concat(Integer.valueOf(message.getData1()).toString()),
+                            //         "Data 2: ".concat(Integer.valueOf(message.getData2()).toString())));
+                        } catch (InvalidMidiDataException | MidiUnavailableException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }).start();
+            }   
+        // }
+    }
+
+    public void sendMessageToChannel(int channel, int messageType, int data1, int data2) {
+        getInstrumentByChannel(channel).forEach(instrument -> { 
             // List<MidiDevice> devices = findMidiOutDevice(instrument.getDevice().getDeviceInfo().getName());
             // if (!devices.isEmpty()) {
                 MidiDevice device = findMidiOutDevice(instrument.getDeviceName());
@@ -152,8 +194,8 @@ public class MIDIService {
                         }
                     }
                 }).start();
-            }   
-        // }
+              
+            });
     }
 
     public List<String> getInstrumentNames() {

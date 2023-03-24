@@ -20,7 +20,7 @@ public class Step {
 
     private int position;
 
-    private Long pageId;
+    private Integer page;
 
     private Long songId;
 
@@ -37,7 +37,7 @@ public class Step {
     public void copyValues(Step step) {
         setId(step.getId());
         setPosition(step.getPosition());
-        setPageId(step.getPageId());
+        setPage(step.getPage());
         setSongId(step.getSongId());
         setActive(step.isActive());
         setPitch(step.getPitch()); 

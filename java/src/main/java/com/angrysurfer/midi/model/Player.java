@@ -154,7 +154,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                     }
 
         setLastTick(getTicker().getTick());
-        getSubCycler().advance();
                 // logger.info(String.format("%s not playing tick %s, beat %s, bar %s", getName(), tick, getTicker().getBeat(), getTicker().getBar()));
         return Boolean.TRUE;
     }
@@ -162,9 +161,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @JsonIgnore
     public boolean shouldPlay() {
 
-        double beat = getTicker().getBeat() + (getSubCycler().get() - 1) * 0.0625;
-
-        AtomicBoolean play = new AtomicBoolean(true);
+        AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
         getRules().stream().filter(r -> r.getPart() == 0 || r.getPart() == getTicker().getPart()).forEach(rule -> {
                 switch (rule.getOperatorId()) {
                     case Operator.TICK -> {
@@ -172,10 +169,13 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                             play.set(false);
                     }
                     
-                    case Operator.BEAT -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), beat, rule.getValue())) 
+                    case Operator.BEAT -> { 
+                        double beat = getTicker().getBeat();
+                        double beatFraction = getTicker().getTick() == 1 ? 0 : 1.0 / getTicker().getTicksPerBeat() * getSubCycler().get();
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat() + beatFraction, rule.getValue())) 
                             // if (getTicker().getBeatCounter().get() / getTicker().getBeatsPerBar() % getSubCycler().getLength() == 0)
                                 play.set(false);
+                        getSubCycler().advance();
                     }
 
                     case Operator.BAR -> {

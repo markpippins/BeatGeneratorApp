@@ -37,6 +37,13 @@ public class Cycler {
         return position.get();
     }
 
+    public Long zeroBasedGet() {
+        if (position.get() == 0)
+            return 0L;
+
+        return position.get() - 1;
+    }
+
     public void reset() {
         position.set(0);
     }

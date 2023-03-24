@@ -1,7 +1,7 @@
 export interface Step {
   id: number
   position: number
-  pageId: number
+  page: number
   songId: number
   active: boolean
   pitch: number

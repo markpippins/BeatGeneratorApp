@@ -3,6 +3,7 @@ package com.angrysurfer.midi.service.test;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
@@ -92,18 +93,19 @@ public class PlayerServiceTests {
     
     @Test
     public void whenInstrumentRequestedDeviceIsInitialized() {
-        MidiInstrument raz = midiService.getInstrumentByChannel(9);
-        try {
-            if (!raz.getDevice().isOpen())
-                raz.getDevice().open();
+        midiService.getInstrumentByChannel(9).forEach(i -> {
+            try {
+                if (!i.getDevice().isOpen())
+                    i.getDevice().open();
 
-            raz.noteOn(45, 120);
-            Thread.sleep(500);
-            raz.noteOff(45, 120);
-            
-        } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
-            logger.error(e.getMessage());
-        }
+                i.noteOn(45, 120);
+                Thread.sleep(500);
+                i.noteOff(45, 120);
+                
+            } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
+                logger.error(e.getMessage());
+            }
+        });
 }
 
     

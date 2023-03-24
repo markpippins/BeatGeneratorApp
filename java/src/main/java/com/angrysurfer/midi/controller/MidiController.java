@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.controller;
 
+import com.angrysurfer.midi.model.MidiDeviceInfo;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.service.MIDIService;
 import com.angrysurfer.midi.util.Constants;
@@ -7,7 +8,6 @@ import com.angrysurfer.midi.util.Constants;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.sound.midi.MidiDevice;
 import java.util.List;
 
 @CrossOrigin("*")
@@ -22,8 +22,8 @@ public class MidiController {
     }
 
     @GetMapping(path = Constants.DEVICES_INFO)
-    public @ResponseBody List<MidiDevice.Info> getDeviceInfo() {
-        return MIDIService.getMidiDevices().stream().map(MidiDevice::getDeviceInfo).toList();
+    public @ResponseBody List<MidiDeviceInfo> getDeviceInfo() {
+        return MIDIService.getMidiDeviceInfos();
     }
 
     @GetMapping(path = Constants.DEVICE_NAMES)
@@ -44,11 +44,11 @@ public class MidiController {
     @GetMapping(Constants.SEND_MESSAGE)
     public void sendMessage(@RequestParam int messageType, @RequestParam int channel, @RequestParam int data1, @RequestParam int data2) {
         // logger.info("/messages/send");
-        service.sendMessage(messageType, channel, data1, data2);
+        service.sendMessageToChannel(messageType, channel, data1, data2);
     }
 
     @GetMapping(path = Constants.GET_INSTRUMENT_BY_CHANNEL)
-    public @ResponseBody MidiInstrument getInstrumentByChannel(int channel) {
+    public @ResponseBody List<MidiInstrument> getInstrumentsByChannel(int channel) {
         // logger.info("/instrument/info");
         return service.getInstrumentByChannel(channel);
     }

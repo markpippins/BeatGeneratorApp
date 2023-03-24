@@ -26,6 +26,8 @@ public class SongService {
 
     private Song song;
     
+    private Map<Integer, Map<Integer, Step>> steps = new HashMap<>();
+
     public SongService(PatternRepository patternRepository, StepRepository stepRepository,
                     SongRepository songRepository) {
         this.stepDataRepository = stepRepository;
@@ -43,6 +45,16 @@ public class SongService {
             result.copyValues(step);
             result = stepDataRepository.save(step);
         }
+
+        
+        Map<Integer, Step> page;
+
+        if (steps.containsKey(step.getPage()))
+            page = steps.get(step.getPage());
+        else page = new HashMap<>();
+
+        steps.put(step.getPage(), page);
+        page.put(step.getPosition(), step);
 
         return result;
     }

@@ -27,15 +27,18 @@ export class BeatSpecComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    for (let step = 0; step < this.stepCount; step++) {
+    // for (let page = 0; page < 8; page++)
+      for (let step = 0; step < this.stepCount; step++) {
       this.steps.push({
-        position: step, active: false, gate: 50, pitch: 60, probability: 100, velocity: 110,
-        id: 0, pageId: step, songId: 0
+        id: 0, position: step, active: false, gate: 50, pitch: 60, probability: 100, velocity: 110,
+        page: 0, songId: 0
       })
     }
   }
 
   onStepChanged(step: Step) {
-    this.midiService.updateStep(step).subscribe()
+    this.midiService.updateStep(step).subscribe(async data => {
+      // this.steps[data.page][data.position] = data
+    })
   }
 }

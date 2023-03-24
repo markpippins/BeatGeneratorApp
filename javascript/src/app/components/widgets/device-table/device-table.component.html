@@ -5,12 +5,20 @@
     <th class="header-cell">description</th>
     <th class="header-cell">vendor</th>
     <th class="header-cell">version</th>
+    <th class="header-cell">Max R</th>
+    <th class="header-cell">Max T</th>
+    <th class="header-cell">Receivers</th>
+    <th class="header-cell">Transmitters</th>
   </tr>
   <tr class="row" *ngFor="let device of devices;">
     <td>{{device.name}}</td>
     <td>{{device.description}}</td>
     <td>{{device.vendor}}</td>
     <td>{{device.version}}</td>
+    <td>{{device.maxReceivers }}</td>
+    <td>{{device.maxTransmitters}}</td>
+    <td>{{device.receivers}}</td>
+    <td>{{device.transmitters}}</td>
   </tr>
 </table>
 </div>

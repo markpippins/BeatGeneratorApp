@@ -252,6 +252,11 @@ public class PlayerService {
 
             case PRESET -> {                
                 strike.setPreset(updateValue);
+                try {
+                    strike.getInstrument().programChange(updateValue, updateValue);
+                } catch (InvalidMidiDataException | MidiUnavailableException e) {
+                    logger.error(e.getMessage(), e);
+                }
                 break;
             }
 

@@ -21,6 +21,9 @@ export class BeatSpecPanelComponent {
   @Input()
   stepData!: Step
 
+  @Input()
+  page!: number
+
   onParamsBtnClick() {
     this.paramBtnClickEvent.emit(this.stepData.position)
     this.uiService.notifyAll(Constants.STEP_UPDATED, this.stepData.position.toString())

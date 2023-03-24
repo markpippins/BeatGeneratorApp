@@ -5,8 +5,6 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.midi.util.Operator;
-
 import jakarta.persistence.*;
 
 import java.util.*;

@@ -2,7 +2,7 @@ package com.angrysurfer.midi.util;
 
 public class Constants {
     public static final double DEFAULT_BEAT_OFFSET = 1.0;
-    public static int DEFAULT_PPQ = 32;
+    public static int DEFAULT_PPQ = 24;
     public static int DEFAULT_BEATS_PER_BAR = 4;
     public static double DEFAULT_BEAT_DIVIDER = 4.0;
     public static float DEFAULT_BPM = 120;
@@ -55,7 +55,7 @@ public class Constants {
 	public static final String UPDATE_RULE = "/rule/update";
 
     public static final String GET_INSTRUMENT_BY_CHANNEL = "/midi/instrument";
-    // public static final String GET_INSTRUMENT_BY_ID = "/instrument";
+    public static final String GET_INSTRUMENT_BY_ID = "/instrument";
 
     public static final String SEND_MESSAGE = "/messages/send";
     public static final String SAVE_BEAT = "/beat/save";
