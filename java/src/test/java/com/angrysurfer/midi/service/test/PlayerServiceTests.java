@@ -25,10 +25,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.angrysurfer.BeatGeneratorApplication;
-import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
-import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.service.MIDIService;
 import com.angrysurfer.midi.service.PlayerService;
 import com.angrysurfer.midi.util.Comparison;
@@ -41,7 +39,7 @@ import com.angrysurfer.midi.util.TickerUpdateType;
   classes = BeatGeneratorApplication.class)
 @AutoConfigureMockMvc
 @TestPropertySource(
-  locations = "classpath:application.properties")
+  locations = "classpath:application-test.properties")
 public class PlayerServiceTests {
 
     static Logger logger = LoggerFactory.getLogger(PlayerServiceTests.class.getCanonicalName());

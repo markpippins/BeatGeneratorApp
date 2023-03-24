@@ -1,11 +1,6 @@
-<!--<p>status-panel</p>-->
-<!--<div class="transport-container">-->
-<!--  <app-transport-control (clickEvent)="onClick($event)"></app-transport-control>-->
-<!--</div>-->
 <div>
   <table class="status-table">
     <tr>
-      <!--      <th *ngFor="let col of statusColumns;">{{col}}</th>-->
       <td *ngIf="ticker.playing" class="active">
       </td>
       <td *ngIf="!ticker.playing" class="inactive">
@@ -14,7 +9,6 @@
       <td>Beat</td>
       <td>Bar</td>
       <td>Part</td>
-      <!-- <td>Bars</td> -->
 
       <td *ngIf="ticker.playing" class="active">
       </td>
@@ -23,9 +17,6 @@
       <td>PPQ</td>
       <td>BPM</td>
       <td>BPB</td>
-      <td>Bars</td>
-      <td>Parts</td>
-      <!-- <td>Part Len</td> -->
       <td *ngIf="ticker.playing" class="active">
       </td>
       <td *ngIf="!ticker.playing" class="inactive">
@@ -49,15 +40,10 @@
       <td>
         <input class="fixed" type="number" disabled="true" value="{{ ticker.part }}">
       </td>
-      <!-- <td>
-        <input class="fixed" type="number" disabled="true" value="{{ ticker.bars }}">
-      </td> -->
       <td *ngIf="ticker.playing" class="active">
       </td>
       <td *ngIf="!ticker.playing" class="inactive">
       </td>
-
-
       <td>
         <form>
             <select class='ticker-param-select' placeholder="PPQ" [(ngModel)]="ppqSelectionIndex" name="ticker-ppq-{{ticker.ticksPerBeat}}"
@@ -68,20 +54,12 @@
             </select>
         </form>
 
-
-        <!-- <input class="ticker-param" type="number" value="{{ ticker.ticksPerBeat }}"> -->
       </td>
       <td>
         <input class="ticker-param" type="number" (change)="onTempoChange($event)" value="{{ ticker.tempoInBPM }}">
       </td>
       <td>
         <input class="ticker-param" type="number"  (change)="onBeatsPerBarChange($event)" value="{{ ticker.beatsPerBar }}">
-      </td>
-      <td>
-        <input class="ticker-param" type="number" (change)="onPartLengthChange($event)" value="{{ ticker.bars }}">
-      </td>
-      <td>
-        <input class="ticker-param" type="number" disabled="true" min="1" max="127" step="1" value="{{ ticker.parts }}">
       </td>
       <td *ngIf="ticker.playing" class="active">
       </td>
@@ -96,22 +74,19 @@
       </td>
       <td *ngIf="!ticker.playing" class="inactive">
       </td>
-      <!-- <td>Ticker</td> -->
       <td>Ticks</td>
       <td>Beats</td>
       <td>Bars</td>
       <td>Parts</td>
-
       <td *ngIf="ticker.playing" class="active">
       </td>
       <td *ngIf="!ticker.playing" class="inactive">
       </td>
-      <td>PPQ</td>
-      <td>BPM</td>
-      <td>BPB</td>
-      <td>Bar</td>
+      <td>Bars</td>
       <td>Parts</td>
-      <!-- <td>Part Len</td> -->
+      <td>Length </td>
+      <!-- <td>BPM</td>
+      <td>BPB</td> -->
       <td *ngIf="ticker.playing" class="active">
       </td>
       <td *ngIf="!ticker.playing" class="inactive">
@@ -122,10 +97,6 @@
       </td>
       <td *ngIf="!ticker.playing" class="inactive">
       </td>
-
-      <!-- <td>
-        <input class="fixed" type="number" disabled="true" value="{{ ticker.id }}">
-      </td> -->
       <td>
         <input class="fixed" type="number" disabled="true" value="{{ ticker.tickCount }}">
       </td>
@@ -144,7 +115,7 @@
       </td>
 
 
-      <td>
+      <!-- <td>
         <form>
             <select class='ticker-param-select' placeholder="PPQ" [(ngModel)]="ppqSelectionIndex" name="ticker-ppq-{{ticker.ticksPerBeat}}"
             (change)="onPPQSelectionChange($event)">
@@ -153,22 +124,19 @@
               </option>
             </select>
         </form>
-
-
-        <!-- <input class="ticker-param" type="number" value="{{ ticker.ticksPerBeat }}"> -->
+      </td> -->
+      <td>
+        <input class="ticker-param" type="number" (change)="onBarsChange($event)" value="{{ ticker.bars }}">
       </td>
       <td>
-        <input class="ticker-param" type="number" (change)="onTempoChange($event)" value="{{ ticker.tempoInBPM }}">
+        <input class="ticker-param" type="number"  (change)="onPartsChange($event)" value="{{ ticker.parts }}">
       </td>
       <td>
-        <input class="ticker-param" type="number"  (change)="onBeatsPerBarChange($event)" value="{{ ticker.beatsPerBar }}">
+        <input class="ticker-param" type="number" (change)="onPartLengthChange($event)" value="{{ ticker.partLength }}">
       </td>
-      <td>
-        <input class="ticker-param" type="number" (change)="onPartLengthChange($event)" value="{{ ticker.bars }}">
-      </td>
-      <td>
+      <!-- <td>
         <input class="ticker-param" type="number" disabled="true" min="1" max="127" step="1" value="{{ ticker.parts }}">
-      </td>
+      </td> -->
       <td *ngIf="ticker.playing" class="active">
       </td>
       <td *ngIf="!ticker.playing" class="inactive">

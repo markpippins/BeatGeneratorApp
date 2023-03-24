@@ -171,7 +171,7 @@ public class PlayerService {
         strike.setTicker(getTicker());
         strike = getStrikeRepository().save(strike);
         getTicker().getPlayers().add(strike);
-        strike.getSubCycler().setLength(16);
+        strike.getSubCycler().setLength(getTicker().getTicksPerBeat() / getTicker().getBeatsPerBar());
         return strike;
     }
 

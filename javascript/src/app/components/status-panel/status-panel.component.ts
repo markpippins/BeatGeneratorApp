@@ -104,6 +104,16 @@ export class StatusPanelComponent implements OnInit, Listener {
     this.tempoChangeEvent.emit(event.target.value)
   }
 
+  onBarsChange(event: { target: any; }) {
+    this.midiService.updateTicker(this.ticker.id, Constants.BARS, event.target.value).subscribe()
+    this.tempoChangeEvent.emit(event.target.value)
+  }
+
+  onPartsChange(event: { target: any; }) {
+    this.midiService.updateTicker(this.ticker.id, Constants.PARTS, event.target.value).subscribe()
+    this.tempoChangeEvent.emit(event.target.value)
+  }
+
   onPartLengthChange(event: { target: any; }) {
     this.midiService.updateTicker(this.ticker.id, Constants.PART_LENGTH, event.target.value).subscribe()
     this.tempoChangeEvent.emit(event.target.value)

@@ -37,7 +37,9 @@ export class Constants {
   static BPM = 1
   static BEATS_PER_BAR = 2
   static PART_LENGTH = 3
-  static MAX_TRACKS = 64
+  static MAX_TRACKS = 4
+  static BARS = 5
+  static PARTS = 6
 
   static ERROR = 0
   static CONNECTED = 1

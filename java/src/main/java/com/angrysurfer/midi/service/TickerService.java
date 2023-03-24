@@ -101,20 +101,26 @@ public class TickerService {
             case TickerUpdateType.PPQ : ticker.setTicksPerBeat(updateValue);
                 break;
 
+            case TickerUpdateType.BEATS_PER_BAR : ticker.setBeatsPerBar(updateValue);
+                break;
+
             case TickerUpdateType.BPM: 
                 ticker.setTempoInBPM(Float.valueOf(updateValue));
                 if (Objects.nonNull(getSequenceRunner()) && ticker.getId().equals(getTicker().getId()))
                     getSequenceRunner().getSequencer().setTempoInBPM(updateValue);
                 break;
 
-            case TickerUpdateType.BEATS_PER_BAR: ticker.setBeatsPerBar(updateValue);
+            case TickerUpdateType.PARTS: ticker.setParts(updateValue);
+                break;
+
+            case TickerUpdateType.BARS: ticker.setBars(updateValue);
                 break;
 
             case TickerUpdateType.PART_LENGTH: ticker.setPartLength(updateValue);
                 break;
 
             case TickerUpdateType.MAX_TRACKS: ticker.setMaxTracks(updateValue);
-            break;
+                break;
         }
 
         return getTickerRepo().save(ticker);

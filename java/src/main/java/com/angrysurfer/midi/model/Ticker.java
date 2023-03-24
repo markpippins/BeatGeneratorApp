@@ -84,14 +84,14 @@ public class Ticker implements Serializable {
     private Integer bars = 8;
     private Integer beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
     private Double beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
-    private Integer partLength = 2;// Constants.DEFAULT_PART_LENGTH;
+    private Integer partLength = Constants.DEFAULT_PART_LENGTH;
     private Integer maxTracks = Constants.DEFAULT_MAX_TRACKS;
     private Integer songLength = Constants.DEFAULT_MAX_TRACKS;
     private Integer swing = Constants.DEFAULT_SWING;
     private Integer ticksPerBeat = Constants.DEFAULT_PPQ;
     private Float tempoInBPM = Constants.DEFAULT_BPM;
     private Integer loopCount  = Constants.DEFAULT_LOOP_COUNT;
-    private Integer parts = 4;
+    private Integer parts = Constants.DEFAULT_PART_COUNT;
 
     
     @Transient
@@ -117,12 +117,22 @@ public class Ticker implements Serializable {
         return getBeatCounter().get();
     } 
 
+    public void setBeatsPerBar(int beatsPerBar) {
+        this.beatsPerBar = beatsPerBar;
+        getBeatCycler().setLength(beatsPerBar);
+    }
+
     public Long getTick() {
         return getTickCycler().get();
     }
 
     public Long getTickCount() {
         return getTickCounter().get();
+    }
+
+    public void setTicksPerBeat(int ticksPerBeat) {
+        this.ticksPerBeat = ticksPerBeat;
+        getTickCycler().setLength(ticksPerBeat);
     }
 
     public Long getBar() {
@@ -133,6 +143,11 @@ public class Ticker implements Serializable {
         return getBarCounter().get();
     } 
 
+    public void setBars(int bars) {
+        this.bars = bars;
+        getBarCycler().setLength(bars);
+    }
+
     public Long getPart() {
         return getPartCycler().get();
     }
@@ -141,6 +156,15 @@ public class Ticker implements Serializable {
         return getPartCounter().get();
     }
 
+    public void setParts(int parts) {
+        this.parts = parts;
+        this.partCycler.setLength(parts);
+    }
+
+    public void setPartLength(int partLength) {
+        this.partLength = partLength;
+    }
+    
     public void reset() {
         // setId(null);
         // setTick(0L);
@@ -190,10 +214,10 @@ public class Ticker implements Serializable {
 
     public void beforeStart() {
         getTickCycler().setLength(getTicksPerBeat());
-        getBarCycler().setLength(getBeatsPerBar());
-        getBeatCycler().setLength(4);
+        getBarCycler().setLength(getBars());
+        getBeatCycler().setLength(getBeatsPerBar());
         getPartCycler().setLength(getPartLength());
-        getPlayers().forEach(p -> p.getSubCycler().setLength(16));
+        getPlayers().forEach(p -> p.getSubCycler().setLength(getTicksPerBeat() / getBeatsPerBar()));
     }
 
     public void onStop() {

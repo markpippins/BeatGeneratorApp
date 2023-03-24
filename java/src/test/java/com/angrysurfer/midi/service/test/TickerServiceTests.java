@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.stream.IntStream;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -20,6 +22,8 @@ import com.angrysurfer.BeatGeneratorApplication;
 import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.Ticker;
+import com.angrysurfer.midi.repo.StrikeRepository;
+import com.angrysurfer.midi.repo.TickerRepo;
 import com.angrysurfer.midi.service.PlayerService;
 import com.angrysurfer.midi.service.TickerService;
 
@@ -30,10 +34,16 @@ import com.angrysurfer.midi.service.TickerService;
   classes = BeatGeneratorApplication.class)
 @AutoConfigureMockMvc
 @TestPropertySource(
-  locations = "classpath:application.properties")
+  locations = "classpath:application-test.properties")
 
 public class TickerServiceTests {
     static Logger logger = org.slf4j.LoggerFactory.getLogger(TickerServiceTests.class.getCanonicalName());
+
+    @Autowired
+    StrikeRepository playerRepository;
+
+    @Autowired
+    TickerRepo tickerRepo;
 
     @Autowired
     TickerService tickerService;
@@ -47,11 +57,13 @@ public class TickerServiceTests {
     // @Before
     // public void setUp() {
     //     playerRepository.deleteAll();
+    //     tickerRepo.deleteAll();
     // }
     
     // @After
     // public void tearDown() {
     //     playerRepository.deleteAll();
+    //     tickerRepo.deleteAll();
     // }
     
     @Test

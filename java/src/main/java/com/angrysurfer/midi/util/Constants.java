@@ -62,6 +62,7 @@ public class Constants {
 	public static final String PLAY_DRUM_NOTE = "/drums/note";
     public static final String PLAY_SEQUENCE = "/sequence/play";
     public static final int DEFAULT_LOOP_COUNT = 0;
+    public static final int DEFAULT_PART_COUNT = 0;
 
 }
 
