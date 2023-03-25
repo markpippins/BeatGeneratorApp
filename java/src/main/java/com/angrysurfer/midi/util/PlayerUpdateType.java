@@ -11,5 +11,7 @@ public interface PlayerUpdateType {
     static int LEVEL  = 7;
     static int SWING = 8;
     static int PRESET  = 9;
+    static int RATCHET_COUNT  = 10;
+    static int RATCHET_INTERVAL  = 11;
     
 }

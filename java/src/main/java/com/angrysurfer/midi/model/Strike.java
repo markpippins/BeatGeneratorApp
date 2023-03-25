@@ -5,9 +5,14 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.midi.util.Comparison;
+import com.angrysurfer.midi.util.Operator;
+
 import jakarta.persistence.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.IntStream;
 
 @Getter
 @Setter
@@ -27,9 +32,9 @@ public class Strike extends Player {
 
     static Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
 
-    private Integer ratchetCount = 0;
+    private int ratchetCount = 0;
     
-    private Integer ratchetInterval = 0;
+    private double ratchetInterval = 0;
 
     public Strike() {
     
@@ -47,12 +52,23 @@ public class Strike extends Player {
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
     }
-
+    
     @Override
     public void onTick(long tick, long bar) {
-        // if (getRules().stream().filter(r -> r.getOperatorId() == Operator.TICK).findAny().isPresent())
-            drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
-        // else if (4 * getTicker().getTick() % getTicker().getTicksPerBeat() == 0)
-        //     drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+        drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+    }
+
+    public boolean shouldPlay() {
+        AtomicBoolean shouldPlay = new AtomicBoolean(false);
+        
+        IntStream.range(1, getRatchetCount() + 1).forEach(r -> {
+            double base = getTicker().getTicksPerBeat() / getTicker().getBeatsPerBar(); 
+            double offSet = getLastPlayedTick() + base * r;
+            if (getTicker().getTick() == offSet)
+                shouldPlay.set(true);
+        });
+
+
+        return shouldPlay.get() || super.shouldPlay();
     }
 }

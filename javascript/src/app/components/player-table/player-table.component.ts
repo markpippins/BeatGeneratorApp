@@ -115,7 +115,9 @@ export class PlayerTableComponent implements Listener, OnInit {
       channel: 0,
       swing: 0,
       level: 0,
-      active: false
+      active: false,
+      ratchetCount: 0,
+      ratchetInterval: 0
     }, 'add')
   }
 
@@ -146,6 +148,14 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   onMaxVelocityChange(player: Player, event: { target: any; }) {
     this.midiService.updatePlayer(player.id, Constants.MAX_VELOCITY, event.target.value).subscribe()
+  }
+
+  onRatchetCountChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.RATCHET_COUNT, event.target.value).subscribe()
+  }
+
+  onRatchetIntervalChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.RATCHET_INTERVAL, event.target.value).subscribe()
   }
 
   onProbabilityChange(player: Player, event: { target: any; }) {

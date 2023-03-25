@@ -13,7 +13,9 @@ export class Constants {
     'Prob',
     'Level',
     'Min. V',
-    'Max. V'
+    'Max. V',
+    'Ratchet',
+    'Interval'
   ]
 
   static INSTRUMENT = 0;
@@ -26,6 +28,8 @@ export class Constants {
   static LEVEL = 7;
   static SWING = 8;
   static PRESET = 9;
+  static RATCHET_COUNT = 10;
+  static RATCHET_INTERVAL = 11;
 
   static STEP_ACTIVE = 0;
   static STEP_GATE = 1;

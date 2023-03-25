@@ -40,7 +40,6 @@ public class PlayerService {
     private final MidiInstrumentRepository midiInstrumentRepo;
     private final ControlCodeRepository controlCodeRepository;
     private final PadRepository padRepository;
-    // private Ticker ticker;
     private Song song;
     private MIDIService midiService;
     private StrikeRepository strikeRepository;
@@ -81,67 +80,12 @@ public class PlayerService {
             File file = new File(instruments);
             if (file.exists()) file.delete();
             MidiInstrumentList list = new MidiInstrumentList();
-            list.getInstruments().addAll(getTicker().getPlayers().stream().map(Player::getInstrument).distinct().toList());
+            list.getInstruments().addAll(getTickerService().getTicker().getPlayers().stream().map(Player::getInstrument).distinct().toList());
             Files.write(file.toPath(), Collections.singletonList(PlayerService.mapper.writerWithDefaultPrettyPrinter().
                     writeValueAsString(list)), StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }    
-    }
-
-    // public void play() {
-        
-    //     stopRunningSequencers();
-    //     sequenceRunner = new SequenceRunner(getTicker());
-    //     sequenceRunners.add(getSequenceRunner());
-
-    //     getTicker().getPlayers().forEach(p -> p.getInstrument()
-    //         .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
-
-    //     if (Objects.nonNull(getSequenceRunner()) && !getSequenceRunner().isPlaying())
-    //         new Thread(getSequenceRunner()).start();
-    //     else {
-    //         setSequenceRunner(new SequenceRunner(getTicker()));
-    //         new Thread(getSequenceRunner()).start();
-    //     }
-    // }
-
-    // private void stopRunningSequencers() {
-    //     sequenceRunners.forEach(sr -> sr.stop());
-    //     sequenceRunners.clear();
-    // }
-
-    // public Ticker stop() {
-    //     stopRunningSequencers();
-    //     return getTicker();
-    // }
-
-    // public void pause() {
-    //     getSequenceRunner().pause();
-    //     getSequenceRunner().isPlaying();
-    // }
-
-    // public Ticker getTickerInfo() {
-    //     return getTicker();
-    // }
-
-    // public Ticker getTickerStatus() {
-    //     return getTicker();
-    // }
-
-    // public List<Ticker> getAllTickerInfo() {
-    //     return getTickerRepo().findAll();
-    // }
-
-    public Ticker getTicker() {
-        // if (Objects.isNull(ticker)) {
-        //     stopRunningSequencers();
-        //     ticker = getTickerRepo().save(new Ticker());
-        //     sequenceRunner = new SequenceRunner(ticker);
-        // }
-        
-        // return ticker;
-        return getTickerService().getTicker();
     }
 
     public Strike addPlayer(String instrumentName) {
@@ -165,13 +109,13 @@ public class PlayerService {
             logger.error(e.getMessage(), e);
         }
 
-        String name = midiInstrument.getName().concat(Integer.toString(getTicker().getPlayers().size()));
-        Strike strike = new Strike(name, getTicker(), midiInstrument,
-                Strike.KICK + getTicker().getPlayers().size(), Strike.closedHatParams);
-        strike.setTicker(getTicker());
+        String name = midiInstrument.getName().concat(Integer.toString(getTickerService().getTicker().getPlayers().size()));
+        Strike strike = new Strike(name, getTickerService().getTicker(), midiInstrument,
+                Strike.KICK + getTickerService().getTicker().getPlayers().size(), Strike.closedHatParams);
+        strike.setTicker(getTickerService().getTicker());
         strike = getStrikeRepository().save(strike);
-        getTicker().getPlayers().add(strike);
-        strike.getSubCycler().setLength(getTicker().getTicksPerBeat() / getTicker().getBeatsPerBar());
+        getTickerService().getTicker().getPlayers().add(strike);
+        strike.getSubCycler().setLength(getTickerService().getTicker().getTicksPerBeat() / getTickerService().getTicker().getBeatsPerBar());
         return strike;
     }
 
@@ -179,9 +123,13 @@ public class PlayerService {
         return this.getRuleRepository().findByPlayerId(playerId);
     }
 
+    static Random rand = new Random();
+
     public Rule addRule(Long playerId) {
         Rule rule = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0);
-        Strike player = getTicker().getPlayer(playerId);
+        
+        
+        Strike player = getTickerService().getTicker().getPlayer(playerId);
         List<Rule> matches = player.getRules().stream().filter(r -> r.isEqualTo(rule)).toList();
         
         if (matches.size() < 2) {
@@ -197,7 +145,7 @@ public class PlayerService {
     }
 
     public void removeRule(Long playerId, Long ruleId) {
-        Strike player = getTicker().getPlayer(playerId);
+        Strike player = getTickerService().getTicker().getPlayer(playerId);
         Rule rule = player.getRule(ruleId);
 
         player.getRules().remove(rule);
@@ -209,35 +157,35 @@ public class PlayerService {
     }
 
 
-    public Ticker updateTicker(Long tickerId, int updateType, int updateValue) {
+    // public Ticker updateTicker(Long tickerId, int updateType, int updateValue) {
 
-        Ticker ticker = getTicker().getId().equals(tickerId) ? getTicker() : getTickerRepo().findById(tickerId).orElseThrow();
+    //     Ticker ticker = getTickerService().getTicker().getId().equals(tickerId) ? getTickerService().getTicker() : getTickerRepo().findById(tickerId).orElseThrow();
 
-        switch (updateType) {
-            case PPQ : ticker.setTicksPerBeat(updateValue);
-                break;
+    //     switch (updateType) {
+    //         case PPQ : ticker.setTicksPerBeat(updateValue);
+    //             break;
 
-            case BPM: 
-                ticker.setTempoInBPM(Float.valueOf(updateValue));
-                if (Objects.nonNull(getSequenceRunner()) && ticker.getId().equals(getTicker().getId()))
-                    getSequenceRunner().getSequencer().setTempoInBPM(updateValue);
-                break;
+    //         case BPM: 
+    //             ticker.setTempoInBPM(Float.valueOf(updateValue));
+    //             if (Objects.nonNull(getSequenceRunner()) && ticker.getId().equals(getTickerService().getTicker().getId()))
+    //                 getSequenceRunner().getSequencer().setTempoInBPM(updateValue);
+    //             break;
 
-            case BEATS_PER_BAR: ticker.setBeatsPerBar(updateValue);
-                break;
+    //         case BEATS_PER_BAR: ticker.setBeatsPerBar(updateValue);
+    //             break;
 
-            case PART_LENGTH: ticker.setPartLength(updateValue);
-                break;
+    //         case PART_LENGTH: ticker.setPartLength(updateValue);
+    //             break;
 
-            case MAX_TRACKS: ticker.setMaxTracks(updateValue);
-            break;
-        }
+    //         case MAX_TRACKS: ticker.setMaxTracks(updateValue);
+    //         break;
+    //     }
 
-        return getTickerRepo().save(ticker);
-    }
+    //     return getTickerRepo().save(ticker);
+    // }
 
     public Player updatePlayer(Long playerId, int updateType, int updateValue) {
-        Strike strike = getTicker().getPlayer(playerId); 
+        Strike strike = getTickerService().getTicker().getPlayer(playerId); 
         // strikeRepository.findById(playerId).orElseThrow();
         switch (updateType) {
             case NOTE -> {
@@ -277,6 +225,16 @@ public class PlayerService {
                 break;
             }
 
+            case RATCHET_COUNT -> {                
+                strike.setRatchetCount(updateValue);
+                break;
+            }
+
+            case RATCHET_INTERVAL -> {                
+                strike.setRatchetInterval(updateValue);
+                break;
+            }
+
             case MUTE -> {                
                 strike.setMuted(updateValue > 0 ? true : false);
                 break;
@@ -284,7 +242,7 @@ public class PlayerService {
         }
 
         getStrikeRepository().save(strike);
-        getTickerRepo().save(getTicker());
+        getTickerRepo().save(getTickerService().getTicker());
 
         return strike;
     }
@@ -296,7 +254,7 @@ public class PlayerService {
                            double newValue,
                            int part) {
 
-        Strike strike = getTicker().getPlayer(playerId);
+        Strike strike = getTickerService().getTicker().getPlayer(playerId);
 
 
         Rule rule = strike.getRule(ruleId);
@@ -310,44 +268,44 @@ public class PlayerService {
     }
 
     public Set<Strike> removePlayer(Long playerId) {
-        Player strike = getTicker().getPlayer(playerId);
-        getTicker().getPlayers().remove(strike);
+        Player strike = getTickerService().getTicker().getPlayer(playerId);
+        getTickerService().getTicker().getPlayers().remove(strike);
         getStrikeRepository().deleteById(strike.getId());
-        return getTicker().getPlayers();
+        return getTickerService().getTicker().getPlayers();
     }
 
 
     public Strike mutePlayer(Long playerId) {
-        Strike strike = getTicker().getPlayer(playerId);
+        Strike strike = getTickerService().getTicker().getPlayer(playerId);
         strike.setMuted(!strike.isMuted());
         return strike;
     }
 
     // public synchronized Ticker next(long currentTickerId) {
-    //     if (currentTickerId == 0 || getTicker().getPlayers().size() > 0) {       
+    //     if (currentTickerId == 0 || getTickerService().getTicker().getPlayers().size() > 0) {       
     //         stopRunningSequencers();
     //         Long maxTickerId = getTickerRepo().getMaximumTickerId();
     //         getTickerService().setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
     //             getTickerRepo().getNextTicker(currentTickerId) :
     //             null);
-    //         getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
-    //         getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
-    //         sequenceRunner = new SequenceRunner(getTicker());
+    //         getTickerService().getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTickerService().getTicker().getId()));
+    //         getTickerService().getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
+    //         sequenceRunner = new SequenceRunner(getTickerService().getTicker());
     //     }
 
-    //     return getTicker();
+    //     return getTickerService().getTicker();
     // }
 
     // public synchronized Ticker previous(long currentTickerId) {
     //     if (currentTickerId >  (getTickerRepo().getMinimumTickerId())) {
     //         stopRunningSequencers();
     //         getTickerService().setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
-    //         getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
-    //         getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
-    //         sequenceRunner = new SequenceRunner(getTicker());
+    //         getTickerService().getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTickerService().getTicker().getId()));
+    //         getTickerService().getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
+    //         sequenceRunner = new SequenceRunner(getTickerService().getTicker());
     //     }
 
-    //     return getTicker();
+    //     return getTickerService().getTicker();
     // }
 
     public void setSteps(List<Step> steps) {
@@ -360,7 +318,7 @@ public class PlayerService {
             File file = new File(instruments);
             if (file.exists()) file.delete();
             MidiInstrumentList list = new MidiInstrumentList();
-            list.getInstruments().addAll(getTicker().getPlayers().stream().map(p -> p.getInstrument()).distinct().toList());
+            list.getInstruments().addAll(getTickerService().getTicker().getPlayers().stream().map(p -> p.getInstrument()).distinct().toList());
             Files.write(file.toPath(), Collections.singletonList(PlayerService.mapper.writerWithDefaultPrettyPrinter().
                     writeValueAsString(list)), StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
@@ -371,29 +329,29 @@ public class PlayerService {
     public void saveBeat() {
         try {
             Set<Strike> strikes = new HashSet<>();
-            getTicker().getPlayers().forEach(s -> strikes.add((Strike) s));
+            getTickerService().getTicker().getPlayers().forEach(s -> strikes.add((Strike) s));
             String beatFile = "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/beats/" + toString() + ".json";
             File file = new File(beatFile);
             if (file.exists()) file.delete();
             Files.write(file.toPath(), Collections.singletonList(PlayerService.mapper.writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(new BeatGeneratorConfig(getTicker(), strikes))), StandardOpenOption.CREATE_NEW);
+                    .writeValueAsString(new BeatGeneratorConfig(getTickerService().getTicker(), strikes))), StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void clearPlayers() {
-        getTicker().getPlayers().clear();
+        getTickerService().getTicker().getPlayers().clear();
     }
 
     public Ticker loadTicker(long tickerId) {
         // getTickerRepo().findById(tickerId).ifPresent(this::setTicker);
-        // return getTicker();
+        // return getTickerService().getTicker();
         return tickerService.loadTicker(tickerId);
     }
 
     public Set<Strike> getPlayers() {
-        return getTicker().getPlayers();
+        return getTickerService().getTicker().getPlayers();
     }
 
     public void playDrumNote(String instrumentName, int channel, int note) {
@@ -431,6 +389,6 @@ public class PlayerService {
 
     // public Ticker newTicker() {
     //     setTicker(null);
-    //     return getTicker();
+    //     return getTickerService().getTicker();
     // } 
 }

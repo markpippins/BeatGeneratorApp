@@ -59,11 +59,11 @@
           P
         </button>
       </td>
-      <td class="player-short-col" (change)="onProbabilityChange(player, $event)">
-        <input type="number" min="0" max="100" step="1" value="{{ player.probability }}">
-      </td>
       <td class="player-short-col" (change)="onSwingChange(player, $event)">
         <input type="number" min="0" max="100" step="1" value="{{ player.swing }}">
+      </td>
+      <td class="player-short-col" (change)="onProbabilityChange(player, $event)">
+        <input type="number" min="0" max="100" step="1" value="{{ player.probability }}">
       </td>
       <td class="player-short-col" (change)="onLevelChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.level }}">
@@ -73,6 +73,12 @@
       </td>
       <td class="player-short-col" (change)="onMaxVelocityChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.maxVelocity }}">
+      </td>
+      <td class="player-short-col" (change)="onRatchetCountChange(player, $event)">
+        <input type="number" min="0" max="127" step="1" value="{{ player.ratchetCount }}">
+      </td>
+      <td class="player-short-col" (change)="onRatchetIntervalChange(player, $event)">
+        <input type="number" min="1" max="16" step="1" value="{{ player.ratchetInterval }}">
       </td>
     </tr>
     <tr *ngIf="players == undefined || players.length == 0">

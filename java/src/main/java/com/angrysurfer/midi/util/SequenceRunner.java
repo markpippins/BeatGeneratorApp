@@ -75,7 +75,7 @@ public class SequenceRunner implements Runnable {
             } catch (InvalidMidiDataException e) {
                 e.printStackTrace();
             }
-        });
+        }); 
         return sequence;
     }
 
@@ -97,6 +97,7 @@ public class SequenceRunner implements Runnable {
     @Override
     public void run() {
 
+        MIDIService.reset();
         ensureDevicesOpen();
 
         try {

@@ -54,7 +54,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Long lastTick = 0L;
 
     @Transient
-    private Long lastPlayedTick;
+    private Long lastPlayedTick = 0L;
 
     @Transient
     private Long lastPlayedBar;
@@ -140,8 +140,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     public Boolean call() {
         if (getLastTick() == getTicker().getTick())
             return Boolean.FALSE;
-        
-            
+
         if (shouldPlay() && !isMuted() &&
             getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers()
                 .stream().filter(e -> e.getLastPlayedTick() == getTicker().getTick())
@@ -158,7 +157,6 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         return Boolean.TRUE;
     }
 
-    @JsonIgnore
     public boolean shouldPlay() {
 
         AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
@@ -170,12 +168,14 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                     }
                     
                     case Operator.BEAT -> { 
-                        double beat = getTicker().getBeat();
                         double beatFraction = getTicker().getTick() == 1 ? 0 : 1.0 / getTicker().getTicksPerBeat() * getSubCycler().get();
                         if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat() + beatFraction, rule.getValue())) 
-                            // if (getTicker().getBeatCounter().get() / getTicker().getBeatsPerBar() % getSubCycler().getLength() == 0)
                                 play.set(false);
-                        getSubCycler().advance();
+                    }
+
+                    case Operator.BEAT_DURATION -> { 
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat(), rule.getValue())) 
+                                play.set(false);
                     }
 
                     case Operator.BAR -> {
@@ -188,15 +188,35 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                             play.set(false);
                     }
                     
-                    case Operator.ACTUAL_BAR -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeatCounter().get() / getTicker().getBeatsPerBar(), 
+                    case Operator.TICK_COUNT -> {
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getTickCounter().get(), 
+                            rule.getValue()))
+                                play.set(false);
+                    }
+
+                    case Operator.BEAT_COUNT -> {
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeatCounter().get(), 
+                            rule.getValue()))
+                                play.set(false);
+                    }
+
+                    case Operator.BAR_COUNT -> {
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBarCounter().get(), 
+                            rule.getValue()))
+                                play.set(false);
+                    }
+
+                    case Operator.PART_COUNT -> {
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getPartCounter().get(), 
                             rule.getValue()))
                                 play.set(false);
                     }
                 }
             });
 
-        return play.get();
+            getSubCycler().advance();
+
+            return play.get();
     }
 
 }

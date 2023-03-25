@@ -19,4 +19,6 @@ export interface Player {
   swing: number
   level: number
   active: boolean
+  ratchetCount: number
+  ratchetInterval: number
 }

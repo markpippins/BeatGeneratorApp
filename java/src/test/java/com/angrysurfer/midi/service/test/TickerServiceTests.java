@@ -26,6 +26,7 @@ import com.angrysurfer.midi.repo.StrikeRepository;
 import com.angrysurfer.midi.repo.TickerRepo;
 import com.angrysurfer.midi.service.PlayerService;
 import com.angrysurfer.midi.service.TickerService;
+import com.angrysurfer.midi.util.TickerUpdateType;
 
 
 @RunWith(SpringRunner.class)
@@ -195,6 +196,33 @@ public class TickerServiceTests {
         Player player3 = tickerService.getTicker().getPlayer(player2.getId());
         // Rule rule2 = player3.getRule(rule.getId());
         assertTrue(player3.getRules().isEmpty()); 
+    }
+
+    @Test
+    public void whenTickerBeatsPerBarUpdated_thenChangeReflectedInTicker() {
+        tickerService.updateTicker(tickerService.getTicker().getId(), TickerUpdateType.BEATS_PER_BAR, 16);
+        assertTrue(16 == tickerService.getTicker().getBeatsPerBar()); 
+    }
+
+    @Test
+    public void whenTickerBPMUpdated_thenChangeReflectedInTicker() {
+        tickerService.updateTicker(tickerService.getTicker().getId(), TickerUpdateType.BPM, 16);
+        assertTrue(16 == tickerService.getTicker().getTempoInBPM()); 
+    }
+    @Test
+    public void whenTickerMaxTracksUpdated_thenChangeReflectedInTicker() {
+        tickerService.updateTicker(tickerService.getTicker().getId(), TickerUpdateType.MAX_TRACKS, 16);
+        assertTrue(16 == tickerService.getTicker().getMaxTracks()); 
+    }
+    @Test
+    public void whenTickePartLengthUpdated_thenChangeReflectedInTicker() {
+        tickerService.updateTicker(tickerService.getTicker().getId(), TickerUpdateType.PART_LENGTH, 25);
+        assertTrue(25 == tickerService.getTicker().getPartLength()); 
+    }
+    @Test
+    public void whenTickerPPQUpdated_thenChangeReflectedInTicker() {
+        tickerService.updateTicker(tickerService.getTicker().getId(), TickerUpdateType.PPQ, 16);
+        assertTrue(16 == tickerService.getTicker().getTicksPerBeat()); 
     }
 
 }

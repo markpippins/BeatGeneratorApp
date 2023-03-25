@@ -29,6 +29,7 @@ import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.service.MIDIService;
 import com.angrysurfer.midi.service.PlayerService;
+import com.angrysurfer.midi.service.TickerService;
 import com.angrysurfer.midi.util.Comparison;
 import com.angrysurfer.midi.util.PlayerUpdateType;
 import com.angrysurfer.midi.util.TickerUpdateType;
@@ -46,6 +47,9 @@ public class PlayerServiceTests {
 
     @Autowired
     PlayerService playerService;
+
+    @Autowired
+    TickerService tickerService;
 
     @Autowired
     MIDIService midiService;
@@ -124,7 +128,7 @@ public class PlayerServiceTests {
         Rule r3 = playerService.addRule(player.getId());
         r3.setComparisonId(Comparison.LESS_THAN);
         
-        Player tickerPlayer = playerService.getTicker().getPlayer(player.getId());
+        Player tickerPlayer = tickerService.getTicker().getPlayer(player.getId());
         assertEquals(3, tickerPlayer.getRules().size());
     }
 
@@ -278,23 +282,23 @@ public class PlayerServiceTests {
     @Test
     public void whenPlayerAdded_thenTickerContainsPlayer() {
         Player player = playerService.addPlayer(RAZ);
-        assertTrue(playerService.getTicker().getPlayers().contains(player)); 
+        assertTrue(tickerService.getTicker().getPlayers().contains(player)); 
     }
 
     @Test
     public void whenPlayerRemoved_thenTickerNoLongerContainsPlayer() {
         Player player = playerService.addPlayer(RAZ);
         playerService.removePlayer(player.getId());
-        assertTrue(!playerService.getTicker().getPlayers().contains(player)); 
+        assertTrue(!tickerService.getTicker().getPlayers().contains(player)); 
     }
 
     @Test
     public void whenPlayersAdded_thenTickerContainsPlayers() {
-        playerService.getTicker().getPlayers().clear();
+        tickerService.getTicker().getPlayers().clear();
         playerService.addPlayer(RAZ);
         playerService.addPlayer(RAZ);
         playerService.addPlayer(RAZ);
-        assertTrue(playerService.getTicker().getPlayers().size() > 0); 
+        assertTrue(tickerService.getTicker().getPlayers().size() > 0); 
     }
 
     @Test
@@ -303,34 +307,7 @@ public class PlayerServiceTests {
         playerService.addPlayer(RAZ);
         playerService.addPlayer(RAZ);
         playerService.clearPlayers();
-        assertTrue(playerService.getTicker().getPlayers().size() == 0); 
-    }
-
-    @Test
-    public void whenTickerBeatsPerBarUpdated_thenChangeReflectedInTicker() {
-        playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.BEATS_PER_BAR, 16);
-        assertTrue(16 == playerService.getTicker().getBeatsPerBar()); 
-    }
-
-    @Test
-    public void whenTickerBPMUpdated_thenChangeReflectedInTicker() {
-        playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.BPM, 16);
-        assertTrue(16 == playerService.getTicker().getTempoInBPM()); 
-    }
-    @Test
-    public void whenTickerMaxTracksUpdated_thenChangeReflectedInTicker() {
-        playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.MAX_TRACKS, 16);
-        assertTrue(16 == playerService.getTicker().getMaxTracks()); 
-    }
-    @Test
-    public void whenTickePartLengthUpdated_thenChangeReflectedInTicker() {
-        playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.PART_LENGTH, 25);
-        assertTrue(25 == playerService.getTicker().getPartLength()); 
-    }
-    @Test
-    public void whenTickerPPQUpdated_thenChangeReflectedInTicker() {
-        playerService.updateTicker(playerService.getTicker().getId(), TickerUpdateType.PPQ, 16);
-        assertTrue(16 == playerService.getTicker().getTicksPerBeat()); 
+        assertTrue(tickerService.getTicker().getPlayers().size() == 0); 
     }
 
 }

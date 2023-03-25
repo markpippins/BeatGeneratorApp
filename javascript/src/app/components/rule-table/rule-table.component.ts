@@ -24,7 +24,7 @@ export class RuleTableComponent {
   BAR = 2
   PART = 3
   POSITION = 4
-  OPERATOR = ["Tick", "Beat", "Bar", "Part", "Bar Count"]
+  OPERATOR = ["Tick", "Beat", "Bar", "Part", "Whole Beat", "Ticks", "Beats", "Bars", "Parts"]
 
   interval = 0.25
 
