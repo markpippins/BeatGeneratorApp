@@ -52,23 +52,36 @@ public class Strike extends Player {
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
     }
+
     
     @Override
     public void onTick(long tick, long bar) {
         drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+        handleRachets();
     }
+    
+    private void handleRachets() {
+        IntStream.range(1, getRatchetCount() + 1).forEach(i -> {
 
-    public boolean shouldPlay() {
-        AtomicBoolean shouldPlay = new AtomicBoolean(false);
-        
-        IntStream.range(1, getRatchetCount() + 1).forEach(r -> {
+
             double base = getTicker().getTicksPerBeat() / getTicker().getBeatsPerBar(); 
-            double offSet = getLastPlayedTick() + base * r;
-            if (getTicker().getTick() == offSet)
-                shouldPlay.set(true);
+            double offset = getTicker().getTick() + (base * i * getRatchetInterval());
+            Rule rule = new Rule(Operator.TICK, Comparison.EQUALS, offset, 0);
+
+            Strike ratchet = new Strike(String.format("%s ratchet - %s", getName(), i + 1), getTicker(), 
+                    getInstrument(), getNote(), getAllowedControlMessages()) {
+                        public void onTick(long tick, long bar) {
+                            drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+                            getTicker().getPlayers().remove(this);
+                        }
+                        
+                    };
+            
+            ratchet.setId((long) getTicker().getMaxTracks() + i);
+            ratchet.setTicker(getTicker());
+            ratchet.getRules().add(rule);
+            
+            getTicker().getPlayers().add(ratchet);
         });
-
-
-        return shouldPlay.get() || super.shouldPlay();
     }
 }

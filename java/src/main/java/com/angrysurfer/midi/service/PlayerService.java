@@ -152,37 +152,8 @@ public class PlayerService {
         strikeRepository.save(player);
         rule.setPlayer(null);
         getRuleRepository().save(rule);
-        // TODO: remove rule from database
-        // getRuleRepository().deleteById(ruleId);
     }
 
-
-    // public Ticker updateTicker(Long tickerId, int updateType, int updateValue) {
-
-    //     Ticker ticker = getTickerService().getTicker().getId().equals(tickerId) ? getTickerService().getTicker() : getTickerRepo().findById(tickerId).orElseThrow();
-
-    //     switch (updateType) {
-    //         case PPQ : ticker.setTicksPerBeat(updateValue);
-    //             break;
-
-    //         case BPM: 
-    //             ticker.setTempoInBPM(Float.valueOf(updateValue));
-    //             if (Objects.nonNull(getSequenceRunner()) && ticker.getId().equals(getTickerService().getTicker().getId()))
-    //                 getSequenceRunner().getSequencer().setTempoInBPM(updateValue);
-    //             break;
-
-    //         case BEATS_PER_BAR: ticker.setBeatsPerBar(updateValue);
-    //             break;
-
-    //         case PART_LENGTH: ticker.setPartLength(updateValue);
-    //             break;
-
-    //         case MAX_TRACKS: ticker.setMaxTracks(updateValue);
-    //         break;
-    //     }
-
-    //     return getTickerRepo().save(ticker);
-    // }
 
     public Player updatePlayer(Long playerId, int updateType, int updateValue) {
         Strike strike = getTickerService().getTicker().getPlayer(playerId); 
@@ -281,33 +252,6 @@ public class PlayerService {
         return strike;
     }
 
-    // public synchronized Ticker next(long currentTickerId) {
-    //     if (currentTickerId == 0 || getTickerService().getTicker().getPlayers().size() > 0) {       
-    //         stopRunningSequencers();
-    //         Long maxTickerId = getTickerRepo().getMaximumTickerId();
-    //         getTickerService().setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
-    //             getTickerRepo().getNextTicker(currentTickerId) :
-    //             null);
-    //         getTickerService().getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTickerService().getTicker().getId()));
-    //         getTickerService().getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
-    //         sequenceRunner = new SequenceRunner(getTickerService().getTicker());
-    //     }
-
-    //     return getTickerService().getTicker();
-    // }
-
-    // public synchronized Ticker previous(long currentTickerId) {
-    //     if (currentTickerId >  (getTickerRepo().getMinimumTickerId())) {
-    //         stopRunningSequencers();
-    //         getTickerService().setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
-    //         getTickerService().getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTickerService().getTicker().getId()));
-    //         getTickerService().getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
-    //         sequenceRunner = new SequenceRunner(getTickerService().getTicker());
-    //     }
-
-    //     return getTickerService().getTicker();
-    // }
-
     public void setSteps(List<Step> steps) {
     //    this.getBeatGenerator().setSteps(steps);
     }
@@ -342,12 +286,6 @@ public class PlayerService {
 
     public void clearPlayers() {
         getTickerService().getTicker().getPlayers().clear();
-    }
-
-    public Ticker loadTicker(long tickerId) {
-        // getTickerRepo().findById(tickerId).ifPresent(this::setTicker);
-        // return getTickerService().getTicker();
-        return tickerService.loadTicker(tickerId);
     }
 
     public Set<Strike> getPlayers() {
@@ -386,9 +324,4 @@ public class PlayerService {
         }).start();
     }
 
-
-    // public Ticker newTicker() {
-    //     setTicker(null);
-    //     return getTickerService().getTicker();
-    // } 
 }
