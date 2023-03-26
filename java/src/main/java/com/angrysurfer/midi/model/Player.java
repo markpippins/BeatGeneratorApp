@@ -32,11 +32,11 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private List<Pad> pads = new ArrayList<>();
 
     private String name;
-    private int swing = 50;
+    private int swing = 0;
     private int level = 100;
     private int note = 60;
-    private int minVelocity = 110;
-    private int maxVelocity = 127;
+    private int minVelocity = 100;
+    private int maxVelocity = 110;
     private int preset = 1;
     private int probability = 100;
 
@@ -91,6 +91,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     public Player(String name, Ticker ticker, MidiInstrument instrument) {
         setName(name);
         setInstrument(instrument);
+        setTicker(ticker);
     }
 
     public Player(String name, Ticker ticker, MidiInstrument instrument, List<Integer> allowedControlMessages) {

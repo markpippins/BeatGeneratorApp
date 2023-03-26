@@ -29,13 +29,11 @@
         <div class="player-table-holder">
           <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
         </div>
-        <div class="two-column-grid-container">
           <div class="rule-table-holder">
             <app-conditions-panel *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
                                 [player]="selectedPlayer"></app-conditions-panel>
           </div>
         </div>
-      </div>
       <!-- <app-randomizer-panel></app-randomizer-panel> -->
       <div>
         <app-beat-spec></app-beat-spec>
@@ -48,9 +46,6 @@
           <app-device-panel></app-device-panel>
         </mat-tab>
       </mat-tab-group>
-          <div class="two-column-grid-container" [style.max-width.px]="230" [style.min-height.px]="280">
-        <!--        <app-drum-grid></app-drum-grid>-->
-      </div>
     </mat-tab>
   </mat-tab-group>
   <div>

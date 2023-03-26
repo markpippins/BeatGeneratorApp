@@ -12,3 +12,4 @@ public interface Operator {
     static int BAR_COUNT  = 7;
     static int PART_COUNT = 8;
 }
+    

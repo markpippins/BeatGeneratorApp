@@ -135,7 +135,8 @@ export class PlayerTableComponent implements Listener, OnInit {
   }
 
   onPresetChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.PRESET, event.target.value).subscribe()
+    this.players.filter(p => p.instrumentId == player.instrumentId )
+      .forEach(p => this.midiService.updatePlayer(p.id, Constants.PRESET, event.target.value).subscribe())
   }
 
   onLevelChange(player: Player, event: { target: any; }) {

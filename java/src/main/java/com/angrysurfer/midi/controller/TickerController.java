@@ -1,7 +1,6 @@
 package com.angrysurfer.midi.controller;
 
 import com.angrysurfer.midi.model.Ticker;
-import com.angrysurfer.midi.service.PlayerService;
 import com.angrysurfer.midi.service.TickerService;
 import com.angrysurfer.midi.util.Constants;
 

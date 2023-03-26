@@ -231,6 +231,7 @@ svg.material-icons:not(:last-child) {
 }
 
 .player-table-holder, .rule-table-holder {
+  flex-grow: true;
   background-color: transparent;
   padding: 0px;
   padding-top: 0px;

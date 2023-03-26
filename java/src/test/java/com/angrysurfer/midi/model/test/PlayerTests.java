@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.IntStream;
-
 import org.junit.Test;
 
 import com.angrysurfer.midi.util.Comparison;

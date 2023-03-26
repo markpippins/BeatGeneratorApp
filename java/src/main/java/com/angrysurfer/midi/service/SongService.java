@@ -5,8 +5,6 @@ import com.angrysurfer.midi.repo.PatternRepository;
 import com.angrysurfer.midi.repo.SongRepository;
 import com.angrysurfer.midi.repo.StepRepository;
 import com.angrysurfer.midi.util.StepUpdateType;
-import com.angrysurfer.midi.util.StepUpdateType.*;
-
 import lombok.Getter;
 import lombok.Setter;
 

@@ -84,7 +84,6 @@ public class SequenceRunner implements Runnable {
         sequencer.setSequence(master);
         sequencer.setLoopCount(this.ticker.getLoopCount());
         sequencer.setTempoInBPM(this.ticker.getTempoInBPM());
-
         sequencer.open();
         this.ticker.beforeStart();
     }

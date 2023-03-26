@@ -93,7 +93,6 @@ public class Ticker implements Serializable {
     private Integer loopCount  = Constants.DEFAULT_LOOP_COUNT;
     private Integer parts = Constants.DEFAULT_PART_COUNT;
 
-    
     @Transient
     private boolean paused = false;
 

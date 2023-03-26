@@ -13,7 +13,7 @@ import { Listener } from 'src/app/models/listener';
 export class StatusPanelComponent implements OnInit, Listener {
 
   ppqSelectionIndex !: number
-  ppqs = [1, 2, 4, 8, 12, 24, 32, 48, 96]
+  ppqs = [1, 2, 4, 8, 9, 11, 12, 13, 21, 23, 24, 32, 33, 48, 64, 96]
 
   statusColumns = ['Ticker', 'Tick', 'Beat', 'Bar', '', 'PPQ', 'BPM', 'Beats / Bar', 'Part Length', 'Max']
 

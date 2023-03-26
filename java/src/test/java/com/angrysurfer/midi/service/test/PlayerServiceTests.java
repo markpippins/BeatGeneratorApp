@@ -3,10 +3,6 @@ package com.angrysurfer.midi.service.test;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.IntStream;
-
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
 
@@ -14,8 +10,6 @@ import com.angrysurfer.midi.repo.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +26,6 @@ import com.angrysurfer.midi.service.PlayerService;
 import com.angrysurfer.midi.service.TickerService;
 import com.angrysurfer.midi.util.Comparison;
 import com.angrysurfer.midi.util.PlayerUpdateType;
-import com.angrysurfer.midi.util.TickerUpdateType;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(

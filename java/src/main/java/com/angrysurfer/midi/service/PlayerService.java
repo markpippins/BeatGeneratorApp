@@ -18,8 +18,6 @@ import org.springframework.stereotype.Service;
 import javax.sound.midi.*;
 
 import static com.angrysurfer.midi.util.PlayerUpdateType.*;
-import static com.angrysurfer.midi.util.TickerUpdateType.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

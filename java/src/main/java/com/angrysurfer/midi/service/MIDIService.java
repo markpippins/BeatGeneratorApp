@@ -10,9 +10,10 @@ import org.springframework.stereotype.Service;
 
 import javax.sound.midi.*;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +23,9 @@ public class MIDIService {
 
     private MidiInstrumentRepository midiInstrumentRepo;
 
+    static Map<String, MidiDevice> midiInDevices = new HashMap<>();
+
+    static Map<String, MidiDevice> midiOutDevices = new HashMap<>();
 
     public MIDIService(MidiInstrumentRepository midiInstrumentRepo) {
         this.midiInstrumentRepo = midiInstrumentRepo;
@@ -68,13 +72,23 @@ public class MIDIService {
     }
 
     public static MidiDevice findMidiOutDevice(String name) {
-        return findMidiDevices(true, false).stream()
+        if (midiOutDevices.containsKey(name))
+            return midiOutDevices.get(name);
+
+        else midiOutDevices.put(name, findMidiDevices(true, false).stream()
                 .filter(d -> d.getDeviceInfo().getName().equals(name)).findAny()
-                .orElse(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals("gervill")).findFirst().orElseThrow());
+                .orElse(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals("gervill")).findFirst().orElseThrow()));
+    
+        return midiOutDevices.get(name);
     }
 
     public static MidiDevice findMidiInDevice(String name) {
-        return findMidiDevices(false, true).stream().filter(d -> d.getDeviceInfo().getName().equals(name)).findAny().orElseThrow();
+        if (midiOutDevices.containsKey(name))
+            return midiOutDevices.get(name);
+        
+        else midiInDevices.put(name, findMidiDevices(false, true).stream().filter(d -> d.getDeviceInfo().getName().equals(name)).findAny().orElseThrow());
+
+        return midiInDevices.get(name);
     }
 
     public static void reset() {
