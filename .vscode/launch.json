@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Cycler",
+            "request": "launch",
+            "mainClass": "com.angrysurfer.midi.util.Cycler",
+            "projectName": "BeatGenerator"
+        },
+        {
+            "type": "java",
             "name": "Current File",
             "request": "launch",
             "mainClass": "${file}"
@@ -15,7 +22,10 @@
             "name": "BeatGeneratorApplication",
             "request": "launch",
             "mainClass": "com.angrysurfer.BeatGeneratorApplication",
-            "projectName": "BeatGenerator"
+            "projectName": "BeatGenerator",
+            "noDebug": false,
+            "__progressId": "2219c5ce-ff90-4aff-aa3e-65de55ea5f8d",
+            "__origin": "internal"
         }
     ]
 }

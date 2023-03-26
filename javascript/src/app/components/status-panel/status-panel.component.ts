@@ -13,7 +13,7 @@ import { Listener } from 'src/app/models/listener';
 export class StatusPanelComponent implements OnInit, Listener {
 
   ppqSelectionIndex !: number
-  ppqs = [1, 2, 4, 8, 9, 11, 12, 13, 21, 23, 24, 32, 33, 48, 64, 96]
+  ppqs = [1, 2, 3,4, 8, 9, 11, 12, 13, 21, 23, 24, 32, 33, 48, 64, 72, 84, 88, 96]
 
   statusColumns = ['Ticker', 'Tick', 'Beat', 'Bar', '', 'PPQ', 'BPM', 'Beats / Bar', 'Part Length', 'Max']
 
@@ -55,6 +55,8 @@ export class StatusPanelComponent implements OnInit, Listener {
   waiting = false;
   nextCalled = false
 
+  lastBeat = 0
+
   updateDisplay(): void {
     if (this.waiting)
       return
@@ -68,19 +70,20 @@ export class StatusPanelComponent implements OnInit, Listener {
           this.midiService.next(0).subscribe(async (data2) => {
             this.connected = true
             this.ticker = data2
-            this.uiService.notifyAll(Constants.CONNECTED, '')
+            this.uiService.notifyAll(Constants.CONNECTED, '', 1)
             this.waiting = false
           })
         }
-        await this.midiService.delay(this.connected && this.ticker != undefined && this.ticker.playing ? 50 : 500);
+        await this.midiService.delay(this.connected && this.ticker != undefined && this.ticker.playing ? 200 : 200);
         this.waiting = false
+
         this.updateDisplay();
       },
 
       async err => {
         console.log(err)
         this.connected = false
-        this.uiService.notifyAll(Constants.DISCONNECTED, '')
+        this.uiService.notifyAll(Constants.DISCONNECTED, '', 0)
         await this.midiService.delay(500);
         this.waiting = false
         this.updateDisplay();
@@ -92,6 +95,12 @@ export class StatusPanelComponent implements OnInit, Listener {
     //     this.updateDisplay();
     // }
     );
+
+    if (this.ticker != undefined && this.ticker.beat != this.lastBeat) {
+      this.lastBeat = this.ticker.beat
+      this.uiService.notifyAll(Constants.BEAT_DIV, '', this.ticker.beat)
+    }
+
   }
 
   onTempoChange(event: { target: any; }) {

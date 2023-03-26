@@ -20,6 +20,8 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   selectedPlayer: Player | undefined;
 
+  @Output()
+  instruments!: Instrument[]
 
   @Input()
   players!: Player[]
@@ -36,6 +38,9 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   ngOnInit(): void {
     this.uiService.addListener(this)
+    this.midiService.allInstruments().subscribe(data => {
+      this.instruments = data
+    })
   }
 
   onRowClick(player: Player, event: MouseEvent) {
@@ -117,7 +122,9 @@ export class PlayerTableComponent implements Listener, OnInit {
       level: 0,
       active: false,
       ratchetCount: 0,
-      ratchetInterval: 0
+      ratchetInterval: 0,
+      subs: 0,
+      sub: 0
     }, 'add')
   }
 

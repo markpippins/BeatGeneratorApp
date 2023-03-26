@@ -1,14 +1,13 @@
 {
 	"folders": [
 		{
-			"path": "java"
-		},
-		{
-			"path": "javascript"
+			"path": "."
 		}
 	],
 	"settings": {
 		"java.compile.nullAnalysis.mode": "automatic",
-		"java.configuration.updateBuildConfiguration": "interactive"
+		"java.configuration.updateBuildConfiguration": "automatic",
+		"maven.view": "flat",
+		"java.debug.settings.onBuildFailureProceed": true
 	}
 }

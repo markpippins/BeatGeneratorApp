@@ -17,6 +17,7 @@ export class InstrumentSelectorComponent implements OnInit {
   @Output()
   instrumentSelectEvent = new EventEmitter<Instrument>();
 
+  @Input()
   instruments!: Instrument[]
 
   @Output()
@@ -28,9 +29,7 @@ export class InstrumentSelectorComponent implements OnInit {
   constructor(private midiService: MidiService, private uiService: UiService) {}
 
   ngOnInit(): void {
-    this.midiService.allInstruments().subscribe(async data => {
-      this.instruments = data
-    })
+
   }
 
   ngAfterContentChecked(): void {
@@ -42,7 +41,7 @@ export class InstrumentSelectorComponent implements OnInit {
 
   onSelectionChange(data: any) {
     this.instrumentSelectEvent.emit(this.instruments[this.selectionIndex])
-    this.uiService.notifyAll(Constants.STATUS, this.instruments[this.selectionIndex].name + ' selected.')
+    this.uiService.notifyAll(Constants.STATUS, this.instruments[this.selectionIndex].name + ' selected.', 0)
   }
 
   setIndexForInstrument() {

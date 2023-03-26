@@ -39,6 +39,7 @@ import { DeviceTableComponent } from './components/widgets/device-table/device-t
 import { RandomizerPanelComponent } from './components/widgets/randomizer-panel/randomizer-panel.component';
 import { ControlPanel808Component } from './components/widgets/control-panel808/control-panel808.component';
 import { ParamsPanel808Component } from './components/widgets/params-panel808/params-panel808.component';
+import { StrikeDetailComponent } from './components/widgets/strike-detail/strike-detail.component';
 
 @NgModule({
   declarations: [
@@ -66,6 +67,7 @@ import { ParamsPanel808Component } from './components/widgets/params-panel808/pa
     RandomizerPanelComponent,
     ControlPanel808Component,
     ParamsPanel808Component,
+    StrikeDetailComponent,
     ],
     imports: [
         BrowserModule,

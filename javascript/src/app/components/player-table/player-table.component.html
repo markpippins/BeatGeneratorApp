@@ -41,8 +41,12 @@
       <!-- <td class="player-short-col" id="player-col-id-{{player.id}}">
         {{ player.instrument.id }}
       </td> -->
+      <td class="player-short-col" id="player-col-id-{{player.id}}" (change)="onPresetChange(player, $event)">
+        <input type="text" value="{{ player.id}}">
+      </td>
+
       <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
-        <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)" [player]="player"></app-instrument-selector>
+        <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)" [instruments]="instruments" [player]="player"></app-instrument-selector>
       </td>
       <!-- <td class="player-short-col" id="player-col-instrument-id-{{player.id}}">
         {{ player.instrument.channel }}
@@ -58,6 +62,9 @@
           <!--          <mat-icon>mute</mat-icon>-->
           P
         </button>
+      </td>
+      <td class="player-short-col" (change)="onSwingChange(player, $event)">
+        <input type="number" min="0" max="100" step="1" value="{{ player.subs }}">
       </td>
       <td class="player-short-col" (change)="onSwingChange(player, $event)">
         <input type="number" min="0" max="100" step="1" value="{{ player.swing }}">

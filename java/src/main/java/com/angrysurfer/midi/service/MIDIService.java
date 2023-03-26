@@ -23,9 +23,9 @@ public class MIDIService {
 
     private MidiInstrumentRepository midiInstrumentRepo;
 
-    static Map<String, MidiDevice> midiInDevices = new HashMap<>();
+    // static Map<String, MidiDevice> midiInDevices = new HashMap<>();
 
-    static Map<String, MidiDevice> midiOutDevices = new HashMap<>();
+    // static Map<String, MidiDevice> midiOutDevices = new HashMap<>();
 
     public MIDIService(MidiInstrumentRepository midiInstrumentRepo) {
         this.midiInstrumentRepo = midiInstrumentRepo;
@@ -72,23 +72,25 @@ public class MIDIService {
     }
 
     public static MidiDevice findMidiOutDevice(String name) {
-        if (midiOutDevices.containsKey(name))
-            return midiOutDevices.get(name);
+        // if (midiOutDevices.containsKey(name))
+        //     return midiOutDevices.get(name);
 
-        else midiOutDevices.put(name, findMidiDevices(true, false).stream()
+        // else midiOutDevices.put(name, 
+        return findMidiDevices(true, false).stream()
                 .filter(d -> d.getDeviceInfo().getName().equals(name)).findAny()
-                .orElse(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals("gervill")).findFirst().orElseThrow()));
+                .orElse(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals("gervill")).findFirst().orElseThrow());
     
-        return midiOutDevices.get(name);
+        // return midiOutDevices.get(name);
     }
 
     public static MidiDevice findMidiInDevice(String name) {
-        if (midiOutDevices.containsKey(name))
-            return midiOutDevices.get(name);
+        // if (midiOutDevices.containsKey(name))
+        //     return midiOutDevices.get(name);
         
-        else midiInDevices.put(name, findMidiDevices(false, true).stream().filter(d -> d.getDeviceInfo().getName().equals(name)).findAny().orElseThrow());
+        // else midiInDevices.put(name, 
+        return findMidiDevices(false, true).stream().filter(d -> d.getDeviceInfo().getName().equals(name)).findAny().orElseThrow();
 
-        return midiInDevices.get(name);
+        // return midiInDevices.get(name);
     }
 
     public static void reset() {
@@ -103,7 +105,7 @@ public class MIDIService {
 
     public static boolean select(MidiDevice device) {
         if (!device.isOpen()) {
-            reset();
+            // reset();
             try {
                 device.open();
                 MidiSystem.getTransmitter().setReceiver(device.getReceiver());
@@ -197,7 +199,7 @@ public class MIDIService {
                         try {
                             ShortMessage message = new ShortMessage();
                             message.setMessage(messageType, channel, data1, data2);
-                            device.getReceiver().send(message, 0L);
+                            device.getReceiver().send(message, 1000L);
                             // log.info(String.join(", ",
                             //         MidiMessage.lookupCommand(message.getCommand()),
                             //         "Channel: ".concat(Integer.valueOf(message.getChannel()).toString()),

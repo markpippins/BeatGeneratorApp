@@ -54,6 +54,8 @@ public class SequenceRunner implements Runnable {
      */
     private final Ticker ticker;
 
+    private boolean stopped = false;
+
     /**
      * @param ticker
      */
@@ -63,7 +65,7 @@ public class SequenceRunner implements Runnable {
     }
 
     public void ensureDevicesOpen() {
-        this.ticker.getPlayers().stream().map(p -> p.getInstrument().getDevice()).distinct().forEach(d -> MIDIService.select(d));
+        this.ticker.getPlayers().stream().map(p -> p.getInstrument().getDevice()).filter(d -> !d.isOpen()).distinct().forEach(d -> MIDIService.select(d));
     }
 
     public Sequence getMasterSequence() throws InvalidMidiDataException {
@@ -91,6 +93,7 @@ public class SequenceRunner implements Runnable {
     public void afterEnd() {
         sequencer.close();
         this.ticker.afterEnd();
+        stopped = false;
     }
 
     @Override
@@ -102,13 +105,15 @@ public class SequenceRunner implements Runnable {
         try {
             beforeStart();
             sequencer.start();
-            while (sequencer.isRunning() && sequencer.isRunning()) {
+            getTicker().onStart();
+            while (sequencer.isRunning() && !isStopped()) {
                 if (sequencer.getTickPosition() > this.ticker.getTick()) {
                     this.ticker.beforeTick();
+                    // this.ticker.getPlayers().forEach(p -> this.executor.submit(p));                    
                     this.executor.invokeAll(this.ticker.getPlayers());
                     this.ticker.afterTick();
                 }
-                Thread.sleep(5);
+                Thread.sleep(15);
             }
 
             afterEnd();
@@ -118,9 +123,9 @@ public class SequenceRunner implements Runnable {
     }
 
     public Ticker stop() {
+        setStopped(true);
         if (Objects.nonNull(sequencer) && sequencer.isRunning())
             sequencer.stop();
-
         this.ticker.setPaused(false);
         this.ticker.getBeatCycler().reset();
         this.ticker.getBarCycler().reset();

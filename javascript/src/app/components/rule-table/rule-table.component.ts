@@ -75,7 +75,7 @@ export class RuleTableComponent {
     rule.operatorId = value
     // let op = 'operatorSelect-' + rule.id
     this.uiService.setSelectValue(event.target, value)
-    this.uiService.notifyAll(Constants.STATUS, this.OPERATOR[value] + ' selected.')
+    this.uiService.notifyAll(Constants.STATUS, this.OPERATOR[value] + ' selected.', 0)
   }
 
   onComparisonChange(rule: Rule, event: { target: any }) {
@@ -83,7 +83,7 @@ export class RuleTableComponent {
     this.midiService.updateRule(this.player.id, rule.id, rule.operatorId, value, rule.value, rule.part).subscribe()
     rule.comparisonId = value
     this.uiService.setSelectValue(event.target, value)
-    this.uiService.notifyAll(Constants.STATUS, this.COMPARISON[value] + ' selected.')
+    this.uiService.notifyAll(Constants.STATUS, this.COMPARISON[value] + ' selected.', 0)
   }
 
   onValueChange(rule: Rule, event: { target: any }) {

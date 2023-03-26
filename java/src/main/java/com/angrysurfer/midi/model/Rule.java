@@ -40,6 +40,14 @@ public class Rule implements Serializable {
         setPart(part);
     }
 
+    public Rule(Player player, int operatorId, int comparisonId, Double value, int part) {
+        setPlayer(player);
+        setOperatorId(operatorId);
+        setComparisonId(comparisonId);
+        setValue(value);
+        setPart(part);
+    }
+
     public void setPlayer(Player player) {
         this.player = player;
         if (Objects.nonNull(player))

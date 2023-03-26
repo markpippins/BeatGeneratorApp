@@ -78,7 +78,7 @@ public class PlayerService {
             File file = new File(instruments);
             if (file.exists()) file.delete();
             MidiInstrumentList list = new MidiInstrumentList();
-            list.getInstruments().addAll(getTickerService().getTicker().getPlayers().stream().map(Player::getInstrument).distinct().toList());
+            list.getInstruments().addAll(getPlayers().stream().map(Player::getInstrument).distinct().toList());
             Files.write(file.toPath(), Collections.singletonList(PlayerService.mapper.writerWithDefaultPrettyPrinter().
                     writeValueAsString(list)), StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
@@ -107,13 +107,14 @@ public class PlayerService {
             logger.error(e.getMessage(), e);
         }
 
-        String name = midiInstrument.getName().concat(Integer.toString(getTickerService().getTicker().getPlayers().size()));
+        String name = midiInstrument.getName().concat(Integer.toString(getPlayers().size()));
         Strike strike = new Strike(name, getTickerService().getTicker(), midiInstrument,
-                Strike.KICK + getTickerService().getTicker().getPlayers().size(), Strike.closedHatParams);
+                Strike.KICK + getPlayers().size(), Strike.closedHatParams);
         strike.setTicker(getTickerService().getTicker());
         strike = getStrikeRepository().save(strike);
-        getTickerService().getTicker().getPlayers().add(strike);
+        getPlayers().add(strike);
         strike.getSubCycler().setLength(getTickerService().getTicker().getTicksPerBeat() / getTickerService().getTicker().getBeatsPerBar());
+        strike.getRules().add(getRuleRepository().save(new Rule(strike, Operator.BEAT, Comparison.EQUALS, 1.0, 0)));
         return strike;
     }
 
@@ -238,9 +239,10 @@ public class PlayerService {
 
     public Set<Strike> removePlayer(Long playerId) {
         Player strike = getTickerService().getTicker().getPlayer(playerId);
-        getTickerService().getTicker().getPlayers().remove(strike);
+        strike.getRules().forEach(r -> ruleRepository.delete(r));
+        getPlayers().remove(strike);
         getStrikeRepository().deleteById(strike.getId());
-        return getTickerService().getTicker().getPlayers();
+        return getPlayers();
     }
 
 
@@ -260,7 +262,7 @@ public class PlayerService {
             File file = new File(instruments);
             if (file.exists()) file.delete();
             MidiInstrumentList list = new MidiInstrumentList();
-            list.getInstruments().addAll(getTickerService().getTicker().getPlayers().stream().map(p -> p.getInstrument()).distinct().toList());
+            list.getInstruments().addAll(getPlayers().stream().map(p -> p.getInstrument()).distinct().toList());
             Files.write(file.toPath(), Collections.singletonList(PlayerService.mapper.writerWithDefaultPrettyPrinter().
                     writeValueAsString(list)), StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
@@ -271,7 +273,7 @@ public class PlayerService {
     public void saveBeat() {
         try {
             Set<Strike> strikes = new HashSet<>();
-            getTickerService().getTicker().getPlayers().forEach(s -> strikes.add((Strike) s));
+            getPlayers().forEach(s -> strikes.add((Strike) s));
             String beatFile = "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/beats/" + toString() + ".json";
             File file = new File(beatFile);
             if (file.exists()) file.delete();
@@ -283,7 +285,12 @@ public class PlayerService {
     }
 
     public void clearPlayers() {
-        getTickerService().getTicker().getPlayers().clear();
+        getPlayers().stream().filter(p -> p.getRules().size() == 0)
+            .forEach(p -> {
+                getPlayers().remove(p);
+                p.setTicker(null);
+                strikeRepository.delete(p);
+            });
     }
 
     public Set<Strike> getPlayers() {

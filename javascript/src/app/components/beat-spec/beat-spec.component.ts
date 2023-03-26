@@ -28,11 +28,11 @@ export class BeatSpecComponent implements OnInit {
 
   ngOnInit(): void {
     // for (let page = 0; page < 8; page++)
-      for (let step = 0; step < this.stepCount; step++) {
-      this.steps.push({
-        id: 0, position: step, active: false, gate: 50, pitch: 60, probability: 100, velocity: 110,
-        page: 0, songId: 0
-      })
+      for (let index =1; index < this.stepCount + 1; index++) {
+        this.steps.push({
+          id: 0, position: index, active: false, gate: 50, pitch: 60, probability: 100, velocity: 110,
+          page: 0, songId: 0
+        })
     }
   }
 

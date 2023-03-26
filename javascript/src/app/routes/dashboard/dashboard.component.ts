@@ -100,7 +100,7 @@ export class DashboardComponent implements OnInit, Listener {
                 this.selectedPlayer = this.players[0]
             })
           })
-          this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
+          this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString(), 0)
           break
         }
 
@@ -117,7 +117,7 @@ export class DashboardComponent implements OnInit, Listener {
               })
             })
           }
-          this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString())
+          this.uiService.notifyAll(Constants.TICKER_SELECTED, this.ticker.id.toString(), 0)
           break
         }
 
@@ -136,7 +136,8 @@ export class DashboardComponent implements OnInit, Listener {
           this.midiService.stop().subscribe(data => {
             this.ticker = data
           })
-          // this.players = []
+          this.players = []
+          this.updateDisplay();
           // let element = document.getElementById('transport-btn-play')
           // if (element != null) { // @ts-ignore
           //   this.toggleClass(element, 'active')

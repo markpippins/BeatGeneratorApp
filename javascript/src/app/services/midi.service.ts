@@ -225,9 +225,10 @@ export class MidiService {
     return this.http.post<Step[]>('http://localhost:8080/api/sequence/play', steps);
   }
 
-  updateStep(stepId: number, updateType: number, updateValue: number) {
+  updateStep(stepId: number, position: number, updateType: number, updateValue: number) {
     let params = new HttpParams();
     params = params.append('stepId', stepId);
+    params = params.append('position', position);
     params = params.append('updateType', updateType);
     params = params.append('updateValue', updateValue);
     return this.http.get<Step>('http://localhost:8080/api/steps/update', {

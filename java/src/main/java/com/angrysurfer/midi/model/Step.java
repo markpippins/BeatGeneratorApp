@@ -18,28 +18,32 @@ public class Step {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    private int position;
+    private Integer position;
 
-    private Integer page;
+    private Integer page = 0;
 
-    private Long songId;
+    private Long songId = 0L;
 
-    boolean active;
+    private Boolean active = false;
     
-    int pitch;
+    private Integer pitch = 60;
 
-    int velocity;
+    private Integer velocity = 100;
 
-    int probability;
+    private Integer probability = 100;
 
-    int gate;
+    private Integer gate = 50;
+
+    public Step() {
+
+    }
 
     public void copyValues(Step step) {
         setId(step.getId());
         setPosition(step.getPosition());
         setPage(step.getPage());
         setSongId(step.getSongId());
-        setActive(step.isActive());
+        setActive(step.getActive());
         setPitch(step.getPitch()); 
         setVelocity(step.getVelocity());
         setProbability(step.getProbability());

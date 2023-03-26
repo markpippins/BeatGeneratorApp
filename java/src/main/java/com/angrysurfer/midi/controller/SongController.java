@@ -28,8 +28,8 @@ public class SongController {
 
     
     @GetMapping(path = "/steps/update")
-    public Step updateStep(@RequestParam long stepId, int updateType, int updateValue) {
-        return service.updateStep(stepId, updateType, updateValue);
+    public Step updateStep(@RequestParam long stepId, @RequestParam int position, @RequestParam int updateType, @RequestParam int updateValue) {
+        return service.updateStep(stepId, position, updateType, updateValue);
     }
     
     @GetMapping(path = "/song/new")

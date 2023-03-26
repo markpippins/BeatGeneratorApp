@@ -3,6 +3,7 @@ package com.angrysurfer.midi.model.test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import org.junit.After;
 import org.junit.Before;
@@ -50,7 +51,7 @@ public class CyclerTests {
     @Test
     public void whenAdvanceCalledLengthTimes_thenAdvanceReturnsOne() {
       Cycler c = new Cycler(30);
-      IntStream.range(1,c.getLength()).forEach(i -> assertTrue(c.advance() == i + 1));
+      LongStream.range(1,c.getLength()).forEach(i -> assertTrue(c.advance() == i + 1));
       assertTrue(c.advance() == 1);
     }
 

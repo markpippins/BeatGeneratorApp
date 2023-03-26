@@ -99,6 +99,14 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         setAllowedControlMessages(allowedControlMessages);
     }
 
+    public Long getSubs() {
+        return getSubCycler().getLength();
+    }
+
+    public Long getSub() {
+        return getSubCycler().get();
+    }
+
     public void setInstrument(MidiInstrument instrument) {
         this.instrument = instrument;
     }

@@ -21,4 +21,6 @@ export interface Player {
   active: boolean
   ratchetCount: number
   ratchetInterval: number
+  subs: number
+  sub: number
 }

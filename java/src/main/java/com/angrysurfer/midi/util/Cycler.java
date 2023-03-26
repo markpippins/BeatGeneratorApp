@@ -18,7 +18,7 @@ public class Cycler {
 
     static Logger logger = LoggerFactory.getLogger(Cycler.class.getCanonicalName());
 
-    private int length;
+    private long length;
 
     private AtomicLong position = new AtomicLong(1);
 
@@ -55,7 +55,8 @@ public class Cycler {
     private Long incrementPosition() {
         position.incrementAndGet();
         notifyAll(position.get());
-        cycleComplete();
+        if (position.get() == getLength())
+            cycleComplete();
         return position.get(); 
     }
 
@@ -91,7 +92,7 @@ public class Cycler {
     }
 
     public void notifyAll(long position) {
-        getListeners().forEach(l -> l.notify(position));
+        getListeners().forEach(l -> l.advanced(position));
     }
 
     public void cycleComplete() {

@@ -54,9 +54,9 @@ public class Strike extends Player {
     
     @Override
     public void onTick(long tick, long bar) {
-        if (getSwing() == 0)
+        // if (getSwing() == 0)
             drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
-        else handleSwing();
+        // else handleSwing();
         
         handleRachets();
     }

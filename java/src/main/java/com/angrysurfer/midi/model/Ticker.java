@@ -219,6 +219,11 @@ public class Ticker implements Serializable {
         getPlayers().forEach(p -> p.getSubCycler().setLength(getTicksPerBeat() / getBeatsPerBar()));
     }
 
+    public void onStart() {
+        getBeatCycler().getListeners().forEach(l -> l.starting());
+        getBarCycler().getListeners().forEach(l -> l.starting());
+    }
+
     public void onStop() {
         getBeatCycler().reset();
     }

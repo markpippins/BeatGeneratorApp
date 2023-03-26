@@ -16,8 +16,8 @@ export class UiService {
     this.listeners.push(listener)
   }
 
-  notifyAll(messageType: number, message: string) {
-    this.listeners.forEach(l => l.onNotify(messageType, message))
+  notifyAll(messageType: number, message: string, messageValue: number) {
+    this.listeners.forEach(l => l.onNotify(messageType, message, messageValue))
   }
 
   setSelectValue(id: string, val: any) {

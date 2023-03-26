@@ -5,10 +5,12 @@ export class Constants {
   static CONDITION_COLUMNS = ['operator', 'comparison', 'value']
 
   static PLAYER_COLUMNS = [
+    'Id',
     'Device',
     'Preset',
     'Pitch',
     '',
+    'Subs',
     'Swing',
     'Prob',
     'Level',
@@ -17,6 +19,11 @@ export class Constants {
     'Ratchet',
     'Interval'
   ]
+
+  static TICK_DIV = 0;
+  static BEAT_DIV = 1;
+  static BAR_DIV = 2;
+  static PART_DIV = 3;
 
   static INSTRUMENT = 0;
   static NOTE = 1;
