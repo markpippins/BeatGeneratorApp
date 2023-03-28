@@ -1,0 +1,11 @@
+{
+  "players" : [ ],
+  "tempoInBPM" : 151.0,
+  "songLength" : 2147483647,
+  "ticksPerBeat" : 4,
+  "beatsPerBar" : 10,
+  "swing" : 25,
+  "beatDivider" : 4.0,
+  "maxTracks" : 128,
+  "partLength" : 4
+}

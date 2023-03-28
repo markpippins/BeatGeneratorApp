@@ -2,6 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
 import { Listener } from 'src/app/models/listener';
+import { Song } from 'src/app/models/song';
 import { UiService } from 'src/app/services/ui.service';
 import {Step} from "../../models/step";
 import {MidiService} from "../../services/midi.service";
@@ -13,10 +14,11 @@ import {MidiService} from "../../services/midi.service";
 })
 export class BeatSpecComponent implements OnInit, Listener {
   editStep: number | undefined
-  stepCount: number = 16
-  steps: Step[][] = []
-  pages = [0, 1, 2, 3, 4, 5, 6, 7]
+  // stepCount: number = 16
+  // steps: Step[][] = []
+  // pages = [0, 1, 2, 3, 4, 5, 6, 7]
   tickerId!: number
+  song!: Song
   rows: string[][] = [[
     'Ride', 'Clap', 'Perc', 'Bass', 'Tom', 'Clap', 'Wood', 'P1',
     'Ride', 'fx', 'Perc', 'Bass',
@@ -27,7 +29,7 @@ export class BeatSpecComponent implements OnInit, Listener {
     this.editStep = step
   }
 
-  constructor(private midiService: MidiService, uiService: UiService) {
+  constructor(private midiService: MidiService, private uiService: UiService) {
     uiService.addListener(this)
   }
   onNotify(messageType: number, message: string, messageValue: number) {
@@ -36,24 +38,34 @@ export class BeatSpecComponent implements OnInit, Listener {
   }
 
   ngOnInit(): void {
-    for (let page = 0; page < 8; page++) {
-      this.steps.push([])
-      for (let index =1; index < this.stepCount + 1; index++) {
-        this.steps[page].push({
-          id: 0, position: index, active: false, gate: 50, pitch: 60, probability: 100, velocity: 110,
-          page: page, songId: 0,
-          channel: 0
-        })
-      }
-    }
+    this.updateDisplay();
+  }
+
+  updateDisplay(): void {
+    this.midiService.songInfo().subscribe(data => {
+        this.song = data
+        this.song.patterns = this.uiService.sortById(this.song.patterns)
+        this.song.patterns.forEach(p => p.steps = this.uiService.sortById(p.steps))
+        // for (let page = 0; page < 8; page++) {
+        //   let patterns = data.patterns
+        //   this.steps.push([])
+        //   for (let index =1; index < this.stepCount + 1; index++) {
+        //     this.steps[page].push({
+        //       id: 0, position: index, active: false, gate: 50, pitch: 60, probability: 100, velocity: 110,
+        //       page: page, songId: 0,
+        //       channel: 0
+        //     })
+        //   }
+        // }
+      })
   }
 
   onInstrumentSelected(instrument: Instrument, page: number) {
-    this.steps[page].forEach(s => s.channel = instrument.channel)
-    this.steps[page].forEach(s => {
+    this.song.patterns[page].steps.forEach(s => s.channel = instrument.channel)
+    this.song.patterns[page].steps.forEach(s => {
       s.channel = instrument.channel;
-      this.midiService.updateStep(s.id, s.page, s.position, Constants.STEP_ACTIVE, 1)
-        .subscribe(data => this.steps[page][this.steps[page].indexOf(s)] = data)
+      this.midiService.updateStep(s.id, s.page, s.position, Constants.CHANNEL, 1)
+        .subscribe(data => s = data)
     })
   }
 

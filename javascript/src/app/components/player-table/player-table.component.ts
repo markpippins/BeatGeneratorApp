@@ -174,6 +174,10 @@ export class PlayerTableComponent implements Listener, OnInit {
     this.midiService.updatePlayer(player.id, Constants.SWING, event.target.value).subscribe()
   }
 
+  onSubsChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.SUBS, event.target.value).subscribe()
+  }
+
   onPass(player: Player, $event: MouseEvent) {
     if (player != undefined && this.selectedPlayer == undefined)
       this.playerSelectEvent.emit(player);

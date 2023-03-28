@@ -149,11 +149,10 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     public Boolean call() {
         if (getLastTick() == getTicker().getTick())
             return Boolean.FALSE;
-
-        if (shouldPlay() && !isMuted() &&
-            getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers()
-                .stream().filter(e -> e.getLastPlayedTick() == getTicker().getTick())
-                    .toList().size() > 0)) {
+        
+            //  && !muteGroupPartnerSoundedOnThisTick()
+        
+        if (!isMuted() && shouldPlay()) {
                         getTicker().getActivePlayerIds().add(getId());
                         setLastPlayedBar(getTicker().getBar());
                         setLastPlayedBeat(getTicker().getBeat());
@@ -166,10 +165,19 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         return Boolean.TRUE;
     }
 
-    public boolean shouldPlay() {
+    private boolean muteGroupPartnerSoundedOnThisTick() {
+        return getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers()
+        .stream().filter(e -> e.getLastPlayedTick() == getTicker().getTick())
+            .toList().size() > 0);
+    }
 
-        AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
-        getRules().stream().filter(r -> r.getPart() == 0 || r.getPart() == getTicker().getPart()).forEach(rule -> {
+    public boolean shouldPlay() {
+        List<Rule> applicable = getRules().stream().
+            filter(r -> r.getPart() == 0 || r.getPart() == getTicker().getPart()).toList();
+
+        AtomicBoolean play = new AtomicBoolean(applicable.size() > 0);
+        
+        applicable.forEach(rule -> {
                 switch (rule.getOperatorId()) {
                     case Operator.TICK -> {
                         if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getTick(), rule.getValue()))

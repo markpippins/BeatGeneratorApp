@@ -13,5 +13,7 @@ public interface PlayerUpdateType {
     static int PRESET  = 9;
     static int RATCHET_COUNT  = 10;
     static int RATCHET_INTERVAL  = 11;
+    static int CHANNEL  = 12;
+    static int SUBS = 13;
     
 }

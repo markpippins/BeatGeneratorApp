@@ -38,6 +38,7 @@ export class Constants {
   static RATCHET_COUNT = 10;
   static RATCHET_INTERVAL = 11;
   static CHANNEL = 12;
+  static SUBS = 13;
 
   static STEP_ACTIVE = 0;
   static STEP_GATE = 1;

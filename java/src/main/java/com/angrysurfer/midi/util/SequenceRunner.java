@@ -1,6 +1,8 @@
 package com.angrysurfer.midi.util;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
@@ -56,6 +58,9 @@ public class SequenceRunner implements Runnable {
 
     private boolean stopped = false;
 
+    private int delay;
+
+    private Set<CyclerListener> cycleListeners = new HashSet<>();
     /**
      * @param ticker
      */
@@ -65,11 +70,11 @@ public class SequenceRunner implements Runnable {
     }
 
     public void ensureDevicesOpen() {
-        this.ticker.getPlayers().stream().map(p -> p.getInstrument().getDevice()).filter(d -> !d.isOpen()).distinct().forEach(d -> MIDIService.select(d));
+        getTicker().getPlayers().stream().map(p -> p.getInstrument().getDevice()).filter(d -> !d.isOpen()).distinct().forEach(d -> MIDIService.select(d));
     }
 
     public Sequence getMasterSequence() throws InvalidMidiDataException {
-        Sequence sequence = new Sequence(Sequence.PPQ, this.ticker.getTicksPerBeat());        
+        Sequence sequence = new Sequence(Sequence.PPQ, getTicker().getTicksPerBeat());        
         Track track = sequence.createTrack();
         IntStream.range(0, 10).forEach(i -> {
             try {
@@ -84,36 +89,42 @@ public class SequenceRunner implements Runnable {
     public void beforeStart() throws InvalidMidiDataException, MidiUnavailableException {
         Sequence master = getMasterSequence();
         sequencer.setSequence(master);
-        sequencer.setLoopCount(this.ticker.getLoopCount());
-        sequencer.setTempoInBPM(this.ticker.getTempoInBPM());
+        sequencer.setLoopCount(getTicker().getLoopCount());
+        sequencer.setTempoInBPM(getTicker().getTempoInBPM());
         sequencer.open();
-        this.ticker.beforeStart();
+        getTicker().beforeStart();
     }
 
     public void afterEnd() {
         sequencer.close();
-        this.ticker.afterEnd();
+        getTicker().afterEnd();
         stopped = false;
     }
 
     @Override
     public void run() {
 
+        boolean started = false;
+
         MIDIService.reset();
         ensureDevicesOpen();
 
         try {
             beforeStart();
+            
             sequencer.start();
-            getTicker().onStart();
             while (sequencer.isRunning() && !isStopped()) {
-                if (sequencer.getTickPosition() > this.ticker.getTick()) {
-                    this.ticker.beforeTick();
-                    // this.ticker.getPlayers().forEach(p -> this.executor.submit(p));                    
-                    this.executor.invokeAll(this.ticker.getPlayers());
-                    this.ticker.afterTick();
-                }
-                Thread.sleep(15);
+                float delay = 60000 / getTicker().getTempoInBPM() / getTicker().getTicksPerBeat();
+                getTicker().beforeTick();
+                while (sequencer.getTickPosition() < getTicker().getTick() + 1)
+                    Thread.sleep(1); 
+
+                if (!started)                    
+                    started = handleStarted();
+
+                this.executor.invokeAll(getTicker().getPlayers());
+                Thread.sleep((long) (delay * .8)); 
+                getTicker().afterTick();
             }
 
             afterEnd();
@@ -122,21 +133,27 @@ public class SequenceRunner implements Runnable {
         }
     }
 
+    private boolean handleStarted() {
+        getTicker().onStart();
+        getCycleListeners().forEach(c -> c.starting());
+        return true;
+    }
+
     public Ticker stop() {
         setStopped(true);
         if (Objects.nonNull(sequencer) && sequencer.isRunning())
             sequencer.stop();
-        this.ticker.setPaused(false);
-        this.ticker.getBeatCycler().reset();
-        this.ticker.getBarCycler().reset();
-        this.ticker.setDone(false);
-        this.ticker.reset();
-        return this.ticker;
+        getTicker().setPaused(false);
+        getTicker().getBeatCycler().reset();
+        getTicker().getBarCycler().reset();
+        getTicker().setDone(false);
+        getTicker().reset();
+        return getTicker();
     }
 
     public void pause() {
-        if (this.ticker.isPaused() || isPlaying())
-            this.ticker.setPaused(!this.ticker.isPaused());
+        if (getTicker().isPaused() || isPlaying())
+            getTicker().setPaused(!getTicker().isPaused());
     }
 
     public boolean isPlaying() {

@@ -99,21 +99,5 @@ public class Cycler {
         getListeners().forEach(l -> l.cycleComplete());
     }
 
-    public static void main(String[] args) {
-        Cycler cycler = new Cycler(16);
-        IntStream.range(0, 32).forEach(i -> 
-            logger.info(String.format("%s - %s", cycler.advance(), cycler.getPosition())));
-
-
-        Cycler cycler2 = new Cycler(16);
-        cycler2.stepSize = .5;
-        IntStream.range(0, 16).forEach(i -> 
-            logger.info(String.format("%s - %s", cycler2.advance(), cycler2.getPosition())));
-
-        Cycler cycler3 = new Cycler(16);
-        cycler3.stepSize = .25;
-        IntStream.range(0, 64).forEach(i -> 
-            logger.info(String.format("%s - %s", cycler3.advance(), cycler3.get())));
-    }
 
 }

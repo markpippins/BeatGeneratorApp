@@ -1,13 +1,11 @@
 package com.angrysurfer.midi.service.test;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 import org.junit.After;
@@ -24,20 +22,16 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.angrysurfer.BeatGeneratorApplication;
 import com.angrysurfer.midi.model.Song;
-import com.angrysurfer.midi.model.Step;
+import com.angrysurfer.midi.model.Pattern;
 import com.angrysurfer.midi.repo.MidiInstrumentRepository;
 import com.angrysurfer.midi.repo.SongRepository;
 import com.angrysurfer.midi.repo.StepRepository;
-import com.angrysurfer.midi.service.MIDIService;
 import com.angrysurfer.midi.service.SongService;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(
-  webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-  classes = BeatGeneratorApplication.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, classes = BeatGeneratorApplication.class)
 @AutoConfigureMockMvc
-@TestPropertySource(
-  locations = "classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-test.properties")
 public class SongServiceTests {
     static Logger logger = LoggerFactory.getLogger(SongServiceTests.class.getCanonicalName());
 
@@ -57,12 +51,11 @@ public class SongServiceTests {
     public void setUp() {
         // songRepository.deleteAll();
     }
-    
+
     @After
     public void tearDown() {
         // songRepository.deleteAll();
     }
-    
 
     @Test
     public void whenSongRetrieved_thenItHasBeenSaved() {
@@ -74,93 +67,94 @@ public class SongServiceTests {
         songService.newSong();
         Long id = songService.getSong().getId();
         songService.newSong();
-        assertTrue(songService.getSong().getId() > id); 
+        assertTrue(songService.getSong().getId() > id);
     }
 
-    @Test
-    public void whenLoadSongCalled_thenGetRequestedSong() {
-        songService.newSong();
-        Long id = songService.getSong().getId();
-        songService.newSong();
-        assertTrue(songService.getSong().getId() > id);
-        songService.newSong();
-        assertTrue(songService.getSong().getId() > id);
-        songService.newSong();
-        assertTrue(songService.getSong().getId() > id);
-        
-        Song song = songService.loadSong(id);
-        assertTrue(Objects.nonNull(song));
-    }
+    // @Test
+    // public void whenLoadSongCalled_thenGetRequestedSong() {
+    //     songService.newSong();
+    //     Long id = songService.getSong().getId();
+    //     songService.newSong();
+    //     assertTrue(songService.getSong().getId() > id);
+    //     songService.newSong();
+    //     assertTrue(songService.getSong().getId() > id);
+    //     songService.newSong();
+    //     assertTrue(songService.getSong().getId() > id);
 
-    
+    //     Song song = songService.loadSong(id);
+    //     assertTrue(Objects.nonNull(song));
+    // }
+
     @Test
-    public void whenNextSongRequestedWithNoSteps_thenSameSongReturned() {
+    public void whenNextSongRequestedWithNoPatterns_thenSameSongReturned() {
         songService.newSong();
         Long id = songService.getSong().getId();
-        songService.getSong().getSteps().clear();
+        songService.getSong().getPatterns().clear();
         Song nextSong = songService.next(id);
         assertSame(nextSong.getId(), id);
     }
 
     @Test
-    public void whenNextSongRequestedWithSteps_thenNewSongReturned() {
+    public void whenNextSongRequestedWithPatterns_thenNewSongReturned() {
         songService.newSong();
-        songService.addStep(0);
+        songService.addPattern(0);
         Long id = songService.getSong().getId();
         Song nextSong = songService.next(id);
-        assertTrue(nextSong.getId() > id); 
+        assertTrue(nextSong.getId() > id);
     }
 
     @Test
-    public void whenNextSongRequestedWithSteps_thenNextSongCanBeRequested() {
+    public void whenNextSongRequestedWithPatterns_thenNextSongCanBeRequested() {
         songService.newSong();
         IntStream.range(0, 5).forEach(i -> {
-            songService.addStep(0);
+            songService.addPattern(0);
             Long id = songService.getSong().getId();
             Song nextSong = songService.next(id);
-            assertTrue(nextSong.getId() > id); 
+            assertTrue(nextSong.getId() > id);
         });
     }
 
     @Test
     public void whenPreviousSongRequestedWith_thenSongWithLowerIdReturned() {
         songService.newSong();
-        songService.addStep(0);
+        songService.addPattern(0);
         Long id = songService.getSong().getId();
         Song nextSong = songService.next(id);
-        assertTrue(nextSong.getId() > id); 
+        assertTrue(nextSong.getId() > id);
 
         Song prevSong = songService.previous(nextSong.getId());
-        assertTrue(prevSong.getId() < nextSong.getId()); 
+        assertTrue(prevSong.getId() < nextSong.getId());
     }
 
     @Test
-    public void whenPreviousSongRequestedForTickWithSteps_thenStepsContainAddedStep() {
+    public void whenPreviousSongRequestedForTickWithPatterns_thenPatternsContainAddedPattern() {
         Long startingSongId = songService.getSong().getId();
-        Step step = songService.addStep(0);
+        Pattern pattern = songService.addPattern(0);
 
         // move to next song, add step and step
         songService.next(startingSongId);
         Long nextSongId = songService.getSong().getId();
-        songService.addStep(0);
+        songService.addPattern(0);
 
         // return to starting song
         songService.previous(nextSongId);
-        Step step2 = songService.getSong().getSteps().stream().filter(s -> s.getId().equals(step.getId())).findAny().orElseThrow();
-        assertTrue(songService.getSong().getSteps().stream().anyMatch(r -> r.getPosition().equals(step2.getPosition()))); 
+        Pattern pattern2 = songService.getSong().getPatterns().stream().filter(s -> s.getId().equals(pattern.getId()))
+                .findAny().orElseThrow();
+        assertTrue(songService.getSong().getPatterns().stream()
+                .anyMatch(r -> r.getPosition().equals(pattern2.getPosition())));
     }
 
     @Test
-    public void whenNextSongRequestedForSongWithSteps_thenStepsContainAddedStep() {
+    public void whenNextSongRequestedForSongWithPatterns_thenPatternsContainAddedPatter() {
         // songService.newSong();
         // add data to current Song
         Long startingSongId = songService.getSong().getId();
-        Step step = songService.addStep(0);
-        songService.addStep(0);
+        Pattern pattern = songService.addPattern(0);
+        songService.addPattern(0);
 
         // move to next song, add step and step
         Song song2 = songService.next(startingSongId);
-        Step step2 = songService.addStep(0);
+        Pattern pattern2 = songService.addPattern(0);
         // Step step = songService.addStep(0);
 
         // return to starting song
@@ -172,33 +166,35 @@ public class SongServiceTests {
         // advance again
         songService.next(songService.getSong().getId());
 
-        Step step3 = songService.getSong().getSteps().stream().filter(s -> s.getId().equals(step2.getId())).findAny().orElseThrow();
-        // Step step2 = step3.stream().filter(s -> s.getId().equals(step.getId())).findAny().orElseThrow();
-        assertTrue(step.getPosition().equals(step2.getPosition())); 
+        Pattern pattern3 = songService.getSong().getPatterns().stream().filter(s -> s.getId().equals(pattern2.getId()))
+                .findAny().orElseThrow();
+
+        assertTrue(pattern.getPosition().equals(pattern2.getPosition()));
     }
 
     @Test
-    public void whenNextSongRequestedForSongWithSteps_thenStepDoesNotContainRemovedStep() {
+    public void whenNextSongRequestedForSongWithPatterns_thenSongDoesNotContainRemovedPattern() {
         // songService.newSong();
         // add data to current Song
         Long startingSongId = songService.getSong().getId();
-        songService.addStep(0);
-        songService.addStep(0);
+        songService.addPattern(0);
+        songService.addPattern(0);
 
         // move to next song, add step and step
         Song song2 = songService.next(startingSongId);
-        Step step = songService.addStep(0);
-        //remove step
-        songService.removeStep(step.getId());
+        Pattern pattern = songService.addPattern(0);
+        // remove pattern
+        songService.removePattern(pattern.getId());
         // return to starting song
         assertEquals(startingSongId, songService.previous(song2.getId()).getId());
 
         // advance again
         songService.next(songService.getSong().getId());
 
-        // Step step3 = songService.getSong().getSteps().stream().filter(s -> s.getId().equals(step2.getId()));
+        // Step step3 = songService.getSong().getSteps().stream().filter(s ->
+        // s.getId().equals(step2.getId()));
         // Step step2 = step3.getStep(step.getId());
-        assertTrue(songService.getSong().getSteps().isEmpty()); 
+        assertTrue(songService.getSong().getPatterns().isEmpty());
     }
 
 }

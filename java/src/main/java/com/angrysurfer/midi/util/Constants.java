@@ -36,6 +36,21 @@ public class Constants {
 	public static final String UPDATE_PLAYER ="/player/update";
 	public static final String MUTE_PLAYER = "/players/mute";
 
+    public static final String ADD_STEP = "/steps/add";
+    public static final String REMOVE_STEP = "/steps/remove";
+	public static final String UPDATE_STEP ="/steps/update";
+	public static final String MUTE_STEP = "/steps/mute";
+
+    public static final String SONG_INFO ="/song/info";
+    public static final String ADD_SONG ="/songs/new";
+    public static final String DELETE_SONG = "/songs/remove";
+	public static final String PREV_SONG = "/songs/previous";
+    public static final String NEXT_SONG = "/songs/next";
+    public static final String UPDATE_SONG = "/song/update";
+    public static final String LOAD_SONG = "/song/load";
+    public static final String NEW_SONG = "/song/new";
+    public static final String REMOVE_SONG = "/song/remove";
+
     public static final String ADD_TICKER ="/ticker/new";
     public static final String DELETE_TICKER = "/rules/remove";
 	public static final String PREV_TICKER = "/ticker/previous";

@@ -23,56 +23,56 @@ export class BeatSpecPanelComponent implements Listener {
   changeEvent = new EventEmitter<Step>();
 
   @Input()
-  stepData!: Step
+  step!: Step
 
   @Input()
   page!: number
 
   onNotify(messageType: number, message: string, messageValue: number) {
-    if (messageType == Constants.BEAT_DIV && messageValue == this.stepData.position) {
-      let element = document.getElementById("beat-btn-" + this.stepData.position)
+    if (messageType == Constants.BEAT_DIV && messageValue == this.step.position) {
+      let element = document.getElementById("beat-btn-" + this.step.position)
       this.uiService.swapClass(element, 'inactive', 'active')
 
-      // element = document.getElementById("beat-led-" + this.stepData.position)
+      // element = document.getElementById("beat-led-" + this.step.position)
       // this.uiService.swapClass(element, 'inactive', 'active')
     }
   }
 
   onParamsBtnClick() {
-    this.paramBtnClickEvent.emit(this.stepData.position)
+    this.paramBtnClickEvent.emit(this.step.position)
     this.uiService.notifyAll(Constants.STEP_UPDATED, "Step Updated", 0)
   }
 
   onLaneBtnClick() {
-    this.stepData.active = !this.stepData.active
-    this.midiService.updateStep(this.stepData.id, this.stepData.page, this.stepData.position, Constants.STEP_ACTIVE, 1).subscribe(async data => this.stepData = data)
+    this.step.active = !this.step.active
+    this.midiService.updateStep(this.step.id, this.step.page, this.step.position, Constants.STEP_ACTIVE, 1).subscribe(async data => this.step = data)
 
-    let element = document.getElementById("beat-btn-" + this.stepData.position)
+    let element = document.getElementById("beat-btn-" + this.step.position)
     this.uiService.swapClass(element, 'inactive', 'active')
 
-    // element = document.getElementById("beat-led-" + this.stepData.position)
+    // element = document.getElementById("beat-led-" + this.step.position)
     // this.uiService.swapClass(element, 'inactive', 'active')
 
   }
 
-  onNoteChange(stepData: Step, event: { target: any; }) {
-    this.midiService.updateStep(stepData.id, stepData.page, stepData.position, Constants.STEP_PITCH, event.target.value).subscribe(data => this.stepData = data)
+  onNoteChange(step: Step, event: { target: any; }) {
+    this.midiService.updateStep(step.id, step.page, step.position, Constants.STEP_PITCH, event.target.value).subscribe(data => this.step = data)
   }
 
-  onVelocityChange(stepData: Step, event: { target: any; }) {
-    this.midiService.updateStep(stepData.id, stepData.page, stepData.position, Constants.STEP_VELOCITY, event.target.value).subscribe(data => this.stepData = data)
+  onVelocityChange(step: Step, event: { target: any; }) {
+    this.midiService.updateStep(step.id, step.page, step.position, Constants.STEP_VELOCITY, event.target.value).subscribe(data => this.step = data)
   }
 
-  onGateChange(stepData: Step, event: { target: any; }) {
-    this.midiService.updateStep(stepData.id, stepData.page, stepData.position, Constants.STEP_GATE, event.target.value).subscribe(data => this.stepData = data)
+  onGateChange(step: Step, event: { target: any; }) {
+    this.midiService.updateStep(step.id, step.page, step.position, Constants.STEP_GATE, event.target.value).subscribe(data => this.step = data)
   }
 
-  onProbabilityChange(stepData: Step, event: { target: any; }) {
-    this.midiService.updateStep(stepData.id, stepData.page, stepData.position, Constants.STEP_PROBABILITY, event.target.value).subscribe(data => this.stepData = data)
+  onProbabilityChange(step: Step, event: { target: any; }) {
+    this.midiService.updateStep(step.id, step.page, step.position, Constants.STEP_PROBABILITY, event.target.value).subscribe(data => this.step = data)
   }
 
   onChange() {
-    this.changeEvent.emit(this.stepData)
+    this.changeEvent.emit(this.step)
   }
 
   onNoteScroll($event: Event) {

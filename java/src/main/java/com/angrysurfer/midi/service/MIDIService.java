@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +23,8 @@ public class MIDIService {
     static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
 
     private MidiInstrumentRepository midiInstrumentRepo;
+
+    static Map<Integer, MidiInstrument> midiInstruments = new HashMap<>();
 
     // static Map<String, MidiDevice> midiInDevices = new HashMap<>();
 
@@ -71,6 +74,9 @@ public class MIDIService {
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
+    static String GS_SYNTH = "Microsoft GS Wavetable Synth".toLowerCase();
+    static String GERVILL = "gervill";
+
     public static MidiDevice findMidiOutDevice(String name) {
         // if (midiOutDevices.containsKey(name))
         //     return midiOutDevices.get(name);
@@ -78,7 +84,7 @@ public class MIDIService {
         // else midiOutDevices.put(name, 
         return findMidiDevices(true, false).stream()
                 .filter(d -> d.getDeviceInfo().getName().equals(name)).findAny()
-                .orElse(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals("gervill")).findFirst().orElseThrow());
+                .orElse(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals(GS_SYNTH)).findFirst().orElseThrow());
     
         // return midiOutDevices.get(name);
     }
@@ -140,7 +146,24 @@ public class MIDIService {
 
     
     public List<MidiInstrument> getInstrumentByChannel(int channel) {
-        return midiInstrumentRepo.findByChannel(channel);
+        if (midiInstruments.containsKey(channel))
+            return List.of(midiInstruments.get(channel));
+
+        List<MidiInstrument> results = midiInstrumentRepo.findByChannel(channel);
+        results.forEach(i -> i.setDevice(findMidiOutDevice(i.getDeviceName())));
+
+        
+        if (results.size() == 1)
+            midiInstruments.put(channel, results.get(0));
+        
+        MidiInstrument instrument = new MidiInstrument();
+        instrument.setChannel(9);
+        instrument.setDevice(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals(GS_SYNTH)).findAny().orElseThrow());
+        instrument.setName(GS_SYNTH);
+
+        results.add(instrument);
+
+        return results;
     }
 
     public MidiInstrument getInstrumentById(Long id) {

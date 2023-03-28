@@ -6,11 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiUnavailableException;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,6 +33,9 @@ import com.angrysurfer.midi.service.MIDIService;
 @TestPropertySource(
   locations = "classpath:application.properties")
 public class MIDIServiceTests {
+
+  
+    static Logger logger = LoggerFactory.getLogger(MIDIServiceTests.class.getCanonicalName());
 
     @Autowired
     MIDIService midiService;
@@ -68,6 +75,24 @@ public class MIDIServiceTests {
     public void whenMidiDevicesRetrieved_thenListIsPopulated() {
             List<MidiDevice> devices = MIDIService.getMidiDevices();
         assertTrue(devices.size() > 0);
+    }
+
+        
+    @Test
+    public void whenInstrumentRequestedDeviceIsInitialized() {
+        midiService.getInstrumentByChannel(9).forEach(i -> {
+            try {
+                if (!i.getDevice().isOpen())
+                    i.getDevice().open();
+
+                i.noteOn(45, 120);
+                Thread.sleep(500);
+                i.noteOff(45, 120);
+                
+            } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
+                logger.error(e.getMessage());
+            }
+        });
     }
 
     // @Test

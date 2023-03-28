@@ -1,6 +1,6 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.Step;
+import com.angrysurfer.midi.model.Pattern;
 import com.angrysurfer.midi.service.PlayerService;
 import com.angrysurfer.midi.util.Constants;
 
@@ -34,7 +34,7 @@ public class BeatController {
         service.playDrumNote(instrument, channel, note);
     }
     @PostMapping(path = Constants.PLAY_SEQUENCE)
-    public void setSteps(@RequestBody List<Step> steps) {
+    public void setSteps(@RequestBody List<Pattern> steps) {
         logger.info(Constants.PLAY_SEQUENCE);
         service.setSteps(steps);
     }

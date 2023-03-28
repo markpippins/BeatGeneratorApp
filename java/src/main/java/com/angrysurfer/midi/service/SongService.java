@@ -5,6 +5,7 @@ import com.angrysurfer.midi.repo.PatternRepository;
 import com.angrysurfer.midi.repo.SongRepository;
 import com.angrysurfer.midi.repo.StepRepository;
 import com.angrysurfer.midi.util.CyclerListener;
+import com.angrysurfer.midi.util.PatternUpdateType;
 import com.angrysurfer.midi.util.StepUpdateType;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 import javax.sound.midi.ShortMessage;
 
@@ -26,6 +28,7 @@ public class SongService {
     private final class BarCyclerListenerImplementation implements CyclerListener {
         @Override
         public void advanced(long position) {
+            logger.info("bars complete");
         }
 
         @Override
@@ -35,160 +38,286 @@ public class SongService {
 
         @Override
         public void starting() {
-            this.advanced(0);
+            this.advanced(1);
         }
     }
 
     private final class BeatCyclerListenerImplementation implements CyclerListener {
+
+        Stack<Thread> noteOffs = new Stack<>();
+
         @Override
         public void advanced(long position) {
-            if (songStepsMap.containsKey(0)) {
-                Map<Integer, Step> stepMap = songStepsMap.get(0);
-                if (stepMap.containsKey((int) position)) {
-                    Step step = stepMap.get((int) position);
-                    if (step.getActive()) {
-                        midiService.sendMessageToChannel(4, ShortMessage.NOTE_ON, step.getPitch(), step.getVelocity());
-                    }
-                }
-            }
+            handleBeat((int) position);
         }
 
         @Override
         public void cycleComplete() {
-            int position = 1;
-            if (songStepsMap.containsKey(0)) {
-                Map<Integer, Step> stepMap = songStepsMap.get(0);
-                if (stepMap.containsKey(position)) {
-                    Step step = stepMap.get(position);
-                    if (step.getActive()) {
-                        midiService.sendMessageToChannel(4, ShortMessage.NOTE_ON, step.getPitch(), step.getVelocity());
-                    }
-                }
-            }
         }
 
         @Override
         public void starting() {
-            logger.info("beat advanced");
+            song.getPatterns().forEach(p -> {
+
+            });
+
+            handleBeat(1);
         }
+
+        private void handleBeat(Integer position) {
+
+            while (noteOffs.size() > 0)
+                noteOffs.pop().start();
+            
+            song.getPatterns().forEach(pattern -> {
+                pattern.getSteps().stream()
+                        .filter(s -> s.getActive() && s.getPosition().equals(position)).toList().forEach(step -> {
+
+                    noteOffs.push(new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF,
+                                    pattern.getBaseNote() + step.getPitch(), step.getVelocity());
+                        }
+                    }));
+                    
+                    new Thread(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_ON, pattern.getBaseNote() + step.getPitch(), step.getVelocity());
+                        }
+                    }).start();
+            
+                });
+            });
+        }
+
     }
 
     static Logger logger = LoggerFactory.getLogger(SongService.class.getCanonicalName());
-    
+
     private StepRepository stepDataRepository;
     private SongRepository songRepository;
     private PatternRepository patternRepository;
     private MIDIService midiService;
 
     private Song song;
-    private Map<Integer, Map<Integer, Step>> songStepsMap = new ConcurrentHashMap<>();
+    private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
 
     private CyclerListener beatListener = new BeatCyclerListenerImplementation();
     private CyclerListener barListener = new BarCyclerListenerImplementation();
 
-
     public SongService(PatternRepository patternRepository, StepRepository stepRepository,
-                    SongRepository songRepository, MIDIService midiService) {
+            SongRepository songRepository, MIDIService midiService) {
         this.stepDataRepository = stepRepository;
         this.songRepository = songRepository;
         this.patternRepository = patternRepository;
         this.midiService = midiService;
     }
 
-    public Step updateStep(Long stepId, int position, int updateType, int updateValue) {
-        Step step = stepDataRepository.findById(stepId).orElse(new Step());
-        step.setPage(Objects.isNull(step.getPage()) ? 0 : step.getPage());
-        if (Objects.isNull(step.getPosition()))
-            step.setPosition(position);
+    public Pattern updatePattern(Long stepId, int position, int updateType, int updateValue) {
+        Pattern pattern = getPatternRepository().findById(stepId).orElse(new Pattern());
+        // pattern.setPage(Objects.isNull(step.getPage()) ? 0 : step.getPage());
+        // if (Objects.isNull(step.getIndex()))
+        // step.setPosition(position);
 
         switch (updateType) {
-            case StepUpdateType.ACTIVE : step.setActive(!step.getActive());;
+            case PatternUpdateType.ACTIVE:
+                pattern.setActive(!pattern.getActive());
                 break;
 
-            case StepUpdateType.GATE : step.setGate(updateValue);
+            case PatternUpdateType.LAST_STEP:
+                pattern.setLastStep(updateValue);
                 break;
 
-            case  StepUpdateType.PITCH: step.setPitch(updateValue);
+            case PatternUpdateType.DIRECTION:
+                pattern.setDirection(updateValue);
                 break;
 
-            case  StepUpdateType.PROBABILITY: step.setProbability(updateValue);
+            case PatternUpdateType.CHANNEL:
+                pattern.setChannel(updateValue);
                 break;
 
-            case  StepUpdateType.VELOCITY: step.setVelocity(updateValue);
+            case PatternUpdateType.PROBABILITY:
+                pattern.setProbability(updateValue);
+                break;
+
+            case PatternUpdateType.RANDOM:
+                pattern.setRandom(updateValue);
+                break;
+
+            case PatternUpdateType.BASE_NOTE:
+                pattern.setBaseNote(updateValue);
+                break;
+
+            case PatternUpdateType.SCALE:
+                pattern.setScale(updateValue);
+                break;
+
+            case PatternUpdateType.TRANSPOSE:
+                pattern.setTranspose(updateValue);
                 break;
         }
 
-        Map<Integer, Step> page = songStepsMap.containsKey(step.getPage()) ? 
-            songStepsMap.get(step.getPage()) : new ConcurrentHashMap<>();
-        page.put(step.getPosition(), step);
-        songStepsMap.put(step.getPage(), page);
-         
-        return stepDataRepository.save(step);
+        // Map<Integer, Pattern> page = songStepsMap.containsKey(step.getPage()) ?
+        // songStepsMap.get(step.getPage()) : new ConcurrentHashMap<>();
+        // page.put(step.getIndex(), step);
+        // songStepsMap.put(step.getPage(), page);
+
+        return getPatternRepository().save(pattern);
     }
 
-    public Song loadSong(long songId) {
-        songRepository.flush();
-        setSong(null);
-        this.song = songRepository.findById(songId).orElse(null);
-        return this.song;
+    public Step updateStep(Long stepId, int position, int updateType, int updateValue) {
+
+        Step step = getSong().getStep(stepId);
+
+        switch (updateType) {
+            case StepUpdateType.ACTIVE:
+                step.setActive(!step.getActive());
+                break;
+
+            case StepUpdateType.GATE:
+                step.setGate(updateValue);
+                break;
+
+            case StepUpdateType.PITCH:
+                step.setPitch(updateValue);
+                break;
+
+            case StepUpdateType.PROBABILITY:
+                step.setProbability(updateValue);
+                break;
+
+            case StepUpdateType.VELOCITY:
+                step.setVelocity(updateValue);
+                break;
+        }
+
+        // Map<Integer, Pattern> page = songStepsMap.containsKey(step.getPage()) ?
+        // songStepsMap.get(step.getPage()) : new ConcurrentHashMap<>();
+        // page.put(step.getIndex(), step);
+        // songStepsMap.put(step.getPage(), page);
+
+        return getStepDataRepository().save(step);
+    }
+
+    public Song loadSong(Song song) {
+        song.setPatterns(getPatternRepository().findBySongId(getSong().getId()));
+        song.getPatterns().forEach(pattern -> {
+            pattern.setSong(getSong());
+            pattern.setSteps(getStepDataRepository().findByPatternId(pattern.getId()));
+            pattern.getSteps().forEach(s -> s.setPattern(pattern));
+        });
+
+        return song;
     }
 
     public Song newSong() {
         songRepository.flush();
-        setSong(songRepository.save(new Song()));
-        return getSong();
+        Song song = songRepository.save(new Song());
+
+        IntStream.range(0, 8).forEach(i -> {
+            Pattern pattern = new Pattern();
+            pattern.setSong(getSong());
+            pattern.setPosition(i);
+            getPatternRepository().save(pattern);
+
+            song.getPatterns().add(pattern);
+
+            IntStream.range(0, 16).forEach(j -> {
+                Step step = new Step();
+                step.setPattern(pattern);
+                step.setPosition(j);
+                getStepDataRepository().save(step);
+
+                pattern.getSteps().add(step);
+            });
+
+        });
+
+        setSong(song);
+
+        return song;
     }
 
-    public Song next(long currentSongId) {
+    public synchronized Song next(long currentSongId) {
         songRepository.flush();
-        if (currentSongId == 0 || getSong().getSteps().size() > 0) {       
+        if (currentSongId == 0 || getSong().getPatterns().size() > 0) {
             Long maxSongId = getSongRepository().getMaximumSongId();
-            setSong(Objects.nonNull(maxSongId) && currentSongId < maxSongId ?
-                getSongRepository().getNextSong(currentSongId) :
-                null);
-            getSong().getSteps().addAll(getStepDataRepository().findBySongId(getSong().getId()));
-            getSong().getSteps().forEach(s -> s.setSong(getSong()));
+            setSong(Objects.nonNull(maxSongId) && currentSongId < maxSongId
+                    ? getSongRepository().getNextSong(currentSongId)
+                    : null);
+            if (Objects.nonNull(getSong()))
+                loadSong(getSong());
+            else
+                setSong(newSong());
         }
-    
+
         return getSong();
     }
 
     public synchronized Song previous(long currentSongId) {
         songRepository.flush();
-        if (currentSongId >  (getSongRepository().getMinimumSongId())) {
+        if (currentSongId > (getSongRepository().getMinimumSongId())) {
             setSong(getSongRepository().getPreviousSong(currentSongId));
-            getSong().getSteps().addAll(getStepDataRepository().findBySongId(getSong().getId()));
-            getSong().getSteps().forEach(s -> s.setSong(getSong()));
+            loadSong(getSong());
         }
 
         return getSong();
     }
 
-    public Song getSong() {
-        if (Objects.isNull(song))
-            setSong(getSongRepository().save(new Song()));
-        
-        return this.song;
-    }
+    // public Song getSong() {
+    // if (Objects.isNull(song))
+    // setSong(newSong());
 
-    public Step addStep(int page) {
+    // return this.song;
+    // }
+
+    public Pattern addPattern(int page) {
         getSongRepository().flush();
 
-        Step step = new Step();
-        step.setPosition(getSong().getSteps().size() + 1);
-        step.setPage(page);
-        step.setSong(getSong());
-        step = getStepDataRepository().save(step);
-        getSong().getSteps().add(step);
-        return step;
+        Pattern pattern = new Pattern();
+        pattern.setPosition(getSong().getPatterns().size());
+        // pattern.setPage(page);
+        pattern.setSong(getSong());
+        pattern = getPatternRepository().save(pattern);
+        getSong().getPatterns().add(pattern);
+        return pattern;
     }
 
-    public Set<Step> removeStep(Long stepId) {
-        Step step = getSong().getSteps().stream().filter(s -> s.getId().equals(stepId)).findAny().orElseThrow();
-        getSong().getSteps().remove(step);
-        getStepDataRepository().delete(step);
-        return getSong().getSteps();
+    public Set<Pattern> removePattern(Long patternId) {
+        Pattern pattern = getSong().getPatterns().stream().filter(s -> s.getId().equals(patternId)).findAny()
+                .orElseThrow();
+        getSong().getPatterns().remove(pattern);
+        getPatternRepository().delete(pattern);
+        return getSong().getPatterns();
     }
 
+    public Song getSongInfo() {
+        if (Objects.isNull(this.song))
+            next(0);
+        return getSong();
+    }
+
+    // public Pattern addStep(int page) {
+    // getSongRepository().flush();
+
+    // Pattern step = new Pattern();
+    // step.setPosition(getSong().getPatterns().size());
+    // step.setPage(page);
+    // step.setSong(getSong());
+    // step = getStepDataRepository().save(step);
+    // getSong().getPatterns().add(step);
+    // return step;
+    // }
+
+    // public Set<Pattern> removeStep(Long stepId) {
+    // Pattern step = getSong().getPatterns().stream().filter(s ->
+    // s.getId().equals(stepId)).findAny().orElseThrow();
+    // getSong().getPatterns().remove(step);
+    // getStepDataRepository().delete(step);
+    // return getSong().getPatterns();
+    // }
 
 }

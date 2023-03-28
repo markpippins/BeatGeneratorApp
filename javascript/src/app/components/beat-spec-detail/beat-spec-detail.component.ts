@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Instrument } from 'src/app/models/instrument';
+import { Pattern } from 'src/app/models/pattern';
 import { MidiService } from 'src/app/services/midi.service';
 import { UiService } from 'src/app/services/ui.service';
 
@@ -14,7 +15,10 @@ export class BeatSpecDetailComponent implements OnInit {
   instrumentSelectEvent = new EventEmitter<Instrument>();
 
   @Input()
-  page!: number;
+  songId!: number;
+
+  @Input()
+  pattern!: Pattern;
 
   @Output()
   instruments!: Instrument[]

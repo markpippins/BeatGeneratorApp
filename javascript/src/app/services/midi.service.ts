@@ -8,6 +8,7 @@ import {Rule} from "../models/rule";
 import {Step} from "../models/step";
 import {LookupItem} from "../models/lookup-item";
 import {Device} from "../models/device";
+import { Song } from '../models/song';
 
 @Injectable({
   providedIn: 'root',
@@ -60,6 +61,10 @@ export class MidiService {
     return this.http.get<Player[]>('http://localhost:8080/api/players/info');
   }
 
+  songInfo() {
+    return this.http.get<Song>('http://localhost:8080/api/song/info');
+  }
+
   tickerInfo() {
     return this.http.get<Ticker>('http://localhost:8080/api/ticker/info');
   }
@@ -105,7 +110,7 @@ export class MidiService {
   saveConfig() {
     let params = new HttpParams();
     return this.http.get<LookupItem[]>(
-      'http://localhost:8080/api/instruments/save');
+      'http://localhost:8080/api/beat/save');
   }
 
   clearPlayers() {

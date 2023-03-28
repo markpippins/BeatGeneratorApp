@@ -252,7 +252,7 @@ public class PlayerService {
         return strike;
     }
 
-    public void setSteps(List<Step> steps) {
+    public void setSteps(List<Pattern> steps) {
     //    this.getBeatGenerator().setSteps(steps);
     }
 

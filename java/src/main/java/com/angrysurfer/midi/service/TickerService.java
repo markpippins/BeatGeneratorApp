@@ -42,6 +42,8 @@ public class TickerService {
         stopRunningSequencers();
         sequenceRunner = new SequenceRunner(getTicker());
         sequenceRunners.add(getSequenceRunner());
+        getSequenceRunner().getCycleListeners().add(getSongService().getBeatListener());
+        getSequenceRunner().getCycleListeners().add(getSongService().getBarListener());
 
         this.ticker.getPlayers().forEach(p -> p.getInstrument()
             .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
@@ -106,8 +108,10 @@ public class TickerService {
 
             case TickerUpdateType.BPM: 
                 ticker.setTempoInBPM(Float.valueOf(updateValue));
-                if (Objects.nonNull(getSequenceRunner()) && ticker.getId().equals(getTicker().getId()))
+                if (Objects.nonNull(getSequenceRunner()) && ticker.getId().equals(getTicker().getId())) {
                     getSequenceRunner().getSequencer().setTempoInBPM(updateValue);
+                    // getSequenceRunner().getSequencer().setTempoInMPQ(updateValue);
+                }
                 break;
 
             case TickerUpdateType.PARTS: ticker.setParts(updateValue);

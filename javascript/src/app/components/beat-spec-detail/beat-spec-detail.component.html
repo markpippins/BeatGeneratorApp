@@ -1,5 +1,63 @@
 <div class="beat-spec-detail">
-  <app-midin-instrument-combo [instruments]="instruments" [identifier]="page" (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
-  <label>Last Step</label>
-  <input type="number" min="0" max="100" step="1">
+<table>
+  <tr>
+    <th>
+      Solos
+    </th>
+    <th>
+      Pattern
+    </th>
+    <th>
+      Device
+    </th>
+    <th>
+      Base Note
+    </th>
+    <th>
+      Transpose
+    </th>
+    <th>
+      Length
+    </th>
+    <th>
+      Last Step
+    </th>
+    <th>
+      Random
+    </th>
+    <th>
+      Probability
+    </th>
+  </tr>
+  <tr>
+    <!-- (change)="onSwingChange(player, $event)" -->
+    <td class="player-short-col">
+      <input type="number" min="0" max="100" step="1" value="{{ songId }}">
+    </td>
+    <td class="player-short-col">
+        <input type="number" min="0" max="100" step="1" value="{{ pattern.id }}">
+      </td>
+      <td>
+        <app-midin-instrument-combo [instruments]="instruments" [identifier]="pattern.id" (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="1" [(ngModel)]="pattern.baseNote">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="-4" max="+4" [(ngModel)]="pattern.transpose">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="-12" max="+12" [(ngModel)]="pattern.length">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="1" max={{pattern.length}} [(ngModel)]="pattern.lastStep">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="0" max="100" [(ngModel)]="pattern.random">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="0" max="100" [(ngModel)]="pattern.probability">
+      </td>
+  </tr>
+</table>
 </div>

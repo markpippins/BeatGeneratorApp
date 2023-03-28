@@ -22,15 +22,13 @@ public class Step {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    private Integer position;
+    private Integer position = 0;
 
-    private Integer page = 0;
-
-    private Integer channel = 0;
+    // private Integer channel = 0;
 
     private Boolean active = false;
     
-    private Integer pitch = 60;
+    private Integer pitch = 0;
 
     private Integer velocity = 100;
 
@@ -40,22 +38,11 @@ public class Step {
 
     @JsonIgnore
     @ManyToOne()
-    @JoinColumn(name = "song_id")
-    private Song song;
+    @JoinColumn(name = "pattern_id")
+    private Pattern pattern;
 
     public Step() {
 
     }
 
-    public void copyValues(Step step) {
-        setId(step.getId());
-        setPosition(step.getPosition());
-        setPage(step.getPage());
-        setSong(step.getSong());
-        setActive(step.getActive());
-        setPitch(step.getPitch()); 
-        setVelocity(step.getVelocity());
-        setProbability(step.getProbability());
-        setGate(step.getGate()); 
-    }
 }

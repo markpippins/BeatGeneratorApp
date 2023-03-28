@@ -52,7 +52,7 @@
         {{ player.instrument.channel }}
       </td> -->
       <td class="player-short-col" id="player-col-preset-{{player.id}}" (change)="onPresetChange(player, $event)">
-        <input type="number" min="1" max="127" step="1" value="{{ player.preset}}">
+        <input type="number" min="0" max="127" step="1" value="{{ player.preset}}">
       </td>
       <td class="player-short-col" (change)="onNoteChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
@@ -63,7 +63,7 @@
           P
         </button>
       </td>
-      <td class="player-short-col" (change)="onSwingChange(player, $event)">
+      <td class="player-short-col" (change)="onSubsChange(player, $event)">
         <input type="number" min="0" max="100" step="1" value="{{ player.subs }}">
       </td>
       <td class="player-short-col" (change)="onSwingChange(player, $event)">

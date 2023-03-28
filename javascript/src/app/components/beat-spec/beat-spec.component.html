@@ -1,12 +1,11 @@
 <div>
   <mat-tab-group>
-    <mat-tab *ngFor="let page of pages;" label="Linear {{page + 1}}">
+    <mat-tab *ngFor="let pattern of song?.patterns;" label="Linear {{pattern.position + 1}}">
       <!-- <app-control-panel808 class="control-panel808"></app-control-panel808> -->
-      <app-beat-spec-detail (instrumentSelectEvent)="onInstrumentSelected($event, page)" class=""></app-beat-spec-detail>
+      <app-beat-spec-detail [pattern]="pattern" [songId]="song.id" (instrumentSelectEvent)="onInstrumentSelected($event, pattern.position)" class=""></app-beat-spec-detail>
       <div class="interface-808">
         <div class="side-panel-808">
           <mat-divider [style.height.px]="10"></mat-divider>
-          <label>Linear {{page + 1}}</label>
           <!-- <app-instrument-selector></app-instrument-selector> -->
 
           <mat-divider [style.height.px]="10"></mat-divider>
@@ -17,7 +16,7 @@
           <mat-divider [style.height.px]="10"></mat-divider>
         </div>
 
-        <app-beat-spec-panel *ngFor="let step of steps[page];" [page]=page [stepData]=step (changeEvent)="onStepChanged(step)"
+        <app-beat-spec-panel *ngFor="let step of pattern.steps;" [page]=pattern.position [step]=step (changeEvent)="onStepChanged(step)"
                              (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>
       </div>
       <!-- <app-params-panel808 class="control-panel808"></app-params-panel808> -->
