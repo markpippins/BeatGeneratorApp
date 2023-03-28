@@ -1,5 +1,6 @@
 export interface Step {
   id: number
+  channel: number
   position: number
   page: number
   songId: number

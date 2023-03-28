@@ -86,9 +86,9 @@ body {
   background-repeat: no-repeat;
   background-size: cover;
   /* background-color: rgb(68, 67, 67); */
-  /*background-color: #3e4aea;*/
+  background-color: #3e4aea;
    /* background-image: linear-gradient(to left, #f46864, #003954); */
-  /* background-image: linear-gradient(to left, #e89105, #2c0ad7);
+   /* background-image: linear-gradient(to left, #e89105, #2c0ad7); */
   /*border-style: dashed;*/
   /*border-width: thin;*/
 }
@@ -116,7 +116,7 @@ body {
   /*max-width: 600px;*/
   /*border-radius: 6px;*/
   /*padding-top: 45px;*/
-  margin-top: 20px;
+  margin-top: 2px;
   overflow: hidden;
   border-style: inset;
   border-width: thin;
@@ -124,9 +124,6 @@ body {
   /* background-color: #a9a9a9; */
 }
 
-.status-output {
-  width: 40px;
-}
 
 .content {
   display: flex;
@@ -222,15 +219,15 @@ svg.material-icons:not(:last-child) {
 
 .status-container {
   display: flex;
-  align-items: center;
-  flex-direction: column;
+  flex-wrap: nowrap;
+  flex-direction: flex-start;
 }
 
 .two-column-grid-container {
   flex-grow: true;
   display: flex;
   align-items: stretch;
-  height: 400px;
+  height: 300px;
 }
 
 .player-table-holder, .rule-table-holder {
@@ -518,7 +515,7 @@ input:hover, select:hover {
 }
 
 .selected-table-row {
-  background-color: coral;
+  background-color: blue;
   color: white;
 }
 
@@ -625,10 +622,23 @@ td, th {
   font-size: small;
 }
 
+.beat-spec-detail {
+	gap: 2px;
+	padding: 2px;
+	margin-top: 5px;
+	display: flex;
+	flex-direction: row;
+}
+
 .status-label {
   font-weight: bold;
   margin: 2px 2px 2px 2px;
   padding: 4px;
+}
+
+.selector-row {
+	padding: 0px;
+	margin: 0px;
 }
 
 .status-item {
@@ -695,6 +705,9 @@ input {
   color: white;
   text-align: center;
   align-self: stretch;
+  gap: 0;
+  margin: 0;
+  padding:0;
 }
 
 select {
@@ -702,11 +715,15 @@ select {
   color: white;
   text-align: left;
   align-self: stretch;
+  gap: 0;
+  margin: 0;
+  padding:0;
 }
 
 td input {
   max-width: 40px;
-  margin:0;
+  gap: 0;
+  margin: 0;
   padding:0;
   text-align: right;
   align-self: stretch;
@@ -764,14 +781,10 @@ th {
 
 .fixed:hover {
   background-color: black;
-  text-align: right;
-  width: 40px;
 }
 
 .fixed {
   background-color: black;
-  text-align: right;
-  width: 40px;
 }
 
 .btn-led {

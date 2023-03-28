@@ -23,18 +23,23 @@ import javax.sound.midi.ShortMessage;
 @Service
 public class SongService {
 
-    static Logger logger = LoggerFactory.getLogger(SongService.class.getCanonicalName());
-    
-    private StepRepository stepDataRepository;
-    private SongRepository songRepository;
-    private PatternRepository patternRepository;
-    private MIDIService midiService;
+    private final class BarCyclerListenerImplementation implements CyclerListener {
+        @Override
+        public void advanced(long position) {
+        }
 
-    private Song song;
-    private Map<Integer, Map<Integer, Step>> songStepsMap = new ConcurrentHashMap<>();
+        @Override
+        public void cycleComplete() {
+            logger.info("bars complete");
+        }
 
-    private CyclerListener beatListener = new CyclerListener() {
+        @Override
+        public void starting() {
+            this.advanced(0);
+        }
+    }
 
+    private final class BeatCyclerListenerImplementation implements CyclerListener {
         @Override
         public void advanced(long position) {
             if (songStepsMap.containsKey(0)) {
@@ -66,25 +71,20 @@ public class SongService {
         public void starting() {
             logger.info("beat advanced");
         }
-        
-    };
-    private CyclerListener barListener = new CyclerListener() {
+    }
 
-        @Override
-        public void advanced(long position) {
-        }
+    static Logger logger = LoggerFactory.getLogger(SongService.class.getCanonicalName());
+    
+    private StepRepository stepDataRepository;
+    private SongRepository songRepository;
+    private PatternRepository patternRepository;
+    private MIDIService midiService;
 
-        @Override
-        public void cycleComplete() {
-            logger.info("bars complete");
-        }
+    private Song song;
+    private Map<Integer, Map<Integer, Step>> songStepsMap = new ConcurrentHashMap<>();
 
-        @Override
-        public void starting() {
-            this.advanced(0);
-        }
-        
-    };
+    private CyclerListener beatListener = new BeatCyclerListenerImplementation();
+    private CyclerListener barListener = new BarCyclerListenerImplementation();
 
 
     public SongService(PatternRepository patternRepository, StepRepository stepRepository,
@@ -127,12 +127,67 @@ public class SongService {
     }
 
     public Song loadSong(long songId) {
+        songRepository.flush();
+        setSong(null);
         this.song = songRepository.findById(songId).orElse(null);
-        return song;
+        return this.song;
     }
 
     public Song newSong() {
-        return songRepository.save(new Song());
+        songRepository.flush();
+        setSong(songRepository.save(new Song()));
+        return getSong();
+    }
+
+    public Song next(long currentSongId) {
+        songRepository.flush();
+        if (currentSongId == 0 || getSong().getSteps().size() > 0) {       
+            Long maxSongId = getSongRepository().getMaximumSongId();
+            setSong(Objects.nonNull(maxSongId) && currentSongId < maxSongId ?
+                getSongRepository().getNextSong(currentSongId) :
+                null);
+            getSong().getSteps().addAll(getStepDataRepository().findBySongId(getSong().getId()));
+            getSong().getSteps().forEach(s -> s.setSong(getSong()));
+        }
+    
+        return getSong();
+    }
+
+    public synchronized Song previous(long currentSongId) {
+        songRepository.flush();
+        if (currentSongId >  (getSongRepository().getMinimumSongId())) {
+            setSong(getSongRepository().getPreviousSong(currentSongId));
+            getSong().getSteps().addAll(getStepDataRepository().findBySongId(getSong().getId()));
+            getSong().getSteps().forEach(s -> s.setSong(getSong()));
+        }
+
+        return getSong();
+    }
+
+    public Song getSong() {
+        if (Objects.isNull(song))
+            setSong(getSongRepository().save(new Song()));
+        
+        return this.song;
+    }
+
+    public Step addStep(int page) {
+        getSongRepository().flush();
+
+        Step step = new Step();
+        step.setPosition(getSong().getSteps().size() + 1);
+        step.setPage(page);
+        step.setSong(getSong());
+        step = getStepDataRepository().save(step);
+        getSong().getSteps().add(step);
+        return step;
+    }
+
+    public Set<Step> removeStep(Long stepId) {
+        Step step = getSong().getSteps().stream().filter(s -> s.getId().equals(stepId)).findAny().orElseThrow();
+        getSong().getSteps().remove(step);
+        getStepDataRepository().delete(step);
+        return getSong().getSteps();
     }
 
 

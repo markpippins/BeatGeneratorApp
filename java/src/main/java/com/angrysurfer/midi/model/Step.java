@@ -1,10 +1,14 @@
 package com.angrysurfer.midi.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,7 +26,7 @@ public class Step {
 
     private Integer page = 0;
 
-    private Long songId = 0L;
+    private Integer channel = 0;
 
     private Boolean active = false;
     
@@ -34,6 +38,11 @@ public class Step {
 
     private Integer gate = 50;
 
+    @JsonIgnore
+    @ManyToOne()
+    @JoinColumn(name = "song_id")
+    private Song song;
+
     public Step() {
 
     }
@@ -42,7 +51,7 @@ public class Step {
         setId(step.getId());
         setPosition(step.getPosition());
         setPage(step.getPage());
-        setSongId(step.getSongId());
+        setSong(step.getSong());
         setActive(step.getActive());
         setPitch(step.getPitch()); 
         setVelocity(step.getVelocity());

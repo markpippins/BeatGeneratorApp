@@ -14,6 +14,7 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -177,6 +178,10 @@ public class Ticker implements Serializable {
         getBeatCounter().reset();
         getBarCounter().reset();
         getPartCounter().reset();
+
+        getAddList().clear();
+        getRemoveList().forEach(r -> getPlayers().remove(r));
+        getRemoveList().clear();
         // getPlayers().clear();
         // setPaused(false);
         // setDone(false);

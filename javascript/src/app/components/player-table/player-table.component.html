@@ -41,9 +41,9 @@
       <!-- <td class="player-short-col" id="player-col-id-{{player.id}}">
         {{ player.instrument.id }}
       </td> -->
-      <td class="player-short-col" id="player-col-id-{{player.id}}" (change)="onPresetChange(player, $event)">
+      <!-- <td class="player-short-col" id="player-col-id-{{player.id}}" (change)="onPresetChange(player, $event)">
         <input type="text" value="{{ player.id}}">
-      </td>
+      </td> -->
 
       <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
         <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)" [instruments]="instruments" [player]="player"></app-instrument-selector>

@@ -1,0 +1,5 @@
+<div class="beat-spec-detail">
+  <app-midin-instrument-combo [instruments]="instruments" [identifier]="page" (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
+  <label>Last Step</label>
+  <input type="number" min="0" max="100" step="1">
+</div>

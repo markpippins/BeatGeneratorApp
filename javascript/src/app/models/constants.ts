@@ -5,7 +5,7 @@ export class Constants {
   static CONDITION_COLUMNS = ['operator', 'comparison', 'value']
 
   static PLAYER_COLUMNS = [
-    'Id',
+    // 'Id',
     'Device',
     'Preset',
     'Pitch',
@@ -37,6 +37,7 @@ export class Constants {
   static PRESET = 9;
   static RATCHET_COUNT = 10;
   static RATCHET_INTERVAL = 11;
+  static CHANNEL = 12;
 
   static STEP_ACTIVE = 0;
   static STEP_GATE = 1;

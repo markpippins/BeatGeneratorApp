@@ -23,18 +23,20 @@ public class Ratchet extends Strike {
         setMaxVelocity(getParent().getMaxVelocity());
         setMinVelocity(getParent().getMinVelocity());
         setMuted(getParent().isMuted());
-        setId((long) 1000 + getTicker().getPlayers().size());
+        Long ratchets = getTicker().getPlayers().stream().filter(p -> p instanceof Ratchet).count();
+        setId(-1 - ratchets);
         setName(getParent().getName() + String.format("s", getParent().getTicker().getPlayers().size()));
-        synchronized (getTicker().getPlayers()) {
-            getTicker().getPlayers().add(this);
-        }
         getRules().add(new Rule(Operator.TICK, Comparison.EQUALS, (double) interval * offset, part));
+
+        synchronized (getTicker().getPlayers()) {
+            synchronized (getTicker().getPlayers()) {
+                getTicker().getPlayers().add(this);
+                getTicker().getRemoveList().add(this);
+            }
+        }
     }
 
     public void onTick(long tick, long bar) {
         drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
-        synchronized (getTicker().getPlayers()) {
-            getTicker().getPlayers().remove(this);
-        }
     }
 }

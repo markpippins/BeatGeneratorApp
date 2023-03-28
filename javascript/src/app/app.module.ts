@@ -40,6 +40,8 @@ import { RandomizerPanelComponent } from './components/widgets/randomizer-panel/
 import { ControlPanel808Component } from './components/widgets/control-panel808/control-panel808.component';
 import { ParamsPanel808Component } from './components/widgets/params-panel808/params-panel808.component';
 import { StrikeDetailComponent } from './components/widgets/strike-detail/strike-detail.component';
+import { BeatSpecDetailComponent } from './components/beat-spec-detail/beat-spec-detail.component';
+import { MidinInstrumentComboComponent } from './components/widgets/midin-instrument-combo/midin-instrument-combo.component';
 
 @NgModule({
   declarations: [
@@ -68,6 +70,8 @@ import { StrikeDetailComponent } from './components/widgets/strike-detail/strike
     ControlPanel808Component,
     ParamsPanel808Component,
     StrikeDetailComponent,
+    BeatSpecDetailComponent,
+    MidinInstrumentComboComponent,
     ],
     imports: [
         BrowserModule,

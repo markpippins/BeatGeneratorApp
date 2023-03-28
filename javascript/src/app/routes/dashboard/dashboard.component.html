@@ -16,15 +16,17 @@
   <label class="branding-label">MultiSequencer, Mark Pippins, angrysurfer.com, 2023</label>
 </div>
 <div class="content dashboard" role="main">
+  <app-status-panel [running]="running" [ticker]="ticker"></app-status-panel>
+  <app-transport-control (clickEvent)="onActionSelected($event)"></app-transport-control>
   <mat-tab-group>
     <mat-tab label="Beat Scheduler">
       <div class="two-column-grid-container">
-        <div class="player-table-holder debug">
+        <div class="player-table-holder">
           <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
         </div>
         <div>
 
-          <div class="rule-table-holder debug">
+          <div class="rule-table-holder">
             <app-conditions-panel *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
                                 [player]="selectedPlayer"></app-conditions-panel>
           </div>
@@ -45,7 +47,7 @@
       </mat-tab-group>
     </mat-tab>
   </mat-tab-group>
-  <div class="">
+  <div>
     <div class="status-bar">
       <label class="status-label">Ticker</label>
       <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.id">
@@ -54,8 +56,6 @@
       <label></label>
       <label class="status-label" *ngFor="let line of consoleOutput">{{line}}</label>
     </div>
-    <app-status-panel [running]="running" [ticker]="ticker"></app-status-panel>
-    <app-transport-control (clickEvent)="onActionSelected($event)"></app-transport-control>
   </div>
 </div>
 <div class="footer">

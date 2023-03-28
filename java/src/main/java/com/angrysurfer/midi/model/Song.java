@@ -19,8 +19,8 @@ public class Song {
 
     private String name;
     
-    @OneToMany(fetch = FetchType.EAGER)
-	@JoinTable(name = "song_patterns", joinColumns = { @JoinColumn(name = "song_id") }, inverseJoinColumns = {
-			@JoinColumn(name = "pattern_id") })
-	private Set<Pattern> patterns = new HashSet<>();
+
+    @Transient
+    private Set<Step> steps = new HashSet<>();
+
 }
