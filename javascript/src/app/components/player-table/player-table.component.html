@@ -10,28 +10,27 @@
     </tr>
 
     <tr *ngFor="let player of players;" class="active-table-row" id="player-row-{{player.id}}"
-        (mouseenter)="onPass(player, $event)"
-        (click)="onRowClick(player, $event)">
+      (mouseenter)="onPass(player, $event)" (click)="onRowClick(player, $event)">
 
 
-        <td>
-          <button [style.height.px]="20" id="add" (click)="onBtnClick(player, 'add')">
-            <!--          <mat-icon>add_circle</mat-icon>-->
-            +
-          </button>
-        </td>
-        <td>
-          <button [style.height.px]="20" id="remove" (click)="onBtnClick(player, 'remove')">
-            -
-            <!--          <mat-icon>remove_circle</mat-icon>-->
-          </button>
-        </td>
-        <td>
-          <button [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'mute')">
-            <!--          <mat-icon>mute</mat-icon>-->
-            M
-          </button>
-        </td>
+      <td>
+        <button [style.height.px]="20" id="add" (click)="onBtnClick(player, 'add')">
+          <!--          <mat-icon>add_circle</mat-icon>-->
+          +
+        </button>
+      </td>
+      <td>
+        <button [style.height.px]="20" id="remove" (click)="onBtnClick(player, 'remove')">
+          -
+          <!--          <mat-icon>remove_circle</mat-icon>-->
+        </button>
+      </td>
+      <td>
+        <button [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'mute')">
+          <!--          <mat-icon>mute</mat-icon>-->
+          M
+        </button>
+      </td>
 
 
 
@@ -46,7 +45,8 @@
       </td> -->
 
       <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
-        <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)" [instruments]="instruments" [player]="player"></app-instrument-selector>
+        <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)"
+          [instruments]="instruments" [player]="player"></app-instrument-selector>
       </td>
       <!-- <td class="player-short-col" id="player-col-instrument-id-{{player.id}}">
         {{ player.instrument.channel }}
@@ -97,12 +97,7 @@
       <td class="player-short-col"></td>
       <td class="player-short-col"></td>
       <td class="player-short-col"></td>
-      <td>
-        <button [style.height.px]="20" id="add2" (click)="initBtnClicked()">
-          <!--          <mat-icon>add_circle</mat-icon>-->
-          +
-        </button>
-      </td>
+      <td class="player-short-col"></td>
       <td class="player-short-col"></td>
       <td class="player-short-col"></td>
 

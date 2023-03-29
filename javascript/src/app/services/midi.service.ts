@@ -9,6 +9,7 @@ import {Step} from "../models/step";
 import {LookupItem} from "../models/lookup-item";
 import {Device} from "../models/device";
 import { Song } from '../models/song';
+import { Pattern } from '../models/pattern';
 
 @Injectable({
   providedIn: 'root',
@@ -194,6 +195,16 @@ export class MidiService {
     params = params.append('updateType', updateType);
     params = params.append('updateValue', updateValue);
     return this.http.get('http://localhost:8080/api/player/update', {
+      params: params,
+    });
+  }
+
+  updatePattern(patternId: number, updateType: number, updateValue: number) {
+    let params = new HttpParams();
+    params = params.append('patternId', patternId);
+    params = params.append('updateType', updateType);
+    params = params.append('updateValue', updateValue);
+    return this.http.get<Pattern>('http://localhost:8080/api/patterns/update', {
       params: params,
     });
   }

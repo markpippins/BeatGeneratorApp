@@ -49,9 +49,7 @@ public class Pattern {
 
     private Integer transpose = 0;
     
-    private Boolean oneShot = false;
-
-    private Integer loopCount = 99;
+    private Integer repeats = 99;
 
     private Integer swing = 50;
 

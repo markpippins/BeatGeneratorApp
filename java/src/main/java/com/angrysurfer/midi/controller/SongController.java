@@ -32,13 +32,13 @@ public class SongController {
 
     
     @GetMapping(path = "/steps/update")
-    public Step updateStep(@RequestParam long stepId, @RequestParam int position, @RequestParam int updateType, @RequestParam int updateValue) {
-        return service.updateStep(stepId, position, updateType, updateValue);
+    public Step updateStep(@RequestParam long stepId, @RequestParam int updateType, @RequestParam int updateValue) {
+        return service.updateStep(stepId, updateType, updateValue);
     }
     
     @GetMapping(path = "/patterns/update")
-    public Pattern updatePatter(@RequestParam long stepId, @RequestParam int position, @RequestParam int updateType, @RequestParam int updateValue) {
-        return service.updatePattern(stepId, position, updateType, updateValue);
+    public Pattern updatePatter(@RequestParam long patternId, @RequestParam int updateType, @RequestParam int updateValue) {
+        return service.updatePattern(patternId, updateType, updateValue);
     }
  
     @GetMapping(path = Constants.SONG_INFO)

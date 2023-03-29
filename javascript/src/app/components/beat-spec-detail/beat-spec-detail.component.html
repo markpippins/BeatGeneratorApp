@@ -2,13 +2,19 @@
 <table>
   <tr>
     <th>
-      Solos
+      Set
     </th>
     <th>
       Pattern
     </th>
     <th>
       Device
+    </th>
+    <th>
+      Channel
+    </th>
+    <th>
+      Preset
     </th>
     <th>
       Base Note
@@ -20,7 +26,16 @@
       Length
     </th>
     <th>
+      Gate
+    </th>
+    <th>
+      Repeats
+    </th>
+    <th>
       Last Step
+    </th>
+    <th>
+      Swing
     </th>
     <th>
       Random
@@ -31,32 +46,47 @@
   </tr>
   <tr>
     <!-- (change)="onSwingChange(player, $event)" -->
-    <td class="player-short-col">
+    <td class="xox-step-input">
       <input type="number" min="0" max="100" step="1" value="{{ songId }}">
     </td>
-    <td class="player-short-col">
+    <td class="xox-step-input">
         <input type="number" min="0" max="100" step="1" value="{{ pattern.id }}">
       </td>
       <td>
         <app-midin-instrument-combo [instruments]="instruments" [identifier]="pattern.id" (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="1" [(ngModel)]="pattern.baseNote">
+        <input class="xox-step-input" type="number" min="1" (change)="onChannelChange($event)" [(ngModel)]="pattern.channel">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="-4" max="+4" [(ngModel)]="pattern.transpose">
+        <input class="xox-step-input" type="number" min="1" (change)="onPresetChange($event)" [(ngModel)]="pattern.preset">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="-12" max="+12" [(ngModel)]="pattern.length">
+        <input class="xox-step-input" type="number" min="1" (change)="onBaseNoteChange($event)" [(ngModel)]="pattern.baseNote">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="1" max={{pattern.length}} [(ngModel)]="pattern.lastStep">
+        <input class="xox-step-input" type="number" min="-4" max="+4" (change)="onTransposeChange($event)" [(ngModel)]="pattern.transpose">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="0" max="100" [(ngModel)]="pattern.random">
+        <input class="xox-step-input" type="number" min="-12" max="+12"  (change)="onLengthChange($event)" [(ngModel)]="pattern.length">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="0" max="100" [(ngModel)]="pattern.probability">
+        <input class="xox-step-input" type="number" min="0" max="100"  (change)="onGateChange($event)" [(ngModel)]="pattern.gate">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="0" (change)="onRepeatsChange($event)" [(ngModel)]="pattern.repeats">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="1" max={{pattern.length}}  (change)="onLastStepChange($event)" [(ngModel)]="pattern.lastStep">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="1" max={{pattern.length}} (change)="onSwingChange($event)" [(ngModel)]="pattern.swing">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="0" max="100" (change)="onRandomChange($event)" [(ngModel)]="pattern.random">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="0" max="100" (change)="onProbablityChange($event)" [(ngModel)]="pattern.probability">
       </td>
   </tr>
 </table>

@@ -2,6 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
 import { Listener } from 'src/app/models/listener';
+import { Pattern } from 'src/app/models/pattern';
 import { Song } from 'src/app/models/song';
 import { UiService } from 'src/app/services/ui.service';
 import {Step} from "../../models/step";
@@ -60,13 +61,17 @@ export class BeatSpecComponent implements OnInit, Listener {
       })
   }
 
-  onInstrumentSelected(instrument: Instrument, page: number) {
-    this.song.patterns[page].steps.forEach(s => s.channel = instrument.channel)
-    this.song.patterns[page].steps.forEach(s => {
-      s.channel = instrument.channel;
-      this.midiService.updateStep(s.id, s.page, s.position, Constants.CHANNEL, 1)
-        .subscribe(data => s = data)
-    })
+  onInstrumentSelected(instrument: Instrument, pattern: Pattern) {
+
+    // this.song.patterns[pattern.position].steps.forEach(s => s.channel = instrument.channel)
+    // this.song.patterns[pattern.position].steps.forEach(s => {
+    //   s.channel = instrument.channel;
+    //   this.midiService.updateStep(s.id, s.page, s.position, Constants.CHANNEL, 1)
+    //     .subscribe(data => s = data)
+    // })
+
+    this.midiService.updatePattern(pattern.id, Constants.INSTRUMENT, instrument.id)
+      .subscribe(data => this.song.patterns[pattern.position] = data)
   }
 
   onStepChanged(step: any) {

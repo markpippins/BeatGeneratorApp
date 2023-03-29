@@ -209,6 +209,28 @@ public class PlayerService {
                 strike.setMuted(updateValue > 0 ? true : false);
                 break;
             }
+
+            case SUBS -> {                
+                strike.getSubCycler().setLength(updateValue);
+                break;
+            }
+
+            case SWING -> {                
+                strike.setSwing(updateValue);
+                break;
+            }
+
+            case LEVEL -> {                
+                strike.setLevel(updateValue);
+                break;
+            }
+
+            case CHANNEL -> {                
+                // strike.setChannel(updateValue > 0 ? true : false);
+                break;
+            }
+
+            
         }
 
         getStrikeRepository().save(strike);

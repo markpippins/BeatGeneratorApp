@@ -8,7 +8,13 @@
 
 <div class="lane-808">
   <!--  <div class="btn-inactive">-->
-  <div id="beat-btn-{{step.position}}" class="btn-inactive">
+    <div *ngIf="step.active" id="beat-btn-{{step.position}}" class="btn-active">
+      <button mat-mini-fab (click)="onLaneBtnClick()">
+        <!-- <mat-icon>album</mat-icon> -->
+        {{step.position + 1}}
+      </button>
+    </div>
+    <div *ngIf="!step.active" id="beat-btn-{{step.position}}" class="btn-inactive">
     <button mat-mini-fab (click)="onLaneBtnClick()">
       <!-- <mat-icon>album</mat-icon> -->
       {{step.position + 1}}

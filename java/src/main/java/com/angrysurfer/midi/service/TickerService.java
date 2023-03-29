@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiUnavailableException;
+
 @Getter
 @Setter
 @Service
@@ -54,6 +57,15 @@ public class TickerService {
             setSequenceRunner(new SequenceRunner(getTicker()));
             new Thread(getSequenceRunner()).start();
         }
+
+        getTicker().getPlayers().forEach(p -> {
+            try {
+                p.getInstrument().programChange(p.getPreset(), 0);
+            } catch (InvalidMidiDataException | MidiUnavailableException e) {                // TODO Auto-generated catch block
+                logger.error(e.getMessage(), e);
+            }
+        });
+
     }
 
     private void stopRunningSequencers() {

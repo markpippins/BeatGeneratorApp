@@ -73,19 +73,18 @@ public class SongService {
                 pattern.getSteps().stream()
                         .filter(s -> s.getActive() && s.getPosition().equals(position)).toList().forEach(step -> {
 
+                    int note = pattern.getBaseNote() + step.getPitch() + (12 * pattern.getTranspose());
                     noteOffs.push(new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF,
-                                    pattern.getBaseNote() + step.getPitch(), step.getVelocity());
+                            midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF, note, step.getVelocity());
                         }
                     }));
                     
                     new Thread(new Runnable() {
-
                         @Override
                         public void run() {
-                            midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_ON, pattern.getBaseNote() + step.getPitch(), step.getVelocity());
+                            midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_ON, note, step.getVelocity());
                         }
                     }).start();
             
@@ -116,11 +115,8 @@ public class SongService {
         this.midiService = midiService;
     }
 
-    public Pattern updatePattern(Long stepId, int position, int updateType, int updateValue) {
-        Pattern pattern = getPatternRepository().findById(stepId).orElse(new Pattern());
-        // pattern.setPage(Objects.isNull(step.getPage()) ? 0 : step.getPage());
-        // if (Objects.isNull(step.getIndex()))
-        // step.setPosition(position);
+    public Pattern updatePattern(Long patternId, int updateType, int updateValue) {
+        Pattern pattern = getSong().getPatterns().stream().filter(p -> p.getId().equals(patternId)).findFirst().orElseThrow();
 
         switch (updateType) {
             case PatternUpdateType.ACTIVE:
@@ -136,7 +132,11 @@ public class SongService {
                 break;
 
             case PatternUpdateType.CHANNEL:
+                pattern.setInstrument(null);
+                midiService.getInstrumentByChannel(updateValue).forEach(i -> pattern.setInstrument(i));
                 pattern.setChannel(updateValue);
+                if (pattern.getInstrument().getChannel() != pattern.getChannel())
+                    pattern.getInstrument().setChannel(updateValue);
                 break;
 
             case PatternUpdateType.PROBABILITY:
@@ -155,20 +155,35 @@ public class SongService {
                 pattern.setScale(updateValue);
                 break;
 
+            case PatternUpdateType.LENGTH:
+                pattern.setLength(updateValue);
+                break;
+
+            case PatternUpdateType.SWING:
+                pattern.setSwing(updateValue);
+                break;
+
+            case PatternUpdateType.PRESET:
+                pattern.setPreset(updateValue);
+                break;
+
+            case PatternUpdateType.REPEATS:
+                pattern.setRepeats(updateValue);
+                break;
+
+            case PatternUpdateType.GATE:
+                pattern.setGate(updateValue);
+                break;
+
             case PatternUpdateType.TRANSPOSE:
                 pattern.setTranspose(updateValue);
                 break;
         }
 
-        // Map<Integer, Pattern> page = songStepsMap.containsKey(step.getPage()) ?
-        // songStepsMap.get(step.getPage()) : new ConcurrentHashMap<>();
-        // page.put(step.getIndex(), step);
-        // songStepsMap.put(step.getPage(), page);
-
         return getPatternRepository().save(pattern);
     }
 
-    public Step updateStep(Long stepId, int position, int updateType, int updateValue) {
+    public Step updateStep(Long stepId, int updateType, int updateValue) {
 
         Step step = getSong().getStep(stepId);
 
@@ -209,6 +224,30 @@ public class SongService {
             pattern.setSteps(getStepDataRepository().findByPatternId(pattern.getId()));
             pattern.getSteps().forEach(s -> s.setPattern(pattern));
         });
+
+        if (song.getPatterns().size() == 0) {
+
+            getPatternRepository().findBySongId(song.getId()).forEach(p -> getPatternRepository().delete(p));
+
+            IntStream.range(0, 8).forEach(i -> {
+                Pattern pattern = new Pattern();
+                pattern.setSong(getSong());
+                pattern.setPosition(i);
+                getPatternRepository().save(pattern);
+    
+                song.getPatterns().add(pattern);
+    
+                IntStream.range(0, 16).forEach(j -> {
+                    Step step = new Step();
+                    step.setPattern(pattern);
+                    step.setPosition(j);
+                    getStepDataRepository().save(step);
+    
+                    pattern.getSteps().add(step);
+                });
+    
+            });
+        }
 
         return song;
     }

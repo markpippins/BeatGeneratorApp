@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {AfterContentChecked, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Listener } from 'src/app/models/listener';
 import { MidiService } from 'src/app/services/midi.service';
@@ -10,10 +10,19 @@ import {Step} from "../../models/step";
   templateUrl: './beat-spec-panel.component.html',
   styleUrls: ['./beat-spec-panel.component.css']
 })
-export class BeatSpecPanelComponent implements Listener {
+export class BeatSpecPanelComponent implements Listener, OnInit, AfterContentChecked {
 
   constructor(private uiService: UiService, private midiService: MidiService) {
     uiService.addListener(this)
+  }
+  ngAfterContentChecked(): void {
+    if (this.step != undefined && this.step.active) {
+      let element = document.getElementById("beat-btn-" + this.step.position)
+      // this.uiService.swapClass(element, 'inactive', 'active')
+      }
+  }
+
+  ngOnInit(): void {
   }
 
   @Output()

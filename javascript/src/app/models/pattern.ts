@@ -5,6 +5,8 @@ export interface Pattern {
 
   instrumentId: number
 
+  preset: number
+
   songId: number
 
   length: number
@@ -31,9 +33,7 @@ export interface Pattern {
 
   transpose: number
 
-  oneShot: boolean;
-
-  loops: number;
+  repeats: number;
 
   swing: number;
 

@@ -2,7 +2,7 @@
   <mat-tab-group>
     <mat-tab *ngFor="let pattern of song?.patterns;" label="Linear {{pattern.position + 1}}">
       <!-- <app-control-panel808 class="control-panel808"></app-control-panel808> -->
-      <app-beat-spec-detail [pattern]="pattern" [songId]="song.id" (instrumentSelectEvent)="onInstrumentSelected($event, pattern.position)" class=""></app-beat-spec-detail>
+      <app-beat-spec-detail [pattern]="pattern" [songId]="song.id" (instrumentSelectEvent)="onInstrumentSelected($event, pattern)" class=""></app-beat-spec-detail>
       <div class="interface-808">
         <div class="side-panel-808">
           <mat-divider [style.height.px]="10"></mat-divider>

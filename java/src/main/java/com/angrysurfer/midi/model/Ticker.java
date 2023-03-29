@@ -81,7 +81,7 @@ public class Ticker implements Serializable {
     @Transient
     private double granularBeat = 1.0;
 
-    private Integer bars = 8;
+    private Integer bars = Constants.DEFAULT_BAR_COUNT;
     private Integer beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
     private Double beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
     private Integer partLength = Constants.DEFAULT_PART_LENGTH;

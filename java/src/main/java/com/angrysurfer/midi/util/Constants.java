@@ -3,13 +3,17 @@ package com.angrysurfer.midi.util;
 public class Constants {
     public static final double DEFAULT_BEAT_OFFSET = 1.0;
     public static int DEFAULT_PPQ = 24;
+    public static int DEFAULT_BAR_COUNT = 4;
     public static int DEFAULT_BEATS_PER_BAR = 4;
     public static double DEFAULT_BEAT_DIVIDER = 4.0;
     public static float DEFAULT_BPM = 120;
-    public static int DEFAULT_PART_LENGTH = 16;
+    public static int DEFAULT_PART_LENGTH = 4;
     public static int DEFAULT_MAX_TRACKS = 128;
     public static int DEFAULT_SONG_LENGTH = Integer.MAX_VALUE;
     public static int DEFAULT_SWING = 25;
+    
+    public static final int DEFAULT_LOOP_COUNT = 0;
+    public static final int DEFAULT_PART_COUNT = 1;
 
     public static final String INSTRUMENT = "/instrument";
     public static final String INSTRUMENT_LIST = "/instruments/all";
@@ -76,8 +80,7 @@ public class Constants {
     public static final String SAVE_BEAT = "/beat/save";
 	public static final String PLAY_DRUM_NOTE = "/drums/note";
     public static final String PLAY_SEQUENCE = "/sequence/play";
-    public static final int DEFAULT_LOOP_COUNT = 0;
-    public static final int DEFAULT_PART_COUNT = 1;
+
 
 }
 
