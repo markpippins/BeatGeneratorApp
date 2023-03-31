@@ -1069,7 +1069,6 @@ th {
 .app-status-panel {
   display: flex;
   flex-direction: row;
-  /* justify-content: space-around; */
 }
 
 .mini-nav-btn {

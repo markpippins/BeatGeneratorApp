@@ -25,7 +25,7 @@ public class PlayerController {
     }
 
     @GetMapping(path = Constants.ALL_PLAYERS)
-    public @ResponseBody Set<Strike> getPlayers() {
+    public @ResponseBody Set<Player> getPlayers() {
         logger.info(Constants.ALL_PLAYERS);
         return (service.getPlayers());
     }
@@ -43,7 +43,7 @@ public class PlayerController {
     }
 
     @GetMapping(Constants.REMOVE_PLAYER)
-    public Set<Strike> removePlayer(@RequestParam Long playerId) {
+    public Set<Player> removePlayer(@RequestParam Long playerId) {
         logger.info(Constants.REMOVE_PLAYER);
         return service.removePlayer(playerId);
     }

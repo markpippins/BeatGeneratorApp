@@ -1,15 +1,82 @@
-<div class="mini-nav">
-  <button class="mini-nav-btn" (click)="onClick('ticker-add')">add</button>
-  <button class="mini-nav-btn" (click)="onClick('ticker-remove')">remove</button>
-  <button class="mini-nav-btn" (click)="onClick('ticker-clear')">clear</button>
+<div class="transport-buttons">
+  <button
+    id="transport-btn-rewind"
+    mat-mini-fab
+    (click)="onClick('ticker-previous')"
+    tabindex="0">
+    <mat-icon>fast_rewind</mat-icon>
+  </button>
 
-  <button class="mini-nav-btn" (click)="onClick('ticker-previous')">prev</button>
-  <button class="mini-nav-btn" (click)="onClick('ticker-record')">rec</button>
-  <button class="mini-nav-btn" (click)="onClick('ticker-pause')">pause</button>
-  <button class="mini-nav-btn" (click)="onClick('ticker-stop')">stop</button>
-  <button class="mini-nav-btn" (click)="onClick('ticker-play')">play</button>
-  <button class="mini-nav-btn" (click)="onClick('ticker-forward')">forward</button>
+  <button
+    id="transport-btn-record"
+    mat-mini-fab
+    (click)="onClick('ticker-record')"
+    tabindex="0">
+    <mat-icon>fiber_manual_record</mat-icon>
+  </button>
 
-  <button class="mini-nav-btn" (click)="onClick('ticker-refresh')">refresh</button>
-  <button class="mini-nav-btn" (click)="onClick('ticker-snapshot')">snapshot</button>
+  <button
+    id="transport-btn-pause"
+    mat-mini-fab
+    (click)="onClick('ticker-pause')"
+    tabindex="0">
+    <mat-icon>pause_circle</mat-icon>
+  </button>
+
+  <button
+    id="transport-btn-stop"
+    mat-mini-fab
+    (click)="onClick('ticker-stop')"
+    tabindex="0">
+    <mat-icon>stop</mat-icon>
+  </button>
+
+  <div id="transport-btn-play" class="neutral">
+    <button
+      mat-mini-fab
+      (click)="onClick('ticker-play')"
+      tabindex="0">
+      <mat-icon>play_circle</mat-icon>
+    </button>
+  </div>
+
+  <button
+    id="transport-btn-forward"
+    mat-mini-fab
+    (click)="onClick('ticker-forward')"
+    tabindex="0">
+    <mat-icon>fast_forward</mat-icon>
+  </button>
+
+  <button
+    id="transport-btn-refresh"
+    mat-mini-fab
+    (click)="onClick('ticker-refresh')"
+    tabindex="0">
+    <mat-icon>loop</mat-icon>
+  </button>
+
+  <button
+    id="transport-btn-snap"
+    mat-mini-fab
+    (click)="onClick('ticker-save')"
+    tabindex="0">
+    <mat-icon>camera_alt</mat-icon>
+  </button>
+
+  <button
+    id="transport-btn-add"
+    mat-mini-fab
+    (click)="onClick('ticker-add')"
+    tabindex="0">
+    <mat-icon>add_circle</mat-icon>
+  </button>
+
+  <button
+    id="transport-btn-clear"
+    mat-mini-fab
+    (click)="onClick('ticker-clear')"
+    tabindex="0">
+    <mat-icon>clear_all</mat-icon>
+  </button>
 </div>

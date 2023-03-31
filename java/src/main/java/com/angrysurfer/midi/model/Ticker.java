@@ -30,11 +30,11 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
-    private Set<Strike> addList = new HashSet<>();
+    private Set<Player> addList = new HashSet<>();
 
     @JsonIgnore
     @Transient
-    private Set<Strike> removeList = new HashSet<>();
+    private Set<Player> removeList = new HashSet<>();
 
     @JsonIgnore
     @Transient
@@ -77,7 +77,7 @@ public class Ticker implements Serializable {
     private Long id;
 
     @Transient
-    private Set<Strike> players = new HashSet<>();
+    private Set<Player> players = new HashSet<>();
 
     @Transient
     Set<Long> activePlayerIds = new HashSet<>();
@@ -108,7 +108,7 @@ public class Ticker implements Serializable {
         setSongLength(Integer.MAX_VALUE);
     }
 
-    public Strike getPlayer(Long playerId) {
+    public Player getPlayer(Long playerId) {
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
 

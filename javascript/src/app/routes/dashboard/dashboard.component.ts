@@ -90,7 +90,7 @@ export class DashboardComponent implements OnInit, Listener {
 
     if (this.ticker != undefined)
       switch (action) {
-        case 'forward': {
+        case 'ticker-forward': {
           if (this.ticker.id > 0 && this.ticker.playing) {
             this.consoleOutput.pop()
             this.consoleOutput.push('ticker is currently playing')
@@ -107,7 +107,7 @@ export class DashboardComponent implements OnInit, Listener {
           break
         }
 
-        case 'previous': {
+        case 'ticker-previous': {
           if (this.ticker != undefined && this.ticker.id > 0) {
             this.midiService.previous(this.ticker.id).subscribe(async (data) => {
               this.clear();
@@ -124,7 +124,7 @@ export class DashboardComponent implements OnInit, Listener {
           break
         }
 
-        case 'play': {
+        case 'ticker-play': {
           this.midiService.start().subscribe()
           this.updateDisplay()
           // let element = document.getElementById('transport-btn-play')
@@ -135,7 +135,7 @@ export class DashboardComponent implements OnInit, Listener {
           break
         }
 
-        case 'stop': {
+        case 'ticker-stop': {
           this.midiService.stop().subscribe(data => {
             this.ticker = data
           })
@@ -148,7 +148,7 @@ export class DashboardComponent implements OnInit, Listener {
           break
         }
 
-        case 'pause': {
+        case 'ticker-pause': {
           this.midiService.pause().subscribe()
           // this.isPlaying = false
           // this.players = []
@@ -156,7 +156,7 @@ export class DashboardComponent implements OnInit, Listener {
           break
         }
 
-        case 'record': {
+        case 'ticker-record': {
           this.midiService.record().subscribe()
           // this.players = []
           // this.playerConditions = []
@@ -191,7 +191,7 @@ export class DashboardComponent implements OnInit, Listener {
         }
 
 
-        case 'refresh': {
+        case 'ticker-refresh': {
           this.updateDisplay();
           break
         }

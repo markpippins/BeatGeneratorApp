@@ -61,7 +61,7 @@ public class SongService {
 
             });
 
-            handleBeat(1);
+            handleBeat(0);
         }
 
         private void handleBeat(Integer position) {

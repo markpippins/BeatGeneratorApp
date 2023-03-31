@@ -1,25 +1,66 @@
-<div class="mini-nav">
-  <button class="mini-nav-btn">add</button>
-  <button class="mini-nav-btn">remove</button>
-  <button class="mini-nav-btn">clear</button>
+<div class="transport-buttons">
+  <button
+    id="transport-btn-rewind"
+    mat-mini-fab
+    (click)="onClick('set-previous')"
+    tabindex="0">
+    <mat-icon>fast_rewind</mat-icon>
+  </button>
 
-  <button class="mini-nav-btn">prev</button>
-  <button class="mini-nav-btn">rec</button>
-  <button class="mini-nav-btn">pause</button>
-  <button class="mini-nav-btn">stop</button>
-  <button class="mini-nav-btn">play</button>
-  <button class="mini-nav-btn">forward</button>
+  <!-- <button
+    id="transport-btn-record"
+    mat-mini-fab
+    (click)="onClick('set-record')"
+    tabindex="0">
+    <mat-icon>fiber_manual_record</mat-icon>
+  </button> -->
 
-  <button class="mini-nav-btn">refresh</button>
-  <button class="mini-nav-btn">snapshot</button>
-  <div class="mini-nav-section">
-    <label> x 2</label>
-    <input class="mini-nav-checkbox" type="checkbox" id="" name="" value="">
-    <label> x 4</label>
-    <input class="mini-nav-checkbox" type="checkbox" id="" name="" value="">
-    <label> x 8</label>
-    <input class="mini-nav-checkbox" type="checkbox" id="" name="" value="">
-    <label> x 16</label>
-    <input class="mini-nav-checkbox" type="checkbox" id="" name="" value="">
+  <!-- <button
+    id="transport-btn-pause"
+    mat-mini-fab
+    (click)="onClick('set-pause')"
+    tabindex="0">
+    <mat-icon>pause_circle</mat-icon>
+  </button> -->
+
+  <button
+    id="transport-btn-stop"
+    mat-mini-fab
+    (click)="onClick('set-stop')"
+    tabindex="0">
+    <mat-icon>stop</mat-icon>
+  </button>
+
+  <div id="transport-btn-play" class="neutral">
+    <button
+      mat-mini-fab
+      (click)="onClick('set-play')"
+      tabindex="0">
+      <mat-icon>play_circle</mat-icon>
+    </button>
   </div>
+
+  <button
+    id="transport-btn-forward"
+    mat-mini-fab
+    (click)="onClick('set-forward')"
+    tabindex="0">
+    <mat-icon>fast_forward</mat-icon>
+  </button>
+
+  <button
+    id="transport-btn-refresh"
+    mat-mini-fab
+    (click)="onClick('set-refresh')"
+    tabindex="0">
+    <mat-icon>loop</mat-icon>
+  </button>
+
+  <button
+    id="transport-btn-clear"
+    mat-mini-fab
+    (click)="onClick('set-clear')"
+    tabindex="0">
+    <mat-icon>clear_all</mat-icon>
+  </button>
 </div>

@@ -27,7 +27,7 @@ public class BeatGeneratorConfig implements Serializable {
     public BeatGeneratorConfig() {
     }
 
-    public BeatGeneratorConfig(Ticker ticker, Set<Strike> players) {
+    public BeatGeneratorConfig(Ticker ticker, Set<Player> players) {
         setTicksPerBeat(ticker.getTicksPerBeat());
         setBeatsPerBar(ticker.getBeatsPerBar());
         setBeatDivider(ticker.getBeatDivider());
