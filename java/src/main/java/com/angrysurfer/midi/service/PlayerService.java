@@ -113,8 +113,9 @@ public class PlayerService {
         strike.setTicker(getTickerService().getTicker());
         strike = getStrikeRepository().save(strike);
         getPlayers().add(strike);
-        strike.getSubCycler().setLength(getTickerService().getTicker().getTicksPerBeat() / getTickerService().getTicker().getBeatsPerBar());
-        strike.getRules().add(getRuleRepository().save(new Rule(strike, Operator.BEAT, Comparison.EQUALS, 1.0, 0)));
+        // strike.getSubCycler().setLength(getTickerService().getTicker().getTicksPerBeat() / getTickerService().getTicker().getBeatsPerBar());
+        // strike.getRules().add(getRuleRepository().save(new Rule(strike, Operator.BEAT, Comparison.EQUALS, 1.0, 0)));
+        strike.getRules().add(getRuleRepository().save(new Rule(strike, Operator.TICK, Comparison.EQUALS, 1.0, 0)));
         return strike;
     }
 
@@ -210,8 +211,22 @@ public class PlayerService {
                 break;
             }
 
-            case SUBS -> {                
+            case SKIPS -> {                
+                strike.setSkips(updateValue);
+                strike.getSkipCycler().setLength(updateValue);
+                strike.getSkipCycler().reset();
+                break;
+            }
+
+            case BEAT_FRACTION -> {                
+                strike.setBeatFraction(updateValue);
+                break;
+            }
+
+            case SUBDIVISIONS -> {                
+                strike.setSubDivisions(updateValue);
                 strike.getSubCycler().setLength(updateValue);
+                strike.getSubCycler().reset();
                 break;
             }
 

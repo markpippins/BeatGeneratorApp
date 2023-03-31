@@ -73,7 +73,7 @@ public class SongService {
                 pattern.getSteps().stream()
                         .filter(s -> s.getActive() && s.getPosition().equals(position)).toList().forEach(step -> {
 
-                    int note = pattern.getBaseNote() + step.getPitch() + (12 * pattern.getTranspose());
+                    int note = pattern.getRootNote() + step.getPitch() + (12 * pattern.getTranspose());
                     noteOffs.push(new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -131,12 +131,20 @@ public class SongService {
                 pattern.setDirection(updateValue);
                 break;
 
-            case PatternUpdateType.CHANNEL:
+            case PatternUpdateType.INSTRUMENT:
                 pattern.setInstrument(null);
                 midiService.getInstrumentByChannel(updateValue).forEach(i -> pattern.setInstrument(i));
                 pattern.setChannel(updateValue);
-                if (pattern.getInstrument().getChannel() != pattern.getChannel())
-                    pattern.getInstrument().setChannel(updateValue);
+                // if (pattern.getInstrument().getChannel() != pattern.getChannel())
+                //     pattern.getInstrument().setChannel(updateValue);
+                break;
+
+            case PatternUpdateType.CHANNEL:
+                // pattern.setInstrument(null);
+                // midiService.getInstrumentByChannel(updateValue).forEach(i -> pattern.setInstrument(i));
+                pattern.setChannel(updateValue);
+                // if (pattern.getInstrument().getChannel() != pattern.getChannel())
+                //     pattern.getInstrument().setChannel(updateValue);
                 break;
 
             case PatternUpdateType.PROBABILITY:
@@ -147,8 +155,8 @@ public class SongService {
                 pattern.setRandom(updateValue);
                 break;
 
-            case PatternUpdateType.BASE_NOTE:
-                pattern.setBaseNote(updateValue);
+            case PatternUpdateType.ROOT_NOTE:
+                pattern.setRootNote(updateValue);
                 break;
 
             case PatternUpdateType.SCALE:

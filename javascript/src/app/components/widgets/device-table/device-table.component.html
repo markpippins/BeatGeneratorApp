@@ -8,7 +8,9 @@
     <th class="header-cell">Max R</th>
     <th class="header-cell">Max T</th>
     <th class="header-cell">Receivers</th>
+    <th class="header-cell">Receiver</th>
     <th class="header-cell">Transmitters</th>
+    <th class="header-cell">Transmitter</th>
   </tr>
   <tr class="row" *ngFor="let device of devices;">
     <td>{{device.name}}</td>
@@ -18,7 +20,9 @@
     <td>{{device.maxReceivers }}</td>
     <td>{{device.maxTransmitters}}</td>
     <td>{{device.receivers}}</td>
+    <td>{{device.receiver}}</td>
     <td>{{device.transmitters}}</td>
+    <td>{{device.transmitter}}</td>
   </tr>
 </table>
 </div>

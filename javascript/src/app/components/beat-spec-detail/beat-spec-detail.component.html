@@ -17,7 +17,7 @@
       Preset
     </th>
     <th>
-      Base Note
+      Root
     </th>
     <th>
       Transpose
@@ -62,7 +62,7 @@
         <input class="xox-step-input" type="number" min="1" (change)="onPresetChange($event)" [(ngModel)]="pattern.preset">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="1" (change)="onBaseNoteChange($event)" [(ngModel)]="pattern.baseNote">
+        <input class="xox-step-input" type="number" min="1" (change)="onRootNoteChange($event)" [(ngModel)]="pattern.rootNote">
       </td>
       <td>
         <input class="xox-step-input" type="number" min="-4" max="+4" (change)="onTransposeChange($event)" [(ngModel)]="pattern.transpose">

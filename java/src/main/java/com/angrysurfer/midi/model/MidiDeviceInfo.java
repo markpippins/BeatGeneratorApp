@@ -3,6 +3,7 @@ package com.angrysurfer.midi.model;
 import java.io.Serializable;
 
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiUnavailableException;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +24,11 @@ public class MidiDeviceInfo implements Serializable {
 
     private int maxTransmitters;
 
+    private String receiver;
+
     private String receivers;
+
+    private String transmitter;
 
     private String transmitters;
     
@@ -37,12 +42,20 @@ public class MidiDeviceInfo implements Serializable {
         this.maxReceivers = device.getMaxReceivers();
         this.maxTransmitters = device.getMaxTransmitters();
 
-        StringBuffer receivers = new StringBuffer();
-        device.getReceivers().forEach(r -> receivers.append(r.toString() + " "));
-        this.receivers = receivers.toString();
+        try {
+            this.receiver = device.getReceiver().toString();
+        } catch (MidiUnavailableException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        this.receivers = String.format("%s", device.getReceivers().size());
 
-        StringBuffer transmitters = new StringBuffer();
-        device.getTransmitters().forEach(r -> transmitters.append(r.toString() + " "));
-        this.transmitters = receivers.toString();
+        try {
+            this.transmitter = device.getTransmitter().toString();
+        } catch (MidiUnavailableException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        this.transmitters = String.format("%s", device.getTransmitters().size());
     }
 }

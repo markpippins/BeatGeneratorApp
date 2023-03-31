@@ -14,6 +14,10 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.IntStream;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiUnavailableException;
 
 @Getter
 @Setter
@@ -66,20 +70,20 @@ public class Ticker implements Serializable {
 
     @Transient
     private boolean done = false;
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
-    
+
     @Transient
     private Set<Strike> players = new HashSet<>();
 
-    @Transient 
+    @Transient
     Set<Long> activePlayerIds = new HashSet<>();
 
     @Transient
-    private double granularBeat = 1.0;
+    private double granularBeat = 0.0;
 
     private Integer bars = Constants.DEFAULT_BAR_COUNT;
     private Integer beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
@@ -90,7 +94,7 @@ public class Ticker implements Serializable {
     private Integer swing = Constants.DEFAULT_SWING;
     private Integer ticksPerBeat = Constants.DEFAULT_PPQ;
     private Float tempoInBPM = Constants.DEFAULT_BPM;
-    private Integer loopCount  = Constants.DEFAULT_LOOP_COUNT;
+    private Integer loopCount = Constants.DEFAULT_LOOP_COUNT;
     private Integer parts = Constants.DEFAULT_PART_COUNT;
 
     @Transient
@@ -109,12 +113,14 @@ public class Ticker implements Serializable {
     }
 
     public double getBeat() {
+        logger.info(String.format("beat: %s", getBeatCycler().get()));
         return getBeatCycler().get();
     }
 
     public Long getBeatCount() {
+        logger.info(String.format("beat count: %s",getBeatCounter().get()));
         return getBeatCounter().get();
-    } 
+    }
 
     public void setBeatsPerBar(int beatsPerBar) {
         this.beatsPerBar = beatsPerBar;
@@ -140,7 +146,7 @@ public class Ticker implements Serializable {
 
     public Long getBarCount() {
         return getBarCounter().get();
-    } 
+    }
 
     public void setBars(int bars) {
         this.bars = bars;
@@ -163,10 +169,8 @@ public class Ticker implements Serializable {
     public void setPartLength(int partLength) {
         this.partLength = partLength;
     }
-    
+
     public void reset() {
-        // setId(null);
-        // setTick(0L);
         getTickCycler().reset();
         getBeatCycler().reset();
         getBarCycler().reset();
@@ -174,25 +178,12 @@ public class Ticker implements Serializable {
 
         getTickCounter().reset();
         getBeatCounter().reset();
-        getBeatCounter().reset();
         getBarCounter().reset();
         getPartCounter().reset();
 
         getAddList().clear();
         getRemoveList().forEach(r -> getPlayers().remove(r));
         getRemoveList().clear();
-        // getPlayers().clear();
-        // setPaused(false);
-        // setDone(false);
-        // setSwing(Constants.DEFAULT_SWING);
-        // setMaxTracks(Constants.DEFAULT_MAX_TRACKS);
-        // setPartLength(Constants.DEFAULT_PART_LENGTH);
-        // setSongLength(Constants.DEFAULT_SONG_LENGTH);
-        // setTempoInBPM(Constants.DEFAULT_BPM);
-        // setBeatDivider(Constants.DEFAULT_BEAT_DIVIDER);
-        // setBeatsPerBar(Constants.DEFAULT_BEATS_PER_BAR);
-        // setGranularBeat(1.0);
-        
     }
 
     private void clearMuteGroups() {
@@ -209,10 +200,19 @@ public class Ticker implements Serializable {
     }
 
     public void afterEnd() {
-        // setTick(1L);
         getTickCycler().reset();
         getBeatCycler().reset();
         getBarCycler().reset();
+
+        IntStream.range(0, 127).forEach(note -> {
+            getPlayers().forEach(p -> {
+                try {
+                    p.getInstrument().noteOff(note, 0);
+                } catch (InvalidMidiDataException | MidiUnavailableException e) {
+                    logger.error(e.getMessage(), e);
+                }
+            });
+        });
     }
 
     public void beforeStart() {
@@ -220,7 +220,7 @@ public class Ticker implements Serializable {
         getBarCycler().setLength(getBars());
         getBeatCycler().setLength(getBeatsPerBar());
         getPartCycler().setLength(getPartLength());
-        getPlayers().forEach(p -> p.getSubCycler().setLength(getTicksPerBeat() / getBeatsPerBar()));
+        getPlayers().forEach(p -> p.getSkipCycler().setLength(p.getSkips()));
     }
 
     public void onStart() {
@@ -232,40 +232,40 @@ public class Ticker implements Serializable {
         getBeatCycler().reset();
     }
 
-
     public void beforeTick() {
     }
 
     public void afterTick() {
-        if (getTick() % getTicksPerBeat() == 0) 
-            onBeatChange();  
+        granularBeat += getTicksPerBeat() / getBeatsPerBar();
+        
+        if (getTick() % getTicksPerBeat() == 0)
+            onBeatChange();
 
         getTickCycler().advance();
         getTickCounter().advance();
     }
 
-    
     public void onBeatChange() {
+        setGranularBeat(0.0);
         getBeatCycler().advance();
         getBeatCounter().advance();
- 
-        if (getBeat() % Constants.DEFAULT_BEATS_PER_BAR == 0) 
-            onBarChange();
-   }
 
+        if (getBeat() % getBeatsPerBar() == 0)
+            onBarChange();
+    }
 
     public void onBarChange() {
         updatePlayerConfig();
         if (getBar() % getPartLength() == 0)
-                onPartChange();
+            onPartChange();
 
         getBarCycler().advance();
         getBarCounter().advance();
     }
 
     public void onPartChange() {
-        getPartCycler().advance();      
-        getPartCounter().advance();  
+        getPartCycler().advance();
+        getPartCounter().advance();
     }
 
     private void updatePlayerConfig() {
@@ -273,11 +273,10 @@ public class Ticker implements Serializable {
             getPlayers().removeAll(getRemoveList());
             getRemoveList().clear();
         }
-        
+
         if (!getAddList().isEmpty()) {
             getPlayers().addAll(getAddList());
             getAddList().clear();
-        }    
+        }
     }
 }
-

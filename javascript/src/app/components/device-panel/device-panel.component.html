@@ -1,17 +1,32 @@
-<div>
-  <label>Interfaces</label>
-  <app-device-table [devices]="ports"></app-device-table>
-</div>
-<div>
-  <label>Synths</label>
-  <app-device-table [devices]="synths"></app-device-table>
-</div>
-<div>
-  <label>Other</label>
-  <app-device-table [devices]="other"></app-device-table>
-</div>
-<div>
-  <label>Unknown</label>
-  <app-device-table [devices]="unknown"></app-device-table>
-</div>
-
+<mat-tab-group>
+  <mat-tab label="MIDI">
+    <div>
+      <label>Interfaces</label>
+      <app-device-table [devices]="ports"></app-device-table>
+    </div>
+    <div>
+      <label>Synths</label>
+      <app-device-table [devices]="synths"></app-device-table>
+    </div>
+    <div>
+      <label>Other</label>
+      <app-device-table [devices]="other"></app-device-table>
+    </div>
+    <div>
+      <label>Unknown</label>
+      <app-device-table [devices]="unknown"></app-device-table>
+    </div>
+  </mat-tab>
+  <mat-tab label="Devices">
+      <table>
+        <tr *ngFor="let ins of instruments">
+          <td>
+              {{ins.name}}
+          </td>
+          <td>
+            {{ins.channel}}
+        </td>
+      </tr>
+      </table>
+  </mat-tab>
+</mat-tab-group>

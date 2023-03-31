@@ -48,17 +48,35 @@ public class Strike extends Player {
         setNote(note);
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
-
     }
 
     
     @Override
     public void onTick(long tick, long bar) {
-        // if (getSwing() == 0)
-            drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
-        // else handleSwing();
+  
+            if (getBeatFraction() != 1 && getSubCycler().getLength() > 1) {
+                try {
+                        // beatFraction = beatFraction * getBeatFraction() * getTicker().getTick();
+                        // double beatDivider = 1.0 / getTicker().getTicksPerBeat() / getSubCycler().getLength();
+                        // double beatFraction = getTicker().getTick() == 1 ? 0 : beatDivider * getBeatFraction() * getTicker().getTick();
+
+                    // double beatFraction = getTicker().getTick() == 1 ? 0 : getTicker().getTicksPerBeat() / getSubCycler().getLength();
+                    double beatFraction = getTicker().getTick() == 1 ? 0 : getTicker().getTicksPerBeat() / getSubDivisions();
+
+                    double delay = (getBeatFraction() * beatFraction) - getTicker().getTicksPerBeat();
+                    Thread.sleep((long) delay);
+                } catch (InterruptedException e) {
+                    logger.error(e.getMessage(), e);
+                }
+            }
         
-        handleRachets();
+            if (getSkipCycler().getLength() == 0 || getSkipCycler().atEnd()) {
+                // else handleSwing();
+                handleRachets();
+                drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+            }
+    
+            // getSkipCycler().advance();
     }
     
     private void handleSwing() {

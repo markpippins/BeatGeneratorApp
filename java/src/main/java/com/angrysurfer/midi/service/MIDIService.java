@@ -153,13 +153,22 @@ public class MIDIService {
         results.forEach(i -> i.setDevice(findMidiOutDevice(i.getDeviceName())));
 
         
+        MidiInstrument instrument = new MidiInstrument();
+        instrument.setChannel(channel);
         if (results.size() == 1)
             midiInstruments.put(channel, results.get(0));
-        
-        MidiInstrument instrument = new MidiInstrument();
-        instrument.setChannel(9);
-        instrument.setDevice(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals(GS_SYNTH)).findAny().orElseThrow());
-        instrument.setName(GS_SYNTH);
+        else {
+            if (channel < 8 || channel > 12) {
+                instrument.setDevice(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals(GERVILL)).findAny().orElseThrow());
+                instrument.setName(GERVILL);
+                }
+            else {
+                instrument.setDevice(getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals(GS_SYNTH)).findAny().orElseThrow());
+                instrument.setName(GS_SYNTH);
+            }
+             
+            instrument.setDeviceName(instrument.getDevice().getDeviceInfo().getName());
+        }
 
         results.add(instrument);
 

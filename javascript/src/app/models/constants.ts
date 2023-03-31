@@ -10,14 +10,16 @@ export class Constants {
     'Preset',
     'Pitch',
     '',
-    'Subs',
+    'Divs',
+    'Frac',
+    'Skips',
     'Swing',
     'Prob',
-    'Level',
+    // 'Level',
+    'Ratchet',
+    'Interval',
     'Min. V',
     'Max. V',
-    'Ratchet',
-    'Interval'
   ]
 
   static TICK_DIV = 0;
@@ -38,7 +40,9 @@ export class Constants {
   static RATCHET_COUNT = 10;
   static RATCHET_INTERVAL = 11;
   static CHANNEL = 12;
-  static SUBS = 13;
+  static SKIPS = 13;
+  static BEAT_FRACTION = 14;
+  static SUBDIVISIONS = 15;
 
   static STEP_ACTIVE = 0;
   static STEP_GATE = 1;
@@ -60,10 +64,11 @@ export class Constants {
   static STATUS = 3
   static TICKER_SELECTED = 10
   static STEP_UPDATED = 11
+  static COMMAND = 12
 
   static PATTERN_UPDATE_CHANNEL = 0
   static PATTERN_UPDATE_ACTIVE = 1
-  static PATTERN_UPDATE_BASE_NOTE = 2
+  static PATTERN_UPDATE_ROOT_NOTE = 2
   static PATTERN_UPDATE_LAST_STEP = 3
   static PATTERN_UPDATE_DIRECTION = 4
   static PATTERN_UPDATE_PROBABILITY = 5

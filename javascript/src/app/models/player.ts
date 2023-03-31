@@ -21,6 +21,7 @@ export interface Player {
   active: boolean
   ratchetCount: number
   ratchetInterval: number
-  subs: number
-  sub: number
+  skips: number
+  subDivisions: number
+  beatFraction: number
 }

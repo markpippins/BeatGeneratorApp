@@ -6,7 +6,7 @@
 {{ player.id }}
 </td>
 <td class="player-short-col" id="player-col-id-{{player.id}}">
-{{ player.instrument.id }}
+{{ player.instrumentId }}
 </td>
 <td class="player-short-col" id="player-col-instrument-id-{{player.id}}">
 {{ player.channel }}
@@ -32,19 +32,19 @@
 <input type="number" min="1" max="127" step="1" value="{{ player.maxVelocity }}">
 </td>
 <td>
-<button [style.height.px]="20" id="add" (click)="onBtnClick(player, 'add')">
+<button [style.height.px]="20" id="add" (click)="onBtnClick(player, 'ticker-add')">
   <!--          <mat-icon>add_circle</mat-icon>-->
   +
 </button>
 </td>
 <td>
-<button [style.height.px]="20" id="remove" (click)="onBtnClick(player, 'remove')">
+<button [style.height.px]="20" id="remove" (click)="onBtnClick(player, 'ticker-remove')">
   -
   <!--          <mat-icon>remove_circle</mat-icon>-->
 </button>
 </td>
 <td>
-<button [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'mute')">
+<button [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'ticker-mute')">
   <!--          <mat-icon>mute</mat-icon>-->
   M
 </button>

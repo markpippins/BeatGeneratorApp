@@ -194,7 +194,7 @@ export class MidiService {
     params = params.append('playerId', playerId);
     params = params.append('updateType', updateType);
     params = params.append('updateValue', updateValue);
-    return this.http.get('http://localhost:8080/api/player/update', {
+    return this.http.get<Player>('http://localhost:8080/api/player/update', {
       params: params,
     });
   }

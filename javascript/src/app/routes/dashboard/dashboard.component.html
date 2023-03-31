@@ -12,9 +12,6 @@
 <!--<mat-toolbar>-->
 <!--  <span>My Application</span>-->
 <!--</mat-toolbar>-->
-<div class="branding-div">
-  <label class="branding-label">MultiSequencer, Mark Pippins, angrysurfer.com, 2023</label>
-</div>
 <div class="content dashboard" role="main">
   <app-status-panel [running]="running" [ticker]="ticker"></app-status-panel>
   <mat-tab-group>
@@ -29,7 +26,7 @@
             <app-conditions-panel *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
                                 [player]="selectedPlayer"></app-conditions-panel>
           </div>
-          <app-strike-detail></app-strike-detail>
+          <app-strike-detail *ngIf="selectedPlayer != undefined" [player]="selectedPlayer"></app-strike-detail>
         </div>
       </div>
       <!-- <app-randomizer-panel></app-randomizer-panel> -->
@@ -37,11 +34,16 @@
         <app-beat-spec></app-beat-spec>
       </div>
     </mat-tab>
-
     <mat-tab label="Config">
+      <app-device-panel></app-device-panel>
+    </mat-tab>
+    <mat-tab label="Experimental">
       <mat-tab-group>
-        <mat-tab label="MIDI Interfaces">
-          <app-device-panel></app-device-panel>
+        <mat-tab label="drums">
+          <app-drum-grid></app-drum-grid>
+        </mat-tab>
+        <mat-tab label="pads">
+          <app-pads-panel></app-pads-panel>
         </mat-tab>
       </mat-tab-group>
     </mat-tab>
@@ -56,7 +58,10 @@
       <label class="status-label" *ngFor="let line of consoleOutput">{{line}}</label>
     </div>
   </div>
-  <app-transport-control (clickEvent)="onActionSelected($event)"></app-transport-control>
+  <!-- <app-transport-control (clickEvent)="onActionSelected($event)"></app-transport-control> -->
+  <div class="branding-div">
+    <label class="branding-label">MultiSequencer, Mark Pippins, angrysurfer.com, 2023</label>
+  </div>
 </div>
 <div class="footer">
 </div>

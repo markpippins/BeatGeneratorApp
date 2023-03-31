@@ -43,8 +43,8 @@ export class BeatSpecDetailComponent implements OnInit {
     this.midiService.updatePattern(this.pattern.id, Constants.PATTERN_UPDATE_ACTIVE, event.target.value).subscribe(data => this.pattern = data)
   }
 
-  onBaseNoteChange(event: { target: any; }) {
-    this.midiService.updatePattern(this.pattern.id, Constants.PATTERN_UPDATE_BASE_NOTE, event.target.value).subscribe(data => this.pattern = data)
+  onRootNoteChange(event: { target: any; }) {
+    this.midiService.updatePattern(this.pattern.id, Constants.PATTERN_UPDATE_ROOT_NOTE, event.target.value).subscribe(data => this.pattern = data)
   }
 
   onDeviceChange(event: { target: any; }) {

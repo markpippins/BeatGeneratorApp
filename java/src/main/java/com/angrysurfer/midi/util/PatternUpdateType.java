@@ -3,7 +3,7 @@ package com.angrysurfer.midi.util;
 public interface PatternUpdateType {
     static int CHANNEL = 0;
     static int ACTIVE = 1;
-    static int BASE_NOTE = 2;
+    static int ROOT_NOTE = 2;
     static int LAST_STEP = 3;
     static int DIRECTION = 4;
     static int PROBABILITY = 5;
@@ -16,5 +16,5 @@ public interface PatternUpdateType {
     static int DEVICE = 12;
     static int PRESET = 13;
     static int SCALE = 14;
-
+    static int INSTRUMENT = 15;
 }

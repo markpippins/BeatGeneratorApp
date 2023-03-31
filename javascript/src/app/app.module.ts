@@ -42,6 +42,10 @@ import { ParamsPanel808Component } from './components/widgets/params-panel808/pa
 import { StrikeDetailComponent } from './components/widgets/strike-detail/strike-detail.component';
 import { BeatSpecDetailComponent } from './components/beat-spec-detail/beat-spec-detail.component';
 import { MidinInstrumentComboComponent } from './components/widgets/midin-instrument-combo/midin-instrument-combo.component';
+import { BeatNavigatorComponent } from './components/beat-navigator/beat-navigator.component';
+import { TickerNavComponent } from './components/widgets/ticker-nav/ticker-nav.component';
+import { SetNavComponent } from './components/widgets/set-nav/set-nav.component';
+import { RulesNavComponent } from './components/widgets/rules-nav/rules-nav.component';
 
 @NgModule({
   declarations: [
@@ -72,6 +76,10 @@ import { MidinInstrumentComboComponent } from './components/widgets/midin-instru
     StrikeDetailComponent,
     BeatSpecDetailComponent,
     MidinInstrumentComboComponent,
+    BeatNavigatorComponent,
+    TickerNavComponent,
+    SetNavComponent,
+    RulesNavComponent,
     ],
     imports: [
         BrowserModule,

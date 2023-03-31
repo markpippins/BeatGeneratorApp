@@ -61,7 +61,7 @@ public class TickerService {
         getTicker().getPlayers().forEach(p -> {
             try {
                 p.getInstrument().programChange(p.getPreset(), 0);
-            } catch (InvalidMidiDataException | MidiUnavailableException e) {                // TODO Auto-generated catch block
+            } catch (InvalidMidiDataException | MidiUnavailableException e) {                
                 logger.error(e.getMessage(), e);
             }
         });

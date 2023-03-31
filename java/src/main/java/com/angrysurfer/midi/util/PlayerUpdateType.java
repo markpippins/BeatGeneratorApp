@@ -14,6 +14,7 @@ public interface PlayerUpdateType {
     static int RATCHET_COUNT  = 10;
     static int RATCHET_INTERVAL  = 11;
     static int CHANNEL  = 12;
-    static int SUBS = 13;
-    
+    static int SKIPS = 13;
+    static int BEAT_FRACTION = 14;
+    static int SUBDIVISIONS = 15;
 }

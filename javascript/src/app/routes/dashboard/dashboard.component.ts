@@ -1,8 +1,8 @@
-import {Component, OnInit, Output} from '@angular/core'
-import {MidiService} from "../../services/midi.service"
-import {Player} from "../../models/player"
-import {MatTabsModule} from '@angular/material/tabs'
-import {Ticker} from "../../models/ticker"
+import { Component, OnInit, Output } from '@angular/core'
+import { MidiService } from "../../services/midi.service"
+import { Player } from "../../models/player"
+import { MatTabsModule } from '@angular/material/tabs'
+import { Ticker } from "../../models/ticker"
 import { UiService } from 'src/app/services/ui.service'
 import { Constants } from 'src/app/models/constants'
 import { Listener } from 'src/app/models/listener'
@@ -65,9 +65,13 @@ export class DashboardComponent implements OnInit, Listener {
 
   onNotify(messageType: number, message: string) {
     this.consoleOutput.pop()
-    switch(messageType) {
+    switch (messageType) {
       case Constants.STATUS:
         this.consoleOutput.push(message)
+        break
+
+      case Constants.COMMAND:
+        this.onActionSelected(message)
         break
 
       case Constants.CONNECTED:
@@ -77,8 +81,7 @@ export class DashboardComponent implements OnInit, Listener {
       case Constants.DISCONNECTED:
         this.consoleOutput.push('disconnected')
         break
-
-      }
+    }
   }
 
   onActionSelected(action: string) {
@@ -160,13 +163,33 @@ export class DashboardComponent implements OnInit, Listener {
           break
         }
 
-        case 'add': {
+        case 'ticker-add': {
           this.midiService.addPlayer().subscribe(async (data) => {
             this.players.push(data)
             this.selectedPlayer = data
           })
           break
         }
+
+        case 'ticker-remove': {
+          if (this.selectedPlayer == undefined)
+            break
+          let id = this.selectedPlayer.id
+          let index = this.players.indexOf(this.selectedPlayer)
+
+          this.selectedPlayer.rules = []
+          this.midiService.removePlayer(this.selectedPlayer).subscribe(async (data) => {
+            this.players = data;
+            if (this.players.length == 0)
+              this.selectedPlayer = undefined
+          });
+          this.players = this.players.filter(p => p.id != id)
+
+          if (this.players.length > 0)
+            this.selectedPlayer = this.players[this.players.length - 1]
+          break
+        }
+
 
         case 'refresh': {
           this.updateDisplay();
@@ -178,7 +201,7 @@ export class DashboardComponent implements OnInit, Listener {
           break
         }
 
-        case 'clear': {
+        case 'ticker-clear': {
           this.midiService.clearPlayers().subscribe()
           this.clear()
           break
@@ -191,7 +214,7 @@ export class DashboardComponent implements OnInit, Listener {
   updateDisplay(): void {
     this.midiService.playerInfo().subscribe(async (data) => {
       var update: boolean = this.ticker.playing && this.players.length != (<Player[]>data).length
-      this.players = data
+      this.players = this.uiService.sortById(data)
       this.players.forEach(p => p.active = p.id in this.ticker.activePlayerIds)
       if (update && this.ticker.playing) {
         await this.midiService.delay(1000)

@@ -25,6 +25,9 @@ public class Rule implements Serializable {
     private Double value;
     private int part = 0;
 
+    private int start = 0;
+    private int end = 0;
+
     @Transient
     @JsonIgnore
     Player player;

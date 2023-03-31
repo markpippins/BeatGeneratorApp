@@ -45,8 +45,8 @@ export class BeatSpecComponent implements OnInit, Listener {
   updateDisplay(): void {
     this.midiService.songInfo().subscribe(data => {
         this.song = data
-        this.song.patterns = this.uiService.sortById(this.song.patterns)
-        this.song.patterns.forEach(p => p.steps = this.uiService.sortById(p.steps))
+        this.song.patterns = this.uiService.sortByPosition(this.song.patterns)
+        this.song.patterns.forEach(p => p.steps = this.uiService.sortByPosition(p.steps))
         // for (let page = 0; page < 8; page++) {
         //   let patterns = data.patterns
         //   this.steps.push([])
@@ -70,7 +70,7 @@ export class BeatSpecComponent implements OnInit, Listener {
     //     .subscribe(data => s = data)
     // })
 
-    this.midiService.updatePattern(pattern.id, Constants.INSTRUMENT, instrument.id)
+    this.midiService.updatePattern(pattern.id, Constants.INSTRUMENT, instrument.channel)
       .subscribe(data => this.song.patterns[pattern.position] = data)
   }
 

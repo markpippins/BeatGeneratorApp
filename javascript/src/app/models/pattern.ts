@@ -11,7 +11,7 @@ export interface Pattern {
 
   length: number
 
-  baseNote: number
+  rootNote: number
 
   tempo: number
 

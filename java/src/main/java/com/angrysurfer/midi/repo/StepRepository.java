@@ -1,9 +1,7 @@
 package com.angrysurfer.midi.repo;
 
-import com.angrysurfer.midi.model.Pattern;
 import com.angrysurfer.midi.model.Step;
 
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;

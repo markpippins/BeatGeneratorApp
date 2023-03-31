@@ -42,13 +42,17 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     @JsonIgnore
     @Transient
-    private Cycler subCycler = new Cycler();
+    private Cycler skipCycler = new Cycler(0);
+
+    @JsonIgnore
+    @Transient
+    private Cycler subCycler = new Cycler(16);
 
     @Transient
     private boolean muted = false;
 
     @Transient
-    private int position = 0;
+    private int position;
 
     @Transient
     private Long lastTick = 0L;
@@ -60,7 +64,14 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Long lastPlayedBar;
 
     @Transient
+    private Integer skips = 0;
+
+    @Transient
     private double lastPlayedBeat;
+
+    private Integer subDivisions = 4;
+
+    private Integer beatFraction = 1;
 
     @Transient   
     private Set<Rule> rules = new HashSet<>();
@@ -99,11 +110,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         setAllowedControlMessages(allowedControlMessages);
     }
 
-    public Long getSubs() {
-        return getSubCycler().getLength();
-    }
-
-    public Long getSub() {
+    public Long getSubPosition() {
         return getSubCycler().get();
     }
 
@@ -147,28 +154,29 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     @Override
     public Boolean call() {
-        if (getLastTick() == getTicker().getTick())
-            return Boolean.FALSE;
-        
-            //  && !muteGroupPartnerSoundedOnThisTick()
-        
-        if (!isMuted() && shouldPlay()) {
-                        getTicker().getActivePlayerIds().add(getId());
-                        setLastPlayedBar(getTicker().getBar());
-                        setLastPlayedBeat(getTicker().getBeat());
-                        setLastPlayedTick(getTicker().getTick());
-                        onTick(getTicker().getTick(), getTicker().getBar());
-                    }
+            if (getLastTick() == getTicker().getTick())
+                return Boolean.FALSE;
+            
+                //  && !muteGroupPartnerSoundedOnThisTick()
+            // && strikeHasNoMuteGroupConflict()
+            if (!isMuted() && shouldPlay()) {
+                            getTicker().getActivePlayerIds().add(getId());
+                            setLastPlayedBar(getTicker().getBar());
+                            setLastPlayedBeat(getTicker().getBeat());
+                            setLastPlayedTick(getTicker().getTick());
+                            onTick(getTicker().getTick(), getTicker().getBar());
+                        }
 
-        setLastTick(getTicker().getTick());
+            setLastTick(getTicker().getTick());
                 // logger.info(String.format("%s not playing tick %s, beat %s, bar %s", getName(), tick, getTicker().getBeat(), getTicker().getBar()));
-        return Boolean.TRUE;
+
+            return Boolean.TRUE;
     }
 
-    private boolean muteGroupPartnerSoundedOnThisTick() {
+    private boolean strikeHasNoMuteGroupConflict() {
         return getTicker().getMuteGroups().stream().noneMatch(g -> g.getPlayers()
         .stream().filter(e -> e.getLastPlayedTick() == getTicker().getTick())
-            .toList().size() > 0);
+            .toList().size() == 0);
     }
 
     public boolean shouldPlay() {
@@ -185,8 +193,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                     }
                     
                     case Operator.BEAT -> { 
-                        double beatFraction = getTicker().getTick() == 1 ? 0 : 1.0 / getTicker().getTicksPerBeat() * getSubCycler().get();
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat() + beatFraction, rule.getValue())) 
+                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat(), rule.getValue())) 
                                 play.set(false);
                     }
 
@@ -230,6 +237,8 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                     }
                 }
             });
+
+            getSkipCycler().advance();
 
             getSubCycler().advance();
 

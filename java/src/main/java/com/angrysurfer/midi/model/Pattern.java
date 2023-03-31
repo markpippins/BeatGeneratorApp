@@ -45,7 +45,7 @@ public class Pattern {
     @Column(name = "rand")
     private Integer random = 0;
 
-    private Integer baseNote = 60;
+    private Integer rootNote = 60;
 
     private Integer transpose = 0;
     

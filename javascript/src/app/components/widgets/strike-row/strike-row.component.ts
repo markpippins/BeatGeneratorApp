@@ -77,7 +77,7 @@ export class StrikeRowComponent {
   }
 
   onInstrumentSelected(instrument: Instrument, player: Player) {
-    player.instrument = instrument
+    player.instrumentId = instrument.id
     this.midiService.updatePlayer(player.id, Constants.INSTRUMENT, instrument.id).subscribe()
   }
 

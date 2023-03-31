@@ -68,13 +68,14 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   onBtnClick(player: Player, action: string) {
     switch (action) {
-      case 'add': {
+      case 'ticker-add': {
         this.midiService.addPlayer().subscribe(async (data) => {
           this.players.push(data);
         });
         break
       }
-      case 'remove': {
+      case 'ticker-remove': {
+        player.rules = []
         this.midiService.removePlayer(player).subscribe(async (data) => {
           this.players = data;
           if (this.players.length == 0)
@@ -83,7 +84,7 @@ export class PlayerTableComponent implements Listener, OnInit {
         this.players = this.players.filter(p => p.id != player.id)
         break
       }
-      case 'mute': {
+      case 'ticker-mute': {
         if (this.selectedPlayer != undefined) {
           this.selectedPlayer.muted = !this.selectedPlayer.muted
           this.midiService.updatePlayer(this.selectedPlayer?.id, Constants.MUTE, this.selectedPlayer.muted ? 1 : 0).subscribe()
@@ -91,7 +92,7 @@ export class PlayerTableComponent implements Listener, OnInit {
         break
       }
 
-      case 'audition': {
+      case 'ticker-audition': {
         if (this.selectedPlayer != undefined) {
           // this.selectedPlayer.muted = !this.selectedPlayer.muted
           this.midiService.sendMessage(MidiMessage.NOTE_ON, this.selectedPlayer.channel, this.selectedPlayer.note, 120)
@@ -123,8 +124,9 @@ export class PlayerTableComponent implements Listener, OnInit {
       active: false,
       ratchetCount: 0,
       ratchetInterval: 0,
-      subs: 0,
-      sub: 0
+      skips: 0,
+      beatFraction: 0,
+      subDivisions: 0
     }, 'add')
   }
 
@@ -143,12 +145,12 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   onPresetChange(player: Player, event: { target: any; }) {
     this.players.filter(p => p.instrumentId == player.instrumentId )
-      .forEach(p => this.midiService.updatePlayer(p.id, Constants.PRESET, event.target.value).subscribe())
+      .forEach(p => this.midiService.updatePlayer(p.id, Constants.PRESET, event.target.value - 1).subscribe())
   }
 
-  onLevelChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.LEVEL, event.target.value).subscribe()
-  }
+  // onLevelChange(player: Player, event: { target: any; }) {
+  //   this.midiService.updatePlayer(player.id, Constants.LEVEL, event.target.value).subscribe()
+  // }
 
   onMinVelocityChange(player: Player, event: { target: any; }) {
     this.midiService.updatePlayer(player.id, Constants.MIN_VELOCITY, event.target.value).subscribe()
@@ -174,8 +176,16 @@ export class PlayerTableComponent implements Listener, OnInit {
     this.midiService.updatePlayer(player.id, Constants.SWING, event.target.value).subscribe()
   }
 
+  onBeatFractionChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.BEAT_FRACTION, event.target.value).subscribe()
+  }
+
+  onSkipsChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.SKIPS, event.target.value).subscribe()
+  }
+
   onSubsChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.SUBS, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, Constants.SUBDIVISIONS, event.target.value).subscribe()
   }
 
   onPass(player: Player, $event: MouseEvent) {

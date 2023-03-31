@@ -87,8 +87,8 @@ body {
   background-size: cover;
   /* background-color: rgb(68, 67, 67); */
   /* background-color: #353637; */
-   /* background-image: linear-gradient(to left, #f46864, #003954); */
-   /* background-image: linear-gradient(to left, #e89105, #2c0ad7); */
+  /* background-image: linear-gradient(to left, #f46864, #003954); */
+  /* background-image: linear-gradient(to left, #e89105, #2c0ad7); */
   /*border-style: dashed;*/
   /*border-width: thin;*/
 }
@@ -111,7 +111,7 @@ body {
 .status-bar {
   display: flow;
   /*position: relative;*/
-  width:100%;
+  width: 100%;
   /*gap: 2px;*/
   /*max-width: 600px;*/
   /*border-radius: 6px;*/
@@ -191,7 +191,7 @@ svg.material-icons:not(:last-child) {
 }
 
 .terminal pre {
-  font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
   color: white;
   padding: 0 1rem 1rem;
   margin: 0;
@@ -230,7 +230,8 @@ svg.material-icons:not(:last-child) {
   height: 300px;
 }
 
-.player-table-holder, .rule-table-holder {
+.player-table-holder,
+.rule-table-holder {
   flex-grow: true;
   background-color: transparent;
   padding: 0px;
@@ -474,7 +475,8 @@ svg#clouds {
 
 /* Responsive Styles */
 @media screen and (max-width: 767px) {
-  .card-container > *:not(.circle-link),
+
+  .card-container>*:not(.circle-link),
   .terminal {
     width: 100%;
   }
@@ -501,7 +503,8 @@ svg#clouds {
   }
 }
 
-.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+.table-hover tbody tr:hover td,
+.table-hover tbody tr:hover th {
   background-color: blue;
 }
 
@@ -509,7 +512,8 @@ svg#clouds {
 /*  background-color: #f2f2f2;*/
 /*}*/
 
-input:hover, select:hover {
+input:hover,
+select:hover {
   background-color: blue;
   color: white;
 }
@@ -530,7 +534,8 @@ input:hover, select:hover {
 }
 
 
-tbody, thead tr {
+tbody,
+thead tr {
   display: block;
 }
 
@@ -540,12 +545,14 @@ tbody {
   overflow-x: hidden;
 }
 
-tbody td, thead th {
+tbody td,
+thead th {
   width: 140px;
 }
 
 thead th:last-child {
-  width: 156px; /* 140px + 16px scrollbar width */
+  width: 156px;
+  /* 140px + 16px scrollbar width */
 }
 
 
@@ -553,7 +560,8 @@ thead th:last-child {
 
 } */
 
-td, th {
+td,
+th {
   /* border: 1px solid #ddd; */
   /* padding: 1px; */
 }
@@ -625,12 +633,12 @@ td, th {
 }
 
 .beat-spec-detail {
-	gap: 2px;
-	padding: 2px;
-	margin-top: 5px;
-	display: flex;
-	flex-direction: row;
-	font-weight: normal;
+  gap: 2px;
+  padding: 2px;
+  margin-top: 5px;
+  display: flex;
+  flex-direction: row;
+  font-weight: normal;
 
 }
 
@@ -644,8 +652,8 @@ td, th {
 .selector-row {
   font-size: small;
   font-weight: normal;
-	padding: 0px;
-	margin: 0px;
+  padding: 0px;
+  margin: 0px;
 }
 
 .status-item {
@@ -681,6 +689,7 @@ td, th {
   min-height: 100px;
   height: 100px;
 }
+
 .side-panel-808 {
   font-weight: normal;
   margin-top: 26px;
@@ -706,9 +715,7 @@ td, th {
   /*border-width: thin;*/
 }
 
-.btn-808 {
-
-}
+.btn-808 {}
 
 input {
   background-color: transparent;
@@ -717,7 +724,7 @@ input {
   align-self: stretch;
   gap: 0;
   margin: 0;
-  padding:0;
+  padding: 0;
 }
 
 select {
@@ -727,14 +734,14 @@ select {
   align-self: stretch;
   gap: 0;
   margin: 0;
-  padding:0;
+  padding: 0;
 }
 
 td input {
   max-width: 40px;
   gap: 0;
   margin: 0;
-  padding:0;
+  padding: 0;
   text-align: right;
   align-self: stretch;
 }
@@ -757,7 +764,6 @@ th {
 .player-short-col {
   width: 25px;
   align-content: stretch;
-  align-text: right;
 }
 
 .player-long-col {
@@ -785,7 +791,7 @@ th {
 .ticker-param-select {
   background-color: blue;
   text-align: right;
-  width: 46px;
+  width: 42px;
 }
 
 
@@ -868,7 +874,8 @@ th {
 /*margin-inside: 10px;*/
 
 /*all: unset;*/
-/*border-radius: 4px;*/ /*background-color: #fafafa;*/
+/*border-radius: 4px;*/
+/*background-color: #fafafa;*/
 /*height: 110px;*/
 /*width: 275px;*/
 /*margin: 0 8px 16px;*/
@@ -897,6 +904,7 @@ th {
   height: 150px;
   overflow-y: scroll;
 }
+
 .list-title {
   font-size: 20px;
   font-weight: bold;
@@ -904,6 +912,7 @@ th {
   letter-spacing: 0.5px;
   margin: 5px;
 }
+
 /* ---------------------------------------------------------- */
 
 
@@ -918,6 +927,7 @@ th {
 .float-right {
   float: right;
 }
+
 /* ---------------------------------------------------------- */
 
 /* Header styles */
@@ -926,6 +936,7 @@ th {
   background-color: #393939;
   color: white;
 }
+
 .header-cell:not(:first-child) {
   padding-left: 0;
 }
@@ -937,10 +948,12 @@ th {
   line-height: normal;
   letter-spacing: 0.5px;
 }
+
 /* Round the top table corners */
 .header-cell:first-child {
   border-top-left-radius: 5px;
 }
+
 .header-cell:last-child {
   border-top-right-radius: 5px;
 }
@@ -965,7 +978,7 @@ th {
 ::ng-deep .sort-header-arrow {
   position: relative;
   left: -1.5rem;
-  display: none!important;
+  display: none !important;
   opacity: 0;
 }
 
@@ -978,6 +991,7 @@ th {
   /* display: flex; */
   /* align-content: center; */
 }
+
 /* ---------------------------------------------------------- */
 
 
@@ -989,33 +1003,39 @@ th {
   padding-top: 0px;
   padding-bottom: 0px;
 }
+
 .name-column {
   width: 30%;
   padding-right: 3rem;
   padding-top: 0px;
   padding-bottom: 0px;
 }
+
 .amount-column {
   width: 15%;
   padding-right: 3rem;
   padding-top: 0px;
   padding-bottom: 0px;
 }
+
 .status-column {
   width: 15%;
   padding-right: 3rem;
   padding-top: 0px;
   padding-bottom: 0px;
 }
+
 .date-column {
   width: 20%;
   padding-right: 3rem;
   padding-top: 0px;
   padding-bottom: 0px;
 }
+
 .state-column {
   width: 5%;
 }
+
 /* ---------------------------------------------------------- */
 
 /* Row styles */
@@ -1023,6 +1043,7 @@ th {
 .row:nth-child(2n) {
   background-color: transparent;
 }
+
 /* ---------------------------------------------------------- */
 
 /* Cell styles */
@@ -1030,6 +1051,7 @@ th {
 .state-cell {
   text-align: right;
 }
+
 .cell {
   border: none;
 }
@@ -1037,7 +1059,41 @@ th {
 .green-svg {
   fill: #6dd400;
 }
+
 .gray-svg {
   fill: #b2b4b6;
 }
+
 /* ---------------------------------------------------------- */
+.mini-nav,
+.app-status-panel {
+  display: flex;
+  flex-direction: row;
+  /* justify-content: space-around; */
+}
+
+.mini-nav-btn {
+  padding: 2px;
+  margin: 1px;
+  height: 28px;
+}
+
+.mini-nav-grid {
+  display: grid;
+  /* gap: 10px; */
+  grid-template-columns: auto auto auto auto auto auto auto;
+}
+
+.mini-nav-grid-btn {
+  padding: 2px;
+  height: 20px;
+  width: 20px;
+  margin: 1px;
+}
+
+.app-status-container {
+  display: flex;
+  flex-direction: row;
+  /* justify-content: space-around; */
+}
+

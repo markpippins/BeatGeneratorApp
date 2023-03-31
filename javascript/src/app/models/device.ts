@@ -5,6 +5,8 @@ export interface Device {
   version: number
   maxReceivers: number
   maxTransmitters: number
+  receiver: String
   receivers: String
+  transmitter: String
   transmitters: String
 }
