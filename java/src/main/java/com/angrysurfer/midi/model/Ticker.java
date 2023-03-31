@@ -88,10 +88,10 @@ public class Ticker implements Serializable {
     private Integer bars = Constants.DEFAULT_BAR_COUNT;
     private Integer beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
     private Double beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
-    private Integer partLength = Constants.DEFAULT_PART_LENGTH;
+    private Long partLength = Constants.DEFAULT_PART_LENGTH;
     private Integer maxTracks = Constants.DEFAULT_MAX_TRACKS;
-    private Integer songLength = Constants.DEFAULT_MAX_TRACKS;
-    private Integer swing = Constants.DEFAULT_SWING;
+    private Long songLength = Constants.DEFAULT_SONG_LENGTH;
+    private Long swing = Constants.DEFAULT_SWING;
     private Integer ticksPerBeat = Constants.DEFAULT_PPQ;
     private Float tempoInBPM = Constants.DEFAULT_BPM;
     private Integer loopCount = Constants.DEFAULT_LOOP_COUNT;
@@ -105,7 +105,7 @@ public class Ticker implements Serializable {
     private Set<MuteGroup> muteGroups = new HashSet<>();
 
     public Ticker() {
-        setSongLength(Integer.MAX_VALUE);
+        setSongLength(Long.MAX_VALUE);
     }
 
     public Player getPlayer(Long playerId) {
@@ -166,7 +166,7 @@ public class Ticker implements Serializable {
         this.partCycler.setLength(parts);
     }
 
-    public void setPartLength(int partLength) {
+    public void setPartLength(long partLength) {
         this.partLength = partLength;
     }
 

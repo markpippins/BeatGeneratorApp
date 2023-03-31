@@ -3,6 +3,7 @@ import { Rule } from './rule';
 
 export interface Player {
   id: number
+  playerClass: string
   tickerId: number
   instrumentId: number
   channel: number

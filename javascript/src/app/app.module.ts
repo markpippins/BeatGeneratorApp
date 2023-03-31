@@ -46,6 +46,7 @@ import { BeatNavigatorComponent } from './components/beat-navigator/beat-navigat
 import { TickerNavComponent } from './components/widgets/ticker-nav/ticker-nav.component';
 import { SetNavComponent } from './components/widgets/set-nav/set-nav.component';
 import { RulesNavComponent } from './components/widgets/rules-nav/rules-nav.component';
+import { PartStackerComponent } from './part-stacker/part-stacker.component';
 
 @NgModule({
   declarations: [
@@ -80,6 +81,7 @@ import { RulesNavComponent } from './components/widgets/rules-nav/rules-nav.comp
     TickerNavComponent,
     SetNavComponent,
     RulesNavComponent,
+    PartStackerComponent,
     ],
     imports: [
         BrowserModule,

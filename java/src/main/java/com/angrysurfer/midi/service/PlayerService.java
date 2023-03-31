@@ -102,15 +102,24 @@ public class PlayerService {
 
         tickerRepo.flush();
 
+        int note = 60;
+
         try {
             midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
+            if (Objects.nonNull(midiInstrument.getLowestNote())) {
+                note = midiInstrument.getLowestNote() + getPlayers().size();
+                if (Objects.nonNull(midiInstrument.getHighestNote())) {
+                    while (note > midiInstrument.getHighestNote())
+                        note -= 12;
+                }
+            }
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
 
         String name = midiInstrument.getName().concat(Integer.toString(getPlayers().size()));
-        Player player = new Strike(name, getTickerService().getTicker(), midiInstrument,
-                Strike.KICK + getPlayers().size(), Strike.closedHatParams);
+        Player player = new Strike(name, getTickerService().getTicker(), midiInstrument, note,
+                midiInstrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
         player.setTicker(getTickerService().getTicker());
         if (player instanceof Strike)
             player = getStrikeRepository().save((Strike) player);
@@ -159,7 +168,7 @@ public class PlayerService {
         getRuleRepository().save(rule);
     }
 
-    public Player updatePlayer(Long playerId, int updateType, int updateValue) {
+    public Player updatePlayer(Long playerId, int updateType, long updateValue) {
         Player player = getTickerService().getTicker().getPlayer(playerId);
         // strikeRepository.findById(playerId).orElseThrow();
         switch (updateType) {

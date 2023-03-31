@@ -20,9 +20,9 @@ public class MidiDeviceInfo implements Serializable {
 
     private final String version;
 
-    private int maxReceivers;
+    private Integer maxReceivers;
 
-    private int maxTransmitters;
+    private Integer maxTransmitters;
 
     private String receiver;
 

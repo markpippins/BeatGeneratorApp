@@ -59,17 +59,17 @@ public class MidiInstrument implements Serializable {
     
     private String deviceName;
 
-    private int channel;
+    private Integer channel;
     
-    private int lowestNote;
+    private Integer lowestNote;
     
-    private int highestNote;
+    private Integer highestNote;
     
-    private int highestPreset;
+    private Integer highestPreset;
     
-    private int preferredPreset;
+    private Integer preferredPreset;
     
-    private boolean hasAssignments;
+    private Boolean hasAssignments;
     
     public MidiInstrument() {
 
@@ -86,28 +86,28 @@ public class MidiInstrument implements Serializable {
         return assignments.getOrDefault(cc, "NONE");
     }
 
-    public void channelPressure(int data1, int data2) throws MidiUnavailableException, InvalidMidiDataException {
-        sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, getChannel(), data1, data2));
+    public void channelPressure(long data1, long data2) throws MidiUnavailableException, InvalidMidiDataException {
+        sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, getChannel(), (int) data1, (int) data2));
     }
 
-    public void controlChange(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, getChannel(), data1, data2));
+    public void controlChange(long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+        sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, getChannel(), (int) data1, (int) data2));
     }
 
-    public void noteOn(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, getChannel(), data1, data2));
+    public void noteOn(long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+        sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, getChannel(), (int) data1, (int) data2));
     }
 
-    public void noteOff(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(ShortMessage.NOTE_OFF, getChannel(), data1, data2));
+    public void noteOff(long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+        sendToDevice(new ShortMessage(ShortMessage.NOTE_OFF, getChannel(), (int) data1, (int) data2));
     }
 
-    public void polyPressure(int data1, int data2) throws MidiUnavailableException, InvalidMidiDataException {
-        sendToDevice(new ShortMessage(ShortMessage.POLY_PRESSURE, getChannel(), data1, data2));
+    public void polyPressure(long data1, long data2) throws MidiUnavailableException, InvalidMidiDataException {
+        sendToDevice(new ShortMessage(ShortMessage.POLY_PRESSURE, getChannel(), (int) data1, (int) data2));
     }
 
-    public void programChange(int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(ShortMessage.PROGRAM_CHANGE, getChannel(), data1, data2));
+    public void programChange(long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+        sendToDevice(new ShortMessage(ShortMessage.PROGRAM_CHANGE, getChannel(), (int) data1, (int) data2));
     }
 
     public void start() throws MidiUnavailableException, InvalidMidiDataException {

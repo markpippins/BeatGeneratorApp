@@ -6,9 +6,11 @@ export class Constants {
 
   static PLAYER_COLUMNS = [
     // 'Id',
+    'Class',
     'Device',
     'Preset',
     'Pitch',
+    '',
     '',
     'Divs',
     'Frac',

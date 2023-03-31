@@ -3,6 +3,7 @@ package com.angrysurfer.midi.model.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class TickerTests {
       ticker.beforeStart();
       
       // 
-      IntStream.range(0, ticker.getBeatsPerBar() * ticker.getTicksPerBeat()).forEach(i -> {
+      LongStream.range(0, ticker.getBeatsPerBar() * ticker.getTicksPerBeat()).forEach(i -> {
         ticker.beforeTick();
         ticker.afterTick();
       });
@@ -103,7 +104,7 @@ public class TickerTests {
       int expectedPart = 1;
       ticker.beforeStart();
 
-      IntStream.range(0, 16 * ticker.getBeatsPerBar() * ticker.getTicksPerBeat()).forEach(i -> {
+      LongStream.range(0, 16 * ticker.getBeatsPerBar() * ticker.getTicksPerBeat()).forEach(i -> {
         ticker.beforeTick();
         ticker.afterTick();
       });

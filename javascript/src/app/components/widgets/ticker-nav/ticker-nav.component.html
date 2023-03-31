@@ -1,4 +1,7 @@
 <div class="transport-buttons">
+</div>
+
+<div class="transport-buttons">
   <button
     id="transport-btn-rewind"
     mat-mini-fab
@@ -70,6 +73,14 @@
     (click)="onClick('ticker-add')"
     tabindex="0">
     <mat-icon>add_circle</mat-icon>
+  </button>
+
+  <button
+    id="transport-btn-remove"
+    mat-mini-fab
+    (click)="onClick('ticker-remove')"
+    tabindex="0">
+    <mat-icon>remove_circle</mat-icon>
   </button>
 
   <button

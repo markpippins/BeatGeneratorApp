@@ -114,7 +114,7 @@ export class DashboardComponent implements OnInit, Listener {
               this.ticker = data
               this.midiService.playerInfo().subscribe(data => {
                 this.players = data
-                DashboardComponent.sortById(this.players)
+                this.sortByPitch(this.players)
                 if (this.players.length > 0)
                   this.selectedPlayer = this.players[0]
               })
@@ -214,7 +214,7 @@ export class DashboardComponent implements OnInit, Listener {
   updateDisplay(): void {
     this.midiService.playerInfo().subscribe(async (data) => {
       var update: boolean = this.ticker.playing && this.players.length != (<Player[]>data).length
-      this.players = this.uiService.sortById(data)
+      this.players = this.sortByPitch(data)
       this.players.forEach(p => p.active = p.id in this.ticker.activePlayerIds)
       if (update && this.ticker.playing) {
         await this.midiService.delay(1000)
@@ -231,16 +231,16 @@ export class DashboardComponent implements OnInit, Listener {
     this.updateDisplay()
   }
 
-  private clear() {
+  clear() {
     this.selectedPlayer = undefined
   }
 
-  static sortById(data: any[]): any[] {
+ sortByPitch(data: Player[]): any[] {
     return data.sort((a, b) => {
-      if (a.id > b.id) {
+      if (a.note > b.note) {
         return 1;
       }
-      if (a.id < b.id) {
+      if (a.note < b.note) {
         return -1;
       }
       return 0;

@@ -115,6 +115,13 @@ public class SongService {
         this.midiService = midiService;
     }
 
+    public Song getSong() {
+        if (Objects.isNull(song))
+            return next(0);
+
+        return this.song;
+    }
+
     public Pattern updatePattern(Long patternId, int updateType, int updateValue) {
         Pattern pattern = getSong().getPatterns().stream().filter(p -> p.getId().equals(patternId)).findFirst().orElseThrow();
 
@@ -295,23 +302,23 @@ public class SongService {
             setSong(Objects.nonNull(maxSongId) && currentSongId < maxSongId
                     ? getSongRepository().getNextSong(currentSongId)
                     : null);
-            if (Objects.nonNull(getSong()))
-                loadSong(getSong());
+            if (Objects.nonNull(this.song)) 
+                loadSong(this.song);
             else
                 setSong(newSong());
         }
 
-        return getSong();
+        return this.song;
     }
 
     public synchronized Song previous(long currentSongId) {
         songRepository.flush();
         if (currentSongId > (getSongRepository().getMinimumSongId())) {
             setSong(getSongRepository().getPreviousSong(currentSongId));
-            loadSong(getSong());
+            loadSong(this.song);
         }
 
-        return getSong();
+        return this.song;
     }
 
     // public Song getSong() {
@@ -321,7 +328,7 @@ public class SongService {
     // return this.song;
     // }
 
-    public Pattern addPattern(int page) {
+    public Pattern addPattern() {
         getSongRepository().flush();
 
         Pattern pattern = new Pattern();

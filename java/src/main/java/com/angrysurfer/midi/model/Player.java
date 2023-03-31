@@ -32,13 +32,13 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private List<Pad> pads = new ArrayList<>();
 
     private String name;
-    private int swing = 0;
-    private int level = 100;
-    private int note = 60;
-    private int minVelocity = 100;
-    private int maxVelocity = 110;
-    private int preset = 1;
-    private int probability = 100;
+    private Long swing = 0L;
+    private Long level = 100L;
+    private Long note = 60L;
+    private Long minVelocity = 100L;
+    private Long maxVelocity = 110L;
+    private Long preset = 1L;
+    private Long probability = 100L;
 
     @JsonIgnore
     @Transient
@@ -52,7 +52,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private boolean muted = false;
 
     @Transient
-    private int position;
+    private Long position;
 
     @Transient
     private Long lastTick = 0L;
@@ -64,14 +64,14 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Long lastPlayedBar;
 
     @Transient
-    private Integer skips = 0;
+    private Long skips = 0L;
 
     @Transient
     private double lastPlayedBeat;
 
-    private Integer subDivisions = 4;
+    private Long subDivisions = 4L;
 
-    private Integer beatFraction = 1;
+    private Long beatFraction = 1L;
 
     @Transient   
     private Set<Rule> rules = new HashSet<>();
@@ -110,6 +110,10 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         setAllowedControlMessages(allowedControlMessages);
     }
 
+    public String getPlayerClass() {
+        return getClass().getSimpleName();
+    }
+
     public Long getSubPosition() {
         return getSubCycler().get();
     }
@@ -131,12 +135,12 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         return Objects.nonNull(instrument) ? instrument.getChannel() : 0;
     }
 
-    public void drumNoteOn(int note, int velocity) {
+    public void drumNoteOn(long note, long velocity) {
         noteOn(note, velocity);
         noteOff(note, velocity);
     }
 
-    public void noteOn(int note, int velocity) {
+    public void noteOn(long note, long velocity) {
        try {
             getInstrument().noteOn(note, velocity);
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
@@ -144,7 +148,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         }
     }
 
-    public void noteOff(int note, int velocity) {
+    public void noteOff(long note, long velocity) {
         try {
             getInstrument().noteOff(note, velocity);
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
@@ -181,7 +185,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     public boolean shouldPlay() {
         List<Rule> applicable = getRules().stream().
-            filter(r -> r.getPart() == 0 || r.getPart() == getTicker().getPart()).toList();
+            filter(r -> r.getPart() == 0 || ((long) r.getPart()) == getTicker().getPart()).toList();
 
         AtomicBoolean play = new AtomicBoolean(applicable.size() > 0);
         

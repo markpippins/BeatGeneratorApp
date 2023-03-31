@@ -6,11 +6,11 @@ public class Constants {
     public static int DEFAULT_BAR_COUNT = 4;
     public static int DEFAULT_BEATS_PER_BAR = 4;
     public static double DEFAULT_BEAT_DIVIDER = 4.0;
-    public static float DEFAULT_BPM = 120;
-    public static int DEFAULT_PART_LENGTH = 4;
-    public static int DEFAULT_MAX_TRACKS = 128;
-    public static int DEFAULT_SONG_LENGTH = Integer.MAX_VALUE;
-    public static int DEFAULT_SWING = 25;
+    public static float DEFAULT_BPM = 88;
+    public static long DEFAULT_PART_LENGTH = 1L;
+    public static int DEFAULT_MAX_TRACKS = 16;
+    public static long DEFAULT_SONG_LENGTH = Long.MAX_VALUE;
+    public static long DEFAULT_SWING = 25L;
     
     public static final int DEFAULT_LOOP_COUNT = 0;
     public static final int DEFAULT_PART_COUNT = 1;

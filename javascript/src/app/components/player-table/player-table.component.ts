@@ -87,7 +87,7 @@ export class PlayerTableComponent implements Listener, OnInit {
       case 'ticker-mute': {
         if (this.selectedPlayer != undefined) {
           this.selectedPlayer.muted = !this.selectedPlayer.muted
-          this.midiService.updatePlayer(this.selectedPlayer?.id, Constants.MUTE, this.selectedPlayer.muted ? 1 : 0).subscribe()
+          this.midiService.updatePlayer(this.selectedPlayer?.id, Constants.MUTE, this.selectedPlayer.muted ? 1 : 0).subscribe(data => this.selectedPlayer = data)
         }
         break
       }
@@ -126,7 +126,8 @@ export class PlayerTableComponent implements Listener, OnInit {
       ratchetInterval: 0,
       skips: 0,
       beatFraction: 0,
-      subDivisions: 0
+      subDivisions: 0,
+      playerClass: ''
     }, 'add')
   }
 

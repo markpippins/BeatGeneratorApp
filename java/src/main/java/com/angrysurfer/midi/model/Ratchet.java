@@ -12,7 +12,7 @@ public class Ratchet extends Strike {
  
     private Strike parent;
 
-    public Ratchet(Strike parent, long offset, int interval, int part) {
+    public Ratchet(Strike parent, long offset, long interval, int part) {
         setParent(parent);
         setTicker(getParent().getTicker());
         setNote(getParent().getNote());
@@ -37,6 +37,6 @@ public class Ratchet extends Strike {
     }
 
     public void onTick(long tick, long bar) {
-        drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+        drumNoteOn(getNote(), rand.nextLong(getMinVelocity(), getMaxVelocity()));
     }
 }

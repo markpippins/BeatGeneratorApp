@@ -91,6 +91,9 @@ body {
   /* background-image: linear-gradient(to left, #e89105, #2c0ad7); */
   /*border-style: dashed;*/
   /*border-width: thin;*/
+  display: flex;
+  flex-direction: column;
+
 }
 
 .footer {
@@ -127,11 +130,11 @@ body {
 
 .content {
   display: flex;
+  flex-direction: column;
   height: 100%;
   margin: auto auto auto;
   /*padding: 0 16px;*/
   max-width: 960px;
-  flex-direction: column;
   align-items: stretch;
   gap: 4px;
   color: white;

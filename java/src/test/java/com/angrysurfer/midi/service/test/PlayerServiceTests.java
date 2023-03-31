@@ -105,7 +105,7 @@ public class PlayerServiceTests {
         r3.setComparisonId(Comparison.LESS_THAN);
         
         Player tickerPlayer = tickerService.getTicker().getPlayer(player.getId());
-        assertEquals(3, tickerPlayer.getRules().size());
+        assertEquals(4, tickerPlayer.getRules().size());
     }
 
     @Test
@@ -117,7 +117,7 @@ public class PlayerServiceTests {
         playerService.addRule(player.getId());
         playerService.addRule(player.getId());
 
-        assertEquals(2, player.getRules().size());
+        assertEquals(3, player.getRules().size());
     }
 
     @Test
@@ -164,7 +164,7 @@ public class PlayerServiceTests {
         playerService.updateRule(player.getId(), rule.getId(), operatorId,
                 rule.getComparisonId(), rule.getValue(), rule.getPart());
 
-        assertEquals(player.getRules().stream().toList().get(0).getOperatorId(), operatorId);
+        assertTrue(player.getRules().stream().toList().get(0).getOperatorId().equals(operatorId));
     }
 
     @Test
@@ -179,7 +179,7 @@ public class PlayerServiceTests {
         playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
                 part, rule.getValue(), part);
 
-        assertEquals(player.getRule(rule.getId()).getPart(), part);
+        assertTrue(player.getRule(rule.getId()).getPart().equals(part));
     }
 
     @Test
@@ -194,7 +194,7 @@ public class PlayerServiceTests {
         playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
                 comparisonId, rule.getValue(), rule.getPart());
 
-        assertEquals(player.getRules().stream().toList().get(0).getComparisonId(), comparisonId);
+        assertTrue(player.getRules().stream().toList().get(0).getComparisonId().equals(comparisonId));
     }
 
     @Test

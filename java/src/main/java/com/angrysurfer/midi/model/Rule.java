@@ -20,13 +20,13 @@ public class Rule implements Serializable {
     private Long id;
 
     private Long playerId;
-    private int operatorId;
-    private int comparisonId;
+    private Integer operatorId;
+    private Integer comparisonId;
     private Double value;
-    private int part = 0;
+    private Integer part = 0;
 
-    private int start = 0;
-    private int end = 0;
+    private Long start = 0L;
+    private Long end = 0L;
 
     @Transient
     @JsonIgnore

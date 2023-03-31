@@ -3,6 +3,7 @@ package com.angrysurfer.midi.util;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
@@ -38,15 +39,22 @@ public class SequenceRunner implements Runnable {
 
     static boolean initialized;
 
-    static Exception exception;
+    static Stack<Exception> exceptions = new Stack<>();
+
+    private final Ticker ticker;
+
+    private Boolean stopped = false;
+
+    private Integer delay;
 
     static {
         try {
             sequencer = MidiSystem.getSequencer();
             initialized = true;
         } catch (MidiUnavailableException e) {
+            logger.error(e.getMessage(), e);
+            exceptions.push(e);
             initialized = false;
-            exception = e;
             throw new RuntimeException(e);
         }
     }
@@ -54,11 +62,6 @@ public class SequenceRunner implements Runnable {
     /**
      *
      */
-    private final Ticker ticker;
-
-    private boolean stopped = false;
-
-    private int delay;
 
     private Set<CyclerListener> cycleListeners = new HashSet<>();
     /**
@@ -80,7 +83,8 @@ public class SequenceRunner implements Runnable {
             try {
                 track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 0, 0), i * 1000));
             } catch (InvalidMidiDataException e) {
-                e.printStackTrace();
+                logger.error(e.getMessage(), e);
+                exceptions.push(e);
             }
         }); 
         return sequence;
@@ -113,8 +117,8 @@ public class SequenceRunner implements Runnable {
             beforeStart();
             
             sequencer.start();
-            while (sequencer.isRunning() && !isStopped()) {
-                float delay = 60000 / getTicker().getTempoInBPM() / getTicker().getTicksPerBeat();
+            while (sequencer.isRunning() && !stopped) {
+                double delay = 60000 / getTicker().getTempoInBPM() / getTicker().getTicksPerBeat();
                 getTicker().beforeTick();
                 while (sequencer.getTickPosition() < getTicker().getTick() + 1)
                     Thread.sleep(1); 

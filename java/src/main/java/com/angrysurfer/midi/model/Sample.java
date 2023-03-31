@@ -9,13 +9,11 @@ import java.util.ArrayList;
 @Setter
 public class Sample extends Strike {
 
-    private int highNote;
-
     private boolean started = false;
 
     public Sample(String name, Ticker ticker, MidiInstrument instrument, int low, int high) {
         super(name, ticker, instrument, low, new ArrayList<>(instrument.getAssignments().keySet()));
-        setHighNote(high);
+        // setHighNote(high);
     }
 
     @Override

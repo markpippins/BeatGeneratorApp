@@ -15,14 +15,14 @@ import com.angrysurfer.midi.model.Ticker;
 @Setter
 public class BeatGeneratorConfig implements Serializable {
     Set<Player> players = new HashSet<>();
-    private float tempoInBPM;
-    private int songLength;
-    private int ticksPerBeat;
-    private int beatsPerBar;
-    private int swing;
-    private double beatDivider;
-    private int maxTracks;
-    private int partLength;
+    private Float tempoInBPM;
+    private Long songLength;
+    private Integer ticksPerBeat;
+    private Integer beatsPerBar;
+    private Long swing;
+    private Double beatDivider;
+    private Integer maxTracks;
+    private Long partLength;
 
     public BeatGeneratorConfig() {
     }
@@ -43,7 +43,7 @@ public class BeatGeneratorConfig implements Serializable {
         ticker.setTicksPerBeat(getTicksPerBeat());
         ticker.setBeatsPerBar(getBeatsPerBar());
         ticker.setBeatDivider(getBeatDivider());
-        ticker.setTempoInBPM((float) getTempoInBPM());
+        ticker.setTempoInBPM(getTempoInBPM());
         ticker.setMaxTracks(getMaxTracks());
         ticker.setPartLength(getPartLength());
         ticker.setSongLength(getSongLength());

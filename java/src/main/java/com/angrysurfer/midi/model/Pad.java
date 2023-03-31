@@ -17,7 +17,7 @@ public class Pad {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    private int note;
+    private Integer note;
     
     @ElementCollection
     List<Integer> controlCodes = new ArrayList<>();

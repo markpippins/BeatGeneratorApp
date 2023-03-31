@@ -107,15 +107,15 @@ public class TickerService {
         return ticker;
     }
 
-    public Ticker updateTicker(Long tickerId, int updateType, int updateValue) {
+    public Ticker updateTicker(Long tickerId, int updateType, long updateValue) {
 
         Ticker ticker = getTicker().getId().equals(tickerId) ? getTicker() : getTickerRepo().findById(tickerId).orElseThrow();
 
         switch (updateType) {
-            case TickerUpdateType.PPQ : ticker.setTicksPerBeat(updateValue);
+            case TickerUpdateType.PPQ : ticker.setTicksPerBeat((int) updateValue);
                 break;
 
-            case TickerUpdateType.BEATS_PER_BAR : ticker.setBeatsPerBar(updateValue);
+            case TickerUpdateType.BEATS_PER_BAR : ticker.setBeatsPerBar((int) updateValue);
                 break;
 
             case TickerUpdateType.BPM: 
@@ -126,16 +126,16 @@ public class TickerService {
                 }
                 break;
 
-            case TickerUpdateType.PARTS: ticker.setParts(updateValue);
+            case TickerUpdateType.PARTS: ticker.setParts((int) updateValue);
                 break;
 
-            case TickerUpdateType.BARS: ticker.setBars(updateValue);
+            case TickerUpdateType.BARS: ticker.setBars((int) updateValue);
                 break;
 
             case TickerUpdateType.PART_LENGTH: ticker.setPartLength(updateValue);
                 break;
 
-            case TickerUpdateType.MAX_TRACKS: ticker.setMaxTracks(updateValue);
+            case TickerUpdateType.MAX_TRACKS: ticker.setMaxTracks((int) updateValue);
                 break;
         }
 
