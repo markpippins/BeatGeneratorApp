@@ -25,7 +25,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public abstract class Player implements Callable<Boolean>, Serializable {
+    
     static final Random rand = new Random();
+    
     static Logger logger = LoggerFactory.getLogger(Player.class.getCanonicalName());
 
     @Transient
@@ -39,6 +41,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Long maxVelocity = 110L;
     private Long preset = 1L;
     private Long probability = 100L;
+    private Long randomDegree = 0L;
 
     @JsonIgnore
     @Transient
@@ -110,6 +113,18 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         setAllowedControlMessages(allowedControlMessages);
     }
 
+    public Long getNote() {
+        Long result = randomDegree == 0L ? note : rand.nextBoolean() ? note + rand.nextLong(randomDegree) : note - rand.nextLong(randomDegree);
+
+        if (result > getInstrument().getHighestNote())
+            result = getInstrument().getLowestNote() + rand.nextLong(randomDegree);
+
+        if (result < getInstrument().getLowestNote())
+            result = getInstrument().getHighestNote() - rand.nextLong(randomDegree);
+
+        return result;
+    }
+
     public String getPlayerClass() {
         return getClass().getSimpleName();
     }
@@ -163,7 +178,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
             
                 //  && !muteGroupPartnerSoundedOnThisTick()
             // && strikeHasNoMuteGroupConflict()
-            if (!isMuted() && shouldPlay()) {
+            if (!isMuted() && isProbable() && shouldPlay()) {
                             getTicker().getActivePlayerIds().add(getId());
                             setLastPlayedBar(getTicker().getBar());
                             setLastPlayedBeat(getTicker().getBeat());
@@ -175,6 +190,15 @@ public abstract class Player implements Callable<Boolean>, Serializable {
                 // logger.info(String.format("%s not playing tick %s, beat %s, bar %s", getName(), tick, getTicker().getBeat(), getTicker().getBar()));
 
             return Boolean.TRUE;
+    }
+
+    @Transient
+    @JsonIgnore
+    private boolean isProbable() {
+        long test = rand.nextLong(101) ;
+        long probable = getProbability();
+        boolean result = test < probable;
+        return result;
     }
 
     private boolean strikeHasNoMuteGroupConflict() {

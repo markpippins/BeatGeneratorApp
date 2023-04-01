@@ -45,30 +45,12 @@ export class BeatSpecComponent implements OnInit, Listener {
   updateDisplay(): void {
     this.midiService.songInfo().subscribe(data => {
         this.song = data
-        this.song.patterns = this.uiService.sortByPosition(this.song.patterns)
+        // this.song.patterns = this.uiService.sortByPosition(this.song.patterns)
         this.song.patterns.forEach(p => p.steps = this.uiService.sortByPosition(p.steps))
-        // for (let page = 0; page < 8; page++) {
-        //   let patterns = data.patterns
-        //   this.steps.push([])
-        //   for (let index =1; index < this.stepCount + 1; index++) {
-        //     this.steps[page].push({
-        //       id: 0, position: index, active: false, gate: 50, pitch: 60, probability: 100, velocity: 110,
-        //       page: page, songId: 0,
-        //       channel: 0
-        //     })
-        //   }
-        // }
       })
   }
 
   onInstrumentSelected(instrument: Instrument, pattern: Pattern) {
-
-    // this.song.patterns[pattern.position].steps.forEach(s => s.channel = instrument.channel)
-    // this.song.patterns[pattern.position].steps.forEach(s => {
-    //   s.channel = instrument.channel;
-    //   this.midiService.updateStep(s.id, s.page, s.position, Constants.CHANNEL, 1)
-    //     .subscribe(data => s = data)
-    // })
 
     this.midiService.updatePattern(pattern.id, Constants.INSTRUMENT, instrument.channel)
       .subscribe(data => this.song.patterns[pattern.position] = data)
@@ -79,5 +61,20 @@ export class BeatSpecComponent implements OnInit, Listener {
     // this.midiService.updateStep(step).subscribe(async data => {
     //   this.steps[step.position] = data
     // })
+  }
+
+  getLabel(pattern: Pattern): string {
+    let s = "XOX " + pattern.channel
+    if (pattern.name != undefined)
+      s = pattern.name
+
+    if (s == "microsoft gs wavetable synth")
+      s = "MS Wave"
+
+      if (s == "gervill")
+      s = "Gervill"
+
+
+    return s;
   }
 }

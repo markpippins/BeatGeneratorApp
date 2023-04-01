@@ -61,9 +61,9 @@ public class MidiInstrument implements Serializable {
 
     private Integer channel;
     
-    private Integer lowestNote;
+    private Integer lowestNote = 0;
     
-    private Integer highestNote;
+    private Integer highestNote = 127;
     
     private Integer highestPreset;
     
@@ -143,6 +143,10 @@ public class MidiInstrument implements Serializable {
                 message.getCommand() != ShortMessage.NOTE_ON && message.getCommand() != ShortMessage.NOTE_OFF ? lookupTarget(message.getData1()) : Integer.toString(message.getData1()),
                 Integer.toString(message.getData2())));
         
+            
+        if (!getDevice().isOpen())
+            getDevice().open();
+
         Receiver reciever = getDevice().getReceiver();
         reciever.send(message, new Date().getTime());
     }

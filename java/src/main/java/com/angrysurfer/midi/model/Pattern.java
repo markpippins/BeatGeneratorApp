@@ -3,6 +3,8 @@ package com.angrysurfer.midi.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.angrysurfer.midi.util.Constants;
+import com.angrysurfer.midi.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -25,6 +27,8 @@ public class Pattern {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
+
+    private String name;
 
     private Integer position = 0;
 
@@ -57,6 +61,8 @@ public class Pattern {
 
     private Integer preset = 0;
 
+    private Integer beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
+
     @Column(name = "delay_bars")
     private Integer delay = 0;
 
@@ -73,6 +79,10 @@ public class Pattern {
     @JoinColumn(name = "instrument_id")
     private MidiInstrument instrument;
 
+    @JsonIgnore
+    @Transient
+    private Cycler stepCycler = new Cycler();
+    
     public Pattern() {
 
     }

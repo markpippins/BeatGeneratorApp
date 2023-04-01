@@ -36,21 +36,21 @@
         {{ player.instrument.channel }}
       </td> -->
       <td class="player-short-col" id="player-col-preset-{{player.id}}" (change)="onPresetChange(player, $event)">
-        <input type="number" min="1" step="1" value="{{ player.preset}}">
+        <input type="number" min="0" step="1" value="{{ player.preset}}">
       </td>
       <td class="player-short-col" (change)="onNoteChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
       </td>
       <td>
-        <button *ngIf="!player.muted" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'mute')">
+        <button *ngIf="!player.muted" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'ticker-mute')">
           M
         </button>
-        <button *ngIf="player.muted" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'mute')">
+        <button *ngIf="player.muted" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'ticker-mute')">
           U
         </button>
       </td>
       <td>
-        <button [style.height.px]="20" id="audition" (click)="onBtnClick(player, 'audition')">
+        <button [style.height.px]="20" id="audition" (click)="onBtnClick(player, 'ticker-audition')">
           <!--          <mat-icon>mute</mat-icon>-->
           P
         </button>
@@ -69,6 +69,9 @@
       </td>
       <td class="player-short-col" (change)="onProbabilityChange(player, $event)">
         <input type="number" min="0" max="100" step="1" value="{{ player.probability }}">
+      </td>
+      <td class="player-short-col" (change)="onRandomDegreeChange(player, $event)">
+        <input type="number" min="0" max="100" step="1" value="{{ player.randomDegree }}">
       </td>
       <!-- <td class="player-short-col" (change)="onLevelChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.level }}">

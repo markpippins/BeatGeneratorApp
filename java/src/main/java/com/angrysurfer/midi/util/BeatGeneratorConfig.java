@@ -20,7 +20,7 @@ public class BeatGeneratorConfig implements Serializable {
     private Integer ticksPerBeat;
     private Integer beatsPerBar;
     private Long swing;
-    private Double beatDivider;
+    private Integer beatDivider;
     private Integer maxTracks;
     private Long partLength;
 

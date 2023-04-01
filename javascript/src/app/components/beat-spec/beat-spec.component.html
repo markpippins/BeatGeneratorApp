@@ -1,15 +1,14 @@
 <div class="debug">
   <mat-tab-group>
-    <mat-tab *ngFor="let pattern of song?.patterns;" label="Linear {{pattern.position + 1}}">
+    <mat-tab *ngFor="let pattern of song?.patterns;" [label]="getLabel(pattern)">
       <!-- <app-control-panel808 class="control-panel808"></app-control-panel808> -->
       <app-set-nav></app-set-nav>
       <app-beat-spec-detail [pattern]="pattern" [songId]="song.id" (instrumentSelectEvent)="onInstrumentSelected($event, pattern)" class=""></app-beat-spec-detail>
       <div class="interface-808">
         <div class="side-panel-808">
-          <mat-divider [style.height.px]="10"></mat-divider>
+          <mat-divider [style.height.px]="4"></mat-divider>
           <!-- <app-instrument-selector></app-instrument-selector> -->
-
-          <mat-divider [style.height.px]="10"></mat-divider>
+          <label [textContent]="getLabel(pattern)"></label>
           <label>Pitch</label>
           <label>Velocity</label>
           <label>Probability</label>

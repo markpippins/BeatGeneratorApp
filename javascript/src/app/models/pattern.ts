@@ -3,6 +3,8 @@ import { Step } from "./step"
 export interface Pattern {
   id: number
 
+  name: string
+
   instrumentId: number
 
   preset: number

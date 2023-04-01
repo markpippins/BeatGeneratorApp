@@ -87,7 +87,7 @@ public class Ticker implements Serializable {
 
     private Integer bars = Constants.DEFAULT_BAR_COUNT;
     private Integer beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
-    private Double beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
+    private Integer beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
     private Long partLength = Constants.DEFAULT_PART_LENGTH;
     private Integer maxTracks = Constants.DEFAULT_MAX_TRACKS;
     private Long songLength = Constants.DEFAULT_SONG_LENGTH;

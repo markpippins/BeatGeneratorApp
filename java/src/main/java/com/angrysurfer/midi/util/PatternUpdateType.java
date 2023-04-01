@@ -17,4 +17,6 @@ public interface PatternUpdateType {
     static int PRESET = 13;
     static int SCALE = 14;
     static int INSTRUMENT = 15;
+    static int BEAT_DIVIDER = 16;
+    static int RANDOM_DEGREE = 17;
 }

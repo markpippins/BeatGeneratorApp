@@ -17,6 +17,7 @@ export class Constants {
     'Skips',
     'Swing',
     'Prob',
+    'Degree',
     // 'Level',
     'Ratchet',
     'Interval',
@@ -45,6 +46,7 @@ export class Constants {
   static SKIPS = 13;
   static BEAT_FRACTION = 14;
   static SUBDIVISIONS = 15;
+  static RANDOM_DEGREE = 16;
 
   static STEP_ACTIVE = 0;
   static STEP_GATE = 1;
@@ -66,8 +68,9 @@ export class Constants {
   static STATUS = 3
   static TICKER_SELECTED = 10
   static STEP_UPDATED = 11
-  static COMMAND = 12
-
+  static PLAYER_UPDATED = 12
+  static COMMAND = 13 
+  
   static PATTERN_UPDATE_CHANNEL = 0
   static PATTERN_UPDATE_ACTIVE = 1
   static PATTERN_UPDATE_ROOT_NOTE = 2

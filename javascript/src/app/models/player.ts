@@ -25,4 +25,5 @@ export interface Player {
   skips: number
   subDivisions: number
   beatFraction: number
+  randomDegree: number
 }

@@ -4,6 +4,7 @@ import com.angrysurfer.midi.model.*;
 import com.angrysurfer.midi.repo.PatternRepository;
 import com.angrysurfer.midi.repo.SongRepository;
 import com.angrysurfer.midi.repo.StepRepository;
+import com.angrysurfer.midi.util.Cycler;
 import com.angrysurfer.midi.util.CyclerListener;
 import com.angrysurfer.midi.util.PatternUpdateType;
 import com.angrysurfer.midi.util.StepUpdateType;
@@ -18,6 +19,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.ShortMessage;
 
 @Getter
@@ -38,17 +41,15 @@ public class SongService {
 
         @Override
         public void starting() {
-            this.advanced(1);
+            this.advanced(0);
         }
     }
 
     private final class BeatCyclerListenerImplementation implements CyclerListener {
 
-        Stack<Thread> noteOffs = new Stack<>();
-
         @Override
         public void advanced(long position) {
-            handleBeat((int) position);
+            handleBeat((int) position - 1);
         }
 
         @Override
@@ -58,37 +59,64 @@ public class SongService {
         @Override
         public void starting() {
             song.getPatterns().forEach(p -> {
-
+                p.getStepCycler().setLength(p.getLastStep());
             });
-
-            handleBeat(0);
         }
 
         private void handleBeat(Integer position) {
 
-            while (noteOffs.size() > 0)
-                noteOffs.pop().start();
+            logger.info(String.format("handling beat %s", position));
             
             song.getPatterns().forEach(pattern -> {
-                pattern.getSteps().stream()
-                        .filter(s -> s.getActive() && s.getPosition().equals(position)).toList().forEach(step -> {
+                double playTime = song.getBeatDuration() / pattern.getBeatDivider();
 
-                    int note = pattern.getRootNote() + step.getPitch() + (12 * pattern.getTranspose());
-                    noteOffs.push(new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF, note, step.getVelocity());
+                // pattern.getSteps().stream()
+                //         .filter(s -> ((long ) s.getPosition() == patter)).toList().forEach(step -> {
+
+                    logger.info(String.format("Pattern %s, Step %s", pattern.getPosition(), pattern.getStepCycler().get()));
+                    IntStream.range(0, pattern.getBeatDivider()).forEach(bd -> {
+
+                        Step step = pattern.getSteps().stream().filter(s -> s.getPosition() == pattern.getStepCycler().get() - 1).findAny().orElseThrow();
+                        double delay = playTime * step.getPosition();
+    
+                        if (step.getActive()) {
+                            int note = pattern.getRootNote() + step.getPitch() + (12 * pattern.getTranspose());
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (step.getPosition() > 1)
+                                        try {
+                                            Thread.sleep((long) delay);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                        
+                                    midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_ON, note, step.getVelocity());
+                                    
+                                    new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                Thread.sleep((long) (pattern.getGate() * 0.1 * delay));
+                                            } catch (InterruptedException e) {
+                                                e.printStackTrace();
+                                            }
+                
+                                            midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF, note, step.getVelocity());
+                                        }
+                                    }).start();
+                                }
+                            }).start();
+    
                         }
-                    }));
-                    
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_ON, note, step.getVelocity());
-                        }
-                    }).start();
-            
-                });
+    
+                        pattern.getStepCycler().advance();
+
+                    });
+
+
+
+                // });
             });
         }
 
@@ -134,7 +162,11 @@ public class SongService {
                 pattern.setLastStep(updateValue);
                 break;
 
-            case PatternUpdateType.DIRECTION:
+            case PatternUpdateType.BEAT_DIVIDER:
+                pattern.setBeatDivider(updateValue);
+                break;
+
+                case PatternUpdateType.DIRECTION:
                 pattern.setDirection(updateValue);
                 break;
 
@@ -162,7 +194,16 @@ public class SongService {
                 pattern.setRandom(updateValue);
                 break;
 
-            case PatternUpdateType.ROOT_NOTE:
+            case PatternUpdateType.PRESET:
+                pattern.setPreset(updateValue);
+                try {
+                    pattern.getInstrument().programChange(updateValue, 0);
+                } catch (InvalidMidiDataException | MidiUnavailableException e) {
+                    logger.error(e.getMessage(), e);
+                }
+                break;
+
+                case PatternUpdateType.ROOT_NOTE:
                 pattern.setRootNote(updateValue);
                 break;
 
@@ -176,10 +217,6 @@ public class SongService {
 
             case PatternUpdateType.SWING:
                 pattern.setSwing(updateValue);
-                break;
-
-            case PatternUpdateType.PRESET:
-                pattern.setPreset(updateValue);
                 break;
 
             case PatternUpdateType.REPEATS:
@@ -240,29 +277,31 @@ public class SongService {
             pattern.getSteps().forEach(s -> s.setPattern(pattern));
         });
 
-        if (song.getPatterns().size() == 0) {
+        // if (song.getPatterns().size() == 0) {
 
-            getPatternRepository().findBySongId(song.getId()).forEach(p -> getPatternRepository().delete(p));
+        //     getPatternRepository().findBySongId(song.getId()).forEach(p -> getPatternRepository().delete(p));
 
-            IntStream.range(0, 8).forEach(i -> {
-                Pattern pattern = new Pattern();
-                pattern.setSong(getSong());
-                pattern.setPosition(i);
-                getPatternRepository().save(pattern);
+        //     IntStream.range(0, 6).forEach(page -> {
+        //         Pattern pattern = new Pattern();
+        //         pattern.setSong(getSong());
+        //         pattern.setPosition(page);
+        //         pattern.setInstrument(this.midiService.getInstrumentByChannel(page).get(0));
+        //         pattern.setChannel(page);
+        //         getPatternRepository().save(pattern);
     
-                song.getPatterns().add(pattern);
+        //         song.getPatterns().add(pattern);
     
-                IntStream.range(0, 16).forEach(j -> {
-                    Step step = new Step();
-                    step.setPattern(pattern);
-                    step.setPosition(j);
-                    getStepDataRepository().save(step);
+        //         IntStream.range(0, 16).forEach(j -> {
+        //             Step step = new Step();
+        //             step.setPattern(pattern);
+        //             step.setPosition(j);
+        //             getStepDataRepository().save(step);
     
-                    pattern.getSteps().add(step);
-                });
+        //             pattern.getSteps().add(step);
+        //         });
     
-            });
-        }
+        //     });
+        // }
 
         return song;
     }
@@ -275,8 +314,10 @@ public class SongService {
             Pattern pattern = new Pattern();
             pattern.setSong(getSong());
             pattern.setPosition(i);
+            pattern.setInstrument(this.midiService.getInstrumentByChannel(i).get(0));
+            pattern.setChannel(i);
+            pattern.setName(pattern.getInstrument().getName());
             getPatternRepository().save(pattern);
-
             song.getPatterns().add(pattern);
 
             IntStream.range(0, 16).forEach(j -> {

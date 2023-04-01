@@ -81,6 +81,12 @@ export class DashboardComponent implements OnInit, Listener {
       case Constants.DISCONNECTED:
         this.consoleOutput.push('disconnected')
         break
+
+    case Constants.PLAYER_UPDATED:
+      this.consoleOutput.push(message)
+      this.updateDisplay()
+      break
+  
     }
   }
 

@@ -17,4 +17,5 @@ public interface PlayerUpdateType {
     static int SKIPS = 13;
     static int BEAT_FRACTION = 14;
     static int SUBDIVISIONS = 15;
+    static int RANDOM_DEGREE = 16;
 }

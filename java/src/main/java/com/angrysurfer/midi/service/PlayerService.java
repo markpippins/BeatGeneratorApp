@@ -107,10 +107,10 @@ public class PlayerService {
         try {
             midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
             if (Objects.nonNull(midiInstrument.getLowestNote())) {
-                note = midiInstrument.getLowestNote() + getPlayers().size();
+                note = midiInstrument.getLowestNote() + getPlayers().stream().filter(p -> p.getInstrument().equals(midiInstrument)).toList().size();
                 if (Objects.nonNull(midiInstrument.getHighestNote())) {
                     while (note > midiInstrument.getHighestNote())
-                        note -= 12;
+                        note -= midiInstrument.getHighestNote() - midiInstrument.getLowestNote();
                 }
             }
         } catch (Exception e) {
@@ -129,6 +129,7 @@ public class PlayerService {
         // strike.getRules().add(getRuleRepository().save(new Rule(strike,
         // Operator.BEAT, Comparison.EQUALS, 1.0, 0)));
         player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, 1.0, 0)));
+        player.setMuted(true);
         return player;
     }
 
@@ -185,10 +186,11 @@ public class PlayerService {
             }
 
             case PRESET -> {
-                player.setPreset(updateValue);
                 try {
+                    player.setPreset(updateValue);
                     player.getInstrument().programChange(updateValue, 0);
-                } catch (InvalidMidiDataException | MidiUnavailableException e) {
+                }   
+                  catch (InvalidMidiDataException | MidiUnavailableException e) {
                     logger.error(e.getMessage(), e);
                 }
                 break;
@@ -230,6 +232,11 @@ public class PlayerService {
                 player.setSkips(updateValue);
                 player.getSkipCycler().setLength(updateValue);
                 player.getSkipCycler().reset();
+                break;
+            }
+
+            case RANDOM_DEGREE -> {
+                player.setRandomDegree(updateValue);
                 break;
             }
 
@@ -341,7 +348,7 @@ public class PlayerService {
             throw new RuntimeException(e);
         }
     }
-
+    
     public void clearPlayers() {
         getPlayers().stream().filter(p -> p.getRules().size() == 0)
                 .forEach(p -> {

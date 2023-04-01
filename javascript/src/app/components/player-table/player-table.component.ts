@@ -86,8 +86,11 @@ export class PlayerTableComponent implements Listener, OnInit {
       }
       case 'ticker-mute': {
         if (this.selectedPlayer != undefined) {
-          this.selectedPlayer.muted = !this.selectedPlayer.muted
-          this.midiService.updatePlayer(this.selectedPlayer?.id, Constants.MUTE, this.selectedPlayer.muted ? 1 : 0).subscribe(data => this.selectedPlayer = data)
+          // this.selectedPlayer.muted = !this.selectedPlayer.muted
+          // this.players.filter(player => player.id == this.selectedPlayer?.id).forEach(p => p.muted = !p.muted)
+          let index = this.players.indexOf(this.selectedPlayer);
+          this.players[index].muted = !this.players[index].muted
+          this.midiService.updatePlayer(this.selectedPlayer?.id, Constants.MUTE, this.selectedPlayer.muted ? 1 : 0).subscribe(data => this.players[index] = data)
         }
         break
       }
@@ -127,7 +130,8 @@ export class PlayerTableComponent implements Listener, OnInit {
       skips: 0,
       beatFraction: 0,
       subDivisions: 0,
-      playerClass: ''
+      playerClass: '',
+      randomDegree: 0
     }, 'add')
   }
 
@@ -146,7 +150,8 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   onPresetChange(player: Player, event: { target: any; }) {
     this.players.filter(p => p.instrumentId == player.instrumentId )
-      .forEach(p => this.midiService.updatePlayer(p.id, Constants.PRESET, event.target.value - 1).subscribe())
+      .forEach(p => this.midiService.updatePlayer(p.id, Constants.PRESET, event.target.value).subscribe())
+    this.uiService.notifyAll(Constants.PLAYER_UPDATED, "Player updated", 0)
   }
 
   // onLevelChange(player: Player, event: { target: any; }) {
@@ -179,6 +184,10 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   onBeatFractionChange(player: Player, event: { target: any; }) {
     this.midiService.updatePlayer(player.id, Constants.BEAT_FRACTION, event.target.value).subscribe()
+  }
+
+  onRandomDegreeChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, Constants.RANDOM_DEGREE, event.target.value).subscribe()
   }
 
   onSkipsChange(player: Player, event: { target: any; }) {
