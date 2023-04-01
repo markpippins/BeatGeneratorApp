@@ -8,4 +8,6 @@ public interface TickerUpdateType {
     static int MAX_TRACKS = 4;
     static int BARS = 5;
     static int PARTS = 6;
+    static int BASE_NOTE_OFFSET = 7;
+    
 }

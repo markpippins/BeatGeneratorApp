@@ -39,7 +39,7 @@ p {
   flex: 1;
 }
 
-.debug {
+.debug, body {
   border-style: solid;
   border-width: thin;
 }
@@ -78,7 +78,7 @@ p {
 
 body {
   /*background-color: #a3d8ec;*/
-  height: 90%;
+  height: 99%;
   /* background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80'); */
 
   /* background-image: url('https://www.red-dot.org/fileadmin/_processed_/9/1/csm_IV1235044-1_568e92817c.jpg'); */
@@ -131,16 +131,17 @@ body {
 .content {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  /* height: 100%; */
   margin: auto auto auto;
   /*padding: 0 16px;*/
   max-width: 960px;
   align-items: stretch;
+  align-self: stretch;
   gap: 4px;
   color: white;
   font-size: small;
-  /*border-style: dashed;*/
-  /*border-width: thin;*/
+  border-style: dashed;
+  border-width: thin;
 }
 
 svg.material-icons {

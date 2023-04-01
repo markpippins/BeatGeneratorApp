@@ -107,11 +107,7 @@ public class PlayerService {
         try {
             midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
             if (Objects.nonNull(midiInstrument.getLowestNote())) {
-                note = midiInstrument.getLowestNote() + getPlayers().stream().filter(p -> p.getInstrument().equals(midiInstrument)).toList().size();
-                if (Objects.nonNull(midiInstrument.getHighestNote())) {
-                    while (note > midiInstrument.getHighestNote())
-                        note -= midiInstrument.getHighestNote() - midiInstrument.getLowestNote();
-                }
+                note = rand.nextInt(midiInstrument.getLowestNote(), midiInstrument.getHighestNote());
             }
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -121,15 +117,37 @@ public class PlayerService {
         Player player = new Strike(name, getTickerService().getTicker(), midiInstrument, note,
                 midiInstrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
         player.setTicker(getTickerService().getTicker());
+        player.setProbability(rand.nextLong(100));
+        if (rand.nextBoolean())
+            player.setRandomDegree(rand.nextLong(3));
+
         if (player instanceof Strike)
             player = getStrikeRepository().save((Strike) player);
+
         getPlayers().add(player);
-        // strike.getSubCycler().setLength(getTickerService().getTicker().getTicksPerBeat()
-        // / getTickerService().getTicker().getBeatsPerBar());
-        // strike.getRules().add(getRuleRepository().save(new Rule(strike,
-        // Operator.BEAT, Comparison.EQUALS, 1.0, 0)));
-        player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, 1.0, 0)));
-        player.setMuted(true);
+
+        int part = rand.nextInt(getTickerService().getTicker().getParts());
+        if (rand.nextBoolean())
+            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, 1.0, part)));
+        else
+            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, rand.nextDouble(1, 
+            getTickerService().getTicker().getTicksPerBeat()), part)));
+
+        if (rand.nextBoolean())
+            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BEAT, Comparison.EQUALS, rand.nextDouble(1, 
+            getTickerService().getTicker().getBeatsPerBar()), part)));
+        else
+            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BEAT, Comparison.MODULO, rand.nextDouble(1, 
+            getTickerService().getTicker().getBeatsPerBar()), part)));
+        
+        if (rand.nextBoolean())
+            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR, Comparison.EQUALS, rand.nextDouble(1, 
+            getTickerService().getTicker().getBars()), part)));
+        else
+            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR, Comparison.MODULO, rand.nextDouble(1, 
+            getTickerService().getTicker().getBars()), part)));
+
+            // player.setMuted(true);
         return player;
     }
 

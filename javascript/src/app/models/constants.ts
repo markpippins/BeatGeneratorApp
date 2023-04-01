@@ -61,7 +61,8 @@ export class Constants {
   static MAX_TRACKS = 4
   static BARS = 5
   static PARTS = 6
-
+  static BASE_NOTE_OFFSET = 7;
+  
   static ERROR = 0
   static CONNECTED = 1
   static DISCONNECTED = 2

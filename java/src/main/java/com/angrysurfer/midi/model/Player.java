@@ -122,7 +122,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         if (result < getInstrument().getLowestNote())
             result = getInstrument().getHighestNote() - rand.nextLong(randomDegree);
 
-        return result;
+        return result + getTicker().getBaseNoteOffset();
     }
 
     public String getPlayerClass() {

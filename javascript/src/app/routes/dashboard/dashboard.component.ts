@@ -46,7 +46,8 @@ export class DashboardComponent implements OnInit, Listener {
     barCount: 0,
     beatCount: 0,
     tickCount: 0,
-    partCount: 0
+    partCount: 0,
+    baseNoteOffSet: 0
   }
 
   running = false

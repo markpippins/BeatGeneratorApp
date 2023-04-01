@@ -25,4 +25,5 @@ export interface Ticker {
   playing: boolean
   stopped: boolean
   activePlayerIds: number[]
+  baseNoteOffSet: number
 }

@@ -96,6 +96,7 @@ public class Ticker implements Serializable {
     private Float tempoInBPM = Constants.DEFAULT_BPM;
     private Integer loopCount = Constants.DEFAULT_LOOP_COUNT;
     private Integer parts = Constants.DEFAULT_PART_COUNT;
+    private Integer baseNoteOffset = 0;
 
     @Transient
     private boolean paused = false;
@@ -113,12 +114,12 @@ public class Ticker implements Serializable {
     }
 
     public double getBeat() {
-        logger.info(String.format("beat: %s", getBeatCycler().get()));
+        // logger.info(String.format("beat: %s", getBeatCycler().get()));
         return getBeatCycler().get();
     }
 
     public Long getBeatCount() {
-        logger.info(String.format("beat count: %s",getBeatCounter().get()));
+        // logger.info(String.format("beat count: %s",getBeatCounter().get()));
         return getBeatCounter().get();
     }
 
@@ -237,7 +238,7 @@ public class Ticker implements Serializable {
 
     public void afterTick() {
         granularBeat += getTicksPerBeat() / getBeatsPerBar();
-        
+
         if (getTick() % getTicksPerBeat() == 0)
             onBeatChange();
 

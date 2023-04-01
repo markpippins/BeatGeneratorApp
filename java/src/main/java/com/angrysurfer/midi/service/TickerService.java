@@ -130,9 +130,13 @@ public class TickerService {
                 break;
 
             case TickerUpdateType.PARTS: ticker.setParts((int) updateValue);
+                getTicker().getPartCycler().reset();
                 break;
 
-            case TickerUpdateType.BARS: ticker.setBars((int) updateValue);
+            case TickerUpdateType.BASE_NOTE_OFFSET: ticker.setBaseNoteOffset((int) updateValue);
+                break;
+
+                case TickerUpdateType.BARS: ticker.setBars((int) updateValue);
                 break;
 
             case TickerUpdateType.PART_LENGTH: ticker.setPartLength(updateValue);
