@@ -1,21 +1,7 @@
-<style>
-  :host {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    font-size: 14px;
-    color: #333;
-    box-sizing: border-box;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-</style>
-
-<!--<mat-toolbar>-->
-<!--  <span>My Application</span>-->
-<!--</mat-toolbar>-->
-<div class="content dashboard debug" role="main">
-  <app-status-panel [running]="running" [ticker]="ticker"></app-status-panel>
+<div class="dashboard">
   <mat-tab-group>
     <mat-tab label="Beat Scheduler">
+      <app-status-panel [running]="running" [ticker]="ticker"></app-status-panel>
       <div class="two-column-grid-container debug">
         <div class="player-table-holder">
           <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>

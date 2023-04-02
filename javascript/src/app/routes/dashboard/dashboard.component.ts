@@ -47,7 +47,8 @@ export class DashboardComponent implements OnInit, Listener {
     beatCount: 0,
     tickCount: 0,
     partCount: 0,
-    baseNoteOffSet: 0
+    baseNoteOffSet: 0,
+    players: []
   }
 
   running = false
@@ -232,6 +233,7 @@ export class DashboardComponent implements OnInit, Listener {
 
   onPlayerSelected(player: Player) {
     this.selectedPlayer = player
+    this.uiService.notifyAll(Constants.PLAYER_SELECTED, "Player selected", player.id)
   }
 
   refresh() {

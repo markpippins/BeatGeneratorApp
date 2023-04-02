@@ -46,18 +46,6 @@ public class MidiController {
         // logger.info("/messages/send");
         service.sendMessageToChannel(messageType, channel, data1, data2);
     }
-
-    @GetMapping(path = Constants.GET_INSTRUMENT_BY_CHANNEL)
-    public @ResponseBody List<MidiInstrument> getInstrumentsByChannel(int channel) {
-        // logger.info("/instrument/info");
-        return service.getInstrumentByChannel(channel);
-    }
-
-    // @GetMapping(path = Constants.GET_INSTRUMENT_BY_ID)
-    // public @ResponseBody MidiInstrument getInstrumentById(Long id) {
-    //     // logger.info("/instrument/info");
-    //     return service.getInstrumentById(id);
-    // }
 }
 
 

@@ -1,10 +1,10 @@
-:host {
+:host, .content {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  font-size: 14px;
   color: transparent;
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: smaller;
 }
 
 html {
@@ -82,10 +82,10 @@ body {
   /* background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80'); */
 
   /* background-image: url('https://www.red-dot.org/fileadmin/_processed_/9/1/csm_IV1235044-1_568e92817c.jpg'); */
-  background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg');
+  /* background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg'); */
   background-repeat: no-repeat;
   background-size: cover;
-  /* background-color: rgb(68, 67, 67); */
+  background-color: rgb(68, 67, 67);
   /* background-color: #353637; */
   /* background-image: linear-gradient(to left, #f46864, #003954); */
   /* background-image: linear-gradient(to left, #e89105, #2c0ad7); */
@@ -106,7 +106,6 @@ body {
   align-items: center;
   gap: 4px;
   color: white;
-  font-size: small;
   /*border-style: dashed;*/
   /*border-width: thin;*/
 }
@@ -221,10 +220,17 @@ svg.material-icons:not(:last-child) {
   box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.2);
 }
 
-.status-container {
+.flex-container-horizontal {
   display: flex;
+}
+
+.flex-container-vertical {
+  display: flex;
+  flex-direction: column;
   flex-wrap: nowrap;
   flex-direction: flex-start;
+  align-items: stretch;
+  justify-content: stretch;
 }
 
 .two-column-grid-container {
@@ -580,8 +586,9 @@ th {
   max-height: 60px;
 }
 
-.transport-buttons {
+.button-bar {
   display: flex;
+  justify-content: center;
   gap: 2px;
   background-color: transparent;
   padding: 2px;
@@ -632,7 +639,6 @@ th {
   /*background-color: transparent;*/
   /*text-align: center;*/
   color: #1a1c20;
-  font-size: small;
   font-weight: normal;
 }
 
@@ -647,38 +653,15 @@ th {
 }
 
 .status-label {
-  font-size: small;
   font-weight: bold;
   margin: 2px 2px 2px 2px;
   padding: 4px;
 }
 
 .selector-row {
-  font-size: small;
   font-weight: normal;
   padding: 0px;
   margin: 0px;
-}
-
-.status-item {
-  display: grid;
-  grid-template-columns: auto auto;
-  background-color: rgba(255, 255, 255, 0.8);
-  /*border: 1px solid rgba(0, 0, 0, 0.8);*/
-  padding: 5px;
-  width: 50px;
-  font-size: small;
-  text-align: right;
-  max-height: 25px;
-}
-
-.status-card-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  margin: 5px;
-  /*border-style: double;*/
-  /*border-width: thin;*/
 }
 
 .interface-808 {
@@ -719,16 +702,14 @@ th {
   /*border-width: thin;*/
 }
 
-.btn-808 {}
-
 input {
   background-color: transparent;
   color: white;
-  text-align: center;
   align-self: stretch;
   gap: 0;
   margin: 0;
   padding: 0;
+  max-width: 40px;
 }
 
 select {
@@ -741,14 +722,14 @@ select {
   padding: 0;
 }
 
-td input {
+/* td input {
   max-width: 40px;
   gap: 0;
   margin: 0;
   padding: 0;
   text-align: right;
   align-self: stretch;
-}
+} */
 
 
 th {
@@ -795,7 +776,7 @@ th {
 .ticker-param-select {
   background-color: blue;
   text-align: right;
-  width: 42px;
+  width: 44px;
 }
 
 
@@ -873,22 +854,6 @@ th {
   overflow-y: auto;
   overflow-x: hidden;
 }
-
-/*border-radius: 25px;*/
-/*margin-inside: 10px;*/
-
-/*all: unset;*/
-/*border-radius: 4px;*/
-/*background-color: #fafafa;*/
-/*height: 110px;*/
-/*width: 275px;*/
-/*margin: 0 8px 16px;*/
-/*display: flex;*/
-/*flex-direction: row;*/
-/*justify-content: flex-start;*/
-/*align-items: flex-start;*/
-/*transition: all 0.2s ease-in-out;*/
-
 
 /* Page title */
 /* ---------------------------------------------------------- */
@@ -1075,28 +1040,47 @@ th {
   flex-direction: row;
 }
 
-.mini-nav-btn {
-  padding: 2px;
-  margin: 1px;
-  height: 28px;
-}
-
 .mini-nav-grid {
   display: grid;
   /* gap: 10px; */
   grid-template-columns: auto auto auto auto auto auto auto;
 }
 
-.mini-nav-grid-btn {
+.mini-nav-btn {
   padding: 2px;
   height: 20px;
   width: 20px;
   margin: 1px;
+  color: black;
+  font-weight: normal;
+  font-size: smaller;
 }
 
-.app-status-container {
-  display: flex;
-  flex-direction: row;
-  /* justify-content: space-around; */
+.mini-nav-btn-excluded {
+  padding: 2px;
+  height: 20px;
+  width: 20px;
+  margin: 1px;
+  color: grey;
+  font-weight: normal;
+  font-size: smaller;
 }
 
+.mini-nav-btn-selected {
+  padding: 2px;
+  height: 20px;
+  width: 20px;
+  margin: 1px;
+  color: red;
+  border-style: inset;
+  font-weight: bolder;
+  font-size: smaller;
+}
+
+.mini-accent-btn {
+
+}
+
+.mini-accent-btn-active {
+
+}

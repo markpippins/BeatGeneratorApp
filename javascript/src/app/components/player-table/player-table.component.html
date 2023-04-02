@@ -24,9 +24,9 @@
           -
         </button>
       </td> -->
-      <td class="player-short-col" id="player-col-class-{{player.id}}" (change)="onPresetChange(player, $event)">
+      <!-- <td class="player-short-col" id="player-col-class-{{player.id}}" (change)="onPresetChange(player, $event)">
         <input value="{{player.playerClass}}">
-      </td>
+      </td> -->
 
       <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
         <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)"

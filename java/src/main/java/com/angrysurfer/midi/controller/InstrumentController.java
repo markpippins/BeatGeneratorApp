@@ -35,6 +35,12 @@ public class InstrumentController {
     public @ResponseBody List<String> getInstrumentNames() {
         return midiService.getInstrumentNames();
     }
+    
+    @GetMapping(path = Constants.GET_INSTRUMENT_BY_CHANNEL)
+    public @ResponseBody List<MidiInstrument> getInstrumentsByChannel(int channel) {
+        // logger.info("/instrument/info");
+        return midiService.getInstrumentByChannel(channel);
+    }
 
     // @GetMapping(path = Constants.INSTRUMENT_LOOKUP)
     // public @ResponseBody List<LookupItem> getInstrumentLookupItems() {

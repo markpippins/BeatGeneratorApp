@@ -6,7 +6,7 @@ export class Constants {
 
   static PLAYER_COLUMNS = [
     // 'Id',
-    'Class',
+    // 'Class',
     'Device',
     'Preset',
     'Pitch',
@@ -71,6 +71,8 @@ export class Constants {
   static STEP_UPDATED = 11
   static PLAYER_UPDATED = 12
   static COMMAND = 13 
+  static TICKER_UPDATED  = 14
+  static PLAYER_SELECTED = 15
   
   static PATTERN_UPDATE_CHANNEL = 0
   static PATTERN_UPDATE_ACTIVE = 1

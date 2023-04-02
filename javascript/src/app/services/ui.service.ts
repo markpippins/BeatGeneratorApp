@@ -45,6 +45,12 @@ export class UiService {
     }
   }
 
+  removeClass(el: any, classNameA: string) {
+    if (el.className.indexOf(classNameA) >= 0) {
+      el.className = el.className.replace(classNameA, "");
+    }
+  }
+
   reverseSortById(data: any[]): any[] {
     return data.sort((a, b) => {
       if (a.id < b.id) {

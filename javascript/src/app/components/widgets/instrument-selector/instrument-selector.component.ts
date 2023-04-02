@@ -24,9 +24,6 @@ export class InstrumentSelectorComponent implements OnInit {
   selectionIndex !: number
 
   @Input()
-  page!: number
-
-  @Input()
   player!: Player
 
   constructor(private midiService: MidiService, private uiService: UiService) {}

@@ -12,7 +12,6 @@ export class RulesNavComponent {
     // uiService.addListener(this)
   }
 
-
   onClick(action: string) {
     this.uiService.notifyAll(Constants.COMMAND, action, 0)
   }

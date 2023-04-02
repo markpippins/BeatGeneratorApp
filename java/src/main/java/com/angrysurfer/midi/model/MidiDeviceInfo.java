@@ -32,6 +32,7 @@ public class MidiDeviceInfo implements Serializable {
 
     private String transmitters;
     
+    
     public MidiDeviceInfo(MidiDevice device) {
 
         this.name = device.getDeviceInfo().getName();

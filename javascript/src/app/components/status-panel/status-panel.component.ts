@@ -104,39 +104,37 @@ export class StatusPanelComponent implements OnInit, Listener {
   }
 
   onTempoChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.BPM, event.target.value).subscribe()
+    this.midiService.updateTicker(this.ticker.id, Constants.BPM, event.target.value).subscribe(data =>  this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Tempo changed', 0))
     this.tempoChangeEvent.emit(event.target.value)
   }
 
   onBeatsPerBarChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.BEATS_PER_BAR, event.target.value).subscribe()
-    this.tempoChangeEvent.emit(event.target.value)
+    this.midiService.updateTicker(this.ticker.id, Constants.BEATS_PER_BAR, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'BPM changed', 0))
+    this.tempoChangeEvent.emit(event.target.value)    
   }
 
   onBarsChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.BARS, event.target.value).subscribe()
+    this.midiService.updateTicker(this.ticker.id, Constants.BARS, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Bars changed', 0))
     this.tempoChangeEvent.emit(event.target.value)
   }
 
   onPartsChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.PARTS, event.target.value).subscribe()
+    this.midiService.updateTicker(this.ticker.id, Constants.PARTS, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Parts changed', 0))
     this.tempoChangeEvent.emit(event.target.value)
   }
 
   onPartLengthChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.PART_LENGTH, event.target.value).subscribe()
+    this.midiService.updateTicker(this.ticker.id, Constants.PART_LENGTH, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Part Length changed', 0))
     this.tempoChangeEvent.emit(event.target.value)
   }
 
   onPPQSelectionChange(data: any) {
-    this.midiService.updateTicker(this.ticker.id, Constants.PPQ, this.ppqs[this.ppqSelectionIndex]).subscribe()
+    this.midiService.updateTicker(this.ticker.id, Constants.PPQ, this.ppqs[this.ppqSelectionIndex]).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'PPQ changed', 0))
     this.ppqChangeEvent.emit(this.ppqs[this.ppqSelectionIndex])
   }
 
   setIndexForPPQ() {
-    // this.ppqs.filter(i => i.id == this.player.instrument.id).forEach(ins => {
     this.ppqSelectionIndex = this.ppqs.indexOf(this.ticker.ticksPerBeat);
-    // })
   }
 
   getRounded(value: number) {
