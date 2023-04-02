@@ -3,23 +3,19 @@
 </div>
 <div class="flex-container-horizontal">
   <div class="flex-container-vertical">
-    <!-- <label>Tick </label>
-    <label>Beat </label>
-    <label>Bar </label>
-    <label>Part </label>
-  </div> -->
+
   <div class="flex-container-vertical">
-    <div class="flex-container-horizontal">
-      <button class="mini-nav-btn" class="mini-nav-btn">2</button>
-      <button class="mini-nav-btn" class="mini-nav-btn" (click)="onTickBackClicked()"><</button>
-      <button class="mini-nav-btn" *ngFor="let tick of tickRange" id="mini-tick-btn-{{tick}}" (click)="onTickClicked(tick, $event)">{{tick + 1}}</button>
-      <button class="mini-nav-btn" *ngFor="let o of tickOverflow" id="mini-tick-btn-{{o}}">{{o}}</button>
-    </div>
     <div class="flex-container-horizontal">
       <button class="mini-nav-btn" class="mini-nav-btn">4</button>
       <button class="mini-nav-btn" class="mini-nav-btn"> </button>
       <button class="mini-nav-btn" *ngFor="let tick of tickRange" id="mini-accent-btn-{{tick}}" (click)="onTickClicked(tick, $event)">..</button>
       <!-- <button class="mini-nav-btn" *ngFor="let tick of tickOverflow"> - </button> -->
+    </div>
+    <div class="flex-container-horizontal">
+      <button class="mini-nav-btn" class="mini-nav-btn">2</button>
+      <button class="mini-nav-btn" class="mini-nav-btn" (click)="onTickBackClicked()"><</button>
+      <button class="mini-nav-btn" *ngFor="let tick of tickRange" id="mini-tick-btn-{{tick}}" (click)="onTickClicked(tick, $event)">{{tick + 1}}</button>
+      <button class="mini-nav-btn" *ngFor="let o of tickOverflow" id="mini-tick-btn-{{o}}">{{o}}</button>
     </div>
     <div class="flex-container-horizontal">
       <button class="mini-nav-btn" class="mini-nav-btn">8</button>
@@ -39,19 +35,18 @@
     <div class="flex-container-horizontal">
       <button class="mini-nav-btn" class="mini-nav-btn"> </button>
       <button class="mini-nav-btn" class="mini-nav-btn"> </button>
-      <button class="mini-nav-btn" *ngFor="let note of range" id="mini-note-btn-{{note}}" (click)="onNoteClicked(note, $event)">{{note}}</button>
+      <button class="mini-nav-btn" *ngFor="let note of range" id="mini-note-btn-{{note}}" (click)="onNoteClicked(note, $event)">{{notes[note]}}</button>
     </div>
-    <!-- <div class="flex-container-horizontal">
-      <button class="mini-nav-btn" *ngFor="let res of resolution" class="">{{res}}</button>
-    </div> -->
+    <div class="flex-container-horizontal">
+      <app-button-panel [identifier]=resolution[0] [window]="window" [symbols]="getTickRangeAsStrings()"></app-button-panel>
+    </div>
+
     </div>
 </div>
 <div class="flex-container-vertical">
+  <button class="mini-nav-btn" class="mini-nav-btn"> </button>
   <button class="mini-nav-btn" class="mini-nav-btn"  (click)="onTickForwardClicked()">></button>
-  <button class="mini-nav-btn" class="mini-nav-btn"> </button>
   <button class="mini-nav-btn" class="mini-nav-btn">></button>
   <button class="mini-nav-btn" class="mini-nav-btn">></button>
-  <button class="mini-nav-btn" class="mini-nav-btn">></button>
-  <button class="mini-nav-btn" class="mini-nav-btn"> </button>
-
+  <button class="mini-nav-btn" class="mini-nav-btn">!</button>
 </div>

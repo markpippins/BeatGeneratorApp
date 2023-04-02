@@ -16,7 +16,7 @@
       "boundaries" : { },
       "deviceName" : "MRCC 880",
       "name" : "Zoia",
-      "channel" : 2,
+      "channel" : 1,
       "lowestNote" : 0,
       "highestNote" : 0,
       "highestPreset" : 0,

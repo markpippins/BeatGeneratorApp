@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Constants } from '../models/constants';
 import { Listener } from '../models/listener';
 
 @Injectable({
@@ -77,10 +78,10 @@ export class UiService {
 
   sortByName(data: any[]): any[] {
     return data.sort((a, b) => {
-      if (a.name > b.name) {
+      if (a.name.toLowerCase() > b.name.toLowerCase()) {
         return 1;
       }
-      if (a.name < b.name) {
+      if (a.name.toLowerCase() < b.name.toLowerCase()) {
         return -1;
       }
       return 0;
@@ -97,5 +98,13 @@ export class UiService {
       }
       return 0;
     });
+  }
+
+  getNoteForValue(value: number) {
+    let note = value
+    while (note > 12)
+      note = note - 12
+
+    return Constants.BASE_SCALE[note]
   }
 }

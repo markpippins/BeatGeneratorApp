@@ -1,5 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import { Instrument } from 'src/app/models/instrument';
+import { UiService } from 'src/app/services/ui.service';
 import {Device} from "../../models/device";
 import {MidiService} from "../../services/midi.service";
 
@@ -10,7 +11,7 @@ import {MidiService} from "../../services/midi.service";
 })
 export class DevicePanelComponent implements  OnInit {
 
-  constructor(private midiService: MidiService) {
+  constructor(private midiService: MidiService, private uiService: UiService) {
   }
   instruments!: Instrument[]
   devices!: Device[]
@@ -29,7 +30,7 @@ export class DevicePanelComponent implements  OnInit {
     })
 
     this.midiService.allInstruments().subscribe(data => {
-      this.instruments = data;
+      this.instruments = this.uiService.sortByName(data)
     })
 
   }

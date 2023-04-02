@@ -48,6 +48,7 @@ import { SetNavComponent } from './components/widgets/set-nav/set-nav.component'
 import { RulesNavComponent } from './components/widgets/rules-nav/rules-nav.component';
 import { PartStackerComponent } from './part-stacker/part-stacker.component';
 import { TickerAdjustComponent } from './components/widgets/ticker-adjust/ticker-adjust.component';
+import { ButtonPanelComponent } from './components/widgets/button-panel/button-panel.component';
 
 @NgModule({
   declarations: [
@@ -84,6 +85,7 @@ import { TickerAdjustComponent } from './components/widgets/ticker-adjust/ticker
     RulesNavComponent,
     PartStackerComponent,
     TickerAdjustComponent,
+    ButtonPanelComponent,
     ],
     imports: [
         BrowserModule,

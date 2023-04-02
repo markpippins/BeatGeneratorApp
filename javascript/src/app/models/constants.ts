@@ -88,4 +88,6 @@ export class Constants {
   static PATTERN_UPDATE_SWING = 11
   static PATTERN_UPDATE_DEVICE = 12
   static PATTERN_UPDATE_PRESET = 13
+
+  static BASE_SCALE = ['C', 'C#/Db','D', 'D#/Eb', 'E', 'F', 'F#/Gb','G', 'A#/Bb', 'B']
 }

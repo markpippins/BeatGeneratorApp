@@ -91,7 +91,7 @@ export class BeatSpecDetailComponent implements OnInit {
   ngOnInit(): void {
     // this.uiService.addListener(this)
     this.midiService.allInstruments().subscribe(data => {
-      this.instruments = data
+      this.instruments = this.uiService.sortByName(data)
     })
   }
 }

@@ -52,7 +52,7 @@ export class SliderPanelComponent implements OnInit, Listener {
     this.midiService
       .allInstruments()
       .subscribe(async (data) => {
-        this.instruments = data;
+        this.instruments = this.uiService.sortByName(data)
       });
   }
 

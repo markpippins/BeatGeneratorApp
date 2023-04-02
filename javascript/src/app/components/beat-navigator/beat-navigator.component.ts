@@ -26,13 +26,14 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   bars:   number[] = []
   parts:  number[] = []
   range:  number[] = []
-  
+  notes:  string[] = []
+
   selectedTicks:  boolean[] = []
   selectedBeats:  boolean[] = []
   selectedBars:   boolean[] = []
   selectedParts:  boolean[] = []
   selectedNote:   number = 0 
-  resolution: string[] = ['bar', 'beat', 'tick']
+  resolution: string[] = ['tick', 'beat', 'bar']
 
   identifier = 1
   
@@ -49,7 +50,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   ngOnInit(): void {
     this.updateDisplay();
     this.midiService.allInstruments().subscribe(data => {
-      this.instruments = data
+      this.instruments = this.uiService.sortByName(data)
     })
   }
 
@@ -88,9 +89,11 @@ export class BeatNavigatorComponent implements OnInit, Listener {
 
       this.tickRange = []
       this.tickOverflow = []
+      this.notes = []
 
       for (let index = 0; index < this.ticker.ticksPerBeat; index++) {
         this.ticks.push(index + 1)
+        this.notes.push(this.uiService.getNoteForValue(index + 1))
         this.selectedTicks.push(false)
         if (this.tickRange.length < this.window)
           this.tickRange.push(index)
@@ -115,6 +118,10 @@ export class BeatNavigatorComponent implements OnInit, Listener {
         this.selectedParts.push(false)
       }
     })
+  }
+
+  getTickRangeAsStrings() {
+    return this.tickRange.map(tr => String(tr))
   }
 
   onTickForwardClicked() {
@@ -191,4 +198,5 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     this.selectedNote = note
     this.uiService.swapClass(event.target, "mini-nav-btn-selected", "mini-nav-btn")
   }
+
 }
