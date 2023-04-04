@@ -82,6 +82,8 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     private Long fadeIn = 0L;
 
+    private Boolean accent = false;
+    
     @Transient   
     private Set<Rule> rules = new HashSet<>();
 

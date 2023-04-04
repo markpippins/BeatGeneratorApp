@@ -102,8 +102,8 @@ body {
   /* background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg'); */
   background-repeat: no-repeat;
   background-size: cover;
-  background-color: rgb(68, 67, 67);
-  /* background-color: #353637; */
+  /* background-color: rgb(68, 67, 67); */
+  background-color: #353637;
   /* background-image: linear-gradient(to left, #f46864, #003954); */
   /* background-image: linear-gradient(to left, #e89105, #2c0ad7); */
   /*border-style: dashed;*/
@@ -111,7 +111,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  border-color: white;
+  /* border-color: white; */
 }
 
 .content {
@@ -654,6 +654,16 @@ th {
 
 }
 
+.short {
+  padding-right: 10px;
+  margin-top: 6px;
+  margin-right: 4px;
+  width: 76px;
+}
+
+form select {
+  width: 90px;
+}
 .status-label {
   font-weight: bold;
   margin: 2px 2px 2px 2px;
@@ -662,8 +672,17 @@ th {
 
 .selector-row {
   font-weight: normal;
-  padding: 0px;
-  margin: 0px;
+  /* padding: 0px; */
+  /* margin: 0px; */
+}
+
+.selector-row form {
+  background-color: #12d312;
+  /* width: 60%; */
+}
+
+.selector-row form select {
+  width: 60%;
 }
 
 .interface-808 {
@@ -1051,33 +1070,43 @@ th {
 
 .mini-nav-btn, .mini-overflow-btn {
   padding: 2px;
-  height: 20px;
-  width: 20px;
+  height: 28px;
+  width: 28px;
   margin: 1px;
   color: black;
   font-weight: normal;
-  font-size: smaller;
+  font-size: small;
 }
 
 .mini-overflow-btn {
-  background-color: wheat;
-  border-style: none;
+  background-color: rgb(219, 109, 6);
+  border-style: inset;
+}
+
+.mini-control-btn {
+  padding: 2px;
+  height: 28px;
+  width: 28px;
+  margin: 1px;
+  background-color: #125699;
+  color: white;
+  font-size: small;
 }
 
 .mini-nav-btn-excluded {
   padding: 2px;
-  height: 20px;
-  width: 20px;
+  height: 28px;
+  width: 28px;
   margin: 1px;
   color: grey;
   font-weight: normal;
-  font-size: smaller;
+  font-size: small;
 }
 
 .mini-nav-btn-selected {
   padding: 2px;
-  height: 20px;
-  width: 20px;
+  height: 28px;
+  width: 28px;
   margin: 1px;
   color: white;
   background-color: green;
