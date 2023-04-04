@@ -13,28 +13,33 @@
   <div class="flex-container-vertical">
 
     <div class="flex-container-vertical">
-      <div class="flex-container-horizontal">
+      <app-button-panel [identifier]=resolution[0] [colCount]="colCount" [symbols]="getAccentsAsStrings()"></app-button-panel>
+      <app-button-panel [identifier]=resolution[0] [colCount]="colCount" [symbols]="getTicksAsStrings()"></app-button-panel>
+      <app-button-panel [identifier]=resolution[1] [colCount]="colCount" [symbols]="getBeatsAsStrings()"></app-button-panel>
+      <app-button-panel [identifier]=resolution[2] [colCount]="colCount" [symbols]="getBarsAsStrings()"></app-button-panel>
+      <app-button-panel [identifier]=resolution[3] [colCount]="colCount" [symbols]="getPartsAsStrings()"></app-button-panel>
+
+      <!-- <div class="flex-container-horizontal">
         <button class="mini-nav-btn" class="mini-nav-btn">B</button>
-        <button class="mini-nav-btn" class="mini-nav-btn">BB</button>
         <button class="mini-nav-btn" *ngFor="let tick of tickRange" id="mini-accent-btn-{{tick}}"
           (click)="onTickClicked(tick, $event)">..</button>
-        <!-- <button class="mini-nav-btn" *ngFor="let tick of tickOverflow"> - </button> -->
-      </div>
-      <div class="flex-container-horizontal">
+        <button class="mini-nav-btn" *ngFor="let tick of tickOverflow"> - </button>
+      </div> -->
+      <!-- <div class="flex-container-horizontal">
         <button class="mini-nav-btn" class="mini-nav-btn">R2</button>
         <button class="mini-nav-btn" class="mini-nav-btn" (click)="onTickBackClicked()">
         </button>
         <button class="mini-nav-btn" *ngFor="let tick of tickRange" id="mini-tick-btn-{{tick}}"
           (click)="onTickClicked(tick, $event)">{{tick + 1}}</button>
         <button class="mini-overflow-btn" *ngFor="let o of tickOverflow" id="mini-tick-btn-{{o}}">{{o}}</button>
-      </div>
-      <div class="flex-container-horizontal">
+      </div> -->
+      <!-- <div class="flex-container-horizontal">
         <button class="mini-nav-btn" class="mini-nav-btn">R3</button>
         <button class="mini-nav-btn" class="mini-nav-btn"> </button>
         <button class="mini-nav-btn inactive" *ngFor="let beat of beats" id="mini-beat-btn-{{beat}}"
           (click)="onBeatClicked(beat, $event)">{{beat}}</button>
-      </div>
-      <div class="flex-container-horizontal">
+      </div> -->
+      <!-- <div class="flex-container-horizontal">
         <button class="mini-nav-btn" class="mini-nav-btn">R4</button>
         <button class="mini-nav-btn" class="mini-nav-btn"></button>
         <button class="mini-nav-btn" *ngFor="let bar of bars" id="mini-bar-btn-{{bar}}"
@@ -45,23 +50,19 @@
         <button class="mini-nav-btn" class="mini-nav-btn"></button>
         <button class="mini-nav-btn" *ngFor="let part of parts" id="mini-part-btn-{{part}}"
           (click)="onPartClicked(part, $event)">{{part}}</button>
-      </div>
+      </div> -->
       <div class="flex-container-horizontal">
         <button class="mini-nav-btn" class="mini-nav-btn">/3</button>
         <button class="mini-nav-btn" class="mini-nav-btn">.</button>
         <button class="mini-nav-btn" *ngFor="let note of range" id="mini-note-btn-{{note}}"
           (click)="onNoteClicked(note, $event)">{{getNote(note)}}</button>
       </div>
-      <div class="flex-container-horizontal">
-        <app-button-panel [identifier]=resolution[0] [colCount]="colCount" [symbols]="getTicksAsStrings()"></app-button-panel>
-        <!-- <app-button-panel [ticks]="ticks"></app-button-panel> -->
-      </div>
 
     </div>
   </div>
   <div class="flex-container-vertical">
     <button class="mini-nav-btn" class="mini-nav-btn"> </button>
-    <button class="mini-nav-btn" class="mini-nav-btn" (click)="onTickForwardClicked()"> </button>
+    <!-- <button class="mini-nav-btn" class="mini-nav-btn" (click)="onTickForwardClicked()"> </button> -->
     <button class="mini-nav-btn" class="mini-nav-btn"> </button>
     <button class="mini-nav-btn" class="mini-nav-btn"> </button>
     <button class="mini-nav-btn" class="mini-nav-btn">!</button>

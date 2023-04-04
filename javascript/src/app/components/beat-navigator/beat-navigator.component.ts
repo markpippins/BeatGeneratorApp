@@ -238,7 +238,25 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     return this.uiService.getNoteForValue(value)
   }
 
+  getAccentsAsStrings() : string[] {
+    let accents: string[] = []
+    this.ticks.forEach(t => accents.push('.'))
+    return accents
+  }
+
   getTicksAsStrings() : string[] {
     return this.ticks.map(String)
+  }
+
+  getBeatsAsStrings() : string[] {
+    return this.beats.map(String)
+  }
+
+  getBarsAsStrings() : string[] {
+    return this.bars.map(String)
+  }
+
+  getPartsAsStrings() : string[] {
+    return this.parts.map(String)
   }
 }

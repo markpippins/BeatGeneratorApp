@@ -1,7 +1,7 @@
-<div class="flex-container-horizontal">
-  <button class="mini-nav-btn" class="mini-nav-btn" (click)="onBackClicked()"><</button>
-  <button class="mini-nav-btn" *ngFor="let symbol of range; let sym = index" id="getButtonId({{sym}}, false)" (click)="onClick(sym, $event)">{{symbol}}</button>
-  <button class="mini-nav-btn" *ngFor="let o of overage; let ov = index" id="getButtonId({{ov}}, true)">{{o}}</button>
-  <button class="mini-nav-btn" class="mini-nav-btn"  (click)="onForwardClicked()">></button>
+<div class={{containerClass}}>
+  <button class={{controlBtnClassName}} (click)="onBackClicked()"><</button>
+  <button class={{symbolBtnClassName}} *ngFor="let symbol of range; let sym = index" id="getButtonId({{sym}}, false)" (click)="onClick(sym, $event)">{{symbol}}</button>
+  <button class={{overageBtnClassName}} *ngFor="let o of overage; let ov = index" id="getButtonId({{ov}}, true)">{{o}}</button>
+  <button class={{controlBtnClassName}} (click)="onForwardClicked()">></button>
 </div>
 
