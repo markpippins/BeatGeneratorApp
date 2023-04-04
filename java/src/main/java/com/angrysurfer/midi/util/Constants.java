@@ -156,12 +156,12 @@ public class Constants {
 //        setBeatDivider(rand.nextInt(1, 4));
 //
 //        try {
-//            int razPreset = rand.nextInt(127);
+//            int razPreset = rand.nextInt(126);
 //            getInstrument(RAZZ).programChange(razPreset, 127);
 //            getPlayers().stream().filter(p -> p.getInstrument().equals(getInstrument(RAZZ)))
 //                    .forEach(p -> p.setPreset(razPreset));
 //
-//            int microFreakPreset = rand.nextInt(127);
+//            int microFreakPreset = rand.nextInt(126);
 //            getInstrument(MICROFREAK).programChange(microFreakPreset, 127);
 //            getPlayers().stream().filter(p -> p.getInstrument().equals(getInstrument(MICROFREAK)))
 //                    .forEach(p -> p.setPreset(microFreakPreset));

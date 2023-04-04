@@ -44,6 +44,10 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Long randomDegree = 0L;
     private Long ratchetCount = 0L;
     private Long ratchetInterval = 0L;
+    private Long internalBars;
+    private Long internalBeats;
+    private Boolean useInternalBeats = false;
+    private Boolean useInternalBars = false;
     
     @JsonIgnore
     @Transient
@@ -52,6 +56,14 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     @JsonIgnore
     @Transient
     private Cycler subCycler = new Cycler(16);
+
+    @JsonIgnore
+    @Transient
+    private Cycler beatCycler = new Cycler(16);
+
+    @JsonIgnore
+    @Transient
+    private Cycler barCycler = new Cycler(16);
 
     @Transient
     private boolean muted = false;
@@ -84,6 +96,10 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     private Boolean accent = false;
     
+    @JsonIgnore
+    @Transient
+    private Boolean armForNextTick = false;
+
     @Transient   
     private Set<Rule> rules = new HashSet<>();
 
@@ -121,17 +137,17 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         setAllowedControlMessages(allowedControlMessages);
     }
 
-    public Long getNote() {
-        Long result = randomDegree == 0L ? note : rand.nextBoolean() ? note + rand.nextLong(randomDegree) : note - rand.nextLong(randomDegree);
+    // public Long getNote() {
+    //     Long result = randomDegree == 0L ? note : rand.nextBoolean() ? note + rand.nextLong(randomDegree) : note - rand.nextLong(randomDegree);
 
-        if (result > getInstrument().getHighestNote())
-            result = getInstrument().getLowestNote() + rand.nextLong(randomDegree);
+    //     if (result > getInstrument().getHighestNote())
+    //         result = getInstrument().getLowestNote() + rand.nextLong(randomDegree);
 
-        if (result < getInstrument().getLowestNote())
-            result = getInstrument().getHighestNote() - rand.nextLong(randomDegree);
+    //     if (result < getInstrument().getLowestNote())
+    //         result = getInstrument().getHighestNote() - rand.nextLong(randomDegree);
 
-        return (long) (result + getTicker().getNoteOffset());
-    }
+    //     return (long) (result + getTicker().getNoteOffset());
+    // }
 
     public String getPlayerClass() {
         return getClass().getSimpleName();
@@ -186,7 +202,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
             
                 //  && !muteGroupPartnerSoundedOnThisTick()
             // && strikeHasNoMuteGroupConflict()
-            if (!isMuted() && isProbable() && shouldPlay()) {
+            if (shouldPlay()) {
                             getTicker().getActivePlayerIds().add(getId());
                             setLastPlayedBar(getTicker().getBar());
                             setLastPlayedBeat(getTicker().getBeat());
@@ -216,6 +232,8 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     }
 
     public boolean shouldPlay() {
+        logger.info(String.format("ShouldPlay() Tick: %s", getTicker().getTick()));
+
         List<Rule> applicable = getRules().stream().
             filter(r -> r.getPart() == 0 || ((long) r.getPart()) == getTicker().getPart()).toList();
 

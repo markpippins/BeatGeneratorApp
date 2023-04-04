@@ -19,6 +19,9 @@ export class PlayerTableComponent implements Listener, OnInit {
   @Output()
   playerSelectEvent = new EventEmitter<Player>();
 
+  @Output()
+  ruleChangeEvent = new EventEmitter<Player>()
+
   selectedPlayer: Player | undefined;
 
   @Output()
@@ -72,6 +75,12 @@ export class PlayerTableComponent implements Listener, OnInit {
       case 'ticker-add': {
         this.midiService.addPlayer().subscribe(async (data) => {
           this.players.push(data);
+
+          // this.midiService.addRule(this.players[this.players.length -1]).subscribe(async (data) => {
+          //   this.players[this.players.length -1].rules.push(data)
+          //   this.ruleChangeEvent.emit(this.players[this.players.length -1])
+          // })
+
         });
         break
       }
@@ -81,6 +90,7 @@ export class PlayerTableComponent implements Listener, OnInit {
           this.players = data;
           if (this.players.length == 0)
             this.selectedPlayer = undefined
+
         });
         this.players = this.players.filter(p => p.id != player.id)
         break

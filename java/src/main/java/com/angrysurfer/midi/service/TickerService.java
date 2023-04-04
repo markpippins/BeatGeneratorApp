@@ -47,7 +47,7 @@ public class TickerService {
         sequenceRunners.add(getSequenceRunner());
         getSequenceRunner().getCycleListeners().add(getSongService().getBeatListener());
         getSequenceRunner().getCycleListeners().add(getSongService().getBarListener());
-        getSongService().getSong().setBeatDuration(getBeatDuration());
+        getSongService().getSong().setBeatDuration(getTicker().getBeatDuration());
         this.ticker.getPlayers().forEach(p -> p.getInstrument()
             .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
 
@@ -66,10 +66,6 @@ public class TickerService {
             }
         });
 
-    }
-
-    private Float getBeatDuration() {
-        return 60000 / getTicker().getTempoInBPM() / getTicker().getTicksPerBeat() / getTicker().getBeatsPerBar();
     }
 
     private void stopRunningSequencers() {
@@ -126,7 +122,7 @@ public class TickerService {
                 ticker.setTempoInBPM(Float.valueOf(updateValue));
                 if (Objects.nonNull(getSequenceRunner()) && ticker.getId().equals(getTicker().getId()))
                     getSequenceRunner().getSequencer().setTempoInBPM(updateValue);
-                    getSongService().getSong().setBeatDuration(getBeatDuration());
+                    getSongService().getSong().setBeatDuration(getTicker().getBeatDuration());
                 break;
 
             case TickerUpdateType.PARTS: ticker.setParts((int) updateValue);
@@ -197,8 +193,8 @@ public class TickerService {
         getTicker().getBeatCycler().getListeners().clear();
         getTicker().getBarCycler().getListeners().clear();
         setTicker(null);
-        getTicker().getBeatCycler().getListeners().add(getSongService().getBeatListener());
-        getTicker().getBarCycler().getListeners().add(getSongService().getBarListener());
+        // getTicker().getBeatCycler().getListeners().add(getSongService().getBeatListener());
+        // getTicker().getBarCycler().getListeners().add(getSongService().getBarListener());
         return getTicker();
     } 
 }

@@ -26,6 +26,7 @@ import com.angrysurfer.midi.service.PlayerService;
 import com.angrysurfer.midi.service.TickerService;
 import com.angrysurfer.midi.util.Comparison;
 import com.angrysurfer.midi.util.PlayerUpdateType;
+import com.angrysurfer.midi.util.RuleUpdateType;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -105,7 +106,7 @@ public class PlayerServiceTests {
         r3.setComparisonId(Comparison.LESS_THAN);
         
         Player tickerPlayer = tickerService.getTicker().getPlayer(player.getId());
-        assertEquals(4, tickerPlayer.getRules().size());
+        assertEquals(3, tickerPlayer.getRules().size());
     }
 
     @Test
@@ -117,24 +118,24 @@ public class PlayerServiceTests {
         playerService.addRule(player.getId());
         playerService.addRule(player.getId());
 
-        assertEquals(3, player.getRules().size());
+        assertEquals(2, player.getRules().size());
     }
 
     @Test
     public void whenRuleAdded_thenPlayerShouldContainIt() {
         Player player = playerService.addPlayer(RAZ);
         playerService.addRule(player.getId());
-        assertEquals(2, player.getRules().size());
+        assertEquals(1, player.getRules().size());
     }
 
     @Test
     public void whenRuleRemoved_thenPlayerShouldNotContainIt() {
         Player player = playerService.addPlayer(RAZ);
         Rule rule = playerService.addRule(player.getId());
-        assertEquals(2, player.getRules().size());
+        assertEquals(1, player.getRules().size());
 
         playerService.removeRule(player.getId(), rule.getId());
-        assertEquals(1, player.getRules().size());
+        assertEquals(0, player.getRules().size());
     }
 
     @Test
@@ -146,8 +147,7 @@ public class PlayerServiceTests {
         Rule rule = player.getRules().stream().toList().get(0);
         double value = rule.getValue() + 1;
 
-        playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
-                rule.getComparisonId(), value, rule.getPart());
+        playerService.updateRule(rule.getId(), RuleUpdateType.VALUE, (long) value);
 
         assertEquals(player.getRules().stream().toList().get(0).getValue(), value, 0.0); 
     }
@@ -159,12 +159,11 @@ public class PlayerServiceTests {
 
         assertTrue(player.getRules().size() > 0);
         Rule rule = player.getRules().stream().toList().get(0);
-        int operatorId = rule.getOperatorId() + 1;
+        int value = rule.getOperatorId() + 1;
 
-        playerService.updateRule(player.getId(), rule.getId(), operatorId,
-                rule.getComparisonId(), rule.getValue(), rule.getPart());
+        playerService.updateRule(rule.getId(), RuleUpdateType.OPERATOR, value);
 
-        assertTrue(player.getRules().stream().toList().get(0).getOperatorId().equals(operatorId));
+        assertTrue(player.getRules().stream().toList().get(0).getOperatorId().equals(value));
     }
 
     @Test
@@ -174,12 +173,10 @@ public class PlayerServiceTests {
 
         assertTrue(player.getRules().size() > 0);
         Rule rule = player.getRules().stream().toList().get(0);
-        int part = rule.getPart() + 1;
+        int value = rule.getPart() + 1;
 
-        playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
-                part, rule.getValue(), part);
-
-        assertTrue(player.getRule(rule.getId()).getPart().equals(part));
+        playerService.updateRule(rule.getId(), RuleUpdateType.PART, value);
+        assertTrue(player.getRule(rule.getId()).getPart().equals(value));
     }
 
     @Test
@@ -189,12 +186,10 @@ public class PlayerServiceTests {
 
         assertTrue(player.getRules().size() > 0);
         Rule rule = player.getRules().stream().toList().get(0);
-        int comparisonId = rule.getComparisonId() + 1;
+        int value = rule.getComparisonId() + 1;
 
-        playerService.updateRule(player.getId(), rule.getId(), rule.getOperatorId(),
-                comparisonId, rule.getValue(), rule.getPart());
-
-        assertTrue(player.getRules().stream().toList().get(0).getComparisonId().equals(comparisonId));
+        playerService.updateRule(rule.getId(), RuleUpdateType.COMPARISON, value);
+        assertTrue(player.getRules().stream().toList().get(0).getComparisonId().equals(value));
     }
 
     @Test
@@ -271,7 +266,7 @@ public class PlayerServiceTests {
     @Test
     public void whenPlayerNoteUpdated_thenPlayerUpdatedWithNewValues() {
         Player player = playerService.addPlayer(RAZ);
-        playerService.updatePlayer(player.getId(), PlayerUpdateType.NOTE, 50);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.NOTE, 50L);
         assertTrue(50L == player.getNote()); 
     }
 

@@ -37,6 +37,6 @@ public class Ratchet extends Strike {
     }
 
     public void onTick(long tick, long bar) {
-        drumNoteOn(getNote(), rand.nextLong(getMinVelocity(), getMaxVelocity()));
+        drumNoteOn(getNote(), rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100, getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
     }
 }

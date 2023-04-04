@@ -220,14 +220,24 @@ export class MidiService {
   }
 
 
-  updateRule(playerId: number, ruleId: number, operatorId: number, comparisonId: number, newValue: number, part: number) {
+  // updateRule(playerId: number, ruleId: number, operatorId: number, comparisonId: number, newValue: number, part: number) {
+  //   let params = new HttpParams();
+  //   params = params.append('playerId', playerId);
+  //   params = params.append('ruleId', ruleId);
+  //   params = params.append('operatorId', operatorId);
+  //   params = params.append('comparisonId', comparisonId);
+  //   params = params.append('newValue', newValue);
+  //   params = params.append('part', part);
+  //   return this.http.get('http://localhost:8080/api/rule/update', {
+  //     params: params,
+  //   });
+  // }
+
+  updateRule(ruleId: number, updateType: number, updateValue: any) {
     let params = new HttpParams();
-    params = params.append('playerId', playerId);
     params = params.append('ruleId', ruleId);
-    params = params.append('operatorId', operatorId);
-    params = params.append('comparisonId', comparisonId);
-    params = params.append('newValue', newValue);
-    params = params.append('part', part);
+    params = params.append('updateType', updateType);
+    params = params.append('updateValue', updateValue);
     return this.http.get('http://localhost:8080/api/rule/update', {
       params: params,
     });

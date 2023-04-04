@@ -42,7 +42,7 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
-    private Cycler beatCounter = new Cycler();
+    private Cycler beatCounter = new Cycler(0);
 
     @JsonIgnore
     @Transient
@@ -50,7 +50,7 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
-    private Cycler barCounter = new Cycler();
+    private Cycler barCounter = new Cycler(0);
 
     @JsonIgnore
     @Transient
@@ -58,7 +58,7 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
-    private Cycler partCounter = new Cycler();
+    private Cycler partCounter = new Cycler(0);
 
     @JsonIgnore
     @Transient
@@ -66,7 +66,7 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
-    private Cycler tickCounter = new Cycler();
+    private Cycler tickCounter = new Cycler(0);
 
     @Transient
     private boolean done = false;
@@ -97,7 +97,7 @@ public class Ticker implements Serializable {
     private Integer loopCount = Constants.DEFAULT_LOOP_COUNT;
     private Integer parts = Constants.DEFAULT_PART_COUNT;
     private Double noteOffset = 0.0;
-    
+
     @Transient
     private boolean paused = false;
 
@@ -279,5 +279,9 @@ public class Ticker implements Serializable {
             getPlayers().addAll(getAddList());
             getAddList().clear();
         }
+    }
+
+    public Float getBeatDuration() {
+        return 60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar();
     }
 }

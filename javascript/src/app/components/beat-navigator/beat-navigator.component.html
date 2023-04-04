@@ -1,18 +1,32 @@
 <div class="flex-container-horizontal">
-  <app-midin-instrument-combo [instruments]="instruments" [identifier]="comboId"
+  <app-midin-instrument-combo class="wide-combo" [instruments]="instruments" [identifier]="comboId"
     (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
   <div class="flex-container-horizontal">
-    <button class="mini-nav-btn" *ngFor="let note of range" id="mini-note-btn-{{note}}"
+    <button class="mini-btn" *ngFor="let note of range" id="mini-note-btn-{{note}}"
       (click)="onNoteClicked(note, $event)">{{getNote(note)}}</button>
   </div>
 </div>
 <div class="flex-container-horizontal">
   <div class="flex-container-vertical">
-    <button class="mini-nav-btn" class="mini-control-btn">𝅗𝅥</button>
-    <button class="mini-nav-btn" class="mini-control-btn">3</button>
-    <button class="mini-nav-btn" class="mini-control-btn">♩</button>
-    <button class="mini-nav-btn" class="mini-control-btn">♪</button>
-    <button class="mini-nav-btn" class="mini-control-btn">𝅘𝅥𝅯</button>
+    <button class="mini-btn mini-control-btn">𝅗𝅥</button>
+    <button class="mini-btn mini-control-btn">3</button>
+    <button class="mini-btn mini-control-btn">♩</button>
+    <button class="mini-btn mini-control-btn">♪</button>
+    <button class="mini-btn mini-control-btn">𝅘𝅥𝅯</button>
+  </div>
+  <div class="flex-container-vertical">
+    <button class="mini-btn mini-control-btn"> </button>
+    <button class="mini-btn mini-control-btn">N</button>
+    <button class="mini-btn mini-control-btn">N</button>
+    <button class="mini-btn mini-control-btn">N</button>
+    <button class="mini-btn mini-control-btn">N</button>
+  </div>
+  <div class="flex-container-vertical">
+    <button class="mini-btn mini-control-btn">𝅗𝅥</button>
+    <button class="mini-btn mini-control-btn">S</button>
+    <button class="mini-btn mini-control-btn">S</button>
+    <button class="mini-btn mini-control-btn">S</button>
+    <button class="mini-btn mini-control-btn">𝅘𝅥𝅯</button>
   </div>
   <div class="flex-container-vertical">
     <div class="flex-container-vertical">
@@ -28,12 +42,11 @@
         [symbols]="getPartsAsStrings()"></app-button-panel>
     </div>
   </div>
-  <div class="flex-container-vertical">
-    <button class="mini-nav-btn" class="mini-control-btn"> </button>
 
-    <!-- <button class="mini-nav-btn" class="mini-nav-btn" (click)="onTickForwardClicked()"> </button> -->
-    <button class="mini-nav-btn" class="mini-control-btn"> </button>
-    <button class="mini-nav-btn" class="mini-control-btn">♬</button>
-    <button class="mini-nav-btn" class="mini-control-btn"> </button>
-    <button class="mini-nav-btn" class="mini-control-btn">!</button>
-  </div>
+  <!-- <div class="flex-container-vertical">
+    <button class="mini-btn mini-control-btn"> </button>
+   <button class="mini-btn mini-control-btn"> </button>
+    <button class="mini-btn mini-control-btn">♬</button>
+    <button class="mini-btn mini-control-btn"> </button>
+    <button class="mini-btn mini-control-btn">!</button>
+  </div> -->

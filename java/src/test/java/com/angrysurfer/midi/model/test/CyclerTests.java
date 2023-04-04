@@ -37,8 +37,8 @@ public class CyclerTests {
   }
 
   @Test
-  public void whenAdvanceCalledOnUninitializedCycler_thenCyclerRunsLinearly() {
-    Cycler c = new Cycler();
+  public void whenAdvanceCalledOnUninitializedCyclerWithRunLinearTrue_thenCyclerRunsLinearly() {
+    Cycler c = new Cycler(0);
     IntStream.range(1, 1000).forEach(i -> assertTrue(c.advance() == i + 1));
   }
 

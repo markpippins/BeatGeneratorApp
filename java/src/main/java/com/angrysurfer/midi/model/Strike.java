@@ -50,43 +50,47 @@ public class Strike extends Player {
     
     @Override
     public void onTick(long tick, long bar) {
-  
-            if (getBeatFraction() != 1 && getSubCycler().getLength() > 1) {
+            logger.info(String.format("Tick: %s", tick));
+            if (tick == 1 && getSubDivisions() > 1) {
                 try {
-                        // beatFraction = beatFraction * getBeatFraction() * getTicker().getTick();
-                        // double beatDivider = 1.0 / getTicker().getTicksPerBeat() / getSubCycler().getLength();
-                        // double beatFraction = getTicker().getTick() == 1 ? 0 : beatDivider * getBeatFraction() * getTicker().getTick();
-
-                    // double beatFraction = getTicker().getTick() == 1 ? 0 : getTicker().getTicksPerBeat() / getSubCycler().getLength();
-                    double beatFraction = getTicker().getTick() == 1 ? 0 : getTicker().getTicksPerBeat() / getSubDivisions();
-
-                    double delay = (getBeatFraction() * beatFraction) - getTicker().getTicksPerBeat();
-                    Thread.sleep((long) delay);
+                    long velocity = (long) ((getLevel() * 0.01) * rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100, getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
+                    Long delay = (long) ((getTicker().getBeatDuration() / getSubDivisions()) * getBeatFraction()); 
+                    Thread.sleep(delay);
+                // else handleSwing();
+                    handleRachets();
+                    drumNoteOn(getNote(), velocity);
                 } catch (InterruptedException e) {
                     logger.error(e.getMessage(), e);
                 }
             }
         
-            if (getSkipCycler().getLength() == 0 || getSkipCycler().atEnd()) {
-                // else handleSwing();
-                handleRachets();
-                long velocity = (long) ((getLevel() * 0.01) * rand.nextLong(getMinVelocity(), getMaxVelocity()));
+            else if (getSkipCycler().getLength() == 0 || getSkipCycler().atEnd()) {
+                long velocity = (long) ((getLevel() * 0.01) * rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100, getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
+                // handleRachets();
+                if (getSwing() > 0)
+                    handleSwing();
                 drumNoteOn(getNote(), velocity);
             }
     
-            // getSkipCycler().advance();
+            getSkipCycler().advance();
     }
     
     private void handleSwing() {
-        double offset = rand.nextDouble(getTicker().getTicksPerBeat() * getSwing() * 0.1);
-        new Ratchet(this, getTicker().getTick() + (long) offset, 1, 0);
+        double offset = getTicker().getBeatDuration() * rand.nextLong(getSwing()) * .01;
+        try {
+            Thread.sleep((long) offset);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        // new Ratchet(this, getTicker().getTick() + (long) offset, 1, 0);
     }
 
     private void handleRachets() {
         LongStream.range(1, getRatchetCount() + 1).forEach(i -> {
-            double base = getTicker().getTicksPerBeat() / getTicker().getBeatsPerBar(); 
-            double offset = getTicker().getTick() + (base * i * getRatchetInterval());
-            new Ratchet(this,(long) offset, getRatchetInterval(), 0);
+            Float duration = getTicker().getBeatDuration();
+            long delay = (long) (getTicker().getBeatDuration() / getSubDivisions() * 10); 
+            new Ratchet(this, delay, getRatchetInterval(), 0);
         });
     }
 }

@@ -1,4 +1,4 @@
-  <form class="short">
+  <form class="mini-form-4">
       <select placeholder="Instrument" [(ngModel)]="selectionIndex" name="midi_instrument-{{identifier}}" (change)="onSelectionChange($event)">
         <option *ngFor="let instrument of instruments; let i = index;" [value]="i">
           {{instrument.name}}

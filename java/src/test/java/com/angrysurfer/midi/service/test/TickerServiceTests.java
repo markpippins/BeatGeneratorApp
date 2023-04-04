@@ -193,7 +193,7 @@ public class TickerServiceTests {
 
         Player player3 = tickerService.getTicker().getPlayer(player2.getId());
         // Rule rule2 = player3.getRule(rule.getId());
-        assertTrue(player3.getRules().size() == 1); 
+        assertTrue(player3.getRules().size() == 0); 
     }
 
     @Test

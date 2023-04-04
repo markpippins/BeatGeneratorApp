@@ -75,7 +75,7 @@ export class StatusPanelComponent implements OnInit, Listener {
             this.waiting = false
           })
         }
-        await this.midiService.delay(this.ticker?.playing ? 50 : 250);
+        await this.midiService.delay(this.ticker?.playing ? 250 : 750);
         this.waiting = false
 
         this.updateDisplay();

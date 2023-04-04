@@ -6,6 +6,7 @@ import com.angrysurfer.midi.util.BeatGeneratorConfig;
 import com.angrysurfer.midi.util.Comparison;
 import com.angrysurfer.midi.util.MidiInstrumentList;
 import com.angrysurfer.midi.util.Operator;
+import com.angrysurfer.midi.util.RuleUpdateType;
 import com.angrysurfer.midi.util.SequenceRunner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -107,7 +108,7 @@ public class PlayerService {
 
         try {
             midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
-            if (Objects.nonNull(midiInstrument.getLowestNote())) {
+            if (Objects.nonNull(midiInstrument.getLowestNote() )) {
                 note = rand.nextInt(midiInstrument.getLowestNote(), midiInstrument.getHighestNote());
             }
         } catch (Exception e) {
@@ -127,9 +128,9 @@ public class PlayerService {
 
         getPlayers().add(player);
 
-        int part = rand.nextInt(getTickerService().getTicker().getParts());
+        // int part = rand.nextInt(getTickerService().getTicker().getParts());
         // if (rand.nextBoolean())
-        player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, 1.0, part)));
+        // player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, 1.0, part)));
         // else
         //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, rand.nextDouble(1, 
         //     getTickerService().getTicker().getTicksPerBeat()), part)));
@@ -147,8 +148,7 @@ public class PlayerService {
         // else
         //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR, Comparison.MODULO, rand.nextDouble(1, 
         //     getTickerService().getTicker().getBars()), part)));
-
-            // player.setMuted(true);
+        // player.setMuted(true);
         return player;
     }
 
@@ -279,6 +279,17 @@ public class PlayerService {
                 break;
             }
 
+            case FADE_IN -> {
+                player.setFadeIn(updateValue);
+                break;
+            }
+
+
+            case FADE_OUT -> {
+                player.setFadeOut(updateValue);
+                break;
+            }
+
             case CHANNEL -> {
                 // strike.setChannel(updateValue > 0 ? true : false);
                 break;
@@ -294,9 +305,13 @@ public class PlayerService {
         return player;
     }
 
+    public Optional<Rule> getRule(Long ruleId) {
+        return getPlayers().stream().flatMap(p -> p.getRules().stream()).filter(r -> r.getId() == ruleId).findAny();
+    }
+
     public Rule updateRule(Long ruleId, int updateType, long updateValue) {
 
-        Optional<Rule> opt = getPlayers().stream().flatMap(p -> p.getRules().stream()).filter(r -> r.getId() == updateValue).findAny();
+        Optional<Rule> opt = getRule(ruleId); 
         Rule rule = null;
         if (opt.isPresent()) {
             rule = opt.get();
@@ -305,12 +320,19 @@ public class PlayerService {
                     rule.setOperatorId((int) updateValue);
                     break;
                 }
+
                 case COMPARISON -> {
                     rule.setComparisonId((int) updateValue);
                     break;
                 }
+
                 case VALUE -> {
                     rule.setValue((double) updateValue);
+                    break;
+                }
+
+                case RuleUpdateType.PART -> {
+                    rule.setPart((int) updateValue);
                     break;
                 }
             }

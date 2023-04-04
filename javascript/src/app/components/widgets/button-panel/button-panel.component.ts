@@ -50,17 +50,17 @@ export class ButtonPanelComponent
   symbolCount = 0;
 
   @Input()
-  symbolBtnClassName = 'mini-nav-btn';
+  symbolBtnClassName = 'mini-btn';
 
   getSymbolBtnSelectedClassName(): string {
     return this.symbolBtnClassName + '-selected';
   }
 
   @Input()
-  controlBtnClassName = 'mini-nav-btn, mini-control-btn';
+  controlBtnClassName = 'mini-btn, mini-control-btn';
 
   @Input()
-  overageBtnClassName = 'mini-overflow-btn';
+  overageBtnClassName = 'overflow';
 
   @Input()
   containerClass = 'flex-container-horizontal';
@@ -140,32 +140,31 @@ export class ButtonPanelComponent
   }
 
   onClick(index: number, event: Event) {
-    if (this.exclusive) {
-      this.range.forEach((note) => {
-        let element = document.getElementById(this.symbolBtnClassName + index);
-        if (element != undefined) {
-          this.uiService.removeClass(
-            element,
-            this.getSymbolBtnSelectedClassName()
-          );
-          this.uiService.addClass(element, this.symbolBtnClassName);
-        }
-      });
+    // if (this.exclusive) {
+    //   this.range.forEach((note) => {
+    //     let element = document.getElementById(this.symbolBtnClassName + index);
+    //     if (element != undefined) {
+    //       this.uiService.removeClass(
+    //         element,
+    //         this.getSymbolBtnSelectedClassName()
+    //       );
+    //       this.uiService.addClass(element, this.symbolBtnClassName);
+    //     }
+    //   });
 
-      // this.selectedNote = note
-      this.uiService.swapClass(
-        event.target,
-        this.symbolBtnClassName,
-        this.getSymbolBtnSelectedClassName()
-      );
-    } else {
+    //   this.uiService.swapClass(
+    //     event.target,
+    //     this.symbolBtnClassName,
+    //     this.getSymbolBtnSelectedClassName()
+    //   );
+    // } else {
       this.selections[index] = !this.selections[index];
       this.uiService.swapClass(
         event.target,
         this.getSymbolBtnSelectedClassName(),
         this.symbolBtnClassName
       );
-    }
+    // }
 
     this.buttonClickedEvent.emit(this.symbols[index]);
   }

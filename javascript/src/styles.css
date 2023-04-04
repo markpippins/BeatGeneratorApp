@@ -654,35 +654,26 @@ th {
 
 }
 
-.short {
-  padding-right: 10px;
+
+.mini-form-4 {
+  padding-right: 2px;
   margin-top: 6px;
-  margin-right: 4px;
-  width: 76px;
+  margin-bottom: 4px;
+  margin-right: 2px;
+  width: 114px;
+  display: flex;
+  align-items: stretch;
+  align-content: stretch;
 }
 
-form select {
-  width: 90px;
+.mini-form-4 select {
+  width: 100%;
 }
+
 .status-label {
   font-weight: bold;
   margin: 2px 2px 2px 2px;
   padding: 4px;
-}
-
-.selector-row {
-  font-weight: normal;
-  /* padding: 0px; */
-  /* margin: 0px; */
-}
-
-.selector-row form {
-  background-color: #12d312;
-  /* width: 60%; */
-}
-
-.selector-row form select {
-  width: 60%;
 }
 
 .interface-808 {
@@ -1068,7 +1059,7 @@ th {
   grid-template-columns: auto auto auto auto auto auto auto;
 }
 
-.mini-nav-btn, .mini-overflow-btn {
+.mini-btn {
   padding: 2px;
   height: 28px;
   width: 28px;
@@ -1078,22 +1069,22 @@ th {
   font-size: small;
 }
 
-.mini-overflow-btn {
+.overflow {
   background-color: rgb(219, 109, 6);
   border-style: inset;
 }
 
 .mini-control-btn {
-  padding: 2px;
+  /* padding: 2px;
   height: 28px;
   width: 28px;
-  margin: 1px;
+  margin: 1px; */
   background-color: #125699;
   color: white;
-  font-size: small;
+  /* font-size: small; */
 }
 
-.mini-nav-btn-excluded {
+.mini-btn-excluded {
   padding: 2px;
   height: 28px;
   width: 28px;
@@ -1103,7 +1094,7 @@ th {
   font-size: small;
 }
 
-.mini-nav-btn-selected {
+.mini-btn-selected {
   padding: 2px;
   height: 28px;
   width: 28px;

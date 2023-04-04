@@ -149,7 +149,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   //     let name = "mini-tick-btn-" + index
   //     let element = document.getElementById(name)
   //     if (element != undefined)
-  //       this.uiService.addClass(element, "mini-nav-btn-selected")
+  //       this.uiService.addClass(element, "mini-btn-selected")
   //   })
   // }
 
@@ -161,7 +161,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     })
 
     this.selectedNote = note
-    this.uiService.swapClass(event.target, "mini-nav-btn-selected", "mini-nav-btn")
+    this.uiService.swapClass(event.target, "mini-btn-selected", "mini-btn")
   }
 
   getNote(value: number) : string {
