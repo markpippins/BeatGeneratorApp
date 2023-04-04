@@ -18,4 +18,6 @@ public interface PlayerUpdateType {
     static int BEAT_FRACTION = 14;
     static int SUBDIVISIONS = 15;
     static int RANDOM_DEGREE = 16;
+    static int FADE_IN = 17;
+    static int FADE_OUT = 18;
 }

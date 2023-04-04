@@ -39,6 +39,9 @@ public class Cycler {
     public Long advance() {
         if (position.get() == length && length > 1)
             position.set(0);
+        
+        if (getLength() == 1)
+            return 1L;
 
         if (stepSize < 1 && stepSize > 0) {
             stepValue = stepValue + stepSize;

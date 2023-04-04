@@ -46,11 +46,24 @@ export class UiService {
     }
   }
 
+  replaceClass(el: any, classNameA: string, classNameB: string) {
+    if (el.className.indexOf(classNameA) >= 0) {
+      el.className = el.className.replace(classNameA, classNameB);
+    }
+  }
+
   removeClass(el: any, classNameA: string) {
     if (el.className.indexOf(classNameA) >= 0) {
       el.className = el.className.replace(classNameA, "");
     }
   }
+
+  addClass(el: any, classNameA: string) {
+    if (el.className.indexOf(classNameA) == -1) {
+      el.className = el.className.replace(classNameA, "");
+    }
+  }
+
 
   reverseSortById(data: any[]): any[] {
     return data.sort((a, b) => {
@@ -102,9 +115,9 @@ export class UiService {
 
   getNoteForValue(value: number) {
     let note = value
-    while (note > 12)
+    while (note > 11)
       note = note - 12
 
-    return Constants.BASE_SCALE[note]
+    return Constants.CHROMATIC_SCALE[note]
   }
 }

@@ -1,5 +1,5 @@
+<app-ticker-nav></app-ticker-nav>
 <div>
-  <app-ticker-nav></app-ticker-nav>
   <table *ngIf="players != undefined" id="player-table">
     <tr>
       <!-- <th></th>
@@ -55,11 +55,11 @@
           P
         </button>
       </td>
-      <td class="player-short-col" (change)="onSubsChange(player, $event)">
-        <input type="number" min="1" max="16" step="1" value="{{ player.subDivisions }}">
-      </td>
       <td class="player-short-col" (change)="onBeatFractionChange(player, $event)">
         <input type="number" min="1" max="{{ player.subDivisions }}" step="1" value="{{ player.beatFraction }}">
+      </td>
+      <td class="player-short-col" (change)="onSubsChange(player, $event)">
+        <input type="number" min="1" max="16" step="1" value="{{ player.subDivisions }}">
       </td>
       <td class="player-short-col" (change)="onSkipsChange(player, $event)">
         <input type="number" min="1" max="100" step="1" value="{{ player.skips }}">
@@ -73,20 +73,26 @@
       <td class="player-short-col" (change)="onRandomDegreeChange(player, $event)">
         <input type="number" min="0" max="100" step="1" value="{{ player.randomDegree }}">
       </td>
-      <!-- <td class="player-short-col" (change)="onLevelChange(player, $event)">
+      <td class="player-short-col" (change)="onLevelChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.level }}">
-      </td> -->
-      <td class="player-short-col" (change)="onRatchetCountChange(player, $event)">
-        <input type="number" min="0" max="127" step="1" value="{{ player.ratchetCount }}">
-      </td>
-      <td class="player-short-col" (change)="onRatchetIntervalChange(player, $event)">
-        <input type="number" min="1" max="16" step="1" value="{{ player.ratchetInterval }}">
       </td>
       <td class="player-short-col" (change)="onMinVelocityChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.minVelocity }}">
       </td>
       <td class="player-short-col" (change)="onMaxVelocityChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.maxVelocity }}">
+      </td>
+      <td class="player-short-col" (change)="onRatchetCountChange(player, $event)">
+        <input type="number" min="0" max="127" step="1" value="{{ player.ratchetCount }}">
+      </td>
+      <td class="player-short-col" (change)="onRatchetIntervalChange(player, $event)">
+        <input type="number" min="1" max="16" step="1" value="{{ player.ratchetInterval }}">
+      </td>
+      <td class="player-short-col" (change)="onFadeInChange(player, $event)">
+        <input type="number" min="0" max="127" step="1" value="{{ player.fadeIn }}">
+      </td>
+      <td class="player-short-col" (change)="onFadeOutChange(player, $event)">
+        <input type="number" min="1" max="16" step="1" value="{{ player.fadeOut }}">
       </td>
     </tr>
     <tr *ngIf="players == undefined || players.length == 0">

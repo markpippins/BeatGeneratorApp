@@ -1,7 +1,6 @@
-import { Player } from "./player";
+import { Player } from './player'
 
 export class Constants {
-
   static CONDITION_COLUMNS = ['operator', 'comparison', 'value']
 
   static PLAYER_COLUMNS = [
@@ -12,57 +11,32 @@ export class Constants {
     'Pitch',
     '',
     '',
-    'Divs',
-    'Frac',
-    'Skips',
+    'Div 1',
+    'Div 2',
+    'Skip',
     'Swing',
     'Prob',
-    'Degree',
-    // 'Level',
-    'Ratchet',
-    'Interval',
+    'Random',
+    'Level',
     'Min. V',
     'Max. V',
+    'Ratchet',
+    'Interval',
+    'Fade In',
+    '/ Out',
   ]
 
-  static TICK_DIV = 0;
-  static BEAT_DIV = 1;
-  static BAR_DIV = 2;
-  static PART_DIV = 3;
+  static TICK_DIV = 0
+  static BEAT_DIV = 1
+  static BAR_DIV = 2
+  static PART_DIV = 3
 
-  static INSTRUMENT = 0;
-  static NOTE = 1;
-  static PROBABILITY = 2;
-  static MIN_VELOCITY = 3;
-  static MAX_VELOCITY = 4;
-  static MUTE = 5;
-  static PART = 6;
-  static LEVEL = 7;
-  static SWING = 8;
-  static PRESET = 9;
-  static RATCHET_COUNT = 10;
-  static RATCHET_INTERVAL = 11;
-  static CHANNEL = 12;
-  static SKIPS = 13;
-  static BEAT_FRACTION = 14;
-  static SUBDIVISIONS = 15;
-  static RANDOM_DEGREE = 16;
+  static STEP_ACTIVE = 0
+  static STEP_GATE = 1
+  static STEP_PITCH = 2
+  static STEP_VELOCITY = 3
+  static STEP_PROBABILITY = 4
 
-  static STEP_ACTIVE = 0;
-  static STEP_GATE = 1;
-  static STEP_PITCH = 2;
-  static STEP_VELOCITY = 3;
-  static STEP_PROBABILITY = 4;
-
-  static PPQ = 0
-  static BPM = 1
-  static BEATS_PER_BAR = 2
-  static PART_LENGTH = 3
-  static MAX_TRACKS = 4
-  static BARS = 5
-  static PARTS = 6
-  static BASE_NOTE_OFFSET = 7;
-  
   static ERROR = 0
   static CONNECTED = 1
   static DISCONNECTED = 2
@@ -70,24 +44,22 @@ export class Constants {
   static TICKER_SELECTED = 10
   static STEP_UPDATED = 11
   static PLAYER_UPDATED = 12
-  static COMMAND = 13 
-  static TICKER_UPDATED  = 14
+  static COMMAND = 13
+  static TICKER_UPDATED = 14
   static PLAYER_SELECTED = 15
-  
-  static PATTERN_UPDATE_CHANNEL = 0
-  static PATTERN_UPDATE_ACTIVE = 1
-  static PATTERN_UPDATE_ROOT_NOTE = 2
-  static PATTERN_UPDATE_LAST_STEP = 3
-  static PATTERN_UPDATE_DIRECTION = 4
-  static PATTERN_UPDATE_PROBABILITY = 5
-  static PATTERN_UPDATE_RANDOM = 6
-  static PATTERN_UPDATE_TRANSPOSE = 7
-  static PATTERN_UPDATE_LENGTH = 8
-  static PATTERN_UPDATE_GATE = 9
-  static PATTERN_UPDATE_REPEATS = 10
-  static PATTERN_UPDATE_SWING = 11
-  static PATTERN_UPDATE_DEVICE = 12
-  static PATTERN_UPDATE_PRESET = 13
 
-  static BASE_SCALE = ['C', 'C#/Db','D', 'D#/Eb', 'E', 'F', 'F#/Gb','G', 'A#/Bb', 'B']
+  static CHROMATIC_SCALE = [
+    'C',
+    'C#',
+    'D',
+    'D#',
+    'E',
+    'F',
+    'F#',
+    'G',
+    'G#',
+    'A',
+    'A#',
+    'B',
+  ]
 }

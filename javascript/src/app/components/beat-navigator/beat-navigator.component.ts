@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
@@ -17,26 +17,29 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   @Input()
   ticker!: Ticker
 
-  window = 16
-  ticksPosition = this.window
+  divCount = 4
+  colCount = 16
+
+  ticksPosition = this.colCount
   tickRange: number[] = []
   tickOverflow: string[] = []
   ticks:  number[] = []
   beats:  number[] = []
   bars:   number[] = []
+  divs:   number[] = []
   parts:  number[] = []
   range:  number[] = []
-  notes:  string[] = []
 
   selectedTicks:  boolean[] = []
   selectedBeats:  boolean[] = []
   selectedBars:   boolean[] = []
+  selectedDivs:   boolean[] = []
   selectedParts:  boolean[] = []
-  selectedNote:   number = 0 
+  selectedNote:   number = 0
   resolution: string[] = ['tick', 'beat', 'bar']
 
-  identifier = 1
-  
+  comboId = 'beat-navigator'
+
   instruments!: Instrument[]
 
   constructor(private uiService: UiService, private midiService: MidiService) {
@@ -51,6 +54,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     this.updateDisplay();
     this.midiService.allInstruments().subscribe(data => {
       this.instruments = this.uiService.sortByName(data)
+      this.uiService.setSelectValue('instrument-combo-' + this.comboId, 0)
     })
   }
 
@@ -68,44 +72,60 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       this.updateDisplay()
 
       if (messageType == Constants.BEAT_DIV) {
-        let element = document.getElementById("beat-btn-" + messageValue)
-        this.uiService.swapClass(element, 'inactive', 'active')
+        let name = "mini-beat-btn-" + messageValue
+        let element = document.getElementById(name)
+        if (element != undefined)
+          this.uiService.swapClass(element, 'inactive', 'active')
+
+
+        // this.beats.filter(b => b != messageValue).forEach(b => {
+        //   let name = "mini-beat-btn-" + messageValue
+        //   let element = document.getElementById(name)
+        //   if (element != undefined)
+        //     this.uiService.swapClass(element, 'active', 'inactive')
+
+        // })
       }
     }
 
   updateDisplay() {
     this.midiService.tickerInfo().subscribe(data => {
-      this.ticksPosition = this.window
+      this.ticksPosition = this.colCount
 
       this.ticker = data
       this.ticks = []
       this.beats = []
       this.bars = []
+      this.divs = []
       this.parts = []
-      this.selectedTicks = []
-      this.selectedBeats = []
-      this.selectedBars = []
-      this.selectedParts = []
+      // this.selectedTicks = []
+      // this.selectedBeats = []
+      // this.selectedBars = []
+      // this.selectedDivs = []
+      // this.selectedParts = []
 
       this.tickRange = []
       this.tickOverflow = []
-      this.notes = []
 
       for (let index = 0; index < this.ticker.ticksPerBeat; index++) {
         this.ticks.push(index + 1)
-        this.notes.push(this.uiService.getNoteForValue(index + 1))
         this.selectedTicks.push(false)
-        if (this.tickRange.length < this.window)
+        if (this.tickRange.length < this.colCount)
           this.tickRange.push(index)
       }
 
-      while (this.tickRange.length + this.tickOverflow.length < this.window)
-        this.tickOverflow.push('')    
+      while (this.tickRange.length + this.tickOverflow.length < this.colCount)
+        this.tickOverflow.push('')
 
 
       for (let index = 0; index < this.ticker.beatsPerBar; index++) {
         this.beats.push(index + 1)
         this.selectedBeats.push(false)
+      }
+
+      for (let index = 0; index < this.divCount; index++) {
+        this.divs.push(index + 1)
+        this.selectedDivs.push(false)
       }
 
       for (let index = 0; index < this.ticker.bars; index++) {
@@ -118,6 +138,18 @@ export class BeatNavigatorComponent implements OnInit, Listener {
         this.selectedParts.push(false)
       }
     })
+
+    this.updateSelections()
+  }
+
+  updateSelections() {
+    let index = 0
+    this.selectedTicks.forEach(t => {
+      let name = "mini-tick-btn-" + index
+      let element = document.getElementById(name)
+      if (element != undefined)
+        this.uiService.addClass(element, "mini-nav-btn-selected")
+    })
   }
 
   getTickRangeAsStrings() {
@@ -125,7 +157,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   }
 
   onTickForwardClicked() {
-    if (this.tickRange[this.window - 1] == this.ticks[this.ticks.length - 1])
+    if (this.tickRange[this.colCount - 1] == this.ticks[this.ticks.length - 1])
       return
 
     if (this.ticksPosition >= this.ticks.length)
@@ -134,15 +166,17 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     this.tickRange = []
     this.tickOverflow = []
 
-    // this.ticksPosition += this.window
-    while (this.tickRange.length < this.window) {
+    // this.ticksPosition += this.colCount
+    while (this.tickRange.length < this.colCount) {
       if (this.ticksPosition == this.ticks.length)
         break
       else this.tickRange.push(this.ticksPosition++)
     }
 
-    while (this.tickRange.length + this.tickOverflow.length < this.window)
-      this.tickOverflow.push('')    
+    while (this.tickRange.length + this.tickOverflow.length < this.colCount)
+      this.tickOverflow.push('')
+
+    this.updateSelections()
   }
 
   onTickBackClicked() {
@@ -151,40 +185,41 @@ export class BeatNavigatorComponent implements OnInit, Listener {
 
     this.tickRange = []
     this.tickOverflow = []
-    this.ticksPosition -= this.window * 2
+    this.ticksPosition -= this.colCount * 2
     if (this.ticksPosition < 0)
         this.ticksPosition = 0
-    
-      while (this.ticksPosition < this.ticks.length && (this.tickOverflow.length + this.tickRange.length < this.window)) {
+
+      while (this.ticksPosition < this.ticks.length && (this.tickOverflow.length + this.tickRange.length < this.colCount)) {
         while (this.ticksPosition == this.ticks.length)
-          this.tickOverflow.push('')      
+          this.tickOverflow.push('')
         this.tickRange.push(this.ticksPosition)
         this.ticksPosition++
       }
-  
-    while (this.tickRange.length + this.tickOverflow.length < this.window)
-      this.tickOverflow.push('')    
+
+    while (this.tickRange.length + this.tickOverflow.length < this.colCount)
+      this.tickOverflow.push('')
      // this.uiService. mini-tick-btn-{{tick}}
-}
+     this.updateSelections()
+  }
 
   onTickClicked(tick: number, event: Event) {
-    this.selectedTicks[tick] = !this.selectedTicks[tick] 
+    this.selectedTicks[tick] = !this.selectedTicks[tick]
     this.uiService.swapClass(event.target, "mini-nav-btn-selected", "mini-nav-btn")
   }
 
 
   onBeatClicked(beat: number, event: Event) {
-    this.selectedBeats[beat] = !this.selectedBeats[beat] 
+    this.selectedBeats[beat] = !this.selectedBeats[beat]
     this.uiService.swapClass(event.target, "mini-nav-btn-selected", "mini-nav-btn")
   }
 
   onBarClicked(bar: number, event: Event) {
-    this.selectedBars[bar] = !this.selectedBars[bar] 
+    this.selectedBars[bar] = !this.selectedBars[bar]
     this.uiService.swapClass(event.target, "mini-nav-btn-selected", "mini-nav-btn")
   }
 
   onPartClicked(part: number, event: Event) {
-    this.selectedParts[part] = !this.selectedParts[part] 
+    this.selectedParts[part] = !this.selectedParts[part]
     this.uiService.swapClass(event.target, "mini-nav-btn-selected", "mini-nav-btn")
   }
 
@@ -194,9 +229,16 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       if (element != undefined)
         this .uiService.removeClass(element, "-selected")
     })
-    
+
     this.selectedNote = note
     this.uiService.swapClass(event.target, "mini-nav-btn-selected", "mini-nav-btn")
   }
 
+  getNote(value: number) : string {
+    return this.uiService.getNoteForValue(value)
+  }
+
+  getTicksAsStrings() : string[] {
+    return this.ticks.map(String)
+  }
 }

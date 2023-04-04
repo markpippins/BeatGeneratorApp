@@ -96,8 +96,8 @@ public class Ticker implements Serializable {
     private Float tempoInBPM = Constants.DEFAULT_BPM;
     private Integer loopCount = Constants.DEFAULT_LOOP_COUNT;
     private Integer parts = Constants.DEFAULT_PART_COUNT;
-    private Integer baseNoteOffset = 0;
-
+    private Double noteOffset = 0.0;
+    
     @Transient
     private boolean paused = false;
 

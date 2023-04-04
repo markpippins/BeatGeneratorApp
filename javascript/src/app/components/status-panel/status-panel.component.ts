@@ -4,6 +4,7 @@ import {Ticker} from "../../models/ticker";
 import { Constants } from 'src/app/models/constants';
 import { UiService } from 'src/app/services/ui.service';
 import { Listener } from 'src/app/models/listener';
+import { TickerUpdateType } from 'src/app/models/ticker-update-type';
 
 @Component({
   selector: 'app-status-panel',
@@ -74,7 +75,7 @@ export class StatusPanelComponent implements OnInit, Listener {
             this.waiting = false
           })
         }
-        await this.midiService.delay(this.connected && this.ticker != undefined && this.ticker.playing ? 100 : 1000);
+        await this.midiService.delay(this.ticker?.playing ? 50 : 250);
         this.waiting = false
 
         this.updateDisplay();
@@ -104,32 +105,32 @@ export class StatusPanelComponent implements OnInit, Listener {
   }
 
   onTempoChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.BPM, event.target.value).subscribe(data =>  this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Tempo changed', 0))
+    this.midiService.updateTicker(this.ticker.id, TickerUpdateType.BPM, event.target.value).subscribe(data =>  this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Tempo changed', 0))
     this.tempoChangeEvent.emit(event.target.value)
   }
 
   onBeatsPerBarChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.BEATS_PER_BAR, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'BPM changed', 0))
-    this.tempoChangeEvent.emit(event.target.value)    
+    this.midiService.updateTicker(this.ticker.id, TickerUpdateType.BEATS_PER_BAR, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'BPM changed', 0))
+    this.tempoChangeEvent.emit(event.target.value)
   }
 
   onBarsChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.BARS, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Bars changed', 0))
+    this.midiService.updateTicker(this.ticker.id, TickerUpdateType.BARS, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Bars changed', 0))
     this.tempoChangeEvent.emit(event.target.value)
   }
 
   onPartsChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.PARTS, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Parts changed', 0))
+    this.midiService.updateTicker(this.ticker.id, TickerUpdateType.PARTS, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Parts changed', 0))
     this.tempoChangeEvent.emit(event.target.value)
   }
 
   onPartLengthChange(event: { target: any; }) {
-    this.midiService.updateTicker(this.ticker.id, Constants.PART_LENGTH, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Part Length changed', 0))
+    this.midiService.updateTicker(this.ticker.id, TickerUpdateType.PART_LENGTH, event.target.value).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Part Length changed', 0))
     this.tempoChangeEvent.emit(event.target.value)
   }
 
   onPPQSelectionChange(data: any) {
-    this.midiService.updateTicker(this.ticker.id, Constants.PPQ, this.ppqs[this.ppqSelectionIndex]).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'PPQ changed', 0))
+    this.midiService.updateTicker(this.ticker.id, TickerUpdateType.PPQ, this.ppqs[this.ppqSelectionIndex]).subscribe(data => this.uiService.notifyAll(Constants.TICKER_UPDATED, 'PPQ changed', 0))
     this.ppqChangeEvent.emit(this.ppqs[this.ppqSelectionIndex])
   }
 

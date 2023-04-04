@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Listener } from 'src/app/models/listener';
 import { UiService } from 'src/app/services/ui.service';
 
@@ -7,7 +7,7 @@ import { UiService } from 'src/app/services/ui.service';
   templateUrl: './button-panel.component.html',
   styleUrls: ['./button-panel.component.css'],
 })
-export class ButtonPanelComponent implements Listener, OnInit {
+export class ButtonPanelComponent implements Listener, OnInit, AfterViewInit, AfterViewChecked {
 
   @Output()
   buttonClickedEvent = new EventEmitter<string>()
@@ -22,63 +22,74 @@ export class ButtonPanelComponent implements Listener, OnInit {
   messageType = -1;
 
   @Input()
-  window = 16;
+  colCount = 16;
 
   @Input()
-  symbols: string[] = [];
+  symbols!: string[]
 
-  position = this.window;
+  position = this.colCount;
   range: string[] = [];
   overage: string[] = [];
   selections: boolean[] = [];
 
+  symbolCount = 0
+
   constructor(private uiService: UiService) {
     uiService.addListener(this);
   }
+  ngAfterViewChecked(): void {
+    if (this.symbolCount != this.symbols.length)
+      this.updateDisplay();
+
+    this.symbolCount = this.symbols.length
+  }
+  ngAfterViewInit(): void {
+  }
+
   ngOnInit(): void {
-    this.updateDisplay();
   }
 
   onNotify(messageType: number, message: string, messageValue: number) {
-    if (messageType = this.messageType)
-      this.updateDisplay()
   }
 
   updateDisplay() {
-    // this.midiService.symbolserInfo().subscribe(symbols => {
-    this.position = this.window;
-    this.symbols = [];
+    this.position = this.colCount;
     this.selections = [];
-
     this.range = [];
+
+    this.symbols.forEach(s => {
+      if (this.selections.length < this.symbols.length)
+        this.selections.push(false);
+        if (this.range.length < this.colCount)
+        this.range.push(s);
+    })
+
     this.overage = [];
-
-    for (let index = 0; index < this.symbols.length; index++) {
-      // this.symbols.push(this.symbols[index]);
-      this.selections.push(false);
-      if (this.range.length < this.window) this.range.push(this.symbols[index]);
-    }
-
-    while (this.range.length + this.overage.length < this.window)
+    while (this.range.length + this.overage.length < this.colCount)
       this.overage.push('');
   }
 
   onForwardClicked() {
-    if (this.range[this.window - 1] == this.symbols[this.symbols.length - 1])
-      return;
+    if (this.range[this.colCount - 1] == this.symbols[this.symbols.length - 1])
+      return
 
-    if (this.position >= this.symbols.length) return;
+    if (this.position >= this.symbols.length)
+      return
 
-    this.range = [];
-    this.overage = [];
+    this.range = []
+    this.overage = []
 
-    while (this.range.length < this.window) {
-      if (this.position == this.symbols.length) break;
-      else this.range.push(this.symbols[this.position++]);
+    // this.ticksPosition += this.colCount
+    while (this.range.length < this.colCount) {
+      if (this.position == this.symbols.length)
+        break
+      else this.range.push(this.symbols[this.position++])
     }
 
-    while (this.range.length + this.overage.length < this.window)
-      this.overage.push('-');
+    while (this.range.length + this.overage.length < this.colCount)
+      this.overage.push('')
+
+    // this.updateSelections()
   }
 
   onBackClicked() {
@@ -86,19 +97,19 @@ export class ButtonPanelComponent implements Listener, OnInit {
 
     this.range = [];
     this.overage = [];
-    this.position -= this.window * 2;
+    this.position -= this.colCount * 2;
     if (this.position < 0) this.position = 0;
 
     while (
       this.position < this.symbols.length &&
-      this.overage.length + this.range.length < this.window
+      this.overage.length + this.range.length < this.colCount
     ) {
       while (this.position == this.symbols.length)
         this.overage.push('-');
       this.range.push(this.symbols[this.position++]);
     }
 
-    while (this.range.length + this.overage.length < this.window)
+    while (this.range.length + this.overage.length < this.colCount)
       this.overage.push('');
     // this.uiService. mini-symbols-btn-{{symbols}}
   }

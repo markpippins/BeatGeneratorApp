@@ -24,7 +24,7 @@ export class MidinInstrumentComboComponent  implements OnInit {
   selectedInstrumentId !: number
 
   @Input()
-  identifier!: number
+  identifier!: string
 
 
   constructor(private midiService: MidiService, private uiService: UiService) {}

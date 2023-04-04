@@ -133,7 +133,7 @@ public class TickerService {
                 getTicker().getPartCycler().reset();
                 break;
 
-            case TickerUpdateType.BASE_NOTE_OFFSET: ticker.setBaseNoteOffset((int) updateValue);
+            case TickerUpdateType.BASE_NOTE_OFFSET: ticker.setNoteOffset((double) updateValue);
                 break;
 
                 case TickerUpdateType.BARS: ticker.setBars((int) updateValue);

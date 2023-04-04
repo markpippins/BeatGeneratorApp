@@ -20,10 +20,12 @@ export interface Player {
   swing: number
   level: number
   active: boolean
-  ratchetCount: number
-  ratchetInterval: number
   skips: number
   subDivisions: number
   beatFraction: number
   randomDegree: number
+  ratchetCount: number
+  ratchetInterval: number
+  fadeIn: number
+  fadeOut: number
 }

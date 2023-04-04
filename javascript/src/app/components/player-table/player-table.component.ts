@@ -7,6 +7,7 @@ import { UiService } from 'src/app/services/ui.service';
 import { Constants } from 'src/app/models/constants';
 import { Listener } from 'src/app/models/listener';
 import { MidiMessage } from 'src/app/models/midi-message';
+import { PlayerUpdateType } from 'src/app/models/player-update-type';
 
 @Component({
   selector: 'app-player-table',
@@ -90,7 +91,7 @@ export class PlayerTableComponent implements Listener, OnInit {
           // this.players.filter(player => player.id == this.selectedPlayer?.id).forEach(p => p.muted = !p.muted)
           let index = this.players.indexOf(this.selectedPlayer);
           this.players[index].muted = !this.players[index].muted
-          this.midiService.updatePlayer(this.selectedPlayer?.id, Constants.MUTE, this.selectedPlayer.muted ? 1 : 0).subscribe(data => this.players[index] = data)
+          this.midiService.updatePlayer(this.selectedPlayer?.id, PlayerUpdateType.MUTE, this.selectedPlayer.muted ? 1 : 0).subscribe(data => this.players[index] = data)
         }
         break
       }
@@ -131,71 +132,81 @@ export class PlayerTableComponent implements Listener, OnInit {
       beatFraction: 0,
       subDivisions: 0,
       playerClass: '',
-      randomDegree: 0
+      randomDegree: 0,
+      fadeIn: 0,
+      fadeOut: 0
     }, 'add')
   }
 
   onInstrumentSelected(instrument: Instrument, player: Player) {
     player.instrumentId = instrument.id
-    this.midiService.updatePlayer(player.id, Constants.INSTRUMENT, instrument.id).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.INSTRUMENT, instrument.id).subscribe()
   }
 
   onNoteChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.NOTE, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.NOTE, event.target.value).subscribe()
   }
 
   onPartChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.PART, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.PART, event.target.value).subscribe()
   }
 
   onPresetChange(player: Player, event: { target: any; }) {
     this.players.filter(p => p.instrumentId == player.instrumentId )
-      .forEach(p => this.midiService.updatePlayer(p.id, Constants.PRESET, event.target.value).subscribe())
+      .forEach(p => this.midiService.updatePlayer(p.id, PlayerUpdateType.PRESET, event.target.value).subscribe())
     this.uiService.notifyAll(Constants.PLAYER_UPDATED, "Player updated", 0)
   }
 
-  // onLevelChange(player: Player, event: { target: any; }) {
-  //   this.midiService.updatePlayer(player.id, Constants.LEVEL, event.target.value).subscribe()
-  // }
+  onLevelChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.LEVEL, event.target.value).subscribe()
+  }
 
   onMinVelocityChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.MIN_VELOCITY, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.MIN_VELOCITY, event.target.value).subscribe()
   }
 
   onMaxVelocityChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.MAX_VELOCITY, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.MAX_VELOCITY, event.target.value).subscribe()
   }
 
   onRatchetCountChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.RATCHET_COUNT, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.RATCHET_COUNT, event.target.value).subscribe()
   }
 
   onRatchetIntervalChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.RATCHET_INTERVAL, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.RATCHET_INTERVAL, event.target.value).subscribe()
+  }
+
+  onFadeInChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.FADE_IN, event.target.value).subscribe()
+  }
+
+  onFadeOutChange(player: Player, event: { target: any; }) {
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.FADE_OUT, event.target.value).subscribe()
   }
 
   onProbabilityChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.PROBABILITY, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.PROBABILITY, event.target.value).subscribe()
   }
 
   onSwingChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.SWING, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.SWING, event.target.value).subscribe()
   }
 
   onBeatFractionChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.BEAT_FRACTION, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.BEAT_FRACTION, event.target.value).subscribe()
   }
 
   onRandomDegreeChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.RANDOM_DEGREE, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.RANDOM_DEGREE, event.target.value).subscribe()
   }
 
   onSkipsChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.SKIPS, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.SKIPS, event.target.value).subscribe()
   }
 
   onSubsChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.SUBDIVISIONS, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.SUBDIVISIONS, event.target.value).subscribe()
   }
 
   onPass(player: Player, $event: MouseEvent) {

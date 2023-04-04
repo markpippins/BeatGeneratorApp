@@ -53,7 +53,7 @@
         <input type="number" min="0" max="100" step="1" value="{{ pattern.id }}">
       </td>
       <td>
-        <app-midin-instrument-combo [instruments]="instruments" [identifier]="pattern.id" (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
+        <app-midin-instrument-combo [instruments]="instruments" [identifier]="identifier" (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
       </td>
       <td>
         <input class="xox-step-input" type="number" min="1" (change)="onChannelChange($event)" [(ngModel)]="pattern.channel">

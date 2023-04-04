@@ -76,39 +76,6 @@ p {
   opacity: 0.8;
 }
 
-body {
-  /*background-color: #a3d8ec;*/
-  height: 99%;
-  /* background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80'); */
-
-  /* background-image: url('https://www.red-dot.org/fileadmin/_processed_/9/1/csm_IV1235044-1_568e92817c.jpg'); */
-  /* background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg'); */
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-color: rgb(68, 67, 67);
-  /* background-color: #353637; */
-  /* background-image: linear-gradient(to left, #f46864, #003954); */
-  /* background-image: linear-gradient(to left, #e89105, #2c0ad7); */
-  /*border-style: dashed;*/
-  /*border-width: thin;*/
-  display: flex;
-  flex-direction: column;
-
-}
-
-.footer {
-  display: flex;
-  height: 5%;
-  margin: auto auto auto;
-  /*padding: 0 16px;*/
-  /*max-width: 960px;*/
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-  color: white;
-  /*border-style: dashed;*/
-  /*border-width: thin;*/
-}
 
 .status-bar {
   display: flow;
@@ -126,12 +93,32 @@ body {
   /* background-color: #a9a9a9; */
 }
 
+body {
+  /*background-color: #a3d8ec;*/
+  height: 97%;
+  /* background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80'); */
 
-.content {
+  /* background-image: url('https://www.red-dot.org/fileadmin/_processed_/9/1/csm_IV1235044-1_568e92817c.jpg'); */
+  /* background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg'); */
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-color: rgb(68, 67, 67);
+  /* background-color: #353637; */
+  /* background-image: linear-gradient(to left, #f46864, #003954); */
+  /* background-image: linear-gradient(to left, #e89105, #2c0ad7); */
+  /*border-style: dashed;*/
+  /*border-width: thin;*/
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  border-color: white;
+}
+
+.content {
+  /* display: flex; */
+  /* flex-direction: column; */
   /* height: 100%; */
-  margin: auto auto auto;
+  /* margin:  auto auto auto auto; */
   /*padding: 0 16px;*/
   max-width: 960px;
   align-items: stretch;
@@ -141,6 +128,21 @@ body {
   font-size: small;
   border-style: dashed;
   border-width: thin;
+  border-color: #125699;
+}
+
+.footer {
+  display: flex;
+  height: 5%;
+  margin: auto auto auto;
+  /*padding: 0 16px;*/
+  /*max-width: 960px;*/
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  color: white;
+  /*border-style: dashed;*/
+  /*border-width: thin;*/
 }
 
 svg.material-icons {
@@ -806,13 +808,13 @@ th {
 }
 
 .inactive {
-  background-color: #ed0114;
-  border-radius: 25px;
+  background-color: inherited;
+  /* border-radius: 25px; */
 }
 
 .active {
-  background-color: lime;
-  border-radius: 25px;
+  background-color: #125699;
+  /* border-radius: 25px; */
 }
 
 .neutral {
@@ -1047,7 +1049,7 @@ th {
   grid-template-columns: auto auto auto auto auto auto auto;
 }
 
-.mini-nav-btn {
+.mini-nav-btn, .mini-overflow-btn {
   padding: 2px;
   height: 20px;
   width: 20px;
@@ -1055,6 +1057,11 @@ th {
   color: black;
   font-weight: normal;
   font-size: smaller;
+}
+
+.mini-overflow-btn {
+  background-color: wheat;
+  border-style: none;
 }
 
 .mini-nav-btn-excluded {
@@ -1072,7 +1079,8 @@ th {
   height: 20px;
   width: 20px;
   margin: 1px;
-  color: red;
+  color: white;
+  background-color: green;
   border-style: inset;
   font-weight: bolder;
   font-size: smaller;

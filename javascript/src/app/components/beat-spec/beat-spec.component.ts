@@ -3,6 +3,7 @@ import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
 import { Listener } from 'src/app/models/listener';
 import { Pattern } from 'src/app/models/pattern';
+import { PatternUpdateType } from 'src/app/models/pattern-update-type';
 import { Song } from 'src/app/models/song';
 import { UiService } from 'src/app/services/ui.service';
 import {Step} from "../../models/step";
@@ -52,7 +53,7 @@ export class BeatSpecComponent implements OnInit, Listener {
 
   onInstrumentSelected(instrument: Instrument, pattern: Pattern) {
 
-    this.midiService.updatePattern(pattern.id, Constants.INSTRUMENT, instrument.channel)
+    this.midiService.updatePattern(pattern.id, PatternUpdateType.INSTRUMENT, instrument.channel)
       .subscribe(data => this.song.patterns[pattern.position] = data)
   }
 

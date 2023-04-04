@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import javax.sound.midi.*;
 
 import static com.angrysurfer.midi.util.PlayerUpdateType.*;
+import static com.angrysurfer.midi.util.RuleUpdateType.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -127,25 +128,25 @@ public class PlayerService {
         getPlayers().add(player);
 
         int part = rand.nextInt(getTickerService().getTicker().getParts());
-        if (rand.nextBoolean())
-            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, 1.0, part)));
-        else
-            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, rand.nextDouble(1, 
-            getTickerService().getTicker().getTicksPerBeat()), part)));
+        // if (rand.nextBoolean())
+        player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, 1.0, part)));
+        // else
+        //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, rand.nextDouble(1, 
+        //     getTickerService().getTicker().getTicksPerBeat()), part)));
 
-        if (rand.nextBoolean())
-            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BEAT, Comparison.EQUALS, rand.nextDouble(1, 
-            getTickerService().getTicker().getBeatsPerBar()), part)));
-        else
-            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BEAT, Comparison.MODULO, rand.nextDouble(1, 
-            getTickerService().getTicker().getBeatsPerBar()), part)));
+        // if (rand.nextBoolean())
+        //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BEAT, Comparison.EQUALS, rand.nextDouble(1, 
+        //     getTickerService().getTicker().getBeatsPerBar()), part)));
+        // else
+        //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BEAT, Comparison.MODULO, rand.nextDouble(1, 
+        //     getTickerService().getTicker().getBeatsPerBar()), part)));
         
-        if (rand.nextBoolean())
-            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR, Comparison.EQUALS, rand.nextDouble(1, 
-            getTickerService().getTicker().getBars()), part)));
-        else
-            player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR, Comparison.MODULO, rand.nextDouble(1, 
-            getTickerService().getTicker().getBars()), part)));
+        // if (rand.nextBoolean())
+        //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR, Comparison.EQUALS, rand.nextDouble(1, 
+        //     getTickerService().getTicker().getBars()), part)));
+        // else
+        //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR, Comparison.MODULO, rand.nextDouble(1, 
+        //     getTickerService().getTicker().getBars()), part)));
 
             // player.setMuted(true);
         return player;
@@ -230,14 +231,12 @@ public class PlayerService {
             }
 
             case RATCHET_COUNT -> {
-                if (player instanceof Strike)
-                    ((Strike) player).setRatchetCount(updateValue);
+                player.setRatchetCount(updateValue);
                 break;
             }
 
             case RATCHET_INTERVAL -> {
-                if (player instanceof Strike)
-                    ((Strike) player).setRatchetInterval(updateValue);
+                player.setRatchetInterval(updateValue);
                 break;
             }
 
@@ -295,24 +294,51 @@ public class PlayerService {
         return player;
     }
 
-    public void updateRule(Long playerId,
-            Long ruleId,
-            int operatorId,
-            int comparisonId,
-            double newValue,
-            int part) {
+    public Rule updateRule(Long ruleId, int updateType, long updateValue) {
 
-        Player player = getTickerService().getTicker().getPlayer(playerId);
+        Optional<Rule> opt = getPlayers().stream().flatMap(p -> p.getRules().stream()).filter(r -> r.getId() == updateValue).findAny();
+        Rule rule = null;
+        if (opt.isPresent()) {
+            rule = opt.get();
+            switch (updateType) {
+                case OPERATOR -> {
+                    rule.setOperatorId((int) updateValue);
+                    break;
+                }
+                case COMPARISON -> {
+                    rule.setComparisonId((int) updateValue);
+                    break;
+                }
+                case VALUE -> {
+                    rule.setValue((double) updateValue);
+                    break;
+                }
+            }
 
-        Rule rule = player.getRule(ruleId);
-        rule.setOperatorId(operatorId);
-        rule.setComparisonId(comparisonId);
-        rule.setValue(newValue);
-        rule.setPart(part);
+            getRuleRepository().save(rule);
+        }
 
-        getRuleRepository().save(rule);
-
+        return rule;
     }
+
+    // public void updateRule(Long playerId,
+    //         Long ruleId,
+    //         int operatorId,
+    //         int comparisonId,
+    //         double newValue,
+    //         int part) {
+
+    //     Player player = getTickerService().getTicker().getPlayer(playerId);
+
+    //     Rule rule = player.getRule(ruleId);
+    //     rule.setOperatorId(operatorId);
+    //     rule.setComparisonId(comparisonId);
+    //     rule.setValue(newValue);
+    //     rule.setPart(part);
+
+    //     getRuleRepository().save(rule);
+
+    // }
 
     public Set<Player> removePlayer(Long playerId) {
         Player player = getTickerService().getTicker().getPlayer(playerId);

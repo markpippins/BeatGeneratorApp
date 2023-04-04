@@ -6,6 +6,8 @@ import com.angrysurfer.midi.util.Constants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
@@ -40,15 +42,21 @@ public class RuleController {
         service.removeRule(playerId, ruleId);
     }
 
+    // @GetMapping(Constants.UPDATE_RULE)
+    // public void updateRule(@RequestParam Long playerId,
+    //                        @RequestParam Long ruleId,
+    //                        @RequestParam int operatorId,
+    //                        @RequestParam int comparisonId,
+    //                        @RequestParam String newValue,
+    //                        @RequestParam int part) {
+    //     logger.info(Constants.UPDATE_RULE);
+    //     service.updateRule(playerId, ruleId, operatorId, comparisonId, Double.parseDouble(newValue), part);
+    // }
+
     @GetMapping(Constants.UPDATE_RULE)
-    public void updateRule(@RequestParam Long playerId,
-                           @RequestParam Long ruleId,
-                           @RequestParam int operatorId,
-                           @RequestParam int comparisonId,
-                           @RequestParam String newValue,
-                           @RequestParam int part) {
+    public ResponseEntity<Rule> updateRule(@RequestParam Long ruleId, @RequestParam int updateType, @RequestParam int updateValue) {
         logger.info(Constants.UPDATE_RULE);
-        service.updateRule(playerId, ruleId, operatorId, comparisonId, Double.parseDouble(newValue), part);
+        return new ResponseEntity<Rule>(service.updateRule(ruleId, updateType, updateValue), HttpStatus.OK);
     }
 }
 

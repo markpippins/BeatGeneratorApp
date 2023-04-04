@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import jakarta.persistence.*;
 
 import java.util.*;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 @Getter
@@ -30,9 +29,6 @@ public class Strike extends Player {
     public static List<Integer> kickParams = List.of(1, 2, 3, 4, 12, 13, 14, 15);
     public static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
 
-    private Long ratchetCount = 0L;
-    
-    private Long ratchetInterval = 0L;
 
     public Strike() {
         setNote(KICK);    
@@ -74,7 +70,8 @@ public class Strike extends Player {
             if (getSkipCycler().getLength() == 0 || getSkipCycler().atEnd()) {
                 // else handleSwing();
                 handleRachets();
-                drumNoteOn(getNote(), rand.nextLong(getMinVelocity(), getMaxVelocity()));
+                long velocity = (long) ((getLevel() * 0.01) * rand.nextLong(getMinVelocity(), getMaxVelocity()));
+                drumNoteOn(getNote(), velocity);
             }
     
             // getSkipCycler().advance();

@@ -227,10 +227,52 @@ public class PlayerServiceTests {
     }
 
     @Test
+    public void whenPlayerFadeInUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.FADE_IN, 50);
+        assertTrue(player.getFadeIn() == 50); 
+    }
+
+    @Test
+    public void whenPlayerFadeOutUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.FADE_OUT, 50);
+        assertTrue(player.getFadeOut() == 50); 
+    }
+
+    @Test
+    public void whenPlayerBeatFractionUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.BEAT_FRACTION, 50);
+        assertTrue(player.getBeatFraction() == 50); 
+    }
+
+    @Test
+    public void whenRandomDegreeUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.RANDOM_DEGREE, 50);
+        assertTrue(player.getRandomDegree() == 50); 
+    }
+
+    @Test
+    public void whenPlayerRatchetCountUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.RATCHET_COUNT, 50);
+        assertTrue(player.getRatchetCount() == 50); 
+    }
+
+    @Test
+    public void whenPlayerRatchetIntervalUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.RATCHET_INTERVAL, 50);
+        assertTrue(player.getRatchetInterval() == 50); 
+    }
+
+    @Test
     public void whenPlayerNoteUpdated_thenPlayerUpdatedWithNewValues() {
         Player player = playerService.addPlayer(RAZ);
         playerService.updatePlayer(player.getId(), PlayerUpdateType.NOTE, 50);
-        assertTrue(player.getNote() == 50); 
+        assertTrue(50L == player.getNote()); 
     }
 
     @Test
@@ -246,13 +288,19 @@ public class PlayerServiceTests {
         playerService.updatePlayer(player.getId(), PlayerUpdateType.MUTE, 0);
         assertFalse(player.isMuted()); 
     }
-    
 
     @Test
     public void whenPlayerProbabilityUpdated_thenPlayerUpdatedWithNewValues() {
         Player player = playerService.addPlayer(RAZ);
         playerService.updatePlayer(player.getId(), PlayerUpdateType.PROBABILITY, 50);
         assertTrue(player.getProbability() == 50); 
+    }
+
+    @Test
+    public void whenPlayerLevelUpdated_thenPlayerUpdatedWithNewValues() {
+        Player player = playerService.addPlayer(RAZ);
+        playerService.updatePlayer(player.getId(), PlayerUpdateType.LEVEL, 50);
+        assertTrue(player.getLevel() == 50); 
     }
 
     @Test

@@ -42,7 +42,9 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Long preset = 1L;
     private Long probability = 100L;
     private Long randomDegree = 0L;
-
+    private Long ratchetCount = 0L;
+    private Long ratchetInterval = 0L;
+    
     @JsonIgnore
     @Transient
     private Cycler skipCycler = new Cycler(0);
@@ -75,6 +77,10 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Long subDivisions = 4L;
 
     private Long beatFraction = 1L;
+
+    private Long fadeOut = 0L;
+
+    private Long fadeIn = 0L;
 
     @Transient   
     private Set<Rule> rules = new HashSet<>();
@@ -122,7 +128,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         if (result < getInstrument().getLowestNote())
             result = getInstrument().getHighestNote() - rand.nextLong(randomDegree);
 
-        return result + getTicker().getBaseNoteOffset();
+        return (long) (result + getTicker().getNoteOffset());
     }
 
     public String getPlayerClass() {
