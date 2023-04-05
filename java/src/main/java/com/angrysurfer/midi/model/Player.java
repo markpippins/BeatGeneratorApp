@@ -48,7 +48,9 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Long internalBeats;
     private Boolean useInternalBeats = false;
     private Boolean useInternalBars = false;
-    
+    private Long panPosition = 63L;
+    private Boolean preserveOnPurge = false;
+    private Set<Long> tickRange = new HashSet<>();
     @JsonIgnore
     @Transient
     private Cycler skipCycler = new Cycler(0);
@@ -240,52 +242,52 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         AtomicBoolean play = new AtomicBoolean(applicable.size() > 0);
         
         applicable.forEach(rule -> {
-                switch (rule.getOperatorId()) {
+                switch (rule.getOperator()) {
                     case Operator.TICK -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getTick(), rule.getValue()))
+                        if (!Comparison.evaluate(rule.getComparison(), getTicker().getTick(), rule.getValue()))
                             play.set(false);
                     }
                     
                     case Operator.BEAT -> { 
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat(), rule.getValue())) 
+                        if (!Comparison.evaluate(rule.getComparison(), getTicker().getBeat(), rule.getValue())) 
                                 play.set(false);
                     }
 
                     case Operator.BEAT_DURATION -> { 
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeat(), rule.getValue())) 
+                        if (!Comparison.evaluate(rule.getComparison(), getTicker().getBeat(), rule.getValue())) 
                                 play.set(false);
                     }
 
                     case Operator.BAR -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBar(), rule.getValue()))
+                        if (!Comparison.evaluate(rule.getComparison(), getTicker().getBar(), rule.getValue()))
                             play.set(false);
                     }
                     
                     case Operator.PART -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getPart(), rule.getValue()))
+                        if (!Comparison.evaluate(rule.getComparison(), getTicker().getPart(), rule.getValue()))
                             play.set(false);
                     }
                     
                     case Operator.TICK_COUNT -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getTickCounter().get(), 
+                        if (!Comparison.evaluate(rule.getComparison(), getTicker().getTickCounter().get(), 
                             rule.getValue()))
                                 play.set(false);
                     }
 
                     case Operator.BEAT_COUNT -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBeatCounter().get(), 
+                        if (!Comparison.evaluate(rule.getComparison(), getTicker().getBeatCounter().get(), 
                             rule.getValue()))
                                 play.set(false);
                     }
 
                     case Operator.BAR_COUNT -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getBarCounter().get(), 
+                        if (!Comparison.evaluate(rule.getComparison(), getTicker().getBarCounter().get(), 
                             rule.getValue()))
                                 play.set(false);
                     }
 
                     case Operator.PART_COUNT -> {
-                        if (!Comparison.evaluate(rule.getComparisonId(), getTicker().getPartCounter().get(), 
+                        if (!Comparison.evaluate(rule.getComparison(), getTicker().getPartCounter().get(), 
                             rule.getValue()))
                                 play.set(false);
                     }
