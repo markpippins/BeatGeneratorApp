@@ -97,13 +97,13 @@ public class PlayerServiceTests {
     public void whenMultipleRulesAdded_thenPlayerShouldContainThem() {
         Player player = playerService.addPlayer(RAZ);
         Rule r1 = playerService.addRule(player.getId());
-        r1.setComparisonId(Comparison.EQUALS);
+        r1.setComparison(Comparison.EQUALS);
 
         Rule r2 = playerService.addRule(player.getId());
-        r2.setComparisonId(Comparison.GREATER_THAN);
+        r2.setComparison(Comparison.GREATER_THAN);
         
         Rule r3 = playerService.addRule(player.getId());
-        r3.setComparisonId(Comparison.LESS_THAN);
+        r3.setComparison(Comparison.LESS_THAN);
         
         Player tickerPlayer = tickerService.getTicker().getPlayer(player.getId());
         assertEquals(3, tickerPlayer.getRules().size());
@@ -159,11 +159,11 @@ public class PlayerServiceTests {
 
         assertTrue(player.getRules().size() > 0);
         Rule rule = player.getRules().stream().toList().get(0);
-        int value = rule.getOperatorId() + 1;
+        int value = rule.getOperator() + 1;
 
         playerService.updateRule(rule.getId(), RuleUpdateType.OPERATOR, value);
 
-        assertTrue(player.getRules().stream().toList().get(0).getOperatorId().equals(value));
+        assertTrue(player.getRules().stream().toList().get(0).getOperator().equals(value));
     }
 
     @Test
@@ -186,10 +186,10 @@ public class PlayerServiceTests {
 
         assertTrue(player.getRules().size() > 0);
         Rule rule = player.getRules().stream().toList().get(0);
-        int value = rule.getComparisonId() + 1;
+        int value = rule.getComparison() + 1;
 
         playerService.updateRule(rule.getId(), RuleUpdateType.COMPARISON, value);
-        assertTrue(player.getRules().stream().toList().get(0).getComparisonId().equals(value));
+        assertTrue(player.getRules().stream().toList().get(0).getComparison().equals(value));
     }
 
     @Test

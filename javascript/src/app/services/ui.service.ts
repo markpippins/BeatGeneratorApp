@@ -38,6 +38,10 @@ export class UiService {
   }
 
 
+  hasClass(el: any, classNameA: string) {
+    return (el.className.indexOf(classNameA) >= 0)
+  }
+
   swapClass(el: any, classNameA: string, classNameB: string) {
     if (el.className.indexOf(classNameA) >= 0) {
       el.className = el.className.replace(classNameA, classNameB);

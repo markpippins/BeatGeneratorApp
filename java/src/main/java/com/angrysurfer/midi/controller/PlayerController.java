@@ -42,6 +42,12 @@ public class PlayerController {
         return new ResponseEntity<Player>(service.addPlayer(instrument), HttpStatus.OK);
     }
 
+    @GetMapping(Constants.ADD_PLAYER_FOR_NOTE)
+    public ResponseEntity<Player> addPlayer(@RequestParam String instrument, @RequestParam Long note) {
+        logger.info(Constants.ADD_PLAYER_FOR_NOTE);
+        return new ResponseEntity<Player>(service.addPlayer(instrument, note), HttpStatus.OK);
+    }
+
     @GetMapping(Constants.REMOVE_PLAYER)
     public Set<Player> removePlayer(@RequestParam Long playerId) {
         logger.info(Constants.REMOVE_PLAYER);

@@ -10,6 +10,8 @@ public interface Comparison {
 
     static int MODULO = 3;
 
+    static int NOT_EQUAL_TO = 4;
+
     public static boolean evaluate(int comparisonType, Long a, Double b) {
         return evaluate(comparisonType, Double.valueOf(a), b);
     }

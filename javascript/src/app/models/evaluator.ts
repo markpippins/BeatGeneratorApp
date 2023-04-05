@@ -1,6 +1,6 @@
 export interface Evaluator {
   id: number;
-  operatorId: number;
-  comparisonId: number;
+  operator: number;
+  comparison: number;
   value: number;
 }

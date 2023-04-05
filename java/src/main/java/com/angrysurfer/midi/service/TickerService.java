@@ -180,9 +180,9 @@ public class TickerService {
         return getTicker();
     }
 
-    public void clearPlayers() {
-        getTicker().getPlayers().clear();
-    }
+    // public void clearPlayers() {
+    //     getTicker().getPlayers().clear();
+    // }
 
     public Ticker loadTicker(long tickerId) {
         getTickerRepo().findById(tickerId).ifPresent(this::setTicker);

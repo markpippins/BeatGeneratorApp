@@ -36,6 +36,7 @@ public class Constants {
     public static final String CLEAR_PLAYERS =  "/players/clear";
 
     public static final String ADD_PLAYER = "/players/add";
+    public static final String ADD_PLAYER_FOR_NOTE = "/players/note";
     public static final String REMOVE_PLAYER = "/players/remove";
 	public static final String UPDATE_PLAYER ="/player/update";
 	public static final String MUTE_PLAYER = "/players/mute";
@@ -72,6 +73,7 @@ public class Constants {
     public static final String ADD_RULE = "/rules/add";
     public static final String REMOVE_RULE = "/rules/remove";
 	public static final String UPDATE_RULE = "/rule/update";
+    public static final String SPECIFY_RULE = "/rules/specify";
 
     public static final String GET_INSTRUMENT_BY_CHANNEL = "/midi/instrument";
     public static final String GET_INSTRUMENT_BY_ID = "/instrument";

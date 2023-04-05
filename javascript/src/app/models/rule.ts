@@ -1,7 +1,7 @@
 export interface Rule {
   id: number;
-  operatorId: number;
-  comparisonId: number;
+  operator: number;
+  comparison: number;
   value: number;
 
   part: number

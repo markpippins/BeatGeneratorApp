@@ -17,7 +17,7 @@
     </td>
     <td>
       <form>
-        <select id="operatorSelect-{{rule.id}}" [value]="OPERATOR[rule.operatorId]"
+        <select id="operatorSelect-{{rule.id}}" [value]="OPERATOR[rule.operator]"
                 (change)="onOperatorChange(rule, $event)">
           <option *ngFor="let opt of OPERATOR" [value]="opt">{{opt}}</option>
         </select>
@@ -25,7 +25,7 @@
     </td>
     <td>
       <form>
-        <select id="comparisonSelect-{{rule.id}}" [value]="COMPARISON[rule.comparisonId]"
+        <select id="comparisonSelect-{{rule.id}}" [value]="COMPARISON[rule.comparison]"
                 (change)="onComparisonChange(rule, $event)">
           <option *ngFor="let opt of COMPARISON" [value]="opt">{{opt}}</option>
         </select>

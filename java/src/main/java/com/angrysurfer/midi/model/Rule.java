@@ -20,8 +20,8 @@ public class Rule implements Serializable {
     private Long id;
 
     private Long playerId;
-    private Integer operatorId;
-    private Integer comparisonId;
+    private Integer operator;
+    private Integer comparison;
     private Double value;
     private Integer part = 0;
 
@@ -36,17 +36,17 @@ public class Rule implements Serializable {
 
     }
 
-    public Rule(int operatorId, int comparisonId, Double value, int part) {
-        setOperatorId(operatorId);
-        setComparisonId(comparisonId);
+    public Rule(int operator, int comparison, Double value, int part) {
+        setOperator(operator);
+        setComparison(comparison);
         setValue(value);
         setPart(part);
     }
 
-    public Rule(Player player, int operatorId, int comparisonId, Double value, int part) {
+    public Rule(Player player, int operator, int comparison, Double value, int part) {
         setPlayer(player);
-        setOperatorId(operatorId);
-        setComparisonId(comparisonId);
+        setOperator(operator);
+        setComparison(comparison);
         setValue(value);
         setPart(part);
     }
@@ -61,7 +61,7 @@ public class Rule implements Serializable {
 
     public boolean isEqualTo(Rule rule) {
         return (getValue().equals(rule.getValue()) &&
-            (this.getComparisonId() == rule.getComparisonId()) && 
-            (this.getOperatorId() == rule.getOperatorId()));
+            (this.getComparison() == rule.getComparison()) && 
+            (this.getOperator() == rule.getOperator()));
     }
 }

@@ -1,5 +1,6 @@
 import {
   AfterContentChecked,
+  AfterContentInit,
   AfterViewChecked,
   AfterViewInit,
   Component,
@@ -17,10 +18,13 @@ import { UiService } from 'src/app/services/ui.service';
   styleUrls: ['./button-panel.component.css'],
 })
 export class ButtonPanelComponent
-  implements Listener, AfterViewChecked, AfterContentChecked
+  implements Listener, AfterContentInit, AfterContentChecked, AfterViewInit, AfterViewChecked
 {
   @Output()
-  buttonClickedEvent = new EventEmitter<string>();
+  buttonClickedForIndexEvent = new EventEmitter<number>();
+
+  @Output()
+  buttonClickedForCommandEvent = new EventEmitter<string>();
 
   @Input()
   exclusive = false;
@@ -41,6 +45,13 @@ export class ButtonPanelComponent
 
   @Input()
   symbols!: string[];
+
+  @Input()
+  customControls: string[] = ['-', '+'];
+  visibleCustomControls: string[] = [];
+
+  @Input()
+  customControlMinCount: number = 0;
 
   position = this.colCount;
   range: string[] = [];
@@ -68,16 +79,26 @@ export class ButtonPanelComponent
   constructor(private uiService: UiService) {
     uiService.addListener(this);
   }
+  ngAfterContentInit(): void {
+    console.log('ngAfterContentInit')
+  }
+
+  ngAfterViewInit(): void {
+    console.log('ngAfterViewInit')
+  }
 
   ngAfterContentChecked(): void {
+    console.log('ngAfterContentChecked')
     if (this.symbolCount != this.symbols.length) {
       this.updateDisplay();
       this.symbolCount = this.symbols.length;
     }
+    // this.updateSelections();
   }
 
   ngAfterViewChecked(): void {
-    this.updateSelections()
+    console.log('ngAfterViewChecked')
+    this.updateSelections();
   }
 
   onNotify(messageType: number, message: string, messageValue: number) {}
@@ -92,8 +113,13 @@ export class ButtonPanelComponent
       if (this.range.length < this.colCount) this.range.push(s);
     });
 
+    this.visibleCustomControls = []
+    let index = 0
+    while (this.range.length + this.overage.length < this.colCount && index < this.customControls.length)
+      this.visibleCustomControls.push(this.customControls[index++])
+
     this.overage = [];
-    while (this.range.length + this.overage.length < this.colCount)
+    while (this.range.length + this.visibleCustomControls.length + this.overage.length < this.colCount)
       this.overage.push('');
   }
 
@@ -107,7 +133,7 @@ export class ButtonPanelComponent
     this.overage = [];
 
     // this.ticksPosition += this.colCount
-    while (this.range.length < this.colCount) {
+    while (this.range.length < this.colCount + this.customControlMinCount) {
       if (this.position == this.symbols.length) break;
       else this.range.push(this.symbols[this.position++]);
     }
@@ -124,13 +150,12 @@ export class ButtonPanelComponent
     this.range = [];
     this.overage = [];
     this.position -= this.colCount * 2;
-    if (this.position < 0) this.position = 0;
+    if (this.position < 0)
+      this.position = 0;
 
-    while (
-      this.position < this.symbols.length &&
-      this.overage.length + this.range.length < this.colCount
-    ) {
-      while (this.position == this.symbols.length) this.overage.push('');
+    while ( this.position < this.symbols.length && this.overage.length + this.range.length < this.colCount ) {
+      while (this.position == this.symbols.length)
+        this.overage.push('');
       this.range.push(this.symbols[this.position++]);
     }
 
@@ -158,34 +183,46 @@ export class ButtonPanelComponent
     //     this.getSymbolBtnSelectedClassName()
     //   );
     // } else {
-      this.selections[index] = !this.selections[index];
-      this.uiService.swapClass(
-        event.target,
-        this.getSymbolBtnSelectedClassName(),
-        this.symbolBtnClassName
-      );
+    this.selections[index] = !this.selections[index];
+    this.uiService.swapClass(
+      event.target,
+      this.getSymbolBtnSelectedClassName(),
+      this.symbolBtnClassName
+    );
     // }
 
-    this.buttonClickedEvent.emit(this.symbols[index]);
+    this.buttonClickedForIndexEvent.emit(index);
+    this.buttonClickedForCommandEvent.emit(this.symbols[index]);
   }
 
   getButtonId(pos: number, over: boolean): string {
-    if (over) this.identifier + '-' + this.overageBtnClassName + '-' + String(this.position + pos);
-    return this.identifier + '-' + this.symbolBtnClassName + '-' + String(this.position + pos);
+    if (over)
+      this.identifier +
+        '-' +
+        this.overageBtnClassName +
+        '-' +
+        String(this.position + pos);
+    return (
+      this.identifier +
+      '-' +
+      this.symbolBtnClassName +
+      '-' +
+      String(this.position + pos)
+    );
   }
 
   updateSelections() {
     let index = this.position - this.colCount;
-    console.log('selected buttons:');
     this.selections.forEach((t) => {
       let id = this.getButtonId(index, false);
       let element = document.getElementById(id);
       if (element != undefined)
         if (this.selections[index]) {
+          if (!this.uiService.hasClass(element, this.getSymbolBtnSelectedClassName()))
           this.uiService.swapClass(
             element,
+            this.symbolBtnClassName,
             this.getSymbolBtnSelectedClassName(),
-            this.symbolBtnClassName
           );
         }
       index++;

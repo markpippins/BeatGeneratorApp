@@ -1,4 +1,5 @@
-:host, .content {
+:host,
+.content {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   color: transparent;
   box-sizing: border-box;
@@ -39,8 +40,8 @@ p {
   flex: 1;
 }
 
-.debug, body {
-  border-style: solid;
+.debug {
+  /* border-style: solid; */
   border-width: thin;
 }
 
@@ -118,7 +119,7 @@ body {
   /* display: flex; */
   /* flex-direction: column; */
   /* height: 100%; */
-  /* margin:  auto auto auto auto; */
+  margin:  auto auto auto auto;
   /*padding: 0 16px;*/
   max-width: 960px;
   align-items: stretch;
@@ -126,7 +127,7 @@ body {
   gap: 4px;
   color: white;
   font-size: small;
-  border-style: dashed;
+  /* border-style: dashed; */
   border-width: thin;
   border-color: #125699;
 }
@@ -166,9 +167,10 @@ svg.material-icons:not(:last-child) {
 /*   !*border-width: thin;*!*/
 /* }*/
 
-/*.status-table {*/
-/*  margin-top: 4px;*/
-/*}*/
+.status-table {
+  margin: 4px;
+}
+
 .terminal {
   position: relative;
   width: 80%;
@@ -660,7 +662,7 @@ th {
   margin-top: 6px;
   margin-bottom: 4px;
   margin-right: 2px;
-  width: 114px;
+  width: 100px;
   display: flex;
   align-items: stretch;
   align-content: stretch;
@@ -818,12 +820,12 @@ th {
 }
 
 .inactive {
-  background-color: inherited;
+  background-color: red;
   /* border-radius: 25px; */
 }
 
 .active {
-  background-color: #125699;
+  background-color: gre;
   /* border-radius: 25px; */
 }
 
@@ -881,8 +883,8 @@ th {
   border-radius: 5px;
   margin-left: 0px;
   margin-right: 0px;
-  border: 2px solid #f2f2f2;
-  height: 150px;
+  /* border: 2px solid #f2f2f2; */
+  height: 100%;
   overflow-y: scroll;
 }
 
@@ -900,11 +902,6 @@ th {
 
 /* Table styles */
 /* ---------------------------------------------------------- */
-.table {
-  width: 100%;
-  border: 2px solid #eeeeee;
-  border-width: thin;
-}
 
 .float-right {
   float: right;
@@ -1061,12 +1058,13 @@ th {
 
 .mini-btn {
   padding: 2px;
-  height: 28px;
-  width: 28px;
+  height: 24px;
+  width: 24px;
   margin: 1px;
   color: black;
   font-weight: normal;
   font-size: small;
+  border-radius: 5px;
 }
 
 .overflow {
@@ -1086,30 +1084,37 @@ th {
 
 .mini-btn-excluded {
   padding: 2px;
-  height: 28px;
-  width: 28px;
+  height: 24px;
+  width: 24px;
   margin: 1px;
   color: grey;
   font-weight: normal;
   font-size: small;
+  border-radius: 5px;
 }
 
 .mini-btn-selected {
   padding: 2px;
-  height: 28px;
-  width: 28px;
+  height: 24px;
+  width: 24px;
   margin: 1px;
   color: white;
   background-color: green;
   border-style: inset;
   font-weight: bolder;
   font-size: smaller;
+  border-radius: 5px;
 }
 
-.mini-accent-btn {
-
+.custom-control {
+  background-color: #1da7c7;
+  color: wheat;
 }
 
-.mini-accent-btn-active {
-
+.fire {
+    background-image: linear-gradient(to left, #e80505, #2c0ad7);
 }
+
+.mini-accent-btn {}
+
+.mini-accent-btn-active {}

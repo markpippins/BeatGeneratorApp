@@ -71,11 +71,11 @@ export class RuleTableComponent implements Listener {
   ngAfterContentChecked(): void {
     this.getRules().forEach((rule) => {
       let op = 'operatorSelect-' + rule.id;
-      this.uiService.setSelectValue(op, rule.operatorId);
+      this.uiService.setSelectValue(op, rule.operator);
     });
     this.getRules().forEach((rule) => {
       let co = 'comparisonSelect-' + rule.id;
-      this.uiService.setSelectValue(co, rule.comparisonId);
+      this.uiService.setSelectValue(co, rule.comparison);
     });
 
     // if (!this.intervalSet)
@@ -98,7 +98,7 @@ export class RuleTableComponent implements Listener {
     this.midiService
       .updateRule(rule.id, RuleUpdateType.OPERATOR, value)
       .subscribe();
-    rule.operatorId = value;
+    rule.operator = value;
     // let op = 'operatorSelect-' + rule.id
     this.uiService.setSelectValue(event.target, value);
     this.uiService.notifyAll(
@@ -113,7 +113,7 @@ export class RuleTableComponent implements Listener {
     this.midiService
       .updateRule(rule.id, RuleUpdateType.COMPARISON, value)
       .subscribe();
-    rule.comparisonId = value;
+    rule.comparison = value;
     this.uiService.setSelectValue(event.target, value);
     this.uiService.notifyAll(
       Constants.STATUS,

@@ -92,7 +92,12 @@ public class PlayerService {
 
     public Player addPlayer(String instrumentName) {
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-        return addPlayer(midiInstrument);
+        return addPlayer(midiInstrument, 60L);
+    }
+
+    public Player addPlayer(String instrumentName, Long note) {
+        MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
+        return addPlayer(midiInstrument, note);
     }
 
     public Player addPlayer(Long instrumentId) {
@@ -101,16 +106,19 @@ public class PlayerService {
     }
 
     public Player addPlayer(MidiInstrument midiInstrument) {
+        long note = 60;
+
+        if (Objects.nonNull(midiInstrument.getLowestNote()))
+            note = rand.nextInt(midiInstrument.getLowestNote(), midiInstrument.getHighestNote());
+        return addPlayer(midiInstrument, note);
+    }
+
+    public Player addPlayer(MidiInstrument midiInstrument, long note) {
 
         tickerRepo.flush();
 
-        int note = 60;
-
         try {
             midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
-            if (Objects.nonNull(midiInstrument.getLowestNote() )) {
-                note = rand.nextInt(midiInstrument.getLowestNote(), midiInstrument.getHighestNote());
-            }
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -119,44 +127,69 @@ public class PlayerService {
         Player player = new Strike(name, getTickerService().getTicker(), midiInstrument, note,
                 midiInstrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
         player.setTicker(getTickerService().getTicker());
-        player.setProbability(rand.nextLong(100));
-        if (rand.nextBoolean())
-            player.setRandomDegree(rand.nextLong(3));
 
         if (player instanceof Strike)
             player = getStrikeRepository().save((Strike) player);
 
         getPlayers().add(player);
 
-        // int part = rand.nextInt(getTickerService().getTicker().getParts());
-        // if (rand.nextBoolean())
-        // player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, 1.0, part)));
-        // else
-        //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.TICK, Comparison.EQUALS, rand.nextDouble(1, 
-        //     getTickerService().getTicker().getTicksPerBeat()), part)));
-
-        // if (rand.nextBoolean())
-        //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BEAT, Comparison.EQUALS, rand.nextDouble(1, 
-        //     getTickerService().getTicker().getBeatsPerBar()), part)));
-        // else
-        //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BEAT, Comparison.MODULO, rand.nextDouble(1, 
-        //     getTickerService().getTicker().getBeatsPerBar()), part)));
-        
-        // if (rand.nextBoolean())
-        //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR, Comparison.EQUALS, rand.nextDouble(1, 
-        //     getTickerService().getTicker().getBars()), part)));
-        // else
-        //     player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR, Comparison.MODULO, rand.nextDouble(1, 
-        //     getTickerService().getTicker().getBars()), part)));
-        // player.setMuted(true);
         return player;
     }
+    // player.setProbability(rand.nextLong(100));
+    // if (rand.nextBoolean())
+    // player.setRandomDegree(rand.nextLong(3));
+    // int part = rand.nextInt(getTickerService().getTicker().getParts());
+    // if (rand.nextBoolean())
+    // player.getRules().add(getRuleRepository().save(new Rule(player,
+    // Operator.TICK, Comparison.EQUALS, 1.0, part)));
+    // else
+    // player.getRules().add(getRuleRepository().save(new Rule(player,
+    // Operator.TICK, Comparison.EQUALS, rand.nextDouble(1,
+    // getTickerService().getTicker().getTicksPerBeat()), part)));
+
+    // if (rand.nextBoolean())
+    // player.getRules().add(getRuleRepository().save(new Rule(player,
+    // Operator.BEAT, Comparison.EQUALS, rand.nextDouble(1,
+    // getTickerService().getTicker().getBeatsPerBar()), part)));
+    // else
+    // player.getRules().add(getRuleRepository().save(new Rule(player,
+    // Operator.BEAT, Comparison.MODULO, rand.nextDouble(1,
+    // getTickerService().getTicker().getBeatsPerBar()), part)));
+
+    // if (rand.nextBoolean())
+    // player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR,
+    // Comparison.EQUALS, rand.nextDouble(1,
+    // getTickerService().getTicker().getBars()), part)));
+    // else
+    // player.getRules().add(getRuleRepository().save(new Rule(player, Operator.BAR,
+    // Comparison.MODULO, rand.nextDouble(1,
+    // getTickerService().getTicker().getBars()), part)));
+    // player.setMuted(true);
 
     public Set<Rule> getRules(Long playerId) {
         return this.getRuleRepository().findByPlayerId(playerId);
     }
 
     static Random rand = new Random();
+
+    public Rule addRule(Long playerId, int operator, int comparison, double value, int part) {
+        Rule rule = new Rule(operator, comparison, value, part);
+
+        Player player = getTickerService().getTicker().getPlayer(playerId);
+        List<Rule> matches = player.getRules().stream().filter(r -> r.isEqualTo(rule)).toList();
+
+        if (matches.size() == 0) {
+            rule.setPlayer(player);
+            getRuleRepository().save(rule);
+            player.getRules().add(rule);
+            if (player instanceof Strike)
+                getStrikeRepository().save((Strike) player);
+
+            return rule;
+        }
+
+        return matches.get(0);
+    }
 
     public Rule addRule(Long playerId) {
         Rule rule = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0);
@@ -208,8 +241,7 @@ public class PlayerService {
                 try {
                     player.setPreset(updateValue);
                     player.getInstrument().programChange(updateValue, 0);
-                }   
-                  catch (InvalidMidiDataException | MidiUnavailableException e) {
+                } catch (InvalidMidiDataException | MidiUnavailableException e) {
                     logger.error(e.getMessage(), e);
                 }
                 break;
@@ -284,7 +316,6 @@ public class PlayerService {
                 break;
             }
 
-
             case FADE_OUT -> {
                 player.setFadeOut(updateValue);
                 break;
@@ -306,23 +337,24 @@ public class PlayerService {
     }
 
     public Optional<Rule> getRule(Long ruleId) {
-        return getPlayers().stream().flatMap(p -> p.getRules().stream()).filter(r -> r.getId() == ruleId).findAny();
+        List<Rule> rules = getPlayers().stream().flatMap(p -> p.getRules().stream()).toList();
+        return rules.stream().filter(r -> r.getId() == ruleId).findAny();
     }
 
     public Rule updateRule(Long ruleId, int updateType, long updateValue) {
 
-        Optional<Rule> opt = getRule(ruleId); 
+        Optional<Rule> opt = getRule(ruleId);
         Rule rule = null;
         if (opt.isPresent()) {
             rule = opt.get();
             switch (updateType) {
                 case OPERATOR -> {
-                    rule.setOperatorId((int) updateValue);
+                    rule.setOperator((int) updateValue);
                     break;
                 }
 
                 case COMPARISON -> {
-                    rule.setComparisonId((int) updateValue);
+                    rule.setComparison((int) updateValue);
                     break;
                 }
 
@@ -344,21 +376,21 @@ public class PlayerService {
     }
 
     // public void updateRule(Long playerId,
-    //         Long ruleId,
-    //         int operatorId,
-    //         int comparisonId,
-    //         double newValue,
-    //         int part) {
+    // Long ruleId,
+    // int operator,
+    // int comparison,
+    // double newValue,
+    // int part) {
 
-    //     Player player = getTickerService().getTicker().getPlayer(playerId);
+    // Player player = getTickerService().getTicker().getPlayer(playerId);
 
-    //     Rule rule = player.getRule(ruleId);
-    //     rule.setOperatorId(operatorId);
-    //     rule.setComparisonId(comparisonId);
-    //     rule.setValue(newValue);
-    //     rule.setPart(part);
+    // Rule rule = player.getRule(ruleId);
+    // rule.setOperatorId(operator);
+    // rule.setComparison(comparison);
+    // rule.setValue(newValue);
+    // rule.setPart(part);
 
-    //     getRuleRepository().save(rule);
+    // getRuleRepository().save(rule);
 
     // }
 
@@ -414,7 +446,7 @@ public class PlayerService {
             throw new RuntimeException(e);
         }
     }
-    
+
     public void clearPlayers() {
         getPlayers().stream().filter(p -> p.getRules().size() == 0)
                 .forEach(p -> {

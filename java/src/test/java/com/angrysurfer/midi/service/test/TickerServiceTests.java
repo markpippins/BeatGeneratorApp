@@ -99,7 +99,7 @@ public class TickerServiceTests {
 
     @Test
     public void whenNextTickerRequestedWithPlayers_thenNewTickerReturned() {
-        playerService.addPlayer(RAZ);
+        playerService.addPlayer(RAZ, 36L);
         Long id = tickerService.getTicker().getId();
         Ticker nextTicker = tickerService.next(id);
         assertTrue(nextTicker.getId() > id); 
@@ -108,7 +108,7 @@ public class TickerServiceTests {
     @Test
     public void whenNextTickerRequestedWithPlayers_thenNextTickerCanBeRequested() {
         IntStream.range(0, 99).forEach(i -> {
-            playerService.addPlayer(RAZ);
+            playerService.addPlayer(RAZ, 36L);
             Long id = tickerService.getTicker().getId();
             Ticker nextTicker = tickerService.next(id);
             assertTrue(nextTicker.getId() > id); 
@@ -117,7 +117,7 @@ public class TickerServiceTests {
 
     @Test
     public void whenPreviousTickerRequestedWith_thenTickerWithLowerIdReturned() {
-        playerService.addPlayer(RAZ);
+        playerService.addPlayer(RAZ, 36L);
         Long id = tickerService.getTicker().getId();
         Ticker nextTicker = tickerService.next(id);
         assertTrue(nextTicker.getId() > id); 
@@ -129,13 +129,13 @@ public class TickerServiceTests {
     @Test
     public void whenPreviousTickerRequestedForTickWithPlayers_thenPlayersContainAddedRule() {
         Long startingTickerId = tickerService.getTicker().getId();
-        Player player = playerService.addPlayer(RAZ);
+        Player player = playerService.addPlayer(RAZ, 36L);
         Rule rule = playerService.addRule(player.getId());
 
         // move to next ticker, add player and rule
         tickerService.next(startingTickerId);
         Long nextTickerId = tickerService.getTicker().getId();
-        playerService.addRule(playerService.addPlayer(RAZ).getId());
+        playerService.addRule(playerService.addPlayer(RAZ, 36L).getId());
 
         // return to starting ticker
         tickerService.previous(nextTickerId);
@@ -148,12 +148,12 @@ public class TickerServiceTests {
         // tickerService.newTicker();
         // add data to current Ticker
         Long startingTickerId = tickerService.getTicker().getId();
-        Player player = playerService.addPlayer(RAZ);
+        Player player = playerService.addPlayer(RAZ, 36L);
         playerService.addRule(player.getId());
 
         // move to next ticker, add player and rule
         Ticker ticker2 = tickerService.next(startingTickerId);
-        Player player2 = playerService.addPlayer(RAZ);
+        Player player2 = playerService.addPlayer(RAZ, 36L);
         Rule rule = playerService.addRule(player2.getId());
 
         // return to starting ticker
@@ -175,12 +175,12 @@ public class TickerServiceTests {
         // tickerService.newTicker();
         // add data to current Ticker
         Long startingTickerId = tickerService.getTicker().getId();
-        Player player = playerService.addPlayer(RAZ);
+        Player player = playerService.addPlayer(RAZ, 36L);
         playerService.addRule(player.getId());
 
         // move to next ticker, add player and rule
         Ticker ticker2 = tickerService.next(startingTickerId);
-        Player player2 = playerService.addPlayer(RAZ);
+        Player player2 = playerService.addPlayer(RAZ, 36L);
         Rule rule = playerService.addRule(player2.getId());
 
         //remove rule

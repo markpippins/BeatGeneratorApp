@@ -71,6 +71,8 @@ public class MidiInstrument implements Serializable {
     
     private Boolean hasAssignments;
     
+    private String playerClassName;
+    
     public MidiInstrument() {
 
     }

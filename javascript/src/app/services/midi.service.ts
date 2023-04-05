@@ -156,6 +156,15 @@ export class MidiService {
     });
   }
 
+  addPlayerForNote(note: number) {
+    let params = new HttpParams();
+    params = params.append('instrument', 'Razzmatazz');
+    params = params.append('note', note);
+    return this.http.get<Player>('http://localhost:8080/api/players/note', {
+      params: params,
+    });
+  }
+
   newPlayer(instrumentId: number) {
     let params = new HttpParams();
     params = params.append('instrumentId', instrumentId);
@@ -176,6 +185,18 @@ export class MidiService {
     let params = new HttpParams();
     params = params.append('playerId', player.id);
     return this.http.get<Rule>('http://localhost:8080/api/rules/add', {
+      params: params,
+    })
+  }
+
+  addSpecifiedRule(player: Player, operator: number, comparison: number, value: number, part: number) {
+    let params = new HttpParams();
+    params = params.append('playerId', player.id);
+    params = params.append('operator', operator);
+    params = params.append('comparison', comparison);
+    params = params.append('part', part);
+    params = params.append('value', value);
+    return this.http.get<Rule>('http://localhost:8080/api/rules/specify', {
       params: params,
     })
   }
@@ -220,12 +241,12 @@ export class MidiService {
   }
 
 
-  // updateRule(playerId: number, ruleId: number, operatorId: number, comparisonId: number, newValue: number, part: number) {
+  // updateRule(playerId: number, ruleId: number, operator: number, comparison: number, newValue: number, part: number) {
   //   let params = new HttpParams();
   //   params = params.append('playerId', playerId);
   //   params = params.append('ruleId', ruleId);
-  //   params = params.append('operatorId', operatorId);
-  //   params = params.append('comparisonId', comparisonId);
+  //   params = params.append('operator', operator);
+  //   params = params.append('comparison', comparison);
   //   params = params.append('newValue', newValue);
   //   params = params.append('part', part);
   //   return this.http.get('http://localhost:8080/api/rule/update', {
@@ -238,7 +259,7 @@ export class MidiService {
     params = params.append('ruleId', ruleId);
     params = params.append('updateType', updateType);
     params = params.append('updateValue', updateValue);
-    return this.http.get('http://localhost:8080/api/rule/update', {
+    return this.http.get<Rule>('http://localhost:8080/api/rule/update', {
       params: params,
     });
   }

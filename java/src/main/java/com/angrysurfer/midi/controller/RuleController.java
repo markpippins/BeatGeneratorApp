@@ -42,16 +42,15 @@ public class RuleController {
         service.removeRule(playerId, ruleId);
     }
 
-    // @GetMapping(Constants.UPDATE_RULE)
-    // public void updateRule(@RequestParam Long playerId,
-    //                        @RequestParam Long ruleId,
-    //                        @RequestParam int operatorId,
-    //                        @RequestParam int comparisonId,
-    //                        @RequestParam String newValue,
-    //                        @RequestParam int part) {
-    //     logger.info(Constants.UPDATE_RULE);
-    //     service.updateRule(playerId, ruleId, operatorId, comparisonId, Double.parseDouble(newValue), part);
-    // }
+    @GetMapping(Constants.SPECIFY_RULE)
+    public void updateRule(@RequestParam Long playerId,
+                           @RequestParam int operator,
+                           @RequestParam int comparison,
+                           @RequestParam String value,
+                           @RequestParam int part) {
+        logger.info(Constants.UPDATE_RULE);
+        service.addRule(playerId, operator, comparison, Double.parseDouble(value), part);
+    }
 
     @GetMapping(Constants.UPDATE_RULE)
     public ResponseEntity<Rule> updateRule(@RequestParam Long ruleId, @RequestParam int updateType, @RequestParam int updateValue) {

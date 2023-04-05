@@ -68,8 +68,6 @@
         <td *ngIf="!ticker.playing" class="inactive">
         </td>
       </tr>
-    </table>
-    <table class="status-table">
       <tr>
         <!--      <th *ngFor="let col of statusColumns;">{{col}}</th>-->
         <td *ngIf="ticker.playing" class="active">
@@ -148,7 +146,6 @@
     </table>
   </div>
   <div class="flex-container-horizontal">
-    <!-- <app-ticker-adjust [ticker]="ticker"></app-ticker-adjust>  -->
-    <app-beat-navigator [ticker]="ticker"></app-beat-navigator>
+    <app-ticker-adjust [ticker]="ticker"></app-ticker-adjust>
   </div>
 </div>

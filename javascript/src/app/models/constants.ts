@@ -1,7 +1,7 @@
 import { Player } from './player'
 
 export class Constants {
-  static CONDITION_COLUMNS = ['operator', 'comparison', 'value']
+  static RULE_COLUMNS = ['operator', 'comparison', 'value']
 
   static PLAYER_COLUMNS = [
     // 'Id',
@@ -11,8 +11,8 @@ export class Constants {
     'Pitch',
     '',
     '',
-    'Div 1',
-    'Div 2',
+    'Frac',
+    'Divs',
     'Skip',
     'Swing',
     'Prob',
