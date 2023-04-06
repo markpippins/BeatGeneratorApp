@@ -1,14 +1,17 @@
 <div class="dashboard">
+  <!-- <app-ticker-nav></app-ticker-nav> -->
   <mat-tab-group>
     <mat-tab label="Beat Scheduler">
       <app-status-panel [running]="running" [ticker]="ticker"></app-status-panel>
       <div class="two-column-grid-container debug">
         <div class="player-table-holder">
+          <app-ticker-nav></app-ticker-nav>
           <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
         </div>
         <div>
 
           <div class="rule-table-holder">
+            <app-rules-nav></app-rules-nav>
             <app-conditions-panel *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
                                 [player]="selectedPlayer"></app-conditions-panel>
           </div>
@@ -19,6 +22,7 @@
       <div>
         <app-beat-spec></app-beat-spec>
       </div>
+      <app-beat-navigator></app-beat-navigator>
     </mat-tab>
     <mat-tab label="Config">
       <app-device-panel></app-device-panel>
@@ -34,7 +38,6 @@
       </mat-tab-group>
     </mat-tab>
   </mat-tab-group>
-  <app-beat-navigator [ticker]="ticker"></app-beat-navigator>
   <div>
     <div class="status-bar">
       <label class="status-label">Ticker</label>

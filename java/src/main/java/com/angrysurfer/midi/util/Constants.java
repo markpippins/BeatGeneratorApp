@@ -34,7 +34,7 @@ public class Constants {
 
     public static final String ALL_PLAYERS =  "/players/info";
     public static final String CLEAR_PLAYERS =  "/players/clear";
-
+    public static final String CLEAR_PLAYERS_WITH_NO_RULES = "/players/clearnorules";
     public static final String ADD_PLAYER = "/players/add";
     public static final String ADD_PLAYER_FOR_NOTE = "/players/note";
     public static final String REMOVE_PLAYER = "/players/remove";
@@ -82,8 +82,6 @@ public class Constants {
     public static final String SAVE_BEAT = "/beat/save";
 	public static final String PLAY_DRUM_NOTE = "/drums/note";
     public static final String PLAY_SEQUENCE = "/sequence/play";
-
-
 }
 
 

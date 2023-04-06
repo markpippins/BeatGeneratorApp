@@ -78,6 +78,7 @@ export class DashboardComponent implements OnInit, Listener {
 
       case Constants.CONNECTED:
         this.consoleOutput.push('connected')
+        this.updateDisplay()
         break
 
       case Constants.DISCONNECTED:
@@ -88,7 +89,7 @@ export class DashboardComponent implements OnInit, Listener {
       this.consoleOutput.push(message)
       this.updateDisplay()
       break
-  
+
     }
   }
 

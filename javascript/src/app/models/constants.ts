@@ -48,6 +48,8 @@ export class Constants {
   static TICKER_UPDATED = 14
   static PLAYER_SELECTED = 15
 
+  static BTN_SELECTION = 0;
+
   static CHROMATIC_SCALE = [
     'C',
     'C#',

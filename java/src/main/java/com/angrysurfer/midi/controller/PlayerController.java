@@ -36,6 +36,12 @@ public class PlayerController {
         service.clearPlayers();
     }
 
+    @GetMapping(Constants.CLEAR_PLAYERS_WITH_NO_RULES)
+    public void clearPlayersWithNoRules() {
+        logger.info(Constants.CLEAR_PLAYERS_WITH_NO_RULES);
+        service.clearPlayersWithNoRules();
+    }
+
     @GetMapping(Constants.ADD_PLAYER)
     public ResponseEntity<Player> addPlayer(@RequestParam String instrument) {
         logger.info(Constants.ADD_PLAYER);

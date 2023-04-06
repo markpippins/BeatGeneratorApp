@@ -338,7 +338,7 @@ public class PlayerService {
 
     public Optional<Rule> getRule(Long ruleId) {
         List<Rule> rules = getPlayers().stream().flatMap(p -> p.getRules().stream()).toList();
-        return rules.stream().filter(r -> r.getId() == ruleId).findAny();
+        return rules.stream().filter(r -> r.getId().equals(ruleId)).findAny();
     }
 
     public Rule updateRule(Long ruleId, int updateType, long updateValue) {
@@ -450,6 +450,19 @@ public class PlayerService {
     public void clearPlayers() {
         getPlayers().stream().filter(p -> p.getRules().size() == 0)
                 .forEach(p -> {
+                    getPlayers().remove(p);
+                    p.setTicker(null);
+                    if (p instanceof Strike)
+                        strikeRepository.delete((Strike) p);
+                });
+    }
+
+    public void clearPlayersWithNoRules() {
+        getPlayers().stream().filter(p -> p.getRules().size() == 0)
+                .forEach(p -> {
+                    if (p.getRules().size() > 0)
+                        return;
+
                     getPlayers().remove(p);
                     p.setTicker(null);
                     if (p instanceof Strike)

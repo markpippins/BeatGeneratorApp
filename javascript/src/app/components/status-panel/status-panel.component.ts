@@ -61,6 +61,9 @@ export class StatusPanelComponent implements OnInit, Listener {
   updateDisplay(): void {
     if (this.waiting)
       return
+    if (this.ticker != undefined && this.ticker.id == 0)
+      this.midiService.next(0)
+
     this.waiting = true
     this.midiService.tickerStatus().subscribe(
       async (data) => {

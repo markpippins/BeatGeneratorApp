@@ -51,8 +51,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   }
 
   generate() {
-    if (this.selectedNote == undefined)
-      return
+    if (this.selectedNote == undefined) return;
 
     let beatIndex = 0;
     this.selectedBeats.forEach((beat) => {
@@ -64,28 +63,30 @@ export class BeatNavigatorComponent implements OnInit, Listener {
           this.selectedTicks.forEach((tick) => {
             if (tick) {
               let tickValue = tickIndex + 1;
-              this.midiService.addPlayerForNote(this.selectedNote).subscribe((player) => {
-                this.addRuleForTick(player, tickValue);
-                this.addRuleForBeat(player, beatValue);
+              this.midiService
+                .addPlayerForNote(this.selectedNote)
+                .subscribe((player) => {
+                  this.addRuleForTick(player, tickValue);
+                  this.addRuleForBeat(player, beatValue);
 
-                let barIndex = 0;
-                this.selectedBars.forEach((bar) => {
-                  if (bar) {
-                    let barValue = barIndex + 1;
-                    this.addRuleForBar(player, barValue);
-                  }
-                  barIndex++;
-                });
+                  let barIndex = 0;
+                  this.selectedBars.forEach((bar) => {
+                    if (bar) {
+                      let barValue = barIndex + 1;
+                      this.addRuleForBar(player, barValue);
+                    }
+                    barIndex++;
+                  });
 
-                let partIndex = 0;
-                this.selectedBars.forEach((bar) => {
-                  if (bar) {
-                    let partValue = partIndex + 1;
-                    this.addRuleForPart(player, partValue);
-                  }
-                  partIndex++;
+                  let partIndex = 0;
+                  this.selectedBars.forEach((bar) => {
+                    if (bar) {
+                      let partValue = partIndex + 1;
+                      this.addRuleForPart(player, partValue);
+                    }
+                    partIndex++;
+                  });
                 });
-              });
             }
             tickIndex++;
           });
@@ -97,6 +98,8 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       }
       beatIndex++;
     });
+
+    this.uiService.notifyAll(Constants.COMMAND, 'ticker-refresh', 0);
   }
   // this.midiService.addPlayer().subscribe((player) => {
   //   this.addRuleForBeat(player, beatValue);
@@ -393,4 +396,62 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   partSelected(index: number) {
     this.selectedParts[index] = !this.selectedParts[index];
   }
+
+  toggleAll() {
+    let num = 0;
+    this.ticks.forEach((t) =>
+      this.uiService.notifyAll(
+        Constants.BTN_SELECTION,
+        this.resolution[1],
+        num++
+      )
+    );
+    this.updateDisplay();
+  }
+
+  toggleInterval(interval: number, data: number[], resolution: string) {
+    let num = 0;
+    data.forEach((t) => {
+      if (num % interval == 0)
+        this.uiService.notifyAll(Constants.BTN_SELECTION, resolution, num);
+      num++;
+    });
+
+    this.updateDisplay();
+  }
+
+  nudgeRight(data: number[], resolution: string) {
+    let num = 0;
+    data.forEach((t) => {
+      if (num < data.length) {
+        data[num + 1] = data[num];
+        // this.uiService.notifyAll(Constants.BTN_SELECTION, resolution, num);
+        num++;
+      }
+    });
+
+    this.updateDisplay();
+  }
+
+  // toggleThrees() {
+  //   let num = 0;
+  //   this.ticks.forEach(t => {
+  //     if (num % 3 == 0)
+  //       this.uiService.notifyAll(Constants.BTN_SELECTION, this.resolution[1], num)
+  //     num++
+  //   })
+
+  //   this.updateDisplay()
+  // }
+
+  // toggleFours() {
+  //   let num = 0;
+  //   this.ticks.forEach(t => {
+  //     if (num % 4 == 0)
+  //       this.uiService.notifyAll(Constants.BTN_SELECTION, this.resolution[1], num)
+  //     num++
+  //   })
+
+  //   this.updateDisplay()
+  // }
 }

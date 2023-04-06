@@ -237,7 +237,7 @@ public class Ticker implements Serializable {
     }
 
     public void afterTick() {
-        granularBeat += getTicksPerBeat() / getBeatsPerBar();
+        granularBeat += 1.0 / getTicksPerBeat();
 
         if (getTick() % getTicksPerBeat() == 0)
             onBeatChange();
