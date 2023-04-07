@@ -12,7 +12,7 @@ public class Ratchet extends Strike {
  
     private Strike parent;
 
-    public Ratchet(Strike parent, long offset, long interval, int part) {
+    public Ratchet(Strike parent, double offset, long interval, int part) {
         setParent(parent);
         setTicker(getParent().getTicker());
         setNote(getParent().getNote());
@@ -26,7 +26,8 @@ public class Ratchet extends Strike {
         Long ratchets = getTicker().getPlayers().stream().filter(p -> p instanceof Ratchet).count();
         setId(-1 - ratchets);
         setName(getParent().getName() + String.format("s", getParent().getTicker().getPlayers().size()));
-        getRules().add(new Rule(Operator.TICK, Comparison.EQUALS, (double) interval * offset, part));
+        double tick = getTicker().getTickCount() + offset;
+        getRules().add(new Rule(Operator.TICK_COUNT, Comparison.EQUALS, tick, part));
 
         synchronized (getTicker().getPlayers()) {
             synchronized (getTicker().getPlayers()) {

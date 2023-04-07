@@ -127,7 +127,7 @@ public class SequenceRunner implements Runnable {
                     started = handleStarted();
 
                 this.executor.invokeAll(getTicker().getPlayers());
-                Thread.sleep((long) (delay * .8)); 
+                Thread.sleep((long) (delay * .5)); 
                 getTicker().afterTick();
             }
 

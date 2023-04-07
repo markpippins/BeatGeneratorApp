@@ -4,7 +4,6 @@ import com.angrysurfer.midi.model.*;
 import com.angrysurfer.midi.repo.PatternRepository;
 import com.angrysurfer.midi.repo.SongRepository;
 import com.angrysurfer.midi.repo.StepRepository;
-import com.angrysurfer.midi.util.Cycler;
 import com.angrysurfer.midi.util.CyclerListener;
 import com.angrysurfer.midi.util.PatternUpdateType;
 import com.angrysurfer.midi.util.StepUpdateType;
@@ -28,10 +27,27 @@ import javax.sound.midi.ShortMessage;
 @Service
 public class SongService {
 
-    private final class BarCyclerListenerImplementation implements CyclerListener {
+    private final class TickCyclerListener implements CyclerListener {
         @Override
         public void advanced(long position) {
-            logger.info("bars complete");
+            logger.info(String.format("Ticks complete: %s", position));
+        }
+
+        @Override
+        public void cycleComplete() {
+            logger.info("ticks complete");
+        }
+
+        @Override
+        public void starting() {
+            logger.info("starting");
+            this.advanced(0);
+        }
+    }
+    private final class BarCyclerListener implements CyclerListener {
+        @Override
+        public void advanced(long position) {
+            logger.info(String.format("bars complete: %s", position));
         }
 
         @Override
@@ -41,14 +57,16 @@ public class SongService {
 
         @Override
         public void starting() {
+            logger.info("starting");
             this.advanced(0);
         }
     }
 
-    private final class BeatCyclerListenerImplementation implements CyclerListener {
+    private final class BeatCyclerListener implements CyclerListener {
 
         @Override
         public void advanced(long position) {
+            logger.info("starting");
             handleBeat((int) position - 1);
         }
 
@@ -58,6 +76,7 @@ public class SongService {
 
         @Override
         public void starting() {
+            logger.info("starting");
             song.getPatterns().forEach(p -> {
                 p.getStepCycler().setLength(p.getLastStep());
             });
@@ -68,21 +87,25 @@ public class SongService {
             logger.info(String.format("handling beat %s", position));
 
             song.getPatterns().forEach(pattern -> {
-                double playTime = song.getBeatDuration() / pattern.getBeatDivider();
+                double playTime = song.getBeatDuration() / pattern.getBeatDivider() / 8;
 
                 // pattern.getSteps().stream()
                 // .filter(s -> ((long ) s.getPosition() == patter)).toList().forEach(step -> {
 
-                logger.info(String.format("Pattern %s, Step %s", pattern.getPosition(), pattern.getStepCycler().get()));
-                IntStream.range(0, pattern.getBeatDivider()).forEach(bd -> {
+                // logger.info(String.format("Pattern %s, Step %s", pattern.getPosition(),
+                // pattern.getStepCycler().get()));
+
+                IntStream.range(0, pattern.getBeatDivider() * 2).forEach(bd -> {
 
                     Step step = pattern.getSteps().stream()
                             .filter(s -> s.getPosition() == pattern.getStepCycler().get() - 1).findAny().orElseThrow();
-                    double delay = playTime * step.getPosition();
 
                     if (step.getActive()) {
                         int note = pattern.getRootNote() + step.getPitch() + (12 * pattern.getTranspose());
                         new Thread(new Runnable() {
+
+                            double delay = playTime * step.getPosition() * 0.9;
+
                             @Override
                             public void run() {
                                 if (step.getPosition() > 1)
@@ -94,20 +117,14 @@ public class SongService {
 
                                 midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_ON, note,
                                         step.getVelocity());
+                                try {
+                                    Thread.sleep((long) (pattern.getGate() * 0.1 * delay));
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
 
-                                new Thread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            Thread.sleep((long) (pattern.getGate() * 0.1 * delay));
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-
-                                        midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF,
-                                                note, step.getVelocity());
-                                    }
-                                }).start();
+                                midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF,
+                                        note, step.getVelocity());
                             }
                         }).start();
 
@@ -130,8 +147,9 @@ public class SongService {
     private Song song;
     private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
 
-    private CyclerListener beatListener = new BeatCyclerListenerImplementation();
-    private CyclerListener barListener = new BarCyclerListenerImplementation();
+    private CyclerListener tickListener = new TickCyclerListener();
+    private CyclerListener beatListener = new BeatCyclerListener();
+    private CyclerListener barListener = new BarCyclerListener();
 
     public SongService(PatternRepository patternRepository, StepRepository stepRepository,
             SongRepository songRepository, MIDIService midiService) {

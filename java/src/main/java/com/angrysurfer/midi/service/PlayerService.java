@@ -90,9 +90,16 @@ public class PlayerService {
         }
     }
 
+    
     public Player addPlayer(String instrumentName) {
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-        return addPlayer(midiInstrument, 60L);
+        return addPlayer(midiInstrument, getNoteForMidiInstrument(midiInstrument));
+    }
+
+    private long getNoteForMidiInstrument(MidiInstrument midiInstrument) {
+        Long note = Objects.nonNull(midiInstrument.getLowestNote()) ? midiInstrument.getLowestNote() : 60L;
+        List<Player> players = getTickerService().getTicker().getPlayers().stream().filter(p -> p.getInstrumentId().equals(midiInstrument.getId())).toList();
+        return note + players.size();
     }
 
     public Player addPlayer(String instrumentName, Long note) {
@@ -106,11 +113,7 @@ public class PlayerService {
     }
 
     public Player addPlayer(MidiInstrument midiInstrument) {
-        long note = 60;
-
-        if (Objects.nonNull(midiInstrument.getLowestNote()))
-            note = rand.nextInt(midiInstrument.getLowestNote(), midiInstrument.getHighestNote());
-        return addPlayer(midiInstrument, note);
+        return addPlayer(midiInstrument, getNoteForMidiInstrument(midiInstrument));
     }
 
     public Player addPlayer(MidiInstrument midiInstrument, long note) {

@@ -265,21 +265,22 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     }
 
     public boolean shouldPlay() {
-        logger.info(String.format("ShouldPlay() Tick: %s", getTicker().getTick()));
-        logger.info(String.format("ShouldPlay() Beat: %s", getTicker().getBeat()));
-        logger.info(String.format("ShouldPlay() Granular Beat: %s", getTicker().getGranularBeat()));
-        logger.info(String.format("ShouldPlay() Bar: %s", getTicker().getBar()));
-        logger.info(String.format("ShouldPlay() Part: %s", getTicker().getPart()));
-//        logger.info(String.format("ShouldPlay() Tick: %s", getTicker().getTick()));
+        // logger.info(String.format("ShouldPlay() Tick: %s", getTicker().getTick()));
+        // logger.info(String.format("ShouldPlay() Beat: %s", getTicker().getBeat()));
+        // logger.info(String.format("ShouldPlay() Granular Beat: %s",
+        //         getTicker().getGranularBeat()));
+        // logger.info(String.format("ShouldPlay() Bar: %s", getTicker().getBar()));
+        // logger.info(String.format("ShouldPlay() Part: %s", getTicker().getPart()));
+        // logger.info(String.format("ShouldPlay() Tick: %s", getTicker().getTick()));
 
         Set<Rule> applicable = filterByPart(getRules(), true);
         // applicable = filterByBar(applicable, true);
         // applicable = filterByBeat(applicable, true);
         // applicable = filterByTick(applicable, true);
 
-
         double granularBeat = getTicker().getBeat() + getTicker().getGranularBeat();
-        // boolean onBeat = getTicker().getGranularBeat() == 0 || granularBeat % (1.0 / getTicker().getGranularBeat()) == 0;
+        // boolean onBeat = getTicker().getGranularBeat() == 0 || granularBeat % (1.0 /
+        // getTicker().getGranularBeat()) == 0;
 
         AtomicBoolean play = new AtomicBoolean(applicable.size() > 0);
 

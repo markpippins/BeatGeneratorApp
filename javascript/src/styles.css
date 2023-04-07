@@ -242,6 +242,7 @@ svg.material-icons:not(:last-child) {
   display: flex;
   align-items: stretch;
   height: 300px;
+  border-style: inset;
 }
 
 .player-table-holder,

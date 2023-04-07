@@ -87,10 +87,11 @@ public class Strike extends Player {
     }
 
     private void handleRachets() {
+
+        double numberOfTicksToWait = getRatchetInterval() * (getTicker().getTicksPerBeat() / getSubDivisions());
+
         LongStream.range(1, getRatchetCount() + 1).forEach(i -> {
-            Float duration = getTicker().getBeatDuration();
-            long delay = (long) (getTicker().getBeatDuration() / getSubDivisions() * 10); 
-            new Ratchet(this, delay, getRatchetInterval(), 0);
+            new Ratchet(this, i * numberOfTicksToWait, getRatchetInterval(), 0);
         });
     }
 }
