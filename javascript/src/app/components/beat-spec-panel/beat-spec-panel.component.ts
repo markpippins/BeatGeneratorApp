@@ -17,7 +17,7 @@ export class BeatSpecPanelComponent implements Listener, OnInit, AfterContentChe
   }
   ngAfterContentChecked(): void {
     if (this.step != undefined && this.step.active) {
-      let element = document.getElementById("beat-btn-" + this.step.position)
+      // let element = document.getElementById("beat-btn-" + this.step.position)
       // this.uiService.swapClass(element, 'inactive', 'active')
       }
   }
@@ -37,7 +37,7 @@ export class BeatSpecPanelComponent implements Listener, OnInit, AfterContentChe
   @Input()
   page!: number
 
-  onNotify(messageType: number, message: string, messageValue: number) {
+  onNotify(messageType: number, _message: string, messageValue: number) {
     if (messageType == Constants.BEAT_DIV && messageValue == this.step.position) {
       let element = document.getElementById("beat-btn-" + this.step.position)
       this.uiService.swapClass(element, 'inactive', 'active')

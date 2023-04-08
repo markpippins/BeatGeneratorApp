@@ -4,8 +4,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import com.angrysurfer.midi.util.Constants;
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,6 +21,9 @@ public class Song {
     
     @Transient
     private Float beatDuration;
+
+    @Transient
+    private Integer ticksPerBeat;
 
     @Transient
     private Set<Pattern> patterns = new HashSet<>();

@@ -1,12 +1,10 @@
-import { Component, Input, OnInit, Output } from '@angular/core';
-import { UntypedFormBuilder } from '@angular/forms';
+import { Component, Input, OnInit } from '@angular/core';
 import { Comparison } from 'src/app/models/comparison';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
 import { Listener } from 'src/app/models/listener';
 import { Operator } from 'src/app/models/operator';
 import { Player } from 'src/app/models/player';
-import { RuleUpdateType } from 'src/app/models/rule-update-type';
 import { Ticker } from 'src/app/models/ticker';
 import { MidiService } from 'src/app/services/midi.service';
 import { UiService } from 'src/app/services/ui.service';
@@ -53,50 +51,49 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   generate() {
     if (this.selectedNote == undefined) return;
 
-    let beatIndex = 0;
-    this.selectedBeats.forEach((beat) => {
-      if (beat) {
-        let beatValue = beatIndex + 1;
+    let partIndex = 0;
+    this.selectedParts.forEach((part) => {
+      if (part) {
+        let partValue = partIndex + 1;
+        let barIndex = 0;
+        this.selectedBars.forEach((bar) => {
+          if (bar) {
+            let barValue = barIndex + 1;
 
-        if (this.selectedTicks.includes(true)) {
-          let tickIndex = 0;
-          this.selectedTicks.forEach((tick) => {
-            if (tick) {
-              let tickValue = tickIndex + 1;
-              this.midiService
-                .addPlayerForNote(this.selectedNote)
-                .subscribe((player) => {
-                  this.addRuleForTick(player, tickValue);
-                  this.addRuleForBeat(player, beatValue);
+            let beatIndex = 0;
+            this.selectedBeats.forEach((beat) => {
+              if (beat) {
+                let beatValue = beatIndex + 1;
 
-                  let barIndex = 0;
-                  this.selectedBars.forEach((bar) => {
-                    if (bar) {
-                      let barValue = barIndex + 1;
-                      this.addRuleForBar(player, barValue);
+                if (this.selectedTicks.includes(true)) {
+                  let tickIndex = 0;
+                  this.selectedTicks.forEach((tick) => {
+                    if (tick) {
+                      let tickValue = tickIndex + 1;
+                      this.midiService
+                        .addPlayerForNote(this.selectedNote)
+                        .subscribe((player) => {
+                          this.addRuleForTick(player, tickValue);
+                          this.addRuleForBeat(player, beatValue);
+                          this.addRuleForBar(player, barValue);
+                          this.addRuleForPart(player, partValue);
+                        });
                     }
-                    barIndex++;
+                    tickIndex++;
                   });
-
-                  let partIndex = 0;
-                  this.selectedBars.forEach((bar) => {
-                    if (bar) {
-                      let partValue = partIndex + 1;
-                      this.addRuleForPart(player, partValue);
-                    }
-                    partIndex++;
+                } else {
+                  this.midiService.addPlayer().subscribe((player) => {
+                    this.addRuleForBeat(player, beatValue);
                   });
-                });
-            }
-            tickIndex++;
-          });
-        } else {
-          this.midiService.addPlayer().subscribe((player) => {
-            this.addRuleForBeat(player, beatValue);
-          });
-        }
+                }
+              }
+              beatIndex++;
+            });
+          }
+          barIndex++;
+        });
       }
-      beatIndex++;
+      partIndex++;
     });
 
     this.uiService.notifyAll(Constants.COMMAND, 'ticker-refresh', 0);
@@ -257,7 +254,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       }
   }
 
-  onNotify(messageType: number, message: string, messageValue: number) {
+  onNotify(messageType: number, _message: string, messageValue: number) {
     if (messageType == Constants.TICKER_UPDATED) this.updateDisplay();
 
     if (messageType == Constants.BEAT_DIV) {
@@ -328,6 +325,17 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     // this.updateSelections()
   }
 
+  toggleInterval(interval: number, data: number[], resolution: string) {
+    let num = 0;
+    data.forEach((_t) => {
+      if (num % interval == 0)
+        this.uiService.notifyAll(Constants.CLICK, resolution, num);
+      num++;
+    });
+
+    this.updateDisplay();
+  }
+
   // updateSelections() {
   //   let index = 0
   //   this.selectedTicks.forEach(t => {
@@ -339,7 +347,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   // }
 
   onNoteClicked(note: number, event: Event) {
-    this.range.forEach((note) => {
+    this.range.forEach((_note) => {
       let element = document.getElementById(
         'mini-note-btn-' + this.selectedNote
       );
@@ -357,7 +365,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
 
   getAccentsAsStrings(): string[] {
     let accents: string[] = [];
-    this.ticks.forEach((t) => accents.push('𝄈'));
+    this.ticks.forEach((_t) => accents.push('𝄈'));
     return accents;
   }
 
@@ -385,6 +393,11 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     this.selectedTicks[index] = !this.selectedTicks[index];
   }
 
+  commandSelected(command: string, level: number) {
+    alert(command + ' ' + this.resolution[level]);
+    // this.selectedTicks[index] = !this.selectedTicks[index];
+  }
+
   beatSelected(index: number) {
     this.selectedBeats[index] = !this.selectedBeats[index];
   }
@@ -399,59 +412,43 @@ export class BeatNavigatorComponent implements OnInit, Listener {
 
   toggleAll() {
     let num = 0;
-    this.ticks.forEach((t) =>
-      this.uiService.notifyAll(
-        Constants.BTN_SELECTION,
-        this.resolution[1],
-        num++
-      )
+    this.ticks.forEach((_t) =>
+      this.uiService.notifyAll(Constants.CLICK, this.resolution[1], num++)
     );
     this.updateDisplay();
   }
 
-  toggleInterval(interval: number, data: number[], resolution: string) {
-    let num = 0;
-    data.forEach((t) => {
-      if (num % interval == 0)
-        this.uiService.notifyAll(Constants.BTN_SELECTION, resolution, num);
-      num++;
+  clearAll(data: number[]) {
+    data.forEach((_t) => {
+      this.uiService.notifyAll(Constants.CLICK, '0', 0);
     });
 
     this.updateDisplay();
   }
 
-  nudgeRight(data: number[], resolution: string) {
-    let num = 0;
-    data.forEach((t) => {
-      if (num < data.length) {
-        data[num + 1] = data[num];
-        // this.uiService.notifyAll(Constants.BTN_SELECTION, resolution, num);
-        num++;
-      }
-    });
-
-    this.updateDisplay();
+  nudgeRight(resolution: string) {
+    this.uiService.notifyAll(Constants.NUDGE_RIGHT, resolution, 0);
   }
-
-  // toggleThrees() {
-  //   let num = 0;
-  //   this.ticks.forEach(t => {
-  //     if (num % 3 == 0)
-  //       this.uiService.notifyAll(Constants.BTN_SELECTION, this.resolution[1], num)
-  //     num++
-  //   })
-
-  //   this.updateDisplay()
-  // }
-
-  // toggleFours() {
-  //   let num = 0;
-  //   this.ticks.forEach(t => {
-  //     if (num % 4 == 0)
-  //       this.uiService.notifyAll(Constants.BTN_SELECTION, this.resolution[1], num)
-  //     num++
-  //   })
-
-  //   this.updateDisplay()
-  // }
 }
+
+// toggleThrees() {
+//   let num = 0;
+//   this.ticks.forEach(t => {
+//     if (num % 3 == 0)
+//       this.uiService.notifyAll(Constants.BTN_SELECTION, this.resolution[1], num)
+//     num++
+//   })
+
+//   this.updateDisplay()
+// }
+
+// toggleFours() {
+//   let num = 0;
+//   this.ticks.forEach(t => {
+//     if (num % 4 == 0)
+//       this.uiService.notifyAll(Constants.BTN_SELECTION, this.resolution[1], num)
+//     num++
+//   })
+
+//   this.updateDisplay()
+// }

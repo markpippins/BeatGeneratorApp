@@ -6,7 +6,6 @@ import {
   Component,
   EventEmitter,
   Input,
-  OnInit,
   Output,
 } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
@@ -53,7 +52,7 @@ export class ButtonPanelComponent
   symbols!: string[];
 
   @Input()
-  customControls: string[] = ['-', '+'];
+  customControls: string[] = ['-', '+', 'C'];
   visibleCustomControls: string[] = [];
 
   @Input()
@@ -108,9 +107,12 @@ export class ButtonPanelComponent
     this.updateSelections();
   }
 
-  onNotify(messageType: number, message: string, messageValue: number) {
-    if (messageType == Constants.BTN_SELECTION && message == this.identifier)
+  onNotify(_messageType: number, _message: string, messageValue: number) {
+    if (_messageType == Constants.CLICK && _message == this.identifier)
       this.selections[messageValue] = !this.selections[messageValue];
+
+    if (_messageType == Constants.NUDGE_RIGHT && _message == this.identifier)
+      this.nudgeRight(this.symbols);
 
     this.updateSelections();
   }
@@ -131,7 +133,7 @@ export class ButtonPanelComponent
       this.range.length + this.overage.length < this.colCount &&
       index < this.customControls.length
     )
-      this.visibleCustomControls.push(this.customControls[index++]);
+      this.visibleCustomControls.push(this.customControls[index++]!);
 
     this.overage = [];
     while (
@@ -155,7 +157,7 @@ export class ButtonPanelComponent
     // this.ticksPosition += this.colCount
     while (this.range.length < this.colCount + this.customControlMinCount) {
       if (this.position == this.symbols.length) break;
-      else this.range.push(this.symbols[this.position++]);
+      else this.range.push(this.symbols[this.position++]!);
     }
 
     while (this.range.length + this.overage.length < this.colCount)
@@ -177,7 +179,7 @@ export class ButtonPanelComponent
       this.overage.length + this.range.length < this.colCount
     ) {
       while (this.position == this.symbols.length) this.overage.push('');
-      this.range.push(this.symbols[this.position++]);
+      this.range.push(this.symbols[this.position++]!);
     }
 
     while (this.range.length + this.overage.length < this.colCount)
@@ -185,35 +187,24 @@ export class ButtonPanelComponent
     this.updateSelections();
   }
 
-  onClick(index: number, event: Event) {
-    // if (this.exclusive) {
-    //   this.range.forEach((note) => {
-    //     let element = document.getElementById(this.symbolBtnClassName + index);
-    //     if (element != undefined) {
-    //       this.uiService.removeClass(
-    //         element,
-    //         this.getSymbolBtnSelectedClassName()
-    //       );
-    //       this.uiService.addClass(element, this.symbolBtnClassName);
-    //     }
-    //   });
-
-    //   this.uiService.swapClass(
-    //     event.target,
-    //     this.symbolBtnClassName,
-    //     this.getSymbolBtnSelectedClassName()
-    //   );
-    // } else {
+  onSymbolClick(index: number, event: Event) {
     this.selections[index] = !this.selections[index];
     this.uiService.swapClass(
       event.target,
       this.getSymbolBtnSelectedClassName(),
       this.symbolBtnClassName
     );
-    // }
-
     this.buttonClickedForIndexEvent.emit(index);
-    this.buttonClickedForCommandEvent.emit(this.symbols[index]);
+  }
+
+  onCommandClick(index: number, event: Event) {
+    this.selections[index] = !this.selections[index];
+    this.uiService.swapClass(
+      event.target,
+      this.getSymbolBtnSelectedClassName(),
+      this.symbolBtnClassName
+    );
+    this.buttonClickedForCommandEvent.emit(this.visibleCustomControls[index]);
   }
 
   getButtonId(pos: number, over: boolean): string {
@@ -234,7 +225,7 @@ export class ButtonPanelComponent
 
   updateSelections() {
     let index = this.position - this.colCount;
-    this.selections.forEach((t) => {
+    this.selections.forEach((_t) => {
       let id = this.getButtonId(index, false);
       let element = document.getElementById(id);
       if (element != undefined)
@@ -269,34 +260,34 @@ export class ButtonPanelComponent
 
   toggleAll() {
     let num = 0;
-    this.selections.forEach(t => {
-      this.selections[num] = !this.selections[num]
+    this.selections.forEach((_t) => {
+      this.selections[num] = !this.selections[num];
     });
     this.updateDisplay();
   }
 
-  toggleInterval(interval: number, data: number[], resolution: string) {
+  toggleInterval(interval: number) {
     let num = 0;
-    this.selections.forEach((t) => {
-      if (num % interval == 0)
-        this.selections[num] = !this.selections[num]
+    this.selections.forEach((_t) => {
+      if (num % interval == 0) this.selections[num] = !this.selections[num];
       num++;
     });
 
     this.updateDisplay();
   }
 
-  nudgeRight(data: number[], resolution: string) {
-    let num = 0;
-    data.forEach((t) => {
-      if (num < data.length) {
-        data[num + 1] = data[num];
-        // this.uiService.notifyAll(Constants.BTN_SELECTION, resolution, num);
-        num++;
+  nudgeRight(data: any[]) {
+    let temp: any[] = [];
+    let length = data.length;
+    data.forEach((_e) => temp.push(_e));
+    data = [];
+    data.push(temp[temp.length - 1]);
+    temp.forEach((_t) => {
+      if (data.length < length) {
+        data.push(_t);
       }
     });
 
     this.updateDisplay();
   }
-
 }

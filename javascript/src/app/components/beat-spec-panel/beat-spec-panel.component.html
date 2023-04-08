@@ -9,7 +9,7 @@
 <div class="lane-808">
   <!--  <div class="btn-inactive">-->
     <div *ngIf="step.active" id="beat-btn-{{step.position}}" class="btn-active">
-      <button mat-icon-button (click)="onLaneBtnClick()">
+      <button icon-button (click)="onLaneBtnClick()">
         <!-- <mat-icon>album</mat-icon> -->
         {{step.position + 1}}
       </button>
@@ -42,7 +42,7 @@
   </div>
 
   <div>
-    <button class="lane-808 btn-808" mat-icon-button (click)="onParamsBtnClick()">
+    <button class="lane-808 btn-808 btn-active" icon-button (click)="onParamsBtnClick()">
       <mat-icon>camera</mat-icon>
     </button>
   </div>

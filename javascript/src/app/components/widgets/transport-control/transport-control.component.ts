@@ -2,7 +2,6 @@ import {Component, EventEmitter, Output} from '@angular/core'
 import { Constants } from 'src/app/models/constants'
 import { Listener } from 'src/app/models/listener'
 import { UiService } from 'src/app/services/ui.service'
-import {MidiService} from "../../../services/midi.service"
 
 @Component({
   selector: 'app-transport-control',
@@ -12,7 +11,7 @@ import {MidiService} from "../../../services/midi.service"
 export class TransportControlComponent implements Listener {
 
   constructor(private uiService: UiService) {
-    uiService.addListener(this)
+    this.uiService.addListener(this)
   }
 
   @Output()
@@ -24,10 +23,10 @@ export class TransportControlComponent implements Listener {
     this.clickEvent.emit(action)
   }
 
-  onNotify(messageType: number, message: string) {
-    if (messageType == Constants.CONNECTED)
+  onNotify(_messageType: number, _message: string) {
+    if (_messageType == Constants.CONNECTED)
       this.connected = true
-    else if (messageType == Constants.DISCONNECTED)
+    else if (_messageType == Constants.DISCONNECTED)
       this.connected = false
   }
 }

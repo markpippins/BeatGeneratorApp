@@ -1,10 +1,8 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Instrument} from "../../models/instrument";
 import {MidiService} from "../../services/midi.service";
-import {MatCheckboxChange} from "@angular/material/checkbox";
 import { Listener } from 'src/app/models/listener';
 import { UiService } from 'src/app/services/ui.service';
-import { Constants } from 'src/app/models/constants';
 
 @Component({
   selector: 'app-slider-panel',
@@ -31,7 +29,7 @@ export class SliderPanelComponent implements OnInit, Listener {
 
   }
 
-  onNotify(messageType: number, message: string) {
+  onNotify(_messageType: number, _message: string) {
 
   }
 
@@ -56,7 +54,7 @@ export class SliderPanelComponent implements OnInit, Listener {
       });
   }
 
-  change(event: MatCheckboxChange) {
+  change() {
     this.configModeOn = !this.configModeOn
   }
 }

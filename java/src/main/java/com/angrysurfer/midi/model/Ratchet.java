@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Ratchet extends Strike {
- 
+
     private Strike parent;
 
     public Ratchet(Strike parent, double offset, long interval, int part) {
@@ -23,6 +23,13 @@ public class Ratchet extends Strike {
         setMaxVelocity(getParent().getMaxVelocity());
         setMinVelocity(getParent().getMinVelocity());
         setMuted(getParent().isMuted());
+        setProbability(getParent().getProbability());
+        setPanPosition(getParent().getPanPosition());
+        setRandomDegree(getParent().getRandomDegree());
+        setFadeIn(getParent().getFadeIn());
+        setFadeOut(getParent().getFadeOut());
+        setPreset(getParent().getPreset());
+                
         Long ratchets = getTicker().getPlayers().stream().filter(p -> p instanceof Ratchet).count();
         setId(-1 - ratchets);
         setName(getParent().getName() + String.format("s", getParent().getTicker().getPlayers().size()));
@@ -38,6 +45,7 @@ public class Ratchet extends Strike {
     }
 
     public void onTick(long tick, long bar) {
-        drumNoteOn(getNote(), rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100, getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
+        if (getProbability().equals(100L) || rand.nextInt(100) > getProbability())
+            drumNoteOn(getNote());
     }
 }

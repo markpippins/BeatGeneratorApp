@@ -1,6 +1,6 @@
 <div class="selector-row">
   <form *ngIf="player != undefined">
-      <select placeholder="Instrument" [(ngModel)]="selectionIndex" name="player_instrument-{{player.id}}" (change)="onSelectionChange($event)">
+      <select placeholder="Instrument" [(ngModel)]="selectionIndex" name="player_instrument-{{player.id}}" (change)="onSelectionChange()">
         <option *ngFor="let instrument of instruments; let i = index;" [value]="i">
           {{instrument.name}}
         </option>

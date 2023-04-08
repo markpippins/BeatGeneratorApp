@@ -1,7 +1,6 @@
 import { Component, OnInit, Output } from '@angular/core'
 import { MidiService } from "../../services/midi.service"
 import { Player } from "../../models/player"
-import { MatTabsModule } from '@angular/material/tabs'
 import { Ticker } from "../../models/ticker"
 import { UiService } from 'src/app/services/ui.service'
 import { Constants } from 'src/app/models/constants'
@@ -65,15 +64,15 @@ export class DashboardComponent implements OnInit, Listener {
     this.onActionSelected('forward')
   }
 
-  onNotify(messageType: number, message: string) {
+  onNotify(_messageType: number, _message: string) {
     this.consoleOutput.pop()
-    switch (messageType) {
+    switch (_messageType) {
       case Constants.STATUS:
-        this.consoleOutput.push(message)
+        this.consoleOutput.push(_message)
         break
 
       case Constants.COMMAND:
-        this.onActionSelected(message)
+        this.onActionSelected(_message)
         break
 
       case Constants.CONNECTED:
@@ -86,7 +85,7 @@ export class DashboardComponent implements OnInit, Listener {
         break
 
     case Constants.PLAYER_UPDATED:
-      this.consoleOutput.push(message)
+      this.consoleOutput.push(_message)
       this.updateDisplay()
       break
 
@@ -184,8 +183,6 @@ export class DashboardComponent implements OnInit, Listener {
           if (this.selectedPlayer == undefined)
             break
           let id = this.selectedPlayer.id
-          let index = this.players.indexOf(this.selectedPlayer)
-
           this.selectedPlayer.rules = []
           this.midiService.removePlayer(this.selectedPlayer).subscribe(async (data) => {
             this.players = data;

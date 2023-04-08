@@ -1,4 +1,3 @@
-import { Instrument } from './instrument';
 import { Rule } from './rule';
 
 export interface Player {

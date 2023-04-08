@@ -1,9 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Constants } from 'src/app/models/constants';
 import { Player } from 'src/app/models/player';
 import { PlayerUpdateType } from 'src/app/models/player-update-type';
 import { MidiService } from 'src/app/services/midi.service';
-import { UiService } from 'src/app/services/ui.service';
 
 @Component({
   selector: 'app-strike-detail',
@@ -15,7 +13,7 @@ export class StrikeDetailComponent {
   @Output()
   changeEvent = new EventEmitter<Player>();
 
-  constructor(private midiService: MidiService, private uiService: UiService) {
+  constructor(private midiService: MidiService) {
   }
   @Input()
   player!: Player

@@ -6,7 +6,6 @@ import { Pattern } from 'src/app/models/pattern';
 import { PatternUpdateType } from 'src/app/models/pattern-update-type';
 import { Song } from 'src/app/models/song';
 import { UiService } from 'src/app/services/ui.service';
-import {Step} from "../../models/step";
 import {MidiService} from "../../services/midi.service";
 
 @Component({
@@ -34,7 +33,7 @@ export class BeatSpecComponent implements OnInit, Listener {
   constructor(private midiService: MidiService, private uiService: UiService) {
     uiService.addListener(this)
   }
-  onNotify(messageType: number, message: string, messageValue: number) {
+  onNotify(messageType: number,_message: string, messageValue: number) {
     if (messageType == Constants.TICKER_SELECTED)
       this.tickerId = messageValue
   }
@@ -58,7 +57,7 @@ export class BeatSpecComponent implements OnInit, Listener {
   }
 
   onStepChanged(step: any) {
-    // alert(step)
+    alert(step)
     // this.midiService.updateStep(step).subscribe(async data => {
     //   this.steps[step.position] = data
     // })
@@ -69,10 +68,10 @@ export class BeatSpecComponent implements OnInit, Listener {
     if (pattern.name != undefined)
       s = pattern.name
 
-    if (s == "microsoft gs wavetable synth")
+    if (s.toLowerCase() == "microsoft gs wavetable synth")
       s = "MS Wave"
 
-      if (s == "gervill")
+      if (s.toLowerCase() == "gervill")
       s = "Gervill"
 
 

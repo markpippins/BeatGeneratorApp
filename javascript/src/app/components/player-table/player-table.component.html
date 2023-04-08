@@ -10,7 +10,7 @@
     </tr>
 
     <tr *ngFor="let player of players;" class="active-table-row" id="player-row-{{player.id}}"
-      (mouseenter)="onPass(player, $event)" (click)="onRowClick(player, $event)">
+      (mouseenter)="onPass(player)" (click)="onRowClick(player)">
 
 
       <!-- <td>
@@ -55,7 +55,7 @@
         </button>
       </td>
       <td class="player-short-col" (change)="onBeatFractionChange(player, $event)">
-        <input type="number" min="1" max="{{ player.beatFraction }}" step="1" value="{{ player.beatFraction }}">
+        <input type="number" min="1" max="{{ player.subDivisions }}" step="1" value="{{ player.beatFraction }}">
       </td>
       <td class="player-short-col" (change)="onSubsChange(player, $event)">
         <input type="number" min="1" max="16" step="1" value="{{ player.subDivisions }}">

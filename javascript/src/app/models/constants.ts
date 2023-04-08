@@ -1,4 +1,3 @@
-import { Player } from './player'
 
 export class Constants {
   static RULE_COLUMNS = ['operator', 'comparison', 'value']
@@ -48,7 +47,12 @@ export class Constants {
   static TICKER_UPDATED = 14
   static PLAYER_SELECTED = 15
 
-  static BTN_SELECTION = 0;
+  static CLICK = 0;
+  static NUDGE_RIGHT = 1;
+  static NUDGE_LEFT = 2;
+  static EXTEND = 3;
+  static SHORTEN = 4;
+  static CLEAR = 5;
 
   static CHROMATIC_SCALE = [
     'C',

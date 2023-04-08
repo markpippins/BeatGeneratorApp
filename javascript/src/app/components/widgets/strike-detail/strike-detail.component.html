@@ -1,30 +1,26 @@
-<div class="rule-table-holder">
-  <div>
-    <table id="player-table">
-      <tr>
-        <th>Player</th>
-        <th>Class</th>
-        <th>Level</th>
-        <!-- <th>Min Velocity</th>
+<table id="player-table">
+  <tr>
+    <th>Player</th>
+    <th>Class</th>
+    <th>Level</th>
+    <!-- <th>Min Velocity</th>
         <th>Max Velocity</th> -->
-      </tr>
-      <tr>
-        <td class="player-long-col" (change)="onLevelChange(player, $event)">
-          <input value="{{ player.name }}">
-        </td>
-        <td class="player-short-col" (change)="onLevelChange(player, $event)">
-          <input value="{{ player.playerClass }}">
-        </td>
-        <td class="player-short-col" (change)="onLevelChange(player, $event)">
-          <input type="number" min="1" max="127" step="1" value="{{ player.level }}">
-        </td>
-        <!-- <td class="player-short-col" (change)="onMinVelocityChange(player, $event)">
+  </tr>
+  <tr>
+    <td class="player-long-col" (change)="onLevelChange(player, $event)">
+      <input value="{{ player.name }}">
+    </td>
+    <td class="player-short-col" (change)="onLevelChange(player, $event)">
+      <input value="{{ player.playerClass }}">
+    </td>
+    <td class="player-short-col" (change)="onLevelChange(player, $event)">
+      <input type="number" min="1" max="127" step="1" value="{{ player.level }}">
+    </td>
+    <!-- <td class="player-short-col" (change)="onMinVelocityChange(player, $event)">
           <input type="number" min="1" max="127" step="1" value="{{ player.minVelocity }}">
         </td>
         <td class="player-short-col" (change)="onMaxVelocityChange(player, $event)">
           <input type="number" min="1" max="127" step="1" value="{{ player.maxVelocity }}">
         </td> -->
-      </tr>
-    </table>
-  </div>
-</div>
+  </tr>
+</table>

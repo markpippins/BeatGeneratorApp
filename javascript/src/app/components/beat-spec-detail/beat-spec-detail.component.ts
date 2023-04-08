@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
 import { Pattern } from 'src/app/models/pattern';
 import { PatternUpdateType } from 'src/app/models/pattern-update-type';

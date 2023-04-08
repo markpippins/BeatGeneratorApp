@@ -9,12 +9,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.sound.midi.*;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,11 +36,12 @@ public class MIDIService {
         this.midiInstrumentRepo = midiInstrumentRepo;
     }
 
+    static List<MidiDevice> midiDevices = new ArrayList<>();
     // public static MidiDevice getDevice(String deviceName) {
     // try {
     // return MidiSystem.getMidiDevice(Stream.of(MidiSystem.getMidiDeviceInfo()).
     // filter(info ->
-    // info.getName().toLowerCase().contains(deviceName.toLowerCase())).toList().get(0));
+    // info.getName().contains(deviceName)).toList().get(0));
     // } catch (MidiUnavailableException e) {
     // throw new RuntimeException(e);
     // }
@@ -56,19 +59,22 @@ public class MIDIService {
     }
 
     public static List<MidiDevice> getMidiDevices() {
-        return Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {
-            try {
-                return MidiSystem.getMidiDevice(info);
-            } catch (MidiUnavailableException ex) {
-                logger.error(ex.getMessage(), ex);
-                throw new RuntimeException(ex);
-            }
-        }).toList();
+        if (midiDevices.size() == 0)
+            midiDevices = Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {
+                try {
+                    return MidiSystem.getMidiDevice(info);
+                } catch (MidiUnavailableException ex) {
+                    logger.error(ex.getMessage(), ex);
+                    throw new RuntimeException(ex);
+                }
+            }).toList();
+
+        return midiDevices;
     }
 
     public static List<MidiDevice> findMidiDevices(boolean receive, boolean transmit) {
         return getMidiDevices().stream().map(device -> {
-            logger.info(device.getDeviceInfo().getName());
+            // logger.info(device.getDeviceInfo().getName());
             if ((transmit == (device.getMaxTransmitters() != 0) && receive == (device.getMaxReceivers() != 0)))
                 return device;
             else
@@ -77,8 +83,8 @@ public class MIDIService {
     }
 
     public static MidiDevice findMidiInDevice(String name) {
-        // if (midiOutDevices.containsKey(name))
-        // return midiOutDevices.get(name);
+        if (midiOutDevices.containsKey(name))
+            return midiOutDevices.get(name);
 
         // else midiInDevices.put(name,
         return findMidiDevices(false, true).stream().filter(d -> d.getDeviceInfo().getName().equals(name)).findAny()
@@ -131,22 +137,35 @@ public class MIDIService {
         return results;
     }
 
-    static String GS_SYNTH = "Microsoft GS Wavetable Synth".toLowerCase();
-    static String GERVILL = "gervill";
+    static String GS_SYNTH = "Microsoft GS Wavetable Synth";
+    static String GERVILL = "Gervill";
 
     public static MidiDevice findMidiOutDevice(String name) {
         if (midiOutDevices.containsKey(name))
             return midiOutDevices.get(name);
 
-        MidiDevice result = findMidiDevices(true, false).stream()
-                .filter(d -> d.getDeviceInfo().getName().equals(name)).findAny()
-                .orElse(getMidiDevices().stream()
-                        .filter(d -> d.getDeviceInfo().getName().toLowerCase().equals(GS_SYNTH)).findFirst()
-                        .orElseThrow());
+        MidiDevice result = null;
 
-        if (Objects.nonNull(result.getDeviceInfo().getName())
-                && result.getDeviceInfo().getName().toLowerCase().equals(name.toLowerCase()))
-            midiOutDevices.put(name, result);
+        try {
+            result = findMidiDevices(true, false).stream()
+                    .filter(d -> Objects.nonNull(d.getDeviceInfo().getName())
+                            && d.getDeviceInfo().getName().equals(name))
+                    .findAny()
+                    .orElse(getMidiDevices().stream()
+                            .filter(d -> Objects.nonNull(d.getDeviceInfo().getName())
+                                    && d.getDeviceInfo().getName().equals(GS_SYNTH))
+                            .findFirst()
+                            .orElseThrow());
+
+            if (Objects.nonNull(result.getDeviceInfo().getName())
+                    && result.getDeviceInfo().getName().equals(name))
+                midiOutDevices.put(name, result);
+            else
+                midiOutDevices.put(GS_SYNTH, result);
+        } catch (NoSuchElementException e) {
+            logger.error(e.getMessage() + " for device " + name, e);
+            e.printStackTrace();
+        }
 
         return result;
     }
@@ -164,16 +183,25 @@ public class MIDIService {
         if (results.size() == 1)
             midiInstruments.put(channel, results.get(0));
         else {
-            if (channel > 6) {
-                instrument.setDevice(
-                        getMidiDevices().stream().filter(d -> d.getDeviceInfo().getName().toLowerCase().equals(GERVILL))
-                                .findAny().orElseThrow());
-                instrument.setName(GS_SYNTH);
-            } else {
-                instrument.setDevice(getMidiDevices().stream()
-                        .filter(d -> d.getDeviceInfo().getName().toLowerCase().equals(GS_SYNTH)).findAny()
-                        .orElseThrow());
-                instrument.setName(GERVILL);
+            try {
+                if (channel > 6) {
+                    instrument.setDevice(
+                            getMidiDevices().stream()
+                                    .filter(d -> Objects.nonNull(d.getDeviceInfo().getName())
+                                            && d.getDeviceInfo().getName().equals(GERVILL))
+                                    .findAny().orElseThrow());
+                    instrument.setName(GERVILL);
+                } else {
+                    instrument.setDevice(getMidiDevices().stream()
+                            .filter(d -> Objects.nonNull(d.getDeviceInfo().getName())
+                                    && d.getDeviceInfo().getName().equals(GS_SYNTH))
+                            .findAny()
+                            .orElseThrow());
+                    instrument.setName(GS_SYNTH);
+                }
+                midiInstruments.put(channel, instrument);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
             instrument.setDeviceName(instrument.getDevice().getDeviceInfo().getName());

@@ -8,8 +8,8 @@
 </div>
 <div class="flex-container-horizontal">
   <div class="flex-container-vertical">
+    <button class="mini-btn mini-control-btn">A</button>
     <button class="mini-btn mini-control-btn">T</button>
-    <button class="mini-btn mini-control-btn">D</button>
     <button class="mini-btn mini-control-btn">Bt</button>
     <button class="mini-btn mini-control-btn">Br</button>
     <button class="mini-btn mini-control-btn">Pt</button>
@@ -76,9 +76,9 @@
   </div>
   <div class="flex-container-vertical">
     <button class="mini-btn mini-control-btn"></button>
-    <button class="mini-btn mini-control-btn" (click)="nudgeRight(ticks, resolution[1])">R</button>
-    <button class="mini-btn mini-control-btn" (click)="nudgeRight(beats, resolution[2])">R</button>
-    <button class="mini-btn mini-control-btn" (click)="nudgeRight(bars, resolution[3])">R</button>
+    <button class="mini-btn mini-control-btn" (click)="nudgeRight(resolution[1])">R</button>
+    <button class="mini-btn mini-control-btn" (click)="nudgeRight(resolution[2])">R</button>
+    <button class="mini-btn mini-control-btn" (click)="nudgeRight(resolution[3])">R</button>
     <button class="mini-btn mini-control-btn">R</button>
   </div>
   <div class="flex-container-vertical">
@@ -91,15 +91,20 @@
   <div class="flex-container-vertical">
     <div class="flex-container-vertical">
       <app-button-panel [identifier]=resolution[0] [colCount]="colCount"
+        (buttonClickedForCommandEvent)="commandSelected($event, 0)"
         [symbols]="getAccentsAsStrings()"></app-button-panel>
       <app-button-panel [identifier]=resolution[1] [colCount]="colCount"
-        (buttonClickedForIndexEvent)="tickSelected($event)" [symbols]="getTicksAsStrings()"></app-button-panel>
+        (buttonClickedForCommandEvent)="commandSelected($event, 1)" (buttonClickedForIndexEvent)="tickSelected($event)"
+        [symbols]="getTicksAsStrings()"></app-button-panel>
       <app-button-panel [identifier]=resolution[2] [colCount]="colCount"
-        (buttonClickedForIndexEvent)="beatSelected($event)" [symbols]="getBeatsAsStrings()"></app-button-panel>
+        (buttonClickedForCommandEvent)="commandSelected($event, 2)" (buttonClickedForIndexEvent)="beatSelected($event)"
+        [symbols]="getBeatsAsStrings()"></app-button-panel>
       <app-button-panel [identifier]=resolution[3] [colCount]="colCount"
-        (buttonClickedForIndexEvent)="barSelected($event)" [symbols]="getBarsAsStrings()"></app-button-panel>
+        (buttonClickedForCommandEvent)="commandSelected($event, 3)" (buttonClickedForIndexEvent)="barSelected($event)"
+        [symbols]="getBarsAsStrings()"></app-button-panel>
       <app-button-panel [identifier]=resolution[4] [colCount]="colCount"
-        (buttonClickedForIndexEvent)="partSelected($event)" [symbols]="getPartsAsStrings()"></app-button-panel>
+        (buttonClickedForCommandEvent)="commandSelected($event, 4)" (buttonClickedForIndexEvent)="partSelected($event)"
+        [symbols]="getPartsAsStrings()"></app-button-panel>
     </div>
   </div>
   <div class="flex-container-vertical">

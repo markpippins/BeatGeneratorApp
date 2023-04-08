@@ -54,9 +54,9 @@ export class RuleTableComponent implements Listener {
   constructor(private midiService: MidiService, private uiService: UiService) {
     this.uiService.addListener(this);
   }
-  onNotify(messageType: number, message: string, messageValue: number) {
-    if (messageType == Constants.COMMAND) {
-      switch (message) {
+  onNotify(_messageType: number, _message: string, _messageValue: number) {
+    if (_messageType == Constants.COMMAND) {
+      switch (_message) {
         case 'rule-add': {
           this.midiService.addRule(this.player).subscribe(async (data) => {
             this.player.rules.push(data);

@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
-import { MidiService } from 'src/app/services/midi.service';
 import { UiService } from 'src/app/services/ui.service';
 
 @Component({
@@ -27,7 +26,7 @@ export class MidinInstrumentComboComponent  implements OnInit {
   identifier!: string
 
 
-  constructor(private midiService: MidiService, private uiService: UiService) {}
+  constructor(private uiService: UiService) {}
 
   ngOnInit(): void {
 
@@ -35,12 +34,11 @@ export class MidinInstrumentComboComponent  implements OnInit {
 
   ngAfterContentChecked(): void {
     if (this.instruments != undefined && this.identifier != undefined) {
-      let sel  = 'midi_instrument-' + this.identifier
       this.setIndexForInstrument()
     }
   }
 
-  onSelectionChange(data: any) {
+  onSelectionChange() {
     this.instrumentSelectEvent.emit(this.instruments[this.selectionIndex])
     this.uiService.notifyAll(Constants.STATUS, this.instruments[this.selectionIndex].name + ' selected.', 0)
   }

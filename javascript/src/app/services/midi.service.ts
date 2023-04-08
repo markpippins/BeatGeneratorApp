@@ -103,13 +103,13 @@ export class MidiService {
   }
 
   instrumentLookup() {
-    let params = new HttpParams();
+    // let params = new HttpParams();
     return this.http.get<LookupItem[]>(
       'http://localhost:8080/api/instruments/lookup');
   }
 
   saveConfig() {
-    let params = new HttpParams();
+    // let params = new HttpParams();
     return this.http.get<LookupItem[]>(
       'http://localhost:8080/api/beat/save');
   }

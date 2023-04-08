@@ -29,28 +29,28 @@ public class TickerService {
     private TickerRepo tickerRepo;
     private SongService songService;
     private SequenceRunner sequenceRunner;
-    private ArrayList<SequenceRunner> sequenceRunners = new ArrayList<>(); 
+    private ArrayList<SequenceRunner> sequenceRunners = new ArrayList<>();
 
     public TickerService(TickerRepo tickerRepo, StrikeRepository strikeRepository,
-        RuleRepository ruleRepository, SongService songService) {
+            RuleRepository ruleRepository, SongService songService) {
 
         this.tickerRepo = tickerRepo;
         this.ruleRepository = ruleRepository;
         this.strikeRepository = strikeRepository;
         this.songService = songService;
     }
-    
+
     public void play() {
-        
+
         stopRunningSequencers();
         sequenceRunner = new SequenceRunner(getTicker());
         sequenceRunners.add(getSequenceRunner());
-        getSequenceRunner().getCycleListeners().add(getSongService().getBeatListener());
-        getSequenceRunner().getCycleListeners().add(getSongService().getBarListener());
         getSequenceRunner().getCycleListeners().add(getSongService().getTickListener());
         getSongService().getSong().setBeatDuration(getTicker().getBeatDuration());
+        getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
+        
         this.ticker.getPlayers().forEach(p -> p.getInstrument()
-            .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
+                .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
 
         if (Objects.nonNull(getSequenceRunner()) && !getSequenceRunner().isPlaying())
             new Thread(getSequenceRunner()).start();
@@ -62,7 +62,7 @@ public class TickerService {
         getTicker().getPlayers().forEach(p -> {
             try {
                 p.getInstrument().programChange(p.getPreset(), 0);
-            } catch (InvalidMidiDataException | MidiUnavailableException e) {                
+            } catch (InvalidMidiDataException | MidiUnavailableException e) {
                 logger.error(e.getMessage(), e);
             }
         });
@@ -100,46 +100,53 @@ public class TickerService {
         if (Objects.isNull(ticker)) {
             stopRunningSequencers();
             ticker = getTickerRepo().save(new Ticker());
-            getTicker().getBeatCycler().getListeners().add(getSongService().getBeatListener());
-            getTicker().getBarCycler().getListeners().add(getSongService().getBarListener());
+            getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
             sequenceRunner = new SequenceRunner(ticker);
         }
-        
+
         return ticker;
     }
 
     public Ticker updateTicker(Long tickerId, int updateType, long updateValue) {
 
-        Ticker ticker = getTicker().getId().equals(tickerId) ? getTicker() : getTickerRepo().findById(tickerId).orElseThrow();
+        Ticker ticker = getTicker().getId().equals(tickerId) ? getTicker()
+                : getTickerRepo().findById(tickerId).orElseThrow();
 
         switch (updateType) {
-            case TickerUpdateType.PPQ : ticker.setTicksPerBeat((int) updateValue);
+            case TickerUpdateType.PPQ:
+                ticker.setTicksPerBeat((int) updateValue);
                 break;
 
-            case TickerUpdateType.BEATS_PER_BAR : ticker.setBeatsPerBar((int) updateValue);
+            case TickerUpdateType.BEATS_PER_BAR:
+                ticker.setBeatsPerBar((int) updateValue);
                 break;
 
-            case TickerUpdateType.BPM: 
+            case TickerUpdateType.BPM:
                 ticker.setTempoInBPM(Float.valueOf(updateValue));
                 if (Objects.nonNull(getSequenceRunner()) && ticker.getId().equals(getTicker().getId()))
                     getSequenceRunner().getSequencer().setTempoInBPM(updateValue);
-                    getSongService().getSong().setBeatDuration(getTicker().getBeatDuration());
+                getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
                 break;
 
-            case TickerUpdateType.PARTS: ticker.setParts((int) updateValue);
+            case TickerUpdateType.PARTS:
+                ticker.setParts((int) updateValue);
                 getTicker().getPartCycler().reset();
                 break;
 
-            case TickerUpdateType.BASE_NOTE_OFFSET: ticker.setNoteOffset((double) updateValue);
+            case TickerUpdateType.BASE_NOTE_OFFSET:
+                ticker.setNoteOffset((double) updateValue);
                 break;
 
-                case TickerUpdateType.BARS: ticker.setBars((int) updateValue);
+            case TickerUpdateType.BARS:
+                ticker.setBars((int) updateValue);
                 break;
 
-            case TickerUpdateType.PART_LENGTH: ticker.setPartLength(updateValue);
+            case TickerUpdateType.PART_LENGTH:
+                ticker.setPartLength(updateValue);
                 break;
 
-            case TickerUpdateType.MAX_TRACKS: ticker.setMaxTracks((int) updateValue);
+            case TickerUpdateType.MAX_TRACKS:
+                ticker.setMaxTracks((int) updateValue);
                 break;
         }
 
@@ -147,16 +154,16 @@ public class TickerService {
     }
 
     public synchronized Ticker next(long currentTickerId) {
-        if (currentTickerId == 0 || getTicker().getPlayers().size() > 0) {       
+        if (currentTickerId == 0 || getTicker().getPlayers().size() > 0) {
             stopRunningSequencers();
+            getTicker().getTickCycler().getListeners().clear();
             getTicker().getBeatCycler().getListeners().clear();
             getTicker().getBarCycler().getListeners().clear();
             Long maxTickerId = getTickerRepo().getMaximumTickerId();
-            setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId ?
-                getTickerRepo().getNextTicker(currentTickerId) :
-                null);
-            getTicker().getBeatCycler().getListeners().add(getSongService().getBeatListener());
-            getTicker().getBarCycler().getListeners().add(getSongService().getBarListener());
+            setTicker(Objects.nonNull(maxTickerId) && currentTickerId < maxTickerId
+                    ? getTickerRepo().getNextTicker(currentTickerId)
+                    : null);
+            getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
             getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
             getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
             sequenceRunner = new SequenceRunner(getTicker());
@@ -166,7 +173,9 @@ public class TickerService {
     }
 
     public synchronized Ticker previous(long currentTickerId) {
-        if (currentTickerId >  (getTickerRepo().getMinimumTickerId())) {
+        if (currentTickerId > (getTickerRepo().getMinimumTickerId())) {
+            // getTicker().getTickCycler().getListeners().clear();
+            getTicker().getTickCounter().getListeners().clear();
             getTicker().getBeatCycler().getListeners().clear();
             getTicker().getBarCycler().getListeners().clear();
             stopRunningSequencers();
@@ -174,15 +183,14 @@ public class TickerService {
             getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
             getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
             sequenceRunner = new SequenceRunner(getTicker());
-            getTicker().getBeatCycler().getListeners().add(getSongService().getBeatListener());
-            getTicker().getBarCycler().getListeners().add(getSongService().getBarListener());
+            getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
         }
 
         return getTicker();
     }
 
     // public void clearPlayers() {
-    //     getTicker().getPlayers().clear();
+    // getTicker().getPlayers().clear();
     // }
 
     public Ticker loadTicker(long tickerId) {
@@ -193,9 +201,11 @@ public class TickerService {
     public Ticker newTicker() {
         getTicker().getBeatCycler().getListeners().clear();
         getTicker().getBarCycler().getListeners().clear();
+        getTicker().getTickCycler().getListeners().clear();
+        getTicker().getTickCounter().getListeners().clear();
+        getTicker().getBeatCounter().getListeners().clear();
+        getTicker().getBarCounter().getListeners().clear();
         setTicker(null);
-        // getTicker().getBeatCycler().getListeners().add(getSongService().getBeatListener());
-        // getTicker().getBarCycler().getListeners().add(getSongService().getBarListener());
         return getTicker();
-    } 
+    }
 }

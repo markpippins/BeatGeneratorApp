@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 public class SongController {
-
+    // double numberOfTicksToWait = getBeatFraction() * (getTicker().getTicksPerBeat() / getSubDivisions());
     List<String> requestsToLog = new ArrayList<>();
 
     static Logger logger = LoggerFactory.getLogger(SongController.class.getCanonicalName());

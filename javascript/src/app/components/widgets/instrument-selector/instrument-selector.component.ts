@@ -1,8 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core'
 import {Instrument} from "../../../models/instrument"
-import {MidiService} from "../../../services/midi.service";
-import {Rule} from "../../../models/rule";
-import {LookupItem} from "../../../models/lookup-item";
 import { Player } from 'src/app/models/player';
 import { UiService } from 'src/app/services/ui.service';
 import { Constants } from 'src/app/models/constants';
@@ -26,7 +23,7 @@ export class InstrumentSelectorComponent implements OnInit {
   @Input()
   player!: Player
 
-  constructor(private midiService: MidiService, private uiService: UiService) {}
+  constructor(private uiService: UiService) {}
 
   ngOnInit(): void {
 
@@ -34,12 +31,11 @@ export class InstrumentSelectorComponent implements OnInit {
 
   ngAfterContentChecked(): void {
     if (this.instruments != undefined && this.player != undefined) {
-      let sel  = 'player_instrument-' + this.player.id
       this.setIndexForInstrument()
     }
   }
 
-  onSelectionChange(data: any) {
+  onSelectionChange() {
     this.instrumentSelectEvent.emit(this.instruments[this.selectionIndex])
     this.uiService.notifyAll(Constants.STATUS, this.instruments[this.selectionIndex].name + ' selected.', 0)
   }

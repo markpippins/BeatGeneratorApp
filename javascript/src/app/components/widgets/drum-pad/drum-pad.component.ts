@@ -21,7 +21,7 @@ export class DrumPadComponent {
 
   @Input()
   channel!: number;
-  padPressed($event: MouseEvent) {
+  padPressed() {
     this.midiService.playNote(
       this.instrument.name,
       this.channel - 1,

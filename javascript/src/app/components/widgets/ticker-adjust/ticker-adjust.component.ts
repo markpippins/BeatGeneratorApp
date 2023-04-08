@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { Constants } from 'src/app/models/constants';
 import { Ticker } from 'src/app/models/ticker';
 import { TickerUpdateType } from 'src/app/models/ticker-update-type';
 import { MidiService } from 'src/app/services/midi.service';

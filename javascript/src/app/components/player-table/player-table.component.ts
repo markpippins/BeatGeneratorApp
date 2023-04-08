@@ -1,7 +1,6 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Player} from "../../models/player";
 import {MidiService} from "../../services/midi.service";
-import {Strike} from "../../models/strike";
 import { Instrument } from 'src/app/models/instrument';
 import { UiService } from 'src/app/services/ui.service';
 import { Constants } from 'src/app/models/constants';
@@ -35,7 +34,7 @@ export class PlayerTableComponent implements Listener, OnInit {
   constructor(private midiService: MidiService, private uiService: UiService) {
   }
 
-  onNotify(messageType: number, message: string) {
+  onNotify(messageType: number, _message: string) {
     if (messageType == Constants.TICKER_SELECTED || messageType == Constants.DISCONNECTED)
       this.selectedPlayer = undefined
   }
@@ -47,7 +46,7 @@ export class PlayerTableComponent implements Listener, OnInit {
     })
   }
 
-  onRowClick(player: Player, event: MouseEvent) {
+  onRowClick(player: Player) {
     let element = document.getElementById("player-row-" + player.id)
     if (this.selectedPlayer == undefined) {
       this.selectedPlayer = player
@@ -76,10 +75,10 @@ export class PlayerTableComponent implements Listener, OnInit {
         this.midiService.addPlayer().subscribe(async (data) => {
           this.players.push(data);
 
-          // this.midiService.addRule(this.players[this.players.length -1]).subscribe(async (data) => {
-          //   this.players[this.players.length -1].rules.push(data)
-          //   this.ruleChangeEvent.emit(this.players[this.players.length -1])
-          // })
+          this.midiService.addRule(this.players[this.players.length -1]).subscribe(async (data) => {
+            this.players[this.players.length -1].rules.push(data)
+            this.ruleChangeEvent.emit(this.players[this.players.length -1])
+          })
 
         });
         break
@@ -219,7 +218,7 @@ export class PlayerTableComponent implements Listener, OnInit {
     this.midiService.updatePlayer(player.id, PlayerUpdateType.SUBDIVISIONS, event.target.value).subscribe()
   }
 
-  onPass(player: Player, $event: MouseEvent) {
+  onPass(player: Player) {
     if (player != undefined && this.selectedPlayer == undefined)
       this.playerSelectEvent.emit(player);
   }

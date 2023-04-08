@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { UiService } from 'src/app/services/ui.service';
 

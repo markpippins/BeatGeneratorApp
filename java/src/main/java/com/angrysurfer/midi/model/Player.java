@@ -44,7 +44,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Long probability = 100L;
     private Long randomDegree = 0L;
     private Long ratchetCount = 0L;
-    private Long ratchetInterval = 0L;
+    private Long ratchetInterval = 1L;
     private Long internalBars;
     private Long internalBeats;
     private Boolean useInternalBeats = false;
@@ -179,7 +179,10 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         return Objects.nonNull(instrument) ? instrument.getChannel() : 0;
     }
 
-    public void drumNoteOn(long note, long velocity) {
+    public void drumNoteOn(long note) {
+        long velocity = (long) ((getLevel() * 0.01)
+                * rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100,
+                        getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
         noteOn(note, velocity);
         noteOff(note, velocity);
     }
@@ -268,12 +271,12 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         // logger.info(String.format("ShouldPlay() Tick: %s", getTicker().getTick()));
         // logger.info(String.format("ShouldPlay() Beat: %s", getTicker().getBeat()));
         // logger.info(String.format("ShouldPlay() Granular Beat: %s",
-        //         getTicker().getGranularBeat()));
+        // getTicker().getGranularBeat()));
         // logger.info(String.format("ShouldPlay() Bar: %s", getTicker().getBar()));
         // logger.info(String.format("ShouldPlay() Part: %s", getTicker().getPart()));
         // logger.info(String.format("ShouldPlay() Tick: %s", getTicker().getTick()));
 
-        Set<Rule> applicable = filterByPart(getRules(), true);
+        // Set<Rule> applicable = filterByPart(getRules(), true);
         // applicable = filterByBar(applicable, true);
         // applicable = filterByBeat(applicable, true);
         // applicable = filterByTick(applicable, true);
@@ -282,9 +285,9 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         // boolean onBeat = getTicker().getGranularBeat() == 0 || granularBeat % (1.0 /
         // getTicker().getGranularBeat()) == 0;
 
-        AtomicBoolean play = new AtomicBoolean(applicable.size() > 0);
+        AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
 
-        applicable.forEach(rule -> {
+        getRules().forEach(rule -> {
             switch (rule.getOperator()) {
                 case Operator.TICK -> {
                     if (!Comparison.evaluate(rule.getComparison(), getTicker().getTick(), rule.getValue()))

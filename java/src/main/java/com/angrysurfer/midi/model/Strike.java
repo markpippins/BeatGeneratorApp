@@ -29,12 +29,12 @@ public class Strike extends Player {
     public static List<Integer> kickParams = List.of(1, 2, 3, 4, 12, 13, 14, 15);
     public static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
 
-
     public Strike() {
-        setNote(KICK);    
+        setNote(KICK);
     }
 
-    public Strike(String name, Ticker ticker, MidiInstrument instrument, long note, List<Integer> allowedControlMessages) {
+    public Strike(String name, Ticker ticker, MidiInstrument instrument, long note,
+            List<Integer> allowedControlMessages) {
         super(name, ticker, instrument, allowedControlMessages);
         setNote(note);
     }
@@ -47,34 +47,25 @@ public class Strike extends Player {
         setMaxVelocity(maxVelocity);
     }
 
-    
     @Override
     public void onTick(long tick, long bar) {
-            logger.info(String.format("Tick: %s", tick));
-            if (tick == 1 && getSubDivisions() > 1) {
-                try {
-                    long velocity = (long) ((getLevel() * 0.01) * rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100, getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
-                    Long delay = (long) ((getTicker().getBeatDuration() / getSubDivisions()) * getBeatFraction()); 
-                    Thread.sleep(delay);
-                // else handleSwing();
-                    handleRachets();
-                    drumNoteOn(getNote(), velocity);
-                } catch (InterruptedException e) {
-                    logger.error(e.getMessage(), e);
-                }
-            }
-        
-            else if (getSkipCycler().getLength() == 0 || getSkipCycler().atEnd()) {
-                long velocity = (long) ((getLevel() * 0.01) * rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100, getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
-                // handleRachets();
-                if (getSwing() > 0)
-                    handleSwing();
-                drumNoteOn(getNote(), velocity);
-            }
-    
-            getSkipCycler().advance();
+        logger.info(String.format("Tick: %s", tick));
+        if (tick == 1 && getSubDivisions() > 1 && getBeatFraction() > 1) {
+            double numberOfTicksToWait = getBeatFraction() * (getTicker().getTicksPerBeat() / getSubDivisions());
+            new Ratchet(this, numberOfTicksToWait, getRatchetInterval(), 0);
+            handleRachets();
+        }
+
+        else if (getSkipCycler().getLength() == 0 || getSkipCycler().atEnd()) {
+            if (getSwing() > 0)
+                handleSwing();
+            if (getProbability().equals(100L) || rand.nextInt(100) > getProbability())
+                drumNoteOn(getNote());
+        }
+
+        getSkipCycler().advance();
     }
-    
+
     private void handleSwing() {
         double offset = getTicker().getBeatDuration() * rand.nextLong(getSwing()) * .01;
         try {
@@ -97,14 +88,15 @@ public class Strike extends Player {
 }
 // Rule rule = new Rule(Operator.TICK, Comparison.EQUALS, offset, 0);
 
-// Strike ratchet = new Strike(String.format("%s ratchet - %s", getName(), i + 1), getTicker(), 
-//         getInstrument(), getNote(), getAllowedControlMessages()) {
-//             public void onTick(long tick, long bar) {
-//                 drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
-//                 getTicker().getPlayers().remove(this);
-//             }
-            
-//         };
+// Strike ratchet = new Strike(String.format("%s ratchet - %s", getName(), i +
+// 1), getTicker(),
+// getInstrument(), getNote(), getAllowedControlMessages()) {
+// public void onTick(long tick, long bar) {
+// drumNoteOn(getNote(), rand.nextInt(getMinVelocity(), getMaxVelocity()));
+// getTicker().getPlayers().remove(this);
+// }
+
+// };
 
 // ratchet.setId((long) getTicker().getMaxTracks() + i);
 // ratchet.setTicker(getTicker());

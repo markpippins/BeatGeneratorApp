@@ -31,7 +31,7 @@ export class SliderComponent {
 
   constructor(private midiService: MidiService) {
   }
-  onChange(element: SliderComponent, event: Event) {
+  onChange() {
     this.midiService.sendMessage(MidiMessage.CONTROL_CHANGE, this.channel, this.cc, this.value)
   }
 }
