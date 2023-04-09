@@ -86,15 +86,15 @@ export class ButtonPanelComponent
   }
 
   ngAfterContentInit(): void {
-    console.log('ngAfterContentInit');
+    // console.log('ngAfterContentInit');
   }
 
   ngAfterViewInit(): void {
-    console.log('ngAfterViewInit');
+    // console.log('ngAfterViewInit');
   }
 
   ngAfterContentChecked(): void {
-    console.log('ngAfterContentChecked');
+    // console.log('ngAfterContentChecked');
     if (this.symbolCount != this.symbols.length) {
       this.updateDisplay();
       this.symbolCount = this.symbols.length;
@@ -103,7 +103,7 @@ export class ButtonPanelComponent
   }
 
   ngAfterViewChecked(): void {
-    console.log('ngAfterViewChecked');
+    // console.log('ngAfterViewChecked');
     this.updateSelections();
   }
 

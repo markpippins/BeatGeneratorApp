@@ -276,66 +276,68 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         // logger.info(String.format("ShouldPlay() Part: %s", getTicker().getPart()));
         // logger.info(String.format("ShouldPlay() Tick: %s", getTicker().getTick()));
 
-        // Set<Rule> applicable = filterByPart(getRules(), true);
-        // applicable = filterByBar(applicable, true);
-        // applicable = filterByBeat(applicable, true);
-        // applicable = filterByTick(applicable, true);
+        Set<Rule> applicable = filterByPart(getRules(), true);
+        applicable = filterByBar(applicable, true);
+        applicable = filterByBeat(applicable, true);
+        applicable = filterByTick(applicable, true);
 
         double granularBeat = getTicker().getBeat() + getTicker().getGranularBeat();
         // boolean onBeat = getTicker().getGranularBeat() == 0 || granularBeat % (1.0 /
         // getTicker().getGranularBeat()) == 0;
 
-        AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
-
-        getRules().forEach(rule -> {
+        // AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
+        List<Boolean> reasons = new ArrayList<>();
+        AtomicBoolean hasTick = new AtomicBoolean(false);
+        applicable.forEach(rule -> {
             switch (rule.getOperator()) {
                 case Operator.TICK -> {
-                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getTick(), rule.getValue()))
-                        play.set(false);
+                    hasTick.set(Comparison.evaluate(rule.getComparison(), getTicker().getTick(), rule.getValue()));
+                    // hasTick.set(true);
+                    // play.set(false);
                 }
 
                 case Operator.BEAT -> {
-                    if (!Comparison.evaluate(rule.getComparison(), granularBeat, rule.getValue()))
-                        play.set(false);
+                    reasons.add(Comparison.evaluate(rule.getComparison(), granularBeat, rule.getValue()));
+                        // play.set(false);
                 }
 
                 case Operator.BEAT_DURATION -> {
-                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getBeat(), rule.getValue()))
-                        play.set(false);
+                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getBeat(), rule.getValue()));
+                        // play.set(false);
                 }
 
                 case Operator.BAR -> {
-                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getBar(), rule.getValue()))
-                        play.set(false);
+                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getBar(), rule.getValue()));
+                        // play.set(false);
                 }
 
                 case Operator.PART -> {
-                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getPart(), rule.getValue()))
-                        play.set(false);
+                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getPart(), rule.getValue()));
+                        // play.set(false);
                 }
 
                 case Operator.TICK_COUNT -> {
-                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getTickCounter().get(),
-                            rule.getValue()))
-                        play.set(false);
+                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getTickCounter().get(),
+                            rule.getValue()));
+                        // play.set(false);
                 }
 
                 case Operator.BEAT_COUNT -> {
-                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getBeatCounter().get(),
-                            rule.getValue()))
-                        play.set(false);
+                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getBeatCounter().get(),
+                            rule.getValue()));
+                        // play.set(false);
                 }
 
                 case Operator.BAR_COUNT -> {
-                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getBarCounter().get(),
-                            rule.getValue()))
-                        play.set(false);
+                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getBarCounter().get(),
+                            rule.getValue()));
+                        // play.set(false);
                 }
 
                 case Operator.PART_COUNT -> {
-                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getPartCounter().get(),
-                            rule.getValue()))
-                        play.set(false);
+                    reasons.add(!Comparison.evaluate(rule.getComparison(), getTicker().getPartCounter().get(),
+                            rule.getValue()));
+                        // play.set(false);
                 }
             }
         });
@@ -344,7 +346,8 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
         getSubCycler().advance();
 
-        return play.get();
+        // return play.get();
+        return reasons.stream().filter(r -> r == true).toList().size() > 0 && (hasTick.get() || getTicker().getTick() == 1) || (hasTick.get());
     }
 
 }

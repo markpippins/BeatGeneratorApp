@@ -1,6 +1,7 @@
 package com.angrysurfer.midi.controller;
 
 import com.angrysurfer.midi.model.Ticker;
+import com.angrysurfer.midi.model.TickerStatus;
 import com.angrysurfer.midi.service.TickerService;
 import com.angrysurfer.midi.util.Constants;
 
@@ -76,7 +77,7 @@ public class TickerController {
     }
 
     @GetMapping(path = Constants.TICKER_STATUS)
-    public @ResponseBody Ticker getTickerStatus() {
+    public @ResponseBody TickerStatus getTickerStatus() {
         if (requestsToLog.contains("status"))
            logger.info(Constants.TICKER_STATUS);
         return tickerService.getTickerStatus();

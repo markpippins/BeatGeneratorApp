@@ -10,6 +10,7 @@ import {LookupItem} from "../models/lookup-item";
 import {Device} from "../models/device";
 import { Song } from '../models/song';
 import { Pattern } from '../models/pattern';
+import { TickerStatus } from '../models/ticker-status';
 
 @Injectable({
   providedIn: 'root',
@@ -71,7 +72,7 @@ export class MidiService {
   }
 
   tickerStatus() {
-    return this.http.get<Ticker>('http://localhost:8080/api/ticker/status');
+    return this.http.get<TickerStatus>('http://localhost:8080/api/ticker/status');
   }
 
   allDevices() {

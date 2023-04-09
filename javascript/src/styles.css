@@ -102,12 +102,12 @@ body {
   /* background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80'); */
 
   /* background-image: url('https://www.red-dot.org/fileadmin/_processed_/9/1/csm_IV1235044-1_568e92817c.jpg'); */
-   background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg'); 
+  /* background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg'); */
   background-repeat: no-repeat;
   background-size: cover;
   /* background-color: rgb(68, 67, 67); */
-/*  background-color: #353637;*/
-/*background-image: linear-gradient(to left, #e89105, #2c0ad7); */
+  background-color: #353637;
+background-image: linear-gradient(to left, #e89105, #2c0ad7); 
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -741,33 +741,6 @@ th {
   width: 100%;
 }
 
-.btn-led {
-  height: 12px;
-  margin: 2px;
-  align-self: center;
-  text-align: center;
-}
-
-.btn-inactive {
-  background-color: #1da7c7;
-  border-radius: 25px;
-}
-
-.btn-active {
-  color: lime;
-  border-radius: 25px;
-}
-
-.inactive {
-  background-color: red;
-  /* border-radius: 25px; */
-}
-
-.active {
-  background-color: gre;
-  /* border-radius: 25px; */
-}
-
 .neutral {
   border-radius: 25px;
 }
@@ -776,14 +749,6 @@ th {
   width: 100px;
 }
 
-.beat-btn {
-  display: flex;
-  align-items: center;
-  /*background-color: #888888;*/
-  height: 40px;
-  width: 40px;
-  font-size: small;
-}
 
 .xox-step-input {
   font-size: smaller;
@@ -1022,6 +987,12 @@ th {
 }
 
 /* ---------------------------------------------------------- */
+.overflow {
+  background-color: rgb(219, 109, 6);
+  border-style: inset;
+}
+
+
 .mini-nav,
 .app-status-panel {
   display: flex;
@@ -1034,6 +1005,7 @@ th {
   grid-template-columns: auto auto auto auto auto auto auto;
 }
 
+
 .mini-btn {
   padding: 2px;
   height: 24px;
@@ -1043,11 +1015,6 @@ th {
   font-weight: normal;
   font-size: small;
   border-radius: 5px;
-}
-
-.overflow {
-  background-color: rgb(219, 109, 6);
-  border-style: inset;
 }
 
 .mini-control-btn {
@@ -1082,6 +1049,49 @@ th {
   font-weight: bolder;
   font-size: smaller;
   border-radius: 5px;
+}
+
+
+.btn-led {
+  height: 12px;
+  margin: 2px;
+  align-self: center;
+  text-align: center;
+}
+
+.btn-inactive {
+    border-style: solid;
+    border-width: medium;
+    border-color: grey;
+}
+
+.btn-active {
+    border-style: solid;
+    border-width: medium;
+    border-color: lawngreen;
+    /*  border-radius: 25px;*/
+}
+
+.inactive {
+  background-color: red;
+  /* border-radius: 25px; */
+}
+
+.active {
+/*    border-style: inset;*/
+  color: green;
+  background-color: green;
+  /* border-radius: 25px; */
+}
+
+.onbeat {
+    border-style: dashed;
+    color: green;
+}
+
+.offbeat {
+/*    border-style: dashed;*/
+    color: red;
 }
 
 .custom-control {

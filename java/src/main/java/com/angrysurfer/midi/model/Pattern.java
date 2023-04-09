@@ -2,6 +2,7 @@ package com.angrysurfer.midi.model;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Stack;
 
 import com.angrysurfer.midi.util.Constants;
 import com.angrysurfer.midi.util.Cycler;
@@ -62,6 +63,9 @@ public class Pattern {
     private Integer preset = 0;
 
     private Integer beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
+
+    @Transient
+    private Stack<Integer> playingNote = new Stack<>();  
 
     @Column(name = "delay_bars")
     private Integer delay = 0;

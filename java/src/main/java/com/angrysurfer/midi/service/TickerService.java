@@ -88,8 +88,8 @@ public class TickerService {
         return getTicker();
     }
 
-    public Ticker getTickerStatus() {
-        return getTicker();
+    public TickerStatus getTickerStatus() {
+        return new TickerStatus(getTicker(), getSequenceRunner().isPlaying());
     }
 
     public List<Ticker> getAllTickerInfo() {

@@ -37,15 +37,12 @@ export class BeatSpecPanelComponent implements Listener, OnInit, AfterContentChe
   @Input()
   page!: number
 
-  onNotify(messageType: number, _message: string, messageValue: number) {
-    if (messageType == Constants.BEAT_DIV && messageValue == this.step.position) {
-      let element = document.getElementById("beat-btn-" + this.step.position)
-      this.uiService.swapClass(element, 'inactive', 'active')
+  @Output()
+  active: boolean = false;
 
-      // element = document.getElementById("beat-led-" + this.step.position)
-      // this.uiService.swapClass(element, 'inactive', 'active')
-    }
-  }
+  onNotify(messageType: number, _message: string, messageValue: number) {
+    this.active = (messageType == Constants.BEAT_DIV && messageValue == this.step.position + 1);
+ }
 
   onParamsBtnClick() {
     this.paramBtnClickEvent.emit(this.step.position)
@@ -57,11 +54,13 @@ export class BeatSpecPanelComponent implements Listener, OnInit, AfterContentChe
     this.midiService.updateStep(this.step.id, this.step.page, this.step.position, Constants.STEP_ACTIVE, 1).subscribe(async data => this.step = data)
 
     let element = document.getElementById("beat-btn-" + this.step.position)
-    this.uiService.swapClass(element, 'inactive', 'active')
-
-    // element = document.getElementById("beat-led-" + this.step.position)
-    // this.uiService.swapClass(element, 'inactive', 'active')
-
+    if (this.uiService.hasClass(element, 'active')) {
+      this.uiService.removeClass(element, 'active');
+      this.uiService.addClass(element, 'inactive');
+    }
+    else if (this.uiService.hasClass(element, 'inactive'))
+      this.uiService.removeClass(element, 'inactive');
+      this.uiService.addClass(element, 'active');
   }
 
   onNoteChange(step: Step, event: { target: any; }) {

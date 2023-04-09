@@ -49,54 +49,65 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   }
 
   generate() {
-    if (this.selectedNote == undefined) return;
 
-    let partIndex = 0;
-    this.selectedParts.forEach((part) => {
-      if (part) {
-        let partValue = partIndex + 1;
-        let barIndex = 0;
-        this.selectedBars.forEach((bar) => {
-          if (bar) {
-            let barValue = barIndex + 1;
+    if (this.selectedNote == undefined)
+      return;
 
-            let beatIndex = 0;
-            this.selectedBeats.forEach((beat) => {
-              if (beat) {
-                let beatValue = beatIndex + 1;
 
-                if (this.selectedTicks.includes(true)) {
-                  let tickIndex = 0;
-                  this.selectedTicks.forEach((tick) => {
-                    if (tick) {
-                      let tickValue = tickIndex + 1;
-                      this.midiService
-                        .addPlayerForNote(this.selectedNote)
-                        .subscribe((player) => {
-                          this.addRuleForTick(player, tickValue);
-                          this.addRuleForBeat(player, beatValue);
-                          this.addRuleForBar(player, barValue);
-                          this.addRuleForPart(player, partValue);
-                        });
-                    }
-                    tickIndex++;
-                  });
-                } else {
-                  this.midiService.addPlayer().subscribe((player) => {
-                    this.addRuleForBeat(player, beatValue);
-                  });
+    this.midiService.addPlayerForNote(this.selectedNote).subscribe((player) => {
+      let partIndex = 0;
+      this.selectedParts.forEach((part) => {
+        if (part) {
+          let partValue = partIndex + 1;
+          this.addRuleForPart(player, partValue);
+
+          let barIndex = 0;
+          this.selectedBars.forEach((bar) => {
+            if (bar) {
+              let barValue = barIndex + 1;
+              this.addRuleForBar(player, barValue, partValue);
+
+              let beatIndex = 0;
+              this.selectedBeats.forEach((beat) => {
+                if (beat) {
+                  let beatValue = beatIndex + 1;
+                  this.addRuleForBeat(player, beatValue, partValue);
+
+                  if (this.selectedTicks.includes(true)) {
+                    let tickIndex = 0;
+                    this.selectedTicks.forEach((tick) => {
+                      if (tick) {
+                        let tickValue = tickIndex + 1;
+                        this.addRuleForTick(player, tickValue, partValue);
+                        this.uiService.notifyAll(
+                          Constants.PLAYER_UPDATED,
+                          '',
+                          0
+                        );
+                      }
+                      tickIndex++;
+                    });
+                  } else {
+                    this.midiService.addPlayer().subscribe((player) => {
+                      this.addRuleForTick(player, 1, partValue);
+                      // this.addRuleForBeat(player, beatValue);
+                      // this.addRuleForBar(player, barValue);
+                      // this.addRuleForPart(player, partValue);
+                      this.uiService.notifyAll(Constants.PLAYER_UPDATED, '', 0);
+                      // this.uiService.notifyAll(Constants.RU)
+                    });
+                  }
                 }
-              }
-              beatIndex++;
-            });
-          }
-          barIndex++;
-        });
-      }
+                beatIndex++;
+              });
+            }
+            barIndex++;
+          });
+        }
+      });
+
       partIndex++;
     });
-
-    this.uiService.notifyAll(Constants.COMMAND, 'ticker-refresh', 0);
   }
   // this.midiService.addPlayer().subscribe((player) => {
   //   this.addRuleForBeat(player, beatValue);
@@ -131,9 +142,9 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   //   }
   // }
 
-  addRuleForTick(player: Player, tick: number) {
+  addRuleForTick(player: Player, tick: number, part: number) {
     this.midiService
-      .addSpecifiedRule(player, Operator.TICK, Comparison.EQUALS, tick, 0)
+      .addSpecifiedRule(player, Operator.TICK, Comparison.EQUALS, tick, part)
       .subscribe((data) =>
         this.uiService.notifyAll(
           Constants.PLAYER_UPDATED,
@@ -143,9 +154,9 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       );
   }
 
-  addRuleForBeat(player: Player, beat: number) {
+  addRuleForBeat(player: Player, beat: number, part: number) {
     this.midiService
-      .addSpecifiedRule(player, Operator.BEAT, Comparison.EQUALS, beat, 0)
+      .addSpecifiedRule(player, Operator.BEAT, Comparison.EQUALS, beat, part)
       .subscribe((data) =>
         this.uiService.notifyAll(
           Constants.PLAYER_UPDATED,
@@ -155,9 +166,9 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       );
   }
 
-  addRuleForBar(player: Player, bar: number) {
+  addRuleForBar(player: Player, bar: number, part: number) {
     this.midiService
-      .addSpecifiedRule(player, Operator.BAR, Comparison.EQUALS, bar, 0)
+      .addSpecifiedRule(player, Operator.BAR, Comparison.EQUALS, bar, part)
       .subscribe((data) =>
         this.uiService.notifyAll(
           Constants.PLAYER_UPDATED,
@@ -254,7 +265,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       }
   }
 
-  onNotify(messageType: number, _message: string, messageValue: number) {
+  onNotify(messageType: number, _message: string, messageValue: any) {
     if (messageType == Constants.TICKER_UPDATED) this.updateDisplay();
 
     if (messageType == Constants.BEAT_DIV) {
