@@ -2,13 +2,13 @@
 (mouseenter)="onPass(player, $event)"
 (click)="onRowClick(player, $event)">
 
-<td class="player-short-col" id="player-col-id-{{player.id}}">
+<td class="shortest-col" id="player-col-id-{{player.id}}">
 {{ player.id }}
 </td>
-<td class="player-short-col" id="player-col-id-{{player.id}}">
+<td class="shortest-col" id="player-col-id-{{player.id}}">
 {{ player.instrumentId }}
 </td>
-<td class="player-short-col" id="player-col-instrument-id-{{player.id}}">
+<td class="shortest-col" id="player-col-instrument-id-{{player.id}}">
 {{ player.channel }}
 </td>
 <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
@@ -16,19 +16,19 @@
   <!-- <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)" [player]="player"></app-instrument-selector> -->
 
 </td>
-<td class="player-short-col" id="player-col-preset-{{player.id}}">
+<td class="shortest-col" id="player-col-preset-{{player.id}}">
 <input type="number" min="1" max="127" step="1" value="{{ player.preset}}">
 </td>
-<td class="player-short-col" (change)="onNoteChange(player, $event)">
+<td class="shortest-col" (change)="onNoteChange(player, $event)">
 <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
 </td>
-<td class="player-short-col">
+<td class="shortest-col">
 <input type="number" min="0" max="100" step="1" value="{{ player.probability }}">
 </td>
-<td class="player-short-col">
+<td class="shortest-col">
 <input type="number" min="1" max="127" step="1" value="{{ player.minVelocity }}">
 </td>
-<td class="player-short-col">
+<td class="shortest-col">
 <input type="number" min="1" max="127" step="1" value="{{ player.maxVelocity }}">
 </td>
 <td>
@@ -51,22 +51,22 @@
 </td>
 </tr>
 <tr *ngIf="player == undefined || player.id == 0">
-<td class="player-short-col"></td>
-<td class="player-short-col"></td>
-<td class="player-short-col"></td>
-<td class="player-short-col"></td>
-<td class="player-short-col"></td>
-<td class="player-short-col"></td>
-<td class="player-short-col"></td>
-<td class="player-short-col"></td>
+<td class="shortest-col"></td>
+<td class="shortest-col"></td>
+<td class="shortest-col"></td>
+<td class="shortest-col"></td>
+<td class="shortest-col"></td>
+<td class="shortest-col"></td>
+<td class="shortest-col"></td>
+<td class="shortest-col"></td>
 <td>
 <button [style.height.px]="20" id="add2" (click)="initBtnClicked()">
   <!--          <mat-icon>add</mat-icon>-->
   +
 </button>
 </td>
-<td class="player-short-col"></td>
-<td class="player-short-col"></td>
+<td class="shortest-col"></td>
+<td class="shortest-col"></td>
 
 
 </tr>

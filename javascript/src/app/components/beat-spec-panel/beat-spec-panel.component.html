@@ -7,12 +7,12 @@
 <!--</div>-->
 
 <div class="lane-808">
-    <div *ngIf="step.active" id="beat-btn-{{step.position}}" class="btn-active onbeat">
-      <button (click)="onLaneBtnClick()">
-        {{step.position + 1}}
-      </button>
-    </div>
-    <div *ngIf="!step.active" id="beat-btn-{{step.position}}" class="btn-inactive">
+  <div *ngIf="step.active" id="beat-btn-{{step.position}}" class="btn-active onbeat">
+    <button (click)="onLaneBtnClick()">
+      {{step.position + 1}}
+    </button>
+  </div>
+  <div *ngIf="!step.active" id="beat-btn-{{step.position}}" class="btn-inactive">
     <button (click)="onLaneBtnClick()">
       <!-- <mat-icon>album</mat-icon> -->
       {{step.position + 1}}
@@ -20,28 +20,34 @@
   </div>
   <mat-divider></mat-divider>
   <!--  <label>Pitch</label>-->
-  <div (scroll)="onNoteScroll($event)">
-    <input class="xox-step-input" type="number" min="-12" max="12" (scroll)="onNoteScroll($event)"  (change)="onNoteChange(step, $event)"
-           [(ngModel)]="step.pitch">
+  <div>
+    <select class="" type="string" (change)="onNoteChange(step, $event)" [(ngModel)]="step.pitch">
+      <option *ngFor="let pitch of pitchMap" [value]="pitch.midi">
+        {{pitch.note}}
+      </option>
+    </select>
   </div>
   <!--  <label>Velocity</label>-->
   <div>
-    <input class="xox-step-input" type="number" min="1" max="127"  (change)="onVelocityChange(step, $event)"
-           [(ngModel)]="step.velocity">
+    <input class="" type="number" min="1" max="127" (change)="onVelocityChange(step, $event)"
+      [(ngModel)]="step.velocity">
   </div>
   <!--  <label>Probably</label>-->
   <div>
-    <input class="xox-step-input" type="number" min="0" max="100"  (change)="onProbabilityChange(step, $event)"
-           [(ngModel)]="step.probability">
+    <input class="" type="number" min="0" max="100" (change)="onProbabilityChange(step, $event)"
+      [(ngModel)]="step.probability">
   </div>
   <!--  <label>Gate Length</label>-->
   <div>
-    <input class="xox-step-input" type="number" min="0" max="100"  (change)="onGateChange(step, $event)" [(ngModel)]="step.gate">
+    <input class="" type="number" min="0" max="100" (change)="onGateChange(step, $event)"
+      [(ngModel)]="step.gate">
   </div>
 
   <div>
-    <div *ngIf="active == true" class="mini-btn param-btn onbeat" (click)="onParamsBtnClick()">{{step.position + 1}}</div>
-    <div *ngIf="active == false" class="mini-btn param-btn offbeat" (click)="onParamsBtnClick()">{{step.position + 1}}</div>
+    <div *ngIf="active == true" class="mini-btn param-btn onbeat" (click)="onParamsBtnClick()">{{step.position + 1}}
+    </div>
+    <div *ngIf="active == false" class="mini-btn param-btn offbeat" (click)="onParamsBtnClick()">{{step.position + 1}}
+    </div>
   </div>
   <mat-divider></mat-divider>
 </div>

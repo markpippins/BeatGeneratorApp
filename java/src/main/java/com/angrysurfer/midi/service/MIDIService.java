@@ -104,7 +104,7 @@ public class MIDIService {
 
     public static boolean select(MidiDevice device) {
         if (!device.isOpen()) {
-            // reset();
+            reset();
             try {
                 device.open();
                 MidiSystem.getTransmitter().setReceiver(device.getReceiver());

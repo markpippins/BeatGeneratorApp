@@ -3,7 +3,7 @@
   <mat-tab-group>
     <mat-tab label="Beat Scheduler">
       <app-status-panel [running]="running" [status]="tickerStatus"></app-status-panel>
-      <div class="two-column-grid-container">
+      <div class="player-panel">
         <div class="player-table-holder">
           <app-ticker-nav></app-ticker-nav>
           <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
@@ -13,19 +13,28 @@
           <div class="rule-table-holder">
             <app-rules-nav></app-rules-nav>
             <app-conditions-panel *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
-                                [player]="selectedPlayer"></app-conditions-panel>
+              [player]="selectedPlayer"></app-conditions-panel>
           </div>
           <app-strike-detail *ngIf="selectedPlayer != undefined" [player]="selectedPlayer"></app-strike-detail>
         </div>
       </div>
-      <!-- <app-randomizer-panel></app-randomizer-panel> -->
+      <div class="status-bar">
+        <label class="status-label">Ticker</label>
+        <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.id">
+        <label class="status-label">Strikes</label>
+        <input *ngIf="players != undefined" class="status-output" [(ngModel)]="players.length">
+        <label></label>
+        <label class="status-label" *ngFor="let line of consoleOutput">{{line}}</label>
+      </div>
+      <app-randomizer-panel></app-randomizer-panel>
       <div>
         <app-beat-spec></app-beat-spec>
       </div>
-
       <mat-tab-group>
         <mat-tab label="Beat Navigator">
-          <app-beat-navigator></app-beat-navigator>
+          <div class="no-scroll">
+            <app-beat-navigator></app-beat-navigator>
+          </div>
         </mat-tab>
         <mat-tab label="Param Locking">
           <app-slider-panel></app-slider-panel>
@@ -47,29 +56,10 @@
     </mat-tab>
   </mat-tab-group>
   <div>
-    <div class="status-bar">
-      <label class="status-label">Ticker</label>
-      <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.id">
-      <label class="status-label">Strikes</label>
-      <input *ngIf="players != undefined" class="status-output" [(ngModel)]="players.length">
-      <label></label>
-      <label class="status-label" *ngFor="let line of consoleOutput">{{line}}</label>
-    </div>
+
   </div>
   <!-- <app-transport-control (clickEvent)="onActionSelected($event)"></app-transport-control> -->
   <div class="branding-div">
     <label class="branding-label">MultiSequencer, Mark Pippins, angrysurfer.com, 2023</label>
   </div>
 </div>
-<div class="footer">
-</div>
-<!--    <pre *ngSwitchDefault>ng generate component xyz</pre>-->
-  <!--    <pre *ngSwitchCase="'material'">ng add @angular/material</pre>-->
-  <!--    <pre *ngSwitchCase="'pwa'">ng add @angular/pwa</pre>-->
-  <!--    <pre *ngSwitchCase="'dependency'">ng add _____</pre>-->
-  <!--    <pre *ngSwitchCase="'test'">ng test</pre>-->
-  <!--    <pre *ngSwitchCase="'build'">ng build</pre>-->
-
-<!--  <div class="card highlight-card card-small">-->
-<!--  </div>-->
-

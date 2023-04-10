@@ -10,16 +10,16 @@
     <td class="player-long-col" (change)="onLevelChange(player, $event)">
       <input value="{{ player.name }}">
     </td>
-    <td class="player-short-col" (change)="onLevelChange(player, $event)">
+    <td class="shortest-col" (change)="onLevelChange(player, $event)">
       <input value="{{ player.playerClass }}">
     </td>
-    <td class="player-short-col" (change)="onLevelChange(player, $event)">
+    <td class="shortest-col" (change)="onLevelChange(player, $event)">
       <input type="number" min="1" max="127" step="1" value="{{ player.level }}">
     </td>
-    <!-- <td class="player-short-col" (change)="onMinVelocityChange(player, $event)">
+    <!-- <td class="shortest-col" (change)="onMinVelocityChange(player, $event)">
           <input type="number" min="1" max="127" step="1" value="{{ player.minVelocity }}">
         </td>
-        <td class="player-short-col" (change)="onMaxVelocityChange(player, $event)">
+        <td class="shortest-col" (change)="onMaxVelocityChange(player, $event)">
           <input type="number" min="1" max="127" step="1" value="{{ player.maxVelocity }}">
         </td> -->
   </tr>

@@ -20,4 +20,6 @@ public class ControlCode implements Serializable {
     private Integer lowerBound;
     private Integer upperBound;
     private Integer pad;
+    @Column(name = "is_binary")
+    private Boolean binary;
 }

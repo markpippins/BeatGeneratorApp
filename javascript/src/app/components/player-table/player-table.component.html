@@ -23,7 +23,7 @@
           -
         </button>
       </td> -->
-      <!-- <td class="player-short-col" id="player-col-class-{{player.id}}" (change)="onPresetChange(player, $event)">
+      <!-- <td class="shortest-col" id="player-col-class-{{player.id}}" (change)="onPresetChange(player, $event)">
         <input value="{{player.playerClass}}">
       </td> -->
 
@@ -31,13 +31,13 @@
         <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)"
           [instruments]="instruments" [player]="player"></app-instrument-selector>
       </td>
-      <!-- <td class="player-short-col" id="player-col-instrument-id-{{player.id}}">
+      <!-- <td class="shortest-col" id="player-col-instrument-id-{{player.id}}">
         {{ player.instrument.channel }}
       </td> -->
-      <td class="player-short-col" id="player-col-preset-{{player.id}}" (change)="onPresetChange(player, $event)">
+      <td class="shortest-col" id="player-col-preset-{{player.id}}" (change)="onPresetChange(player, $event)">
         <input type="number" min="0" step="1" value="{{ player.preset }}">
       </td>
-      <td class="player-short-col" (change)="onNoteChange(player, $event)">
+      <td class="shortest-col" (change)="onNoteChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
       </td>
       <td>
@@ -54,58 +54,58 @@
           P
         </button>
       </td>
-      <td class="player-short-col" (change)="onBeatFractionChange(player, $event)">
+      <td class="shortest-col" (change)="onBeatFractionChange(player, $event)">
         <input type="number" min="1" max="{{ player.subDivisions }}" step="1" value="{{ player.beatFraction }}">
       </td>
-      <td class="player-short-col" (change)="onSubsChange(player, $event)">
+      <td class="shortest-col" (change)="onSubsChange(player, $event)">
         <input type="number" min="1" max="16" step="1" value="{{ player.subDivisions }}">
       </td>
-      <td class="player-short-col" (change)="onSkipsChange(player, $event)">
+      <td class="shortest-col" (change)="onSkipsChange(player, $event)">
         <input type="number" min="1" max="100" step="1" value="{{ player.skips }}">
       </td>
-      <td class="player-short-col" (change)="onSwingChange(player, $event)">
+      <td class="shortest-col" (change)="onSwingChange(player, $event)">
         <input type="number" min="0" max="100" step="1" value="{{ player.swing }}">
       </td>
-      <td class="player-short-col" (change)="onProbabilityChange(player, $event)">
+      <td class="shortest-col" (change)="onProbabilityChange(player, $event)">
         <input type="number" min="0" max="100" step="1" value="{{ player.probability }}">
       </td>
-      <td class="player-short-col" (change)="onRandomDegreeChange(player, $event)">
+      <td class="shortest-col" (change)="onRandomDegreeChange(player, $event)">
         <input type="number" min="0" max="100" step="1" value="{{ player.randomDegree }}">
       </td>
-      <td class="player-short-col" (change)="onLevelChange(player, $event)">
+      <td class="shortest-col" (change)="onLevelChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.level }}">
       </td>
-      <td class="player-short-col" (change)="onMinVelocityChange(player, $event)">
+      <td class="shortest-col" (change)="onMinVelocityChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.minVelocity }}">
       </td>
-      <td class="player-short-col" (change)="onMaxVelocityChange(player, $event)">
+      <td class="shortest-col" (change)="onMaxVelocityChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.maxVelocity }}">
       </td>
-      <td class="player-short-col" (change)="onRatchetCountChange(player, $event)">
+      <td class="shortest-col" (change)="onRatchetCountChange(player, $event)">
         <input type="number" min="0" max="127" step="1" value="{{ player.ratchetCount }}">
       </td>
-      <td class="player-short-col" (change)="onRatchetIntervalChange(player, $event)">
+      <td class="shortest-col" (change)="onRatchetIntervalChange(player, $event)">
         <input type="number" min="1" max="16" step="1" value="{{ player.ratchetInterval }}">
       </td>
-      <td class="player-short-col" (change)="onFadeInChange(player, $event)">
+      <td class="shortest-col" (change)="onFadeInChange(player, $event)">
         <input type="number" min="0" max="127" step="1" value="{{ player.fadeIn }}">
       </td>
-      <td class="player-short-col" (change)="onFadeOutChange(player, $event)">
+      <td class="shortest-col" (change)="onFadeOutChange(player, $event)">
         <input type="number" min="1" max="16" step="1" value="{{ player.fadeOut }}">
       </td>
     </tr>
     <tr *ngIf="players == undefined || players.length == 0">
-      <td class="player-short-col"></td>
-      <td class="player-short-col"></td>
-      <td class="player-short-col"></td>
-      <td class="player-short-col"></td>
-      <td class="player-short-col"></td>
-      <td class="player-short-col"></td>
-      <td class="player-short-col"></td>
-      <td class="player-short-col"></td>
-      <td class="player-short-col"></td>
-      <td class="player-short-col"></td>
-      <td class="player-short-col"></td>
+      <td class="shortest-col"></td>
+      <td class="shortest-col"></td>
+      <td class="shortest-col"></td>
+      <td class="shortest-col"></td>
+      <td class="shortest-col"></td>
+      <td class="shortest-col"></td>
+      <td class="shortest-col"></td>
+      <td class="shortest-col"></td>
+      <td class="shortest-col"></td>
+      <td class="shortest-col"></td>
+      <td class="shortest-col"></td>
 
 
     </tr>
