@@ -26,6 +26,10 @@ export class BeatSpecDetailComponent implements OnInit {
 
   identifier = 'beat-spec-detail'
 
+
+
+  columns: string[] = ['Set', 'Pattern', 'Device', 'Channel', 'Preset', 'Root', 'Transpose', 'Length', 'Last Step', 'Gate', 'Speed', 'Repeats', 'Swing', 'Random', 'Probability']
+
   constructor(private midiService: MidiService, private uiService: UiService) {
   }
 
@@ -69,8 +73,8 @@ export class BeatSpecDetailComponent implements OnInit {
     this.midiService.updatePattern(this.pattern.id, PatternUpdateType.LENGTH, event.target.value).subscribe(data => this.pattern = data)
   }
 
-  onProbablityChange(event: { target: any; }) {
-    this.midiService.updatePattern(this.pattern.id, PatternUpdateType.PROBABILITY, event.target.value).subscribe(data => this.pattern = data)
+  onQuantizeChange(event: { target: any; }) {
+    this.midiService.updatePattern(this.pattern.id, PatternUpdateType.QUANTIZE, event.target.value).subscribe(data => this.pattern = data)
   }
 
   onRandomChange(event: { target: any; }) {
@@ -79,6 +83,10 @@ export class BeatSpecDetailComponent implements OnInit {
 
   onRepeatsChange(event: { target: any; }) {
     this.midiService.updatePattern(this.pattern.id, PatternUpdateType.REPEATS, event.target.value).subscribe(data => this.pattern = data)
+  }
+
+  onSpeedChange(event: { target: any; }) {
+    this.midiService.updatePattern(this.pattern.id, PatternUpdateType.SPEED, event.target.value).subscribe(data => this.pattern = data)
   }
 
   onSwingChange(event: { target: any; }) {

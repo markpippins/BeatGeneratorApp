@@ -3,7 +3,7 @@
   <mat-tab-group>
     <mat-tab label="Beat Scheduler">
       <app-status-panel [running]="running" [status]="tickerStatus"></app-status-panel>
-      <div class="two-column-grid-container debug">
+      <div class="two-column-grid-container">
         <div class="player-table-holder">
           <app-ticker-nav></app-ticker-nav>
           <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
@@ -22,7 +22,15 @@
       <div>
         <app-beat-spec></app-beat-spec>
       </div>
-      <app-beat-navigator></app-beat-navigator>
+
+      <mat-tab-group>
+        <mat-tab label="Beat Navigator">
+          <app-beat-navigator></app-beat-navigator>
+        </mat-tab>
+        <mat-tab label="Param Locking">
+          <app-slider-panel></app-slider-panel>
+        </mat-tab>
+      </mat-tab-group>
     </mat-tab>
     <mat-tab label="Config">
       <app-device-panel></app-device-panel>

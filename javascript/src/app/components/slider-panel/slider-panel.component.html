@@ -1,12 +1,12 @@
 <mat-tab-group>
   <div *ngFor="let instrument of instruments;">
     <mat-tab *ngIf="instrument.controlCodes.length > 0" label="{{instrument.name}}">
+      <!-- <span>{{instrument.channel}}</span> -->
       <div class="slider-container">
-        <app-slider *ngFor="let controlCode of instrument.controlCodes"
-                    [configMode]="configModeOn" [channel]="instrument.channel" [label]="controlCode.name"
-                    [cc]="controlCode.code"></app-slider>
+        <app-slider *ngFor="let controlCode of instrument.controlCodes" [configMode]="configModeOn"
+          [channel]="instrument.channel" [label]="controlCode.name" [cc]="controlCode.code"></app-slider>
       </div>
+      <mat-checkbox (change)="configBtnClicked()">Group</mat-checkbox>
     </mat-tab>
   </div>
 </mat-tab-group>
-<mat-checkbox (change)="change()">Group</mat-checkbox>

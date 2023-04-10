@@ -135,7 +135,6 @@ export class DashboardComponent implements OnInit, Listener {
             this.midiService.next(this.ticker.id).subscribe(async (data) => {
               this.clear();
               this.ticker = data;
-              // this.updateTickerStatus()
               this.uiService.notifyAll(Constants.TICKER_SELECTED, '', 0);
 
               this.midiService.playerInfo().subscribe((data) => {
@@ -265,18 +264,24 @@ export class DashboardComponent implements OnInit, Listener {
   }
 
   updateDisplay(): void {
-    this.midiService.playerInfo().subscribe(async (data) => {
-      var update: boolean =
-        this.ticker.playing && this.players.length != (<Player[]>data).length;
-      this.players = this.reverseSortByClass(data); // data)
-      this.players.forEach(
-        (p) => (p.active = p.id in this.ticker.activePlayerIds)
-      );
-      if (update && this.ticker.playing) {
-        await this.midiService.delay(1000);
-        this.updateDisplay();
-      }
-    });
+    if (this.ticker.id == 0) {
+      this.midiService.next(0).subscribe((_data) => {
+        this.ticker = _data
+        this.players = this.reverseSortByClass(_data.players); // data)
+      });
+    } else
+      this.midiService.playerInfo().subscribe(async (data) => {
+        var update: boolean =
+          this.ticker.playing && this.players.length != (<Player[]>data).length;
+        this.players = this.reverseSortByClass(data); // data)
+        this.players.forEach(
+          (p) => (p.active = p.id in this.ticker.activePlayerIds)
+        );
+        if (update && this.ticker.playing) {
+          await this.midiService.delay(1000);
+          this.updateDisplay();
+        }
+      });
 
     // this.updateTickerStatus()
   }

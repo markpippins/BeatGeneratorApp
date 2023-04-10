@@ -1,49 +1,6 @@
 <div class="beat-spec-detail">
 <table>
-  <tr>
-    <th>
-      Set
-    </th>
-    <th>
-      Pattern
-    </th>
-    <th>
-      Device
-    </th>
-    <th>
-      Channel
-    </th>
-    <th>
-      Preset
-    </th>
-    <th>
-      Root
-    </th>
-    <th>
-      Transpose
-    </th>
-    <th>
-      Length
-    </th>
-    <th>
-      Gate
-    </th>
-    <th>
-      Repeats
-    </th>
-    <th>
-      Last Step
-    </th>
-    <th>
-      Swing
-    </th>
-    <th>
-      Random
-    </th>
-    <th>
-      Probability
-    </th>
-  </tr>
+  <tr><th *ngFor="let col of columns"> {{col}} </th></tr>
   <tr>
     <!-- (change)="onSwingChange(player, $event)" -->
     <td class="xox-step-input">
@@ -65,19 +22,22 @@
         <input class="xox-step-input" type="number" min="1" (change)="onRootNoteChange($event)" [(ngModel)]="pattern.rootNote">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="-4" max="+4" (change)="onTransposeChange($event)" [(ngModel)]="pattern.transpose">
+        <input class="xox-step-input" type="number" min="-4" max="4" (change)="onTransposeChange($event)" [(ngModel)]="pattern.transpose">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="-12" max="+12"  (change)="onLengthChange($event)" [(ngModel)]="pattern.length">
+        <input class="xox-step-input" type="number" min="-12" max="12"  (change)="onLengthChange($event)" [(ngModel)]="pattern.length">
+      </td>
+      <td>
+        <input class="xox-step-input" type="number" min="1" max={{pattern.length}}  (change)="onLastStepChange($event)" [(ngModel)]="pattern.lastStep">
       </td>
       <td>
         <input class="xox-step-input" type="number" min="0" max="100"  (change)="onGateChange($event)" [(ngModel)]="pattern.gate">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="0" (change)="onRepeatsChange($event)" [(ngModel)]="pattern.repeats">
+        <input class="xox-step-input" type="number" min="1" max="4" (change)="onSpeedChange($event)" [(ngModel)]="pattern.speed">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="1" max={{pattern.length}}  (change)="onLastStepChange($event)" [(ngModel)]="pattern.lastStep">
+        <input class="xox-step-input" type="number" min="0" (change)="onRepeatsChange($event)" [(ngModel)]="pattern.repeats">
       </td>
       <td>
         <input class="xox-step-input" type="number" min="1" max={{pattern.length}} (change)="onSwingChange($event)" [(ngModel)]="pattern.swing">
@@ -86,7 +46,7 @@
         <input class="xox-step-input" type="number" min="0" max="100" (change)="onRandomChange($event)" [(ngModel)]="pattern.random">
       </td>
       <td>
-        <input class="xox-step-input" type="number" min="0" max="100" (change)="onProbablityChange($event)" [(ngModel)]="pattern.probability">
+        <input class="xox-step-input" type="boolean" (change)="onQuantizeChange($event)" [(ngModel)]="pattern.quantize">
       </td>
   </tr>
 </table>

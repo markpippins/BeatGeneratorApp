@@ -28,6 +28,8 @@ import javax.sound.midi.ShortMessage;
 public class SongService {
 
     private final class TickCyclerListener implements CyclerListener {
+    
+    static final Random rand = new Random();
 
         private Integer ticks = 0;
 
@@ -41,43 +43,48 @@ public class SongService {
         private void handleTick(long tick) {
 
             song.getPatterns().forEach(pattern -> {
-                Long speed = 1L;
 
-                if (tick == 0 || (tick % (song.getTicksPerBeat() / speed) == 0)) {
-
-                    Optional<Step> opt = pattern.getSteps().stream()
-                            .filter(s -> s.getPosition() == pattern.getStepCycler().get() - 1).findAny();
+                if (tick == 0 || (tick % (song.getTicksPerBeat() / pattern.getSpeed()) == 0)) {
 
                     while (!pattern.getPlayingNote().empty())
                         midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF,
                                 pattern.getPlayingNote().pop(), 0);
 
+                    Optional<Step> opt = pattern.getSteps().stream()
+                            .filter(s -> s.getPosition() == pattern.getStepCycler().get() - 1).findAny();
+
                     if (opt.isPresent() && opt.get().getActive()) {
                         Step step = opt.get();
-                        logger.info(String.format("Step %s", step.getPosition()));
-                        int note = pattern.getRootNote() + step.getPitch() + (12 * pattern.getTranspose());
-                        pattern.getPlayingNote().push(note);
-                        logger.info(
-                                String.format("playing step %s of pattern %s, note %s",
-                                        step.getPosition(),
-                                        pattern.getPosition(), note));
-                        midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_ON,
-                                note, step.getVelocity());
-                        // new Thread(new Runnable() {
-                        //     @Override
-                        //     public void run() {
-                        //         try {
 
-                        //             Thread.sleep((long) (2.0 / step.getGate() * song.getBeatDuration()));
-                        //             midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF,
-                        //                     note, step.getVelocity());
-                        //         } catch (InterruptedException e) {
-                        //             logger.error(e.getMessage(), e);
-                        //         }
-                        //     }
-                        // }).start();
+                        if (step.getProbability() == 100 || (step.getProbability() > rand.nextInt(100)) && pattern.getLength() > step.getPosition()) {
+                            logger.info(String.format("Step %s", step.getPosition()));
+                            int note = pattern.getRootNote() + step.getPitch() + (12 * pattern.getTranspose());
+                            note = pattern.getQuantizer().quantizeNote(note);
+                            pattern.getPlayingNote().push(note);
+                            logger.info(
+                                    String.format("playing step %s of pattern %s, note %s",
+                                            step.getPosition(),
+                                            pattern.getPosition(), note));
+                            midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_ON,
+                                    note, step.getVelocity());
+                            // new Thread(new Runnable() {
+                            // @Override
+                            // public void run() {
+                            // try {the 
+
+                            // Thread.sleep((long) (2.0 / step.getGate() * song.getBeatDuration()));
+                            // midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF,
+                            // note, step.getVelocity());
+                            // } catch (InterruptedException e) {
+                            // logger.error(e.getMessage(), e);
+                            // }
+                            // }
+                            // }).start();
+                        }
                     }
 
+                    if (pattern.getStepCycler().get() == (long) pattern.getLastStep())
+                        pattern.getStepCycler().reset();
                     pattern.getStepCycler().advance();
                 }
             });
@@ -220,6 +227,10 @@ public class SongService {
                 pattern.setDirection(updateValue);
                 break;
 
+            case PatternUpdateType.SPEED:
+                pattern.setSpeed(updateValue);
+                break;
+
             case PatternUpdateType.INSTRUMENT:
                 pattern.setInstrument(null);
                 midiService.getInstrumentByChannel(updateValue).forEach(i -> pattern.setInstrument(i));
@@ -237,8 +248,8 @@ public class SongService {
                 // pattern.getInstrument().setChannel(updateValue);
                 break;
 
-            case PatternUpdateType.PROBABILITY:
-                pattern.setProbability(updateValue);
+            case PatternUpdateType.QUANTIZE:
+                pattern.setQuantize(updateValue > 0 ? true : false) ;
                 break;
 
             case PatternUpdateType.RANDOM:

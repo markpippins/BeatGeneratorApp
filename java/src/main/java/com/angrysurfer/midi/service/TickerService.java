@@ -48,7 +48,7 @@ public class TickerService {
         getSequenceRunner().getCycleListeners().add(getSongService().getTickListener());
         getSongService().getSong().setBeatDuration(getTicker().getBeatDuration());
         getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
-        
+
         this.ticker.getPlayers().forEach(p -> p.getInstrument()
                 .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
 

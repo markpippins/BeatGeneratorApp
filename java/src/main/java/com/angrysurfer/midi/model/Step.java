@@ -24,8 +24,6 @@ public class Step {
 
     private Integer position = 0;
 
-    // private Integer channel = 0;
-
     private Boolean active = false;
     
     private Integer pitch = 0;

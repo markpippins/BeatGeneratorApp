@@ -6,6 +6,7 @@ import java.util.Stack;
 
 import com.angrysurfer.midi.util.Constants;
 import com.angrysurfer.midi.util.Cycler;
+import com.angrysurfer.midi.util.Quantizer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -39,13 +40,15 @@ public class Pattern {
 
     private Boolean active = false;
     
-    private Integer probability = 100;
+    private Boolean quantize = false;
 
     private Integer direction = 1;
 
     private Integer length = 16;
 
     private Integer lastStep = 16;
+
+    private Integer speed = 1;
 
     @Column(name = "rand")
     private Integer random = 0;
@@ -64,6 +67,11 @@ public class Pattern {
 
     private Integer beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
 
+    @JsonIgnore
+    @Transient
+    private Quantizer quantizer = new Quantizer(Quantizer.C_MINOR_SCALE);
+
+    @JsonIgnore
     @Transient
     private Stack<Integer> playingNote = new Stack<>();  
 
@@ -91,15 +99,4 @@ public class Pattern {
 
     }
 
-    // public void copyValues(Pattern step) {
-    //     setId(step.getId());
-    //     setPosition(step.getPosition());
-    //     setPage(step.getPage());
-    //     setSong(step.getSong());
-    //     setActive(step.getActive());
-    //     setPitch(step.getPitch()); 
-    //     setVelocity(step.getVelocity());
-    //     setProbability(step.getProbability());
-    //     setGate(step.getGate()); 
-    // }
 }

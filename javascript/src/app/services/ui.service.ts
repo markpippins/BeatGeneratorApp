@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Constants } from '../models/constants';
 import { Listener } from '../models/listener';
 
 @Injectable({
@@ -117,11 +116,11 @@ export class UiService {
     });
   }
 
-  getNoteForValue(value: number) {
+  getNoteForValue(value: number, scale: string[]) {
     let note = value
     while (note > 11)
       note = note - 12
 
-    return Constants.CHROMATIC_SCALE[note]
+    return scale[note]
   }
 }

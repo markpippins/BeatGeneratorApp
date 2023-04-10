@@ -54,7 +54,7 @@ export class SliderPanelComponent implements OnInit, Listener {
       });
   }
 
-  change() {
+  configBtnClicked() {
     this.configModeOn = !this.configModeOn
   }
 }

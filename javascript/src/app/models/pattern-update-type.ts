@@ -5,7 +5,7 @@ export class PatternUpdateType {
   static ROOT_NOTE = 2
   static LAST_STEP = 3
   static DIRECTION = 4
-  static PROBABILITY = 5
+  static QUANTIZE = 5
   static RANDOM = 6
   static TRANSPOSE = 7
   static LENGTH = 8
@@ -18,4 +18,5 @@ export class PatternUpdateType {
   static INSTRUMENT = 15
   static BEAT_DIVIDER = 16
   static RANDOM_DEGREE = 17
+  static SPEED = 18
 }

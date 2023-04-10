@@ -42,9 +42,9 @@ public class MidiController {
     }
 
     @GetMapping(Constants.SEND_MESSAGE)
-    public void sendMessage(@RequestParam int messageType, @RequestParam int channel, @RequestParam int data1, @RequestParam int data2) {
+    public void sendMessage(@RequestParam int channel, @RequestParam int messageType, @RequestParam int data1, @RequestParam int data2) {
         // logger.info("/messages/send");
-        service.sendMessageToChannel(messageType, channel, data1, data2);
+        service.sendMessageToChannel(channel, messageType, data1, data2);
     }
 }
 

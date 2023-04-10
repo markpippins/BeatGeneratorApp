@@ -13,6 +13,8 @@ export interface Pattern {
 
   length: number
 
+  speed: number
+
   rootNote: number
 
   tempo: number
@@ -21,11 +23,11 @@ export interface Pattern {
 
   channel: number
 
-  scale: number
-
   active: boolean
 
-  probability: number
+  quantize: boolean
+
+  scale: string
 
   direction: number
 

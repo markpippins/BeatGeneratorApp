@@ -371,7 +371,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   }
 
   getNote(value: number): string {
-    return this.uiService.getNoteForValue(value);
+    return this.uiService.getNoteForValue(value, Constants.SCALE_NOTES);
   }
 
   getAccentsAsStrings(): string[] {

@@ -270,7 +270,7 @@ public class MIDIService {
                     try {
                         ShortMessage message = new ShortMessage();
                         message.setMessage(messageType, channel, data1, data2);
-                        device.getReceiver().send(message, 1000L);
+                        device.getReceiver().send(message, 0L);
                         // log.info(String.join(", ",
                         // MidiMessage.lookupCommand(message.getCommand()),
                         // "Channel: ".concat(Integer.valueOf(message.getChannel()).toString()),

@@ -105,9 +105,9 @@ body {
   /* background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg'); */
   background-repeat: no-repeat;
   background-size: cover;
-  /* background-color: rgb(68, 67, 67); */
+   background-color: rgb(68, 67, 67); 
   background-color: #353637;
-background-image: linear-gradient(to left, #e89105, #2c0ad7); 
+/*background-image: linear-gradient(to left, #e89105, #2c0ad7); */
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -649,7 +649,8 @@ th {
 
 .side-panel-808 {
   font-weight: normal;
-  margin-top: 26px;
+  margin-top: 20px;
+  margin-left: 2px;
   display: flex;
   gap: 5px;
   flex-direction: column;
@@ -1085,7 +1086,7 @@ th {
 }
 
 .onbeat {
-    border-style: dashed;
+/*    border-style: dashed;*/
     color: green;
 }
 

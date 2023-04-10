@@ -6,7 +6,7 @@ public interface PatternUpdateType {
     static int ROOT_NOTE = 2;
     static int LAST_STEP = 3;
     static int DIRECTION = 4;
-    static int PROBABILITY = 5;
+    static int QUANTIZE = 5;
     static int RANDOM = 6;
     static int TRANSPOSE = 7;
     static int LENGTH = 8;
@@ -19,4 +19,5 @@ public interface PatternUpdateType {
     static int INSTRUMENT = 15;
     static int BEAT_DIVIDER = 16;
     static int RANDOM_DEGREE = 17;
+   static int SPEED = 18;
 }
