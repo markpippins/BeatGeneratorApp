@@ -18,7 +18,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   @Input()
   ticker!: Ticker;
 
-  divCount = 16;
+  divCount = 4;
   colCount = 24;
 
   ticksPosition = this.colCount;
@@ -37,7 +37,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   selectedDivs: boolean[] = [];
   selectedParts: boolean[] = [];
   selectedNote: number = 0;
-  resolution: string[] = ['accent', 'tick', 'beat', 'bar', 'part', 'div'];
+  resolution: string[] = ['accent', 'tick', 'div', 'beat', 'bar', 'part'];
 
   comboId = 'beat-navigator';
   controlBtnClassName = 'mini-control-btn';
@@ -388,6 +388,10 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     return this.ticks.map(String);
   }
 
+  getDivsAsStrings(): string[] {
+    return this.divs.map(String);
+  }
+
   getBeatsAsStrings(): string[] {
     return this.beats.map(String);
   }
@@ -403,6 +407,11 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   tickSelected(index: number) {
     this.selectedTicks[index] = !this.selectedTicks[index];
   }
+
+  divSelected(index: number) {
+    this.selectedDivs[index] = !this.selectedDivs[index];
+  }
+
 
   commandSelected(command: string, level: number) {
     alert(command + ' ' + this.resolution[level]);

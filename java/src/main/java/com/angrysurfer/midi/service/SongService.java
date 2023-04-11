@@ -373,7 +373,7 @@ public class SongService {
         songRepository.flush();
         Song song = songRepository.save(new Song());
 
-        IntStream.range(0, 16).forEach(i -> {
+        IntStream.range(0, 8).forEach(i -> {
             Pattern pattern = new Pattern();
             pattern.setSong(getSong());
             pattern.setPosition(i);

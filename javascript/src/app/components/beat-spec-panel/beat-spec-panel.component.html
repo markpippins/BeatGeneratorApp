@@ -21,7 +21,7 @@
   <mat-divider></mat-divider>
   <!--  <label>Pitch</label>-->
   <div>
-    <select class="" type="string" (change)="onNoteChange(step, $event)" [(ngModel)]="step.pitch">
+    <select class="short-col" type="string" (change)="onNoteChange(step, $event)" [(ngModel)]="step.pitch">
       <option *ngFor="let pitch of pitchMap" [value]="pitch.midi">
         {{pitch.note}}
       </option>

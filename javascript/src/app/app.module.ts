@@ -49,6 +49,7 @@ import { RulesNavComponent } from './components/widgets/rules-nav/rules-nav.comp
 import { PartStackerComponent } from './part-stacker/part-stacker.component';
 import { TickerAdjustComponent } from './components/widgets/ticker-adjust/ticker-adjust.component';
 import { ButtonPanelComponent } from './components/widgets/button-panel/button-panel.component';
+import { PlayerNavComponent } from './components/widgets/player-nav/player-nav.component';
 
 @NgModule({
   declarations: [
@@ -86,6 +87,7 @@ import { ButtonPanelComponent } from './components/widgets/button-panel/button-p
     PartStackerComponent,
     TickerAdjustComponent,
     ButtonPanelComponent,
+    PlayerNavComponent,
     ],
     imports: [
         BrowserModule,

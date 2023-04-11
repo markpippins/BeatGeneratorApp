@@ -1,0 +1,262 @@
+<style>
+  :host {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-size: 14px;
+    color: #333;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+
+  content {
+    color: blanchedalmond;
+  }
+
+  .container {
+    display: grid;
+    max-width: 960px;
+    margin: 100px;
+    padding: 10px;
+    border: skyblue 2px solid;
+    grid-auto-rows: minmax(200px, auto);
+    /* grid-template-columns: repeat(6, 1fr); */
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: 15% 40% auto 10%;
+    /* align-items: end; */
+    align-items: stretch;
+  }
+
+  section,
+  header,
+  footer,
+  main,
+  aside,
+  nav {
+    background-color: steelblue;
+    color: white;
+    font-size: 12px;
+    padding: 10px;
+    border: white 1px solid;
+    align-self: stretch;
+  }
+
+  main {
+    width: auto;
+    grid-template-areas:
+      'section1 section2'
+
+    ;
+  }
+
+  .tr {
+    color: white;
+    background-color: springgreen;
+    border: line black 1px;
+  }
+
+
+  .player-panel {
+    height: 40vh;
+    display: grid;
+    grid-template: 1fr 1fr 1fr 1fr 1fr;
+    grid-row: 2 / 3;
+  }
+
+  .players {
+    grid-column: 1 /3;
+    grid-row: 1;
+  }
+
+  .rules {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  .mini-btn {
+    padding: 2px;
+    height: 24px;
+    width: 24px;
+    margin: 1px;
+    color: black;
+    font-weight: normal;
+    font-size: small;
+    border-radius: 5px;
+    align-self: flex-end;
+  }
+
+  .rounded {
+    border-radius: 25px;
+  }
+
+  .control-pnl {
+    display: flex;
+    border: line white 1px;
+    align-items: flex;
+  }
+
+  .btn-area {
+    display: flex;
+    align-items: flex-end;
+    align-self: stretch;
+    background-color: wheat;
+  }
+
+
+  body,
+  html {
+    height: 100vh;
+  }
+
+  body {
+    margin: 0px;
+    background: #125699;
+    color: blanchedalmond;
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto;
+    grid-template-rows: 80px 80vh auto;
+    grid-template-areas:
+      'section1 header header header header header section2'
+      'aside main main main main main main'
+      'aside main main main main main main'
+      'footer footer footer footer footer footer footer'
+    ;
+  }
+
+  header {
+    grid-area: header;
+  }
+
+  aside {
+    grid-area: aside;
+  }
+
+  footer {
+    grid-area: footer;
+  }
+
+  section {
+    grid-area: section1, section2, section3, section4;
+  }
+
+  main {
+    grid-area: main;
+    display: grid;
+    grid-template-columns: auto auto;
+  }
+</style>
+
+<body>
+  <aside>
+    <p>Aside 1</p>
+    <div class="btn-panel"></div>
+  </aside>
+  <section>Section 1</section>
+  <header>Header</header>
+  <section>Section 2</section>
+  <!-- <section>Section 3</section> -->
+  <main>
+    <section>Main Section 1</section>
+    <section>Main Section 2</section>
+  </main>
+  <!-- <section>Section 4</section> -->
+  <footer>Footer</footer>
+</body>
+
+<!-- header header header header section1'
+      'aside main main main section2'
+      'aside main main main section2'
+      'footer footer footer footer footer'
+    ; -->
+
+
+<!-- <div class="btn-area">
+  <button class="mini-btn">1</button>
+</div>
+<div class="btn-area">
+  <button class="mini-btn">2</button>
+</div>
+<div class="btn-area">
+  <button class="mini-btn">3</button>
+</div>
+<div class="btn-area">
+  <button class="mini-btn">4</button>
+</div>
+<div class="btn-area">
+  <button class="mini-btn">5</button>
+</div> -->
+
+<!--
+<div class="content" role="main">
+  <div class="container">
+    <div class="item">
+      <table>
+        <tr>
+          <th>Header 1</th>
+          <th>Header 2</th>
+          <th>Header 3</th>
+          <th>Header 4</th>
+          <th>Header 5</th>
+          <th>Header 6</th>
+          <th>Header 7</th>
+          <th>Header 8</th>
+          <th>Header 9</th>
+          <th>Header 10</th>
+        </tr>
+        <tr>
+          <td>data 1</td>
+          <td>data 2</td>
+          <td>data 3</td>
+          <td>data 4</td>
+          <td>data 5</td>
+          <td>data 6</td>
+          <td>data 7</td>
+          <td>data 8</td>
+          <td>data 9</td>
+          <td>data 10</td>
+        </tr>
+        <tr>
+          <td>data 1</td>
+          <td>data 2</td>
+          <td>data 3</td>
+          <td>data 4</td>
+          <td>data 5</td>
+          <td>data 6</td>
+          <td>data 7</td>
+          <td>data 8</td>
+          <td>data 9</td>
+          <td>data 10</td>
+        </tr>
+        <tr>
+          <td>data 1</td>
+          <td>data 2</td>
+          <td>data 3</td>
+          <td>data 4</td>
+          <td>data 5</td>
+          <td>data 6</td>
+          <td>data 7</td>
+          <td>data 8</td>
+          <td>data 9</td>
+          <td>data 10</td>
+        </tr>
+      </table>
+    </div>
+    <div class="item">Item 2</div>
+    <div class="item">Item 3</div>
+    <div class="item">Item 4</div>
+    <div class="item">Item 5</div>
+    <div class="item">Item 6</div>
+    <div class="item">Item 7</div>
+    <div class="item">Item 8</div>
+  </div>
+
+  <footer>
+  </footer>
+</div> -->
+
+
+<router-outlet></router-outlet>
+
+<script>
+
+</script>

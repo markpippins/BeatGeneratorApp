@@ -41,6 +41,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Long minVelocity = 100L;
     private Long maxVelocity = 110L;
     private Long preset = 1L;
+    private Boolean stickyPreset;
     private Long probability = 100L;
     private Long randomDegree = 0L;
     private Long ratchetCount = 0L;
