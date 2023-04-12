@@ -136,6 +136,7 @@ export class ButtonPanelComponent
       this.visibleCustomControls.push(this.customControls[index++]!);
 
     this.overage = [];
+
     while (
       this.range.length +
         this.visibleCustomControls.length +

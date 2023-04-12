@@ -9,7 +9,7 @@
     grid-template-areas:
       'section1 header header section2 section2 section2 section2'
       'main main main main main main main'
-      'main main main main main main main'
+      'section4 section4 section4 section4 section4 section4 section4'
       'footer footer footer footer footer footer footer'
     ;
     padding: 2px;
@@ -44,9 +44,10 @@
     color: blanchedalmond;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-    grid-template-rows: 100px 80vh auto;
+    grid-template-rows: 100px auto auto auto;
     grid-template-areas:
       'section1 header header header header header section2'
+      'main main main main main main main'
       'main main main main main main main'
       'main main main main main main main'
       'footer footer footer footer footer footer footer'
@@ -64,7 +65,7 @@
     width: auto;
     grid-template-areas:
       'section1 section2'
-      'section3 section4'
+      'section4 section5'
     ;
     grid-template-rows: 40px auto;
     gap: 4px;
@@ -88,6 +89,9 @@
     <app-ticker-nav></app-ticker-nav>
   </section>
   <header> <app-status-panel [running]="running" [status]="tickerStatus"></app-status-panel></header>
+  <section>
+
+  </section>
   <main>
     <mat-tab-group>
       <mat-tab label="Scheduler">
@@ -97,22 +101,15 @@
           <div class="table-holder">
             <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
           </div>
-          <div class="table-holder fw-325">
+          <div class="table-holder">
             <app-conditions-panel *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
               [player]="selectedPlayer"></app-conditions-panel>
           </div>
         </div>
-        <!-- <app-strike-detail *ngIf="selectedPlayer != undefined" [player]="selectedPlayer"></app-strike-detail> -->
-        <!-- </div> -->
-        <div class="beatnav">
-          <app-beat-spec></app-beat-spec>
-        </div>
-        <div class="beatnav">
-          <app-beat-navigator></app-beat-navigator>
-        </div>
+        <app-beat-navigator></app-beat-navigator>
+        <app-beat-spec></app-beat-spec>
       </mat-tab>
       <mat-tab label="X0X">
-        <!-- <app-beat-spec></app-beat-spec> -->
         <app-slider-panel></app-slider-panel>
       </mat-tab>
       <mat-tab label="Config">
@@ -130,7 +127,13 @@
       </mat-tab>
     </mat-tab-group>
   </main>
-  <!-- <section>Section 4</section> -->
+
+  <!-- <app-strike-detail *ngIf="selectedPlayer != undefined" [player]="selectedPlayer"></app-strike-detail> -->
+  <!-- </div> -->
+  <!--
+        <div class="beatnav">
+          <app-beat-spec></app-beat-spec>
+        </div> -->
   <footer>
     <div class="status-bar">
       <label class="status-label">Ticker</label>
