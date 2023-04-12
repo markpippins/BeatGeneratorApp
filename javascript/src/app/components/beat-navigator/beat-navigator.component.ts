@@ -59,7 +59,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       this.selectedParts.forEach((part) => {
         if (part) {
           let partValue = partIndex + 1;
-          this.addRuleForPart(player, partValue);
+          // this.addRuleForPart(player, partValue);
 
           let barIndex = 0;
           this.selectedBars.forEach((bar) => {
@@ -89,12 +89,16 @@ export class BeatNavigatorComponent implements OnInit, Listener {
                     });
                   } else {
                     this.midiService.addPlayer().subscribe((player) => {
-                      this.addRuleForTick(player, 1, partValue);
-                      // this.addRuleForBeat(player, beatValue);
-                      // this.addRuleForBar(player, barValue);
+                      this.addRuleForTick(player, 1, 0);
+                      this.addRuleForBeat(player, beatValue, 0);
+                      this.addRuleForBar(player, barValue, 0);
                       // this.addRuleForPart(player, partValue);
                       this.uiService.notifyAll(Constants.PLAYER_UPDATED, '', 0);
-                      // this.uiService.notifyAll(Constants.RU)
+                      this.uiService.notifyAll(
+                        Constants.PLAYER_UPDATED,
+                        '',
+                        0
+                      );
                     });
                   }
                 }

@@ -75,12 +75,15 @@ public class Constants {
     public static final String SPECIFY_RULE = "/rules/specify";
 
     public static final String GET_INSTRUMENT_BY_CHANNEL = "/midi/instrument";
-    public static final String GET_INSTRUMENT_BY_ID = "/instrument";
+    public static final String GET_INSTRUMENT_BYF_ID = "/instrument";
 
     public static final String SEND_MESSAGE = "/messages/send";
     public static final String SAVE_BEAT = "/beat/save";
     public static final String PLAY_DRUM_NOTE = "/drums/note";
     public static final String PLAY_SEQUENCE = "/sequence/play";
+
+    public static final int DEFAULT_XOX_TRACKS = 8;
+    public static final int DEFAULT_XOX_PATTERN_LENGTH = 16;
 }
 
 // package com.angrysurfer.midi.model;
@@ -124,7 +127,7 @@ public class Constants {
 //
 // getPlayers().clear();
 //
-// Stream.of(new Strike("blackbox-kick", this, getInstrument("blackbox"), KICK,
+// Stream.of(new Strike("Blackbox-kick", this, getInstrument("Blackbox"), KICK,
 // kickParams, 100, 125)
 // .addRule(new Rule(BEAT, MODULO, 2.0)),
 // new Strike("raz-kick", this, getInstrument(RAZZ), SNARE, snarePrams, 100,
@@ -133,11 +136,11 @@ public class Constants {
 // new Strike("raz-closed-hat", this, getInstrument(RAZZ), CLOSED_HAT,
 // closedHatParams, 100, 125)
 // .addRule(new Rule(BEAT, MODULO, 3.0)),
-// new Strike("blackbox-open-hat", this, getInstrument("blackbox"), OPEN_HAT,
+// new Strike("Blackbox-open-hat", this, getInstrument("Blackbox"), OPEN_HAT,
 // closedHatParams, 100, 125)
 // .addRule(new Rule(BEAT, EQUALS, rand.nextInt(4, 6) * .25))
 // .addRule(new Rule(TICK, MODULO, 3.0)),
-// new Strike("blackbox-snare", this, getInstrument("blackbox"), SNARE,
+// new Strike("Blackbox-snare", this, getInstrument("Blackbox"), SNARE,
 // snarePrams, 100, 125)
 // .addRule(new Rule(BEAT, MODULO, rand.nextInt(1, 4) * .25)),
 // new Strike("raz-snare", this, getInstrument(RAZZ), SNARE, snarePrams, 100,
@@ -146,7 +149,7 @@ public class Constants {
 // new Strike("raz-closed-hat", this, getInstrument(RAZZ), CLOSED_HAT,
 // closedHatParams, 100, 125)
 // .addRule(new Rule(BEAT, EQUALS, rand.nextInt(2, 8) * .25)),
-// new Strike("blackbox-open-hat", this, getInstrument("blackbox"), OPEN_HAT,
+// new Strike("Blackbox-open-hat", this, getInstrument("Blackbox"), OPEN_HAT,
 // closedHatParams, 100, 125)
 // .addRule(new Rule(BEAT, MODULO, rand.nextInt(4, 6) * .25))
 // .addRule(new Rule(TICK, EQUALS, rand.nextInt(6, 8) * .25))).filter(h ->
@@ -223,7 +226,7 @@ public class Constants {
 // });
 // if (rand.nextBoolean())
 // if (rand.nextBoolean())
-// result.add(new DrumPad(ticker, blackbox, KICK, kickParams, 100, 125)
+// result.add(new DrumPad(ticker, Blackbox, KICK, kickParams, 100, 125)
 // .addRule(BEAT, GREATER_THAN, nextValue(4))
 // .addRule(BEAT, LESS_THAN, nextValue(4))
 // .addRule(BAR, MODULO, nextValue(4))
@@ -235,7 +238,7 @@ public class Constants {
 // .addRule(BAR, GREATER_THAN, nextValue(4))
 // .addRule(TICK, MODULO, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, blackbox, KICK,
+// if (rand.nextBoolean()) result.add(new DrumPad(ticker, Blackbox, KICK,
 // kickParams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
@@ -247,7 +250,7 @@ public class Constants {
 // snarePrams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, blackbox, SNARE,
+// if (rand.nextBoolean()) result.add(new DrumPad(ticker, Blackbox, SNARE,
 // snarePrams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
@@ -333,7 +336,7 @@ public class Constants {
 // }
 // },
 //
-// new SamplePlayer(ticker, blackbox, 40, 52),
+// new SamplePlayer(ticker, Blackbox, 40, 52),
 //
 // new NotePlayer(ticker, new MidiInstrument("Zero", device, 4)) {
 // @Override
@@ -397,7 +400,7 @@ public class Constants {
 // }
 // },
 //
-// new DrumPad(ticker, blackbox, 36, List.of()) {
+// new DrumPad(ticker, Blackbox, 36, List.of()) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (tick % 8 == 0 || (rand.nextBoolean() && (tick % 6 == 0 || tick % 14 ==
@@ -406,7 +409,7 @@ public class Constants {
 // }
 // },
 //
-// new DrumPad(ticker, blackbox, 37, List.of()) {
+// new DrumPad(ticker, Blackbox, 37, List.of()) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (bar < 8 || (bar > 24 && bar < 32) || bar > 48)
@@ -416,7 +419,7 @@ public class Constants {
 // }
 // },
 //
-// new DrumPad(ticker, blackbox, 39, List.of()) {
+// new DrumPad(ticker, Blackbox, 39, List.of()) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (bar > 8 && bar < 17 || bar > 32 && bar < 48 && tick % 16 == 0 &&
@@ -425,7 +428,7 @@ public class Constants {
 // }
 // },
 //
-// new DrumPad(ticker, blackbox, 38, List.of()) {
+// new DrumPad(ticker, Blackbox, 38, List.of()) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (tick % 4 == 0 || (rand.nextBoolean() && tick % 3 == 0))

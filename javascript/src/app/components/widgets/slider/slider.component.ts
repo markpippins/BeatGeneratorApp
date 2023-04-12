@@ -26,7 +26,7 @@ export class SliderComponent {
     floor: 1,
     ceil: 127,
     vertical: true,
-    hideLimitLabels: true,
+    hideLimitLabels: false,
   }
 
   constructor(private midiService: MidiService) {

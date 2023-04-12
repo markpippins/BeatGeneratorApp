@@ -93,12 +93,12 @@ body {
   height: 97%;
   /* background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80'); */
 
-  /* background-image: url('https://www.red-dot.org/fileadmin/_processed_/9/1/csm_IV1235044-1_568e92817c.jpg'); */
-  /* background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg'); */
+/*   background-image: url('https://www.red-dot.org/fileadmin/_processed_/9/1/csm_IV1235044-1_568e92817c.jpg');*/
+   background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg');
   background-repeat: no-repeat;
   background-size: cover;
-   background-color: rgb(68, 67, 67);
-  background-color: #353637;
+/*   background-color: rgb(68, 67, 67);*/
+/*  background-color: #353637;*/
 /*background-image: linear-gradient(to left, #e89105, #2c0ad7); */
   display: flex;
   flex-direction: column;
@@ -741,9 +741,6 @@ th {
   border-radius: 25px;
 }
 
-.slider {
-  width: 100px;
-}
 
 
 .xox-step-input {
@@ -753,22 +750,32 @@ th {
 }
 
 .label {
-  font-size: smaller;
+  font-size: small;
 }
 
 .slider-container {
-  font-size: smaller;
   display: grid;
   gap: 10px;
   grid-template-columns: auto auto auto auto auto auto auto auto;
   background-color: transparent;
   padding: 16px;
   line-height: 24px;
-  align-self: center;
-  height: auto;
-  overflow-y: scroll;
-  overflow-x: scroll;
-    width: 96vh;
+  align-self: flex-start;
+  height: 60vh;
+  overflow-y: hide;
+  overflow-x: hide;
+    width: 90vh;
+}
+
+.slider-box {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0px;
+}
+
+.slider {
+    margin: auto;
+    width: 200;
 }
 
 /* Page title */
@@ -989,7 +996,7 @@ th {
   height: 28px;
   width: 28px;
   margin: 1px; */
-  background-color: #125699;
+  background-color: #316f8b;
   color: white;
   /* font-size: small; */
 }
@@ -1018,6 +1025,16 @@ th {
   border-radius: 5px;
 }
 
+.button-bar {
+    display: flex;
+    gap: 2px;
+/*    background-color: orange;*/
+    padding: 2px;
+    align-self: stretch;
+    align-items: space-around;
+    max-height: 60px;
+
+  }
 
 .btn-led {
   height: 12px;

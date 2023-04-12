@@ -243,30 +243,38 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     private Set<Rule> filterByPart(Set<Rule> rules, boolean includeNoPart) {
         return rules.stream()
-                .filter(r -> r.getPart() == 0 || (includeNoPart && ((long) r.getPart()) == getTicker().getPart()))
+                .filter(r -> r.getPart() == 0
+                        || (includeNoPart && ((long) r.getPart()) == getTicker().getPart()))
                 .collect(Collectors.toSet());
     }
 
-    private Set<Rule> filterByBar(Set<Rule> rules, boolean includeNoBar) {
-        return rules.stream()
-                .filter(r -> (r.getOperator().equals(Operator.BAR) && ((double) getTicker().getBar()) == r.getValue())
-                        || (includeNoBar && (!r.getOperator().equals(Operator.BAR))))
-                .collect(Collectors.toSet());
-    }
+    // private Set<Rule> filterByBar(Set<Rule> rules, boolean includeNoBar) {
+    // return rules.stream()
+    // .filter(r -> ((r.getComparison().equals(Comparison.EQUALS) &&
+    // r.getOperator().equals(Operator.BAR) ||
+    // (!r.getComparison().equals(Comparison.EQUALS)) && ((double)
+    // getTicker().getBar()) == r.getValue())
+    // || (includeNoBar && (!r.getOperator().equals(Operator.BAR))))
+    // .collect(Collectors.toSet()));
+    // }
 
-    private Set<Rule> filterByBeat(Set<Rule> rules, boolean includeNoBeat) {
-        return rules.stream()
-                .filter(r -> (r.getOperator().equals(Operator.BEAT) && ((double) getTicker().getBeat()) == r.getValue())
-                        || (includeNoBeat && (!r.getOperator().equals(Operator.BEAT))))
-                .collect(Collectors.toSet());
-    }
+    // private Set<Rule> filterByBeat(Set<Rule> rules, boolean includeNoBeat) {
+    // return rules.stream()
+    // .filter(r -> ((r.getComparison().equals(Comparison.EQUALS) &&
+    // r.getOperator().equals(Operator.BEAT) && ((double) getTicker().getBeat()) ==
+    // r.getValue())
+    // || (includeNoBeat && (!r.getOperator().equals(Operator.BEAT))))
+    // .collect(Collectors.toSet()));
+    // }
 
-    private Set<Rule> filterByTick(Set<Rule> rules, boolean includeNoTick) {
-        return rules.stream()
-                .filter(r -> (r.getOperator().equals(Operator.TICK) && ((double) getTicker().getTick()) == r.getValue())
-                        || (includeNoTick && (!r.getOperator().equals(Operator.TICK))))
-                .collect(Collectors.toSet());
-    }
+    // private Set<Rule> filterByTick(Set<Rule> rules, boolean includeNoTick) {
+    // return rules.stream()
+    // .filter(r -> ((r.getComparison().equals(Comparison.EQUALS) && ((double)
+    // getTicker().getTick()) == r.getValue())||
+    // (!r.getComparison().equals(Comparison.EQUALS))
+    // || (includeNoTick && (!r.getOperator().equals(Operator.TICK))))
+    // .collect(Collectors.toSet()));
+    // }
 
     public boolean shouldPlay() {
         // logger.info(String.format("ShouldPlay() Tick: %s", getTicker().getTick()));
@@ -278,77 +286,88 @@ public abstract class Player implements Callable<Boolean>, Serializable {
         // logger.info(String.format("ShouldPlay() Tick: %s", getTicker().getTick()));
 
         Set<Rule> applicable = filterByPart(getRules(), true);
-        applicable = filterByBar(applicable, true);
-        applicable = filterByBeat(applicable, true);
-        applicable = filterByTick(applicable, true);
+        // applicable = filterByBar(applicable, true);
+        // applicable = filterByBeat(applicable, true);
+        // applicable = filterByTick(applicable, true);
 
-        double granularBeat = getTicker().getBeat() + getTicker().getGranularBeat();
-        // boolean onBeat = getTicker().getGranularBeat() == 0 || granularBeat % (1.0 /
-        // getTicker().getGranularBeat()) == 0;
+        // double granularBeat = Double.toString(getTicker().getGranularBeat()).contains(".0") ? getTicker().getBeat()
+        //         : getTicker().getBeat() + getTicker().getGranularBeat();
+        // logger.info(String.format("Granular Beat: %s", granularBeat));
 
-        // AtomicBoolean play = new AtomicBoolean(getRules().size() > 0);
-        List<Boolean> reasons = new ArrayList<>();
+        AtomicBoolean play = new AtomicBoolean(true);
         AtomicBoolean hasTick = new AtomicBoolean(false);
+        AtomicBoolean hasBeat = new AtomicBoolean(false);
+        AtomicBoolean hasBar = new AtomicBoolean(false);
+
+        logger.info(String.format("Applicable rules: %s", applicable.size()));
+
         applicable.forEach(rule -> {
             switch (rule.getOperator()) {
                 case Operator.TICK -> {
-                    hasTick.set(Comparison.evaluate(rule.getComparison(), getTicker().getTick(), rule.getValue()));
-                    // hasTick.set(true);
-                    // play.set(false);
+                    if (Comparison.evaluate(rule.getComparison(), getTicker().getTick(), rule.getValue()))
+                        hasTick.set(true);
+                    logger.info(String.format("HasTick: %s", hasTick.get()));
+                    break;
                 }
 
                 case Operator.BEAT -> {
-                    reasons.add(Comparison.evaluate(rule.getComparison(), granularBeat, rule.getValue()));
-                        // play.set(false);
-                }
-
-                case Operator.BEAT_DURATION -> {
-                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getBeat(), rule.getValue()));
-                        // play.set(false);
+                    if (Comparison.evaluate(rule.getComparison(), getTicker().getBeat(), rule.getValue()))
+                        hasBeat.set(true);
+                    logger.info(String.format("HasBeat: %s", hasBeat.get()));
+                    break;
                 }
 
                 case Operator.BAR -> {
-                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getBar(), rule.getValue()));
-                        // play.set(false);
+                    if (Comparison.evaluate(rule.getComparison(), getTicker().getBar(), rule.getValue()))
+                        hasBar.set(true);
+                    logger.info(String.format("HasBar: %s", hasBar.get()));
+                    // play.set(false);
                 }
 
-                case Operator.PART -> {
-                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getPart(), rule.getValue()));
-                        // play.set(false);
+                // case Operator.PART -> {
+                // if (!Comparison.evaluate(rule.getComparison(), getTicker().getPart(),
+                // rule.getValue()))
+                // play.set(false);
+                // }
+
+                case Operator.BEAT_DURATION -> {
+                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getBeat(), rule.getValue()))
+                        play.set(false);
+                    break;
                 }
 
                 case Operator.TICK_COUNT -> {
-                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getTickCounter().get(),
-                            rule.getValue()));
-                        // play.set(false);
+                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getTickCounter().get(),
+                            rule.getValue()))
+                        play.set(false);
                 }
 
                 case Operator.BEAT_COUNT -> {
-                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getBeatCounter().get(),
-                            rule.getValue()));
-                        // play.set(false);
+                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getBeatCounter().get(),
+                            rule.getValue()))
+                        play.set(false);
                 }
 
                 case Operator.BAR_COUNT -> {
-                    reasons.add(Comparison.evaluate(rule.getComparison(), getTicker().getBarCounter().get(),
-                            rule.getValue()));
-                        // play.set(false);
+                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getBarCounter().get(),
+                            rule.getValue()))
+                        play.set(false);
                 }
 
                 case Operator.PART_COUNT -> {
-                    reasons.add(!Comparison.evaluate(rule.getComparison(), getTicker().getPartCounter().get(),
-                            rule.getValue()));
-                        // play.set(false);
+                    if (!Comparison.evaluate(rule.getComparison(), getTicker().getPartCounter().get(),
+                            rule.getValue()))
+                        play.set(false);
                 }
             }
         });
 
         getSkipCycler().advance();
-
         getSubCycler().advance();
-
-        // return play.get();
-        return reasons.stream().filter(r -> r == true).toList().size() > 0 && (hasTick.get() || getTicker().getTick() == 1) || (hasTick.get());
+        boolean result = hasTick.get() && hasBeat.get() && hasBar.get() && play.get();
+        logger.info(String.format("Returning: %s", result));
+               
+        return result;
     }
 
 }

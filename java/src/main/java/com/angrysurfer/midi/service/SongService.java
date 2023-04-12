@@ -4,6 +4,7 @@ import com.angrysurfer.midi.model.*;
 import com.angrysurfer.midi.repo.PatternRepository;
 import com.angrysurfer.midi.repo.SongRepository;
 import com.angrysurfer.midi.repo.StepRepository;
+import com.angrysurfer.midi.util.Constants;
 import com.angrysurfer.midi.util.CyclerListener;
 import com.angrysurfer.midi.util.PatternUpdateType;
 import com.angrysurfer.midi.util.StepUpdateType;
@@ -373,7 +374,8 @@ public class SongService {
         songRepository.flush();
         Song song = songRepository.save(new Song());
 
-        IntStream.range(0, 8).forEach(i -> {
+        // picking up MIDI channels 2-9
+        IntStream.range(1, Constants.DEFAULT_XOX_TRACKS + 1).forEach(i -> {
             Pattern pattern = new Pattern();
             pattern.setSong(getSong());
             pattern.setPosition(i);
@@ -383,7 +385,7 @@ public class SongService {
             getPatternRepository().save(pattern);
             song.getPatterns().add(pattern);
 
-            IntStream.range(0, 16).forEach(j -> {
+            IntStream.range(0, Constants.DEFAULT_XOX_PATTERN_LENGTH).forEach(j -> {
                 Step step = new Step();
                 step.setPattern(pattern);
                 step.setPosition(j);
