@@ -104,7 +104,7 @@ public class MIDIService {
 
     public static boolean select(MidiDevice device) {
         if (!device.isOpen()) {
-            reset();
+            // reset();
             try {
                 device.open();
                 MidiSystem.getTransmitter().setReceiver(device.getReceiver());
@@ -139,7 +139,7 @@ public class MIDIService {
 
     static String GS_SYNTH = "Microsoft GS Wavetable Synth";
     static String GERVILL = "Gervill";
-    
+
     public static MidiDevice findMidiOutDevice(String name) {
         if (midiOutDevices.containsKey(name))
             return midiOutDevices.get(name);
@@ -184,20 +184,20 @@ public class MIDIService {
             midiInstruments.put(channel, results.get(0));
         else {
             try {
-                if (channel > 8) {
+                if (channel > 6) {
                     instrument.setDevice(
                             getMidiDevices().stream()
                                     .filter(d -> Objects.nonNull(d.getDeviceInfo().getName())
-                                            && d.getDeviceInfo().getName().equals(GS_SYNTH))
+                                            && d.getDeviceInfo().getName().equals(GERVILL))
                                     .findAny().orElseThrow());
-                    instrument.setName(GS_SYNTH);
+                    instrument.setName(GERVILL);
                 } else {
                     instrument.setDevice(getMidiDevices().stream()
                             .filter(d -> Objects.nonNull(d.getDeviceInfo().getName())
-                                    && d.getDeviceInfo().getName().equals(GERVILL))
+                                    && d.getDeviceInfo().getName().equals(GS_SYNTH))
                             .findAny()
                             .orElseThrow());
-                    instrument.setName(GERVILL);
+                    instrument.setName(GS_SYNTH);
                 }
                 midiInstruments.put(channel, instrument);
             } catch (Exception e) {

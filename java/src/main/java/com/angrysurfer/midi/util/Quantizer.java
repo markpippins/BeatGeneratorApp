@@ -89,7 +89,14 @@ public class Quantizer {
     public String getNoteForValue(int value, String[] scale) {
         int note = value;
         while (note > 11)
-            note = note - 12;
-        return scale[note];
+            note -= 12;
+        while (note < 0)
+            note += 12;
+
+        int octave = 1;
+        for (int i = 0; i < value; i += 12)
+            octave++;
+
+        return scale[note] + Integer.toString(octave);
     }
 }

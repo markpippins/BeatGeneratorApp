@@ -89,12 +89,13 @@ p {
 }
 
 body {
-  /*background-color: #a3d8ec;*/
-  height: 97%;
+  background-color: darkcyan;
+  color: black;
+  /* height: 97%; */
   /* background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80'); */
 
 /*   background-image: url('https://www.red-dot.org/fileadmin/_processed_/9/1/csm_IV1235044-1_568e92817c.jpg');*/
-   background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg');
+   /* background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg'); */
   background-repeat: no-repeat;
   background-size: cover;
 /*   background-color: rgb(68, 67, 67);*/
@@ -219,8 +220,14 @@ svg.material-icons:not(:last-child) {
   box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.2);
 }
 
+.btns {
+  justify-content: space-around;
+  align-items: center;
+}
+
 .flex-container-horizontal {
   display: flex;
+  align-items: center;
 }
 
 .flex-container-vertical {
@@ -616,13 +623,20 @@ th {
 .interface-808 {
   display: grid;
   /*gap: 2px;*/
-  grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
     width: 90vh;
     margin: 4px;
 }
 
 .xox-panel {
-    width: 90vh;
+    flex-grow: true;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    align-self: stretch;
+    margin: auto;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
 }
 
 .control-panel-808 {
@@ -794,11 +808,21 @@ th {
 /*    padding-top: 0px;*/
 /*    border-radius: 5px;*/
     border-color: whitesmoke;
-    overflow-y: scroll;
+    overflow-x: auto;
+    overflow-y: auto;
+
     border: whitesmoke solid 1px;
-    border-style: line;
+    border-style: inset;
     border-width: thin;
     margin: 4px;
+}
+
+.fw-275 {
+  width: 275px;
+}
+
+.fw-300 {
+  width: 300px;
 }
 
 .fw-325 {
@@ -1027,13 +1051,8 @@ th {
 
 .button-bar {
     display: flex;
-    gap: 2px;
-/*    background-color: orange;*/
-    padding: 2px;
-    align-self: stretch;
-    align-items: space-around;
-    max-height: 60px;
-
+    align-items: center;
+    justify-content: center;
   }
 
 .btn-led {
@@ -1091,6 +1110,9 @@ th {
     background-image: linear-gradient(to left, #f52d2d, #f0f013);
 }
 
+.sandy {
+    background-color: sandybrown;
+}
 .mini-accent-btn {}
 
 .mini-accent-btn-active {}

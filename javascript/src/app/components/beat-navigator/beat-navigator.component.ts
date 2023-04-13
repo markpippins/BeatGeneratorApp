@@ -43,16 +43,28 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   controlBtnClassName = 'mini-control-btn';
 
   instruments!: Instrument[];
+  selectedInstrument!: Instrument;
 
   constructor(private uiService: UiService, private midiService: MidiService) {
     uiService.addListener(this);
   }
 
+  ngOnInit(): void {
+    this.midiService.allInstruments().subscribe((data) => {
+      this.instruments = this.uiService.sortByName(data);
+    });
+    this.updateDisplay();
+  }
+
+  ngAfterContentChecked(): void {
+    if (this.selectedInstrument == undefined && this.instruments.length > 0) {
+      this.selectedInstrument = this.instruments[0];
+      this.onInstrumentSelected(this.instruments[0]);
+    }
+  }
+
   generate() {
-
-    if (this.selectedNote == undefined)
-      return;
-
+    if (this.selectedNote == undefined) return;
 
     this.midiService.addPlayerForNote(this.selectedNote).subscribe((player) => {
       let partIndex = 0;
@@ -94,11 +106,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
                       this.addRuleForBar(player, barValue, 0);
                       // this.addRuleForPart(player, partValue);
                       this.uiService.notifyAll(Constants.PLAYER_UPDATED, '', 0);
-                      this.uiService.notifyAll(
-                        Constants.PLAYER_UPDATED,
-                        '',
-                        0
-                      );
+                      this.uiService.notifyAll(Constants.PLAYER_UPDATED, '', 0);
                     });
                   }
                 }
@@ -113,38 +121,6 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       partIndex++;
     });
   }
-  // this.midiService.addPlayer().subscribe((player) => {
-  //   this.addRuleForBeat(player, beatValue);
-  //   if (!this.selectedTicks.includes(true))
-  //     this.addRuleForTick(player, 1);
-  //   else {
-  //     let tickIndex = 0;
-  //     this.selectedTicks.forEach((tick) => {
-  //       if (tick) {
-  //         let tickValue = tickIndex + 1;
-  //         this.addRuleForTick(player, tickValue);
-  //       }
-  //       tickIndex++;
-  //     });
-  //   }
-  // });
-
-  // }
-  // });
-
-  // while (beatIndex < this.selectedBeats.length) {
-  //   if (this.selectedBeats[beatIndex]) {
-  //     this.midiService.addPlayer().subscribe((player) => {
-  //       // let tickIndex = 0;
-  //       // this.ticks.forEach((tick) => {
-  //       //   if (this.selectedTicks[tickIndex])
-  //       this.addRuleForBeat(player, beatIndex);
-  //       // this.addRuleForTick(player, tickIndex);
-  //       // tickIndex++;
-  //       // });
-  //     });
-  //   }
-  // }
 
   addRuleForTick(player: Player, tick: number, part: number) {
     this.midiService
@@ -194,64 +170,8 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       );
   }
 
-  // this.bars.forEach((bar) => {
-  //   if (this.selectedBars[bar])
-  //     this.midiService
-  //       .addSpecifiedRule(
-  //         player,
-  //         Operator.BAR,
-  //         Comparison.EQUALS,
-  //         bar + 1,
-  //         0
-  //       )
-  //       .subscribe((data) =>
-  //       this.uiService.notifyAll(
-  //         Constants.PLAYER_UPDATED,
-  //         'Rule Added',
-  //         data.id
-  //       ));
-  // });
-
-  // this.parts.forEach((part) => {
-  //   if (this.selectedParts[part])
-  //     this.midiService
-  //       .addSpecifiedRule(
-  //         player,
-  //         Operator.PART,
-  //         Comparison.EQUALS,
-  //         part,
-  //         0
-  //       )
-  //       .subscribe((data) =>
-  //       this.uiService.notifyAll(
-  //         Constants.PLAYER_UPDATED,
-  //         'Rule Added',
-  //         data.id
-  //       ));
-  // });
-
-  // this.midiService
-  //   .addSpecifiedRule(
-  //     player,
-  //     Operator.BEAT,
-  //     Comparison.EQUALS,
-  //     beat + 1,
-  //     0
-  //   )
-  //   .subscribe();
-
-  // this.selectedTicks.forEach;
-
   getBeatPerBar(): number {
     return this.ticker == undefined ? 4 : this.ticker.beatsPerBar;
-  }
-
-  ngOnInit(): void {
-    this.updateDisplay();
-    this.midiService.allInstruments().subscribe((data) => {
-      this.instruments = this.uiService.sortByName(data);
-      this.uiService.setSelectValue('instrument-combo-' + this.comboId, 0);
-    });
   }
 
   onInstrumentSelected(instrument: Instrument) {
@@ -415,7 +335,6 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   divSelected(index: number) {
     this.selectedDivs[index] = !this.selectedDivs[index];
   }
-
 
   commandSelected(command: string, level: number) {
     alert(command + ' ' + this.resolution[level]);

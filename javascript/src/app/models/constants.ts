@@ -16,12 +16,12 @@ export class Constants {
     'Prob',
     'Random',
     'Level',
-    'Min. V',
-    'Max. V',
+    'VMIN',
+    'VMAX',
     'Ratchet',
     'Interval',
-    'Fade In',
-    '/ Out',
+    'IFade',
+    'OFade',
   ];
 
   static TICK_DIV = 0;

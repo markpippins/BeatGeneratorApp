@@ -2,43 +2,42 @@ import { Injectable } from '@angular/core';
 import { Listener } from '../models/listener';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
-
-
 export class UiService {
+  listeners: Listener[] = [];
 
-  listeners: Listener[] = []
-
-  constructor() { }
+  constructor() {}
 
   addListener(listener: Listener) {
-    this.listeners.push(listener)
+    this.listeners.push(listener);
   }
 
   notifyAll(_messageType: number, _message: string, _messageValue: number) {
-    this.listeners.forEach(l => l.onNotify(_messageType, _message, _messageValue))
+    this.listeners.forEach((l) =>
+      l.onNotify(_messageType, _message, _messageValue)
+    );
   }
 
   setSelectValue(id: string, val: any) {
     // @ts-ignore
-    let element = document.getElementById(id)
-    if (element != null) { // @ts-ignore
-      element.selectedIndex = val
+    let element = document.getElementById(id);
+    if (element != null) {
+      // @ts-ignore
+      element.selectedIndex = val;
     }
   }
 
   toggleClass(el: any, className: string) {
     if (el.className.indexOf(className) >= 0) {
-      el.className = el.className.replace(className, "");
+      el.className = el.className.replace(className, '');
     } else {
       el.className += className;
     }
   }
 
-
   hasClass(el: any, classNameA: string) {
-    return (el.className.indexOf(classNameA) >= 0)
+    return el.className.indexOf(classNameA) >= 0;
   }
 
   swapClass(el: any, classNameA: string, classNameB: string) {
@@ -57,16 +56,15 @@ export class UiService {
 
   removeClass(el: any, classNameA: string) {
     if (el.className.indexOf(classNameA) >= 0) {
-      el.className = el.className.replace(classNameA, "");
+      el.className = el.className.replace(classNameA, '');
     }
   }
 
   addClass(el: any, classNameA: string) {
     if (el.className.indexOf(classNameA) == -1) {
-      el.className = el.className.replace(classNameA, "");
+      el.className = el.className.replace(classNameA, '');
     }
   }
-
 
   reverseSortById(data: any[]): any[] {
     return data.sort((a, b) => {
@@ -117,10 +115,11 @@ export class UiService {
   }
 
   getNoteForValue(value: number, scale: string[]) {
-    let note = value
-    while (note > 11)
-      note = note - 12
+    let note = value;
+    while (note > 11) note = note - 12;
 
-    return scale[note]
+    let octave = 1;
+    for (let i = 0; i < value; i += 12) octave++;
+    return scale[note] + octave;
   }
 }

@@ -28,7 +28,7 @@ export class BeatSpecDetailComponent implements OnInit {
 
 
 
-  columns: string[] = ['Set', 'Pattern', 'Device', 'Channel', 'Preset', 'Root', 'Transpose', 'Length', 'Last Step', 'Gate', 'Speed', 'Repeats', 'Swing', 'Random', 'Probability']
+  columns: string[] = ['Set', 'Pattern', 'Device', 'Chan', 'Preset', 'Root', 'Transp', 'Length', 'Start', 'End', 'Gate', 'Speed', 'Repeat', 'Swing', 'Random', 'Quantize', 'Loop', 'Mute']
 
   constructor(private midiService: MidiService, private uiService: UiService) {
   }
@@ -65,6 +65,10 @@ export class BeatSpecDetailComponent implements OnInit {
     this.midiService.updatePattern(this.pattern.id, PatternUpdateType.GATE, event.target.value).subscribe(data => this.pattern = data)
   }
 
+  onFirstStepChange(event: { target: any; }) {
+    this.midiService.updatePattern(this.pattern.id, PatternUpdateType.FIRST_STEP, event.target.value).subscribe(data => this.pattern = data)
+  }
+
   onLastStepChange(event: { target: any; }) {
     this.midiService.updatePattern(this.pattern.id, PatternUpdateType.LAST_STEP, event.target.value).subscribe(data => this.pattern = data)
   }
@@ -73,8 +77,16 @@ export class BeatSpecDetailComponent implements OnInit {
     this.midiService.updatePattern(this.pattern.id, PatternUpdateType.LENGTH, event.target.value).subscribe(data => this.pattern = data)
   }
 
-  onQuantizeChange(event: { target: any; }) {
-    this.midiService.updatePattern(this.pattern.id, PatternUpdateType.QUANTIZE, event.target.value).subscribe(data => this.pattern = data)
+  onQuantizeChange() {
+    this.midiService.updatePattern(this.pattern.id, PatternUpdateType.QUANTIZE, 0).subscribe(data => this.pattern = data)
+  }
+
+  onLoopChange() {
+    this.midiService.updatePattern(this.pattern.id, PatternUpdateType.LOOP, 0).subscribe(data => this.pattern = data)
+  }
+
+  onMuteChange() {
+    this.midiService.updatePattern(this.pattern.id, PatternUpdateType.MUTE, 0).subscribe(data => this.pattern = data)
   }
 
   onRandomChange(event: { target: any; }) {

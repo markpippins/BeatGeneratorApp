@@ -31,19 +31,25 @@ export interface Pattern {
 
   direction: number
 
+  firstStep: number
+
   lastStep: number
 
   random: number
 
   transpose: number
 
-  repeats: number;
+  repeats: number
 
-  swing: number;
+  swing: number
 
-  gate: number;
+  gate: number
 
-  delay: number;
+  delay: number
 
   steps: Step[]
+
+  muted: boolean
+
+  loop: boolean
 }

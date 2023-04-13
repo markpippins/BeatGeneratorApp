@@ -33,12 +33,19 @@
   main,
   aside,
   nav {
-    background-color: steelblue;
     color: white;
     font-size: 12px;
     padding: 10px;
     border: white 1px solid;
     align-self: stretch;
+  }
+
+  section,
+  aside,
+  nav {
+    background-color: steelblue;
+    border-radius: 25px;
+    margin: 7px;
   }
 
   main {
@@ -110,11 +117,11 @@
 
   body {
     margin: 0px;
-    background: #125699;
+    background-color: slategrey;
     color: blanchedalmond;
     display: grid;
     grid-template-columns: auto auto auto auto auto auto auto;
-    grid-template-rows: 80px 80vh auto;
+    grid-template-rows: 80px 88vh auto;
     grid-template-areas:
       'section1 header header header header header section2'
       'aside main main main main main main'
@@ -140,8 +147,11 @@
   }
 
   main {
+    margin: 0px;
+    padding: 0px;
     grid-area: main;
     display: grid;
+    gap: 2px;
     grid-template-columns: auto auto;
   }
 </style>

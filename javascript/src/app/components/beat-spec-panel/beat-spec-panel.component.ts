@@ -17,7 +17,6 @@ interface PitchPair {
   note: string;
 }
 
-
 @Component({
   selector: 'app-beat-spec-panel',
   templateUrl: './beat-spec-panel.component.html',
@@ -26,21 +25,7 @@ interface PitchPair {
 export class BeatSpecPanelComponent
   implements Listener, OnInit, AfterContentChecked
 {
-  constructor(private uiService: UiService, private midiService: MidiService) {
-    uiService.addListener(this);
-  }
-  ngAfterContentChecked(): void {
-    if (this.step != undefined && this.step.active) {
-      // let element = document.getElementById("beat-btn-" + this.step.position)
-      // this.uiService.swapClass(element, 'inactive', 'active')
-    }
-  }
-
-  ngOnInit(): void {
-
-    for (let i = 0; i < 126; i++)
-      this.pitchMap.push({ "midi": i, "note": this.uiService.getNoteForValue(i, Constants.SCALE_NOTES)});
-  }
+  flag: boolean = false;
 
   @Output()
   paramBtnClickEvent = new EventEmitter<number>();
@@ -59,6 +44,21 @@ export class BeatSpecPanelComponent
 
   pitchMap: PitchPair[] = [];
 
+  constructor(private uiService: UiService, private midiService: MidiService) {
+    uiService.addListener(this);
+  }
+
+  ngAfterContentChecked(): void {
+    this.flag = (this.step != undefined && this.step.active)
+  }
+
+  ngOnInit(): void {
+    for (let i = 0; i < 126; i++)
+      this.pitchMap.push({
+        midi: i,
+        note: this.uiService.getNoteForValue(i, Constants.SCALE_NOTES),
+      });
+  }
 
   onNotify(messageType: number, _message: string, messageValue: number) {
     this.active =
@@ -144,6 +144,4 @@ export class BeatSpecPanelComponent
   onChange() {
     this.changeEvent.emit(this.step);
   }
-
-
 }

@@ -1,16 +1,19 @@
 <div class="beat-spec-detail">
-<table>
-  <tr><th *ngFor="let col of columns"> {{col}} </th></tr>
-  <tr>
-    <!-- (change)="onSwingChange(player, $event)" -->
-    <td class="short-col">
-      <input type="number" min="0" max="100" step="1" value="{{ songId }}">
-    </td>
-    <td class="short-col">
+  <table>
+    <tr>
+      <th *ngFor="let col of columns"> {{col}} </th>
+    </tr>
+    <tr>
+      <!-- (change)="onSwingChange(player, $event)" -->
+      <td class="short-col">
+        <input type="number" min="0" max="100" step="1" value="{{ songId }}">
+      </td>
+      <td class="short-col">
         <input type="number" min="0" max="100" step="1" value="{{ pattern.id }}">
       </td>
       <td>
-        <app-midin-instrument-combo [instruments]="instruments" [identifier]="identifier" (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
+        <app-midin-instrument-combo [instruments]="instruments" [identifier]="identifier"
+          (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
       </td>
       <td>
         <input class="short-col" type="number" min="1" (change)="onChannelChange($event)" [(ngModel)]="pattern.channel">
@@ -19,35 +22,54 @@
         <input class="short-col" type="number" min="1" (change)="onPresetChange($event)" [(ngModel)]="pattern.preset">
       </td>
       <td>
-        <input class="short-col" type="number" min="1" (change)="onRootNoteChange($event)" [(ngModel)]="pattern.rootNote">
+        <input class="short-col" type="number" min="1" (change)="onRootNoteChange($event)"
+          [(ngModel)]="pattern.rootNote">
       </td>
       <td>
-        <input class="short-col" type="number" min="-4" max="4" (change)="onTransposeChange($event)" [(ngModel)]="pattern.transpose">
+        <input class="short-col" type="number" min="-4" max="4" (change)="onTransposeChange($event)"
+          [(ngModel)]="pattern.transpose">
       </td>
       <td>
-        <input class="short-col" type="number" min="-12" max="12"  (change)="onLengthChange($event)" [(ngModel)]="pattern.length">
+        <input class="short-col" type="number" min="-12" max="12" (change)="onLengthChange($event)"
+          [(ngModel)]="pattern.length">
       </td>
       <td>
-        <input class="short-col" type="number" min="1" max={{pattern.length}}  (change)="onLastStepChange($event)" [(ngModel)]="pattern.lastStep">
+        <input class="short-col" type="number" min="1" max={{pattern.length}} (change)="onFirstStepChange($event)"
+          [(ngModel)]="pattern.firstStep">
       </td>
       <td>
-        <input class="short-col" type="number" min="0" max="100"  (change)="onGateChange($event)" [(ngModel)]="pattern.gate">
+        <input class="short-col" type="number" min="1" max={{pattern.length}} (change)="onLastStepChange($event)"
+          [(ngModel)]="pattern.lastStep">
+      </td>
+
+      <td>
+        <input class="short-col" type="number" min="0" max="100" (change)="onGateChange($event)"
+          [(ngModel)]="pattern.gate">
       </td>
       <td>
-        <input class="short-col" type="number" min="1" max="4" (change)="onSpeedChange($event)" [(ngModel)]="pattern.speed">
+        <input class="short-col" type="number" min="1" max="4" (change)="onSpeedChange($event)"
+          [(ngModel)]="pattern.speed">
       </td>
       <td>
         <input class="short-col" type="number" min="0" (change)="onRepeatsChange($event)" [(ngModel)]="pattern.repeats">
       </td>
       <td>
-        <input class="short-col" type="number" min="1" max={{pattern.length}} (change)="onSwingChange($event)" [(ngModel)]="pattern.swing">
+        <input class="short-col" type="number" min="1" max={{pattern.length}} (change)="onSwingChange($event)"
+          [(ngModel)]="pattern.swing">
       </td>
       <td>
-        <input class="short-col" type="number" min="0" max="100" (change)="onRandomChange($event)" [(ngModel)]="pattern.random">
+        <input class="short-col" type="number" min="0" max="100" (change)="onRandomChange($event)"
+          [(ngModel)]="pattern.random">
       </td>
       <td>
-        <input class="short-col" type="boolean" (change)="onQuantizeChange($event)" [(ngModel)]="pattern.quantize">
+        <input class="short-col" type="checkbox" (change)="onQuantizeChange()" [(ngModel)]="pattern.quantize">
       </td>
-  </tr>
-</table>
+      <td>
+        <input class="short-col" type="checkbox" (change)="onLoopChange()" [(ngModel)]="pattern.loop">
+      </td>
+      <td>
+        <input class="short-col" type="checkbox" (change)="onMuteChange()" [(ngModel)]="pattern.muted">
+      </td>
+    </tr>
+  </table>
 </div>

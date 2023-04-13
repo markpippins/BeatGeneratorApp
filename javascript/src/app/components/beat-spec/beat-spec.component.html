@@ -2,7 +2,7 @@
   <div class="xox-panel">
   <mat-tab *ngFor="let pattern of song?.patterns;" [label]="getLabel(pattern)">
     <!-- <app-control-panel808 class="control-panel808"></app-control-panel808> -->
-    <!-- <app-set-nav></app-set-nav> -->
+    <app-set-nav></app-set-nav>
     <app-beat-spec-detail [pattern]="pattern" [songId]="song.id"
       (instrumentSelectEvent)="onInstrumentSelected($event, pattern)" class=""></app-beat-spec-detail>
     <div class="interface-808">

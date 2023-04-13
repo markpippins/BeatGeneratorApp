@@ -19,4 +19,7 @@ export class PatternUpdateType {
   static BEAT_DIVIDER = 16
   static RANDOM_DEGREE = 17
   static SPEED = 18
+  static FIRST_STEP = 19
+  static MUTE = 20
+  static LOOP = 21
 }

@@ -65,7 +65,6 @@
     width: auto;
     grid-template-areas:
       'section1 section2'
-      'section4 section5'
     ;
     grid-template-rows: 40px auto;
     gap: 4px;
@@ -101,7 +100,7 @@
           <div class="table-holder">
             <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
           </div>
-          <div class="table-holder">
+          <div class="table-holder fw-300">
             <app-conditions-panel *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
               [player]="selectedPlayer"></app-conditions-panel>
           </div>

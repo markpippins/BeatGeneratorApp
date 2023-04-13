@@ -46,6 +46,8 @@ public class Pattern {
 
     private Integer length = 16;
 
+    private Integer firstStep = 1;
+
     private Integer lastStep = 16;
 
     private Integer speed = 1;
@@ -64,6 +66,11 @@ public class Pattern {
     private Integer gate = 50;
 
     private Integer preset = 0;
+
+    private Boolean muted = false;
+
+    @Column(name = "auto_repeat")
+    private Boolean loop = true;
 
     private Integer beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
 

@@ -1,13 +1,6 @@
-<!--<div class="beat-btn" (click)="onLaneBtnClick()">-->
-<!--<div class="btn-inactive btn-led lane-808" (click)="onLaneBtnClick()" >-->
-<!--  <div id="beat-led-{{step.step}}" class="btn-inactive btn-led" [style.width.px]="15">-->
-<!--    {{step.step}}-->
-<!--  </div>-->
-<!--</div>-->
-<!--</div>-->
-
 <div class="lane-808">
-  <div *ngIf="step.active" id="beat-btn-{{step.position}}" class="btn-active onbeat">
+  <div [ngClass]=" flag ? 'primary' : 'secondary'" *ngIf="step.active" id="beat-btn-{{step.position}}"
+    class="btn-active onbeat">
     <button (click)="onLaneBtnClick()">
       {{step.position + 1}}
     </button>
@@ -27,29 +20,19 @@
       </option>
     </select>
   </div>
-  <!--  <label>Velocity</label>-->
   <div>
     <input class="" type="number" min="1" max="127" (change)="onVelocityChange(step, $event)"
       [(ngModel)]="step.velocity">
   </div>
-  <!--  <label>Probably</label>-->
   <div>
     <input class="" type="number" min="0" max="100" (change)="onProbabilityChange(step, $event)"
       [(ngModel)]="step.probability">
   </div>
-  <!--  <label>Gate Length</label>-->
   <div>
-    <input class="" type="number" min="0" max="100" (change)="onGateChange(step, $event)"
-      [(ngModel)]="step.gate">
+    <input class="" type="number" min="0" max="100" (change)="onGateChange(step, $event)" [(ngModel)]="step.gate">
+  </div>
+  <div [ngClass]=" flag ? 'primary mini-btn' : 'secondary mini-btn'" *ngIf="active == true"
+    (click)="onParamsBtnClick()">{{step.position + 1}}
   </div>
 
-  <div>
-    <div *ngIf="active == true" class="mini-btn param-btn onbeat" (click)="onParamsBtnClick()">{{step.position + 1}}
-    </div>
-    <div *ngIf="active == false" class="mini-btn param-btn offbeat" (click)="onParamsBtnClick()">{{step.position + 1}}
-    </div>
-  </div>
-  <mat-divider></mat-divider>
 </div>
-
-<div class="lane-808">

@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  AfterContentChecked,
+  AfterContentInit,
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
 import { UiService } from 'src/app/services/ui.service';
@@ -6,47 +15,52 @@ import { UiService } from 'src/app/services/ui.service';
 @Component({
   selector: 'app-midin-instrument-combo',
   templateUrl: './midin-instrument-combo.component.html',
-  styleUrls: ['./midin-instrument-combo.component.css']
+  styleUrls: ['./midin-instrument-combo.component.css'],
 })
-export class MidinInstrumentComboComponent  implements OnInit {
-
+export class MidinInstrumentComboComponent implements OnInit, AfterViewInit, AfterContentInit, AfterContentChecked {
   @Output()
   instrumentSelectEvent = new EventEmitter<Instrument>();
 
   @Input()
-  instruments!: Instrument[]
+  instruments!: Instrument[];
 
   @Output()
-  selectionIndex !: number
+  selectionIndex!: number;
 
   @Output()
-  selectedInstrumentId !: number
+  selectedInstrumentId!: number;
 
   @Input()
-  identifier!: string
-
+  identifier!: string;
 
   constructor(private uiService: UiService) {}
-
-  ngOnInit(): void {
+  ngAfterContentInit(): void {
+  }
+  ngAfterViewInit(): void {
 
   }
 
+  ngOnInit(): void {}
+
   ngAfterContentChecked(): void {
-    if (this.instruments != undefined && this.identifier != undefined) {
-      this.setIndexForInstrument()
-    }
+    if (this.selectionIndex == undefined && this.instruments.length > 0)
+      this.selectionIndex = 0
   }
 
   onSelectionChange() {
-    this.instrumentSelectEvent.emit(this.instruments[this.selectionIndex])
-    this.uiService.notifyAll(Constants.STATUS, this.instruments[this.selectionIndex].name + ' selected.', 0)
+    this.instrumentSelectEvent.emit(this.instruments[this.selectionIndex]);
+    this.uiService.notifyAll(
+      Constants.STATUS,
+      this.instruments[this.selectionIndex].name + ' selected.',
+      0
+    );
   }
 
   setIndexForInstrument() {
-    this.instruments.filter(i => i.id == this.selectedInstrumentId).forEach(ins => {
-      this.selectionIndex = this.instruments.indexOf(ins);
-    })
+    this.instruments
+      .filter((i) => i.id == this.selectedInstrumentId)
+      .forEach((ins) => {
+        this.selectionIndex = this.instruments.indexOf(ins);
+      });
   }
-
 }

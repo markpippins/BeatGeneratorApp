@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
 import { Player } from 'src/app/models/player';
+import { PlayerUpdateType } from 'src/app/models/player-update-type';
 import { MidiService } from 'src/app/services/midi.service';
 import { UiService } from 'src/app/services/ui.service';
 
@@ -38,11 +39,11 @@ export class StrikeRowComponent {
     // 'comparison',
     // 'value',
     'Prob.',
-    'Min V',
-    'Max V',
+    'VMin',
+    'VMax',
   ];
 
-  constructor(private midiService: MidiService, uiService: UiService) {
+  constructor(private midiService: MidiService, privateuiService: UiService) {
   }
 
   // onRowClick(player: Player, event: MouseEvent) {
@@ -78,11 +79,11 @@ export class StrikeRowComponent {
 
   onInstrumentSelected(instrument: Instrument, player: Player) {
     player.instrumentId = instrument.id
-    this.midiService.updatePlayer(player.id, Constants.INSTRUMENT, instrument.id).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.INSTRUMENT, instrument.id).subscribe()
   }
 
   onNoteChange(player: Player, event: { target: any; }) {
-    this.midiService.updatePlayer(player.id, Constants.NOTE, event.target.value).subscribe()
+    this.midiService.updatePlayer(player.id, PlayerUpdateType.NOTE, event.target.value).subscribe()
   }
 
   onPass(player: Player, $event: MouseEvent) {

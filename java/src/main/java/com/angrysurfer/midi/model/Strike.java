@@ -49,7 +49,7 @@ public class Strike extends Player {
 
     @Override
     public void onTick(long tick, long bar) {
-        logger.info(String.format("Tick: %s", tick));
+        // logger.info(String.format("Tick: %s", tick));
         if (tick == 1 && getSubDivisions() > 1 && getBeatFraction() > 1) {
             double numberOfTicksToWait = getBeatFraction() * (getTicker().getTicksPerBeat() / getSubDivisions());
             new Ratchet(this, numberOfTicksToWait, getRatchetInterval(), 0);
