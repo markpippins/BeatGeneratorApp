@@ -58,6 +58,9 @@ export class ButtonPanelComponent
   @Input()
   customControlMinCount: number = 0;
 
+  @Input()
+  indicators!: boolean[]
+
   position = this.colCount;
   range: string[] = [];
   overage: string[] = [];
@@ -76,7 +79,7 @@ export class ButtonPanelComponent
   controlBtnClassName = 'mini-btn, mini-control-btn';
 
   @Input()
-  overageBtnClassName = 'overflow';
+  overageBtnClassName = 'overage';
 
   @Input()
   containerClass = 'flex-container-horizontal';
@@ -144,6 +147,8 @@ export class ButtonPanelComponent
       this.colCount
     )
       this.overage.push('');
+
+      // this.overage.forEach(() => this.indicators.push(false))
   }
 
   onForwardClicked() {

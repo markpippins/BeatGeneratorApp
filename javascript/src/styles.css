@@ -89,13 +89,13 @@ p {
 }
 
 body {
-  background-color: darkcyan;
+  /* background-color: darkcyan; */
   color: black;
   /* height: 97%; */
   /* background-image: url('https://images.unsplash.com/photo-1599854100970-974129a5c8b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhY2glMjB3YXZlc3xlbnwwfHwwfHw%3D&w=1000&q=80'); */
 
-/*   background-image: url('https://www.red-dot.org/fileadmin/_processed_/9/1/csm_IV1235044-1_568e92817c.jpg');*/
-   /* background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg'); */
+  /* background-image: url('https://www.red-dot.org/fileadmin/_processed_/9/1/csm_IV1235044-1_568e92817c.jpg'); */
+   background-image: url('https://cdn.fansshare.com/image/abstractwallpapers/blue-waves-abstract-wallpaper-blue-2046987242.jpg');
   background-repeat: no-repeat;
   background-size: cover;
 /*   background-color: rgb(68, 67, 67);*/
@@ -622,10 +622,8 @@ th {
 
 .interface-808 {
   display: grid;
-  /*gap: 2px;*/
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
-    width: 90vh;
-    margin: 4px;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    width: auto;
 }
 
 .xox-panel {
@@ -664,13 +662,42 @@ th {
   margin-top: 10px;
   display: flex;
   gap: 2px;
-  /* padding: 1px; */
   flex-flow: column;
   font-size: small;
   align-items: center;
-  /*border-style: inset;*/
-  /*border-width: thin;*/
 }
+
+.pad {
+  height: 42px;
+  width: 42px;
+  padding: 0px;
+    gap: 0px;
+  text-align: center;
+  align-items: stretch;
+  margin: 0px;
+  display: grid;
+  background-color: lightgray;
+  grid-template-columns: 1fr
+}
+
+
+.pad-ring  {
+    color: black;
+    border: lawngreen solid 2px;
+    margin: 0px;
+    padding: 0px;
+    background-color: yellow;
+}
+
+.selected-pad-0{
+
+
+/*    background-color: lightgray;*/
+/*    background-color: aqua;*/
+/*    background-color: lawngreen;*/
+/*    background-color: fuchsia;*/
+}
+
 
 input {
   background-color: transparent;
@@ -814,7 +841,8 @@ th {
     border: whitesmoke solid 1px;
     border-style: inset;
     border-width: thin;
-    margin: 4px;
+/*    margin: 4px;*/
+      margin-bottom: 10px;
 }
 
 .fw-275 {
@@ -985,8 +1013,8 @@ th {
 }
 
 /* ---------------------------------------------------------- */
-.overflow {
-  background-color: rgb(219, 109, 6);
+.overage {
+  background-color: burlywood;
   border-style: inset;
 }
 
@@ -1003,12 +1031,26 @@ th {
   grid-template-columns: auto auto auto auto auto auto auto;
 }
 
+.comparison {
+    background: yellow;
+}
 
+.mini-pad {
+    background-color: black;
+}
+
+.generate {
+    background: coral;
+}
+
+.time-div {
+    background: purple;
+}
 .mini-btn {
-  padding: 2px;
-  height: 24px;
+  padding: 0px;
+  height: 25px;
   width: 24px;
-  margin: 1px;
+  margin: 2px;
   color: black;
   font-weight: normal;
   font-size: small;
@@ -1020,16 +1062,16 @@ th {
   height: 28px;
   width: 28px;
   margin: 1px; */
-  background-color: #316f8b;
-  color: white;
+  /* background-color: #316f8b; */
+  color: silver;
   /* font-size: small; */
 }
 
 .mini-btn-excluded {
-  padding: 2px;
+  padding: 0px;
   height: 24px;
   width: 24px;
-  margin: 1px;
+  margin: 2px;
   color: grey;
   font-weight: normal;
   font-size: small;
@@ -1037,15 +1079,13 @@ th {
 }
 
 .mini-btn-selected {
-  padding: 2px;
+  padding: 0px;
   height: 24px;
   width: 24px;
-  margin: 1px;
+  margin: 2px;
   color: white;
-  background-color: green;
   border-style: inset;
   font-weight: bolder;
-  font-size: smaller;
   border-radius: 5px;
 }
 

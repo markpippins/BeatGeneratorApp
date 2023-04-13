@@ -266,18 +266,21 @@ export class DashboardComponent implements OnInit, Listener {
   updateDisplay(): void {
     if (this.ticker.id == 0) {
       this.midiService.next(0).subscribe((_data) => {
-        this.ticker = _data
+        this.ticker = _data;
         this.players = this.reverseSortByClass(_data.players); // data)
       });
     } else
       this.midiService.playerInfo().subscribe(async (data) => {
         var update: boolean =
           this.ticker.playing && this.players.length != (<Player[]>data).length;
-        this.players = this.reverseSortByClass(data); // data)
+        this.players = this.reverseSortByClass(data);
         this.players.forEach(
           (p) => (p.active = p.id in this.ticker.activePlayerIds)
         );
         if (update && this.ticker.playing) {
+          this.uiService.notifyAll(Constants.BEAT_DIV, '', this.ticker.beat);
+          this.uiService.notifyAll(Constants.BAR_DIV, '', this.ticker.bar);
+          this.uiService.notifyAll(Constants.PART_DIV, '', this.ticker.part);
           await this.midiService.delay(1000);
           this.updateDisplay();
         }

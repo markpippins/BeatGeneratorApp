@@ -1,4 +1,4 @@
-<div class="flex-container-horizontal no-scroll">
+<div class="flex-container-horizontal">
   <app-midin-instrument-combo class="wide-combo" [instruments]="instruments" [identifier]="comboId"
     (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
   <div class="flex-container-horizontal">
@@ -51,45 +51,41 @@
   </div> -->
   <div class="flex-container-vertical">
     <button class="mini-btn mini-control-btn"></button>
-    <button class="mini-btn mini-control-btn sandy">13</button>
-    <button class="mini-btn mini-control-btn sandy">9</button>
-    <button class="mini-btn mini-control-btn sandy">5</button>
-    <button class="mini-btn mini-control-btn sandy">1</button>
-    <button class="mini-btn mini-control-btn">=</button>
+    <button class="mini-btn mini-pad">13</button>
+    <button class="mini-btn mini-pad">9</button>
+    <button class="mini-btn mini-pad">5</button>
+    <button class="mini-btn mini-pad">1</button>
+    <button class="mini-btn comparison">=</button>
   </div>
   <div class="flex-container-vertical">
     <button class="mini-btn mini-control-btn"></button>
-    <button class="mini-btn mini-control-bt sandyn">14</button>
-    <button class="mini-btn mini-control-btn sandy">10</button>
-    <button class="mini-btn mini-control-btn sandy">6</button>
-    <button class="mini-btn mini-control-btn sandy">2</button>
-    <button class="mini-btn mini-control-btn">%</button>
+    <button class="mini-btn mini-control-bt mini-pad">14</button>
+    <button class="mini-btn mini-pad">10</button>
+    <button class="mini-btn mini-pad">6</button>
+    <button class="mini-btn mini-pad">2</button>
+    <button class="mini-btn  comparison">%</button>
   </div>
   <div class="flex-container-vertical">
     <button class="mini-btn mini-control-btn"></button>
-    <button class="mini-btn mini-control-btn sandy">15</button>
-    <button class="mini-btn mini-control-btn sandy">11</button>
-    <button class="mini-btn mini-control-btn sandy">7</button>
-    <button class="mini-btn mini-control-btn sandy">3</button>
-    <button class="mini-btn mini-control-btn"><</button>
+    <button class="mini-btn mini-pad">15</button>
+    <button class="mini-btn mini-pad">11</button>
+    <button class="mini-btn mini-pad">7</button>
+    <button class="mini-btn mini-pad">3</button>
+    <button class="mini-btn comparison">
+      < </button>
   </div>
   <div class="flex-container-vertical">
     <button class="mini-btn mini-control-btn"></button>
-    <button class="mini-btn mini-control-btn sandy">16</button>
-    <button class="mini-btn mini-control-btn sandy">12</button>
-    <button class="mini-btn mini-control-btn sandy">8</button>
-    <button class="mini-btn mini-control-btn">4</button>
-    <button class="mini-btn mini-control-btn">></button>
+    <button class="mini-btn mini-pad">16</button>
+    <button class="mini-btn mini-pad">12</button>
+    <button class="mini-btn mini-pad">8</button>
+    <button class="mini-btn mini-pad">4</button>
+    <button class="mini-btn comparison">
+      >
+    </button>
   </div>
 
-  <!-- <div class="flex-container-vertical">
-    <button class="mini-btn mini-control-btn">1</button>
-    <button class="mini-btn mini-control-btn">2</button>
-    <button class="mini-btn mini-control-btn">3</button>
-    <button class="mini-btn mini-control-btn">4</button>
-    <button class="mini-btn mini-control-btn">5</button>
-    <button class="mini-btn mini-control-btn"> </button>
-  </div> -->
+
   <div class="flex-container-vertical">
     <button class="mini-btn mini-control-btn">🠟</button>
     <button class="mini-btn mini-control-btn">U</button>
@@ -112,7 +108,7 @@
     <button class="mini-btn mini-control-btn" (click)="nudgeRight(resolution[2])">R</button>
     <button class="mini-btn mini-control-btn" (click)="nudgeRight(resolution[3])">R</button>
     <button class="mini-btn mini-control-btn">R</button>
-    <button class="mini-btn mini-control-btn fire2">V</button>
+    <button class="mini-btn mini-control-btn generate">V</button>
   </div>
   <div class="flex-container-vertical">
     <button class="mini-btn mini-control-btn">F</button>
@@ -120,35 +116,42 @@
     <button class="mini-btn mini-control-btn">S</button>
     <button class="mini-btn mini-control-btn">S</button>
     <button class="mini-btn mini-control-btn">S</button>
-    <button class="mini-btn mini-control-btn fire2" (click)="generate()">A</button>
+    <button class="mini-btn mini-control-btn generate" (click)="generate()">A</button>
 
   </div>
   <div class="flex-container-vertical">
-    <button class="mini-btn mini-control-btn fire">A</button>
-    <button class="mini-btn mini-control-btn fire">T</button>
-    <button class="mini-btn mini-control-btn fire">F</button>
-    <button class="mini-btn mini-control-btn fire">Bt</button>
-    <button class="mini-btn mini-control-btn fire">Br</button>
-    <button class="mini-btn mini-control-btn fire">Pt</button>
+    <button class="mini-btn mini-control-btn time-div">A</button>
+    <button class="mini-btn mini-control-btn time-div">T</button>
+    <button class="mini-btn mini-control-btn time-div">F</button>
+    <button class="mini-btn mini-control-btn time-div">Bt</button>
+    <button class="mini-btn mini-control-btn time-div">Br</button>
+    <button class="mini-btn mini-control-btn time-div">Pt</button>
   </div>
+
   <div class="flex-container-vertical">
     <div class="flex-container-vertical">
+
       <app-button-panel [identifier]=resolution[0] [colCount]="colCount + 1"
         (buttonClickedForCommandEvent)="commandSelected($event, 0)"
         [symbols]="getAccentsAsStrings()"></app-button-panel>
+
       <app-button-panel [identifier]=resolution[1] [colCount]="colCount + 1"
         (buttonClickedForCommandEvent)="commandSelected($event, 1)" (buttonClickedForIndexEvent)="tickSelected($event)"
         [symbols]="getTicksAsStrings()"></app-button-panel>
+
       <app-button-panel [identifier]=resolution[2] [colCount]="colCount + 1"
         (buttonClickedForCommandEvent)="commandSelected($event, 2)" (buttonClickedForIndexEvent)="divSelected($event)"
         [symbols]="getDivsAsStrings()"></app-button-panel>
-      <app-button-panel [identifier]=resolution[3] [colCount]="colCount + 1"
+
+      <app-button-panel [indicators]="beatIndicators" [identifier]=resolution[3] [colCount]="colCount + 1"
         (buttonClickedForCommandEvent)="commandSelected($event, 3)" (buttonClickedForIndexEvent)="beatSelected($event)"
         [symbols]="getBeatsAsStrings()"></app-button-panel>
-      <app-button-panel [identifier]=resolution[4] [colCount]="colCount + 1"
+
+      <app-button-panel [indicators]="barIndicators" [identifier]=resolution[4] [colCount]="colCount + 1"
         (buttonClickedForCommandEvent)="commandSelected($event, 4)" (buttonClickedForIndexEvent)="barSelected($event)"
         [symbols]="getBarsAsStrings()"></app-button-panel>
-      <app-button-panel [identifier]=resolution[5] [colCount]="colCount + 1"
+
+      <app-button-panel [indicators]="partIndicators" [identifier]=resolution[5] [colCount]="colCount + 1"
         (buttonClickedForCommandEvent)="commandSelected($event, 5)" (buttonClickedForIndexEvent)="partSelected($event)"
         [symbols]="getPartsAsStrings()"></app-button-panel>
     </div>

@@ -54,7 +54,11 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Boolean useInternalBars = false;
     private Long panPosition = 63L;
     private Boolean preserveOnPurge = false;
-    private Set<Long> tickRange = new HashSet<>();
+    private double sparse;
+
+    // private Set<Long> tickRange = new HashSet<>();
+
+
     @JsonIgnore
     @Transient
     private Cycler skipCycler = new Cycler(0);

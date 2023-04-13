@@ -15,9 +15,6 @@ import {MidiService} from "../../services/midi.service";
 })
 export class BeatSpecComponent implements OnInit, Listener {
   editStep: number | undefined
-  // stepCount: number = 16
-  // steps: Step[][] = []
-  // pages = [0, 1, 2, 3, 4, 5, 6, 7]
   tickerId!: number
   song!: Song
   rows: string[][] = [[
@@ -51,7 +48,6 @@ export class BeatSpecComponent implements OnInit, Listener {
   }
 
   onInstrumentSelected(instrument: Instrument, pattern: Pattern) {
-
     this.midiService.updatePattern(pattern.id, PatternUpdateType.INSTRUMENT, instrument.channel)
       .subscribe(data => this.song.patterns[pattern.position] = data)
   }

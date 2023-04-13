@@ -11,6 +11,7 @@ import { Listener } from 'src/app/models/listener';
 import { MidiService } from 'src/app/services/midi.service';
 import { UiService } from 'src/app/services/ui.service';
 import { Step } from '../../models/step';
+import { Instrument } from 'src/app/models/instrument';
 
 interface PitchPair {
   midi: number;
@@ -35,6 +36,9 @@ export class BeatSpecPanelComponent
 
   @Input()
   step!: Step;
+
+  @Input()
+  instrument!: Instrument;
 
   @Input()
   page!: number;

@@ -31,8 +31,9 @@
   <div>
     <input class="" type="number" min="0" max="100" (change)="onGateChange(step, $event)" [(ngModel)]="step.gate">
   </div>
-  <div [ngClass]=" flag ? 'primary mini-btn' : 'secondary mini-btn'" *ngIf="active == true"
-    (click)="onParamsBtnClick()">{{step.position + 1}}
-  </div>
+  <app-drum-pad></app-drum-pad>
+  <!-- <div [ngClass]=" flag ? 'primary mini-btn' : 'secondary mini-btn'" *ngIf="active == true"
+    (click)="onParamsBtnClick()">Δ
+  </div> -->
 
 </div>

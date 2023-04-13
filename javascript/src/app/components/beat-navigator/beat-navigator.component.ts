@@ -45,6 +45,10 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   instruments!: Instrument[];
   selectedInstrument!: Instrument;
 
+  beatIndicators: boolean[] = [];
+  barIndicators: boolean[] = [];
+  partIndicators: boolean[] = [];
+
   constructor(private uiService: UiService, private midiService: MidiService) {
     uiService.addListener(this);
   }
@@ -55,6 +59,8 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     });
     this.updateDisplay();
   }
+
+  lastBeat = 0;
 
   ngAfterContentChecked(): void {
     if (this.selectedInstrument == undefined && this.instruments.length > 0) {
@@ -189,22 +195,23 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       }
   }
 
-  onNotify(messageType: number, _message: string, messageValue: any) {
+  onNotify(messageType: number, _message: string, _messageValue: any) {
     if (messageType == Constants.TICKER_UPDATED) this.updateDisplay();
 
     if (messageType == Constants.BEAT_DIV) {
-      let name = 'mini-beat-btn-' + messageValue;
-      let element = document.getElementById(name);
-      if (element != undefined)
-        this.uiService.swapClass(element, 'inactive', 'active');
-
-      // this.beats.filter(b => b != messageValue).forEach(b => {
-      //   let name = "mini-beat-btn-" + messageValue
-      //   let element = document.getElementById(name)
-      //   if (element != undefined)
-      //     this.uiService.swapClass(element, 'active', 'inactive')
-
-      // })
+      this.beatIndicators = [];
+      for (let i = 0; i < this.beats.length; i++)
+        this.beatIndicators.push(i + 1 == _messageValue);
+    }
+    if (messageType == Constants.BAR_DIV) {
+      this.barIndicators = [];
+      for (let i = 0; i < this.bars.length; i++)
+        this.barIndicators.push(i + 1 == _messageValue);
+    }
+    if (messageType == Constants.PART_DIV) {
+      this.partIndicators = [];
+      for (let i = 0; i < this.parts.length; i++)
+        this.partIndicators.push(i + 1 == _messageValue);
     }
   }
 
@@ -218,6 +225,8 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       this.bars = [];
       this.divs = [];
       this.parts = [];
+
+      this.beatIndicators = [];
       // this.selectedTicks = []
       // this.selectedBeats = []
       // this.selectedBars = []
@@ -239,6 +248,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       for (let index = 0; index < this.ticker.beatsPerBar; index++) {
         this.beats.push(index + 1);
         this.selectedBeats.push(false);
+        this.beatIndicators.push(false);
       }
 
       for (let index = 0; index < this.divCount; index++) {
@@ -257,7 +267,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       }
     });
 
-    // this.updateSelections()
+    // this.beats.forEach(() => this.beatIndicators.push(false));
   }
 
   toggleInterval(interval: number, data: number[], resolution: string) {

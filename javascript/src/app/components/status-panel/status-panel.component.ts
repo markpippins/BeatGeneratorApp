@@ -65,8 +65,7 @@ export class StatusPanelComponent
     this.updateDisplay();
   }
 
-  ngAfterContentChecked(): void {
-  }
+  ngAfterContentChecked(): void {}
 
   getBeats() {
     const beats = [];
@@ -78,6 +77,8 @@ export class StatusPanelComponent
   nextCalled = false;
 
   lastBeat = 0;
+  lastBar = 0;
+  lastPart = 0;
 
   // if (this.waiting)
   //   return
@@ -108,7 +109,7 @@ export class StatusPanelComponent
         this.setIndexForPPQ();
         await this.midiService.delay(this.status?.playing ? 200 : 1000);
         this.updateDisplay();
-      },
+      }
 
       // async (err) => {
       //   console.log(err);
@@ -126,9 +127,19 @@ export class StatusPanelComponent
       // }
     );
 
-    if (this.status != undefined && this.status.beat != this.lastBeat) {
-      this.lastBeat = this.status.beat;
-      this.uiService.notifyAll(Constants.BEAT_DIV, '', this.status.beat);
+    if (this.status != undefined) {
+      if (this.status.beat != this.lastBeat) {
+        this.lastBeat = this.status.beat;
+        this.uiService.notifyAll(Constants.BEAT_DIV, '', this.status.beat);
+      }
+      if (this.status.bar != this.lastBar) {
+        this.lastBar = this.status.bar;
+        this.uiService.notifyAll(Constants.BAR_DIV, '', this.status.bar);
+      }
+      if (this.status.part != this.lastPart) {
+        this.lastPart = this.status.part;
+        this.uiService.notifyAll(Constants.PART_DIV, '', this.status.part);
+      }
     }
   }
 
