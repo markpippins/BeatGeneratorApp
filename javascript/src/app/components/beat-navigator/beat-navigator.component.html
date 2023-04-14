@@ -9,7 +9,6 @@
 <div class="flex-container-horizontal">
   <div class="flex-container-vertical">
     <button class="mini-btn mini-action-btn" (click)="generate()">A</button>
-
     <button class="mini-btn mini-pad">13</button>
     <button class="mini-btn mini-pad">9</button>
     <button class="mini-btn mini-pad">5</button>
@@ -17,15 +16,15 @@
     <button class="mini-btn comparison">=</button>
   </div>
   <div class="flex-container-vertical">
-    <button class="mini-btn mini-action-btn"></button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
     <button class="mini-btn mini-control-bt mini-pad">14</button>
     <button class="mini-btn mini-pad">10</button>
     <button class="mini-btn mini-pad">6</button>
     <button class="mini-btn mini-pad">2</button>
-    <button class="mini-btn  comparison">%</button>
+    <button class="mini-btn comparison">%</button>
   </div>
   <div class="flex-container-vertical">
-    <button class="mini-btn mini-action-btn"></button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
     <button class="mini-btn mini-pad">15</button>
     <button class="mini-btn mini-pad">11</button>
     <button class="mini-btn mini-pad">7</button>
@@ -34,7 +33,7 @@
       < </button>
   </div>
   <div class="flex-container-vertical">
-    <button class="mini-btn mini-action-btn"></button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
     <button class="mini-btn mini-pad">16</button>
     <button class="mini-btn mini-pad">12</button>
     <button class="mini-btn mini-pad">8</button>
@@ -45,49 +44,51 @@
   </div>
 
   <div class="flex-container-vertical">
-    <button class="mini-btn mini-action-btn"></button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(2, ticks, resolution[1])">2</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(2, divs, resolution[2])">2</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(2, beats, resolution[3])">2</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(2, bars, resolution[4])">2</button>
-    <button class="mini-btn mini-control-btn" (click)="toggleInterval(2, parts, resolution[5])">2</button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
+    <!-- <button class="mini-btn mini-control-btn" (click)="toggleInterval(2, parts, resolution[5])">2</button> -->
   </div>
   <div class="flex-container-vertical">
-    <button class="mini-btn mini-action-btn"></button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(3, ticks, resolution[1])">3</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(3, divs, resolution[2])">3</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(3, beats, resolution[3])">3</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(3, bars, resolution[4])">3</button>
-    <button class="mini-btn mini-control-btn" (click)="toggleInterval(3, parts, resolution[5])">3</button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
+    <!-- <button class="mini-btn mini-control-btn" (click)="toggleInterval(3, parts, resolution[5])">3</button> -->
   </div>
   <div class="flex-container-vertical">
-    <button class="mini-btn mini-action-btn"></button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(4, ticks, resolution[1])">4</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(4, divs, resolution[2])">4</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(4, beats, resolution[3])">4</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(4, bars, resolution[4])">4</button>
-    <button class="mini-btn mini-control-btn" (click)="toggleInterval(4, parts, resolution[5])">4</button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
+    <!-- <button class="mini-btn mini-control-btn" (click)="toggleInterval(4, parts, resolution[5])">4</button> -->
   </div>
   <div class="flex-container-vertical">
-    <button class="mini-btn mini-action-btn"></button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(8, ticks, resolution[1])">8</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(8, divs, resolution[2])">8</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(8, beats, resolution[3])">8</button>
     <button class="mini-btn mini-control-btn" (click)="toggleInterval(8, bars, resolution[4])">8</button>
-    <button class="mini-btn mini-control-btn" (click)="toggleInterval(8, parts, resolution[5])">8</button>
+    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
+    <!-- <button class="mini-btn mini-control-btn" (click)="toggleInterval(8, parts, resolution[5])">8</button> -->
   </div>
   <div class="flex-container-vertical">
-    <button class="mini-btn time-div">A</button>
-    <button class="mini-btn time-div">T</button>
-    <button class="mini-btn time-div">F</button>
-    <button class="mini-btn time-div">Bt</button>
-    <button class="mini-btn time-div">Br</button>
-    <button class="mini-btn time-div">Pt</button>
+    <button class="mini-btn time-div" [disabled]="true">A</button>
+    <button class="mini-btn time-div" [disabled]="true">T</button>
+    <button class="mini-btn time-div" [disabled]="true">F</button>
+    <button class="mini-btn time-div" [disabled]="true">Bt</button>
+    <button class="mini-btn time-div" [disabled]="true">Br</button>
+    <button class="mini-btn time-div" [disabled]="true">Pt</button>
   </div>
 
   <div class="flex-container-vertical">
-    <div class="flex-container-vertical">
-
       <app-button-panel [identifier]=resolution[0] [colCount]="colCount + 1"
         (buttonClickedForCommandEvent)="commandSelected($event, 0)"
         [symbols]="getAccentsAsStrings()"></app-button-panel>
@@ -111,5 +112,4 @@
       <app-button-panel [indicators]="partIndicators" [identifier]=resolution[5] [colCount]="colCount + 1"
         (buttonClickedForCommandEvent)="commandSelected($event, 5)" (buttonClickedForIndexEvent)="partSelected($event)"
         [symbols]="getPartsAsStrings()"></app-button-panel>
-    </div>
   </div>

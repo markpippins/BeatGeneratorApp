@@ -4,6 +4,7 @@ import com.angrysurfer.midi.model.MidiDeviceInfo;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.repo.MidiInstrumentRepository;
 
+import org.aspectj.util.IStructureModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -48,19 +49,26 @@ public class MIDIService {
     // }
 
     public static List<MidiDeviceInfo> getMidiDeviceInfos() {
+        logger.info("getMidiDeviceInfos");
         return Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {
             try {
-                return new MidiDeviceInfo(MidiSystem.getMidiDevice(info));
+                logger.info(String.format("retrieving device for %s, %s, %s", info.getName(), info.getVendor(),
+                        info.getDescription()));
+                MidiDevice device = MidiSystem.getMidiDevice(info);
+                return Objects.isNull(device) ? null : new MidiDeviceInfo(device);
             } catch (MidiUnavailableException ex) {
                 logger.error(ex.getMessage(), ex);
                 throw new RuntimeException(ex);
             }
-        }).toList();
+        }).filter(d -> Objects.nonNull(d)).toList();
     }
 
     public static List<MidiDevice> getMidiDevices() {
+        logger.info("getMidiDevices");
         if (midiDevices.size() == 0)
             midiDevices = Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {
+                logger.info(String.format("retrieving device for %s, %s, %s", info.getName(), info.getVendor(),
+                        info.getDescription()));
                 try {
                     return MidiSystem.getMidiDevice(info);
                 } catch (MidiUnavailableException ex) {
@@ -73,8 +81,8 @@ public class MIDIService {
     }
 
     public static List<MidiDevice> findMidiDevices(boolean receive, boolean transmit) {
+        logger.info(String.format("findMidiDevices(receive: %s, transmit: %s)", receive, transmit));
         return getMidiDevices().stream().map(device -> {
-            // logger.info(device.getDeviceInfo().getName());
             if ((transmit == (device.getMaxTransmitters() != 0) && receive == (device.getMaxReceivers() != 0)))
                 return device;
             else
@@ -83,6 +91,7 @@ public class MIDIService {
     }
 
     public static MidiDevice findMidiInDevice(String name) {
+        logger.info(String.format("findMidiInDevice(%s)", name));
         if (midiOutDevices.containsKey(name))
             return midiOutDevices.get(name);
 
@@ -94,6 +103,7 @@ public class MIDIService {
     }
 
     public static void reset() {
+        logger.info("reset()");
         try {
             MidiSystem.getSequencer().getReceivers().forEach(Receiver::close);
         } catch (MidiUnavailableException e) {
@@ -103,6 +113,7 @@ public class MIDIService {
     }
 
     public static boolean select(MidiDevice device) {
+        logger.info(String.format("select(%s)", device.getDeviceInfo().getName()));
         if (!device.isOpen()) {
             // reset();
             try {
@@ -116,6 +127,7 @@ public class MIDIService {
     }
 
     public static boolean select(String name) {
+        logger.info(String.format("select(%s)", name));
         reset();
         try {
             MidiDevice device = findMidiOutDevice(name);
@@ -132,6 +144,7 @@ public class MIDIService {
     }
 
     public List<MidiInstrument> getAllInstruments() {
+        logger.info("getAllInstruments()");
         List<MidiInstrument> results = midiInstrumentRepo.findAll();
         results.forEach(i -> i.setDevice(findMidiOutDevice(i.getDeviceName())));
         return results;
@@ -141,6 +154,7 @@ public class MIDIService {
     static String GERVILL = "Gervill";
 
     public static MidiDevice findMidiOutDevice(String name) {
+        logger.info(String.format("findMidiOutDevice(%s)", name));
         if (midiOutDevices.containsKey(name))
             return midiOutDevices.get(name);
 
@@ -164,13 +178,13 @@ public class MIDIService {
                 midiOutDevices.put(GS_SYNTH, result);
         } catch (NoSuchElementException e) {
             logger.error(e.getMessage() + " for device " + name, e);
-            e.printStackTrace();
         }
 
         return result;
     }
 
     public List<MidiInstrument> getInstrumentByChannel(int channel) {
+        logger.info(String.format("getInstrumentByChannel(%s)", channel));
         if (midiInstruments.containsKey(channel))
             return List.of(midiInstruments.get(channel));
 
@@ -201,7 +215,7 @@ public class MIDIService {
                 }
                 midiInstruments.put(channel, instrument);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e.getMessage(), e);
             }
 
             instrument.setDeviceName(instrument.getDevice().getDeviceInfo().getName());
@@ -213,10 +227,12 @@ public class MIDIService {
     }
 
     public MidiInstrument getInstrumentById(Long id) {
+        logger.info(String.format("getInstrumentById(%s)", id));
         return midiInstrumentRepo.findById(id).orElseThrow();
     }
 
     public void sendMessageToInstrument(Long instrumentId, int messageType, int data1, int data2) {
+        logger.info(String.format("sendMessageToIntrument(%s)", instrumentId));
         MidiInstrument instrument = getInstrumentById(instrumentId);
         if (Objects.nonNull(instrument)) {
             // List<MidiDevice> devices =
@@ -252,6 +268,8 @@ public class MIDIService {
     }
 
     public void sendMessageToChannel(int channel, int messageType, int data1, int data2) {
+        logger.info(String.format("sendMessageToChannel(%s)", channel));
+
         getInstrumentByChannel(channel).forEach(instrument -> {
             // List<MidiDevice> devices =
             // findMidiOutDevice(instrument.getDevice().getDeviceInfo().getName());
@@ -286,6 +304,7 @@ public class MIDIService {
     }
 
     public List<String> getInstrumentNames() {
+        logger.info("getInstrumentNames()");
         return midiInstrumentRepo.findAll().stream().map(i -> i.getName()).toList();
     }
 
@@ -295,6 +314,7 @@ public class MIDIService {
     }
 
     public List<MidiInstrument> getInstrumentList() {
+        logger.info("getInstrumentList()");
         return midiInstrumentRepo.findAll();
     }
 

@@ -2,7 +2,7 @@
   <mat-tab *ngFor="let pattern of song?.patterns;" [label]="getLabel(pattern)">
     <!-- <app-control-panel808 class="control-panel808"></app-control-panel808> -->
     <app-set-nav></app-set-nav>
-    <app-beat-spec-detail [pattern]="pattern" [songId]="song.id"
+    <app-beat-spec-detail [instruments]="instruments" [pattern]="pattern" [songId]="song.id"
       (instrumentSelectEvent)="onInstrumentSelected($event, pattern)" class=""></app-beat-spec-detail>
     <div class="interface-808">
       <div class="side-panel-808">
@@ -15,7 +15,7 @@
         <mat-divider [style.height.px]="10"></mat-divider>
       </div>
 
-      <app-beat-spec-panel *ngFor="let step of pattern.steps;" [page]=pattern.position [step]=step
+      <app-beat-spec-panel *ngFor="let step of pattern.steps;" [page]=pattern.position [step]=step [instrument]="getInstrumentForStep(pattern, step)"
         (changeEvent)="onStepChanged(step)" (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>
     </div>
     <!-- <app-params-panel808 class="control-panel808"></app-params-panel808> -->

@@ -1,16 +1,15 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Instrument } from 'src/app/models/instrument';
 import { Pattern } from 'src/app/models/pattern';
 import { PatternUpdateType } from 'src/app/models/pattern-update-type';
 import { MidiService } from 'src/app/services/midi.service';
-import { UiService } from 'src/app/services/ui.service';
 
 @Component({
   selector: 'app-beat-spec-detail',
   templateUrl: './beat-spec-detail.component.html',
   styleUrls: ['./beat-spec-detail.component.css']
 })
-export class BeatSpecDetailComponent implements OnInit {
+export class BeatSpecDetailComponent {
 
   @Output()
   instrumentSelectEvent = new EventEmitter<Instrument>();
@@ -21,7 +20,7 @@ export class BeatSpecDetailComponent implements OnInit {
   @Input()
   pattern!: Pattern;
 
-  @Output()
+  @Input()
   instruments!: Instrument[]
 
   identifier = 'beat-spec-detail'
@@ -30,7 +29,7 @@ export class BeatSpecDetailComponent implements OnInit {
 
   columns: string[] = ['Set', 'Pattern', 'Device', 'Chan', 'Preset', 'Root', 'Transp', 'Length', 'Start', 'End', 'Gate', 'Speed', 'Repeat', 'Swing', 'Random', 'Quantize', 'Loop', 'Mute']
 
-  constructor(private midiService: MidiService, private uiService: UiService) {
+  constructor(private midiService: MidiService) {
   }
 
   onInstrumentSelected(instrument: Instrument) {
@@ -109,11 +108,4 @@ export class BeatSpecDetailComponent implements OnInit {
     this.midiService.updatePattern(this.pattern.id, PatternUpdateType.TRANSPOSE, event.target.value).subscribe(data => this.pattern = data)
   }
 
-
-  ngOnInit(): void {
-    // this.uiService.addListener(this)
-    this.midiService.allInstruments().subscribe(data => {
-      this.instruments = this.uiService.sortByName(data)
-    })
-  }
 }

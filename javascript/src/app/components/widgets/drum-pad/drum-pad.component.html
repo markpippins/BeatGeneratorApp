@@ -1,5 +1,5 @@
-<button class="pad" tabindex="0" (click)="padPressed()">
-  <div class="pad-ring">
+<button class="pad pad-{{index}}" id="pad-{{index}}" tabindex="0" (click)="padPressed()">
+  <div class="pad-ring" id="pad-ring-{{index}}">
       {{ name }}<br />{{ note }}
   </div>
 </button>

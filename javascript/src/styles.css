@@ -89,7 +89,8 @@ p {
 }
 
 body {
-  background-image: linear-gradient(to left, #e89105, #2c0ad7); 
+  /* background-image: linear-gradient(to left, #e89105, #2c0ad7);  */
+  background-color: black;
  }
 
 .content {
@@ -648,17 +649,80 @@ thead th:last-child {
   align-items: stretch;
   margin: 0px;
   display: grid;
-  background-color: lightgray;
+/*  background-color: lightgray;*/
   grid-template-columns: 1fr
 }
 
+.pad-0 {
+  background-color: violet;
+}
+
+.pad-1 {
+   background-color: lightsalmon; 
+}
+
+.pad-2 {
+   background-color: lightseagreen; 
+}
+
+.pad-3 {
+      background-color: mediumorchid;
+}
+
+.pad-4 {
+      background-color: fuchsia;
+}
+
+.pad-5 {
+      background-color: mediumspringgreen;
+}
+
+.pad-6 {
+      background-color: mediumpurple;
+}
+
+.pad-7 {
+      background-color: firebrick;
+}
+
+.pad-8 {
+      background-color: deepskyblue;
+}
+
+.pad-9 {
+      background-color: aqua;
+}
+
+.pad-10 {
+      background-color: olivedrab
+}
+
+.pad-11 {
+      background-color: cornflowerblue;
+}
+
+.pad-12 {
+      background-color: lightcoral;
+}
+
+.pad-13 {
+      background-color: darkcyan;
+}
+
+.pad-14 {
+   background-color: goldenrod; 
+}
+
+.pad-15 {
+      background-color: tomato;
+}
 
 .pad-ring {
-  color: black;
+  color: transparent;
   border: lawngreen solid 2px;
   margin: 0px;
   padding: 0px;
-  background-color: violet;
+  background-color: transparent;
 }
 
 .selected-pad-0 {
@@ -772,7 +836,9 @@ th {
   border-radius: 25px;
 }
 
-
+.mg-2 {
+    margin: 2px;
+}
 
 .xox-step-input {
   font-size: smaller;

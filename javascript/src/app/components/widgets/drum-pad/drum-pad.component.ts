@@ -14,6 +14,9 @@ export class DrumPadComponent {
   name!: string;
 
   @Input()
+  index!: number;
+
+  @Input()
   note!: number;
 
   @Input()
