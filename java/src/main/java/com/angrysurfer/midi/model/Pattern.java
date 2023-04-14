@@ -67,7 +67,7 @@ public class Pattern {
 
     private Integer preset = 0;
 
-    private Boolean muted = false;
+    private Boolean muted = true;
 
     @Column(name = "auto_repeat")
     private Boolean loop = true;

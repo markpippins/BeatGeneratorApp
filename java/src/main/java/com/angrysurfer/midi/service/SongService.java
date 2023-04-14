@@ -44,9 +44,7 @@ public class SongService {
         private void handleTick(long tick) {
 
             song.getPatterns().forEach(pattern -> {
-
-                if (tick == 0 || (tick % (song.getTicksPerBeat() / pattern.getSpeed()) == 0)) {
-
+                if (!pattern.getMuted() && (tick == 0 || (tick % (song.getTicksPerBeat() / pattern.getSpeed()) == 0))) {
                     while (!pattern.getPlayingNote().empty())
                         midiService.sendMessageToChannel(pattern.getChannel(), ShortMessage.NOTE_OFF,
                                 pattern.getPlayingNote().pop(), 0);

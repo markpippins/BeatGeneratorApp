@@ -184,7 +184,7 @@ public class MIDIService {
             midiInstruments.put(channel, results.get(0));
         else {
             try {
-                if (channel > 6) {
+                if (channel > 14) {
                     instrument.setDevice(
                             getMidiDevices().stream()
                                     .filter(d -> Objects.nonNull(d.getDeviceInfo().getName())
