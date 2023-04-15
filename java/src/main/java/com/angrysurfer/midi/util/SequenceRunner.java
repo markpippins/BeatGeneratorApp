@@ -1,6 +1,5 @@
 package com.angrysurfer.midi.util;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -10,7 +9,6 @@ import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.MidiSystem;
@@ -24,6 +22,7 @@ import javax.sound.midi.Track;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.midi.model.TickListener;
 import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.service.MIDIService;
 import com.sun.media.sound.MidiUtils;
@@ -52,6 +51,8 @@ public class SequenceRunner implements Runnable, Receiver {
 
     private Integer delay;
 
+    private TickListener listener;
+
     static {
         try {
             sequencer = MidiSystem.getSequencer();
@@ -73,8 +74,9 @@ public class SequenceRunner implements Runnable, Receiver {
     /**
      * @param ticker
      */
-    public SequenceRunner(Ticker ticker) {
+    public SequenceRunner(TickListener listener, Ticker ticker) {
         this.ticker = ticker;
+        this.listener = listener;
         executor = Executors.newFixedThreadPool(ticker.getMaxTracks());
     }
 
@@ -135,8 +137,13 @@ public class SequenceRunner implements Runnable, Receiver {
                 if (!started)
                     started = handleStarted();
 
+                if (Objects.nonNull(getListener()))
+                    getListener().onTick();
+
                 this.executor.invokeAll(getTicker().getPlayers());
+
                 Thread.sleep((long) (delay * .5));
+
                 getTicker().afterTick();
             }
 

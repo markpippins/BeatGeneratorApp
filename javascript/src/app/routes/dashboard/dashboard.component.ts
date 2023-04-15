@@ -17,7 +17,7 @@ export class DashboardComponent implements OnInit, Listener {
   players!: Player[];
 
   @Output()
-  selectedPlayer: Player | undefined;
+  selectedPlayer!: Player;
 
   tickerPointer = 0;
 
@@ -234,7 +234,7 @@ export class DashboardComponent implements OnInit, Listener {
             .removePlayer(this.selectedPlayer)
             .subscribe(async (data) => {
               this.players = data;
-              if (this.players.length == 0) this.selectedPlayer = undefined;
+              // if (this.players.length == 0) this.selectedPlayer = undefined;
             });
           this.players = this.players.filter((p) => p.id != id);
 
@@ -310,7 +310,7 @@ export class DashboardComponent implements OnInit, Listener {
   }
 
   clear() {
-    this.selectedPlayer = undefined;
+    // this.selectedPlayer = undefined;
   }
 
   sortByPitch(data: Player[]): any[] {

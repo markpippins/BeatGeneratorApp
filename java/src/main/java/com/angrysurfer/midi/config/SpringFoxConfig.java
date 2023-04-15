@@ -1,3 +1,4 @@
+package com.angrysurfer.midi.config;
 // package com.angrysurfer;
 
 // import org.springframework.context.annotation.Bean;

@@ -1,9 +1,21 @@
 package com.angrysurfer.midi.model;
 
+import java.io.Serializable;
+
+import org.springframework.data.redis.core.RedisHash;
+
+import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class TickerStatus {
+@NoArgsConstructor
+@AllArgsConstructor
+@RedisHash("TickerStatus")
+public class TickerStatus implements Serializable {
+    
+    @Id
     private Long id; 
     private Long tick;
     private Double beat;
@@ -29,28 +41,33 @@ public class TickerStatus {
     private Double noteOffset;
     private Boolean playing;
 
-    public TickerStatus(Ticker ticker, boolean isPlaying) {
-        setId(ticker.getId());
-        setTick(ticker.getTick());
-        setBeat(ticker.getBeat());
-        setBar(ticker.getBar());
-        setPart(ticker.getPart());
-        setBars(ticker.getBars());
-        setParts(ticker.getParts());
-        setMaxTracks(ticker.getMaxTracks());
-        setTempoInBPM(ticker.getTempoInBPM());
-        setBeatDivider(ticker.getBeatDivider());
-        setBeatsPerBar(ticker.getBeatsPerBar());
-        setLoopCount(ticker.getLoopCount());
-        setNoteOffset(ticker.getNoteOffset());
-        setPartLength(ticker.getPartLength());
-        setSongLength(ticker.getSongLength());
-        setTicksPerBeat(ticker.getTicksPerBeat());
-        setSwing(ticker.getSwing());
-        setPlaying(isPlaying);
-        setTickCount(ticker.getTickCount());
-        setBeatCount(ticker.getBeatCount());
-        setBarCount(ticker.getBarCount());
-        setPartCount(ticker.getPartCount());
+    public static TickerStatus from(Ticker ticker, boolean isPlaying) {
+
+        TickerStatus result = new TickerStatus();
+
+        result.setId(ticker.getId());
+        result.setTick(ticker.getTick());
+        result.setBeat(ticker.getBeat());
+        result.setBar(ticker.getBar());
+        result.setPart(ticker.getPart());
+        result.setBars(ticker.getBars());
+        result.setParts(ticker.getParts());
+        result.setMaxTracks(ticker.getMaxTracks());
+        result.setTempoInBPM(ticker.getTempoInBPM());
+        result.setBeatDivider(ticker.getBeatDivider());
+        result.setBeatsPerBar(ticker.getBeatsPerBar());
+        result.setLoopCount(ticker.getLoopCount());
+        result.setNoteOffset(ticker.getNoteOffset());
+        result.setPartLength(ticker.getPartLength());
+        result.setSongLength(ticker.getSongLength());
+        result.setTicksPerBeat(ticker.getTicksPerBeat());
+        result.setSwing(ticker.getSwing());
+        result.setPlaying(isPlaying);
+        result.setTickCount(ticker.getTickCount());
+        result.setBeatCount(ticker.getBeatCount());
+        result.setBarCount(ticker.getBarCount());
+        result.setPartCount(ticker.getPartCount());
+
+        return result;
     } 
 }

@@ -1,5 +1,8 @@
-<button class="pad pad-{{index}}" id="pad-{{index}}" tabindex="0" (click)="padPressed()">
-  <div class="pad-ring" id="pad-ring-{{index}}">
-      {{ name }}<br />{{ note }}
+<button [ngClass]="getPadClass()" id="pad-{{index}}" tabindex="0" (click)="padPressed()">
+  <div class="pad-ring-standby" id="pad-ring-{{index}}">
+    <div class="pad-content">
+      <label>{{ name }}</label>
+      <label>{{ note }}</label>
+    </div>
   </div>
 </button>

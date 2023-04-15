@@ -43,7 +43,7 @@ export class MidinInstrumentComboComponent implements OnInit, AfterViewInit, Aft
   ngOnInit(): void {}
 
   ngAfterContentChecked(): void {
-    if (this.selectionIndex == undefined && this.instruments.length > 0)
+    if (this.selectionIndex == undefined && this.instruments != undefined && this.instruments.length > 0)
       this.selectionIndex = 0
   }
 

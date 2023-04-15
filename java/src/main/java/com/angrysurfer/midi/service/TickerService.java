@@ -31,19 +31,31 @@ public class TickerService {
     private SequenceRunner sequenceRunner;
     private ArrayList<SequenceRunner> sequenceRunners = new ArrayList<>();
 
+    private TickerStatusDAO tickerStatusDAO;
+    private TickListener listener;
+    private Long lastTickId;
+
     public TickerService(TickerRepo tickerRepo, StrikeRepository strikeRepository,
-            RuleRepository ruleRepository, SongService songService) {
+            RuleRepository ruleRepository, SongService songService, TickerStatusDAO tickerStatusDAO) {
 
         this.tickerRepo = tickerRepo;
         this.ruleRepository = ruleRepository;
         this.strikeRepository = strikeRepository;
         this.songService = songService;
+        this.tickerStatusDAO = tickerStatusDAO;
+        this.listener = new TickListener() {
+
+            @Override
+            public void onTick() {
+                getTickerStatusDAO().save(TickerStatus.from(getTicker(),  getSequenceRunner().isPlaying()));
+            }    
+        };
     }
 
     public void play() {
 
         stopRunningSequencers();
-        sequenceRunner = new SequenceRunner(getTicker());
+        sequenceRunner = new SequenceRunner(getListener(), getTicker());
         sequenceRunners.add(getSequenceRunner());
         getSequenceRunner().getCycleListeners().add(getSongService().getTickListener());
         getSongService().getSong().setBeatDuration(getTicker().getBeatDuration());
@@ -55,7 +67,7 @@ public class TickerService {
         if (Objects.nonNull(getSequenceRunner()) && !getSequenceRunner().isPlaying())
             new Thread(getSequenceRunner()).start();
         else {
-            setSequenceRunner(new SequenceRunner(getTicker()));
+            setSequenceRunner(new SequenceRunner(getListener(), getTicker()));
             new Thread(getSequenceRunner()).start();
         }
 
@@ -89,7 +101,7 @@ public class TickerService {
     }
 
     public TickerStatus getTickerStatus() {
-        return new TickerStatus(getTicker(), getSequenceRunner().isPlaying());
+        return TickerStatus.from(getTicker(), getSequenceRunner().isPlaying());
     }
 
     public List<Ticker> getAllTickerInfo() {
@@ -101,7 +113,7 @@ public class TickerService {
             stopRunningSequencers();
             ticker = getTickerRepo().save(new Ticker());
             getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
-            sequenceRunner = new SequenceRunner(ticker);
+            sequenceRunner = new SequenceRunner(getListener(), ticker);
         }
 
         return ticker;
@@ -166,7 +178,7 @@ public class TickerService {
             getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
             getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
             getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
-            sequenceRunner = new SequenceRunner(getTicker());
+            sequenceRunner = new SequenceRunner(getListener(), getTicker());
         }
 
         return getTicker();
@@ -182,7 +194,7 @@ public class TickerService {
             setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
             getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
             getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
-            sequenceRunner = new SequenceRunner(getTicker());
+            sequenceRunner = new SequenceRunner(getListener(), getTicker());
             getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
         }
 

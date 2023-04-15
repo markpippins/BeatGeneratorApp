@@ -63,7 +63,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   lastBeat = 0;
 
   ngAfterContentChecked(): void {
-    if (this.selectedInstrument == undefined && this.instruments.length > 0) {
+    if (this?.selectedInstrument == undefined && this.instruments != undefined && this.instruments.length > 0) {
       this.selectedInstrument = this.instruments[0];
       this.onInstrumentSelected(this.instruments[0]);
     }
