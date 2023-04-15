@@ -90,7 +90,8 @@ p {
 
 body {
   /* background-image: linear-gradient(to left, #e89105, #2c0ad7);  */
-  background-color: black;
+  background-color: grey;
+
  }
 
 .content {
@@ -593,6 +594,13 @@ thead th:last-child {
   padding: 4px;
 }
 
+.widget-808 {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 2px;
+    margin: 2px;
+}
+
 .interface-808 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
@@ -610,6 +618,11 @@ thead th:last-child {
   grid-template-rows: auto;
 }
 
+.info {
+    color: black;
+    font-weight: bold;
+}
+
 .control-panel-808 {
   font-weight: normal;
   grid-column: span 16;
@@ -619,13 +632,13 @@ thead th:last-child {
 
 .side-panel-808 {
   font-weight: normal;
-  margin-top: 20px;
+  /* margin-top: 20px; */
   margin-left: 2px;
   display: flex;
-  gap: 5px;
+  gap: 3px;
   flex-direction: column;
   flex-flow: column;
-  font-size: smaller;
+  font-size: small;
   align-items: flex-start;
   align-self: stretch;
   /* box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.2); */
@@ -634,8 +647,9 @@ thead th:last-child {
 .lane-808 {
   margin-top: 10px;
   display: flex;
+    flex-direction: column;
+flex-wrap: nowrap;
   gap: 2px;
-  flex-flow: column;
   font-size: small;
   align-items: center;
 }
@@ -658,11 +672,11 @@ thead th:last-child {
 }
 
 .pad-1 {
-   background-color: lightsalmon; 
+   background-color: lightsalmon;
 }
 
 .pad-2 {
-   background-color: lightseagreen; 
+   background-color: lightseagreen;
 }
 
 .pad-3 {
@@ -706,11 +720,11 @@ thead th:last-child {
 }
 
 .pad-13 {
-      background-color: darkcyan;
+      background-color: darkorchid;
 }
 
 .pad-14 {
-   background-color: goldenrod; 
+   background-color: goldenrod;
 }
 
 .pad-15 {

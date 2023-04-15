@@ -100,6 +100,6 @@ export class BeatSpecComponent implements OnInit, Listener {
 
     if (s.toLowerCase() == 'gervill') s = 'Gervill';
 
-    return s + ' (' + pattern.position + ')';
+    return s + ' [' + pattern.position + ']'
   }
 }
