@@ -37,27 +37,27 @@ public class PlayerService {
     static final String MICROFREAK = "MicroFreak";
     public static ObjectMapper mapper = new ObjectMapper();
     static Logger log = LoggerFactory.getLogger(PlayerService.class.getCanonicalName());
-    private final MidiInstrumentRepository midiInstrumentRepo;
-    private final ControlCodeRepository controlCodeRepository;
-    private final PadRepository padRepository;
+    private final MidiInstrumentRepo midiInstrumentRepo;
+    private final ControlCodeRepo controlCodeRepository;
+    private final PadRepo padRepository;
     private Song song;
     private MIDIService midiService;
-    private StrikeRepository strikeRepository;
-    private RuleRepository ruleRepository;
+    private StrikeRepo strikeRepository;
+    private RuleRepo ruleRepository;
     private TickerRepo tickerRepo;
-    private StepRepository stepDataRepository;
-    private SongRepository songRepository;
+    private StepRepo stepDataRepository;
+    private SongRepo songRepository;
     private SequenceRunner sequenceRunner;
     private ArrayList<SequenceRunner> sequenceRunners = new ArrayList<>();
     private TickerService tickerService;
 
-    public PlayerService(MIDIService midiService, StrikeRepository strikeRepository,
-            RuleRepository ruleRepository, TickerRepo tickerRepo,
-            MidiInstrumentRepository midiInstrumentRepository,
-            ControlCodeRepository controlCodeRepository,
-            PadRepository padRepository,
-            StepRepository stepRepository,
-            SongRepository songRepository,
+    public PlayerService(MIDIService midiService, StrikeRepo strikeRepository,
+            RuleRepo ruleRepository, TickerRepo tickerRepo,
+            MidiInstrumentRepo midiInstrumentRepository,
+            ControlCodeRepo controlCodeRepository,
+            PadRepo padRepository,
+            StepRepo stepRepository,
+            SongRepo songRepository,
             TickerService tickerService) {
 
         this.midiService = midiService;

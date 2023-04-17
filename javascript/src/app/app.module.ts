@@ -51,6 +51,10 @@ import { TickerAdjustComponent } from './components/widgets/ticker-adjust/ticker
 import { ButtonPanelComponent } from './components/widgets/button-panel/button-panel.component';
 import { PlayerNavComponent } from './components/widgets/player-nav/player-nav.component';
 import { SchedulerComponent } from './routes/scheduler/scheduler.component';
+import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
+import { StatusReadoutComponent } from './widgets/status-readout/status-readout.component';
+
+const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
 
 @NgModule({
   declarations: [
@@ -90,6 +94,7 @@ import { SchedulerComponent } from './routes/scheduler/scheduler.component';
     ButtonPanelComponent,
     PlayerNavComponent,
     SchedulerComponent,
+    StatusReadoutComponent
     ],
     imports: [
         BrowserModule,
@@ -107,7 +112,8 @@ import { SchedulerComponent } from './routes/scheduler/scheduler.component';
         MatTabsModule,
         MatCheckboxModule,
         MatListModule,
-        MatToolbarModule
+        MatToolbarModule,
+        SocketIoModule.forRoot(config)
     ],
   providers: [],
   bootstrap: [AppComponent]

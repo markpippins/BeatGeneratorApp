@@ -304,6 +304,11 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     this.uiService.swapClass(event.target, 'mini-btn-selected', 'mini-btn');
   }
 
+  getNoteButtonClass(value: number): string {
+    let note = this.getNote(value);
+    return note.includes('♯') || note.includes('♯') ? ' piano-btn bg-gray' : 'piano-btn bg-lightgray'
+  }
+
   getNote(value: number): string {
     return this.uiService.getNoteForValue(value, Constants.SCALE_NOTES);
   }

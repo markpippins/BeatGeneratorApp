@@ -81,6 +81,10 @@ export class BeatSpecComponent implements OnInit, Listener {
       .subscribe((data) => (this.song.patterns[pattern.position] = data));
   }
 
+  selectedIndexChange(_index: number) {
+    // alert(this.song.patterns[index -1].instrumentId)
+  }
+
   onStepChanged(_step: any) {
     // this.midiService.updateStep(step).subscribe(async data => {
     //   this.steps[step.position] = data

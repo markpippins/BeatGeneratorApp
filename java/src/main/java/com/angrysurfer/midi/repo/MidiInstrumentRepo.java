@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.angrysurfer.midi.model.MidiInstrument;
 
-public interface MidiInstrumentRepository extends JpaRepository<MidiInstrument, Long> {
+public interface MidiInstrumentRepo extends JpaRepository<MidiInstrument, Long> {
 
     public List<MidiInstrument> findByChannel(int channel);
 

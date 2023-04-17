@@ -3,9 +3,6 @@ package com.angrysurfer.midi.service.test;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
-
 import com.angrysurfer.midi.repo.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,28 +46,28 @@ public class PlayerServiceTests {
     MIDIService midiService;
 
     @Autowired
-    StrikeRepository playerRepository;
+    StrikeRepo playerRepo;
 
     @Autowired
-    RuleRepository ruleRepository;
+    RuleRepo ruleRepo;
 
     @Autowired
     TickerRepo tickerRepo;
 
     @Autowired
-    MidiInstrumentRepository midiInstrumentRepository;
+    MidiInstrumentRepo midiInstrumentRepo;
 
     @Autowired
-    ControlCodeRepository controlCodeRepository;
+    ControlCodeRepo controlCodeRepo;
 
     @Autowired
-    PadRepository padRepository;
+    PadRepo padRepo;
 
     @Autowired
-    StepRepository stepRepository;
+    StepRepo stepRepo;
 
     @Autowired
-    SongRepository songRepository;
+    SongRepo songRepo;
 
     static String RAZ = "razzmatazz";
     static String ZERO = "zero";
@@ -79,12 +76,12 @@ public class PlayerServiceTests {
 
     @Before
     public void setUp() {
-        playerRepository.deleteAll();
+        playerRepo.deleteAll();
     }
     
     @Before
     public void tearDown() {
-        playerRepository.deleteAll();
+        playerRepo.deleteAll();
     }
 
     @Test

@@ -1,4 +1,4 @@
-<mat-tab-group>
+<mat-tab-group (selectedIndexChange)="selectedIndexChange($event)">
   <mat-tab *ngFor="let pattern of song?.patterns;" [label]="getLabel(pattern)">
     <!-- <app-control-panel808 class="control-panel808"></app-control-panel808> -->
     <app-set-nav></app-set-nav>

@@ -25,11 +25,11 @@ public class TickerStatusDAO {
         return template.opsForHash().values(HASH_KEY);
     }
 
-    public TickerStatus findById(int id) {
+    public TickerStatus findById(long id) {
         return (TickerStatus) template.opsForHash().get(HASH_KEY, id);
     }
 
-    public String deleteTickerStatus(int id) {
+    public String delete(long id) {
         template.opsForHash().delete(HASH_KEY, id);
         return "TickerStatus removed";
     }

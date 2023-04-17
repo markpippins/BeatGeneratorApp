@@ -1,7 +1,6 @@
 package com.angrysurfer.midi.controller;
 
 import com.angrysurfer.midi.model.MidiDeviceInfo;
-import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.service.MIDIService;
 import com.angrysurfer.midi.util.Constants;
 
@@ -47,27 +46,3 @@ public class MidiController {
         service.sendMessageToChannel(channel, messageType, data1, data2);
     }
 }
-
-
-// @GetMapping(path = "/instruments/info")
-// public @ResponseBody Map<String, MidiInstrument> getInstruments() {
-//     logger.info("/instruments/info");
-//     return beatGeneratorService.getInstrumentMap();
-// }
-
-//    @PostMapping(path = "/tracks/add")
-//    public void addTrack(@RequestBody List<StepData> steps) {
-//
-//    }
-//
-//    @PostMapping(path = "/sequence/play")
-//    public void playSequence(@RequestBody List<StepData> steps) {
-//        midiService.playSequence(steps);
-//    }
-//
-//    @PostMapping(path = "/steps/update")
-//    public void addTrack(@RequestBody StepData step) {
-//
-//    }
-
-

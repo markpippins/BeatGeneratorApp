@@ -41,19 +41,19 @@ public class MIDIServiceTests {
     MIDIService midiService;
 
     @Autowired
-    MidiInstrumentRepository midiInstrumentRepository;
+    MidiInstrumentRepo midiInstrumentRepository;
 
     @Autowired
-    ControlCodeRepository controlCodeRepository;
+    ControlCodeRepo controlCodeRepository;
 
     @Autowired
-    PadRepository padRepository;
+    PadRepo padRepository;
 
     @Autowired
-    StepRepository stepRepository;
+    StepRepo stepRepository;
 
     @Autowired
-    SongRepository songRepository;
+    SongRepo songRepository;
 
     static String RAZ = "raz";
     static String ZERO = "zero";

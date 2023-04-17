@@ -1,19 +1,33 @@
 package com.angrysurfer.midi.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.IntStream;
+
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.angrysurfer.midi.model.TickListener;
 import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.model.TickerStatus;
 import com.angrysurfer.midi.service.TickerService;
 import com.angrysurfer.midi.util.Constants;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
+import reactor.core.publisher.Flux;
 
 @CrossOrigin("*")
-@RestController
+@Controller
+@ResponseBody
 @RequestMapping("/api")
 public class TickerController {
 
@@ -27,11 +41,45 @@ public class TickerController {
         this.tickerService = tickerService;
     }
 
+    private Publisher<TickerStatus> tickerStatusPublisher = new Publisher<TickerStatus>() {
+
+        @Override
+        public void subscribe(Subscriber<? super TickerStatus> subscriber) {
+            
+
+            tickerService.getSequenceRunner().getListeners().add(new TickListener() {
+
+
+                @Override
+                public void onTick() {
+                    subscriber.onNext(TickerStatus.from(tickerService.getTicker(),
+                            tickerService.getSequenceRunner().isPlaying()));
+                }
+
+                @Override
+                public void onEnd() {
+                    subscriber.onNext(TickerStatus.from(tickerService.getTicker(),
+                            tickerService.getSequenceRunner().isPlaying()));
+                }
+            });
+        }
+    };
+
+    @GetMapping(value = "/tick", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    Flux<TickerStatus> tickerStatus() {
+        return Flux.from(tickerStatusPublisher);
+    }
+
+    @GetMapping(value = "/tick2", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    Publisher<TickerStatus> tickerStatus2() {
+        return tickerStatusPublisher;
+    }
+
     // @GetMapping(path = Constants.ADD_TICKER)
     // public Ticker newTicker() {
-    //     if (requestsToLog.contains("new"))
-    //         logger.info(Constants.ADD_TICKER);
-    //     return service.newTicker();
+    // if (requestsToLog.contains("new"))
+    // logger.info(Constants.ADD_TICKER);
+    // return service.newTicker();
     // }
 
     @GetMapping(path = Constants.LOAD_TICKER)
@@ -45,48 +93,48 @@ public class TickerController {
     public void start() {
         if (requestsToLog.contains("start"))
             logger.info(Constants.START_TICKER);
-            tickerService.play();
+        tickerService.play();
     }
 
     @GetMapping(path = Constants.PAUSE_TICKER)
     public void pause() {
         if (requestsToLog.contains("pause"))
-           logger.info(Constants.PAUSE_TICKER);
-           tickerService.pause();
+            logger.info(Constants.PAUSE_TICKER);
+        tickerService.pause();
     }
 
     @GetMapping(path = Constants.STOP_TICKER)
     public Ticker stop() {
         if (requestsToLog.contains("stop"))
-           logger.info(Constants.STOP_TICKER);
+            logger.info(Constants.STOP_TICKER);
         return tickerService.stop();
     }
 
     @GetMapping(path = Constants.NEXT_TICKER)
     public Ticker next(@RequestParam long currentTickerId) {
         if (requestsToLog.contains("next"))
-           logger.info(Constants.NEXT_TICKER);
+            logger.info(Constants.NEXT_TICKER);
         return tickerService.next(currentTickerId);
     }
 
     @GetMapping(path = Constants.PREV_TICKER)
     public Ticker previous(@RequestParam long currentTickerId) {
         if (requestsToLog.contains("previous"))
-           logger.info(Constants.PREV_TICKER);
+            logger.info(Constants.PREV_TICKER);
         return tickerService.previous(currentTickerId);
     }
 
     @GetMapping(path = Constants.TICKER_STATUS)
     public @ResponseBody TickerStatus getTickerStatus() {
         if (requestsToLog.contains("status"))
-           logger.info(Constants.TICKER_STATUS);
+            logger.info(Constants.TICKER_STATUS);
         return tickerService.getTickerStatus();
     }
 
     @GetMapping(path = Constants.TICKER_INFO)
     public @ResponseBody Ticker getTicker() {
         if (requestsToLog.contains("info"))
-           logger.info(Constants.TICKER_INFO);
+            logger.info(Constants.TICKER_INFO);
         return tickerService.getTicker();
     }
 
@@ -94,31 +142,74 @@ public class TickerController {
     public void toggleShowTicker(@RequestParam String requestType) {
         if (requestsToLog.contains(requestType))
             requestsToLog.remove(requestType);
-        else 
+        else
             requestsToLog.add(requestType);
     }
 
     @GetMapping(Constants.UPDATE_TICKER)
-    public @ResponseBody Ticker updateTicker(@RequestParam Long tickerId, @RequestParam int updateType, @RequestParam int updateValue) {
+    public @ResponseBody Ticker updateTicker(@RequestParam Long tickerId, @RequestParam int updateType,
+            @RequestParam int updateValue) {
         if (requestsToLog.contains("update"))
             logger.info(Constants.UPDATE_TICKER);
         return tickerService.updateTicker(tickerId, updateType, updateValue);
     }
 
-}
-
-    // @GetMapping(path = "/tickers/info")
-    // public @ResponseBody List<Ticker> getAllTicker() {
-    //     if (requestsToLog.contains("all-info"))
-    //         logger.info("/tickers/info");
-    //     return service.getAllTickerInfos();
+    // @GetMapping(value = "/greetings/{name}", produces =
+    // MediaType.TEXT_EVENT_STREAM_VALUE)
+    // Flux<Greeting> greetings(@PathVariable String name) {
+    // return Flux
+    // .fromStream(Stream.generate(() -> new Greeting("Hello, " + name + "!")))
+    // .take(1000)
+    // .delayElements(Duration.ofSeconds(1));
     // }
 
-    //  @MessageMapping("/tick")
-    //  @SendTo("/topic/messages")
-    //  public Ticker send() throws Exception {
-    //      // String time = new SimpleDateFormat("HH:mm").format(new Date());
-    //      return new Ticker();
-    //  }
+    // @GetMapping(value = "/tick", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    // Flux<TickerStatus> tickerStatus() {
+    // return Flux.from(tickerStatusPublisher);
+    // }
+    // } return Flux
+    // .from(new Publisher<TickerStatus>() {
 
+    // @Override
+    // public void subscribe(Subscriber<? super TickerStatus> subscriber) {
+    // IntStream.range(0, 100).forEach(i -> {
+    // logger.info("onTick");
+    // try {
+    // Thread.sleep(100);
+    // } catch (InterruptedException e) {
+    // // TODO Auto-generated catch block
+    // e.printStackTrace();
+    // }
+    // subscriber.onNext(new TickerStatus());
+    // });
+    // }
+    // });
+    // }
 
+    // @GetMapping(value = "/tick", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    // Flux<TickerStatus> tickerStatus() {
+
+    // return Flux.from(tickerService.getTickerStatusPublisher());
+
+    // return Flux.from(new Publisher<TickerStatus>() {
+    // @Override
+    // public void subscribe(Subscriber<? super TickerStatus> subscriber) {
+
+    // tickerService.getSequenceRunner().getListeners().add(new TickListener() {
+    // @Override
+    // public void onTick() {
+    // logger.info("onTick");
+    // subscriber.onNext(TickerStatus.from(tickerService.getTicker(),
+    // tickerService.getSequenceRunner().isPlaying()));
+    // }
+
+    // // send a final tick with cycled ticker status
+
+    // @Override
+    // public void onEnd() {
+    // subscriber.onNext(TickerStatus.from(tickerService.getTicker(),
+    // tickerService.getSequenceRunner().isPlaying()));
+    // }
+    // });
+
+}

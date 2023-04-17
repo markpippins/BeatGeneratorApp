@@ -15,18 +15,18 @@ import com.angrysurfer.midi.model.ControlCode;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.model.Pad;
 import com.angrysurfer.midi.model.Strike;
-import com.angrysurfer.midi.repo.ControlCodeRepository;
-import com.angrysurfer.midi.repo.MidiInstrumentRepository;
-import com.angrysurfer.midi.repo.PadRepository;
+import com.angrysurfer.midi.repo.ControlCodeRepo;
+import com.angrysurfer.midi.repo.MidiInstrumentRepo;
+import com.angrysurfer.midi.repo.PadRepo;
 import com.angrysurfer.midi.util.MidiInstrumentList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootApplication
 public class BeatGeneratorApplication {
 
-    MidiInstrumentRepository midiInstrumentRepo;
-    PadRepository padRepository;
-    ControlCodeRepository controlCodeRepository;
+    MidiInstrumentRepo midiInstrumentRepo;
+    PadRepo padRepo;
+    ControlCodeRepo controlCodeRepo;
 
      static ObjectMapper mapper = new ObjectMapper();
 
@@ -35,13 +35,13 @@ public class BeatGeneratorApplication {
     }
     
 	@Bean
-	CommandLineRunner beatGeneratorSetup(MidiInstrumentRepository midiInstrumentRepo,
-    PadRepository padRepository, 
-    ControlCodeRepository controlCodeRepository) {
+	CommandLineRunner beatGeneratorSetup(MidiInstrumentRepo midiInstrumentRepo,
+    PadRepo padRepo, 
+    ControlCodeRepo controlCodeRepo) {
 
         this.midiInstrumentRepo = midiInstrumentRepo;
-        this.padRepository = padRepository;
-        this.controlCodeRepository = controlCodeRepository;
+        this.padRepo = padRepo;
+        this.controlCodeRepo = controlCodeRepo;
 
 		return args -> {
             // load data
@@ -62,7 +62,7 @@ public class BeatGeneratorApplication {
                                 controlCode.setLowerBound(finalInstrumentDef.getBoundaries().get(code)[0]);
                                 controlCode.setUpperBound(finalInstrumentDef.getBoundaries().get(code)[1]);
                             }
-                            controlCode = controlCodeRepository.save(controlCode);
+                            controlCode = controlCodeRepo.save(controlCode);
                             finalInstrumentDef.getControlCodes().add(controlCode);
                         });
                         instrument = midiInstrumentRepo.save(finalInstrumentDef);
@@ -118,7 +118,7 @@ public class BeatGeneratorApplication {
             pads.get(6).setName("Mid Tom");
             pads.get(7).setName("Hi Tom");
 
-            pads.forEach(pad -> instrumentInfo.getPads().add(padRepository.save(pad)));
+            pads.forEach(pad -> instrumentInfo.getPads().add(padRepo.save(pad)));
             midiInstrumentRepo.save(instrumentInfo);
         }
     }

@@ -22,9 +22,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.angrysurfer.BeatGeneratorApplication;
 import com.angrysurfer.midi.model.Song;
 import com.angrysurfer.midi.model.Pattern;
-import com.angrysurfer.midi.repo.MidiInstrumentRepository;
-import com.angrysurfer.midi.repo.SongRepository;
-import com.angrysurfer.midi.repo.StepRepository;
+import com.angrysurfer.midi.repo.MidiInstrumentRepo;
+import com.angrysurfer.midi.repo.SongRepo;
+import com.angrysurfer.midi.repo.StepRepo;
 import com.angrysurfer.midi.service.SongService;
 
 @RunWith(SpringRunner.class)
@@ -38,13 +38,13 @@ public class SongServiceTests {
     SongService songService;
 
     @Autowired
-    MidiInstrumentRepository midiInstrumentRepository;
+    MidiInstrumentRepo midiInstrumentRepository;
 
     @Autowired
-    StepRepository stepRepository;
+    StepRepo stepRepository;
 
     @Autowired
-    SongRepository songRepository;
+    SongRepo songRepository;
 
     @Before
     public void setUp() {

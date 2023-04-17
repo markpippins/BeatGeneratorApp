@@ -20,6 +20,9 @@ export class DrumPadComponent {
   note!: number;
 
   @Input()
+  otherNote!: number;
+
+  @Input()
   instrument!: Instrument;
 
   pressed = false;
@@ -34,7 +37,7 @@ export class DrumPadComponent {
 
     let element = document.getElementById('pad-ring-' + this.index);
     if (element != undefined)
-      this.uiService.swapClass(element, 'standby', 'armed');
+      this.uiService.swapClass(element, 'standby', 'enabled');
 
     // this.midiService.playNote(
     //   this.instrument.name,
@@ -52,7 +55,7 @@ export class DrumPadComponent {
   }
 
   getPadRingClass(): string {
-    let result = this.active ? 'pad-ring-enabled' : 'pad-ring-standby';
+    let result = this.active ? 'pad-ring enabled' : 'pad-ring standby';
 
     return result;
   }

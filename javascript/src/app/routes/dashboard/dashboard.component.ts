@@ -264,6 +264,8 @@ export class DashboardComponent implements OnInit, Listener {
   }
 
   updateDisplay(): void {
+    // window.addEventListener('load', function (e) {});
+
     if (this.ticker.id == 0) {
       this.midiService.next(0).subscribe((_data) => {
         this.ticker = _data;

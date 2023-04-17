@@ -20,7 +20,7 @@ import com.angrysurfer.BeatGeneratorApplication;
 import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.Ticker;
-import com.angrysurfer.midi.repo.StrikeRepository;
+import com.angrysurfer.midi.repo.StrikeRepo;
 import com.angrysurfer.midi.repo.TickerRepo;
 import com.angrysurfer.midi.service.PlayerService;
 import com.angrysurfer.midi.service.TickerService;
@@ -39,7 +39,7 @@ public class TickerServiceTests {
     static Logger logger = org.slf4j.LoggerFactory.getLogger(TickerServiceTests.class.getCanonicalName());
 
     @Autowired
-    StrikeRepository playerRepository;
+    StrikeRepo playerRepo;
 
     @Autowired
     TickerRepo tickerRepo;
@@ -55,13 +55,13 @@ public class TickerServiceTests {
 
     // @Before
     // public void setUp() {
-    //     playerRepository.deleteAll();
+    //     playerRepo.deleteAll();
     //     tickerRepo.deleteAll();
     // }
     
     // @After
     // public void tearDown() {
-    //     playerRepository.deleteAll();
+    //     playerRepo.deleteAll();
     //     tickerRepo.deleteAll();
     // }
     

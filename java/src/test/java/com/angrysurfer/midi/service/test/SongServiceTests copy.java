@@ -25,9 +25,9 @@
 // import com.angrysurfer.BeatGeneratorApplication;
 // import com.angrysurfer.midi.model.Song;
 // import com.angrysurfer.midi.model.Step;
-// import com.angrysurfer.midi.repo.MidiInstrumentRepository;
-// import com.angrysurfer.midi.repo.SongRepository;
-// import com.angrysurfer.midi.repo.StepRepository;
+// import com.angrysurfer.midi.repo.MidiInstrumentRepo;
+// import com.angrysurfer.midi.repo.SongRepo;
+// import com.angrysurfer.midi.repo.StepRepo;
 // import com.angrysurfer.midi.service.MIDIService;
 // import com.angrysurfer.midi.service.SongService;
 
@@ -45,22 +45,22 @@
 //     SongService songService;
 
 //     @Autowired
-//     MidiInstrumentRepository midiInstrumentRepository;
+//     MidiInstrumentRepo midiInstrumentRepo;
 
 //     @Autowired
-//     StepRepository stepRepository;
+//     StepRepo stepRepo;
 
 //     @Autowired
-//     SongRepository songRepository;
+//     SongRepo songRepo;
 
 //     @Before
 //     public void setUp() {
-//         // songRepository.deleteAll();
+//         // songRepo.deleteAll();
 //     }
     
 //     @After
 //     public void tearDown() {
-//         // songRepository.deleteAll();
+//         // songRepo.deleteAll();
 //     }
     
 

@@ -1,9 +1,9 @@
 package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.*;
-import com.angrysurfer.midi.repo.PatternRepository;
-import com.angrysurfer.midi.repo.SongRepository;
-import com.angrysurfer.midi.repo.StepRepository;
+import com.angrysurfer.midi.repo.PatternRepo;
+import com.angrysurfer.midi.repo.SongRepo;
+import com.angrysurfer.midi.repo.StepRepo;
 import com.angrysurfer.midi.util.Constants;
 import com.angrysurfer.midi.util.CyclerListener;
 import com.angrysurfer.midi.util.PatternUpdateType;
@@ -112,9 +112,9 @@ public class SongService {
 
     static Logger logger = LoggerFactory.getLogger(SongService.class.getCanonicalName());
 
-    private StepRepository stepDataRepository;
-    private SongRepository songRepository;
-    private PatternRepository patternRepository;
+    private StepRepo stepRepo;
+    private SongRepo songRepo;
+    private PatternRepo patternRepo;
     private MIDIService midiService;
 
     private Song song;
@@ -124,11 +124,11 @@ public class SongService {
     // private CyclerListener beatListener = new BeatCyclerListener();
     // private CyclerListener barListener = new BarCyclerListener();
 
-    public SongService(PatternRepository patternRepository, StepRepository stepRepository,
-            SongRepository songRepository, MIDIService midiService) {
-        this.stepDataRepository = stepRepository;
-        this.songRepository = songRepository;
-        this.patternRepository = patternRepository;
+    public SongService(PatternRepo patternRepo, StepRepo stepRepo,
+            SongRepo songRepo, MIDIService midiService) {
+        this.stepRepo = stepRepo;
+        this.songRepo = songRepo;
+        this.patternRepo = patternRepo;
         this.midiService = midiService;
     }
 
@@ -239,7 +239,7 @@ public class SongService {
                 break;
         }
 
-        return getPatternRepository().save(pattern);
+        return getPatternRepo().save(pattern);
     }
 
     public Step updateStep(Long stepId, int updateType, int updateValue) {
@@ -273,21 +273,21 @@ public class SongService {
         // page.put(step.getIndex(), step);
         // songStepsMap.put(step.getPage(), page);
 
-        return getStepDataRepository().save(step);
+        return getStepRepo().save(step);
     }
 
     public Song loadSong(Song song) {
-        song.setPatterns(getPatternRepository().findBySongId(getSong().getId()));
+        song.setPatterns(getPatternRepo().findBySongId(getSong().getId()));
         song.getPatterns().forEach(pattern -> {
             pattern.setSong(getSong());
-            pattern.setSteps(getStepDataRepository().findByPatternId(pattern.getId()));
+            pattern.setSteps(getStepRepo().findByPatternId(pattern.getId()));
             pattern.getSteps().forEach(s -> s.setPattern(pattern));
         });
 
         // if (song.getPatterns().size() == 0) {
 
-        // getPatternRepository().findBySongId(song.getId()).forEach(p ->
-        // getPatternRepository().delete(p));
+        // getPatternRepo().findBySongId(song.getId()).forEach(p ->
+        // getPatternRepo().delete(p));
 
         // IntStream.range(0, 6).forEach(page -> {
         // Pattern pattern = new Pattern();
@@ -295,7 +295,7 @@ public class SongService {
         // pattern.setPosition(page);
         // pattern.setInstrument(this.midiService.getInstrumentByChannel(page).get(0));
         // pattern.setChannel(page);
-        // getPatternRepository().save(pattern);
+        // getPatternRepo().save(pattern);
 
         // song.getPatterns().add(pattern);
 
@@ -303,7 +303,7 @@ public class SongService {
         // Step step = new Step();
         // step.setPattern(pattern);
         // step.setPosition(j);
-        // getStepDataRepository().save(step);
+        // getStepRepo().save(step);
 
         // pattern.getSteps().add(step);
         // });
@@ -315,8 +315,8 @@ public class SongService {
     }
 
     public Song newSong() {
-        songRepository.flush();
-        Song song = songRepository.save(new Song());
+        songRepo.flush();
+        Song song = songRepo.save(new Song());
 
         // picking up MIDI channels 2-9
         IntStream.range(1, Constants.DEFAULT_XOX_TRACKS).forEach(i -> {
@@ -326,14 +326,14 @@ public class SongService {
             pattern.setInstrument(this.midiService.getInstrumentByChannel(i).get(0));
             pattern.setChannel(i);
             pattern.setName(pattern.getInstrument().getName());
-            getPatternRepository().save(pattern);
+            getPatternRepo().save(pattern);
             song.getPatterns().add(pattern);
 
             IntStream.range(0, Constants.DEFAULT_XOX_PATTERN_LENGTH).forEach(j -> {
                 Step step = new Step();
                 step.setPattern(pattern);
                 step.setPosition(j);
-                getStepDataRepository().save(step);
+                getStepRepo().save(step);
 
                 pattern.getSteps().add(step);
             });
@@ -346,11 +346,11 @@ public class SongService {
     }
 
     public synchronized Song next(long currentSongId) {
-        songRepository.flush();
+        songRepo.flush();
         if (currentSongId == 0 || getSong().getPatterns().size() > 0) {
-            Long maxSongId = getSongRepository().getMaximumSongId();
+            Long maxSongId = getSongRepo().getMaximumSongId();
             setSong(Objects.nonNull(maxSongId) && currentSongId < maxSongId
-                    ? getSongRepository().getNextSong(currentSongId)
+                    ? getSongRepo().getNextSong(currentSongId)
                     : null);
             if (Objects.nonNull(this.song))
                 loadSong(this.song);
@@ -362,9 +362,9 @@ public class SongService {
     }
 
     public synchronized Song previous(long currentSongId) {
-        songRepository.flush();
-        if (currentSongId > (getSongRepository().getMinimumSongId())) {
-            setSong(getSongRepository().getPreviousSong(currentSongId));
+        songRepo.flush();
+        if (currentSongId > (getSongRepo().getMinimumSongId())) {
+            setSong(getSongRepo().getPreviousSong(currentSongId));
             loadSong(this.song);
         }
 
@@ -379,13 +379,13 @@ public class SongService {
     // }
 
     public Pattern addPattern() {
-        getSongRepository().flush();
+        getSongRepo().flush();
 
         Pattern pattern = new Pattern();
         pattern.setPosition(getSong().getPatterns().size());
         // pattern.setPage(page);
         pattern.setSong(getSong());
-        pattern = getPatternRepository().save(pattern);
+        pattern = getPatternRepo().save(pattern);
         getSong().getPatterns().add(pattern);
         return pattern;
     }
@@ -394,7 +394,7 @@ public class SongService {
         Pattern pattern = getSong().getPatterns().stream().filter(s -> s.getId().equals(patternId)).findAny()
                 .orElseThrow();
         getSong().getPatterns().remove(pattern);
-        getPatternRepository().delete(pattern);
+        getPatternRepo().delete(pattern);
         return getSong().getPatterns();
     }
 
@@ -405,13 +405,13 @@ public class SongService {
     }
 
     // public Pattern addStep(int page) {
-    // getSongRepository().flush();
+    // getSongRepo().flush();
 
     // Pattern step = new Pattern();
     // step.setPosition(getSong().getPatterns().size());
     // step.setPage(page);
     // step.setSong(getSong());
-    // step = getStepDataRepository().save(step);
+    // step = getStepRepo().save(step);
     // getSong().getPatterns().add(step);
     // return step;
     // }
@@ -420,7 +420,7 @@ public class SongService {
     // Pattern step = getSong().getPatterns().stream().filter(s ->
     // s.getId().equals(stepId)).findAny().orElseThrow();
     // getSong().getPatterns().remove(step);
-    // getStepDataRepository().delete(step);
+    // getStepRepo().delete(step);
     // return getSong().getPatterns();
     // }
 

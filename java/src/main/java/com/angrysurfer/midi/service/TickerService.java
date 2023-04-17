@@ -24,38 +24,32 @@ public class TickerService {
     static Logger logger = LoggerFactory.getLogger(TickerService.class.getCanonicalName());
 
     private Ticker ticker;
-    private StrikeRepository strikeRepository;
-    private RuleRepository ruleRepository;
+    private StrikeRepo strikeRepo;
+    private RuleRepo ruleRepo;
     private TickerRepo tickerRepo;
     private SongService songService;
     private SequenceRunner sequenceRunner;
     private ArrayList<SequenceRunner> sequenceRunners = new ArrayList<>();
 
     private TickerStatusDAO tickerStatusDAO;
-    private TickListener listener;
+    // private TickListener listener;
+    // private TickerStatusPublisher tickerStatusPublisher = new TickerStatusPublisher(this);
     private Long lastTickId;
 
-    public TickerService(TickerRepo tickerRepo, StrikeRepository strikeRepository,
-            RuleRepository ruleRepository, SongService songService, TickerStatusDAO tickerStatusDAO) {
+    public TickerService(TickerRepo tickerRepo, StrikeRepo strikeRepo,
+            RuleRepo ruleRepo, SongService songService, TickerStatusDAO tickerStatusDAO) {
 
         this.tickerRepo = tickerRepo;
-        this.ruleRepository = ruleRepository;
-        this.strikeRepository = strikeRepository;
+        this.ruleRepo = ruleRepo;
+        this.strikeRepo = strikeRepo;
         this.songService = songService;
         this.tickerStatusDAO = tickerStatusDAO;
-        this.listener = new TickListener() {
-
-            @Override
-            public void onTick() {
-                getTickerStatusDAO().save(TickerStatus.from(getTicker(),  getSequenceRunner().isPlaying()));
-            }    
-        };
     }
 
     public void play() {
 
         stopRunningSequencers();
-        sequenceRunner = new SequenceRunner(getListener(), getTicker());
+        sequenceRunner = new SequenceRunner(getTicker());
         sequenceRunners.add(getSequenceRunner());
         getSequenceRunner().getCycleListeners().add(getSongService().getTickListener());
         getSongService().getSong().setBeatDuration(getTicker().getBeatDuration());
@@ -67,7 +61,7 @@ public class TickerService {
         if (Objects.nonNull(getSequenceRunner()) && !getSequenceRunner().isPlaying())
             new Thread(getSequenceRunner()).start();
         else {
-            setSequenceRunner(new SequenceRunner(getListener(), getTicker()));
+            setSequenceRunner(new SequenceRunner(getTicker()));
             new Thread(getSequenceRunner()).start();
         }
 
@@ -113,7 +107,7 @@ public class TickerService {
             stopRunningSequencers();
             ticker = getTickerRepo().save(new Ticker());
             getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
-            sequenceRunner = new SequenceRunner(getListener(), ticker);
+            sequenceRunner = new SequenceRunner(ticker);
         }
 
         return ticker;
@@ -176,9 +170,9 @@ public class TickerService {
                     ? getTickerRepo().getNextTicker(currentTickerId)
                     : null);
             getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
-            getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
-            getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
-            sequenceRunner = new SequenceRunner(getListener(), getTicker());
+            getTicker().getPlayers().addAll(getStrikeRepo().findByTickerId(getTicker().getId()));
+            getTicker().getPlayers().forEach(p -> p.setRules(ruleRepo.findByPlayerId(p.getId())));
+            sequenceRunner = new SequenceRunner(getTicker());
         }
 
         return getTicker();
@@ -192,9 +186,9 @@ public class TickerService {
             getTicker().getBarCycler().getListeners().clear();
             stopRunningSequencers();
             setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
-            getTicker().getPlayers().addAll(getStrikeRepository().findByTickerId(getTicker().getId()));
-            getTicker().getPlayers().forEach(p -> p.setRules(ruleRepository.findByPlayerId(p.getId())));
-            sequenceRunner = new SequenceRunner(getListener(), getTicker());
+            getTicker().getPlayers().addAll(getStrikeRepo().findByTickerId(getTicker().getId()));
+            getTicker().getPlayers().forEach(p -> p.setRules(ruleRepo.findByPlayerId(p.getId())));
+            sequenceRunner = new SequenceRunner(getTicker());
             getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
         }
 

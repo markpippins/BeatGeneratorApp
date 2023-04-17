@@ -1,5 +1,6 @@
 package com.angrysurfer.midi.util;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -27,6 +28,7 @@ import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.service.MIDIService;
 import com.sun.media.sound.MidiUtils;
 import com.sun.media.sound.MidiUtils.TempoCache;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -51,7 +53,7 @@ public class SequenceRunner implements Runnable, Receiver {
 
     private Integer delay;
 
-    private TickListener listener;
+    private List<TickListener> listeners = new ArrayList<>();
 
     static {
         try {
@@ -74,9 +76,8 @@ public class SequenceRunner implements Runnable, Receiver {
     /**
      * @param ticker
      */
-    public SequenceRunner(TickListener listener, Ticker ticker) {
+    public SequenceRunner(Ticker ticker) {
         this.ticker = ticker;
-        this.listener = listener;
         executor = Executors.newFixedThreadPool(ticker.getMaxTracks());
     }
 
@@ -111,6 +112,7 @@ public class SequenceRunner implements Runnable, Receiver {
 
     public void afterEnd() {
         // sequencer.getReceivers().remove(this);
+        getListeners().forEach(l -> l.onEnd());
         sequencer.close();
         getTicker().afterEnd();
         stopped = false;
@@ -137,8 +139,7 @@ public class SequenceRunner implements Runnable, Receiver {
                 if (!started)
                     started = handleStarted();
 
-                if (Objects.nonNull(getListener()))
-                    getListener().onTick();
+                getListeners().forEach(l -> l.onTick());
 
                 this.executor.invokeAll(getTicker().getPlayers());
 

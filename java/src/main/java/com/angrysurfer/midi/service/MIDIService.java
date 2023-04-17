@@ -2,9 +2,8 @@ package com.angrysurfer.midi.service;
 
 import com.angrysurfer.midi.model.MidiDeviceInfo;
 import com.angrysurfer.midi.model.MidiInstrument;
-import com.angrysurfer.midi.repo.MidiInstrumentRepository;
+import com.angrysurfer.midi.repo.MidiInstrumentRepo;
 
-import org.aspectj.util.IStructureModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,7 @@ public class MIDIService {
 
     static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
 
-    private MidiInstrumentRepository midiInstrumentRepo;
+    private MidiInstrumentRepo midiInstrumentRepo;
 
     static Map<Integer, MidiInstrument> midiInstruments = new HashMap<>();
 
@@ -33,7 +32,7 @@ public class MIDIService {
 
     static Map<String, MidiDevice> midiOutDevices = new HashMap<>();
 
-    public MIDIService(MidiInstrumentRepository midiInstrumentRepo) {
+    public MIDIService(MidiInstrumentRepo midiInstrumentRepo) {
         this.midiInstrumentRepo = midiInstrumentRepo;
     }
 

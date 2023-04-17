@@ -9,7 +9,7 @@
       </th>
     </tr>
 
-    <tr *ngFor="let player of players;" class="active-table-row" id="player-row-{{player.id}}"
+    <tr *ngFor="let player of players; let index = index;" class="active-table-row" id="player-row-{{player.id}}"
       (mouseenter)="onPass(player)" (click)="onRowClick(player)">
 
 
@@ -41,12 +41,12 @@
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
       </td>
       <td>
-        <button *ngIf="!player.muted" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'ticker-mute')">
+        <button ngClass="{{getMuteButtonClass(player)}}" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'ticker-mute')">
           M
         </button>
-        <button *ngIf="player.muted" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'ticker-mute')">
+        <!-- <button *ngIf="player.muted" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'ticker-mute')">
           U
-        </button>
+        </button> -->
       </td>
       <td>
         <button [style.height.px]="20" id="audition" (click)="onBtnClick(player, 'ticker-audition')">
