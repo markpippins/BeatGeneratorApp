@@ -1,23 +1,23 @@
 <button [ngClass]="getPadClass()" id="pad-{{index}}" tabindex="0" (click)="padPressed()">
   <div class="{{getPadRingClass()}}" id="pad-ring-{{index}}">
-    <div class="" id="pad-indicator-left-{{index}}">
-
+    <div class="pad-indicator" id="pad-indicator-left-{{index}}">
+      <div class="{{getIndicatorClass(0)}}"></div>
     </div>
     <div class="" id="pad-indicator-center-{{index}}">
 
     </div>
-    <div class="" id="pad-indicator-right-{{index}}">
+    <!-- <div class="" id="pad-indicator-right-{{index}}">
 
-    </div>
-    <div class="">
+    </div> -->
+    <!-- <div class="">
       <label>{{ name }}</label>
     </div>
     <div class="">
       <label>{{ note }}</label>
     </div>
-    <div class="">
+    <div class=""> -->
       <!-- <label>{{ otherNote }}</label> -->
-    </div>
+    <!-- </div> -->
 
 
     <!-- <div class="pad-content">

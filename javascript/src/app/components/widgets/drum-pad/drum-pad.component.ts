@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { Instrument } from '../../../models/instrument';
-import { UiService } from 'src/app/services/ui.service';
 
 @Component({
   selector: 'app-drum-pad',
@@ -8,7 +7,7 @@ import { UiService } from 'src/app/services/ui.service';
   styleUrls: ['./drum-pad.component.css'],
 })
 export class DrumPadComponent {
-  constructor(private uiService: UiService) {}
+  constructor() {}
 
   @Input()
   name!: string;
@@ -37,9 +36,9 @@ export class DrumPadComponent {
     this.pressed = !this.pressed;
     this.active = true;
 
-    let element = document.getElementById('pad-ring-' + this.index);
-    if (element != undefined)
-      this.uiService.swapClass(element, 'standby', 'enabled');
+    // let element = document.getElementById('pad-ring-' + this.index);
+    // if (element != undefined)
+    //   this.uiService.swapClass(element, 'standby', 'enabled');
 
     // this.midiService.playNote(
     //   this.instrument.name,
@@ -57,8 +56,13 @@ export class DrumPadComponent {
   }
 
   getPadRingClass(): string {
-    let result = this.active ? 'pad-ring onstep' : 'pad-ring';
+    let result = this.active ? 'pad-ring' : 'pad-ring';
 
+    return result;
+  }
+
+  getIndicatorClass(_index: number): string {
+    let result = this.active ? 'pad-indicator-content onstep' : 'pad-indicator-content offstep';
     return result;
   }
 }

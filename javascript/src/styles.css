@@ -568,15 +568,6 @@ loop {
   background-color: firebrick;
 }
 
-
-.offstep {
-  border: red solid 1px;
-}
-
-.onstep {
-  border: silver solid 6px;
-}
-
 .armed {
   background-color: seagreen;
   border: lawngreen solid 3px;
@@ -602,7 +593,7 @@ loop {
   background-color: transparent;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: auto auto auto;
+  grid-template-rows: auto auto auto ;
   margin: 1px;
   padding: 0px;
 }
@@ -619,18 +610,36 @@ loop {
 }
 */
 
+.onstep {
+    background-color: green;
+}
+
+.offstep {
+    background-color: red;
+}
+
 .pad-indicator {
 
 /*  background-color: lightyellow;*/
   align-self: stretch;
-
   margin: 2px;
+/*  border: black dashed 1px;*/
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+.pad-indicator-content {
+/*  background-color: lightyellow;*/
+align-self: stretch;
+/*background-color: red;*/
+/*  border: black ridge 1px;*/
 }
 
 .pad-content {
-  background-color: lightyellow;
+  background-color: mistyrose;
   align-self: stretch;
-  margin: 2px;
+  margin: px;
+  border: black inset 1px;
 }
 
 .pad {

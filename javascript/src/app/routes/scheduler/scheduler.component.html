@@ -5,7 +5,7 @@
     <app-player-table [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-table>
   </div>
   <div class="table-holder">
-    <app-conditions-panel *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
-      [player]="selectedPlayer"></app-conditions-panel>
+    <app-rule-table *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
+      [player]="selectedPlayer"></app-rule-table>
   </div>
 </div>

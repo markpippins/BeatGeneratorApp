@@ -19,7 +19,6 @@ import { MatInputModule } from '@angular/material/input';
 import { DrumGridComponent } from './components/drum-grid/drum-grid.component';
 import { PlayerTableComponent } from './components/player-table/player-table.component';
 import { MatTableModule } from '@angular/material/table';
-import { ConditionsPanelComponent } from './components/conditions-panel/conditions-panel.component';
 import { ConditionsSelectOptionComponent } from './components/widgets/conditions-select-option/conditions-select-option.component';
 import { SliderComponent } from './components/widgets/slider/slider.component';
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
@@ -51,7 +50,7 @@ import { ButtonPanelComponent } from './components/widgets/button-panel/button-p
 import { PlayerNavComponent } from './components/widgets/player-nav/player-nav.component';
 import { SchedulerComponent } from './routes/scheduler/scheduler.component';
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
-import { StatusReadoutComponent } from './widgets/status-readout/status-readout.component';
+import { StatusReadoutComponent } from './components/widgets/status-readout/status-readout.component';
 import { CommonModule } from '@angular/common';
 import { Knob2Component } from './components/widgets/knob2/knob2.component';
 import { NgStyle } from '@angular/common';
@@ -70,7 +69,6 @@ const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
     TransportControlComponent,
     DrumGridComponent,
     PlayerTableComponent,
-    ConditionsPanelComponent,
     ConditionsSelectOptionComponent,
     SliderComponent,
     BeatSpecComponent,
