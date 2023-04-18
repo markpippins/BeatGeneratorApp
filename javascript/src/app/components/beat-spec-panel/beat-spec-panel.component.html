@@ -1,5 +1,5 @@
 <div class="lane-808">
-  <div [ngClass]=" flag ? 'primary' : 'secondary'" *ngIf="step.active" id="beat-btn-{{step.position}}"
+  <div *ngIf="step.active" id="beat-btn-{{step.position}}"
     class="btn-active onbeat">
     <button (click)="onLaneBtnClick()">
       {{step.position + 1}}
@@ -31,9 +31,8 @@
   <div>
     <input class="" type="number" min="0" max="100" (change)="onGateChange(step, $event)" [(ngModel)]="step.gate">
   </div>
-  <app-drum-pad [index]="step.position"></app-drum-pad>
+  <app-drum-pad [active]="active" [index]="step.position"></app-drum-pad>
   <!-- <div [ngClass]=" flag ? 'primary mini-btn' : 'secondary mini-btn'" *ngIf="active == true"
     (click)="onParamsBtnClick()">Δ
   </div> -->
-
 </div>

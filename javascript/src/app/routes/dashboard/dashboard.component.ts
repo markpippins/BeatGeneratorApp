@@ -6,6 +6,7 @@ import { UiService } from 'src/app/services/ui.service';
 import { Constants } from 'src/app/models/constants';
 import { Listener } from 'src/app/models/listener';
 import { TickerStatus } from 'src/app/models/ticker-status';
+import { Instrument } from 'src/app/models/instrument';
 
 @Component({
   selector: 'app-dashboard',
@@ -20,6 +21,14 @@ export class DashboardComponent implements OnInit, Listener {
   selectedPlayer!: Player;
 
   tickerPointer = 0;
+
+  activeInstrument!: Instrument;
+
+  @Output()
+  instruments!: Instrument[];
+
+  @Output()
+  selectedInstrument!: Instrument;
 
   @Output()
   tickerStatus: TickerStatus = {
@@ -88,6 +97,12 @@ export class DashboardComponent implements OnInit, Listener {
   ngOnInit(): void {
     this.updateDisplay();
     this.onActionSelected('forward');
+    this.midiService.allInstruments().subscribe((data) => {
+      this.instruments = this.uiService.sortByName(data);
+      if (this.instruments.length > 0) {
+        this.selectedInstrument = this.instruments[0];
+      }
+    });
   }
 
   onNotify(_messageType: number, _message: string, _messageValue: any) {
@@ -118,6 +133,15 @@ export class DashboardComponent implements OnInit, Listener {
       case Constants.TICKER_UPDATED:
         this.updateDisplay();
         break;
+
+      case Constants.INSTRUMENT_SELECTED: {
+        let instrument = this.instruments.filter(
+          (instrument) => instrument.id == _messageValue
+        );
+        if (instrument.length > 0) {
+          this.selectedInstrument = instrument[0];
+        }
+      }
     }
   }
 
@@ -178,6 +202,11 @@ export class DashboardComponent implements OnInit, Listener {
         }
 
         case 'ticker-play': {
+          this.uiService.notifyAll(
+            Constants.TICKER_STARTED,
+            this.ticker.id.toString(),
+            0
+          );
           this.midiService.start().subscribe();
           this.updateDisplay();
           // let element = document.getElementById('transport-btn-play')
@@ -219,10 +248,13 @@ export class DashboardComponent implements OnInit, Listener {
         }
 
         case 'ticker-add': {
-          this.midiService.addPlayer().subscribe(async (data) => {
-            this.players.push(data);
-            this.selectedPlayer = data;
-          });
+          if (this.selectedInstrument)
+            this.midiService
+              .addPlayer(this.selectedInstrument.name)
+              .subscribe(async (data) => {
+                this.players.push(data);
+                this.selectedPlayer = data;
+              });
           break;
         }
 
@@ -283,7 +315,7 @@ export class DashboardComponent implements OnInit, Listener {
           this.uiService.notifyAll(Constants.BEAT_DIV, '', this.ticker.beat);
           this.uiService.notifyAll(Constants.BAR_DIV, '', this.ticker.bar);
           this.uiService.notifyAll(Constants.PART_DIV, '', this.ticker.part);
-          await this.midiService.delay(1000);
+          await this.midiService.delay(250);
           this.updateDisplay();
         }
       });
@@ -305,6 +337,10 @@ export class DashboardComponent implements OnInit, Listener {
       'Player selected',
       player.id
     );
+  }
+
+  onRuleChange(_player: Player) {
+    // this.ruleChangeEvent.emit(player);
   }
 
   refresh() {

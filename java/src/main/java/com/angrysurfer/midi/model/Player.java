@@ -76,7 +76,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
     private Cycler barCycler = new Cycler(16);
 
     @Transient
-    private boolean muted = false;
+    private boolean muted = true;
 
     @Transient
     private Long position;
@@ -217,7 +217,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
         // && !muteGroupPartnerSoundedOnThisTick()
         // && strikeHasNoMuteGroupConflict()
-        if (shouldPlay()) {
+        if (!isMuted() && shouldPlay()) {
             getTicker().getActivePlayerIds().add(getId());
             setLastPlayedBar(getTicker().getBar());
             setLastPlayedBeat(getTicker().getBeat());

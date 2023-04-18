@@ -12,6 +12,7 @@ import { MidiService } from 'src/app/services/midi.service';
 import { UiService } from 'src/app/services/ui.service';
 import { Step } from '../../models/step';
 import { Instrument } from 'src/app/models/instrument';
+import { Pattern } from 'src/app/models/pattern';
 
 interface PitchPair {
   midi: number;
@@ -35,6 +36,9 @@ export class BeatSpecPanelComponent
   changeEvent = new EventEmitter<Step>();
 
   @Input()
+  pattern!: Pattern;
+
+  @Input()
   step!: Step;
 
   @Input()
@@ -53,7 +57,7 @@ export class BeatSpecPanelComponent
   }
 
   ngAfterContentChecked(): void {
-    this.flag = (this.step != undefined && this.step.active)
+    this.flag = this.step != undefined && this.step.active;
   }
 
   ngOnInit(): void {
@@ -64,10 +68,19 @@ export class BeatSpecPanelComponent
       });
   }
 
-  onNotify(messageType: number, _message: string, messageValue: number) {
-    this.active =
-      messageType == Constants.BEAT_DIV &&
-      messageValue == this.step.position + 1;
+  @Input()
+  currentStep = 1;
+
+  onNotify(messageType: number, _message: string, _messageValue: number) {
+    if (messageType == Constants.TICKER_STARTED)
+      this.currentStep = this.pattern.firstStep - 1;
+
+    if (messageType == Constants.BEAT_DIV) {
+      if (this.currentStep < this.pattern.lastStep) this.currentStep += 1;
+      else this.currentStep = this.pattern.firstStep;
+
+      this.active = this.currentStep-1 == this.step.position;
+    }
   }
 
   onParamsBtnClick() {
@@ -147,5 +160,9 @@ export class BeatSpecPanelComponent
 
   onChange() {
     this.changeEvent.emit(this.step);
+  }
+
+  getClass() {
+    return this.active ? "lane-808 ready" : "lane-808";
   }
 }

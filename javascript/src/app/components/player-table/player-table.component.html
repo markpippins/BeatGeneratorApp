@@ -41,10 +41,10 @@
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
       </td>
       <td>
-        <button ngClass="{{getMuteButtonClass(player)}}" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'ticker-mute')">
-          M
+        <button ngClass="{{player.muted ? 'muted' : 'unmuted' }}" [style.height.px]="20" id="player-mute-{{player.id}}" (click)="onBtnClick(player, 'player-mute')">
+          {{player.muted ? 'U' : 'M'}}
         </button>
-        <!-- <button *ngIf="player.muted" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'ticker-mute')">
+        <!-- <button *ngIf="player.muted" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'player-mute')">
           U
         </button> -->
       </td>

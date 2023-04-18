@@ -19,7 +19,7 @@ export class SliderPanelComponent implements OnInit, Listener {
   @Input()
   instrument!: Instrument | undefined
 
-  @Input()
+  // @Input()
   instruments!: Instrument[]
 
   @Output()

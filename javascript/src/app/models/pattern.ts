@@ -1,3 +1,4 @@
+import { Instrument } from "./instrument"
 import { Step } from "./step"
 
 export interface Pattern {
@@ -5,7 +6,7 @@ export interface Pattern {
 
   name: string
 
-  instrumentId: number
+  instrument: Instrument
 
   preset: number
 

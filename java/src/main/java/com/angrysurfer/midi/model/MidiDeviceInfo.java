@@ -5,12 +5,17 @@ import java.io.Serializable;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 public class MidiDeviceInfo implements Serializable {
+
+    static Logger logger = LoggerFactory.getLogger(MidiDeviceInfo.class.getCanonicalName());
 
     private final String name;
 
@@ -31,8 +36,7 @@ public class MidiDeviceInfo implements Serializable {
     private String transmitter;
 
     private String transmitters;
-    
-    
+
     public MidiDeviceInfo(MidiDevice device) {
 
         this.name = device.getDeviceInfo().getName();
@@ -43,19 +47,21 @@ public class MidiDeviceInfo implements Serializable {
         this.maxReceivers = device.getMaxReceivers();
         this.maxTransmitters = device.getMaxTransmitters();
 
+        // if (maxReceivers > 0)
         try {
-            this.receiver = device.getReceiver().toString();
+            if (device.getReceiver() != null)
+                this.receiver = device.getReceiver().toString();
+            this.receivers = String.format("%s", device.getReceivers().size());
         } catch (MidiUnavailableException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
-        this.receivers = String.format("%s", device.getReceivers().size());
 
+        // if (maxTransmitters > 0)
         try {
-            this.transmitter = device.getTransmitter().toString();
+            if (device.getTransmitter() != null)
+                this.transmitter = device.getTransmitter().toString();
         } catch (MidiUnavailableException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         this.transmitters = String.format("%s", device.getTransmitters().size());
     }

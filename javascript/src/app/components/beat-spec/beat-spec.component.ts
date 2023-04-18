@@ -81,8 +81,8 @@ export class BeatSpecComponent implements OnInit, Listener {
       .subscribe((data) => (this.song.patterns[pattern.position] = data));
   }
 
-  selectedIndexChange(_index: number) {
-    // alert(this.song.patterns[index -1].instrumentId)
+  selectedIndexChange(index: number) {
+    this.uiService.notifyAll(Constants.INSTRUMENT_SELECTED, '', this.song.patterns[index].instrument.id)
   }
 
   onStepChanged(_step: any) {
@@ -92,7 +92,7 @@ export class BeatSpecComponent implements OnInit, Listener {
   }
 
   getInstrumentForStep(_pattern: Pattern, _step: Step): Instrument {
-    let result = this.instruments.filter(i => i.id == _pattern.instrumentId)
+    let result = this.instruments.filter(i => i.id == _pattern.instrument.id)
     return result[0]
   }
 

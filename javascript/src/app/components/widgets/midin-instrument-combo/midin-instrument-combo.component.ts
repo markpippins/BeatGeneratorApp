@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
+import { Listener } from 'src/app/models/listener';
 import { UiService } from 'src/app/services/ui.service';
 
 @Component({
@@ -17,7 +18,14 @@ import { UiService } from 'src/app/services/ui.service';
   templateUrl: './midin-instrument-combo.component.html',
   styleUrls: ['./midin-instrument-combo.component.css'],
 })
-export class MidinInstrumentComboComponent implements OnInit, AfterViewInit, AfterContentInit, AfterContentChecked {
+export class MidinInstrumentComboComponent
+  implements
+    Listener,
+    OnInit,
+    AfterViewInit,
+    AfterContentInit,
+    AfterContentChecked
+{
   @Output()
   instrumentSelectEvent = new EventEmitter<Instrument>();
 
@@ -33,18 +41,34 @@ export class MidinInstrumentComboComponent implements OnInit, AfterViewInit, Aft
   @Input()
   identifier!: string;
 
-  constructor(private uiService: UiService) {}
-  ngAfterContentInit(): void {
+  constructor(private uiService: UiService) {
+    uiService.addListener(this);
   }
-  ngAfterViewInit(): void {
 
+  onNotify(messageType: number, _message: string, messageValue: number) {
+    if (messageType == Constants.INSTRUMENT_SELECTED) {
+      let instrument = this.instruments.filter(
+        (instrument) => instrument.id == messageValue
+      );
+      if (instrument.length > 0) {
+        this.selectionIndex = this.instruments.indexOf(instrument[0]);
+        this.selectedInstrumentId = instrument[0].id;
+      }
+    }
   }
+
+  ngAfterContentInit(): void {}
+  ngAfterViewInit(): void {}
 
   ngOnInit(): void {}
 
   ngAfterContentChecked(): void {
-    if (this.selectionIndex == undefined && this.instruments != undefined && this.instruments.length > 0)
-      this.selectionIndex = 0
+    if (
+      this.selectionIndex == undefined &&
+      this.instruments != undefined &&
+      this.instruments.length > 0
+    )
+      this.selectionIndex = 0;
   }
 
   onSelectionChange() {

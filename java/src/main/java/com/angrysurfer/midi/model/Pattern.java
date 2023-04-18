@@ -93,7 +93,7 @@ public class Pattern {
     @Transient
     Set<Step> steps = new HashSet<>();
 
-    @JsonIgnore
+    // @JsonIgnore
     @Transient
     @JoinColumn(name = "instrument_id")
     private MidiInstrument instrument;

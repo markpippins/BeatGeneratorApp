@@ -149,17 +149,17 @@ export class MidiService {
     return this.http.get('http://localhost:8080/api/players/clear');
   }
 
-  addPlayer() {
+  addPlayer(instrument: string) {
     let params = new HttpParams();
-    params = params.append('instrument', 'Razzmatazz');
+    params = params.append('instrument', instrument);
     return this.http.get<Player>('http://localhost:8080/api/players/add', {
       params: params,
     });
   }
 
-  addPlayerForNote(note: number) {
+  addPlayerForNote(instrument: string, note: number) {
     let params = new HttpParams();
-    params = params.append('instrument', 'Razzmatazz');
+    params = params.append('instrument', instrument);
     params = params.append('note', note);
     return this.http.get<Player>('http://localhost:8080/api/players/note', {
       params: params,

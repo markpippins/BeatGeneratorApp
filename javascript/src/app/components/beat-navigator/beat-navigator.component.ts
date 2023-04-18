@@ -1,4 +1,6 @@
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, Input, OnInit } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Comparison } from 'src/app/models/comparison';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
@@ -6,6 +8,7 @@ import { Listener } from 'src/app/models/listener';
 import { Operator } from 'src/app/models/operator';
 import { Player } from 'src/app/models/player';
 import { Ticker } from 'src/app/models/ticker';
+import { TickerStatus } from 'src/app/models/ticker-status';
 import { MidiService } from 'src/app/services/midi.service';
 import { UiService } from 'src/app/services/ui.service';
 
@@ -49,7 +52,12 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   barIndicators: boolean[] = [];
   partIndicators: boolean[] = [];
 
-  constructor(private uiService: UiService, private midiService: MidiService) {
+  constructor(
+    private http: HttpClient,
+    // private pl: PlatformLocation,
+    private uiService: UiService,
+    private midiService: MidiService
+  ) {
     uiService.addListener(this);
   }
 
@@ -63,69 +71,100 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   lastBeat = 0;
 
   ngAfterContentChecked(): void {
-    if (this?.selectedInstrument == undefined && this.instruments != undefined && this.instruments.length > 0) {
+    if (
+      this?.selectedInstrument == undefined &&
+      this.instruments != undefined &&
+      this.instruments.length > 0
+    ) {
       this.selectedInstrument = this.instruments[0];
       this.onInstrumentSelected(this.instruments[0]);
     }
   }
 
+  private _reqOptionsArgs = {
+    headers: new HttpHeaders().set('Content-Type', 'application/json'),
+  };
+
+  getTickerStatus(): Observable<TickerStatus> {
+    return this.http.get<TickerStatus>(
+      'http://localhost:8080/api/foos',
+      this._reqOptionsArgs
+    );
+  }
+
+  testWebSocket() {
+    this.getTickerStatus().subscribe((data) => console.log(data));
+  }
+
   generate() {
     if (this.selectedNote == undefined) return;
 
-    this.midiService.addPlayerForNote(this.selectedNote).subscribe((player) => {
-      let partIndex = 0;
-      this.selectedParts.forEach((part) => {
-        if (part) {
-          let partValue = partIndex + 1;
-          // this.addRuleForPart(player, partValue);
+    this.midiService
+      .addPlayerForNote(this.selectedInstrument.name, this.selectedNote)
+      .subscribe((player) => {
+        let partIndex = 0;
+        this.selectedParts.forEach((part) => {
+          if (part) {
+            let partValue = partIndex + 1;
+            // this.addRuleForPart(player, partValue);
 
-          let barIndex = 0;
-          this.selectedBars.forEach((bar) => {
-            if (bar) {
-              let barValue = barIndex + 1;
-              this.addRuleForBar(player, barValue, partValue);
+            let barIndex = 0;
+            this.selectedBars.forEach((bar) => {
+              if (bar) {
+                let barValue = barIndex + 1;
+                this.addRuleForBar(player, barValue, partValue);
 
-              let beatIndex = 0;
-              this.selectedBeats.forEach((beat) => {
-                if (beat) {
-                  let beatValue = beatIndex + 1;
-                  this.addRuleForBeat(player, beatValue, partValue);
+                let beatIndex = 0;
+                this.selectedBeats.forEach((beat) => {
+                  if (beat) {
+                    let beatValue = beatIndex + 1;
+                    this.addRuleForBeat(player, beatValue, partValue);
 
-                  if (this.selectedTicks.includes(true)) {
-                    let tickIndex = 0;
-                    this.selectedTicks.forEach((tick) => {
-                      if (tick) {
-                        let tickValue = tickIndex + 1;
-                        this.addRuleForTick(player, tickValue, partValue);
-                        this.uiService.notifyAll(
-                          Constants.PLAYER_UPDATED,
-                          '',
-                          0
-                        );
-                      }
-                      tickIndex++;
-                    });
-                  } else {
-                    this.midiService.addPlayer().subscribe((player) => {
-                      this.addRuleForTick(player, 1, 0);
-                      this.addRuleForBeat(player, beatValue, 0);
-                      this.addRuleForBar(player, barValue, 0);
-                      // this.addRuleForPart(player, partValue);
-                      this.uiService.notifyAll(Constants.PLAYER_UPDATED, '', 0);
-                      this.uiService.notifyAll(Constants.PLAYER_UPDATED, '', 0);
-                    });
+                    if (this.selectedTicks.includes(true)) {
+                      let tickIndex = 0;
+                      this.selectedTicks.forEach((tick) => {
+                        if (tick) {
+                          let tickValue = tickIndex + 1;
+                          this.addRuleForTick(player, tickValue, partValue);
+                          this.uiService.notifyAll(
+                            Constants.PLAYER_UPDATED,
+                            '',
+                            0
+                          );
+                        }
+                        tickIndex++;
+                      });
+                    } else {
+                      this.midiService
+                        .addPlayer(this.selectedInstrument.name)
+                        .subscribe((player) => {
+                          this.addRuleForTick(player, 1, 0);
+                          this.addRuleForBeat(player, beatValue, 0);
+                          this.addRuleForBar(player, barValue, 0);
+                          // this.addRuleForPart(player, partValue);
+                          this.uiService.notifyAll(
+                            Constants.PLAYER_UPDATED,
+                            '',
+                            0
+                          );
+                          this.uiService.notifyAll(
+                            Constants.PLAYER_UPDATED,
+                            '',
+                            0
+                          );
+                        });
+                    }
                   }
-                }
-                beatIndex++;
-              });
-            }
-            barIndex++;
-          });
-        }
-      });
+                  beatIndex++;
+                });
+              }
+              barIndex++;
+            });
+          }
+        });
 
-      partIndex++;
-    });
+        partIndex++;
+      });
   }
 
   addRuleForTick(player: Player, tick: number, part: number) {
@@ -193,10 +232,19 @@ export class BeatNavigatorComponent implements OnInit, Listener {
       ) {
         this.range.push(note);
       }
+
+    // if (this.range.length == 0) for (let i = 0; i < 88; i++) this.range.push(i);
   }
 
   onNotify(messageType: number, _message: string, _messageValue: any) {
     if (messageType == Constants.TICKER_UPDATED) this.updateDisplay();
+
+    if (messageType == Constants.INSTRUMENT_SELECTED) {
+      this.instruments
+        .filter((instrument) => instrument.id == _messageValue)
+        .forEach((instrument) => this.onInstrumentSelected(instrument));
+      this.updateDisplay();
+    }
 
     if (messageType == Constants.BEAT_DIV) {
       this.beatIndicators = [];
@@ -306,7 +354,13 @@ export class BeatNavigatorComponent implements OnInit, Listener {
 
   getNoteButtonClass(value: number): string {
     let note = this.getNote(value);
-    return note.includes('♯') || note.includes('♯') ? ' piano-btn bg-gray' : 'piano-btn bg-lightgray'
+    return note.includes('♯') || note.includes('♯')
+      ? ' piano-btn bg-gray'
+      : 'piano-btn bg-lightgray';
+  }
+
+  isDrumMachine() {
+    return this.selectedInstrument.lowestNote > 0 && this.selectedInstrument.highestNote > this.selectedInstrument.lowestNote;
   }
 
   getNote(value: number): string {

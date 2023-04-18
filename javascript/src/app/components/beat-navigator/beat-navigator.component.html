@@ -1,10 +1,14 @@
 <div class="flex-container-horizontal">
-  <app-midin-instrument-combo class="wide-combo" [instruments]="instruments" [identifier]="comboId"
-    (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo>
+  <!-- <app-midin-instrument-combo class="wide-combo" [instruments]="instruments" [identifier]="comboId"
+    (instrumentSelectEvent)="onInstrumentSelected($event)"></app-midin-instrument-combo> -->
   <div class="flex-container-horizontal">
     <button class="{{getNoteButtonClass(note)}}" *ngFor="let note of range; let i = index;" id="beat-nav-note-btn-{{i}}"
       (click)="onNoteClicked(note, $event)">{{getNote(note)}}</button>
   </div>
+  <!-- <div *ngif="range.length == 0" class="flex-container-horizontal">
+    <p>booya</p>
+  </div> -->
+
 </div>
 <div class="flex-container-horizontal">
   <div class="flex-container-vertical">
@@ -16,7 +20,7 @@
     <button class="mini-btn comparison">=</button>
   </div>
   <div class="flex-container-vertical">
-    <button class="mini-btn mini-action-btn" [disabled]="true"></button>
+    <button class="mini-btn mini-action-btn" (click)="testWebSocket()"></button>
     <button class="mini-btn mini-control-bt mini-pad">14</button>
     <button class="mini-btn mini-pad">10</button>
     <button class="mini-btn mini-pad">6</button>

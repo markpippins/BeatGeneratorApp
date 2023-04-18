@@ -19,13 +19,22 @@
         <div class="player-panel">
           <app-player-nav></app-player-nav>
           <app-rules-nav></app-rules-nav>
+          <!-- <div>
+
+          </div> -->
           <div class="table-holder">
-            <app-player-panel [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-panel>
+            <app-player-table [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-table>
           </div>
           <div class="table-holder fw-300">
             <app-conditions-panel *ngIf="selectedPlayer != undefined" (ruleChangeEvent)="onPlayerSelected($event)"
               [player]="selectedPlayer"></app-conditions-panel>
+
+            <app-rule-table (ruleChangeEvent)="onRuleChange($event)" [player]="selectedPlayer"></app-rule-table>
+
           </div>
+          <!-- <div class="table-holder">
+              <app-strike-detail></app-strike-detail>
+          </div> -->
         </div>
         <app-beat-navigator></app-beat-navigator>
         <app-beat-spec></app-beat-spec>

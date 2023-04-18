@@ -1,8 +1,10 @@
-<div class="status-bar">
+<div class="status-readout">
   <label class="status-label">Ticker</label>
-  <input *ngIf="ticker != undefined" class="status-output" [(ngModel)]="ticker.id">
-  <label class="status-label">Strikes</label>
-  <input *ngIf="players != undefined" class="status-output" [(ngModel)]="players.length">
+  <label *ngIf="ticker != undefined" class="status-output">{{ticker.id}}</label>
+  |
+  <label class="status-label">Players</label>
+  <label class="status-output">{{players.length}}</label>
   <label></label>
+  <br>
   <label class="status-label" *ngFor="let line of consoleOutput">{{line}}</label>
 </div>

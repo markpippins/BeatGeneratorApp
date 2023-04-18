@@ -26,7 +26,9 @@ export class DrumPadComponent {
   instrument!: Instrument;
 
   pressed = false;
-  active = false;
+
+  @Input()
+  active: boolean = false;
 
   @Input()
   channel!: number;
@@ -55,7 +57,7 @@ export class DrumPadComponent {
   }
 
   getPadRingClass(): string {
-    let result = this.active ? 'pad-ring enabled' : 'pad-ring standby';
+    let result = this.active ? 'pad-ring onstep' : 'pad-ring';
 
     return result;
   }
