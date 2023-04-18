@@ -24,8 +24,8 @@ html {
   /*background: -moz-linear-gradient( to left top, blue, red);*
   /*background: -ms-linear-gradient( to left top, blue, red);*/
   /*  background: -o-linear-gradient( to left top, blue, red);*/
-/*  background: linear-gradient(to right bottom, steelblue, slategrey);*/
-   background-color: black; 
+  /*  background: linear-gradient(to right bottom, steelblue, slategrey);*/
+  background-color: black;
 }
 
 body {
@@ -176,7 +176,7 @@ p {
 
 .flex-container-horizontal {
   display: flex;
-    flex-direction: row;
+  flex-direction: row;
   align-items: center;
 }
 
@@ -559,7 +559,8 @@ thead th:last-child {
   grid-template-columns: 1fr;
 }
 
-.unmuted, .active {
+.unmuted,
+.active {
   background-color: greenyellow;
 }
 
@@ -567,14 +568,6 @@ thead th:last-child {
 loop {
   background-color: firebrick;
 }
-
-.armed {
-  background-color: seagreen;
-  border: lawngreen solid 3px;
-  margin: 0px;
-  padding: 0px;
-}
-
 
 .disabled {
   background-color: transparent;
@@ -593,9 +586,11 @@ loop {
   background-color: transparent;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: auto auto auto ;
-  margin: 1px;
-  padding: 0px;
+  grid-template-rows: auto auto auto;
+  margin: 2px;
+  padding: 2px;
+  background-color: #316f8b;
+border-radius: 3px;
 }
 
 
@@ -611,28 +606,27 @@ loop {
 */
 
 .onstep {
-    background-color: green;
+  background-color: navajowhite;
 }
 
 .offstep {
-    background-color: red;
+  background-color: transparent;
 }
 
 .pad-indicator {
-
-/*  background-color: lightyellow;*/
   align-self: stretch;
-  margin: 2px;
-/*  border: black dashed 1px;*/
-    display: grid;
-    grid-template-columns: 1fr;
+  margin: 1px;
+  margin: 1px;
+  display: grid;
+  grid-template-columns: 1fr;
 }
 
 .pad-indicator-content {
-/*  background-color: lightyellow;*/
-align-self: stretch;
-/*background-color: red;*/
-/*  border: black ridge 1px;*/
+  /*  background-color: lightyellow;*/
+  align-self: stretch;
+
+  /*background-color: red;*/
+  /*  border: black ridge 1px;*/
 }
 
 .pad-content {
@@ -640,6 +634,7 @@ align-self: stretch;
   align-self: stretch;
   margin: px;
   border: black inset 1px;
+    
 }
 
 .pad {
@@ -652,6 +647,7 @@ align-self: stretch;
   margin: 0px;
   display: grid;
   grid-template-columns: 1fr;
+  border-radius: 3px;
 }
 
 .vflex-end {
@@ -749,7 +745,7 @@ select {
   gap: 0;
   margin: 0;
   padding: 0;
-    border: black inset 1px;
+  border: black inset 1px;
 }
 
 th {
@@ -832,28 +828,28 @@ th {
 .slider-container {
   display: grid;
   gap: 4px;
-    margin: 4px;
+  margin: 4px;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   background-color: transparent;
   align-self: stretch;
-    
+
 }
 
 .slider-box {
   display: grid;
-    height: 50px;
+  height: 50px;
   grid-template-columns: auto;
   gap: 4px;
-    margin: 4px;
-/*border: whitesmoke solid 1px;   */
+  margin: 4px;
+  /*border: whitesmoke solid 1px;   */
 }
 
 .slider {
-/*  transform: rotate(270deg);
+  /*  transform: rotate(270deg);
     */
-    margin: 4px;
-    width: 85%;
-/*    font: smaller;*/
+  margin: auto;
+  width: 85%;
+  /*    font: smaller;*/
 }
 
 /* Page title */
@@ -904,16 +900,17 @@ th {
 }
 
 .status-readout {
-    align-self: stretch;
-    width: 298px;
-    margin: 6px;
-    border: black 1px inset;
-    height: 100%;
-    border-radius: 6px;
-    background-color: silver;
-    color: black;
-    font-weight: bolder;
+  align-self: stretch;
+  width: 298px;
+  margin: 6px;
+  border: silver 1px inset;
+  height: 100%;
+  border-radius: 6px;
+  background-color: black;
+  color: hotpink;
+  font-weight: bolder;
 }
+
 /* ---------------------------------------------------------- */
 
 
@@ -1179,6 +1176,26 @@ th {
 .inactive {
   background-color: firebrick;
 }
+
+
+.ready {
+  background-color: transparent;
+/*
+  border: lawngreen solid 3px;
+  margin: 0px;
+  padding: 0px;
+*/
+}
+
+.armed {
+  background-color: greenyellow;
+/*
+  border: lawngreen solid 3px;
+  margin: 0px;
+  padding: 0px;
+*/
+}
+
 
 .onbeat {
   /*    border-style: dashed;*/

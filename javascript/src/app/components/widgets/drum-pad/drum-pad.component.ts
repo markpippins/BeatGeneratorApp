@@ -34,7 +34,7 @@ export class DrumPadComponent {
 
   padPressed() {
     this.pressed = !this.pressed;
-    this.active = true;
+    // this.active = true;
 
     // let element = document.getElementById('pad-ring-' + this.index);
     // if (element != undefined)
@@ -62,7 +62,18 @@ export class DrumPadComponent {
   }
 
   getIndicatorClass(_index: number): string {
-    let result = this.active ? 'pad-indicator-content onstep' : 'pad-indicator-content offstep';
+    let result = 'pad-indicator-content'
+    switch (_index) {
+      case 0: {
+        result += this.pressed? ' armed' :' ready';
+        break;
+      }
+      case 1: {
+        result += this.active ? ' onstep' : ' offstep';
+        break;
+      }
+    }
+
     return result;
   }
 }
