@@ -59,69 +59,25 @@ public class TickerController {
         this.tickerService = tickerService;
     }
 
-    // private Publisher<TickerStatus> tickerStatusPublisher = new
-    // Publisher<TickerStatus>() {
 
-    // @Override
-    // public void subscribe(Subscriber<? super TickerStatus> subscriber) {
-
-    // tickerService.getSequenceRunner().getListeners().add(new TickListener() {
-
-    // @Override
-    // public void onTick() {
-    // subscriber.onNext(TickerStatus.from(tickerService.getTicker(),
-    // tickerService.getSequenceRunner().isPlaying()));
-    // }
-
-    // @Override
-    // public void onEnd() {
-    // subscriber.onNext(TickerStatus.from(tickerService.getTicker(),
-    // tickerService.getSequenceRunner().isPlaying()));
-    // }
-    // });
-    // }
-    // };
-
-    // @GetMapping("/foos/{id}")
-    // public Mono<Foo> getFoo(@PathVariable("id") long id) {
-    // return Mono.just(new Foo(id, randomAlphabetic(6)));
-    // }
-
-    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/foos")
-    public Flux<Foo> getAllFoos2() {
-        final Flux<Foo> foosFlux = Flux
-                .fromStream(Stream.generate(() -> new Foo(new Random().nextLong(), randomAlphabetic(6))));
-        final Flux<Long> emmitFlux = Flux.interval(Duration.ofSeconds(1));
-        return Flux.zip(foosFlux, emmitFlux).map(Tuple2::getT1);
+    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/tick")
+    public Flux<TickerStatus> getTick() {
+        final Flux<TickerStatus> flux = Flux
+                .fromStream(Stream.generate(() -> TickerStatus.from(tickerService.getTicker(), tickerService.getSequenceRunner().isPlaying())));
+        final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(150));
+        return Flux.zip(flux, emmitFlux).map(Tuple2::getT1);
     }
 
-    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/foos2")
-    public Flux<TickerStatus> getAllFoos() {
-        final Flux<TickerStatus> flux = Flux.<TickerStatus>create(fluxSink -> {
-            while (true) {
-                fluxSink.next(
-                        TickerStatus.from(tickerService.getTicker(), tickerService.getSequenceRunner().isPlaying()));
-            }
-        }).sample(Duration.ofMillis(50)).log();
+    // @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/foos2")
+    // public Flux<TickerStatus> getAllFoos2() {
+    //     final Flux<TickerStatus> flux = Flux.<TickerStatus>create(fluxSink -> {
+    //         while (true) {
+    //             fluxSink.next(
+    //                     TickerStatus.from(tickerService.getTicker(), tickerService.getSequenceRunner().isPlaying()));
+    //         }
+    //     }).sample(Duration.ofMillis(500)).log();
 
-        return flux;
-    }
-
-    // @GetMapping(value = "/tick", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    // Flux<TickerStatus> tickerStatus() {
-    // return Flux.from(tickerStatusPublisher);
-    // }
-
-    // @GetMapping(value = "/tick2", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    // Publisher<TickerStatus> tickerStatus2() {
-    // return tickerStatusPublisher;
-    // }
-
-    // @GetMapping(path = Constants.ADD_TICKER)
-    // public Ticker newTicker() {
-    // if (requestsToLog.contains("new"))
-    // logger.info(Constants.ADD_TICKER);
-    // return service.newTicker();
+    //     return flux;
     // }
 
     @GetMapping(path = Constants.LOAD_TICKER)

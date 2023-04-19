@@ -5,9 +5,9 @@
       <div class="slider-container">
         <app-slider *ngFor="let controlCode of instrument.controlCodes" [configMode]="configModeOn"
           [channel]="instrument.channel" [label]="controlCode.name" [cc]="controlCode.code"></app-slider>
-          <div *ngif="" class="">
+          <!-- <div *ngif="" class="">
 
-          </div>
+          </div> -->
           <!-- <app-knob></app-knob> -->
       </div>
       <mat-checkbox (change)="configBtnClicked()">Group</mat-checkbox>

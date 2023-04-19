@@ -50,10 +50,12 @@ export class RuleTableComponent implements Listener {
   ];
 
   intervalSet = false;
+  selectedRule!: Rule;
 
   constructor(private midiService: MidiService, private uiService: UiService) {
     this.uiService.addListener(this);
   }
+
   onNotify(_messageType: number, _message: string, _messageValue: number) {
     if (_messageType == Constants.COMMAND) {
       switch (_message) {

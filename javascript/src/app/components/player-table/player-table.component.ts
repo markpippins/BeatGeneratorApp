@@ -20,6 +20,7 @@ export class PlayerTableComponent implements Listener, OnInit {
   @Output()
   ruleChangeEvent = new EventEmitter<Player>();
 
+  selectedPlayer!: Player
   selectedPlayers: Player[] = [];
 
   @Output()
@@ -48,25 +49,8 @@ export class PlayerTableComponent implements Listener, OnInit {
   }
 
   onRowClick(player: Player) {
-    let element = document.getElementById('player-row-' + player.id);
-    if (this.selectedPlayers.length == 0) {
-      this.selectedPlayers.push(player);
+      this.selectedPlayer = player
       this.playerSelectEvent.emit(player);
-      this.uiService.swapClass(element, 'selected', 'active');
-    } else if (this.selectedPlayers.length > 0) {
-      this.selectedPlayers.forEach((p) => {
-        let current = document.getElementById('player-row-' + p.id);
-        this.uiService.swapClass(current, 'selected', 'active');
-      });
-
-      this.selectedPlayers = [player];
-      this.playerSelectEvent.emit(player);
-      this.uiService.swapClass(element, 'selected', 'active');
-    }
-    // else {
-    //   this.selectedPlayer = undefined;
-    //   this.uiService.swapClass(element, 'selected', 'active');
-    // }
   }
 
   onBtnClick(player: Player, action: string) {
@@ -352,5 +336,9 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   getMuteButtonClass(player: Player): string {
     return player.muted ? 'muted' : 'unmuted';
+  }
+
+  getRowClass(player: Player): string {
+    return player == this.selectedPlayer ? 'active-table-row selected' : 'active-table-row';
   }
 }

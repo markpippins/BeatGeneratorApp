@@ -21,15 +21,18 @@
     </select>
   </div>
   <div>
-    <input class="" type="number" min="1" max="127" (change)="onVelocityChange(step, $event)"
-      [(ngModel)]="step.velocity">
+    <input [(ngModel)]="step.velocity" type="range" min="0" max="127" value=1 class="" (change)="onVelocityChange(step, $event)">
+    <!-- <input class="" type="number" min="1" max="127" (change)="onVelocityChange(step, $event)"
+      [(ngModel)]="step.velocity"> -->
   </div>
   <div>
-    <input class="" type="number" min="0" max="100" (change)="onProbabilityChange(step, $event)"
+    <input [(ngModel)]="step.probability" type="range" min="0" max="100" value=1 class="" (change)="onProbabilityChange(step, $event)">
+    <!-- <input class="" type="number" min="0" max="100" (change)="onProbabilityChange(step, $event)"
       [(ngModel)]="step.probability">
-  </div>
+  </div> -->
   <div>
-    <input class="" type="number" min="0" max="100" (change)="onGateChange(step, $event)" [(ngModel)]="step.gate">
+    <input [(ngModel)]="step.gate" type="range" min="0" max="100" value=1 class="" (change)="onGateChange(step, $event)">
+    <!-- <input class="" type="number" min="0" max="100" (change)="onGateChange(step, $event)" [(ngModel)]="step.gate"> -->
   </div>
   <app-drum-pad [active]="active" [index]="step.position"></app-drum-pad>
   <!-- <div [ngClass]=" flag ? 'primary mini-btn' : 'secondary mini-btn'" *ngIf="active == true"

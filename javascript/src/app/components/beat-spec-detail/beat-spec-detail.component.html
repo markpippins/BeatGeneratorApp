@@ -4,6 +4,37 @@
       <th *ngFor="let col of columns"> {{col}} </th>
     </tr>
     <tr>
+
+      <td>
+        <!-- LINK BUTTON -->
+        <button ngClass="{{pattern.loop ? 'mini-btn loop' : 'mini-btn ready' }}" [style.height.px]="20"
+          id="pattern-link-{{pattern.id}}" (click)="onLinkChange()" disabled="true">
+          Li
+        </button>
+      </td>
+
+      <td>
+        <button ngClass="{{pattern.loop ? 'mini-btn loop' : 'mini-btn ready' }}" [style.height.px]="20"
+          id="pattern-loop-{{pattern.id}}" (click)="onLoopChange()">
+          {{pattern.loop ? 'L' : 'L'}}
+        </button>
+      </td>
+
+      <td>
+        <button ngClass="{{pattern.muted ? 'muted' : 'unmuted' }}" [style.height.px]="20"
+          id="pattern-mute-{{pattern.id}}" (click)="onMuteChange()">
+          {{pattern.muted ? 'U' : 'M'}}
+        </button>
+      </td>
+
+      <td>
+        <!-- <input class="short-col" type="checkbox" (change)="onQuantizeChange()" [(ngModel)]="pattern.quantize"> -->
+        <button ngClass="{{pattern.loop ? 'mini-btn loop' : 'mini-btn ready' }}" [style.height.px]="20"
+          id="pattern-quantize-{{pattern.id}}" (click)="onQuantizeChange()">
+          {{pattern.quantize ? 'Q' : 'Q'}}
+        </button>
+      </td>
+
       <!-- (change)="onSwingChange(player, $event)" -->
       <td class="short-col">
         <input type="number" min="0" max="100" step="1" value="{{ songId }}">
@@ -72,33 +103,6 @@
       <td>
         <input class="short-col" type="number" min="0" max="100" (change)="onRandomChange($event)"
           [(ngModel)]="pattern.random">
-      </td>
-      <td>
-        <button ngClass="{{pattern.loop ? 'mini-btn loop' : 'mini-btn ready' }}" [style.height.px]="20"
-          id="pattern-link-{{pattern.id}}" (click)="onLinkChange()">
-          Li
-        </button>
-      </td>
-      <td>
-        <!-- <input class="short-col" type="checkbox" (change)="onQuantizeChange()" [(ngModel)]="pattern.quantize"> -->
-        <button ngClass="{{pattern.loop ? 'mini-btn loop' : 'mini-btn ready' }}" [style.height.px]="20"
-          id="pattern-quantize-{{pattern.id}}" (click)="onQuantizeChange()">
-          {{pattern.quantize ? 'Q' : 'Q'}}
-        </button>
-      </td>
-      <td>
-        <!-- <input class="short-col" type="checkbox" (change)="onLoopChange()" [(ngModel)]="pattern.loop"> -->
-        <button ngClass="{{pattern.loop ? 'mini-btn loop' : 'mini-btn ready' }}" [style.height.px]="20"
-          id="pattern-loop-{{pattern.id}}" (click)="onLoopChange()">
-          {{pattern.loop ? 'L' : 'L'}}
-        </button>
-      </td>
-      <td>
-        <button ngClass="{{pattern.muted ? 'muted' : 'unmuted' }}" [style.height.px]="20"
-          id="pattern-mute-{{pattern.id}}" (click)="onMuteChange()">
-          {{pattern.muted ? 'U' : 'M'}}
-        </button>
-        <!-- <input class="short-col" type="checkbox" (change)="onMuteChange()" [(ngModel)]="pattern.muted"> -->
       </td>
     </tr>
 

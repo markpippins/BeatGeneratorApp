@@ -9,7 +9,7 @@
       </th>
     </tr>
 
-    <tr *ngFor="let player of players; let index = index;" class="active-table-row" id="player-row-{{player.id}}"
+    <tr *ngFor="let player of players; let index = index;" [ngClass]="getRowClass(player)" id="player-row-{{player.id}}"
       (mouseenter)="onPass(player)" (click)="onRowClick(player)">
 
 

@@ -1,26 +1,29 @@
 import {
-  AfterContentChecked,
   Component,
   EventEmitter,
   Input,
+  NgZone,
   OnInit,
   Output,
 } from '@angular/core';
 import { MidiService } from '../../services/midi.service';
 import { Constants } from 'src/app/models/constants';
 import { UiService } from 'src/app/services/ui.service';
-import { Listener } from 'src/app/models/listener';
 import { TickerUpdateType } from 'src/app/models/ticker-update-type';
 import { TickerStatus } from 'src/app/models/ticker-status';
+import { Observable, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-status-panel',
   templateUrl: './status-panel.component.html',
   styleUrls: ['./status-panel.component.css'],
 })
-export class StatusPanelComponent
-  implements OnInit, Listener, AfterContentChecked
-{
+export class StatusPanelComponent implements OnInit {
+
+  message = '';
+  messages!: any[];
+  sub!: Subscription;
+
   ppqSelectionIndex!: number;
   ppqs = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 21, 23, 24, 27,
@@ -41,15 +44,8 @@ export class StatusPanelComponent
     'Max',
   ];
 
-  interval: number = 10;
-
-  @Input()
-  running = false;
-
   @Input()
   status!: TickerStatus;
-
-  connected = false;
 
   @Output()
   ppqChangeEvent = new EventEmitter<number>();
@@ -57,16 +53,43 @@ export class StatusPanelComponent
   @Output()
   tempoChangeEvent = new EventEmitter<number>();
 
-  constructor(private midiService: MidiService, private uiService: UiService) {}
+  constructor(private zone: NgZone, private midiService: MidiService, private uiService: UiService) {}
 
-  onNotify(_messageType: number, _message: string) {}
+  getMessages(): Observable<string> {
 
-  ngOnInit(): void {
-    this.updateDisplay();
+    return Observable.create(
+      (      observer: { next: (arg0: any) => void; error: (arg0: Event) => void; }) => {
+
+        let source = new EventSource("http://localhost:8080/api/tick");
+        source.onmessage = event => {
+          this.zone.run(() => {
+            observer.next(event.data)
+          })
+        }
+
+        source.onerror = event => {
+          this.zone.run(() => {
+            observer.error(event)
+          })
+        }
+      }
+    )
   }
 
-  ngAfterContentChecked(): void {}
+  ngOnInit(): void {
+    this.messages = [];
+    this.sub = this.getMessages().subscribe({
+      next: (data: string) => {
+        this.status = JSON.parse(data);
+        this.updateDisplay();
+      },
+      error: (err: any) => console.error(err)
+    });
+  }
 
+  ngOnDestroy(): void {
+    this.sub && this.sub.unsubscribe();
+  }
   getBeats() {
     const beats = [];
     for (let i = this.status.beatsPerBar; i >= 1; i--) beats.push(i);
@@ -80,53 +103,7 @@ export class StatusPanelComponent
   lastBar = 0;
   lastPart = 0;
 
-  // if (this.waiting)
-  //   return
-
-  // if (this.status != undefined && this.status.id == 0)
-  //   this.midiService.next(0)
-
-  // this.waiting = true
-  // if (this.connected)
-
-  // let disconnected = !this.connected
-  // if (disconnected && !this.nextCalled) {
-  //   this.nextCalled = true
-  //   this.midiService.next(0).subscribe(async (_newTicker) => {
-  //     this.connected = true
-  // //     this.status = data2
-  //     this.uiService.notifyAll(Constants.CONNECTED, '', 1)
-  //     this.waiting = false
-  //   })
-  // }
-  // await this.midiService.delay(this.status?.playing ? 100 : 250);
-  // this.waiting = false;
-
   updateDisplay(): void {
-    this.midiService.tickerStatus().subscribe(
-      async (data) => {
-        this.status = data;
-        this.setIndexForPPQ();
-        await this.midiService.delay(this.status?.playing ? 200 : 1000);
-        this.updateDisplay();
-      }
-
-      // async (err) => {
-      //   console.log(err);
-      //   this.connected = false;
-      //   this.uiService.notifyAll(Constants.DISCONNECTED, '', 0);
-      //   await this.midiService.delay(500);
-      //   this.waiting = false;
-      //   this.updateDisplay();
-      // },
-
-      // async () => {
-      //   await this.midiService.delay(500);
-      //   this.waiting = false;
-      //   this.updateDisplay();
-      // }
-    );
-
     if (this.status != undefined) {
       if (this.status.beat != this.lastBeat) {
         this.lastBeat = this.status.beat;
