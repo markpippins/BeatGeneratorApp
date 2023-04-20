@@ -33,7 +33,8 @@ public class TickerService {
 
     private TickerStatusDAO tickerStatusDAO;
     // private TickListener listener;
-    // private TickerStatusPublisher tickerStatusPublisher = new TickerStatusPublisher(this);
+    // private TickerStatusPublisher tickerStatusPublisher = new
+    // TickerStatusPublisher(this);
     private Long lastTickId;
 
     public TickerService(TickerRepo tickerRepo, StrikeRepo strikeRepo,
@@ -95,7 +96,7 @@ public class TickerService {
     }
 
     public TickerStatus getTickerStatus() {
-        return TickerStatus.from(getTicker(), getSequenceRunner().isPlaying());
+        return TickerStatus.from(getTicker(), getSongService().getSong(), getSequenceRunner().isPlaying());
     }
 
     public List<Ticker> getAllTickerInfo() {

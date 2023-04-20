@@ -20,19 +20,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.angrysurfer.midi.model.TickListener;
 import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.model.TickerStatus;
+import com.angrysurfer.midi.service.SongService;
 import com.angrysurfer.midi.service.TickerService;
 import com.angrysurfer.midi.util.Constants;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
-
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 
 @CrossOrigin("*")
 @Controller
@@ -40,44 +35,39 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 @RequestMapping("/api")
 public class TickerController {
 
-    @AllArgsConstructor
-    @Data
-    public class Foo {
-
-        private long id;
-        private String name;
-
-    }
-
     List<String> requestsToLog = new ArrayList<>();
 
     static Logger logger = LoggerFactory.getLogger(TickerController.class.getCanonicalName());
 
     private final TickerService tickerService;
+    private final SongService songService;
 
-    public TickerController(TickerService tickerService) {
+    public TickerController(TickerService tickerService, SongService songService) {
         this.tickerService = tickerService;
+        this.songService = songService;
     }
-
 
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/tick")
     public Flux<TickerStatus> getTick() {
         final Flux<TickerStatus> flux = Flux
-                .fromStream(Stream.generate(() -> TickerStatus.from(tickerService.getTicker(), tickerService.getSequenceRunner().isPlaying())));
-        final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(150));
+                .fromStream(Stream.generate(() -> TickerStatus.from(tickerService.getTicker(),
+                        songService.getSong(),
+                        tickerService.getSequenceRunner().isPlaying())));
+        final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(300));
         return Flux.zip(flux, emmitFlux).map(Tuple2::getT1);
     }
 
     // @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/foos2")
     // public Flux<TickerStatus> getAllFoos2() {
-    //     final Flux<TickerStatus> flux = Flux.<TickerStatus>create(fluxSink -> {
-    //         while (true) {
-    //             fluxSink.next(
-    //                     TickerStatus.from(tickerService.getTicker(), tickerService.getSequenceRunner().isPlaying()));
-    //         }
-    //     }).sample(Duration.ofMillis(500)).log();
+    // final Flux<TickerStatus> flux = Flux.<TickerStatus>create(fluxSink -> {
+    // while (true) {
+    // fluxSink.next(
+    // TickerStatus.from(tickerService.getTicker(),
+    // tickerService.getSequenceRunner().isPlaying()));
+    // }
+    // }).sample(Duration.ofMillis(500)).log();
 
-    //     return flux;
+    // return flux;
     // }
 
     @GetMapping(path = Constants.LOAD_TICKER)

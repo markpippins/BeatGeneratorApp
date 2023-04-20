@@ -135,8 +135,11 @@ public class SongService {
     public Song getSong() {
         if (Objects.isNull(song))
             return next(0);
-
         return this.song;
+    }
+
+    public SongStatus getSongStatus() {
+        return SongStatus.from(getSong());
     }
 
     public Pattern updatePattern(Long patternId, int updateType, int updateValue) {

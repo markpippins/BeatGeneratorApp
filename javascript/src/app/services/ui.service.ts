@@ -13,7 +13,7 @@ export class UiService {
     this.listeners.push(listener);
   }
 
-  notifyAll(_messageType: number, _message: string, _messageValue: number) {
+  notifyAll(_messageType: number, _message: string, _messageValue: any) {
     this.listeners.forEach((l) =>
       l.onNotify(_messageType, _message, _messageValue)
     );
@@ -96,6 +96,18 @@ export class UiService {
         return 1;
       }
       if (a.name.toLowerCase() < b.name.toLowerCase()) {
+        return -1;
+      }
+      return 0;
+    });
+  }
+
+  sortAlphabetically(data: string[]): string[] {
+    return data.sort((a, b) => {
+      if (a.toLowerCase() > b.toLowerCase()) {
+        return 1;
+      }
+      if (a.toLowerCase() < b.toLowerCase()) {
         return -1;
       }
       return 0;

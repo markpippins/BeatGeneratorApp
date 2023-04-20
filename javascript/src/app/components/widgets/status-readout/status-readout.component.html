@@ -3,7 +3,7 @@
     <label class="status-label">Ticker</label>
     <label *ngIf="ticker != undefined" class="status-output">{{ticker.id}}</label>    |
     <label class="status-label">Players</label>
-    <label class="status-output">{{players.length}}</label>
+    <label *ngif="player != undefined" class="status-output">{{players.length}}</label>
     <div class="flex-container-horizontal">
       <app-slider></app-slider>
       <app-slider></app-slider>

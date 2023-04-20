@@ -54,6 +54,7 @@ export class DashboardComponent implements OnInit, Listener {
     beatCount: 0,
     barCount: 0,
     partCount: 0,
+    patternStatuses: []
   };
 
   ticker: Ticker = {

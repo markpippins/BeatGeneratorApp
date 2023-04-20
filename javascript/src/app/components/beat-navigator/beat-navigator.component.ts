@@ -44,6 +44,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
 
   comboId = 'beat-navigator';
   controlBtnClassName = 'mini-control-btn';
+  newPartOnSum: boolean = false;
 
   instruments!: Instrument[];
   selectedInstrument!: Instrument;
@@ -94,6 +95,10 @@ export class BeatNavigatorComponent implements OnInit, Listener {
 
   testWebSocket() {
     this.getTickerStatus().subscribe((data) => console.log(data));
+  }
+
+  toggleNewPartOnSum(): void {
+    this.newPartOnSum =!this.newPartOnSum;
   }
 
   generate() {

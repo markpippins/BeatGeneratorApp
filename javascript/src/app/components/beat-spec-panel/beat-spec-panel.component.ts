@@ -13,6 +13,7 @@ import { UiService } from 'src/app/services/ui.service';
 import { Step } from '../../models/step';
 import { Instrument } from 'src/app/models/instrument';
 import { Pattern } from 'src/app/models/pattern';
+import { PatternStatus } from 'src/app/models/pattern-status';
 
 interface PitchPair {
   midi: number;
@@ -71,15 +72,12 @@ export class BeatSpecPanelComponent
   @Input()
   currentStep = 1;
 
-  onNotify(messageType: number, _message: string, _messageValue: number) {
-    if (messageType == Constants.TICKER_STARTED)
-      this.currentStep = this.pattern.firstStep - 1;
-
-    if (messageType == Constants.BEAT_DIV) {
-      if (this.currentStep < this.pattern.lastStep) this.currentStep += 1;
-      else this.currentStep = this.pattern.firstStep;
-
-      this.active = this.currentStep-1 == this.step.position;
+  onNotify(messageType: number, _message: string, messageValue: any) {
+    if (messageType == Constants.NOTIFY_SONG_STATUS) {
+      let status: PatternStatus = messageValue;
+      this.active =
+        this.pattern.id == status.pattern &&
+        status.activeStep == this.step.position;
     }
   }
 
@@ -163,6 +161,6 @@ export class BeatSpecPanelComponent
   }
 
   getClass() {
-    return this.active ? "lane-808 ready" : "lane-808";
+    return this.active ? 'lane-808 ready' : 'lane-808';
   }
 }

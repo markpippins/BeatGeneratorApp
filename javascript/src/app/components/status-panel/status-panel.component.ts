@@ -19,11 +19,7 @@ import { Observable, Subscription } from 'rxjs';
   styleUrls: ['./status-panel.component.css'],
 })
 export class StatusPanelComponent implements OnInit {
-
-  message = '';
-  messages!: any[];
   sub!: Subscription;
-
   ppqSelectionIndex!: number;
   ppqs = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 21, 23, 24, 27,
@@ -53,43 +49,48 @@ export class StatusPanelComponent implements OnInit {
   @Output()
   tempoChangeEvent = new EventEmitter<number>();
 
-  constructor(private zone: NgZone, private midiService: MidiService, private uiService: UiService) {}
+  constructor(
+    private zone: NgZone,
+    private midiService: MidiService,
+    private uiService: UiService
+  ) {}
 
   getMessages(): Observable<string> {
-
     return Observable.create(
-      (      observer: { next: (arg0: any) => void; error: (arg0: Event) => void; }) => {
-
-        let source = new EventSource("http://localhost:8080/api/tick");
-        source.onmessage = event => {
+      (observer: {
+        next: (arg0: any) => void;
+        error: (arg0: Event) => void;
+      }) => {
+        let source = new EventSource('http://localhost:8080/api/tick');
+        source.onmessage = (event) => {
           this.zone.run(() => {
-            observer.next(event.data)
-          })
-        }
+            observer.next(event.data);
+          });
+        };
 
-        source.onerror = event => {
+        source.onerror = (event) => {
           this.zone.run(() => {
-            observer.error(event)
-          })
-        }
+            observer.error(event);
+          });
+        };
       }
-    )
+    );
   }
 
   ngOnInit(): void {
-    this.messages = [];
     this.sub = this.getMessages().subscribe({
       next: (data: string) => {
         this.status = JSON.parse(data);
         this.updateDisplay();
       },
-      error: (err: any) => console.error(err)
+      error: (err: any) => console.error(err),
     });
   }
 
   ngOnDestroy(): void {
     this.sub && this.sub.unsubscribe();
   }
+
   getBeats() {
     const beats = [];
     for (let i = this.status.beatsPerBar; i >= 1; i--) beats.push(i);
@@ -108,6 +109,13 @@ export class StatusPanelComponent implements OnInit {
       if (this.status.beat != this.lastBeat) {
         this.lastBeat = this.status.beat;
         this.uiService.notifyAll(Constants.BEAT_DIV, '', this.status.beat);
+        this.status.patternStatuses.forEach((patternStatus) =>
+          this.uiService.notifyAll(
+            Constants.NOTIFY_SONG_STATUS,
+            '',
+            patternStatus
+          )
+        );
       }
       if (this.status.bar != this.lastBar) {
         this.lastBar = this.status.bar;

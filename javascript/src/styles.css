@@ -189,6 +189,14 @@ p {
   justify-content: stretch;
 }
 
+.flex-v-inset {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  flex-direction: flex-start;
+  align-items: stretch;
+  justify-content: stretch;
+}
 
 .strike-detail {
   /* height: 29%; */
@@ -584,9 +592,9 @@ loop {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: auto auto auto;
-  margin: 2px;
+  margin: 3px;
   padding: 2px;
-  background-color: #316f8b;
+  background-color: silver;
 border-radius: 3px;
 }
 
@@ -709,7 +717,7 @@ border-radius: 3px;
 }
 
 .pad-13 {
-  background-color: darkorchid;
+  background-color: crimson;
 }
 
 .pad-14 {
@@ -844,6 +852,8 @@ th {
   gap: 4px;
   margin: 4px;
   /*border: whitesmoke solid 1px;   */
+    background-color: cornflowerblue;
+    border: white solid 1px;
 }
 
 .slider {
@@ -854,6 +864,40 @@ th {
   /*    font: smaller;*/
 }
 
+.slider-area {
+  gap: 4px;
+  display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr ;
+        margin:4px;
+    border: white solid 1px;
+    border-radius: 25px;
+    padding: 10px;
+    background-color: cadetblue;
+}
+
+.area {
+    background-color: crimson;
+    border: white solid 1px;
+    display: flex;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+}
+
+.area-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.first-level {
+    
+}
+
+.top-level {
+    
+}
+
+.top-level {
+    
+}
 /* Page title */
 /* ---------------------------------------------------------- */
 .title-holder {

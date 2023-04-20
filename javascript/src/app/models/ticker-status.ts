@@ -1,3 +1,5 @@
+import { PatternStatus } from "./pattern-status"
+
 export interface TickerStatus {
   id: number
   bars: number
@@ -21,4 +23,5 @@ export interface TickerStatus {
   beatCount: number
   barCount: number
   partCount: number
+  patternStatuses: PatternStatus[]
 }

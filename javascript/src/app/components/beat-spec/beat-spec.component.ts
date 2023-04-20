@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, NgZone, OnInit } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
 import { Listener } from 'src/app/models/listener';
@@ -8,6 +8,8 @@ import { Song } from 'src/app/models/song';
 import { UiService } from 'src/app/services/ui.service';
 import { MidiService } from '../../services/midi.service';
 import { Step } from 'src/app/models/step';
+import { Observable, Subscription } from 'rxjs';
+import { SongStatus } from 'src/app/models/song-status';
 
 @Component({
   selector: 'app-beat-spec',
@@ -39,24 +41,71 @@ export class BeatSpecComponent implements OnInit, Listener {
     ],
   ];
 
+  sub!: Subscription;
+  status!: SongStatus;
+
   // @Input()
   instruments!: Instrument[];
 
+  constructor(
+    private zone: NgZone,
+    private midiService: MidiService,
+    private uiService: UiService
+  ) {
+    uiService.addListener(this);
+  }
+
+  getMessages(): Observable<string> {
+    return Observable.create(
+      (observer: {
+        next: (arg0: any) => void;
+        error: (arg0: Event) => void;
+      }) => {
+        let source = new EventSource('http://localhost:8080/api/song/status');
+        source.onmessage = (event) => {
+          this.zone.run(() => {
+            observer.next(event.data);
+          });
+        };
+
+        source.onerror = (event) => {
+          this.zone.run(() => {
+            observer.error(event);
+          });
+        };
+      }
+    );
+  }
+
   ngOnInit(): void {
-    // this.uiService.addListener(this)
-    this.midiService.allInstruments().subscribe((data) => {
-      this.instruments = this.uiService.sortByName(data);
+    this.midiService.allInstruments().subscribe((instruments) => {
+      this.instruments = this.uiService.sortByName(instruments);
+      this.updateDisplay();
     });
-    this.updateDisplay();
+
+    // this.sub = this.getMessages().subscribe({
+    //   next: (data: string) => {
+    //     this.status = JSON.parse(data);
+    //     this.status.patternStatuses.forEach((patternStatus) =>
+    //       this.uiService.notifyAll(
+    //         Constants.NOTIFY_SONG_STATUS,
+    //         '',
+    //         patternStatus
+    //       )
+    //     );
+    //   },
+    //   error: (err: any) => console.error(err),
+    // });
+  }
+
+  ngOnDestroy(): void {
+    this.sub && this.sub.unsubscribe();
   }
 
   paramsBtnClicked(step: number) {
     this.editStep = step;
   }
 
-  constructor(private midiService: MidiService, private uiService: UiService) {
-    uiService.addListener(this);
-  }
   onNotify(messageType: number, _message: string, messageValue: number) {
     if (messageType == Constants.TICKER_SELECTED) this.tickerId = messageValue;
   }
@@ -82,7 +131,11 @@ export class BeatSpecComponent implements OnInit, Listener {
   }
 
   selectedIndexChange(index: number) {
-    this.uiService.notifyAll(Constants.INSTRUMENT_SELECTED, '', this.song.patterns[index].instrument.id)
+    this.uiService.notifyAll(
+      Constants.INSTRUMENT_SELECTED,
+      '',
+      this.song.patterns[index].instrument.id
+    );
   }
 
   onStepChanged(_step: any) {
@@ -92,8 +145,8 @@ export class BeatSpecComponent implements OnInit, Listener {
   }
 
   getInstrumentForStep(_pattern: Pattern, _step: Step): Instrument {
-    let result = this.instruments.filter(i => i.id == _pattern.instrument.id)
-    return result[0]
+    let result = this.instruments.filter((i) => i.id == _pattern.instrument.id);
+    return result[0];
   }
 
   getLabel(pattern: Pattern): string {
@@ -104,6 +157,6 @@ export class BeatSpecComponent implements OnInit, Listener {
 
     if (s.toLowerCase() == 'gervill') s = 'Gervill';
 
-    return s + ' [' + pattern.position + ']'
+    return s + ' [' + pattern.position + ']';
   }
 }

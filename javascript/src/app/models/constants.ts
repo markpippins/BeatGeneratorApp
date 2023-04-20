@@ -47,7 +47,7 @@ export class Constants {
   static PLAYER_SELECTED = 15;
   static INSTRUMENT_SELECTED = 16;
   static TICKER_STARTED = 17;
-
+  static NOTIFY_SONG_STATUS = 18;
   static CLICK = 0;
   static NUDGE_RIGHT = 1;
   static NUDGE_LEFT = 2;

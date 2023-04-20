@@ -1,7 +1,9 @@
 package com.angrysurfer.midi.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
+import org.hibernate.mapping.List;
 import org.springframework.data.redis.core.RedisHash;
 
 import jakarta.persistence.Id;
@@ -14,9 +16,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @RedisHash("TickerStatus")
 public class TickerStatus implements Serializable {
-    
+
     @Id
-    private Long id; 
+    private Long id;
     private Long tick;
     private Double beat;
     private Long bar;
@@ -41,7 +43,9 @@ public class TickerStatus implements Serializable {
     private Double noteOffset;
     private Boolean playing;
 
-    public static TickerStatus from(Ticker ticker, boolean isPlaying) {
+    ArrayList<PatternStatus> patternStatuses = new ArrayList<>();
+
+    public static TickerStatus from(Ticker ticker, Song song, boolean isPlaying) {
 
         TickerStatus result = new TickerStatus();
 
@@ -68,6 +72,8 @@ public class TickerStatus implements Serializable {
         result.setBarCount(ticker.getBarCount());
         result.setPartCount(ticker.getPartCount());
 
+        song.getPatterns().forEach(p -> result.patternStatuses.add(PatternStatus.from(p)));
+
         return result;
-    } 
+    }
 }
