@@ -50,16 +50,39 @@ export class SliderPanelComponent implements OnInit, Listener {
     });
   }
 
+  findKeys(data: string[]) {
+    let pool: Map<string, string[]> = new Map();
+
+    data.forEach((item) => {
+      let splitted = item.split(' ');
+      let term = '';
+      splitted.forEach((s) => {
+        term += s;
+        if (!this.keyExistsForTerm(term, pool)) {
+          pool.set(term, []);
+        } else {
+          let leaves = pool.get(this.getKeyForTerm(term, pool));
+          if (!leaves?.includes(term))
+            if (term != this.getKeyForTerm(term, pool)) leaves!.push(term);
+        }
+        term += ' ';
+      });
+    });
+
+    console.log('findKeys() returning:', pool);
+  }
+
   buildPool(instruments: Instrument[]) {
     // let panels = new Map<string, string[]>()
 
     instruments.forEach((instrument) => {
       let pool: Map<string, string[]> = new Map();
 
+      let areas: Map<string, string[]> = new Map();
+
       instrument.controlCodes.forEach((cc) => {
         let splitted = cc.name.split(' ');
         let term = '';
-        // let level = 0;
         splitted.forEach((s) => {
           term += s;
           if (!this.keyExistsForTerm(term, pool)) {
@@ -70,12 +93,10 @@ export class SliderPanelComponent implements OnInit, Listener {
               if (term != this.getKeyForTerm(term, pool)) leaves!.push(term);
           }
           term += ' ';
-          // level++;
         });
       });
 
-      let result: Map<string, string[]> = new Map();
-      result.set('other', []);
+      areas.set('other', []);
       pool.forEach((value, key) => {
         if (value.length > 1) {
           let outliers: string[] = value.filter(
@@ -83,22 +104,23 @@ export class SliderPanelComponent implements OnInit, Listener {
           );
           if (outliers.length > 0) {
             outliers.forEach((out) =>
-              result.set(
+              areas.set(
                 out,
                 value.filter((v) => !outliers.includes(v))
               )
             );
-          } else if (value.length > 1) result.set(key, value);
-        } else {
-          result.get('other')?.push(value[0]);
-        }
+          } else {
+            if (value.length > 1) areas.set(key, value);
+          }
+        } else areas.get('Other')?.push(value[0]);
       });
 
+      if (areas.get('Other')?.length == 0) areas.delete('Other');
+
       console.log(instrument.name);
-      console.log('pool');
-      console.log(pool);
-      console.log('result');
-      console.log(result);
+      console.log('areas', areas);
+      this.findKeys([...areas.keys()]);
+      // console.log('keys', [...areas.keys()]);
     });
   }
 

@@ -7,6 +7,7 @@ import { Constants } from 'src/app/models/constants';
 import { Listener } from 'src/app/models/listener';
 import { TickerStatus } from 'src/app/models/ticker-status';
 import { Instrument } from 'src/app/models/instrument';
+import { TickerUpdateType } from 'src/app/models/ticker-update-type';
 
 @Component({
   selector: 'app-dashboard',
@@ -54,7 +55,7 @@ export class DashboardComponent implements OnInit, Listener {
     beatCount: 0,
     barCount: 0,
     partCount: 0,
-    patternStatuses: []
+    patternStatuses: [],
   };
 
   ticker: Ticker = {
@@ -278,6 +279,20 @@ export class DashboardComponent implements OnInit, Listener {
 
         case 'ticker-refresh': {
           this.updateDisplay();
+          break;
+        }
+
+        case 'ticker-transpose-up': {
+          this.midiService
+            .updateTicker(this.ticker.id, TickerUpdateType.BASE_NOTE_OFFSET, 1)
+            .subscribe();
+          break;
+        }
+
+        case 'ticker-transpose-down': {
+          this.midiService
+            .updateTicker(this.ticker.id, TickerUpdateType.BASE_NOTE_OFFSET, -1)
+            .subscribe();
           break;
         }
 

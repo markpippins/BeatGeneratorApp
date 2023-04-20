@@ -134,7 +134,7 @@ export class BeatSpecComponent implements OnInit, Listener {
     this.uiService.notifyAll(
       Constants.INSTRUMENT_SELECTED,
       '',
-      this.song.patterns[index].instrument.id
+      this.song.patterns[index].instrument?.id
     );
   }
 
@@ -145,7 +145,7 @@ export class BeatSpecComponent implements OnInit, Listener {
   }
 
   getInstrumentForStep(_pattern: Pattern, _step: Step): Instrument {
-    let result = this.instruments.filter((i) => i.id == _pattern.instrument.id);
+    let result = this.instruments?.filter((i) => i.id == _pattern?.instrument?.id);
     return result[0];
   }
 
