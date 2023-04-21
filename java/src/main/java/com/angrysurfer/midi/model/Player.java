@@ -234,7 +234,7 @@ public abstract class Player implements Callable<Boolean>, Serializable {
 
     @Transient
     @JsonIgnore
-    private boolean isProbable() {
+    public boolean isProbable() {
         long test = rand.nextLong(101);
         long probable = getProbability();
         boolean result = test < probable;

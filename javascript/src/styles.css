@@ -24,8 +24,8 @@ html {
   /*background: -moz-linear-gradient( to left top, blue, red);*
   /*background: -ms-linear-gradient( to left top, blue, red);*/
   /*  background: -o-linear-gradient( to left top, blue, red);*/
-  /*  background: linear-gradient(to right bottom, steelblue, slategrey);*/
-  background-color: black;
+  background: linear-gradient(to right bottom, steelblue, slategrey);
+  /*  background-color: black;*/
 }
 
 body {
@@ -508,8 +508,8 @@ thead th:last-child {
 }
 
 .side-panel-808-drum-pad {
-    margin-top: 4px;
-    margin-left: 14px;
+  margin-top: 4px;
+  margin-left: 14px;
 }
 
 .lane-808 {
@@ -595,7 +595,7 @@ loop {
   margin: 3px;
   padding: 2px;
   background-color: silver;
-border-radius: 3px;
+  border-radius: 3px;
 }
 
 
@@ -619,16 +619,17 @@ border-radius: 3px;
 }
 
 .pad-indicator-text {
-    font-size: smaller;
-    margin: 0px;
+  font-size: smaller;
+  margin: 0px;
 }
+
 .pad-indicator {
   align-self: stretch;
   margin: 1px;
   margin: 1px;
   display: grid;
   grid-template-columns: 1fr;
-    border-radius: 6px;
+  border-radius: 6px;
 }
 
 .pad-indicator-content {
@@ -644,7 +645,7 @@ border-radius: 3px;
   align-self: stretch;
   margin: px;
   border: black inset 1px;
-    
+
 }
 
 .pad {
@@ -846,58 +847,79 @@ th {
 }
 
 .slider-box {
-  display: grid;
-  height: 50px;
-  grid-template-columns: auto;
-  gap: 4px;
-  margin: 4px;
-  /*border: whitesmoke solid 1px;   */
-    background-color: cornflowerblue;
-    border: white solid 1px;
+  display: flex;
+  flex-direction: column;
+  background-color: transparent;
+  /*    border: white solid 1px;*/
 }
 
 .slider {
   /*  transform: rotate(270deg);
     */
   margin: auto;
-  width: 85%;
-  /*    font: smaller;*/
+  width: 100%;
 }
 
 .slider-area {
   gap: 4px;
   display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr ;
-        margin:4px;
-    border: white solid 1px;
-    border-radius: 25px;
-    padding: 10px;
-    background-color: cadetblue;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  margin: 4px;
+  border: white solid 1px;
+  border-radius: 25px;
+  padding: 10px;
+  background-color: cadetblue;
 }
 
 .area {
-    background-color: crimson;
-    border: white solid 1px;
+  background-color: transparent;
+  border: white ridge 1px;
+  gap: 4px;
+  margin: 4px;
+  border-radius: 25px;
+  background-color: cadetblue;
+}
+
+
+.area-header {
+  border-radius: 25px;
+  background-color: blue;
+  margin: 4px 8px 4px 8px;
+  text-align: center;
+  justify-content: center;
+  border: white inset 1px;
+}
+
+.area-content {
+  background-color: transparent;
+  gap: 4px;
+  margin: 8px;
+  /*    border-radius: 25px;*/
+}
+
+.area-slider {
+  width: 80px;
+}
+
+.area-control {
+/*  border: white inset 1px;*/
+    gap: 4px;
     display: flex;
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+}
+
+.area-controls {
+  margin: 2px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(2, 1fr));
+/*  border: blue dashed 1px;*/
 }
 
 .area-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(6, minmax(150px, 1fr));
+/*  border: coral dashed 4px;*/
 }
 
-.first-level {
-    
-}
-
-.top-level {
-    
-}
-
-.top-level {
-    
-}
 /* Page title */
 /* ---------------------------------------------------------- */
 .title-holder {
@@ -1151,8 +1173,8 @@ th {
 }
 
 .mini-control-btn {
-    color: white;
-    background-color: #316f8b;
+  color: white;
+  background-color: #316f8b;
 }
 
 .mini-comparison-btn {
@@ -1231,7 +1253,7 @@ th {
 
 .ready {
   background-color: transparent;
-/*
+  /*
   border: lawngreen solid 3px;
   margin: 0px;
   padding: 0px;
@@ -1240,7 +1262,7 @@ th {
 
 .armed {
   background-color: greenyellow;
-/*
+  /*
   border: lawngreen solid 3px;
   margin: 0px;
   padding: 0px;

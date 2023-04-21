@@ -1,45 +1,28 @@
 <mat-tab-group>
   <div *ngFor="let instrument of instruments;">
     <mat-tab *ngIf="instrument.controlCodes.length > 0" label="{{instrument.name}}">
-      <!-- <span>{{instrument.channel}}</span> -->
-      <div class="slider-container">
+      <!-- <div class="slider-container">
         <app-slider *ngFor="let controlCode of instrument.controlCodes" [configMode]="configModeOn"
           [channel]="instrument.channel" [label]="controlCode.name" [cc]="controlCode.code"></app-slider>
-        <!-- <div *ngif="" class="">
+      </div> -->
 
-          </div> -->
-        <!-- <app-knob></app-knob> -->
-      </div>
-      <mat-checkbox (change)="configBtnClicked()">Group</mat-checkbox>
       <div class="area-container">
-        <div *ngFor="let area of getAreasFor(instrument)">
-          <div class="area">
-            <!-- {{ area }} -->
+        <div class="area" *ngFor="let pool of pools.get(instrument)">
+          <div class="area-content">
+            <div class="area-header">
+              {{ pool }}
+            </div>
             <br>
-            <div class="sub-panel">
-              <div *ngFor="let sub of getPanelsFor(instrument, area)">
-                {{sub}}
-                <div class="slider-area">
-                  <div *ngFor="let cc of getCCsFor(instrument, sub)">
-                    {{cc.name}}
-                    <input type="range" min="1" max="127" value=1 class="slider">
-
-                    <!-- <app-slider [configMode]="configModeOn" [channel]="instrument.channel" [label]="cc.name"
-                      [cc]="cc.code"></app-slider> -->
-                  </div>
+            <div *ngFor="let controlCode of getControlCodes(instrument, pool)">
+              <div class="area-controls" *ngIf="controlCode.name.startsWith(pool)">
+                <div class="area-control">
+                  <app-slider [configMode]="configModeOn" [channel]="instrument.channel" [label]="controlCode.name"
+                    [cc]="controlCode.code"></app-slider>
                 </div>
-              </div>
-              <div class="flex-v-inset slider-area third-level">
-                <div *ngFor="let panel of getRemainingPanelsFor(instrument, area)">
-                  <!-- <div *ngIf="!getPanelsFor(instrument, area).includes(cc.name)"> -->
-                    {{panel}}
-                    <app-slider [configMode]="configModeOn" [channel]="instrument.channel"
-                      ></app-slider>
-                  </div>
-                <!-- </div> -->
               </div>
             </div>
           </div>
+          <!-- <mat-checkbox (change)="configBtnClicked()">Group</mat-checkbox> -->
         </div>
       </div>
     </mat-tab>

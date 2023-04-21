@@ -58,19 +58,16 @@ export class SliderPanelComponent implements OnInit, Listener {
       let term = '';
       splitted.forEach((s) => {
         term += s;
-        if (!this.keyExistsForTerm(term, pool)) {
-          pool.set(term, []);
-        } else {
-          let leaves = pool.get(this.getKeyForTerm(term, pool));
-          if (!leaves?.includes(term))
-            if (term != this.getKeyForTerm(term, pool)) leaves!.push(term);
-        }
+        if (!this.keyExistsForTerm(term, pool)) pool.set(term, []);
         term += ' ';
       });
     });
-
-    console.log('findKeys() returning:', pool);
+    console.log('findKeys() returning:', pool.keys());
+    return pool.keys();
   }
+
+  pools: Map<Instrument, string[]> = new Map();
+  panels: Map<string, Map<string, string[]>> = new Map();
 
   buildPool(instruments: Instrument[]) {
     // let panels = new Map<string, string[]>()
@@ -78,41 +75,40 @@ export class SliderPanelComponent implements OnInit, Listener {
     instruments.forEach((instrument) => {
       let pool: Map<string, string[]> = new Map();
 
-      let areas: Map<string, string[]> = new Map();
-
       instrument.controlCodes.forEach((cc) => {
-        let splitted = cc.name.split(' ');
-        let term = '';
-        splitted.forEach((s) => {
-          term += s;
-          if (!this.keyExistsForTerm(term, pool)) {
-            pool.set(term, []);
+        let terms = cc.name.split(' ');
+        let value = '';
+        terms.forEach((term) => {
+          value += term;
+          if (!this.keyExistsForTerm(value, pool)) {
+            pool.set(value, []);
           } else {
-            let leaves = pool.get(this.getKeyForTerm(term, pool));
-            if (!leaves?.includes(term))
-              if (term != this.getKeyForTerm(term, pool)) leaves!.push(term);
+            let leaves = pool.get(this.getKeyForTerm(value, pool));
+            if (!leaves?.includes(value))
+              if (value != this.getKeyForTerm(value, pool)) leaves!.push(value);
           }
-          term += ' ';
+          value += ' ';
         });
       });
 
-      areas.set('other', []);
+      let areas: Map<string, string[]> = new Map();
+      // areas.set('Other', []);
+
       pool.forEach((value, key) => {
-        if (value.length > 1) {
-          let outliers: string[] = value.filter(
-            (v) => !instrument.controlCodes.map((cc) => cc.name).includes(v)
+        let outliers: string[] = value.filter(
+          (v) => !instrument.controlCodes.map((cc) => cc.name).includes(v)
+        );
+        if (outliers.length > 0) {
+          outliers.forEach((out) =>
+            areas.set(
+              out,
+              value.filter((v) => !outliers.includes(v))
+            )
           );
-          if (outliers.length > 0) {
-            outliers.forEach((out) =>
-              areas.set(
-                out,
-                value.filter((v) => !outliers.includes(v))
-              )
-            );
-          } else {
-            if (value.length > 1) areas.set(key, value);
-          }
-        } else areas.get('Other')?.push(value[0]);
+        }
+        // if (value.length > 0)
+        areas.set(key, value);
+        areas.get('Other')?.push(value[0]);
       });
 
       if (areas.get('Other')?.length == 0) areas.delete('Other');
@@ -121,7 +117,13 @@ export class SliderPanelComponent implements OnInit, Listener {
       console.log('areas', areas);
       this.findKeys([...areas.keys()]);
       // console.log('keys', [...areas.keys()]);
+      this.pools.set(instrument, [...this.findKeys([...areas.keys()])].sort());
+      this.panels.set(instrument.name + '-' + pool, areas);
     });
+  }
+
+  getControlCodes(instrument: Instrument, search: string): ControlCode[] {
+    return instrument.controlCodes.filter((cc) => cc.name.startsWith(search));
   }
 
   findShortest(data: string[]) {
