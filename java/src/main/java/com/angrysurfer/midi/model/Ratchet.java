@@ -29,7 +29,7 @@ public class Ratchet extends Strike {
         setFadeIn(getParent().getFadeIn());
         setFadeOut(getParent().getFadeOut());
         setPreset(getParent().getPreset());
-                
+
         Long ratchets = getTicker().getPlayers().stream().filter(p -> p instanceof Ratchet).count();
         setId(-1 - ratchets);
         setName(getParent().getName() + String.format("s", getParent().getTicker().getPlayers().size()));
@@ -45,7 +45,7 @@ public class Ratchet extends Strike {
     }
 
     public void onTick(long tick, long bar) {
-        if (getProbability().equals(100L) || rand.nextInt(100) > getProbability())
+        if (isProbable())
             drumNoteOn(getNote());
     }
 }
