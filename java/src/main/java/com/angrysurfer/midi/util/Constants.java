@@ -82,7 +82,7 @@ public class Constants {
     public static final String PLAY_DRUM_NOTE = "/drums/note";
     public static final String PLAY_SEQUENCE = "/sequence/play";
 
-    public static final int DEFAULT_XOX_TRACKS = 16;
+    public static final int DEFAULT_XOX_TRACKS = 4;
     public static final int DEFAULT_XOX_PATTERN_LENGTH = 16;
 }
 

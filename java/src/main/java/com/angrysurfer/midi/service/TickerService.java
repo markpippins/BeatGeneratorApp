@@ -141,7 +141,7 @@ public class TickerService {
                 break;
 
             case TickerUpdateType.BASE_NOTE_OFFSET:
-                ticker.setNoteOffset((double) updateValue);
+                ticker.setNoteOffset((double) ticker.getNoteOffset() + updateValue);
                 break;
 
             case TickerUpdateType.BARS:

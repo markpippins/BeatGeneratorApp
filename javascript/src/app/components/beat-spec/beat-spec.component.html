@@ -6,8 +6,8 @@
       (instrumentSelectEvent)="onInstrumentSelected($event, pattern)" class=""></app-beat-spec-detail>
     <div class="interface-808">
       <div class="side-panel-808">
-        <label class="info" [textContent]="getLabel(pattern)"></label>
-        <!-- <mat-divider [style.height.px]="10"></mat-divider> -->
+        <!-- <label class="info" [textContent]="getLabel(pattern)"></label> -->
+        <mat-divider [style.height.px]="10"></mat-divider>
         <label>Pitch</label>
         <label>Velocity</label>
         <label>Probability</label>
@@ -16,7 +16,7 @@
           <app-drum-pad></app-drum-pad>
         </div>
       </div>
-      <app-beat-spec-panel *ngFor="let step of pattern.steps;" [pattern]="pattern" [page]=pattern.position [step]=step
+      <app-beat-spec-panel *ngFor="let step of pattern.steps;" [pattern]="pattern" [step]=step
         [instrument]="getInstrumentForStep(pattern, step)" (changeEvent)="onStepChanged(step)"
         (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>
     </div>

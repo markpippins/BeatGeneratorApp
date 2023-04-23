@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Instrument } from '../../../models/instrument';
 
 @Component({
@@ -6,11 +6,17 @@ import { Instrument } from '../../../models/instrument';
   templateUrl: './drum-pad.component.html',
   styleUrls: ['./drum-pad.component.css'],
 })
+
 export class DrumPadComponent {
-  constructor() {}
+
+  @Output()
+  padPressedEvent = new EventEmitter<number>();
 
   @Input()
   name!: string;
+
+  @Input()
+  caption!: string;
 
   @Input()
   index!: number;
@@ -24,7 +30,8 @@ export class DrumPadComponent {
   @Input()
   instrument!: Instrument;
 
-  pressed = false;
+  @Input()
+  pressed!: boolean;
 
   @Input()
   active: boolean = false;
@@ -32,19 +39,10 @@ export class DrumPadComponent {
   @Input()
   channel!: number;
 
+  constructor() {}
+
   padPressed() {
-    this.pressed = !this.pressed;
-    // this.active = true;
-
-    // let element = document.getElementById('pad-ring-' + this.index);
-    // if (element != undefined)
-    //   this.uiService.swapClass(element, 'standby', 'enabled');
-
-    // this.midiService.playNote(
-    //   this.instrument.name,
-    //   this.channel - 1,
-    //   this.note
-    // );
+    this.padPressedEvent.emit(this.index)
   }
 
   getPadClass(): string {

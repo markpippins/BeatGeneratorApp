@@ -83,7 +83,7 @@ export class DashboardComponent implements OnInit, Listener {
     beatCount: 0,
     tickCount: 0,
     partCount: 0,
-    baseNoteOffSet: 0,
+    noteOffset: 0,
     players: [],
   };
 
@@ -133,6 +133,11 @@ export class DashboardComponent implements OnInit, Listener {
         break;
 
       case Constants.TICKER_UPDATED:
+        this.updateDisplay();
+        break;
+
+      case Constants.BEAT_DIV:
+        this.tickerStatus = _messageValue;
         this.updateDisplay();
         break;
 

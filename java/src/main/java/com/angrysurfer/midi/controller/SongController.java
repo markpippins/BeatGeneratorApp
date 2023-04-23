@@ -1,24 +1,17 @@
 package com.angrysurfer.midi.controller;
 
 import com.angrysurfer.midi.model.Song;
-import com.angrysurfer.midi.model.SongStatus;
 import com.angrysurfer.midi.model.Step;
 import com.angrysurfer.midi.model.Pattern;
 import com.angrysurfer.midi.service.SongService;
 import com.angrysurfer.midi.util.Constants;
 
-import reactor.core.publisher.Flux;
-import reactor.util.function.Tuple2;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 @CrossOrigin("*")
 @RestController
@@ -80,13 +73,7 @@ public class SongController {
         return service.previous(currentSongId);
     }
 
-    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/song/status")
-    public Flux<SongStatus> getSongStatus() {
-        final Flux<SongStatus> flux = Flux
-                .fromStream(Stream.generate(() -> service.getSongStatus()));
-        final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(750));
-        return Flux.zip(flux, emmitFlux).map(Tuple2::getT1);
-    }
+
 }
 
 // @GetMapping(path = "/song/start")
@@ -124,10 +111,10 @@ public class SongController {
 // return service.previous(currentSongId);
 // }
 
-// @GetMapping(path = "/song/status")
+// @GetMapping(path = "/xox")
 // public @ResponseBody SongInfo getSongStatus() {
 // if (requestsToLog.contains("status"))
-// logger.info("/song/status");
+// logger.info("/xox");
 // return service.getSongStatus();
 // }
 

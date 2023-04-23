@@ -18,8 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
+import com.angrysurfer.midi.model.SongStatus;
 import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.model.TickerStatus;
 import com.angrysurfer.midi.service.SongService;
@@ -53,22 +52,17 @@ public class TickerController {
                 .fromStream(Stream.generate(() -> TickerStatus.from(tickerService.getTicker(),
                         songService.getSong(),
                         tickerService.getSequenceRunner().isPlaying())));
-        final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(300));
+        final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(25));
         return Flux.zip(flux, emmitFlux).map(Tuple2::getT1);
     }
 
-    // @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/foos2")
-    // public Flux<TickerStatus> getAllFoos2() {
-    // final Flux<TickerStatus> flux = Flux.<TickerStatus>create(fluxSink -> {
-    // while (true) {
-    // fluxSink.next(
-    // TickerStatus.from(tickerService.getTicker(),
-    // tickerService.getSequenceRunner().isPlaying()));
-    // }
-    // }).sample(Duration.ofMillis(500)).log();
-
-    // return flux;
-    // }
+    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/xox")
+    public Flux<SongStatus> getSongStatus() {
+        final Flux<SongStatus> flux = Flux
+                .fromStream(Stream.generate(() -> songService.getSongStatus()));
+        final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(750));
+        return Flux.zip(flux, emmitFlux).map(Tuple2::getT1);
+    }
 
     @GetMapping(path = Constants.LOAD_TICKER)
     public Ticker load(@RequestParam long tickerId) {
@@ -120,10 +114,12 @@ public class TickerController {
     }
 
     @GetMapping(path = Constants.TICKER_INFO)
-    public @ResponseBody Ticker getTicker() {
+    public @ResponseBody TickerStatus getTicker() {
         if (requestsToLog.contains("info"))
             logger.info(Constants.TICKER_INFO);
-        return tickerService.getTicker();
+
+        TickerStatus result = TickerStatus.from(tickerService.getTicker(), songService.getSong(), false);
+        return result;
     }
 
     @GetMapping(path = Constants.TICKER_LOG)

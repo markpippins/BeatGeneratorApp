@@ -27,7 +27,8 @@ public class PlayerController {
     @GetMapping(path = Constants.ALL_PLAYERS)
     public @ResponseBody Set<Player> getPlayers() {
         logger.info(Constants.ALL_PLAYERS);
-        return (service.getPlayers());
+        Set<Player> players = (service.getPlayers());
+        return players;
     }
 
     @GetMapping(Constants.CLEAR_PLAYERS)

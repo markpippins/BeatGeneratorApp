@@ -31,6 +31,8 @@
     "@material/slider": "^15.0.0-canary.684e33d25.0",
     "@mui/icons-material": "^5.11.9",
     "material-icons": "^1.13.1",
+    "primeicons": "^6.0.1",
+    "primeng": "^15.4.1",
     "rxjs": "~7.8.0",
     "socket.io-client": "^4.6.1",
     "tslib": "^2.3.0",

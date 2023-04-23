@@ -14,6 +14,8 @@ export class SliderPanelComponent implements OnInit, Listener {
   @Input()
   channel = 1;
 
+  value5: number = 50;
+
   @Output()
   channelSelectEvent = new EventEmitter<number>();
 
@@ -74,6 +76,8 @@ export class SliderPanelComponent implements OnInit, Listener {
 
     instruments.forEach((instrument) => {
       let pool: Map<string, string[]> = new Map();
+      let areas: Map<string, string[]> = new Map();
+      // areas.set('Other', []);
 
       instrument.controlCodes.forEach((cc) => {
         let terms = cc.name.split(' ');
@@ -91,33 +95,32 @@ export class SliderPanelComponent implements OnInit, Listener {
         });
       });
 
-      let areas: Map<string, string[]> = new Map();
-      // areas.set('Other', []);
 
       pool.forEach((value, key) => {
         let outliers: string[] = value.filter(
           (v) => !instrument.controlCodes.map((cc) => cc.name).includes(v)
         );
-        if (outliers.length > 0) {
-          outliers.forEach((out) =>
+        if (outliers.length > 1) {
+          outliers.forEach((outlier) =>
             areas.set(
-              out,
+              outlier,
               value.filter((v) => !outliers.includes(v))
             )
           );
         }
+        // else areas.get('Other')?.push(value[0])
+
         // if (value.length > 0)
         areas.set(key, value);
-        areas.get('Other')?.push(value[0]);
       });
 
-      if (areas.get('Other')?.length == 0) areas.delete('Other');
+      // if (areas.get('Other')?.length == 0) areas.delete('Other');
 
       console.log(instrument.name);
       console.log('areas', areas);
       this.findKeys([...areas.keys()]);
       // console.log('keys', [...areas.keys()]);
-      this.pools.set(instrument, [...this.findKeys([...areas.keys()])].sort());
+      this.pools.set(instrument, [...areas.keys()].sort());
       this.panels.set(instrument.name + '-' + pool, areas);
     });
   }

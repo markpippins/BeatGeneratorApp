@@ -12,6 +12,7 @@ import { UiService } from 'src/app/services/ui.service';
 import { TickerUpdateType } from 'src/app/models/ticker-update-type';
 import { TickerStatus } from 'src/app/models/ticker-status';
 import { Observable, Subscription } from 'rxjs';
+// import { SongStatus } from 'src/app/models/song-status';
 
 @Component({
   selector: 'app-status-panel',
@@ -19,7 +20,8 @@ import { Observable, Subscription } from 'rxjs';
   styleUrls: ['./status-panel.component.css'],
 })
 export class StatusPanelComponent implements OnInit {
-  sub!: Subscription;
+  tickerSubscription!: Subscription;
+  // songSubscription!: Subscription;
   ppqSelectionIndex!: number;
   ppqs = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 21, 23, 24, 27,
@@ -41,7 +43,10 @@ export class StatusPanelComponent implements OnInit {
   ];
 
   @Input()
-  status!: TickerStatus;
+  tickerStatus!: TickerStatus;
+
+  // @Input()
+  // songStatus!: SongStatus;
 
   @Output()
   ppqChangeEvent = new EventEmitter<number>();
@@ -55,7 +60,7 @@ export class StatusPanelComponent implements OnInit {
     private uiService: UiService
   ) {}
 
-  getMessages(): Observable<string> {
+  getTickerMessages(): Observable<string> {
     return Observable.create(
       (observer: {
         next: (arg0: any) => void;
@@ -64,6 +69,8 @@ export class StatusPanelComponent implements OnInit {
         let source = new EventSource('http://localhost:8080/api/tick');
         source.onmessage = (event) => {
           this.zone.run(() => {
+            console.log('tick');
+            console.log(event.data);
             observer.next(event.data);
           });
         };
@@ -77,23 +84,56 @@ export class StatusPanelComponent implements OnInit {
     );
   }
 
+  // getSongMessages(): Observable<string> {
+  //   return Observable.create(
+  //     (observer: {
+  //       next: (arg0: any) => void;
+  //       error: (arg0: Event) => void;
+  //     }) => {
+  //       let source = new EventSource('http://localhost:8080/api/xox');
+  //       source.onmessage = (event) => {
+  //         this.zone.run(() => {
+  //           console.log('song');
+  //           console.log(event.data);
+  //           observer.next(event.data);
+  //         });
+  //       };
+
+  //       source.onerror = (event) => {
+  //         this.zone.run(() => {
+  //           observer.error(event);
+  //         });
+  //       };
+  //     }
+  //   );
+  // }
+
   ngOnInit(): void {
-    this.sub = this.getMessages().subscribe({
+    this.tickerSubscription = this.getTickerMessages().subscribe({
       next: (data: string) => {
-        this.status = JSON.parse(data);
+        this.tickerStatus = JSON.parse(data);
         this.updateDisplay();
       },
       error: (err: any) => console.error(err),
     });
+
+    // this.songSubscription = this.getSongMessages().subscribe({
+    //   next: (data: string) => {
+    //     this.songStatus = JSON.parse(data);
+    //     this.updateDisplay();
+    //   },
+    //   error: (err: any) => console.error(err),
+    // });
   }
 
   ngOnDestroy(): void {
-    this.sub && this.sub.unsubscribe();
+    this.tickerSubscription && this.tickerSubscription.unsubscribe();
+    // this.songSubscription && this.songSubscription.unsubscribe();
   }
 
   getBeats() {
     const beats = [];
-    for (let i = this.status.beatsPerBar; i >= 1; i--) beats.push(i);
+    for (let i = this.tickerStatus.beatsPerBar; i >= 1; i--) beats.push(i);
     return beats.reverse();
   }
 
@@ -105,32 +145,51 @@ export class StatusPanelComponent implements OnInit {
   lastPart = 0;
 
   updateDisplay(): void {
-    if (this.status != undefined) {
-      if (this.status.beat != this.lastBeat) {
-        this.lastBeat = this.status.beat;
-        this.uiService.notifyAll(Constants.BEAT_DIV, '', this.status.beat);
-        this.status.patternStatuses.forEach((patternStatus) =>
-          this.uiService.notifyAll(
-            Constants.NOTIFY_SONG_STATUS,
-            '',
-            patternStatus
-          )
+    if (this.tickerStatus != undefined) {
+      this.tickerStatus.patternStatuses.forEach((patternStatus) =>
+        this.uiService.notifyAll(
+          Constants.NOTIFY_SONG_STATUS,
+          '',
+          patternStatus
+        )
+      );
+
+      if (this.tickerStatus.beat != this.lastBeat) {
+        this.lastBeat = this.tickerStatus.beat;
+        this.uiService.notifyAll(
+          Constants.BEAT_DIV,
+          '',
+          this.tickerStatus.beat
         );
-      }
-      if (this.status.bar != this.lastBar) {
-        this.lastBar = this.status.bar;
-        this.uiService.notifyAll(Constants.BAR_DIV, '', this.status.bar);
-      }
-      if (this.status.part != this.lastPart) {
-        this.lastPart = this.status.part;
-        this.uiService.notifyAll(Constants.PART_DIV, '', this.status.part);
+
+        if (this.tickerStatus.bar != this.lastBar) {
+          this.lastBar = this.tickerStatus.bar;
+          this.uiService.notifyAll(
+            Constants.BAR_DIV,
+            '',
+            this.tickerStatus.bar
+          );
+        }
+
+        if (this.tickerStatus.part != this.lastPart) {
+          this.lastPart = this.tickerStatus.part;
+          this.uiService.notifyAll(
+            Constants.PART_DIV,
+            '',
+            this.tickerStatus.part
+          );
+        }
       }
     }
   }
 
   onTempoChange(event: { target: any }) {
     this.midiService
-      .updateTicker(this.status.id, TickerUpdateType.BPM, event.target.value)
+      .updateTicker(
+        this.tickerStatus.id,
+        TickerUpdateType.BPM,
+        event.target.value
+      )
       .subscribe((_data) =>
         this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Tempo changed', 0)
       );
@@ -140,7 +199,7 @@ export class StatusPanelComponent implements OnInit {
   onBeatsPerBarChange(event: { target: any }) {
     this.midiService
       .updateTicker(
-        this.status.id,
+        this.tickerStatus.id,
         TickerUpdateType.BEATS_PER_BAR,
         event.target.value
       )
@@ -152,7 +211,11 @@ export class StatusPanelComponent implements OnInit {
 
   onBarsChange(event: { target: any }) {
     this.midiService
-      .updateTicker(this.status.id, TickerUpdateType.BARS, event.target.value)
+      .updateTicker(
+        this.tickerStatus.id,
+        TickerUpdateType.BARS,
+        event.target.value
+      )
       .subscribe((_data) =>
         this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Bars changed', 0)
       );
@@ -161,7 +224,11 @@ export class StatusPanelComponent implements OnInit {
 
   onPartsChange(event: { target: any }) {
     this.midiService
-      .updateTicker(this.status.id, TickerUpdateType.PARTS, event.target.value)
+      .updateTicker(
+        this.tickerStatus.id,
+        TickerUpdateType.PARTS,
+        event.target.value
+      )
       .subscribe((_data) =>
         this.uiService.notifyAll(Constants.TICKER_UPDATED, 'Parts changed', 0)
       );
@@ -171,7 +238,7 @@ export class StatusPanelComponent implements OnInit {
   onPartLengthChange(event: { target: any }) {
     this.midiService
       .updateTicker(
-        this.status.id,
+        this.tickerStatus.id,
         TickerUpdateType.PART_LENGTH,
         event.target.value
       )
@@ -188,7 +255,7 @@ export class StatusPanelComponent implements OnInit {
   onPPQSelectionChange() {
     this.midiService
       .updateTicker(
-        this.status.id,
+        this.tickerStatus.id,
         TickerUpdateType.PPQ,
         this.ppqs[this.ppqSelectionIndex]
       )
@@ -199,10 +266,10 @@ export class StatusPanelComponent implements OnInit {
   }
 
   setIndexForPPQ() {
-    this.ppqSelectionIndex = this.ppqs.indexOf(this.status.ticksPerBeat);
+    this.ppqSelectionIndex = this.ppqs.indexOf(this.tickerStatus.ticksPerBeat);
   }
 
   getTickerPosition() {
-    return Math.round(this.status.beat);
+    return Math.round(this.tickerStatus.beat);
   }
 }

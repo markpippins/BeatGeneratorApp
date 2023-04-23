@@ -13,8 +13,6 @@ import { UiService } from 'src/app/services/ui.service';
 import { Step } from '../../models/step';
 import { Instrument } from 'src/app/models/instrument';
 import { Pattern } from 'src/app/models/pattern';
-import { PatternStatus } from 'src/app/models/pattern-status';
-
 interface PitchPair {
   midi: number;
   note: string;
@@ -28,7 +26,7 @@ interface PitchPair {
 export class BeatSpecPanelComponent
   implements Listener, OnInit, AfterContentChecked
 {
-  flag: boolean = false;
+  // selected: boolean = false;
 
   @Output()
   paramBtnClickEvent = new EventEmitter<number>();
@@ -45,9 +43,6 @@ export class BeatSpecPanelComponent
   @Input()
   instrument!: Instrument;
 
-  @Input()
-  page!: number;
-
   @Output()
   active: boolean = false;
 
@@ -58,7 +53,7 @@ export class BeatSpecPanelComponent
   }
 
   ngAfterContentChecked(): void {
-    this.flag = this.step != undefined && this.step.active;
+    // this.selected = this.step != undefined && this.step.active;
   }
 
   ngOnInit(): void {
@@ -69,16 +64,28 @@ export class BeatSpecPanelComponent
       });
   }
 
-  @Input()
-  currentStep = 1;
+  lastBeat = 0;
 
-  onNotify(messageType: number, _message: string, messageValue: any) {
-    if (messageType == Constants.NOTIFY_SONG_STATUS) {
-      let status: PatternStatus = messageValue;
+  onPadPressed(_index: number) {
+    this.step.active = !this.step.active;
+    // this.selected = !this.selected
+  }
+  onNotify(messageType: number, _message: string, _messageValue: any) {
+    if (messageType == Constants.BEAT_DIV) {
+      if (this.lastBeat > this.pattern.lastStep)
+        this.lastBeat = this.pattern.firstStep;
+
       this.active =
-        this.pattern.id == status.pattern &&
-        status.activeStep == this.step.position;
+        // this.pattern.position == status.position &&
+        this.lastBeat == this.step.position;
+      this.lastBeat++;
     }
+    // if (messageType == Constants.NOTIFY_SONG_STATUS) {
+    //   let status: PatternStatus = messageValue;
+    //   this.active =
+    //     this.pattern.position == status.position &&
+    //     status.activeStep == this.step.position;
+    // }
   }
 
   onParamsBtnClick() {
@@ -89,13 +96,7 @@ export class BeatSpecPanelComponent
   onLaneBtnClick() {
     this.step.active = !this.step.active;
     this.midiService
-      .updateStep(
-        this.step.id,
-        this.step.page,
-        this.step.position,
-        Constants.STEP_ACTIVE,
-        1
-      )
+      .updateStep(this.step.id, this.step.position, Constants.STEP_ACTIVE, 1)
       .subscribe(async (data) => (this.step = data));
 
     let element = document.getElementById('beat-btn-' + this.step.position);
@@ -112,7 +113,6 @@ export class BeatSpecPanelComponent
       this.midiService
         .updateStep(
           step.id,
-          step.page,
           step.position,
           Constants.STEP_PITCH,
           event.target.value
@@ -124,7 +124,6 @@ export class BeatSpecPanelComponent
     this.midiService
       .updateStep(
         step.id,
-        step.page,
         step.position,
         Constants.STEP_VELOCITY,
         event.target.value
@@ -136,7 +135,6 @@ export class BeatSpecPanelComponent
     this.midiService
       .updateStep(
         step.id,
-        step.page,
         step.position,
         Constants.STEP_GATE,
         event.target.value
@@ -148,7 +146,6 @@ export class BeatSpecPanelComponent
     this.midiService
       .updateStep(
         step.id,
-        step.page,
         step.position,
         Constants.STEP_PROBABILITY,
         event.target.value
@@ -162,5 +159,9 @@ export class BeatSpecPanelComponent
 
   getClass() {
     return this.active ? 'lane-808 ready' : 'lane-808';
+  }
+
+  getCaption(): string {
+    return this.step.position.toString();
   }
 }

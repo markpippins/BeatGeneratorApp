@@ -25,7 +25,7 @@ html {
   /*background: -ms-linear-gradient( to left top, blue, red);*/
   /*  background: -o-linear-gradient( to left top, blue, red);*/
   background: linear-gradient(to right bottom, steelblue, slategrey);
-  /*  background-color: black;*/
+/*    background-color: black;*/
 }
 
 body {
@@ -592,8 +592,8 @@ loop {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: auto auto auto;
-  margin: 3px;
-  padding: 2px;
+  margin: 2px;
+  padding: 1px;
   background-color: silver;
   border-radius: 3px;
 }
@@ -611,11 +611,11 @@ loop {
 */
 
 .onstep {
-  background-color: navajowhite;
+  background-color: fuchsia;
 }
 
 .offstep {
-  background-color: transparent;
+  background-color: dodgerblue;
 }
 
 .pad-indicator-text {
@@ -630,6 +630,7 @@ loop {
   display: grid;
   grid-template-columns: 1fr;
   border-radius: 6px;
+  min-height: 6px;
 }
 
 .pad-indicator-content {
@@ -1252,7 +1253,7 @@ th {
 
 
 .ready {
-  background-color: transparent;
+  background-color: orange;
   /*
   border: lawngreen solid 3px;
   margin: 0px;

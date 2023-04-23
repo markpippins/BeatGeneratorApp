@@ -21,7 +21,6 @@ import { PlayerTableComponent } from './components/player-table/player-table.com
 import { MatTableModule } from '@angular/material/table';
 import { ConditionsSelectOptionComponent } from './components/widgets/conditions-select-option/conditions-select-option.component';
 import { SliderComponent } from './components/widgets/slider/slider.component';
-import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import { MatSliderModule } from '@angular/material/slider';
 import { BeatSpecComponent } from './components/beat-spec/beat-spec.component';
 import { BeatSpecPanelComponent } from './components/beat-spec-panel/beat-spec-panel.component';
@@ -54,6 +53,7 @@ import { StatusReadoutComponent } from './components/widgets/status-readout/stat
 import { CommonModule } from '@angular/common';
 import { Knob2Component } from './components/widgets/knob2/knob2.component';
 import { NgStyle } from '@angular/common';
+import { KnobModule } from "primeng/knob";
 const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
 
 @NgModule({
@@ -106,7 +106,7 @@ const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
     MatIconModule,
     MatInputModule,
     MatTableModule,
-    NgxSliderModule,
+    KnobModule,
     MatSliderModule,
     MatButtonModule,
     MatTabsModule,
