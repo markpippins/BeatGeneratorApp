@@ -12,16 +12,23 @@
             <div class="area-header">
               {{ pool }}
             </div>
-            <br>
             <div *ngFor="let controlCode of getControlCodes(instrument, pool)">
               <div class="area-controls" *ngIf="controlCode.name.startsWith(pool)">
                 <div class="area-control">
-                  <app-slider [configMode]="configModeOn" [channel]="instrument.channel" [label]="controlCode.name"
-                    [cc]="controlCode.code"></app-slider>
+                  <!-- <app-slider [configMode]="configModeOn" [channel]="instrument.channel" [label]="controlCode.name"
+                    [cc]="controlCode.code"></app-slider> -->
+                    <div class="p-field p-col-12 p-md-4">
+                      <h5 class="p-mt-3">{{controlCode.name}}</h5>
+                      <p-knob [(ngModel)]="value5"  [step]="10"></p-knob>
+                    </div>
                 </div>
               </div>
             </div>
           </div>
+          <!-- <div class="area-content" *ngFor="let panel of panels.get(instrument.name + '-' + pool)">
+            {{panel}}
+          </div> -->
+
           <!-- <mat-checkbox (change)="configBtnClicked()">Group</mat-checkbox> -->
         </div>
       </div>
