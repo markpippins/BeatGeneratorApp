@@ -36,7 +36,7 @@
       "dom"
     ],
     "paths": {
-      "rxjs": ["node_modules/rxjs"]
+      "rxjs": ["./node_modules/rxjs"]
     }
   },
   "angularCompilerOptions": {
