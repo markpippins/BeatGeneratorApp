@@ -19,7 +19,6 @@ import { MatInputModule } from '@angular/material/input';
 import { DrumGridComponent } from './components/drum-grid/drum-grid.component';
 import { PlayerTableComponent } from './components/player-table/player-table.component';
 import { MatTableModule } from '@angular/material/table';
-import { ConditionsSelectOptionComponent } from './components/widgets/conditions-select-option/conditions-select-option.component';
 import { SliderComponent } from './components/widgets/slider/slider.component';
 import { MatSliderModule } from '@angular/material/slider';
 import { BeatSpecComponent } from './components/beat-spec/beat-spec.component';
@@ -43,7 +42,6 @@ import { BeatNavigatorComponent } from './components/beat-navigator/beat-navigat
 import { TickerNavComponent } from './components/widgets/ticker-nav/ticker-nav.component';
 import { SetNavComponent } from './components/widgets/set-nav/set-nav.component';
 import { RulesNavComponent } from './components/widgets/rules-nav/rules-nav.component';
-import { PartStackerComponent } from './part-stacker/part-stacker.component';
 import { TickerAdjustComponent } from './components/widgets/ticker-adjust/ticker-adjust.component';
 import { ButtonPanelComponent } from './components/widgets/button-panel/button-panel.component';
 import { PlayerNavComponent } from './components/widgets/player-nav/player-nav.component';
@@ -51,7 +49,6 @@ import { SchedulerComponent } from './routes/scheduler/scheduler.component';
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
 import { StatusReadoutComponent } from './components/widgets/status-readout/status-readout.component';
 import { CommonModule } from '@angular/common';
-import { Knob2Component } from './components/widgets/knob2/knob2.component';
 import { NgStyle } from '@angular/common';
 import { KnobModule } from "primeng/knob";
 const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
@@ -69,7 +66,6 @@ const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
     TransportControlComponent,
     DrumGridComponent,
     PlayerTableComponent,
-    ConditionsSelectOptionComponent,
     SliderComponent,
     BeatSpecComponent,
     BeatSpecPanelComponent,
@@ -87,13 +83,11 @@ const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
     TickerNavComponent,
     SetNavComponent,
     RulesNavComponent,
-    PartStackerComponent,
     TickerAdjustComponent,
     ButtonPanelComponent,
     PlayerNavComponent,
     SchedulerComponent,
     StatusReadoutComponent,
-    Knob2Component,
   ],
   imports: [
     CommonModule,
