@@ -48,7 +48,7 @@ public class TickerController {
                 .fromStream(Stream.generate(() -> TickerStatus.from(tickerService.getTicker(),
                         songService.getSong(),
                         tickerService.getSequenceRunner().isPlaying())));
-        final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(25));
+        final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(100));
         return Flux.zip(flux, emmitFlux).map(Tuple2::getT1);
     }
 

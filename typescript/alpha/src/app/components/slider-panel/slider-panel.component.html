@@ -1,37 +1,59 @@
 <mat-tab-group>
   <div *ngFor="let instrument of instruments;">
     <mat-tab *ngIf="instrument.controlCodes.length > 0" label="{{instrument.name}}">
-      <!-- <div class="slider-container">
-        <app-slider *ngFor="let controlCode of instrument.controlCodes" [configMode]="configModeOn"
-          [channel]="instrument.channel" [label]="controlCode.name" [cc]="controlCode.code"></app-slider>
-      </div> -->
+      <div class="area-header">
+        <h3>{{ instrument.name }}</h3>
+      </div>
 
       <div class="area-container">
-        <div class="area" *ngFor="let pool of pools.get(instrument)">
-          <div class="area-content">
-            <div class="area-header">
-              {{ pool }}
-            </div>
-            <div *ngFor="let controlCode of getControlCodes(instrument, pool)">
-              <div class="area-controls" *ngIf="controlCode.name.startsWith(pool)">
-                <div class="area-control">
-                  <!-- <app-slider [configMode]="configModeOn" [channel]="instrument.channel" [label]="controlCode.name"
-                    [cc]="controlCode.code"></app-slider> -->
+        <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
+          <div class="area" *ngIf="!panel.startsWith('Other')">
+            <div class="area-content">
+              <div class="area-header">
+                {{ panel }}
+              </div>
+              <div class="area" *ngFor="let controlCode of getControlCodes(instrument, panel)">
+                <div class="area-controls">
+                  <div class="area-control">
                     <div class="p-field p-col-12 p-md-4">
-                      <h5 class="p-mt-3">{{controlCode.name}}</h5>
-                      <p-knob [(ngModel)]="value5"  [step]="10"></p-knob>
+                      <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="45"
+                        [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()"
+                        [valueTemplate]="getValueTemplate(controlCode)" [valueColor]="getValueColor()"
+                        [(ngModel)]="value5" [step]="10"></p-knob>
+                      <h5>{{controlCode}}</h5>
                     </div>
+                  </div>
                 </div>
+                <!-- ELSE -->
               </div>
             </div>
           </div>
-          <!-- <div class="area-content" *ngFor="let panel of panels.get(instrument.name + '-' + pool)">
-            {{panel}}
-          </div> -->
-
-          <!-- <mat-checkbox (change)="configBtnClicked()">Group</mat-checkbox> -->
         </div>
       </div>
+
+
+      <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
+        <div class="area" *ngIf="panel.startsWith('Other')">
+          <div class="area-content">
+            <div class="area-header">
+              {{ panel }}
+            </div>
+            <div class="area-controls" *ngFor="let controlCode of getOtherControlCodes(instrument.name)">
+              <div class="area-control">
+                <div class="p-field p-col-12 p-md-4">
+                  <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="45"
+                    [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [valueColor]="getValueColor()"
+                    [(ngModel)]="value5" [step]="10"></p-knob>
+                  <h5>{{controlCode}}</h5>
+                </div>
+              </div>
+              <!-- ELSE -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+
     </mat-tab>
   </div>
 </mat-tab-group>

@@ -69,8 +69,8 @@ export class StatusPanelComponent implements OnInit {
         let source = new EventSource('http://localhost:8080/api/tick');
         source.onmessage = (event) => {
           this.zone.run(() => {
-            console.log('tick');
-            console.log(event.data);
+            // console.log('tick');
+            // console.log(event.data);
             observer.next(event.data);
           });
         };

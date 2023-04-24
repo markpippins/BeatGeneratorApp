@@ -45,7 +45,7 @@ public class SongService {
 
             song.getPatterns().forEach(pattern -> {
 
-                logger.info(String.format("Pattern, %s", pattern.getPosition()));
+                // logger.info(String.format("Pattern  %s", pattern.getPosition()));
 
                 while (pattern.getStepCycler().get() < pattern.getFirstStep())
                     pattern.getStepCycler().advance();
@@ -54,7 +54,7 @@ public class SongService {
                         .filter(s -> s.getPosition() == (long) pattern.getStepCycler().get())
                         .findAny().orElseThrow();
 
-                logger.info(String.format("Pattern, %s, Step %s", pattern.getPosition(), step.getPosition()));
+                // logger.info(String.format("Pattern %s, Step %s", pattern.getPosition(), step.getPosition()));
 
                 // if (!pattern.getMuted() && (tick == 0 || (tick % (song.getTicksPerBeat() / pattern.getSpeed()) == 0))) {
                 //     while (!pattern.getPlayingNote().empty())

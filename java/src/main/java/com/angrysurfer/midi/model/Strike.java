@@ -60,7 +60,7 @@ public class Strike extends Player {
             if (getSwing() > 0)
                 handleSwing();
             if (getProbability().equals(100L) || rand.nextInt(100) > getProbability())
-                drumNoteOn(getNote());
+                drumNoteOn((long) (getNote() + getTicker().getNoteOffset()));
         }
 
         getSkipCycler().advance();

@@ -46,6 +46,6 @@ public class Ratchet extends Strike {
 
     public void onTick(long tick, long bar) {
         if (isProbable())
-            drumNoteOn(getNote());
+            drumNoteOn((long) (getNote() + getTicker().getNoteOffset()));
     }
 }

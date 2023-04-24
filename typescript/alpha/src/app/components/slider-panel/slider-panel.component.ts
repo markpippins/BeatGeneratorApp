@@ -3,7 +3,7 @@ import { Instrument } from '../../models/instrument';
 import { MidiService } from '../../services/midi.service';
 import { Listener } from 'src/app/models/listener';
 import { UiService } from 'src/app/services/ui.service';
-import { ControlCode } from 'src/app/models/control-code';
+import { Panel } from 'src/app/models/panel';
 
 @Component({
   selector: 'app-slider-panel',
@@ -15,6 +15,8 @@ export class SliderPanelComponent implements OnInit, Listener {
   channel = 1;
 
   value5: number = 50;
+
+  pnls: Map<string, Panel[]> = new Map();
 
   @Output()
   channelSelectEvent = new EventEmitter<number>();
@@ -48,202 +50,137 @@ export class SliderPanelComponent implements OnInit, Listener {
     this.onSelect(10);
     this.midiService.allInstruments().subscribe(async (data) => {
       this.instruments = this.uiService.sortByName(data);
-      this.buildPool(this.instruments);
+      this.buildPanelMap(this.instruments);
     });
   }
 
-  findKeys(data: string[]) {
-    let pool: Map<string, string[]> = new Map();
-
-    data.forEach((item) => {
-      let splitted = item.split(' ');
-      let term = '';
-      splitted.forEach((s) => {
-        term += s;
-        if (!this.keyExistsForTerm(term, pool)) pool.set(term, []);
-        term += ' ';
-      });
-    });
-    console.log('findKeys() returning:', pool.keys());
-    return pool.keys();
+  getRangeColor() {
+    return 'blue';
   }
 
-  pools: Map<Instrument, string[]> = new Map();
-  panels: Map<string, Map<string, string[]>> = new Map();
+  getStrokeWidth() {
+    return 10;
+  }
 
-  buildPool(instruments: Instrument[]) {
-    // let panels = new Map<string, string[]>()
+  getStyleClass() {
+    return 'knob';
+  }
 
+  getValueColor() {
+    // return 'fuchsia';
+    return 'yellow';
+  }
+
+  getValueTemplate(_name: string) {
+    return '{value}';
+  }
+
+  buildPanelMap(instruments: Instrument[]) {
     instruments.forEach((instrument) => {
-      let pool: Map<string, string[]> = new Map();
-      let areas: Map<string, string[]> = new Map();
-      // areas.set('Other', []);
+      this.pnls.set(
+        instrument.name,
+        this.createMap(instrument.controlCodes.map((cc) => cc.name))
+      );
+    });
+  }
 
-      instrument.controlCodes.forEach((cc) => {
-        let terms = cc.name.split(' ');
-        let value = '';
-        terms.forEach((term) => {
-          value += term;
-          if (!this.keyExistsForTerm(value, pool)) {
-            pool.set(value, []);
-          } else {
-            let leaves = pool.get(this.getKeyForTerm(value, pool));
-            if (!leaves?.includes(value))
-              if (value != this.getKeyForTerm(value, pool)) leaves!.push(value);
-          }
-          value += ' ';
+  getPanelsForInstrument(name: string): string[] {
+    let result: string[] = [];
+
+    this.pnls.get(name)?.forEach((pnl) => {
+      if (!result.includes(pnl.name)) result.push(pnl.name.replace('(', ''));
+    });
+
+    return result.sort();
+  }
+
+  getOtherControlCodes(name: string): String[] {
+    let result: string[] = [];
+    this.pnls.get(name)?.forEach((pnl) => {
+      if (pnl.name == 'Other')
+        pnl.children.forEach((child) => {
+          let childName = child.name.replace('Other ', '');
+          if (!result.includes(childName)) result.push(childName);
         });
-      });
-
-
-      pool.forEach((value, key) => {
-        let outliers: string[] = value.filter(
-          (v) => !instrument.controlCodes.map((cc) => cc.name).includes(v)
-        );
-        if (outliers.length > 1) {
-          outliers.forEach((outlier) =>
-            areas.set(
-              outlier,
-              value.filter((v) => !outliers.includes(v))
-            )
-          );
-        }
-        // else areas.get('Other')?.push(value[0])
-
-        // if (value.length > 0)
-        areas.set(key, value);
-      });
-
-      // if (areas.get('Other')?.length == 0) areas.delete('Other');
-
-      console.log(instrument.name);
-      console.log('areas', areas);
-      this.findKeys([...areas.keys()]);
-      // console.log('keys', [...areas.keys()]);
-      this.pools.set(instrument, [...areas.keys()].sort());
-      this.panels.set(instrument.name + '-' + pool, areas);
-    });
-  }
-
-  getControlCodes(instrument: Instrument, search: string): ControlCode[] {
-    return instrument.controlCodes.filter((cc) => cc.name.startsWith(search));
-  }
-
-  findShortest(data: string[]) {
-    let val = data[0];
-    let index = 0;
-
-    for (let i = 0; i < data.length; i++) {
-      if (data[i] > val) {
-        val = data[i];
-        index = i;
-      }
-    }
-
-    return index;
-  }
-
-  setKeyForTerm(newKey: string, term: string, pools: Map<string, string[]>) {
-    let oldVal = pools.get(this.getKeyForTerm(term, pools));
-    pools.delete(this.getKeyForTerm(term, pools));
-    pools.set(newKey, oldVal!);
-  }
-
-  getKeyForTerm(term: string, pools: Map<string, string[]>): string {
-    let result = term;
-    pools.forEach((_value, key) => {
-      if (term.startsWith(key)) result = key;
-    });
-    return result;
-  }
-
-  keyExistsForTerm(term: string, pools: Map<string, string[]>) {
-    let result = false;
-    pools.forEach((_value, key) => {
-      if (term.startsWith(key)) result = true;
-    });
-    return result;
-  }
-
-  arrayContainsStringThatStartsWith(
-    search: string,
-    data: string[],
-    minimum: number
-  ) {
-    let count = 0;
-    for (let i = 0; i < data.length; i++) {
-      if (data[i].startsWith(search)) count++;
-    }
-    return count >= minimum;
-  }
-
-  getAreasFor(instrument: Instrument) {
-    let panels: string[] = [];
-    instrument.controlCodes.forEach((code) => {
-      let splitted = code.name.includes(' ')
-        ? code.name.split(' ', 1)
-        : [code.name];
-      let tokens: string[] = [];
-      splitted.forEach((token) => {
-        tokens.push(token);
-        if (!panels.includes(token)) {
-          panels.push(token);
-        }
-      });
     });
 
-    return this.uiService.sortAlphabetically(panels);
+    return result.sort();
   }
 
-  getPanelsFor(instrument: Instrument, _area: string) {
-    let panels: string[] = [];
-    let controlCodes = instrument.controlCodes.map((cc) => cc.name);
-
-    instrument.controlCodes.forEach((code) => {
-      let splitted = code.name.includes(' ')
-        ? code.name.split(' ', 2)
-        : [code.name];
-
-      if (
-        code.name.startsWith(_area) &&
-        !panels.includes(splitted.join(' '))
-        // &&
-        // !controlCodes.includes(splitted.join(' '))
-      )
-        panels.push(splitted.join(' '));
-    });
-
-    let temp: string[] = [];
-    panels.forEach((p) => {
-      if (controlCodes.includes(p)) {
-        temp.push(p);
-      }
-    });
-
-    panels = this.uiService.sortAlphabetically(temp);
-    return panels;
-  }
-
-  getRemainingPanelsFor(instrument: Instrument, area: string) {
-    let controlCodes = instrument.controlCodes
-      .filter((cc) => cc.name.startsWith(area))
-      .filter((cc) => !this.getPanelsFor(instrument, area).includes(cc.name))
-      .map((cc) => cc.name);
-
-    return controlCodes;
-  }
-
-  getCCsFor(instrument: Instrument, subPanel: string) {
-    let ccs: ControlCode[] = [];
-
-    instrument.controlCodes.forEach((code) => {
-      if (code.name.startsWith(subPanel)) ccs.push(code);
-    });
-
-    return ccs;
+  getControlCodes(instrument: Instrument, search: string): string[] {
+    return instrument.controlCodes.filter((cc) => cc.name.startsWith(search)).map(o => o.name.replace(search, ''));
   }
 
   configBtnClicked() {
     this.configModeOn = !this.configModeOn;
+  }
+
+  createMap(data: string[]): Panel[] {
+    const map: Panel[] = [];
+
+    for (const name of data) {
+      const parts = name.split(' ');
+
+      let parent = map.find((panel) => panel.name === parts[0]);
+
+      if (!parent) {
+        parent = { name: parts[0], children: [] };
+        map.push(parent);
+      }
+
+      let child = parent.children.find((panel) => panel.name === name);
+
+      if (!child) {
+        child = { name, children: [] };
+        parent.children.push(child);
+      }
+    }
+
+    for (const parent of map) {
+      if (parent.children.length === 1) {
+        const child = parent.children[0];
+        parent.name = 'Other';
+        child.name = `${parent.name} ${child.name}`;
+        parent.children.push(child);
+      } else {
+        const common = this.findCommonPrefix(
+          parent.children.map((panel) => panel.name)
+        );
+        parent.name = common || parent.name;
+      }
+
+      // let changeChildren = false;
+      // for (const child of parent.children)
+      //   if (child.name.length > 10) changeChildren = true;
+      // if (changeChildren)
+      //   for (const child of parent.children)
+      //     child.name = child.name.replace(parent.name, '');
+    }
+
+    return map;
+  }
+
+  findCommonPrefix(strings: string[]): string {
+    if (strings.length === 0) {
+      return '';
+    }
+
+    let prefix = strings[0];
+
+    for (const string of strings) {
+      let i = 0;
+
+      while (
+        i < prefix.length &&
+        i < string.length &&
+        prefix[i] === string[i]
+      ) {
+        i++;
+      }
+
+      prefix = prefix.slice(0, i);
+    }
+
+    return prefix;
   }
 }

@@ -24,7 +24,7 @@ html {
   /*background: -moz-linear-gradient( to left top, blue, red);*
   /*background: -ms-linear-gradient( to left top, blue, red);*/
   /*  background: -o-linear-gradient( to left top, blue, red);*/
-  background: linear-gradient(to right bottom, steelblue, slategrey);
+  background: linear-gradient(to right bottom, darkblue, slategrey);
 /*    background-color: black;*/
 }
 
@@ -588,7 +588,6 @@ loop {
 }
 
 .pad-ring {
-  background-color: transparent;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: auto auto auto;
@@ -598,7 +597,16 @@ loop {
   border-radius: 3px;
 }
 
-
+.pad-ring-active {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  margin: 2px;
+  padding: 1px;
+  background-color: transparent;
+  border-radius: 3px;
+  color: white;
+}
 /*
 .pad-ring-disabled {
   display: grid;
@@ -679,7 +687,7 @@ loop {
 }
 
 .pad-3 {
-  background-color: mediumorchid;
+  background-color: deepskyblue;
 }
 
 .pad-4 {
@@ -699,7 +707,7 @@ loop {
 }
 
 .pad-8 {
-  background-color: deepskyblue;
+  background-color: mediumorchid;
 }
 
 .pad-9 {
@@ -728,6 +736,22 @@ loop {
 
 .pad-15 {
   background-color: tomato;
+}
+
+.pad-16 {
+  background-color: blueviolet;
+}
+
+.pad-selector {
+  background-color: black;
+}
+
+.subdued {
+  background-color: darkblue;
+}
+
+.awake {
+  background-color: fuchsia;
 }
 
 .piano-btn {
@@ -874,28 +898,28 @@ th {
 
 .area {
   background-color: transparent;
-  border: white ridge 1px;
-  gap: 4px;
-  margin: 4px;
+  /* border: white ridge 1px; */
+  gap: 2px;
+  margin: 2px;
   border-radius: 25px;
-  background-color: cadetblue;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
 
 .area-header {
-  border-radius: 25px;
-  background-color: blue;
-  margin: 4px 8px 4px 8px;
   text-align: center;
-  justify-content: center;
-  border: white inset 1px;
+  color: white;
 }
 
 .area-content {
   background-color: transparent;
-  gap: 4px;
-  margin: 8px;
-  /*    border-radius: 25px;*/
+  align-self: stretch;
+  gap: 2px;
+  margin: 2px;
+  display: flex;
+  /* border: white solid 1px; */
+  font-size: smaller;
 }
 
 .area-slider {
@@ -903,22 +927,20 @@ th {
 }
 
 .area-control {
-/*  border: white inset 1px;*/
-    gap: 4px;
-    display: flex;
+  display: flex;
+  align-items: center;
 }
 
 .area-controls {
-  margin: 2px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(2, 1fr));
-/*  border: blue dashed 1px;*/
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  grid-gap: 10px;
 }
 
 .area-container {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(150px, 1fr));
-/*  border: coral dashed 4px;*/
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Page title */
@@ -1140,20 +1162,9 @@ th {
   grid-template-columns: auto auto auto auto auto auto auto;
 }
 
-.comparison {
-  background: lightseagreen;
-}
-
-.mini-pad {
-  background-color: lightgray;
-}
 
 .generate {
   background: coral;
-}
-
-.time-div {
-  background: purple;
 }
 
 .mini-btn {
@@ -1161,7 +1172,6 @@ th {
   height: 25px;
   width: 24px;
   margin: 2px;
-  color: black;
   font-weight: normal;
   font-size: small;
   border-radius: 5px;
@@ -1178,9 +1188,8 @@ th {
   background-color: #316f8b;
 }
 
-.mini-comparison-btn {
-  background-color: yellow;
-  color: black;
+.c-white {
+  color: white;
 }
 
 .mini-btn-excluded {

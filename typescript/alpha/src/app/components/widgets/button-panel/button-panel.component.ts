@@ -59,7 +59,7 @@ export class ButtonPanelComponent
   customControlMinCount: number = 0;
 
   @Input()
-  indicators!: boolean[]
+  indicators!: boolean[];
 
   position = this.colCount;
   range: string[] = [];
@@ -148,7 +148,7 @@ export class ButtonPanelComponent
     )
       this.overage.push('');
 
-      // this.overage.forEach(() => this.indicators.push(false))
+    // this.overage.forEach(() => this.indicators.push(false))
   }
 
   onForwardClicked() {
