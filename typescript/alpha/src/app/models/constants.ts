@@ -39,14 +39,18 @@ export class Constants {
   static CONNECTED = 1;
   static DISCONNECTED = 2;
   static STATUS = 3;
-  static TICKER_SELECTED = 10;
   static STEP_UPDATED = 11;
   static PLAYER_UPDATED = 12;
   static COMMAND = 13;
-  static TICKER_UPDATED = 14;
   static PLAYER_SELECTED = 15;
   static INSTRUMENT_SELECTED = 16;
-  static TICKER_STARTED = 17;
+
+  static TICKER_CONNECTED = 100;
+  static TICKER_SELECTED = 101;
+  static TICKER_STARTED = 102;
+  static TICKER_STOPPED = 103;
+  static TICKER_UPDATED = 104;
+
   static NOTIFY_SONG_STATUS = 18;
   static CLICK = 0;
   static NUDGE_RIGHT = 1;

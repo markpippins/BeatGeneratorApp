@@ -1,14 +1,16 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Instrument } from '../../../models/instrument';
+import { Swirl } from 'src/app/models/swirl';
+import { Listener } from 'src/app/models/listener';
+import { UiService } from 'src/app/services/ui.service';
+import { Constants } from 'src/app/models/constants';
 
 @Component({
   selector: 'app-drum-pad',
   templateUrl: './drum-pad.component.html',
   styleUrls: ['./drum-pad.component.css'],
 })
-
-export class DrumPadComponent {
-
+export class DrumPadComponent implements Listener {
   @Output()
   padPressedEvent = new EventEmitter<number>();
 
@@ -17,6 +19,10 @@ export class DrumPadComponent {
 
   @Input()
   caption!: string;
+
+  @Input()
+  swirling = false;
+  swirl = new Swirl<number>([0, 1, 2, 3, 4, 5, 6, 7]);
 
   @Input()
   selector: boolean = false;
@@ -45,10 +51,21 @@ export class DrumPadComponent {
   @Input()
   channel!: number;
 
-  constructor() {}
+  constructor(private uiService: UiService) {
+    this.uiService.addListener(this);
+  }
+
+  pulse = 0;
+
+  onNotify(_messageType: number, _message: string, _messageValue: number) {
+    if (_messageType == Constants.TICKER_CONNECTED && this.swirling) {
+      this.pulse++;
+      this.swirl.forward();
+    }
+  }
 
   padPressed() {
-    this.padPressedEvent.emit(this.index)
+    this.padPressedEvent.emit(this.index);
   }
 
   getPadClass(): string {
@@ -60,65 +77,28 @@ export class DrumPadComponent {
   }
 
   getPadRingClass(): string {
-    if (this.selector)
-      return 'none'
+    if (this.selector) return 'none';
 
     let result = this.active ? 'pad-ring-active' : 'pad-ring';
 
     return result;
   }
 
-  getIndicatorClass(_index: number): string {
-    if (this.selector)
-      return 'pad-15'
+  getIndicatorClass(index: number): string {
+    if (this.swirling) return 'pad-' + (this.swirl.getItems()[index] + 3);
 
-    let result = 'pad-indicator-content'
-    switch (_index) {
+    let result = 'pad-indicator-content';
+
+    switch (index) {
       case 0: {
-        result += this.pressed? ' armed' :' ready';
+        result += this.pressed ? ' armed' : ' mute';
         break;
       }
       case 1: {
         result += this.muted ? ' muted' : ' active';
         break;
       }
-
-      case 2: {
-        result += ' pad-2';
-        break;
-      }
-
-      case 2: {
-        result += ' pad-2';
-        break;
-      }
-
-      case 3: {
-        result += ' pad-3';
-        break;
-      }
-      case 4: {
-        result += ' pad-4';
-        break;
-      }
-      case 5: {
-        result += ' pad-5';
-        break;
-      }
-      case 6: {
-        result += ' pad-6';
-        break;
-      }
-      case 7: {
-        result += ' pad-7';
-        break;
-      }
-      case 8: {
-        result += ' pad-8';
-        break;
-      }
     }
-
 
     return result;
   }

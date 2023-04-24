@@ -16,6 +16,10 @@
   <main>
     <mat-tab-group>
 
+      <mat-tab label="Controls">
+        <app-slider-panel></app-slider-panel>
+      </mat-tab>
+
       <mat-tab class="no-scroll" label="Scheduler">
         <div class="player-panel">
           <app-player-nav></app-player-nav>
@@ -37,9 +41,6 @@
         <app-beat-spec></app-beat-spec>
       </mat-tab>
 
-      <mat-tab label="Controls">
-        <app-slider-panel></app-slider-panel>
-      </mat-tab>
 
       <mat-tab label="Config">
         <app-device-panel></app-device-panel>

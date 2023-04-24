@@ -13,27 +13,10 @@
       (mouseenter)="onPass(player)" (click)="onRowClick(player)">
 
 
-      <!-- <td>
-        <button [style.height.px]="20" id="add" (click)="onBtnClick(player, 'ticker-add')">
-          +
-        </button>
-      </td> -->
-      <!-- <td>
-        <button [style.height.px]="20" id="remove" (click)="onBtnClick(player, 'ticker-remove')">
-          -
-        </button>
-      </td> -->
-      <!-- <td class="shortest-col" id="player-col-class-{{player.id}}" (change)="onPresetChange(player, $event)">
-        <input value="{{player.playerClass}}">
-      </td> -->
-
       <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
         <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)"
           [instruments]="instruments" [player]="player"></app-instrument-selector>
       </td>
-      <!-- <td class="shortest-col" id="player-col-instrument-id-{{player.id}}">
-        {{ player.instrument.channel }}
-      </td> -->
       <td class="shortest-col" id="player-col-preset-{{player.id}}" (change)="onPresetChange(player, $event)">
         <input type="number" min="0" step="1" value="{{ player.preset }}">
       </td>
@@ -41,16 +24,13 @@
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
       </td>
       <td>
-        <button ngClass="{{player.muted ? 'muted' : 'unmuted' }}" [style.height.px]="20" id="player-mute-{{player.id}}" (click)="onBtnClick(player, 'player-mute')">
+        <button ngClass="{{player.muted ? 'muted' : 'unmuted' }}" [style.height.px]="20" id="player-mute-{{player.id}}"
+          (click)="onBtnClick(player, 'player-mute')">
           {{player.muted ? 'U' : 'M'}}
         </button>
-        <!-- <button *ngIf="player.muted" [style.height.px]="20" id="mute" (click)="onBtnClick(player, 'player-mute')">
-          U
-        </button> -->
       </td>
       <td>
         <button [style.height.px]="20" id="audition" (click)="onBtnClick(player, 'ticker-audition')">
-          <!--          <mat-icon>mute</mat-icon>-->
           P
         </button>
       </td>
@@ -106,45 +86,6 @@
       <td class="shortest-col"></td>
       <td class="shortest-col"></td>
       <td class="shortest-col"></td>
-
-
     </tr>
   </table>
 </div>
-
-<!--    <ng-container-->
-<!--      [matColumnDef]="col"-->
-<!--      *ngFor="let col of playerCols">-->
-
-<!--      <td mat-cell *matCellDef="let element ">-->
-<!--        <input-->
-<!--          matInput-->
-<!--          placeholder="col"-->
-<!--          [value]="element[col]"-->
-<!--          [(ngModel)]="element[col]"-->
-<!--        />-->
-<!--    </ng-container>-->
-
-<!--    <tr mat-header-row *matHeaderRowDef="playerCols"></tr>-->
-<!--    <tr mat-row *matRowDef="let row; columns: playerCols"></tr>-->
-
-<!--  <table mat-table [dataSource]="players">-->
-<!--    <ng-container-->
-<!--      [matColumnDef]="col"-->
-<!--      *ngFor="let col of playerCols">-->
-<!--      <th mat-header-cell *matHeaderCellDef>-->
-<!--        {{ col }}-->
-<!--      </th>-->
-
-<!--      <td mat-cell *matCellDef="let element ">-->
-<!--        <input-->
-<!--          matInput-->
-<!--          placeholder="col"-->
-<!--          [value]="element[col]"-->
-<!--          [(ngModel)]="element[col]"-->
-<!--        />-->
-<!--    </ng-container>-->
-
-<!--    <tr mat-header-row *matHeaderRowDef="playerCols"></tr>-->
-<!--    <tr mat-row *matRowDef="let row; columns: playerCols"></tr>-->
-<!--  </table>-->

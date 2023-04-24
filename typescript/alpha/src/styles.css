@@ -121,11 +121,16 @@ main {
 
 h1,
 h2,
-h3,
 h4,
 h5,
 h6 {
-  margin: 8px 0;
+  margin: 6px 0;
+  color: black;
+}
+
+h3 {
+  margin: 4px 0;
+  color: white;
 }
 
 p {
@@ -886,63 +891,74 @@ th {
 }
 
 .slider-area {
-  gap: 4px;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  margin: 4px;
-  border: white solid 1px;
-  border-radius: 25px;
-  padding: 10px;
-  background-color: cadetblue;
-}
-
-.area {
-  background-color: transparent;
-  /* border: white ridge 1px; */
-  gap: 2px;
-  margin: 2px;
-  border-radius: 25px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
-
-.area-header {
-  text-align: center;
-  color: white;
-}
-
-.area-content {
-  background-color: transparent;
-  align-self: stretch;
-  gap: 2px;
-  margin: 2px;
-  display: flex;
-  /* border: white solid 1px; */
-  font-size: smaller;
-}
 
 .area-slider {
   width: 80px;
 }
-
-.area-control {
-  display: flex;
-  align-items: center;
-}
-
-.area-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  grid-gap: 10px;
-}
-
 .area-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  margin: 1px;
+  /* border: white dashed 10px; */
+}
+.area-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  grid-template-rows: repeat(auto-fill, minmax(60px, 1fr));
+  grid-gap: 4px;
 }
 
+
+.area-control {
+  display: grid;
+  grid-template-rows: auto auto;
+  justify-items: left;
+  align-items: left;
+
+  padding-right: 20px;
+  /* border: blue dashed 2px; */
+}
+
+.area {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  grid-template-rows: repeat(auto-fill, minmax(60px, 1fr));
+  grid-gap: 10px;
+  justify-items: left;
+  align-items: left;
+  align-self: stretch;
+  margin: 1px;
+  /* border: yellow dashed 2px; */
+}
+
+.knob {
+  margin-right: 10px;
+}
+
+.area-header {
+  text-align: center;
+  color: white;
+
+  margin: 1px;
+  /* border: purple dashed 2px; */
+}
+
+.area-content {
+  background-color: silver;
+  align-self: stretch;
+  gap: 2px;
+  margin: 2px;
+  display: flex;
+  padding: 2px;
+  border: white inset 1px;
+  border-radius: 25px;
+}
 /* Page title */
 /* ---------------------------------------------------------- */
 .title-holder {

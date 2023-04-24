@@ -21,7 +21,7 @@ export class DashboardComponent implements OnInit, Listener {
   @Output()
   selectedPlayer!: Player;
 
-  tickerPointer = 0;
+  playing = false;
 
   activeInstrument!: Instrument;
 
@@ -209,6 +209,7 @@ export class DashboardComponent implements OnInit, Listener {
         }
 
         case 'ticker-play': {
+          this.playing = true
           this.uiService.notifyAll(
             Constants.TICKER_STARTED,
             this.ticker.id.toString(),
@@ -216,26 +217,18 @@ export class DashboardComponent implements OnInit, Listener {
           );
           this.midiService.start().subscribe();
           this.updateDisplay();
-          // let element = document.getElementById('transport-btn-play')
-          // if (element != null) { // @ts-ignore
-          //   this.toggleClass(element, 'active')
-          // }
 
           break;
         }
 
         case 'ticker-stop': {
+          this.playing = false
           this.midiService.stop().subscribe((data) => {
             this.ticker = data;
-            // this.updateTickerStatus()
-            this.uiService.notifyAll(Constants.TICKER_SELECTED, '', 0);
+            this.uiService.notifyAll(Constants.TICKER_STOPPED, '', 0);
           });
           this.players = [];
           this.updateDisplay();
-          // let element = document.getElementById('transport-btn-play')
-          // if (element != null) { // @ts-ignore
-          //   this.toggleClass(element, 'active')
-          // }
           break;
         }
 
@@ -313,7 +306,7 @@ export class DashboardComponent implements OnInit, Listener {
         }
       }
 
-    this.updateDisplay();
+    // this.updateDisplay();
   }
 
   updateDisplay(): void {
@@ -324,32 +317,14 @@ export class DashboardComponent implements OnInit, Listener {
         this.ticker = _data;
         this.players = this.reverseSortByClass(_data.players); // data)
       });
-    } else
+    } else if (this.playing)
       this.midiService.playerInfo().subscribe(async (data) => {
-        // var update: boolean =
-        //   this.ticker.playing && this.players.length != (<Player[]>data).length;
         this.players = this.reverseSortByClass(data);
         this.players.forEach(
           (p) => (p.active = p.id in this.ticker.activePlayerIds)
         );
-        // if (update && this.ticker.playing) {
-        //   this.uiService.notifyAll(Constants.BEAT_DIV, '', this.ticker.beat);
-        //   this.uiService.notifyAll(Constants.BAR_DIV, '', this.ticker.bar);
-        //   this.uiService.notifyAll(Constants.PART_DIV, '', this.ticker.part);
-        //   await this.midiService.delay(250);
-        //   this.updateDisplay();
-        // }
       });
-
-    // this.updateTickerStatus()
   }
-
-  // updateTickerStatus() {
-  //   this.midiService.tickerStatus().subscribe(async (data) => {
-  //     this.tickerStatus = data;
-  //     await this.midiService.delay(this.tickerStatus?.playing ? 100 : 250);
-  //   });
-  // }
 
   onPlayerSelected(player: Player) {
     this.selectedPlayer = player;

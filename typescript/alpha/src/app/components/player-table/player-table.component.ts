@@ -21,7 +21,7 @@ export class PlayerTableComponent implements Listener, OnInit {
   ruleChangeEvent = new EventEmitter<Player>();
 
   selectedPlayer!: Player
-  selectedPlayers: Player[] = [];
+  // selectedPlayers: Player[] = [];
 
   @Output()
   instruments!: Instrument[];
@@ -33,12 +33,12 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   constructor(private midiService: MidiService, private uiService: UiService) {}
 
-  onNotify(messageType: number, _message: string) {
-    if (
-      messageType == Constants.TICKER_SELECTED ||
-      messageType == Constants.DISCONNECTED
-    )
-      this.selectedPlayers = [];
+  onNotify(_messageType: number, _message: string) {
+    // if (
+    //   messageType == Constants.TICKER_SELECTED ||
+    //   messageType == Constants.DISCONNECTED
+    // )
+      // this.selectedPlayers = [];
   }
 
   ngOnInit(): void {
@@ -72,7 +72,7 @@ export class PlayerTableComponent implements Listener, OnInit {
         player.rules = [];
         this.midiService.removePlayer(player).subscribe(async (data) => {
           this.players = data;
-          if (this.players.length == 0) this.selectedPlayers = [];
+          // if (this.players.length == 0) this.selectedPlayers = [];
         });
         this.players = this.players.filter((p) => p.id != player.id);
         break;
@@ -91,18 +91,18 @@ export class PlayerTableComponent implements Listener, OnInit {
       }
 
       case 'ticker-audition': {
-        if (this.selectedPlayers.length == 1) {
+        if (this.selectedPlayer != undefined) {
           // this.selectedPlayer.muted = !this.selectedPlayer.muted
           this.midiService.sendMessage(
             MidiMessage.NOTE_ON,
-            this.selectedPlayers[0].channel,
-            this.selectedPlayers[0].note,
+            this.selectedPlayer.channel,
+            this.selectedPlayer.note,
             120
           );
           this.midiService.sendMessage(
             MidiMessage.NOTE_OFF,
-            this.selectedPlayers[0].channel,
-            this.selectedPlayers[0].note,
+            this.selectedPlayer.channel,
+            this.selectedPlayer.note,
             120
           );
         }
@@ -330,7 +330,7 @@ export class PlayerTableComponent implements Listener, OnInit {
   }
 
   onPass(player: Player) {
-    if (player != undefined && this.selectedPlayers.length == 0)
+    if (player != undefined && this.selectedPlayer != undefined)
       this.playerSelectEvent.emit(player);
   }
 

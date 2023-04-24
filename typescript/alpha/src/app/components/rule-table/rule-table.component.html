@@ -7,7 +7,7 @@
     </th>
   </tr>
 
-  <tr class="active-table-row" *ngFor="let rule of player?.rules;">
+  <tr class="active-table-row" *ngFor="let rule of player?.rules;" (mouseenter)="onPass(rule)" (click)="onRowClick(rule)">
     <!-- <td class="shortest-col">{{rule.id}}</td> -->
     <td>
       <button [style.height.px]="20" id="add" (click)="btnClicked(rule, 'add')">+</button>

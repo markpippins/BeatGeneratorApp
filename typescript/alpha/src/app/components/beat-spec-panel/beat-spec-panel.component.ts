@@ -38,6 +38,9 @@ export class BeatSpecPanelComponent
   pattern!: Pattern;
 
   @Input()
+  swirling = true;
+
+  @Input()
   step!: Step;
 
   @Input()
@@ -70,14 +73,27 @@ export class BeatSpecPanelComponent
     this.step.active = !this.step.active;
     // this.selected = !this.selected
   }
+
+
   onNotify(messageType: number, _message: string, _messageValue: any) {
+    if (messageType == Constants.TICKER_STARTED) {
+      this.lastBeat = 0;
+      this.swirling = false;
+    }
+
+    if (messageType == Constants.TICKER_STOPPED) {
+      this.lastBeat = 0;
+      this.swirling = true;
+    }
+
     if (messageType == Constants.BEAT_DIV) {
       if (this.lastBeat > this.pattern.lastStep)
         this.lastBeat = this.pattern.firstStep;
-
-      this.active =
-        // this.pattern.position == status.position &&
-        this.lastBeat == this.step.position;
+      else if (this.lastBeat == 0) this.lastBeat = 1;
+      else
+        this.active =
+          // this.pattern.position == status.position &&
+          this.lastBeat == this.step.position;
       this.lastBeat++;
     }
     // if (messageType == Constants.NOTIFY_SONG_STATUS) {

@@ -60,6 +60,8 @@ export class StatusPanelComponent implements OnInit {
     private uiService: UiService
   ) {}
 
+  private pulse = 0;
+
   getTickerMessages(): Observable<string> {
     return Observable.create(
       (observer: {
@@ -111,6 +113,8 @@ export class StatusPanelComponent implements OnInit {
   ngOnInit(): void {
     this.tickerSubscription = this.getTickerMessages().subscribe({
       next: (data: string) => {
+        this.pulse++;
+          this.uiService.notifyAll(Constants.TICKER_CONNECTED, '', this.pulse);
         this.tickerStatus = JSON.parse(data);
         this.updateDisplay();
       },

@@ -1,17 +1,25 @@
-export class Swirl {
-  private strings: string[];
+export class Swirl<K> {
+  private items: K[];
 
-  constructor(strings: string[]) {
-    this.strings = strings;
+  constructor(items: K[]) {
+    this.items = items;
+  }
+
+  getItem(index: number): K {
+    return this.items[index];
+  }
+
+  getItems(): K[] {
+    return this.items;
   }
 
   forward(): void {
-    const lastString = this.strings.pop();
-    if (lastString != undefined) this.strings.unshift(lastString);
+    const lastItem = this.items.pop();
+    if (lastItem != undefined) this.items.unshift(lastItem);
   }
 
   reverse(): void {
-    const firstString = this.strings.shift();
-    if (firstString != undefined) this.strings.push(firstString);
+    const firstItem = this.items.shift();
+    if (firstItem != undefined) this.items.push(firstItem);
   }
 }

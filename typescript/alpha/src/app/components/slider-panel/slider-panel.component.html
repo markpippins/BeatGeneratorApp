@@ -4,55 +4,57 @@
       <div class="area-header">
         <h3>{{ instrument.name }}</h3>
       </div>
+      <div class="slider-area">
 
-      <div class="area-container">
-        <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
-          <div class="area" *ngIf="!panel.startsWith('Other')">
-            <div class="area-content">
-              <div class="area-header">
-                {{ panel }}
+        <div class="area-container">
+          <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
+            <div class="area" *ngIf="!panel.startsWith('Other')">
+              <div class="area-content">
+                <div class="area-header">
+                  <h4>{{ panel }}</h4>
+                </div>
+                <div class="area" *ngFor="let controlCode of getControlCodes(instrument, panel)">
+                  <div class="area-controls">
+                    <div class="area-control">
+                      <div class="p-field p-col-12 p-md-4">
+                        <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="65"
+                          [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [textColor]="getTextColor()"
+                          [valueTemplate]="getValueTemplate(controlCode)" [valueColor]="getValueColor()"
+                          [(ngModel)]="value5" [step]="10"></p-knob>
+                        <!-- <h5>{{controlCode}}</h5> -->
+                      </div>
+                    </div>
+                  </div>
+                  <!-- ELSE -->
+                </div>
               </div>
-              <div class="area" *ngFor="let controlCode of getControlCodes(instrument, panel)">
-                <div class="area-controls">
+            </div>
+          </div>
+
+
+          <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
+            <div class="area" *ngIf="panel.startsWith('Other')">
+              <div class="area-content">
+                <div class="area-header">
+                  <h4>{{ panel }}</h4>
+                </div>
+                <div class="area-controls" *ngFor="let controlCode of getOtherControlCodes(instrument.name)">
                   <div class="area-control">
                     <div class="p-field p-col-12 p-md-4">
-                      <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="45"
-                        [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()"
-                        [valueTemplate]="getValueTemplate(controlCode)" [valueColor]="getValueColor()"
-                        [(ngModel)]="value5" [step]="10"></p-knob>
+                      <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="65"
+                        [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [valueColor]="getValueColor()"
+                        [textColor]="getTextColor()" [(ngModel)]="value5" [step]="10"></p-knob>
                       <h5>{{controlCode}}</h5>
                     </div>
                   </div>
+                  <!-- ELSE -->
                 </div>
-                <!-- ELSE -->
               </div>
             </div>
           </div>
         </div>
+
       </div>
-
-
-      <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
-        <div class="area" *ngIf="panel.startsWith('Other')">
-          <div class="area-content">
-            <div class="area-header">
-              {{ panel }}
-            </div>
-            <div class="area-controls" *ngFor="let controlCode of getOtherControlCodes(instrument.name)">
-              <div class="area-control">
-                <div class="p-field p-col-12 p-md-4">
-                  <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="45"
-                    [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [valueColor]="getValueColor()"
-                    [(ngModel)]="value5" [step]="10"></p-knob>
-                  <h5>{{controlCode}}</h5>
-                </div>
-              </div>
-              <!-- ELSE -->
-            </div>
-          </div>
-        </div>
-      </div>
-
 
     </mat-tab>
   </div>

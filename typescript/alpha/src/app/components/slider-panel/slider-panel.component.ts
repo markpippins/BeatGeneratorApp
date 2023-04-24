@@ -55,7 +55,7 @@ export class SliderPanelComponent implements OnInit, Listener {
   }
 
   getRangeColor() {
-    return 'blue';
+    return 'lightblue';
   }
 
   getStrokeWidth() {
@@ -66,13 +66,16 @@ export class SliderPanelComponent implements OnInit, Listener {
     return 'knob';
   }
 
+  getTextColor() {
+    return 'black';
+  }
+
   getValueColor() {
-    // return 'fuchsia';
-    return 'yellow';
+    return 'fuchsia';
   }
 
   getValueTemplate(_name: string) {
-    return '{value}';
+    return _name
   }
 
   buildPanelMap(instruments: Instrument[]) {

@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { DashboardComponent } from './routes/dashboard/dashboard.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { SliderPanelComponent } from './components/slider-panel/slider-panel.component';
 import { ChannelSelectorComponent } from './components/widgets/channel-selector/channel-selector.component';
 import { InstrumentSelectorComponent } from './components/widgets/instrument-selector/instrument-selector.component';
@@ -42,10 +42,8 @@ import { BeatNavigatorComponent } from './components/beat-navigator/beat-navigat
 import { TickerNavComponent } from './components/widgets/ticker-nav/ticker-nav.component';
 import { SetNavComponent } from './components/widgets/set-nav/set-nav.component';
 import { RulesNavComponent } from './components/widgets/rules-nav/rules-nav.component';
-import { TickerAdjustComponent } from './components/widgets/ticker-adjust/ticker-adjust.component';
 import { ButtonPanelComponent } from './components/widgets/button-panel/button-panel.component';
 import { PlayerNavComponent } from './components/widgets/player-nav/player-nav.component';
-import { SchedulerComponent } from './routes/scheduler/scheduler.component';
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
 import { StatusReadoutComponent } from './components/widgets/status-readout/status-readout.component';
 import { CommonModule } from '@angular/common';
@@ -83,10 +81,8 @@ const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
     TickerNavComponent,
     SetNavComponent,
     RulesNavComponent,
-    TickerAdjustComponent,
     ButtonPanelComponent,
     PlayerNavComponent,
-    SchedulerComponent,
     StatusReadoutComponent,
   ],
   imports: [

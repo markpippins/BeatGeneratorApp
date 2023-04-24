@@ -39,6 +39,9 @@ export class RuleTableComponent implements Listener {
 
   interval = 0.25;
 
+  @Output()
+  ruleSelectEvent = new EventEmitter<Rule>();
+
   @Input()
   player!: Player;
   ruleCols: string[] = [
@@ -90,6 +93,11 @@ export class RuleTableComponent implements Listener {
   //       this.intervalSet = true;
   //     });
   // }
+
+  onRowClick(rule: Rule) {
+    this.selectedRule = rule
+    this.ruleSelectEvent.emit(rule);
+}
 
   getRules(): Rule[] {
     return this.player == undefined ? [] : this.player.rules;
@@ -160,5 +168,18 @@ export class RuleTableComponent implements Listener {
       this.midiService.addRule(this.player).subscribe(async (data) => {
         this.player.rules.push(data);
       });
+  }
+
+  onPass(rule: Rule) {
+    if (rule != undefined && this.selectedRule != undefined)
+      this.ruleSelectEvent.emit(rule);
+  }
+
+  getMuteButtonClass(_rule: Rule): string {
+    return '';
+  }
+
+  getRowClass(rule: Rule): string {
+    return rule == this.selectedRule ? 'active-table-row selected' : 'active-table-row';
   }
 }
