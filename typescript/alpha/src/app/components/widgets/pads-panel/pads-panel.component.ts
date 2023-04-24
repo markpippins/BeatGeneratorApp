@@ -1,6 +1,6 @@
 import {Component, EventEmitter, OnInit} from '@angular/core';
-import {Instrument} from "../../models/instrument";
-import {MidiService} from "../../services/midi.service";
+import {Instrument} from "../../../models/instrument";
+import {MidiService} from "../../../services/midi.service";
 
 @Component({
   selector: 'app-pads-panel',

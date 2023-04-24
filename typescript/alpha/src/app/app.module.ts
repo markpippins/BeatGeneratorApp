@@ -9,7 +9,7 @@ import { ChannelSelectorComponent } from './components/widgets/channel-selector/
 import { InstrumentSelectorComponent } from './components/widgets/instrument-selector/instrument-selector.component';
 import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
-import { PadsPanelComponent } from './components/pads-panel/pads-panel.component';
+import { PadsPanelComponent } from './components/widgets/pads-panel/pads-panel.component';
 import { DrumPadComponent } from './components/widgets/drum-pad/drum-pad.component';
 import { StatusPanelComponent } from './components/status-panel/status-panel.component';
 import { MatRadioModule } from '@angular/material/radio';
@@ -28,7 +28,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { RuleTableComponent } from './components/rule-table/rule-table.component';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatListModule } from '@angular/material/list';
-import { InstrumentSelectDialogComponent } from './components/instrument-select-dialog/instrument-select-dialog.component';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { DevicePanelComponent } from './components/device-panel/device-panel.component';
 import { DeviceTableComponent } from './components/widgets/device-table/device-table.component';
@@ -49,6 +48,7 @@ import { StatusReadoutComponent } from './components/widgets/status-readout/stat
 import { CommonModule } from '@angular/common';
 import { NgStyle } from '@angular/common';
 import { KnobModule } from "primeng/knob";
+import { MidiKnobComponent } from './components/widgets/midi-knob/midi-knob.component';
 const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
 
 @NgModule({
@@ -68,7 +68,6 @@ const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
     BeatSpecComponent,
     BeatSpecPanelComponent,
     RuleTableComponent,
-    InstrumentSelectDialogComponent,
     DevicePanelComponent,
     DeviceTableComponent,
     RandomizerPanelComponent,
@@ -84,6 +83,7 @@ const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
     ButtonPanelComponent,
     PlayerNavComponent,
     StatusReadoutComponent,
+    MidiKnobComponent,
   ],
   imports: [
     CommonModule,

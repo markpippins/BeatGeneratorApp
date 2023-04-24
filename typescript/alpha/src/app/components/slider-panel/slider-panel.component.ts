@@ -4,6 +4,7 @@ import { MidiService } from '../../services/midi.service';
 import { Listener } from 'src/app/models/listener';
 import { UiService } from 'src/app/services/ui.service';
 import { Panel } from 'src/app/models/panel';
+import { ControlCode } from 'src/app/models/control-code';
 
 @Component({
   selector: 'app-slider-panel',
@@ -14,7 +15,6 @@ export class SliderPanelComponent implements OnInit, Listener {
   @Input()
   channel = 1;
 
-  value5: number = 50;
 
   pnls: Map<string, Panel[]> = new Map();
 
@@ -54,8 +54,10 @@ export class SliderPanelComponent implements OnInit, Listener {
     });
   }
 
+
+
   getRangeColor() {
-    return 'lightblue';
+    return 'slategrey';
   }
 
   getStrokeWidth() {
@@ -74,9 +76,11 @@ export class SliderPanelComponent implements OnInit, Listener {
     return 'fuchsia';
   }
 
-  getValueTemplate(_name: string) {
-    return _name
+  getValueTemplate(name: string) {
+    return name
   }
+
+
 
   buildPanelMap(instruments: Instrument[]) {
     instruments.forEach((instrument) => {
@@ -97,7 +101,7 @@ export class SliderPanelComponent implements OnInit, Listener {
     return result.sort();
   }
 
-  getOtherControlCodes(name: string): String[] {
+  getOtherControlCodes(name: string): string[] {
     let result: string[] = [];
     this.pnls.get(name)?.forEach((pnl) => {
       if (pnl.name == 'Other')
@@ -110,8 +114,8 @@ export class SliderPanelComponent implements OnInit, Listener {
     return result.sort();
   }
 
-  getControlCodes(instrument: Instrument, search: string): string[] {
-    return instrument.controlCodes.filter((cc) => cc.name.startsWith(search)).map(o => o.name.replace(search, ''));
+  getControlCodes(instrument: Instrument, search: string): ControlCode[] {
+    return instrument.controlCodes.filter((cc) => cc.name.startsWith(search));
   }
 
   configBtnClicked() {
@@ -151,16 +155,37 @@ export class SliderPanelComponent implements OnInit, Listener {
         );
         parent.name = common || parent.name;
       }
-
-      // let changeChildren = false;
-      // for (const child of parent.children)
-      //   if (child.name.length > 10) changeChildren = true;
-      // if (changeChildren)
-      //   for (const child of parent.children)
-      //     child.name = child.name.replace(parent.name, '');
     }
 
     return map;
+  }
+
+ transformPanels(panels: Panel[]): Panel[] {
+    const transformedPanels: Panel[] = [];
+
+    panels.forEach((panel) => {
+      const [parentPanelName, childPanelName] = panel.name.split(/\s+/);
+
+      if (parentPanelName && !isNaN(Number(parentPanelName))) {
+        let parentPanel = transformedPanels.find(
+          (n) => n.name === parentPanelName
+        );
+
+        if (!parentPanel) {
+          parentPanel = { name: parentPanelName, children: [] };
+          transformedPanels.push(parentPanel);
+        }
+
+        parentPanel.children.push({ name: childPanelName, children: panel.children });
+      } else {
+        transformedPanels.push({
+          name: panel.name,
+          children: this.transformPanels(panel.children),
+        });
+      }
+    });
+
+    return transformedPanels;
   }
 
   findCommonPrefix(strings: string[]): string {

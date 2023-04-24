@@ -13,49 +13,69 @@
                 <div class="area-header">
                   <h4>{{ panel }}</h4>
                 </div>
-                <div class="area" *ngFor="let controlCode of getControlCodes(instrument, panel)">
+                <div class="area" *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
                   <div class="area-controls">
                     <div class="area-control">
                       <div class="p-field p-col-12 p-md-4">
-                        <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="65"
-                          [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [textColor]="getTextColor()"
-                          [valueTemplate]="getValueTemplate(controlCode)" [valueColor]="getValueColor()"
-                          [(ngModel)]="value5" [step]="10"></p-knob>
-                        <!-- <h5>{{controlCode}}</h5> -->
+                        <!-- <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="65"
+                        [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [textColor]="getTextColor()"
+                        [valueTemplate]="getValueTemplate(controlCode)" [valueColor]="getValueColor()"
+                        [(ngModel)]="value5" [step]="10"></p-knob> -->
+                        <app-midi-knob [index]="index" [instrument]="instrument" [name]="controlCode.name"
+                          [cc]="controlCode.code"></app-midi-knob>
                       </div>
                     </div>
                   </div>
-                  <!-- ELSE -->
                 </div>
               </div>
             </div>
           </div>
-
-
           <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
             <div class="area" *ngIf="panel.startsWith('Other')">
               <div class="area-content">
                 <div class="area-header">
                   <h4>{{ panel }}</h4>
                 </div>
-                <div class="area-controls" *ngFor="let controlCode of getOtherControlCodes(instrument.name)">
+                <div class="area-controls" *ngFor="let controlCode of getOtherControlCodes(instrument.name); let index = index;">
                   <div class="area-control">
                     <div class="p-field p-col-12 p-md-4">
-                      <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="65"
-                        [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [valueColor]="getValueColor()"
-                        [textColor]="getTextColor()" [(ngModel)]="value5" [step]="10"></p-knob>
-                      <h5>{{controlCode}}</h5>
+                      <!-- <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="65"
+                        [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [textColor]="getTextColor()"
+                        [valueTemplate]="getValueTemplate(controlCode)" [valueColor]="getValueColor()"
+                        [(ngModel)]="value5" [step]="10"></p-knob> -->
+                      <app-midi-knob [index]="index" [instrument]="instrument" [name]="controlCode"></app-midi-knob>
                     </div>
                   </div>
-                  <!-- ELSE -->
                 </div>
               </div>
             </div>
           </div>
         </div>
-
       </div>
-
     </mat-tab>
   </div>
 </mat-tab-group>
+<div class="flex-container-horizontal">
+  <app-drum-pad></app-drum-pad>
+  <app-drum-pad></app-drum-pad>
+  <app-drum-pad></app-drum-pad>
+  <app-drum-pad caption="1"></app-drum-pad>
+  <app-drum-pad caption="2"></app-drum-pad>
+  <app-drum-pad caption="3"></app-drum-pad>
+  <app-drum-pad caption="4"></app-drum-pad>
+  <app-drum-pad caption="5"></app-drum-pad>
+  <app-drum-pad caption="6"></app-drum-pad>
+  <app-drum-pad caption="7"></app-drum-pad>
+  <app-drum-pad caption="8"></app-drum-pad>
+  <app-drum-pad caption="9"></app-drum-pad>
+  <app-drum-pad caption="10"></app-drum-pad>
+  <app-drum-pad caption="11"></app-drum-pad>
+  <app-drum-pad caption="12"></app-drum-pad>
+  <app-drum-pad caption="13"></app-drum-pad>
+  <app-drum-pad caption="14"></app-drum-pad>
+  <app-drum-pad caption="15"></app-drum-pad>
+  <app-drum-pad caption="16"></app-drum-pad>
+  <app-drum-pad></app-drum-pad>
+  <app-drum-pad></app-drum-pad>
+  <app-drum-pad></app-drum-pad>
+</div>

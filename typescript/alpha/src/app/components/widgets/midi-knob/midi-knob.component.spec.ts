@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ConsoleComponent } from './console.component';
+import { MidiKnobComponent } from './midi-knob.component';
 
-describe('ConsoleComponent', () => {
-  let component: ConsoleComponent;
-  let fixture: ComponentFixture<ConsoleComponent>;
+describe('MidiKnobComponent', () => {
+  let component: MidiKnobComponent;
+  let fixture: ComponentFixture<MidiKnobComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ConsoleComponent ]
+      declarations: [ MidiKnobComponent ]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(ConsoleComponent);
+    fixture = TestBed.createComponent(MidiKnobComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
