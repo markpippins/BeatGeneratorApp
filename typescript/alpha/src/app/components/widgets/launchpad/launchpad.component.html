@@ -1,0 +1,121 @@
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  #launchpad {
+    margin: 4px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 2px;
+    height: 80vh;
+    background-color: transparent;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+  }
+
+  .dark-pad-0 {
+    background-color: darkblue;
+  }
+
+  .dark-pad-1 {
+    background-color: darkorchid;
+  }
+
+  .dark-pad-2 {
+    background-color: darkcyan;
+  }
+
+  .dark-pad-3 {
+    background-color: #555;
+  }
+
+  .button {
+    color: white;
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+<div id="launchpad">
+  <div class="controls" id="control1">
+    <button class="button dark-pad-0" (click)="onClick(48)">48</button>
+    <button class="button dark-pad-0" (click)="onClick(49)">49</button>
+    <button class="button dark-pad-0" (click)="onClick(50)">50</button>
+    <button class="button dark-pad-0" (click)="onClick(51)">51</button>
+    <button class="button dark-pad-0" (click)="onClick(44)">44</button>
+    <button class="button dark-pad-0" (click)="onClick(45)">45</button>
+    <button class="button dark-pad-0" (click)="onClick(46)">46</button>
+    <button class="button dark-pad-0" (click)="onClick(47)">47</button>
+    <button class="button dark-pad-0" (click)="onClick(40)">40</button>
+    <button class="button dark-pad-0" (click)="onClick(41)">41</button>
+    <button class="button dark-pad-0" (click)="onClick(42)">42</button>
+    <button class="button dark-pad-0" (click)="onClick(43)">43</button>
+    <button class="button dark-pad-0" (click)="onClick(36)">36</button>
+    <button class="button dark-pad-0" (click)="onClick(37)">37</button>
+    <button class="button dark-pad-0" (click)="onClick(38)">38</button>
+    <button class="button dark-pad-0" (click)="onClick(39)">39</button>
+  </div>
+  <div class="controls" id="control2">
+    <button class="button dark-pad-1" (click)="onClick(64)">64</button>
+    <button class="button dark-pad-1" (click)="onClick(65)">65</button>
+    <button class="button dark-pad-1" (click)="onClick(66)">66</button>
+    <button class="button dark-pad-1" (click)="onClick(67)">67</button>
+    <button class="button dark-pad-1" (click)="onClick(60)">60</button>
+    <button class="button dark-pad-1" (click)="onClick(61)">61</button>
+    <button class="button dark-pad-1" (click)="onClick(62)">62</button>
+    <button class="button dark-pad-1" (click)="onClick(63)">63</button>
+    <button class="button dark-pad-1" (click)="onClick(56)">56</button>
+    <button class="button dark-pad-1" (click)="onClick(57)">57</button>
+    <button class="button dark-pad-1" (click)="onClick(58)">58</button>
+    <button class="button dark-pad-1" (click)="onClick(59)">59</button>
+    <button class="button dark-pad-1" (click)="onClick(53)">52</button>
+    <button class="button dark-pad-1" (click)="onClick(53)">53</button>
+    <button class="button dark-pad-1" (click)="onClick(54)">54</button>
+    <button class="button dark-pad-1" (click)="onClick(55)">55</button>
+  </div>
+  <div class="controls" id="control1">
+    <button class="button dark-pad-2" (click)="onClick(80)">80</button>
+    <button class="button dark-pad-2" (click)="onClick(81)">81</button>
+    <button class="button dark-pad-2" (click)="onClick(82)">82</button>
+    <button class="button dark-pad-2" (click)="onClick(83)">83</button>
+    <button class="button dark-pad-2" (click)="onClick(76)">76</button>
+    <button class="button dark-pad-2" (click)="onClick(77)">77</button>
+    <button class="button dark-pad-2" (click)="onClick(78)">78</button>
+    <button class="button dark-pad-2" (click)="onClick(79)">79</button>
+    <button class="button dark-pad-2" (click)="onClick(72)">72</button>
+    <button class="button dark-pad-2" (click)="onClick(73)">73</button>
+    <button class="button dark-pad-2" (click)="onClick(74)">74</button>
+    <button class="button dark-pad-2" (click)="onClick(75)">75</button>
+    <button class="button dark-pad-2" (click)="onClick(68)">68</button>
+    <button class="button dark-pad-2" (click)="onClick(69)">69</button>
+    <button class="button dark-pad-2" (click)="onClick(70)">70</button>
+    <button class="button dark-pad-2" (click)="onClick(71)">71</button>
+  </div>
+  <div class="controls" id="control2">
+    <button class="button dark-pad-3" (click)="onClick(96)">96</button>
+    <button class="button dark-pad-3" (click)="onClick(97)">97</button>
+    <button class="button dark-pad-3" (click)="onClick(98)">98</button>
+    <button class="button dark-pad-3" (click)="onClick(99)">99</button>
+    <button class="button dark-pad-3" (click)="onClick(92)">92</button>
+    <button class="button dark-pad-3" (click)="onClick(93)">93</button>
+    <button class="button dark-pad-3" (click)="onClick(94)">94</button>
+    <button class="button dark-pad-3" (click)="onClick(95)">95</button>
+    <button class="button dark-pad-3" (click)="onClick(88)">88</button>
+    <button class="button dark-pad-3" (click)="onClick(89)">89</button>
+    <button class="button dark-pad-3" (click)="onClick(90)">90</button>
+    <button class="button dark-pad-3" (click)="onClick(91)">91</button>
+    <button class="button dark-pad-3" (click)="onClick(84)">84</button>
+    <button class="button dark-pad-3" (click)="onClick(85)">85</button>
+    <button class="button dark-pad-3" (click)="onClick(86)">86</button>
+    <button class="button dark-pad-3" (click)="onClick(87)">87</button>
+  </div>
+
+</div>

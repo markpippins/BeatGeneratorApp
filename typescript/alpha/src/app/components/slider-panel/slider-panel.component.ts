@@ -114,7 +114,6 @@ export class SliderPanelComponent implements OnInit, Listener {
   }
 
   controlIsBinary(cc: ControlCode) {
-    // if (instrument.boundaries.has(cc.code)) return false;
     return cc.upperBound == 1 && cc.lowerBound == 0;
   }
 

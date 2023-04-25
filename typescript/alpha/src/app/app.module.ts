@@ -50,6 +50,7 @@ import { NgStyle } from '@angular/common';
 import { KnobModule } from "primeng/knob";
 import { CheckboxModule } from 'primeng/checkbox';
 import { MidiKnobComponent } from './components/widgets/midi-knob/midi-knob.component';
+import { LaunchpadComponent } from './components/widgets/launchpad/launchpad.component';
 const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
 
 @NgModule({
@@ -85,6 +86,7 @@ const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
     PlayerNavComponent,
     StatusReadoutComponent,
     MidiKnobComponent,
+    LaunchpadComponent,
   ],
   imports: [
     CommonModule,

@@ -37,6 +37,16 @@
                 <div class="area-header">
                   <h4>{{ panel }}</h4>
                 </div>
+                <div class="area" *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
+                  <div class="area-controls">
+                    <div class="area-control">
+                      <app-midi-knob *ngIf="controlIsWideRange(controlCode)" [index]="index" [instrument]="instrument"
+                        [name]="controlCode.name" [cc]="controlCode.code" [panel]="panel"></app-midi-knob>
+
+                    </div>
+                  </div>
+                </div>
+
                 <div *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
                   <div *ngIf="controlIsBinary(controlCode) || controlIsShortRange(controlCode)" class="area">
                     <div class="area-controls">
@@ -59,17 +69,6 @@
                     </div>
                   </div>
                 </div>
-
-                <div class="area" *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
-                  <div class="area-controls">
-                    <div class="area-control">
-                      <app-midi-knob *ngIf="controlIsWideRange(controlCode)" [index]="index" [instrument]="instrument"
-                        [name]="controlCode.name" [cc]="controlCode.code" [panel]="panel"></app-midi-knob>
-
-                    </div>
-                  </div>
-                </div>
-
 
 
               </div>
