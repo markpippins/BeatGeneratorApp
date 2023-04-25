@@ -2,6 +2,8 @@ package com.angrysurfer.midi.model;
 
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -22,4 +24,6 @@ public class ControlCode implements Serializable {
     private Integer pad;
     @Column(name = "is_binary")
     private Boolean binary;
+    @Transient
+    private Map<Integer, Map<Integer, String>> optionLabels = new HashMap<>();
 }

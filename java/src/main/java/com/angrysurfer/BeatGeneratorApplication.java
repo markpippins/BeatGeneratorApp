@@ -61,6 +61,7 @@ public class BeatGeneratorApplication {
                             if (finalInstrumentDef.getBoundaries().containsKey(code)) {
                                 controlCode.setLowerBound(finalInstrumentDef.getBoundaries().get(code)[0]);
                                 controlCode.setUpperBound(finalInstrumentDef.getBoundaries().get(code)[1]);
+                                controlCode.setOptionLabels(finalInstrumentDef.getOptionLabels());
                             }
                             controlCode = controlCodeRepo.save(controlCode);
                             finalInstrumentDef.getControlCodes().add(controlCode);

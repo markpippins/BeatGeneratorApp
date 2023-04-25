@@ -3,6 +3,7 @@
     {
       "assignments": {},
       "boundaries": {},
+      "optionLabels": {},
       "deviceName": "MRCC 880",
       "name": "West Pest",
       "channel": 1,
@@ -14,6 +15,7 @@
     {
       "assignments": {},
       "boundaries": {},
+      "optionLabels": {},
       "deviceName": "MRCC 880",
       "name": "Zoia",
       "channel": 6,
@@ -25,6 +27,7 @@
     {
       "assignments": {},
       "boundaries": {},
+      "optionLabels": {},
       "deviceName": "MRCC 880",
       "name": "Tracker",
       "channel": 12,
@@ -35,6 +38,7 @@
     },
     {
       "assignments": {
+        "5": "Portamento Time (0=OFF)",
         "117": "Arpreggiator ON/OFF",
         "119": "Arpreggiator Type",
         "118": "Legato ON/OFF",
@@ -51,9 +55,10 @@
         "112": "Min Velocity A",
         "113": "Min Velocity B",
         "114": "MIDI Clock ON/OFF",
-        "116": "Tempo In Division"
+        "116": "Tempo In Div"
       },
       "boundaries": {
+        "65": [0, 1],
         "102": [0, 16],
         "103": [0, 16],
         "104": [0, 3],
@@ -62,8 +67,29 @@
         "107": [0, 3],
         "114": [0, 1],
         "117": [0, 1],
-        "118": [0, 1]
-        
+        "118": [0, 1],
+        "119": [0, 1]
+      },
+      "optionLabels": {
+        "65": { "0": "Off", "1": "On" },
+        "104": { "0": "Note", "1": "Velocity", "2": "Mod", "3": "LFO Rate" },
+        "105": { "0": "Note", "1": "Velocity", "2": "Mod", "3": "LFO Rate" },
+        "106": {
+          "0": "Note ON",
+          "1": "Velocity > 50%",
+          "2": "ModWh > 50%",
+          "3": "LFO Rate"
+        },
+        "107": {
+          "0": "Note ON",
+          "1": "Velocity > 50%",
+          "2": "ModWh > 50%",
+          "3": "LFO Rate"
+        },
+        "114": { "0": "Off", "1": "On" },
+        "117": { "0": "Off", "1": "On" },
+        "118": { "0": "Off", "1": "On" },
+        "119": { "0": "Traditional", "1": "Latch & Shift" }
       },
       "deviceName": "MRCC 880",
       "name": "Zero",
@@ -76,6 +102,7 @@
     {
       "assignments": {},
       "boundaries": {},
+      "optionLabels": {},
       "deviceName": "MRCC 880",
       "name": "Blackbox",
       "channel": 5,
@@ -116,9 +143,8 @@
         "62": "Wave 1 Level",
         "63": "Wave 1 Position"
       },
-      "boundaries": {
-        
-      },
+      "boundaries": {},
+      "optionLabels": {},
       "deviceName": "MRCC 880",
       "name": "Fireball",
       "channel": 3,
@@ -146,6 +172,7 @@
         "94": "LFO rate (sync)"
       },
       "boundaries": {},
+      "optionLabels": {},
       "deviceName": "MRCC 880",
       "name": "MicroFreak",
       "channel": 2,
@@ -217,8 +244,8 @@
         "70": "Low Perc OS/Wave",
         "71": "Low Perc Distortion"
       },
-      "boundaries": {
-      },
+      "boundaries": {},
+      "optionLabels": {},
       "deviceName": "MRCC 880",
       "name": "Razzmatazz",
       "channel": 9,

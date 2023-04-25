@@ -48,7 +48,10 @@ public class MidiInstrument implements Serializable {
     private Map<Integer, String> assignments = new HashMap<>();
     @Transient
     private Map<Integer, Integer[]> boundaries = new HashMap<>();
-    
+
+    @Transient
+    private Map<Integer, Map<Integer, String>> optionLabels = new HashMap<>();
+
     @JsonIgnore
     @Transient
     private MidiDevice device;
