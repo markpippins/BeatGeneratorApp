@@ -15,7 +15,6 @@ export class SliderPanelComponent implements OnInit, Listener {
   @Input()
   channel = 1;
 
-
   pnls: Map<string, Panel[]> = new Map();
 
   @Output()
@@ -54,8 +53,6 @@ export class SliderPanelComponent implements OnInit, Listener {
     });
   }
 
-
-
   getRangeColor() {
     return 'slategrey';
   }
@@ -77,10 +74,8 @@ export class SliderPanelComponent implements OnInit, Listener {
   }
 
   getValueTemplate(name: string) {
-    return name
+    return name;
   }
-
-
 
   buildPanelMap(instruments: Instrument[]) {
     instruments.forEach((instrument) => {
@@ -116,6 +111,31 @@ export class SliderPanelComponent implements OnInit, Listener {
 
   getControlCodes(instrument: Instrument, search: string): ControlCode[] {
     return instrument.controlCodes.filter((cc) => cc.name.startsWith(search));
+  }
+
+  controlIsBinary(cc: ControlCode) {
+    // if (instrument.boundaries.has(cc.code)) return false;
+    return cc.upperBound == 1 && cc.lowerBound == 0;
+  }
+
+  controlIsShortRange(cc: ControlCode) {
+    return cc.upperBound > 1 && cc.upperBound - cc.lowerBound < 16;
+  }
+
+  controlIsWideRange(cc: ControlCode) {
+    return (
+      (cc.lowerBound == undefined && cc.upperBound == undefined) ||
+      (cc.lowerBound == 0 && cc.upperBound == 0) ||
+      (cc.upperBound > 1 && cc.upperBound - cc.lowerBound > 15)
+    );
+  }
+
+  getOptionsFor(cc: ControlCode) {
+    let result = [];
+
+    for (let i = 0; i < cc.upperBound - cc.lowerBound; i++)
+      result.push(i.toString());
+    return result;
   }
 
   configBtnClicked() {
@@ -160,7 +180,7 @@ export class SliderPanelComponent implements OnInit, Listener {
     return map;
   }
 
- transformPanels(panels: Panel[]): Panel[] {
+  transformPanels(panels: Panel[]): Panel[] {
     const transformedPanels: Panel[] = [];
 
     panels.forEach((panel) => {
@@ -176,7 +196,10 @@ export class SliderPanelComponent implements OnInit, Listener {
           transformedPanels.push(parentPanel);
         }
 
-        parentPanel.children.push({ name: childPanelName, children: panel.children });
+        parentPanel.children.push({
+          name: childPanelName,
+          children: panel.children,
+        });
       } else {
         transformedPanels.push({
           name: panel.name,

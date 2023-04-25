@@ -18,6 +18,7 @@ interface PitchPair {
   note: string;
 }
 
+
 @Component({
   selector: 'app-beat-spec-panel',
   templateUrl: './beat-spec-panel.component.html',
@@ -26,7 +27,7 @@ interface PitchPair {
 export class BeatSpecPanelComponent
   implements Listener, OnInit, AfterContentChecked
 {
-  // selected: boolean = false;
+  colors = ['violet', 'lightsalmon', 'lightseagreen', 'deepskyblue', 'fuchsia', 'mediumspringgreen', 'mediumpurple', 'firebrick', 'mediumorchid', 'aqua', 'olivedrab', 'cornflowerblue', 'lightcoral', 'crimson', 'goldenrod', 'tomato', 'blueviolet']
 
   @Output()
   paramBtnClickEvent = new EventEmitter<number>();
@@ -124,14 +125,15 @@ export class BeatSpecPanelComponent
     this.uiService.addClass(element, 'active');
   }
 
-  onNoteChange(step: Step, event: { target: any }) {
-    if (step.pitch == event.target.value)
+  onNoteChange(_event: { target: any }) {
+    // alert(this.step.pitch)
+    // if (this.step.pitch == event.target.value)
       this.midiService
         .updateStep(
-          step.id,
-          step.position,
+          this.step.id,
+          this.step.position,
           Constants.STEP_PITCH,
-          event.target.value
+          this.step.pitch
         )
         .subscribe((data) => (this.step = data));
   }
@@ -179,5 +181,38 @@ export class BeatSpecPanelComponent
 
   getCaption(): string {
     return this.step.position.toString();
+  }
+
+  getMaxValue() {
+    return 127
+  }
+
+  getMinValue() {
+    return 0
+  }
+
+  getRangeColor() {
+    return 'slategrey';
+  }
+
+  getStrokeWidth() {
+    return 10;
+  }
+
+  getStyleClass() {
+    return 'knob';
+  }
+
+  getTextColor() {
+    return 'white';
+  }
+
+
+  getValueColor(index: number) {
+    return this.colors[index];
+  }
+
+  getValueTemplate(name: string): string {
+    return name
   }
 }

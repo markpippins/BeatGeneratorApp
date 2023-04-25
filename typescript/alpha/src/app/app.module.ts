@@ -48,6 +48,7 @@ import { StatusReadoutComponent } from './components/widgets/status-readout/stat
 import { CommonModule } from '@angular/common';
 import { NgStyle } from '@angular/common';
 import { KnobModule } from "primeng/knob";
+import { CheckboxModule } from 'primeng/checkbox';
 import { MidiKnobComponent } from './components/widgets/midi-knob/midi-knob.component';
 const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
 
@@ -97,6 +98,7 @@ const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
     MatInputModule,
     MatTableModule,
     KnobModule,
+    CheckboxModule,
     MatSliderModule,
     MatButtonModule,
     MatTabsModule,

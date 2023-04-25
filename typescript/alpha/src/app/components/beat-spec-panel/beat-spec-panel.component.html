@@ -1,5 +1,5 @@
 <div class="lane-808">
-  <div *ngIf="step.active" id="beat-btn-{{step.position}}" class="btn-active onbeat">
+  <!-- <div *ngIf="step.active" id="beat-btn-{{step.position}}" class="btn-active onbeat">
     <button (click)="onLaneBtnClick()">
       {{step.position}}
     </button>
@@ -8,35 +8,61 @@
     <button (click)="onLaneBtnClick()">
       {{step.position + 1}}
     </button>
-  </div>
+  </div> -->
   <!--  <label>Pitch</label>-->
   <div>
-    <select class="short-col" type="string" (change)="onNoteChange(step, $event)" [(ngModel)]="step.pitch">
+    <!-- <select class="short-col" type="string" (change)="onNoteChange(step, $event)" [(ngModel)]="step.pitch">
       <option *ngFor="let pitch of pitchMap" [value]="pitch.midi">
         {{pitch.note}}
       </option>
-    </select>
+    </select> -->
   </div>
-  <div>
+  <div class="flex-container-vertical">
+
+    <p-knob (onChange)="onNoteChange($event)" [(ngModel)]="step.pitch" [min]="getMinValue()" [max]="getMaxValue()"
+      [size]="35" [size]="35" [strokeWidth]="getStrokeWidth()" [styleClass]="getStyleClass()"
+      [rangeColor]=" getRangeColor()" [textColor]="getTextColor()" [valueColor]="getValueColor(1)"
+      [valueTemplate]="getValueTemplate('Pitch')" [step]="1"></p-knob>
+
+    <p-knob [(ngModel)]="step.velocity" type="range" [min]="getMinValue()" [max]="getMaxValue()" [size]="35"
+      [strokeWidth]="getStrokeWidth()" [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()"
+      [textColor]="getTextColor()" [valueColor]="getValueColor(2)" [valueTemplate]="getValueTemplate('Vel')"
+      (change)="onVelocityChange(step, $event)" [step]="1"></p-knob>
+
+    <p-knob [(ngModel)]="step.gate" type="range" [min]="getMinValue()" [max]="getMaxValue()" [size]="35"
+      [strokeWidth]="getStrokeWidth()" [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()"
+      [textColor]="getTextColor()" [valueColor]="getValueColor(3)" [valueTemplate]="getValueTemplate('Gate')"
+      (onChange)="onGateChange(step, $event)" [size]="35" [step]="1"></p-knob>
+
+    <p-knob [(ngModel)]="step.probability" type="range" [min]="getMinValue()" [max]="getMaxValue()" [size]="35"
+      [strokeWidth]="getStrokeWidth()" [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()"
+      [textColor]="getTextColor()" [valueColor]="getValueColor(4)" [valueTemplate]="getValueTemplate('Prob')"
+      (onChange)="onProbabilityChange(step, $event)" [size]="35" [step]="1"></p-knob>
+  </div>
+  <app-drum-pad [swirling]="swirling" [active]="active" [pressed]="step.active" [caption]="getCaption()"
+    (padPressedEvent)="onPadPressed($event)" [index]="step.position"></app-drum-pad>
+</div>
+<!-- <div>
     <input [(ngModel)]="step.velocity" type="range" min="0" max="127" value=1 class=""
       (change)="onVelocityChange(step, $event)">
-    <!-- <input class="" type="number" min="1" max="127" (change)="onVelocityChange(step, $event)"
-      [(ngModel)]="step.velocity"> -->
   </div>
   <div>
     <input [(ngModel)]="step.probability" type="range" min="0" max="100" value=1 class=""
       (change)="onProbabilityChange(step, $event)">
-    <!-- <input class="" type="number" min="0" max="100" (change)="onProbabilityChange(step, $event)"
-      [(ngModel)]="step.probability">
-  </div> -->
     <div>
       <input [(ngModel)]="step.gate" type="range" min="0" max="100" value=1 class=""
         (change)="onGateChange(step, $event)">
-      <!-- <input class="" type="number" min="0" max="100" (change)="onGateChange(step, $event)" [(ngModel)]="step.gate"> -->
-    </div>
-    <app-drum-pad [swirling]="swirling" [active]="active" [pressed]="step.active" [caption]="getCaption()"
-      (padPressedEvent)="onPadPressed($event)" [index]="step.position"></app-drum-pad>
-    <!-- <div [ngClass]=" flag ? 'primary mini-btn' : 'secondary mini-btn'" *ngIf="active == true"
+        <p-knob [size]="10" [strokeWidth]="3" [step]="1"></p-knob>
+
+    </div> -->
+
+<!-- <div [ngClass]=" flag ? 'primary mini-btn' : 'secondary mini-btn'" *ngIf="active == true"
     (click)="onParamsBtnClick()">Δ
   </div> -->
-  </div>
+<!-- <input class="" type="number" min="1" max="127" (change)="onVelocityChange(step, $event)"
+      [(ngModel)]="step.velocity"> -->
+<!-- <input class="" type="number" min="0" max="100" (change)="onProbabilityChange(step, $event)"
+      [(ngModel)]="step.probability">
+  </div> -->
+
+<!-- <input class="" type="number" min="0" max="100" (change)="onGateChange(step, $event)" [(ngModel)]="step.gate"> -->

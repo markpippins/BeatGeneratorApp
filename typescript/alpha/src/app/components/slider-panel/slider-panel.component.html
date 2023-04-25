@@ -1,60 +1,3 @@
-<mat-tab-group>
-  <div *ngFor="let instrument of instruments;">
-    <mat-tab *ngIf="instrument.controlCodes.length > 0" label="{{instrument.name}}">
-      <div class="area-header">
-        <h3>{{ instrument.name }}</h3>
-      </div>
-      <div class="slider-area">
-
-        <div class="area-container">
-          <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
-            <div class="area" *ngIf="!panel.startsWith('Other')">
-              <div class="area-content">
-                <div class="area-header">
-                  <h4>{{ panel }}</h4>
-                </div>
-                <div class="area" *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
-                  <div class="area-controls">
-                    <div class="area-control">
-                      <div class="p-field p-col-12 p-md-4">
-                        <!-- <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="65"
-                        [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [textColor]="getTextColor()"
-                        [valueTemplate]="getValueTemplate(controlCode)" [valueColor]="getValueColor()"
-                        [(ngModel)]="value5" [step]="10"></p-knob> -->
-                        <app-midi-knob [index]="index" [instrument]="instrument" [name]="controlCode.name"
-                          [cc]="controlCode.code"></app-midi-knob>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
-            <div class="area" *ngIf="panel.startsWith('Other')">
-              <div class="area-content">
-                <div class="area-header">
-                  <h4>{{ panel }}</h4>
-                </div>
-                <div class="area-controls" *ngFor="let controlCode of getOtherControlCodes(instrument.name); let index = index;">
-                  <div class="area-control">
-                    <div class="p-field p-col-12 p-md-4">
-                      <!-- <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="65"
-                        [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [textColor]="getTextColor()"
-                        [valueTemplate]="getValueTemplate(controlCode)" [valueColor]="getValueColor()"
-                        [(ngModel)]="value5" [step]="10"></p-knob> -->
-                      <app-midi-knob [index]="index" [instrument]="instrument" [name]="controlCode"></app-midi-knob>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </mat-tab>
-  </div>
-</mat-tab-group>
 <div class="flex-container-horizontal">
   <app-drum-pad></app-drum-pad>
   <app-drum-pad></app-drum-pad>
@@ -79,3 +22,83 @@
   <app-drum-pad></app-drum-pad>
   <app-drum-pad></app-drum-pad>
 </div>
+<mat-tab-group>
+  <div *ngFor="let instrument of instruments;">
+    <mat-tab *ngIf="instrument.controlCodes.length > 0" label="{{instrument.name}}">
+      <div class="area-header">
+        <h3>{{ instrument.name }}</h3>
+      </div>
+      <div class="slider-area">
+
+        <div class="area-container">
+          <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
+            <div class="area" *ngIf="!panel.startsWith('Other')">
+              <div class="area-content">
+                <div class="area-header">
+                  <h4>{{ panel }}</h4>
+                </div>
+                <div *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
+                  <div *ngIf="controlIsBinary(controlCode) || controlIsShortRange(controlCode)" class="area">
+                    <div class="area-controls">
+                      <div class="area-control">
+                        <div *ngIf="controlIsBinary(controlCode)">
+                          {{controlCode.name}}
+                          <input type="checkbox" />
+                        </div>
+                        <!-- <app-midi-knob *ngIf="controlIsWideRange(controlCode)" [index]="index" [instrument]="instrument"
+                        [name]="controlCode.name" [cc]="controlCode.code" [panel]="panel"></app-midi-knob> -->
+
+                        <div *ngIf="controlIsShortRange(controlCode)">
+                          {{controlCode.name}}
+                          <div *ngFor="let option of getOptionsFor(controlCode)" class="flex-container-horizontal">
+                            <input type="radio" id="{{controlCode.name}}" name="{{controlCode.name}}">
+                            <label for="{{controlCode.name}}">{{option}}</label><br>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="area" *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
+                  <div class="area-controls">
+                    <div class="area-control">
+                      <app-midi-knob *ngIf="controlIsWideRange(controlCode)" [index]="index" [instrument]="instrument"
+                        [name]="controlCode.name" [cc]="controlCode.code" [panel]="panel"></app-midi-knob>
+
+                    </div>
+                  </div>
+                </div>
+
+
+
+              </div>
+            </div>
+          </div>
+          <div *ngFor="let panel of getPanelsForInstrument(instrument.name)">
+            <div class="area" *ngIf="panel.startsWith('Other')">
+              <div class="area-content">
+                <div class="area-header">
+                  <h4>{{ panel }}</h4>
+                </div>
+                <div class="area-controls"
+                  *ngFor="let controlCode of getOtherControlCodes(instrument.name); let index = index;">
+                  <div class="area-control">
+                    <div class="p-field p-col-12 p-md-4">
+                      <!-- <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="65"
+                        [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [textColor]="getTextColor()"
+                        [valueTemplate]="getValueTemplate(controlCode)" [valueColor]="getValueColor()"
+                        [(ngModel)]="value5" [step]="10"></p-knob> -->
+                      <app-midi-knob [index]="index" [instrument]="instrument" [name]="controlCode"
+                        [panel]="panel"></app-midi-knob>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </div>
+</mat-tab-group>

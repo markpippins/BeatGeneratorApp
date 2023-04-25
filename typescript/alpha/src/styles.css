@@ -25,7 +25,7 @@ html {
   /*background: -ms-linear-gradient( to left top, blue, red);*/
   /*  background: -o-linear-gradient( to left top, blue, red);*/
   background: linear-gradient(to right bottom, darkblue, slategrey);
-/*    background-color: black;*/
+  /*    background-color: black;*/
 }
 
 body {
@@ -121,15 +121,11 @@ main {
 
 h1,
 h2,
+h3,
 h4,
 h5,
 h6 {
   margin: 6px 0;
-  color: black;
-}
-
-h3 {
-  margin: 4px 0;
   color: white;
 }
 
@@ -525,6 +521,8 @@ thead th:last-child {
   gap: 2px;
   font-size: small;
   align-items: center;
+  /* border: white solid 1px; */
+  padding: 0px;
 }
 
 .selected-pad-0 {
@@ -612,6 +610,7 @@ loop {
   border-radius: 3px;
   color: white;
 }
+
 /*
 .pad-ring-disabled {
   display: grid;
@@ -899,6 +898,7 @@ th {
 .area-slider {
   width: 80px;
 }
+
 .area-container {
   display: flex;
   flex-direction: column;
@@ -907,6 +907,7 @@ th {
   margin: 1px;
   /* border: white dashed 10px; */
 }
+
 .area-controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
@@ -938,7 +939,7 @@ th {
 }
 
 .knob {
-  margin-right: 10px;
+  /* border: 1px white solid; */
 }
 
 .area-header {
@@ -950,15 +951,17 @@ th {
 }
 
 .area-content {
-  background-color: silver;
   align-self: stretch;
   gap: 2px;
   margin: 2px;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   padding: 2px;
   border: white inset 1px;
   border-radius: 25px;
+
 }
+
 /* Page title */
 /* ---------------------------------------------------------- */
 .title-holder {
@@ -978,8 +981,7 @@ th {
   overflow-x: auto;
   overflow-y: auto;
 
-  border: whitesmoke solid 1px;
-  border-style: inset;
+  border: whitesmoke inset 1px;
   border-width: thin;
   /*    margin: 4px;*/
   margin-bottom: 10px;

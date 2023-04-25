@@ -7,18 +7,24 @@
     <div class="interface-808">
       <div class="side-panel-808">
         <!-- <label class="info" [textContent]="getLabel(pattern)"></label> -->
-        <mat-divider [style.height.px]="10"></mat-divider>
-        <label>Pitch</label>
+        <!-- <label>Pitch</label>
         <label>Velocity</label>
         <label>Probability</label>
-        <label>Gate</label>
-        <div class="side-panel-808-drum-pad">
+        <label>Gate</label> -->
+        <!-- <div class="side-panel-808-drum-pad">
           <app-drum-pad [selector]="true" class="pad-selector"></app-drum-pad>
-        </div>
+        </div> -->
       </div>
-      <app-beat-spec-panel *ngFor="let step of pattern.steps; let index = index;" [pattern]="pattern" [swirling]="swirls.getItem(index)" [step]=step
-        [instrument]="getInstrumentForStep(pattern, step)" (changeEvent)="onStepChanged(step)"
-        (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>
+      <app-beat-spec-panel *ngFor="let step of pattern.steps; let index = index;" [pattern]="pattern"
+        [swirling]="swirls.getItem(index)" [step]=step [instrument]="getInstrumentForStep(pattern, step)"
+        (changeEvent)="onStepChanged(step)" (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>
+      <!-- <div class="flex-container-vertical">
+        <mat-divider [style.height.px]="10" [inset]="true"></mat-divider>
+        <app-drum-pad [selector]="true" class="pad-selector"></app-drum-pad>
+        <app-drum-pad [selector]="true" class="pad-selector"></app-drum-pad>
+        <app-drum-pad [selector]="true" class="pad-selector"></app-drum-pad>
+        <app-drum-pad [selector]="true" class="pad-selector"></app-drum-pad>
+      </div> -->
     </div>
     <!-- <app-params-panel808 class="control-panel808"></app-params-panel808> -->
   </mat-tab>

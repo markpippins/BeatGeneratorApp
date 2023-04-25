@@ -1,5 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Instrument } from 'src/app/models/instrument';
+import { MidiMessage } from 'src/app/models/midi-message';
+import { MidiService } from 'src/app/services/midi.service';
 
 @Component({
   selector: 'app-midi-knob',
@@ -17,7 +19,17 @@ export class MidiKnobComponent {
   @Input()
   cc!: number;
 
+  @Input()
+  panel: string = '';
+
   value: number = 50
+
+  constructor(private midiService: MidiService) {
+  }
+
+  onChange() {
+    this.midiService.sendMessage(MidiMessage.CONTROL_CHANGE, this.instrument.channel, this.cc, this.value)
+  }
 
   getMaxValue() {
     return 127
@@ -51,6 +63,6 @@ export class MidiKnobComponent {
   }
 
   getValueTemplate() {
-    return this.name;
+    return this.name.replace(this.panel, ' ');
   }
 }
