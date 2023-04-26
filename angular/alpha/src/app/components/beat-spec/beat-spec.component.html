@@ -5,7 +5,7 @@
     <app-beat-spec-detail *ngIf="song != undefined" [instruments]="instruments" [pattern]="pattern" [songId]="song.id"
       (instrumentSelectEvent)="onInstrumentSelected($event, pattern)" class=""></app-beat-spec-detail>
     <div class="interface-808">
-      <div class="side-panel-808">
+      <canvas id="thumb-area" class="side-panel-808">
         <!-- <label class="info" [textContent]="getLabel(pattern)"></label> -->
         <!-- <label>Pitch</label>
         <label>Velocity</label>
@@ -14,7 +14,7 @@
         <!-- <div class="side-panel-808-drum-pad">
           <app-drum-pad [selector]="true" class="pad-selector"></app-drum-pad>
         </div> -->
-      </div>
+      </canvas>
       <app-beat-spec-panel *ngFor="let step of pattern.steps; let index = index;" [pattern]="pattern"
         [swirling]="swirls.getItem(index)" [step]=step [instrument]="getInstrumentForStep(pattern, step)"
         (changeEvent)="onStepChanged(step)" (paramBtnClickEvent)="paramsBtnClicked($event)"></app-beat-spec-panel>

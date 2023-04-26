@@ -58,7 +58,7 @@ export class SliderPanelComponent implements OnInit, Listener {
   }
 
   getStrokeWidth() {
-    return 10;
+    return 25;
   }
 
   getStyleClass() {
@@ -113,12 +113,13 @@ export class SliderPanelComponent implements OnInit, Listener {
     return instrument.controlCodes.filter((cc) => cc.name.startsWith(search));
   }
 
-  controlIsBinary(cc: ControlCode) {
-    return cc.upperBound == 1 && cc.lowerBound == 0;
+  controlIsBinary(_cc: ControlCode) {
+    // return cc.upperBound == 1 && cc.lowerBound == 0 && (cc.captions.map(cap => cap.description).includes('Off'));
+    return false;
   }
 
   controlIsShortRange(cc: ControlCode) {
-    return cc.upperBound > 1 && cc.upperBound - cc.lowerBound < 16;
+    return cc.upperBound > 0 && cc.upperBound - cc.lowerBound < 16;
   }
 
   controlIsWideRange(cc: ControlCode) {

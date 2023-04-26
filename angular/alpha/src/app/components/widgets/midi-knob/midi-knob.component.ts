@@ -44,7 +44,7 @@ export class MidiKnobComponent {
   }
 
   getStrokeWidth() {
-    return 10;
+    return 20;
   }
 
   getStyleClass() {

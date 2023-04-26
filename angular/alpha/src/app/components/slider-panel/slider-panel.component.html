@@ -11,26 +11,30 @@
             <div class="area" *ngIf="!panel.startsWith('Other')">
               <div class="area-content">
                 <div class="area-header">
-                  <h4>{{ panel }}</h4>
+                  <h4 class="control-code-label">{{ panel }}</h4>
                 </div>
 
-                <div  class="short-control">
+                <div class="short-control">
                   <div *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
-                    <div  *ngIf="controlIsBinary(controlCode) || controlIsShortRange(controlCode)" class="area">
-                      <div>
-                        <label>
-                          {{controlCode.name}}
-                        </label>
-                        <div class="area-control">
-                          <div *ngIf="controlIsBinary(controlCode)">
-                            <input type="checkbox" />
-                          </div>
+                    <div *ngIf="controlIsBinary(controlCode) || controlIsShortRange(controlCode)" class="area">
+                      <div class="area-control">
+                        <div *ngIf="controlIsBinary(controlCode)">
+                          <label>
+                            {{controlCode.name.replace(panel, '')}}
+                          </label>
+                          <input type="checkbox" />
+                        </div>
 
-                          <div *ngIf="controlIsShortRange(controlCode)">
-                            <select id="{{controlCode.id + '-' + 'select'}}" name="{{controlCode.id + '-' + 'select'}}">
+                        <div class="flex-container-horizontal w-200" *ngIf="controlIsShortRange(controlCode)">
+                          <div class="flex-container-vertical">
+                            <label class="control-code-label">
+                              {{controlCode.name.replace(panel, '')}}
+                            </label>
+                            <select class="area-control" id="{{controlCode.id + '-' + 'select'}}"
+                              name="{{controlCode.id + '-' + 'select'}}">
                               <!-- <label for="{{controlCode.name}}">{{caption.description}}</label><br> -->
                               <option *ngFor="let caption of controlCode.captions" value="{{caption.code}}">
-                                {{caption.description}}</option>
+                                {{caption.description.replace(panel, '')}}</option>
                             </select>
                           </div>
                         </div>

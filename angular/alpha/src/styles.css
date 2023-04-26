@@ -1,6 +1,7 @@
 :host,
 .content {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+  /* //, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; */
   background-color: transparent;
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
@@ -24,8 +25,8 @@ html {
   /*background: -moz-linear-gradient( to left top, blue, red);*
   /*background: -ms-linear-gradient( to left top, blue, red);*/
   /*  background: -o-linear-gradient( to left top, blue, red);*/
-  background: linear-gradient(to right bottom, darkblue, slategrey);
-  /*    background-color: black;*/
+  /* background: linear-gradient(to right bottom, darkblue, slategrey); */
+  background-color: #558;
 }
 
 body {
@@ -79,10 +80,20 @@ main {
   /*    border: fuchsia solid 1px;*/
 }
 
-.beat-navigator {
+.beat-navigator {}
+
+.w-200 {
+  width: 60vh;
 }
+
 .mg-8 {
   margin: 8;
+}
+
+.control-code-label {
+  margin: 2px;
+  padding: 2px;
+  width: 100%;
 }
 
 .beat-navigator-panel {
@@ -530,9 +541,11 @@ thead th:last-child {
 }
 
 .side-panel-808 {
+  width: 10vh;
   align-self: stretch;
-  display: grid;
-  grid-template: 1fr;
+  border: white inset 1px;
+  background-color: silver;
+  border-radius: 8px;
 }
 
 .side-panel-808-drum-pad {
@@ -930,14 +943,14 @@ th {
   display: flex;
   flex-direction: column;
   align-items: center;
-
+  align-self: stretch;
   margin: 1px;
-  /* border: white dashed 10px; */
+
 }
 
 .area-controls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   grid-template-rows: repeat(auto-fill, minmax(60px, 1fr));
   grid-gap: 4px;
 }
@@ -955,8 +968,8 @@ th {
 
 .area {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  grid-template-rows: repeat(auto-fill, minmax(60px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  grid-template-rows: repeat(auto-fill, minmax(80px, 1fr));
   grid-gap: 10px;
   justify-items: left;
   align-items: left;
@@ -965,9 +978,7 @@ th {
   /* border: yellow dashed 2px; */
 }
 
-.knob {
-  /* border: 1px white solid; */
-}
+.knob {}
 
 .area-header {
   text-align: center;
@@ -984,7 +995,7 @@ th {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   padding: 2px;
-  /* border: white inset 1px; */
+  border: white inset 1px;
   border-radius: 25px;
 
 }

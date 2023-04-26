@@ -1,15 +1,15 @@
-export class Swirl<K> {
-  private items: K[];
+export class Swirl<T> {
+  private items: T[];
 
-  constructor(items: K[]) {
+  constructor(items: T[]) {
     this.items = items;
   }
 
-  getItem(index: number): K {
+  getItem(index: number): T {
     return this.items[index];
   }
 
-  getItems(): K[] {
+  getItems(): T[] {
     return this.items;
   }
 
