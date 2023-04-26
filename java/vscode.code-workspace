@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "../../../../IdeaProjects/BeatGeneratorApp/java"
+		},
+		{
+			"path": "../../../../IdeaProjects/BeatGeneratorApp/typescript/alpha"
+		},
+		{
+			"path": "../../../../IdeaProjects/BeatGeneratorApp/typescript/beta"
+		},
+		{
+			"path": "../../../../IdeaProjects/next/nextjs-blog"
+		},
+		{
+			"path": "../../../../IdeaProjects/lit/vite/multiseq-lit"
+		}
+	],
+	"settings": {
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.configuration.updateBuildConfiguration": "interactive"
+	}
+}

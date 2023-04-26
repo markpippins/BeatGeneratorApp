@@ -1,14 +1,77 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"path": "java"
+		},
+		{
+			"path": "angular/alpha"
+		},
+		{
+			"path": "angular/beta"
+		},
+		{
+			"path": "../../lit/vite/multiseq-lit"
+		},
+		{
+			"path": "../../next/nextjs-blog"
+		},
+		{
+			"path": "../../preact/vite/multiseq-preact"
+		},
+		{
+			"path": "../../react/vite/multiseq-react"
+		},
+		{
+			"path": "../../svelte/vite/multiseq-svelte"
+		},
+		{
+			"path": "../../typescript/vite/mutiseq-ts"
+		},
+		{
+			"path": "../../vue/vite/multiseq-vue"
+		},
+		{
+			"path": "../../ember/multiseq-ember"
+		},
+		{
+			"path": "../../pyscript"
+		},
+		{
+			"path": "../../rust"
+		},
+		{
+			"path": "../gervill"
+		},
+		{
+			"path": "../social-media"
+		},
+		{
+			"path": "../vaadin"
+		},
+		{
+			"path": "../../express"
+		},
+		{
+			"path": "../../node"
+		},
+		{
+			"path": "../../angular/ng-matero"
+		},
+		{
+			"path": "../../angular/sandbox"
+		},
+		{
+			"path": "../../python/mildred"
+		},
+		{
+			"path": "../../python/fastapi"
+		},
+		{
+			"path": "../../typescript"
 		}
 	],
 	"settings": {
 		"java.compile.nullAnalysis.mode": "automatic",
-		"java.configuration.updateBuildConfiguration": "automatic",
-		"maven.view": "flat",
-		"java.debug.settings.onBuildFailureProceed": true,
-		"angular.log": "verbose"
+		"java.configuration.updateBuildConfiguration": "interactive"
 	}
 }

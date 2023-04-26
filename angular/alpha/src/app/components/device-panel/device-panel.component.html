@@ -1,0 +1,86 @@
+<label>Ports</label>
+<app-device-table [devices]="ports"></app-device-table>
+<label>Softsynths</label>
+<app-device-table [devices]="synths"></app-device-table>
+<label>Other</label>
+<app-device-table [devices]="other"></app-device-table>
+<label>MIDI Devices</label>
+<table>
+  <tr>
+    <th>MIDI Device</th>
+    <th>Channel</th>
+    <!-- <th>Pads</th> -->
+    <th>Lowest Note</th>
+    <th>Highest Note</th>
+    <th>Highest Prest</th>
+    <th>Preferred Preset</th>
+    <th>Control Codes</th>
+  </tr>
+  <tr *ngFor="let ins of instruments">
+    <td>
+      {{ins.name}}
+    </td>
+    <td>
+      {{ins.channel}}
+    </td>
+    <!-- <td>
+      {{ins.pads}}
+    </td> -->
+    <td>
+      {{ins.lowestNote}}
+    </td>
+    <td>
+      {{ins.highestNote}}
+    </td>
+    <td>
+      {{ins.highestPreset}}
+    </td>
+    <td>
+      {{ins.preferredPreset}}
+    </td>
+    <td>
+      <table *ngIf="ins.controlCodes != undefined && ins.controlCodes.length > 0">
+        <tr>
+          <td>
+            name
+          </td>
+          <th>
+            code
+          </th>
+        </tr>
+        <tr *ngFor="let cc of ins.controlCodes">
+          <td>
+            {{cc.name}}
+          </td>
+          <td>
+            {{cc.code}}
+          </td>
+          <td>
+            <table *ngIf="cc.captions != undefined && cc.captions.length > 0">
+              <tr>
+                <td>
+                  code
+                </td>
+                <th>
+                  description
+                </th>
+              </tr>
+              <tr *ngFor="let caption of cc.captions">
+                <td>
+                  {{caption.code}}
+                </td>
+                <td>
+                  {{caption.description}}
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+      </table>
+    </td>
+
+  </tr>
+</table>
+<!-- </mat-tab>
+</mat-tab-group> -->

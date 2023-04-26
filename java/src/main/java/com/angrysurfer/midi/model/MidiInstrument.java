@@ -50,7 +50,7 @@ public class MidiInstrument implements Serializable {
     private Map<Integer, Integer[]> boundaries = new HashMap<>();
 
     @Transient
-    private Map<Integer, Map<Integer, String>> optionLabels = new HashMap<>();
+    private Map<Integer, Map<Long, String>> captions = new HashMap<>();
 
     @JsonIgnore
     @Transient

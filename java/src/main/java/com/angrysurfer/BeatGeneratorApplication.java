@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.springframework.boot.CommandLineRunner;
@@ -11,10 +13,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import com.angrysurfer.midi.model.Caption;
 import com.angrysurfer.midi.model.ControlCode;
 import com.angrysurfer.midi.model.MidiInstrument;
 import com.angrysurfer.midi.model.Pad;
 import com.angrysurfer.midi.model.Strike;
+import com.angrysurfer.midi.repo.CaptionRepo;
 import com.angrysurfer.midi.repo.ControlCodeRepo;
 import com.angrysurfer.midi.repo.MidiInstrumentRepo;
 import com.angrysurfer.midi.repo.PadRepo;
@@ -24,31 +28,36 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootApplication
 public class BeatGeneratorApplication {
 
-    MidiInstrumentRepo midiInstrumentRepo;
-    PadRepo padRepo;
-    ControlCodeRepo controlCodeRepo;
+    private MidiInstrumentRepo midiInstrumentRepo;
+    private PadRepo padRepo;
 
-     static ObjectMapper mapper = new ObjectMapper();
+    private ControlCodeRepo controlCodeRepo;
+    private CaptionRepo captionRepo;
+
+    static ObjectMapper mapper = new ObjectMapper();
 
     public static void main(String[] args) {
         SpringApplication.run(BeatGeneratorApplication.class, args);
     }
-    
-	@Bean
-	CommandLineRunner beatGeneratorSetup(MidiInstrumentRepo midiInstrumentRepo,
-    PadRepo padRepo, 
-    ControlCodeRepo controlCodeRepo) {
+
+    @Bean
+    CommandLineRunner beatGeneratorSetup(MidiInstrumentRepo midiInstrumentRepo,
+            PadRepo padRepo,
+            ControlCodeRepo controlCodeRepo,
+            CaptionRepo captionRepo) {
 
         this.midiInstrumentRepo = midiInstrumentRepo;
         this.padRepo = padRepo;
         this.controlCodeRepo = controlCodeRepo;
+        this.captionRepo = captionRepo;
 
-		return args -> {
+        return args -> {
             // load data
             if (midiInstrumentRepo.findAll().isEmpty())
                 try {
-                    String filepath = "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/config/midi.json";
-                    // String filepath = this.getClass().getResource("resources/config/midi.json").getPath();
+                    String filepath = "C:/Users/MarkP/dev/java/BeatGeneratorApp/java/resources/config/midi.json";
+                    // String filepath =
+                    // this.getClass().getResource("resources/config/midi.json").getPath();
                     MidiInstrumentList config = mapper.readValue(new File(filepath), MidiInstrumentList.class);
 
                     config.getInstruments().forEach(instrument -> {
@@ -61,7 +70,16 @@ public class BeatGeneratorApplication {
                             if (finalInstrumentDef.getBoundaries().containsKey(code)) {
                                 controlCode.setLowerBound(finalInstrumentDef.getBoundaries().get(code)[0]);
                                 controlCode.setUpperBound(finalInstrumentDef.getBoundaries().get(code)[1]);
-                                controlCode.setOptionLabels(finalInstrumentDef.getOptionLabels());
+
+                                if (finalInstrumentDef.getCaptions().containsKey(code))
+                                    controlCode.setCaptions(finalInstrumentDef.getCaptions().get(code)
+                                            .entrySet().stream().map(es -> {
+                                                Caption caption = new Caption();
+                                                caption.setCode(es.getKey());
+                                                caption.setDescription(es.getValue().strip());
+                                                caption = captionRepo.save(caption);
+                                                return caption;
+                                            }).collect(Collectors.toSet()));
                             }
                             controlCode = controlCodeRepo.save(controlCode);
                             finalInstrumentDef.getControlCodes().add(controlCode);
@@ -74,8 +92,8 @@ public class BeatGeneratorApplication {
                 }
 
             // add ticker, player, rules
-		};
-	}
+        };
+    }
 
     private void addPadInfo(MidiInstrument instrumentInfo) {
         int padCount = instrumentInfo.getHighestNote() - instrumentInfo.getLowestNote();
@@ -84,7 +102,7 @@ public class BeatGeneratorApplication {
             instrumentInfo.getControlCodes().forEach(cc -> {
                 if (Strike.kickParams.contains(cc.getCode()))
                     pads.get(0).getControlCodes().add(cc.getCode());
-                    
+
                 if (Strike.snarePrams.contains(cc.getCode()))
                     pads.get(1).getControlCodes().add(cc.getCode());
 
@@ -123,6 +141,5 @@ public class BeatGeneratorApplication {
             midiInstrumentRepo.save(instrumentInfo);
         }
     }
-
 
 }

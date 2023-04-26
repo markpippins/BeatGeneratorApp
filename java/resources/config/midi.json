@@ -3,7 +3,7 @@
     {
       "assignments": {},
       "boundaries": {},
-      "optionLabels": {},
+      "captions": {},
       "deviceName": "MRCC 880",
       "name": "West Pest",
       "channel": 1,
@@ -15,7 +15,7 @@
     {
       "assignments": {},
       "boundaries": {},
-      "optionLabels": {},
+      "captions": {},
       "deviceName": "MRCC 880",
       "name": "Zoia",
       "channel": 6,
@@ -27,7 +27,7 @@
     {
       "assignments": {},
       "boundaries": {},
-      "optionLabels": {},
+      "captions": {},
       "deviceName": "MRCC 880",
       "name": "Tracker",
       "channel": 12,
@@ -70,7 +70,7 @@
         "118": [0, 1],
         "119": [0, 1]
       },
-      "optionLabels": {
+      "captions": {
         "65": { "0": "Off", "1": "On" },
         "104": { "0": "Note", "1": "Velocity", "2": "Mod", "3": "LFO Rate" },
         "105": { "0": "Note", "1": "Velocity", "2": "Mod", "3": "LFO Rate" },
@@ -102,7 +102,7 @@
     {
       "assignments": {},
       "boundaries": {},
-      "optionLabels": {},
+      "captions": {},
       "deviceName": "MRCC 880",
       "name": "Blackbox",
       "channel": 5,
@@ -144,7 +144,7 @@
         "63": "Wave 1 Position"
       },
       "boundaries": {},
-      "optionLabels": {},
+      "captions": {},
       "deviceName": "MRCC 880",
       "name": "Fireball",
       "channel": 3,
@@ -172,7 +172,7 @@
         "94": "LFO rate (sync)"
       },
       "boundaries": {},
-      "optionLabels": {},
+      "captions": {},
       "deviceName": "MRCC 880",
       "name": "MicroFreak",
       "channel": 2,
@@ -245,7 +245,7 @@
         "71": "Low Perc Distortion"
       },
       "boundaries": {},
-      "optionLabels": {},
+      "captions": {},
       "deviceName": "MRCC 880",
       "name": "Razzmatazz",
       "channel": 9,
