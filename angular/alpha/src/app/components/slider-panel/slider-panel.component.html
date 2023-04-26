@@ -1,4 +1,3 @@
-
 <mat-tab-group>
   <div *ngFor="let instrument of instruments;">
     <mat-tab *ngIf="instrument.controlCodes.length > 0" label="{{instrument.name}}">
@@ -14,6 +13,32 @@
                 <div class="area-header">
                   <h4>{{ panel }}</h4>
                 </div>
+
+                <div  class="short-control">
+                  <div *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
+                    <div  *ngIf="controlIsBinary(controlCode) || controlIsShortRange(controlCode)" class="area">
+                      <div>
+                        <label>
+                          {{controlCode.name}}
+                        </label>
+                        <div class="area-control">
+                          <div *ngIf="controlIsBinary(controlCode)">
+                            <input type="checkbox" />
+                          </div>
+
+                          <div *ngIf="controlIsShortRange(controlCode)">
+                            <select id="{{controlCode.id + '-' + 'select'}}" name="{{controlCode.id + '-' + 'select'}}">
+                              <!-- <label for="{{controlCode.name}}">{{caption.description}}</label><br> -->
+                              <option *ngFor="let caption of controlCode.captions" value="{{caption.code}}">
+                                {{caption.description}}</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="area" *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
                   <div class="area-controls">
                     <div class="area-control">
@@ -23,30 +48,6 @@
                     </div>
                   </div>
                 </div>
-
-                <div *ngFor="let controlCode of getControlCodes(instrument, panel);  let index = index">
-                  <div *ngIf="controlIsBinary(controlCode) || controlIsShortRange(controlCode)" class="area">
-                    <div class="area-controls">
-                      <div class="area-control">
-                        <div *ngIf="controlIsBinary(controlCode)">
-                          {{controlCode.name}}
-                          <input type="checkbox" />
-                        </div>
-                        <!-- <app-midi-knob *ngIf="controlIsWideRange(controlCode)" [index]="index" [instrument]="instrument"
-                        [name]="controlCode.name" [cc]="controlCode.code" [panel]="panel"></app-midi-knob> -->
-
-                        <div *ngIf="controlIsShortRange(controlCode)">
-                          {{controlCode.name}}
-                          <div *ngFor="let caption of controlCode.captions" class="flex-container-horizontal">
-                            <input type="radio" id="{{controlCode.id + '-' + caption.code}}" name="{{controlCode.id + '-' + caption.code}}">
-                            <label for="{{controlCode.name}}">{{caption.description}}</label><br>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
 
               </div>
             </div>

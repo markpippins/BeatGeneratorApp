@@ -984,7 +984,7 @@ th {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   padding: 2px;
-  border: white inset 1px;
+  /* border: white inset 1px; */
   border-radius: 25px;
 
 }
@@ -1392,4 +1392,9 @@ th {
   margin: 4px;
   border: silver 1px inset;
   height: 55%;
+}
+
+.short-control {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
 }

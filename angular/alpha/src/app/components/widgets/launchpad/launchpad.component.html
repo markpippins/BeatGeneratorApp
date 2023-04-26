@@ -11,8 +11,8 @@
     grid-template-rows: repeat(2, 1fr);
     gap: 2px;
     height: 75vh;
-    background-color: darkred;
-    border: white solid 1px;
+    background-color: red;
+    border: red solid 1px;
   }
 
   .controls {
@@ -69,80 +69,19 @@
 
 <div id="launchpad">
   <div class="controls" id="control2">
-    <button class="button dark-pad-1" (click)="onClick(64)" id="btn-64">64</button>
-    <button class="button dark-pad-1" (click)="onClick(65)" id="btn-65">65</button>
-    <button class="button dark-pad-1" (click)="onClick(66)" id="btn-66">66</button>
-    <button class="button dark-pad-1" (click)="onClick(67)" id="btn-67">67</button>
-    <button class="button dark-pad-1" (click)="onClick(60)" id="btn-60">60</button>
-    <button class="button dark-pad-1" (click)="onClick(61)" id="btn-61">61</button>
-    <button class="button dark-pad-1" (click)="onClick(62)" id="btn-62">62</button>
-    <button class="button dark-pad-1" (click)="onClick(63)" id="btn-63">63</button>
-    <button class="button dark-pad-1" (click)="onClick(56)" id="btn-56">56</button>
-    <button class="button dark-pad-1" (click)="onClick(57)" id="btn-57">57</button>
-    <button class="button dark-pad-1" (click)="onClick(58)" id="btn-58">58</button>
-    <button class="button dark-pad-1" (click)="onClick(59)" id="btn-59">59</button>
-    <button class="button dark-pad-1" (click)="onClick(53)" id="btn-53">52</button>
-    <button class="button dark-pad-1" (click)="onClick(53)" id="btn-53">53</button>
-    <button class="button dark-pad-1" (click)="onClick(54)" id="btn-54">54</button>
-    <button class="button dark-pad-1" (click)="onClick(55)" id="btn-55">55</button>
-
+    <button *ngFor="let note of clips" class="button dark-pad-0" (click)="onClick(note)" id="btn-{{note}}"></button>
   </div>
 
   <div class="controls" id="control2">
-    <button id="btn-96" class="button dark-pad-3" (click)="onClick(96)">96</button>
-    <button id="btn-97" class="button dark-pad-3" (click)="onClick(97)">97</button>
-    <button id="btn-98" class="button dark-pad-3" (click)="onClick(98)">98</button>
-    <button id="btn-99" class="button dark-pad-3" (click)="onClick(99)">99</button>
-    <button id="btn-92" class="button dark-pad-3" (click)="onClick(92)">92</button>
-    <button id="btn-93" class="button dark-pad-3" (click)="onClick(93)">93</button>
-    <button id="btn-94" class="button dark-pad-3" (click)="onClick(94)">94</button>
-    <button id="btn-95" class="button dark-pad-3" (click)="onClick(95)">95</button>
-    <button id="btn-88" class="button dark-pad-3" (click)="onClick(88)">88</button>
-    <button id="btn-89" class="button dark-pad-3" (click)="onClick(89)">89</button>
-    <button id="btn-90" class="button dark-pad-3" (click)="onClick(90)">90</button>
-    <button id="btn-91" class="button dark-pad-3" (click)="onClick(91)">91</button>
-    <button id="btn-84" class="button dark-pad-3" (click)="onClick(84)">84</button>
-    <button id="btn-85" class="button dark-pad-3" (click)="onClick(85)">85</button>
-    <button id="btn-86" class="button dark-pad-3" (click)="onClick(86)">86</button>
-    <button id="btn-86" class="button dark-pad-3" (click)="onClick(87)">87</button>
+    <button *ngFor="let note of clips" class="button dark-pad-1" (click)="onClick(note)" id="btn-{{note}}"></button>
   </div>
 
-  <div class="controls" id="control1">
-    <button id="btn-48" class="button dark-pad-0" (click)="onClick(48)">48</button>
-    <button id="btn-49" class="button dark-pad-0" (click)="onClick(49)">49</button>
-    <button id="btn-50" class="button dark-pad-0" (click)="onClick(50)">50</button>
-    <button id="btn-51" class="button dark-pad-0" (click)="onClick(51)">51</button>
-    <button id="btn-44" class="button dark-pad-0" (click)="onClick(44)">44</button>
-    <button id="btn-45" class="button dark-pad-0" (click)="onClick(45)">45</button>
-    <button id="btn-46" class="button dark-pad-0" (click)="onClick(46)">46</button>
-    <button id="btn-47" class="button dark-pad-0" (click)="onClick(47)">47</button>
-    <button id="btn-40" class="button dark-pad-0" (click)="onClick(40)">40</button>
-    <button id="btn-41" class="button dark-pad-0" (click)="onClick(41)">41</button>
-    <button id="btn-42" class="button dark-pad-0" (click)="onClick(42)">42</button>
-    <button id="btn-43" class="button dark-pad-0" (click)="onClick(43)">43</button>
-    <button id="btn-36" class="button dark-pad-0" (click)="onClick(36)">36</button>
-    <button id="btn-37" class="button dark-pad-0" (click)="onClick(37)">37</button>
-    <button id="btn-38" class="button dark-pad-0" (click)="onClick(38)">38</button>
-    <button id="btn-39" class="button dark-pad-0" (click)="onClick(39)">39</button>
-
+  <div class="controls" id="control2">
+    <button *ngFor="let note of clips" class="button dark-pad-2" (click)="onClick(note)" id="btn-{{note}}"></button>
   </div>
 
-  <div class="controls" id="control1">
-    <button id="btn-80" class="button dark-pad-2" (click)="onClick(80)">80</button>
-    <button id="btn-81" class="button dark-pad-2" (click)="onClick(81)">81</button>
-    <button id="btn-82" class="button dark-pad-2" (click)="onClick(82)">82</button>
-    <button id="btn-83" class="button dark-pad-2" (click)="onClick(83)">83</button>
-    <button id="btn-76" class="button dark-pad-2" (click)="onClick(76)">76</button>
-    <button id="btn-77" class="button dark-pad-2" (click)="onClick(77)">77</button>
-    <button id="btn-78" class="button dark-pad-2" (click)="onClick(78)">78</button>
-    <button id="btn-79" class="button dark-pad-2" (click)="onClick(79)">79</button>
-    <button id="btn-72" class="button dark-pad-2" (click)="onClick(72)">72</button>
-    <button id="btn-73" class="button dark-pad-2" (click)="onClick(73)">73</button>
-    <button id="btn-74" class="button dark-pad-2" (click)="onClick(74)">74</button>
-    <button id="btn-75" class="button dark-pad-2" (click)="onClick(75)">75</button>
-    <button id="btn-68" class="button dark-pad-2" (click)="onClick(68)">68</button>
-    <button id="btn-69" class="button dark-pad-2" (click)="onClick(69)">69</button>
-    <button id="btn-70" class="button dark-pad-2" (click)="onClick(70)">70</button>
-    <button id="btn-71" class="button dark-pad-2" (click)="onClick(71)">71</button>
+  <div class="controls" id="control2">
+    <button *ngFor="let note of clips" class="button dark-pad-3" (click)="onClick(note)" id="btn-{{note}}"></button>
   </div>
+
 </div>
