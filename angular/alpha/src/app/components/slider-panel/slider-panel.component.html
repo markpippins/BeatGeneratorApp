@@ -30,7 +30,7 @@
                             <label class="control-code-label">
                               {{controlCode.name.replace(panel, '')}}
                             </label>
-                            <select class="area-control" id="{{controlCode.id + '-' + 'select'}}"
+                            <select class="area-select" id="{{controlCode.id + '-' + 'select'}}"
                               name="{{controlCode.id + '-' + 'select'}}">
                               <!-- <label for="{{controlCode.name}}">{{caption.description}}</label><br> -->
                               <option *ngFor="let caption of controlCode.captions" value="{{caption.code}}">
@@ -66,10 +66,6 @@
                   *ngFor="let controlCode of getOtherControlCodes(instrument.name); let index = index;">
                   <div class="area-control">
                     <div class="p-field p-col-12 p-md-4">
-                      <!-- <p-knob [min]="1" [strokeWidth]="getStrokeWidth()" [max]="127" [size]="65"
-                        [styleClass]="getStyleClass()" [rangeColor]=" getRangeColor()" [textColor]="getTextColor()"
-                        [valueTemplate]="getValueTemplate(controlCode)" [valueColor]="getValueColor()"
-                        [(ngModel)]="value5" [step]="10"></p-knob> -->
                       <app-midi-knob [index]="index" [instrument]="instrument" [name]="controlCode"
                         [panel]="panel"></app-midi-knob>
                     </div>

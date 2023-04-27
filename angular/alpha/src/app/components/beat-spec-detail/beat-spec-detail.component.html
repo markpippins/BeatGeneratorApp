@@ -104,6 +104,19 @@
         <input class="short-col" type="number" min="0" max="100" (change)="onRandomChange($event)"
           [(ngModel)]="pattern.random">
       </td>
+
+      <td>
+        <button ngClass="{{pattern.loop ? 'mini-btn loop' : 'mini-btn ready' }}" [style.height.px]="20"
+          id="pattern-link-{{pattern.id}}" disabled="true">
+          Li
+        </button>
+      </td>
+
+      <td>
+        <button ngClass="{{pattern.loop ? 'mini-btn loop' : 'mini-btn ready' }}" [style.height.px]="20"
+          id="pattern-link-{{pattern.id}}" disabled="true">
+        </button>
+      </td>
     </tr>
 
   </table>

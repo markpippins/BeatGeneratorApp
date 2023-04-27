@@ -78,22 +78,22 @@ public class MIDIServiceTests {
     }
 
         
-    @Test
-    public void whenInstrumentRequestedDeviceIsInitialized() {
-        midiService.getInstrumentByChannel(9).forEach(i -> {
-            try {
-                if (!i.getDevice().isOpen())
-                    i.getDevice().open();
+    // @Test
+    // public void whenInstrumentRequestedDeviceIsInitialized() {
+    //     midiService.getInstrumentByChannel(9).forEach(i -> {
+    //         try {
+    //             if (!i.getDevice().isOpen())
+    //                 i.getDevice().open();
 
-                i.noteOn(45, 120);
-                Thread.sleep(500);
-                i.noteOff(45, 120);
+    //             i.noteOn(45, 120);
+    //             Thread.sleep(500);
+    //             i.noteOff(45, 120);
                 
-            } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
-                logger.error(e.getMessage());
-            }
-        });
-    }
+    //         } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
+    //             logger.error(e.getMessage());
+    //         }
+    //     });
+    // }
 
     // @Test
     // public void whenMidiDevicesRetrievedByName_thenCorrectDeviceReturned() {

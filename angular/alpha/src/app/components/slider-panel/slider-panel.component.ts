@@ -224,6 +224,14 @@ export class SliderPanelComponent implements OnInit, Listener {
       prefix = prefix.slice(0, i);
     }
 
-    return prefix;
+    return this.truncateStringAtSecondToLastSpace(prefix);
+  }
+
+  truncateStringAtSecondToLastSpace(str: string): string {
+    const secondToLastChar = str.charAt(str.length - 2);
+    if (secondToLastChar === ' ') {
+        return str.slice(0, str.length - 3);
+    }
+    return str;
   }
 }

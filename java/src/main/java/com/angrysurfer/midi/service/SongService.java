@@ -119,7 +119,8 @@ public class SongService {
     private SongRepo songRepo;
     private PatternRepo patternRepo;
     private MIDIService midiService;
-
+    MidiInstrumentService instrumentService;
+    
     private Song song;
     private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
 
@@ -128,11 +129,12 @@ public class SongService {
     // private CyclerListener barListener = new BarCyclerListener();
 
     public SongService(PatternRepo patternRepo, StepRepo stepRepo,
-            SongRepo songRepo, MIDIService midiService) {
+            SongRepo songRepo, MIDIService midiService, MidiInstrumentService instrumentService) {
         this.stepRepo = stepRepo;
         this.songRepo = songRepo;
         this.patternRepo = patternRepo;
         this.midiService = midiService;
+        this.instrumentService = instrumentService;
     }
 
     public Song getSong() {
@@ -175,8 +177,8 @@ public class SongService {
                 break;
 
             case PatternUpdateType.INSTRUMENT:
-                pattern.setInstrument(null);
-                midiService.getInstrumentByChannel(updateValue).forEach(i -> pattern.setInstrument(i));
+                // pattern.setInstrument(null);
+                // midiService.getInstrumentByChannel(updateValue).forEach(i -> pattern.setInstrument(i));
                 pattern.setChannel(updateValue);
                 // if (pattern.getInstrument().getChannel() != pattern.getChannel())
                 // pattern.getInstrument().setChannel(updateValue);
@@ -329,7 +331,7 @@ public class SongService {
             Pattern pattern = new Pattern();
             pattern.setSong(getSong());
             pattern.setPosition(song.getPatterns().size() + 1);
-            pattern.setInstrument(this.midiService.getInstrumentByChannel(i).get(0));
+            pattern.setInstrument(this.instrumentService.getInstrumentByChannel(i, false).get(0));
             pattern.setChannel(i);
             pattern.setName(pattern.getInstrument().getName());
             getPatternRepo().save(pattern);

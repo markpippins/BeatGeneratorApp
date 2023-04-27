@@ -955,6 +955,10 @@ th {
   grid-gap: 4px;
 }
 
+.control-code-label,
+.area-select {
+  width: 80px;
+}
 
 .area-control {
   display: grid;
@@ -1406,6 +1410,9 @@ th {
 }
 
 .short-control {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+  align-items: flex-start;
+  align-self: stretch;
 }

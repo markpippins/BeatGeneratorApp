@@ -11,7 +11,7 @@
     grid-template-rows: repeat(2, 1fr);
     gap: 2px;
     height: 75vh;
-    background-color: red;
+    background: linear-gradient(to right bottom, darkgray, coral);
     border: red solid 1px;
   }
 
@@ -48,22 +48,22 @@
 <mat-divider [style.height.px]="10"></mat-divider>
 
 <div class="button-bar">
-  <button id="launch-btn-rewind" mat-icon-button (click)="onClick(100)" tabindex="0">
-    <mat-icon>fast_rewind</mat-icon>
+  <button id="launch-btn-rewind" mat-raised-button (click)="onClick(100)" tabindex="0">
+    fast_rewind
   </button>
 
   <div id="launch-btn-play" class="neutral">
-    <button mat-icon-button (click)="onClick(102)" tabindex="0">
-      <mat-icon>play_arrow</mat-icon>
+    <button mat-raised-button (click)="onClick(102)" tabindex="0">
+      play_arrow
     </button>
   </div>
 
-  <button id="launch-forward" mat-icon-button (click)="onClick(101)" tabindex="0">
-    <mat-icon>fast_forward</mat-icon>
+  <button id="launch-forward" mat-raised-button (click)="onClick(101)" tabindex="0">
+    fast_forward
   </button>
 
-  <button id="launch-clear" mat-icon-button (click)="onClick(104)" tabindex="0">
-    <mat-icon>clear_all</mat-icon>
+  <button id="launch-clear" mat-raised-button (click)="onClick(104)" tabindex="0">
+    clear_all
   </button>
 </div>
 
