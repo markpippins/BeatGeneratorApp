@@ -1,41 +1,31 @@
 <div class="button-bar">
-  <button
-    id="transport-btn-add"
-    mat-raised-button
-    (click)="onClick('ticker-add')"
-    tabindex="0">
-    add
+  <button id="transport-btn-add" mat-button (click)="onClick('ticker-add')" tabindex="0">
+    <mat-icon>
+      add
+    </mat-icon>
   </button>
 
-  <button
-    id="transport-btn-remove"
-    mat-raised-button
-    (click)="onClick('ticker-remove')"
-    tabindex="0">
-    remove
+  <button id="transport-btn-remove" mat-button (click)="onClick('ticker-remove')" tabindex="0">
+    <mat-icon>
+      remove
+    </mat-icon>
   </button>
 
-  <button
-    id="transport-btn-clear"
-    mat-raised-button
-    (click)="onClick('ticker-clear')"
-    tabindex="0">
-    clear_all
+  <button id="transport-btn-clear" mat-button (click)="onClick('ticker-clear')" tabindex="0">
+    <mat-icon>
+      clear_all
+    </mat-icon>
   </button>
 
-  <button
-    id="transport-btn-refresh"
-    mat-raised-button
-    (click)="onClick('ticker-refresh')"
-    tabindex="0">
-    loop
+  <button id="transport-btn-refresh" mat-button (click)="onClick('ticker-refresh')" tabindex="0">
+    <mat-icon>
+      loop
+    </mat-icon>
   </button>
 
-  <button
-    id="transport-btn-snap"
-    mat-raised-button
-    (click)="onClick('ticker-save')"
-    tabindex="0">
-    camera_alt
+  <button id="transport-btn-snap" mat-button (click)="onClick('ticker-save')" tabindex="0">
+    <mat-icon>
+      camera_alt
+    </mat-icon>
   </button>
 </div>

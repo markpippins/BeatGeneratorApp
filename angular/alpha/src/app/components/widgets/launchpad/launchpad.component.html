@@ -48,22 +48,29 @@
 <mat-divider [style.height.px]="10"></mat-divider>
 
 <div class="button-bar">
-  <button id="launch-btn-rewind" mat-raised-button (click)="onClick(100)" tabindex="0">
-    fast_rewind
+  <button id="launch-btn-rewind" mat-button (click)="onClick(100)" tabindex="0">
+    <mat-icon>
+      fast_rewind
+    </mat-icon>
   </button>
 
   <div id="launch-btn-play" class="neutral">
-    <button mat-raised-button (click)="onClick(102)" tabindex="0">
-      play_arrow
+    <button mat-button (click)="onClick(102)" tabindex="0">
+      <mat-icon>
+        play_arrow
+      </mat-icon>
     </button>
   </div>
 
-  <button id="launch-forward" mat-raised-button (click)="onClick(101)" tabindex="0">
-    fast_forward
+  <button id="launch-forward" mat-button (click)="onClick(101)" tabindex="0">
+    <mat-icon>
+      fast_forward </mat-icon>
   </button>
 
-  <button id="launch-clear" mat-raised-button (click)="onClick(104)" tabindex="0">
-    clear_all
+  <button id="launch-clear" mat-button (click)="onClick(104)" tabindex="0">
+    <mat-icon>
+      clear_all
+    </mat-icon>
   </button>
 </div>
 

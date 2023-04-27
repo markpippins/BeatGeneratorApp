@@ -1,34 +1,46 @@
 <div class="button-bar">
-  <button id="transport-btn-rewind" mat-raised-button (click)="onClick('ticker-previous')" tabindex="0">
-    fast_rewind
+  <button id="transport-btn-rewind" mat-button (click)="onClick('ticker-previous')" tabindex="0">
+    <mat-icon>
+      fast_rewind
+    </mat-icon>
   </button>
 
-  <button id="transport-btn-record" mat-raised-button (click)="onClick('ticker-record')" tabindex="0">
-    fiber_manual_record
-  </button>
+  <button id="transport-btn-record" mat-button (click)="onClick('ticker-record')" tabindex="0">
+    <mat-icon>
+      fiber_manual_record
+    </mat-icon>
+      </button>
 
-  <button id="transport-btn-pause" mat-raised-button (click)="onClick('ticker-pause')" tabindex="0">
-    pause
-  </button>
+  <button id="transport-btn-pause" mat-button (click)="onClick('ticker-pause')" tabindex="0">
+    <mat-icon>
+      pause
+    </mat-icon>
+      </button>
 
-  <button id="transport-btn-stop" mat-raised-button (click)="onClick('ticker-stop')" tabindex="0">
-    stop
-  </button>
+  <button id="transport-btn-stop" mat-button (click)="onClick('ticker-stop')" tabindex="0">
+    <mat-icon>
+      stop
+    </mat-icon>
+      </button>
 
   <div id="transport-btn-play" class="neutral">
-    <button mat-raised-button (click)="onClick('ticker-play')" tabindex="0">
+    <button mat-button (click)="onClick('ticker-play')" tabindex="0">
+    <mat-icon>
       play_arrow
-    </button>
+    </mat-icon>
+      </button>
   </div>
 
-  <button id="transport-btn-forward" mat-raised-button (click)="onClick('ticker-forward')" tabindex="0">
-    fast_forward
-  </button>
+  <button id="transport-btn-forward" mat-button (click)="onClick('ticker-forward')" tabindex="0">
+    <mat-icon>
+      fast_forward
+    </mat-icon>
+      </button>
 </div>
 <div class="button-bar">
   <!-- <button
     id="transport-btn-refresh"
-    mat-raised-button
+    mat-button
     (click)="onClick('ticker-refresh')"
     tabindex="0">
     loop
@@ -36,24 +48,24 @@
 
   <button
     id="transport-btn-snap"
-    mat-raised-button
+    mat-button
     (click)="onClick('ticker-save')"
     tabindex="0">
     camera_alt
   </button> -->
 
-  <button id="transport-btn-add" mat-raised-button (click)="onClick('ticker-transpose-up')" tabindex="0">
+  <button id="transport-btn-add" mat-button (click)="onClick('ticker-transpose-up')" tabindex="0">
     add
   </button>
 
-  <button id="transport-btn-remove" mat-raised-button (click)="onClick('ticker-transpose-down')" tabindex="0">
+  <button id="transport-btn-remove" mat-button (click)="onClick('ticker-transpose-down')" tabindex="0">
     remove
   </button>
   <app-slider></app-slider>
   <app-slider></app-slider>
   <!-- <button
     id="transport-btn-clear"
-    mat-raised-button
+    mat-button
     (click)="onClick('ticker-clear')"
     tabindex="0">
     clear_all
