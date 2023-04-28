@@ -22,7 +22,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   ticker!: Ticker;
 
   divCount = 4;
-  colCount = 24;
+  colCount = 23;
 
   ticksPosition = this.colCount;
   tickRange: number[] = [];

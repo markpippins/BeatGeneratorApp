@@ -12,9 +12,16 @@
   <header> <app-status-panel [tickerStatus]="tickerStatus"></app-status-panel></header>
   <section>
     <app-status-readout [ticker]="ticker" [players]="players" [consoleOutput]="consoleOutput"></app-status-readout>
+    <app-status-readout [ticker]="ticker" [players]="players" [consoleOutput]="consoleOutput"></app-status-readout>
   </section>
   <main>
     <mat-tab-group>
+
+
+      <mat-tab label="Config">
+        <app-device-panel></app-device-panel>
+      </mat-tab>
+
       <mat-tab label="Beats">
         <mat-tab-group>
           <mat-tab label="Beat Navigator">
@@ -45,18 +52,18 @@
                 <app-rule-table (ruleChangeEvent)="onRuleChange($event)" [player]="selectedPlayer"></app-rule-table>
               </div>
               <div class="table-holder">
-                <!-- <app-strike-detail [player]="selectedPlayer"></app-strike-detail> -->
+                <app-strike-detail [player]="selectedPlayer"></app-strike-detail>
               </div>
               <div class="table-holder fw-300">
                 <!-- <app-strike-detail [player]="selectedPlayer"></app-strike-detail> -->
               </div>
             </div>
           </mat-tab>
-          <!-- <mat-tab label="Controls">
+          <mat-tab label="Controls">
             <div class="table-holder fw-300">
               <app-mini-slider-panel></app-mini-slider-panel>
             </div>
-          </mat-tab> -->
+          </mat-tab>
         </mat-tab-group>
         <app-beat-spec></app-beat-spec>
       </mat-tab>
@@ -70,9 +77,6 @@
       </mat-tab>
 
 
-      <mat-tab label="Config">
-        <app-device-panel></app-device-panel>
-      </mat-tab>
       <!-- <mat-tab label="Experimental">
         <mat-tab-group>
           <mat-tab label="drums">

@@ -4,7 +4,7 @@
       <!-- <th></th>
       <th></th>
       <th></th> -->
-      <th *ngFor="let col of playerCols">
+      <th  class="table-header" *ngFor="let col of playerCols">
         {{ col }}
       </th>
     </tr>
@@ -13,7 +13,7 @@
       (mouseenter)="onPass(player)" (click)="onRowClick(player)">
 
 
-      <td class="player-selected-long-col" id="player-col-instrument-{{player.id}}">
+      <td class="selected-long-col" id="player-col-instrument-{{player.id}}">
         <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)"
           [instruments]="instruments" [player]="player"></app-instrument-selector>
       </td>

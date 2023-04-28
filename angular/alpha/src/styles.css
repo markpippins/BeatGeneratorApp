@@ -13,6 +13,17 @@
   grid-template-columns: 1fr;
 }
 
+.distinct {
+  background-color: goldenrod;
+  color: black;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+}
+
 html {
   height: 100vh;
   -webkit-background-size: cover;
@@ -62,7 +73,14 @@ main {
   grid-area: main;
 }
 
+
+.tickerStatus-table {
+  font-size: smaller;
+  color: greenyellow;
+}
+
 .dashboard {
+  font-size: large;
   max-width: 960px;
   margin: auto;
   background: transparent;
@@ -80,7 +98,10 @@ main {
   /*    border: fuchsia solid 1px;*/
 }
 
-.beat-navigator {}
+.beat-navigator {
+  /* border: white 1px inset; */
+  padding: 2px;
+}
 
 .w-200 {
   width: 60vh;
@@ -400,6 +421,31 @@ select:hover {
   color: white;
 }
 
+.port-table-row {
+  background-color: green;
+  color: black;
+}
+
+.synth-table-row {
+  background-color: firebrick;
+  color: black;
+}
+
+.sequencer-table-row {
+  background-color: cornflowerblue;
+  color: black;
+}
+
+.midi-mapper-table-row {
+  background-color: darkblue;
+  color: black;
+}
+
+.other-table-row {
+  background-color: darkviolet;
+  color: black;
+}
+
 .active-table-row {
   background-color: transparent;
   color: white;
@@ -565,35 +611,6 @@ thead th:last-child {
   padding: 0px;
 }
 
-.selected-pad-0 {
-  /* background-color: violet; */
-  /* background-color: lightsalmon; */
-  /* background-color: lightseagreen; */
-  /* background-color: goldenrod; */
-  /*    background-color: goldenrod;*/
-  /*    background-color: hotpink;*/
-  /*    background-color: navajowhite;*/
-  /*    background-color: cornflowerblue;*/
-  /*    background-color: tomato;*/
-  /*    background-color: salmon;*/
-  /*    background-color: mediumspringgreen;*/
-  /*    background-color: mediumpurple;*/
-  /*    background-color: mediumorchid;*/
-  /*    background-color: magenta;*/
-  /*    background-color: firebrick;*/
-  /*    background-color: cyan;*/
-  /*    background-color: darkcyan;*/
-  /*    background-color: deepskyblue;*/
-  /*    background-color: lightcoral;*/
-  /*    background-color: coral;*/
-  /*    background-color: lightgray;*/
-  /*    background-color: aqua;*/
-  /*    background-color: lawngreen;*/
-  /*    background-color: fuchsia;*/
-}
-
-
-
 .pressed {
   /*  border: inset;*/
   height: 42px;
@@ -718,72 +735,223 @@ loop {
   justify-self: flex-end;
 }
 
+/* .selected-pad-0 { */
+/* background-color: violet; */
+/* background-color: lightsalmon; */
+/* background-color: lightseagreen; */
+/* background-color: goldenrod; */
+/*    background-color: goldenrod;*/
+/*    background-color: hotpink;*/
+/*    background-color: navajowhite;*/
+/*    background-color: cornflowerblue;*/
+/*    background-color: tomato;*/
+/*    background-color: salmon;*/
+/*    background-color: mediumspringgreen;*/
+/*    background-color: mediumpurple;*/
+/*    background-color: mediumorchid;*/
+/*    background-color: magenta;*/
+/*    background-color: firebrick;*/
+/*    background-color: cyan;*/
+/*    background-color: darkcyan;*/
+/*    background-color: deepskyblue;*/
+/*    background-color: lightcoral;*/
+/*    background-color: coral;*/
+/*    background-color: lightgray;*/
+/*    background-color: aqua;*/
+/*    background-color: lawngreen;*/
+/*    background-color: fuchsia;*/
+/* } */
+
+
 .pad-0 {
   background-color: violet;
 }
 
+.pad-0-light {
+  background-color: lightviolet;
+}
+
+.pad-0-dark {
+  background-color: darkviolet;
+}
+
 .pad-1 {
-  background-color: lightsalmon;
+  background-color: salmon;
+}
+
+.pad-1-dark {
+  background-color: darksalmon;
 }
 
 .pad-2 {
   background-color: lightseagreen;
 }
 
+
+.pad-2-light {
+  background-color: lavenderblush;
+}
+
+.pad-2-dark {
+  background-color: darkorchid;
+}
+
 .pad-3 {
   background-color: deepskyblue;
+}
+
+.pad-3-light {
+  background-color: khaki;
+}
+
+.pad-3-dark {
+  background-color: paddlebrown;
 }
 
 .pad-4 {
   background-color: fuchsia;
 }
 
+.pad-4-light {
+  background-color: lightsteelblue;
+}
+
+.pad-4-dark {
+  background-color: plateaya;
+}
+
 .pad-5 {
   background-color: mediumspringgreen;
 }
 
+.pad-5-light {
+  background-color: mistyrose;
+}
+
+.pad-5-dark {
+  background-color: darkslateblue;
+}
+
 .pad-6 {
+  background-color: purple;
+}
+
+.pad-5-light {
   background-color: mediumpurple;
 }
+
+.pad-5-dark {
+  background-color: purple;
+}
+
 
 .pad-7 {
   background-color: firebrick;
 }
 
 .pad-8 {
+  background-color: plum;
+}
+
+.pad-8-light {
   background-color: mediumorchid;
 }
 
-.pad-9 {
-  background-color: aqua;
+.pad-8-dark {
+  background-color: darkorchid;
 }
 
+.pad-9 {
+  background-color: turquoise;
+}
+
+.pad-9-light {
+  background-color: turquoise;
+}
+
+.pad-9-dark {
+  background-color: darkturquoise;
+}
+
+
 .pad-10 {
-  background-color: olivedrab
+  background-color: olivedrab;
+}
+
+.pad-10-light {
+  background-color: lightolivedrab;
+}
+
+.pad-10-dark {
+  background-color: darkolivedrab;
 }
 
 .pad-11 {
   background-color: cornflowerblue;
 }
 
+.pad-11-dark {
+  background-color: midnightblue;
+}
+
 .pad-12 {
   background-color: lightcoral;
+}
+
+.pad-12-light {
+  background-color: lightsalmon;
+}
+
+.pad-12-dark {
+  background-color: darkcoral;
 }
 
 .pad-13 {
   background-color: crimson;
 }
 
+.pad-13-light {
+  background-color: lightpink;
+}
+
+.pad-13-dark {
+  background-color: darkred;
+}
+
 .pad-14 {
   background-color: goldenrod;
+}
+
+.pad-14-light {
+  background-color: palegoldenrod;
+}
+
+.pad-14-dark {
+  background-color: darkgoldenrod;
 }
 
 .pad-15 {
   background-color: tomato;
 }
 
+.pad-15-light {
+  background-color: lightsalmon;
+}
+
+.pad-15-dark {
+  background-color: orangered;
+}
+
 .pad-16 {
   background-color: blueviolet;
+}
+
+.pad-16-light {
+  background-color: lavender;
+}
+
+.pad-16-dark {
+  background-color: darkslateblue;
 }
 
 .pad-selector {
@@ -807,7 +975,6 @@ loop {
 }
 
 input {
-  text-align: right;
   background-color: transparent;
   color: white;
   align-self: stretch;
@@ -1011,22 +1178,19 @@ th {
   margin-bottom: 10px;
 }
 
+grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+}
+
 .table-holder {
   align-self: stretch;
   align-content: stretch;
   background-color: transparent;
   flex-grow: true;
-  /*    padding: 0px;*/
-  /*    padding-top: 0px;*/
-  /*    border-radius: 5px;*/
-  border-color: whitesmoke;
   overflow-x: auto;
   overflow-y: auto;
-
   border: whitesmoke inset 1px;
-  border-width: thin;
-  /*    margin: 4px;*/
-  margin-bottom: 10px;
 }
 
 .fw-275 {
@@ -1052,13 +1216,14 @@ th {
 
 .status-readout {
   align-self: stretch;
-  width: 298px;
-  margin: 6px;
+  /* width: 298px; */
+  /* margin: 6px; */
   border: silver 1px inset;
-  height: 100%;
+  /* height: 100%; */
   border-radius: 6px;
   background-color: black;
   color: hotpink;
+  font-size: smaller;
   font-weight: bolder;
 }
 
@@ -1079,6 +1244,7 @@ th {
 .header-cell {
   background-color: #393939;
   color: white;
+  text-align: center;
 }
 
 .header-cell:not(:first-child) {

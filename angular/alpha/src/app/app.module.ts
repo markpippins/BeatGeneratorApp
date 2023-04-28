@@ -51,7 +51,10 @@ import { KnobModule } from "primeng/knob";
 import { CheckboxModule } from 'primeng/checkbox';
 import { MidiKnobComponent } from './components/widgets/midi-knob/midi-knob.component';
 import { LaunchpadComponent } from './components/widgets/launchpad/launchpad.component';
-import { MiniSliderPanelComponent } from './widgets/mini-slider-panel/mini-slider-panel.component';
+import { MiniSliderPanelComponent } from './components/widgets/mini-slider-panel/mini-slider-panel.component';
+import { InstrumentTableComponent } from './components/instrument-table/instrument-table.component';
+import { ControlCodesTableComponent } from './components/control-codes-table/control-codes-table.component';
+import { CaptionsTableComponent } from './components/captions-table/captions-table.component';
 const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
 
 @NgModule({
@@ -89,6 +92,9 @@ const config: SocketIoConfig = { url: 'http://localhost:8988', options: {} };
     MidiKnobComponent,
     LaunchpadComponent,
     MiniSliderPanelComponent,
+    InstrumentTableComponent,
+    ControlCodesTableComponent,
+    CaptionsTableComponent,
   ],
   imports: [
     CommonModule,

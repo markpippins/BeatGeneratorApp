@@ -6,7 +6,7 @@
     <!-- <th>Min Velocity</th>
         <th>Max Velocity</th> -->
   </tr>
-  <tr>
+  <tr *ngIf="player != undefined">
     <td class="player-long-col" (change)="onLevelChange(player, $event)">
       <input value="{{ player.name }}">
     </td>

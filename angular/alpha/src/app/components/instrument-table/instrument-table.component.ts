@@ -1,0 +1,38 @@
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Instrument } from 'src/app/models/instrument';
+
+@Component({
+  selector: 'app-instrument-table',
+  templateUrl: './instrument-table.component.html',
+  styleUrls: ['./instrument-table.component.css'],
+})
+export class InstrumentTableComponent {
+  @Input()
+  instruments!: Instrument[];
+  selectedInstrument!: Instrument;
+
+  @Output()
+  instrumentSelectEvent = new EventEmitter<Instrument>();
+
+  getRowClass(instrument: Instrument): string {
+    // if (_device.description.includes('External MIDI Port')) return 'port-table-row';
+
+    // if (_device.description.includes('Internal software synthesizer')) return 'synth-table-row';
+
+    // if (_device.description.includes('Software MIDI Synthesizer')) return 'synth-table-row';
+
+    // if (_device.description.includes('Software sequencer')) return 'sequencer-table-row';
+
+    // if (_device.description.includes('MAPPER')) return 'midi-mapper-table-row ';
+
+    // if (_device.description.includes('No details available')) return 'other-table-row';
+
+
+    return instrument == this.selectedInstrument ? 'active-table-row' : 'table-row';
+  }
+
+  onRowClick(instrument: Instrument) {
+    this.selectedInstrument = instrument;
+    this.instrumentSelectEvent.emit(instrument);
+  }
+}

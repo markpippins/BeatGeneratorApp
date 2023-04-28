@@ -31,12 +31,12 @@ public class MidiInstrumentService {
 
     public List<MidiInstrument> getAllInstruments(boolean clearCache) {
         logger.info("getAllInstruments()");
-        if (clearCache || instruments.isEmpty())
-            setInstruments(instrumentRepo.findAll());
+        // if (clearCache || instruments.isEmpty())
+        //     setInstruments(instrumentRepo.findAll());
 
         // results.forEach(i -> i.setDevice(findMidiOutDevice(i.getDeviceName())));
 
-        return instruments;
+        return instrumentRepo.findAll();
     }
 
     public List<MidiInstrument> getInstrumentByChannel(int channel, boolean clearCache) {

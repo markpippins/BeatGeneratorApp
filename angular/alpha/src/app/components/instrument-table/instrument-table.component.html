@@ -1,0 +1,28 @@
+<div class="table-holder">
+  <table class="table-header">
+    <tr class="header-row">
+      <th class="header-cell">MIDI Device</th>
+      <th class="header-cell">Channel</th>
+      <th class="header-cell">Device</th>
+      <th class="header-cell">Low</th>
+      <th class="header-cell">High</th>
+    </tr>
+    <tr class="table-row" *ngFor="let ins of instruments;" (click)="onRowClick(ins)">
+      <td [ngClass]="getRowClass(ins)">
+        <input [style.width.px]="100" [disabled]="true" value="{{ins.name}}">
+      </td>
+      <td [ngClass]="getRowClass(ins)">
+        <input [style.width.px]="40" [disabled]="true" value="{{ins.channel}}">
+      </td>
+      <td [ngClass]="getRowClass(ins)">
+        <input [style.width.px]="100" [disabled]="true" value="{{ins.deviceName}}">
+      </td>
+      <td [ngClass]="getRowClass(ins)">
+        <input [style.width.px]="40" [disabled]="true" value="{{ins.lowestNote}}">
+      </td>
+      <td [ngClass]="getRowClass(ins)">
+        <input [style.width.px]="40" [disabled]="true" value="{{ins.highestNote}}">
+      </td>
+    </tr>
+  </table>
+</div>

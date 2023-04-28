@@ -3,6 +3,7 @@ import {ControlCode} from "./control-code"
 export interface Instrument {
   id: number
   name: string
+  deviceName: string
   channel: number
   lowestNote: number
   highestNote: number

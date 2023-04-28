@@ -1,0 +1,17 @@
+<!-- {{controlCode.name}} -->
+<div class="table-holder" [style.height.px]="400">
+  <table class="table-header">
+    <tr class="header-row">
+      <th class="header-cell">Value</th>
+      <th class="header-cell">Caption</th>
+    </tr>
+    <tr class="table-row" *ngFor="let caption of controlCode?.captions;">
+      <td  class="table-row">
+        <input [style.width.px]="20" [disabled]="true" value="{{caption.code}}">
+      </td>
+      <td class="table-row">
+        <input [style.width.px]="160" [disabled]="true" value="{{caption.description}}">
+      </td>
+    </tr>
+  </table>
+</div>

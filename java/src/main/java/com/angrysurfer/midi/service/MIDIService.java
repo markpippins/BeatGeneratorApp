@@ -31,7 +31,7 @@ public class MIDIService {
     static String GS_SYNTH = "Microsoft GS Wavetable Synth";
     static String GERVILL = "Gervill";
 
-    static List<MidiDevice> midiDevices = new ArrayList<>();
+    // static List<MidiDevice> midiDevices = new ArrayList<>();
 
     public static List<MidiDeviceInfo> getMidiDeviceInfos() {
         logger.info("getMidiDeviceInfos");
@@ -50,19 +50,16 @@ public class MIDIService {
 
     public static List<MidiDevice> getMidiDevices() {
         logger.info("getMidiDevices");
-        if (midiDevices.size() == 0)
-            midiDevices = Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {
-                logger.info(String.format("retrieving device for %s, %s, %s", info.getName(), info.getVendor(),
-                        info.getDescription()));
-                try {
-                    return MidiSystem.getMidiDevice(info);
-                } catch (MidiUnavailableException ex) {
-                    logger.error(ex.getMessage(), ex);
-                    throw new RuntimeException(ex);
-                }
-            }).toList();
-
-        return midiDevices;
+        return Arrays.stream(MidiSystem.getMidiDeviceInfo()).map(info -> {
+            logger.info(String.format("retrieving device for %s, %s, %s", info.getName(), info.getVendor(),
+                    info.getDescription()));
+            try {
+                return MidiSystem.getMidiDevice(info);
+            } catch (MidiUnavailableException ex) {
+                logger.error(ex.getMessage(), ex);
+                throw new RuntimeException(ex);
+            }
+        }).toList();
     }
 
     public static List<MidiDevice> findMidiDevices(boolean receive, boolean transmit) {
@@ -201,76 +198,78 @@ public class MIDIService {
     // return results;
     // }
 
-    // public void sendMessageToInstrument(Long instrumentId, int messageType, int data1, int data2) {
-    //     logger.info(String.format("sendMessageToIntrument(%s)", instrumentId));
-    //     MidiInstrument instrument = getInstrumentById(instrumentId);
-    //     if (Objects.nonNull(instrument)) {
-    //         // List<MidiDevice> devices =
-    //         // findMidiOutDevice(instrument.getDevice().getDeviceInfo().getName());
-    //         // if (!devices.isEmpty()) {
-    //         MidiDevice device = findMidiOutDevice(instrument.getDeviceName());
-    //         if (!device.isOpen())
-    //             try {
-    //                 device.open();
-    //                 MidiSystem.getTransmitter().setReceiver(device.getReceiver());
-    //             } catch (MidiUnavailableException e) {
-    //                 throw new RuntimeException(e);
-    //             }
-    //         new Thread(new Runnable() {
+    // public void sendMessageToInstrument(Long instrumentId, int messageType, int
+    // data1, int data2) {
+    // logger.info(String.format("sendMessageToIntrument(%s)", instrumentId));
+    // MidiInstrument instrument = getInstrumentById(instrumentId);
+    // if (Objects.nonNull(instrument)) {
+    // // List<MidiDevice> devices =
+    // // findMidiOutDevice(instrument.getDevice().getDeviceInfo().getName());
+    // // if (!devices.isEmpty()) {
+    // MidiDevice device = findMidiOutDevice(instrument.getDeviceName());
+    // if (!device.isOpen())
+    // try {
+    // device.open();
+    // MidiSystem.getTransmitter().setReceiver(device.getReceiver());
+    // } catch (MidiUnavailableException e) {
+    // throw new RuntimeException(e);
+    // }
+    // new Thread(new Runnable() {
 
-    //             public void run() {
-    //                 try {
-    //                     ShortMessage message = new ShortMessage();
-    //                     message.setMessage(messageType, instrument.getChannel(), data1, data2);
-    //                     device.getReceiver().send(message, 0L);
-    //                     // log.info(String.join(", ",
-    //                     // MidiMessage.lookupCommand(message.getCommand()),
-    //                     // "Channel: ".concat(Integer.valueOf(message.getChannel()).toString()),
-    //                     // "Data 1: ".concat(Integer.valueOf(message.getData1()).toString()),
-    //                     // "Data 2: ".concat(Integer.valueOf(message.getData2()).toString())));
-    //                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
-    //                     throw new RuntimeException(e);
-    //                 }
-    //             }
-    //         }).start();
-    //     }
-    //     // }
+    // public void run() {
+    // try {
+    // ShortMessage message = new ShortMessage();
+    // message.setMessage(messageType, instrument.getChannel(), data1, data2);
+    // device.getReceiver().send(message, 0L);
+    // // log.info(String.join(", ",
+    // // MidiMessage.lookupCommand(message.getCommand()),
+    // // "Channel: ".concat(Integer.valueOf(message.getChannel()).toString()),
+    // // "Data 1: ".concat(Integer.valueOf(message.getData1()).toString()),
+    // // "Data 2: ".concat(Integer.valueOf(message.getData2()).toString())));
+    // } catch (InvalidMidiDataException | MidiUnavailableException e) {
+    // throw new RuntimeException(e);
+    // }
+    // }
+    // }).start();
+    // }
+    // // }
     // }
 
-    // public void sendMessageToChannel(int channel, int messageType, int data1, int data2) {
-    //     logger.info(String.format("sendMessageToChannel(%s)", channel));
+    // public void sendMessageToChannel(int channel, int messageType, int data1, int
+    // data2) {
+    // logger.info(String.format("sendMessageToChannel(%s)", channel));
 
-    //     getInstrumentByChannel(channel).forEach(instrument -> {
-    //         // List<MidiDevice> devices =
-    //         // findMidiOutDevice(instrument.getDevice().getDeviceInfo().getName());
-    //         // if (!devices.isEmpty()) {
-    //         MidiDevice device = findMidiOutDevice(instrument.getDeviceName());
-    //         if (!device.isOpen())
-    //             try {
-    //                 device.open();
-    //                 MidiSystem.getTransmitter().setReceiver(device.getReceiver());
-    //             } catch (MidiUnavailableException e) {
-    //                 throw new RuntimeException(e);
-    //             }
-    //         new Thread(new Runnable() {
+    // getInstrumentByChannel(channel).forEach(instrument -> {
+    // // List<MidiDevice> devices =
+    // // findMidiOutDevice(instrument.getDevice().getDeviceInfo().getName());
+    // // if (!devices.isEmpty()) {
+    // MidiDevice device = findMidiOutDevice(instrument.getDeviceName());
+    // if (!device.isOpen())
+    // try {
+    // device.open();
+    // MidiSystem.getTransmitter().setReceiver(device.getReceiver());
+    // } catch (MidiUnavailableException e) {
+    // throw new RuntimeException(e);
+    // }
+    // new Thread(new Runnable() {
 
-    //             public void run() {
-    //                 try {
-    //                     ShortMessage message = new ShortMessage();
-    //                     message.setMessage(messageType, channel, data1, data2);
-    //                     device.getReceiver().send(message, 0L);
-    //                     // log.info(String.join(", ",
-    //                     // MidiMessage.lookupCommand(message.getCommand()),
-    //                     // "Channel: ".concat(Integer.valueOf(message.getChannel()).toString()),
-    //                     // "Data 1: ".concat(Integer.valueOf(message.getData1()).toString()),
-    //                     // "Data 2: ".concat(Integer.valueOf(message.getData2()).toString())));
-    //                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
-    //                     throw new RuntimeException(e);
-    //                 }
-    //             }
-    //         }).start();
+    // public void run() {
+    // try {
+    // ShortMessage message = new ShortMessage();
+    // message.setMessage(messageType, channel, data1, data2);
+    // device.getReceiver().send(message, 0L);
+    // // log.info(String.join(", ",
+    // // MidiMessage.lookupCommand(message.getCommand()),
+    // // "Channel: ".concat(Integer.valueOf(message.getChannel()).toString()),
+    // // "Data 1: ".concat(Integer.valueOf(message.getData1()).toString()),
+    // // "Data 2: ".concat(Integer.valueOf(message.getData2()).toString())));
+    // } catch (InvalidMidiDataException | MidiUnavailableException e) {
+    // throw new RuntimeException(e);
+    // }
+    // }
+    // }).start();
 
-    //     });
+    // });
     // }
 
     public void sendMessage(MidiInstrument instrument, int messageType, int data1, int data2)

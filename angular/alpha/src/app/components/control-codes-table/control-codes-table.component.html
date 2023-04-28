@@ -1,0 +1,25 @@
+<div class="table-holder" [style.height.px]="400">
+  <table class="table-header">
+    <tr class="header-row">
+      <th class="header-cell">Code</th>
+      <th class="header-cell">Desc</th>
+      <th class="header-cell">Low</th>
+      <th class="header-cell">High</th>
+    </tr>
+    <tr class="table-row" *ngFor="let cc of instrument?.controlCodes;" (click)="onRowClick(cc)">
+      <td [ngClass]="getRowClass(cc)">
+        <input [style.width.px]="40" [disabled]="true" value="{{cc.code}}">
+      </td>
+      <td [ngClass]="getRowClass(cc)">
+        <input [style.width.px]="175" [disabled]="true" value="{{cc.name}}">
+      </td>
+
+      <td [ngClass]="getRowClass(cc)">
+        <input [style.width.px]="40" [disabled]="true" value="{{cc.lowerBound}}">
+      </td>
+      <td [ngClass]="getRowClass(cc)">
+        <input [style.width.px]="40" [disabled]="true" value="{{cc.upperBound}}">
+      </td>
+    </tr>
+  </table>
+</div>

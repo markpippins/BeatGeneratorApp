@@ -9,33 +9,33 @@
     <mat-icon>
       fiber_manual_record
     </mat-icon>
-      </button>
+  </button>
 
   <button id="transport-btn-pause" mat-button (click)="onClick('ticker-pause')" tabindex="0">
     <mat-icon>
       pause
     </mat-icon>
-      </button>
+  </button>
 
   <button id="transport-btn-stop" mat-button (click)="onClick('ticker-stop')" tabindex="0">
     <mat-icon>
       stop
     </mat-icon>
-      </button>
+  </button>
 
   <div id="transport-btn-play" class="neutral">
     <button mat-button (click)="onClick('ticker-play')" tabindex="0">
-    <mat-icon>
-      play_arrow
-    </mat-icon>
-      </button>
+      <mat-icon>
+        play_arrow
+      </mat-icon>
+    </button>
   </div>
 
   <button id="transport-btn-forward" mat-button (click)="onClick('ticker-forward')" tabindex="0">
     <mat-icon>
       fast_forward
     </mat-icon>
-      </button>
+  </button>
 </div>
 <div class="button-bar">
   <!-- <button
@@ -55,14 +55,18 @@
   </button> -->
 
   <button id="transport-btn-add" mat-button (click)="onClick('ticker-transpose-up')" tabindex="0">
-    add
+    <mat-icon>
+      add
+    </mat-icon>
   </button>
 
   <button id="transport-btn-remove" mat-button (click)="onClick('ticker-transpose-down')" tabindex="0">
-    remove
+    <mat-icon>
+      remove </mat-icon>
+
   </button>
-  <app-slider></app-slider>
-  <app-slider></app-slider>
+  <!-- <app-slider></app-slider>
+  <app-slider></app-slider> -->
   <!-- <button
     id="transport-btn-clear"
     mat-button

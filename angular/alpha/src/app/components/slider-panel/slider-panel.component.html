@@ -30,7 +30,7 @@
                             <label class="control-code-label">
                               {{controlCode.name.replace(panel, '')}}
                             </label>
-                            <select class="area-select" id="{{controlCode.id + '-' + 'select'}}"
+                            <select name="{{controlCode.id + '-' + 'select'}}" class="area-select" id="{{controlCode.id + '-' + 'select'}}"
                               name="{{controlCode.id + '-' + 'select'}}">
                               <!-- <label for="{{controlCode.name}}">{{caption.description}}</label><br> -->
                               <option *ngFor="let caption of controlCode.captions" value="{{caption.code}}">

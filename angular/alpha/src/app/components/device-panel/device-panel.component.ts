@@ -1,8 +1,9 @@
-import {Component, OnInit} from '@angular/core';
-import { Instrument } from 'src/app/models/instrument';
-import { UiService } from 'src/app/services/ui.service';
-import {Device} from "../../models/device";
-import {MidiService} from "../../services/midi.service";
+import {Component, OnInit} from '@angular/core'
+import { Instrument } from 'src/app/models/instrument'
+import { UiService } from 'src/app/services/ui.service'
+import {Device} from "../../models/device"
+import {MidiService} from "../../services/midi.service"
+import { ControlCode } from 'src/app/models/control-code'
 
 @Component({
   selector: 'app-device-panel',
@@ -15,14 +16,16 @@ export class DevicePanelComponent implements  OnInit {
   }
   instruments!: Instrument[]
   devices!: Device[]
-  ports: Device[] = [];
-  synths: Device[] = [];
-  other: Device[] = [];
-  unknown: Device[] = [];
+  ports: Device[] = []
+  synths: Device[] = []
+  other: Device[] = []
+  unknown: Device[] = []
+  selectedInstrument!: Instrument
+  selectedControlCode!: ControlCode
 
   ngOnInit(): void {
     this.midiService.allDevices().subscribe(data => {
-      this.devices = data;
+      this.devices = data
       this.ports = this.devices.filter(d => d.description.toLowerCase().indexOf('port') > -1)
       this.synths = this.devices.filter(d => d.description.toLowerCase().indexOf('synth') > -1)
       this.unknown = this.devices.filter(d => d.description.toLowerCase().indexOf('no details') > -1)
@@ -32,6 +35,17 @@ export class DevicePanelComponent implements  OnInit {
     this.midiService.allInstruments().subscribe(data => {
       this.instruments = this.uiService.sortByName(data)
     })
+  }
 
+  onInstrumentSelected(instrument: Instrument) {
+    this.selectedInstrument = instrument
+  }
+
+  onControlCodeSelected(controlCode: ControlCode) {
+    this.selectedControlCode = controlCode
+  }
+
+  onRowClick(instrument: Instrument) {
+      this.selectedInstrument = instrument
   }
 }
