@@ -18,7 +18,6 @@ interface PitchPair {
   note: string;
 }
 
-
 @Component({
   selector: 'app-beat-spec-panel',
   templateUrl: './beat-spec-panel.component.html',
@@ -27,7 +26,25 @@ interface PitchPair {
 export class BeatSpecPanelComponent
   implements Listener, OnInit, AfterContentChecked
 {
-  colors = ['violet', 'lightsalmon', 'lightseagreen', 'deepskyblue', 'fuchsia', 'mediumspringgreen', 'mediumpurple', 'firebrick', 'mediumorchid', 'aqua', 'olivedrab', 'cornflowerblue', 'lightcoral', 'crimson', 'goldenrod', 'tomato', 'blueviolet']
+  colors = [
+    'violet',
+    'lightsalmon',
+    'lightseagreen',
+    'deepskyblue',
+    'fuchsia',
+    'mediumspringgreen',
+    'mediumpurple',
+    'firebrick',
+    'mediumorchid',
+    'aqua',
+    'olivedrab',
+    'cornflowerblue',
+    'lightcoral',
+    'crimson',
+    'goldenrod',
+    'tomato',
+    'blueviolet',
+  ];
 
   @Output()
   paramBtnClickEvent = new EventEmitter<number>();
@@ -74,7 +91,6 @@ export class BeatSpecPanelComponent
     this.step.active = !this.step.active;
     // this.selected = !this.selected
   }
-
 
   onNotify(messageType: number, _message: string, _messageValue: any) {
     if (messageType == Constants.TICKER_STARTED) {
@@ -128,14 +144,14 @@ export class BeatSpecPanelComponent
   onNoteChange(_event: { target: any }) {
     // alert(this.step.pitch)
     // if (this.step.pitch == event.target.value)
-      this.midiService
-        .updateStep(
-          this.step.id,
-          this.step.position,
-          Constants.STEP_PITCH,
-          this.step.pitch
-        )
-        .subscribe((data) => (this.step = data));
+    this.midiService
+      .updateStep(
+        this.step.id,
+        this.step.position,
+        Constants.STEP_PITCH,
+        this.step.pitch
+      )
+      .subscribe((data) => (this.step = data));
   }
 
   onVelocityChange(step: Step, event: { target: any }) {
@@ -183,12 +199,14 @@ export class BeatSpecPanelComponent
     return this.step.position.toString();
   }
 
-  getMaxValue() {
-    return 127
+  getMaxValue(_name: string): number {
+    let result = 127;
+
+    return result;
   }
 
-  getMinValue() {
-    return 0
+  getMinValue(_name: string): number {
+    return 0;
   }
 
   getRangeColor() {
@@ -207,12 +225,23 @@ export class BeatSpecPanelComponent
     return 'white';
   }
 
-
   getValueColor(index: number) {
     return this.colors[index];
   }
 
   getValueTemplate(name: string): string {
-    return name
+    let result = name;
+
+    switch (name) {
+      case 'pitch': {
+        result = this.uiService.getNoteForValue(
+          this.step.pitch + this.pattern.transpose,
+          Constants.SCALE_NOTES
+        );
+        break;
+      }
+    }
+
+    return result;
   }
 }

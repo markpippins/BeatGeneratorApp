@@ -101,7 +101,7 @@ export class BeatSpecComponent implements OnInit, Listener {
   updateDisplay(): void {
     this.midiService.songInfo().subscribe((data) => {
       this.song = data;
-      // this.song.patterns = this.uiService.sortByPosition(this.song.patterns)
+      this.song.patterns = this.uiService.sortByPosition(this.song.patterns)
       this.song.patterns.forEach(
         (p) => (p.steps = this.uiService.sortByPosition(p.steps))
       );

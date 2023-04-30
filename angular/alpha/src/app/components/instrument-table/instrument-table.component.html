@@ -1,4 +1,4 @@
-<div class="table-holder">
+<div class="table-holder" [style.height.px]="300">
   <table class="table-header">
     <tr class="header-row">
       <th class="header-cell">MIDI Device</th>
@@ -9,19 +9,23 @@
     </tr>
     <tr class="table-row" *ngFor="let ins of instruments;" (click)="onRowClick(ins)">
       <td [ngClass]="getRowClass(ins)">
-        <input [style.width.px]="100" [disabled]="true" value="{{ins.name}}">
+        <input [style.width.px]="100" value="{{ins.name}}">
       </td>
       <td [ngClass]="getRowClass(ins)">
-        <input [style.width.px]="40" [disabled]="true" value="{{ins.channel}}">
+        <select [style.width.px]="40" value="{{ins.channel}}">
+          <option *ngFor="let ch of channels">{{ch + 1}}</option>
+        </select>
       </td>
       <td [ngClass]="getRowClass(ins)">
-        <input [style.width.px]="100" [disabled]="true" value="{{ins.deviceName}}">
+        <select [style.width.px]="100" value="{{ins.deviceName}}">
+          <option *ngFor="let device of devices">{{device.name}}</option>
+        </select>
       </td>
       <td [ngClass]="getRowClass(ins)">
-        <input [style.width.px]="40" [disabled]="true" value="{{ins.lowestNote}}">
+        <input [style.width.px]="40" value="{{ins.lowestNote}}">
       </td>
       <td [ngClass]="getRowClass(ins)">
-        <input [style.width.px]="40" [disabled]="true" value="{{ins.highestNote}}">
+        <input [style.width.px]="40" value="{{ins.highestNote}}">
       </td>
     </tr>
   </table>

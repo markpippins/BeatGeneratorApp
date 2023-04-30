@@ -48,4 +48,8 @@ export class DevicePanelComponent implements  OnInit {
   onRowClick(instrument: Instrument) {
       this.selectedInstrument = instrument
   }
+
+  getDeviceNames() {
+    return this.devices.map(d => d.name)
+  }
 }

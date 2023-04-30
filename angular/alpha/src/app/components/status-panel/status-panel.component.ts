@@ -54,6 +54,9 @@ export class StatusPanelComponent implements OnInit {
   @Output()
   tempoChangeEvent = new EventEmitter<number>();
 
+  colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+  index = 0;
+
   constructor(
     private zone: NgZone,
     private midiService: MidiService,
@@ -61,6 +64,14 @@ export class StatusPanelComponent implements OnInit {
   ) {}
 
   private pulse = 0;
+
+  cycleColors() {
+    let colorContainer = document.getElementById('dashboard') as HTMLElement;
+    if (colorContainer) {
+      colorContainer.style.backgroundColor = this.colors[this.index];
+      this.index = (this.index + 1) % this.colors.length;
+    }
+  }
 
   getTickerMessages(): Observable<string> {
     return Observable.create(
@@ -73,6 +84,7 @@ export class StatusPanelComponent implements OnInit {
           this.zone.run(() => {
             // console.log('tick');
             // console.log(event.data);
+            this.cycleColors();
             observer.next(event.data);
           });
         };
@@ -114,7 +126,7 @@ export class StatusPanelComponent implements OnInit {
     this.tickerSubscription = this.getTickerMessages().subscribe({
       next: (data: string) => {
         this.pulse++;
-          this.uiService.notifyAll(Constants.TICKER_CONNECTED, '', this.pulse);
+        this.uiService.notifyAll(Constants.TICKER_CONNECTED, '', this.pulse);
         this.tickerStatus = JSON.parse(data);
         this.updateDisplay();
       },

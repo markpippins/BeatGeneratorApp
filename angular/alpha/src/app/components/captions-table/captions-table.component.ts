@@ -13,4 +13,15 @@ export class CaptionsTableComponent {
   getRowClass(_caption: string) {
     return 'table-row';
   }
+
+  getCaptionCodes() {
+    let codes: string[] = [];
+    for (
+      let i = this.controlCode.lowerBound;
+      i < this.controlCode.upperBound;
+      i++
+    )
+      codes.push(i.toString());
+    return codes; 
+  }
 }

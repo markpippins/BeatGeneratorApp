@@ -8,7 +8,7 @@
 <h4>MIDI Devices</h4>
 <div class="local"></div>
 <div class="grid-3">
-  <app-instrument-table (instrumentSelectEvent)="onInstrumentSelected($event)" [instruments]="instruments"></app-instrument-table>
+  <app-instrument-table (instrumentSelectEvent)="onInstrumentSelected($event)" [devices]="ports" [instruments]="instruments"></app-instrument-table>
   <app-control-codes-table (controlCodeEvent)="onControlCodeSelected($event)" [instrument]="selectedInstrument"></app-control-codes-table>
   <app-captions-table [controlCode]="selectedControlCode"></app-captions-table>
 </div>

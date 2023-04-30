@@ -2,7 +2,7 @@
   <div *ngFor="let instrument of instruments;">
     <mat-tab *ngIf="instrument.controlCodes.length > 0" label="{{instrument.name}}">
       <div class="area-header">
-        <h3>{{ instrument.name }}</h3>
+        <h5>{{ instrument.name }}</h5>
       </div>
       <div class="slider-area">
 
@@ -11,7 +11,7 @@
             <div class="area" *ngIf="!panel.startsWith('Other')">
               <div class="area-content">
                 <div class="area-header">
-                  <h4 class="control-code-label">{{ panel }}</h4>
+                  <h5 class="control-code-label">{{ panel }}</h5>
                 </div>
 
                 <div class="short-control">
@@ -60,7 +60,7 @@
             <div class="area" *ngIf="panel.startsWith('Other')">
               <div class="area-content">
                 <div class="area-header">
-                  <h4>{{ panel }}</h4>
+                  <h5>{{ panel }}</h5>
                 </div>
                 <div class="area-controls"
                   *ngFor="let controlCode of getOtherControlCodes(instrument.name); let index = index;">
