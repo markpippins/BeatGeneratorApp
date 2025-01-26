@@ -19,10 +19,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.angrysurfer.midi.Application;
-import com.angrysurfer.midi.model.midi.MidiInstrument;
-import com.angrysurfer.midi.repo.*;
-import com.angrysurfer.midi.service.MIDIService;
+import com.angrysurfer.sequencer.Application;
+import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.repo.*;
+import com.angrysurfer.sequencer.service.MIDIService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(

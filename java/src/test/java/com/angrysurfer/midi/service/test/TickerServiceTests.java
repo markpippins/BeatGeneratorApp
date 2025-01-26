@@ -16,15 +16,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.angrysurfer.midi.Application;
-import com.angrysurfer.midi.model.Rule;
-import com.angrysurfer.midi.model.Ticker;
-import com.angrysurfer.midi.model.player.AbstractPlayer;
-import com.angrysurfer.midi.repo.StrikeRepo;
-import com.angrysurfer.midi.repo.TickerRepo;
-import com.angrysurfer.midi.service.PlayerService;
-import com.angrysurfer.midi.service.TickerService;
-import com.angrysurfer.midi.util.update.TickerUpdateType;
+import com.angrysurfer.sequencer.Application;
+import com.angrysurfer.sequencer.model.Rule;
+import com.angrysurfer.sequencer.model.Ticker;
+import com.angrysurfer.sequencer.model.player.AbstractPlayer;
+import com.angrysurfer.sequencer.repo.StrikeRepo;
+import com.angrysurfer.sequencer.repo.TickerRepo;
+import com.angrysurfer.sequencer.service.PlayerService;
+import com.angrysurfer.sequencer.service.TickerService;
+import com.angrysurfer.sequencer.util.update.TickerUpdateType;
 
 
 @RunWith(SpringRunner.class)

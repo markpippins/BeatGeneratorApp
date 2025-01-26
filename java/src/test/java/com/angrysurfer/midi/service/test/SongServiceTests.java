@@ -19,13 +19,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.angrysurfer.midi.Application;
-import com.angrysurfer.midi.model.Pattern;
-import com.angrysurfer.midi.model.Song;
-import com.angrysurfer.midi.repo.MidiInstrumentRepo;
-import com.angrysurfer.midi.repo.SongRepo;
-import com.angrysurfer.midi.repo.StepRepo;
-import com.angrysurfer.midi.service.SongService;
+import com.angrysurfer.sequencer.Application;
+import com.angrysurfer.sequencer.model.Pattern;
+import com.angrysurfer.sequencer.model.Song;
+import com.angrysurfer.sequencer.repo.MidiInstrumentRepo;
+import com.angrysurfer.sequencer.repo.SongRepo;
+import com.angrysurfer.sequencer.repo.StepRepo;
+import com.angrysurfer.sequencer.service.SongService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, classes = Application.class)

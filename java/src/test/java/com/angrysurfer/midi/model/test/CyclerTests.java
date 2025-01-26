@@ -9,7 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.angrysurfer.midi.util.Cycler;
+import com.angrysurfer.sequencer.util.Cycler;
 
 
 

@@ -14,16 +14,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.angrysurfer.midi.Application;
-import com.angrysurfer.midi.model.Rule;
-import com.angrysurfer.midi.model.player.AbstractPlayer;
-import com.angrysurfer.midi.repo.*;
-import com.angrysurfer.midi.service.MIDIService;
-import com.angrysurfer.midi.service.PlayerService;
-import com.angrysurfer.midi.service.TickerService;
-import com.angrysurfer.midi.util.Comparison;
-import com.angrysurfer.midi.util.update.PlayerUpdateType;
-import com.angrysurfer.midi.util.update.RuleUpdateType;
+import com.angrysurfer.sequencer.Application;
+import com.angrysurfer.sequencer.model.Rule;
+import com.angrysurfer.sequencer.model.player.AbstractPlayer;
+import com.angrysurfer.sequencer.repo.*;
+import com.angrysurfer.sequencer.service.MIDIService;
+import com.angrysurfer.sequencer.service.PlayerService;
+import com.angrysurfer.sequencer.service.TickerService;
+import com.angrysurfer.sequencer.util.Comparison;
+import com.angrysurfer.sequencer.util.update.PlayerUpdateType;
+import com.angrysurfer.sequencer.util.update.RuleUpdateType;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(

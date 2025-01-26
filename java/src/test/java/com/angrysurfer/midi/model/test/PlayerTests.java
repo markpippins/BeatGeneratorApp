@@ -8,11 +8,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Test;
 
-import com.angrysurfer.midi.model.Rule;
-import com.angrysurfer.midi.model.Ticker;
-import com.angrysurfer.midi.model.player.AbstractPlayer;
-import com.angrysurfer.midi.util.Comparison;
-import com.angrysurfer.midi.util.Operator;
+import com.angrysurfer.sequencer.model.Rule;
+import com.angrysurfer.sequencer.model.Ticker;
+import com.angrysurfer.sequencer.model.player.AbstractPlayer;
+import com.angrysurfer.sequencer.util.Comparison;
+import com.angrysurfer.sequencer.util.Operator;
 
 public class PlayerTests {
 

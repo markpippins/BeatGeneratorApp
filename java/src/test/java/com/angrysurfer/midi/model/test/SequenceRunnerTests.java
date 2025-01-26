@@ -8,8 +8,8 @@ import javax.sound.midi.InvalidMidiDataException;
 
 import org.junit.Test;
 
-import com.angrysurfer.midi.model.Ticker;
-import com.angrysurfer.midi.util.ClockSource;
+import com.angrysurfer.sequencer.model.Ticker;
+import com.angrysurfer.sequencer.util.ClockSource;
 
 public class SequenceRunnerTests {
 
