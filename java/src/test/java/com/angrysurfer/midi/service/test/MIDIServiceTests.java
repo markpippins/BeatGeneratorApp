@@ -4,9 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiUnavailableException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +19,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.angrysurfer.sequencer.Application;
 import com.angrysurfer.sequencer.model.midi.MidiInstrument;
-import com.angrysurfer.sequencer.repo.*;
+import com.angrysurfer.sequencer.repo.ControlCodeRepo;
+import com.angrysurfer.sequencer.repo.MidiInstrumentRepo;
+import com.angrysurfer.sequencer.repo.PadRepo;
+import com.angrysurfer.sequencer.repo.SongRepo;
+import com.angrysurfer.sequencer.repo.StepRepo;
 import com.angrysurfer.sequencer.service.MIDIService;
 
 @RunWith(SpringRunner.class)

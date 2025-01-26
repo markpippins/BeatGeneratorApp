@@ -125,7 +125,7 @@ public class PlayerService {
         tickerRepo.flush();
 
         try {
-            midiInstrument.setDevice(InstrumentService.getMidiDevice(midiInstrument.getName()));
+            midiInstrument.setDevice(MIDIService.getMidiDevice(midiInstrument.getName()));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -239,7 +239,7 @@ public class PlayerService {
 
             case INSTRUMENT -> {
                 MidiInstrument instrument = getMidiInstrumentRepo().findById((long) updateValue).orElseThrow(null);
-                instrument.setDevice(InstrumentService.getMidiDevice(instrument.getDeviceName()));
+                instrument.setDevice(MIDIService.getMidiDevice(instrument.getDeviceName()));
                 player.setInstrument(instrument);
                 break;
             }
@@ -484,7 +484,7 @@ public class PlayerService {
     public void playDrumNote(String instrumentName, int channel, int note) {
 
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-        midiInstrument.setDevice(InstrumentService.getMidiDevice(midiInstrument.getDeviceName()));
+        midiInstrument.setDevice(MIDIService.getMidiDevice(midiInstrument.getDeviceName()));
 
         log.info(String.join(", ", instrumentName, Integer.toString(channel), Integer.toString(note)));
 

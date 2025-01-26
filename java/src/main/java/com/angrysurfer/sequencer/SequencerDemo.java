@@ -1,7 +1,4 @@
-package com.angrysurfer.sequencer.service;
-
-import java.util.ArrayList;
-import java.util.List;
+package com.angrysurfer.sequencer;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MetaEventListener;
@@ -21,53 +18,11 @@ import javax.sound.midi.Transmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.sequencer.service.MIDIService;
 import com.angrysurfer.sequencer.util.PreciseTimer;
 
-public class InstrumentService {
-    private static final Logger logger = LoggerFactory.getLogger(InstrumentService.class);
-
-    public static List<MidiDevice> getMidiDevices() {
-        List<MidiDevice> devices = new ArrayList<>();
-        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-
-        for (MidiDevice.Info info : infos) {
-            try {
-                MidiDevice device = MidiSystem.getMidiDevice(info);
-                devices.add(device);
-                logger.info("Found MIDI device: {} (Receivers: {}, Transmitters: {})",
-                        info.getName(),
-                        device.getMaxReceivers(),
-                        device.getMaxTransmitters());
-            } catch (MidiUnavailableException e) {
-                logger.error("Error accessing MIDI device: " + info.getName(), e);
-            }
-        }
-        return devices;
-    }
-
-    public static MidiDevice getMidiDevice(String name) {
-        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-
-        for (MidiDevice.Info info : infos) {
-            if (info.getName().contains(name)) {
-                try {
-                    MidiDevice device = MidiSystem.getMidiDevice(info);
-                    logger.info("Found requested MIDI device: {} (Receivers: {}, Transmitters: {})",
-                            info.getName(),
-                            device.getMaxReceivers(),
-                            device.getMaxTransmitters());
-                    return device;
-                } catch (MidiUnavailableException e) {
-                    logger.error("Error accessing MIDI device: " + info.getName(), e);
-                }
-            }
-        }
-        return null;
-    }
-
-    public static int midiChannel(int realChannel) {
-        return realChannel - 1;
-    }
+public class SequencerDemo {
+    static final Logger logger = LoggerFactory.getLogger(SequencerDemo.class);
 
     public static class TimingListener implements MetaEventListener {
         private static final int TIMING_CLOCK = 0x58;
@@ -122,7 +77,7 @@ public class InstrumentService {
             Track track1 = sequence.createTrack();
 
             // First track - C major scale
-            int channel = midiChannel(2);
+            int channel = MIDIService.midiChannel(2);
             int velocity = 100;
             int ticksPerWholeNote = 24 * 4;
 
@@ -137,10 +92,10 @@ public class InstrumentService {
 
             // List all MIDI devices
             System.out.println("\nAvailable MIDI Devices:");
-            getMidiDevices().forEach(device -> System.out.println(device.getDeviceInfo().getName()));
+            MIDIService.getMidiDevices().forEach(device -> System.out.println(device.getDeviceInfo().getName()));
 
             // Get the Tracker device using the new method
-            MidiDevice outputDevice = getMidiDevice("Tracker");
+            MidiDevice outputDevice = MIDIService.getMidiDevice("Tracker");
             if (outputDevice == null) {
                 System.out.println("Tracker MIDI device not found!");
                 return;

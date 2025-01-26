@@ -51,7 +51,7 @@ public class Application {
                 return;
 
             List<String> instrumentNames = new ArrayList<>();
-            MIDIService.findMidiDevices(true, false).forEach(device -> {
+            MIDIService.getMidiDevices().forEach(device -> {
                 if (device.getDeviceInfo().getName().contains("MIDI"))
                     return;
 

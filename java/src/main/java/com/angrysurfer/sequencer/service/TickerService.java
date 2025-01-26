@@ -62,7 +62,7 @@ public class TickerService {
         getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
 
         this.ticker.getPlayers().forEach(p -> p.getInstrument()
-                .setDevice(InstrumentService.getMidiDevice(p.getInstrument().getDeviceName())));
+                .setDevice(MIDIService.getMidiDevice(p.getInstrument().getDeviceName())));
 
         if (Objects.nonNull(getClockSource()) && !getClockSource().isPlaying())
             new Thread(getClockSource()).start();
