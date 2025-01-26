@@ -16,13 +16,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @Service
-public class MidiInstrumentService {
+public class InstrumentService {
 
-    static Logger logger = LoggerFactory.getLogger(MidiInstrumentService.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(InstrumentService.class.getCanonicalName());
 
     private MidiInstrumentRepo instrumentRepo;
 
-    public MidiInstrumentService(MidiInstrumentRepo instrumentRepo) {
+    public InstrumentService(MidiInstrumentRepo instrumentRepo) {
         this.instrumentRepo = instrumentRepo;
     }
 

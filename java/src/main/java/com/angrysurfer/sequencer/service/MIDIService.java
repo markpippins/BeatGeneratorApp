@@ -25,6 +25,45 @@ public class MIDIService {
 
     static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
 
+    public static MidiDevice getMidiDevice(String name) {
+        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+
+        for (MidiDevice.Info info : infos) {
+            if (info.getName().contains(name)) {
+                try {
+                    MidiDevice device = MidiSystem.getMidiDevice(info);
+                    logger.info("Found requested MIDI device: {} (Receivers: {}, Transmitters: {})",
+                            info.getName(),
+                            device.getMaxReceivers(),
+                            device.getMaxTransmitters());
+                    return device;
+                } catch (MidiUnavailableException e) {
+                    logger.error("Error accessing MIDI device: " + info.getName(), e);
+                }
+            }
+        }
+        return null;
+    }
+
+    public static List<MidiDevice> getMidiDevices() {
+        List<MidiDevice> devices = new ArrayList<>();
+        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+
+        for (MidiDevice.Info info : infos) {
+            try {
+                MidiDevice device = MidiSystem.getMidiDevice(info);
+                devices.add(device);
+                logger.info("Found MIDI device: {} (Receivers: {}, Transmitters: {})",
+                        info.getName(),
+                        device.getMaxReceivers(),
+                        device.getMaxTransmitters());
+            } catch (MidiUnavailableException e) {
+                logger.error("Error accessing MIDI device: " + info.getName(), e);
+            }
+        }
+        return devices;
+    }
+
     // Improved error handling and validation
     public static List<MidiDeviceInfo> getMidiDeviceInfos() {
         logger.info("getMidiDeviceInfos");
@@ -45,6 +84,10 @@ public class MIDIService {
         } catch (Exception ex) {
             throw new MidiDeviceException("Failed to get MIDI device infos", ex);
         }
+    }
+
+    public static int midiChannel(int realChannel) {
+        return realChannel - 1;
     }
 
     // Better error handling for reset
@@ -127,46 +170,4 @@ public class MIDIService {
         return data;
     }
 
-    public static MidiDevice getMidiDevice(String name) {
-        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-
-        for (MidiDevice.Info info : infos) {
-            if (info.getName().contains(name)) {
-                try {
-                    MidiDevice device = MidiSystem.getMidiDevice(info);
-                    logger.info("Found requested MIDI device: {} (Receivers: {}, Transmitters: {})",
-                            info.getName(),
-                            device.getMaxReceivers(),
-                            device.getMaxTransmitters());
-                    return device;
-                } catch (MidiUnavailableException e) {
-                    logger.error("Error accessing MIDI device: " + info.getName(), e);
-                }
-            }
-        }
-        return null;
-    }
-
-    public static int midiChannel(int realChannel) {
-        return realChannel - 1;
-    }
-
-    public static List<MidiDevice> getMidiDevices() {
-        List<MidiDevice> devices = new ArrayList<>();
-        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-
-        for (MidiDevice.Info info : infos) {
-            try {
-                MidiDevice device = MidiSystem.getMidiDevice(info);
-                devices.add(device);
-                logger.info("Found MIDI device: {} (Receivers: {}, Transmitters: {})",
-                        info.getName(),
-                        device.getMaxReceivers(),
-                        device.getMaxTransmitters());
-            } catch (MidiUnavailableException e) {
-                logger.error("Error accessing MIDI device: " + info.getName(), e);
-            }
-        }
-        return devices;
-    }
 }

@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.angrysurfer.sequencer.model.midi.MidiInstrument;
 import com.angrysurfer.sequencer.service.MIDIService;
-import com.angrysurfer.sequencer.service.MidiInstrumentService;
+import com.angrysurfer.sequencer.service.InstrumentService;
 import com.angrysurfer.sequencer.util.Constants;
 
 import java.util.List;
@@ -17,9 +17,9 @@ import java.util.List;
 public class InstrumentController {
     static Logger logger = LoggerFactory.getLogger(InstrumentController.class.getCanonicalName());
     private final MIDIService midiService;
-    private final MidiInstrumentService instrumentService;
+    private final InstrumentService instrumentService;
 
-    public InstrumentController(MIDIService midiService, MidiInstrumentService instrumentService) {
+    public InstrumentController(MIDIService midiService, InstrumentService instrumentService) {
         this.midiService = midiService;
         this.instrumentService = instrumentService;
     }

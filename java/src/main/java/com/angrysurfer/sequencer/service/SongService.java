@@ -121,7 +121,7 @@ public class SongService implements NoteProvider {
     private SongRepo songRepo;
     private PatternRepo patternRepo;
     private MIDIService midiService;
-    MidiInstrumentService instrumentService;
+    InstrumentService instrumentService;
 
     private Song song;
     private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
@@ -131,7 +131,7 @@ public class SongService implements NoteProvider {
     // private CyclerListener barListener = new BarCyclerListener();
 
     public SongService(PatternRepo patternRepo, StepRepo stepRepo,
-            SongRepo songRepo, MIDIService midiService, MidiInstrumentService instrumentService) {
+            SongRepo songRepo, MIDIService midiService, InstrumentService instrumentService) {
         this.stepRepo = stepRepo;
         this.songRepo = songRepo;
         this.patternRepo = patternRepo;
