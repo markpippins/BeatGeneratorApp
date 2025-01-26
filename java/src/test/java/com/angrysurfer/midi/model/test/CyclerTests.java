@@ -12,6 +12,7 @@ import org.junit.Test;
 import com.angrysurfer.midi.util.Cycler;
 
 
+
 public class CyclerTests {
 
   @Before

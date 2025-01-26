@@ -6,6 +6,50 @@
     "configurations": [
         {
             "type": "java",
+            "name": "InstrumentService",
+            "request": "launch",
+            "mainClass": "com.angrysurfer.beatgenerator.service.InstrumentService",
+            "projectName": "BeatGenerator"
+        },
+        {
+            "type": "java",
+            "name": "SequenceRunner",
+            "request": "launch",
+            "mainClass": "com.angrysurfer.beatgenerator.util.SequenceRunner",
+            "projectName": "BeatGenerator"
+        },
+        {
+            "type": "java",
+            "name": "Application",
+            "request": "launch",
+            "mainClass": "com.angrysurfer.beatgenerator.Application",
+            "projectName": "BeatGenerator",
+            "noDebug": false,
+            "__progressId": "f582a9e3-71ed-4cab-a2bd-f980262d1bc9",
+            "__origin": "internal"
+        },
+        {
+            "type": "java",
+            "name": "TrackPopulator",
+            "request": "launch",
+            "mainClass": "com.angrysurfer.beatgenerator.util.TrackPopulator",
+            "projectName": "BeatGenerator"
+        },
+        {
+            "type": "java",
+            "name": "SequenceRunnerCreator",
+            "request": "launch",
+            "mainClass": "com.angrysurfer.midi.util.SequenceRunnerCreator",
+            "projectName": "BeatGenerator"
+        },
+        {
+            "command": "ng serve",
+            "name": "Run ng start",
+            "request": "launch",
+            "type": "node-terminal"
+        },
+        {
+            "type": "java",
             "name": "Cycler",
             "request": "launch",
             "mainClass": "com.angrysurfer.midi.util.Cycler",

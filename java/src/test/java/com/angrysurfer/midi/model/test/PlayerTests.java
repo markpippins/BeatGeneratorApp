@@ -8,11 +8,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Test;
 
-import com.angrysurfer.midi.util.Comparison;
-import com.angrysurfer.midi.util.Operator;
-import com.angrysurfer.midi.model.Player;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.Ticker;
+import com.angrysurfer.midi.model.player.AbstractPlayer;
+import com.angrysurfer.midi.util.Comparison;
+import com.angrysurfer.midi.util.Operator;
 
 public class PlayerTests {
 
@@ -23,7 +23,7 @@ public class PlayerTests {
 
 
     AtomicBoolean play = new AtomicBoolean(false);
-    Player p = new Player() {
+    AbstractPlayer p = new AbstractPlayer() {
       @Override
       public void onTick(long tick, long bar) {
         play.set(true);
@@ -57,7 +57,7 @@ public class PlayerTests {
     ticker.getBarCycler().reset();
     ticker.getBeatCycler().reset();
 
-    Player p1 = new Player() {
+    AbstractPlayer p1 = new AbstractPlayer() {
       @Override
       public void onTick(long tick, long bar) {
         play1.set(true);
@@ -66,7 +66,7 @@ public class PlayerTests {
     };
     p1.setTicker(ticker);
 
-    Player p2 = new Player() {
+    AbstractPlayer p2 = new AbstractPlayer() {
       @Override
       public void onTick(long tick, long bar) {
         play2.set(true);
@@ -75,7 +75,7 @@ public class PlayerTests {
     };
     p2.setTicker(ticker);
 
-    Player p3 = new Player() {
+    AbstractPlayer p3 = new AbstractPlayer() {
       @Override
       public void onTick(long tick, long bar) {
         play3.set(true);

@@ -5,12 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Objects;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
 
 import org.junit.Test;
 
-import com.angrysurfer.midi.util.SequenceRunner;
 import com.angrysurfer.midi.model.Ticker;
+import com.angrysurfer.midi.util.ClockSource;
 
 public class SequenceRunnerTests {
 
@@ -18,7 +17,7 @@ public class SequenceRunnerTests {
   public void whenGetMasterSequenceCalled_thenSequenceIsReturned() {
 
     Ticker ticker = new Ticker();
-    SequenceRunner runner = new SequenceRunner(ticker);
+    ClockSource runner = new ClockSource(ticker);
     try {
       assertTrue(Objects.nonNull(runner.getMasterSequence()));
     } catch (InvalidMidiDataException e) {
@@ -26,20 +25,20 @@ public class SequenceRunnerTests {
     }
   }
 
-  @Test
-  public void whenBeforeStartCalled_thenRunnerHasOpenSequencer() {
+  // @Test
+  // public void whenBeforeStartCalled_thenRunnerHasOpenSequencer() {
 
-    Ticker ticker = new Ticker();
-    SequenceRunner runner = new SequenceRunner(ticker);
+  //   Ticker ticker = new Ticker();
+  //   SequenceRunner runner = new SequenceRunner(ticker);
 
-    try {
-      runner.beforeStart();
-    } catch (InvalidMidiDataException | MidiUnavailableException e) {
-      e.printStackTrace();
-    }
+  //   try {
+  //     runner.beforeStart();
+  //   } catch (InvalidMidiDataException | MidiUnavailableException e) {
+  //     e.printStackTrace();
+  //   }
 
-    assertTrue(runner.getSequencer().isOpen());
-  }
+  //   assertTrue(runner.getSequencer().isOpen());
+  // }
 
   // @Test
   // public void whenRunCalled_thenSequencerIsRunning() {

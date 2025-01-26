@@ -1,12 +1,12 @@
 package com.angrysurfer.midi.repo;
 
-import com.angrysurfer.midi.model.Rule;
-
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.angrysurfer.midi.model.Rule;
 
 public interface RuleRepo  extends JpaRepository<Rule, Long> {
     String FIND_BY_PLAYER_ID = "select * from rule r where r.player_id = :playerId";

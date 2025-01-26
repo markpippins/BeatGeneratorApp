@@ -1,12 +1,12 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.Pattern;
-import com.angrysurfer.midi.service.PlayerService;
-import com.angrysurfer.midi.util.Constants;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+
+import com.angrysurfer.midi.model.Pattern;
+import com.angrysurfer.midi.service.PlayerService;
+import com.angrysurfer.midi.util.Constants;
 
 import java.util.List;
 

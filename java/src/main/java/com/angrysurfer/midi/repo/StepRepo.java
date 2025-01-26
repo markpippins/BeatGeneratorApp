@@ -1,11 +1,11 @@
 package com.angrysurfer.midi.repo;
 
-import com.angrysurfer.midi.model.Step;
-
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
+
+import com.angrysurfer.midi.model.Step;
 
 public interface StepRepo extends JpaRepository<Step, Long> {
 

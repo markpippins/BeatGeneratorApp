@@ -19,16 +19,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.angrysurfer.BeatGeneratorApplication;
-import com.angrysurfer.midi.model.Song;
+import com.angrysurfer.midi.Application;
 import com.angrysurfer.midi.model.Pattern;
+import com.angrysurfer.midi.model.Song;
 import com.angrysurfer.midi.repo.MidiInstrumentRepo;
 import com.angrysurfer.midi.repo.SongRepo;
 import com.angrysurfer.midi.repo.StepRepo;
 import com.angrysurfer.midi.service.SongService;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, classes = BeatGeneratorApplication.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, classes = Application.class)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class SongServiceTests {

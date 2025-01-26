@@ -16,21 +16,21 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.angrysurfer.BeatGeneratorApplication;
-import com.angrysurfer.midi.model.Player;
+import com.angrysurfer.midi.Application;
 import com.angrysurfer.midi.model.Rule;
 import com.angrysurfer.midi.model.Ticker;
+import com.angrysurfer.midi.model.player.AbstractPlayer;
 import com.angrysurfer.midi.repo.StrikeRepo;
 import com.angrysurfer.midi.repo.TickerRepo;
 import com.angrysurfer.midi.service.PlayerService;
 import com.angrysurfer.midi.service.TickerService;
-import com.angrysurfer.midi.util.TickerUpdateType;
+import com.angrysurfer.midi.util.update.TickerUpdateType;
 
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
   webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-  classes = BeatGeneratorApplication.class)
+  classes = Application.class)
 @AutoConfigureMockMvc
 @TestPropertySource(
   locations = "classpath:application-test.properties")
@@ -129,7 +129,7 @@ public class TickerServiceTests {
     @Test
     public void whenPreviousTickerRequestedForTickWithPlayers_thenPlayersContainAddedRule() {
         Long startingTickerId = tickerService.getTicker().getId();
-        Player player = playerService.addPlayer(RAZ, 36L);
+        AbstractPlayer player = playerService.addPlayer(RAZ, 36L);
         Rule rule = playerService.addRule(player.getId());
 
         // move to next ticker, add player and rule
@@ -148,12 +148,12 @@ public class TickerServiceTests {
         // tickerService.newTicker();
         // add data to current Ticker
         Long startingTickerId = tickerService.getTicker().getId();
-        Player player = playerService.addPlayer(RAZ, 36L);
+        AbstractPlayer player = playerService.addPlayer(RAZ, 36L);
         playerService.addRule(player.getId());
 
         // move to next ticker, add player and rule
         Ticker ticker2 = tickerService.next(startingTickerId);
-        Player player2 = playerService.addPlayer(RAZ, 36L);
+        AbstractPlayer player2 = playerService.addPlayer(RAZ, 36L);
         Rule rule = playerService.addRule(player2.getId());
 
         // return to starting ticker
@@ -165,7 +165,7 @@ public class TickerServiceTests {
         // advance again
         tickerService.next(tickerService.getTicker().getId());
 
-        Player player3 = tickerService.getTicker().getPlayer(player2.getId());
+        AbstractPlayer player3 = tickerService.getTicker().getPlayer(player2.getId());
         Rule rule2 = player3.getRule(rule.getId());
         assertTrue(rule.isEqualTo(rule2)); 
     }
@@ -175,12 +175,12 @@ public class TickerServiceTests {
         // tickerService.newTicker();
         // add data to current Ticker
         Long startingTickerId = tickerService.getTicker().getId();
-        Player player = playerService.addPlayer(RAZ, 36L);
+        AbstractPlayer player = playerService.addPlayer(RAZ, 36L);
         playerService.addRule(player.getId());
 
         // move to next ticker, add player and rule
         Ticker ticker2 = tickerService.next(startingTickerId);
-        Player player2 = playerService.addPlayer(RAZ, 36L);
+        AbstractPlayer player2 = playerService.addPlayer(RAZ, 36L);
         Rule rule = playerService.addRule(player2.getId());
 
         //remove rule
@@ -191,7 +191,7 @@ public class TickerServiceTests {
         // advance again
         tickerService.next(tickerService.getTicker().getId());
 
-        Player player3 = tickerService.getTicker().getPlayer(player2.getId());
+        AbstractPlayer player3 = tickerService.getTicker().getPlayer(player2.getId());
         // Rule rule2 = player3.getRule(rule.getId());
         assertTrue(player3.getRules().size() == 0); 
     }

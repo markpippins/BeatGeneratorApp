@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
-import com.angrysurfer.midi.model.TickerStatus;
+import com.angrysurfer.midi.dao.TickerStatus;
 
 @Repository
 public class TickerStatusDAO {

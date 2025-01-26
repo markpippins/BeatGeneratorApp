@@ -1,3 +1,4 @@
+package com.angrysurfer.midi.config;
 // package com.angrysurfer.midi.config;
 
 // import org.springframework.context.annotation.Configuration;

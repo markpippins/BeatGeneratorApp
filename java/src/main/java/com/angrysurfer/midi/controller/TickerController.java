@@ -14,9 +14,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.angrysurfer.midi.model.SongStatus;
+
+import com.angrysurfer.midi.dao.SongStatus;
+import com.angrysurfer.midi.dao.TickerStatus;
 import com.angrysurfer.midi.model.Ticker;
-import com.angrysurfer.midi.model.TickerStatus;
 import com.angrysurfer.midi.service.SongService;
 import com.angrysurfer.midi.service.TickerService;
 import com.angrysurfer.midi.util.Constants;

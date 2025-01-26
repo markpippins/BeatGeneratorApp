@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.angrysurfer.midi.model.MidiInstrument;
+import com.angrysurfer.midi.model.midi.MidiInstrument;
 
 public interface MidiInstrumentRepo extends JpaRepository<MidiInstrument, Long> {
 

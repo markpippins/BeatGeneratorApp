@@ -7,6 +7,7 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.util.Objects;
 
+import com.angrysurfer.midi.model.player.AbstractPlayer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Getter
@@ -30,7 +31,7 @@ public class Rule implements Serializable {
 
     @Transient
     @JsonIgnore
-    Player player;
+    AbstractPlayer player;
     
     public Rule() {
 
@@ -43,7 +44,7 @@ public class Rule implements Serializable {
         setPart(part);
     }
 
-    public Rule(Player player, int operator, int comparison, Double value, int part) {
+    public Rule(AbstractPlayer player, int operator, int comparison, Double value, int part) {
         setPlayer(player);
         setOperator(operator);
         setComparison(comparison);
@@ -51,7 +52,7 @@ public class Rule implements Serializable {
         setPart(part);
     }
 
-    public void setPlayer(Player player) {
+    public void setPlayer(AbstractPlayer player) {
         this.player = player;
         if (Objects.nonNull(player))
             this.playerId = player.getId();

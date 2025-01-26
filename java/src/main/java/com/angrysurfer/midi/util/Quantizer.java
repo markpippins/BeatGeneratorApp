@@ -3,64 +3,13 @@ package com.angrysurfer.midi.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
 public class Quantizer {
-    private String key;
     private Boolean[] scale;
 
     static Logger logger = LoggerFactory.getLogger(Quantizer.class.getCanonicalName());
 
-    public static Boolean[] C_MAJOR_SCALE = {
-            true,
-            false,
-            true,
-            false,
-            true,
-            true,
-            false,
-            true,
-            false,
-            true,
-            false,
-            true,
-    };
-
-    public static Boolean[] C_MINOR_SCALE = {
-            true,
-            false,
-            true,
-            true,
-            false,
-            true,
-            false,
-            true,
-            true,
-            true,
-            true,
-            false,
-    };
-
-    public static String[] SCALE_NOTES = {
-            "C",
-            "C♯/D♭",
-            "D",
-            "D♯/E♭",
-            "E",
-            "F",
-            "F♯/G♭",
-            "G",
-            "G♯/A♭",
-            "A",
-            "A♯/B♭",
-            "B",
-    };
-
     public Quantizer(Boolean[] scale) {
-        setScale(scale);
+        this.scale = scale;
     }
 
     public int quantizeNote(int note) {
@@ -82,7 +31,8 @@ public class Quantizer {
             distanceDown++;
 
         int result = distanceUp > distanceDown ? note + distanceUp : note - distanceDown;
-        logger.info("Quantize " + getNoteForValue(note, SCALE_NOTES) + " to " + getNoteForValue(result, SCALE_NOTES));
+        logger.info("Quantize " + getNoteForValue(note, Scale.SCALE_NOTES) + " to "
+                + getNoteForValue(result, Scale.SCALE_NOTES));
         return result;
     }
 

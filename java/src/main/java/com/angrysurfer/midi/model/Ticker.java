@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.midi.dao.TickerStatus;
+import com.angrysurfer.midi.model.player.AbstractPlayer;
 import com.angrysurfer.midi.util.Constants;
 import com.angrysurfer.midi.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -18,6 +20,7 @@ import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
+import com.sun.media.sound.MidiUtils;
 
 @Getter
 @Setter
@@ -30,11 +33,11 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
-    private Set<Player> addList = new HashSet<>();
+    private Set<AbstractPlayer> addList = new HashSet<>();
 
     @JsonIgnore
     @Transient
-    private Set<Player> removeList = new HashSet<>();
+    private Set<AbstractPlayer> removeList = new HashSet<>();
 
     @JsonIgnore
     @Transient
@@ -77,12 +80,12 @@ public class Ticker implements Serializable {
     private Long id;
 
     @Transient
-    private Set<Player> players = new HashSet<>();
+    private Set<AbstractPlayer> players = new HashSet<>();
 
     @Transient
     Set<Long> activePlayerIds = new HashSet<>();
 
-    @Transient  
+    @Transient
     private Set<TickerStatus> tracks = new HashSet<>();
 
     @Transient
@@ -112,7 +115,7 @@ public class Ticker implements Serializable {
         setSongLength(Long.MAX_VALUE);
     }
 
-    public Player getPlayer(Long playerId) {
+    public AbstractPlayer getPlayer(Long playerId) {
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
 
@@ -128,7 +131,7 @@ public class Ticker implements Serializable {
 
     public void setBeatsPerBar(int beatsPerBar) {
         this.beatsPerBar = beatsPerBar;
-        getBeatCycler().setLength(beatsPerBar);
+        getBeatCycler().setLength((long) beatsPerBar);
     }
 
     public Long getTick() {
@@ -141,7 +144,7 @@ public class Ticker implements Serializable {
 
     public void setTicksPerBeat(int ticksPerBeat) {
         this.ticksPerBeat = ticksPerBeat;
-        getTickCycler().setLength(ticksPerBeat);
+        getTickCycler().setLength((long) ticksPerBeat);
     }
 
     public Long getBar() {
@@ -154,7 +157,7 @@ public class Ticker implements Serializable {
 
     public void setBars(int bars) {
         this.bars = bars;
-        getBarCycler().setLength(bars);
+        getBarCycler().setLength((long) bars);
     }
 
     public Long getPart() {
@@ -167,7 +170,7 @@ public class Ticker implements Serializable {
 
     public void setParts(int parts) {
         this.parts = parts;
-        this.partCycler.setLength(parts);
+        this.partCycler.setLength((long) parts);
     }
 
     public void setPartLength(long partLength) {
@@ -220,10 +223,10 @@ public class Ticker implements Serializable {
     }
 
     public void beforeStart() {
-        getTickCycler().setLength(getTicksPerBeat());
-        getBarCycler().setLength(getBars());
-        getBeatCycler().setLength(getBeatsPerBar());
-        getPartCycler().setLength(getPartLength());
+        getTickCycler().setLength((long) getTicksPerBeat());
+        getBarCycler().setLength((long) getBars());
+        getBeatCycler().setLength((long) getBeatsPerBar());
+        getPartCycler().setLength((long) getPartLength());
         getPlayers().forEach(p -> p.getSkipCycler().setLength(p.getSkips()));
     }
 
@@ -286,5 +289,16 @@ public class Ticker implements Serializable {
 
     public Float getBeatDuration() {
         return 60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar();
+    }
+
+    public double getInterval() {
+        return 10;
+        // Convert BPM to microseconds per quarter note
+        // double microsecondsPerQuarterNote = MidiUtils.convertTempo(tempoInBPM);
+
+        // Convert to milliseconds per tick:
+        // 1. Divide by ticksPerBeat to get microseconds per tick
+        // 2. Divide by 1000 to convert to milliseconds
+        // return (microsecondsPerQuarterNote / ticksPerBeat) / 1000.0;
     }
 }

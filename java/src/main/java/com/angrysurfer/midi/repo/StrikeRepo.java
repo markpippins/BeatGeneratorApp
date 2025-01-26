@@ -1,12 +1,12 @@
 package com.angrysurfer.midi.repo;
 
-import com.angrysurfer.midi.model.Strike;
-
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.angrysurfer.midi.model.player.Strike;
 
 public interface StrikeRepo extends JpaRepository<Strike, Long> {
 

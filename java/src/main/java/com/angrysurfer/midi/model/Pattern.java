@@ -4,9 +4,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 
+import com.angrysurfer.midi.model.midi.MidiInstrument;
 import com.angrysurfer.midi.util.Constants;
 import com.angrysurfer.midi.util.Cycler;
 import com.angrysurfer.midi.util.Quantizer;
+import com.angrysurfer.midi.util.Scale;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -39,7 +41,7 @@ public class Pattern {
     private Integer scale = 0;
 
     private Boolean active = false;
-    
+
     private Boolean quantize = false;
 
     private Integer direction = 1;
@@ -58,7 +60,7 @@ public class Pattern {
     private Integer rootNote = 60;
 
     private Integer transpose = 0;
-    
+
     private Integer repeats = 99;
 
     private Integer swing = 50;
@@ -76,11 +78,11 @@ public class Pattern {
 
     @JsonIgnore
     @Transient
-    private Quantizer quantizer = new Quantizer(Quantizer.C_MINOR_SCALE);
+    private Quantizer quantizer = new Quantizer(Scale.getScale("C", "Chromatic"));
 
     @JsonIgnore
     @Transient
-    private Stack<Integer> playingNote = new Stack<>();  
+    private Stack<Integer> playingNote = new Stack<>();
 
     @Column(name = "delay_bars")
     private Integer delay = 0;
@@ -101,7 +103,7 @@ public class Pattern {
     @JsonIgnore
     @Transient
     private Cycler stepCycler = new Cycler();
-    
+
     public Pattern() {
 
     }

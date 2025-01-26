@@ -1,13 +1,13 @@
 package com.angrysurfer.midi.controller;
 
-import com.angrysurfer.midi.model.MidiInstrument;
-import com.angrysurfer.midi.service.MIDIService;
-import com.angrysurfer.midi.service.MidiInstrumentService;
-import com.angrysurfer.midi.util.Constants;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+
+import com.angrysurfer.midi.model.midi.MidiInstrument;
+import com.angrysurfer.midi.service.MIDIService;
+import com.angrysurfer.midi.service.MidiInstrumentService;
+import com.angrysurfer.midi.util.Constants;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class InstrumentController {
 
     @GetMapping(path = Constants.INSTRUMENT_LIST)
     public @ResponseBody List<MidiInstrument> getInstrumentList() {
-        return instrumentService.getAllInstruments(false);
+        return instrumentService.getAllInstruments();
     }
 
     @GetMapping(path = Constants.INSTRUMENT)
@@ -36,18 +36,17 @@ public class InstrumentController {
 
     @GetMapping(path = Constants.INSTRUMENT_NAMES)
     public @ResponseBody List<String> getInstrumentNames() {
-        return instrumentService.getInstrumentNames(false);
+        return instrumentService.getInstrumentNames();
     }
-    
+
     @GetMapping(path = Constants.GET_INSTRUMENT_BY_CHANNEL)
     public @ResponseBody List<MidiInstrument> getInstrumentsByChannel(int channel) {
         // logger.info("/instrument/info");
-        return instrumentService.getInstrumentByChannel(channel, false);
+        return instrumentService.getInstrumentByChannel(channel);
     }
 
     // @GetMapping(path = Constants.INSTRUMENT_LOOKUP)
     // public @ResponseBody List<LookupItem> getInstrumentLookupItems() {
-    //     return midiService.getInstrumentLookupItems();
+    // return midiService.getInstrumentLookupItems();
     // }
 }
-

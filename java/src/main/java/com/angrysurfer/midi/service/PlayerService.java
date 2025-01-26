@@ -1,13 +1,16 @@
 package com.angrysurfer.midi.service;
 
+import com.angrysurfer.midi.config.SystemConfig;
+import com.angrysurfer.midi.dao.BeatConfig;
 import com.angrysurfer.midi.model.*;
+import com.angrysurfer.midi.model.midi.MidiInstrument;
+import com.angrysurfer.midi.model.player.AbstractPlayer;
+import com.angrysurfer.midi.model.player.Strike;
 import com.angrysurfer.midi.repo.*;
-import com.angrysurfer.midi.util.BeatGeneratorConfig;
+import com.angrysurfer.midi.util.ClockSource;
 import com.angrysurfer.midi.util.Comparison;
-import com.angrysurfer.midi.util.MidiInstrumentList;
 import com.angrysurfer.midi.util.Operator;
-import com.angrysurfer.midi.util.RuleUpdateType;
-import com.angrysurfer.midi.util.SequenceRunner;
+import com.angrysurfer.midi.util.update.RuleUpdateType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,8 +21,9 @@ import org.springframework.stereotype.Service;
 
 import javax.sound.midi.*;
 
-import static com.angrysurfer.midi.util.PlayerUpdateType.*;
-import static com.angrysurfer.midi.util.RuleUpdateType.*;
+import static com.angrysurfer.midi.util.update.PlayerUpdateType.*;
+import static com.angrysurfer.midi.util.update.RuleUpdateType.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -47,8 +51,8 @@ public class PlayerService {
     private TickerRepo tickerRepo;
     private StepRepo stepDataRepository;
     private SongRepo songRepository;
-    private SequenceRunner sequenceRunner;
-    private ArrayList<SequenceRunner> sequenceRunners = new ArrayList<>();
+    private ClockSource sequenceRunner;
+    private ArrayList<ClockSource> sequenceRunners = new ArrayList<>();
     private TickerService tickerService;
 
     public PlayerService(MIDIService midiService, StrikeRepo strikeRepository,
@@ -79,8 +83,8 @@ public class PlayerService {
             File file = new File(instruments);
             if (file.exists())
                 file.delete();
-            MidiInstrumentList list = new MidiInstrumentList();
-            list.getInstruments().addAll(getPlayers().stream().map(Player::getInstrument).distinct().toList());
+            SystemConfig list = new SystemConfig();
+            list.getInstruments().addAll(getPlayers().stream().map(AbstractPlayer::getInstrument).distinct().toList());
             Files.write(file.toPath(),
                     Collections.singletonList(
                             PlayerService.mapper.writerWithDefaultPrettyPrinter().writeValueAsString(list)),
@@ -90,44 +94,44 @@ public class PlayerService {
         }
     }
 
-    
-    public Player addPlayer(String instrumentName) {
+    public AbstractPlayer addPlayer(String instrumentName) {
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
         return addPlayer(midiInstrument, getNoteForMidiInstrument(midiInstrument));
     }
 
     private long getNoteForMidiInstrument(MidiInstrument midiInstrument) {
         Long note = Objects.nonNull(midiInstrument.getLowestNote()) ? midiInstrument.getLowestNote() : 60L;
-        List<Player> players = getTickerService().getTicker().getPlayers().stream().filter(p -> p.getInstrumentId().equals(midiInstrument.getId())).toList();
+        List<AbstractPlayer> players = getTickerService().getTicker().getPlayers().stream()
+                .filter(p -> p.getInstrumentId().equals(midiInstrument.getId())).toList();
         return note + players.size();
     }
 
-    public Player addPlayer(String instrumentName, Long note) {
+    public AbstractPlayer addPlayer(String instrumentName, Long note) {
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
         return addPlayer(midiInstrument, note);
     }
 
-    public Player addPlayer(Long instrumentId) {
+    public AbstractPlayer addPlayer(Long instrumentId) {
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findById(instrumentId).orElseThrow();
         return addPlayer(midiInstrument);
     }
 
-    public Player addPlayer(MidiInstrument midiInstrument) {
+    public AbstractPlayer addPlayer(MidiInstrument midiInstrument) {
         return addPlayer(midiInstrument, getNoteForMidiInstrument(midiInstrument));
     }
 
-    public Player addPlayer(MidiInstrument midiInstrument, long note) {
+    public AbstractPlayer addPlayer(MidiInstrument midiInstrument, long note) {
 
         tickerRepo.flush();
 
         try {
-            midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
+            midiInstrument.setDevice(InstrumentService.getMidiDevice(midiInstrument.getName()));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
 
         String name = midiInstrument.getName().concat(Integer.toString(getPlayers().size()));
-        Player player = new Strike(name, getTickerService().getTicker(), midiInstrument, note,
+        AbstractPlayer player = new Strike(name, getTickerService().getTicker(), midiInstrument, note,
                 midiInstrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
         player.setTicker(getTickerService().getTicker());
 
@@ -178,7 +182,7 @@ public class PlayerService {
     public Rule addRule(Long playerId, int operator, int comparison, double value, int part) {
         Rule rule = new Rule(operator, comparison, value, part);
 
-        Player player = getTickerService().getTicker().getPlayer(playerId);
+        AbstractPlayer player = getTickerService().getTicker().getPlayer(playerId);
         List<Rule> matches = player.getRules().stream().filter(r -> r.isEqualTo(rule)).toList();
 
         if (matches.size() == 0) {
@@ -197,7 +201,7 @@ public class PlayerService {
     public Rule addRule(Long playerId) {
         Rule rule = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0);
 
-        Player player = getTickerService().getTicker().getPlayer(playerId);
+        AbstractPlayer player = getTickerService().getTicker().getPlayer(playerId);
         List<Rule> matches = player.getRules().stream().filter(r -> r.isEqualTo(rule)).toList();
 
         if (matches.size() < 2) {
@@ -214,7 +218,7 @@ public class PlayerService {
     }
 
     public void removeRule(Long playerId, Long ruleId) {
-        Player player = getTickerService().getTicker().getPlayer(playerId);
+        AbstractPlayer player = getTickerService().getTicker().getPlayer(playerId);
         Rule rule = player.getRule(ruleId);
 
         player.getRules().remove(rule);
@@ -224,8 +228,8 @@ public class PlayerService {
         getRuleRepository().save(rule);
     }
 
-    public Player updatePlayer(Long playerId, int updateType, long updateValue) {
-        Player player = getTickerService().getTicker().getPlayer(playerId);
+    public AbstractPlayer updatePlayer(Long playerId, int updateType, long updateValue) {
+        AbstractPlayer player = getTickerService().getTicker().getPlayer(playerId);
         // strikeRepository.findById(playerId).orElseThrow();
         switch (updateType) {
             case NOTE -> {
@@ -235,7 +239,7 @@ public class PlayerService {
 
             case INSTRUMENT -> {
                 MidiInstrument instrument = getMidiInstrumentRepo().findById((long) updateValue).orElseThrow(null);
-                instrument.setDevice(MIDIService.findMidiOutDevice(instrument.getDeviceName()));
+                instrument.setDevice(InstrumentService.getMidiDevice(instrument.getDeviceName()));
                 player.setInstrument(instrument);
                 break;
             }
@@ -397,8 +401,8 @@ public class PlayerService {
 
     // }
 
-    public Set<Player> removePlayer(Long playerId) {
-        Player player = getTickerService().getTicker().getPlayer(playerId);
+    public Set<AbstractPlayer> removePlayer(Long playerId) {
+        AbstractPlayer player = getTickerService().getTicker().getPlayer(playerId);
         player.getRules().forEach(r -> ruleRepository.delete(r));
         getPlayers().remove(player);
         if (player instanceof Strike)
@@ -406,8 +410,8 @@ public class PlayerService {
         return getPlayers();
     }
 
-    public Player mutePlayer(Long playerId) {
-        Player player = getTickerService().getTicker().getPlayer(playerId);
+    public AbstractPlayer mutePlayer(Long playerId) {
+        AbstractPlayer player = getTickerService().getTicker().getPlayer(playerId);
         player.setMuted(!player.isMuted());
         return player;
     }
@@ -422,7 +426,7 @@ public class PlayerService {
             File file = new File(instruments);
             if (file.exists())
                 file.delete();
-            MidiInstrumentList list = new MidiInstrumentList();
+            SystemConfig list = new SystemConfig();
             list.getInstruments().addAll(getPlayers().stream().map(p -> p.getInstrument()).distinct().toList());
             Files.write(file.toPath(),
                     Collections.singletonList(
@@ -435,7 +439,7 @@ public class PlayerService {
 
     public void saveBeat() {
         try {
-            Set<Player> strikes = new HashSet<>();
+            Set<AbstractPlayer> strikes = new HashSet<>();
             getPlayers().forEach(s -> strikes.add((Strike) s));
             String beatFile = "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/beats/" + toString()
                     + ".json";
@@ -443,7 +447,7 @@ public class PlayerService {
             if (file.exists())
                 file.delete();
             Files.write(file.toPath(), Collections.singletonList(PlayerService.mapper.writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(new BeatGeneratorConfig(getTickerService().getTicker(), strikes))),
+                    .writeValueAsString(new BeatConfig(getTickerService().getTicker(), strikes))),
                     StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -473,14 +477,14 @@ public class PlayerService {
                 });
     }
 
-    public Set<Player> getPlayers() {
+    public Set<AbstractPlayer> getPlayers() {
         return getTickerService().getTicker().getPlayers();
     }
 
     public void playDrumNote(String instrumentName, int channel, int note) {
 
         MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-        midiInstrument.setDevice(MIDIService.findMidiOutDevice(midiInstrument.getDeviceName()));
+        midiInstrument.setDevice(InstrumentService.getMidiDevice(midiInstrument.getDeviceName()));
 
         log.info(String.join(", ", instrumentName, Integer.toString(channel), Integer.toString(note)));
 
@@ -498,11 +502,11 @@ public class PlayerService {
                     ShortMessage noteOn = new ShortMessage();
                     noteOn.setMessage(ShortMessage.NOTE_ON, channel, note, 127);
                     midiInstrument.getDevice().getReceiver().send(noteOn, 0L);
-                    Thread.sleep(2500);
-                    ShortMessage noteOff = new ShortMessage();
-                    noteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, 127);
-                    midiInstrument.getDevice().getReceiver().send(noteOff, 0L);
-                } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
+                    // Thread.sleep(5000);
+                    // ShortMessage noteOff = new ShortMessage();
+                    // noteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, 127);
+                    // midiInstrument.getDevice().getReceiver().send(noteOff, 1000L);
+                } catch (InvalidMidiDataException | MidiUnavailableException e) {
                     throw new RuntimeException(e);
                 }
             }

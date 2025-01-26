@@ -1,20 +1,27 @@
 package com.angrysurfer.midi.service;
 
-import com.angrysurfer.midi.model.*;
-import com.angrysurfer.midi.repo.*;
-import com.angrysurfer.midi.util.SequenceRunner;
-import com.angrysurfer.midi.util.TickerUpdateType;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import com.angrysurfer.midi.dao.TickerStatus;
+import com.angrysurfer.midi.model.Ticker;
+import com.angrysurfer.midi.repo.RuleRepo;
+import com.angrysurfer.midi.repo.StrikeRepo;
+import com.angrysurfer.midi.repo.TickerRepo;
+import com.angrysurfer.midi.repo.TickerStatusDAO;
+import com.angrysurfer.midi.util.SequenceRunner;
+import com.angrysurfer.midi.util.update.TickerUpdateType;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -57,7 +64,7 @@ public class TickerService {
         getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
 
         this.ticker.getPlayers().forEach(p -> p.getInstrument()
-                .setDevice(MIDIService.findMidiOutDevice(p.getInstrument().getDeviceName())));
+                .setDevice(InstrumentService.getMidiDevice(p.getInstrument().getDeviceName())));
 
         if (Objects.nonNull(getSequenceRunner()) && !getSequenceRunner().isPlaying())
             new Thread(getSequenceRunner()).start();

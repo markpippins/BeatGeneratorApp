@@ -1,0 +1,102 @@
+<div class="dashboard">
+  <!-- <aside>
+    <p>Aside 1</p>
+    <div class="btn-panel"></div>
+  </aside> -->
+  <section>
+    <div class="branding-div flex-container-vertical">
+      <label class="branding-label">MultiSequencer, Mark Pippins, angrysurfer.com, 2023</label>
+    </div>
+    <app-ticker-nav></app-ticker-nav>-`
+  </section>
+  <header> <app-status-panel [tickerStatus]="tickerStatus"></app-status-panel></header>
+  <!-- <section>
+    <app-status-readout [ticker]="ticker" [players]="players" [consoleOutput]="consoleOutput"></app-status-readout>
+  </section> -->
+  <main>
+    <mat-tab-group>
+
+      <mat-tab label="Beats">
+        <mat-tab-group>
+          <mat-tab label="Beat Navigator">
+            <div class="beat-navigator-panel fh-600">
+              <!-- <app-mini-slider-panel></app-mini-slider-panel> -->
+              <div class="player-panel  vh-40">
+                <app-player-nav></app-player-nav>
+                <app-rules-nav></app-rules-nav>
+                <div class="table-holder">
+                  <app-player-table [players]="players"
+                    (playerSelectEvent)="onPlayerSelected($event)"></app-player-table>
+                </div>
+                <div class="table-holder fw-300">
+                  <app-rule-table (ruleChangeEvent)="onRuleChange($event)" [player]="selectedPlayer"></app-rule-table>
+                </div>
+              </div>
+              <app-beat-navigator></app-beat-navigator>
+            </div>
+          </mat-tab>
+          <mat-tab label="Beat Scheduler">
+            <div class="player-panel vh-60">
+              <app-player-nav></app-player-nav>
+              <app-rules-nav></app-rules-nav>
+              <div class="table-holder">
+                <app-player-table [players]="players" (playerSelectEvent)="onPlayerSelected($event)"></app-player-table>
+              </div>
+              <div class="table-holder fw-300">
+                <app-rule-table (ruleChangeEvent)="onRuleChange($event)" [player]="selectedPlayer"></app-rule-table>
+              </div>
+              <div class="table-holder">
+                <app-strike-detail [player]="selectedPlayer"></app-strike-detail>
+              </div>
+              <!-- <div class="table-holder fw-300"> -->
+                <!-- <app-strike-detail [player]="selectedPlayer"></app-strike-detail> -->
+              <!-- </div> -->
+            </div>
+          </mat-tab>
+          <mat-tab label="X0X">
+            <div class="table-holder">
+              <app-beat-spec></app-beat-spec>
+            </div>
+          </mat-tab>
+          <mat-tab label="Controls">
+            <app-mini-slider-panel></app-mini-slider-panel>
+          </mat-tab>
+
+        </mat-tab-group>
+      </mat-tab>
+
+      <mat-tab label="Params">
+        <app-slider-panel></app-slider-panel>
+      </mat-tab>
+
+      <mat-tab label="Launch">
+        <app-launchpad></app-launchpad>
+      </mat-tab>
+
+      <mat-tab label="Options">
+        <app-device-panel></app-device-panel>
+      </mat-tab>
+
+      <!-- <mat-tab label="Experimental">
+        <mat-tab-group>
+          <mat-tab label="drums">
+            <app-drum-grid></app-drum-grid>
+          </mat-tab>
+          <mat-tab label="pads">
+            <app-pads-panel></app-pads-panel>
+          </mat-tab>
+        </mat-tab-group>
+      </mat-tab> -->
+    </mat-tab-group>
+  </main>
+
+  <!-- <app-strike-detail *ngIf="selectedPlayer != undefined" [player]="selectedPlayer"></app-strike-detail> -->
+  <!-- </div> -->
+  <!--
+        <div class="beatnav">
+          <app-beat-spec></app-beat-spec>
+        </div> -->
+  <!-- <footer>
+
+  </footer> -->
+</div>

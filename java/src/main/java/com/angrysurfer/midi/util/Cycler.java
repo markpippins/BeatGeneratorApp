@@ -7,9 +7,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.midi.util.listener.CyclerListener;
+
 import lombok.Getter;
 import lombok.Setter;
-
 
 @Getter
 @Setter
@@ -99,14 +100,6 @@ public class Cycler {
 
     public void cycleComplete() {
         getListeners().forEach(l -> l.cycleComplete());
-    }
-
-	public void setLength(Integer length) {
-        this.length = (long) length;
-	}
-
-    public void setLength(Long length) { 
-        this.length = length;
     }
 
 

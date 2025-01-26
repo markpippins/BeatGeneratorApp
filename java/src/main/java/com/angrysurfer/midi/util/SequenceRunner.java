@@ -2,6 +2,7 @@ package com.angrysurfer.midi.util;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
@@ -23,12 +24,12 @@ import javax.sound.midi.Track;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.midi.model.TickListener;
 import com.angrysurfer.midi.model.Ticker;
 import com.angrysurfer.midi.service.MIDIService;
+import com.angrysurfer.midi.util.listener.CyclerListener;
+import com.angrysurfer.midi.util.listener.TickListener;
 import com.sun.media.sound.MidiUtils;
 import com.sun.media.sound.MidiUtils.TempoCache;
-import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -189,7 +190,7 @@ public class SequenceRunner implements Runnable, Receiver {
 
     @Override
     public void send(MidiMessage message, long timeStamp) {
-        logger.info(com.angrysurfer.midi.util.MidiMessage.lookupCommand(message.getStatus()));
+        // logger.info(MidiMessage.lookupCommand(message.getStatus()));
         long tickPos = 0;
         if (tempoCache == null) {
             try {

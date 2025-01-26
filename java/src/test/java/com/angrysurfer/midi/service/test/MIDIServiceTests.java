@@ -1,7 +1,5 @@
 package com.angrysurfer.midi.service.test;
 
-import com.angrysurfer.midi.repo.*;
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -21,14 +19,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.angrysurfer.BeatGeneratorApplication;
-import com.angrysurfer.midi.model.MidiInstrument;
+import com.angrysurfer.midi.Application;
+import com.angrysurfer.midi.model.midi.MidiInstrument;
+import com.angrysurfer.midi.repo.*;
 import com.angrysurfer.midi.service.MIDIService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
   webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-  classes = BeatGeneratorApplication.class)
+  classes = Application.class)
 @AutoConfigureMockMvc
 @TestPropertySource(
   locations = "classpath:application.properties")
