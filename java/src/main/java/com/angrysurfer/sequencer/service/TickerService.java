@@ -17,7 +17,7 @@ import com.angrysurfer.sequencer.repo.RuleRepo;
 import com.angrysurfer.sequencer.repo.StrikeRepo;
 import com.angrysurfer.sequencer.repo.TickerRepo;
 import com.angrysurfer.sequencer.repo.TickerStatusDAO;
-import com.angrysurfer.sequencer.util.SequenceRunner;
+import com.angrysurfer.sequencer.util.ClockSource;
 import com.angrysurfer.sequencer.util.update.TickerUpdateType;
 
 import lombok.Getter;
@@ -35,8 +35,8 @@ public class TickerService {
     private RuleRepo ruleRepo;
     private TickerRepo tickerRepo;
     private SongService songService;
-    private SequenceRunner clockSource;
-    private ArrayList<SequenceRunner> clocks = new ArrayList<>();
+    private ClockSource clockSource;
+    private ArrayList<ClockSource> clocks = new ArrayList<>();
 
     private TickerStatusDAO tickerStatusDAO;
 
@@ -55,7 +55,7 @@ public class TickerService {
     public void play() {
 
         stopRunningSequencers();
-        clockSource = new SequenceRunner(getTicker());
+        clockSource = new ClockSource(getTicker());
         clocks.add(getClockSource());
         getClockSource().getCycleListeners().add(getSongService().getTickListener());
         getSongService().getSong().setBeatDuration(getTicker().getBeatDuration());
@@ -67,7 +67,7 @@ public class TickerService {
         if (Objects.nonNull(getClockSource()) && !getClockSource().isPlaying())
             new Thread(getClockSource()).start();
         else {
-            setClockSource(new SequenceRunner(getTicker()));
+            setClockSource(new ClockSource(getTicker()));
             new Thread(getClockSource()).start();
         }
 
@@ -113,7 +113,7 @@ public class TickerService {
             stopRunningSequencers();
             ticker = getTickerRepo().save(new Ticker());
             getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
-            clockSource = new SequenceRunner(ticker);
+            clockSource = new ClockSource(ticker);
         }
 
         return ticker;
@@ -178,7 +178,7 @@ public class TickerService {
             getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
             getTicker().getPlayers().addAll(getStrikeRepo().findByTickerId(getTicker().getId()));
             getTicker().getPlayers().forEach(p -> p.setRules(ruleRepo.findByPlayerId(p.getId())));
-            clockSource = new SequenceRunner(getTicker());
+            clockSource = new ClockSource(getTicker());
         }
 
         return getTicker();
@@ -194,7 +194,7 @@ public class TickerService {
             setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
             getTicker().getPlayers().addAll(getStrikeRepo().findByTickerId(getTicker().getId()));
             getTicker().getPlayers().forEach(p -> p.setRules(ruleRepo.findByPlayerId(p.getId())));
-            clockSource = new SequenceRunner(getTicker());
+            clockSource = new ClockSource(getTicker());
             getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
         }
 

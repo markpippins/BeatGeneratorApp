@@ -7,7 +7,7 @@ import com.angrysurfer.sequencer.model.midi.MidiInstrument;
 import com.angrysurfer.sequencer.model.player.AbstractPlayer;
 import com.angrysurfer.sequencer.model.player.Strike;
 import com.angrysurfer.sequencer.repo.*;
-import com.angrysurfer.sequencer.util.ClockSourceGen;
+import com.angrysurfer.sequencer.util.ClockSource;
 import com.angrysurfer.sequencer.util.Comparison;
 import com.angrysurfer.sequencer.util.Operator;
 import com.angrysurfer.sequencer.util.update.RuleUpdateType;
@@ -51,8 +51,8 @@ public class PlayerService {
     private TickerRepo tickerRepo;
     private StepRepo stepDataRepository;
     private SongRepo songRepository;
-    private ClockSourceGen sequenceRunner;
-    private ArrayList<ClockSourceGen> sequenceRunners = new ArrayList<>();
+    private ClockSource clockSource;
+    private ArrayList<ClockSource> clocks = new ArrayList<>();
     private TickerService tickerService;
 
     public PlayerService(MIDIService midiService, StrikeRepo strikeRepository,

@@ -24,16 +24,16 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.sequencer.model.Ticker;
 import com.angrysurfer.sequencer.service.MIDIService;
 import com.angrysurfer.sequencer.util.listener.CyclerListener;
-import com.angrysurfer.sequencer.util.listener.TickListener;
+import com.angrysurfer.sequencer.util.listener.ClockListener;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class SequenceRunner implements Runnable { //, Receiver {
+public class ClockSource implements Runnable { //, Receiver {
 
-    static Logger logger = LoggerFactory.getLogger(SequenceRunner.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(ClockSource.class.getCanonicalName());
 
     private ExecutorService executor;
 
@@ -49,7 +49,7 @@ public class SequenceRunner implements Runnable { //, Receiver {
 
     private static final AtomicBoolean playing = new AtomicBoolean(false);
 
-    private List<TickListener> listeners = new ArrayList<>();
+    private List<ClockListener> listeners = new ArrayList<>();
 
     static {
         try {
@@ -72,7 +72,7 @@ public class SequenceRunner implements Runnable { //, Receiver {
     /**
      * @param ticker
      */
-    public SequenceRunner(Ticker ticker) {
+    public ClockSource(Ticker ticker) {
         this.ticker = ticker;
         executor = Executors.newFixedThreadPool(ticker.getMaxTracks());
     }
@@ -201,4 +201,35 @@ public class SequenceRunner implements Runnable { //, Receiver {
     //     return sequencer;
     // }
 
+        // private TempoCache tempoCache;
+
+    // @Override
+    // public void send(MidiMessage message, long timeStamp) {
+    //     logger.info(com.angrysurfer.beatgenerator.model.midi.MidiMessage.lookupCommand(message.getStatus()));
+    //     long tickPos = 0;
+    //     if (tempoCache == null) {
+    //         try {
+    //             tempoCache = new TempoCache(getMasterSequence());
+    //         } catch (InvalidMidiDataException e) {
+    //             logger.error(e.getMessage(), e);
+    //         }
+    //     }
+    //     // convert timeStamp to ticks
+    //     if (timeStamp < 0) {
+    //         tickPos = ticker.getTick();
+    //     } else {
+    //         synchronized (tempoCache) {
+    //             try {
+    //                 tickPos = MidiUtils.microsecond2tick(getMasterSequence(), timeStamp, tempoCache);
+    //             } catch (InvalidMidiDataException e) {
+    //                 logger.error(e.getMessage(), e);
+    //             }
+    //         }
+    //     }
+    // }
+
+    // @Override
+    // public void close() {
+    //     getSequencer().getReceivers().remove(this);
+    // }
 }

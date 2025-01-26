@@ -1,6 +1,6 @@
 package com.angrysurfer.sequencer.util.listener;
 
-public interface TickListener {
+public interface ClockListener {
     public void onTick();
 
     public void onEnd();
