@@ -135,8 +135,8 @@ public class TickerService {
 
             case TickerUpdateType.BPM:
                 ticker.setTempoInBPM(Float.valueOf(updateValue));
-                if (Objects.nonNull(getClockSource()) && ticker.getId().equals(getTicker().getId()))
-                    getClockSource().getSequencer().setTempoInBPM(updateValue);
+                // if (Objects.nonNull(getClockSource()) && ticker.getId().equals(getTicker().getId()))
+                //     getClockSource().getSequencer().setTempoInBPM(updateValue);
                 getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
                 break;
 

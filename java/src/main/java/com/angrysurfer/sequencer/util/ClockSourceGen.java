@@ -12,12 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
-import javax.sound.midi.MidiMessage;
-import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
 import javax.sound.midi.Sequence;
-import javax.sound.midi.Sequencer;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
@@ -29,17 +25,15 @@ import com.angrysurfer.sequencer.model.Ticker;
 import com.angrysurfer.sequencer.service.MIDIService;
 import com.angrysurfer.sequencer.util.listener.CyclerListener;
 import com.angrysurfer.sequencer.util.listener.TickListener;
-import com.sun.media.sound.MidiUtils;
-import com.sun.media.sound.MidiUtils.TempoCache;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class ClockSource implements Runnable { // , Receiver {
+public class ClockSourceGen implements Runnable { // , Receiver {
 
-    static Logger logger = LoggerFactory.getLogger(ClockSource.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(ClockSourceGen.class.getCanonicalName());
 
     private ExecutorService executor;
 
@@ -67,7 +61,7 @@ public class ClockSource implements Runnable { // , Receiver {
     /**
      * @param ticker
      */
-    public ClockSource(Ticker ticker) {
+    public ClockSourceGen(Ticker ticker) {
         this.ticker = ticker;
         executor = Executors.newFixedThreadPool(ticker.getMaxTracks());
     }

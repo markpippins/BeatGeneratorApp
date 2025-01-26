@@ -8,18 +8,15 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.IntStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
-import javax.sound.midi.MidiMessage;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
 import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Track;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,15 +25,13 @@ import com.angrysurfer.sequencer.model.Ticker;
 import com.angrysurfer.sequencer.service.MIDIService;
 import com.angrysurfer.sequencer.util.listener.CyclerListener;
 import com.angrysurfer.sequencer.util.listener.TickListener;
-import com.sun.media.sound.MidiUtils;
-import com.sun.media.sound.MidiUtils.TempoCache;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class SequenceRunner implements Runnable, Receiver {
+public class SequenceRunner implements Runnable { //, Receiver {
 
     static Logger logger = LoggerFactory.getLogger(SequenceRunner.class.getCanonicalName());
 
@@ -52,7 +47,7 @@ public class SequenceRunner implements Runnable, Receiver {
 
     private Boolean stopped = false;
 
-    private Integer delay;
+    private static final AtomicBoolean playing = new AtomicBoolean(false);
 
     private List<TickListener> listeners = new ArrayList<>();
 
@@ -89,15 +84,8 @@ public class SequenceRunner implements Runnable, Receiver {
 
     public Sequence getMasterSequence() throws InvalidMidiDataException {
         Sequence sequence = new Sequence(Sequence.PPQ, getTicker().getTicksPerBeat());
-        Track track = sequence.createTrack();
-        IntStream.range(0, 10).forEach(i -> {
-            try {
-                track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 0, 0), i * 1000));
-            } catch (InvalidMidiDataException e) {
-                logger.error(e.getMessage(), e);
-                exceptions.push(e);
-            }
-        });
+        sequence.createTrack().add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, 0, 0, 0),
+                ticker.getTicksPerBeat() * ticker.getBeatsPerBar() * 4 * 1000));
         return sequence;
     }
 
@@ -107,7 +95,7 @@ public class SequenceRunner implements Runnable, Receiver {
         sequencer.setLoopCount(getTicker().getLoopCount());
         sequencer.setTempoInBPM(getTicker().getTempoInBPM());
         sequencer.open();
-        sequencer.getTransmitter().setReceiver(this);
+        // sequencer.getTransmitter().setReceiver(this);
         getTicker().beforeStart();
     }
 
@@ -121,38 +109,57 @@ public class SequenceRunner implements Runnable, Receiver {
 
     @Override
     public void run() {
-
-        boolean started = false;
-
         MIDIService.reset();
-        ensureDevicesOpen();
 
         try {
             beforeStart();
 
+            // Initialize PreciseTimer with ticker's parameters
+            PreciseTimer timer = new PreciseTimer(
+                    Math.round(ticker.getTempoInBPM()),
+                    ticker.getTicksPerBeat());
+
+            // Add tick listener to handle each tick
+            timer.addTickListener(() -> {
+                
+                try {
+                    if (!playing.get()) {
+                        playing.set(handleStarted());
+                    }
+
+                    ticker.beforeTick();
+                    getListeners().forEach(l -> l.onTick());
+                    this.executor.invokeAll(ticker.getPlayers());
+                    ticker.afterTick();
+
+                    logger.info("Tick: {}", ticker.getTick());
+                } catch (InterruptedException e) {
+                    logger.error("Error in tick processing", e);
+                }
+            });
+
             sequencer.start();
+
+            // Start the timer in a new thread
+            Thread timerThread = new Thread(timer);
+            timerThread.setPriority(Thread.MAX_PRIORITY);
+            timerThread.start();
+
+            // Wait while running
             while (sequencer.isRunning() && !stopped) {
-                double delay = 60000 / getTicker().getTempoInBPM() / getTicker().getTicksPerBeat();
-                getTicker().beforeTick();
-                while (sequencer.getTickPosition() < getTicker().getTick() + 1)
-                    Thread.sleep(1);
-
-                if (!started)
-                    started = handleStarted();
-
-                getListeners().forEach(l -> l.onTick());
-
-                this.executor.invokeAll(getTicker().getPlayers());
-
-                Thread.sleep((long) (delay * .5));
-
-                getTicker().afterTick();
+                Thread.sleep(10);
             }
 
+            // Cleanup
+            timer.stop();
+            timerThread.join();
             afterEnd();
+
         } catch (InvalidMidiDataException | MidiUnavailableException | InterruptedException e) {
+            stop();
             throw new RuntimeException(e);
         }
+
     }
 
     private boolean handleStarted() {
@@ -182,40 +189,16 @@ public class SequenceRunner implements Runnable, Receiver {
         return Objects.nonNull(sequencer) ? sequencer.isRunning() : false;
     }
 
-    public Sequencer getSequencer() {
-        return sequencer;
+    double getDelay() {
+        return 60000 / ticker.getTempoInBPM() / ticker.getTicksPerBeat();
     }
 
-    private TempoCache tempoCache;
-
-    @Override
-    public void send(MidiMessage message, long timeStamp) {
-        // logger.info(MidiMessage.lookupCommand(message.getStatus()));
-        long tickPos = 0;
-        if (tempoCache == null) {
-            try {
-                tempoCache = new TempoCache(getMasterSequence());
-            } catch (InvalidMidiDataException e) {
-                logger.error(e.getMessage(), e);
-            }
-        }
-        // convert timeStamp to ticks
-        if (timeStamp < 0) {
-            tickPos = getTicker().getTick();
-        } else {
-            synchronized (tempoCache) {
-                try {
-                    tickPos = MidiUtils.microsecond2tick(getMasterSequence(), timeStamp, tempoCache);
-                } catch (InvalidMidiDataException e) {
-                    logger.error(e.getMessage(), e);
-                }
-            }
-        }
+    double getDutyCycle() {
+        return 0.5;
     }
 
-    @Override
-    public void close() {
-        getSequencer().getReceivers().remove(this);
-    }
+    // public Sequencer getSequencer() {
+    //     return sequencer;
+    // }
 
 }

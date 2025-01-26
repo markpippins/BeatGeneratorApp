@@ -9,7 +9,7 @@ import javax.sound.midi.InvalidMidiDataException;
 import org.junit.Test;
 
 import com.angrysurfer.sequencer.model.Ticker;
-import com.angrysurfer.sequencer.util.ClockSource;
+import com.angrysurfer.sequencer.util.ClockSourceGen;
 
 public class SequenceRunnerTests {
 
@@ -17,7 +17,7 @@ public class SequenceRunnerTests {
   public void whenGetMasterSequenceCalled_thenSequenceIsReturned() {
 
     Ticker ticker = new Ticker();
-    ClockSource runner = new ClockSource(ticker);
+    ClockSourceGen runner = new ClockSourceGen(ticker);
     try {
       assertTrue(Objects.nonNull(runner.getMasterSequence()));
     } catch (InvalidMidiDataException e) {
