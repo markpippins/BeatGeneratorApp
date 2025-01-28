@@ -16,6 +16,7 @@ import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Getter
 @Setter
@@ -57,6 +58,10 @@ public class MidiInstrument implements Serializable {
     @JsonIgnore
     @Transient
     private MidiDevice device;
+    
+    @JsonIgnore
+    @Transient
+    private AtomicReference<Receiver> receiver = new AtomicReference<>();
     
     @Column(name = "name", unique = true)
     private String name;
@@ -129,8 +134,7 @@ public class MidiInstrument implements Serializable {
 
     public void randomize(List<Integer> params) {
 
-        new Thread(() -> params.forEach(cc ->
-        {
+        new Thread(() -> params.forEach(cc -> {
             try {
                 int value = getBoundaries().containsKey(cc) ?
                         rand.nextInt(getBoundaries().get(cc)[0], getBoundaries().get(cc)[0] >= getBoundaries().get(cc)[1] ? getBoundaries().get(cc)[0] + 1 : getBoundaries().get(cc)[1]) :
@@ -144,7 +148,6 @@ public class MidiInstrument implements Serializable {
         })).start();
     }
 
-
     public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
         logger.info(String.join(", ",
                 getName(),
@@ -153,24 +156,56 @@ public class MidiInstrument implements Serializable {
                 Integer.toString(message.getData2())));
         
             
-        if (!getDevice().isOpen())
+        if (!getDevice().isOpen()) {
             getDevice().open();
+            receiver.set(getDevice().getReceiver());
+        }
 
-        Receiver reciever = getDevice().getReceiver();
-        reciever.send(message, new Date().getTime());
+        Receiver currentReceiver = receiver.get();
+        if (currentReceiver == null) {
+            receiver.set(getDevice().getReceiver());
+            currentReceiver = receiver.get();
+        }
+        
+        currentReceiver.send(message, new Date().getTime());
     }
 
     boolean initialized = false;
 
-    public void setDevice(MidiDevice device){
+    public void cleanup() {
+        if (receiver.get() != null) {
+            receiver.get().close();
+            receiver.set(null);
+        }
+        if (device != null && device.isOpen()) {
+            device.close();
+        }
+    }
+
+    public void setDevice(MidiDevice device) {
+        cleanup(); // Clean up old device first
         this.device = device;
-        initialized = true;     
+        try {
+            if (device != null && !device.isOpen()) {
+                device.open();
+                receiver.set(device.getReceiver());
+            }
+        } catch (MidiUnavailableException e) {
+            logger.error("Failed to initialize device receiver", e);
+        }
+        initialized = true;
+    }
+
+    // Add finalizer to ensure cleanup
+    @Override
+    protected void finalize() throws Throwable {
+        cleanup();
+        super.finalize();
     }
 
     public void assign(int cc, String control) {
         getAssignments().put(cc, control);
     }
-
 
     public void setBounds(int cc, int lowerBound, int upperBound) {
         getBoundaries().put(cc, new Integer[]{lowerBound, upperBound});

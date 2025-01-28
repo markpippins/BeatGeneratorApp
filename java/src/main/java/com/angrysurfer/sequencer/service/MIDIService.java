@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
@@ -25,12 +26,29 @@ public class MIDIService {
 
     static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
 
+    public static void cleanupMidiDevices() {
+        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+        for (MidiDevice.Info info : infos) {
+            try {
+                MidiDevice device = MidiSystem.getMidiDevice(info);
+                if (device.isOpen()) {
+                    device.getReceivers().forEach(Receiver::close);
+                    device.close();
+                }
+            } catch (MidiUnavailableException e) {
+                logger.warn("Error during cleanup of device: " + info.getName(), e);
+            }
+        }
+    }
+
     public static MidiDevice getMidiDevice(String name) {
+        cleanupMidiDevices(); // Add cleanup before getting new device
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
 
         for (MidiDevice.Info info : infos) {
             if (info.getName().contains(name)) {
                 try {
+
                     MidiDevice device = MidiSystem.getMidiDevice(info);
                     logger.info("Found requested MIDI device: {} (Receivers: {}, Transmitters: {})",
                             info.getName(),
@@ -45,18 +63,20 @@ public class MIDIService {
         return null;
     }
 
-    public static List<MidiDevice> getMidiDevices() {
+    public static List<MidiDevice> getMidiOutDevices() {
         List<MidiDevice> devices = new ArrayList<>();
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-
+        
         for (MidiDevice.Info info : infos) {
             try {
                 MidiDevice device = MidiSystem.getMidiDevice(info);
-                devices.add(device);
-                logger.info("Found MIDI device: {} (Receivers: {}, Transmitters: {})",
+                // Only add devices that support output (MaxReceivers > 0 or unlimited (-1))
+                if (device.getMaxReceivers() != 0) {
+                    devices.add(device);
+                    logger.info("Found MIDI output device: {} (Receivers: {})",
                         info.getName(),
-                        device.getMaxReceivers(),
-                        device.getMaxTransmitters());
+                        device.getMaxReceivers());
+                }
             } catch (MidiUnavailableException e) {
                 logger.error("Error accessing MIDI device: " + info.getName(), e);
             }
@@ -114,11 +134,7 @@ public class MIDIService {
 
         try {
             if (!device.isOpen()) {
-                reset();
                 device.open();
-                try (Receiver receiver = device.getReceiver()) {
-                    MidiSystem.getTransmitter().setReceiver(receiver);
-                }
             }
             return device.isOpen();
         } catch (MidiUnavailableException ex) {
@@ -127,17 +143,9 @@ public class MIDIService {
     }
 
     public static boolean select(String name) throws MidiUnavailableException {
-        logger.info(String.format("select(%s)", name));
-        reset();
-        // MidiDevice device = findMidiOutDevice(name);
-        MidiDevice device = MIDIService.getMidiDevice(name);
-        if (!device.isOpen()) {
-            device.open();
-            MidiSystem.getTransmitter().setReceiver(device.getReceiver());
-            return device.isOpen();
-        }
-
-        return false;
+        logger.info("select({})", name);
+        MidiDevice device = getMidiDevice(name);
+        return device != null && select(device);
     }
 
     // Add proper cleanup

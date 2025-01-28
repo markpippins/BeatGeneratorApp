@@ -92,7 +92,7 @@ public class SequencerDemo {
 
             // List all MIDI devices
             System.out.println("\nAvailable MIDI Devices:");
-            MIDIService.getMidiDevices().forEach(device -> System.out.println(device.getDeviceInfo().getName()));
+            MIDIService.getMidiOutDevices().forEach(device -> System.out.println(device.getDeviceInfo().getName()));
 
             // Get the Tracker device using the new method
             MidiDevice outputDevice = MIDIService.getMidiDevice("Tracker");

@@ -132,7 +132,7 @@ public class ClockSource implements Runnable { //, Receiver {
                     this.executor.invokeAll(ticker.getPlayers());
                     ticker.afterTick();
 
-                    logger.info("Tick: {}", ticker.getTick());
+                    // logger.info("Tick: {}", ticker.getTick());
                 } catch (InterruptedException e) {
                     logger.error("Error in tick processing", e);
                 }

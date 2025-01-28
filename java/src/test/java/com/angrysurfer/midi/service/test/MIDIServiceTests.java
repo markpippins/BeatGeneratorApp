@@ -74,7 +74,7 @@ public class MIDIServiceTests {
 
     @Test
     public void whenMidiDevicesRetrieved_thenListIsPopulated() {
-            List<MidiDevice> devices = MIDIService.getMidiDevices();
+            List<MidiDevice> devices = MIDIService.getMidiOutDevices();
         assertTrue(devices.size() > 0);
     }
 

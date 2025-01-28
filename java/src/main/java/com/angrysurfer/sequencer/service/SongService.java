@@ -334,7 +334,7 @@ public class SongService implements NoteProvider {
                 } else {
                     MidiDevice[] devices = { null, null };
 
-                    MIDIService.getMidiDevices().forEach(device -> {
+                    MIDIService.getMidiOutDevices().forEach(device -> {
                         logger.info("Device: " + device.getDeviceInfo().getName());
                         if (device.getDeviceInfo().getName().contains("Microsoft GS")) {
                             devices[0] = device;

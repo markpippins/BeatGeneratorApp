@@ -24,7 +24,7 @@ public class MidiController {
 
     @GetMapping(path = Constants.DEVICE_NAMES)
     public @ResponseBody List<String> getDeviceNames() {
-        return MIDIService.getMidiDevices().stream().map(d -> d.getDeviceInfo().getName()).toList();
+        return MIDIService.getMidiOutDevices().stream().map(d -> d.getDeviceInfo().getName()).toList();
     }
 
     @PostMapping(path = Constants.SERVICE_RESET)

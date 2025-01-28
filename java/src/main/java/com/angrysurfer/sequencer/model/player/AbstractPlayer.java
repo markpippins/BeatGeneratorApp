@@ -194,12 +194,12 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
                 * rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100,
                         getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
         noteOn(note, velocity);
-        try {
-            Thread.sleep((long) getTicker().getInterval());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        noteOff(note, velocity);
+        // try {
+        //     Thread.sleep((long) getTicker().getInterval());
+        // } catch (InterruptedException e) {
+        //     e.printStackTrace();
+        // }
+        // noteOff(note, velocity);
     }
 
     public void noteOn(long note, long velocity) {

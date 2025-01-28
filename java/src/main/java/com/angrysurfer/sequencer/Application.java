@@ -51,8 +51,8 @@ public class Application {
                 return;
 
             List<String> instrumentNames = new ArrayList<>();
-            MIDIService.getMidiDevices().forEach(device -> {
-                if (device.getDeviceInfo().getName().contains("MIDI"))
+            MIDIService.getMidiOutDevices().forEach(device -> {
+                if (device.getMaxTransmitters() == -1)
                     return;
 
                 MidiInstrument instrument = new MidiInstrument(device.getDeviceInfo().getName(), device, 5);

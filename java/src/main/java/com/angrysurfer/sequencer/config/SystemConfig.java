@@ -31,7 +31,8 @@ public class SystemConfig implements Serializable {
         this.instruments = instruments;
     }
 
-    public static SystemConfig newInstance(String filepath, String instrumentNames, MidiInstrumentRepo midiInstrumentRepo,
+    public static SystemConfig newInstance(String filepath, String instrumentNames,
+            MidiInstrumentRepo midiInstrumentRepo,
             ControlCodeRepo controlCodeRepo, CaptionRepo captionRepo) throws IOException {
 
         File ini = new File(filepath);

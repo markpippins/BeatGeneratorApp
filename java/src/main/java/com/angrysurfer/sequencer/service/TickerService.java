@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.angrysurfer.sequencer.dao.TickerStatus;
 import com.angrysurfer.sequencer.model.Ticker;
+import com.angrysurfer.sequencer.model.midi.MidiInstrument;
 import com.angrysurfer.sequencer.repo.RuleRepo;
 import com.angrysurfer.sequencer.repo.StrikeRepo;
 import com.angrysurfer.sequencer.repo.TickerRepo;
@@ -61,8 +63,19 @@ public class TickerService {
         getSongService().getSong().setBeatDuration(getTicker().getBeatDuration());
         getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
 
-        this.ticker.getPlayers().forEach(p -> p.getInstrument()
-                .setDevice(MIDIService.getMidiDevice(p.getInstrument().getDeviceName())));
+        this.ticker.getPlayers().forEach(p -> {
+            MidiInstrument instrument = p.getInstrument();
+            MidiDevice device = MIDIService.getMidiDevice(instrument.getDeviceName());
+
+            if (!device.isOpen())
+                try {
+                    device.open();
+                } catch (MidiUnavailableException e) {
+                    logger.error(e.getMessage(), e);
+                }
+
+            instrument.setDevice(device);
+        });
 
         if (Objects.nonNull(getClockSource()) && !getClockSource().isPlaying())
             new Thread(getClockSource()).start();
@@ -73,7 +86,8 @@ public class TickerService {
 
         getTicker().getPlayers().forEach(p -> {
             try {
-                p.getInstrument().programChange(p.getPreset(), 0);
+                if (p.getPreset() > 0)
+                    p.getInstrument().programChange(p.getPreset(), 0);
             } catch (InvalidMidiDataException | MidiUnavailableException e) {
                 logger.error(e.getMessage(), e);
             }
@@ -135,8 +149,9 @@ public class TickerService {
 
             case TickerUpdateType.BPM:
                 ticker.setTempoInBPM(Float.valueOf(updateValue));
-                // if (Objects.nonNull(getClockSource()) && ticker.getId().equals(getTicker().getId()))
-                //     getClockSource().getSequencer().setTempoInBPM(updateValue);
+                // if (Objects.nonNull(getClockSource()) &&
+                // ticker.getId().equals(getTicker().getId()))
+                // getClockSource().getSequencer().setTempoInBPM(updateValue);
                 getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
                 break;
 

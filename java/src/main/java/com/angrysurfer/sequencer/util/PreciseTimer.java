@@ -2,11 +2,14 @@ package com.angrysurfer.sequencer.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class PreciseTimer implements Runnable {
-    private final int bpm;
-    private final int ppq; // pulses per quarter note
+    private volatile int bpm;
+    private volatile int ppq;
+    private final AtomicInteger pendingBpm = new AtomicInteger(-1);
+    private final AtomicInteger pendingPpq = new AtomicInteger(-1);
     private final AtomicLong ticks = new AtomicLong(0);
     private volatile boolean running = true;
     private final List<Runnable> tickListeners = new ArrayList<>();
@@ -29,6 +32,22 @@ public class PreciseTimer implements Runnable {
         running = false;
     }
 
+    public synchronized void setBpm(int newBpm) {
+        pendingBpm.set(newBpm);
+    }
+
+    public synchronized void setPpq(int newPpq) {
+        pendingPpq.set(newPpq);
+    }
+
+    public int getBpm() {
+        return bpm;
+    }
+
+    public int getPpq() {
+        return ppq;
+    }
+
     @Override
     public void run() {
         long intervalNanos = (long) ((60.0 / bpm / ppq) * 1_000_000_000);
@@ -39,18 +58,29 @@ public class PreciseTimer implements Runnable {
             if (currentTime >= nextTick) {
                 long tickNum = ticks.incrementAndGet();
                 
-                // Notify tick listeners
-                tickListeners.forEach(Runnable::run);
-                
-                // If we've reached a beat (ppq ticks), notify beat listeners
+                // Check for pending changes at beat boundaries
                 if (tickNum % ppq == 0) {
+                    int newBpm = pendingBpm.get();
+                    if (newBpm > 0) {
+                        bpm = newBpm;
+                        intervalNanos = (long) ((60.0 / bpm / ppq) * 1_000_000_000);
+                        pendingBpm.set(-1);
+                    }
+                    
+                    int newPpq = pendingPpq.get();
+                    if (newPpq > 0) {
+                        ppq = newPpq;
+                        intervalNanos = (long) ((60.0 / bpm / ppq) * 1_000_000_000);
+                        pendingPpq.set(-1);
+                    }
+                    
                     beatListeners.forEach(Runnable::run);
                 }
                 
+                tickListeners.forEach(Runnable::run);
                 nextTick += intervalNanos;
             }
             
-            // Small yield to prevent busy-waiting
             Thread.yield();
         }
     }
