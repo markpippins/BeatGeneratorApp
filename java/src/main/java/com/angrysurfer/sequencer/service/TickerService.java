@@ -56,7 +56,7 @@ public class TickerService {
 
     public void play() {
 
-        stopRunningSequencers();
+        stopRunningClocks();
         clockSource = new ClockSource(getTicker());
         clocks.add(getClockSource());
         getClockSource().getCycleListeners().add(getSongService().getTickListener());
@@ -95,13 +95,13 @@ public class TickerService {
 
     }
 
-    private void stopRunningSequencers() {
+    private void stopRunningClocks() {
         clocks.forEach(sr -> sr.stop());
         clocks.clear();
     }
 
     public Ticker stop() {
-        stopRunningSequencers();
+        stopRunningClocks();
         return getTicker();
     }
 
@@ -124,7 +124,7 @@ public class TickerService {
 
     public Ticker getTicker() {
         if (Objects.isNull(ticker)) {
-            stopRunningSequencers();
+            stopRunningClocks();
             ticker = getTickerRepo().save(new Ticker());
             getTicker().getTickCycler().getListeners().add(getSongService().getTickListener());
             clockSource = new ClockSource(ticker);
@@ -149,10 +149,11 @@ public class TickerService {
 
             case TickerUpdateType.BPM:
                 ticker.setTempoInBPM(Float.valueOf(updateValue));
-                // if (Objects.nonNull(getClockSource()) &&
-                // ticker.getId().equals(getTicker().getId()))
-                // getClockSource().getSequencer().setTempoInBPM(updateValue);
-                getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
+                if (Objects.nonNull(getClockSource()) &&
+                        ticker.getId().equals(getTicker().getId()))
+                    getClockSource().setTempoInBPM(updateValue);
+
+                // getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
                 break;
 
             case TickerUpdateType.PARTS:
@@ -182,7 +183,7 @@ public class TickerService {
 
     public synchronized Ticker next(long currentTickerId) {
         if (currentTickerId == 0 || getTicker().getPlayers().size() > 0) {
-            stopRunningSequencers();
+            stopRunningClocks();
             getTicker().getTickCycler().getListeners().clear();
             getTicker().getBeatCycler().getListeners().clear();
             getTicker().getBarCycler().getListeners().clear();
@@ -205,7 +206,7 @@ public class TickerService {
             getTicker().getTickCounter().getListeners().clear();
             getTicker().getBeatCycler().getListeners().clear();
             getTicker().getBarCycler().getListeners().clear();
-            stopRunningSequencers();
+            stopRunningClocks();
             setTicker(getTickerRepo().getPreviousTicker(currentTickerId));
             getTicker().getPlayers().addAll(getStrikeRepo().findByTickerId(getTicker().getId()));
             getTicker().getPlayers().forEach(p -> p.setRules(ruleRepo.findByPlayerId(p.getId())));

@@ -3,14 +3,12 @@ package com.angrysurfer.sequencer.util;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,10 +50,12 @@ public class ClockSource implements Runnable {
     }
 
     public void afterEnd() {
-        getListeners().forEach(l -> l.onEnd()
+        getListeners().forEach(l -> l.onEnd());
         getTicker().afterEnd();
         stopped = false;
     }
+
+    PreciseTimer timer;
 
     @Override
     public void run() {
@@ -65,7 +65,7 @@ public class ClockSource implements Runnable {
             getTicker().beforeStart();
 
             // Initialize PreciseTimer with ticker's parameters
-            PreciseTimer timer = new PreciseTimer(
+            timer = new PreciseTimer(
                     Math.round(ticker.getTempoInBPM()),
                     ticker.getTicksPerBeat());
 
@@ -145,5 +145,11 @@ public class ClockSource implements Runnable {
 
     double getDutyCycle() {
         return 0.5;
+    }
+
+    public void setTempoInBPM(long updateValue) {
+        if (Objects.nonNull(timer))
+            timer.setBpm((int) updateValue);
+
     }
 }
