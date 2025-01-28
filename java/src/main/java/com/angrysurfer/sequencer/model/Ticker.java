@@ -1,7 +1,13 @@
 package com.angrysurfer.sequencer.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.IntStream;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiUnavailableException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,16 +17,14 @@ import com.angrysurfer.sequencer.util.Constants;
 import com.angrysurfer.sequencer.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.persistence.*;
-
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.IntStream;
-
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
-import com.sun.media.sound.MidiUtils;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Transient;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -292,13 +296,6 @@ public class Ticker implements Serializable {
     }
 
     public double getInterval() {
-        return 10;
-        // Convert BPM to microseconds per quarter note
-        // double microsecondsPerQuarterNote = MidiUtils.convertTempo(tempoInBPM);
-
-        // Convert to milliseconds per tick:
-        // 1. Divide by ticksPerBeat to get microseconds per tick
-        // 2. Divide by 1000 to convert to milliseconds
-        // return (microsecondsPerQuarterNote / ticksPerBeat) / 1000.0;
+        return 60000 / getTempoInBPM() / getTicksPerBeat();
     }
 }

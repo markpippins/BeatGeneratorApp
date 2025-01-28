@@ -148,50 +148,62 @@ public class MidiInstrument implements Serializable {
         })).start();
     }
 
-    public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
-        logger.info(String.join(", ",
-                getName(),
-                MidiMessage.lookupCommand(message.getCommand()),
-                message.getCommand() != ShortMessage.NOTE_ON && message.getCommand() != ShortMessage.NOTE_OFF ? lookupTarget(message.getData1()) : Integer.toString(message.getData1()),
-                Integer.toString(message.getData2())));
-        
-            
-        if (!getDevice().isOpen()) {
-            getDevice().open();
-            receiver.set(getDevice().getReceiver());
+    private synchronized Receiver getOrCreateReceiver() throws MidiUnavailableException {
+        Receiver current = receiver.get();
+        if (current == null) {
+            if (!getDevice().isOpen()) {
+                getDevice().open();
+            }
+            current = getDevice().getReceiver();
+            receiver.set(current);
+            logger.info("Created new receiver for device: {}", getName());
         }
+        return current;
+    }
 
-        Receiver currentReceiver = receiver.get();
-        if (currentReceiver == null) {
-            receiver.set(getDevice().getReceiver());
-            currentReceiver = receiver.get();
+    public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
+        try {
+            Receiver currentReceiver = getOrCreateReceiver();
+            currentReceiver.send(message, -1);
+            logger.debug("Sent message: {} to device: {}", 
+                MidiMessage.lookupCommand(message.getCommand()),
+                getName());
+        } catch (Exception e) {
+            logger.error("Send failed: {} - will attempt recovery", e.getMessage());
+            cleanup();
+            // One retry attempt
+            getOrCreateReceiver().send(message, -1);
         }
-        
-        currentReceiver.send(message, new Date().getTime());
+    }
+
+    public void cleanup() {
+        logger.info("Cleaning up device: {}", getName());
+        try {
+            Receiver oldReceiver = receiver.get();
+            if (oldReceiver != null) {
+                receiver.set(null);
+                oldReceiver.close();
+            }
+        } catch (Exception e) {
+            logger.debug("Error closing receiver: {}", e.getMessage());
+        }
     }
 
     boolean initialized = false;
 
-    public void cleanup() {
-        if (receiver.get() != null) {
-            receiver.get().close();
-            receiver.set(null);
-        }
-        if (device != null && device.isOpen()) {
-            device.close();
-        }
-    }
-
     public void setDevice(MidiDevice device) {
-        cleanup(); // Clean up old device first
+        cleanup();
         this.device = device;
         try {
-            if (device != null && !device.isOpen()) {
-                device.open();
+            if (device != null) {
+                if (!device.isOpen()) {
+                    device.open();
+                }
                 receiver.set(device.getReceiver());
+                logger.info("Device {} initialized successfully", getName());
             }
         } catch (MidiUnavailableException e) {
-            logger.error("Failed to initialize device receiver", e);
+            logger.error("Failed to initialize device: {}", e.getMessage());
         }
         initialized = true;
     }
