@@ -145,13 +145,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 53,
-        "code" : 1,
-        "description" : "On"
-      }, {
         "id" : 52,
         "code" : 0,
         "description" : "Off"
+      }, {
+        "id" : 53,
+        "code" : 1,
+        "description" : "On"
       } ]
     }, {
       "id" : 154,
@@ -162,13 +162,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 55,
-        "code" : 1,
-        "description" : "Latch & Shift"
-      }, {
         "id" : 54,
         "code" : 0,
         "description" : "Traditional"
+      }, {
+        "id" : 55,
+        "code" : 1,
+        "description" : "Latch & Shift"
       } ]
     }, {
       "id" : 155,
@@ -218,17 +218,17 @@
         "code" : 0,
         "description" : "Note"
       }, {
-        "id" : 60,
-        "code" : 2,
-        "description" : "Mod"
+        "id" : 61,
+        "code" : 3,
+        "description" : "LFO Rate"
       }, {
         "id" : 59,
         "code" : 1,
         "description" : "Velocity"
       }, {
-        "id" : 61,
-        "code" : 3,
-        "description" : "LFO Rate"
+        "id" : 60,
+        "code" : 2,
+        "description" : "Mod"
       } ]
     }, {
       "id" : 159,
@@ -243,10 +243,6 @@
         "code" : 0,
         "description" : "Note"
       }, {
-        "id" : 63,
-        "code" : 1,
-        "description" : "Velocity"
-      }, {
         "id" : 65,
         "code" : 3,
         "description" : "LFO Rate"
@@ -254,6 +250,10 @@
         "id" : 64,
         "code" : 2,
         "description" : "Mod"
+      }, {
+        "id" : 63,
+        "code" : 1,
+        "description" : "Velocity"
       } ]
     }, {
       "id" : 160,
@@ -264,6 +264,10 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
+        "id" : 67,
+        "code" : 1,
+        "description" : "Velocity > 50%"
+      }, {
         "id" : 68,
         "code" : 2,
         "description" : "ModWh > 50%"
@@ -271,10 +275,6 @@
         "id" : 69,
         "code" : 3,
         "description" : "LFO Rate"
-      }, {
-        "id" : 67,
-        "code" : 1,
-        "description" : "Velocity > 50%"
       }, {
         "id" : 66,
         "code" : 0,
@@ -289,6 +289,10 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
+        "id" : 72,
+        "code" : 2,
+        "description" : "ModWh > 50%"
+      }, {
         "id" : 70,
         "code" : 0,
         "description" : "Note ON"
@@ -300,10 +304,6 @@
         "id" : 71,
         "code" : 1,
         "description" : "Velocity > 50%"
-      }, {
-        "id" : 72,
-        "code" : 2,
-        "description" : "ModWh > 50%"
       } ]
     }, {
       "id" : 162,
@@ -368,13 +368,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 75,
-        "code" : 1,
-        "description" : "On"
-      }, {
         "id" : 74,
         "code" : 0,
         "description" : "Off"
+      }, {
+        "id" : 75,
+        "code" : 1,
+        "description" : "On"
       } ]
     }, {
       "id" : 169,
@@ -403,13 +403,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 102,
-        "code" : 0,
-        "description" : "Off"
-      }, {
         "id" : 103,
         "code" : 1,
         "description" : "On"
+      }, {
+        "id" : 102,
+        "code" : 0,
+        "description" : "Off"
       } ]
     }, {
       "id" : 304,
@@ -420,13 +420,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 105,
-        "code" : 1,
-        "description" : "Latch & Shift"
-      }, {
         "id" : 104,
         "code" : 0,
         "description" : "Traditional"
+      }, {
+        "id" : 105,
+        "code" : 1,
+        "description" : "Latch & Shift"
       } ]
     }, {
       "id" : 305,
@@ -437,13 +437,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 107,
-        "code" : 1,
-        "description" : "On"
-      }, {
         "id" : 106,
         "code" : 0,
         "description" : "Off"
+      }, {
+        "id" : 107,
+        "code" : 1,
+        "description" : "On"
       } ]
     }, {
       "id" : 306,
@@ -472,6 +472,14 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
+        "id" : 110,
+        "code" : 2,
+        "description" : "Mod"
+      }, {
+        "id" : 108,
+        "code" : 0,
+        "description" : "Note"
+      }, {
         "id" : 109,
         "code" : 1,
         "description" : "Velocity"
@@ -479,14 +487,6 @@
         "id" : 111,
         "code" : 3,
         "description" : "LFO Rate"
-      }, {
-        "id" : 108,
-        "code" : 0,
-        "description" : "Note"
-      }, {
-        "id" : 110,
-        "code" : 2,
-        "description" : "Mod"
       } ]
     }, {
       "id" : 309,
@@ -497,21 +497,21 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 113,
-        "code" : 1,
-        "description" : "Velocity"
-      }, {
-        "id" : 115,
-        "code" : 3,
-        "description" : "LFO Rate"
+        "id" : 112,
+        "code" : 0,
+        "description" : "Note"
       }, {
         "id" : 114,
         "code" : 2,
         "description" : "Mod"
       }, {
-        "id" : 112,
-        "code" : 0,
-        "description" : "Note"
+        "id" : 115,
+        "code" : 3,
+        "description" : "LFO Rate"
+      }, {
+        "id" : 113,
+        "code" : 1,
+        "description" : "Velocity"
       } ]
     }, {
       "id" : 310,
@@ -522,13 +522,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 116,
-        "code" : 0,
-        "description" : "Note ON"
-      }, {
         "id" : 119,
         "code" : 3,
         "description" : "LFO Rate"
+      }, {
+        "id" : 116,
+        "code" : 0,
+        "description" : "Note ON"
       }, {
         "id" : 117,
         "code" : 1,
@@ -547,14 +547,6 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 123,
-        "code" : 3,
-        "description" : "LFO Rate"
-      }, {
-        "id" : 121,
-        "code" : 1,
-        "description" : "Velocity > 50%"
-      }, {
         "id" : 120,
         "code" : 0,
         "description" : "Note ON"
@@ -562,6 +554,14 @@
         "id" : 122,
         "code" : 2,
         "description" : "ModWh > 50%"
+      }, {
+        "id" : 123,
+        "code" : 3,
+        "description" : "LFO Rate"
+      }, {
+        "id" : 121,
+        "code" : 1,
+        "description" : "Velocity > 50%"
       } ]
     }, {
       "id" : 312,
@@ -626,13 +626,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 125,
-        "code" : 1,
-        "description" : "On"
-      }, {
         "id" : 124,
         "code" : 0,
         "description" : "Off"
+      }, {
+        "id" : 125,
+        "code" : 1,
+        "description" : "On"
       } ]
     }, {
       "id" : 319,
@@ -661,13 +661,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 152,
-        "code" : 0,
-        "description" : "Off"
-      }, {
         "id" : 153,
         "code" : 1,
         "description" : "On"
+      }, {
+        "id" : 152,
+        "code" : 0,
+        "description" : "Off"
       } ]
     }, {
       "id" : 454,
@@ -695,13 +695,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 157,
-        "code" : 1,
-        "description" : "On"
-      }, {
         "id" : 156,
         "code" : 0,
         "description" : "Off"
+      }, {
+        "id" : 157,
+        "code" : 1,
+        "description" : "On"
       } ]
     }, {
       "id" : 456,
@@ -730,14 +730,6 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 158,
-        "code" : 0,
-        "description" : "Note"
-      }, {
-        "id" : 161,
-        "code" : 3,
-        "description" : "LFO Rate"
-      }, {
         "id" : 160,
         "code" : 2,
         "description" : "Mod"
@@ -745,6 +737,14 @@
         "id" : 159,
         "code" : 1,
         "description" : "Velocity"
+      }, {
+        "id" : 161,
+        "code" : 3,
+        "description" : "LFO Rate"
+      }, {
+        "id" : 158,
+        "code" : 0,
+        "description" : "Note"
       } ]
     }, {
       "id" : 459,
@@ -755,10 +755,6 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 163,
-        "code" : 1,
-        "description" : "Velocity"
-      }, {
         "id" : 164,
         "code" : 2,
         "description" : "Mod"
@@ -766,6 +762,10 @@
         "id" : 162,
         "code" : 0,
         "description" : "Note"
+      }, {
+        "id" : 163,
+        "code" : 1,
+        "description" : "Velocity"
       }, {
         "id" : 165,
         "code" : 3,
@@ -780,10 +780,6 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 166,
-        "code" : 0,
-        "description" : "Note ON"
-      }, {
         "id" : 167,
         "code" : 1,
         "description" : "Velocity > 50%"
@@ -791,6 +787,10 @@
         "id" : 168,
         "code" : 2,
         "description" : "ModWh > 50%"
+      }, {
+        "id" : 166,
+        "code" : 0,
+        "description" : "Note ON"
       }, {
         "id" : 169,
         "code" : 3,
@@ -805,21 +805,21 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 173,
-        "code" : 3,
-        "description" : "LFO Rate"
-      }, {
-        "id" : 170,
-        "code" : 0,
-        "description" : "Note ON"
+        "id" : 171,
+        "code" : 1,
+        "description" : "Velocity > 50%"
       }, {
         "id" : 172,
         "code" : 2,
         "description" : "ModWh > 50%"
       }, {
-        "id" : 171,
-        "code" : 1,
-        "description" : "Velocity > 50%"
+        "id" : 170,
+        "code" : 0,
+        "description" : "Note ON"
+      }, {
+        "id" : 173,
+        "code" : 3,
+        "description" : "LFO Rate"
       } ]
     }, {
       "id" : 462,
@@ -957,13 +957,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 4,
-        "code" : 1,
-        "description" : "Latch & Shift"
-      }, {
         "id" : 3,
         "code" : 0,
         "description" : "Traditional"
+      }, {
+        "id" : 4,
+        "code" : 1,
+        "description" : "Latch & Shift"
       } ]
     }, {
       "id" : 4,
@@ -1009,14 +1009,6 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 10,
-        "code" : 3,
-        "description" : "LFO Rate"
-      }, {
-        "id" : 8,
-        "code" : 1,
-        "description" : "Velocity"
-      }, {
         "id" : 9,
         "code" : 2,
         "description" : "Mod"
@@ -1024,6 +1016,14 @@
         "id" : 7,
         "code" : 0,
         "description" : "Note"
+      }, {
+        "id" : 8,
+        "code" : 1,
+        "description" : "Velocity"
+      }, {
+        "id" : 10,
+        "code" : 3,
+        "description" : "LFO Rate"
       } ]
     }, {
       "id" : 8,
@@ -1034,21 +1034,21 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 11,
-        "code" : 0,
-        "description" : "Note"
-      }, {
-        "id" : 12,
-        "code" : 1,
-        "description" : "Velocity"
+        "id" : 13,
+        "code" : 2,
+        "description" : "Mod"
       }, {
         "id" : 14,
         "code" : 3,
         "description" : "LFO Rate"
       }, {
-        "id" : 13,
-        "code" : 2,
-        "description" : "Mod"
+        "id" : 12,
+        "code" : 1,
+        "description" : "Velocity"
+      }, {
+        "id" : 11,
+        "code" : 0,
+        "description" : "Note"
       } ]
     }, {
       "id" : 9,
@@ -1063,10 +1063,6 @@
         "code" : 2,
         "description" : "ModWh > 50%"
       }, {
-        "id" : 18,
-        "code" : 3,
-        "description" : "LFO Rate"
-      }, {
         "id" : 15,
         "code" : 0,
         "description" : "Note ON"
@@ -1074,6 +1070,10 @@
         "id" : 16,
         "code" : 1,
         "description" : "Velocity > 50%"
+      }, {
+        "id" : 18,
+        "code" : 3,
+        "description" : "LFO Rate"
       } ]
     }, {
       "id" : 10,
@@ -1084,21 +1084,21 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 20,
-        "code" : 1,
-        "description" : "Velocity > 50%"
-      }, {
-        "id" : 19,
-        "code" : 0,
-        "description" : "Note ON"
+        "id" : 21,
+        "code" : 2,
+        "description" : "ModWh > 50%"
       }, {
         "id" : 22,
         "code" : 3,
         "description" : "LFO Rate"
       }, {
-        "id" : 21,
-        "code" : 2,
-        "description" : "ModWh > 50%"
+        "id" : 19,
+        "code" : 0,
+        "description" : "Note ON"
+      }, {
+        "id" : 20,
+        "code" : 1,
+        "description" : "Velocity > 50%"
       } ]
     }, {
       "id" : 11,
@@ -1163,13 +1163,13 @@
       "pad" : null,
       "binary" : null,
       "captions" : [ {
-        "id" : 23,
-        "code" : 0,
-        "description" : "Off"
-      }, {
         "id" : 24,
         "code" : 1,
         "description" : "On"
+      }, {
+        "id" : 23,
+        "code" : 0,
+        "description" : "Off"
       } ]
     }, {
       "id" : 18,

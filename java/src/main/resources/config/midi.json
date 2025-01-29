@@ -124,7 +124,7 @@
     "initialized" : false,
     "assignmentCount" : 0,
     "multiTimbral" : false,
-    "defaultChannel" : 12
+    "defaultChannel" : 5
   }, {
     "id" : 7,
     "controlCodes" : [ {

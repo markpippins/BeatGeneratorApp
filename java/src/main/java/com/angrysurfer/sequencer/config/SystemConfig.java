@@ -26,14 +26,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 
 @Getter
 @Setter
 public class SystemConfig implements Serializable {
     static ObjectMapper mapper = new ObjectMapper()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     List<Instrument> instruments = new ArrayList<>();
 
     public SystemConfig() {
@@ -86,28 +84,52 @@ public class SystemConfig implements Serializable {
             CaptionRepo captionRepo, 
             PadRepo padRepo) throws IOException {
 
-        if (!midiInstrumentRepo.findAll().isEmpty())
-            return;
+        // Get existing instruments from DB as a map
+        Map<String, Instrument> existingInstruments = midiInstrumentRepo.findAll().stream()
+            .collect(Collectors.toMap(Instrument::getName, Function.identity()));
 
-        List<String> instrumentNames = new ArrayList<>();
-        MIDIService.getMidiOutDevices().forEach(device -> {
-            if (device.getMaxTransmitters() == -1)
-                return;
+        // Get available MIDI devices and create if not in DB
+        List<String> availableDevices = MIDIService.getMidiOutDevices().stream()
+            .filter(d -> d.getMaxTransmitters() != -1)
+            .map(d -> {
+                String deviceName = d.getDeviceInfo().getName();
+                if (!existingInstruments.containsKey(deviceName)) {
+                    Instrument instrument = new Instrument(deviceName, d);
+                    instrument.setAvailable(true);
+                    instrument = midiInstrumentRepo.save(instrument);
+                    existingInstruments.put(deviceName, instrument);
+                }
+                return deviceName;
+            })
+            .collect(Collectors.toList());
 
-            Instrument instrument = new Instrument(device.getDeviceInfo().getName(), device);
-            instrument.setAvailable(true);
-            midiInstrumentRepo.save(instrument);
-            instrumentNames.add(instrument.getName());
-        });
+        // Load and process config file
+        File configFile = new File(filepath);
+        if (configFile.exists()) {
+            SystemConfig config = mapper.readValue(configFile, SystemConfig.class);
+            
+            // Process each instrument from config
+            config.getInstruments().forEach(configInstrument -> {
+                configInstrument.setAvailable(availableDevices.contains(configInstrument.getName()));
+                
+                // Update existing or create new
+                Instrument dbInstrument = existingInstruments.containsKey(configInstrument.getName()) ?
+                    updateExistingInstrument(configInstrument, existingInstruments.get(configInstrument.getName())) :
+                    configInstrument;
 
-        File ini = new File(filepath);
-        if (ini.exists() || !ini.isDirectory())
-            SystemConfig.newInstance(ini,
-                    instrumentNames.stream().collect(Collectors.joining(",")),
-                    midiInstrumentRepo, controlCodeRepo, captionRepo).getInstruments()
-                    .forEach(instrument -> {
-                        addPadInfo(midiInstrumentRepo, padRepo, instrument);
-                    });
+                // Process control codes
+                processControlCodes(dbInstrument, controlCodeRepo, captionRepo);
+                
+                // Save instrument
+                dbInstrument = midiInstrumentRepo.save(dbInstrument);
+                
+                // Process pads if needed
+                addPadInfo(midiInstrumentRepo, padRepo, dbInstrument);
+            });
+        }
+
+        // Save current state back to file
+        saveCurrentStateToFile(filepath, midiInstrumentRepo);
     }
 
     private static Instrument updateExistingInstrument(Instrument source, Instrument target) {
@@ -124,28 +146,28 @@ public class SystemConfig implements Serializable {
         return target;
     }
 
-    private static void processControlCodes(Instrument instrument, 
-            ControlCodeRepo controlCodeRepo, 
+    private static void processControlCodes(Instrument instrument,
+            ControlCodeRepo controlCodeRepo,
             CaptionRepo captionRepo) {
         instrument.getAssignments().keySet().forEach(code -> {
             ControlCode controlCode = new ControlCode();
             controlCode.setCode(code);
             controlCode.setName(instrument.getAssignments().get(code));
-            
+
             if (instrument.getBoundaries().containsKey(code)) {
                 controlCode.setLowerBound(instrument.getBoundaries().get(code)[0]);
                 controlCode.setUpperBound(instrument.getBoundaries().get(code)[1]);
 
                 if (instrument.getCaptions().containsKey(code)) {
                     controlCode.setCaptions(instrument.getCaptions().get(code)
-                        .entrySet().stream()
-                        .map(es -> {
-                            Caption caption = new Caption();
-                            caption.setCode(es.getKey());
-                            caption.setDescription(es.getValue().strip());
-                            return captionRepo.save(caption);
-                        })
-                        .collect(Collectors.toSet()));
+                            .entrySet().stream()
+                            .map(es -> {
+                                Caption caption = new Caption();
+                                caption.setCode(es.getKey());
+                                caption.setDescription(es.getValue().strip());
+                                return captionRepo.save(caption);
+                            })
+                            .collect(Collectors.toSet()));
                 }
             }
             controlCode = controlCodeRepo.save(controlCode);
@@ -153,19 +175,17 @@ public class SystemConfig implements Serializable {
         });
     }
 
-    public static void saveCurrentStateToFile(String filepath, 
-            MidiInstrumentRepo midiInstrumentRepo,
-            ResourceLoader resourceLoader) throws IOException {
+    public static void saveCurrentStateToFile(String filepath,
+            MidiInstrumentRepo midiInstrumentRepo) throws IOException {
         SystemConfig currentConfig = new SystemConfig();
         currentConfig.setInstruments(midiInstrumentRepo.findAll());
-        
+
         // Configure mapper for pretty printing
         ObjectMapper prettyMapper = new ObjectMapper();
         prettyMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        
+
         // Get actual file path for writing
-        Resource resource = resourceLoader.getResource(filepath);
-        File outputFile = resource.getFile();
+        File outputFile = new File(filepath);
         prettyMapper.writeValue(outputFile, currentConfig);
     }
 
