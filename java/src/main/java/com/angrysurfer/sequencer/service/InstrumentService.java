@@ -30,9 +30,9 @@ public class InstrumentService {
         return instrumentRepo.findAll().stream().filter(i -> i.getAvailable()).collect(Collectors.toList());
     }
 
-    public List<Instrument> getInstrumentByChannel(int channel) {
+    public List<Instrument> getInstrumentByChannel(String deviceName, int channel) {
         logger.info(String.format("getInstrumentByChannel(%s)", channel));
-        return getAllInstruments().stream().filter(i -> i.getChannel() == channel)
+        return getAllInstruments().stream().filter(i -> i.getChannels().length == 1 && i.getChannels()[0] == channel)
                 .collect(Collectors.toList());
     }
 

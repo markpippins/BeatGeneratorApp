@@ -3,7 +3,6 @@ package com.angrysurfer.sequencer.model.midi;
 import com.angrysurfer.sequencer.converter.IntegerArrayConverter;
 import com.angrysurfer.sequencer.model.Pad;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +26,9 @@ public class Instrument implements Serializable {
     static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
 
     static final Random rand = new Random();
+
+    public static final Integer DEFAULT_CHANNEL = 0;
+    public static final Integer[] DEFAULT_CHANNELS = new Integer[]{DEFAULT_CHANNEL};
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -69,8 +71,8 @@ public class Instrument implements Serializable {
     
     private String deviceName;
 
-    private Integer channel;
-
+    // private Integer channel;
+    
     @Convert(converter = IntegerArrayConverter.class)
     @Column(name = "channels")
     private Integer[] channels;
@@ -93,51 +95,69 @@ public class Instrument implements Serializable {
 
     }
 
+    public Instrument(String name, MidiDevice device) {
+        this(name, device, DEFAULT_CHANNELS);
+    }
+
     public Instrument(String name, MidiDevice device, int channel) {
+        this(name, device, new Integer[]{channel});
+    }
+
+    public Instrument(String name, MidiDevice device, Integer[] channels) {
         setName(Objects.isNull(name) ? device.getDeviceInfo().getName() : name);
         setDevice(device);
         setDeviceName(device.getDeviceInfo().getName());
-        setChannel(channel);
-        logger.info(String.join(" ", getName(), "created on channel", Integer.toString(getChannel())));
+        setChannels(channels);
+        logger.info("Created instrument {} with channels: {}", getName(), Arrays.toString(channels));
+    }
+
+    // Helper method to determine if device is likely multi-timbral
+    public boolean isMultiTimbral() {
+        return channels != null && channels.length > 1;
+    }
+
+    // Convenience method for single-channel devices
+    public int getDefaultChannel() {
+        return channels != null && channels.length > 0 ? channels[0] : DEFAULT_CHANNEL;
     }
 
     public String assignedControl(int cc) {
         return assignments.getOrDefault(cc, "NONE");
     }
 
-    public void channelPressure(long data1, long data2) throws MidiUnavailableException, InvalidMidiDataException {
-        sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, getChannel(), (int) data1, (int) data2));
+    public void channelPressure(int channel, long data1, long data2) throws MidiUnavailableException, InvalidMidiDataException {
+        sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, channel, (int) data1, (int) data2));
     }
 
-    public void controlChange(long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, getChannel(), (int) data1, (int) data2));
+    public void controlChange(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+        sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, (int) data1, (int) data2));
     }
 
-    public void noteOn(long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, getChannel(), (int) data1, (int) data2));
+    public void noteOn(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+        sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, channel, (int) data1, (int) data2));
     }
 
-    public void noteOff(long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(ShortMessage.NOTE_OFF, getChannel(), (int) data1, (int) data2));
+    public void noteOff(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+        sendToDevice(new ShortMessage(ShortMessage.NOTE_OFF, channel, (int) data1, (int) data2));
     }
 
-    public void polyPressure(long data1, long data2) throws MidiUnavailableException, InvalidMidiDataException {
-        sendToDevice(new ShortMessage(ShortMessage.POLY_PRESSURE, getChannel(), (int) data1, (int) data2));
+    public void polyPressure(int channel, long data1, long data2) throws MidiUnavailableException, InvalidMidiDataException {
+        sendToDevice(new ShortMessage(ShortMessage.POLY_PRESSURE, channel, (int) data1, (int) data2));
     }
 
-    public void programChange(long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(ShortMessage.PROGRAM_CHANGE, getChannel(), (int) data1, (int) data2));
+    public void programChange(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+        sendToDevice(new ShortMessage(ShortMessage.PROGRAM_CHANGE, channel, (int) data1, (int) data2));
     }
 
-    public void start() throws MidiUnavailableException, InvalidMidiDataException {
-        sendToDevice(new ShortMessage(ShortMessage.START, getChannel(), 0, 0));
+    public void start(int channel) throws MidiUnavailableException, InvalidMidiDataException {
+        sendToDevice(new ShortMessage(ShortMessage.START, channel, 0, 0));
     }
 
-    public void stop() throws MidiUnavailableException, InvalidMidiDataException {
-        sendToDevice(new ShortMessage(ShortMessage.STOP, getChannel(), 1, 1));
+    public void stop(int channel) throws MidiUnavailableException, InvalidMidiDataException {
+        sendToDevice(new ShortMessage(ShortMessage.STOP, channel, 1, 1));
     }
 
-    public void randomize(List<Integer> params) {
+    public void randomize(int channel, List<Integer> params) {
 
         new Thread(() -> params.forEach(cc -> {
             try {
@@ -145,7 +165,7 @@ public class Instrument implements Serializable {
                         rand.nextInt(getBoundaries().get(cc)[0], getBoundaries().get(cc)[0] >= getBoundaries().get(cc)[1] ? getBoundaries().get(cc)[0] + 1 : getBoundaries().get(cc)[1]) :
                         rand.nextInt(0, 127);
 
-                sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, getChannel(), cc, value));
+                sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, cc, value));
             } catch (IllegalArgumentException | MidiUnavailableException | InvalidMidiDataException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);

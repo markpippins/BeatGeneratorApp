@@ -1,5 +1,6 @@
-// package com.angrysurfer.sequencer.model.midi;
+// // package com.angrysurfer.sequencer.model.midi;
 
+// import com.angrysurfer.sequencer.converter.IntegerArrayConverter;
 // import com.angrysurfer.sequencer.model.Pad;
 // import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -68,7 +69,9 @@
     
 //     private String deviceName;
 
-//     private Integer channel;
+//     @Convert(converter = IntegerArrayConverter.class)
+//     @Column(name = "channels")
+//     private Integer[] channels;
     
 //     private Integer lowestNote = 0;
     
@@ -92,8 +95,8 @@
 //         setName(Objects.isNull(name) ? device.getDeviceInfo().getName() : name);
 //         setDevice(device);
 //         setDeviceName(device.getDeviceInfo().getName());
-//         setChannel(channel);
-//         logger.info(String.join(" ", getName(), "created on channel", Integer.toString(getChannel())));
+//         setChannels(new Integer[]{channel});
+//         logger.info(String.join(" ", getName(), "created on channel", Arrays.toString(getChannels())));
 //     }
 
 //     public String assignedControl(int cc) {
@@ -229,6 +232,14 @@
 
 //     private String lookupTarget(int key) {
 //         return assignments.getOrDefault(key, Integer.toString(key));
+//     }
+
+//     public int getChannel() {
+//         return channels != null && channels.length > 0 ? channels[0] : 0;
+//     }
+
+//     public void setChannel(int channel) {
+//         this.channels = new Integer[]{channel};
 //     }
 // }
 

@@ -249,7 +249,7 @@ public class PlayerService {
                     player.setPreset(updateValue);
                     Instrument instrument = getMidiInstrumentRepo().findById((long) player.getInstrumentId()).orElseThrow(null);
                     instrument.setDevice(MIDIService.getMidiDevice(instrument.getDeviceName()));
-                    instrument.programChange(updateValue, 0);
+                    instrument.programChange(player.getChannel(), updateValue, 0);
                     player.setInstrument(instrument);
                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
                     logger.error(e.getMessage(), e);

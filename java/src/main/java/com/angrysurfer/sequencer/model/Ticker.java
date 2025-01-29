@@ -218,7 +218,7 @@ public class Ticker implements Serializable {
         IntStream.range(0, 127).forEach(note -> {
             getPlayers().forEach(p -> {
                 try {
-                    p.getInstrument().noteOff(note, 0);
+                    p.getInstrument().noteOff(p.getChannel(), note, 0);
                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
                     logger.error(e.getMessage(), e);
                 }

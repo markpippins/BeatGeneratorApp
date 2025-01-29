@@ -38,9 +38,9 @@ public class InstrumentController {
     }
 
     @GetMapping(path = Constants.GET_INSTRUMENT_BY_CHANNEL)
-    public @ResponseBody List<Instrument> getInstrumentsByChannel(int channel) {
+    public @ResponseBody List<Instrument> getInstrumentsByChannel(String deviceName, int channel) {
         // logger.info("/instrument/info");
-        return instrumentService.getInstrumentByChannel(channel);
+        return instrumentService.getInstrumentByChannel(deviceName, channel);
     }
 
     // @GetMapping(path = Constants.INSTRUMENT_LOOKUP)

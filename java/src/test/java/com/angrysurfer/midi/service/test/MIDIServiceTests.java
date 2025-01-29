@@ -67,7 +67,7 @@ public class MIDIServiceTests {
             Instrument raz = new Instrument();
             raz.setName(RAZ);
             raz.setDeviceName(DEVICE);
-            raz.setChannel(9);
+            // raz.setChannels([9]);
             midiInstrumentRepository.save(raz);
         }
     }

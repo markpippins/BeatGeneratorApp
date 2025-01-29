@@ -41,6 +41,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
     private List<Pad> pads = new ArrayList<>();
 
     private String name;
+    private int channel;
     private Long swing = 0L;
     private Long level = 100L;
     private Long note = 60L;
@@ -185,9 +186,9 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
         return getRules().stream().filter(r -> r.getId().equals(ruleId)).findAny().orElseThrow();
     }
 
-    public int getChannel() {
-        return Objects.nonNull(instrument) ? instrument.getChannel() : 0;
-    }
+    // public int getChannel() {
+    //     return Objects.nonNull(instrument) ? instrument.getChannel() : 0;
+    // }
 
     public void drumNoteOn(long note) {
         long velocity = (long) ((getLevel() * 0.01)
@@ -205,7 +206,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
 
     public void noteOn(long note, long velocity) {
         try {
-            getInstrument().noteOn(note, velocity);
+            getInstrument().noteOn(getChannel(), note, velocity);
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
             throw new RuntimeException(e);
         }
@@ -213,7 +214,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
 
     public void noteOff(long note, long velocity) {
         try {
-            getInstrument().noteOff(note, velocity);
+            getInstrument().noteOff(getChannel(), note, velocity);
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
             throw new RuntimeException(e);
         }

@@ -236,7 +236,7 @@ public class SongService implements NoteProvider {
             case PatternUpdateType.PRESET:
                 pattern.setPreset(updateValue);
                 try {
-                    pattern.getInstrument().programChange(updateValue, 0);
+                    pattern.getInstrument().programChange(pattern.getChannel(), updateValue, 0);
                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
                     logger.error(e.getMessage(), e);
                 }
@@ -322,63 +322,64 @@ public class SongService implements NoteProvider {
     public Song newSong() {
         this.song = new Song();
 
-        try {
-            songRepo.save(song);
+        // try {
+        //     songRepo.save(song);
 
-            IntStream.range(1, Constants.DEFAULT_XOX_TRACKS).forEach(i -> {
-                Pattern pattern = new Pattern();
-                pattern.setSong(song);
-                pattern.setPosition(song.getPatterns().size() + 1);
-                List<Instrument> instruments = this.instrumentService.getInstrumentByChannel(i);
-                if (instruments.size() > 0) {
-                    pattern.setInstrument((Instrument) instruments.get(0));
-                    pattern.setName(((Instrument) instruments.get(0)).getName());
-                } else {
-                    MidiDevice[] devices = { null, null };
+        //     IntStream.range(1, Constants.DEFAULT_XOX_TRACKS).forEach(i -> {
+        //         Pattern pattern = new Pattern();
+        //         pattern.setSong(song);
+        //         pattern.setPosition(song.getPatterns().size() + 1);
+        //         pattern.getInstrument()
+        //         List<Instrument> instruments = this.instrumentService.getInstrumentByChannel(i);
+        //         if (instruments.size() > 0) {
+        //             pattern.setInstrument((Instrument) instruments.get(0));
+        //             pattern.setName(((Instrument) instruments.get(0)).getName());
+        //         } else {
+        //             MidiDevice[] devices = { null, null };
 
-                    MIDIService.getMidiOutDevices().forEach(device -> {
-                        logger.info("Device: " + device.getDeviceInfo().getName());
-                        if (device.getDeviceInfo().getName().contains("Microsoft GS")) {
-                            devices[0] = device;
-                        }
-                        if (device.getDeviceInfo().getName().contains("Gervill")) {
-                            devices[1] = device;
-                        }
-                    });
+        //             MIDIService.getMidiOutDevices().forEach(device -> {
+        //                 logger.info("Device: " + device.getDeviceInfo().getName());
+        //                 if (device.getDeviceInfo().getName().contains("Microsoft GS")) {
+        //                     devices[0] = device;
+        //                 }
+        //                 if (device.getDeviceInfo().getName().contains("Gervill")) {
+        //                     devices[1] = device;
+        //                 }
+        //             });
 
-                    if (Objects.nonNull(devices[0])) {
-                        Instrument instrument = new Instrument();
-                        instrument.setChannel(i);
-                        instrument.setDeviceName(devices[0].getDeviceInfo().getName());
-                        instrument.setName(devices[0].getDeviceInfo().getName());
-                        instrument.setDevice(devices[0]);
-                        // instrument = instrumentService.save(instrument);
-                        pattern.setInstrument(instrument);
-                    } else
+        //             if (Objects.nonNull(devices[0])) {
+        //                 Instrument instrument = new Instrument();
+        //                 instrument.setChannel(i);
+        //                 instrument.setDeviceName(devices[0].getDeviceInfo().getName());
+        //                 instrument.setName(devices[0].getDeviceInfo().getName());
+        //                 instrument.setDevice(devices[0]);
+        //                 // instrument = instrumentService.save(instrument);
+        //                 pattern.setInstrument(instrument);
+        //             } else
 
-                    if (Objects.nonNull(devices[1])) {
-                        Instrument instrument = new Instrument();
-                        instrument.setChannel(i);
-                        instrument.setDeviceName(devices[1].getDeviceInfo().getName());
-                        instrument.setName(devices[1].getDeviceInfo().getName());
-                        instrument.setDevice(devices[1]);
-                        // instrument = instrumentService.save(instrument);
-                        pattern.setInstrument(instrument);
-                    }
-                }
+        //             if (Objects.nonNull(devices[1])) {
+        //                 Instrument instrument = new Instrument();
+        //                 instrument.setChannel(i);
+        //                 instrument.setDeviceName(devices[1].getDeviceInfo().getName());
+        //                 instrument.setName(devices[1].getDeviceInfo().getName());
+        //                 instrument.setDevice(devices[1]);
+        //                 // instrument = instrumentService.save(instrument);
+        //                 pattern.setInstrument(instrument);
+        //             }
+        //         }
 
-                pattern.setChannel(i);
-                song.getPatterns().add(getPatternRepo().save(pattern));
-                IntStream.range(0, Constants.DEFAULT_XOX_PATTERN_LENGTH).forEach(j -> {
-                    Step step = new Step();
-                    step.setPattern(pattern);
-                    step.setPosition(pattern.getSteps().size() + 1);
-                    pattern.getSteps().add(getStepRepo().save(step));
-                });
-            });
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-        }
+        //         pattern.setChannel(i);
+        //         song.getPatterns().add(getPatternRepo().save(pattern));
+        //         IntStream.range(0, Constants.DEFAULT_XOX_PATTERN_LENGTH).forEach(j -> {
+        //             Step step = new Step();
+        //             step.setPattern(pattern);
+        //             step.setPosition(pattern.getSteps().size() + 1);
+        //             pattern.getSteps().add(getStepRepo().save(step));
+        //         });
+        //     });
+        // } catch (Exception e) {
+        //     logger.error(e.getMessage(), e);
+        // }
 
         return song;
     }
