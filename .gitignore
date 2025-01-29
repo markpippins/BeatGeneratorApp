@@ -1,2 +1,4 @@
 *.class
 .gitignore
+java/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+java/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst

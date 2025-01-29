@@ -3,6 +3,7 @@ package com.angrysurfer.sequencer.controller;
 import java.util.List;
 import java.util.Objects;
 
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
 import org.springframework.stereotype.Controller;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.angrysurfer.sequencer.model.midi.Instrument;
-import com.angrysurfer.sequencer.model.midi.Device;
 import com.angrysurfer.sequencer.service.InstrumentService;
 import com.angrysurfer.sequencer.service.MIDIService;
 import com.angrysurfer.sequencer.util.Constants;
@@ -36,7 +36,7 @@ public class MidiController {
     }
 
     @GetMapping(path = Constants.DEVICES_INFO)
-    public @ResponseBody List<Device> getDeviceInfo() {
+    public @ResponseBody List<MidiDevice.Info> getDeviceInfo() {
         return MIDIService.getMidiDeviceInfos();
     }
 

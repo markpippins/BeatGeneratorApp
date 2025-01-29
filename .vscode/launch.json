@@ -6,6 +6,20 @@
     "configurations": [
         {
             "type": "java",
+            "name": "SequencerDemo",
+            "request": "launch",
+            "mainClass": "com.angrysurfer.sequencer.SequencerDemo",
+            "projectName": "BeatGenerator"
+        },
+        {
+            "type": "java",
+            "name": "Application",
+            "request": "launch",
+            "mainClass": "com.angrysurfer.sequencer.Application",
+            "projectName": "BeatGenerator"
+        },
+        {
+            "type": "java",
             "name": "InstrumentService",
             "request": "launch",
             "mainClass": "com.angrysurfer.beatgenerator.service.InstrumentService",

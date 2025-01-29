@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.sequencer.exception.MidiDeviceException;
-import com.angrysurfer.sequencer.model.midi.Device;
 import com.angrysurfer.sequencer.model.midi.Instrument;
 
 @Service
@@ -66,7 +64,7 @@ public class MIDIService {
     public static List<MidiDevice> getMidiOutDevices() {
         List<MidiDevice> devices = new ArrayList<>();
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-        
+
         for (MidiDevice.Info info : infos) {
             try {
                 MidiDevice device = MidiSystem.getMidiDevice(info);
@@ -74,8 +72,8 @@ public class MIDIService {
                 if (device.getMaxReceivers() != 0) {
                     devices.add(device);
                     logger.info("Found MIDI output device: {} (Receivers: {})",
-                        info.getName(),
-                        device.getMaxReceivers());
+                            info.getName(),
+                            device.getMaxReceivers());
                 }
             } catch (MidiUnavailableException e) {
                 logger.error("Error accessing MIDI device: " + info.getName(), e);
@@ -85,19 +83,13 @@ public class MIDIService {
     }
 
     // Improved error handling and validation
-    public static List<Device> getMidiDeviceInfos() {
+    public static List<MidiDevice.Info> getMidiDeviceInfos() {
         logger.info("getMidiDeviceInfos");
         try {
             return Arrays.stream(MidiSystem.getMidiDeviceInfo())
                     .filter(Objects::nonNull)
                     .map(info -> {
-                        try {
-                            MidiDevice device = MidiSystem.getMidiDevice(info);
-                            return device != null ? new Device(device) : null;
-                        } catch (MidiUnavailableException ex) {
-                            logger.warn("Failed to get MIDI device: " + info.getName(), ex);
-                            return null;
-                        }
+                        return info;
                     })
                     .filter(Objects::nonNull)
                     .toList();
