@@ -9,4 +9,5 @@ export interface Device {
   receivers: string
   transmitter: string
   transmitters: string
+  channels: number[]
 }

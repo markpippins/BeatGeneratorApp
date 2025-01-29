@@ -5,6 +5,7 @@ export interface Instrument {
   name: string
   deviceName: string
   channel: number
+  channels: number[]; // for multi-channel instruments
   lowestNote: number
   highestNote: number
   highestPreset: number

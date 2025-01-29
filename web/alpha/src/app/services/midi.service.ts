@@ -1,13 +1,13 @@
-import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
-import {Player} from '../models/player';
-import {Instrument} from '../models/instrument';
-import {Ticker} from '../models/ticker';
-import {Evaluator} from '../models/evaluator';
-import {Rule} from "../models/rule";
-import {Step} from "../models/step";
-import {LookupItem} from "../models/lookup-item";
-import {Device} from "../models/device";
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Player } from '../models/player';
+import { Instrument } from '../models/instrument';
+import { Ticker } from '../models/ticker';
+import { Evaluator } from '../models/evaluator';
+import { Rule } from "../models/rule";
+import { Step } from "../models/step";
+import { LookupItem } from "../models/lookup-item";
+import { Device } from "../models/device";
 import { Song } from '../models/song';
 import { Pattern } from '../models/pattern';
 import { TickerStatus } from '../models/ticker-status';
@@ -42,13 +42,13 @@ export class MidiService {
   next(currentTickerId: number) {
     let params = new HttpParams();
     params = params.append('currentTickerId', currentTickerId);
-    return this.http.get<Ticker>('http://localhost:8080/api/ticker/next', {params});
+    return this.http.get<Ticker>('http://localhost:8080/api/ticker/next', { params });
   }
 
   previous(currentTickerId: number) {
     let params = new HttpParams();
     params = params.append('currentTickerId', currentTickerId);
-    return this.http.get<Ticker>('http://localhost:8080/api/ticker/previous', {params});
+    return this.http.get<Ticker>('http://localhost:8080/api/ticker/previous', { params });
   }
 
   stop() {
@@ -85,7 +85,16 @@ export class MidiService {
     params = params.append('channel', channel);
     return this.http.get<Instrument>(
       'http://localhost:8080/api/midi/instrument',
-      {params: params}
+      { params: params }
+    );
+  }
+
+  instrumentInfoByName(name: string) {
+    let params = new HttpParams();
+    params = params.append('name', name);
+    return this.http.get<Instrument>(
+      'http://localhost:8080/api/midi/instrument',
+      { params: params }
     );
   }
 
@@ -94,7 +103,7 @@ export class MidiService {
     params = params.append('instrumentId', instrumentId);
     return this.http.get<Instrument>(
       'http://localhost:8080/api/instrument',
-      {params: params}
+      { params: params }
     );
   }
 
@@ -125,23 +134,30 @@ export class MidiService {
     params = params.append('channel', channel);
     params = params.append('note', note);
     return this.http
-      .get('http://localhost:8080/api/drums/note', {params: params})
+      .get('http://localhost:8080/api/drums/note', { params: params })
       .subscribe();
   }
 
   sendMessage(
-    messageType: number,
+    instrumentId: number,
     channel: number,
+    messageType: number,
     data1: number,
     data2: number
   ) {
+
+    console.log('instrumentId: ' + instrumentId);
+    console.log('channel: ' + channel);
+    console.log('messageType: ' + messageType);
+
     let params = new HttpParams();
-    params = params.append('messageType', messageType);
+    params = params.append('instrumentId', instrumentId);
     params = params.append('channel', channel);
+    params = params.append('messageType', messageType);
     params = params.append('data1', data1);
     params = params.append('data2', data2);
     return this.http
-      .get('http://localhost:8080/api/messages/send', {params: params})
+      .get('http://localhost:8080/api/messages/send', { params: params })
       .subscribe();
   }
 
