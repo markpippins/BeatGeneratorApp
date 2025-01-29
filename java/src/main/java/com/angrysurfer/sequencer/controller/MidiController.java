@@ -72,7 +72,7 @@ public class MidiController {
             instrument.setDevice(MIDIService.getMidiDevice(instrument.getDeviceName()));
             if (Objects.nonNull(instrument.getDevice())) {
                 // instrument.setChannel(channel);
-                midiService.sendMessage(instrument, messageType, data1, data2);
+                midiService.sendMessage(instrument, channel, messageType, data1, data2);
             }
         }
 

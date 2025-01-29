@@ -147,14 +147,14 @@ public class MIDIService {
     }
 
     // Improved message sending with validation
-    public void sendMessage(Instrument instrument, int messageType, int data1, int data2) {
+    public void sendMessage(Instrument instrument, int channel, int messageType, int data1, int data2) {
         if (instrument == null) {
             throw new IllegalArgumentException("Instrument cannot be null");
         }
 
         try {
             ShortMessage message = new ShortMessage(messageType,
-                    instrument.getChannel(),
+                    channel,
                     validateData(data1),
                     validateData(data2));
             instrument.sendToDevice(message);

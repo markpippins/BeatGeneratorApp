@@ -3,12 +3,14 @@ package com.angrysurfer.sequencer.util;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +35,7 @@ public class ClockSource implements Runnable {
 
     private final Ticker ticker;
 
-    private PreciseTimer timer = new PreciseTimer(130, 24);;
+    private Boolean stopped = false;
 
     private static final AtomicBoolean playing = new AtomicBoolean(false);
 
@@ -41,21 +43,23 @@ public class ClockSource implements Runnable {
 
     private Set<CyclerListener> cycleListeners = new HashSet<>();
 
+    private PreciseTimer timer;
+
     /**
      * @param ticker
      */
     public ClockSource(Ticker ticker) {
         this.ticker = ticker;
+        executor = Executors.newFixedThreadPool(ticker.getMaxTracks());
         timer = new PreciseTimer(
                 Math.round(ticker.getTempoInBPM()),
                 ticker.getTicksPerBeat());
-        executor = Executors.newFixedThreadPool(ticker.getMaxTracks());
     }
 
     public void afterEnd() {
         getListeners().forEach(l -> l.onEnd());
         getTicker().afterEnd();
-        playing.set(false);
+        stopped = false;
     }
 
     @Override
@@ -64,13 +68,16 @@ public class ClockSource implements Runnable {
 
         try {
             getTicker().beforeStart();
-            
+
+            // Initialize PreciseTimer with ticker's parameters
+
             // Add tick listener to handle each tick
             timer.addTickListener(() -> {
 
                 try {
-                    if (!playing.get())
+                    if (!playing.get()) {
                         playing.set(handleStarted());
+                    }
 
                     ticker.beforeTick();
                     getListeners().forEach(l -> l.onTick());
@@ -83,14 +90,14 @@ public class ClockSource implements Runnable {
                 }
             });
 
+
             // Start the timer in a new thread
             Thread timerThread = new Thread(timer);
             timerThread.setPriority(Thread.MAX_PRIORITY);
             timerThread.start();
 
             // Wait while running
-            Thread.sleep(10);
-            while (playing.get()) {
+            while (!stopped) {
                 Thread.sleep(10);
             }
 
@@ -112,8 +119,16 @@ public class ClockSource implements Runnable {
         return true;
     }
 
-    public void stop() {
-        playing.set(false);
+    public Ticker stop() {
+        setStopped(true);
+        // if (Objects.nonNull(sequencer) && sequencer.isRunning())
+        // sequencer.stop();
+        getTicker().setPaused(false);
+        getTicker().getBeatCycler().reset();
+        getTicker().getBarCycler().reset();
+        getTicker().setDone(false);
+        getTicker().reset();
+        return getTicker();
     }
 
     public void pause() {
@@ -125,18 +140,15 @@ public class ClockSource implements Runnable {
         return playing.get();
     }
 
+    double getDelay() {
+        return 60000 / ticker.getTempoInBPM() / ticker.getTicksPerBeat();
+    }
+
     double getDutyCycle() {
         return 0.5;
     }
 
     public void setTempoInBPM(long updateValue) {
-        if (Objects.nonNull(timer))
-            timer.setBpm((int) updateValue);
-
-    }
-
-    public void setppq(long updateValue) {
-        if (Objects.nonNull(timer))
-            timer.setPpq((int) updateValue);
+        timer.setBpm((int) updateValue);
     }
 }

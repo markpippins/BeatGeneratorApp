@@ -67,7 +67,7 @@ public class SongService implements NoteProvider {
                         .findAny().orElseThrow();
 
                 // logger.info(String.format("Pattern %s, Step %s", pattern.getPosition(),
-                //         step.getPosition()));
+                // step.getPosition()));
 
                 final int note = getNoteForStep(step, pattern, tick);
                 if (note > -1) {
@@ -81,9 +81,11 @@ public class SongService implements NoteProvider {
                         @Override
                         public void run() {
                             try {
-                                midiService.sendMessage(pattern.getInstrument(), ShortMessage.NOTE_ON, note, note);
+                                midiService.sendMessage(pattern.getInstrument(), pattern.getChannel(),
+                                        ShortMessage.NOTE_ON, note, note);
                                 Thread.sleep((long) (1.0 / step.getGate() * getSong().getBeatDuration()));
-                                midiService.sendMessage(pattern.getInstrument(), ShortMessage.NOTE_OFF, note, note);
+                                midiService.sendMessage(pattern.getInstrument(), pattern.getChannel(),
+                                        ShortMessage.NOTE_OFF, note, note);
                             } catch (InterruptedException e) {
                                 logger.error(e.getMessage(), e);
                             }
@@ -142,7 +144,7 @@ public class SongService implements NoteProvider {
 
     public int getNoteForStep(Step step, Pattern pattern, long tick) {
         // logger.info(String.format("Pattern %s, Step %s", pattern.getPosition(),
-        //         step.getPosition()));
+        // step.getPosition()));
 
         Random rand = new Random();
         int note = -1;
