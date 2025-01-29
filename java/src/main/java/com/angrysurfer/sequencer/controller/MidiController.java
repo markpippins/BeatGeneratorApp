@@ -1,15 +1,24 @@
 package com.angrysurfer.sequencer.controller;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
-
-import com.angrysurfer.sequencer.model.midi.MidiDeviceInfo;
-import com.angrysurfer.sequencer.service.MIDIService;
-import com.angrysurfer.sequencer.util.Constants;
-
 import java.util.List;
+import java.util.Objects;
 
 import javax.sound.midi.MidiUnavailableException;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.angrysurfer.sequencer.model.midi.Instrument;
+import com.angrysurfer.sequencer.model.midi.Device;
+import com.angrysurfer.sequencer.service.InstrumentService;
+import com.angrysurfer.sequencer.service.MIDIService;
+import com.angrysurfer.sequencer.util.Constants;
 
 @CrossOrigin("*")
 @RequestMapping(path = "/api")
@@ -17,8 +26,17 @@ import javax.sound.midi.MidiUnavailableException;
 @RestController
 public class MidiController {
 
+    InstrumentService instrumentService;
+
+    MIDIService midiService;
+
+    public MidiController(InstrumentService instrumentService, MIDIService midiService) {
+        this.instrumentService = instrumentService;
+        this.midiService = midiService;
+    }
+
     @GetMapping(path = Constants.DEVICES_INFO)
-    public @ResponseBody List<MidiDeviceInfo> getDeviceInfo() {
+    public @ResponseBody List<Device> getDeviceInfo() {
         return MIDIService.getMidiDeviceInfos();
     }
 
@@ -44,10 +62,19 @@ public class MidiController {
         return false;
     }
 
-    // @GetMapping(Constants.SEND_MESSAGE)
-    // public void sendMessage(@RequestParam int channel, @RequestParam int
-    // messageType, @RequestParam int data1, @RequestParam int data2) {
-    // // logger.info("/messages/send");
-    // service.sendMessageToChannel(channel, messageType, data1, data2);
-    // }
+    @GetMapping(Constants.SEND_MESSAGE)
+    public void sendMessage(@RequestParam int instrumentId, @RequestParam int channel, @RequestParam int messageType,
+            @RequestParam int data1,
+            @RequestParam int data2) {
+
+        Instrument instrument = instrumentService.getInstrumentById((long) instrumentId);
+        if (Objects.nonNull(instrument)) {
+            instrument.setDevice(MIDIService.getMidiDevice(instrument.getDeviceName()));
+            if (Objects.nonNull(instrument.getDevice())) {
+                // instrument.setChannel(channel);
+                midiService.sendMessage(instrument, messageType, data1, data2);
+            }
+        }
+
+    }
 }

@@ -21,7 +21,7 @@ import com.angrysurfer.sequencer.dao.SongStatus;
 import com.angrysurfer.sequencer.model.Pattern;
 import com.angrysurfer.sequencer.model.Song;
 import com.angrysurfer.sequencer.model.Step;
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.repo.PatternRepo;
 import com.angrysurfer.sequencer.repo.SongRepo;
 import com.angrysurfer.sequencer.repo.StepRepo;
@@ -327,10 +327,10 @@ public class SongService implements NoteProvider {
                 Pattern pattern = new Pattern();
                 pattern.setSong(song);
                 pattern.setPosition(song.getPatterns().size() + 1);
-                List<MidiInstrument> instruments = this.instrumentService.getInstrumentByChannel(i);
+                List<Instrument> instruments = this.instrumentService.getInstrumentByChannel(i);
                 if (instruments.size() > 0) {
-                    pattern.setInstrument((MidiInstrument) instruments.get(0));
-                    pattern.setName(((MidiInstrument) instruments.get(0)).getName());
+                    pattern.setInstrument((Instrument) instruments.get(0));
+                    pattern.setName(((Instrument) instruments.get(0)).getName());
                 } else {
                     MidiDevice[] devices = { null, null };
 
@@ -345,7 +345,7 @@ public class SongService implements NoteProvider {
                     });
 
                     if (Objects.nonNull(devices[0])) {
-                        MidiInstrument instrument = new MidiInstrument();
+                        Instrument instrument = new Instrument();
                         instrument.setChannel(i);
                         instrument.setDeviceName(devices[0].getDeviceInfo().getName());
                         instrument.setName(devices[0].getDeviceInfo().getName());
@@ -355,7 +355,7 @@ public class SongService implements NoteProvider {
                     } else
 
                     if (Objects.nonNull(devices[1])) {
-                        MidiInstrument instrument = new MidiInstrument();
+                        Instrument instrument = new Instrument();
                         instrument.setChannel(i);
                         instrument.setDeviceName(devices[1].getDeviceInfo().getName());
                         instrument.setName(devices[1].getDeviceInfo().getName());

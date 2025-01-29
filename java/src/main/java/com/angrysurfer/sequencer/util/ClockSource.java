@@ -33,7 +33,7 @@ public class ClockSource implements Runnable {
 
     private final Ticker ticker;
 
-    private Boolean stopped = false;
+    private PreciseTimer timer = new PreciseTimer(130, 24);;
 
     private static final AtomicBoolean playing = new AtomicBoolean(false);
 
@@ -46,16 +46,17 @@ public class ClockSource implements Runnable {
      */
     public ClockSource(Ticker ticker) {
         this.ticker = ticker;
+        timer = new PreciseTimer(
+                Math.round(ticker.getTempoInBPM()),
+                ticker.getTicksPerBeat());
         executor = Executors.newFixedThreadPool(ticker.getMaxTracks());
     }
 
     public void afterEnd() {
         getListeners().forEach(l -> l.onEnd());
         getTicker().afterEnd();
-        stopped = false;
+        playing.set(false);
     }
-
-    PreciseTimer timer;
 
     @Override
     public void run() {
@@ -63,19 +64,13 @@ public class ClockSource implements Runnable {
 
         try {
             getTicker().beforeStart();
-
-            // Initialize PreciseTimer with ticker's parameters
-            timer = new PreciseTimer(
-                    Math.round(ticker.getTempoInBPM()),
-                    ticker.getTicksPerBeat());
-
+            
             // Add tick listener to handle each tick
             timer.addTickListener(() -> {
 
                 try {
-                    if (!playing.get()) {
+                    if (!playing.get())
                         playing.set(handleStarted());
-                    }
 
                     ticker.beforeTick();
                     getListeners().forEach(l -> l.onTick());
@@ -88,15 +83,14 @@ public class ClockSource implements Runnable {
                 }
             });
 
-            // sequencer.start();
-
             // Start the timer in a new thread
             Thread timerThread = new Thread(timer);
             timerThread.setPriority(Thread.MAX_PRIORITY);
             timerThread.start();
 
             // Wait while running
-            while (!stopped) {
+            Thread.sleep(10);
+            while (playing.get()) {
                 Thread.sleep(10);
             }
 
@@ -118,16 +112,8 @@ public class ClockSource implements Runnable {
         return true;
     }
 
-    public Ticker stop() {
-        setStopped(true);
-        // if (Objects.nonNull(sequencer) && sequencer.isRunning())
-        // sequencer.stop();
-        getTicker().setPaused(false);
-        getTicker().getBeatCycler().reset();
-        getTicker().getBarCycler().reset();
-        getTicker().setDone(false);
-        getTicker().reset();
-        return getTicker();
+    public void stop() {
+        playing.set(false);
     }
 
     public void pause() {
@@ -139,10 +125,6 @@ public class ClockSource implements Runnable {
         return playing.get();
     }
 
-    double getDelay() {
-        return 60000 / ticker.getTempoInBPM() / ticker.getTicksPerBeat();
-    }
-
     double getDutyCycle() {
         return 0.5;
     }
@@ -151,5 +133,10 @@ public class ClockSource implements Runnable {
         if (Objects.nonNull(timer))
             timer.setBpm((int) updateValue);
 
+    }
+
+    public void setppq(long updateValue) {
+        if (Objects.nonNull(timer))
+            timer.setPpq((int) updateValue);
     }
 }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+  import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Player } from '../../models/player';
 import { MidiService } from '../../services/midi.service';
 import { Instrument } from 'src/app/models/instrument';
@@ -14,6 +14,7 @@ import { PlayerUpdateType } from 'src/app/models/player-update-type';
   styleUrls: ['./player-table.component.css'],
 })
 export class PlayerTableComponent implements Listener, OnInit {
+
   @Output()
   playerSelectEvent = new EventEmitter<Player>();
 
@@ -92,16 +93,20 @@ export class PlayerTableComponent implements Listener, OnInit {
 
       case 'ticker-audition': {
         if (this.selectedPlayer != undefined) {
+          console.log('auditioning player: ' + this.selectedPlayer.name);
+          console.log('auditioning player instrument: ' + this.selectedPlayer.instrumentId);
           // this.selectedPlayer.muted = !this.selectedPlayer.muted
           this.midiService.sendMessage(
-            MidiMessage.NOTE_ON,
+            this.selectedPlayer.instrumentId,
             this.selectedPlayer.channel,
+            MidiMessage.NOTE_ON,
             this.selectedPlayer.note,
             120
           );
           this.midiService.sendMessage(
-            MidiMessage.NOTE_OFF,
+            this.selectedPlayer.instrumentId,
             this.selectedPlayer.channel,
+            MidiMessage.NOTE_OFF,
             this.selectedPlayer.note,
             120
           );
@@ -171,6 +176,17 @@ export class PlayerTableComponent implements Listener, OnInit {
         // if (data.parts == player.parts)
           this.players[this.players.indexOf(player)] = data;
       });
+  }
+
+  onChannelChange(player: Player, event: { target: any }) {
+    this.players
+      .filter((p) => p.instrumentId == player.instrumentId)
+      .forEach((p) =>
+        this.midiService
+          .updatePlayer(p.id, PlayerUpdateType.CHANNEL, event.target.value)
+          .subscribe()
+      );
+    this.uiService.notifyAll(Constants.PLAYER_UPDATED, 'Player updated', 0);
   }
 
   onPresetChange(player: Player, event: { target: any }) {

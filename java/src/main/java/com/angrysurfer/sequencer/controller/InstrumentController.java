@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.service.MIDIService;
 import com.angrysurfer.sequencer.service.InstrumentService;
 import com.angrysurfer.sequencer.util.Constants;
@@ -16,21 +16,19 @@ import java.util.List;
 @RequestMapping("/api")
 public class InstrumentController {
     static Logger logger = LoggerFactory.getLogger(InstrumentController.class.getCanonicalName());
-    private final MIDIService midiService;
     private final InstrumentService instrumentService;
 
-    public InstrumentController(MIDIService midiService, InstrumentService instrumentService) {
-        this.midiService = midiService;
+    public InstrumentController(InstrumentService instrumentService) {
         this.instrumentService = instrumentService;
     }
 
     @GetMapping(path = Constants.INSTRUMENT_LIST)
-    public @ResponseBody List<MidiInstrument> getInstrumentList() {
+    public @ResponseBody List<Instrument> getInstrumentList() {
         return instrumentService.getAllInstruments();
     }
 
     @GetMapping(path = Constants.INSTRUMENT)
-    public @ResponseBody MidiInstrument getInstrument(@RequestParam Long instrumentId) {
+    public @ResponseBody Instrument getInstrument(@RequestParam Long instrumentId) {
         return instrumentService.getInstrumentById(instrumentId);
     }
 
@@ -40,7 +38,7 @@ public class InstrumentController {
     }
 
     @GetMapping(path = Constants.GET_INSTRUMENT_BY_CHANNEL)
-    public @ResponseBody List<MidiInstrument> getInstrumentsByChannel(int channel) {
+    public @ResponseBody List<Instrument> getInstrumentsByChannel(int channel) {
         // logger.info("/instrument/info");
         return instrumentService.getInstrumentByChannel(channel);
     }

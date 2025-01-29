@@ -12,6 +12,10 @@ import { ControlCode } from 'src/app/models/control-code';
   styleUrls: ['./slider-panel.component.css'],
 })
 export class SliderPanelComponent implements OnInit, Listener {
+
+  @Input()
+  instrumentId!: number;
+
   @Input()
   channel = 1;
 

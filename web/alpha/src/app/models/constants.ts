@@ -5,6 +5,7 @@ export class Constants {
     // 'Id',
     // 'Class',
     'Device',
+    'Channel',
     'Preset',
     'Pitch',
     '',

@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.sequencer.model.Ticker;
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 
 import jakarta.persistence.*;
 
@@ -36,13 +36,13 @@ public class Strike extends AbstractPlayer {
         setNote(KICK);
     }
 
-    public Strike(String name, Ticker ticker, MidiInstrument instrument, long note,
+    public Strike(String name, Ticker ticker, Instrument instrument, long note,
             List<Integer> allowedControlMessages) {
         super(name, ticker, instrument, allowedControlMessages);
         setNote(note);
     }
 
-    public Strike(String name, Ticker ticker, MidiInstrument instrument, long note,
+    public Strike(String name, Ticker ticker, Instrument instrument, long note,
             List<Integer> allowableControlMessages, long minVelocity, long maxVelocity) {
         super(name, ticker, instrument, allowableControlMessages);
         setNote(note);

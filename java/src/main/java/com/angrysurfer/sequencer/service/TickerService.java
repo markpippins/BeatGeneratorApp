@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.angrysurfer.sequencer.dao.TickerStatus;
 import com.angrysurfer.sequencer.model.Ticker;
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.repo.RuleRepo;
 import com.angrysurfer.sequencer.repo.StrikeRepo;
 import com.angrysurfer.sequencer.repo.TickerRepo;
@@ -64,7 +64,7 @@ public class TickerService {
         getSongService().getSong().setTicksPerBeat(getTicker().getTicksPerBeat());
 
         this.ticker.getPlayers().forEach(p -> {
-            MidiInstrument instrument = p.getInstrument();
+            Instrument instrument = p.getInstrument();
             MidiDevice device = MIDIService.getMidiDevice(instrument.getDeviceName());
 
             if (!device.isOpen())
@@ -84,14 +84,14 @@ public class TickerService {
             new Thread(getClockSource()).start();
         }
 
-        getTicker().getPlayers().forEach(p -> {
-            try {
-                if (p.getPreset() > 0)
-                    p.getInstrument().programChange(p.getPreset(), 0);
-            } catch (InvalidMidiDataException | MidiUnavailableException e) {
-                logger.error(e.getMessage(), e);
-            }
-        });
+        // getTicker().getPlayers().forEach(p -> {
+        //     try {
+        //         if (p.getPreset() > 0)
+        //             p.getInstrument().programChange(p.getPreset(), 0);
+        //     } catch (InvalidMidiDataException | MidiUnavailableException e) {
+        //         logger.error(e.getMessage(), e);
+        //     }
+        // });
 
     }
 
@@ -102,6 +102,11 @@ public class TickerService {
 
     public Ticker stop() {
         stopRunningClocks();
+        getTicker().setPaused(false);
+        getTicker().getBeatCycler().reset();
+        getTicker().getBarCycler().reset();
+        getTicker().setDone(false);
+        getTicker().reset();
         return getTicker();
     }
 

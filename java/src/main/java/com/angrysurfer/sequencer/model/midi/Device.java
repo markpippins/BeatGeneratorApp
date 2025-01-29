@@ -13,9 +13,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MidiDeviceInfo implements Serializable {
+public class Device implements Serializable {
 
-    static Logger logger = LoggerFactory.getLogger(MidiDeviceInfo.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(Device.class.getCanonicalName());
 
     private final String name;
 
@@ -37,7 +37,9 @@ public class MidiDeviceInfo implements Serializable {
 
     private String transmitters;
 
-    public MidiDeviceInfo(MidiDevice device) {
+    private Integer[] channels;
+
+    public Device(MidiDevice device) {
 
         this.name = device.getDeviceInfo().getName();
         this.vendor = device.getDeviceInfo().getVendor();

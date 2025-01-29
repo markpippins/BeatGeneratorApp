@@ -17,6 +17,9 @@
         <app-instrument-selector (instrumentSelectEvent)="onInstrumentSelected($event, player)"
           [instruments]="instruments" [player]="player"></app-instrument-selector>
       </td>
+      <td class="shortest-col" id="player-col-channel-{{player.id}}" (change)="onChannelChange(player, $event)">
+        <input type="number" min="0" Amax="16" step="1" value="{{ player.channel }}">
+      </td>
       <td class="shortest-col" id="player-col-preset-{{player.id}}" (change)="onPresetChange(player, $event)">
         <input type="number" min="0" step="1" value="{{ player.preset }}">
       </td>

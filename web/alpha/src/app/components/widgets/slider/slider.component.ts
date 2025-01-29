@@ -10,6 +10,10 @@ import {MidiMessage} from "../../../models/midi-message"
   styleUrls: ['./slider.component.css']
 })
 export class SliderComponent {
+
+  @Input()
+  instrumentId!: number
+
   @Input()
   channel!: number
 
@@ -32,6 +36,6 @@ export class SliderComponent {
   constructor(private midiService: MidiService) {
   }
   onChange() {
-    this.midiService.sendMessage(MidiMessage.CONTROL_CHANGE, this.channel, this.cc, this.value)
+    this.midiService.sendMessage(this.instrumentId, this.channel, MidiMessage.CONTROL_CHANGE, this.cc, this.value)
   }
 }

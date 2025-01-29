@@ -3,7 +3,7 @@ package com.angrysurfer.sequencer.service;
 import com.angrysurfer.sequencer.config.SystemConfig;
 import com.angrysurfer.sequencer.dao.BeatConfig;
 import com.angrysurfer.sequencer.model.*;
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.model.player.AbstractPlayer;
 import com.angrysurfer.sequencer.model.player.Strike;
 import com.angrysurfer.sequencer.repo.*;
@@ -95,11 +95,11 @@ public class PlayerService {
     }
 
     public AbstractPlayer addPlayer(String instrumentName) {
-        MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
+        Instrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
         return addPlayer(midiInstrument, getNoteForMidiInstrument(midiInstrument));
     }
 
-    private long getNoteForMidiInstrument(MidiInstrument midiInstrument) {
+    private long getNoteForMidiInstrument(Instrument midiInstrument) {
         Long note = Objects.nonNull(midiInstrument.getLowestNote()) ? midiInstrument.getLowestNote() : 60L;
         List<AbstractPlayer> players = getTickerService().getTicker().getPlayers().stream()
                 .filter(p -> p.getInstrumentId().equals(midiInstrument.getId())).toList();
@@ -107,20 +107,20 @@ public class PlayerService {
     }
 
     public AbstractPlayer addPlayer(String instrumentName, Long note) {
-        MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
+        Instrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
         return addPlayer(midiInstrument, note);
     }
 
     public AbstractPlayer addPlayer(Long instrumentId) {
-        MidiInstrument midiInstrument = getMidiInstrumentRepo().findById(instrumentId).orElseThrow();
+        Instrument midiInstrument = getMidiInstrumentRepo().findById(instrumentId).orElseThrow();
         return addPlayer(midiInstrument);
     }
 
-    public AbstractPlayer addPlayer(MidiInstrument midiInstrument) {
+    public AbstractPlayer addPlayer(Instrument midiInstrument) {
         return addPlayer(midiInstrument, getNoteForMidiInstrument(midiInstrument));
     }
 
-    public AbstractPlayer addPlayer(MidiInstrument midiInstrument, long note) {
+    public AbstractPlayer addPlayer(Instrument midiInstrument, long note) {
 
         tickerRepo.flush();
 
@@ -238,7 +238,7 @@ public class PlayerService {
             }
 
             case INSTRUMENT -> {
-                MidiInstrument instrument = getMidiInstrumentRepo().findById((long) updateValue).orElseThrow(null);
+                Instrument instrument = getMidiInstrumentRepo().findById((long) updateValue).orElseThrow(null);
                 instrument.setDevice(MIDIService.getMidiDevice(instrument.getDeviceName()));
                 player.setInstrument(instrument);
                 break;
@@ -247,7 +247,10 @@ public class PlayerService {
             case PRESET -> {
                 try {
                     player.setPreset(updateValue);
-                    player.getInstrument().programChange(updateValue, 0);
+                    Instrument instrument = getMidiInstrumentRepo().findById((long) player.getInstrumentId()).orElseThrow(null);
+                    instrument.setDevice(MIDIService.getMidiDevice(instrument.getDeviceName()));
+                    instrument.programChange(updateValue, 0);
+                    player.setInstrument(instrument);
                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
                     logger.error(e.getMessage(), e);
                 }
@@ -483,7 +486,7 @@ public class PlayerService {
 
     public void playDrumNote(String instrumentName, int channel, int note) {
 
-        MidiInstrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
+        Instrument midiInstrument = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
         midiInstrument.setDevice(MIDIService.getMidiDevice(midiInstrument.getDeviceName()));
 
         log.info(String.join(", ", instrumentName, Integer.toString(channel), Integer.toString(note)));

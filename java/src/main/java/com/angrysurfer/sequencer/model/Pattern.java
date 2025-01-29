@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.util.Constants;
 import com.angrysurfer.sequencer.util.Cycler;
 import com.angrysurfer.sequencer.util.Quantizer;
@@ -98,7 +98,7 @@ public class Pattern {
     // @JsonIgnore
     @Transient
     @JoinColumn(name = "instrument_id")
-    private MidiInstrument instrument;
+    private Instrument instrument;
 
     @JsonIgnore
     @Transient

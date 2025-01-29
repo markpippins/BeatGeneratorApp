@@ -18,7 +18,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.angrysurfer.sequencer.Application;
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.repo.ControlCodeRepo;
 import com.angrysurfer.sequencer.repo.MidiInstrumentRepo;
 import com.angrysurfer.sequencer.repo.PadRepo;
@@ -64,7 +64,7 @@ public class MIDIServiceTests {
     @Before
     public void setUp() {
         if (!midiInstrumentRepository.findByName(RAZ).isPresent()) {
-            MidiInstrument raz = new MidiInstrument();
+            Instrument raz = new Instrument();
             raz.setName(RAZ);
             raz.setDeviceName(DEVICE);
             raz.setChannel(9);

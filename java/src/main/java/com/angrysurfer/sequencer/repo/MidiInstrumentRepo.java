@@ -5,12 +5,12 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 
-public interface MidiInstrumentRepo extends JpaRepository<MidiInstrument, Long> {
+public interface MidiInstrumentRepo extends JpaRepository<Instrument, Long> {
 
-    public List<MidiInstrument> findByChannel(int channel);
+    public List<Instrument> findByChannel(int channel);
 
-    public Optional<MidiInstrument> findByName(String instrument);
+    public Optional<Instrument> findByName(String instrument);
 
 }

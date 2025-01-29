@@ -28,7 +28,7 @@ export class MidiKnobComponent {
   }
 
   onChange() {
-    this.midiService.sendMessage(MidiMessage.CONTROL_CHANGE, this.instrument.channel, this.cc, this.value)
+    this.midiService.sendMessage(this.instrument.id, this.instrument.channel, MidiMessage.CONTROL_CHANGE, this.cc, this.value)
   }
 
   getMaxValue() {

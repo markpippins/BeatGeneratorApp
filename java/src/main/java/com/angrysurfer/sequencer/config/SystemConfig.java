@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.angrysurfer.sequencer.model.midi.ControlCode;
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.model.ui.Caption;
 import com.angrysurfer.sequencer.repo.CaptionRepo;
 import com.angrysurfer.sequencer.repo.ControlCodeRepo;
@@ -22,12 +22,12 @@ import lombok.Setter;
 @Setter
 public class SystemConfig implements Serializable {
     static ObjectMapper mapper = new ObjectMapper();
-    List<MidiInstrument> instruments = new ArrayList<>();
+    List<Instrument> instruments = new ArrayList<>();
 
     public SystemConfig() {
     }
 
-    public SystemConfig(List<MidiInstrument> instruments) {
+    public SystemConfig(List<Instrument> instruments) {
         this.instruments = instruments;
     }
 
@@ -41,7 +41,7 @@ public class SystemConfig implements Serializable {
         config.getInstruments().forEach(instrument -> {
             instrument.setAvailable(instrumentNames.contains(instrument.getName()));
             instrument = midiInstrumentRepo.save(instrument);
-            MidiInstrument finalInstrumentDef = instrument;
+            Instrument finalInstrumentDef = instrument;
             instrument.getAssignments().keySet().forEach(code -> {
                 ControlCode controlCode = new ControlCode();
                 controlCode.setCode(code);

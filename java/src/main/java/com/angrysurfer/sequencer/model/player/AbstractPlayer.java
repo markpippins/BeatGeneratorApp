@@ -3,7 +3,7 @@ package com.angrysurfer.sequencer.model.player;
 import com.angrysurfer.sequencer.model.Pad;
 import com.angrysurfer.sequencer.model.Rule;
 import com.angrysurfer.sequencer.model.Ticker;
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.util.Comparison;
 import com.angrysurfer.sequencer.util.Cycler;
 import com.angrysurfer.sequencer.util.Operator;
@@ -123,7 +123,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "instrument_id")
-    private MidiInstrument instrument;
+    private Instrument instrument;
 
     @JsonIgnore
     @ManyToOne()
@@ -139,13 +139,13 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
 
     }
 
-    public AbstractPlayer(String name, Ticker ticker, MidiInstrument instrument) {
+    public AbstractPlayer(String name, Ticker ticker, Instrument instrument) {
         setName(name);
         setInstrument(instrument);
         setTicker(ticker);
     }
 
-    public AbstractPlayer(String name, Ticker ticker, MidiInstrument instrument, List<Integer> allowedControlMessages) {
+    public AbstractPlayer(String name, Ticker ticker, Instrument instrument, List<Integer> allowedControlMessages) {
         this(name, ticker, instrument);
         setAllowedControlMessages(allowedControlMessages);
     }
@@ -171,7 +171,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
         return getSubCycler().get();
     }
 
-    public void setInstrument(MidiInstrument instrument) {
+    public void setInstrument(Instrument instrument) {
         this.instrument = instrument;
     }
 

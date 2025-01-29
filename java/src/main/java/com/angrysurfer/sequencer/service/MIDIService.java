@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.sequencer.exception.MidiDeviceException;
-import com.angrysurfer.sequencer.model.midi.MidiDeviceInfo;
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Device;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 
 @Service
 public class MIDIService {
@@ -85,7 +85,7 @@ public class MIDIService {
     }
 
     // Improved error handling and validation
-    public static List<MidiDeviceInfo> getMidiDeviceInfos() {
+    public static List<Device> getMidiDeviceInfos() {
         logger.info("getMidiDeviceInfos");
         try {
             return Arrays.stream(MidiSystem.getMidiDeviceInfo())
@@ -93,7 +93,7 @@ public class MIDIService {
                     .map(info -> {
                         try {
                             MidiDevice device = MidiSystem.getMidiDevice(info);
-                            return device != null ? new MidiDeviceInfo(device) : null;
+                            return device != null ? new Device(device) : null;
                         } catch (MidiUnavailableException ex) {
                             logger.warn("Failed to get MIDI device: " + info.getName(), ex);
                             return null;
@@ -155,7 +155,7 @@ public class MIDIService {
     }
 
     // Improved message sending with validation
-    public void sendMessage(MidiInstrument instrument, int messageType, int data1, int data2) {
+    public void sendMessage(Instrument instrument, int messageType, int data1, int data2) {
         if (instrument == null) {
             throw new IllegalArgumentException("Instrument cannot be null");
         }

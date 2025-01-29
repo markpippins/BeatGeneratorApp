@@ -1,5 +1,6 @@
 package com.angrysurfer.sequencer.model.midi;
 
+import com.angrysurfer.sequencer.converter.IntegerArrayConverter;
 import com.angrysurfer.sequencer.model.Pad;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -21,9 +22,9 @@ import java.util.concurrent.atomic.AtomicReference;
 @Getter
 @Setter
 @Entity
-public class MidiInstrument implements Serializable {
+public class Instrument implements Serializable {
 
-    static Logger logger = LoggerFactory.getLogger(MidiInstrument.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
 
     static final Random rand = new Random();
 
@@ -69,6 +70,10 @@ public class MidiInstrument implements Serializable {
     private String deviceName;
 
     private Integer channel;
+
+    @Convert(converter = IntegerArrayConverter.class)
+    @Column(name = "channels")
+    private Integer[] channels;
     
     private Integer lowestNote = 0;
     
@@ -84,11 +89,11 @@ public class MidiInstrument implements Serializable {
     
     private Boolean available = false;
 
-    public MidiInstrument() {
+    public Instrument() {
 
     }
 
-    public MidiInstrument(String name, MidiDevice device, int channel) {
+    public Instrument(String name, MidiDevice device, int channel) {
         setName(Objects.isNull(name) ? device.getDeviceInfo().getName() : name);
         setDevice(device);
         setDeviceName(device.getDeviceInfo().getName());

@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.repo.MidiInstrumentRepo;
 
 import lombok.Getter;
@@ -26,17 +26,17 @@ public class InstrumentService {
         this.instrumentRepo = instrumentRepo;
     }
 
-    public List<MidiInstrument> getAllInstruments() {
+    public List<Instrument> getAllInstruments() {
         return instrumentRepo.findAll().stream().filter(i -> i.getAvailable()).collect(Collectors.toList());
     }
 
-    public List<MidiInstrument> getInstrumentByChannel(int channel) {
+    public List<Instrument> getInstrumentByChannel(int channel) {
         logger.info(String.format("getInstrumentByChannel(%s)", channel));
         return getAllInstruments().stream().filter(i -> i.getChannel() == channel)
                 .collect(Collectors.toList());
     }
 
-    public MidiInstrument getInstrumentById(Long id) {
+    public Instrument getInstrumentById(Long id) {
         logger.info(String.format("getInstrumentById(%s)", id));
         return instrumentRepo.findById(id).orElseThrow();
     }

@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Bean;
 
 import com.angrysurfer.sequencer.config.SystemConfig;
 import com.angrysurfer.sequencer.model.Pad;
-import com.angrysurfer.sequencer.model.midi.MidiInstrument;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.model.player.Strike;
 import com.angrysurfer.sequencer.repo.CaptionRepo;
 import com.angrysurfer.sequencer.repo.ControlCodeRepo;
@@ -55,7 +55,7 @@ public class Application {
                 if (device.getMaxTransmitters() == -1)
                     return;
 
-                MidiInstrument instrument = new MidiInstrument(device.getDeviceInfo().getName(), device, 5);
+                Instrument instrument = new Instrument(device.getDeviceInfo().getName(), device, 5);
                 instrument.setAvailable(true);
                 midiInstrumentRepo.save(instrument);
                 instrumentNames.add(instrument.getName());
@@ -74,7 +74,7 @@ public class Application {
         };
     }
 
-    private void addPadInfo(MidiInstrument instrumentInfo) {
+    private void addPadInfo(Instrument instrumentInfo) {
         int padCount = instrumentInfo.getHighestNote() - instrumentInfo.getLowestNote();
         if (padCount == 8) {
             List<Pad> pads = new ArrayList<>(IntStream.range(0, 8).mapToObj(i -> new Pad()).toList());
