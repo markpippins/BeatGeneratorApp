@@ -228,7 +228,7 @@ export class DashboardComponent implements OnInit, Listener {
             this.ticker = data;
             this.uiService.notifyAll(Constants.TICKER_STOPPED, '', 0);
           });
-          this.players = [];
+
           this.updateDisplay();
           break;
         }

@@ -70,8 +70,6 @@ public class Instrument implements Serializable {
     private String name;
     
     private String deviceName;
-
-    // private Integer channel;
     
     @Convert(converter = IntegerArrayConverter.class)
     @Column(name = "channels")

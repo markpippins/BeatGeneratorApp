@@ -9,9 +9,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,6 +98,8 @@ public class ClockSource implements Runnable {
                 Thread.sleep(10);
             }
 
+            playing.set(false);
+            
             // Cleanup
             timer.stop();
             timerThread.join();
@@ -121,8 +120,14 @@ public class ClockSource implements Runnable {
 
     public Ticker stop() {
         setStopped(true);
-        // if (Objects.nonNull(sequencer) && sequencer.isRunning())
-        // sequencer.stop();
+
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
         getTicker().setPaused(false);
         getTicker().getBeatCycler().reset();
         getTicker().getBarCycler().reset();
