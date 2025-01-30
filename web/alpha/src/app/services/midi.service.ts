@@ -80,23 +80,24 @@ export class MidiService {
       'http://localhost:8080/api/devices/info');
   }
 
-  instrumentInfoByChannel(channel: number) {
+  instrumentInfoByChannel(device: string, channel: number) {
     let params = new HttpParams();
     params = params.append('channel', channel);
+    params = params.append('device', device);
     return this.http.get<Instrument>(
       'http://localhost:8080/api/midi/instrument',
       { params: params }
     );
   }
 
-  instrumentInfoByName(name: string) {
-    let params = new HttpParams();
-    params = params.append('name', name);
-    return this.http.get<Instrument>(
-      'http://localhost:8080/api/midi/instrument',
-      { params: params }
-    );
-  }
+  // instrumentInfoByName(name: string) {
+  //   let params = new HttpParams();
+  //   params = params.append('name', name);
+  //   return this.http.get<Instrument>(
+  //     'http://localhost:8080/api/midi/instrument',
+  //     { params: params }
+  //   );
+  // }
 
   instrumentInfoById(instrumentId: number) {
     let params = new HttpParams();
