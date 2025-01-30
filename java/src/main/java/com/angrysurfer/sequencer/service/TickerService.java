@@ -84,14 +84,14 @@ public class TickerService {
             new Thread(getClockSource()).start();
         }
 
-        // getTicker().getPlayers().forEach(p -> {
-        //     try {
-        //         if (p.getPreset() > 0)
-        //             p.getInstrument().programChange(p.getPreset(), 0);
-        //     } catch (InvalidMidiDataException | MidiUnavailableException e) {
-        //         logger.error(e.getMessage(), e);
-        //     }
-        // });
+        getTicker().getPlayers().forEach(p -> {
+            try {
+                if (p.getPreset() > 0)
+                    p.getInstrument().programChange(p.getChannel(), p.getPreset(), 0);
+            } catch (InvalidMidiDataException | MidiUnavailableException e) {
+                logger.error(e.getMessage(), e);
+            }
+        });
 
     }
 

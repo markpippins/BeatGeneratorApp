@@ -232,6 +232,11 @@ public class PlayerService {
         AbstractPlayer player = getTickerService().getTicker().getPlayer(playerId);
         // strikeRepository.findById(playerId).orElseThrow();
         switch (updateType) {
+            case CHANNEL -> {
+                player.setChannel((int) updateValue);
+                break;
+            }
+
             case NOTE -> {
                 player.setNote(updateValue);
                 break;
@@ -247,7 +252,8 @@ public class PlayerService {
             case PRESET -> {
                 try {
                     player.setPreset(updateValue);
-                    Instrument instrument = getMidiInstrumentRepo().findById((long) player.getInstrumentId()).orElseThrow(null);
+                    Instrument instrument = getMidiInstrumentRepo().findById((long) player.getInstrumentId())
+                            .orElseThrow(null);
                     instrument.setDevice(MIDIService.getMidiDevice(instrument.getDeviceName()));
                     instrument.programChange(player.getChannel(), updateValue, 0);
                     player.setInstrument(instrument);
@@ -330,12 +336,6 @@ public class PlayerService {
                 player.setFadeOut(updateValue);
                 break;
             }
-
-            case CHANNEL -> {
-                // strike.setChannel(updateValue > 0 ? true : false);
-                break;
-            }
-
         }
 
         if (player instanceof Strike)
