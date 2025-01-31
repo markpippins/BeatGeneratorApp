@@ -1,5 +1,7 @@
 *.class
 .gitignore
-java/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
-java/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+java/target/maven-status/maven-compiler-plugin/compile/default-compile/*.*
 java/target/classes/config/midi.json
+java/target/classes/application.properties
+java/target/classes/application.properties
+java/target/classes/application.properties

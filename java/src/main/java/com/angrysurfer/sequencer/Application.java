@@ -18,7 +18,7 @@ public class Application {
 
     static ObjectMapper mapper = new ObjectMapper();
     
-    @Value("${midi.config.filepath}")
+    @Value("${sys.config.filepath}")
     private String configFilepath;
 
     public static void main(String[] args) {
@@ -31,7 +31,7 @@ public class Application {
             ControlCodeRepo controlCodeRepo,
             CaptionRepo captionRepo) {
         return args -> {
-            SystemConfig.startupRoutine(configFilepath, midiInstrumentRepo, controlCodeRepo, captionRepo, padRepo);
+            SystemConfig.loadDefaults(configFilepath, midiInstrumentRepo, controlCodeRepo, captionRepo, padRepo);
         };
     }
 
