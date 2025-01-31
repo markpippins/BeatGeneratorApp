@@ -83,8 +83,8 @@ public class SystemConfig implements Serializable {
 
                 // Process control codes
                 if (!dbInstrument.getControlCodes().isEmpty())
-                    processControlCodesCaptionsAssignmentsAndBoundaries(dbInstrument, controlCodeRepo, captionRepo,
-                            config);
+                    processControlCodesCaptionsAssignmentsAndBoundaries(dbInstrument, configInstrument, controlCodeRepo,
+                            captionRepo);
 
                 try {
                     // Save instrument
@@ -94,12 +94,12 @@ public class SystemConfig implements Serializable {
                 }
 
                 // Process pads if needed
-                addPadInfo(midiInstrumentRepo, padRepo, dbInstrument);
+                // addPadInfo(midiInstrumentRepo, padRepo, dbInstrument);
             });
         }
 
         // Save current state back to file
-        saveCurrentStateToFile(filepath, midiInstrumentRepo);
+        // saveCurrentStateToFile(filepath, midiInstrumentRepo);
     }
 
     private static Instrument updateExistingInstrument(Instrument source, Instrument target) {
@@ -110,108 +110,55 @@ public class SystemConfig implements Serializable {
         target.setHighestNote(source.getHighestNote());
         target.setHighestPreset(source.getHighestPreset());
         target.setPreferredPreset(source.getPreferredPreset());
-        target.setAssignments(source.getAssignments());
-        target.setBoundaries(source.getBoundaries());
-        target.setCaptions(source.getCaptions());
+        // target.setAssignments(source.getAssignments());
+        // target.setBoundaries(source.getBoundaries());
+        // target.setCaptions(source.getCaptions());
         return target;
     }
 
-    // private static void processControlCodes(Instrument instrument,
-    // ControlCodeRepo controlCodeRepo,
-    // CaptionRepo captionRepo) {
-    // instrument.getAssignments().keySet().forEach(code -> {
-    // try {
-    // // Check if control code already exists
-    // ControlCode controlCode = controlCodeRepo.findById(code)
-    // .orElseGet(ControlCode::new);
-
-    // // Update or set new values
-    // controlCode.setCode(code);
-    // controlCode.setName(instrument.getAssignments().get(code));
-
-    // if (instrument.getBoundaries().containsKey(code)) {
-    // controlCode.setLowerBound(instrument.getBoundaries().get(code)[0]);
-    // controlCode.setUpperBound(instrument.getBoundaries().get(code)[1]);
-
-    // if (instrument.getCaptions().containsKey(code)) {
-    // try {
-    // controlCode.setCaptions(instrument.getCaptions().get(code)
-    // .entrySet().stream()
-    // .map(es -> {
-    // Caption caption = new Caption();
-    // caption.setCode(es.getKey());
-    // caption.setDescription(es.getValue().strip());
-    // return captionRepo.save(caption);
-    // })
-    // .collect(Collectors.toSet()));
-    // } catch (Exception e) {
-    // log.warn("Failed to process captions for control code {}: {}", code,
-    // e.getMessage());
-    // }
-    // }
-    // }
-
-    // // Save control code and add to instrument
-    // controlCode = controlCodeRepo.save(controlCode);
-    // instrument.getControlCodes().add(controlCode);
-
-    // } catch (Exception e) {
-    // log.error("Failed to process control code {}: {}", code, e.getMessage());
-    // }
-    // });
-    // }
-
-    private static void processControlCodesCaptionsAssignmentsAndBoundaries(Instrument instrument,
+    private static void processControlCodesCaptionsAssignmentsAndBoundaries(Instrument dbInstrument,
+            Instrument configInstrument,
             ControlCodeRepo controlCodeRepo,
-            CaptionRepo captionRepo, SystemConfig config) {
+            CaptionRepo captionRepo) {
 
-        List<ControlCode> controlCodes = new ArrayList<>();
-        controlCodes.addAll(instrument.getControlCodes());
+        dbInstrument.getControlCodes().clear(); // Clear existing control codes for
+        dbInstrument.getAssignments().clear();
+        dbInstrument.getBoundaries().clear();
+        dbInstrument.getCaptions().clear();
 
-        instrument.getControlCodes().clear(); // Clear existing control codes for
-        instrument.getAssignments().clear();
-        instrument.getBoundaries().clear();
-        instrument.getCaptions().clear();
-        
         // instrument.getAssignments().keySet().forEach(code -> {
-        controlCodes.forEach(cc -> {
+        configInstrument.getControlCodes().forEach(cc -> {
             Integer code = cc.getCode();
             ControlCode controlCode = new ControlCode();
             controlCode.setCode(code);
             controlCode.setName(cc.getName());
             controlCode.setLowerBound(cc.getLowerBound());
             controlCode.setUpperBound(cc.getUpperBound());
-            controlCode.setCaptions(cc.getCaptions());
-            controlCode.setPad(cc.getPad());
+            // controlCode.setPad(cc.getPad());
             controlCode.setBinary(cc.getBinary());
-
-            instrument.getAssignments().put(cc.getCode(), cc.getName());
-            instrument.getBoundaries().put(cc.getCode(), new Integer[]{cc.getLowerBound(), cc.getUpperBound()});
-            instrument.getCaptions().put(cc.getCode(), cc.getCaptions().stream().collect(Collectors.toMap(Caption::getCode, Caption::getDescription))); 
-
-            // if (instrument.getAssignments().containsKey(code)) {
-            //     controlCode.setName(instrument.getAssignments().get(code));
-            // }
-            // controlCode.setName(instrument.getAssignments().get(code));
-
-            if (instrument.getBoundaries().containsKey(code)) {
-                controlCode.setLowerBound(instrument.getBoundaries().get(code)[0]);
-                controlCode.setUpperBound(instrument.getBoundaries().get(code)[1]);
-
-                if (instrument.getCaptions().containsKey(code)) {
-                    controlCode.setCaptions(instrument.getCaptions().get(code)
-                            .entrySet().stream()
-                            .map(es -> {
-                                Caption caption = new Caption();
-                                caption.setCode(es.getKey());
-                                caption.setDescription(es.getValue().strip());
-                                return captionRepo.save(caption);
-                            })
-                            .collect(Collectors.toSet()));
-                }
+            if (!cc.getCaptions().isEmpty()) {
+                List<Caption> newCaptions = new ArrayList<>();
+                cc.getCaptions().forEach(cap -> {
+                    Caption caption = new Caption();
+                    caption.setCode(cap.getCode());
+                    caption.setDescription(cap.getDescription());
+                    caption = captionRepo.save(caption);
+                    newCaptions.add(caption);
+                });
+                controlCode.getCaptions().addAll(newCaptions);
             }
             controlCode = controlCodeRepo.save(controlCode);
-            instrument.getControlCodes().add(controlCode);
+
+            dbInstrument.getAssignments().put(controlCode.getCode(), controlCode.getName());
+            dbInstrument.getBoundaries().put(controlCode.getCode(),
+                    new Integer[] { controlCode.getLowerBound(), controlCode.getUpperBound() });
+
+            if (!controlCode.getCaptions().isEmpty())
+                dbInstrument.getCaptions().put(controlCode.getCode(),
+                        controlCode.getCaptions().stream()
+                                .collect(Collectors.toMap(Caption::getCode, Caption::getDescription)));
+
+            dbInstrument.getControlCodes().add(controlCode);
         });
     }
 
@@ -293,10 +240,4 @@ public class SystemConfig implements Serializable {
         return copy;
     }
 
-    // public Boundary copy(Boundary boundary) {
-    // Boundary copy = new Boundary();
-    // copy.setLowerBound(boundary.getLowerBound());
-    // copy.setUpperBound(boundary.getUpperBound());
-    // return copy;
-    // }
 }
