@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -86,6 +87,16 @@ public class SystemConfig implements Serializable {
                     processControlCodesCaptionsAssignmentsAndBoundaries(dbInstrument, configInstrument, controlCodeRepo,
                             captionRepo);
 
+                if (Objects.isNull(dbInstrument.getHighestNote()) || dbInstrument.getHighestNote() == 0)
+                    dbInstrument.setHighestNote(127);
+
+                if (Objects.isNull(dbInstrument.getLowestNote()))
+                    dbInstrument.setLowestNote(0);
+
+                // Process pads if needed
+                if (dbInstrument.getHighestNote() - dbInstrument.getLowestNote() != 127)
+                    addPadInfo(padRepo, dbInstrument);
+
                 try {
                     // Save instrument
                     dbInstrument = midiInstrumentRepo.save(dbInstrument);
@@ -93,8 +104,6 @@ public class SystemConfig implements Serializable {
                     System.out.println("Failed to save instrument: " + dbInstrument.getName());
                 }
 
-                // Process pads if needed
-                // addPadInfo(midiInstrumentRepo, padRepo, dbInstrument);
             });
         }
 
@@ -176,51 +185,73 @@ public class SystemConfig implements Serializable {
         prettyMapper.writeValue(outputFile, currentConfig);
     }
 
-    static void addPadInfo(MidiInstrumentRepo midiInstrumentRepo, PadRepo padRepo, Instrument instrumentInfo) {
-        int padCount = instrumentInfo.getHighestNote() - instrumentInfo.getLowestNote();
-        if (padCount == 8) {
-            List<Pad> pads = new ArrayList<>(IntStream.range(0, 8).mapToObj(i -> new Pad()).toList());
-            instrumentInfo.getControlCodes().forEach(cc -> {
-                if (Strike.kickParams.contains(cc.getCode()))
-                    pads.get(0).getControlCodes().add(cc.getCode());
+    static void addPadInfo(PadRepo padRepo, Instrument instrument) {
 
-                if (Strike.snarePrams.contains(cc.getCode()))
-                    pads.get(1).getControlCodes().add(cc.getCode());
+        List<Pad> pads = new ArrayList<>(IntStream.range(instrument.getLowestNote(), instrument.getHighestNote())
+                .mapToObj(note -> new Pad(note)).toList());
 
-                if (cc.getCode() > 23 && cc.getCode() < 29)
-                    pads.get(2).getControlCodes().add(cc.getCode());
+        instrument.getControlCodes().forEach(cc -> {
+            if (pads.size() > 0 && Strike.kickParams.contains(cc.getCode()))
+                pads.get(0).getControlCodes().add(cc.getCode());
 
-                if (cc.getCode() > 28 && cc.getCode() < 32)
-                    pads.get(3).getControlCodes().add(cc.getCode());
+            if (pads.size() > 1 && Strike.snarePrams.contains(cc.getCode()))
+                pads.get(1).getControlCodes().add(cc.getCode());
 
-                if (cc.getCode() > 31 && cc.getCode() < 40)
-                    pads.get(4).getControlCodes().add(cc.getCode());
+            if (pads.size() > 2 && cc.getCode() > 23 && cc.getCode() < 29)
+                pads.get(2).getControlCodes().add(cc.getCode());
 
-                if (cc.getCode() > 39 && cc.getCode() < 45)
-                    pads.get(3).getControlCodes().add(cc.getCode());
+            if (pads.size() > 3 && cc.getCode() > 28 && cc.getCode() < 32)
+                pads.get(3).getControlCodes().add(cc.getCode());
 
-                if (cc.getCode() > 44 && cc.getCode() < 56)
-                    pads.get(5).getControlCodes().add(cc.getCode());
+            if (pads.size() > 4 && cc.getCode() > 31 && cc.getCode() < 40)
+                pads.get(4).getControlCodes().add(cc.getCode());
 
-                if (cc.getCode() > 55 && cc.getCode() < 64)
-                    pads.get(6).getControlCodes().add(cc.getCode());
+            if (pads.size() > 5 && cc.getCode() > 39 && cc.getCode() < 45)
+                pads.get(5).getControlCodes().add(cc.getCode());
 
-                if (cc.getCode() > 63 && cc.getCode() < 72)
-                    pads.get(7).getControlCodes().add(cc.getCode());
-            });
+            if (pads.size() > 6 && cc.getCode() > 44 && cc.getCode() < 56)
+                pads.get(6).getControlCodes().add(cc.getCode());
 
-            pads.get(0).setName("Kick");
-            pads.get(1).setName("Snare");
-            pads.get(2).setName("Hi-Hat Closed");
-            pads.get(3).setName("Hi-Hat Open");
-            pads.get(4).setName("Ride");
-            pads.get(5).setName("Low Tom");
-            pads.get(6).setName("Mid Tom");
-            pads.get(7).setName("Hi Tom");
+            if (pads.size() > 7 && cc.getCode() > 55 && cc.getCode() < 64)
+                pads.get(7).getControlCodes().add(cc.getCode());
 
-            pads.forEach(pad -> instrumentInfo.getPads().add(padRepo.save(pad)));
-            midiInstrumentRepo.save(instrumentInfo);
-        }
+            if (pads.size() > 8 && cc.getCode() > 63 && cc.getCode() < 72)
+                pads.get(8).getControlCodes().add(cc.getCode());
+        });
+
+        pads.forEach(pad -> {
+            var index = pads.indexOf(pad);
+            switch (index) {
+                case 0:
+                    pad.setName("Kick");
+                    break;
+                case 1:
+                    pad.setName("Snare");
+                    break;
+                case 2:
+                    pad.setName("Closed Hi-Hat");
+                    break;
+                case 3:
+                    pad.setName("Open Hi-Hat");
+                    break;
+                case 4:
+                    pad.setName("Crash");
+                    break;
+                case 5:
+                    pad.setName("Low Tom");
+                    break;
+                case 6:
+                    pad.setName("Md Tom");
+                    break;
+                case 7:
+                    pad.setName("High Tom");
+                    break;
+                default:
+                    pad.setName(pad.getNote().toString());
+            }
+        });
+
+        pads.forEach(pad -> instrument.getPads().add(padRepo.save(pad)));
     }
 
     public ControlCode copy(ControlCode controlCode) {

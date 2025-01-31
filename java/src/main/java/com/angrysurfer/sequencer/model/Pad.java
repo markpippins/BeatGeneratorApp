@@ -18,9 +18,17 @@ public class Pad {
     private Long id;
 
     private Integer note;
-    
+
     @ElementCollection
     List<Integer> controlCodes = new ArrayList<>();
 
     private String name;
+
+    public Pad() {
+
+    }
+
+    public Pad(Integer note) {
+        this.note = note;
+    }
 }
