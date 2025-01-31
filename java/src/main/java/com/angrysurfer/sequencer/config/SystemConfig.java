@@ -32,7 +32,9 @@ import lombok.Setter;
 @Setter
 public class SystemConfig implements Serializable {
     static ObjectMapper mapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)       // Add this line
+            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false); // Add this line
     List<Instrument> instruments = new ArrayList<>();
 
     public SystemConfig() {
@@ -106,9 +108,6 @@ public class SystemConfig implements Serializable {
 
             });
         }
-
-        // Save current state back to file
-        // saveCurrentStateToFile(filepath, midiInstrumentRepo);
     }
 
     private static Instrument updateExistingInstrument(Instrument source, Instrument target) {
@@ -174,15 +173,61 @@ public class SystemConfig implements Serializable {
     public static void saveCurrentStateToFile(String filepath,
             MidiInstrumentRepo midiInstrumentRepo) throws IOException {
         SystemConfig currentConfig = new SystemConfig();
-        currentConfig.setInstruments(midiInstrumentRepo.findAll());
+        
+        // Create clean copies of instruments without circular references
+        List<Instrument> cleanInstruments = midiInstrumentRepo.findAll().stream()
+            .map(instrument -> {
+                Instrument clean = new Instrument();
+                clean.setName(instrument.getName());
+                clean.setDeviceName(instrument.getDeviceName());
+                clean.setChannels(instrument.getChannels());
+                clean.setLowestNote(instrument.getLowestNote());
+                clean.setHighestNote(instrument.getHighestNote());
+                clean.setHighestPreset(instrument.getHighestPreset());
+                clean.setPreferredPreset(instrument.getPreferredPreset());
+                clean.setHasAssignments(instrument.getHasAssignments());
+                clean.setPlayerClassName(instrument.getPlayerClassName());
+                clean.setAvailable(instrument.getAvailable());
+                
+                // Clean copy of control codes
+                clean.setControlCodes(instrument.getControlCodes().stream()
+                    .map(cc -> {
+                        ControlCode cleanCC = new ControlCode();
+                        cleanCC.setCode(cc.getCode());
+                        cleanCC.setName(cc.getName());
+                        cleanCC.setLowerBound(cc.getLowerBound());
+                        cleanCC.setUpperBound(cc.getUpperBound());
+                        cleanCC.setBinary(cc.getBinary());
+                        // Create clean copies of captions
+                        cleanCC.setCaptions(cc.getCaptions().stream()
+                            .map(cap -> {
+                                Caption cleanCap = new Caption();
+                                cleanCap.setCode(cap.getCode());
+                                cleanCap.setDescription(cap.getDescription());
+                                return cleanCap;
+                            })
+                            .collect(Collectors.toSet()));
+                        return cleanCC;
+                    })
+                    .collect(Collectors.toList()));
+                
+                return clean;
+            })
+            .collect(Collectors.toList());
+
+        currentConfig.setInstruments(cleanInstruments);
 
         // Configure mapper for pretty printing
-        ObjectMapper prettyMapper = new ObjectMapper();
-        prettyMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        ObjectMapper prettyMapper = new ObjectMapper()
+            .configure(SerializationFeature.INDENT_OUTPUT, true)
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
-        // Get actual file path for writing
+        // Write to file
         File outputFile = new File(filepath);
         prettyMapper.writeValue(outputFile, currentConfig);
+
+        System.out.println("config saved");
     }
 
     static void addPadInfo(PadRepo padRepo, Instrument instrument) {

@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Application {
 
     static ObjectMapper mapper = new ObjectMapper();
-    
+
     @Value("${sys.config.filepath}")
     private String configFilepath;
 
@@ -31,7 +31,15 @@ public class Application {
             ControlCodeRepo controlCodeRepo,
             CaptionRepo captionRepo) {
         return args -> {
-            SystemConfig.loadDefaults(configFilepath, midiInstrumentRepo, controlCodeRepo, captionRepo, padRepo);
+            try {
+                if (midiInstrumentRepo.count() == 0)
+                    SystemConfig.loadDefaults(configFilepath, midiInstrumentRepo, controlCodeRepo, captionRepo,
+                            padRepo);
+                // SystemConfig.saveCurrentStateToFile(configFilepath, midiInstrumentRepo);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         };
     }
 
