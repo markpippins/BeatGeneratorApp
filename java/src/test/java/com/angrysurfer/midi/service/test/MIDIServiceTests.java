@@ -19,11 +19,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.angrysurfer.sequencer.Application;
 import com.angrysurfer.sequencer.model.midi.Instrument;
-import com.angrysurfer.sequencer.repo.ControlCodeRepo;
-import com.angrysurfer.sequencer.repo.MidiInstrumentRepo;
-import com.angrysurfer.sequencer.repo.PadRepo;
-import com.angrysurfer.sequencer.repo.SongRepo;
-import com.angrysurfer.sequencer.repo.StepRepo;
+import com.angrysurfer.sequencer.repo.ControlCodes;
+import com.angrysurfer.sequencer.repo.Instruments;
+import com.angrysurfer.sequencer.repo.Pads;
+import com.angrysurfer.sequencer.repo.Songs;
+import com.angrysurfer.sequencer.repo.Steps;
 import com.angrysurfer.sequencer.service.MIDIService;
 
 @RunWith(SpringRunner.class)
@@ -42,19 +42,19 @@ public class MIDIServiceTests {
     MIDIService midiService;
 
     @Autowired
-    MidiInstrumentRepo midiInstrumentRepository;
+    Instruments midiInstrumentRepository;
 
     @Autowired
-    ControlCodeRepo controlCodeRepository;
+    ControlCodes controlCodeRepository;
 
     @Autowired
-    PadRepo padRepository;
+    Pads padRepository;
 
     @Autowired
-    StepRepo stepRepository;
+    Steps stepRepository;
 
     @Autowired
-    SongRepo songRepository;
+    Songs songRepository;
 
     static String RAZ = "raz";
     static String ZERO = "zero";

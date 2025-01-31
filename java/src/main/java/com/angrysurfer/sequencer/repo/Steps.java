@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.angrysurfer.sequencer.model.Step;
 
-public interface StepRepo extends JpaRepository<Step, Long> {
+public interface Steps extends JpaRepository<Step, Long> {
 
     Set<Step> findByPatternId(@Param("patternId") Long patternId);
 

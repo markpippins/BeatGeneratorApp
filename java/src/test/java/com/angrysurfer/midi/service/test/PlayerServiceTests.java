@@ -46,28 +46,28 @@ public class PlayerServiceTests {
     MIDIService midiService;
 
     @Autowired
-    StrikeRepo playerRepo;
+    Strikes playerRepo;
 
     @Autowired
-    RuleRepo ruleRepo;
+    Rules ruleRepo;
 
     @Autowired
-    TickerRepo tickerRepo;
+    Tickers tickerRepo;
 
     @Autowired
-    MidiInstrumentRepo midiInstrumentRepo;
+    Instruments midiInstrumentRepo;
 
     @Autowired
-    ControlCodeRepo controlCodeRepo;
+    ControlCodes controlCodeRepo;
 
     @Autowired
-    PadRepo padRepo;
+    Pads padRepo;
 
     @Autowired
-    StepRepo stepRepo;
+    Steps stepRepo;
 
     @Autowired
-    SongRepo songRepo;
+    Songs songRepo;
 
     static String RAZ = "razzmatazz";
     static String ZERO = "zero";

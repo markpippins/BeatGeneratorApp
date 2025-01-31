@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.angrysurfer.sequencer.model.player.Strike;
 
-public interface StrikeRepo extends JpaRepository<Strike, Long> {
+public interface Strikes extends JpaRepository<Strike, Long> {
 
    // @Query(value="select s.id from strike s where s.ticker_id  = :tickerId", nativeQuery = true)
    // List<Long> getIdsForTicker(@Param("tickerId") Long ticker_id);

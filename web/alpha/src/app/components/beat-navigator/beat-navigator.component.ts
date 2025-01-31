@@ -98,7 +98,7 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   }
 
   toggleNewPartOnSum(): void {
-    this.newPartOnSum =!this.newPartOnSum;
+    this.newPartOnSum = !this.newPartOnSum;
   }
 
   generate() {
@@ -242,9 +242,14 @@ export class BeatNavigatorComponent implements OnInit, Listener {
   }
 
   onNotify(messageType: number, _message: string, _messageValue: any) {
-    if (messageType == Constants.TICKER_UPDATED) this.updateDisplay();
+    console.log("NOTIFIED")
+    if (messageType == Constants.TICKER_UPDATED) {
+      this.updateDisplay();
+      console.log("TICKER_UPDATED")
+    }
 
     if (messageType == Constants.INSTRUMENT_SELECTED) {
+      console.log("INSTRUMENT_SELECTED")
       this.instruments
         .filter((instrument) => instrument.id == _messageValue)
         .forEach((instrument) => this.onInstrumentSelected(instrument));
@@ -252,16 +257,19 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     }
 
     if (messageType == Constants.BEAT_DIV) {
+      console.log("BEAT_DIV")
       this.beatIndicators = [];
       for (let i = 0; i < this.beats.length; i++)
         this.beatIndicators.push(i + 1 == _messageValue);
     }
     if (messageType == Constants.BAR_DIV) {
+      console.log("BAR_DIV")
       this.barIndicators = [];
       for (let i = 0; i < this.bars.length; i++)
         this.barIndicators.push(i + 1 == _messageValue);
     }
     if (messageType == Constants.PART_DIV) {
+      console.log("PART_DIV")
       this.partIndicators = [];
       for (let i = 0; i < this.parts.length; i++)
         this.partIndicators.push(i + 1 == _messageValue);

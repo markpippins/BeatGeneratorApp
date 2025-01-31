@@ -20,8 +20,8 @@ import com.angrysurfer.sequencer.Application;
 import com.angrysurfer.sequencer.model.Rule;
 import com.angrysurfer.sequencer.model.Ticker;
 import com.angrysurfer.sequencer.model.player.AbstractPlayer;
-import com.angrysurfer.sequencer.repo.StrikeRepo;
-import com.angrysurfer.sequencer.repo.TickerRepo;
+import com.angrysurfer.sequencer.repo.Strikes;
+import com.angrysurfer.sequencer.repo.Tickers;
 import com.angrysurfer.sequencer.service.PlayerService;
 import com.angrysurfer.sequencer.service.TickerService;
 import com.angrysurfer.sequencer.util.update.TickerUpdateType;
@@ -39,10 +39,10 @@ public class TickerServiceTests {
     static Logger logger = org.slf4j.LoggerFactory.getLogger(TickerServiceTests.class.getCanonicalName());
 
     @Autowired
-    StrikeRepo playerRepo;
+    Strikes playerRepo;
 
     @Autowired
-    TickerRepo tickerRepo;
+    Tickers tickerRepo;
 
     @Autowired
     TickerService tickerService;

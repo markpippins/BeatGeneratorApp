@@ -6,7 +6,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.angrysurfer.sequencer.model.Ticker;
 
-public interface TickerRepo extends JpaRepository<Ticker, Long> {
+public interface Tickers extends JpaRepository<Ticker, Long> {
     
     String NEXT_TICKER = "select * from ticker ti where ti.id = (select min(tii.id) from ticker tii WHERE tii.id > :currentTickerId)";
     @Query(value=NEXT_TICKER, nativeQuery = true)

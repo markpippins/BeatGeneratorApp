@@ -61,7 +61,7 @@ export class StatusPanelComponent implements OnInit {
     private zone: NgZone,
     private midiService: MidiService,
     private uiService: UiService
-  ) {}
+  ) { }
 
   private pulse = 0;
 
@@ -126,8 +126,9 @@ export class StatusPanelComponent implements OnInit {
     this.tickerSubscription = this.getTickerMessages().subscribe({
       next: (data: string) => {
         this.pulse++;
-        this.uiService.notifyAll(Constants.TICKER_CONNECTED, '', this.pulse);
         this.tickerStatus = JSON.parse(data);
+        if (this.tickerStatus.tickCount % this.tickerStatus.ticksPerBeat == 0)
+          this.uiService.notifyAll(Constants.TICKER_CONNECTED, '', this.pulse);
         this.updateDisplay();
       },
       error: (err: any) => console.error(err),

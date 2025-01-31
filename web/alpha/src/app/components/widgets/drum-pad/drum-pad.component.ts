@@ -58,6 +58,7 @@ export class DrumPadComponent implements Listener {
   pulse = 0;
 
   onNotify(_messageType: number, _message: string, _messageValue: number) {
+    console.log("NOTIFIED")
     if (_messageType == Constants.TICKER_CONNECTED && this.swirling) {
       this.pulse++;
       this.swirl.forward();

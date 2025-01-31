@@ -35,7 +35,9 @@ export class SliderPanelComponent implements OnInit, Listener {
 
   constructor(private midiService: MidiService, private uiService: UiService) { }
 
-  onNotify(_messageType: number, _message: string) { }
+  onNotify(_messageType: number, _message: string) {
+    console.log("NOTIFIED")
+  }
 
   onSelect(selectedChannel: number) {
     // this.instrument = undefined;

@@ -1,6 +1,6 @@
 package com.angrysurfer.sequencer.service;
 
-import com.angrysurfer.sequencer.config.SystemConfig;
+import com.angrysurfer.sequencer.config.DeviceConfig;
 import com.angrysurfer.sequencer.dao.BeatConfig;
 import com.angrysurfer.sequencer.model.*;
 import com.angrysurfer.sequencer.model.midi.Instrument;
@@ -41,27 +41,27 @@ public class PlayerService {
     static final String MICROFREAK = "MicroFreak";
     public static ObjectMapper mapper = new ObjectMapper();
     static Logger log = LoggerFactory.getLogger(PlayerService.class.getCanonicalName());
-    private final MidiInstrumentRepo midiInstrumentRepo;
-    private final ControlCodeRepo controlCodeRepository;
-    private final PadRepo padRepository;
+    private final Instruments midiInstrumentRepo;
+    private final ControlCodes controlCodeRepository;
+    private final Pads padRepository;
     private Song song;
     private MIDIService midiService;
-    private StrikeRepo strikeRepository;
-    private RuleRepo ruleRepository;
-    private TickerRepo tickerRepo;
-    private StepRepo stepDataRepository;
-    private SongRepo songRepository;
+    private Strikes strikeRepository;
+    private Rules ruleRepository;
+    private Tickers tickerRepo;
+    private Steps stepDataRepository;
+    private Songs songRepository;
     private ClockSource clockSource;
     private ArrayList<ClockSource> clocks = new ArrayList<>();
     private TickerService tickerService;
 
-    public PlayerService(MIDIService midiService, StrikeRepo strikeRepository,
-            RuleRepo ruleRepository, TickerRepo tickerRepo,
-            MidiInstrumentRepo midiInstrumentRepository,
-            ControlCodeRepo controlCodeRepository,
-            PadRepo padRepository,
-            StepRepo stepRepository,
-            SongRepo songRepository,
+    public PlayerService(MIDIService midiService, Strikes strikeRepository,
+            Rules ruleRepository, Tickers tickerRepo,
+            Instruments midiInstrumentRepository,
+            ControlCodes controlCodeRepository,
+            Pads padRepository,
+            Steps stepRepository,
+            Songs songRepository,
             TickerService tickerService) {
 
         this.midiService = midiService;
@@ -83,7 +83,7 @@ public class PlayerService {
             File file = new File(instruments);
             if (file.exists())
                 file.delete();
-            SystemConfig list = new SystemConfig();
+            DeviceConfig list = new DeviceConfig();
             list.getInstruments().addAll(getPlayers().stream().map(AbstractPlayer::getInstrument).distinct().toList());
             Files.write(file.toPath(),
                     Collections.singletonList(
@@ -429,7 +429,7 @@ public class PlayerService {
             File file = new File(instruments);
             if (file.exists())
                 file.delete();
-            SystemConfig list = new SystemConfig();
+            DeviceConfig list = new DeviceConfig();
             list.getInstruments().addAll(getPlayers().stream().map(p -> p.getInstrument()).distinct().toList());
             Files.write(file.toPath(),
                     Collections.singletonList(

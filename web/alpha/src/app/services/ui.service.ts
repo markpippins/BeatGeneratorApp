@@ -10,10 +10,12 @@ export class UiService {
   constructor() {}
 
   addListener(listener: Listener) {
+    console.log("ADDING LISTENER")
     this.listeners.push(listener);
   }
 
   notifyAll(_messageType: number, _message: string, _messageValue: any) {
+    console.log("NOTIFYING ALL")
     this.listeners.forEach((l) =>
       l.onNotify(_messageType, _message, _messageValue)
     );

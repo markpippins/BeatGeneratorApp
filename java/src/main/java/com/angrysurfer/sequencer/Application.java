@@ -1,16 +1,16 @@
 package com.angrysurfer.sequencer;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.beans.factory.annotation.Value;
 
-import com.angrysurfer.sequencer.config.SystemConfig;
-import com.angrysurfer.sequencer.repo.CaptionRepo;
-import com.angrysurfer.sequencer.repo.ControlCodeRepo;
-import com.angrysurfer.sequencer.repo.MidiInstrumentRepo;
-import com.angrysurfer.sequencer.repo.PadRepo;
+import com.angrysurfer.sequencer.config.DeviceConfig;
+import com.angrysurfer.sequencer.repo.Captions;
+import com.angrysurfer.sequencer.repo.ControlCodes;
+import com.angrysurfer.sequencer.repo.Instruments;
+import com.angrysurfer.sequencer.repo.Pads;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootApplication
@@ -26,16 +26,16 @@ public class Application {
     }
 
     @Bean
-    CommandLineRunner beatGeneratorSetup(MidiInstrumentRepo midiInstrumentRepo,
-            PadRepo padRepo,
-            ControlCodeRepo controlCodeRepo,
-            CaptionRepo captionRepo) {
+    CommandLineRunner beatGeneratorSetup(Instruments midiInstruments,
+            Pads pads,
+            ControlCodes controlCodes,
+            Captions captions) {
         return args -> {
             try {
-                if (midiInstrumentRepo.count() == 0)
-                    SystemConfig.loadDefaults(configFilepath, midiInstrumentRepo, controlCodeRepo, captionRepo,
-                            padRepo);
-                // SystemConfig.saveCurrentStateToFile(configFilepath, midiInstrumentRepo);
+                if (midiInstruments.count() == 0)
+                    DeviceConfig.loadDefaults(configFilepath, midiInstruments, controlCodes, captions,
+                            pads);
+                // SystemConfig.saveCurrentStateToFile(configFilepath, midiInstruments);
             } catch (Exception e) {
                 e.printStackTrace();
             }

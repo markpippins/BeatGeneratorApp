@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.sequencer.model.midi.Instrument;
-import com.angrysurfer.sequencer.repo.MidiInstrumentRepo;
+import com.angrysurfer.sequencer.repo.Instruments;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -20,9 +20,9 @@ public class InstrumentService {
 
     static Logger logger = LoggerFactory.getLogger(InstrumentService.class.getCanonicalName());
 
-    private MidiInstrumentRepo instrumentRepo;
+    private Instruments instrumentRepo;
 
-    public InstrumentService(MidiInstrumentRepo instrumentRepo) {
+    public InstrumentService(Instruments instrumentRepo) {
         this.instrumentRepo = instrumentRepo;
     }
 

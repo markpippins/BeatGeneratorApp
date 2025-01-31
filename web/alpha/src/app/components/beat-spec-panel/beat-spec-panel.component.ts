@@ -24,8 +24,7 @@ interface PitchPair {
   styleUrls: ['./beat-spec-panel.component.css'],
 })
 export class BeatSpecPanelComponent
-  implements Listener, OnInit, AfterContentChecked
-{
+  implements Listener, OnInit, AfterContentChecked {
   colors = [
     'violet',
     'lightsalmon',
@@ -93,17 +92,21 @@ export class BeatSpecPanelComponent
   }
 
   onNotify(messageType: number, _message: string, _messageValue: any) {
+    console.log("NOTIFIED")
     if (messageType == Constants.TICKER_STARTED) {
+      console.log("TICKER_STARTED")
       this.lastBeat = 0;
       this.swirling = false;
     }
 
     if (messageType == Constants.TICKER_STOPPED) {
+      console.log("TICKER_STOPPED")
       this.lastBeat = 0;
       this.swirling = true;
     }
 
     if (messageType == Constants.BEAT_DIV) {
+      console.log("BEAT_DIV")
       if (this.lastBeat > this.pattern.lastStep)
         this.lastBeat = this.pattern.firstStep;
       else if (this.lastBeat == 0) this.lastBeat = 1;

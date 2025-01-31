@@ -29,7 +29,14 @@ export class TickerService {
     activePlayerIds: [],
     part: 0,
     bars: 0,
-    parts: 0
+    parts: 0,
+    tickCount: 0,
+    barCount: 0,
+    beats: 0,
+    beatCount: 0,
+    partCount: 0,
+    noteOffset: 0,
+    players: []
   }
 
   constructor(private midiService: MidiService) { }

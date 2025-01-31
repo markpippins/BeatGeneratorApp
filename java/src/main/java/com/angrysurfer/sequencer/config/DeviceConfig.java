@@ -16,10 +16,10 @@ import com.angrysurfer.sequencer.model.midi.ControlCode;
 import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.model.player.Strike;
 import com.angrysurfer.sequencer.model.ui.Caption;
-import com.angrysurfer.sequencer.repo.CaptionRepo;
-import com.angrysurfer.sequencer.repo.ControlCodeRepo;
-import com.angrysurfer.sequencer.repo.MidiInstrumentRepo;
-import com.angrysurfer.sequencer.repo.PadRepo;
+import com.angrysurfer.sequencer.repo.Captions;
+import com.angrysurfer.sequencer.repo.ControlCodes;
+import com.angrysurfer.sequencer.repo.Instruments;
+import com.angrysurfer.sequencer.repo.Pads;
 import com.angrysurfer.sequencer.service.MIDIService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,28 +30,28 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SystemConfig implements Serializable {
+public class DeviceConfig implements Serializable {
     static ObjectMapper mapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)       // Add this line
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false) // Add this line
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false); // Add this line
     List<Instrument> instruments = new ArrayList<>();
 
-    public SystemConfig() {
+    public DeviceConfig() {
     }
 
-    public SystemConfig(List<Instrument> instruments) {
+    public DeviceConfig(List<Instrument> instruments) {
         this.instruments = instruments;
     }
 
     public static void loadDefaults(String filepath,
-            MidiInstrumentRepo midiInstrumentRepo,
-            ControlCodeRepo controlCodeRepo,
-            CaptionRepo captionRepo,
-            PadRepo padRepo) throws IOException {
+            Instruments instruments,
+            ControlCodes controlCodes,
+            Captions captions,
+            Pads pads) throws IOException {
 
         // Get existing instruments from DB as a map
-        Map<String, Instrument> existingInstruments = midiInstrumentRepo.findAll().stream()
+        Map<String, Instrument> existingInstruments = instruments.findAll().stream()
                 .collect(Collectors.toMap(Instrument::getName, Function.identity()));
 
         // Get available MIDI devices and create if not in DB
@@ -62,7 +62,7 @@ public class SystemConfig implements Serializable {
                     if (!existingInstruments.containsKey(deviceName)) {
                         Instrument instrument = new Instrument(deviceName, d);
                         instrument.setAvailable(true);
-                        instrument = midiInstrumentRepo.save(instrument);
+                        instrument = instruments.save(instrument);
                         existingInstruments.put(deviceName, instrument);
                     }
                     return deviceName;
@@ -72,7 +72,7 @@ public class SystemConfig implements Serializable {
         // Load and process config file
         File configFile = new File(filepath);
         if (configFile.exists()) {
-            SystemConfig config = mapper.readValue(configFile, SystemConfig.class);
+            DeviceConfig config = mapper.readValue(configFile, DeviceConfig.class);
 
             // Process each instrument from config
             config.getInstruments().forEach(configInstrument -> {
@@ -86,8 +86,8 @@ public class SystemConfig implements Serializable {
 
                 // Process control codes
                 if (!dbInstrument.getControlCodes().isEmpty())
-                    processControlCodesCaptionsAssignmentsAndBoundaries(dbInstrument, configInstrument, controlCodeRepo,
-                            captionRepo);
+                    processControlCodesCaptionsAssignmentsAndBoundaries(dbInstrument, configInstrument, controlCodes,
+                            captions);
 
                 if (Objects.isNull(dbInstrument.getHighestNote()) || dbInstrument.getHighestNote() == 0)
                     dbInstrument.setHighestNote(127);
@@ -97,11 +97,11 @@ public class SystemConfig implements Serializable {
 
                 // Process pads if needed
                 if (dbInstrument.getHighestNote() - dbInstrument.getLowestNote() != 127)
-                    addPadInfo(padRepo, dbInstrument);
+                    addPadInfo(pads, dbInstrument);
 
                 try {
                     // Save instrument
-                    dbInstrument = midiInstrumentRepo.save(dbInstrument);
+                    dbInstrument = instruments.save(dbInstrument);
                 } catch (Exception e) {
                     System.out.println("Failed to save instrument: " + dbInstrument.getName());
                 }
@@ -126,8 +126,8 @@ public class SystemConfig implements Serializable {
 
     private static void processControlCodesCaptionsAssignmentsAndBoundaries(Instrument dbInstrument,
             Instrument configInstrument,
-            ControlCodeRepo controlCodeRepo,
-            CaptionRepo captionRepo) {
+            ControlCodes controlCodes,
+            Captions captions) {
 
         dbInstrument.getControlCodes().clear(); // Clear existing control codes for
         dbInstrument.getAssignments().clear();
@@ -150,12 +150,12 @@ public class SystemConfig implements Serializable {
                     Caption caption = new Caption();
                     caption.setCode(cap.getCode());
                     caption.setDescription(cap.getDescription());
-                    caption = captionRepo.save(caption);
+                    caption = captions.save(caption);
                     newCaptions.add(caption);
                 });
                 controlCode.getCaptions().addAll(newCaptions);
             }
-            controlCode = controlCodeRepo.save(controlCode);
+            controlCode = controlCodes.save(controlCode);
 
             dbInstrument.getAssignments().put(controlCode.getCode(), controlCode.getName());
             dbInstrument.getBoundaries().put(controlCode.getCode(),
@@ -171,57 +171,57 @@ public class SystemConfig implements Serializable {
     }
 
     public static void saveCurrentStateToFile(String filepath,
-            MidiInstrumentRepo midiInstrumentRepo) throws IOException {
-        SystemConfig currentConfig = new SystemConfig();
-        
+            Instruments instruments) throws IOException {
+        DeviceConfig currentConfig = new DeviceConfig();
+
         // Create clean copies of instruments without circular references
-        List<Instrument> cleanInstruments = midiInstrumentRepo.findAll().stream()
-            .map(instrument -> {
-                Instrument clean = new Instrument();
-                clean.setName(instrument.getName());
-                clean.setDeviceName(instrument.getDeviceName());
-                clean.setChannels(instrument.getChannels());
-                clean.setLowestNote(instrument.getLowestNote());
-                clean.setHighestNote(instrument.getHighestNote());
-                clean.setHighestPreset(instrument.getHighestPreset());
-                clean.setPreferredPreset(instrument.getPreferredPreset());
-                clean.setHasAssignments(instrument.getHasAssignments());
-                clean.setPlayerClassName(instrument.getPlayerClassName());
-                clean.setAvailable(instrument.getAvailable());
-                
-                // Clean copy of control codes
-                clean.setControlCodes(instrument.getControlCodes().stream()
-                    .map(cc -> {
-                        ControlCode cleanCC = new ControlCode();
-                        cleanCC.setCode(cc.getCode());
-                        cleanCC.setName(cc.getName());
-                        cleanCC.setLowerBound(cc.getLowerBound());
-                        cleanCC.setUpperBound(cc.getUpperBound());
-                        cleanCC.setBinary(cc.getBinary());
-                        // Create clean copies of captions
-                        cleanCC.setCaptions(cc.getCaptions().stream()
-                            .map(cap -> {
-                                Caption cleanCap = new Caption();
-                                cleanCap.setCode(cap.getCode());
-                                cleanCap.setDescription(cap.getDescription());
-                                return cleanCap;
+        List<Instrument> cleanInstruments = instruments.findAll().stream()
+                .map(instrument -> {
+                    Instrument clean = new Instrument();
+                    clean.setName(instrument.getName());
+                    clean.setDeviceName(instrument.getDeviceName());
+                    clean.setChannels(instrument.getChannels());
+                    clean.setLowestNote(instrument.getLowestNote());
+                    clean.setHighestNote(instrument.getHighestNote());
+                    clean.setHighestPreset(instrument.getHighestPreset());
+                    clean.setPreferredPreset(instrument.getPreferredPreset());
+                    clean.setHasAssignments(instrument.getHasAssignments());
+                    clean.setPlayerClassName(instrument.getPlayerClassName());
+                    clean.setAvailable(instrument.getAvailable());
+
+                    // Clean copy of control codes
+                    clean.setControlCodes(instrument.getControlCodes().stream()
+                            .map(cc -> {
+                                ControlCode cleanCC = new ControlCode();
+                                cleanCC.setCode(cc.getCode());
+                                cleanCC.setName(cc.getName());
+                                cleanCC.setLowerBound(cc.getLowerBound());
+                                cleanCC.setUpperBound(cc.getUpperBound());
+                                cleanCC.setBinary(cc.getBinary());
+                                // Create clean copies of captions
+                                cleanCC.setCaptions(cc.getCaptions().stream()
+                                        .map(cap -> {
+                                            Caption cleanCap = new Caption();
+                                            cleanCap.setCode(cap.getCode());
+                                            cleanCap.setDescription(cap.getDescription());
+                                            return cleanCap;
+                                        })
+                                        .collect(Collectors.toSet()));
+                                return cleanCC;
                             })
-                            .collect(Collectors.toSet()));
-                        return cleanCC;
-                    })
-                    .collect(Collectors.toList()));
-                
-                return clean;
-            })
-            .collect(Collectors.toList());
+                            .collect(Collectors.toList()));
+
+                    return clean;
+                })
+                .collect(Collectors.toList());
 
         currentConfig.setInstruments(cleanInstruments);
 
         // Configure mapper for pretty printing
         ObjectMapper prettyMapper = new ObjectMapper()
-            .configure(SerializationFeature.INDENT_OUTPUT, true)
-            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+                .configure(SerializationFeature.INDENT_OUTPUT, true)
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
         // Write to file
         File outputFile = new File(filepath);
@@ -230,7 +230,7 @@ public class SystemConfig implements Serializable {
         System.out.println("config saved");
     }
 
-    static void addPadInfo(PadRepo padRepo, Instrument instrument) {
+    static void addPadInfo(Pads padRepo, Instrument instrument) {
 
         List<Pad> pads = new ArrayList<>(IntStream.range(instrument.getLowestNote(), instrument.getHighestNote())
                 .mapToObj(note -> new Pad(note)).toList());
@@ -305,7 +305,7 @@ public class SystemConfig implements Serializable {
         copy.setName(controlCode.getName());
         copy.setLowerBound(controlCode.getLowerBound());
         copy.setUpperBound(controlCode.getUpperBound());
-        copy.setCaptions(controlCode.getCaptions());
+        // copy.setCaptions(controlCode.getCaptions());
         return copy;
     }
 

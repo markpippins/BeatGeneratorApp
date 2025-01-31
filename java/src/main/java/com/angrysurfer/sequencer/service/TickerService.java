@@ -13,12 +13,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.sequencer.dao.TickerStatus;
+import com.angrysurfer.sequencer.dao.TickerStatusDAO;
 import com.angrysurfer.sequencer.model.Ticker;
 import com.angrysurfer.sequencer.model.midi.Instrument;
-import com.angrysurfer.sequencer.repo.RuleRepo;
-import com.angrysurfer.sequencer.repo.StrikeRepo;
-import com.angrysurfer.sequencer.repo.TickerRepo;
-import com.angrysurfer.sequencer.repo.TickerStatusDAO;
+import com.angrysurfer.sequencer.repo.Rules;
+import com.angrysurfer.sequencer.repo.Strikes;
+import com.angrysurfer.sequencer.repo.Tickers;
 import com.angrysurfer.sequencer.util.ClockSource;
 import com.angrysurfer.sequencer.util.update.TickerUpdateType;
 
@@ -33,9 +33,9 @@ public class TickerService {
     static Logger logger = LoggerFactory.getLogger(TickerService.class.getCanonicalName());
 
     private Ticker ticker;
-    private StrikeRepo strikeRepo;
-    private RuleRepo ruleRepo;
-    private TickerRepo tickerRepo;
+    private Strikes strikeRepo;
+    private Rules ruleRepo;
+    private Tickers tickerRepo;
     private SongService songService;
     private ClockSource clockSource;
     private ArrayList<ClockSource> clocks = new ArrayList<>();
@@ -44,8 +44,8 @@ public class TickerService {
 
     private Long lastTickId;
 
-    public TickerService(TickerRepo tickerRepo, StrikeRepo strikeRepo,
-            RuleRepo ruleRepo, SongService songService, TickerStatusDAO tickerStatusDAO) {
+    public TickerService(Tickers tickerRepo, Strikes strikeRepo,
+            Rules ruleRepo, SongService songService, TickerStatusDAO tickerStatusDAO) {
 
         this.tickerRepo = tickerRepo;
         this.ruleRepo = ruleRepo;

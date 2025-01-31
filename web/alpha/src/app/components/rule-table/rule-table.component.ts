@@ -60,9 +60,12 @@ export class RuleTableComponent implements Listener {
   }
 
   onNotify(_messageType: number, _message: string, _messageValue: number) {
+    console.log("NOTIFIED")
     if (_messageType == Constants.COMMAND) {
+      console.log("COMMAND")
       switch (_message) {
         case 'rule-add': {
+          console.log("rule table - rule-add")
           this.midiService.addRule(this.player).subscribe(async (data) => {
             this.player.rules.push(data);
             this.ruleChangeEvent.emit(this.player);
@@ -97,7 +100,7 @@ export class RuleTableComponent implements Listener {
   onRowClick(rule: Rule) {
     this.selectedRule = rule
     this.ruleSelectEvent.emit(rule);
-}
+  }
 
   getRules(): Rule[] {
     return this.player == undefined ? [] : this.player.rules;

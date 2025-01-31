@@ -111,6 +111,7 @@ export class ButtonPanelComponent
   }
 
   onNotify(_messageType: number, _message: string, messageValue: number) {
+    console.log("NOTIFIED")
     if (_messageType == Constants.CLICK && _message == this.identifier)
       this.selections[messageValue] = !this.selections[messageValue];
 

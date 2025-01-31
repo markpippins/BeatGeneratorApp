@@ -109,6 +109,7 @@ export class DashboardComponent implements OnInit, Listener {
   }
 
   onNotify(_messageType: number, _message: string, _messageValue: any) {
+    console.log("NOTIFIED")
     this.consoleOutput.pop();
     switch (_messageType) {
       case Constants.STATUS:

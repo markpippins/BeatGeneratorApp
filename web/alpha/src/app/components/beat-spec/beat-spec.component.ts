@@ -82,9 +82,13 @@ export class BeatSpecComponent implements OnInit, Listener {
   count = 0;
 
   onNotify(messageType: number, _message: string, messageValue: number) {
-    if (messageType == Constants.TICKER_SELECTED) this.tickerId = messageValue;
-
+    console.log("NOTIFIED")
+    if (messageType == Constants.TICKER_SELECTED) {
+      this.tickerId = messageValue;
+      console.log("TICKER_SELECTED")
+    }
     if (messageType == Constants.TICKER_CONNECTED) {
+      console.log("TICKER_CONNECTED")
       this.pulse++;
 
       if (this.pulse % 8 == 0) {

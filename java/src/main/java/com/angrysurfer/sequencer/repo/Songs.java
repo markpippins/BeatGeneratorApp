@@ -6,7 +6,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.angrysurfer.sequencer.model.Song;
 
-public interface SongRepo  extends JpaRepository<Song, Long> {
+public interface Songs  extends JpaRepository<Song, Long> {
 
     String NEXT_SONG = "select * from song s where s.id = (select min(so.id) from song so WHERE so.id > :currentSongId)";
     @Query(value=NEXT_SONG, nativeQuery = true)

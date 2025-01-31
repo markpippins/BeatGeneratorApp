@@ -1,15 +1,12 @@
 package com.angrysurfer.sequencer.service;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.ShortMessage;
 
@@ -21,11 +18,9 @@ import com.angrysurfer.sequencer.dao.SongStatus;
 import com.angrysurfer.sequencer.model.Pattern;
 import com.angrysurfer.sequencer.model.Song;
 import com.angrysurfer.sequencer.model.Step;
-import com.angrysurfer.sequencer.model.midi.Instrument;
-import com.angrysurfer.sequencer.repo.PatternRepo;
-import com.angrysurfer.sequencer.repo.SongRepo;
-import com.angrysurfer.sequencer.repo.StepRepo;
-import com.angrysurfer.sequencer.util.Constants;
+import com.angrysurfer.sequencer.repo.Patterns;
+import com.angrysurfer.sequencer.repo.Songs;
+import com.angrysurfer.sequencer.repo.Steps;
 import com.angrysurfer.sequencer.util.listener.CyclerListener;
 import com.angrysurfer.sequencer.util.update.PatternUpdateType;
 import com.angrysurfer.sequencer.util.update.StepUpdateType;
@@ -119,9 +114,9 @@ public class SongService implements NoteProvider {
 
     static Logger logger = LoggerFactory.getLogger(SongService.class.getCanonicalName());
 
-    private StepRepo stepRepo;
-    private SongRepo songRepo;
-    private PatternRepo patternRepo;
+    private Steps stepRepo;
+    private Songs songRepo;
+    private Patterns patternRepo;
     private MIDIService midiService;
     InstrumentService instrumentService;
 
@@ -132,8 +127,8 @@ public class SongService implements NoteProvider {
     // private CyclerListener beatListener = new BeatCyclerListener();
     // private CyclerListener barListener = new BarCyclerListener();
 
-    public SongService(PatternRepo patternRepo, StepRepo stepRepo,
-            SongRepo songRepo, MIDIService midiService, InstrumentService instrumentService) {
+    public SongService(Patterns patternRepo, Steps stepRepo,
+            Songs songRepo, MIDIService midiService, InstrumentService instrumentService) {
         this.stepRepo = stepRepo;
         this.songRepo = songRepo;
         this.patternRepo = patternRepo;

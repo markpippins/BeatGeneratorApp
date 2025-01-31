@@ -24,6 +24,7 @@ export class TransportControlComponent implements Listener {
   }
 
   onNotify(_messageType: number, _message: string) {
+    console.log("NOTIFIED")
     if (_messageType == Constants.CONNECTED)
       this.connected = true
     else if (_messageType == Constants.DISCONNECTED)

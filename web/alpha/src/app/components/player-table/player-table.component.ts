@@ -1,12 +1,12 @@
-  import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Player } from '../../models/player';
-import { MidiService } from '../../services/midi.service';
-import { Instrument } from 'src/app/models/instrument';
-import { UiService } from 'src/app/services/ui.service';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
+import { Instrument } from 'src/app/models/instrument';
 import { Listener } from 'src/app/models/listener';
 import { MidiMessage } from 'src/app/models/midi-message';
 import { PlayerUpdateType } from 'src/app/models/player-update-type';
+import { UiService } from 'src/app/services/ui.service';
+import { Player } from '../../models/player';
+import { MidiService } from '../../services/midi.service';
 
 @Component({
   selector: 'app-player-table',
@@ -32,14 +32,15 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   playerCols = Constants.PLAYER_COLUMNS;
 
-  constructor(private midiService: MidiService, private uiService: UiService) {}
+  constructor(private midiService: MidiService, private uiService: UiService) { }
 
   onNotify(_messageType: number, _message: string) {
+    console.log("NOTIFIED")
     // if (
     //   messageType == Constants.TICKER_SELECTED ||
     //   messageType == Constants.DISCONNECTED
     // )
-      // this.selectedPlayers = [];
+    // this.selectedPlayers = [];
   }
 
   ngOnInit(): void {
@@ -50,26 +51,28 @@ export class PlayerTableComponent implements Listener, OnInit {
   }
 
   onRowClick(player: Player) {
-      this.selectedPlayer = player
-      this.playerSelectEvent.emit(player);
+    this.selectedPlayer = player
+    this.playerSelectEvent.emit(player);
   }
 
   onBtnClick(player: Player, action: string) {
     switch (action) {
       case 'ticker-add': {
-        // this.midiService.addPlayer().subscribe(async (data) => {
-        //   this.players.push(data);
+        console.log("ticker-add")
+        this.midiService.addPlayer("Gervill").subscribe(async (data) => {
+          this.players.push(data);
 
-        //   this.midiService
-        //     .addRule(this.players[this.players.length - 1])
-        //     .subscribe(async (data) => {
-        //       this.players[this.players.length - 1].rules.push(data);
-        //       this.ruleChangeEvent.emit(this.players[this.players.length - 1]);
-        //     });
-        // });
+          this.midiService
+            .addRule(this.players[this.players.length - 1])
+            .subscribe(async (data) => {
+              this.players[this.players.length - 1].rules.push(data);
+              this.ruleChangeEvent.emit(this.players[this.players.length - 1]);
+            });
+        });
         break;
       }
       case 'ticker-remove': {
+        console.log("ticker-remove")
         player.rules = [];
         this.midiService.removePlayer(player).subscribe(async (data) => {
           this.players = data;
@@ -95,7 +98,7 @@ export class PlayerTableComponent implements Listener, OnInit {
         if (this.selectedPlayer != undefined) {
           console.log('auditioning player: ' + this.selectedPlayer.name);
           console.log('auditioning player instrument: ' + this.selectedPlayer.instrumentId);
-          // this.selectedPlayer.muted = !this.selectedPlayer.muted
+          
           this.midiService.sendMessage(
             this.selectedPlayer.instrumentId,
             this.selectedPlayer.channel,
@@ -174,7 +177,7 @@ export class PlayerTableComponent implements Listener, OnInit {
       .updatePlayer(player.id, PlayerUpdateType.PART, event.target.value)
       .subscribe((data) => {
         // if (data.parts == player.parts)
-          this.players[this.players.indexOf(player)] = data;
+        this.players[this.players.indexOf(player)] = data;
       });
   }
 

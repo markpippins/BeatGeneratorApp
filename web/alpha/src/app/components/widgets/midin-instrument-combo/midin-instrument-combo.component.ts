@@ -20,12 +20,11 @@ import { UiService } from 'src/app/services/ui.service';
 })
 export class MidinInstrumentComboComponent
   implements
-    Listener,
-    OnInit,
-    AfterViewInit,
-    AfterContentInit,
-    AfterContentChecked
-{
+  Listener,
+  OnInit,
+  AfterViewInit,
+  AfterContentInit,
+  AfterContentChecked {
   @Output()
   instrumentSelectEvent = new EventEmitter<Instrument>();
 
@@ -46,6 +45,7 @@ export class MidinInstrumentComboComponent
   }
 
   onNotify(messageType: number, _message: string, messageValue: number) {
+    console.log("NOTIFIED")
     if (messageType == Constants.INSTRUMENT_SELECTED) {
       let instrument = this.instruments.filter(
         (instrument) => instrument.id == messageValue
@@ -57,10 +57,10 @@ export class MidinInstrumentComboComponent
     }
   }
 
-  ngAfterContentInit(): void {}
-  ngAfterViewInit(): void {}
+  ngAfterContentInit(): void { }
+  ngAfterViewInit(): void { }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
 
   ngAfterContentChecked(): void {
     if (
