@@ -35,7 +35,7 @@ export class PadsPanelComponent implements OnInit {
 
   onSelect(selectedChannel: number) {
     this.midiService
-      .instrumentInfoByChannel(selectedChannel - 1)
+      .instrumentInfoByChannel(this.instrument.deviceName, selectedChannel - 1)
       .subscribe(async (data) => {
         this.instrument = data;
         this.channel = selectedChannel;

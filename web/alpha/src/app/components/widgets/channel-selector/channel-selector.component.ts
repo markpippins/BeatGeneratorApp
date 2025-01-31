@@ -1,6 +1,6 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Instrument} from "../../../models/instrument";
-import {MidiService} from "../../../services/midi.service";
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Instrument } from "../../../models/instrument";
+import { MidiService } from "../../../services/midi.service";
 
 @Component({
   selector: 'app-channel-selector',
@@ -22,21 +22,25 @@ export class ChannelSelectorComponent implements OnInit {
   instrument?: Instrument | undefined;
   constructor(private midiService: MidiService) {
   }
+
   ngOnInit(): void {
     this.onChannelChanged(1);
   }
+
   selectionChange(event: { target: any; }) {
     this.onChannelChanged(event.target.value);
   }
+
   onChannelChanged(newChannel: number) {
     this.channel = newChannel;
-    this.midiService
-      .instrumentInfoByChannel(this.channel - 1)
-      .subscribe(async (data) => {
-        this.instrument = data;
-        this.channelSelectEvent.emit(this.channel);
-        this.instrumentSelectEvent.emit(this.instrument);
-      });
+    if (this.instrument?.deviceName) {
+      this.midiService
+        .instrumentInfoByChannel(this.instrument.deviceName, this.channel - 1)
+        .subscribe(async (data) => {
+          this.instrument = data;
+          this.channelSelectEvent.emit(this.channel);
+          this.instrumentSelectEvent.emit(this.instrument);
+        });
+    }
   }
 }
-

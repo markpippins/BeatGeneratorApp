@@ -33,19 +33,21 @@ export class SliderPanelComponent implements OnInit, Listener {
   @Output()
   configModeOn = false;
 
-  constructor(private midiService: MidiService, private uiService: UiService) {}
+  constructor(private midiService: MidiService, private uiService: UiService) { }
 
-  onNotify(_messageType: number, _message: string) {}
+  onNotify(_messageType: number, _message: string) { }
 
   onSelect(selectedChannel: number) {
-    this.instrument = undefined;
+    // this.instrument = undefined;
     this.channel = selectedChannel;
-    this.midiService
-      .instrumentInfoByChannel(selectedChannel - 1)
-      .subscribe(async (data) => {
-        this.instrument = data;
-        this.channelSelectEvent.emit(selectedChannel);
-      });
+    if (this.instrument?.deviceName) {
+      this.midiService
+        .instrumentInfoByChannel(this.instrument.deviceName, selectedChannel - 1)
+        .subscribe(async (data) => {
+          this.instrument = data;
+          this.channelSelectEvent.emit(selectedChannel);
+        });
+    }
   }
 
   ngOnInit(): void {
@@ -234,7 +236,7 @@ export class SliderPanelComponent implements OnInit, Listener {
   truncateStringAtSecondToLastSpace(str: string): string {
     const secondToLastChar = str.charAt(str.length - 2);
     if (secondToLastChar === ' ') {
-        return str.slice(0, str.length - 3);
+      return str.slice(0, str.length - 3);
     }
     return str;
   }
