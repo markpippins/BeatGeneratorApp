@@ -183,6 +183,6 @@ export class RuleTableComponent implements Listener {
   }
 
   getRowClass(rule: Rule): string {
-    return rule == this.selectedRule ? 'active-table-row selected' : 'active-table-row';
+    return 'table-row' + (rule === this.selectedRule ? ' selected' : '');
   }
 }

@@ -1,0 +1,22 @@
+/* Table Layout */
+table {
+    width: 100%;
+}
+
+/* Row Styles */
+.table-row {
+    background-color: transparent;
+    color: white;
+}
+
+.table-row:hover {
+    background-color: #1da7c7;
+    color: white;
+}
+
+.table-row.selected {
+    background-color: #316f8b;
+    color: white;
+}
+
+/* ...rest of specific player table styles... */

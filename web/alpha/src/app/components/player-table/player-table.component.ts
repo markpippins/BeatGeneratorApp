@@ -367,6 +367,6 @@ export class PlayerTableComponent implements OnInit {
   }
 
   getRowClass(player: Player): string {
-    return player == this.selectedPlayer ? 'active-table-row selected' : 'active-table-row';
+    return 'table-row' + (player === this.selectedPlayer ? ' selected' : '');
   }
 }
