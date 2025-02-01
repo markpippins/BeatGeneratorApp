@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Player } from '../models/player';
 import { Ticker } from '../models/ticker';
 import { MidiService } from './midi.service';
@@ -39,7 +40,7 @@ export class TickerService {
     players: []
   }
 
-  constructor(private midiService: MidiService) { }
+  constructor(private zone: NgZone, private midiService: MidiService) { }
 
   getTicker(): Ticker {
     return this.ticker
@@ -55,4 +56,27 @@ export class TickerService {
         return data
       })
   }
+
+  getTickerMessages(): Observable<string> {
+      return Observable.create(
+        (observer: {
+          next: (arg0: any) => void;
+          error: (arg0: Event) => void;
+        }) => {
+          let source = new EventSource('http://localhost:8080/api/tick');
+          source.onmessage = (event) => {
+            this.zone.run(() => {
+              // this.cycleColors();
+              observer.next(event.data);
+            });
+          };
+
+          source.onerror = (event) => {
+            this.zone.run(() => {
+              observer.error(event);
+            });
+          };
+        }
+      );
+    }
 }

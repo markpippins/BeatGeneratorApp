@@ -1066,8 +1066,33 @@ grid-3 {
   border: whitesmoke inset 1px;
 }
 
+.fh-800 {
+  height: 800px;
+}
+
+.fh-700 {
+  height: 700px;
+}
+
+
 .fh-600 {
   height: 600px;
+}
+
+.fh-500 {
+  height: 500px;
+}
+
+.fh-450 {
+  height: 450px;
+}
+
+.fh-400 {
+  height: 400px;
+}
+
+.fh-300 {
+  height: 300px;
 }
 
 .fw-275 {

@@ -1,0 +1,50 @@
+/* Table Layout */
+table {
+    width: 100%;
+}
+
+/* Table Headers */
+th {
+    background-color: transparent;
+    color: white;
+    font-size: small;
+    font-weight: normal;
+    text-align: left;
+}
+
+/* Row Styles */
+.active-table-row {
+    background-color: transparent;
+    color: green;
+}
+
+.active-table-row:hover {
+    background-color: #1da7c7;
+    color: white;
+}
+
+/* Form Elements */
+select {
+    background-color: transparent;
+    color: white;
+    text-align: left;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    border: black inset 1px;
+}
+
+input {
+    background-color: transparent;
+    color: white;
+    align-self: stretch;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    width: 40px;
+}
+
+/* Button Styles */
+button {
+    height: 20px;
+}

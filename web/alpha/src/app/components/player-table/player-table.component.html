@@ -23,6 +23,11 @@
       <td class="shortest-col" id="player-col-preset-{{player.id}}" (change)="onPresetChange(player, $event)">
         <input type="number" min="0" step="1" value="{{ player.preset }}">
       </td>
+      <td>
+        <button [style.height.px]="20" id="audition" (click)="onBtnClick(player, 'ticker-audition')">
+          P
+        </button>
+      </td>
       <td class="shortest-col" (change)="onNoteChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
       </td>
@@ -30,11 +35,6 @@
         <button ngClass="{{player.muted ? 'muted' : 'unmuted' }}" [style.height.px]="20" id="player-mute-{{player.id}}"
           (click)="onBtnClick(player, 'player-mute')">
           {{player.muted ? 'U' : 'M'}}
-        </button>
-      </td>
-      <td>
-        <button [style.height.px]="20" id="audition" (click)="onBtnClick(player, 'ticker-audition')">
-          P
         </button>
       </td>
       <td class="shortest-col" (change)="onBeatFractionChange(player, $event)">

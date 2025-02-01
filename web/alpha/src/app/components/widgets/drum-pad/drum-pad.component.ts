@@ -1,16 +1,18 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Instrument } from '../../../models/instrument';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { Swirl } from 'src/app/models/swirl';
-import { Listener } from 'src/app/models/listener';
-import { UiService } from 'src/app/services/ui.service';
-import { Constants } from 'src/app/models/constants';
+import { TickerService } from 'src/app/services/ticker.service';
+import { Instrument } from '../../../models/instrument';
 
 @Component({
   selector: 'app-drum-pad',
   templateUrl: './drum-pad.component.html',
   styleUrls: ['./drum-pad.component.css'],
 })
-export class DrumPadComponent implements Listener {
+export class DrumPadComponent implements OnInit {
+
+  tickerSubscription!: Subscription;
+
   @Output()
   padPressedEvent = new EventEmitter<number>();
 
@@ -51,19 +53,22 @@ export class DrumPadComponent implements Listener {
   @Input()
   channel!: number;
 
-  constructor(private uiService: UiService) {
-    this.uiService.addListener(this);
+  constructor(private tickerService: TickerService) {
+    // this.uiService.addListener(this);
   }
 
   pulse = 0;
 
-  onNotify(_messageType: number, _message: string, _messageValue: number) {
-    console.log("NOTIFIED")
-    if (_messageType == Constants.TICKER_CONNECTED && this.swirling) {
-      this.pulse++;
-      this.swirl.forward();
-    }
+  ngOnInit(): void {
+    this.tickerSubscription = this.tickerService.getTickerMessages().subscribe({
+      next: () => {
+        this.pulse++;
+        this.swirl.forward();
+      },
+      error: (err: any) => console.error(err),
+    });
   }
+
 
   padPressed() {
     this.padPressedEvent.emit(this.index);

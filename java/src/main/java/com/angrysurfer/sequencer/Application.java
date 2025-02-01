@@ -26,14 +26,14 @@ public class Application {
     }
 
     @Bean
-    CommandLineRunner beatGeneratorSetup(Instruments midiInstruments,
+    CommandLineRunner beatGeneratorSetup(Instruments instruments,
             Pads pads,
             ControlCodes controlCodes,
             Captions captions) {
         return args -> {
             try {
-                if (midiInstruments.count() == 0)
-                    DeviceConfig.loadDefaults(configFilepath, midiInstruments, controlCodes, captions,
+                // if (midiInstruments.count() == 0)
+                    DeviceConfig.loadDefaults(configFilepath, instruments, controlCodes, captions,
                             pads);
                 // SystemConfig.saveCurrentStateToFile(configFilepath, midiInstruments);
             } catch (Exception e) {

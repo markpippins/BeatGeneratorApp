@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
-import { Listener } from 'src/app/models/listener';
 import { MidiMessage } from 'src/app/models/midi-message';
 import { PlayerUpdateType } from 'src/app/models/player-update-type';
 import { UiService } from 'src/app/services/ui.service';
@@ -13,7 +12,7 @@ import { MidiService } from '../../services/midi.service';
   templateUrl: './player-table.component.html',
   styleUrls: ['./player-table.component.css'],
 })
-export class PlayerTableComponent implements Listener, OnInit {
+export class PlayerTableComponent implements OnInit {
 
   @Output()
   playerSelectEvent = new EventEmitter<Player>();
@@ -34,17 +33,7 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   constructor(private midiService: MidiService, private uiService: UiService) { }
 
-  onNotify(_messageType: number, _message: string) {
-    console.log("NOTIFIED")
-    // if (
-    //   messageType == Constants.TICKER_SELECTED ||
-    //   messageType == Constants.DISCONNECTED
-    // )
-    // this.selectedPlayers = [];
-  }
-
   ngOnInit(): void {
-    this.uiService.addListener(this);
     this.midiService.allInstruments().subscribe((data) => {
       this.instruments = this.uiService.sortByName(data);
     });
@@ -82,6 +71,15 @@ export class PlayerTableComponent implements Listener, OnInit {
         break;
       }
       case 'player-mute': {
+
+        this.midiService.sendMessage(
+          player.instrumentId,
+          player.channel,
+          MidiMessage.NOTE_ON,
+          player.note,
+          120
+        );
+
         let index = this.players.indexOf(player);
         this.players[index].muted = !this.players[index].muted;
         this.midiService
@@ -98,7 +96,7 @@ export class PlayerTableComponent implements Listener, OnInit {
         if (this.selectedPlayer != undefined) {
           console.log('auditioning player: ' + this.selectedPlayer.name);
           console.log('auditioning player instrument: ' + this.selectedPlayer.instrumentId);
-          
+
           this.midiService.sendMessage(
             this.selectedPlayer.instrumentId,
             this.selectedPlayer.channel,
@@ -106,6 +104,7 @@ export class PlayerTableComponent implements Listener, OnInit {
             this.selectedPlayer.note,
             120
           );
+
           this.midiService.sendMessage(
             this.selectedPlayer.instrumentId,
             this.selectedPlayer.channel,
@@ -183,7 +182,7 @@ export class PlayerTableComponent implements Listener, OnInit {
 
   onChannelChange(player: Player, event: { target: any }) {
     this.players
-      .filter((p) => p.instrumentId == player.instrumentId)
+      .filter((p) => p.id == player.id)
       .forEach((p) =>
         this.midiService
           .updatePlayer(p.id, PlayerUpdateType.CHANNEL, event.target.value)
@@ -193,12 +192,22 @@ export class PlayerTableComponent implements Listener, OnInit {
   }
 
   onPresetChange(player: Player, event: { target: any }) {
+
+    this.midiService.sendMessage(
+      player.instrumentId,
+      player.channel,
+      MidiMessage.NOTE_OFF,
+      player.note,
+      120
+    );
+
     this.players
-      .filter((p) => p.instrumentId == player.instrumentId)
+      .filter((p) => p.instrumentId == player.instrumentId && p.channel == player.channel)
       .forEach((p) =>
         this.midiService
           .updatePlayer(p.id, PlayerUpdateType.PRESET, event.target.value)
           .subscribe()
+
       );
     this.uiService.notifyAll(Constants.PLAYER_UPDATED, 'Player updated', 0);
   }

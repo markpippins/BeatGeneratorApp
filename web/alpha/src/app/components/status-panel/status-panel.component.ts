@@ -2,16 +2,17 @@ import {
   Component,
   EventEmitter,
   Input,
-  NgZone,
+  // NgZone,
   OnInit,
   Output,
 } from '@angular/core';
-import { MidiService } from '../../services/midi.service';
+import { Subscription } from 'rxjs';
 import { Constants } from 'src/app/models/constants';
-import { UiService } from 'src/app/services/ui.service';
-import { TickerUpdateType } from 'src/app/models/ticker-update-type';
 import { TickerStatus } from 'src/app/models/ticker-status';
-import { Observable, Subscription } from 'rxjs';
+import { TickerUpdateType } from 'src/app/models/ticker-update-type';
+import { TickerService } from 'src/app/services/ticker.service';
+import { UiService } from 'src/app/services/ui.service';
+import { MidiService } from '../../services/midi.service';
 // import { SongStatus } from 'src/app/models/song-status';
 
 @Component({
@@ -58,12 +59,13 @@ export class StatusPanelComponent implements OnInit {
   index = 0;
 
   constructor(
-    private zone: NgZone,
+    // private zone: NgZone,
     private midiService: MidiService,
+    private tickerService: TickerService,
     private uiService: UiService
   ) { }
 
-  private pulse = 0;
+  // private pulse = 0;
 
   cycleColors() {
     let colorContainer = document.getElementById('dashboard') as HTMLElement;
@@ -71,31 +73,6 @@ export class StatusPanelComponent implements OnInit {
       colorContainer.style.backgroundColor = this.colors[this.index];
       this.index = (this.index + 1) % this.colors.length;
     }
-  }
-
-  getTickerMessages(): Observable<string> {
-    return Observable.create(
-      (observer: {
-        next: (arg0: any) => void;
-        error: (arg0: Event) => void;
-      }) => {
-        let source = new EventSource('http://localhost:8080/api/tick');
-        source.onmessage = (event) => {
-          this.zone.run(() => {
-            // console.log('tick');
-            // console.log(event.data);
-            this.cycleColors();
-            observer.next(event.data);
-          });
-        };
-
-        source.onerror = (event) => {
-          this.zone.run(() => {
-            observer.error(event);
-          });
-        };
-      }
-    );
   }
 
   // getSongMessages(): Observable<string> {
@@ -123,13 +100,14 @@ export class StatusPanelComponent implements OnInit {
   // }
 
   ngOnInit(): void {
-    this.tickerSubscription = this.getTickerMessages().subscribe({
+    this.tickerSubscription = this.tickerService.getTickerMessages().subscribe({
       next: (data: string) => {
-        this.pulse++;
+        // this.pulse++;
+        this.cycleColors();
         this.tickerStatus = JSON.parse(data);
-        if (this.tickerStatus.tickCount % this.tickerStatus.ticksPerBeat == 0)
-          this.uiService.notifyAll(Constants.TICKER_CONNECTED, '', this.pulse);
-        this.updateDisplay();
+        // if (this.tickerStatus.tickCount % 2 == 0)
+          //   this.uiService.notifyAll(Constants.TICKER_CONNECTED, '', this.pulse);
+          this.updateDisplay();
       },
       error: (err: any) => console.error(err),
     });

@@ -5,10 +5,13 @@ import { Listener } from 'src/app/models/listener';
 import { Pattern } from 'src/app/models/pattern';
 import { PatternUpdateType } from 'src/app/models/pattern-update-type';
 import { Song } from 'src/app/models/song';
-import { UiService } from 'src/app/services/ui.service';
-import { MidiService } from '../../services/midi.service';
 import { Step } from 'src/app/models/step';
 import { Swirl } from 'src/app/models/swirl';
+import { TickerService } from 'src/app/services/ticker.service';
+import { UiService } from 'src/app/services/ui.service';
+import { MidiService } from '../../services/midi.service';
+import { Subscription } from 'rxjs';
+
 
 @Component({
   selector: 'app-beat-spec',
@@ -19,6 +22,7 @@ export class BeatSpecComponent implements OnInit, Listener {
   editStep: number | undefined;
   tickerId!: number;
   song!: Song;
+  tickerSubscription!: Subscription;
   rows: string[][] = [
     [
       'Ride',
@@ -63,7 +67,7 @@ export class BeatSpecComponent implements OnInit, Listener {
   // @Input()
   instruments!: Instrument[];
 
-  constructor(private midiService: MidiService, private uiService: UiService) {
+  constructor(private tickerService: TickerService, private midiService: MidiService, private uiService: UiService) {
     uiService.addListener(this);
   }
 
@@ -71,6 +75,22 @@ export class BeatSpecComponent implements OnInit, Listener {
     this.midiService.allInstruments().subscribe((instruments) => {
       this.instruments = this.uiService.sortByName(instruments);
       this.updateDisplay();
+    });
+
+    this.tickerSubscription = this.tickerService.getTickerMessages().subscribe({
+      next: () => {
+        this.pulse++;
+
+        if (this.pulse % 8 == 0) {
+          this.count++;
+
+          if (this.forward) this.swirls.forward();
+          else this.swirls.reverse();
+
+          if (this.count % 15 == 0) this.forward = !this.forward;
+        }
+      },
+      error: (err: any) => console.error(err),
     });
   }
 
@@ -86,19 +106,6 @@ export class BeatSpecComponent implements OnInit, Listener {
     if (messageType == Constants.TICKER_SELECTED) {
       this.tickerId = messageValue;
       console.log("TICKER_SELECTED")
-    }
-    if (messageType == Constants.TICKER_CONNECTED) {
-      console.log("TICKER_CONNECTED")
-      this.pulse++;
-
-      if (this.pulse % 8 == 0) {
-        this.count++;
-
-        if (this.forward) this.swirls.forward();
-        else this.swirls.reverse();
-
-        if (this.count % 15 == 0) this.forward = !this.forward;
-      }
     }
   }
 
