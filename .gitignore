@@ -13,3 +13,6 @@ java/target/classes/application.properties
 java/target/surefire-reports/2025-01-31T15-10-52_457-jvmRun1.dump
 java/target/surefire-reports/2025-01-31T15-10-52_457-jvmRun1.dumpstream
 java/target/classes/config/defaults.json
+java/target/classes/application.properties
+java/target/classes/config/defaults.json
+web/alpha/package-lock.json

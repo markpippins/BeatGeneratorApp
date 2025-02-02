@@ -76,7 +76,7 @@ public class Constants {
     public static final String GET_INSTRUMENT_BY_ID = "/instrument";
 
     public static final String SEND_MESSAGE = "/messages/send";
-    public static final String SAVE_BEAT = "/beat/save";
+    public static final String SAVE_BEAT = "/ticker/save";
     public static final String SPECIFY_RULE = "/rules/specify";
 
     public static final String PLAY_DRUM_NOTE = "/drums/note";

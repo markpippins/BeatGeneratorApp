@@ -71,13 +71,11 @@ export class PlayerTableComponent implements OnInit {
         break;
       }
       case 'player-mute': {
-
         this.midiService.sendMessage(
           player.instrumentId,
           player.channel,
-          MidiMessage.NOTE_ON,
-          player.note,
-          120
+          MidiMessage.NOTE_OFF,
+          0, 0
         );
 
         let index = this.players.indexOf(player);
@@ -358,7 +356,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onPass(player: Player) {
-    if (player != undefined && this.selectedPlayer != undefined)
+    if (player != undefined && this.selectedPlayer == undefined)
       this.playerSelectEvent.emit(player);
   }
 

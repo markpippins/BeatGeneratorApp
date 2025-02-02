@@ -1063,7 +1063,6 @@ grid-3 {
   flex-grow: true;
   overflow-x: auto;
   overflow-y: auto;
-  border: whitesmoke inset 1px;
 }
 
 .fh-800 {
@@ -1483,4 +1482,14 @@ grid-3 {
   gap: 2px;
   align-items: flex-start;
   align-self: stretch;
+}
+
+/* Reduce mat-tab label font size */
+.mat-mdc-tab-label-content {
+  font-size: 10px !important;  /* adjust size as needed */
+}
+
+/* If you want even smaller size for nested tabs */
+.mat-tab-group .mat-tab-group .mat-mdc-tab-label-content {
+  font-size: 10px !important;  /* adjust size as needed */
 }

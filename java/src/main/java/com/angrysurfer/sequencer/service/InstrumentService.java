@@ -20,25 +20,29 @@ public class InstrumentService {
 
     static Logger logger = LoggerFactory.getLogger(InstrumentService.class.getCanonicalName());
 
-    private Instruments instrumentRepo;
+    private Instruments instruments;
 
-    public InstrumentService(Instruments instrumentRepo) {
-        this.instrumentRepo = instrumentRepo;
+    public InstrumentService(Instruments instruments) {
+        this.instruments = instruments;
     }
 
     public List<Instrument> getAllInstruments() {
-        return instrumentRepo.findAll().stream().filter(i -> i.getAvailable()).collect(Collectors.toList());
+        List<Instrument> result = instruments.findAll().stream().filter(i -> i.getAvailable())
+                .collect(Collectors.toList());
+        return result;
     }
 
     public List<Instrument> getInstrumentByChannel(String deviceName, int channel) {
         logger.info(String.format("getInstrumentByChannel(%s)", channel));
-        return getAllInstruments().stream().filter(i -> i.getChannels().length == 1 && i.getChannels()[0] == channel)
+        List<Instrument> result = getAllInstruments().stream()
+                .filter(i -> i.getChannels().length == 1 && i.getChannels()[0] == channel)
                 .collect(Collectors.toList());
+        return result;
     }
 
     public Instrument getInstrumentById(Long id) {
         logger.info(String.format("getInstrumentById(%s)", id));
-        return instrumentRepo.findById(id).orElseThrow();
+        return instruments.findById(id).orElseThrow();
     }
 
     public List<String> getInstrumentNames() {

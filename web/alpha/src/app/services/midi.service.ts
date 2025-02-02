@@ -122,7 +122,7 @@ export class MidiService {
   saveConfig() {
     // let params = new HttpParams();
     return this.http.get<LookupItem[]>(
-      'http://localhost:8080/api/beat/save');
+      'http://localhost:8080/api/ticker/save');
   }
 
   clearPlayers() {
