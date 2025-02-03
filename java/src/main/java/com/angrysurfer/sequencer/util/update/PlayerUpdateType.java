@@ -20,4 +20,5 @@ public interface PlayerUpdateType {
     static int RANDOM_DEGREE = 16;
     static int FADE_IN = 17;
     static int FADE_OUT = 18;
+    static int SOLO = 19;
 }

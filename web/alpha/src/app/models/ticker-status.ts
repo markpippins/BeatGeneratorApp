@@ -25,4 +25,5 @@ export interface TickerStatus {
   partCount: number
   patternStatuses: PatternStatus[]
   playerCount: number
+  hasSolos: boolean
 }

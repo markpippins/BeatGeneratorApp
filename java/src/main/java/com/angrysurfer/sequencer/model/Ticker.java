@@ -298,4 +298,8 @@ public class Ticker implements Serializable {
     public double getInterval() {
         return 60000 / getTempoInBPM() / getTicksPerBeat();
     }
+
+    public Boolean hasSolos() {
+        return this.getPlayers().stream().anyMatch(player -> player.isSolo());
+    }
 }

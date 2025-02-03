@@ -77,21 +77,22 @@ public class PlayerService {
     }
 
     // public void saveConfig() {
-    //     try {
-    //         String instruments = "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/config/midi.json";
-    //         // String instruments = "resources/config/midi-bak.json";
-    //         File file = new File(instruments);
-    //         if (file.exists())
-    //             file.delete();
-    //         DeviceConfig list = new DeviceConfig();
-    //         list.getInstruments().addAll(getPlayers().stream().map(AbstractPlayer::getInstrument).distinct().toList());
-    //         Files.write(file.toPath(),
-    //                 Collections.singletonList(
-    //                         PlayerService.mapper.writerWithDefaultPrettyPrinter().writeValueAsString(list)),
-    //                 StandardOpenOption.CREATE_NEW);
-    //     } catch (IOException e) {
-    //         throw new RuntimeException(e);
-    //     }
+    // try {
+    // String instruments =
+    // "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/config/midi.json";
+    // // String instruments = "resources/config/midi-bak.json";
+    // File file = new File(instruments);
+    // if (file.exists())
+    // file.delete();
+    // DeviceConfig list = new DeviceConfig();
+    // list.getInstruments().addAll(getPlayers().stream().map(AbstractPlayer::getInstrument).distinct().toList());
+    // Files.write(file.toPath(),
+    // Collections.singletonList(
+    // PlayerService.mapper.writerWithDefaultPrettyPrinter().writeValueAsString(list)),
+    // StandardOpenOption.CREATE_NEW);
+    // } catch (IOException e) {
+    // throw new RuntimeException(e);
+    // }
     // }
 
     public AbstractPlayer addPlayer(String instrumentName) {
@@ -290,6 +291,11 @@ public class PlayerService {
 
             case MUTE -> {
                 player.setMuted(updateValue > 0 ? true : false);
+                break;
+            }
+
+            case SOLO -> {
+                player.setSolo(updateValue > 0 ? true : false);
                 break;
             }
 

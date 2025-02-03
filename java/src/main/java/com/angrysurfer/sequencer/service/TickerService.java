@@ -88,8 +88,7 @@ public class TickerService {
         getTicker().getPlayers().forEach(p -> {
             try {
                 if (p.getPreset() > 0)
-                    p.getInstrument().programChange(p.getChannel(), p.
-                    getPreset(), 0);
+                    p.getInstrument().programChange(p.getChannel(), p.getPreset(), 0);
             } catch (InvalidMidiDataException | MidiUnavailableException e) {
                 logger.error(e.getMessage(), e);
             }

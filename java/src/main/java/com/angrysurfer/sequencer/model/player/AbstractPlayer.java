@@ -80,6 +80,9 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
     private Cycler barCycler = new Cycler(16);
 
     @Transient
+    private boolean solo = false;
+
+    @Transient
     private boolean muted = true;
 
     @Transient
@@ -187,7 +190,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
     }
 
     // public int getChannel() {
-    //     return Objects.nonNull(instrument) ? instrument.getChannel() : 0;
+    // return Objects.nonNull(instrument) ? instrument.getChannel() : 0;
     // }
 
     public void drumNoteOn(long note) {
@@ -196,10 +199,10 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
                         getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
         noteOn(note, velocity);
         // try {
-        //     Thread.sleep((long) getTicker().getInterval());
-        //     noteOff(note, velocity);
+        // Thread.sleep((long) getTicker().getInterval());
+        // noteOff(note, velocity);
         // } catch (InterruptedException e) {
-        //     e.printStackTrace();
+        // e.printStackTrace();
         // }
 
     }
@@ -227,7 +230,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
 
         // && !muteGroupPartnerSoundedOnThisTick()
         // && strikeHasNoMuteGroupConflict()
-        if (!isMuted() && shouldPlay()) {
+        if ((!isMuted() || (getTicker().hasSolos() && isSolo())) && shouldPlay()) {
             getTicker().getActivePlayerIds().add(getId());
             setLastPlayedBar(getTicker().getBar());
             setLastPlayedBeat(getTicker().getBeat());

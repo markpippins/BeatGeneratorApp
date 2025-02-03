@@ -18,4 +18,5 @@ export class PlayerUpdateType {
   static RANDOM_DEGREE = 16
   static FADE_IN = 17
   static FADE_OUT = 18
+  static SOLO = 19;
 }

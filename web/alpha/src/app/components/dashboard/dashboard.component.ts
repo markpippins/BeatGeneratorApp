@@ -56,7 +56,8 @@ export class DashboardComponent implements OnInit, Listener {
     barCount: 0,
     partCount: 0,
     patternStatuses: [],
-    playerCount: 0
+    playerCount: 0,
+    hasSolos: false
   };
 
   ticker: Ticker = {

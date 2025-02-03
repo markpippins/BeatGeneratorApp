@@ -94,21 +94,19 @@ export class PlayerTableComponent implements OnInit {
       case 'player-solo': {
 
         player.solo = !player.solo
-        this.players.forEach(p => {
 
-          let index = this.players.indexOf(p);
+        let index = this.players.indexOf(player);
 
-          this.midiService
-            .updatePlayer(
-              p.id,
-              PlayerUpdateType.MUTE,
-              p.solo ? 0 : 1
-            )
-            .subscribe(data => {
-              this.players[index] = data;
-              this.players[index].solo = p.solo
-            });
-        });
+        this.midiService
+          .updatePlayer(
+            player.id,
+            PlayerUpdateType.SOLO,
+            player.solo ? 1 : 0
+          )
+          .subscribe(data => {
+            this.players[index] = data;
+            this.players[index].solo = player.solo
+          });
 
         break;
       }

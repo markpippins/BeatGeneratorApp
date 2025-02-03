@@ -44,6 +44,7 @@ public class TickerStatus implements Serializable {
     private Integer parts;
     private Double noteOffset;
     private Boolean playing;
+    private Boolean hasSolos;
 
     private Integer playerCount;
 
@@ -76,6 +77,7 @@ public class TickerStatus implements Serializable {
         result.setBarCount(ticker.getBarCount());
         result.setPartCount(ticker.getPartCount());
         result.setPlayerCount(ticker.getPlayers().size());
+        result.setHasSolos(ticker.hasSolos());
         song.getPatterns().forEach(p -> result.patternStatuses.add(PatternStatus.from(p)));
 
         return result;
