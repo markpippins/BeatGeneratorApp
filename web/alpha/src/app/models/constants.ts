@@ -9,6 +9,7 @@ export class Constants {
     'Preset',
     '🎶',
     'Pitch',
+    'Solo',
     '🔇',
     'Frac',
     'Divs',

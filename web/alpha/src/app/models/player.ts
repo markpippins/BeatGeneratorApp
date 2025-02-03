@@ -27,4 +27,5 @@ export interface Player {
   ratchetInterval: number
   fadeIn: number
   fadeOut: number
+  solo: boolean
 }

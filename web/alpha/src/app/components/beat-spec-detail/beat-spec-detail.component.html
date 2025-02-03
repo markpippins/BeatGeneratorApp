@@ -27,6 +27,13 @@
         </button>
       </td>
 
+      <!-- <td>
+        <button ngClass="{{pattern.muted ? 'muted' : 'unmuted' }}" [style.height.px]="20"
+          id="pattern-mute-{{pattern.id}}" (click)="onMuteChange()">
+          {{pattern.muted ? 'U' : 'S'}}
+        </button>
+      </td> -->
+
       <td>
         <!-- <input class="short-col" type="checkbox" (change)="onQuantizeChange()" [(ngModel)]="pattern.quantize"> -->
         <button ngClass="{{pattern.loop ? 'mini-btn loop' : 'mini-btn ready' }}" [style.height.px]="20"

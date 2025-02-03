@@ -42,7 +42,8 @@ public class BeatController {
     @GetMapping(path = Constants.SAVE_CONFIG)
     public void saveConfig() {
         logger.info(Constants.SAVE_CONFIG);
-        service.saveConfig();
+        // service.saveConfig();
+        logger.info("Save Called");
     }
 
 }

@@ -35,13 +35,14 @@ html {
   background-repeat: no-repeat;
   /*background: -webkit-linear-gradient( to left top, blue, red);*/
   /*background: -moz-linear-gradient( to left top, blue, red);*
-  /*background: -ms-linear-gradient( to left top, blue, red);*/
-  /*  background: -o-linear-gradient( to left top, blue, red);*/
+  /* background: -ms-linear-gradient( to left top, blue, red); */
+  /* background: -o-linear-gradient( to left top, blue, red); */
   /* background: linear-gradient(to right bottom, darkblue, slategrey); */
 
-  background-color: #125699;
+  /* background-color: #125699; */
 
   /* background-color: #558; */
+  background-color: #125699;
 }
 
 body {
@@ -504,6 +505,14 @@ select:hover {
 .muted,
 loop {
   background-color: firebrick;
+}
+
+.disabled {
+  background-color: #333;
+}
+
+.enabled {
+  background-color: #12d312;
 }
 
 .disabled {
@@ -1268,7 +1277,19 @@ grid-3 {
   fill: #b2b4b6;
 }
 
+/* Global table cell vertical alignment */
+td,
+th {
+  vertical-align: middle !important;
+}
 
+/* Ensure form controls are vertically centered */
+td input,
+td select,
+td button {
+  vertical-align: middle !important;
+  margin: auto 0;
+}
 
 /* ---------------------------------------------------------- */
 .overage {
@@ -1486,10 +1507,12 @@ grid-3 {
 
 /* Reduce mat-tab label font size */
 .mat-mdc-tab-label-content {
-  font-size: 10px !important;  /* adjust size as needed */
+  font-size: 10px !important;
+  /* adjust size as needed */
 }
 
 /* If you want even smaller size for nested tabs */
 .mat-tab-group .mat-tab-group .mat-mdc-tab-label-content {
-  font-size: 10px !important;  /* adjust size as needed */
+  font-size: 10px !important;
+  /* adjust size as needed */
 }

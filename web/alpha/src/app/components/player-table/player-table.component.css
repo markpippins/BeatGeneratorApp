@@ -25,6 +25,7 @@ td,
 th {
   padding: 1px;  /* Reduced from 4px 8px */
   /* border: 1px solid #d0d0d0; */
+  font-size: medium;
 }
 
 th {

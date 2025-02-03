@@ -28,7 +28,7 @@ public class Instrument implements Serializable {
     static final Random rand = new Random();
 
     public static final Integer DEFAULT_CHANNEL = 0;
-    public static final Integer[] DEFAULT_CHANNELS = new Integer[]{DEFAULT_CHANNEL};
+    public static final Integer[] DEFAULT_CHANNELS = new Integer[] { DEFAULT_CHANNEL };
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -36,16 +36,13 @@ public class Instrument implements Serializable {
     private Long id;
 
     @OneToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "instrument_control_code", joinColumns = {@JoinColumn(name = "instrument_id")}, inverseJoinColumns = {
-            @JoinColumn(name = "control_code_id")})
+    @JoinTable(name = "instrument_control_code", joinColumns = {
+            @JoinColumn(name = "instrument_id") }, inverseJoinColumns = {
+                    @JoinColumn(name = "control_code_id") })
     private List<ControlCode> controlCodes = new ArrayList<>();
 
-    
     @ManyToMany
-    @JoinTable(
-            name = "instrument_pad",
-            joinColumns = @JoinColumn(name = "pad_id"),
-            inverseJoinColumns = @JoinColumn(name = "instrument_id"))
+    @JoinTable(name = "instrument_pad", joinColumns = @JoinColumn(name = "pad_id"), inverseJoinColumns = @JoinColumn(name = "instrument_id"))
 
     private Set<Pad> pads = new HashSet<>();
 
@@ -61,32 +58,32 @@ public class Instrument implements Serializable {
     @JsonIgnore
     @Transient
     private MidiDevice device;
-    
+
     @JsonIgnore
     @Transient
     private AtomicReference<Receiver> receiver = new AtomicReference<>();
-    
+
     @Column(name = "name", unique = true)
     private String name;
-    
+
     private String deviceName;
-    
+
     @Convert(converter = IntegerArrayConverter.class)
     @Column(name = "channels")
     private Integer[] channels;
-    
+
     private Integer lowestNote = 0;
-    
+
     private Integer highestNote = 127;
-    
+
     private Integer highestPreset;
-    
+
     private Integer preferredPreset;
-    
+
     private Boolean hasAssignments;
-    
+
     private String playerClassName;
-    
+
     private Boolean available = false;
 
     public Instrument() {
@@ -98,7 +95,7 @@ public class Instrument implements Serializable {
     }
 
     public Instrument(String name, MidiDevice device, int channel) {
-        this(name, device, new Integer[]{channel});
+        this(name, device, new Integer[] { channel });
     }
 
     public Instrument(String name, MidiDevice device, Integer[] channels) {
@@ -123,27 +120,32 @@ public class Instrument implements Serializable {
         return assignments.getOrDefault(cc, "NONE");
     }
 
-    public void channelPressure(int channel, long data1, long data2) throws MidiUnavailableException, InvalidMidiDataException {
+    public void channelPressure(int channel, long data1, long data2)
+            throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, channel, (int) data1, (int) data2));
     }
 
-    public void controlChange(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+    public void controlChange(int channel, long data1, long data2)
+            throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, (int) data1, (int) data2));
     }
 
     public void noteOn(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, channel, (int) data1, (int) data2));
+        sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, channel, (int) data1,
+                (int) data2));
     }
 
     public void noteOff(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.NOTE_OFF, channel, (int) data1, (int) data2));
     }
 
-    public void polyPressure(int channel, long data1, long data2) throws MidiUnavailableException, InvalidMidiDataException {
+    public void polyPressure(int channel, long data1, long data2)
+            throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.POLY_PRESSURE, channel, (int) data1, (int) data2));
     }
 
-    public void programChange(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+    public void programChange(int channel, long data1, long data2)
+            throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.PROGRAM_CHANGE, channel, (int) data1, (int) data2));
     }
 
@@ -159,9 +161,10 @@ public class Instrument implements Serializable {
 
         new Thread(() -> params.forEach(cc -> {
             try {
-                int value = getBoundaries().containsKey(cc) ?
-                        rand.nextInt(getBoundaries().get(cc)[0], getBoundaries().get(cc)[0] >= getBoundaries().get(cc)[1] ? getBoundaries().get(cc)[0] + 1 : getBoundaries().get(cc)[1]) :
-                        rand.nextInt(0, 127);
+                int value = getBoundaries().containsKey(cc) ? rand.nextInt(getBoundaries().get(cc)[0],
+                        getBoundaries().get(cc)[0] >= getBoundaries().get(cc)[1] ? getBoundaries().get(cc)[0] + 1
+                                : getBoundaries().get(cc)[1])
+                        : rand.nextInt(0, 127);
 
                 sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, cc, value));
             } catch (IllegalArgumentException | MidiUnavailableException | InvalidMidiDataException e) {
@@ -173,7 +176,7 @@ public class Instrument implements Serializable {
 
     private synchronized Receiver getOrCreateReceiver() throws MidiUnavailableException {
         Receiver current = receiver.get();
-        if (current == null) {
+        if (current == null && Objects.nonNull(getDevice())) {
             if (!getDevice().isOpen()) {
                 getDevice().open();
             }
@@ -188,9 +191,9 @@ public class Instrument implements Serializable {
         try {
             Receiver currentReceiver = getOrCreateReceiver();
             currentReceiver.send(message, -1);
-            logger.debug("Sent message: {} to device: {}", 
-                MidiMessage.lookupCommand(message.getCommand()),
-                getName());
+            logger.debug("Sent message: {} to device: {}",
+                    MidiMessage.lookupCommand(message.getCommand()),
+                    getName());
         } catch (Exception e) {
             logger.error("Send failed: {} - will attempt recovery", e.getMessage());
             cleanup();
@@ -243,7 +246,7 @@ public class Instrument implements Serializable {
     }
 
     public void setBounds(int cc, int lowerBound, int upperBound) {
-        getBoundaries().put(cc, new Integer[]{lowerBound, upperBound});
+        getBoundaries().put(cc, new Integer[] { lowerBound, upperBound });
     }
 
     public Integer getAssignmentCount() {
@@ -254,4 +257,3 @@ public class Instrument implements Serializable {
         return assignments.getOrDefault(key, Integer.toString(key));
     }
 }
-

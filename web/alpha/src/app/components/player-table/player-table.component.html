@@ -4,7 +4,7 @@
       <!-- <th></th>
       <th></th>
       <th></th> -->
-      <th  class="table-header" *ngFor="let col of playerCols">
+      <th class="table-header" *ngFor="let col of playerCols">
         <div>{{ col }}</div>
       </th>
     </tr>
@@ -30,6 +30,12 @@
       </td>
       <td class="shortest-col" (change)="onNoteChange(player, $event)">
         <input type="number" min="1" max="127" step="1" value="{{ player.note }}">
+      </td>
+      <td>
+        <button ngClass="{{player.solo ? 'awake' : 'sandy' }}" [style.height.px]="20" id="player-solo-{{player.id}}"
+          (click)="onBtnClick(player, 'player-solo')">
+          {{player.solo ? 'U' : 'S'}}
+        </button>
       </td>
       <td>
         <button ngClass="{{player.muted ? 'muted' : 'unmuted' }}" [style.height.px]="20" id="player-mute-{{player.id}}"

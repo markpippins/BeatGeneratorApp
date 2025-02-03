@@ -60,16 +60,17 @@ export class PlayerTableComponent implements OnInit {
         });
         break;
       }
+
       case 'ticker-remove': {
         console.log("ticker-remove")
         player.rules = [];
         this.midiService.removePlayer(player).subscribe(async (data) => {
           this.players = data;
-          // if (this.players.length == 0) this.selectedPlayers = [];
         });
         this.players = this.players.filter((p) => p.id != player.id);
         break;
       }
+
       case 'player-mute': {
         this.midiService.sendMessage(
           player.instrumentId,
@@ -90,29 +91,50 @@ export class PlayerTableComponent implements OnInit {
         break;
       }
 
-      case 'ticker-audition': {
-        if (this.selectedPlayer != undefined) {
-          console.log('auditioning player: ' + this.selectedPlayer.name);
-          console.log('auditioning player instrument: ' + this.selectedPlayer.instrumentId);
+      case 'player-solo': {
 
-          this.midiService.sendMessage(
-            this.selectedPlayer.instrumentId,
-            this.selectedPlayer.channel,
-            MidiMessage.NOTE_ON,
-            this.selectedPlayer.note,
-            120
-          );
+        player.solo = !player.solo
+        this.players.forEach(p => {
 
-          this.midiService.sendMessage(
-            this.selectedPlayer.instrumentId,
-            this.selectedPlayer.channel,
-            MidiMessage.NOTE_OFF,
-            this.selectedPlayer.note,
-            120
-          );
-        }
+          let index = this.players.indexOf(p);
+
+          this.midiService
+            .updatePlayer(
+              p.id,
+              PlayerUpdateType.MUTE,
+              p.solo ? 0 : 1
+            )
+            .subscribe(data => {
+              this.players[index] = data;
+              this.players[index].solo = p.solo
+            });
+        });
+
         break;
       }
+
+      case 'ticker-audition': {
+        // if (this.selectedPlayer != undefined) {
+        console.log('auditioning player: ' + player.name);
+        console.log('auditioning player instrument: ' + player.instrumentId);
+
+        this.midiService.sendMessage(
+          player.instrumentId,
+          player.channel,
+          MidiMessage.NOTE_ON,
+          player.note,
+          120
+        );
+
+        this.midiService.sendMessage(
+          player.instrumentId,
+          player.channel,
+          MidiMessage.NOTE_OFF,
+          player.note,
+          120
+        );
+      }
+        break;
     }
   }
 
@@ -145,12 +167,14 @@ export class PlayerTableComponent implements OnInit {
         randomDegree: 0,
         fadeIn: 0,
         fadeOut: 0,
+        solo: false
       },
       'add'
     );
   }
 
   onInstrumentSelected(instrument: Instrument, player: Player) {
+    console.log("onInstrumentSelected")
     player.instrumentId = instrument.id;
     this.midiService
       .updatePlayer(player.id, PlayerUpdateType.INSTRUMENT, instrument.id)
@@ -161,6 +185,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onNoteChange(player: Player, event: { target: any }) {
+    console.log("onNoteChange")
     this.midiService
       .updatePlayer(player.id, PlayerUpdateType.NOTE, event.target.value)
       .subscribe((data) => {
@@ -170,6 +195,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onPartChange(player: Player, event: { target: any }) {
+    console.log("onPartChange")
     this.midiService
       .updatePlayer(player.id, PlayerUpdateType.PART, event.target.value)
       .subscribe((data) => {
@@ -179,6 +205,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onChannelChange(player: Player, event: { target: any }) {
+    console.log("onChannelChange")
     this.players
       .filter((p) => p.id == player.id)
       .forEach((p) =>
@@ -190,6 +217,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onPresetChange(player: Player, event: { target: any }) {
+    console.log("onPresetChange")
 
     this.midiService.sendMessage(
       player.instrumentId,
@@ -211,6 +239,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onLevelChange(player: Player, event: { target: any }) {
+    console.log("onLevelChange")
     this.midiService
       .updatePlayer(player.id, PlayerUpdateType.LEVEL, event.target.value)
       .subscribe((data) => {
@@ -220,6 +249,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onMinVelocityChange(player: Player, event: { target: any }) {
+    console.log("onMinVelocityChange")
     this.midiService
       .updatePlayer(
         player.id,
@@ -233,6 +263,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onMaxVelocityChange(player: Player, event: { target: any }) {
+    console.log("onMaxVelocityChange")
     this.midiService
       .updatePlayer(
         player.id,
@@ -246,6 +277,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onRatchetCountChange(player: Player, event: { target: any }) {
+    console.log("onRatchetCountChange")
     this.midiService
       .updatePlayer(
         player.id,
@@ -259,6 +291,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onRatchetIntervalChange(player: Player, event: { target: any }) {
+    console.log("onRatchetIntervalChange")
     this.midiService
       .updatePlayer(
         player.id,
@@ -272,6 +305,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onFadeInChange(player: Player, event: { target: any }) {
+    console.log("onFadeInChange")
     this.midiService
       .updatePlayer(player.id, PlayerUpdateType.FADE_IN, event.target.value)
       .subscribe((data) => {
@@ -281,6 +315,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onFadeOutChange(player: Player, event: { target: any }) {
+    console.log("onFadeOutChange")
     this.midiService
       .updatePlayer(player.id, PlayerUpdateType.FADE_OUT, event.target.value)
       .subscribe((data) => {
@@ -290,6 +325,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onProbabilityChange(player: Player, event: { target: any }) {
+    console.log("onProbabilityChange")
     this.midiService
       .updatePlayer(player.id, PlayerUpdateType.PROBABILITY, event.target.value)
       .subscribe((data) => {
@@ -299,6 +335,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onSwingChange(player: Player, event: { target: any }) {
+    console.log("onSwingChange")
     this.midiService
       .updatePlayer(player.id, PlayerUpdateType.SWING, event.target.value)
       .subscribe((data) => {
@@ -308,6 +345,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onBeatFractionChange(player: Player, event: { target: any }) {
+    console.log("onBeatFractionChange")
     this.midiService
       .updatePlayer(
         player.id,
@@ -321,6 +359,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onRandomDegreeChange(player: Player, event: { target: any }) {
+    console.log("onRandomDegreeChange")
     this.midiService
       .updatePlayer(
         player.id,
@@ -334,6 +373,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onSkipsChange(player: Player, event: { target: any }) {
+    console.log("onSkipsChange")
     this.midiService
       .updatePlayer(player.id, PlayerUpdateType.SKIPS, event.target.value)
       .subscribe((data) => {
@@ -343,6 +383,7 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onSubsChange(player: Player, event: { target: any }) {
+    console.log("onSubsChange")
     this.midiService
       .updatePlayer(
         player.id,
@@ -360,9 +401,9 @@ export class PlayerTableComponent implements OnInit {
       this.playerSelectEvent.emit(player);
   }
 
-  getMuteButtonClass(player: Player): string {
-    return player.muted ? 'muted' : 'unmuted';
-  }
+  // getMuteButtonClass(player: Player): string {
+  //   return player.muted ? 'muted' : 'unmuted';
+  // }
 
   getRowClass(player: Player): string {
     return 'table-row' + (player === this.selectedPlayer ? ' selected' : '');
