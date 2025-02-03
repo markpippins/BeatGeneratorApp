@@ -83,7 +83,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
     private boolean solo = false;
 
     @Transient
-    private boolean muted = true;
+    private boolean muted = false;
 
     @Transient
     private Long position;

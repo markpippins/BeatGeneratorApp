@@ -172,7 +172,7 @@ export class DashboardComponent implements OnInit, Listener {
               this.uiService.notifyAll(Constants.TICKER_SELECTED, '', 0);
 
               this.midiService.playerInfo().subscribe((data) => {
-                this.players = data;
+                this.players = this.sortByChannel(data);
                 if (this.players.length > 0)
                   this.selectedPlayer = this.players[0];
               });
@@ -196,7 +196,7 @@ export class DashboardComponent implements OnInit, Listener {
                 this.uiService.notifyAll(Constants.TICKER_SELECTED, '', 0);
 
                 this.midiService.playerInfo().subscribe((data) => {
-                  this.players = data;
+                  this.players = this.sortByChannel(data);
                   this.sortByPitch(this.players);
                   if (this.players.length > 0)
                     this.selectedPlayer = this.players[0];
@@ -268,7 +268,7 @@ export class DashboardComponent implements OnInit, Listener {
           this.midiService
             .removePlayer(this.selectedPlayer)
             .subscribe(async (data) => {
-              this.players = data;
+              this.players = this.sortByChannel(data);
               // if (this.players.length == 0) this.selectedPlayer = undefined;
             });
           this.players = this.players.filter((p) => p.id != id);
@@ -318,11 +318,11 @@ export class DashboardComponent implements OnInit, Listener {
     if (this.ticker.id == 0) {
       this.midiService.next(0).subscribe((_data) => {
         this.ticker = _data;
-        this.players = this.reverseSortByClass(_data.players); // data)
+        this.players = this.sortByChannel(_data.players); // data)
       });
     } else if (this.playing)
       this.midiService.playerInfo().subscribe(async (data) => {
-        this.players = this.reverseSortByClass(data);
+        this.players = this.sortByChannel(data);
         this.players.forEach(
           (p) => (p.active = p.id in this.ticker.activePlayerIds)
         );
@@ -369,6 +369,18 @@ export class DashboardComponent implements OnInit, Listener {
       }
       if (a.playerClass < b.playerClass) {
         return -1;
+      }
+      return 0;
+    });
+  }
+
+  sortByChannel(data: Player[]): any[] {
+    return data.sort((b, a) => {
+      if (a.channel + 1 > b.channel) {
+        return -1;
+      }
+      if (a.channel < b.channel) {
+        return 1;
       }
       return 0;
     });

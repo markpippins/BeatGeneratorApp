@@ -9,7 +9,7 @@
     </tr>
     <tr class="table-row" *ngFor="let ins of instruments;" (click)="onRowClick(ins)">
       <td [ngClass]="getRowClass(ins)">
-        <input [style.width.px]="100" value="{{ins.name}}">
+        <input [style.width.px]="300" value="{{ins.name}}">
       </td>
       <td [ngClass]="getRowClass(ins)">
         <select [style.width.px]="40" value="{{ins.channel}}">
