@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class PreciseTimer implements Runnable {
+public class PreciseTimer implements Runnable, Timer {
     private volatile int bpm;
     private volatile int ppq;
     private final AtomicInteger pendingBpm = new AtomicInteger(-1);
@@ -20,30 +20,37 @@ public class PreciseTimer implements Runnable {
         this.ppq = ppq;
     }
 
+    @Override
     public void addTickListener(Runnable listener) {
         tickListeners.add(listener);
     }
 
+    @Override
     public void addBeatListener(Runnable listener) {
         beatListeners.add(listener);
     }
 
+    @Override
     public void stop() {
         running = false;
     }
 
+    @Override
     public synchronized void setBpm(int newBpm) {
         pendingBpm.set(newBpm);
     }
 
+    @Override
     public synchronized void setPpq(int newPpq) {
         pendingPpq.set(newPpq);
     }
 
+    @Override
     public int getBpm() {
         return bpm;
     }
 
+    @Override
     public int getPpq() {
         return ppq;
     }
@@ -85,6 +92,7 @@ public class PreciseTimer implements Runnable {
         }
     }
 
+    @Override
     public long getCurrentTick() {
         return ticks.get();
     }

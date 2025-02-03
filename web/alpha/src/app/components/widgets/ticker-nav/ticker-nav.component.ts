@@ -8,12 +8,23 @@ import { UiService } from 'src/app/services/ui.service';
   styleUrls: ['./ticker-nav.component.css']
 })
 export class TickerNavComponent {
+
+  commands: string[] = [];
+
   constructor(private uiService: UiService) {
     // uiService.addListener(this)
   }
 
 
   onClick(action: string) {
+    this.commands = [action]
     this.uiService.notifyAll(Constants.COMMAND, action, 0)
+  }
+
+  getButtonClass(element: string): string {
+    let result = 'btn-inactive'
+    if (this.commands.includes(element))
+      result = 'btn-active'
+    return result;
   }
 }

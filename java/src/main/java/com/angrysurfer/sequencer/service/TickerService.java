@@ -67,17 +67,18 @@ public class TickerService {
             Instrument instrument = p.getInstrument();
             MidiDevice device = MIDIService.getMidiDevice(instrument.getDeviceName());
 
-            if (!device.isOpen())
+            if (Objects.nonNull(device) && !device.isOpen())
                 try {
                     device.open();
+                    instrument.setDevice(device);
                 } catch (MidiUnavailableException e) {
                     logger.error(e.getMessage(), e);
                 }
-
-            instrument.setDevice(device);
+            else
+                logger.warn(instrument.getDeviceName() + " not initialized");
         });
 
-        if (Objects.nonNull(getClockSource()) && !getClockSource().isPlaying())
+        if (Objects.nonNull(getClockSource()) && !getClockSource().isRunning())
             new Thread(getClockSource()).start();
         else {
             setClockSource(new ClockSource(getTicker()));
@@ -87,7 +88,8 @@ public class TickerService {
         getTicker().getPlayers().forEach(p -> {
             try {
                 if (p.getPreset() > 0)
-                    p.getInstrument().programChange(p.getChannel(), p.getPreset(), 0);
+                    p.getInstrument().programChange(p.getChannel(), p.
+                    getPreset(), 0);
             } catch (InvalidMidiDataException | MidiUnavailableException e) {
                 logger.error(e.getMessage(), e);
             }
@@ -112,7 +114,7 @@ public class TickerService {
 
     public void pause() {
         getClockSource().pause();
-        getClockSource().isPlaying();
+        getClockSource().isRunning();
     }
 
     public Ticker getTickerInfo() {
@@ -120,7 +122,7 @@ public class TickerService {
     }
 
     public TickerStatus getTickerStatus() {
-        return TickerStatus.from(getTicker(), getSongService().getSong(), getClockSource().isPlaying());
+        return TickerStatus.from(getTicker(), getSongService().getSong(), getClockSource().isRunning());
     }
 
     public List<Ticker> getAllTickerInfo() {

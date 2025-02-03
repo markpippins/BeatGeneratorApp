@@ -34,13 +34,13 @@ public class ClockSource implements Runnable {
 
     private Boolean stopped = false;
 
-    private static final AtomicBoolean playing = new AtomicBoolean(false);
+    private static final AtomicBoolean running = new AtomicBoolean(false);
 
     private List<ClockListener> listeners = new ArrayList<>();
 
     private Set<CyclerListener> cycleListeners = new HashSet<>();
 
-    private PreciseTimer timer;
+    private Timer timer;
 
     /**
      * @param ticker
@@ -59,6 +59,20 @@ public class ClockSource implements Runnable {
         stopped = false;
     }
 
+    public void onTick() {
+
+        ticker.beforeTick();
+        getListeners().forEach(l -> l.onTick());
+
+        try {
+            this.executor.invokeAll(ticker.getPlayers());
+        } catch (InterruptedException e) {
+            logger.error("Error in tick processing", e);
+        }
+
+        ticker.afterTick();
+    }
+
     @Override
     public void run() {
         MIDIService.reset();
@@ -66,27 +80,12 @@ public class ClockSource implements Runnable {
         try {
             getTicker().beforeStart();
 
-            // Initialize PreciseTimer with ticker's parameters
-
-            // Add tick listener to handle each tick
-            timer.addTickListener(() -> {
-
-                try {
-                    if (!playing.get()) {
-                        playing.set(handleStarted());
-                    }
-
-                    ticker.beforeTick();
-                    getListeners().forEach(l -> l.onTick());
-                    this.executor.invokeAll(ticker.getPlayers());
-                    ticker.afterTick();
-
-                    // logger.info("Tick: {}", ticker.getTick());
-                } catch (InterruptedException e) {
-                    logger.error("Error in tick processing", e);
+            getTimer().addTickListener(() -> {
+                if (!running.get()) {
+                    running.set(handleStarted());
                 }
+                onTick();
             });
-
 
             // Start the timer in a new thread
             Thread timerThread = new Thread(timer);
@@ -94,14 +93,13 @@ public class ClockSource implements Runnable {
             timerThread.start();
 
             // Wait while running
-            while (!stopped) {
+            while (!stopped)
                 Thread.sleep(10);
-            }
 
-            playing.set(false);
-            
+            running.set(false);
+
             // Cleanup
-            timer.stop();
+            getTimer().stop();
             timerThread.join();
             afterEnd();
 
@@ -118,7 +116,7 @@ public class ClockSource implements Runnable {
         return true;
     }
 
-    public Ticker stop() {
+    public void stop() {
         setStopped(true);
 
         try {
@@ -133,27 +131,29 @@ public class ClockSource implements Runnable {
         getTicker().getBarCycler().reset();
         getTicker().setDone(false);
         getTicker().reset();
-        return getTicker();
     }
 
     public void pause() {
-        if (getTicker().isPaused() || isPlaying())
-            getTicker().setPaused(!getTicker().isPaused());
+        if (!getTicker().isPaused() || !isRunning())
+            return;
+
+        timer.stop();
+        getTicker().setPaused(!getTicker().isPaused());
     }
 
-    public boolean isPlaying() {
-        return playing.get();
-    }
-
-    double getDelay() {
-        return 60000 / ticker.getTempoInBPM() / ticker.getTicksPerBeat();
-    }
-
-    double getDutyCycle() {
-        return 0.5;
+    public boolean isRunning() {
+        return running.get();
     }
 
     public void setTempoInBPM(long updateValue) {
         timer.setBpm((int) updateValue);
     }
+
+    // double getDelay() {
+    // return 60000 / ticker.getTempoInBPM() / ticker.getTicksPerBeat();
+    // }
+
+    // double getDutyCycle() {
+    // return 0.5;
+    // }
 }
