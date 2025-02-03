@@ -198,12 +198,12 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
                 * rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100,
                         getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
         noteOn(note, velocity);
-        // try {
-        // Thread.sleep((long) getTicker().getInterval());
-        // noteOff(note, velocity);
-        // } catch (InterruptedException e) {
-        // e.printStackTrace();
-        // }
+        try {
+            Thread.sleep(2500);
+            noteOff(note, velocity);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -227,10 +227,11 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
     public Boolean call() {
         if (getLastTick() == getTicker().getTick())
             return Boolean.FALSE;
-
         // && !muteGroupPartnerSoundedOnThisTick()
         // && strikeHasNoMuteGroupConflict()
-        if ((!isMuted() || (getTicker().hasSolos() && isSolo())) && shouldPlay()) {
+        var solo = getTicker().hasSolos();
+
+        if ((!solo && !isMuted()) || (solo && isSolo()) && shouldPlay()) {
             getTicker().getActivePlayerIds().add(getId());
             setLastPlayedBar(getTicker().getBar());
             setLastPlayedBeat(getTicker().getBeat());
@@ -241,7 +242,6 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
         setLastTick(getTicker().getTick());
         // logger.info(String.format("%s not playing tick %s, beat %s, bar %s",
         // getName(), tick, getTicker().getBeat(), getTicker().getBar()));
-
         return Boolean.TRUE;
     }
 
