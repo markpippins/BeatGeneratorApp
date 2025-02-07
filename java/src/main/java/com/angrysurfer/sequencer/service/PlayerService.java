@@ -126,7 +126,7 @@ public class PlayerService {
         tickerRepo.flush();
 
         try {
-            midiInstrument.setDevice(MIDIService.getMidiDevice(midiInstrument.getName()));
+            midiInstrument.setDevice(MIDIService.getMidiDevice(midiInstrument.getDeviceName()));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -234,6 +234,7 @@ public class PlayerService {
         // strikeRepository.findById(playerId).orElseThrow();
         switch (updateType) {
             case CHANNEL -> {
+                player.noteOff(0, 0);
                 player.setChannel((int) updateValue);
                 break;
             }
@@ -252,6 +253,7 @@ public class PlayerService {
 
             case PRESET -> {
                 try {
+                    player.noteOff(0, 0);
                     player.setPreset(updateValue);
                     Instrument instrument = getMidiInstrumentRepo().findById((long) player.getInstrumentId())
                             .orElseThrow(null);
@@ -509,11 +511,11 @@ public class PlayerService {
             public void run() {
                 try {
                     ShortMessage noteOn = new ShortMessage();
-                    noteOn.setMessage(ShortMessage.NOTE_ON, channel, note, 127);
+                    noteOn.setMessage(ShortMessage.NOTE_ON, channel, note, 126);
                     midiInstrument.getDevice().getReceiver().send(noteOn, 0L);
                     // Thread.sleep(5000);
                     // ShortMessage noteOff = new ShortMessage();
-                    // noteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, 127);
+                    // noteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, 126);
                     // midiInstrument.getDevice().getReceiver().send(noteOff, 1000L);
                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
                     throw new RuntimeException(e);

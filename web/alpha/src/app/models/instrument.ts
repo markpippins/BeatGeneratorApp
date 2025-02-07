@@ -2,6 +2,7 @@ import {ControlCode} from "./control-code"
 
 export interface Instrument {
   id: number
+  available: boolean
   name: string
   deviceName: string
   channel: number

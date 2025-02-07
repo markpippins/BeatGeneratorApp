@@ -5,14 +5,15 @@ import {
   Input,
   OnInit,
   Output,
+  OnDestroy,
 } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
-import { Listener } from 'src/app/models/listener';
 import { MidiService } from 'src/app/services/midi.service';
 import { UiService } from 'src/app/services/ui.service';
 import { Step } from '../../models/step';
 import { Instrument } from 'src/app/models/instrument';
 import { Pattern } from 'src/app/models/pattern';
+import { MessageListener } from 'src/app/models/message-listener';
 interface PitchPair {
   midi: number;
   note: string;
@@ -24,7 +25,8 @@ interface PitchPair {
   styleUrls: ['./beat-spec-panel.component.css'],
 })
 export class BeatSpecPanelComponent
-  implements Listener, OnInit, AfterContentChecked {
+  implements MessageListener, OnInit, AfterContentChecked, OnDestroy {
+
   colors = [
     'violet',
     'lightsalmon',
@@ -68,15 +70,17 @@ export class BeatSpecPanelComponent
 
   pitchMap: PitchPair[] = [];
 
-  constructor(private uiService: UiService, private midiService: MidiService) {
-    uiService.addListener(this);
-  }
+  lastBeat = 0;
+
+  constructor(private uiService: UiService, private midiService: MidiService) { }
 
   ngAfterContentChecked(): void {
     // this.selected = this.step != undefined && this.step.active;
   }
 
   ngOnInit(): void {
+    this.uiService.addListener(this);
+
     for (let i = 0; i < 126; i++)
       this.pitchMap.push({
         midi: i,
@@ -84,15 +88,13 @@ export class BeatSpecPanelComponent
       });
   }
 
-  lastBeat = 0;
-
-  onPadPressed(_index: number) {
-    this.step.active = !this.step.active;
-    // this.selected = !this.selected
+  ngOnDestroy(): void {
+    this.uiService.removeListener(this);
   }
 
-  onNotify(messageType: number, _message: string, _messageValue: any) {
-    console.log("NOTIFIED")
+
+  notify(messageType: number, _message: string, _messageValue: any) {
+    // console.log(this.getCaption() + "NOTIFIED")
     if (messageType == Constants.TICKER_STARTED) {
       console.log("TICKER_STARTED")
       this.lastBeat = 0;
@@ -122,6 +124,11 @@ export class BeatSpecPanelComponent
     //     this.pattern.position == status.position &&
     //     status.activeStep == this.step.position;
     // }
+  }
+
+  onPadPressed(_index: number) {
+    this.step.active = !this.step.active;
+    // this.selected = !this.selected
   }
 
   onParamsBtnClick() {

@@ -1,6 +1,8 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Swirl } from 'src/app/models/swirl';
+import { TickListener } from 'src/app/models/tick-listener';
+import { TickerStatus } from 'src/app/models/ticker-status';
 import { TickerService } from 'src/app/services/ticker.service';
 import { Instrument } from '../../../models/instrument';
 
@@ -9,7 +11,7 @@ import { Instrument } from '../../../models/instrument';
   templateUrl: './drum-pad.component.html',
   styleUrls: ['./drum-pad.component.css'],
 })
-export class DrumPadComponent implements OnInit {
+export class DrumPadComponent implements TickListener, OnDestroy, OnInit {
 
   tickerSubscription!: Subscription;
 
@@ -53,22 +55,25 @@ export class DrumPadComponent implements OnInit {
   @Input()
   channel!: number;
 
-  constructor(private tickerService: TickerService) {
-    // this.uiService.addListener(this);
-  }
-
   pulse = 0;
 
-  ngOnInit(): void {
-    this.tickerSubscription = this.tickerService.getTickerMessages().subscribe({
-      next: () => {
-        this.pulse++;
-        this.swirl.forward();
-      },
-      error: (err: any) => console.error(err),
-    });
+
+  constructor(private tickerService: TickerService) { }
+
+  ngOnDestroy(): void {
+    // this.uiService.removeListener(this);
+    this.tickerService.removeListener(this);
   }
 
+  ngOnInit(): void {
+    // this.uiService.addListener(this);
+    this.tickerService.addListener(this);
+  }
+
+  update(_tickerStatus: TickerStatus): void {
+    this.pulse++;
+    this.swirl.forward();
+  }
 
   padPressed() {
     this.padPressedEvent.emit(this.index);

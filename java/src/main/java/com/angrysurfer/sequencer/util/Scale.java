@@ -5,7 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Scale {
+
+    static final Logger logger = LoggerFactory.getLogger(Scale.class);
 
     public static String[] SCALE_NOTES = {
             "C", "C♯/D♭", "D", "D♯/E♭", "E",

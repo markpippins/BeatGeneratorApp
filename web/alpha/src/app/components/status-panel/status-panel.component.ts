@@ -2,12 +2,13 @@ import {
   Component,
   EventEmitter,
   Input,
-  // NgZone,
+  OnDestroy,
   OnInit,
-  Output,
+  Output
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Constants } from 'src/app/models/constants';
+import { TickListener } from 'src/app/models/tick-listener';
 import { TickerStatus } from 'src/app/models/ticker-status';
 import { TickerUpdateType } from 'src/app/models/ticker-update-type';
 import { TickerService } from 'src/app/services/ticker.service';
@@ -20,7 +21,7 @@ import { MidiService } from '../../services/midi.service';
   templateUrl: './status-panel.component.html',
   styleUrls: ['./status-panel.component.css'],
 })
-export class StatusPanelComponent implements OnInit {
+export class StatusPanelComponent implements TickListener, OnDestroy, OnInit {
   tickerSubscription!: Subscription;
   // songSubscription!: Subscription;
   ppqSelectionIndex!: number;
@@ -46,9 +47,6 @@ export class StatusPanelComponent implements OnInit {
   @Input()
   tickerStatus!: TickerStatus;
 
-  // @Input()
-  // songStatus!: SongStatus;
-
   @Output()
   ppqChangeEvent = new EventEmitter<number>();
 
@@ -57,15 +55,37 @@ export class StatusPanelComponent implements OnInit {
 
   colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
   index = 0;
+  waiting = false;
+  nextCalled = false;
+
+  lastBeat = 0;
+  lastBar = 0;
+  lastPart = 0;
 
   constructor(
-    // private zone: NgZone,
     private midiService: MidiService,
-    private tickerService: TickerService,
-    private uiService: UiService
-  ) { }
+    private uiService: UiService,
+    private tickerService: TickerService
+  ) {
+  }
 
-  // private pulse = 0;
+  ngOnDestroy(): void {
+    this.tickerService.removeListener(this)
+    this.tickerSubscription && this.tickerSubscription.unsubscribe();
+  }
+
+  ngOnInit(): void {
+    this.tickerService.addListener(this)
+  }
+
+  update(tickerStatus: TickerStatus): void {
+    this.cycleColors();
+    this.tickerStatus = tickerStatus;
+    if (this.tickerStatus.tickCount % this.tickerStatus.ticksPerBeat == 0)
+      this.uiService.notifyAll(Constants.BEAT_DIV, '', this.tickerStatus.tickCount);
+    this.updateDisplay();
+  }
+
 
   cycleColors() {
     let colorContainer = document.getElementById('dashboard') as HTMLElement;
@@ -75,69 +95,11 @@ export class StatusPanelComponent implements OnInit {
     }
   }
 
-  // getSongMessages(): Observable<string> {
-  //   return Observable.create(
-  //     (observer: {
-  //       next: (arg0: any) => void;
-  //       error: (arg0: Event) => void;
-  //     }) => {
-  //       let source = new EventSource('http://localhost:8080/api/xox');
-  //       source.onmessage = (event) => {
-  //         this.zone.run(() => {
-  //           console.log('song');
-  //           console.log(event.data);
-  //           observer.next(event.data);
-  //         });
-  //       };
-
-  //       source.onerror = (event) => {
-  //         this.zone.run(() => {
-  //           observer.error(event);
-  //         });
-  //       };
-  //     }
-  //   );
-  // }
-
-  ngOnInit(): void {
-    this.tickerSubscription = this.tickerService.getTickerMessages().subscribe({
-      next: (data: string) => {
-        // this.pulse++;
-        this.cycleColors();
-        this.tickerStatus = JSON.parse(data);
-        // if (this.tickerStatus.tickCount % 2 == 0)
-          //   this.uiService.notifyAll(Constants.TICKER_CONNECTED, '', this.pulse);
-          this.updateDisplay();
-      },
-      error: (err: any) => console.error(err),
-    });
-
-    // this.songSubscription = this.getSongMessages().subscribe({
-    //   next: (data: string) => {
-    //     this.songStatus = JSON.parse(data);
-    //     this.updateDisplay();
-    //   },
-    //   error: (err: any) => console.error(err),
-    // });
-  }
-
-  ngOnDestroy(): void {
-    this.tickerSubscription && this.tickerSubscription.unsubscribe();
-    // this.songSubscription && this.songSubscription.unsubscribe();
-  }
-
   getBeats() {
     const beats = [];
     for (let i = this.tickerStatus.beatsPerBar; i >= 1; i--) beats.push(i);
     return beats.reverse();
   }
-
-  waiting = false;
-  nextCalled = false;
-
-  lastBeat = 0;
-  lastBar = 0;
-  lastPart = 0;
 
   updateDisplay(): void {
     if (this.tickerStatus != undefined) {

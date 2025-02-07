@@ -1,5 +1,3 @@
-BEAT SPEC DETAILS
-
 <mat-tab-group (selectedIndexChange)="selectedIndexChange($event)">
   <mat-tab *ngFor="let pattern of song?.patterns;" [label]="getLabel(pattern)">
     <!-- <app-control-panel808 class="control-panel808"></app-control-panel808> -->
@@ -7,13 +5,13 @@ BEAT SPEC DETAILS
     <app-beat-spec-detail *ngIf="song != undefined" [instruments]="instruments" [pattern]="pattern" [songId]="song.id"
       (instrumentSelectEvent)="onInstrumentSelected($event, pattern)" class=""></app-beat-spec-detail>
     <div class="interface-808">
-      <div class="thumb-canvas-container">
+      <!-- <div class="thumb-canvas-container">
       <canvas id="thumb-canvas" class="side-panel-808">
       </canvas>
       <canvas id="thumb-canvas" class="side-panel-808">
       </canvas>
-    </div>
-          <!-- <div class="side-panel-808-drum-pad">
+    </div> -->
+      <!-- <div class="side-panel-808-drum-pad">
           <app-drum-pad [selector]="true" class="pad-selector"></app-drum-pad>
         </div> -->
       <app-beat-spec-panel *ngFor="let step of pattern.steps; let index = index;" [pattern]="pattern"

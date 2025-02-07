@@ -8,7 +8,8 @@ import com.angrysurfer.sequencer.model.midi.Instrument;
 
 public interface Instruments extends JpaRepository<Instrument, Long> {
 
-    // public List<Instrument> findByChannel(int channel);
+    @SuppressWarnings("null")
+    public Optional<Instrument> findById(Long id);
 
     public Optional<Instrument> findByName(String instrument);
 

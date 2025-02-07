@@ -1,12 +1,16 @@
 package com.angrysurfer.sequencer.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.ShortMessage;
 
@@ -18,9 +22,11 @@ import com.angrysurfer.sequencer.dao.SongStatus;
 import com.angrysurfer.sequencer.model.Pattern;
 import com.angrysurfer.sequencer.model.Song;
 import com.angrysurfer.sequencer.model.Step;
+import com.angrysurfer.sequencer.model.midi.Instrument;
 import com.angrysurfer.sequencer.repo.Patterns;
 import com.angrysurfer.sequencer.repo.Songs;
 import com.angrysurfer.sequencer.repo.Steps;
+import com.angrysurfer.sequencer.util.Constants;
 import com.angrysurfer.sequencer.util.listener.CyclerListener;
 import com.angrysurfer.sequencer.util.update.PatternUpdateType;
 import com.angrysurfer.sequencer.util.update.StepUpdateType;
@@ -313,68 +319,57 @@ public class SongService implements NoteProvider {
 
         return song;
     }
-
+    
     public Song newSong() {
         this.song = new Song();
 
-        // try {
-        //     songRepo.save(song);
+        List<String> devices = new ArrayList<>();
 
-        //     IntStream.range(1, Constants.DEFAULT_XOX_TRACKS).forEach(i -> {
-        //         Pattern pattern = new Pattern();
-        //         pattern.setSong(song);
-        //         pattern.setPosition(song.getPatterns().size() + 1);
-        //         pattern.getInstrument()
-        //         List<Instrument> instruments = this.instrumentService.getInstrumentByChannel(i);
-        //         if (instruments.size() > 0) {
-        //             pattern.setInstrument((Instrument) instruments.get(0));
-        //             pattern.setName(((Instrument) instruments.get(0)).getName());
-        //         } else {
-        //             MidiDevice[] devices = { null, null };
+        MIDIService.getMidiOutDevices().forEach(device -> devices.add(device.getDeviceInfo().getName()));
 
-        //             MIDIService.getMidiOutDevices().forEach(device -> {
-        //                 logger.info("Device: " + device.getDeviceInfo().getName());
-        //                 if (device.getDeviceInfo().getName().contains("Microsoft GS")) {
-        //                     devices[0] = device;
-        //                 }
-        //                 if (device.getDeviceInfo().getName().contains("Gervill")) {
-        //                     devices[1] = device;
-        //                 }
-        //             });
+        if (devices.size() > 0)
+            try {
+                songRepo.save(song);
 
-        //             if (Objects.nonNull(devices[0])) {
-        //                 Instrument instrument = new Instrument();
-        //                 instrument.setChannel(i);
-        //                 instrument.setDeviceName(devices[0].getDeviceInfo().getName());
-        //                 instrument.setName(devices[0].getDeviceInfo().getName());
-        //                 instrument.setDevice(devices[0]);
-        //                 // instrument = instrumentService.save(instrument);
-        //                 pattern.setInstrument(instrument);
-        //             } else
+                final List<Instrument> instruments = this.instrumentService.getAllInstruments();
 
-        //             if (Objects.nonNull(devices[1])) {
-        //                 Instrument instrument = new Instrument();
-        //                 instrument.setChannel(i);
-        //                 instrument.setDeviceName(devices[1].getDeviceInfo().getName());
-        //                 instrument.setName(devices[1].getDeviceInfo().getName());
-        //                 instrument.setDevice(devices[1]);
-        //                 // instrument = instrumentService.save(instrument);
-        //                 pattern.setInstrument(instrument);
-        //             }
-        //         }
+                IntStream.range(0,8).forEach(i -> {
+                    Pattern pattern = new Pattern();
+                    pattern.setSong(song);
+                    pattern.setPosition(song.getPatterns().size() + 1);
 
-        //         pattern.setChannel(i);
-        //         song.getPatterns().add(getPatternRepo().save(pattern));
-        //         IntStream.range(0, Constants.DEFAULT_XOX_PATTERN_LENGTH).forEach(j -> {
-        //             Step step = new Step();
-        //             step.setPattern(pattern);
-        //             step.setPosition(pattern.getSteps().size() + 1);
-        //             pattern.getSteps().add(getStepRepo().save(step));
-        //         });
-        //     });
-        // } catch (Exception e) {
-        //     logger.error(e.getMessage(), e);
-        // }
+                    var vv = instruments.stream().filter(ins -> ins.receivesOn(i) && ins.getAvailable()).toList();
+
+                    if (vv.size() > 0) {
+                        pattern.setInstrument((Instrument) vv.getFirst());
+                        pattern.setName(((Instrument) vv.getFirst()).getName());
+                    } else {
+
+                        if (devices.size() > 0) {
+                            Instrument instrument = new Instrument();
+                            Integer[] channels = { i };
+                            instrument.setChannels(channels);
+                            instrument.setDeviceName(devices.getFirst());
+                            instrument
+                                    .setName(devices.getFirst() + " " + Integer.toString(i));
+                            // instrument.setDevice(devices.getFirst());
+                            instrument = instrumentService.save(instrument);
+                            pattern.setInstrument(instrument);
+                        }
+                    }
+
+                    pattern.setChannel(i);
+                    song.getPatterns().add(getPatternRepo().save(pattern));
+                    IntStream.range(0, 16).forEach(j -> {
+                        Step step = new Step();
+                        step.setPattern(pattern);
+                        step.setPosition(pattern.getSteps().size() + 1);
+                        pattern.getSteps().add(getStepRepo().save(step));
+                    });
+                });
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
 
         return song;
     }

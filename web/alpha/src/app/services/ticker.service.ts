@@ -1,15 +1,17 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Player } from '../models/player';
+import { TickListener } from '../models/tick-listener';
 import { Ticker } from '../models/ticker';
-import { MidiService } from './midi.service';
+import { TickerStatus } from '../models/ticker-status';
 
 @Injectable({
   providedIn: 'root'
 })
-export class TickerService {
+export class TickerService implements OnInit {
 
   players: Player[] = []
+  listeners: TickListener[] = [];
 
   ticker: Ticker = {
     bar: 0,
@@ -40,43 +42,52 @@ export class TickerService {
     players: []
   }
 
-  constructor(private zone: NgZone, private midiService: MidiService) { }
+  constructor(private zone: NgZone) {
+    this.getTickerMessages().subscribe(data => {
+      let tickerStatus: TickerStatus = JSON.parse(data);
+      this.listeners.forEach(listener => {
+        listener.update(tickerStatus)
+      })
+    })
+  }
+
+  ngOnInit(): void {
+
+  }
 
   getTicker(): Ticker {
     return this.ticker
   }
 
-  forward() {
-      if (this.ticker.id > 0 && this.ticker.playing) {
-        // this.consoleOutput.pop()
-        // this.consoleOutput.push('ticker is currently playing')
-      } else this.midiService.next(this.ticker.id).subscribe(async (data) => {
-        // this.clear();
-        this.ticker = data
-        return data
-      })
+  addListener(listener: TickListener) {
+    this.listeners.push(listener);
+  }
+
+  removeListener(listener: TickListener) {
+    this.listeners = this.listeners.filter(l => l != listener);
   }
 
   getTickerMessages(): Observable<string> {
-      return Observable.create(
-        (observer: {
-          next: (arg0: any) => void;
-          error: (arg0: Event) => void;
-        }) => {
-          let source = new EventSource('http://localhost:8080/api/tick');
-          source.onmessage = (event) => {
-            this.zone.run(() => {
-              // this.cycleColors();
-              observer.next(event.data);
-            });
-          };
+    return Observable.create(
+      (observer: {
+        next: (arg0: any) => void;
+        error: (arg0: Event) => void;
+      }) => {
+        let source = new EventSource('http://localhost:8080/api/tick');
+        source.onmessage = (event) => {
+          this.zone.run(() => {
+            observer.next(event.data);
+          });
+        };
 
-          source.onerror = (event) => {
-            this.zone.run(() => {
-              observer.error(event);
-            });
-          };
-        }
-      );
-    }
+        source.onerror = (event) => {
+          this.zone.run(() => {
+            observer.error(event);
+          });
+        };
+      }
+    );
+  }
+
+
 }

@@ -1,20 +1,20 @@
-import { Component, OnInit, Output } from '@angular/core';
-import { MidiService } from '../../services/midi.service';
+import { Component, OnDestroy, OnInit, Output } from '@angular/core';
+import { Constants } from 'src/app/models/constants';
+import { Instrument } from 'src/app/models/instrument';
+import { TickerStatus } from 'src/app/models/ticker-status';
+import { TickerUpdateType } from 'src/app/models/ticker-update-type';
+import { UiService } from 'src/app/services/ui.service';
 import { Player } from '../../models/player';
 import { Ticker } from '../../models/ticker';
-import { UiService } from 'src/app/services/ui.service';
-import { Constants } from 'src/app/models/constants';
-import { Listener } from 'src/app/models/listener';
-import { TickerStatus } from 'src/app/models/ticker-status';
-import { Instrument } from 'src/app/models/instrument';
-import { TickerUpdateType } from 'src/app/models/ticker-update-type';
+import { MidiService } from '../../services/midi.service';
+import { MessageListener } from 'src/app/models/message-listener';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
-export class DashboardComponent implements OnInit, Listener {
+export class DashboardComponent implements OnDestroy, OnInit, MessageListener {
   @Output()
   players!: Player[];
 
@@ -95,38 +95,47 @@ export class DashboardComponent implements OnInit, Listener {
   consoleOutput: string[] = [];
 
   constructor(private midiService: MidiService, private uiService: UiService) {
-    uiService.addListener(this);
+  }
+
+  ngOnDestroy(): void {
+    this.uiService.removeListener(this);
   }
 
   ngOnInit(): void {
-    this.updateDisplay();
-    this.onActionSelected('forward');
+    this.uiService.addListener(this);
+    // this.onActionSelected('forward');
     this.midiService.allInstruments().subscribe((data) => {
       this.instruments = this.uiService.sortByName(data);
       if (this.instruments.length > 0) {
         this.selectedInstrument = this.instruments[0];
       }
     });
+    this.updateDisplay();
+
   }
 
-  onNotify(_messageType: number, _message: string, _messageValue: any) {
-    console.log("NOTIFIED")
+  notify(_messageType: number, _message: string, _messageValue: any) {
+
     this.consoleOutput.pop();
     switch (_messageType) {
       case Constants.STATUS:
+        console.log("STATUS:  " + _message);
         this.consoleOutput.push(_message);
         break;
 
       case Constants.COMMAND:
+        console.log("COMMAND:  " + _message);
         this.onActionSelected(_message);
         break;
 
       case Constants.CONNECTED:
+        console.log("CONNECTED:  " + _message);
         this.consoleOutput.push('connected');
         this.updateDisplay();
         break;
 
       case Constants.DISCONNECTED:
+        console.log("DISCONNECTED:  " + _message);
         this.consoleOutput.push('disconnected');
         break;
 
@@ -159,6 +168,7 @@ export class DashboardComponent implements OnInit, Listener {
     this.consoleOutput.pop();
     this.consoleOutput.push(action);
 
+    console.log('handling ' + action);
     if (this.ticker != undefined)
       switch (action) {
         case 'ticker-forward': {
@@ -308,8 +318,9 @@ export class DashboardComponent implements OnInit, Listener {
           break;
         }
       }
+      else console.error('TICKER UNDEFINED')
 
-    // this.updateDisplay();
+      // this.updateDisplay();
   }
 
   updateDisplay(): void {
@@ -320,9 +331,15 @@ export class DashboardComponent implements OnInit, Listener {
         this.ticker = _data;
         this.players = this.sortByChannel(_data.players); // data)
       });
-    } else if (this.playing)
+    }
+
+    else if (!this.playing)
       this.midiService.playerInfo().subscribe(async (data) => {
         this.players = this.sortByChannel(data);
+      });
+
+    else if (this.playing)
+      this.midiService.playerInfo().subscribe(async () => {
         this.players.forEach(
           (p) => (p.active = p.id in this.ticker.activePlayerIds)
         );

@@ -163,13 +163,13 @@ public class Constants {
 //
 // try {
 // int razPreset = rand.nextInt(126);
-// getInstrument(RAZZ).programChange(razPreset, 127);
+// getInstrument(RAZZ).programChange(razPreset, 126);
 // getPlayers().stream().filter(p ->
 // p.getInstrument().equals(getInstrument(RAZZ)))
 // .forEach(p -> p.setPreset(razPreset));
 //
 // int microFreakPreset = rand.nextInt(126);
-// getInstrument(MICROFREAK).programChange(microFreakPreset, 127);
+// getInstrument(MICROFREAK).programChange(microFreakPreset, 126);
 // getPlayers().stream().filter(p ->
 // p.getInstrument().equals(getInstrument(MICROFREAK)))
 // .forEach(p -> p.setPreset(microFreakPreset));
@@ -321,7 +321,7 @@ public class Constants {
 // getInstrument().randomize(getAllowedControlMessages());
 //
 // if (tick % 4 == 0 || (rand.nextBoolean() && tick % 3 == 0))
-// drumNoteOn(getNote(), rand.nextInt(75, 127));
+// drumNoteOn(getNote(), rand.nextInt(75, 126));
 // }
 // },
 // // closed hi-hat
@@ -332,7 +332,7 @@ public class Constants {
 // getInstrument().randomize(getAllowedControlMessages());
 //
 // if (bar > 32 && tick % 16 == 0 && rand.nextBoolean())
-// drumNoteOn(getNote(), rand.nextInt(120, 127));
+// drumNoteOn(getNote(), rand.nextInt(120, 126));
 // }
 // },
 //
@@ -347,7 +347,7 @@ public class Constants {
 // if (bar > 4)
 // if (getBeat() % .25 == 0) {
 // t int note = notes[getPosition()];
-// noteOn(note, 127);
+// noteOn(note, 126);
 // }
 // }
 // },
@@ -360,7 +360,7 @@ public class Constants {
 //
 // if (tick % 2 == 0) {
 // int note = notes[incrementAndGetPosition()] - 24;
-// noteOn(note, 127);
+// noteOn(note, 126);
 // }
 // }
 // },
@@ -373,7 +373,7 @@ public class Constants {
 //
 // if (rand.nextBoolean()) {
 // try {
-// getInstrument().programChange(rand.nextInt(), 127);
+// getInstrument().programChange(rand.nextInt(), 126);
 // } catch (InvalidMidiDataException | MidiUnavailableException e) {
 // throw new RuntimeException(e);
 // }
@@ -383,7 +383,7 @@ public class Constants {
 //
 // if (tick % 2 == 0) {
 // int note = notes[incrementAndGetPosition()] - 24;
-// noteOn(note, 127);
+// noteOn(note, 126);
 // }
 // }
 // },
@@ -396,7 +396,7 @@ public class Constants {
 // getInstrument().randomize(getAllowedControlMessages());
 //
 // if (getBeat() % 2 == 0)
-// noteOn(33 + (rand.nextBoolean() ? 12 * rand.nextInt(0, 2) : 0), 127);
+// noteOn(33 + (rand.nextBoolean() ? 12 * rand.nextInt(0, 2) : 0), 126);
 // }
 // },
 //
@@ -424,7 +424,7 @@ public class Constants {
 // public void onTick(int tick, int bar) {
 // if (bar > 8 && bar < 17 || bar > 32 && bar < 48 && tick % 16 == 0 &&
 // rand.nextBoolean())
-// drumNoteOn(getNote(), rand.nextInt(120, 127));
+// drumNoteOn(getNote(), rand.nextInt(120, 126));
 // }
 // },
 //
@@ -432,7 +432,7 @@ public class Constants {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (tick % 4 == 0 || (rand.nextBoolean() && tick % 3 == 0))
-// drumNoteOn(getNote(), rand.nextInt(75, 127));
+// drumNoteOn(getNote(), rand.nextInt(75, 126));
 // }
 // }
 

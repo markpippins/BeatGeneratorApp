@@ -6,10 +6,12 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
+  OnInit,
   Output,
 } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
-import { Listener } from 'src/app/models/listener';
+import { MessageListener } from 'src/app/models/message-listener';
 import { UiService } from 'src/app/services/ui.service';
 
 @Component({
@@ -19,12 +21,13 @@ import { UiService } from 'src/app/services/ui.service';
 })
 export class ButtonPanelComponent
   implements
-    Listener,
-    AfterContentInit,
-    AfterContentChecked,
-    AfterViewInit,
-    AfterViewChecked
-{
+  MessageListener,
+  AfterContentInit,
+  AfterContentChecked,
+  AfterViewInit,
+  AfterViewChecked,
+  OnInit,
+  OnDestroy {
   @Output()
   buttonClickedForIndexEvent = new EventEmitter<number>();
 
@@ -85,7 +88,14 @@ export class ButtonPanelComponent
   containerClass = 'flex-container-horizontal';
 
   constructor(private uiService: UiService) {
-    uiService.addListener(this);
+  }
+  ngOnInit(): void {
+    this.uiService.addListener(this);
+    this.updateDisplay();
+  }
+
+  ngOnDestroy(): void {
+    this.uiService.removeListener(this);
   }
 
   ngAfterContentInit(): void {
@@ -110,8 +120,8 @@ export class ButtonPanelComponent
     this.updateSelections();
   }
 
-  onNotify(_messageType: number, _message: string, messageValue: number) {
-    console.log("NOTIFIED")
+  notify(_messageType: number, _message: string, messageValue: number) {
+    // console.log("NOTIFIED")
     if (_messageType == Constants.CLICK && _message == this.identifier)
       this.selections[messageValue] = !this.selections[messageValue];
 
@@ -143,8 +153,8 @@ export class ButtonPanelComponent
 
     while (
       this.range.length +
-        this.visibleCustomControls.length +
-        this.overage.length <
+      this.visibleCustomControls.length +
+      this.overage.length <
       this.colCount
     )
       this.overage.push('');

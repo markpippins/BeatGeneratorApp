@@ -147,7 +147,7 @@ public class MIDIService {
     }
 
     // Improved message sending with validation
-    public void sendMessage(Instrument instrument, int channel, int messageType, int data1, int data2) {
+    public static void sendMessage(Instrument instrument, int channel, int messageType, int data1, int data2) {
         if (instrument == null) {
             throw new IllegalArgumentException("Instrument cannot be null");
         }
@@ -163,9 +163,9 @@ public class MIDIService {
         }
     }
 
-    private int validateData(int data) {
-        if (data < 0 || data > 127) {
-            throw new IllegalArgumentException("MIDI data must be between 0 and 127");
+    static int validateData(int data) {
+        if (data < 0 || data > 126) {
+            throw new IllegalArgumentException("MIDI data must be between 0 and 126");
         }
         return data;
     }

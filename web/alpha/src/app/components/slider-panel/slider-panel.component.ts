@@ -1,17 +1,17 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnDestroy, Output } from '@angular/core';
 import { Instrument } from '../../models/instrument';
 import { MidiService } from '../../services/midi.service';
-import { Listener } from 'src/app/models/listener';
 import { UiService } from 'src/app/services/ui.service';
 import { Panel } from 'src/app/models/panel';
 import { ControlCode } from 'src/app/models/control-code';
+import { MessageListener } from 'src/app/models/message-listener';
 
 @Component({
   selector: 'app-slider-panel',
   templateUrl: './slider-panel.component.html',
   styleUrls: ['./slider-panel.component.css'],
 })
-export class SliderPanelComponent implements OnInit, Listener {
+export class SliderPanelComponent implements OnDestroy, OnInit, MessageListener {
 
   @Input()
   instrumentId!: number;
@@ -35,8 +35,21 @@ export class SliderPanelComponent implements OnInit, Listener {
 
   constructor(private midiService: MidiService, private uiService: UiService) { }
 
-  onNotify(_messageType: number, _message: string) {
-    console.log("NOTIFIED")
+  ngOnDestroy(): void {
+    this.uiService.removeListener(this);
+  }
+
+  ngOnInit(): void {
+    this.uiService.addListener(this);
+    this.onSelect(10);
+    this.midiService.allInstruments().subscribe(async (data) => {
+      this.instruments = this.uiService.sortByName(data);
+      this.buildPanelMap(this.instruments);
+    });
+  }
+
+  notify(_messageType: number, _message: string) {
+    // console.log("NOTIFIED")
   }
 
   onSelect(selectedChannel: number) {
@@ -50,15 +63,6 @@ export class SliderPanelComponent implements OnInit, Listener {
           this.channelSelectEvent.emit(selectedChannel);
         });
     }
-  }
-
-  ngOnInit(): void {
-    this.uiService.addListener(this);
-    this.onSelect(10);
-    this.midiService.allInstruments().subscribe(async (data) => {
-      this.instruments = this.uiService.sortByName(data);
-      this.buildPanelMap(this.instruments);
-    });
   }
 
   getRangeColor() {

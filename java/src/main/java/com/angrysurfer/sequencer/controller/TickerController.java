@@ -129,7 +129,7 @@ public class TickerController {
 
     @GetMapping(Constants.UPDATE_TICKER)
     public @ResponseBody Ticker updateTicker(@RequestParam Long tickerId, @RequestParam int updateType,
-            @RequestParam int updateValue) {
+            @RequestParam Long updateValue) {
         if (requestsToLog.contains("update"))
             logger.info(Constants.UPDATE_TICKER);
         return tickerService.updateTicker(tickerId, updateType, updateValue);

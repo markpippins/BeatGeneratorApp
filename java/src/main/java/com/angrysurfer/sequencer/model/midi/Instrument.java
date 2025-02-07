@@ -28,7 +28,10 @@ public class Instrument implements Serializable {
     static final Random rand = new Random();
 
     public static final Integer DEFAULT_CHANNEL = 0;
+
     public static final Integer[] DEFAULT_CHANNELS = new Integer[] { DEFAULT_CHANNEL };
+
+    public static final Integer[] ALL_CHANNELS = new Integer[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -74,7 +77,7 @@ public class Instrument implements Serializable {
 
     private Integer lowestNote = 0;
 
-    private Integer highestNote = 127;
+    private Integer highestNote = 126;
 
     private Integer highestPreset;
 
@@ -109,6 +112,11 @@ public class Instrument implements Serializable {
     // Helper method to determine if device is likely multi-timbral
     public boolean isMultiTimbral() {
         return channels != null && channels.length > 1;
+    }
+
+    public boolean receivesOn(Integer channel) {
+        List<Integer> channels = Arrays.asList(this.channels);
+        return channels.contains(channel);
     }
 
     // Convenience method for single-channel devices
@@ -164,7 +172,7 @@ public class Instrument implements Serializable {
                 int value = getBoundaries().containsKey(cc) ? rand.nextInt(getBoundaries().get(cc)[0],
                         getBoundaries().get(cc)[0] >= getBoundaries().get(cc)[1] ? getBoundaries().get(cc)[0] + 1
                                 : getBoundaries().get(cc)[1])
-                        : rand.nextInt(0, 127);
+                        : rand.nextInt(0, 126);
 
                 sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, cc, value));
             } catch (IllegalArgumentException | MidiUnavailableException | InvalidMidiDataException e) {
@@ -190,15 +198,22 @@ public class Instrument implements Serializable {
     public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
         try {
             Receiver currentReceiver = getOrCreateReceiver();
-            currentReceiver.send(message, -1);
-            logger.debug("Sent message: {} to device: {}",
-                    MidiMessage.lookupCommand(message.getCommand()),
-                    getName());
+            if (Objects.nonNull(currentReceiver)) {
+                currentReceiver.send(message, -1);
+                logger.debug("Sent message: {} to device: {}",
+                        MidiMessage.lookupCommand(message.getCommand()),
+                        getName());
+            } else
+                logger.error("Failed message to {}", getName());
         } catch (Exception e) {
             logger.error("Send failed: {} - will attempt recovery", e.getMessage());
             cleanup();
             // One retry attempt
-            getOrCreateReceiver().send(message, -1);
+            Receiver receiver = getOrCreateReceiver();
+            if (Objects.nonNull(receiver))
+                receiver.send(message, -1);
+            else
+                logger.error("Failed retry message to {}", getName());
         }
     }
 

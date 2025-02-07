@@ -1,20 +1,22 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { AfterContentChecked, OnInit, OnDestroy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MidiService } from '../../services/midi.service';
 import { Player } from '../../models/player';
 import { Rule } from '../../models/rule';
 import { UiService } from 'src/app/services/ui.service';
 import { Constants } from 'src/app/models/constants';
 import { RuleUpdateType } from 'src/app/models/rule-update-type';
-import { Listener } from 'src/app/models/listener';
+import { MessageListener } from 'src/app/models/message-listener';
 
 @Component({
   selector: 'app-rule-table',
   templateUrl: './rule-table.component.html',
   styleUrls: ['./rule-table.component.css'],
 })
-export class RuleTableComponent implements Listener {
+export class RuleTableComponent implements MessageListener, AfterContentChecked, OnInit, OnDestroy {
+
   @Output()
   ruleChangeEvent = new EventEmitter<Player>();
+
   EQUALS = 0;
   GREATER_THAN = 1;
   LESS_THAN = 2;
@@ -56,11 +58,18 @@ export class RuleTableComponent implements Listener {
   selectedRule!: Rule;
 
   constructor(private midiService: MidiService, private uiService: UiService) {
-    this.uiService.addListener(this);
   }
 
-  onNotify(_messageType: number, _message: string, _messageValue: number) {
-    console.log("NOTIFIED")
+  ngOnDestroy(): void {
+    this.uiService.removeListener(this);
+  }
+
+  ngOnInit(): void {
+    this.uiService.removeListener(this);
+  }
+
+  notify(_messageType: number, _message: string, _messageValue: number) {
+    // console.log("NOTIFIED")
     if (_messageType == Constants.COMMAND) {
       console.log("COMMAND")
       switch (_message) {
@@ -77,6 +86,7 @@ export class RuleTableComponent implements Listener {
   }
 
   ngAfterContentChecked(): void {
+
     this.getRules().forEach((rule) => {
       let op = 'operatorSelect-' + rule.id;
       this.uiService.setSelectValue(op, rule.operator);
@@ -148,6 +158,7 @@ export class RuleTableComponent implements Listener {
   }
 
   btnClicked(rule: Rule, command: string) {
+
     if (this.player.id > 0)
       switch (command) {
         case 'add': {
@@ -157,6 +168,7 @@ export class RuleTableComponent implements Listener {
           });
           break;
         }
+
         case 'remove': {
           this.player.rules = this.player.rules.filter((r) => r.id != rule.id);
           this.midiService.removeRule(this.player, rule).subscribe();
@@ -164,6 +176,9 @@ export class RuleTableComponent implements Listener {
           break;
         }
       }
+
+    this.uiService.notifyAll(Constants.COMMAND, command, 0)
+
   }
 
   initBtnClick() {
@@ -184,5 +199,10 @@ export class RuleTableComponent implements Listener {
 
   getRowClass(rule: Rule): string {
     return 'table-row' + (rule === this.selectedRule ? ' selected' : '');
+  }
+
+  onClick(action: string) {
+    console.log(action + " clicked")
+    this.btnClicked(this.selectedRule, action);
   }
 }

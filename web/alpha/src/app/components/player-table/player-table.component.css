@@ -59,16 +59,16 @@ th {
 .selected-long-col {
   width: 120px;
   align-content: stretch;
-  
+
   /* removed background and color as they're handled by the instrument selector */
 }
 
 input,
 select {
-  min-width: 60px;  /* Updated from 90px */
+  min-width: 60px;
   width: 100%;
   margin: 0;
-  padding: 1px 2px;  /* Minimal padding for text visibility */
+  padding: 1px 2px;
   /* border: 1px solid #d0d0d0; */
   background-color: #ffffff;
   color: #000000;

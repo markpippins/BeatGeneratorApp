@@ -24,6 +24,12 @@
   gap: 4px;
 }
 
+.center-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 10px 0;
+}
 
 html {
   height: 100vh;
@@ -154,8 +160,12 @@ main {
 }
 
 .player-panel {
-  flex-grow: true;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+  overflow: hidden;
+  padding: 8px;
   align-items: stretch;
   max-width: 90vhpx;
   align-self: stretch;
@@ -168,6 +178,30 @@ main {
   gap: 4px;
 
   /*    border: lawngreen solid 1px;*/
+}
+
+.table-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: transparent;
+  min-width: 0;
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
 .beatnav {
@@ -1065,13 +1099,12 @@ grid-3 {
   margin: 4px;
 }
 
-.table-holder {
-  align-self: stretch;
-  align-content: stretch;
+.stretch {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
   background-color: transparent;
-  flex-grow: true;
-  overflow-x: auto;
-  overflow-y: auto;
 }
 
 .fh-800 {
@@ -1366,6 +1399,34 @@ td button {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 4px;
+  background-color: transparent;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.button-bar button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 16px;
+  border-radius: 4px;
+  background-color: #125699;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-bar button:hover {
+  background-color: #1976d2;
+}
+
+.button-bar button:active {
+  background-color: #1565c0;
+  transform: translateY(1px);
 }
 
 .btn-icon {
@@ -1515,4 +1576,60 @@ td button {
 .mat-tab-group .mat-tab-group .mat-mdc-tab-label-content {
   font-size: 10px !important;
   /* adjust size as needed */
+}
+
+.table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: transparent;
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+  background-color: transparent;
+  min-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.tables-container {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  height: 100%;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.player-table-section {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.rules-table-section {
+  flex: 1;
+  max-width: fit-content;
+  min-width: 400px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.navigator-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 200px);
+  padding: 16px;
+  gap: 16px;
+}
+
+.footer-container {
+  flex-shrink: 0;
+  padding: 8px 0;
 }

@@ -8,6 +8,19 @@ import { Instrument } from 'src/app/models/instrument';
   styleUrls: ['./instrument-table.component.css'],
 })
 export class InstrumentTableComponent {
+  updateHighNote(_$event: Event, _t14: Instrument) {
+    throw new Error('Method not implemented.');
+  }
+  updateLowNote(_$event: Event, _t14: Instrument) {
+    throw new Error('Method not implemented.');
+  }
+  updateAvailable(event: Event, instrument: Instrument) {
+    const checkbox = event.target as HTMLInputElement;
+    instrument.available = checkbox.checked;
+  }
+  updateName(_$event: Event, _t14: Instrument) {
+    throw new Error('Method not implemented.');
+  }
   @Input()
   instruments!: Instrument[];
 
@@ -15,7 +28,6 @@ export class InstrumentTableComponent {
   devices!: Device[];
 
   selectedInstrument!: Instrument;
-
 
   channels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 

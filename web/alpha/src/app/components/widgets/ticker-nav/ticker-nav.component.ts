@@ -17,6 +17,7 @@ export class TickerNavComponent {
 
 
   onClick(action: string) {
+    console.log(action + ' clicked')
     this.commands = [action]
     this.uiService.notifyAll(Constants.COMMAND, action, 0)
   }

@@ -5,12 +5,13 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
   OnInit,
   Output,
 } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
-import { Listener } from 'src/app/models/listener';
+import { MessageListener } from 'src/app/models/message-listener';
 import { UiService } from 'src/app/services/ui.service';
 
 @Component({
@@ -20,7 +21,8 @@ import { UiService } from 'src/app/services/ui.service';
 })
 export class MidinInstrumentComboComponent
   implements
-  Listener,
+  MessageListener,
+  OnDestroy,
   OnInit,
   AfterViewInit,
   AfterContentInit,
@@ -41,11 +43,33 @@ export class MidinInstrumentComboComponent
   identifier!: string;
 
   constructor(private uiService: UiService) {
-    uiService.addListener(this);
+
   }
 
-  onNotify(messageType: number, _message: string, messageValue: number) {
-    console.log("NOTIFIED")
+
+  ngAfterContentInit(): void { }
+
+  ngAfterViewInit(): void { }
+
+  ngOnDestroy(): void {
+    this.uiService.removeListener(this);
+  }
+
+  ngOnInit(): void {
+    this.uiService.addListener(this);
+  }
+
+  ngAfterContentChecked(): void {
+    if (
+      this.selectionIndex == undefined &&
+      this.instruments != undefined &&
+      this.instruments.length > 0
+    )
+      this.selectionIndex = 0;
+  }
+
+  notify(messageType: number, _message: string, messageValue: number) {
+    // console.log("NOTIFIED")
     if (messageType == Constants.INSTRUMENT_SELECTED) {
       let instrument = this.instruments.filter(
         (instrument) => instrument.id == messageValue
@@ -55,20 +79,6 @@ export class MidinInstrumentComboComponent
         this.selectedInstrumentId = instrument[0].id;
       }
     }
-  }
-
-  ngAfterContentInit(): void { }
-  ngAfterViewInit(): void { }
-
-  ngOnInit(): void { }
-
-  ngAfterContentChecked(): void {
-    if (
-      this.selectionIndex == undefined &&
-      this.instruments != undefined &&
-      this.instruments.length > 0
-    )
-      this.selectionIndex = 0;
   }
 
   onSelectionChange() {

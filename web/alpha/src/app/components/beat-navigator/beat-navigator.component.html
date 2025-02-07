@@ -5,9 +5,6 @@
     <button class="{{getNoteButtonClass(note)}}" *ngFor="let note of range; let i = index;" id="beat-nav-note-btn-{{i}}"
       (click)="onNoteClicked(note, $event)">{{getNote(note)}}</button>
   </div>
-  <!-- <div *ngif="range.length == 0" class="flex-container-horizontal">
-    <p>booya</p>
-  </div> -->
 
 <div class="flex-container-horizontal">
   <div class="flex-container-vertical">

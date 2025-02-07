@@ -91,7 +91,7 @@ input, select {
 
 /* Button Styles */
 button {
-    height: 20px;
+    height: 36px;
     vertical-align: middle; /* Add this line */
     display: flex; /* Add this line */
     align-items: center; /* Add this line */

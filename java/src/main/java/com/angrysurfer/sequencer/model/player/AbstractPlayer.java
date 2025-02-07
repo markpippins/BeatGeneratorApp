@@ -38,7 +38,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
     static Logger logger = LoggerFactory.getLogger(AbstractPlayer.class.getCanonicalName());
 
     @Transient
-    private List<Pad> pads = new ArrayList<>();
+    private Set<Pad> pads = new HashSet<>();
 
     private String name;
     private int channel;

@@ -1,3 +1,3 @@
-export interface Listener {
-  onNotify(_messageType: number, _message: string, messageValue: number): any
-}
+// export interface Listener {
+//   notify(_messageType: number, _message: string, messageValue: number): any
+// }

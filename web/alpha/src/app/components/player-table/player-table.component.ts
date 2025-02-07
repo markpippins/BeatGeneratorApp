@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { AfterContentChecked, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
 import { MidiMessage } from 'src/app/models/midi-message';
@@ -12,16 +12,18 @@ import { MidiService } from '../../services/midi.service';
   templateUrl: './player-table.component.html',
   styleUrls: ['./player-table.component.css'],
 })
-export class PlayerTableComponent implements OnInit {
+export class PlayerTableComponent implements OnInit, AfterContentChecked {
 
   @Output()
   playerSelectEvent = new EventEmitter<Player>();
 
   @Output()
+  playerAddedEvent = new EventEmitter();
+
+  @Output()
   ruleChangeEvent = new EventEmitter<Player>();
 
   selectedPlayer!: Player
-  // selectedPlayers: Player[] = [];
 
   @Output()
   instruments!: Instrument[];
@@ -33,10 +35,14 @@ export class PlayerTableComponent implements OnInit {
 
   constructor(private midiService: MidiService, private uiService: UiService) { }
 
-  ngOnInit(): void {
+  ngAfterContentChecked(): void {
     this.midiService.allInstruments().subscribe((data) => {
       this.instruments = this.uiService.sortByName(data);
     });
+  }
+
+  ngOnInit(): void {
+    //
   }
 
   onRowClick(player: Player) {
@@ -45,7 +51,10 @@ export class PlayerTableComponent implements OnInit {
   }
 
   onBtnClick(player: Player, action: string) {
+    console.log(action)
+
     switch (action) {
+
       case 'ticker-add': {
         console.log("ticker-add")
         this.midiService.addPlayer("Gervill").subscribe(async (data) => {
@@ -405,5 +414,23 @@ export class PlayerTableComponent implements OnInit {
 
   getRowClass(player: Player): string {
     return 'table-row' + (player === this.selectedPlayer ? ' selected' : '');
+  }
+
+  onClick(command: string) {
+
+    switch (command) {
+      case 'ticker-add':
+        this.playerAddedEvent.emit()
+        break
+    }
+
+    // this.http.get('http://localhost:8080/api/' + command).subscribe(
+    //   (response) => {
+    //     console.log(response);
+    //   },
+    //   (error) => {
+    //     console.error('Error:', error);
+    //   }
+    // );
   }
 }

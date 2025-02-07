@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { Comparison } from 'src/app/models/comparison';
 import { Constants } from 'src/app/models/constants';
 import { Instrument } from 'src/app/models/instrument';
-import { Listener } from 'src/app/models/listener';
+import { MessageListener } from 'src/app/models/message-listener';
 import { Operator } from 'src/app/models/operator';
 import { Player } from 'src/app/models/player';
 import { Ticker } from 'src/app/models/ticker';
@@ -17,7 +17,8 @@ import { UiService } from 'src/app/services/ui.service';
   templateUrl: './beat-navigator.component.html',
   styleUrls: ['./beat-navigator.component.css'],
 })
-export class BeatNavigatorComponent implements OnInit, Listener {
+export class BeatNavigatorComponent implements OnInit, MessageListener {
+
   @Input()
   ticker!: Ticker;
 
@@ -241,14 +242,17 @@ export class BeatNavigatorComponent implements OnInit, Listener {
     // if (this.range.length == 0) for (let i = 0; i < 88; i++) this.range.push(i);
   }
 
-  onNotify(messageType: number, _message: string, _messageValue: any) {
-    console.log("NOTIFIED")
+  notify(messageType: number, _message: string, _messageValue: any) {
+    // console.log("NOTIFIED")
     if (messageType == Constants.TICKER_UPDATED) {
       this.updateDisplay();
       console.log("TICKER_UPDATED")
     }
 
     if (messageType == Constants.INSTRUMENT_SELECTED) {
+      if (this.instruments == undefined)
+        return
+
       console.log("INSTRUMENT_SELECTED")
       this.instruments
         .filter((instrument) => instrument.id == _messageValue)

@@ -1,37 +1,32 @@
-<div class="table-holder">
-  <table class="table-header">
-    <tr class="header-row">
-      <th class="header-cell">Name</th>
-      <th class="header-cell">Description</th>
-      <th class="header-cell">Vendor</th>
-      <th class="header-cell">Version</th>
-      <th class="header-cell">Max R</th>
-      <th class="header-cell">Max T</th>
-      <th class="header-cell">Receivers</th>
-      <th class="header-cell">Transmitters</th>
-      <th class="header-cell">Receiver</th>
-      <th class="header-cell">Transmitter</th>
-    </tr>
-    <tr class="table-row" *ngFor="let device of devices;">
-      <td [ngClass]="getRowClass(device)"><input [style.width.px]="200" [disabled]="true" value="{{device.name}}"></td>
-      <td [ngClass]="getRowClass(device)"><input [style.width.px]="200" [disabled]="true"
-          value="{{device.description}}"></td>
-      <td [ngClass]="getRowClass(device)"><input [style.width.px]="160" [disabled]="true" value="{{device.vendor}}">
-      </td>
-      <td [ngClass]="getRowClass(device)"><input [style.width.px]="80" [disabled]="true" value="{{device.version}}">
-      </td>
-      <td [ngClass]="getRowClass(device)"><input [style.width.px]="40" [disabled]="true"
-          value="{{device.maxReceivers }}"></td>
-      <td [ngClass]="getRowClass(device)"><input [style.width.px]="40" [disabled]="true"
-          value="{{device.maxTransmitters}}"></td>
-      <td [ngClass]="getRowClass(device)"><input [style.width.px]="80" [disabled]="true" value="{{device.receivers}}">
-      </td>
-      <td [ngClass]="getRowClass(device)"><input [style.width.px]="80" [disabled]="true"
-          value="{{device.transmitters}}"></td>
-      <td [ngClass]="getRowClass(device)"><input [style.width.px]="300" [disabled]="true"
-          value="{{shortenedName(device.receiver)}}"></td>
-      <td [ngClass]="getRowClass(device)"><input [style.width.px]="300" [disabled]="true"
-          value="{{shortenedName(device.transmitter)}}"></td>
-    </tr>
+<div class="stretch">
+  <table>
+    <thead>
+      <tr class="header-row">
+        <th class="header-cell col-name">Name</th>
+        <th class="header-cell col-desc">Description</th>
+        <th class="header-cell col-vendor">Vendor</th>
+        <th class="header-cell col-version">Version</th>
+        <th class="header-cell col-number">Max R</th>
+        <th class="header-cell col-number">Max T</th>
+        <th class="header-cell col-number">Receivers</th>
+        <th class="header-cell col-number">Transmitters</th>
+        <th class="header-cell col-long">Receiver</th>
+        <th class="header-cell col-long">Transmitter</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="table-row" *ngFor="let device of devices;">
+        <td [ngClass]="getRowClass(device)" class="readonly-cell">{{device.name}}</td>
+        <td [ngClass]="getRowClass(device)" class="readonly-cell">{{device.description}}</td>
+        <td [ngClass]="getRowClass(device)" class="readonly-cell">{{device.vendor}}</td>
+        <td [ngClass]="getRowClass(device)" class="readonly-cell">{{device.version}}</td>
+        <td [ngClass]="getRowClass(device)" class="readonly-cell">{{device.maxReceivers}}</td>
+        <td [ngClass]="getRowClass(device)" class="readonly-cell">{{device.maxTransmitters}}</td>
+        <td [ngClass]="getRowClass(device)" class="readonly-cell">{{device.receivers}}</td>
+        <td [ngClass]="getRowClass(device)" class="readonly-cell">{{device.transmitters}}</td>
+        <td [ngClass]="getRowClass(device)" class="readonly-cell">{{shortenedName(device.receiver)}}</td>
+        <td [ngClass]="getRowClass(device)" class="readonly-cell">{{shortenedName(device.transmitter)}}</td>
+      </tr>
+    </tbody>
   </table>
 </div>

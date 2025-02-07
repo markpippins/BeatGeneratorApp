@@ -1,23 +1,30 @@
 import { Injectable } from '@angular/core';
-import { Listener } from '../models/listener';
+import { MessageListener } from '../models/message-listener';
 
 @Injectable({
   providedIn: 'root',
 })
+
 export class UiService {
-  listeners: Listener[] = [];
+  listeners: MessageListener[] = [];
 
-  constructor() {}
+  constructor() { }
 
-  addListener(listener: Listener) {
-    console.log("ADDING LISTENER")
-    this.listeners.push(listener);
+  addListener(listener: MessageListener) {
+    // Add check to prevent duplicate listeners
+    if (!this.listeners.includes(listener)) {
+      this.listeners.push(listener);
+    }
+    else console.log("addListener again")
+  }
+
+  removeListener(listener: MessageListener) {
+    this.listeners = this.listeners.filter(l => l !== listener);
   }
 
   notifyAll(_messageType: number, _message: string, _messageValue: any) {
-    console.log("NOTIFYING ALL")
     this.listeners.forEach((l) =>
-      l.onNotify(_messageType, _message, _messageValue)
+      l.notify(_messageType, _message, _messageValue)
     );
   }
 

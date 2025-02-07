@@ -54,6 +54,18 @@ public class DeviceConfig implements Serializable {
         Map<String, Instrument> existingInstruments = instruments.findAll().stream()
                 .collect(Collectors.toMap(Instrument::getName, Function.identity()));
 
+        List<String> devices = new ArrayList<>();
+
+        MIDIService.getMidiOutDevices().forEach(device -> devices.add(device.getDeviceInfo().getName()));
+
+        existingInstruments.values().forEach(ins -> {
+
+            if (ins.getAvailable() != devices.contains(ins.getDeviceName())) {
+                ins.setAvailable(devices.contains(ins.getDeviceName()));
+                instruments.save(ins);
+            }
+        });
+
         // Get available MIDI devices and create if not in DB
         List<String> availableDevices = MIDIService.getMidiOutDevices().stream()
                 .filter(d -> d.getMaxTransmitters() != -1)
@@ -90,13 +102,13 @@ public class DeviceConfig implements Serializable {
                             captions);
 
                 if (Objects.isNull(dbInstrument.getHighestNote()) || dbInstrument.getHighestNote() == 0)
-                    dbInstrument.setHighestNote(127);
+                    dbInstrument.setHighestNote(126);
 
                 if (Objects.isNull(dbInstrument.getLowestNote()))
                     dbInstrument.setLowestNote(0);
 
                 // Process pads if needed
-                if (dbInstrument.getHighestNote() - dbInstrument.getLowestNote() != 127)
+                if (dbInstrument.getHighestNote() - dbInstrument.getLowestNote() != dbInstrument.getHighestNote())
                     addPadInfo(pads, dbInstrument);
 
                 try {

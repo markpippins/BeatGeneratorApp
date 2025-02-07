@@ -118,7 +118,7 @@ export const MidiMessage = {
   //   // Default message data: NOTE_ON on Channel 0 with max volume
   //   data[0] : (byte) (NOTE_ON & 0xFF),
   //   data[1] : (byte) 64,
-  //   data[2] : (byte) 127,
+  //   data[2] : (byte) 126,
   //   length : 3,
   // }
 };
