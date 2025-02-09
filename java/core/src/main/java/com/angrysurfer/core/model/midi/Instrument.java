@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Pad;
+import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.converter.IntegerArrayConverter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -36,14 +37,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-// @RedisHash("instrument")
 @Entity
+@Table(name = "instrument")
 public class Instrument implements Serializable {
 
     static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
@@ -111,6 +113,9 @@ public class Instrument implements Serializable {
     private String playerClassName;
 
     private Boolean available = false;
+
+    @OneToMany(mappedBy = "instrument")
+    private Set<Pattern> patterns;
 
     public Instrument() {
 

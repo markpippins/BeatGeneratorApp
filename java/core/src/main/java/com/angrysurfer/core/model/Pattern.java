@@ -14,13 +14,17 @@ import com.angrysurfer.core.util.Quantizer;
 import com.angrysurfer.core.util.Scale;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 import lombok.Getter;
@@ -29,6 +33,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
+@Table(name = "pattern")
 public class Pattern {
 
     private static final Logger logger = LoggerFactory.getLogger(Pattern.class);
@@ -98,15 +103,19 @@ public class Pattern {
     @JoinColumn(name = "song_id")
     private Song song;
 
-    @Transient
-    Set<Step> steps = new HashSet<>();
+    @OneToMany(mappedBy = "pattern", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Step> steps = new HashSet<>();
 
-    @Transient
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instrument_id")
     private Instrument instrument;
 
     @JsonIgnore
+    @Column(name = "step_cycler")
+    private Integer stepCyclerPosition = 0;
+
     @Transient
+    @JsonIgnore
     private Cycler stepCycler = new Cycler();
 
     public Pattern() {

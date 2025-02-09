@@ -7,13 +7,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
-// @RedisHash("step")
+@Table(name = "step")
 public class Step {
 
     private static final Logger logger = LoggerFactory.getLogger(Step.class);
@@ -34,6 +38,8 @@ public class Step {
     private Integer gate = 50;
 
     @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pattern_id")
     private Pattern pattern;
 
     public Step() {
