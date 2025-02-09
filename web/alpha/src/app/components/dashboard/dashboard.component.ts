@@ -115,7 +115,7 @@ export class DashboardComponent implements OnDestroy, OnInit, MessageListener {
   }
 
   notify(_messageType: number, _message: string, _messageValue: any) {
-
+    console.log("NOTIFICATION:  " + _message);
     this.consoleOutput.pop();
     switch (_messageType) {
       case Constants.STATUS:
@@ -357,10 +357,6 @@ export class DashboardComponent implements OnDestroy, OnInit, MessageListener {
 
   onRuleChange(_player: Player) {
     // this.ruleChangeEvent.emit(player);
-  }
-
-  refresh() {
-    this.updateDisplay();
   }
 
   clear() {

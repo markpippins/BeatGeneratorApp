@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ec71e66c-6f12-42da-bc1e-ab4376d60412" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.hintrc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jpa-buddy.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/uiDesigner.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vscode/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/.vscode/settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HELP.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mvnw" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mvnw.cmd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/Application.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/SequencerDemo.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/config/DeviceConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/config/RedisConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/config/SpringFoxConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/config/WebSocketConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/controller/BeatController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/controller/InstrumentController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/controller/MidiController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/controller/PlayerController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/controller/RuleController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/controller/SongController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/controller/TickerController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/converter/IntegerArrayConverter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/dao/BeatConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/dao/PatternStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/dao/SongStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/dao/TickerStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/dao/TickerStatusDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/exception/MidiDeviceException.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/MuteGroup.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/Pad.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/PartLengthChange.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/Pattern.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/Rule.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/Song.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/Step.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/Ticker.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/midi/Arpeggiator.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/midi/ControlCode.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/midi/Instrument.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/midi/KeyModulation.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/midi/MidiLowFrequencyOscillator.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/midi/MidiMessage.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/midi/RangedParamTweaker.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/player/AbstractPlayer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/player/Chord.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/player/Melody.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/player/Note.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/player/Ratchet.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/player/Sample.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/player/Stab.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/player/Strike.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/ui/Auditionable.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/model/ui/Caption.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/repo/Captions.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/repo/ControlCodes.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/repo/Instruments.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/repo/Pads.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/repo/Patterns.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/repo/Rules.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/repo/Songs.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/repo/Steps.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/repo/Strikes.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/repo/Tickers.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/service/InstrumentService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/service/MIDIService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/service/PlayerService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/service/SongService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/service/TickerService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/ClockSource.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/Comparison.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/Constants.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/Cycler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/Operator.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/PreciseTimer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/Quantizer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/Scale.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/Timer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/TrackPopulator.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/listener/ClockListener.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/listener/CyclerListener.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/update/PatternUpdateType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/update/PlayerUpdateType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/update/RuleUpdateType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/update/StepUpdateType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/angrysurfer/sequencer/util/update/TickerUpdateType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application-test.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/config/defaults.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/config/defaults.json.bak" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/angrysurfer/midi/model/test/CyclerTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/angrysurfer/midi/model/test/PlayerTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/angrysurfer/midi/model/test/RuleTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/angrysurfer/midi/model/test/TickerTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/angrysurfer/midi/service/test/MIDIServiceTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/angrysurfer/midi/service/test/PlayerServiceTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/angrysurfer/midi/service/test/SongServiceTests copy.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/angrysurfer/midi/service/test/SongServiceTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/angrysurfer/midi/service/test/TickerServiceTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/angrysurfer/midi/test/BeatGeneratorApplicationTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/application-test.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/config/defaults.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/config/defaults.json.bak" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vscode.code-workspace" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../swing/beatsui/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../swing/beatsui/src/main/java/com/angrysurfer/beatsui/App.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../swing/beatsui/src/main/java/com/angrysurfer/beatsui/AppFrame.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../swing/beatsui/src/test/java/com/angrysurfer/beatsui/AppTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/alpha/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../web/alpha/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/alpha/src/app/components/dashboard/dashboard.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../web/alpha/src/app/components/dashboard/dashboard.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/alpha/src/app/services/midi.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../web/alpha/src/app/services/midi.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../web/alpha/src/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/../web/alpha/src/styles.css" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 5
+}]]></component>
+  <component name="ProjectId" id="2sltrEnyUdiQM5yog3s93Ae7nB9" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "project.structure.last.edited": "SDKs",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.2"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="beatgen" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="beatgen" />
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ec71e66c-6f12-42da-bc1e-ab4376d60412" name="Changes" comment="" />
+      <created>1739042188843</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1739042188843</updated>
+    </task>
+    <servers />
+  </component>
+</project>

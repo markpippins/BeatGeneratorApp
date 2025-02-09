@@ -187,7 +187,7 @@ export class MidiService {
 
   allInstruments() {
     // Check if we have cached data and it's still fresh
-    if (this.instrumentsSubject.value.length > 0 && 
+    if (this.instrumentsSubject.value.length > 0 &&
         Date.now() - this.lastInstrumentsLoad < this.CACHE_DURATION) {
       return this.instruments$;
     }
@@ -195,7 +195,7 @@ export class MidiService {
     // Prevent multiple simultaneous requests
     if (!this.isLoadingInstruments) {
       this.isLoadingInstruments = true;
-      
+
       this.http.get<Instrument[]>('http://localhost:8080/api/instruments/all')
         .pipe(
           shareReplay(1) // Share the response with all subscribers
