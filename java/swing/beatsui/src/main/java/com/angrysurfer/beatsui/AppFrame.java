@@ -41,11 +41,15 @@ import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.Timer;
+import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+
+import com.angrysurfer.beatsui.widgets.LaunchPanel;
+import com.angrysurfer.core.model.Rule;
 
 public class AppFrame extends JFrame {
     private JLabel statusBar;
@@ -104,7 +108,7 @@ public class AppFrame extends JFrame {
     }
 
     // Temporary Rule class for UI development
-    private static class Rule {
+    private static class RuleData {
         public static final String[] OPERATORS = {
                 "Tick", "Beat", "Bar", "Part",
                 "Ticks", "Beats", "Bars", "Parts"
@@ -119,7 +123,7 @@ public class AppFrame extends JFrame {
         Double value;
         Integer part;
 
-        public Rule() {
+        public RuleData() {
             this.operator = 0;
             this.comparison = 0;
             this.value = 0.0;
@@ -226,30 +230,34 @@ public class AppFrame extends JFrame {
 
         // Transport controls with correct Unicode characters
         JButton rewindBtn = createToolbarButton("⏮", "Rewind");
-        JButton recordBtn = createToolbarButton("⏺", "Record");
         JButton pauseBtn = createToolbarButton("⏸", "Pause");
+        JButton recordBtn = createToolbarButton("⏺", "Record");
         JButton stopBtn = createToolbarButton("⏹", "Stop");
         JButton playBtn = createToolbarButton("▶", "Play");
+        JButton forwardBtn = createToolbarButton("⏭", "Forward");
 
         toolBar.add(rewindBtn);
-        toolBar.add(recordBtn);
         toolBar.add(pauseBtn);
         toolBar.add(stopBtn);
+        toolBar.add(recordBtn);
         toolBar.add(playBtn);
+        toolBar.add(forwardBtn);
 
         toolBar.addSeparator();
 
         // Use arrow icons instead of plus/minus
         JButton upButton = createToolbarButton("↓", "Down");
         JButton downButton = createToolbarButton("↑", "Up");
-        
+
         // Or alternatively, if you prefer different arrows:
-        // JButton upButton = new JButton(UIManager.getIcon("ScrollBar.northButtonIcon"));
-        // JButton downButton = new JButton(UIManager.getIcon("ScrollBar.southButtonIcon"));
-        
+        // JButton upButton = new
+        // JButton(UIManager.getIcon("ScrollBar.northButtonIcon"));
+        // JButton downButton = new
+        // JButton(UIManager.getIcon("ScrollBar.southButtonIcon"));
+
         upButton.setFocusPainted(false);
         downButton.setFocusPainted(false);
-        
+
         toolBar.add(upButton);
         toolBar.add(downButton);
         // Center glue
@@ -305,9 +313,10 @@ public class AppFrame extends JFrame {
         button.setToolTipText(tooltip);
 
         // Increase button size
-        button.setPreferredSize(new Dimension(40, 40));
-        button.setMinimumSize(new Dimension(40, 40));
-        button.setMaximumSize(new Dimension(40, 40));
+        int size = 32;
+        button.setPreferredSize(new Dimension(size, size));
+        button.setMinimumSize(new Dimension(size, size));
+        button.setMaximumSize(new Dimension(size, size));
 
         // Use a font that supports Unicode symbols
         button.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
@@ -334,7 +343,7 @@ public class AppFrame extends JFrame {
         tabbedPane.addTab("Beats", beatsPanel);
 
         // Add Launch tab with drum pads
-        JPanel launchPanel = createLaunchPanel();
+        JPanel launchPanel = new LaunchPanel();
         tabbedPane.addTab("Launch", launchPanel);
 
         // Add X0X tab
@@ -355,8 +364,10 @@ public class AppFrame extends JFrame {
         JPanel beatsPanel = new JPanel(new BorderLayout());
 
         // Create vertical split pane for main layout
-        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        mainSplitPane.setResizeWeight(0.75);
+        // JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        // mainSplitPane.setResizeWeight(0.75);
+
+        JPanel mainPane = new JPanel(new BorderLayout());
 
         // Top section with horizontal split for tables
         JSplitPane tablesSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -385,14 +396,19 @@ public class AppFrame extends JFrame {
 
         // Bottom section with button grid
         JPanel buttonGridPanel = createButtonGridPanel();
-        JScrollPane buttonScrollPane = new JScrollPane(buttonGridPanel);
+        // JScrollPane buttonScrollPane = new JScrollPane(buttonGridPanel);
 
         // Add components to main split pane
-        mainSplitPane.setTopComponent(tablesSplitPane);
-        mainSplitPane.setBottomComponent(buttonScrollPane);
+        mainPane.add(tablesSplitPane, BorderLayout.CENTER);
+        mainPane.add(buttonGridPanel, BorderLayout.SOUTH);
 
-        beatsPanel.add(mainSplitPane, BorderLayout.CENTER);
+        Dimension size = new Dimension(BUTTON_SIZE * GRID_COLS, BUTTON_SIZE * GRID_ROWS);
 
+        buttonGridPanel.setMaximumSize(size);
+        buttonGridPanel.setMinimumSize(size);
+        buttonGridPanel.setPreferredSize(size);
+
+        beatsPanel.add(mainPane, BorderLayout.CENTER);
 
         return beatsPanel;
     }
@@ -405,10 +421,14 @@ public class AppFrame extends JFrame {
         return buttonPanel;
     }
 
+    static int BUTTON_SIZE = 25;
+    static int GRID_ROWS = 5;
+    static int GRID_COLS = 36;
+
     private JPanel createButtonGridPanel() {
         JPanel panel = new JPanel(new GridLayout(5, 33, 2, 2));
-        panel.setBorder(new EmptyBorder(5, 5, 5, 5));
-        
+        panel.setBorder(BorderFactory.createEmptyBorder());
+
         // Create 5x33 grid of buttons with varying colors
         Color[] colors = {
                 new Color(255, 200, 200), // Light red
@@ -419,10 +439,10 @@ public class AppFrame extends JFrame {
                 new Color(200, 255, 255) // Light cyan
         };
 
-        for (int row = 0; row < 5; row++) {
-            for (int col = 0; col < 33; col++) {
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
                 JButton button = new JButton();
-                button.setPreferredSize(new Dimension(30, 30)); // Make buttons square
+                button.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE)); // Make buttons square
 
                 // Vary colors based on position
                 int colorIndex = (row * col) % colors.length;
@@ -564,11 +584,11 @@ public class AppFrame extends JFrame {
         rightTable.getTableHeader().setReorderingAllowed(false);
 
         // Setup combo box for Operator column
-        JComboBox<String> operatorCombo = new JComboBox<>(Rule.OPERATORS);
+        JComboBox<String> operatorCombo = new JComboBox<>(RuleData.OPERATORS);
         rightTable.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(operatorCombo));
 
         // Setup combo box for Comparison column
-        JComboBox<String> comparisonCombo = new JComboBox<>(Rule.COMPARISONS);
+        JComboBox<String> comparisonCombo = new JComboBox<>(RuleData.COMPARISONS);
         rightTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(comparisonCombo));
 
         // Setup spinner for Value column
@@ -619,18 +639,13 @@ public class AppFrame extends JFrame {
         }
 
         // Add some sample data
-        Rule[] sampleRules = {
-                new Rule(), // Add default rule
-                new Rule(), // Add default rule
-                new Rule(), // Add default rule
-                new Rule(), // Add default rule
-                new Rule(), // Add default rule
-                new Rule(), // Add default rule
-                new Rule(), // Add default rule
-                new Rule(), // Add default rule
+        RuleData[] sampleRules = {
+                new RuleData(), // Add default rule
+                new RuleData(), // Add default rule
+                new RuleData(), // Add default rule
         };
 
-        for (Rule rule : sampleRules) {
+        for (RuleData rule : sampleRules) {
             rightModel.addRow(rule.toRow());
         }
     }
@@ -903,125 +918,6 @@ public class AppFrame extends JFrame {
         return table;
     }
 
-    private JPanel createLaunchPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-
-        // Create the 8x8 grid panel
-        JPanel gridPanel = new JPanel(new GridLayout(8, 8, 5, 5));
-        gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-
-        // Define colors for each quadrant
-        Color[] quadrantColors = {
-                new Color(255, 50, 50), // Top-left: bright red
-                new Color(50, 255, 50), // Top-right: bright green
-                new Color(50, 50, 255), // Bottom-left: bright blue
-                new Color(255, 255, 50) // Bottom-right: bright yellow
-        };
-
-        // Create and add 64 drum pad buttons
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                // Determine which quadrant we're in (0-3)
-                int quadrant = (row / 4) * 2 + (col / 4);
-
-                // Create button with quadrant-specific color
-                JButton padButton = createDrumPadButton(row * 8 + col, quadrantColors[quadrant]);
-                gridPanel.add(padButton);
-            }
-        }
-
-        // Add the grid panel to the main panel with constraints to make it expand
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        panel.add(gridPanel, gbc);
-
-        return panel;
-    }
-
-    private JButton createDrumPadButton(int index, Color baseColor) {
-        JButton button = new JButton();
-        
-        // Create flash color (lighter version of base color)
-        Color flashColor = new Color(
-            Math.min(baseColor.getRed() + 100, 255),
-            Math.min(baseColor.getGreen() + 100, 255),
-            Math.min(baseColor.getBlue() + 100, 255)
-        );
-        
-        // Track if we're in flash state
-        final boolean[] isFlashing = {false};
-        
-        button.addActionListener(e -> {
-            // Start flash
-            isFlashing[0] = true;
-            button.repaint();
-            
-            // Timer to end flash after 100ms
-            Timer timer = new Timer(100, evt -> {
-                isFlashing[0] = false;
-                button.repaint();
-                ((Timer)evt.getSource()).stop();
-            });
-            timer.setRepeats(false);
-            timer.start();
-        });
-        
-        button.setUI(new BasicButtonUI() {
-            @Override
-            public void paint(Graphics g, JComponent c) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
-                                   RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                int w = c.getWidth();
-                int h = c.getHeight();
-                
-                if (isFlashing[0]) {
-                    // Draw flash state
-                    g2d.setColor(flashColor);
-                    g2d.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
-                } else {
-                    // Draw normal state
-                    g2d.setColor(baseColor);
-                    g2d.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
-                }
-                
-                // Add border
-                g2d.setColor(new Color(80, 80, 80));
-                g2d.drawRoundRect(0, 0, w - 1, h - 1, 10, 10);
-                
-                // Add highlight
-                g2d.setColor(new Color(255, 255, 255, 30));
-                g2d.drawLine(2, 2, w - 3, 2);
-                
-                // Draw the button text if it exists
-                String text = ((JButton)c).getText();
-                if (text != null && !text.isEmpty()) {
-                    g2d.setFont(new Font("Arial", Font.BOLD, 16));
-                    g2d.setColor(Color.WHITE);
-                    FontMetrics fm = g2d.getFontMetrics();
-                    int textWidth = fm.stringWidth(text);
-                    int textHeight = fm.getHeight();
-                    g2d.drawString(text, 
-                                 (w - textWidth) / 2,
-                                 ((h + textHeight) / 2) - fm.getDescent());
-                }
-                
-                g2d.dispose();
-            }
-        });
-        
-        button.setPreferredSize(new Dimension(40, 40));
-        button.setContentAreaFilled(false);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setToolTipText("Pad " + index);
-        
-        return button;
-    }
-
     private JPanel createX0XPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout());
 
@@ -1283,56 +1179,56 @@ public class AppFrame extends JFrame {
         JButton button = new JButton();
         Color baseColor = new Color(60, 60, 60); // Dark grey base
         Color flashColor = new Color(160, 160, 160); // Lighter grey for flash
-        final boolean[] isFlashing = {false};
-        
+        final boolean[] isFlashing = { false };
+
         button.addActionListener(e -> {
             isFlashing[0] = true;
             button.repaint();
-            
+
             Timer timer = new Timer(100, evt -> {
                 isFlashing[0] = false;
                 button.repaint();
-                ((Timer)evt.getSource()).stop();
+                ((Timer) evt.getSource()).stop();
             });
             timer.setRepeats(false);
             timer.start();
         });
-        
+
         button.setUI(new BasicButtonUI() {
             @Override
             public void paint(Graphics g, JComponent c) {
                 Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
-                                   RenderingHints.VALUE_ANTIALIAS_ON);
-                
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+
                 int w = c.getWidth();
                 int h = c.getHeight();
-                
+
                 if (isFlashing[0]) {
                     g2d.setColor(flashColor);
                 } else {
                     g2d.setColor(baseColor);
                 }
-                
+
                 g2d.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
-                
+
                 // Add border
                 g2d.setColor(new Color(80, 80, 80));
                 g2d.drawRoundRect(0, 0, w - 1, h - 1, 10, 10);
-                
+
                 // Add highlight
                 g2d.setColor(new Color(255, 255, 255, 30));
                 g2d.drawLine(2, 2, w - 3, 2);
-                
+
                 g2d.dispose();
             }
         });
-        
+
         button.setPreferredSize(new Dimension(40, 40));
         button.setContentAreaFilled(false);
         button.setBorderPainted(false);
         button.setFocusPainted(false);
-        
+
         return button;
     }
 
@@ -1341,60 +1237,60 @@ public class AppFrame extends JFrame {
         button.setPreferredSize(new Dimension(30, 20));
         button.setMinimumSize(new Dimension(30, 20));
         button.setMaximumSize(new Dimension(30, 20));
-        
-        final boolean[] isActive = {false};
-        
+
+        final boolean[] isActive = { false };
+
         // Orange for inactive state
-        Color topColorInactive = new Color(255, 140, 0);    // Bright orange
+        Color topColorInactive = new Color(255, 140, 0); // Bright orange
         Color bottomColorInactive = new Color(200, 110, 0); // Darker orange
-        
+
         // Green for active state
-        Color topColorActive = new Color(50, 255, 50);      // Bright green
-        Color bottomColorActive = new Color(40, 200, 40);   // Darker green
-        
+        Color topColorActive = new Color(50, 255, 50); // Bright green
+        Color bottomColorActive = new Color(40, 200, 40); // Darker green
+
         button.addActionListener(e -> {
             isActive[0] = !isActive[0];
             button.repaint();
         });
-        
+
         button.setUI(new BasicButtonUI() {
             @Override
             public void paint(Graphics g, JComponent c) {
                 Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
-                                   RenderingHints.VALUE_ANTIALIAS_ON);
-                
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+
                 int w = c.getWidth();
                 int h = c.getHeight();
-                
+
                 // Choose colors based on state
                 Color topColor = isActive[0] ? topColorActive : topColorInactive;
                 Color bottomColor = isActive[0] ? bottomColorActive : bottomColorInactive;
-                
+
                 GradientPaint gp = new GradientPaint(
-                    0, 0, topColor,
-                    0, h, bottomColor);
-                
+                        0, 0, topColor,
+                        0, h, bottomColor);
+
                 g2d.setPaint(gp);
                 g2d.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
-                
+
                 // Add border
                 g2d.setColor(new Color(80, 80, 80));
                 g2d.drawRoundRect(0, 0, w - 1, h - 1, 10, 10);
-                
+
                 // Add highlight
                 g2d.setColor(new Color(255, 255, 255, 30));
                 g2d.drawLine(2, 2, w - 3, 2);
-                
+
                 g2d.dispose();
             }
         });
-        
+
         button.setContentAreaFilled(false);
         button.setBorderPainted(false);
         button.setFocusPainted(false);
         button.setToolTipText("Step " + (index + 1));
-        
+
         return button;
     }
 }

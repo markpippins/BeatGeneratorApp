@@ -16,13 +16,6 @@
 // import com.angrysurfer.core.model.midi.Instrument;
 // import com.angrysurfer.core.model.player.Strike;
 // import com.angrysurfer.core.model.ui.Caption;
-// import com.angrysurfer.core.repo.Captions;
-// import com.angrysurfer.core.repo.ControlCodes;
-// import com.angrysurfer.core.repo.Instruments;
-// import com.angrysurfer.core.repo.Pads;
-// import com.fasterxml.jackson.databind.DeserializationFeature;
-// import com.fasterxml.jackson.databind.ObjectMapper;
-// import com.fasterxml.jackson.databind.SerializationFeature;
 
 // import lombok.Getter;
 // import lombok.Setter;
@@ -30,10 +23,10 @@
 // @Getter
 // @Setter
 // public class DeviceConfig implements Serializable {
-//     static ObjectMapper mapper = new ObjectMapper()
-//             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-//             .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false) // Add this line
-//             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false); // Add this line
+//     // static ObjectMapper mapper = new ObjectMapper()
+//     //         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+//     //         .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false) // Add this line
+//     //         .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false); // Add this line
 //     List<Instrument> instruments = new ArrayList<>();
 
 //     public DeviceConfig() {

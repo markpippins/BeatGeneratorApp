@@ -40,21 +40,30 @@ public class Rule implements Serializable {
     private Long start = 0L;
     private Long end = 0L;
 
+    @JsonIgnore
+    @Transient
+    private boolean unsaved = false;
+
     @Transient
     @JsonIgnore
     AbstractPlayer player;
-    
+
     public Rule() {
 
     }
 
     public Rule(int operator, int comparison, Double value, int part) {
-        logger.debug("Creating new Rule - operator: {}, comparison: {}, value: {}, part: {}", 
-            operator, comparison, value, part);
+        logger.debug("Creating new Rule - operator: {}, comparison: {}, value: {}, part: {}",
+                operator, comparison, value, part);
         setOperator(operator);
         setComparison(comparison);
         setValue(value);
         setPart(part);
+    }
+
+    public Rule(int operator, int comparison, Double value, int part, boolean unsaved) {
+        this(operator, comparison, value, part);
+        setUnsaved(unsaved);
     }
 
     public Rule(AbstractPlayer player, int operator, int comparison, Double value, int part) {
@@ -76,8 +85,8 @@ public class Rule implements Serializable {
 
     public boolean isEqualTo(Rule rule) {
         boolean result = (getValue().equals(rule.getValue()) &&
-            (this.getComparison() == rule.getComparison()) && 
-            (this.getOperator() == rule.getOperator()));
+                (this.getComparison() == rule.getComparison()) &&
+                (this.getOperator() == rule.getOperator()));
         logger.debug("isEqualTo() - comparing with rule: {}, result: {}", rule.getId(), result);
         return result;
     }

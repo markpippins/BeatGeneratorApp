@@ -12,7 +12,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class BeatConfig implements Serializable {
+public class TickerConfig implements Serializable {
     Set<AbstractPlayer> players = new HashSet<>();
     private Float tempoInBPM;
     private Long songLength;
@@ -23,10 +23,10 @@ public class BeatConfig implements Serializable {
     private Integer maxTracks;
     private Long partLength;
     
-    public BeatConfig() {
+    public TickerConfig() {
     }
 
-    public BeatConfig(Ticker ticker, Set<AbstractPlayer> players) {
+    public TickerConfig(Ticker ticker, Set<AbstractPlayer> players) {
         setTicksPerBeat(ticker.getTicksPerBeat());
         setBeatsPerBar(ticker.getBeatsPerBar());
         setBeatDivider(ticker.getBeatDivider());

@@ -131,6 +131,10 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
 
     @JsonIgnore
     @Transient
+    private boolean unsaved = false;
+
+    @JsonIgnore
+    @Transient
     private Boolean armForNextTick = false;
 
     @Transient

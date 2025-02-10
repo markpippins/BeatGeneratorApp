@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.angrysurfer.core.engine.MIDIEngine;
 import com.angrysurfer.core.model.Pad;
 import com.angrysurfer.core.model.midi.ControlCode;
 import com.angrysurfer.core.model.midi.Instrument;
@@ -20,7 +21,6 @@ import com.angrysurfer.spring.repo.Captions;
 import com.angrysurfer.spring.repo.ControlCodes;
 import com.angrysurfer.spring.repo.Instruments;
 import com.angrysurfer.spring.repo.Pads;
-import com.angrysurfer.spring.service.MIDIService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -56,7 +56,7 @@ public class DeviceConfig implements Serializable {
 
         List<String> devices = new ArrayList<>();
 
-        MIDIService.getMidiOutDevices().forEach(device -> devices.add(device.getDeviceInfo().getName()));
+        MIDIEngine.getMidiOutDevices().forEach(device -> devices.add(device.getDeviceInfo().getName()));
 
         existingInstruments.values().forEach(ins -> {
 
@@ -67,7 +67,7 @@ public class DeviceConfig implements Serializable {
         });
 
         // Get available MIDI devices and create if not in DB
-        List<String> availableDevices = MIDIService.getMidiOutDevices().stream()
+        List<String> availableDevices = MIDIEngine.getMidiOutDevices().stream()
                 .filter(d -> d.getMaxTransmitters() != -1)
                 .map(d -> {
                     String deviceName = d.getDeviceInfo().getName();

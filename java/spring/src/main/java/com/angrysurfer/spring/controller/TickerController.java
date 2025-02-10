@@ -57,30 +57,30 @@ public class TickerController {
                         songService.getSong(),
                         tickerService.getClockSource().isRunning())));
         final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(emitInterval));
-        
-        logger.debug("Tick stream configured with interval: {}ms (BPM: {}, PPQ: {})", 
-            emitInterval, timer.getBpm(), timer.getPpq());
-        
+
+        logger.debug("Tick stream configured with interval: {}ms (BPM: {}, PPQ: {})",
+                emitInterval, timer.getBpm(), timer.getPpq());
+
         return Flux.zip(flux, emmitFlux).map(Tuple2::getT1);
     }
 
     // @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/xox")
     // public Flux<SongStatus> getSongStatus() {
-    //     logger.info("GET /api/xox");
-    //     Timer timer = tickerService.getClockSource().getTimer();
-    //     // Calculate interval based on beats rather than ticks
-    //     long beatIntervalMillis = (long) ((60.0 / timer.getBpm()) * 1000);
-    //     // Update roughly twice per beat, but no faster than 100ms
-    //     long emitInterval = Math.max(beatIntervalMillis / 2, 100);
+    // logger.info("GET /api/xox");
+    // Timer timer = tickerService.getClockSource().getTimer();
+    // // Calculate interval based on beats rather than ticks
+    // long beatIntervalMillis = (long) ((60.0 / timer.getBpm()) * 1000);
+    // // Update roughly twice per beat, but no faster than 100ms
+    // long emitInterval = Math.max(beatIntervalMillis / 2, 100);
 
-    //     final Flux<SongStatus> flux = Flux
-    //             .fromStream(Stream.generate(() -> songService.getSongStatus()));
-    //     final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(emitInterval));
-        
-    //     logger.debug("Song status stream configured with interval: {}ms (BPM: {})", 
-    //         emitInterval, timer.getBpm());
-        
-    //     return Flux.zip(flux, emmitFlux).map(Tuple2::getT1);
+    // final Flux<SongStatus> flux = Flux
+    // .fromStream(Stream.generate(() -> songService.getSongStatus()));
+    // final Flux<Long> emmitFlux = Flux.interval(Duration.ofMillis(emitInterval));
+
+    // logger.debug("Song status stream configured with interval: {}ms (BPM: {})",
+    // emitInterval, timer.getBpm());
+
+    // return Flux.zip(flux, emmitFlux).map(Tuple2::getT1);
     // }
 
     @GetMapping(path = Constants.LOAD_TICKER)
@@ -105,10 +105,10 @@ public class TickerController {
     }
 
     @GetMapping(path = Constants.STOP_TICKER)
-    public Ticker stop() {
+    public void stop() {
         if (requestsToLog.contains("stop"))
             logger.info(Constants.STOP_TICKER);
-        return tickerService.stop();
+        tickerService.stop();
     }
 
     @GetMapping(path = Constants.NEXT_TICKER)

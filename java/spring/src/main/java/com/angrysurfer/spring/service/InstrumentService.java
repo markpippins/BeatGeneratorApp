@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.engine.InstrumentEngine;
+import com.angrysurfer.core.engine.MIDIEngine;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.spring.repo.Instruments;
 
@@ -22,13 +23,11 @@ public class InstrumentService {
 
     private Instruments instrumentRepo;
 
-    // private boolean refresh = true;
-
     private InstrumentEngine instrumentEngine;
 
     public InstrumentService(Instruments instruments) {
         this.instrumentRepo = instruments;
-        this.instrumentEngine = new InstrumentEngine(instrumentRepo.findAll(), MIDIService.getMidiOutDevices());
+        this.instrumentEngine = new InstrumentEngine(instrumentRepo.findAll(), MIDIEngine.getMidiOutDevices());
     }
 
     public Instrument save(Instrument instrument) {
