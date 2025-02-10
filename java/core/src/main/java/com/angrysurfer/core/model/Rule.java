@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.player.AbstractPlayer;
+import com.angrysurfer.core.model.player.IPlayer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -46,7 +47,7 @@ public class Rule implements Serializable {
 
     @Transient
     @JsonIgnore
-    AbstractPlayer player;
+    IPlayer player;
 
     public Rule() {
 
@@ -66,7 +67,7 @@ public class Rule implements Serializable {
         setUnsaved(unsaved);
     }
 
-    public Rule(AbstractPlayer player, int operator, int comparison, Double value, int part) {
+    public Rule(IPlayer player, int operator, int comparison, Double value, int part) {
         setPlayer(player);
         setOperator(operator);
         setComparison(comparison);
@@ -74,7 +75,7 @@ public class Rule implements Serializable {
         setPart(part);
     }
 
-    public void setPlayer(AbstractPlayer player) {
+    public void setPlayer(IPlayer player) {
         logger.debug("setPlayer() - player: {}", player != null ? player.getName() : "null");
         this.player = player;
         if (Objects.nonNull(player))

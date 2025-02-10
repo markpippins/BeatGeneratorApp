@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.player.AbstractPlayer;
+import com.angrysurfer.core.model.player.IPlayer;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
@@ -89,7 +90,7 @@ public class Ticker implements Serializable {
     private Long id;
 
     @Transient
-    private Set<AbstractPlayer> players = new HashSet<>();
+    private Set<IPlayer> players = new HashSet<>();
 
     @Transient
     Set<Long> activePlayerIds = new HashSet<>();
@@ -121,7 +122,7 @@ public class Ticker implements Serializable {
         setSongLength(Long.MAX_VALUE);
     }
 
-    public AbstractPlayer getPlayer(Long playerId) {
+    public IPlayer getPlayer(Long playerId) {
         logger.info("getPlayer() - playerId: {}", playerId);
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }

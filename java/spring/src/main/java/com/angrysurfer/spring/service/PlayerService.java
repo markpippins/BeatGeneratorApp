@@ -16,7 +16,7 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.model.player.AbstractPlayer;
+import com.angrysurfer.core.model.player.IPlayer;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.util.ClockSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,7 +52,7 @@ public class PlayerService {
         this.dbUtils = dbUtils;
     }
 
-    public AbstractPlayer addPlayer(String instrumentName) {
+    public IPlayer addPlayer(String instrumentName) {
         logger.info("addPlayer() - instrumentName: {}", instrumentName);
         Instrument instrument = getInstrumentService().findByName(instrumentName);
         return addPlayer(instrument, getNoteForMidiInstrument(instrument));
@@ -63,25 +63,23 @@ public class PlayerService {
         return playerEngine.getNoteForMidiInstrument(getTicker(), instrument);
     }
 
-    public AbstractPlayer addPlayer(String instrumentName, Long note) {
+    public IPlayer addPlayer(String instrumentName, Long note) {
         logger.info("addPlayer() - instrumentName: {}, note: {}", instrumentName, note);
         return addPlayer(getInstrumentService().findByName(instrumentName), note);
     }
 
-    public AbstractPlayer addPlayer(Long instrumentId) {
+    public IPlayer addPlayer(Long instrumentId) {
         logger.info("addPlayer() - id: {}", instrumentId);
         return addPlayer(getInstrumentService().getInstrumentById(instrumentId));
     }
 
-    public AbstractPlayer addPlayer(Instrument instrument) {
+    public IPlayer addPlayer(Instrument instrument) {
         return addPlayer(instrument, getNoteForMidiInstrument(instrument));
     }
 
-    public AbstractPlayer addPlayer(Instrument instrument, long note) {
+    public IPlayer addPlayer(Instrument instrument, long note) {
         logger.info("addPlayer() - instrument: {}, note: {}", instrument.getName(), note);
-        return playerEngine.addPlayer(getTicker(), instrument,
-                dbUtils.getPlayerSaver(),
-                dbUtils.getTickerSaver());
+        return playerEngine.addPlayer(getTicker(), instrument, note);
     }
 
     private Ticker getTicker() {
@@ -101,26 +99,26 @@ public class PlayerService {
 
         return playerEngine.addRule(getTicker(), getTicker().getPlayer(playerId),
                 operator, comparison, value, part,
-                dbUtils.getRuleSaver(), dbUtils.getPlayerSaver());
+                dbUtils.getRuleSaver(), dbUtils.getStrikeSaver());
     }
 
     public Rule addRule(Long playerId) {
         return playerEngine.addRule(getTicker(), getTicker().getPlayer(playerId),
                 dbUtils.getRuleSaver(),
-                dbUtils.getPlayerSaver());
+                dbUtils.getStrikeSaver());
     }
 
     public void removeRule(Long playerId, Long ruleId) {
         logger.info("removeRule() - playerId: {}, ruleId: {}", playerId, ruleId);
         playerEngine.removeRule(getTicker(), playerId, ruleId, dbUtils.getRuleDeleter(),
-                dbUtils.getPlayerSaver());
+                dbUtils.getStrikeSaver());
     }
 
-    public AbstractPlayer updatePlayer(Long playerId, int updateType, long updateValue) {
+    public IPlayer updatePlayer(Long playerId, int updateType, long updateValue) {
         logger.info("updatePlayer() - playerId: {}, updateType: {}, updateValue: {}",
                 playerId, updateType, updateValue);
         return playerEngine.updatePlayer(getTicker(), playerId, updateType, updateValue,
-                dbUtils.getPlayerSaver());
+                dbUtils.getStrikeSaver());
 
     }
 
@@ -133,26 +131,26 @@ public class PlayerService {
                 dbUtils.getRuleSaver());
     }
 
-    public Set<AbstractPlayer> removePlayer(Long playerId) {
+    public Set<IPlayer> removePlayer(Long playerId) {
         logger.info("removePlayer() - playerId: {}", playerId);
-        return playerEngine.removePlayer(getTicker(), playerId, dbUtils.getPlayerDeleter(),
+        return playerEngine.removePlayer(getTicker(), playerId, dbUtils.getStrikeDeleter(),
                 dbUtils.getRuleDeleter(), dbUtils.getTickerSaver());
     }
 
-    public AbstractPlayer mutePlayer(Long playerId) {
+    public IPlayer mutePlayer(Long playerId) {
         return playerEngine.mutePlayer(getTicker(), playerId);
     }
 
     public void clearPlayers() {
-        playerEngine.clearPlayers(getTicker(), dbUtils.getPlayerDeleter(), dbUtils.getTickerSaver());
+        playerEngine.clearPlayers(getTicker(), dbUtils.getStrikeDeleter(), dbUtils.getTickerSaver());
     }
 
     public void clearPlayersWithNoRules() {
-        playerEngine.clearPlayersWithNoRules(getTicker(), dbUtils.getPlayerDeleter(),
+        playerEngine.clearPlayersWithNoRules(getTicker(), dbUtils.getStrikeDeleter(),
                 dbUtils.getTickerSaver());
     }
 
-    public Set<AbstractPlayer> getPlayers() {
+    public Set<IPlayer> getPlayers() {
         return getTicker().getPlayers();
     }
 
@@ -190,7 +188,7 @@ public class PlayerService {
     // TODO: SaveBeat
     public void saveBeat() {
         // try {
-        // Set<AbstractPlayer> strikes = new HashSet<>();
+        // Set<IPlayer> strikes = new HashSet<>();
         // getPlayers().forEach(s -> strikes.add((Strike) s));
         // String beatFile =
         // "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/beats/" +
@@ -218,7 +216,7 @@ public class PlayerService {
     // if (file.exists())
     // file.delete();
     // DeviceConfig list = new DeviceConfig();
-    // list.getInstruments().addAll(getPlayers().stream().map(AbstractPlayer::getInstrument).distinct().toList());
+    // list.getInstruments().addAll(getPlayers().stream().map(IPlayer::getInstrument).distinct().toList());
     // Files.write(file.toPath(),
     // Collections.singletonList(
     // PlayerService.mapper.writerWithDefaultPrettyPrinter().writeValueAsString(list)),

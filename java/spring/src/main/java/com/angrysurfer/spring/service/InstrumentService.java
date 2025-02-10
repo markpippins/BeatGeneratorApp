@@ -26,7 +26,7 @@ public class InstrumentService {
 
     public InstrumentService(DBService dbUtils) {
         this.dbUtils = dbUtils;
-        this.instrumentEngine = new InstrumentEngine(dbUtils.getInstrumentsFindAll(), MIDIEngine.getMidiOutDevices());
+        this.instrumentEngine = new InstrumentEngine(dbUtils.getInstrumentFindAll());
     }
 
     public Instrument save(Instrument instrument) {

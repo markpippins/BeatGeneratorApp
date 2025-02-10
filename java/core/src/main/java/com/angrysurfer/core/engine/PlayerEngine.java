@@ -42,7 +42,8 @@ import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.model.player.AbstractPlayer;
+import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.model.player.IPlayer;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.Comparison;
@@ -79,7 +80,7 @@ public class PlayerEngine {
     // if (file.exists())
     // file.delete();
     // DeviceConfig list = new DeviceConfig();
-    // list.getInstruments().addAll(getPlayers().stream().map(AbstractPlayer::getInstrument).distinct().toList());
+    // list.getInstruments().addAll(getPlayers().stream().map(IPlayer::getInstrument).distinct().toList());
     // Files.write(file.toPath(),
     // Collections.singletonList(
     // PlayerService.mapper.writerWithDefaultPrettyPrinter().writeValueAsString(list)),
@@ -89,7 +90,7 @@ public class PlayerEngine {
     // }
     // }
 
-    // public AbstractPlayer addPlayer(String instrumentName) {
+    // public IPlayer addPlayer(String instrumentName) {
     // logger.info("addPlayer() - instrumentName: {}", instrumentName);
     // = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
     // return addPlayer(instrument, getNoteForMidiInstrument(instrument));
@@ -102,17 +103,17 @@ public class PlayerEngine {
         return note + ticker.getPlayers().size();
     }
 
-    public AbstractPlayer addPlayer(Ticker ticker, Instrument instrument, Save<AbstractPlayer> playerSaver,
+    public IPlayer addPlayer(Ticker ticker, Instrument instrument, Save<IPlayer> playerSaver,
             Save<Ticker> tickerSaver) {
 
-        AbstractPlayer player = playerSaver
+        IPlayer player = playerSaver
                 .save(addPlayer(ticker, instrument, getNoteForMidiInstrument(ticker, instrument)));
         tickerSaver.save(ticker);
 
         return player;
     }
 
-    public AbstractPlayer addPlayer(Ticker ticker, Instrument instrument, long note) {
+    public IPlayer addPlayer(Ticker ticker, Instrument instrument, long note) {
         logger.info("addPlayer() - instrument: {}, note: {}", instrument.getName(), note);
         // tickerRepo.flush();
 
@@ -123,7 +124,7 @@ public class PlayerEngine {
         }
 
         String name = instrument.getName().concat(Integer.toString(ticker.getPlayers().size()));
-        AbstractPlayer player = new Strike(name, ticker, instrument, note,
+        IPlayer player = new Strike(name, ticker, instrument, note,
                 instrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
         player.setTicker(ticker);
 
@@ -134,8 +135,8 @@ public class PlayerEngine {
 
     static Random rand = new Random();
 
-    public Rule addRule(Ticker ticker, AbstractPlayer player, int operator, int comparison, double value, int part, Save<Rule> ruleSaver,
-    Save<AbstractPlayer> playerSaver) {
+    public Rule addRule(Ticker ticker, IPlayer player, int operator, int comparison, double value, int part, Save<Rule> ruleSaver,
+    Save<IPlayer> playerSaver) {
         logger.info("addRule() - playerId: {}, operator: {}, comparison: {}, value: {}, part: {}",
                 player.getId(), operator, comparison, value, part);
 
@@ -153,8 +154,8 @@ public class PlayerEngine {
         return matches.get(0);
     }
 
-    public Rule addRule(Ticker ticker, AbstractPlayer player, Save<Rule> ruleSaver,
-            Save<AbstractPlayer> playerSaver) {
+    public Rule addRule(Ticker ticker, IPlayer player, Save<Rule> ruleSaver,
+            Save<IPlayer> playerSaver) {
 
         Rule rule = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0, true);
 
@@ -172,10 +173,10 @@ public class PlayerEngine {
     }
 
     public void removeRule(Ticker ticker, Long playerId, Long ruleId, Delete<Rule> ruleDeleter,
-            Save<AbstractPlayer> playerSaver) {
+            Save<IPlayer> playerSaver) {
 
         logger.info("removeRule() - playerId: {}, ruleId: {}", playerId, ruleId);
-        AbstractPlayer player = ticker.getPlayer(playerId);
+        IPlayer player = ticker.getPlayer(playerId);
         Rule rule = player.getRule(ruleId);
         player.getRules().remove(rule);
         rule.setPlayer(null);
@@ -183,11 +184,11 @@ public class PlayerEngine {
         playerSaver.save(player);
     }
 
-    public Set<AbstractPlayer> removePlayer(Ticker ticker, Long playerId, Delete<AbstractPlayer> playerDeleter,
+    public Set<IPlayer> removePlayer(Ticker ticker, Long playerId, Delete<IPlayer> playerDeleter,
             Delete<Rule> ruleDeleter, Save<Ticker> tickerSaver) {
 
         logger.info("removePlayer() - playerId: {}", playerId);
-        AbstractPlayer player = ticker.getPlayer(playerId);
+        IPlayer player = ticker.getPlayer(playerId);
 
         player.getRules().forEach(r -> ruleDeleter.delete(r));
 
@@ -197,13 +198,13 @@ public class PlayerEngine {
         return ticker.getPlayers();
     }
 
-    public AbstractPlayer updatePlayer(Ticker ticker, Long playerId, int updateType, long updateValue,
-            Save<AbstractPlayer> playerSaver) {
+    public IPlayer updatePlayer(Ticker ticker, Long playerId, int updateType, long updateValue,
+            Save<IPlayer> playerSaver) {
 
         logger.info("updatePlayer() - playerId: {}, updateType: {}, updateValue: {}",
                 playerId, updateType, updateValue);
 
-        AbstractPlayer player = ticker.getPlayer(playerId);
+        IPlayer player = ticker.getPlayer(playerId);
 
         switch (updateType) {
             case CHANNEL -> {
@@ -361,8 +362,8 @@ public class PlayerEngine {
         return ruleSaver.save(rule);
     }
 
-    public AbstractPlayer mutePlayer(Ticker ticker, Long playerId) {
-        AbstractPlayer player = ticker.getPlayer(playerId);
+    public IPlayer mutePlayer(Ticker ticker, Long playerId) {
+        IPlayer player = ticker.getPlayer(playerId);
         player.setMuted(!player.isMuted());
         return player;
     }
@@ -395,7 +396,7 @@ public class PlayerEngine {
     // TODO: SaveBeat
     public void saveBeat() {
         // try {
-        // Set<AbstractPlayer> strikes = new HashSet<>();
+        // Set<IPlayer> strikes = new HashSet<>();
         // getPlayers().forEach(s -> strikes.add((Strike) s));
         // String beatFile =
         // "C:/Users/MarkP/IdeaProjects/BeatGeneratorApp/java/resources/beats/" +
@@ -414,8 +415,8 @@ public class PlayerEngine {
         // }
     }
 
-    public void clearPlayers(Ticker ticker, Delete<AbstractPlayer> playerDeleter, Save<Ticker> tickerSaver) {
-        Set<AbstractPlayer> players = ticker.getPlayers();
+    public void clearPlayers(Ticker ticker, Delete<IPlayer> playerDeleter, Save<Ticker> tickerSaver) {
+        Set<IPlayer> players = ticker.getPlayers();
         players.stream().filter(p -> p.getRules().size() == 0)
                 .forEach(p -> {
                     ticker.getPlayers().remove(p);
@@ -426,7 +427,7 @@ public class PlayerEngine {
         tickerSaver.save(ticker);
     }
 
-    public void clearPlayersWithNoRules(Ticker ticker, Delete<AbstractPlayer> playerDeleter, Save<Ticker> tickerSaver) {
+    public void clearPlayersWithNoRules(Ticker ticker, Delete<IPlayer> playerDeleter, Save<Ticker> tickerSaver) {
         ticker.getPlayers().stream().filter(p -> p.getRules().size() == 0)
                 .forEach(p -> {
                     if (p.getRules().size() > 0)

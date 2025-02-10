@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.player.AbstractPlayer;
+import com.angrysurfer.core.model.player.IPlayer;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +13,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TickerConfig implements Serializable {
-    Set<AbstractPlayer> players = new HashSet<>();
+    Set<IPlayer> players = new HashSet<>();
     private Float tempoInBPM;
     private Long songLength;
     private Integer ticksPerBeat;
@@ -26,7 +26,7 @@ public class TickerConfig implements Serializable {
     public TickerConfig() {
     }
 
-    public TickerConfig(Ticker ticker, Set<AbstractPlayer> players) {
+    public TickerConfig(Ticker ticker, Set<IPlayer> players) {
         setTicksPerBeat(ticker.getTicksPerBeat());
         setBeatsPerBar(ticker.getBeatsPerBar());
         setBeatDivider(ticker.getBeatDivider());

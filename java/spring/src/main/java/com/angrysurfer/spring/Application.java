@@ -9,10 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import com.angrysurfer.core.config.DeviceConfig;
-import com.angrysurfer.spring.repo.Captions;
-import com.angrysurfer.spring.repo.ControlCodes;
 import com.angrysurfer.spring.repo.Instruments;
-import com.angrysurfer.spring.repo.Pads;
 import com.angrysurfer.spring.service.DBService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -31,17 +28,18 @@ public class Application {
     }
 
     @Bean
-    CommandLineRunner beatGeneratorSetup(Instruments instruments,
+    CommandLineRunner loadDefaults(Instruments instruments,
             DBService dbUtils) {
         return args -> {
-            try {
-                if (instruments.count() == 0)
-                    DeviceConfig.loadDefaults(configFilepath, instruments, controlCodes, captions,
-                            pads);
-                // SystemConfig.saveCurrentStateToFile(configFilepath, instruments);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            if (instruments.count() == 0)
+                try {
+                    DeviceConfig.loadDefaults(configFilepath, dbUtils.getInstrumentFindAll(),
+                            dbUtils.getInstrumentSaver(),
+                            dbUtils.getCaptionSaver(), dbUtils.getControlCodeSaver(), dbUtils.getPadSaver());
+                    // SystemConfig.saveCurrentStateToFile(configFilepath, instruments);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
         };
     }

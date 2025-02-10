@@ -47,7 +47,7 @@ import lombok.Setter;
 @Setter
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-public abstract class AbstractPlayer implements Callable<Boolean>, Serializable {
+public abstract class AbstractPlayer implements Callable<Boolean>, Serializable, IPlayer {
 
     static final Random rand = new Random();
 
@@ -187,24 +187,30 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
     // return (long) (result + getTicker().getNoteOffset());
     // }
 
+    @Override
     public String getPlayerClass() {
         return getClass().getSimpleName();
     }
 
+    @Override
     public Long getSubPosition() {
         return getSubCycler().get();
     }
 
+    @Override
     public void setInstrument(Instrument instrument) {
         this.instrument = instrument;
     }
 
+    @Override
     public abstract void onTick(long tick, long bar);
 
+    @Override
     public Long getInstrumentId() {
         return (Objects.nonNull(getInstrument()) ? getInstrument().getId() : null);
     }
 
+    @Override
     public Rule getRule(Long ruleId) {
         return getRules().stream().filter(r -> r.getId().equals(ruleId)).findAny().orElseThrow();
     }
@@ -213,6 +219,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
     // return Objects.nonNull(instrument) ? instrument.getChannel() : 0;
     // }
 
+    @Override
     public void drumNoteOn(long note) {
         logger.debug("drumNoteOn() - note: {}", note);
         long velocity = (long) ((getLevel() * 0.01)
@@ -227,6 +234,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
         }
     }
 
+    @Override
     public void noteOn(long note, long velocity) {
         logger.debug("noteOn() - note: {}, velocity: {}", note, velocity);
         try {
@@ -237,6 +245,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
         }
     }
 
+    @Override
     public void noteOff(long note, long velocity) {
         logger.debug("noteOff() - note: {}, velocity: {}", note, velocity);
         try {
@@ -271,6 +280,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
         return Boolean.TRUE;
     }
 
+    @Override
     @Transient
     @JsonIgnore
     public boolean isProbable() {
@@ -293,6 +303,7 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable 
                 .collect(Collectors.toSet());
     }
 
+    @Override
     public boolean shouldPlay() {
         logger.debug("shouldPlay() - evaluating rules for player: {}", getName());
         Set<Rule> applicable = filterByPart(getRules(), true);

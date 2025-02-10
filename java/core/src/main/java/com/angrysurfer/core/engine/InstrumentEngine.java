@@ -1,6 +1,5 @@
 package com.angrysurfer.core.engine;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,9 +30,8 @@ public class InstrumentEngine {
 
     private FindAll<Instrument> instrumentsFindAll;
 
-    public InstrumentEngine(FindAll<Instrument> instrumentsFindAll, List<MidiDevice> midiDevices) {
+    public InstrumentEngine(FindAll<Instrument> instrumentsFindAll) {
         this.instrumentList = instrumentsFindAll.findAll();
-        this.midiDevices = new ArrayList<>(midiDevices);
         this.instrumentsFindAll = instrumentsFindAll;
     }
 
