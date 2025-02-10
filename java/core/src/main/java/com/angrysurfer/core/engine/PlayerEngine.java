@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiSystem;
@@ -46,6 +47,7 @@ import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Operator;
+import com.angrysurfer.core.util.db.Delete;
 import com.angrysurfer.core.util.db.Save;
 import com.angrysurfer.core.util.update.RuleUpdateType;
 
@@ -90,39 +92,39 @@ public class PlayerEngine {
     // public AbstractPlayer addPlayer(String instrumentName) {
     // logger.info("addPlayer() - instrumentName: {}", instrumentName);
     // = getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-    // return addPlayer(midiInstrument, getNoteForMidiInstrument(midiInstrument));
+    // return addPlayer(instrument, getNoteForMidiInstrument(instrument));
     // }
 
-    private long getNoteForMidiInstrument(Ticker ticker, Instrument midiInstrument) {
-        Long note = Objects.nonNull(midiInstrument.getLowestNote()) ? midiInstrument.getLowestNote() : 60L;
+    public long getNoteForMidiInstrument(Ticker ticker, Instrument instrument) {
+        Long note = Objects.nonNull(instrument.getLowestNote()) ? instrument.getLowestNote() : 60L;
         ticker.getPlayers().stream()
-                .filter(p -> p.getInstrumentId().equals(midiInstrument.getId())).toList();
+                .filter(p -> p.getInstrumentId().equals(instrument.getId())).toList();
         return note + ticker.getPlayers().size();
     }
 
-    public AbstractPlayer addPlayer(Ticker ticker, Instrument midiInstrument, Save<AbstractPlayer> playerSaver,
+    public AbstractPlayer addPlayer(Ticker ticker, Instrument instrument, Save<AbstractPlayer> playerSaver,
             Save<Ticker> tickerSaver) {
 
         AbstractPlayer player = playerSaver
-                .save(addPlayer(ticker, midiInstrument, getNoteForMidiInstrument(ticker, midiInstrument)));
+                .save(addPlayer(ticker, instrument, getNoteForMidiInstrument(ticker, instrument)));
         tickerSaver.save(ticker);
 
         return player;
     }
 
-    public AbstractPlayer addPlayer(Ticker ticker, Instrument midiInstrument, long note) {
-        logger.info("addPlayer() - instrument: {}, note: {}", midiInstrument.getName(), note);
+    public AbstractPlayer addPlayer(Ticker ticker, Instrument instrument, long note) {
+        logger.info("addPlayer() - instrument: {}, note: {}", instrument.getName(), note);
         // tickerRepo.flush();
 
         try {
-            midiInstrument.setDevice(MIDIEngine.getMidiDevice(midiInstrument.getDeviceName()));
+            instrument.setDevice(MIDIEngine.getMidiDevice(instrument.getDeviceName()));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
 
-        String name = midiInstrument.getName().concat(Integer.toString(ticker.getPlayers().size()));
-        AbstractPlayer player = new Strike(name, ticker, midiInstrument, note,
-                midiInstrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
+        String name = instrument.getName().concat(Integer.toString(ticker.getPlayers().size()));
+        AbstractPlayer player = new Strike(name, ticker, instrument, note,
+                instrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
         player.setTicker(ticker);
 
         ticker.getPlayers().add(player);
@@ -132,7 +134,8 @@ public class PlayerEngine {
 
     static Random rand = new Random();
 
-    public Rule addRule(Ticker ticker, AbstractPlayer player, int operator, int comparison, double value, int part) {
+    public Rule addRule(Ticker ticker, AbstractPlayer player, int operator, int comparison, double value, int part, Save<Rule> ruleSaver,
+    Save<AbstractPlayer> playerSaver) {
         logger.info("addRule() - playerId: {}, operator: {}, comparison: {}, value: {}, part: {}",
                 player.getId(), operator, comparison, value, part);
 
@@ -141,7 +144,9 @@ public class PlayerEngine {
 
         if (matches.size() == 0) {
             rule.setPlayer(player);
+            ruleSaver.save(rule);
             player.getRules().add(rule);
+            playerSaver.save(player);
             return rule;
         }
 
@@ -166,16 +171,34 @@ public class PlayerEngine {
         return matches.get(0);
     }
 
-    public void removeRule(Ticker ticker, Long playerId, Long ruleId) {
+    public void removeRule(Ticker ticker, Long playerId, Long ruleId, Delete<Rule> ruleDeleter,
+            Save<AbstractPlayer> playerSaver) {
 
         logger.info("removeRule() - playerId: {}, ruleId: {}", playerId, ruleId);
         AbstractPlayer player = ticker.getPlayer(playerId);
         Rule rule = player.getRule(ruleId);
         player.getRules().remove(rule);
         rule.setPlayer(null);
+        ruleDeleter.delete(rule);
+        playerSaver.save(player);
     }
 
-    public AbstractPlayer updatePlayer(Ticker ticker, Long playerId, int updateType, long updateValue) {
+    public Set<AbstractPlayer> removePlayer(Ticker ticker, Long playerId, Delete<AbstractPlayer> playerDeleter,
+            Delete<Rule> ruleDeleter, Save<Ticker> tickerSaver) {
+
+        logger.info("removePlayer() - playerId: {}", playerId);
+        AbstractPlayer player = ticker.getPlayer(playerId);
+
+        player.getRules().forEach(r -> ruleDeleter.delete(r));
+
+        ticker.getPlayers().remove(player);
+        playerDeleter.delete(player);
+        tickerSaver.save(ticker);
+        return ticker.getPlayers();
+    }
+
+    public AbstractPlayer updatePlayer(Ticker ticker, Long playerId, int updateType, long updateValue,
+            Save<AbstractPlayer> playerSaver) {
 
         logger.info("updatePlayer() - playerId: {}, updateType: {}, updateValue: {}",
                 playerId, updateType, updateValue);
@@ -298,7 +321,7 @@ public class PlayerEngine {
             }
         }
 
-        return player;
+        return playerSaver.save(player);
     }
 
     public Optional<Rule> getRule(Ticker ticker, Long ruleId) {
@@ -306,7 +329,7 @@ public class PlayerEngine {
         return rules.stream().filter(r -> r.getId().equals(ruleId)).findAny();
     }
 
-    public Rule updateRule(Ticker ticker, Long ruleId, int updateType, long updateValue) {
+    public Rule updateRule(Ticker ticker, Long ruleId, int updateType, long updateValue, Save<Rule> ruleSaver) {
 
         Optional<Rule> opt = getRule(ticker, ruleId);
         Rule rule = null;
@@ -335,7 +358,7 @@ public class PlayerEngine {
             }
         }
 
-        return rule;
+        return ruleSaver.save(rule);
     }
 
     public AbstractPlayer mutePlayer(Ticker ticker, Long playerId) {
@@ -391,37 +414,41 @@ public class PlayerEngine {
         // }
     }
 
-    // public void clearPlayers(Ticker ticker) {
-    // ticker.getPlayers().stream().filter(p -> p.getRules().size() == 0)
-    // .forEach(p -> {
-    // getPlayers().remove(p);
-    // p.setTicker(null);
-    // if (p instanceof Strike)
-    // strikeRepository.delete((Strike) p);
-    // });
-    // }
+    public void clearPlayers(Ticker ticker, Delete<AbstractPlayer> playerDeleter, Save<Ticker> tickerSaver) {
+        Set<AbstractPlayer> players = ticker.getPlayers();
+        players.stream().filter(p -> p.getRules().size() == 0)
+                .forEach(p -> {
+                    ticker.getPlayers().remove(p);
+                    p.setTicker(null);
+                    playerDeleter.delete((Strike) p);
+                });
 
-    public void clearPlayersWithNoRules(Ticker ticker) {
+        tickerSaver.save(ticker);
+    }
+
+    public void clearPlayersWithNoRules(Ticker ticker, Delete<AbstractPlayer> playerDeleter, Save<Ticker> tickerSaver) {
         ticker.getPlayers().stream().filter(p -> p.getRules().size() == 0)
                 .forEach(p -> {
                     if (p.getRules().size() > 0)
                         return;
                     ticker.getPlayers().remove(p);
                     p.setTicker(null);
+                    playerDeleter.delete((Strike) p);
                 });
+
+        tickerSaver.save(ticker);
     }
 
-    public void playDrumNote(Instrument midiInstrument, int channel, int note) {
+    public void playDrumNote(Instrument instrument, int channel, int note) {
         logger.info("playDrumNote() - instrumentName: {}, channel: {}, note: {}",
-                midiInstrument.getName(), channel, note);
-        // Instrument midiInstrument =
-        // getMidiInstrumentRepo().findByName(instrumentName).orElseThrow();
-        midiInstrument.setDevice(MIDIEngine.getMidiDevice(midiInstrument.getDeviceName()));
+                instrument.getName(), channel, note);
 
-        if (!midiInstrument.getDevice().isOpen())
+        instrument.setDevice(MIDIEngine.getMidiDevice(instrument.getDeviceName()));
+
+        if (!instrument.getDevice().isOpen())
             try {
-                midiInstrument.getDevice().open();
-                MidiSystem.getTransmitter().setReceiver(midiInstrument.getDevice().getReceiver());
+                instrument.getDevice().open();
+                MidiSystem.getTransmitter().setReceiver(instrument.getDevice().getReceiver());
             } catch (MidiUnavailableException e) {
                 throw new RuntimeException(e);
             }
@@ -431,11 +458,11 @@ public class PlayerEngine {
                 try {
                     ShortMessage noteOn = new ShortMessage();
                     noteOn.setMessage(ShortMessage.NOTE_ON, channel, note, 126);
-                    midiInstrument.getDevice().getReceiver().send(noteOn, 0L);
+                    instrument.getDevice().getReceiver().send(noteOn, 0L);
                     // Thread.sleep(5000);
                     // ShortMessage noteOff = new ShortMessage();
                     // noteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, 126);
-                    // midiInstrument.getDevice().getReceiver().send(noteOff, 1000L);
+                    // instrument.getDevice().getReceiver().send(noteOff, 1000L);
                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
                     throw new RuntimeException(e);
                 }

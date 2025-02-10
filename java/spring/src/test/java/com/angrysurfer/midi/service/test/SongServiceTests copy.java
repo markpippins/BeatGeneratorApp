@@ -45,7 +45,7 @@
 //     SongService songService;
 
 //     @Autowired
-//     MidiInstrumentRepo midiInstrumentRepo;
+//     MidiInstrumentRepo instrumentRepo;
 
 //     @Autowired
 //     StepRepo stepRepo;

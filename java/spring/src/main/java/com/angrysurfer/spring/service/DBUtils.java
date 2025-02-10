@@ -16,7 +16,8 @@ import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.model.player.AbstractPlayer;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.util.db.Delete;
-import com.angrysurfer.core.util.db.FindList;
+import com.angrysurfer.core.util.db.FindAll;
+import com.angrysurfer.core.util.db.FindListForId;
 import com.angrysurfer.core.util.db.FindOne;
 import com.angrysurfer.core.util.db.FindSet;
 import com.angrysurfer.core.util.db.Next;
@@ -40,7 +41,7 @@ import lombok.Setter;
 @Service
 public class DBUtils {
 
-    private Instruments InstrumentRepo;
+    private Instruments instrumentRepository;
     private ControlCodes controlCodeRepository;
     private Pads padRepository;
     private Patterns patternRepository;
@@ -63,7 +64,7 @@ public class DBUtils {
         this.ruleRepository = ruleRepository;
         this.strikeRepository = strikeRepository;
         this.padRepository = padRepository;
-        this.InstrumentRepo = InstrumentRepository;
+        this.instrumentRepository = InstrumentRepository;
         this.controlCodeRepository = controlCodeRepository;
         this.stepDataRepository = stepRepository;
         this.songRepository = songRepository;
@@ -107,10 +108,6 @@ public class DBUtils {
 
     private FindOne<Ticker> tickerFindOne = (Long id) -> {
         return tickerRepo.findById(id);
-    };
-
-    private FindList<Ticker> tickerFinder = (Long id) -> {
-        return tickerRepo.findAll();
     };
 
     private Save<Ticker> tickerSaver = (Ticker t) -> {
@@ -157,11 +154,15 @@ public class DBUtils {
 
     private Delete<Pattern> patternDeleter = (Pattern p) -> getPatternRepository().deleteById(p.getId());
 
-    private Save<Instrument> instrumentSaver = (Instrument i) -> {
-        return getInstrumentRepo().save(i);
+    private FindAll<Instrument> instrumentsFindAll = () -> {
+        return getInstrumentRepository().findAll();
     };
 
-    private Delete<Instrument> instrumentDeleter = (Instrument i) -> getInstrumentRepo().deleteById(i.getId());
+    private Save<Instrument> instrumentSaver = (Instrument i) -> {
+        return getInstrumentRepository().save(i);
+    };
+
+    private Delete<Instrument> instrumentDeleter = (Instrument i) -> getInstrumentRepository().deleteById(i.getId());
 
     private Save<ControlCode> controlCodeSaver = (ControlCode c) -> {
         return getControlCodeRepository().save(c);
@@ -267,7 +268,7 @@ public class DBUtils {
     }
 
     public Instrument findInstrumentById(Long id) {
-        return InstrumentRepo.findById(id).orElse(null);
+        return getInstrumentRepository().findById(id).orElse(null);
     }
 
     public ControlCode findControlCodeById(Long id) {

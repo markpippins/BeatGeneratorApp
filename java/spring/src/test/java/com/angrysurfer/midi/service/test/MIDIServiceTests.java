@@ -42,7 +42,7 @@
 //     MIDIService midiService;
 
 //     @Autowired
-//     Instruments midiInstrumentRepository;
+//     Instruments instrumentRepository;
 
 //     @Autowired
 //     ControlCodes controlCodeRepository;
@@ -63,12 +63,12 @@
 
 //     @Before
 //     public void setUp() {
-//         if (!midiInstrumentRepository.findByName(RAZ).isPresent()) {
+//         if (!instrumentRepository.findByName(RAZ).isPresent()) {
 //             Instrument raz = new Instrument();
 //             raz.setName(RAZ);
 //             raz.setDeviceName(DEVICE);
 //             // raz.setChannels([9]);
-//             midiInstrumentRepository.save(raz);
+//             instrumentRepository.save(raz);
 //         }
 //     }
 

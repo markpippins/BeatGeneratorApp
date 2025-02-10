@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.util.db.FindAll;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -28,8 +29,8 @@ public class InstrumentEngine {
 
     private List<String> devices;
 
-    public InstrumentEngine(List<Instrument> instruments, List<MidiDevice> midiDevices) {
-        this.instrumentList = new ArrayList<>(instruments);
+    public InstrumentEngine(FindAll<Instrument> instrumentsFindAll, List<MidiDevice> midiDevices) {
+        this.instrumentList = instrumentsFindAll.findAll();
         this.midiDevices = new ArrayList<>(midiDevices);
     }
 
@@ -48,6 +49,11 @@ public class InstrumentEngine {
     public List<String> getInstrumentNames() {
         logger.info("getInstrumentNames()");
         return instrumentList.stream().map(i -> i.getName()).toList();
+    }
+
+    public Instrument findByName(String name) {
+        logger.info(String.format("getInstrumentById(%s)", name));
+        return instrumentList.stream().filter(i -> i.getName() == name).findFirst().orElseThrow();
     }
 
 }

@@ -2,7 +2,7 @@ package com.angrysurfer.core.util.db;
 
 import java.util.List;
 
-public interface FindList<T> {
+public interface FindAll<T> {
 
-    List<T> find(Long id);
+    List<T> findAll();
 }

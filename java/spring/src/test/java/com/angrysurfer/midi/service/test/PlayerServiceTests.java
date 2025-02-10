@@ -64,7 +64,7 @@
 //     Tickers tickerRepo;
 
 //     @Autowired
-//     Instruments midiInstrumentRepo;
+//     Instruments instrumentRepo;
 
 //     @Autowired
 //     ControlCodes controlCodeRepo;

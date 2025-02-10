@@ -36,10 +36,10 @@ public class Application {
             Captions captions) {
         return args -> {
             try {
-                // if (midiInstruments.count() == 0)
+                // if (instruments.count() == 0)
                     DeviceConfig.loadDefaults(configFilepath, instruments, controlCodes, captions,
                             pads);
-                // SystemConfig.saveCurrentStateToFile(configFilepath, midiInstruments);
+                // SystemConfig.saveCurrentStateToFile(configFilepath, instruments);
             } catch (Exception e) {
                 e.printStackTrace();
             }
