@@ -17,10 +17,8 @@ import com.angrysurfer.core.model.midi.ControlCode;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.model.ui.Caption;
-import com.angrysurfer.spring.repo.Captions;
-import com.angrysurfer.spring.repo.ControlCodes;
-import com.angrysurfer.spring.repo.Instruments;
-import com.angrysurfer.spring.repo.Pads;
+import com.angrysurfer.core.util.db.FindAll;
+import com.angrysurfer.core.util.db.Save;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -35,6 +33,7 @@ public class DeviceConfig implements Serializable {
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false) // Add this line
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false); // Add this line
+
     List<Instrument> instruments = new ArrayList<>();
 
     public DeviceConfig() {
@@ -44,14 +43,13 @@ public class DeviceConfig implements Serializable {
         this.instruments = instruments;
     }
 
-    public static void loadDefaults(String filepath,
-            Instruments instruments,
-            ControlCodes controlCodes,
-            Captions captions,
-            Pads pads) throws IOException {
+    public static void loadDefaults(String filepath, FindAll<Instrument> findAllInstruments,
+            Save<Instrument> saveInstrument, Save<Caption> saveCaption, Save<ControlCode> saveControlCode,
+            Save<Pad> savePad)
+            throws IOException {
 
         // Get existing instruments from DB as a map
-        Map<String, Instrument> existingInstruments = instruments.findAll().stream()
+        Map<String, Instrument> existingInstruments = findAllInstruments.findAll().stream()
                 .collect(Collectors.toMap(Instrument::getName, Function.identity()));
 
         List<String> devices = new ArrayList<>();
@@ -62,7 +60,7 @@ public class DeviceConfig implements Serializable {
 
             if (ins.getAvailable() != devices.contains(ins.getDeviceName())) {
                 ins.setAvailable(devices.contains(ins.getDeviceName()));
-                instruments.save(ins);
+                saveInstrument.save(ins);
             }
         });
 
@@ -74,7 +72,7 @@ public class DeviceConfig implements Serializable {
                     if (!existingInstruments.containsKey(deviceName)) {
                         Instrument instrument = new Instrument(deviceName, d);
                         instrument.setAvailable(true);
-                        instrument = instruments.save(instrument);
+                        instrument = saveInstrument.save(instrument);
                         existingInstruments.put(deviceName, instrument);
                     }
                     return deviceName;
@@ -98,8 +96,8 @@ public class DeviceConfig implements Serializable {
 
                 // Process control codes
                 if (!dbInstrument.getControlCodes().isEmpty())
-                    processControlCodesCaptionsAssignmentsAndBoundaries(dbInstrument, configInstrument, controlCodes,
-                            captions);
+                    processControlCodesCaptionsAssignmentsAndBoundaries(dbInstrument, configInstrument, saveCaption,
+                            saveControlCode);
 
                 if (Objects.isNull(dbInstrument.getHighestNote()) || dbInstrument.getHighestNote() == 0)
                     dbInstrument.setHighestNote(126);
@@ -109,11 +107,11 @@ public class DeviceConfig implements Serializable {
 
                 // Process pads if needed
                 if (dbInstrument.getHighestNote() - dbInstrument.getLowestNote() != dbInstrument.getHighestNote())
-                    addPadInfo(pads, dbInstrument);
+                    addPadInfo(dbInstrument, savePad);
 
                 try {
                     // Save instrument
-                    dbInstrument = instruments.save(dbInstrument);
+                    dbInstrument = saveInstrument.save(dbInstrument);
                 } catch (Exception e) {
                     System.out.println("Failed to save instrument: " + dbInstrument.getName());
                 }
@@ -137,9 +135,7 @@ public class DeviceConfig implements Serializable {
     }
 
     private static void processControlCodesCaptionsAssignmentsAndBoundaries(Instrument dbInstrument,
-            Instrument configInstrument,
-            ControlCodes controlCodes,
-            Captions captions) {
+            Instrument configInstrument, Save<Caption> saveCaption, Save<ControlCode> saveCC) {
 
         dbInstrument.getControlCodes().clear(); // Clear existing control codes for
         dbInstrument.getAssignments().clear();
@@ -162,12 +158,12 @@ public class DeviceConfig implements Serializable {
                     Caption caption = new Caption();
                     caption.setCode(cap.getCode());
                     caption.setDescription(cap.getDescription());
-                    caption = captions.save(caption);
+                    caption = saveCaption.save(caption);
                     newCaptions.add(caption);
                 });
                 controlCode.getCaptions().addAll(newCaptions);
             }
-            controlCode = controlCodes.save(controlCode);
+            controlCode = saveCC.save(controlCode);
 
             dbInstrument.getAssignments().put(controlCode.getCode(), controlCode.getName());
             dbInstrument.getBoundaries().put(controlCode.getCode(),
@@ -183,11 +179,11 @@ public class DeviceConfig implements Serializable {
     }
 
     public static void saveCurrentStateToFile(String filepath,
-            Instruments instruments) throws IOException {
+            List<Instrument> instruments) throws IOException {
         DeviceConfig currentConfig = new DeviceConfig();
 
         // Create clean copies of instruments without circular references
-        List<Instrument> cleanInstruments = instruments.findAll().stream()
+        List<Instrument> cleanInstruments = instruments.stream()
                 .map(instrument -> {
                     Instrument clean = new Instrument();
                     clean.setName(instrument.getName());
@@ -242,7 +238,7 @@ public class DeviceConfig implements Serializable {
         System.out.println("config saved");
     }
 
-    static void addPadInfo(Pads padRepo, Instrument instrument) {
+    static void addPadInfo(Instrument instrument, Save<Pad> savePad) {
 
         List<Pad> pads = new ArrayList<>(IntStream.range(instrument.getLowestNote(), instrument.getHighestNote())
                 .mapToObj(note -> new Pad(note)).toList());
@@ -308,7 +304,7 @@ public class DeviceConfig implements Serializable {
             }
         });
 
-        pads.forEach(pad -> instrument.getPads().add(padRepo.save(pad)));
+        pads.forEach(pad -> instrument.getPads().add(savePad.save(pad)));
     }
 
     public ControlCode copy(ControlCode controlCode) {

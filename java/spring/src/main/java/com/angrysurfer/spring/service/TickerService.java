@@ -23,13 +23,13 @@ public class TickerService {
 
     private TickerEngine engine;
 
-    private DBUtils dbUtils;
+    private DBService dbUtils;
 
     private SongService songService;
 
     InstrumentService instrumentService;
 
-    public TickerService(DBUtils dbUtils, SongService songService, InstrumentService instrumentService) {
+    public TickerService(DBService dbUtils, SongService songService, InstrumentService instrumentService) {
         this.dbUtils = dbUtils;
         this.songService = songService;
         this.instrumentService = instrumentService;

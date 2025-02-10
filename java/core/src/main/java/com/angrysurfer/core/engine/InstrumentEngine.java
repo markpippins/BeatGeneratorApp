@@ -29,9 +29,16 @@ public class InstrumentEngine {
 
     private List<String> devices;
 
+    private FindAll<Instrument> instrumentsFindAll;
+
     public InstrumentEngine(FindAll<Instrument> instrumentsFindAll, List<MidiDevice> midiDevices) {
         this.instrumentList = instrumentsFindAll.findAll();
         this.midiDevices = new ArrayList<>(midiDevices);
+        this.instrumentsFindAll = instrumentsFindAll;
+    }
+
+    public void refreshInstruments() {
+        this.instrumentList = instrumentsFindAll.findAll();
     }
 
     public List<Instrument> getInstrumentByChannel(int channel) {

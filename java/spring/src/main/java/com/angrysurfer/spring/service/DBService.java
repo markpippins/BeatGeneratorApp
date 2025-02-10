@@ -15,14 +15,15 @@ import com.angrysurfer.core.model.midi.ControlCode;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.model.player.AbstractPlayer;
 import com.angrysurfer.core.model.player.Strike;
+import com.angrysurfer.core.model.ui.Caption;
 import com.angrysurfer.core.util.db.Delete;
 import com.angrysurfer.core.util.db.FindAll;
-import com.angrysurfer.core.util.db.FindListForId;
 import com.angrysurfer.core.util.db.FindOne;
 import com.angrysurfer.core.util.db.FindSet;
 import com.angrysurfer.core.util.db.Next;
 import com.angrysurfer.core.util.db.Prior;
 import com.angrysurfer.core.util.db.Save;
+import com.angrysurfer.spring.repo.Captions;
 import com.angrysurfer.spring.repo.ControlCodes;
 import com.angrysurfer.spring.repo.Instruments;
 import com.angrysurfer.spring.repo.Pads;
@@ -39,10 +40,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @Service
-public class DBUtils {
+public class DBService {
 
     private Instruments instrumentRepository;
-    private ControlCodes controlCodeRepository;
     private Pads padRepository;
     private Patterns patternRepository;
     private Strikes strikeRepository;
@@ -50,10 +50,13 @@ public class DBUtils {
     private Tickers tickerRepo;
     private Steps stepDataRepository;
     private Songs songRepository;
+    private ControlCodes controlCodeRepository;
+    private Captions captionRepository;
 
-    public DBUtils(Strikes strikeRepository,
+    public DBService(Strikes strikeRepository,
             Rules ruleRepository, Tickers tickerRepo,
             Instruments InstrumentRepository,
+            Captions captionRepository,
             ControlCodes controlCodeRepository,
             Pads padRepository,
             Patterns patternRepository,
@@ -69,6 +72,11 @@ public class DBUtils {
         this.stepDataRepository = stepRepository;
         this.songRepository = songRepository;
         this.patternRepository = patternRepository;
+        this.captionRepository = captionRepository;
+    };
+
+    private Save<Caption> captionSaver = (Caption caption) -> {
+        return getCaptionRepository().save(caption);
     };
 
     private FindSet<Rule> playerRuleFindSet = (Long playerId) -> {
@@ -132,6 +140,10 @@ public class DBUtils {
 
     private Save<Song> songSaver = (Song s) -> {
         return getSongRepository().save(s);
+    };
+
+    private FindOne<Song> songFindOne = (Long id) -> {
+        return getSongRepository().findById(id);
     };
 
     private Delete<Song> songDeleter = (Song s) -> getSongRepository().deleteById(s.getId());

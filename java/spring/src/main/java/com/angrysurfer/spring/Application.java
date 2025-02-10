@@ -13,6 +13,7 @@ import com.angrysurfer.spring.repo.Captions;
 import com.angrysurfer.spring.repo.ControlCodes;
 import com.angrysurfer.spring.repo.Instruments;
 import com.angrysurfer.spring.repo.Pads;
+import com.angrysurfer.spring.service.DBService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootApplication
@@ -31,12 +32,10 @@ public class Application {
 
     @Bean
     CommandLineRunner beatGeneratorSetup(Instruments instruments,
-            Pads pads,
-            ControlCodes controlCodes,
-            Captions captions) {
+            DBService dbUtils) {
         return args -> {
             try {
-                // if (instruments.count() == 0)
+                if (instruments.count() == 0)
                     DeviceConfig.loadDefaults(configFilepath, instruments, controlCodes, captions,
                             pads);
                 // SystemConfig.saveCurrentStateToFile(configFilepath, instruments);

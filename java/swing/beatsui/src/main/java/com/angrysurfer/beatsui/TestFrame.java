@@ -1,32 +1,18 @@
 package com.angrysurfer.beatsui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 import javax.swing.UIManager;
-import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.basic.BasicButtonUI;
 
 import com.angrysurfer.beatsui.widgets.LaunchPanel;
+import com.angrysurfer.beatsui.widgets.X0XPanel;
 
 public class TestFrame extends JFrame {
 
@@ -40,7 +26,7 @@ public class TestFrame extends JFrame {
         setMinimumSize(new Dimension(1200, 800));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        setContentPane(new LaunchPanel());
+        setContentPane(new X0XPanel());
     }
 
     private void setupMenuBar() {

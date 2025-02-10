@@ -2,6 +2,7 @@ package com.angrysurfer.spring.service;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,10 +33,9 @@ public class SongService implements NoteProvider {
 
     static Logger logger = LoggerFactory.getLogger(SongService.class.getCanonicalName());
 
-    private DBUtils dbUtils;
+    private DBService dbUtils;
     private InstrumentService instrumentService;
 
-    private Song song;
     private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
 
     private CyclerListener tickListener;
@@ -44,12 +44,17 @@ public class SongService implements NoteProvider {
 
     private SongEngine songEngine;
 
-    public SongService(DBUtils dbUtils, InstrumentService instrumentService) {
+    public SongService(DBService dbUtils, InstrumentService instrumentService) {
         this.dbUtils = dbUtils;
         this.instrumentService = instrumentService;
         this.songEngine = new SongEngine(instrumentService.getInstrumentEngine());
         this.tickListener = new TickCyclerListener(songEngine);
-        this.song = newSong();
+
+        Optional<Song> opt = dbUtils.getSongFindOne().find(dbUtils.getMinimumSongId());
+        if (opt.isPresent())
+            songEngine.setSong(opt.get());
+        else
+            songEngine.setSong(newSong());
     }
 
     public int getNoteForStep(Step step, Pattern pattern, long tick) {
@@ -97,34 +102,31 @@ public class SongService implements NoteProvider {
         logger.info("next() - currentSongId: {}", currentSongId);
         if (currentSongId == 0 || getSong().getPatterns().size() > 0) {
             Long maxSongId = dbUtils.getMaximumSongId();
-            setSong(Objects.nonNull(maxSongId) && currentSongId < maxSongId
+            songEngine.setSong(Objects.nonNull(maxSongId) && currentSongId < maxSongId
                     ? dbUtils.getNextSong(currentSongId)
                     : null);
-            if (Objects.nonNull(this.song))
-                loadSong(this.song);
+            if (Objects.nonNull(songEngine.getSong()))
+                loadSong(songEngine.getSong());
             else
-                newSong();
+                songEngine.setSong(newSong());
         }
 
-        return this.song;
+        return songEngine.getSong();
     }
 
     public synchronized Song previous(long currentSongId) {
         logger.info("previous() - currentSongId: {}", currentSongId);
         // songRepo.flush();
         if (currentSongId > (dbUtils.getMinimumSongId())) {
-            setSong(dbUtils.getPreviousSong(currentSongId));
-            loadSong(this.song);
+            songEngine.setSong(dbUtils.getPreviousSong(currentSongId));
+            loadSong(songEngine.getSong());
         }
 
-        return this.song;
+        return songEngine.getSong();
     }
 
     public synchronized Song getSong() {
-        if (Objects.isNull(song))
-            newSong();
-
-        return this.song;
+        return songEngine.getSong();
     }
 
     public Pattern addPattern() {
@@ -141,7 +143,7 @@ public class SongService implements NoteProvider {
     }
 
     public Song getSongInfo() {
-        if (Objects.isNull(this.song))
+        if (Objects.isNull(songEngine.getSong()))
             next(0);
         return getSong();
     }

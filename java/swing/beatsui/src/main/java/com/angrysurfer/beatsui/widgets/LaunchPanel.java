@@ -33,7 +33,10 @@ public class LaunchPanel extends JPanel {
 
     private void setup() {
         setLayout(new BorderLayout());
+        add(createGridPanel(), BorderLayout.CENTER);
+    }
 
+    private JPanel createGridPanel() {
         JPanel gridPanel = new JPanel(new GridLayout(8, 8, 5, 5));
         gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
@@ -60,9 +63,9 @@ public class LaunchPanel extends JPanel {
             }
         }
 
-        add(gridPanel, BorderLayout.CENTER);
+        return gridPanel;
     }
-    
+
     public int getLabelText(int input) {
         return (input >= 1 && input <= 16) ? LAUNCH_PAD_LABELS[input - 1] : input;
     }

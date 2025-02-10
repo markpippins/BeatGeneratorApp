@@ -20,11 +20,11 @@ public class InstrumentService {
 
     static Logger logger = LoggerFactory.getLogger(InstrumentService.class.getCanonicalName());
 
-    private DBUtils dbUtils;
+    private DBService dbUtils;
 
     private InstrumentEngine instrumentEngine;
 
-    public InstrumentService(DBUtils dbUtils) {
+    public InstrumentService(DBService dbUtils) {
         this.dbUtils = dbUtils;
         this.instrumentEngine = new InstrumentEngine(dbUtils.getInstrumentsFindAll(), MIDIEngine.getMidiOutDevices());
     }

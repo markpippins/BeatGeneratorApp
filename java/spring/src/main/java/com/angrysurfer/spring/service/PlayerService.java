@@ -38,13 +38,13 @@ public class PlayerService {
     private ClockSource clockSource;
 
     private ArrayList<ClockSource> clocks = new ArrayList<>();
-    private DBUtils dbUtils;
+    private DBService dbUtils;
     private TickerService tickerService;
     private InstrumentService instrumentService;
 
     private PlayerEngine playerEngine;
 
-    public PlayerService(TickerService tickerService, InstrumentService instrumentService, DBUtils dbUtils) {
+    public PlayerService(TickerService tickerService, InstrumentService instrumentService, DBService dbUtils) {
 
         this.tickerService = tickerService;
         this.instrumentService = instrumentService;
