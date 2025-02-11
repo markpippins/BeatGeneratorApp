@@ -35,6 +35,20 @@ public class PlayerPanel extends JPanel {
     private JTable rightTable;
     private StatusConsumer status;
 
+    // Add buttons as fields
+    private JButton addPlayerButton;
+    private JButton editPlayerButton;
+    private JButton deletePlayerButton;
+    private JButton addRuleButton;
+    private JButton editRuleButton;
+    private JButton deleteRuleButton;
+
+    // Add menu items as fields
+    private JMenuItem editPlayerMenuItem;
+    private JMenuItem deletePlayerMenuItem;
+    private JMenuItem editRuleMenuItem;
+    private JMenuItem deleteRuleMenuItem;
+
     public PlayerPanel(StatusConsumer status) {
         super(new BorderLayout());
         this.status = status;
@@ -60,17 +74,17 @@ public class PlayerPanel extends JPanel {
         JSplitPane tablesSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         tablesSplitPane.setResizeWeight(1.0); // Give all extra space to left component
 
-        // Left panel setup
+        // Left panel setup with player buttons
         JPanel leftPanel = new JPanel(new BorderLayout());
-        JPanel leftButtonPanel = createButtonPanel();
+        JPanel leftButtonPanel = createPlayerButtonPanel();
         leftTable = new JTable();
         JScrollPane leftScrollPane = new JScrollPane(leftTable);
         leftPanel.add(leftButtonPanel, BorderLayout.NORTH);
         leftPanel.add(leftScrollPane, BorderLayout.CENTER);
 
-        // Right panel setup with fixed width
+        // Right panel setup with rule buttons
         JPanel rightPanel = new JPanel(new BorderLayout());
-        JPanel rightButtonPanel = createButtonPanel();
+        JPanel rightButtonPanel = createRuleButtonPanel();
         rightTable = new JTable();
         JScrollPane rightScrollPane = new JScrollPane(rightTable);
         rightPanel.add(rightButtonPanel, BorderLayout.NORTH);
@@ -104,11 +118,67 @@ public class PlayerPanel extends JPanel {
         return beatsPanel;
     }
 
-    private JPanel createButtonPanel() {
+    private JPanel createPlayerButtonPanel() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.add(new JButton("Add"));
-        buttonPanel.add(new JButton("Remove"));
-        buttonPanel.add(new JButton("Clear"));
+        
+        addPlayerButton = new JButton("Add");
+        editPlayerButton = new JButton("Edit");
+        deletePlayerButton = new JButton("Delete");
+
+        editPlayerButton.setEnabled(false);
+        deletePlayerButton.setEnabled(false);
+
+        addPlayerButton.addActionListener(e -> showPlayerDialog(null));
+        editPlayerButton.addActionListener(e -> {
+            int row = leftTable.getSelectedRow();
+            if (row >= 0) {
+                MockPlayer player = getPlayerFromRow(row);
+                showPlayerDialog(player);
+            }
+        });
+        deletePlayerButton.addActionListener(e -> {
+            int row = leftTable.getSelectedRow();
+            if (row >= 0) {
+                ((DefaultTableModel)leftTable.getModel()).removeRow(row);
+            }
+        });
+
+        buttonPanel.add(addPlayerButton);
+        buttonPanel.add(editPlayerButton);
+        buttonPanel.add(deletePlayerButton);
+
+        return buttonPanel;
+    }
+
+    private JPanel createRuleButtonPanel() {
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        
+        addRuleButton = new JButton("Add");
+        editRuleButton = new JButton("Edit");
+        deleteRuleButton = new JButton("Delete");
+
+        editRuleButton.setEnabled(false);
+        deleteRuleButton.setEnabled(false);
+
+        addRuleButton.addActionListener(e -> showRuleDialog(null));
+        editRuleButton.addActionListener(e -> {
+            int row = rightTable.getSelectedRow();
+            if (row >= 0) {
+                MockRule rule = getRuleFromRow(row);
+                showRuleDialog(rule);
+            }
+        });
+        deleteRuleButton.addActionListener(e -> {
+            int row = rightTable.getSelectedRow();
+            if (row >= 0) {
+                ((DefaultTableModel)rightTable.getModel()).removeRow(row);
+            }
+        });
+
+        buttonPanel.add(addRuleButton);
+        buttonPanel.add(editRuleButton);
+        buttonPanel.add(deleteRuleButton);
+
         return buttonPanel;
     }
 
@@ -304,59 +374,88 @@ public class PlayerPanel extends JPanel {
             rightModel.addRow(rule.toRow());
         }
 
-        // Add popup menu to left table
-        JPopupMenu playerPopup = new JPopupMenu();
-        JMenuItem addPlayer = new JMenuItem("Add...");
-        JMenuItem editPlayer = new JMenuItem("Edit...");
-        JMenuItem deletePlayer = new JMenuItem("Delete");
+        // Add selection listeners to tables
+        leftTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean hasSelection = leftTable.getSelectedRow() >= 0;
+                editPlayerButton.setEnabled(hasSelection);
+                deletePlayerButton.setEnabled(hasSelection);
+                editPlayerMenuItem.setEnabled(hasSelection);
+                deletePlayerMenuItem.setEnabled(hasSelection);
+            }
+        });
 
-        addPlayer.addActionListener(e -> showPlayerDialog(null));
-        editPlayer.addActionListener(e -> {
+        rightTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean hasSelection = rightTable.getSelectedRow() >= 0;
+                editRuleButton.setEnabled(hasSelection);
+                deleteRuleButton.setEnabled(hasSelection);
+                editRuleMenuItem.setEnabled(hasSelection);
+                deleteRuleMenuItem.setEnabled(hasSelection);
+            }
+        });
+
+        // Create popup menus
+        JPopupMenu playerPopup = new JPopupMenu();
+        JMenuItem addPlayerMenuItem = new JMenuItem("Add...");
+        editPlayerMenuItem = new JMenuItem("Edit...");
+        deletePlayerMenuItem = new JMenuItem("Delete");
+
+        addPlayerMenuItem.addActionListener(e -> showPlayerDialog(null));
+        editPlayerMenuItem.addActionListener(e -> {
             int row = leftTable.getSelectedRow();
             if (row >= 0) {
                 MockPlayer player = getPlayerFromRow(row);
                 showPlayerDialog(player);
             }
         });
-        deletePlayer.addActionListener(e -> {
+        deletePlayerMenuItem.addActionListener(e -> {
             int row = leftTable.getSelectedRow();
             if (row >= 0) {
                 ((DefaultTableModel) leftTable.getModel()).removeRow(row);
             }
         });
 
-        playerPopup.add(addPlayer);
-        playerPopup.add(editPlayer);
+        // Set initial menu item states
+        editPlayerMenuItem.setEnabled(false);
+        deletePlayerMenuItem.setEnabled(false);
+
+        playerPopup.add(addPlayerMenuItem);
+        playerPopup.add(editPlayerMenuItem);
         playerPopup.addSeparator();
-        playerPopup.add(deletePlayer);
+        playerPopup.add(deletePlayerMenuItem);
 
         leftTable.setComponentPopupMenu(playerPopup);
 
         // Add popup menu to right table
         JPopupMenu rulePopup = new JPopupMenu();
-        JMenuItem addRule = new JMenuItem("Add...");
-        JMenuItem editRule = new JMenuItem("Edit...");
-        JMenuItem deleteRule = new JMenuItem("Delete");
+        JMenuItem addRuleMenuItem = new JMenuItem("Add...");
+        editRuleMenuItem = new JMenuItem("Edit...");
+        deleteRuleMenuItem = new JMenuItem("Delete");
 
-        addRule.addActionListener(e -> showRuleDialog(null));
-        editRule.addActionListener(e -> {
+        addRuleMenuItem.addActionListener(e -> showRuleDialog(null));
+        editRuleMenuItem.addActionListener(e -> {
             int row = rightTable.getSelectedRow();
             if (row >= 0) {
                 MockRule rule = getRuleFromRow(row);
                 showRuleDialog(rule);
             }
         });
-        deleteRule.addActionListener(e -> {
+        deleteRuleMenuItem.addActionListener(e -> {
             int row = rightTable.getSelectedRow();
             if (row >= 0) {
                 ((DefaultTableModel) rightTable.getModel()).removeRow(row);
             }
         });
 
-        rulePopup.add(addRule);
-        rulePopup.add(editRule);
+        // Set initial menu item states
+        editRuleMenuItem.setEnabled(false);
+        deleteRuleMenuItem.setEnabled(false);
+
+        rulePopup.add(addRuleMenuItem);
+        rulePopup.add(editRuleMenuItem);
         rulePopup.addSeparator();
-        rulePopup.add(deleteRule);
+        rulePopup.add(deleteRuleMenuItem);
 
         rightTable.setComponentPopupMenu(rulePopup);
 
