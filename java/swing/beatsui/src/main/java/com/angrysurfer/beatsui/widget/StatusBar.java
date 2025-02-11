@@ -6,6 +6,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import com.angrysurfer.beatsui.api.IStatus;
+
 public class StatusBar extends JPanel implements IStatus {
 
     private JLabel statusLabel;

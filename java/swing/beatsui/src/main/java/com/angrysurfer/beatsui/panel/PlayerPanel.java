@@ -1,13 +1,11 @@
 package com.angrysurfer.beatsui.panel;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import java.util.Objects;
 
-import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -24,7 +22,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.beatsui.Utils;
-import com.angrysurfer.beatsui.widget.IStatus;
+import com.angrysurfer.beatsui.api.IStatus;
 
 public class PlayerPanel extends JPanel {
 
@@ -42,6 +40,11 @@ public class PlayerPanel extends JPanel {
     private void setup() {
         setLayout(new BorderLayout());
         add(createBeatsPanel(), BorderLayout.CENTER);
+    }
+
+    private void setStatus(String status) {
+        if (Objects.nonNull(this.status))
+            this.status.setStatus(status);
     }
 
     private static class Player {
@@ -128,21 +131,14 @@ public class PlayerPanel extends JPanel {
     }
 
     private JPanel createBeatsPanel() {
-        // Main panel using BorderLayout
         JPanel beatsPanel = new JPanel(new BorderLayout());
-
-        // Create vertical split pane for main layout
-        // JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        // mainSplitPane.setResizeWeight(0.75);
-
         JPanel mainPane = new JPanel(new BorderLayout());
 
-        // Top section with horizontal split for tables
+        // Create and configure split pane
         JSplitPane tablesSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        tablesSplitPane.setResizeWeight(0.75); // Left table gets 75% of space
-        tablesSplitPane.setDividerLocation(0.55);
+        tablesSplitPane.setResizeWeight(1.0); // Give all extra space to left component
 
-        // Left table section
+        // Left panel setup
         JPanel leftPanel = new JPanel(new BorderLayout());
         JPanel leftButtonPanel = createButtonPanel();
         leftTable = new JTable();
@@ -150,14 +146,19 @@ public class PlayerPanel extends JPanel {
         leftPanel.add(leftButtonPanel, BorderLayout.NORTH);
         leftPanel.add(leftScrollPane, BorderLayout.CENTER);
 
-        // Right table section
+        // Right panel setup with fixed width
         JPanel rightPanel = new JPanel(new BorderLayout());
         JPanel rightButtonPanel = createButtonPanel();
         rightTable = new JTable();
         JScrollPane rightScrollPane = new JScrollPane(rightTable);
         rightPanel.add(rightButtonPanel, BorderLayout.NORTH);
         rightPanel.add(rightScrollPane, BorderLayout.CENTER);
-        rightPanel.setMaximumSize(new Dimension(300, 600));
+
+        // Set fixed width for right panel
+        int rightPanelWidth = 200; // Adjust this value as needed
+        rightPanel.setPreferredSize(new Dimension(rightPanelWidth, 0));
+        rightPanel.setMinimumSize(new Dimension(rightPanelWidth, 0));
+        rightPanel.setMaximumSize(new Dimension(rightPanelWidth, Integer.MAX_VALUE));
 
         tablesSplitPane.setLeftComponent(leftPanel);
         tablesSplitPane.setRightComponent(rightPanel);
@@ -176,13 +177,6 @@ public class PlayerPanel extends JPanel {
 
         mainPane.add(panel, BorderLayout.SOUTH);
 
-        // Dimension size = new Dimension(BUTTON_SIZE * GRID_COLS, BUTTON_SIZE *
-        // GRID_ROWS);
-
-        // buttonGridPanel.setMaximumSize(size);
-        // buttonGridPanel.setMinimumSize(size);
-        // buttonGridPanel.setPreferredSize(size);
-
         beatsPanel.add(mainPane, BorderLayout.CENTER);
 
         return beatsPanel;
@@ -195,46 +189,6 @@ public class PlayerPanel extends JPanel {
         buttonPanel.add(new JButton("Clear"));
         return buttonPanel;
     }
-
-    // static int BUTTON_SIZE = 25;
-    // static int GRID_ROWS = 5;
-    // static int GRID_COLS = 36;
-
-    // private JPanel createButtonGridPanel() {
-    // JPanel panel = new JPanel(new GridLayout(5, 33, 2, 2));
-    // panel.setBorder(BorderFactory.createEmptyBorder());
-
-    // // Create 5x33 grid of buttons with varying colors
-    // Color[] colors = {
-    // new Color(255, 200, 200), // Light red
-    // new Color(200, 255, 200), // Light green
-    // new Color(200, 200, 255), // Light blue
-    // new Color(255, 255, 200), // Light yellow
-    // new Color(255, 200, 255), // Light purple
-    // new Color(200, 255, 255) // Light cyan
-    // };
-
-    // for (int row = 0; row < GRID_ROWS; row++) {
-    // for (int col = 0; col < GRID_COLS; col++) {
-    // JButton button = new JButton();
-    // button.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE)); // Make
-    // buttons square
-
-    // // Vary colors based on position
-    // int colorIndex = (row * col) % colors.length;
-    // button.setBackground(colors[colorIndex]);
-    // button.setOpaque(true);
-    // button.setBorderPainted(true);
-
-    // // Optional: Add tooltip showing position
-    // button.setToolTipText(String.format("Row: %d, Col: %d", row + 1, col + 1));
-
-    // panel.add(button);
-    // }
-    // }
-
-    // return panel;
-    // }
 
     private void setupTables() {
         // Define column names
@@ -395,11 +349,22 @@ public class PlayerPanel extends JPanel {
             }
         });
 
-        // Set column widths
-        rightTable.getColumnModel().getColumn(0).setPreferredWidth(40); // Operator
-        rightTable.getColumnModel().getColumn(1).setPreferredWidth(20); // Comparison
-        rightTable.getColumnModel().getColumn(2).setPreferredWidth(40); // Value
-        rightTable.getColumnModel().getColumn(3).setPreferredWidth(20); // Part
+        // Adjust right table column widths to minimum
+        rightTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        rightTable.getColumnModel().getColumn(0).setPreferredWidth(60); // Operator
+        rightTable.getColumnModel().getColumn(1).setPreferredWidth(40); // Comparison
+        rightTable.getColumnModel().getColumn(2).setPreferredWidth(50); // Value
+        rightTable.getColumnModel().getColumn(3).setPreferredWidth(40); // Part
+
+        // Force the table to be compact
+        int totalWidth = 0;
+        for (int i = 0; i < rightTable.getColumnCount(); i++) {
+            totalWidth += rightTable.getColumnModel().getColumn(i).getPreferredWidth();
+        }
+
+        // Add small buffer for borders
+        totalWidth += 10;
+        rightTable.setPreferredScrollableViewportSize(new Dimension(totalWidth, 0));
 
         // Apply center alignment to all columns except first in right table
         for (int i = 1; i < rightTable.getColumnCount(); i++) {

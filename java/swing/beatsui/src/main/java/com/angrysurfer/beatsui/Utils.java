@@ -9,6 +9,8 @@ import javax.swing.JTable;
 import javax.swing.table.TableColumn;
 
 public class Utils {
+
+    
     // Greys & Dark Blues
     public static Color charcoalGray = new Color(40, 40, 40); // Deep console casing
     public static Color slateGray = new Color(70, 80, 90); // Cool metallic panel

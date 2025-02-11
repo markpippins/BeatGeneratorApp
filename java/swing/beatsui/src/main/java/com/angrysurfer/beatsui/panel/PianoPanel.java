@@ -21,7 +21,7 @@ public class PianoPanel extends JPanel {
 
         setPreferredSize(new Dimension(500, 80));
         setBorder(new EmptyBorder(10, 10, 10, 10));
-        setBackground(new Color(40, 40, 40));
+        // setBackground(new Color(40, 40, 40));
 
         // Dimensions for keys
         int whiteKeyWidth = 30;
@@ -62,19 +62,32 @@ public class PianoPanel extends JPanel {
                 int w = c.getWidth();
                 int h = c.getHeight();
 
-                // Base color
+                // Check if button is pressed
+                boolean isPressed = ((JButton)c).getModel().isPressed();
+
+                // Base color with pressed effect
                 if (isWhite) {
-                    g2d.setColor(Color.WHITE);
-                    g2d.fillRect(0, 0, w, h);
-                    // Add shadow effect
-                    g2d.setColor(new Color(200, 200, 200));
-                    g2d.fillRect(0, h - 10, w, 10);
+                    if (isPressed) {
+                        g2d.setColor(new Color(230, 230, 230));
+                        g2d.fillRect(0, 2, w, h); // Slight offset when pressed
+                    } else {
+                        g2d.setColor(Color.WHITE);
+                        g2d.fillRect(0, 0, w, h);
+                        // Shadow effect
+                        g2d.setColor(new Color(200, 200, 200));
+                        g2d.fillRect(0, h - 10, w, 10);
+                    }
                 } else {
-                    g2d.setColor(Color.BLACK);
-                    g2d.fillRect(0, 0, w, h);
-                    // Add highlight effect
-                    g2d.setColor(new Color(60, 60, 60));
-                    g2d.fillRect(0, 0, w, 5);
+                    if (isPressed) {
+                        g2d.setColor(new Color(20, 20, 20));
+                        g2d.fillRect(0, 2, w, h); // Slight offset when pressed
+                    } else {
+                        g2d.setColor(Color.BLACK);
+                        g2d.fillRect(0, 0, w, h);
+                        // Highlight effect
+                        g2d.setColor(new Color(60, 60, 60));
+                        g2d.fillRect(0, 0, w, 5);
+                    }
                 }
 
                 // Draw border
@@ -94,6 +107,8 @@ public class PianoPanel extends JPanel {
             }
         });
 
+        // Add press effect
+        key.setPressedIcon(null);
         key.setContentAreaFilled(false);
         key.setBorderPainted(false);
         key.setFocusPainted(false);
