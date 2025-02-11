@@ -85,7 +85,7 @@ public class X0XPanel extends JPanel {
         }
 
         // Add the trigger button
-        JButton triggerButton = new TriggerButton();
+        JButton triggerButton = new TriggerButton("");
         triggerButton.setName("TriggerButton-" + index);
 
         // Center the button horizontally

@@ -22,15 +22,20 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.beatsui.Utils;
-import com.angrysurfer.beatsui.api.IStatus;
+import com.angrysurfer.beatsui.api.StatusConsumer;
+import com.angrysurfer.beatsui.Dialog;
+import javax.swing.JPopupMenu;
+import javax.swing.JMenuItem;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class PlayerPanel extends JPanel {
 
     private JTable leftTable;
     private JTable rightTable;
-    private IStatus status;
+    private StatusConsumer status;
 
-    public PlayerPanel(IStatus status) {
+    public PlayerPanel(StatusConsumer status) {
         super(new BorderLayout());
         this.status = status;
         setup();
@@ -45,89 +50,6 @@ public class PlayerPanel extends JPanel {
     private void setStatus(String status) {
         if (Objects.nonNull(this.status))
             this.status.setStatus(status);
-    }
-
-    private static class Player {
-        String name;
-        int channel;
-        long swing;
-        long level;
-        long note;
-        long minVelocity;
-        long maxVelocity;
-        long preset;
-        boolean stickyPreset;
-        long probability;
-        long randomDegree;
-        long ratchetCount;
-        long ratchetInterval;
-        boolean useInternalBeats;
-        boolean useInternalBars;
-        long panPosition;
-        boolean preserveOnPurge;
-        double sparse;
-
-        public Player(String name, int channel, long note) {
-            this.name = name;
-            this.channel = Math.min(12, Math.max(1, channel)); // Constrain to 1-12
-            this.note = Math.min(127, Math.max(1, note)); // Constrain to 1-127
-            this.level = 100L;
-            this.minVelocity = 100L;
-            this.maxVelocity = 110L;
-            this.preset = 1L;
-            this.probability = 100L;
-            this.panPosition = 63L; // Center pan
-            this.swing = 0L;
-            this.randomDegree = 0L;
-            this.ratchetCount = 0L;
-            this.ratchetInterval = 1L;
-            this.useInternalBeats = false;
-            this.useInternalBars = false;
-            this.preserveOnPurge = false;
-            this.sparse = 0.0;
-        }
-
-        public Object[] toRow() {
-            return new Object[] {
-                    name, channel, swing, level, note, minVelocity, maxVelocity,
-                    preset, stickyPreset, probability, randomDegree, ratchetCount,
-                    ratchetInterval, useInternalBeats, useInternalBars, panPosition,
-                    preserveOnPurge, sparse
-            };
-        }
-    }
-
-    // Temporary Rule class for UI development
-    private static class RuleData {
-        public static final String[] OPERATORS = {
-                "Tick", "Beat", "Bar", "Part",
-                "Ticks", "Beats", "Bars", "Parts"
-        };
-
-        public static final String[] COMPARISONS = {
-                "=", "!=", "<", ">", "%"
-        };
-
-        Integer operator;
-        Integer comparison;
-        Double value;
-        Integer part;
-
-        public RuleData() {
-            this.operator = 0;
-            this.comparison = 0;
-            this.value = 0.0;
-            this.part = 0;
-        }
-
-        public Object[] toRow() {
-            return new Object[] {
-                    OPERATORS[operator],
-                    COMPARISONS[comparison],
-                    value,
-                    part
-            };
-        }
     }
 
     private JPanel createBeatsPanel() {
@@ -219,18 +141,18 @@ public class PlayerPanel extends JPanel {
         };
 
         // Add sample data
-        Player[] samplePlayers = {
-                new Player("Kick", 1, 36),
-                new Player("Snare", 2, 38),
-                new Player("HiHat", 3, 42),
-                new Player("Crash", 4, 49),
-                new Player("Tom1", 5, 45),
-                new Player("Tom2", 6, 47),
-                new Player("Tom3", 7, 48),
-                new Player("Ride", 8, 51)
+        MockPlayer[] samplePlayers = {
+                new MockPlayer("Kick", 1, 36),
+                new MockPlayer("Snare", 2, 38),
+                new MockPlayer("HiHat", 3, 42),
+                new MockPlayer("Crash", 4, 49),
+                new MockPlayer("Tom1", 5, 45),
+                new MockPlayer("Tom2", 6, 47),
+                new MockPlayer("Tom3", 7, 48),
+                new MockPlayer("Ride", 8, 51)
         };
 
-        for (Player player : samplePlayers) {
+        for (MockPlayer player : samplePlayers) {
             leftModel.addRow(player.toRow());
         }
 
@@ -304,11 +226,11 @@ public class PlayerPanel extends JPanel {
         rightTable.getTableHeader().setReorderingAllowed(false);
 
         // Setup combo box for Operator column
-        JComboBox<String> operatorCombo = new JComboBox<>(RuleData.OPERATORS);
+        JComboBox<String> operatorCombo = new JComboBox<>(MockRule.OPERATORS);
         rightTable.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(operatorCombo));
 
         // Setup combo box for Comparison column
-        JComboBox<String> comparisonCombo = new JComboBox<>(RuleData.COMPARISONS);
+        JComboBox<String> comparisonCombo = new JComboBox<>(MockRule.COMPARISONS);
         rightTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(comparisonCombo));
 
         // Setup spinner for Value column
@@ -372,15 +294,213 @@ public class PlayerPanel extends JPanel {
         }
 
         // Add some sample data
-        RuleData[] sampleRules = {
-                new RuleData(), // Add default rule
-                new RuleData(), // Add default rule
-                new RuleData(), // Add default rule
+        MockRule[] sampleRules = {
+                new MockRule(), // Add default rule
+                new MockRule(), // Add default rule
+                new MockRule(), // Add default rule
         };
 
-        for (RuleData rule : sampleRules) {
+        for (MockRule rule : sampleRules) {
             rightModel.addRow(rule.toRow());
         }
+
+        // Add popup menu to left table
+        JPopupMenu playerPopup = new JPopupMenu();
+        JMenuItem addPlayer = new JMenuItem("Add...");
+        JMenuItem editPlayer = new JMenuItem("Edit...");
+        JMenuItem deletePlayer = new JMenuItem("Delete");
+
+        addPlayer.addActionListener(e -> showPlayerDialog(null));
+        editPlayer.addActionListener(e -> {
+            int row = leftTable.getSelectedRow();
+            if (row >= 0) {
+                MockPlayer player = getPlayerFromRow(row);
+                showPlayerDialog(player);
+            }
+        });
+        deletePlayer.addActionListener(e -> {
+            int row = leftTable.getSelectedRow();
+            if (row >= 0) {
+                ((DefaultTableModel) leftTable.getModel()).removeRow(row);
+            }
+        });
+
+        playerPopup.add(addPlayer);
+        playerPopup.add(editPlayer);
+        playerPopup.addSeparator();
+        playerPopup.add(deletePlayer);
+
+        leftTable.setComponentPopupMenu(playerPopup);
+
+        // Add popup menu to right table
+        JPopupMenu rulePopup = new JPopupMenu();
+        JMenuItem addRule = new JMenuItem("Add...");
+        JMenuItem editRule = new JMenuItem("Edit...");
+        JMenuItem deleteRule = new JMenuItem("Delete");
+
+        addRule.addActionListener(e -> showRuleDialog(null));
+        editRule.addActionListener(e -> {
+            int row = rightTable.getSelectedRow();
+            if (row >= 0) {
+                MockRule rule = getRuleFromRow(row);
+                showRuleDialog(rule);
+            }
+        });
+        deleteRule.addActionListener(e -> {
+            int row = rightTable.getSelectedRow();
+            if (row >= 0) {
+                ((DefaultTableModel) rightTable.getModel()).removeRow(row);
+            }
+        });
+
+        rulePopup.add(addRule);
+        rulePopup.add(editRule);
+        rulePopup.addSeparator();
+        rulePopup.add(deleteRule);
+
+        rightTable.setComponentPopupMenu(rulePopup);
+
+        // Add double click listener to left table
+        leftTable.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = leftTable.rowAtPoint(e.getPoint());
+                    if (row >= 0) {
+                        MockPlayer player = getPlayerFromRow(row);
+                        showPlayerDialog(player);
+                    }
+                }
+            }
+        });
+
+        // Add double click listener to right table
+        rightTable.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = rightTable.rowAtPoint(e.getPoint());
+                    if (row >= 0) {
+                        MockRule rule = getRuleFromRow(row);
+                        showRuleDialog(rule);
+                    }
+                }
+            }
+        });
+    }
+
+    private void showPlayerDialog(MockPlayer player) {
+        if (player == null) {
+            player = new MockPlayer("New Player", 1, 36);
+        }
+
+        PlayerEditorPanel editorPanel = new PlayerEditorPanel(player);
+        Dialog<MockPlayer> dialog = new Dialog<>(player, editorPanel);
+        dialog.setTitle(player.getName() == null ? "Add Player" : "Edit Player: " + player.getName());
+
+        if (dialog.showDialog()) {
+            MockPlayer updatedPlayer = editorPanel.getUpdatedPlayer();
+            updatePlayerTable(updatedPlayer, leftTable.getSelectedRow());
+        }
+    }
+
+    private void showRuleDialog(MockRule rule) {
+        if (rule == null) {
+            rule = new MockRule();
+        }
+
+        RuleEditorPanel editorPanel = new RuleEditorPanel(rule);
+        Dialog<MockRule> dialog = new Dialog<>(rule, editorPanel);
+        dialog.setTitle(rule.getOperator() == null ? "Add Rule" : "Edit Rule");
+
+        if (dialog.showDialog()) {
+            MockRule updatedRule = editorPanel.getUpdatedRule();
+            updateRuleTable(updatedRule, rightTable.getSelectedRow());
+        }
+    }
+
+    private MockPlayer getPlayerFromRow(int row) {
+        DefaultTableModel model = (DefaultTableModel) leftTable.getModel();
+
+        // Create new player with basic info
+        MockPlayer player = new MockPlayer(
+                (String) model.getValueAt(row, 0),
+                ((Number) model.getValueAt(row, 1)).intValue(), // channel
+                ((Number) model.getValueAt(row, 4)).longValue() // note
+        );
+
+        // Set all other values using the model data
+        player.setSwing(((Number) model.getValueAt(row, 2)).longValue());
+        player.setLevel(((Number) model.getValueAt(row, 3)).longValue());
+        player.setMinVelocity(((Number) model.getValueAt(row, 5)).longValue());
+        player.setMaxVelocity(((Number) model.getValueAt(row, 6)).longValue());
+        player.setPreset(((Number) model.getValueAt(row, 7)).longValue());
+        player.setStickyPreset((Boolean) model.getValueAt(row, 8));
+        player.setProbability(((Number) model.getValueAt(row, 9)).longValue());
+        player.setRandomDegree(((Number) model.getValueAt(row, 10)).longValue());
+        player.setRatchetCount(((Number) model.getValueAt(row, 11)).longValue());
+        player.setRatchetInterval(((Number) model.getValueAt(row, 12)).longValue());
+        player.setUseInternalBeats((Boolean) model.getValueAt(row, 13));
+        player.setUseInternalBars((Boolean) model.getValueAt(row, 14));
+        player.setPanPosition(((Number) model.getValueAt(row, 15)).longValue());
+        player.setPreserveOnPurge((Boolean) model.getValueAt(row, 16));
+        player.setSparse((Double) model.getValueAt(row, 17));
+
+        return player;
+    }
+
+    private MockRule getRuleFromRow(int row) {
+        MockRule rule = new MockRule();
+        DefaultTableModel model = (DefaultTableModel) rightTable.getModel();
+        rule.setOperator(getOperatorIndex((String) model.getValueAt(row, 0)));
+        rule.setComparison(getComparisonIndex((String) model.getValueAt(row, 1)));
+        rule.setValue((Double) model.getValueAt(row, 2));
+        rule.setPart((Integer) model.getValueAt(row, 3));
+        return rule;
+    }
+
+    private void updatePlayerTable(MockPlayer player, int selectedRow) {
+        DefaultTableModel model = (DefaultTableModel) leftTable.getModel();
+        Object[] rowData = player.toRow();
+
+        if (selectedRow >= 0) {
+            // Update existing row
+            for (int i = 0; i < rowData.length; i++) {
+                model.setValueAt(rowData[i], selectedRow, i);
+            }
+        } else {
+            // Add new row
+            model.addRow(rowData);
+        }
+    }
+
+    private void updateRuleTable(MockRule rule, int selectedRow) {
+        DefaultTableModel model = (DefaultTableModel) rightTable.getModel();
+        Object[] rowData = rule.toRow();
+
+        if (selectedRow >= 0) {
+            // Update existing row
+            for (int i = 0; i < rowData.length; i++) {
+                model.setValueAt(rowData[i], selectedRow, i);
+            }
+        } else {
+            // Add new row
+            model.addRow(rowData);
+        }
+    }
+
+    private int getOperatorIndex(String operator) {
+        for (int i = 0; i < MockRule.OPERATORS.length; i++) {
+            if (MockRule.OPERATORS[i].equals(operator))
+                return i;
+        }
+        return 0;
+    }
+
+    private int getComparisonIndex(String comparison) {
+        for (int i = 0; i < MockRule.COMPARISONS.length; i++) {
+            if (MockRule.COMPARISONS[i].equals(comparison))
+                return i;
+        }
+        return 0;
     }
 
     // Update the isValidValue method to include Level and Preset

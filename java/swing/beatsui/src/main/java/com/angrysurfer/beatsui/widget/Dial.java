@@ -6,6 +6,7 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.BasicStroke;
 
 import javax.swing.JComponent;
 
@@ -18,7 +19,8 @@ public class Dial extends JComponent {
     private int lastY;
 
     public Dial() {
-        setPreferredSize(new Dimension(50, 50));
+        setPreferredSize(new Dimension(60, 60));  // Increased size
+        setMinimumSize(new Dimension(60, 60));    // Added minimum size
 
         addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent e) {
@@ -46,32 +48,26 @@ public class Dial extends JComponent {
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int w = getWidth();
         int h = getHeight();
         int min = Math.min(w, h);
 
-        // Draw knob body with blue color
-        // g2d.setColor(new Color(30, 100, 255));
+        // Draw border
+        g2d.setColor(Utils.charcoalGray);
         g2d.fillOval(0, 0, min - 1, min - 1);
 
-        // Add a subtle gradient for 3D effect
-        // GradientPaint gp = new GradientPaint(
-        // 0, 0, new Color(60, 130, 255),
-        // 0, h, new Color(20, 80, 200));
-
+        // Draw knob body
         GradientPaint gp = new GradientPaint(
                 0, 0, Utils.deepNavy,
-                0, h, Utils.warmOffWhite);
-
+                0, h, Utils.warmOffWhite.darker());
         g2d.setPaint(gp);
-        g2d.fillOval(2, 2, min - 4, min - 4);
+        g2d.fillOval(4, 4, min - 8, min - 8);
 
-        // Draw white indicator line
-        g2d.setColor(Color.WHITE);
-        // g2d.setStroke(new BasicStroke(2.0f));
+        // Draw indicator line
+        g2d.setColor(Utils.warmOffWhite);
+        g2d.setStroke(new BasicStroke(2.0f));
         double angle = Math.PI * 0.75 + (Math.PI * 1.5 * value / 127.0);
         int centerX = min / 2;
         int centerY = min / 2;
@@ -80,10 +76,6 @@ public class Dial extends JComponent {
         g2d.drawLine(centerX, centerY,
                 centerX + (int) (Math.cos(angle) * radius),
                 centerY + (int) (Math.sin(angle) * radius));
-
-        // Add highlight for 3D effect
-        g2d.setColor(new Color(255, 255, 255, 60));
-        g2d.fillOval(5, 3, min / 2 - 5, min / 2 - 5);
 
         g2d.dispose();
     }

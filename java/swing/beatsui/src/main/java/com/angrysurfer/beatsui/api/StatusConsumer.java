@@ -1,6 +1,6 @@
 package com.angrysurfer.beatsui.api;
 
-public interface IStatus {
+public interface StatusConsumer {
 
     public void setStatus(String status);
 

@@ -1,83 +1,87 @@
 package com.angrysurfer.beatsui.widget;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.plaf.basic.BasicButtonUI;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import com.angrysurfer.beatsui.Utils;
 
 public class TriggerButton extends JButton {
+    private Color baseColor;
+    private Color activeColor;
+    private boolean isTriggered = false;
+    private Timer fadeTimer;
+    private float alpha = 1.0f;
 
-    public TriggerButton() {
-        super();
+    public TriggerButton(String text) {
+        super(text);
         setup();
     }
 
     private void setup() {
-        // setFocusPainted(false);
-        // setBorderPainted(false);
-        // setContentAreaFilled(false);
-        setPreferredSize(new Dimension(30, 20));
-        setMinimumSize(new Dimension(30, 20));
-        setMaximumSize(new Dimension(30, 20));
+        baseColor = Utils.deepNavy;
+        activeColor = Utils.warmOffWhite;
+        setContentAreaFilled(false);
+        setFocusPainted(false);
+        setBorderPainted(false);
+        setPreferredSize(new Dimension(40, 40));
 
-        final boolean[] isActive = { false };
-
-        // Orange for inactive state
-        Color topColorInactive = new Color(255, 140, 0); // Bright orange
-        Color bottomColorInactive = new Color(200, 110, 0); // Darker orange
-
-        // Green for active state
-        Color topColorActive = new Color(50, 255, 50); // Bright green
-        Color bottomColorActive = new Color(40, 200, 40); // Darker green
-
-        addActionListener(e -> {
-            isActive[0] = !isActive[0];
+        // Create fade timer
+        fadeTimer = new Timer(50, e -> {
+            alpha *= 0.8f;
+            if (alpha < 0.1f) {
+                alpha = 1.0f;
+                isTriggered = false;
+                fadeTimer.stop();
+            }
             repaint();
         });
 
-        setUI(new BasicButtonUI() {
+        addMouseListener(new MouseAdapter() {
             @Override
-            public void paint(Graphics g, JComponent c) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
-
-                int w = c.getWidth();
-                int h = c.getHeight();
-
-                // Choose colors based on state
-                Color topColor = isActive[0] ? topColorActive : topColorInactive;
-                Color bottomColor = isActive[0] ? bottomColorActive : bottomColorInactive;
-
-                GradientPaint gp = new GradientPaint(
-                        0, 0, topColor,
-                        0, h, bottomColor);
-
-                g2d.setPaint(gp);
-                g2d.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
-
-                // Add border
-                g2d.setColor(new Color(80, 80, 80));
-                g2d.drawRoundRect(0, 0, w - 1, h - 1, 10, 10);
-
-                // Add highlight
-                g2d.setColor(new Color(255, 255, 255, 30));
-                g2d.drawLine(2, 2, w - 3, 2);
-
-                g2d.dispose();
+            public void mousePressed(MouseEvent e) {
+                trigger();
             }
         });
-
-        setContentAreaFilled(false);
-        setBorderPainted(false);
-        setFocusPainted(false);
-        // setToolTipText("Step " + (index + 1));
     }
 
+    public void trigger() {
+        isTriggered = true;
+        alpha = 1.0f;
+        fadeTimer.restart();
+        repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Draw background
+        g2d.setColor(baseColor);
+        g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+
+        // Draw trigger effect
+        if (isTriggered) {
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2d.setColor(activeColor);
+            g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+        }
+
+        // Draw text
+        FontMetrics metrics = g2d.getFontMetrics(getFont());
+        int x = (getWidth() - metrics.stringWidth(getText())) / 2;
+        int y = ((getHeight() - metrics.getHeight()) / 2) + metrics.getAscent();
+        
+        g2d.setColor(isTriggered ? baseColor : activeColor);
+        g2d.drawString(getText(), x, y);
+
+        g2d.dispose();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        int max = Math.max(size.width, size.height);
+        return new Dimension(max, max);
+    }
 }
