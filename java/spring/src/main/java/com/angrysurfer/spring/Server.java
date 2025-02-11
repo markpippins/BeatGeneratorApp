@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootApplication
 @EntityScan("com.angrysurfer.core.model")
 @EnableJpaRepositories("com.angrysurfer.spring.repo")
-public class Application {
+public class Server {
 
     static ObjectMapper mapper = new ObjectMapper();
 
@@ -24,7 +24,7 @@ public class Application {
     private String configFilepath;
 
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(Server.class, args);
     }
 
     @Bean

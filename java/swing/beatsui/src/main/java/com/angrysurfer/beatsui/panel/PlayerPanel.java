@@ -23,15 +23,18 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import com.angrysurfer.beatsui.UIUtils;
+import com.angrysurfer.beatsui.Utils;
+import com.angrysurfer.beatsui.widget.IStatus;
 
 public class PlayerPanel extends JPanel {
 
     private JTable leftTable;
     private JTable rightTable;
+    private IStatus status;
 
-    public PlayerPanel() {
+    public PlayerPanel(IStatus status) {
         super(new BorderLayout());
+        this.status = status;
         setup();
         setupTables();
     }
@@ -137,7 +140,7 @@ public class PlayerPanel extends JPanel {
         // Top section with horizontal split for tables
         JSplitPane tablesSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         tablesSplitPane.setResizeWeight(0.75); // Left table gets 75% of space
-        tablesSplitPane.setDividerLocation(0.75);
+        tablesSplitPane.setDividerLocation(0.55);
 
         // Left table section
         JPanel leftPanel = new JPanel(new BorderLayout());
@@ -160,18 +163,25 @@ public class PlayerPanel extends JPanel {
         tablesSplitPane.setRightComponent(rightPanel);
 
         // Bottom section with button grid
-        JPanel buttonGridPanel = createButtonGridPanel();
-        // JScrollPane buttonScrollPane = new JScrollPane(buttonGridPanel);
+
+        JPanel buttonGridPanel = new GridPanel();
+        JScrollPane buttonScrollPane = new JScrollPane(buttonGridPanel);
 
         // Add components to main split pane
         mainPane.add(tablesSplitPane, BorderLayout.CENTER);
-        mainPane.add(buttonGridPanel, BorderLayout.SOUTH);
 
-        Dimension size = new Dimension(BUTTON_SIZE * GRID_COLS, BUTTON_SIZE * GRID_ROWS);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(new PianoPanel(), BorderLayout.NORTH);
+        panel.add(buttonScrollPane, BorderLayout.SOUTH);
 
-        buttonGridPanel.setMaximumSize(size);
-        buttonGridPanel.setMinimumSize(size);
-        buttonGridPanel.setPreferredSize(size);
+        mainPane.add(panel, BorderLayout.SOUTH);
+
+        // Dimension size = new Dimension(BUTTON_SIZE * GRID_COLS, BUTTON_SIZE *
+        // GRID_ROWS);
+
+        // buttonGridPanel.setMaximumSize(size);
+        // buttonGridPanel.setMinimumSize(size);
+        // buttonGridPanel.setPreferredSize(size);
 
         beatsPanel.add(mainPane, BorderLayout.CENTER);
 
@@ -186,44 +196,45 @@ public class PlayerPanel extends JPanel {
         return buttonPanel;
     }
 
-    static int BUTTON_SIZE = 25;
-    static int GRID_ROWS = 5;
-    static int GRID_COLS = 36;
+    // static int BUTTON_SIZE = 25;
+    // static int GRID_ROWS = 5;
+    // static int GRID_COLS = 36;
 
-    private JPanel createButtonGridPanel() {
-        JPanel panel = new JPanel(new GridLayout(5, 33, 2, 2));
-        panel.setBorder(BorderFactory.createEmptyBorder());
+    // private JPanel createButtonGridPanel() {
+    // JPanel panel = new JPanel(new GridLayout(5, 33, 2, 2));
+    // panel.setBorder(BorderFactory.createEmptyBorder());
 
-        // Create 5x33 grid of buttons with varying colors
-        Color[] colors = {
-                new Color(255, 200, 200), // Light red
-                new Color(200, 255, 200), // Light green
-                new Color(200, 200, 255), // Light blue
-                new Color(255, 255, 200), // Light yellow
-                new Color(255, 200, 255), // Light purple
-                new Color(200, 255, 255) // Light cyan
-        };
+    // // Create 5x33 grid of buttons with varying colors
+    // Color[] colors = {
+    // new Color(255, 200, 200), // Light red
+    // new Color(200, 255, 200), // Light green
+    // new Color(200, 200, 255), // Light blue
+    // new Color(255, 255, 200), // Light yellow
+    // new Color(255, 200, 255), // Light purple
+    // new Color(200, 255, 255) // Light cyan
+    // };
 
-        for (int row = 0; row < GRID_ROWS; row++) {
-            for (int col = 0; col < GRID_COLS; col++) {
-                JButton button = new JButton();
-                button.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE)); // Make buttons square
+    // for (int row = 0; row < GRID_ROWS; row++) {
+    // for (int col = 0; col < GRID_COLS; col++) {
+    // JButton button = new JButton();
+    // button.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE)); // Make
+    // buttons square
 
-                // Vary colors based on position
-                int colorIndex = (row * col) % colors.length;
-                button.setBackground(colors[colorIndex]);
-                button.setOpaque(true);
-                button.setBorderPainted(true);
+    // // Vary colors based on position
+    // int colorIndex = (row * col) % colors.length;
+    // button.setBackground(colors[colorIndex]);
+    // button.setOpaque(true);
+    // button.setBorderPainted(true);
 
-                // Optional: Add tooltip showing position
-                button.setToolTipText(String.format("Row: %d, Col: %d", row + 1, col + 1));
+    // // Optional: Add tooltip showing position
+    // button.setToolTipText(String.format("Row: %d, Col: %d", row + 1, col + 1));
 
-                panel.add(button);
-            }
-        }
+    // panel.add(button);
+    // }
+    // }
 
-        return panel;
-    }
+    // return panel;
+    // }
 
     private void setupTables() {
         // Define column names
@@ -282,17 +293,17 @@ public class PlayerPanel extends JPanel {
         }
 
         // Set up custom editors for specific columns
-        UIUtils.setupColumnEditor(leftTable, "Channel", 1, 16);
-        UIUtils.setupColumnEditor(leftTable, "Swing", 0, 100);
-        UIUtils.setupColumnEditor(leftTable, "Level", 1, 127);
-        UIUtils.setupColumnEditor(leftTable, "Note", 1, 127);
-        UIUtils.setupColumnEditor(leftTable, "Min Vel", 1, 127);
-        UIUtils.setupColumnEditor(leftTable, "Max Vel", 1, 127);
-        UIUtils.setupColumnEditor(leftTable, "Preset", 1, 127);
-        UIUtils.setupColumnEditor(leftTable, "Prob", 0, 100);
-        UIUtils.setupColumnEditor(leftTable, "Random", 0, 100);
-        UIUtils.setupColumnEditor(leftTable, "Ratchet #", 0, 6);
-        UIUtils.setupColumnEditor(leftTable, "Pan", 1, 127);
+        Utils.setupColumnEditor(leftTable, "Channel", 1, 16);
+        Utils.setupColumnEditor(leftTable, "Swing", 0, 100);
+        Utils.setupColumnEditor(leftTable, "Level", 1, 127);
+        Utils.setupColumnEditor(leftTable, "Note", 1, 127);
+        Utils.setupColumnEditor(leftTable, "Min Vel", 1, 127);
+        Utils.setupColumnEditor(leftTable, "Max Vel", 1, 127);
+        Utils.setupColumnEditor(leftTable, "Preset", 1, 127);
+        Utils.setupColumnEditor(leftTable, "Prob", 0, 100);
+        Utils.setupColumnEditor(leftTable, "Random", 0, 100);
+        Utils.setupColumnEditor(leftTable, "Ratchet #", 0, 6);
+        Utils.setupColumnEditor(leftTable, "Pan", 1, 127);
 
         // Create center-aligned renderer
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
@@ -355,6 +366,7 @@ public class PlayerPanel extends JPanel {
             public Component getTableCellEditorComponent(JTable table, Object value,
                     boolean isSelected, int row, int column) {
                 spinner.setValue(value == null ? 0.0 : value);
+                status.setStatus("Set value at row " + row);
                 return spinner;
             }
 
@@ -373,6 +385,7 @@ public class PlayerPanel extends JPanel {
             public Component getTableCellEditorComponent(JTable table, Object value,
                     boolean isSelected, int row, int column) {
                 spinner.setValue(value == null ? 0 : value);
+                status.setStatus("Set value at row " + row);
                 return spinner;
             }
 

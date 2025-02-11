@@ -16,9 +16,9 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.UIManager;
 
-public class AppToolBar extends JToolBar {
+public class ToolBar extends JToolBar {
 
-    public AppToolBar() {
+    public ToolBar() {
         super();
         setup();
     }

@@ -14,7 +14,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import com.angrysurfer.beatsui.UIUtils;
+import com.angrysurfer.beatsui.Utils;
 
 public class OptionsPanel extends JPanel {
 
@@ -203,7 +203,7 @@ public class OptionsPanel extends JPanel {
         table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(portCombo));
 
         // Set up channels combo box (1-16)
-        UIUtils.setupColumnEditor(table, "Channels", 1, 16);
+        Utils.setupColumnEditor(table, "Channels", 1, 16);
 
         // Center-align numeric columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();

@@ -3,6 +3,7 @@ package com.angrysurfer.spring.controller;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -45,6 +46,10 @@ public class TickerController {
 
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE, value = "/tick")
     public Flux<TickerStatus> getTick() {
+
+        if (Objects.isNull(tickerService.getTicker()))
+            return Flux.empty();
+
         logger.info("GET /api/tick");
         Timer timer = tickerService.getClockSource().getTimer();
         // Calculate interval based on actual timer settings

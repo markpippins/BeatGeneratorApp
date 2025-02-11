@@ -17,6 +17,8 @@ import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
+import com.angrysurfer.beatsui.Utils;
+
 public class LaunchPanel extends JPanel {
 
     private static final int[] LAUNCH_PAD_LABELS = {
@@ -41,11 +43,18 @@ public class LaunchPanel extends JPanel {
         gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         // Define colors for each quadrant
+        // Color[] quadrantColors = {
+        // new Color(255, 50, 50), // Top-left: bright red
+        // new Color(50, 255, 50), // Top-right: bright green
+        // new Color(50, 50, 255), // Bottom-left: bright blue
+        // new Color(205, 155, 50) // Bottom-right: bright yellow
+        // };
+
         Color[] quadrantColors = {
-                new Color(255, 50, 50), // Top-left: bright red
-                new Color(50, 255, 50), // Top-right: bright green
-                new Color(50, 50, 255), // Bottom-left: bright blue
-                new Color(205, 155, 50) // Bottom-right: bright yellow
+                Utils.mutedRed, // Top-left
+                Utils.mutedOlive, // Top-right
+                Utils.warmMustard, // Bottom-left
+                Utils.fadedOrange // Bottom-right
         };
 
         // Create and add 64 drum pad buttons
