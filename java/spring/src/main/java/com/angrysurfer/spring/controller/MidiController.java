@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.angrysurfer.core.engine.MIDIEngine;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.InstrumentService;
-import com.angrysurfer.spring.service.MIDIService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,36 +33,33 @@ public class MidiController {
 
     InstrumentService instrumentService;
 
-    MIDIService midiService;
-
-    public MidiController(InstrumentService instrumentService, MIDIService midiService) {
+    public MidiController(InstrumentService instrumentService) {
         this.instrumentService = instrumentService;
-        this.midiService = midiService;
     }
 
     @GetMapping(path = Constants.DEVICES_INFO)
     public @ResponseBody List<MidiDevice.Info> getDeviceInfo() {
         logger.info("GET " + Constants.DEVICES_INFO);
-        return MIDIService.getMidiDeviceInfos();
+        return MIDIEngine.getMidiDeviceInfos();
     }
 
     @GetMapping(path = Constants.DEVICE_NAMES)
     public @ResponseBody List<String> getDeviceNames() {
         logger.info("GET " + Constants.DEVICE_NAMES);
-        return MIDIService.getMidiOutDevices().stream().map(d -> d.getDeviceInfo().getName()).toList();
+        return MIDIEngine.getMidiOutDevices().stream().map(d -> d.getDeviceInfo().getName()).toList();
     }
 
     @PostMapping(path = Constants.SERVICE_RESET)
     public void reset() {
         logger.info("POST " + Constants.SERVICE_RESET);
-        MIDIService.reset();
+        MIDIEngine.reset();
     }
 
     @PostMapping(path = Constants.SERVICE_SELECT)
     public @ResponseBody boolean select(String name) {
         logger.info("POST " + Constants.SERVICE_SELECT + " - name: {}", name);
         try {
-            return MIDIService.select(name);
+            return MIDIEngine.select(name);
         } catch (MidiUnavailableException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -75,14 +72,16 @@ public class MidiController {
     public void sendMessage(@RequestParam int instrumentId, @RequestParam int channel, @RequestParam int messageType,
             @RequestParam int data1,
             @RequestParam int data2) {
-        logger.info("GET " + Constants.SEND_MESSAGE + " - instrumentId: {}, channel: {}, messageType: {}, data1: {}, data2: {}", 
-            instrumentId, channel, messageType, data1, data2);
+        logger.info(
+                "GET " + Constants.SEND_MESSAGE
+                        + " - instrumentId: {}, channel: {}, messageType: {}, data1: {}, data2: {}",
+                instrumentId, channel, messageType, data1, data2);
         Instrument instrument = instrumentService.getInstrumentById((long) instrumentId);
         if (Objects.nonNull(instrument)) {
-            instrument.setDevice(MIDIService.getMidiDevice(instrument.getDeviceName()));
+            instrument.setDevice(MIDIEngine.getMidiDevice(instrument.getDeviceName()));
             if (Objects.nonNull(instrument.getDevice())) {
                 // instrument.setChannel(channel);
-                MIDIService.sendMessage(instrument, channel, messageType, data1, data2);
+                MIDIEngine.sendMessage(instrument, channel, messageType, data1, data2);
             }
         }
 

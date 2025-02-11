@@ -38,7 +38,7 @@
 //     SongService songService;
 
 //     @Autowired
-//     Instruments midiInstrumentRepository;
+//     Instruments instrumentRepository;
 
 //     @Autowired
 //     Steps stepRepository;

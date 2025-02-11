@@ -11,7 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.player.AbstractPlayer;
+import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Operator;
 
@@ -22,9 +23,8 @@ public class PlayerTests {
   @Test
   public void whenRuleExistsForFirstBeat_thenOnTickCalledFirstBeat() {
 
-
     AtomicBoolean play = new AtomicBoolean(false);
-    AbstractPlayer p = new AbstractPlayer() {
+    IPlayer p = new Strike() {
       @Override
       public void onTick(long tick, long bar) {
         play.set(true);
@@ -50,7 +50,7 @@ public class PlayerTests {
 
     Ticker ticker = new Ticker() {
       @Override
-      public double getBeat() { 
+      public double getBeat() {
         return 1.0;
       }
     };
@@ -58,7 +58,7 @@ public class PlayerTests {
     ticker.getBarCycler().reset();
     ticker.getBeatCycler().reset();
 
-    AbstractPlayer p1 = new AbstractPlayer() {
+    IPlayer p1 = new Strike() {
       @Override
       public void onTick(long tick, long bar) {
         play1.set(true);
@@ -67,7 +67,7 @@ public class PlayerTests {
     };
     p1.setTicker(ticker);
 
-    AbstractPlayer p2 = new AbstractPlayer() {
+    IPlayer p2 = new Strike() {
       @Override
       public void onTick(long tick, long bar) {
         play2.set(true);
@@ -76,19 +76,18 @@ public class PlayerTests {
     };
     p2.setTicker(ticker);
 
-    AbstractPlayer p3 = new AbstractPlayer() {
+    IPlayer p3 = new Strike() {
       @Override
       public void onTick(long tick, long bar) {
         play3.set(true);
       }
     };
     p3.setTicker(ticker);
-    
 
     p1.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
     p2.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
     p3.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
-    
+
     try {
       executor.invokeAll(List.of(p1, p2, p3));
     } catch (InterruptedException e) {

@@ -1,12 +1,12 @@
 <div class="table-container">
   <div class="button-bar">
-    <button mat-button (click)="onClick('add')" tabindex="0">
+    <button mat-button (click)="onClick('rule-add')" tabindex="0">
       ➕
     </button>
-    <button mat-button (click)="onClick('remove')" tabindex="0">
+    <button mat-button (click)="onClick('rule-remove')" tabindex="0">
       ➖
     </button>
-    <button mat-button (click)="onClick('clear')" tabindex="0">
+    <button mat-button (click)="onClick('rule-clear')" tabindex="0">
       🧹
     </button>
   </div>
@@ -24,10 +24,10 @@
         <tr class="active-table-row" *ngFor="let rule of player?.rules;" (mouseenter)="onPass(rule)" (click)="onRowClick(rule)">
           <!-- <td class="shortest-col">{{rule.id}}</td> -->
           <td>
-            <button [style.height.px]="20" id="add" (click)="btnClicked(rule, 'add')">+</button>
+            <button [style.height.px]="20" id="add" (click)="btnClicked(rule, 'rule-add')">+</button>
           </td>
           <td>
-            <button [style.height.px]="20" id="remove" (click)="btnClicked(rule, 'remove')">-</button>
+            <button [style.height.px]="20" id="remove" (click)="btnClicked(rule, 'rule-remove')">-</button>
           </td>
           <td>
             <form>

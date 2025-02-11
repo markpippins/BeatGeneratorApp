@@ -1,4 +1,4 @@
-package com.angrysurfer.spring.service;
+package com.angrysurfer.core.engine;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,15 +14,13 @@ import javax.sound.midi.ShortMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.exception.MidiDeviceException;
 import com.angrysurfer.core.model.midi.Instrument;
 
-@Service
-public class MIDIService {
+public class MIDIEngine {
 
-    static Logger logger = LoggerFactory.getLogger(MIDIService.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(MIDIEngine.class.getCanonicalName());
 
     public static void cleanupMidiDevices() {
         logger.info("cleanupMidiDevices()");
@@ -146,10 +144,10 @@ public class MIDIService {
     }
 
     // Add proper cleanup
-    @Override
-    public void finalize() {
-        reset();
-    }
+    // @Override
+    // public void finalize() {
+    //     reset();
+    // }
 
     // Improved message sending with validation
     public static void sendMessage(Instrument instrument, int channel, int messageType, int data1, int data2) {

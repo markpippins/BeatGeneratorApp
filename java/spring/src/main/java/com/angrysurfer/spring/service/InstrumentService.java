@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.engine.InstrumentEngine;
+import com.angrysurfer.core.engine.MIDIEngine;
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.spring.repo.Instruments;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -20,20 +20,18 @@ public class InstrumentService {
 
     static Logger logger = LoggerFactory.getLogger(InstrumentService.class.getCanonicalName());
 
-    private Instruments instrumentRepo;
-
-    // private boolean refresh = true;
+    private DBService dbUtils;
 
     private InstrumentEngine instrumentEngine;
 
-    public InstrumentService(Instruments instruments) {
-        this.instrumentRepo = instruments;
-        this.instrumentEngine = new InstrumentEngine(instrumentRepo.findAll(), MIDIService.getMidiOutDevices());
+    public InstrumentService(DBService dbUtils) {
+        this.dbUtils = dbUtils;
+        this.instrumentEngine = new InstrumentEngine(dbUtils.getInstrumentFindAll());
     }
 
     public Instrument save(Instrument instrument) {
         logger.info("save");
-        return instrumentRepo.save(instrument);
+        return dbUtils.getInstrumentSaver().save(instrument);
     }
 
     public List<Instrument> getAllInstruments() {
@@ -54,6 +52,10 @@ public class InstrumentService {
     public List<String> getInstrumentNames() {
         logger.info("getInstrumentNames()");
         return instrumentEngine.getInstrumentNames();
+    }
+
+    public Instrument findByName(String instrumentName) {
+        return instrumentEngine.findByName(instrumentName);
     }
 
 }

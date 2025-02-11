@@ -25,6 +25,8 @@ import com.angrysurfer.core.model.Pad;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.converter.IntegerArrayConverter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -46,6 +48,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "instrument")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Instrument implements Serializable {
 
     static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
@@ -63,15 +66,16 @@ public class Instrument implements Serializable {
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
+    @JsonManagedReference
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "instrument_control_code", joinColumns = {
             @JoinColumn(name = "instrument_id") }, inverseJoinColumns = {
                     @JoinColumn(name = "control_code_id") })
     private List<ControlCode> controlCodes = new ArrayList<>();
 
+    @JsonManagedReference
     @ManyToMany
     @JoinTable(name = "instrument_pad", joinColumns = @JoinColumn(name = "pad_id"), inverseJoinColumns = @JoinColumn(name = "instrument_id"))
-
     private Set<Pad> pads = new HashSet<>();
 
     @Transient
@@ -114,6 +118,7 @@ public class Instrument implements Serializable {
 
     private Boolean available = false;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "instrument")
     private Set<Pattern> patterns;
 

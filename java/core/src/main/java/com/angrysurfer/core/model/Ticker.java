@@ -2,6 +2,7 @@ package com.angrysurfer.core.model;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -11,7 +12,9 @@ import javax.sound.midi.MidiUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.player.AbstractPlayer;
+import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -36,11 +39,15 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
-    private Set<AbstractPlayer> addList = new HashSet<>();
+    ClockSource clockSource;
 
     @JsonIgnore
     @Transient
-    private Set<AbstractPlayer> removeList = new HashSet<>();
+    private Set<IPlayer> addList = new HashSet<>();
+
+    @JsonIgnore
+    @Transient
+    private Set<IPlayer> removeList = new HashSet<>();
 
     @JsonIgnore
     @Transient
@@ -83,7 +90,7 @@ public class Ticker implements Serializable {
     private Long id;
 
     @Transient
-    private Set<AbstractPlayer> players = new HashSet<>();
+    private Set<IPlayer> players = new HashSet<>();
 
     @Transient
     Set<Long> activePlayerIds = new HashSet<>();
@@ -115,7 +122,7 @@ public class Ticker implements Serializable {
         setSongLength(Long.MAX_VALUE);
     }
 
-    public AbstractPlayer getPlayer(Long playerId) {
+    public IPlayer getPlayer(Long playerId) {
         logger.info("getPlayer() - playerId: {}", playerId);
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
@@ -126,7 +133,8 @@ public class Ticker implements Serializable {
     }
 
     public Long getBeatCount() {
-        // // logger.debug("getBeatCount() - current count: {}", getBeatCounter().get());
+        // // logger.debug("getBeatCount() - current count: {}",
+        // getBeatCounter().get());
         return getBeatCounter().get();
     }
 
@@ -229,8 +237,8 @@ public class Ticker implements Serializable {
                 try {
                     p.getInstrument().noteOff(p.getChannel(), note, 0);
                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
-                    logger.error("Error stopping note {} on channel {}: {}", 
-                        note, p.getChannel(), e.getMessage(), e);
+                    logger.error("Error stopping note {} on channel {}: {}",
+                            note, p.getChannel(), e.getMessage(), e);
                 }
             });
         });
@@ -297,8 +305,8 @@ public class Ticker implements Serializable {
     }
 
     private void updatePlayerConfig() {
-        logger.debug("updatePlayerConfig() - removing {} players, adding {} players", 
-            getRemoveList().size(), getAddList().size());
+        logger.debug("updatePlayerConfig() - removing {} players, adding {} players",
+                getRemoveList().size(), getAddList().size());
         if (!getRemoveList().isEmpty()) {
             getPlayers().removeAll(getRemoveList());
             getRemoveList().clear();
@@ -311,14 +319,14 @@ public class Ticker implements Serializable {
     }
 
     public Float getBeatDuration() {
-        // logger.debug("getBeatDuration() - calculated duration: {}", 
-            // 60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar());
+        // logger.debug("getBeatDuration() - calculated duration: {}",
+        // 60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar());
         return 60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar();
     }
 
     public double getInterval() {
-        // logger.debug("getInterval() - calculated interval: {}", 
-            // 60000 / getTempoInBPM() / getTicksPerBeat());
+        // logger.debug("getInterval() - calculated interval: {}",
+        // 60000 / getTempoInBPM() / getTicksPerBeat());
         return 60000 / getTempoInBPM() / getTicksPerBeat();
     }
 
@@ -326,5 +334,9 @@ public class Ticker implements Serializable {
         boolean result = this.getPlayers().stream().anyMatch(player -> player.isSolo());
         // logger.debug("hasSolos() - result: {}", result);
         return result;
+    }
+
+    public boolean isRunning() {
+        return (Objects.nonNull(clockSource) && clockSource.isRunning());
     }
 }

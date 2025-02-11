@@ -29,7 +29,8 @@ public class InstrumentController {
     @GetMapping(path = Constants.INSTRUMENT_LIST)
     public @ResponseBody List<Instrument> getInstrumentList() {
         logger.info("GET " + Constants.INSTRUMENT_LIST);
-        return instrumentService.getAllInstruments();
+        List<Instrument> instruments = instrumentService.getAllInstruments();
+        return instruments;
     }
 
     @GetMapping(path = Constants.INSTRUMENT)

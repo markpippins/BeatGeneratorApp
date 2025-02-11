@@ -17,7 +17,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Strike extends AbstractPlayer {
+public class Strike extends AbstractPlayer implements IPlayer {
 
     static Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
 

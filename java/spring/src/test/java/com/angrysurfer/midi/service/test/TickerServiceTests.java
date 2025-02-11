@@ -18,7 +18,7 @@
 
 // import com.angrysurfer.core.model.Rule;
 // import com.angrysurfer.core.model.Ticker;
-// import com.angrysurfer.core.model.player.AbstractPlayer;
+// import com.angrysurfer.core.model.player.IPlayer;
 // import com.angrysurfer.core.repo.Strikes;
 // import com.angrysurfer.core.repo.Tickers;
 // import com.angrysurfer.core.util.update.TickerUpdateType;
@@ -129,7 +129,7 @@
 //     @Test
 //     public void whenPreviousTickerRequestedForTickWithPlayers_thenPlayersContainAddedRule() {
 //         Long startingTickerId = tickerService.getTicker().getId();
-//         AbstractPlayer player = playerService.addPlayer(RAZ, 36L);
+//         IPlayer player = playerService.addPlayer(RAZ, 36L);
 //         Rule rule = playerService.addRule(player.getId());
 
 //         // move to next ticker, add player and rule
@@ -148,12 +148,12 @@
 //         // tickerService.newTicker();
 //         // add data to current Ticker
 //         Long startingTickerId = tickerService.getTicker().getId();
-//         AbstractPlayer player = playerService.addPlayer(RAZ, 36L);
+//         IPlayer player = playerService.addPlayer(RAZ, 36L);
 //         playerService.addRule(player.getId());
 
 //         // move to next ticker, add player and rule
 //         Ticker ticker2 = tickerService.next(startingTickerId);
-//         AbstractPlayer player2 = playerService.addPlayer(RAZ, 36L);
+//         IPlayer player2 = playerService.addPlayer(RAZ, 36L);
 //         Rule rule = playerService.addRule(player2.getId());
 
 //         // return to starting ticker
@@ -165,7 +165,7 @@
 //         // advance again
 //         tickerService.next(tickerService.getTicker().getId());
 
-//         AbstractPlayer player3 = tickerService.getTicker().getPlayer(player2.getId());
+//         IPlayer player3 = tickerService.getTicker().getPlayer(player2.getId());
 //         Rule rule2 = player3.getRule(rule.getId());
 //         assertTrue(rule.isEqualTo(rule2)); 
 //     }
@@ -175,12 +175,12 @@
 //         // tickerService.newTicker();
 //         // add data to current Ticker
 //         Long startingTickerId = tickerService.getTicker().getId();
-//         AbstractPlayer player = playerService.addPlayer(RAZ, 36L);
+//         IPlayer player = playerService.addPlayer(RAZ, 36L);
 //         playerService.addRule(player.getId());
 
 //         // move to next ticker, add player and rule
 //         Ticker ticker2 = tickerService.next(startingTickerId);
-//         AbstractPlayer player2 = playerService.addPlayer(RAZ, 36L);
+//         IPlayer player2 = playerService.addPlayer(RAZ, 36L);
 //         Rule rule = playerService.addRule(player2.getId());
 
 //         //remove rule
@@ -191,7 +191,7 @@
 //         // advance again
 //         tickerService.next(tickerService.getTicker().getId());
 
-//         AbstractPlayer player3 = tickerService.getTicker().getPlayer(player2.getId());
+//         IPlayer player3 = tickerService.getTicker().getPlayer(player2.getId());
 //         // Rule rule2 = player3.getRule(rule.getId());
 //         assertTrue(player3.getRules().size() == 0); 
 //     }
