@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import com.angrysurfer.beatsui.config.BeatsUIConfig;
 import com.angrysurfer.beatsui.config.RedisConfig;
@@ -37,6 +38,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 public class RedisService { // implements Database {
+    private static final Logger logger = Logger.getLogger(RedisService.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
 
@@ -51,11 +53,15 @@ public class RedisService { // implements Database {
     }
 
     private String getKey(Class<?> cls, Long id) {
-        return cls.getSimpleName().toLowerCase() + ":" + id;
+        String key = cls.getSimpleName().toLowerCase() + ":" + id;
+        logger.fine("Generated key: " + key + " for class: " + cls.getSimpleName() + " and ID: " + id);
+        return key;
     }
 
     private String getCollectionKey(Class<?> cls) {
-        return cls.getSimpleName().toLowerCase() + "s";
+        String key = cls.getSimpleName().toLowerCase();
+        logger.fine("Generated collection key: " + key + " for class: " + cls.getSimpleName());
+        return key;
     }
 
     // public static void main(String[] args) {
@@ -1116,8 +1122,19 @@ public class RedisService { // implements Database {
         }
     }
 
+    public boolean isDatabaseEmpty() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            Set<String> keys = jedis.keys("*");
+            logger.info("All Redis keys: " + String.join(", ", keys));
+            return keys.isEmpty();
+        }
+    }
+
     public BeatsUIConfig loadConfigFromXml(String xmlFilePath) {
         try {
+            // Clear existing data before loading config
+            clearDatabase();
+
             // Create mapper configured for our needs
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -1208,6 +1225,84 @@ public class RedisService { // implements Database {
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to load configuration: " + e.getMessage(), e);
+        }
+    }
+
+    public List<Rule> findAllRules() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            List<Rule> rules = new ArrayList<>();
+            Set<String> keys = jedis.keys(getCollectionKey(Rule.class) + ":*");
+            for (String key : keys) {
+                String json = jedis.get(key);
+                if (json != null) {
+                    rules.add(objectMapper.readValue(json, Rule.class));
+                }
+            }
+            return rules;
+        } catch (Exception e) {
+            throw new RuntimeException("Error finding all rules", e);
+        }
+    }
+
+    public List<Strike> findAllStrikes() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            List<Strike> strikes = new ArrayList<>();
+            String pattern = getCollectionKey(Strike.class) + ":*";
+            Set<String> allKeys = jedis.keys("*");
+            Set<String> strikeKeys = jedis.keys(pattern);
+            
+            logger.info("All Redis keys: " + String.join(", ", allKeys));
+            logger.info("Strike pattern: " + pattern);
+            logger.info("Found strike keys: " + String.join(", ", strikeKeys));
+            
+            for (String key : strikeKeys) {
+                String json = jedis.get(key);
+                logger.info("Reading strike from key: " + key);
+                if (json != null) {
+                    try {
+                        Strike strike = objectMapper.readValue(json, Strike.class);
+                        logger.info("Successfully parsed strike: " + strike.getName());
+                        strikes.add(strike);
+                    } catch (Exception e) {
+                        logger.severe("Error parsing strike JSON: " + json + ", Error: " + e.getMessage());
+                    }
+                } else {
+                    logger.warning("No data found for key: " + key);
+                }
+            }
+            return strikes;
+        } catch (Exception e) {
+            logger.severe("Error in findAllStrikes: " + e.getMessage());
+            throw new RuntimeException("Error finding all strikes", e);
+        }
+    }
+
+    public Strike saveStrike(Strike strike) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            if (strike.getId() == null) {
+                String seqKey = "seq:" + Strike.class.getSimpleName().toLowerCase();
+                Long newId = jedis.incr(seqKey);
+                strike.setId(newId);
+                logger.info("Generated new ID for strike: " + newId);
+            }
+            
+            String json = objectMapper.writeValueAsString(strike);
+            String key = getKey(Strike.class, strike.getId());
+            jedis.set(key, json);
+            logger.info("Saved strike - Key: " + key + ", ID: " + strike.getId() + ", Name: " + strike.getName() + ", JSON: " + json);
+            return strike;
+        } catch (Exception e) {
+            logger.severe("Error saving strike: " + e.getMessage());
+            throw new RuntimeException("Error saving strike", e);
+        }
+    }
+
+    public void deleteStrike(Strike strike) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String key = getKey(Strike.class, strike.getId());
+            jedis.del(key);
+        } catch (Exception e) {
+            throw new RuntimeException("Error deleting strike", e);
         }
     }
 }
