@@ -1,11 +1,12 @@
 package com.angrysurfer.beatsui;
 
+import java.util.logging.Logger;
+
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import com.formdev.flatlaf.FlatDarkLaf;
-import com.angrysurfer.beatsui.config.BeatsUIConfig;
-import java.util.logging.Logger;
+import com.formdev.flatlaf.FlatLightLaf;
 
 /**
  * Hello world!
@@ -34,7 +35,7 @@ public class App {
 
     private static void setupLookAndFeel() {
         try {
-            UIManager.setLookAndFeel(new FlatDarkLaf());
+            UIManager.setLookAndFeel(new FlatLightLaf());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -44,11 +45,11 @@ public class App {
         try {
             logger.info("Initializing Redis service...");
             redisService = new RedisService();
+            // redisService.clearDatabase();
             
             // Check if Redis is empty - only initialize if it is
             boolean isEmpty = redisService.isDatabaseEmpty();
             logger.info("Redis database is empty: " + isEmpty);
-            
             if (isEmpty) {
                 logger.info("Loading initial configuration...");
                 String configPath = "C:/Users/MarkP/dev/BeatGeneratorApp/java/swing/beatsui/src/main/java/com/angrysurfer/beatsui/config/beats-config.json";

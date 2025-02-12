@@ -19,9 +19,9 @@ public class Rule implements Serializable {
 
     private Long id;
     private Long playerId;
-    private Integer operator;
-    private Integer comparison;
-    private Double value;
+    private Integer operator = 0;
+    private Integer comparison = 0;;
+    private Double value = 0.0;
     private Integer part = 0;
 
     private Long start = 0L;

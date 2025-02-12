@@ -1,8 +1,11 @@
 package com.angrysurfer.beatsui.widget;
 
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import com.angrysurfer.beatsui.api.StatusConsumer;
 
@@ -11,7 +14,7 @@ public class StatusBar extends JPanel implements StatusConsumer {
 
     public StatusBar() {
         super(new BorderLayout());
-        setBorder(new BevelBorder(BevelBorder.LOWERED));
+        setBorder(BorderFactory.createEmptyBorder(2, 6,8 , 6));
         label = new JLabel(" ");
         label.setHorizontalAlignment(SwingConstants.LEFT);
         add(label, BorderLayout.CENTER);

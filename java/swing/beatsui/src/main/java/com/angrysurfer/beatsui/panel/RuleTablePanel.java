@@ -1,31 +1,37 @@
 package com.angrysurfer.beatsui.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.Component;
 import java.util.List;
+import java.util.logging.Logger;
 
+import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.DefaultCellEditor;
-import javax.swing.JComboBox;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.JSpinner;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.table.DefaultTableModel;
 
+import com.angrysurfer.beatsui.App;
 import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.mock.Rule;
-import com.angrysurfer.beatsui.App;
+import com.angrysurfer.beatsui.mock.Strike;
+import com.angrysurfer.beatsui.api.Action;
+import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.ActionListener;
+import com.angrysurfer.beatsui.api.Commands;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -33,7 +39,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RuleTablePanel extends JPanel {
+public class RuleTablePanel extends JPanel implements ActionListener {
+    private static final Logger logger = Logger.getLogger(RuleTablePanel.class.getName());
     private final JTable table;
     private final StatusConsumer status;
     private final JButton addButton;
@@ -41,6 +48,10 @@ public class RuleTablePanel extends JPanel {
     private final JButton deleteButton;
     private final JMenuItem editMenuItem;
     private final JMenuItem deleteMenuItem;
+    private Strike selectedPlayer;
+    private JPopupMenu popup; // Add this field
+    private JMenuItem addPopupMenuItem; // Add this field
+    private final ActionBus actionBus = ActionBus.getInstance();
 
     public RuleTablePanel(StatusConsumer status) {
         super(new BorderLayout());
@@ -52,10 +63,48 @@ public class RuleTablePanel extends JPanel {
         this.editMenuItem = new JMenuItem("Edit...");
         this.deleteMenuItem = new JMenuItem("Delete");
         
+        actionBus.register(this); // Register for events
         setupTable();
         setupButtons();
         setupLayout();
-        setupPopupMenu();
+        setupPopupMenu(); // Renamed from setupContextMenu for clarity
+    }
+
+    @Override
+    public void onAction(Action action) {
+        if (action.getSender() == this) return; // Ignore own actions
+        
+        switch (action.getCommand()) {
+            case Commands.PLAYER_SELECTED:
+                handlePlayerSelected((Strike) action.getData());
+                break;
+            case Commands.PLAYER_UNSELECTED:
+                handlePlayerUnselected();
+                break;
+        }
+    }
+
+    private void handlePlayerSelected(Strike player) {
+        this.selectedPlayer = player;
+        addButton.setEnabled(true);
+        addPopupMenuItem.setEnabled(true);
+        loadRulesFromRedis(); // Load rules for the new player
+        status.setStatus("Selected player: " + player.getName());
+    }
+
+    private void handlePlayerUnselected() {
+        this.selectedPlayer = null;
+        clearTable();
+        addButton.setEnabled(false);
+        addPopupMenuItem.setEnabled(false);
+        editButton.setEnabled(false);
+        deleteButton.setEnabled(false);
+        status.setStatus("No player selected");
+    }
+
+    private void clearTable() {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setRowCount(0);
     }
 
     private void setupLayout() {
@@ -77,6 +126,7 @@ public class RuleTablePanel extends JPanel {
     private void setupButtons() {
         editButton.setEnabled(false);
         deleteButton.setEnabled(false);
+        addButton.setEnabled(false); // Initially disabled until player is selected
 
         addButton.addActionListener(e -> showRuleDialog(null));
         editButton.addActionListener(e -> editSelectedRule());
@@ -84,22 +134,38 @@ public class RuleTablePanel extends JPanel {
     }
 
     private void setupPopupMenu() {
-        JPopupMenu popup = new JPopupMenu();
-        JMenuItem addMenuItem = new JMenuItem("Add...");
+        popup = new JPopupMenu();
+        addPopupMenuItem = new JMenuItem("Add...");
         
-        addMenuItem.addActionListener(e -> showRuleDialog(null));
+        addPopupMenuItem.addActionListener(e -> showRuleDialog(null));
         editMenuItem.addActionListener(e -> editSelectedRule());
         deleteMenuItem.addActionListener(e -> deleteSelectedRule());
 
-        editMenuItem.setEnabled(false);
-        deleteMenuItem.setEnabled(false);
-
-        popup.add(addMenuItem);
+        popup.add(addPopupMenuItem);
         popup.add(editMenuItem);
-        popup.addSeparator();
         popup.add(deleteMenuItem);
 
-        table.setComponentPopupMenu(popup);
+        table.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            private void maybeShowPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    // Update enabled state before showing
+                    boolean hasSelection = table.getSelectedRow() >= 0;
+                    editMenuItem.setEnabled(hasSelection);
+                    deleteMenuItem.setEnabled(hasSelection);
+                    addPopupMenuItem.setEnabled(selectedPlayer != null);
+                    
+                    popup.show(table, e.getX(), e.getY());
+                }
+            }
+        });
     }
 
     private void setupTable() {
@@ -145,22 +211,22 @@ public class RuleTablePanel extends JPanel {
         table.getColumnModel().getColumn(2).setPreferredWidth(50);
         table.getColumnModel().getColumn(3).setPreferredWidth(40);
 
-        // Replace sample rules with Redis data
-        loadDataFromRedis();
-
-        // Selection listener
+        // Single selection listener that updates everything
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 boolean hasSelection = table.getSelectedRow() >= 0;
+                boolean hasPlayer = selectedPlayer != null;
+
+                // Update button states
                 editButton.setEnabled(hasSelection);
                 deleteButton.setEnabled(hasSelection);
-                editMenuItem.setEnabled(hasSelection);
-                deleteMenuItem.setEnabled(hasSelection);
-                
+                addButton.setEnabled(hasPlayer);
+
                 if (hasSelection) {
-                    String operator = (String) table.getValueAt(table.getSelectedRow(), 0);
-                    String comparison = (String) table.getValueAt(table.getSelectedRow(), 1);
-                    Object value = table.getValueAt(table.getSelectedRow(), 2);
+                    int row = table.getSelectedRow();
+                    String operator = (String) table.getValueAt(row, 0);
+                    String comparison = (String) table.getValueAt(row, 1);
+                    Object value = table.getValueAt(row, 2);
                     status.setStatus(String.format("Selected rule: %s %s %s", operator, comparison, value));
                 }
             }
@@ -175,17 +241,23 @@ public class RuleTablePanel extends JPanel {
         });
     }
 
-    private void loadDataFromRedis() {
+    private void loadRulesFromRedis() {
         try {
-            List<Rule> rules = App.getRedisService().findAllRules();
+            if (selectedPlayer == null || selectedPlayer.getId() == null) {
+                return; // Silent return - no need to log this
+            }
+
+            clearTable();
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             
-            for (Rule rule : rules) {
-                model.addRow(rule.toRow());
-            }
+            List<Rule> rules = App.getRedisService().findRulesByPlayer(selectedPlayer);
+            logger.info("Loaded " + rules.size() + " rules for player: " + selectedPlayer.getName());
+            
+            rules.forEach(rule -> model.addRow(rule.toRow()));
+            
         } catch (Exception e) {
-            e.printStackTrace();
-            status.setStatus("Error loading rules from Redis: " + e.getMessage());
+            logger.severe("Error loading rules: " + e.getMessage());
+            status.setStatus("Error loading rules: " + e.getMessage());
         }
     }
 
@@ -230,17 +302,41 @@ public class RuleTablePanel extends JPanel {
     }
 
     private void showRuleDialog(Rule rule) {
+        if (selectedPlayer == null) {
+            status.setStatus("No player selected");
+            return;
+        }
+
         if (rule == null) {
             rule = new Rule();
         }
 
         RuleEditorPanel editorPanel = new RuleEditorPanel(rule);
         Dialog<Rule> dialog = new Dialog<>(rule, editorPanel);
-        dialog.setTitle(rule.getOperator() == null ? "Add Rule" : "Edit Rule");
+        dialog.setTitle(rule.getId() == null ? "Add Rule" : "Edit Rule");
 
         if (dialog.showDialog()) {
             Rule updatedRule = editorPanel.getUpdatedRule();
+            saveRuleToRedis(updatedRule);
             updateRuleTable(updatedRule, table.getSelectedRow());
+        }
+    }
+
+    private void saveRuleToRedis(Rule rule) {
+        try {
+            if (rule.getId() == null) {
+                // Let Redis service handle ID generation
+                Rule savedRule = App.getRedisService().saveRule(rule, selectedPlayer);
+                // Update the rule with generated ID
+                rule.setId(savedRule.getId());
+                status.setStatus("Created new rule for player: " + selectedPlayer.getName());
+            } else {
+                App.getRedisService().saveRule(rule, selectedPlayer);
+                status.setStatus("Updated rule for player: " + selectedPlayer.getName());
+            }
+        } catch (Exception e) {
+            logger.severe("Error saving rule: " + e.getMessage());
+            status.setStatus("Error saving rule: " + e.getMessage());
         }
     }
 
@@ -254,8 +350,16 @@ public class RuleTablePanel extends JPanel {
 
     private void deleteSelectedRule() {
         int row = table.getSelectedRow();
-        if (row >= 0) {
-            ((DefaultTableModel) table.getModel()).removeRow(row);
+        if (row >= 0 && selectedPlayer != null) {
+            Rule rule = getRuleFromRow(row);
+            try {
+                App.getRedisService().deleteRule(rule, selectedPlayer);
+                ((DefaultTableModel) table.getModel()).removeRow(row);
+                status.setStatus("Deleted rule from player: " + selectedPlayer.getName());
+            } catch (Exception e) {
+                logger.severe("Error deleting rule: " + e.getMessage());
+                status.setStatus("Error deleting rule: " + e.getMessage());
+            }
         }
     }
 

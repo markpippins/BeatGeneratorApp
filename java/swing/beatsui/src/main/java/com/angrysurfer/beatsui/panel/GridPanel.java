@@ -9,9 +9,6 @@ import com.angrysurfer.beatsui.api.StatusConsumer;
 
 public class GridPanel extends StatusProviderPanel {
 
-    private static final int GRID_ROWS = 5;
-    private static final int GRID_COLS = 36;
-
     private GridButton[][] buttons;
     private GridSaver gridSaver;
 
@@ -20,14 +17,14 @@ public class GridPanel extends StatusProviderPanel {
     }
 
     public GridPanel(StatusConsumer statusConsumer) {
-        super(new GridLayout(GRID_ROWS, GRID_COLS, 2, 2), statusConsumer);
+        super(new GridLayout(GridSaver.GRID_ROWS, GridSaver.GRID_COLS, 2, 2), statusConsumer);
         setup();
         gridSaver = new GridSaver(statusConsumer, buttons);
     }
 
     private void setup() {
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        buttons = new GridButton[GRID_ROWS][GRID_COLS];
+        buttons = new GridButton[GridSaver.GRID_ROWS][GridSaver.GRID_COLS];
 
         MouseAdapter mouseHandler = new MouseAdapter() {
             @Override
@@ -38,8 +35,8 @@ public class GridPanel extends StatusProviderPanel {
             }
         };
 
-        for (int row = 0; row < GRID_ROWS; row++) {
-            for (int col = 0; col < GRID_COLS; col++) {
+        for (int row = 0; row < GridSaver.GRID_ROWS; row++) {
+            for (int col = 0; col < GridSaver.GRID_COLS; col++) {
                 buttons[row][col] = new GridButton(row, col);
                 buttons[row][col].addMouseListener(mouseHandler);
                 add(buttons[row][col]);

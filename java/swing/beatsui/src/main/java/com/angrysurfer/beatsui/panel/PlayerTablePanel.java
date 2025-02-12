@@ -23,6 +23,9 @@ import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.mock.Strike;
 import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.App;
+import com.angrysurfer.beatsui.api.Action;
+import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.Commands;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -38,8 +41,10 @@ public class PlayerTablePanel extends JPanel {
     private final JButton deleteButton;
     private final JMenuItem editMenuItem;
     private final JMenuItem deleteMenuItem;
+    private final RuleTablePanel ruleTablePanel;
+    private final ActionBus actionBus = ActionBus.getInstance();
 
-    public PlayerTablePanel(StatusConsumer status) {
+    public PlayerTablePanel(StatusConsumer status, RuleTablePanel ruleTablePanel) {
         super(new BorderLayout());
         this.status = status;
         this.table = new JTable();
@@ -48,6 +53,7 @@ public class PlayerTablePanel extends JPanel {
         this.deleteButton = new JButton("Delete");
         this.editMenuItem = new JMenuItem("Edit...");
         this.deleteMenuItem = new JMenuItem("Delete");
+        this.ruleTablePanel = ruleTablePanel;
         
         setupTable();
         setupButtons();
@@ -178,8 +184,23 @@ public class PlayerTablePanel extends JPanel {
                 deleteMenuItem.setEnabled(hasSelection);
                 
                 if (hasSelection) {
-                    String playerName = (String) table.getValueAt(table.getSelectedRow(), 0);
-                    status.setStatus("Selected player: " + playerName);
+                    Strike selectedPlayer = getPlayerFromRow(table.getSelectedRow());
+                    ruleTablePanel.setSelectedPlayer(selectedPlayer);
+                    status.setStatus("Selected player: " + selectedPlayer.getName());
+                } else {
+                    ruleTablePanel.setSelectedPlayer(null);
+                }
+            }
+        });
+
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int selectedRow = table.getSelectedRow();
+                if (selectedRow >= 0) {
+                    Strike player = getPlayerFromRow(selectedRow);
+                    publishPlayerSelected(player);
+                } else {
+                    publishPlayerUnselected();
                 }
             }
         });
@@ -302,5 +323,20 @@ public class PlayerTablePanel extends JPanel {
             status.setStatus(error);
             e.printStackTrace();
         }
+    }
+
+    private void publishPlayerSelected(Strike player) {
+        Action action = new Action();
+        action.setCommand(Commands.PLAYER_SELECTED);
+        action.setData(player);
+        action.setSender(this);
+        actionBus.publish(action);
+    }
+
+    private void publishPlayerUnselected() {
+        Action action = new Action();
+        action.setCommand(Commands.PLAYER_UNSELECTED);
+        action.setSender(this);
+        actionBus.publish(action);
     }
 }

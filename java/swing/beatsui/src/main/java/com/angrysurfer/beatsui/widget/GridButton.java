@@ -46,6 +46,17 @@ public class GridButton extends JButton {
     public void reset() {
         setText("");
         setToolTipText("");
+        setBackground(Utils.darkGray);
+    }
+
+    public void reset(boolean randomize) {
+        setText("");
+        setToolTipText("");
+        if (randomize) {
+            setBackground(colors[rand.nextInt(colors.length)]);
+        } else {
+            setBackground(Utils.darkGray);
+        }
         setBackground(colors[rand.nextInt(colors.length)]);
     }
 

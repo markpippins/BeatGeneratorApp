@@ -19,8 +19,8 @@ public class PlayerPanel extends StatusProviderPanel {
 
     public PlayerPanel(StatusConsumer status) {
         super(new BorderLayout(), status);
-        this.playerTablePanel = new PlayerTablePanel(status);
         this.ruleTablePanel = new RuleTablePanel(status);
+        this.playerTablePanel = new PlayerTablePanel(status, ruleTablePanel);
         setup();
     }
 

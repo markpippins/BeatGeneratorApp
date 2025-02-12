@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import com.angrysurfer.beatsui.config.BeatsUIConfig;
 import com.angrysurfer.beatsui.config.RedisConfig;
@@ -1071,11 +1072,35 @@ public class RedisService { // implements Database {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findRulesByPlayerId'");
     }
-
+    
     // @Override
-    public Rule saveRule(Rule rule) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'saveRule'");
+    public Rule saveRule(Rule rule, Strike player) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            // Generate new ID if needed
+            if (rule.getId() == null) {
+                String seqKey = "seq:" + Rule.class.getSimpleName().toLowerCase();
+                Long newId = jedis.incr(seqKey);
+                rule.setId(newId);
+                logger.info("Generated new rule ID: " + newId);
+            }
+            
+            rule.setPlayerId(player.getId()); // Ensure player ID is set
+            
+            // Save the rule
+            String json = objectMapper.writeValueAsString(rule);
+            String ruleKey = getKey(Rule.class, rule.getId());
+            jedis.set(ruleKey, json);
+            
+            // Link rule to player
+            String playerRulesKey = getKey(Strike.class, player.getId()) + ":rules";
+            jedis.sadd(playerRulesKey, rule.getId().toString());
+            
+            logger.info("Saved rule " + rule.getId() + " for player " + player.getName());
+            return rule;
+        } catch (Exception e) {
+            logger.severe("Error saving rule: " + e.getMessage());
+            throw new RuntimeException("Error saving rule", e);
+        }
     }
 
     // @Override
@@ -1248,28 +1273,31 @@ public class RedisService { // implements Database {
         try (Jedis jedis = jedisPool.getResource()) {
             List<Strike> strikes = new ArrayList<>();
             String pattern = getCollectionKey(Strike.class) + ":*";
-            Set<String> allKeys = jedis.keys("*");
-            Set<String> strikeKeys = jedis.keys(pattern);
             
-            logger.info("All Redis keys: " + String.join(", ", allKeys));
+            // Get all keys and filter only those that start with our pattern
+            // This avoids issues with auxiliary keys (like name mappings)
+            Set<String> allKeys = jedis.keys("*");
+            Set<String> strikeKeys = allKeys.stream()
+                .filter(key -> key.matches(pattern + "\\d+"))
+                .collect(Collectors.toSet());
+            
             logger.info("Strike pattern: " + pattern);
             logger.info("Found strike keys: " + String.join(", ", strikeKeys));
             
             for (String key : strikeKeys) {
-                String json = jedis.get(key);
-                logger.info("Reading strike from key: " + key);
-                if (json != null) {
-                    try {
+                try {
+                    String json = jedis.get(key);
+                    if (json != null) {
                         Strike strike = objectMapper.readValue(json, Strike.class);
-                        logger.info("Successfully parsed strike: " + strike.getName());
+                        logger.info("Loaded strike: " + strike.getName() + " from key: " + key);
                         strikes.add(strike);
-                    } catch (Exception e) {
-                        logger.severe("Error parsing strike JSON: " + json + ", Error: " + e.getMessage());
                     }
-                } else {
-                    logger.warning("No data found for key: " + key);
+                } catch (Exception e) {
+                    logger.warning("Error loading strike from key " + key + ": " + e.getMessage());
+                    // Continue loading other strikes even if one fails
                 }
             }
+            
             return strikes;
         } catch (Exception e) {
             logger.severe("Error in findAllStrikes: " + e.getMessage());
@@ -1289,7 +1317,8 @@ public class RedisService { // implements Database {
             String json = objectMapper.writeValueAsString(strike);
             String key = getKey(Strike.class, strike.getId());
             jedis.set(key, json);
-            logger.info("Saved strike - Key: " + key + ", ID: " + strike.getId() + ", Name: " + strike.getName() + ", JSON: " + json);
+            
+            logger.info("Saved strike - Key: " + key + ", ID: " + strike.getId() + ", Name: " + strike.getName());
             return strike;
         } catch (Exception e) {
             logger.severe("Error saving strike: " + e.getMessage());
@@ -1303,6 +1332,49 @@ public class RedisService { // implements Database {
             jedis.del(key);
         } catch (Exception e) {
             throw new RuntimeException("Error deleting strike", e);
+        }
+    }
+
+    public List<Rule> findRulesByPlayer(Strike player) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            List<Rule> rules = new ArrayList<>();
+            String playerRulesKey = getKey(Strike.class, player.getId()) + ":rules";
+            Set<String> ruleIds = jedis.smembers(playerRulesKey);
+            
+            logger.info("Finding rules for player: " + player.getName() + " (ID: " + player.getId() + "), key: " + playerRulesKey);
+            logger.info("Found rule IDs: " + String.join(", ", ruleIds));
+            
+            for (String ruleId : ruleIds) {
+                String key = getKey(Rule.class, Long.valueOf(ruleId));
+                String json = jedis.get(key);
+                if (json != null) {
+                    Rule rule = objectMapper.readValue(json, Rule.class);
+                    rule.setPlayerId(player.getId()); // Ensure playerId is set
+                    rules.add(rule);
+                    logger.info("Loaded rule: " + json);
+                }
+            }
+            return rules;
+        } catch (Exception e) {
+            logger.severe("Error finding rules for player: " + e.getMessage());
+            throw new RuntimeException("Error finding rules for player", e);
+        }
+    }
+
+    public void deleteRule(Rule rule, Strike player) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            // Remove rule data
+            String ruleKey = getKey(Rule.class, rule.getId());
+            jedis.del(ruleKey);
+            
+            // Remove link to player
+            String playerRulesKey = getKey(Strike.class, player.getId()) + ":rules";
+            jedis.srem(playerRulesKey, rule.getId().toString());
+            
+            logger.info("Deleted rule " + rule.getId() + " from player " + player.getName());
+        } catch (Exception e) {
+            logger.severe("Error deleting rule: " + e.getMessage());
+            throw new RuntimeException("Error deleting rule", e);
         }
     }
 }

@@ -19,8 +19,8 @@ import lombok.Setter;
 @Setter
 public class GridSaver {
 
-    private static final int GRID_ROWS = 5;
-    private static final int GRID_COLS = 36;
+    public static final int GRID_ROWS = 8;
+    public static final int GRID_COLS = 36;
 
     private GridButton[][] buttons;
     private Timer animationTimer;
@@ -55,8 +55,8 @@ public class GridSaver {
     private Timer screensaverTimer;
     private Timer modeChangeTimer;
     private long lastInteraction;
-    private static final int SCREENSAVER_DELAY = 30000; // 30 seconds
-    private static final int MODE_CHANGE_DELAY = 60000; // 10 seconds
+    private static final int SCREENSAVER_DELAY = 30; // 30 seconds
+    private static final int MODE_CHANGE_DELAY = 10000; // 10 seconds
     private boolean isScreensaverMode = false;
 
     // Add new instance variables

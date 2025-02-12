@@ -23,4 +23,8 @@ public class Commands {
     
     // Theme Commands
     public static final String CHANGE_THEME = "CHANGE_THEME";
+    
+    // Player selection commands
+    public static final String PLAYER_SELECTED = "PLAYER_SELECTED";
+    public static final String PLAYER_UNSELECTED = "PLAYER_UNSELECTED";
 }
