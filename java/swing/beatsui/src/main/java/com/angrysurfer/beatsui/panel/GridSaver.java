@@ -3,6 +3,8 @@ package com.angrysurfer.beatsui.panel;
 import java.awt.Color;
 import java.util.Objects;
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Timer;
 
@@ -54,7 +56,7 @@ public class GridSaver {
     private Timer modeChangeTimer;
     private long lastInteraction;
     private static final int SCREENSAVER_DELAY = 30000; // 30 seconds
-    private static final int MODE_CHANGE_DELAY = 10000; // 10 seconds
+    private static final int MODE_CHANGE_DELAY = 60000; // 10 seconds
     private boolean isScreensaverMode = false;
 
     // Add new instance variables
@@ -65,6 +67,27 @@ public class GridSaver {
     private boolean[][] visited;
     private Ant ant;
     private double t = 0.0; // Time variable for plasma
+
+    // Add new instance variables
+    private double[] waveformData = new double[GRID_COLS];
+    private double[] spectrumData = new double[GRID_COLS];
+    private boolean[][] sequencerGrid = new boolean[GRID_ROWS][GRID_COLS];
+    private int seqPosition = 0;
+    private double phase = 0.0;
+
+    // Add new instance variables
+    private List<RubiksCuber> cubers = new ArrayList<>();
+    private long competitionStartTime;
+    private boolean hasWinner = false;
+
+    // Add new instance variables
+    private double[] phases = new double[GRID_ROWS];
+    private int[] euclidSteps = {3, 4, 5, 7};
+    private int[] euclidPulses = {2, 3, 2, 5};
+    private double[][] lfoValues = new double[GRID_ROWS][GRID_COLS];
+    private double[] lfoFreqs = {1.0, 1.5, 2.0, 2.5, 3.0};
+    private int burstCount = 0;
+    private int burstX = 0, burstY = 0;
 
     // Add inner class for Langton's Ant
     private class Ant {
@@ -82,6 +105,38 @@ public class GridSaver {
             direction = (direction + (turnRight ? 1 : -1) + 4) % 4;
             x = Math.floorMod(x + dx[direction], GRID_COLS);
             y = Math.floorMod(y + dy[direction], GRID_ROWS);
+        }
+    }
+
+    // Add inner class for Rubik's Cuber
+    private class RubiksCuber {
+        int x, y;
+        double progress;
+        boolean isWinner;
+        Color[] colors;
+
+        RubiksCuber(int x, int y) {
+            this.x = x;
+            this.y = y;
+            this.progress = 0.0;
+            this.isWinner = false;
+            this.colors = new Color[]{
+                    Color.RED, Color.ORANGE, Color.YELLOW,
+                    Color.GREEN, Color.BLUE, Color.WHITE
+            };
+        }
+
+        void update() {
+            progress += random.nextDouble() * 0.03; // Random solving speed
+            if (progress >= 1.0 && !isWinner) {
+                isWinner = true;
+                return;
+            }
+        }
+
+        Color getCurrentColor() {
+            int colorIndex = (int)(progress * colors.length);
+            return colors[Math.min(colorIndex, colors.length - 1)];
         }
     }
 
@@ -118,7 +173,32 @@ public class GridSaver {
         CELLULAR("Cellular"),
         BROWNIAN("Brownian Motion"),
         CRYSTAL("Crystal Growth"),
-        LANGTON("Langton's Ant");
+        LANGTON("Langton's Ant"),
+        SPECTRUM_ANALYZER("Spectrum Analyzer"),
+        WAVEFORM("Waveform"),
+        OSCILLOSCOPE("Oscilloscope"),
+        VU_METERS("VU Meters"),
+        FREQUENCY_BANDS("Frequency Bands"),
+        MIDI_GRID("MIDI Grid"),
+        STEP_SEQUENCER("Step Sequencer"),
+        LOOP_PULSE("Loop Pulse"),
+        DRUM_PATTERN("Drum Pattern"),
+        TIME_DIVISION("Time Division"),
+        POLYPHONIC("Polyphonic Lines"),
+        PIANO_ROLL("Piano Roll"),
+        RUBIKS_COMP("Rubik's Competition"),
+        EUCLID("Euclidean Rhythm"),
+        MODULAR("Modular CV"),
+        POLYRHYTHM("Polyrhythm"),
+        ARPEGGIATOR("Arpeggiator"),
+        GATE_SEQ("Gate Sequencer"),
+        CHORD_PROG("Chord Progression"),
+        PROBABILITY("Probability Grid"),
+        HARMONICS("Harmonic Series"),
+        LFO_MATRIX("LFO Matrix"),
+        PHASE_SHIFT("Phase Shifter"),
+        XY_PAD("XY Pad"),
+        TRIG_BURST("Trigger Burst");
 
         private final String label;
 
@@ -246,6 +326,31 @@ public class GridSaver {
             case BROWNIAN -> updateBrownian();
             case CRYSTAL -> updateCrystal();
             case LANGTON -> updateLangton();
+            case SPECTRUM_ANALYZER -> updateSpectrumAnalyzer();
+            case WAVEFORM -> updateWaveform();
+            case OSCILLOSCOPE -> updateOscilloscope();
+            case VU_METERS -> updateVUMeters();
+            case FREQUENCY_BANDS -> updateFrequencyBands();
+            case MIDI_GRID -> updateMidiGrid();
+            case STEP_SEQUENCER -> updateStepSequencer();
+            case LOOP_PULSE -> updateLoopPulse();
+            case DRUM_PATTERN -> updateDrumPattern();
+            case TIME_DIVISION -> updateTimeDivision();
+            case POLYPHONIC -> updatePolyphonic();
+            case PIANO_ROLL -> updatePianoRoll();
+            case RUBIKS_COMP -> updateRubiksCompetition();
+            case EUCLID -> updateEuclidean();
+            case MODULAR -> updateModular();
+            case POLYRHYTHM -> updatePolyrhythm();
+            case ARPEGGIATOR -> updateArpeggiator();
+            case GATE_SEQ -> updateGateSequencer();
+            case CHORD_PROG -> updateChordProgression();
+            case PROBABILITY -> updateProbability();
+            case HARMONICS -> updateHarmonics();
+            case LFO_MATRIX -> updateLFOMatrix();
+            case PHASE_SHIFT -> updatePhaseShift();
+            case XY_PAD -> updateXYPad();
+            case TRIG_BURST -> updateTriggerBurst();
         }
     }
 
@@ -1030,5 +1135,585 @@ public class GridSaver {
         boolean isWhite = current.equals(Color.WHITE);
         buttons[ant.y][ant.x].setBackground(isWhite ? Utils.darkGray : Color.WHITE);
         ant.move(!isWhite);
+    }
+
+    private void updateSpectrumAnalyzer() {
+        setStatus("Spectrum Analyzer");
+        clearDisplay();
+        
+        // Simulate spectrum data
+        for (int col = 0; col < GRID_COLS; col++) {
+            spectrumData[col] = Math.abs(Math.sin(phase + col * 0.2)) * 
+                               Math.abs(Math.cos(phase * 0.7 + col * 0.1));
+            int height = (int)(spectrumData[col] * GRID_ROWS);
+            
+            for (int row = GRID_ROWS - 1; row >= GRID_ROWS - height; row--) {
+                float hue = (float)col / GRID_COLS;
+                buttons[row][col].setBackground(Color.getHSBColor(hue, 0.8f, 1.0f));
+            }
+        }
+        phase += 0.1;
+    }
+
+    private void updateWaveform() {
+        setStatus("Waveform");
+        clearDisplay();
+        
+        // Generate a complex waveform
+        for (int col = 0; col < GRID_COLS; col++) {
+            double t = phase + col * 0.2;
+            waveformData[col] = Math.sin(t) * 0.5 + 
+                               Math.sin(t * 2) * 0.25 + 
+                               Math.sin(t * 3) * 0.125;
+            int row = (int)((waveformData[col] + 1) * (GRID_ROWS - 1) / 2);
+            buttons[row][col].setBackground(Color.CYAN);
+        }
+        phase += 0.1;
+    }
+
+    private void updateOscilloscope() {
+        setStatus("Oscilloscope");
+        clearDisplay();
+        
+        // Create Lissajous pattern
+        for (int t = 0; t < 50; t++) {
+            double angle = t * 0.1 + phase;
+            int x = (int)((Math.sin(angle * 3) + 1) * (GRID_COLS - 1) / 2);
+            int y = (int)((Math.sin(angle * 2) + 1) * (GRID_ROWS - 1) / 2);
+            if (x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS) {
+                buttons[y][x].setBackground(Color.GREEN);
+            }
+        }
+        phase += 0.05;
+    }
+
+    private void updateVUMeters() {
+        setStatus("VU Meters");
+        clearDisplay();
+        
+        // Simulate multiple VU meters
+        int meterWidth = GRID_COLS / 4;
+        for (int meter = 0; meter < 4; meter++) {
+            double level = Math.abs(Math.sin(phase + meter * 0.5));
+            int height = (int)(level * GRID_ROWS);
+            
+            for (int row = GRID_ROWS - 1; row >= GRID_ROWS - height; row--) {
+                for (int col = meter * meterWidth; col < (meter + 1) * meterWidth - 1; col++) {
+                    Color color = row < GRID_ROWS * 0.2 ? Color.RED :
+                                 row < GRID_ROWS * 0.4 ? Color.YELLOW : Color.GREEN;
+                    buttons[row][col].setBackground(color);
+                }
+            }
+        }
+        phase += 0.1;
+    }
+
+    private void updateFrequencyBands() {
+        setStatus("Frequency Bands");
+        clearDisplay();
+        
+        // Simulate frequency band analysis
+        int bandWidth = 3;
+        for (int band = 0; band < GRID_COLS/bandWidth; band++) {
+            double freq = band * 0.5;
+            int height = (int)(Math.abs(Math.sin(phase * freq)) * GRID_ROWS);
+            
+            for (int col = band * bandWidth; col < (band + 1) * bandWidth; col++) {
+                for (int row = GRID_ROWS - 1; row >= GRID_ROWS - height; row--) {
+                    buttons[row][col].setBackground(new Color(
+                        100 + (155 * band / (GRID_COLS/bandWidth)),
+                        255 - (200 * band / (GRID_COLS/bandWidth)),
+                        255
+                    ));
+                }
+            }
+        }
+        phase += 0.1;
+    }
+
+    private void updateMidiGrid() {
+        setStatus("MIDI Grid");
+        clearDisplay();
+        
+        // Simulate MIDI note grid with moving playhead
+        seqPosition = (seqPosition + 1) % GRID_COLS;
+        
+        // Randomly populate grid
+        if (random.nextInt(100) < 10) {
+            sequencerGrid[random.nextInt(GRID_ROWS)][random.nextInt(GRID_COLS)] = true;
+        }
+        
+        // Draw grid
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                if (sequencerGrid[row][col]) {
+                    buttons[row][col].setBackground(col == seqPosition ? Color.WHITE : Color.BLUE);
+                } else if (col == seqPosition) {
+                    buttons[row][col].setBackground(Color.DARK_GRAY);
+                }
+            }
+        }
+    }
+
+    private void updateStepSequencer() {
+        setStatus("Step Sequencer");
+        clearDisplay();
+        
+        seqPosition = (seqPosition + 1) % 16; // 16-step sequence
+        int stepWidth = GRID_COLS / 16;
+        
+        // Draw 4 instrument tracks
+        for (int track = 0; track < GRID_ROWS; track++) {
+            for (int step = 0; step < 16; step++) {
+                boolean isActive = random.nextInt(100) < 20;
+                Color trackColor = switch(track) {
+                    case 0 -> Color.RED;    // Kick
+                    case 1 -> Color.YELLOW; // Snare
+                    case 2 -> Color.CYAN;   // Hi-hat
+                    case 3 -> Color.GREEN;  // Percussion
+                    default -> Color.GRAY;
+                };
+                
+                for (int x = step * stepWidth; x < (step + 1) * stepWidth; x++) {
+                    buttons[track][x].setBackground(
+                        step == seqPosition ? Color.WHITE :
+                        isActive ? trackColor : Utils.darkGray
+                    );
+                }
+            }
+        }
+    }
+
+    private void updateLoopPulse() {
+        setStatus("Loop Pulse");
+        clearDisplay();
+        
+        // Create circular loop indicator
+        double angle = phase;
+        int centerX = GRID_COLS / 2;
+        int centerY = GRID_ROWS / 2;
+        int radius = 2;
+        
+        for (int i = 0; i < 16; i++) {
+            double beatAngle = i * Math.PI / 8;
+            int x = centerX + (int)(Math.cos(beatAngle) * radius);
+            int y = centerY + (int)(Math.sin(beatAngle) * radius);
+            
+            if (x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS) {
+                boolean isOnBeat = Math.abs(angle % (Math.PI * 2) - beatAngle) < 0.2;
+                buttons[y][x].setBackground(isOnBeat ? Color.WHITE : Color.BLUE);
+            }
+        }
+        phase += 0.1;
+    }
+
+    private void updateDrumPattern() {
+        setStatus("Drum Pattern");
+        clearDisplay();
+        
+        seqPosition = (seqPosition + 1) % GRID_COLS;
+        
+        // Create drum pattern visualization
+        for (int row = 0; row < GRID_ROWS; row++) {
+            int pattern = switch(row) {
+                case 0 -> 0b1000100010001000; // Kick
+                case 1 -> 0b0000100000001000; // Snare
+                case 2 -> 0b1010101010101010; // Hi-hat
+                case 3 -> 0b0010001000100010; // Percussion
+                default -> 0;
+            };
+            
+            for (int col = 0; col < GRID_COLS; col++) {
+                boolean isHit = (pattern & (1 << (col % 16))) != 0;
+                if (isHit) {
+                    buttons[row][col].setBackground(
+                        col == seqPosition ? Color.WHITE : Color.ORANGE
+                    );
+                } else if (col == seqPosition) {
+                    buttons[row][col].setBackground(Color.DARK_GRAY);
+                }
+            }
+        }
+    }
+
+    private void updateTimeDivision() {
+        setStatus("Time Division");
+        clearDisplay();
+        
+        // Show different time divisions
+        int[] divisions = {1, 2, 4, 8, 16}; // Different timing divisions
+        
+        for (int row = 0; row < GRID_ROWS; row++) {
+            int div = divisions[row % divisions.length];
+            double speed = div * phase;
+            
+            for (int col = 0; col < GRID_COLS; col++) {
+                double pos = (col + speed) % GRID_COLS;
+                buttons[row][col].setBackground(
+                    pos < 2 ? Color.WHITE : Utils.darkGray
+                );
+            }
+        }
+        phase += 0.1;
+    }
+
+    private void updatePolyphonic() {
+        setStatus("Polyphonic Lines");
+        clearDisplay();
+        
+        // Create multiple interweaving sine waves
+        for (int voice = 0; voice < 3; voice++) {
+            double freq = 1.0 + voice * 0.5;
+            Color color = voice == 0 ? Color.RED : 
+                         voice == 1 ? Color.BLUE : Color.GREEN;
+            
+            for (int col = 0; col < GRID_COLS; col++) {
+                double t = phase * freq + col * 0.2;
+                int row = (int)((Math.sin(t) + 1) * (GRID_ROWS - 1) / 2);
+                if (row >= 0 && row < GRID_ROWS) {
+                    buttons[row][col].setBackground(color);
+                }
+            }
+        }
+        phase += 0.05;
+    }
+
+    private void updatePianoRoll() {
+        setStatus("Piano Roll");
+        clearDisplay();
+        
+        seqPosition = (seqPosition + 1) % GRID_COLS;
+        
+        // Create piano roll style notes
+        for (int row = 0; row < GRID_ROWS; row++) {
+            // Different note lengths for variety
+            int noteLength = random.nextInt(4) + 1;
+            for (int col = 0; col < GRID_COLS; col++) {
+                if (col % (8 * noteLength) == 0) {
+                    for (int i = 0; i < noteLength && col + i < GRID_COLS; i++) {
+                        buttons[row][col + i].setBackground(
+                            col + i == seqPosition ? Color.WHITE : Color.MAGENTA
+                        );
+                    }
+                } else if (col == seqPosition) {
+                    buttons[row][col].setBackground(Color.DARK_GRAY);
+                }
+            }
+        }
+    }
+
+    private void updateRubiksCompetition() {
+        setStatus("Rubik's Competition");
+        
+        // Initialize competition if needed
+        if (cubers.isEmpty()) {
+            initializeCompetition();
+        }
+        
+        // Clear display
+        clearDisplay();
+        
+        // Update and draw each cuber
+        boolean someoneWon = false;
+        for (RubiksCuber cuber : cubers) {
+            cuber.update();
+            
+            // Draw 2x2 cube for each competitor
+            for (int dy = 0; dy < 2; dy++) {
+                for (int dx = 0; dx < 2; dx++) {
+                    int x = cuber.x + dx;
+                    int y = cuber.y + dy;
+                    if (y >= 0 && y < GRID_ROWS && x >= 0 && x < GRID_COLS) {
+                        Color baseColor = cuber.getCurrentColor();
+                        
+                        // Make winner's cube flash
+                        if (cuber.isWinner) {
+                            someoneWon = true;
+                            boolean flash = System.currentTimeMillis() % 500 < 250;
+                            buttons[y][x].setBackground(flash ? Color.WHITE : baseColor);
+                        } else {
+                            // Add scramble effect for unsolved cubes
+                            if (cuber.progress < 0.8) {
+                                int scramble = random.nextInt(cuber.colors.length);
+                                buttons[y][x].setBackground(cuber.colors[scramble]);
+                            } else {
+                                buttons[y][x].setBackground(baseColor);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Reset competition if it's been running too long or someone won
+        if (someoneWon && System.currentTimeMillis() - competitionStartTime > 5000) {
+            cubers.clear(); // This will trigger a new competition
+        }
+    }
+
+    private void initializeCompetition() {
+        competitionStartTime = System.currentTimeMillis();
+        hasWinner = false;
+        
+        // Determine number of competitors (2 to max that fit in grid)
+        int maxCompetitors = (GRID_COLS / 3) * (GRID_ROWS / 3); // Leave space between cubes
+        int numCompetitors = Math.max(2, random.nextInt(maxCompetitors) + 2);
+        
+        // Calculate spacing
+        int spacing = GRID_COLS / (numCompetitors + 1);
+        
+        // Create competitors
+        for (int i = 0; i < numCompetitors; i++) {
+            int x = (i + 1) * spacing - 1; // Center the 2x2 cube
+            int y = random.nextInt(GRID_ROWS - 1); // Random vertical position
+            cubers.add(new RubiksCuber(x, y));
+        }
+    }
+
+    private void updateEuclidean() {
+        setStatus("Euclidean Rhythm");
+        clearDisplay();
+        
+        for (int row = 0; row < Math.min(GRID_ROWS, euclidSteps.length); row++) {
+            int steps = euclidSteps[row];
+            int pulses = euclidPulses[row];
+            
+            for (int col = 0; col < GRID_COLS; col++) {
+                if ((col * pulses) % steps < pulses) {
+                    Color color = col == seqPosition ? Color.WHITE : Color.ORANGE;
+                    buttons[row][col].setBackground(color);
+                } else if (col == seqPosition) {
+                    buttons[row][col].setBackground(Color.DARK_GRAY);
+                }
+            }
+        }
+        seqPosition = (seqPosition + 1) % GRID_COLS;
+    }
+
+    private void updateModular() {
+        setStatus("Modular CV");
+        clearDisplay();
+        
+        // Generate multiple CV signals
+        for (int row = 0; row < GRID_ROWS; row++) {
+            double freq = 0.5 + row * 0.25;
+            phases[row] += freq * 0.1;
+            
+            for (int col = 0; col < GRID_COLS; col++) {
+                double cv = Math.sin(phases[row] + col * 0.1);
+                int intensity = (int)((cv + 1) * 127);
+                buttons[row][col].setBackground(new Color(0, intensity, intensity));
+            }
+        }
+    }
+
+    private void updatePolyrhythm() {
+        setStatus("Polyrhythm");
+        clearDisplay();
+        
+        int[] rhythms = {3, 4, 5, 7}; // Different rhythm divisions
+        
+        for (int row = 0; row < Math.min(GRID_ROWS, rhythms.length); row++) {
+            int rhythm = rhythms[row];
+            int position = (int)(phase * rhythm) % GRID_COLS;
+            
+            for (int col = 0; col < GRID_COLS; col++) {
+                if (col % (GRID_COLS / rhythm) == 0) {
+                    Color color = col == position ? Color.WHITE : 
+                                                   new Color(255, 100 + (50 * row), 0);
+                    buttons[row][col].setBackground(color);
+                }
+            }
+        }
+        phase += 0.1;
+    }
+
+    private void updateArpeggiator() {
+        setStatus("Arpeggiator");
+        clearDisplay();
+        
+        // Define an arpeggio pattern
+        int[] notes = {0, 4, 7, 12, 7, 4}; // Major triad up and down
+        int position = (int)(phase * 8) % notes.length;
+        
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                if (col % (GRID_COLS / notes.length) == 0) {
+                    int noteIndex = (col / (GRID_COLS / notes.length));
+                    boolean isActive = noteIndex == position;
+                    if (row == notes[noteIndex] % GRID_ROWS) {
+                        buttons[row][col].setBackground(isActive ? Color.WHITE : Color.BLUE);
+                    }
+                }
+            }
+        }
+        phase += 0.05;
+    }
+
+    private void updateGateSequencer() {
+        setStatus("Gate Sequencer");
+        clearDisplay();
+        
+        // Simulate gate signals with different lengths
+        for (int row = 0; row < GRID_ROWS; row++) {
+            int gateLength = random.nextInt(4) + 1;
+            for (int col = 0; col < GRID_COLS; col++) {
+                if (col % 8 < gateLength) {
+                    Color color = (col / 8) % 2 == 0 ? Color.RED : Color.ORANGE;
+                    buttons[row][col].setBackground(color);
+                }
+            }
+        }
+        seqPosition = (seqPosition + 1) % GRID_COLS;
+    }
+
+    private void updateChordProgression() {
+        setStatus("Chord Progression");
+        clearDisplay();
+        
+        // Define chord progression (I-IV-V-I)
+        int[][] chords = {
+            {0, 4, 7},    // C major
+            {5, 9, 12},   // F major
+            {7, 11, 14},  // G major
+            {0, 4, 7}     // C major
+        };
+        
+        int chordIndex = ((int)(phase * 2)) % chords.length;
+        int[] currentChord = chords[chordIndex];
+        
+        // Display chord notes
+        for (int note : currentChord) {
+            int row = note % GRID_ROWS;
+            for (int col = 0; col < GRID_COLS; col++) {
+                if (col % 4 == 0) {
+                    buttons[row][col].setBackground(Color.CYAN);
+                }
+            }
+        }
+        phase += 0.02;
+    }
+
+    private void updateProbability() {
+        setStatus("Probability Grid");
+        clearDisplay();
+        
+        for (int row = 0; row < GRID_ROWS; row++) {
+            double probability = (double)(GRID_ROWS - row) / GRID_ROWS;
+            
+            for (int col = 0; col < GRID_COLS; col++) {
+                if (random.nextDouble() < probability) {
+                    int green = (int)(probability * 255);
+                    buttons[row][col].setBackground(new Color(0, green, 0));
+                }
+            }
+        }
+    }
+
+    private void updateHarmonics() {
+        setStatus("Harmonic Series");
+        clearDisplay();
+        
+        double baseFreq = 1.0;
+        for (int harmonic = 1; harmonic <= GRID_ROWS; harmonic++) {
+            double freq = baseFreq * harmonic;
+            for (int col = 0; col < GRID_COLS; col++) {
+                double amplitude = Math.sin(phase * freq + col * 0.1);
+                if (amplitude > 0.7) {
+                    int brightness = (int)((amplitude - 0.7) * 850);
+                    buttons[harmonic-1][col].setBackground(
+                        new Color(brightness, brightness/2, 0));
+                }
+            }
+        }
+        phase += 0.1;
+    }
+
+    private void updateLFOMatrix() {
+        setStatus("LFO Matrix");
+        clearDisplay();
+        
+        // Update LFO values
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                double lfo1 = Math.sin(phase * lfoFreqs[row % lfoFreqs.length]);
+                double lfo2 = Math.cos(phase * lfoFreqs[col % lfoFreqs.length]);
+                lfoValues[row][col] = (lfo1 + lfo2) / 2;
+                
+                int intensity = (int)((lfoValues[row][col] + 1) * 127);
+                buttons[row][col].setBackground(new Color(intensity, 0, intensity));
+            }
+        }
+        phase += 0.05;
+    }
+
+    private void updatePhaseShift() {
+        setStatus("Phase Shifter");
+        clearDisplay();
+        
+        for (int row = 0; row < GRID_ROWS; row++) {
+            double phaseOffset = (double)row / GRID_ROWS * Math.PI * 2;
+            for (int col = 0; col < GRID_COLS; col++) {
+                double value = Math.sin(phase + phaseOffset + col * 0.2);
+                if (value > 0) {
+                    int brightness = (int)(value * 255);
+                    buttons[row][col].setBackground(new Color(0, brightness, brightness));
+                }
+            }
+        }
+        phase += 0.1;
+    }
+
+    private void updateXYPad() {
+        setStatus("XY Pad");
+        clearDisplay();
+        
+        // Create circular motion
+        int centerX = (int)(GRID_COLS/2 + Math.cos(phase) * GRID_COLS/3);
+        int centerY = (int)(GRID_ROWS/2 + Math.sin(phase*1.5) * GRID_ROWS/3);
+        
+        // Draw crosshairs and intensity field
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                double distance = Math.sqrt(
+                    Math.pow(col - centerX, 2) + 
+                    Math.pow(row - centerY, 2));
+                
+                if (row == centerY || col == centerX) {
+                    buttons[row][col].setBackground(Color.RED);
+                } else if (distance < 3) {
+                    int intensity = (int)(255 * (3 - distance) / 3);
+                    buttons[row][col].setBackground(new Color(intensity, intensity, 0));
+                }
+            }
+        }
+        phase += 0.05;
+    }
+
+    private void updateTriggerBurst() {
+        setStatus("Trigger Burst");
+        clearDisplay();
+        
+        if (burstCount == 0) {
+            // Start new burst
+            burstX = random.nextInt(GRID_COLS);
+            burstY = random.nextInt(GRID_ROWS);
+            burstCount = 8;
+        }
+        
+        // Draw expanding burst
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                double distance = Math.sqrt(
+                    Math.pow(col - burstX, 2) + 
+                    Math.pow(row - burstY, 2));
+                
+                if (distance <= (8 - burstCount) && distance > (7 - burstCount)) {
+                    buttons[row][col].setBackground(Color.YELLOW);
+                }
+            }
+        }
+        
+        burstCount--;
     }
 }

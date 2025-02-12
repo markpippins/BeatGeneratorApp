@@ -1,5 +1,13 @@
 package com.angrysurfer.beatsui.api;
 
-public interface Action<T> {
-    T getData();
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class Action {
+
+    private String command;
+    private Object sender;
+    private Object data;
 }

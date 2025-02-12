@@ -1,16 +1,32 @@
 package com.angrysurfer.beatsui;
 
 import java.awt.event.KeyEvent;
-import javax.swing.*;
 
-import com.formdev.flatlaf.*;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.LookAndFeel;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+
+import com.angrysurfer.beatsui.api.Action;
+import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.Commands;
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 
 public class MenuBar extends JMenuBar {
     private final JFrame parentFrame;
+    private final ActionBus actionBus = ActionBus.getInstance();
+    private final ThemeManager themeManager;
 
     public MenuBar(JFrame parentFrame) {
         super();
         this.parentFrame = parentFrame;
+        this.themeManager = ThemeManager.getInstance(parentFrame);
         setup();
     }
 
@@ -18,12 +34,12 @@ public class MenuBar extends JMenuBar {
         // File Menu
         JMenu fileMenu = new JMenu("File");
         fileMenu.setMnemonic(KeyEvent.VK_F);
-        fileMenu.add(new JMenuItem("New"));
-        fileMenu.add(new JMenuItem("Open"));
-        fileMenu.add(new JMenuItem("Save"));
-        fileMenu.add(new JMenuItem("Save As..."));
+        addMenuItem(fileMenu, "New", Commands.NEW_FILE);
+        addMenuItem(fileMenu, "Open", Commands.OPEN_FILE);
+        addMenuItem(fileMenu, "Save", Commands.SAVE_FILE);
+        addMenuItem(fileMenu, "Save As...", Commands.SAVE_AS);
         fileMenu.addSeparator();
-        fileMenu.add(new JMenuItem("Exit"));
+        addMenuItem(fileMenu, "Exit", Commands.EXIT);
 
         // Edit Menu
         JMenu editMenu = new JMenu("Edit");
@@ -31,29 +47,11 @@ public class MenuBar extends JMenuBar {
         
         // Preferences submenu
         JMenu preferencesMenu = new JMenu("Preferences");
-        JMenu themeMenu = new JMenu("Theme");
-        
-        // Platform Themes - dynamically populate
-        JMenu platformThemes = new JMenu("Platform");
-        UIManager.LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels();
-        for (UIManager.LookAndFeelInfo look : looks) {
-            addThemeItem(platformThemes, look.getName(), look.getClassName());
-        }
-        
-        // FlatLaf Themes
-        JMenu flatThemes = new JMenu("FlatLaf");
-        addThemeItem(flatThemes, "Dark", () -> new FlatDarkLaf());
-        addThemeItem(flatThemes, "Light", () -> new FlatLightLaf());
-        addThemeItem(flatThemes, "Darcula", () -> new FlatDarculaLaf());
-        addThemeItem(flatThemes, "IntelliJ", () -> new FlatIntelliJLaf());
+        preferencesMenu.add(themeManager.createThemeMenu());
 
-        themeMenu.add(platformThemes);
-        themeMenu.add(flatThemes);
-        preferencesMenu.add(themeMenu);
-        
-        editMenu.add(new JMenuItem("Cut"));
-        editMenu.add(new JMenuItem("Copy"));
-        editMenu.add(new JMenuItem("Paste"));
+        addMenuItem(editMenu, "Cut", Commands.CUT);
+        addMenuItem(editMenu, "Copy", Commands.COPY);
+        addMenuItem(editMenu, "Paste", Commands.PASTE);
         editMenu.addSeparator();
         editMenu.add(preferencesMenu);
 
@@ -67,38 +65,14 @@ public class MenuBar extends JMenuBar {
         add(helpMenu);
     }
 
-    private void addThemeItem(JMenu menu, String name, String className) {
+    private void addMenuItem(JMenu menu, String name, String command) {
         JMenuItem item = new JMenuItem(name);
-        item.addActionListener(e -> setTheme(className));
+        item.addActionListener(e -> {
+            Action action = new Action();
+            action.setCommand(command);
+            action.setSender(this);
+            actionBus.publish(action);
+        });
         menu.add(item);
-    }
-
-    private void addThemeItem(JMenu menu, String name, ThemeSupplier supplier) {
-        JMenuItem item = new JMenuItem(name);
-        item.addActionListener(e -> setTheme(supplier));
-        menu.add(item);
-    }
-
-    private void setTheme(String className) {
-        try {
-            UIManager.setLookAndFeel(className);
-            SwingUtilities.updateComponentTreeUI(parentFrame);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    private void setTheme(ThemeSupplier supplier) {
-        try {
-            UIManager.setLookAndFeel(supplier.get());
-            SwingUtilities.updateComponentTreeUI(parentFrame);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    @FunctionalInterface
-    private interface ThemeSupplier {
-        LookAndFeel get();
     }
 }
