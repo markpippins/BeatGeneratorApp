@@ -13,15 +13,19 @@ import java.awt.RenderingHints;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
 import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.api.StatusConsumer;
+import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.ActionListener;
+import com.angrysurfer.beatsui.api.Commands;
 import java.util.Objects;
 
-public class LaunchPanel extends StatusProviderPanel {
+public class LaunchPanel extends StatusProviderPanel implements ActionListener {
 
     private static final int[] LAUNCH_PAD_LABELS = {
             13, 14, 15, 16, // inputs 1-4 map to 13,14,15,16
@@ -36,7 +40,15 @@ public class LaunchPanel extends StatusProviderPanel {
 
     public LaunchPanel(StatusConsumer statusConsumer) {
         super(new BorderLayout(), statusConsumer);
+        ActionBus.getInstance().register(this);
         setup();
+    }
+
+    @Override
+    public void onAction(com.angrysurfer.beatsui.api.Action action) {
+        if (Commands.CHANGE_THEME.equals(action.getCommand())) {
+            SwingUtilities.invokeLater(this::repaint);
+        }
     }
 
     private void setup() {
@@ -87,6 +99,9 @@ public class LaunchPanel extends StatusProviderPanel {
         button.addActionListener(e -> {
             isFlashing[0] = true;
             button.repaint();
+
+            // Update status when pad is pressed
+            setStatus("Pad " + button.getText() + " pressed");
 
             Timer timer = new Timer(100, evt -> {
                 isFlashing[0] = false;

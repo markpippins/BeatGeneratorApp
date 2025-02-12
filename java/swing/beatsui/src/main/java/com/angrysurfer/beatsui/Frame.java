@@ -16,21 +16,12 @@ import com.angrysurfer.beatsui.widget.StatusBar;
 
 public class Frame extends JFrame {
 
-    private StatusBar statusBar;
+    private StatusBar statusBar = new StatusBar();
 
     public Frame() {
         super("Beats");
         setupFrame();
-        setJMenuBar(new MenuBar(this));
-        add(new ToolBar(), BorderLayout.NORTH);
-        setUpStatusBar();
         setupMainContent();
-    }
-
-    private void setUpStatusBar() {
-        this.statusBar = new StatusBar();
-        add(statusBar, BorderLayout.SOUTH);
-
     }
 
     private void setupFrame() {
@@ -38,6 +29,9 @@ public class Frame extends JFrame {
         setMinimumSize(new Dimension(1200, 800));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+        setJMenuBar(new MenuBar(this, statusBar)); // We're passing statusBar correctly here
+        add(new ToolBar(), BorderLayout.NORTH);
+        add(statusBar, BorderLayout.SOUTH);
     }
 
     private void setupMainContent() {

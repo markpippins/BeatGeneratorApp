@@ -388,6 +388,12 @@ public class PlayerPanel extends StatusProviderPanel {
                 deletePlayerButton.setEnabled(hasSelection);
                 editPlayerMenuItem.setEnabled(hasSelection);
                 deletePlayerMenuItem.setEnabled(hasSelection);
+                
+                // Add status update for player selection
+                if (hasSelection) {
+                    String playerName = (String) leftTable.getValueAt(leftTable.getSelectedRow(), 0);
+                    setStatus("Selected player: " + playerName);
+                }
             }
         });
 
@@ -398,6 +404,14 @@ public class PlayerPanel extends StatusProviderPanel {
                 deleteRuleButton.setEnabled(hasSelection);
                 editRuleMenuItem.setEnabled(hasSelection);
                 deleteRuleMenuItem.setEnabled(hasSelection);
+                
+                // Add status update for rule selection
+                if (hasSelection) {
+                    String operator = (String) rightTable.getValueAt(rightTable.getSelectedRow(), 0);
+                    String comparison = (String) rightTable.getValueAt(rightTable.getSelectedRow(), 1);
+                    Object value = rightTable.getValueAt(rightTable.getSelectedRow(), 2);
+                    setStatus(String.format("Selected rule: %s %s %s", operator, comparison, value));
+                }
             }
         });
 

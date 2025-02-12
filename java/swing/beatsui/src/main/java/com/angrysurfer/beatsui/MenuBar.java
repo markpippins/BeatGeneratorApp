@@ -1,31 +1,29 @@
 package com.angrysurfer.beatsui;
 
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.LookAndFeel;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.JOptionPane;
 
 import com.angrysurfer.beatsui.api.Action;
 import com.angrysurfer.beatsui.api.ActionBus;
 import com.angrysurfer.beatsui.api.Commands;
-import com.formdev.flatlaf.FlatDarculaLaf;
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatIntelliJLaf;
-import com.formdev.flatlaf.FlatLightLaf;
+import com.angrysurfer.beatsui.api.StatusConsumer;
 
 public class MenuBar extends JMenuBar {
     private final JFrame parentFrame;
     private final ActionBus actionBus = ActionBus.getInstance();
     private final ThemeManager themeManager;
+    private final StatusConsumer statusConsumer;
 
-    public MenuBar(JFrame parentFrame) {
+    public MenuBar(JFrame parentFrame, StatusConsumer statusConsumer) {
         super();
         this.parentFrame = parentFrame;
+        this.statusConsumer = statusConsumer;
         this.themeManager = ThemeManager.getInstance(parentFrame);
         setup();
     }
@@ -39,7 +37,17 @@ public class MenuBar extends JMenuBar {
         addMenuItem(fileMenu, "Save", Commands.SAVE_FILE);
         addMenuItem(fileMenu, "Save As...", Commands.SAVE_AS);
         fileMenu.addSeparator();
-        addMenuItem(fileMenu, "Exit", Commands.EXIT);
+        addMenuItem(fileMenu, "Exit", Commands.EXIT, e -> {
+            int option = JOptionPane.showConfirmDialog(
+                parentFrame,
+                "Are you sure you want to exit?",
+                "Exit Application",
+                JOptionPane.YES_NO_OPTION
+            );
+            if (option == JOptionPane.YES_OPTION) {
+                System.exit(0);
+            }
+        });
 
         // Edit Menu
         JMenu editMenu = new JMenu("Edit");
@@ -66,12 +74,26 @@ public class MenuBar extends JMenuBar {
     }
 
     private void addMenuItem(JMenu menu, String name, String command) {
+        addMenuItem(menu, name, command, null);
+    }
+
+    private void addMenuItem(JMenu menu, String name, String command, ActionListener extraAction) {
         JMenuItem item = new JMenuItem(name);
         item.addActionListener(e -> {
+            // Update status first
+            if (statusConsumer != null) {
+                statusConsumer.setStatus("Menu: " + name); // Make the status message more distinct
+            }
+
+            // Then handle the action
             Action action = new Action();
             action.setCommand(command);
             action.setSender(this);
             actionBus.publish(action);
+            
+            if (extraAction != null) {
+                extraAction.actionPerformed(e);
+            }
         });
         menu.add(item);
     }
