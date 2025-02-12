@@ -9,8 +9,8 @@ import javax.sound.midi.MidiDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.db.FindAll;
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.util.db.FindAll;
 
 import lombok.Getter;
 import lombok.Setter;

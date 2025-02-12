@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.angrysurfer.core.api.Database;
 import com.angrysurfer.core.engine.InstrumentEngine;
-import com.angrysurfer.core.engine.MIDIEngine;
 import com.angrysurfer.core.model.midi.Instrument;
 
 import lombok.Getter;
@@ -20,11 +20,11 @@ public class InstrumentService {
 
     static Logger logger = LoggerFactory.getLogger(InstrumentService.class.getCanonicalName());
 
-    private DBService dbUtils;
+    private Database dbUtils;
 
     private InstrumentEngine instrumentEngine;
 
-    public InstrumentService(DBService dbUtils) {
+    public InstrumentService(Database dbUtils) {
         this.dbUtils = dbUtils;
         this.instrumentEngine = new InstrumentEngine(dbUtils.getInstrumentFindAll());
     }

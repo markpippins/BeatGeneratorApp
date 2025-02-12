@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.angrysurfer.core.api.Database;
 import com.angrysurfer.core.engine.SongEngine;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Song;
@@ -33,7 +34,7 @@ public class SongService implements NoteProvider {
 
     static Logger logger = LoggerFactory.getLogger(SongService.class.getCanonicalName());
 
-    private DBService dbUtils;
+    private Database dbUtils;
     private InstrumentService instrumentService;
 
     private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
@@ -44,7 +45,7 @@ public class SongService implements NoteProvider {
 
     private SongEngine songEngine;
 
-    public SongService(DBService dbUtils, InstrumentService instrumentService) {
+    public SongService(Database dbUtils, InstrumentService instrumentService) {
         this.dbUtils = dbUtils;
         this.instrumentService = instrumentService;
         this.songEngine = new SongEngine(instrumentService.getInstrumentEngine());

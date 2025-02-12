@@ -2,7 +2,6 @@ package com.angrysurfer.spring.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 
@@ -10,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.angrysurfer.core.api.Database;
 import com.angrysurfer.core.engine.PlayerEngine;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Rule;
@@ -17,7 +17,6 @@ import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.model.player.IPlayer;
-import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.util.ClockSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,13 +37,13 @@ public class PlayerService {
     private ClockSource clockSource;
 
     private ArrayList<ClockSource> clocks = new ArrayList<>();
-    private DBService dbUtils;
+    private Database dbUtils;
     private TickerService tickerService;
     private InstrumentService instrumentService;
 
     private PlayerEngine playerEngine;
 
-    public PlayerService(TickerService tickerService, InstrumentService instrumentService, DBService dbUtils) {
+    public PlayerService(TickerService tickerService, InstrumentService instrumentService, Database dbUtils) {
 
         this.tickerService = tickerService;
         this.instrumentService = instrumentService;

@@ -15,6 +15,8 @@ import javax.sound.midi.MidiUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.db.Delete;
+import com.angrysurfer.core.api.db.Save;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
@@ -22,8 +24,6 @@ import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.CyclerListener;
 import com.angrysurfer.core.util.TickCyclerListener;
-import com.angrysurfer.core.util.db.Delete;
-import com.angrysurfer.core.util.db.Save;
 import com.angrysurfer.core.util.update.PatternUpdateType;
 import com.angrysurfer.core.util.update.StepUpdateType;
 

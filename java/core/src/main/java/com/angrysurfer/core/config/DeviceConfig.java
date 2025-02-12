@@ -11,14 +11,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.angrysurfer.core.api.db.FindAll;
+import com.angrysurfer.core.api.db.Save;
 import com.angrysurfer.core.engine.MIDIEngine;
 import com.angrysurfer.core.model.Pad;
 import com.angrysurfer.core.model.midi.ControlCode;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.model.ui.Caption;
-import com.angrysurfer.core.util.db.FindAll;
-import com.angrysurfer.core.util.db.Save;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -140,7 +140,7 @@ public class DeviceConfig implements Serializable {
         dbInstrument.getControlCodes().clear(); // Clear existing control codes for
         dbInstrument.getAssignments().clear();
         dbInstrument.getBoundaries().clear();
-        dbInstrument.getCaptions().clear();
+        // dbInstrument.getCaptions().clear();
 
         // instrument.getAssignments().keySet().forEach(code -> {
         configInstrument.getControlCodes().forEach(cc -> {
@@ -169,10 +169,10 @@ public class DeviceConfig implements Serializable {
             dbInstrument.getBoundaries().put(controlCode.getCode(),
                     new Integer[] { controlCode.getLowerBound(), controlCode.getUpperBound() });
 
-            if (!controlCode.getCaptions().isEmpty())
-                dbInstrument.getCaptions().put(controlCode.getCode(),
-                        controlCode.getCaptions().stream()
-                                .collect(Collectors.toMap(Caption::getCode, Caption::getDescription)));
+            // if (!controlCode.getCaptions().isEmpty())
+            //     dbInstrument.getCaptions().put(controlCode.getCode(),
+            //             controlCode.getCaptions().stream()
+            //                     .collect(Collectors.toMap(Caption::getCode, Caption::getDescription)));
 
             dbInstrument.getControlCodes().add(controlCode);
         });

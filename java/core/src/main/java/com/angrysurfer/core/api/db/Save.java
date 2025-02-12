@@ -1,4 +1,4 @@
-package com.angrysurfer.core.util.db;
+package com.angrysurfer.core.api.db;
 
 public interface Save<T> {
     

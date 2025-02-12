@@ -1,0 +1,4011 @@
+<LinkedHashMap>
+  <instruments>
+    <id>1</id>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>Gervill</name>
+    <deviceName>Gervill</deviceName>
+    <lowestNote>0</lowestNote>
+    <highestNote>126</highestNote>
+    <highestPreset/>
+    <preferredPreset/>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>true</available>
+    <initialized>true</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>0</defaultChannel>
+  </instruments>
+  <instruments>
+    <id>2</id>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>Microsoft MIDI Mapper</name>
+    <deviceName>Microsoft MIDI Mapper</deviceName>
+    <lowestNote>0</lowestNote>
+    <highestNote>126</highestNote>
+    <highestPreset/>
+    <preferredPreset/>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>true</available>
+    <initialized>true</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>0</defaultChannel>
+  </instruments>
+  <instruments>
+    <id>3</id>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>Microsoft GS Wavetable Synth</name>
+    <deviceName>Microsoft GS Wavetable Synth</deviceName>
+    <lowestNote>0</lowestNote>
+    <highestNote>126</highestNote>
+    <highestPreset/>
+    <preferredPreset/>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>true</available>
+    <initialized>true</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>0</defaultChannel>
+  </instruments>
+  <instruments>
+    <id>4</id>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>West Pest</name>
+    <deviceName>MRCC 880</deviceName>
+    <channels>1</channels>
+    <lowestNote>0</lowestNote>
+    <highestNote>0</highestNote>
+    <highestPreset>0</highestPreset>
+    <preferredPreset>0</preferredPreset>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>false</available>
+    <initialized>false</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>1</defaultChannel>
+  </instruments>
+  <instruments>
+    <id>5</id>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>Zoia</name>
+    <deviceName>MRCC 880</deviceName>
+    <channels>6</channels>
+    <lowestNote>0</lowestNote>
+    <highestNote>0</highestNote>
+    <highestPreset>0</highestPreset>
+    <preferredPreset>0</preferredPreset>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>false</available>
+    <initialized>false</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>6</defaultChannel>
+  </instruments>
+  <instruments>
+    <id>6</id>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>Tracker (MRCC 880)</name>
+    <deviceName>MRCC 880</deviceName>
+    <channels>12</channels>
+    <lowestNote>0</lowestNote>
+    <highestNote>0</highestNote>
+    <highestPreset>0</highestPreset>
+    <preferredPreset>0</preferredPreset>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>false</available>
+    <initialized>false</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>12</defaultChannel>
+  </instruments>
+  <instruments>
+    <id>7</id>
+    <controlCodes>
+      <id>152</id>
+      <name>Portamento Time (0=OFF)</name>
+      <code>5</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>153</id>
+      <name>Arpreggiator ON/OFF</name>
+      <code>117</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>52</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+      <captions>
+        <id>53</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>154</id>
+      <name>Arpreggiator Type</name>
+      <code>119</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>54</id>
+        <code>0</code>
+        <description>Traditional</description>
+      </captions>
+      <captions>
+        <id>55</id>
+        <code>1</code>
+        <description>Latch &amp; Shift</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>155</id>
+      <name>Legato ON/OFF</name>
+      <code>118</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>56</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+      <captions>
+        <id>57</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>156</id>
+      <name>MIDI Channel A</name>
+      <code>102</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>16</upperBound>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>157</id>
+      <name>MIDI Channel B</name>
+      <code>103</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>16</upperBound>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>158</id>
+      <name>CV Out A</name>
+      <code>104</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>58</id>
+        <code>0</code>
+        <description>Note</description>
+      </captions>
+      <captions>
+        <id>61</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+      <captions>
+        <id>59</id>
+        <code>1</code>
+        <description>Velocity</description>
+      </captions>
+      <captions>
+        <id>60</id>
+        <code>2</code>
+        <description>Mod</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>159</id>
+      <name>CV Out B</name>
+      <code>105</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>62</id>
+        <code>0</code>
+        <description>Note</description>
+      </captions>
+      <captions>
+        <id>65</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+      <captions>
+        <id>64</id>
+        <code>2</code>
+        <description>Mod</description>
+      </captions>
+      <captions>
+        <id>63</id>
+        <code>1</code>
+        <description>Velocity</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>160</id>
+      <name>Gate Out A</name>
+      <code>106</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>67</id>
+        <code>1</code>
+        <description>Velocity > 50%</description>
+      </captions>
+      <captions>
+        <id>68</id>
+        <code>2</code>
+        <description>ModWh > 50%</description>
+      </captions>
+      <captions>
+        <id>69</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+      <captions>
+        <id>66</id>
+        <code>0</code>
+        <description>Note ON</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>161</id>
+      <name>Gate Out B</name>
+      <code>107</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>72</id>
+        <code>2</code>
+        <description>ModWh > 50%</description>
+      </captions>
+      <captions>
+        <id>70</id>
+        <code>0</code>
+        <description>Note ON</description>
+      </captions>
+      <captions>
+        <id>73</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+      <captions>
+        <id>71</id>
+        <code>1</code>
+        <description>Velocity > 50%</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>162</id>
+      <name>Pitch Bend Scale A</name>
+      <code>108</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>163</id>
+      <name>Pitch Bend Scale B</name>
+      <code>109</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>164</id>
+      <name>Aftertouch A</name>
+      <code>110</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>165</id>
+      <name>Aftertouch B</name>
+      <code>111</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>166</id>
+      <name>Min Velocity A</name>
+      <code>112</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>167</id>
+      <name>Min Velocity B</name>
+      <code>113</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>168</id>
+      <name>MIDI Clock ON/OFF</name>
+      <code>114</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>74</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+      <captions>
+        <id>75</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>169</id>
+      <name>Tempo In Div</name>
+      <code>116</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>302</id>
+      <name>Portamento Time (0=OFF)</name>
+      <code>5</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>303</id>
+      <name>Arpreggiator ON/OFF</name>
+      <code>117</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>103</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+      <captions>
+        <id>102</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>304</id>
+      <name>Arpreggiator Type</name>
+      <code>119</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>104</id>
+        <code>0</code>
+        <description>Traditional</description>
+      </captions>
+      <captions>
+        <id>105</id>
+        <code>1</code>
+        <description>Latch &amp; Shift</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>305</id>
+      <name>Legato ON/OFF</name>
+      <code>118</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>106</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+      <captions>
+        <id>107</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>306</id>
+      <name>MIDI Channel A</name>
+      <code>102</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>16</upperBound>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>307</id>
+      <name>MIDI Channel B</name>
+      <code>103</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>16</upperBound>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>308</id>
+      <name>CV Out A</name>
+      <code>104</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>110</id>
+        <code>2</code>
+        <description>Mod</description>
+      </captions>
+      <captions>
+        <id>108</id>
+        <code>0</code>
+        <description>Note</description>
+      </captions>
+      <captions>
+        <id>109</id>
+        <code>1</code>
+        <description>Velocity</description>
+      </captions>
+      <captions>
+        <id>111</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>309</id>
+      <name>CV Out B</name>
+      <code>105</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>112</id>
+        <code>0</code>
+        <description>Note</description>
+      </captions>
+      <captions>
+        <id>114</id>
+        <code>2</code>
+        <description>Mod</description>
+      </captions>
+      <captions>
+        <id>115</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+      <captions>
+        <id>113</id>
+        <code>1</code>
+        <description>Velocity</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>310</id>
+      <name>Gate Out A</name>
+      <code>106</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>119</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+      <captions>
+        <id>116</id>
+        <code>0</code>
+        <description>Note ON</description>
+      </captions>
+      <captions>
+        <id>117</id>
+        <code>1</code>
+        <description>Velocity > 50%</description>
+      </captions>
+      <captions>
+        <id>118</id>
+        <code>2</code>
+        <description>ModWh > 50%</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>311</id>
+      <name>Gate Out B</name>
+      <code>107</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>120</id>
+        <code>0</code>
+        <description>Note ON</description>
+      </captions>
+      <captions>
+        <id>122</id>
+        <code>2</code>
+        <description>ModWh > 50%</description>
+      </captions>
+      <captions>
+        <id>123</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+      <captions>
+        <id>121</id>
+        <code>1</code>
+        <description>Velocity > 50%</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>312</id>
+      <name>Pitch Bend Scale A</name>
+      <code>108</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>313</id>
+      <name>Pitch Bend Scale B</name>
+      <code>109</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>314</id>
+      <name>Aftertouch A</name>
+      <code>110</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>315</id>
+      <name>Aftertouch B</name>
+      <code>111</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>316</id>
+      <name>Min Velocity A</name>
+      <code>112</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>317</id>
+      <name>Min Velocity B</name>
+      <code>113</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>318</id>
+      <name>MIDI Clock ON/OFF</name>
+      <code>114</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>124</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+      <captions>
+        <id>125</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>319</id>
+      <name>Tempo In Div</name>
+      <code>116</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>452</id>
+      <name>Portamento Time (0=OFF)</name>
+      <code>5</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>453</id>
+      <name>Arpreggiator ON/OFF</name>
+      <code>117</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>153</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+      <captions>
+        <id>152</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>454</id>
+      <name>Arpreggiator Type</name>
+      <code>119</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>155</id>
+        <code>1</code>
+        <description>Latch &amp; Shift</description>
+      </captions>
+      <captions>
+        <id>154</id>
+        <code>0</code>
+        <description>Traditional</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>455</id>
+      <name>Legato ON/OFF</name>
+      <code>118</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>156</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+      <captions>
+        <id>157</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>456</id>
+      <name>MIDI Channel A</name>
+      <code>102</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>16</upperBound>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>457</id>
+      <name>MIDI Channel B</name>
+      <code>103</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>16</upperBound>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>458</id>
+      <name>CV Out A</name>
+      <code>104</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>160</id>
+        <code>2</code>
+        <description>Mod</description>
+      </captions>
+      <captions>
+        <id>159</id>
+        <code>1</code>
+        <description>Velocity</description>
+      </captions>
+      <captions>
+        <id>161</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+      <captions>
+        <id>158</id>
+        <code>0</code>
+        <description>Note</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>459</id>
+      <name>CV Out B</name>
+      <code>105</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>164</id>
+        <code>2</code>
+        <description>Mod</description>
+      </captions>
+      <captions>
+        <id>162</id>
+        <code>0</code>
+        <description>Note</description>
+      </captions>
+      <captions>
+        <id>163</id>
+        <code>1</code>
+        <description>Velocity</description>
+      </captions>
+      <captions>
+        <id>165</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>460</id>
+      <name>Gate Out A</name>
+      <code>106</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>167</id>
+        <code>1</code>
+        <description>Velocity > 50%</description>
+      </captions>
+      <captions>
+        <id>168</id>
+        <code>2</code>
+        <description>ModWh > 50%</description>
+      </captions>
+      <captions>
+        <id>166</id>
+        <code>0</code>
+        <description>Note ON</description>
+      </captions>
+      <captions>
+        <id>169</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>461</id>
+      <name>Gate Out B</name>
+      <code>107</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>171</id>
+        <code>1</code>
+        <description>Velocity > 50%</description>
+      </captions>
+      <captions>
+        <id>172</id>
+        <code>2</code>
+        <description>ModWh > 50%</description>
+      </captions>
+      <captions>
+        <id>170</id>
+        <code>0</code>
+        <description>Note ON</description>
+      </captions>
+      <captions>
+        <id>173</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>462</id>
+      <name>Pitch Bend Scale A</name>
+      <code>108</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>463</id>
+      <name>Pitch Bend Scale B</name>
+      <code>109</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>464</id>
+      <name>Aftertouch A</name>
+      <code>110</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>465</id>
+      <name>Aftertouch B</name>
+      <code>111</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>466</id>
+      <name>Min Velocity A</name>
+      <code>112</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>467</id>
+      <name>Min Velocity B</name>
+      <code>113</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>468</id>
+      <name>MIDI Clock ON/OFF</name>
+      <code>114</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>175</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+      <captions>
+        <id>174</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>469</id>
+      <name>Tempo In Div</name>
+      <code>116</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>Zero</name>
+    <deviceName>MRCC 880</deviceName>
+    <channels>4</channels>
+    <lowestNote>0</lowestNote>
+    <highestNote>0</highestNote>
+    <highestPreset>0</highestPreset>
+    <preferredPreset>0</preferredPreset>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>false</available>
+    <initialized>false</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>4</defaultChannel>
+  </instruments>
+  <instruments>
+    <id>8</id>
+    <controlCodes>
+      <id>1</id>
+      <name>Portamento Time (0=OFF)</name>
+      <code>5</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>2</id>
+      <name>Arpreggiator ON/OFF</name>
+      <code>117</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>1</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+      <captions>
+        <id>2</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>3</id>
+      <name>Arpreggiator Type</name>
+      <code>119</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>3</id>
+        <code>0</code>
+        <description>Traditional</description>
+      </captions>
+      <captions>
+        <id>4</id>
+        <code>1</code>
+        <description>Latch &amp; Shift</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>4</id>
+      <name>Legato ON/OFF</name>
+      <code>118</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>6</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+      <captions>
+        <id>5</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>5</id>
+      <name>MIDI Channel A</name>
+      <code>102</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>16</upperBound>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>6</id>
+      <name>MIDI Channel B</name>
+      <code>103</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>16</upperBound>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>7</id>
+      <name>CV Out A</name>
+      <code>104</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>9</id>
+        <code>2</code>
+        <description>Mod</description>
+      </captions>
+      <captions>
+        <id>7</id>
+        <code>0</code>
+        <description>Note</description>
+      </captions>
+      <captions>
+        <id>8</id>
+        <code>1</code>
+        <description>Velocity</description>
+      </captions>
+      <captions>
+        <id>10</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>8</id>
+      <name>CV Out B</name>
+      <code>105</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>13</id>
+        <code>2</code>
+        <description>Mod</description>
+      </captions>
+      <captions>
+        <id>14</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+      <captions>
+        <id>12</id>
+        <code>1</code>
+        <description>Velocity</description>
+      </captions>
+      <captions>
+        <id>11</id>
+        <code>0</code>
+        <description>Note</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>9</id>
+      <name>Gate Out A</name>
+      <code>106</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>17</id>
+        <code>2</code>
+        <description>ModWh > 50%</description>
+      </captions>
+      <captions>
+        <id>15</id>
+        <code>0</code>
+        <description>Note ON</description>
+      </captions>
+      <captions>
+        <id>16</id>
+        <code>1</code>
+        <description>Velocity > 50%</description>
+      </captions>
+      <captions>
+        <id>18</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>10</id>
+      <name>Gate Out B</name>
+      <code>107</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>3</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>21</id>
+        <code>2</code>
+        <description>ModWh > 50%</description>
+      </captions>
+      <captions>
+        <id>22</id>
+        <code>3</code>
+        <description>LFO Rate</description>
+      </captions>
+      <captions>
+        <id>19</id>
+        <code>0</code>
+        <description>Note ON</description>
+      </captions>
+      <captions>
+        <id>20</id>
+        <code>1</code>
+        <description>Velocity > 50%</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>11</id>
+      <name>Pitch Bend Scale A</name>
+      <code>108</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>12</id>
+      <name>Pitch Bend Scale B</name>
+      <code>109</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>13</id>
+      <name>Aftertouch A</name>
+      <code>110</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>14</id>
+      <name>Aftertouch B</name>
+      <code>111</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>15</id>
+      <name>Min Velocity A</name>
+      <code>112</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>16</id>
+      <name>Min Velocity B</name>
+      <code>113</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>17</id>
+      <name>MIDI Clock ON/OFF</name>
+      <code>114</code>
+      <lowerBound>0</lowerBound>
+      <upperBound>1</upperBound>
+      <pad/>
+      <binary/>
+      <captions>
+        <id>24</id>
+        <code>1</code>
+        <description>On</description>
+      </captions>
+      <captions>
+        <id>23</id>
+        <code>0</code>
+        <description>Off</description>
+      </captions>
+    </controlCodes>
+    <controlCodes>
+      <id>18</id>
+      <name>Tempo In Div</name>
+      <code>116</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>Blackbox</name>
+    <deviceName>MRCC 880</deviceName>
+    <channels>5</channels>
+    <lowestNote>36</lowestNote>
+    <highestNote>51</highestNote>
+    <highestPreset>0</highestPreset>
+    <preferredPreset>0</preferredPreset>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>false</available>
+    <initialized>false</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>5</defaultChannel>
+  </instruments>
+  <instruments>
+    <id>9</id>
+    <controlCodes>
+      <id>170</id>
+      <name>Wave 2 Pitch</name>
+      <code>64</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>171</id>
+      <name>Wave 2 Level</name>
+      <code>65</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>172</id>
+      <name>Wave 2 Position</name>
+      <code>66</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>173</id>
+      <name>Oscillator Pitch</name>
+      <code>67</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>174</id>
+      <name>Oscillator Level</name>
+      <code>68</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>175</id>
+      <name>Oscillator PWM</name>
+      <code>69</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>176</id>
+      <name>Filter 1 Cutoff</name>
+      <code>40</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>177</id>
+      <name>Filter 1 Resonance</name>
+      <code>41</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>178</id>
+      <name>Filter 2 Cutoff</name>
+      <code>42</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>179</id>
+      <name>Filter 2 Resonance</name>
+      <code>43</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>180</id>
+      <name>Envelope 1 Attack</name>
+      <code>44</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>181</id>
+      <name>Envelope 1 Decay</name>
+      <code>45</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>182</id>
+      <name>Envelope 1 Sustain</name>
+      <code>46</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>183</id>
+      <name>Envelope 2 Attack</name>
+      <code>47</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>184</id>
+      <name>Envelope 2 Decay</name>
+      <code>48</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>185</id>
+      <name>Envelope 2 Sustain</name>
+      <code>49</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>186</id>
+      <name>LFO 1 Rate</name>
+      <code>50</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>187</id>
+      <name>LFO 1 Depth</name>
+      <code>51</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>188</id>
+      <name>LFO 2 Rate</name>
+      <code>52</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>189</id>
+      <name>LFO 2 Depth</name>
+      <code>53</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>190</id>
+      <name>Phaser Rate</name>
+      <code>54</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>191</id>
+      <name>Delay Wet Amount</name>
+      <code>55</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>192</id>
+      <name>Delay Feedback</name>
+      <code>56</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>193</id>
+      <name>Delay Cutoff</name>
+      <code>57</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>194</id>
+      <name>X Mod</name>
+      <code>59</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>195</id>
+      <name>Y Mod</name>
+      <code>60</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>196</id>
+      <name>Wave 1 Pitch</name>
+      <code>61</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>197</id>
+      <name>Wave 1 Level</name>
+      <code>62</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>198</id>
+      <name>Wave 1 Position</name>
+      <code>63</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>320</id>
+      <name>Wave 2 Pitch</name>
+      <code>64</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>321</id>
+      <name>Wave 2 Level</name>
+      <code>65</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>322</id>
+      <name>Wave 2 Position</name>
+      <code>66</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>323</id>
+      <name>Oscillator Pitch</name>
+      <code>67</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>324</id>
+      <name>Oscillator Level</name>
+      <code>68</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>325</id>
+      <name>Oscillator PWM</name>
+      <code>69</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>326</id>
+      <name>Filter 1 Cutoff</name>
+      <code>40</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>327</id>
+      <name>Filter 1 Resonance</name>
+      <code>41</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>328</id>
+      <name>Filter 2 Cutoff</name>
+      <code>42</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>329</id>
+      <name>Filter 2 Resonance</name>
+      <code>43</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>330</id>
+      <name>Envelope 1 Attack</name>
+      <code>44</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>331</id>
+      <name>Envelope 1 Decay</name>
+      <code>45</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>332</id>
+      <name>Envelope 1 Sustain</name>
+      <code>46</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>333</id>
+      <name>Envelope 2 Attack</name>
+      <code>47</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>334</id>
+      <name>Envelope 2 Decay</name>
+      <code>48</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>335</id>
+      <name>Envelope 2 Sustain</name>
+      <code>49</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>336</id>
+      <name>LFO 1 Rate</name>
+      <code>50</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>337</id>
+      <name>LFO 1 Depth</name>
+      <code>51</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>338</id>
+      <name>LFO 2 Rate</name>
+      <code>52</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>339</id>
+      <name>LFO 2 Depth</name>
+      <code>53</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>340</id>
+      <name>Phaser Rate</name>
+      <code>54</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>341</id>
+      <name>Delay Wet Amount</name>
+      <code>55</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>342</id>
+      <name>Delay Feedback</name>
+      <code>56</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>343</id>
+      <name>Delay Cutoff</name>
+      <code>57</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>344</id>
+      <name>X Mod</name>
+      <code>59</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>345</id>
+      <name>Y Mod</name>
+      <code>60</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>346</id>
+      <name>Wave 1 Pitch</name>
+      <code>61</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>347</id>
+      <name>Wave 1 Level</name>
+      <code>62</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>348</id>
+      <name>Wave 1 Position</name>
+      <code>63</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>470</id>
+      <name>Wave 2 Pitch</name>
+      <code>64</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>471</id>
+      <name>Wave 2 Level</name>
+      <code>65</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>472</id>
+      <name>Wave 2 Position</name>
+      <code>66</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>473</id>
+      <name>Oscillator Pitch</name>
+      <code>67</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>474</id>
+      <name>Oscillator Level</name>
+      <code>68</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>475</id>
+      <name>Oscillator PWM</name>
+      <code>69</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>476</id>
+      <name>Filter 1 Cutoff</name>
+      <code>40</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>477</id>
+      <name>Filter 1 Resonance</name>
+      <code>41</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>478</id>
+      <name>Filter 2 Cutoff</name>
+      <code>42</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>479</id>
+      <name>Filter 2 Resonance</name>
+      <code>43</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>480</id>
+      <name>Envelope 1 Attack</name>
+      <code>44</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>481</id>
+      <name>Envelope 1 Decay</name>
+      <code>45</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>482</id>
+      <name>Envelope 1 Sustain</name>
+      <code>46</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>483</id>
+      <name>Envelope 2 Attack</name>
+      <code>47</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>484</id>
+      <name>Envelope 2 Decay</name>
+      <code>48</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>485</id>
+      <name>Envelope 2 Sustain</name>
+      <code>49</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>486</id>
+      <name>LFO 1 Rate</name>
+      <code>50</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>487</id>
+      <name>LFO 1 Depth</name>
+      <code>51</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>488</id>
+      <name>LFO 2 Rate</name>
+      <code>52</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>489</id>
+      <name>LFO 2 Depth</name>
+      <code>53</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>490</id>
+      <name>Phaser Rate</name>
+      <code>54</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>491</id>
+      <name>Delay Wet Amount</name>
+      <code>55</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>492</id>
+      <name>Delay Feedback</name>
+      <code>56</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>493</id>
+      <name>Delay Cutoff</name>
+      <code>57</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>494</id>
+      <name>X Mod</name>
+      <code>59</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>495</id>
+      <name>Y Mod</name>
+      <code>60</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>496</id>
+      <name>Wave 1 Pitch</name>
+      <code>61</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>497</id>
+      <name>Wave 1 Level</name>
+      <code>62</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>498</id>
+      <name>Wave 1 Position</name>
+      <code>63</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>Fireball</name>
+    <deviceName>MRCC 880</deviceName>
+    <channels>3</channels>
+    <lowestNote>0</lowestNote>
+    <highestNote>0</highestNote>
+    <highestPreset>0</highestPreset>
+    <preferredPreset>0</preferredPreset>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>false</available>
+    <initialized>false</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>3</defaultChannel>
+  </instruments>
+  <instruments>
+    <id>10</id>
+    <controlCodes>
+      <id>19</id>
+      <name>Wave 2 Pitch</name>
+      <code>64</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>20</id>
+      <name>Wave 2 Level</name>
+      <code>65</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>21</id>
+      <name>Wave 2 Position</name>
+      <code>66</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>22</id>
+      <name>Oscillator Pitch</name>
+      <code>67</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>23</id>
+      <name>Oscillator Level</name>
+      <code>68</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>24</id>
+      <name>Oscillator PWM</name>
+      <code>69</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>25</id>
+      <name>Filter 1 Cutoff</name>
+      <code>40</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>26</id>
+      <name>Filter 1 Resonance</name>
+      <code>41</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>27</id>
+      <name>Filter 2 Cutoff</name>
+      <code>42</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>28</id>
+      <name>Filter 2 Resonance</name>
+      <code>43</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>29</id>
+      <name>Envelope 1 Attack</name>
+      <code>44</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>30</id>
+      <name>Envelope 1 Decay</name>
+      <code>45</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>31</id>
+      <name>Envelope 1 Sustain</name>
+      <code>46</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>32</id>
+      <name>Envelope 2 Attack</name>
+      <code>47</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>33</id>
+      <name>Envelope 2 Decay</name>
+      <code>48</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>34</id>
+      <name>Envelope 2 Sustain</name>
+      <code>49</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>35</id>
+      <name>LFO 1 Rate</name>
+      <code>50</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>36</id>
+      <name>LFO 1 Depth</name>
+      <code>51</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>37</id>
+      <name>LFO 2 Rate</name>
+      <code>52</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>38</id>
+      <name>LFO 2 Depth</name>
+      <code>53</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>39</id>
+      <name>Phaser Rate</name>
+      <code>54</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>40</id>
+      <name>Delay Wet Amount</name>
+      <code>55</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>41</id>
+      <name>Delay Feedback</name>
+      <code>56</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>42</id>
+      <name>Delay Cutoff</name>
+      <code>57</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>43</id>
+      <name>X Mod</name>
+      <code>59</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>44</id>
+      <name>Y Mod</name>
+      <code>60</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>45</id>
+      <name>Wave 1 Pitch</name>
+      <code>61</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>46</id>
+      <name>Wave 1 Level</name>
+      <code>62</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>47</id>
+      <name>Wave 1 Position</name>
+      <code>63</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>199</id>
+      <name>Glide</name>
+      <code>5</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>200</id>
+      <name>Cycling Env rise</name>
+      <code>102</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>201</id>
+      <name>Cycling Env fall</name>
+      <code>103</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>202</id>
+      <name>Type</name>
+      <code>9</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>203</id>
+      <name>Wave</name>
+      <code>10</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>204</id>
+      <name>Timbre</name>
+      <code>12</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>205</id>
+      <name>Shape</name>
+      <code>13</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>206</id>
+      <name>Filter Resonance</name>
+      <code>83</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>207</id>
+      <name>Filter Cutoff</name>
+      <code>23</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>208</id>
+      <name>Cycling Env amount</name>
+      <code>24</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>209</id>
+      <name>ARP/SEQ rate (free)</name>
+      <code>91</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>210</id>
+      <name>Cycling Env hold</name>
+      <code>28</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>211</id>
+      <name>ARP/SEQ rate (sync)</name>
+      <code>92</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>212</id>
+      <name>LFO rate (free)</name>
+      <code>93</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>213</id>
+      <name>LFO rate (sync)</name>
+      <code>94</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>349</id>
+      <name>Glide</name>
+      <code>5</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>350</id>
+      <name>Cycling Env rise</name>
+      <code>102</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>351</id>
+      <name>Cycling Env fall</name>
+      <code>103</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>352</id>
+      <name>Type</name>
+      <code>9</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>353</id>
+      <name>Wave</name>
+      <code>10</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>354</id>
+      <name>Timbre</name>
+      <code>12</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>355</id>
+      <name>Shape</name>
+      <code>13</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>356</id>
+      <name>Filter Resonance</name>
+      <code>83</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>357</id>
+      <name>Filter Cutoff</name>
+      <code>23</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>358</id>
+      <name>Cycling Env amount</name>
+      <code>24</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>359</id>
+      <name>ARP/SEQ rate (free)</name>
+      <code>91</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>360</id>
+      <name>Cycling Env hold</name>
+      <code>28</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>361</id>
+      <name>ARP/SEQ rate (sync)</name>
+      <code>92</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>362</id>
+      <name>LFO rate (free)</name>
+      <code>93</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>363</id>
+      <name>LFO rate (sync)</name>
+      <code>94</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>499</id>
+      <name>Glide</name>
+      <code>5</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>500</id>
+      <name>Cycling Env rise</name>
+      <code>102</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>501</id>
+      <name>Cycling Env fall</name>
+      <code>103</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>502</id>
+      <name>Type</name>
+      <code>9</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>503</id>
+      <name>Wave</name>
+      <code>10</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>504</id>
+      <name>Timbre</name>
+      <code>12</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>505</id>
+      <name>Shape</name>
+      <code>13</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>506</id>
+      <name>Filter Resonance</name>
+      <code>83</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>507</id>
+      <name>Filter Cutoff</name>
+      <code>23</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>508</id>
+      <name>Cycling Env amount</name>
+      <code>24</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>509</id>
+      <name>ARP/SEQ rate (free)</name>
+      <code>91</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>510</id>
+      <name>Cycling Env hold</name>
+      <code>28</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>511</id>
+      <name>ARP/SEQ rate (sync)</name>
+      <code>92</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>512</id>
+      <name>LFO rate (free)</name>
+      <code>93</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>513</id>
+      <name>LFO rate (sync)</name>
+      <code>94</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>MicroFreak</name>
+    <deviceName>MRCC 880</deviceName>
+    <channels>2</channels>
+    <lowestNote>0</lowestNote>
+    <highestNote>0</highestNote>
+    <highestPreset>0</highestPreset>
+    <preferredPreset>0</preferredPreset>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>false</available>
+    <initialized>false</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>2</defaultChannel>
+  </instruments>
+  <instruments>
+    <id>11</id>
+    <controlCodes>
+      <id>48</id>
+      <name>Glide</name>
+      <code>5</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>49</id>
+      <name>Cycling Env rise</name>
+      <code>102</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>50</id>
+      <name>Cycling Env fall</name>
+      <code>103</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>51</id>
+      <name>Type</name>
+      <code>9</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>52</id>
+      <name>Wave</name>
+      <code>10</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>53</id>
+      <name>Timbre</name>
+      <code>12</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>54</id>
+      <name>Shape</name>
+      <code>13</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>55</id>
+      <name>Filter Resonance</name>
+      <code>83</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>56</id>
+      <name>Filter Cutoff</name>
+      <code>23</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>57</id>
+      <name>Cycling Env amount</name>
+      <code>24</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>58</id>
+      <name>ARP/SEQ rate (free)</name>
+      <code>91</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>59</id>
+      <name>Cycling Env hold</name>
+      <code>28</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>60</id>
+      <name>ARP/SEQ rate (sync)</name>
+      <code>92</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>61</id>
+      <name>LFO rate (free)</name>
+      <code>93</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>62</id>
+      <name>LFO rate (sync)</name>
+      <code>94</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>214</id>
+      <name>Kick Pitch</name>
+      <code>1</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>215</id>
+      <name>Kick Bend</name>
+      <code>2</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>216</id>
+      <name>Kick Snap</name>
+      <code>3</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>217</id>
+      <name>Kick Filter</name>
+      <code>4</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>218</id>
+      <name>Kick Decay</name>
+      <code>12</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>219</id>
+      <name>Kick Time</name>
+      <code>13</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>220</id>
+      <name>Kick OS/Wave</name>
+      <code>14</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>221</id>
+      <name>Kick Distortion</name>
+      <code>15</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>222</id>
+      <name>Snare Pitch</name>
+      <code>16</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>223</id>
+      <name>Snare Bend</name>
+      <code>17</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>224</id>
+      <name>Snare Snap</name>
+      <code>18</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>225</id>
+      <name>Snare Filter</name>
+      <code>19</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>226</id>
+      <name>Snare Decay</name>
+      <code>20</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>227</id>
+      <name>Snare Time</name>
+      <code>21</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>228</id>
+      <name>Snare OS/Wave</name>
+      <code>22</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>229</id>
+      <name>Snare Distortion</name>
+      <code>23</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>230</id>
+      <name>Closed Hat Pitch</name>
+      <code>24</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>231</id>
+      <name>Closed Hat Bend</name>
+      <code>25</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>232</id>
+      <name>Closed Hat Snap</name>
+      <code>26</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>233</id>
+      <name>Closed Hat Filter</name>
+      <code>27</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>234</id>
+      <name>Closed Hat Decay</name>
+      <code>28</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>235</id>
+      <name>Closed Hat Time</name>
+      <code>29</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>236</id>
+      <name>Closed Hat OS/Wave</name>
+      <code>30</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>237</id>
+      <name>Closed Hat Distortion</name>
+      <code>31</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>238</id>
+      <name>Open Hat Pitch</name>
+      <code>32</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>239</id>
+      <name>Open Hat Bend</name>
+      <code>33</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>240</id>
+      <name>Open Hat Snap</name>
+      <code>34</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>241</id>
+      <name>Open Hat Filter</name>
+      <code>35</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>242</id>
+      <name>Open Hat Decay</name>
+      <code>36</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>243</id>
+      <name>Open Hat Time</name>
+      <code>37</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>244</id>
+      <name>Open Hat OS/Wave</name>
+      <code>38</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>245</id>
+      <name>Open Hat Distortion</name>
+      <code>39</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>246</id>
+      <name>Slice Pitch</name>
+      <code>40</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>247</id>
+      <name>Slice Bend</name>
+      <code>41</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>248</id>
+      <name>Slice Snap/Slice</name>
+      <code>42</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>249</id>
+      <name>Slice Filter</name>
+      <code>43</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>250</id>
+      <name>Slice Decay/Hold</name>
+      <code>44</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>251</id>
+      <name>Fx Perc Pitch</name>
+      <code>48</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>252</id>
+      <name>Fx Perc Bend</name>
+      <code>49</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>253</id>
+      <name>Fx Perc Snap</name>
+      <code>50</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>254</id>
+      <name>Fx Perc Filter</name>
+      <code>51</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>255</id>
+      <name>Fx Perc Decay</name>
+      <code>52</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>256</id>
+      <name>Fx Perc Time</name>
+      <code>53</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>257</id>
+      <name>Fx Perc OS/Wave</name>
+      <code>54</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>258</id>
+      <name>Fx Perc Distortion</name>
+      <code>55</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>259</id>
+      <name>Tom Pitch</name>
+      <code>56</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>260</id>
+      <name>Tom Bend</name>
+      <code>57</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>261</id>
+      <name>Tom Snap</name>
+      <code>58</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>262</id>
+      <name>Tom Filter</name>
+      <code>59</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>263</id>
+      <name>Tom Decay</name>
+      <code>60</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>264</id>
+      <name>Tom Time</name>
+      <code>61</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>265</id>
+      <name>Tom OS/Wave</name>
+      <code>62</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>266</id>
+      <name>Tom Distortion</name>
+      <code>63</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>267</id>
+      <name>Low Perc Bend</name>
+      <code>64</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>268</id>
+      <name>Low Perc Snap</name>
+      <code>66</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>269</id>
+      <name>Low Perc Filter</name>
+      <code>67</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>270</id>
+      <name>Low Perc Decay</name>
+      <code>68</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>271</id>
+      <name>Low Perc Time</name>
+      <code>69</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>272</id>
+      <name>Low Perc OS/Wave</name>
+      <code>70</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>273</id>
+      <name>Low Perc Distortion</name>
+      <code>71</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>514</id>
+      <name>Kick Pitch</name>
+      <code>1</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>515</id>
+      <name>Kick Bend</name>
+      <code>2</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>516</id>
+      <name>Kick Snap</name>
+      <code>3</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>517</id>
+      <name>Kick Filter</name>
+      <code>4</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>518</id>
+      <name>Kick Decay</name>
+      <code>12</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>519</id>
+      <name>Kick Time</name>
+      <code>13</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>520</id>
+      <name>Kick OS/Wave</name>
+      <code>14</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>521</id>
+      <name>Kick Distortion</name>
+      <code>15</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>522</id>
+      <name>Snare Pitch</name>
+      <code>16</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>523</id>
+      <name>Snare Bend</name>
+      <code>17</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>524</id>
+      <name>Snare Snap</name>
+      <code>18</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>525</id>
+      <name>Snare Filter</name>
+      <code>19</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>526</id>
+      <name>Snare Decay</name>
+      <code>20</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>527</id>
+      <name>Snare Time</name>
+      <code>21</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>528</id>
+      <name>Snare OS/Wave</name>
+      <code>22</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>529</id>
+      <name>Snare Distortion</name>
+      <code>23</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>530</id>
+      <name>Closed Hat Pitch</name>
+      <code>24</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>531</id>
+      <name>Closed Hat Bend</name>
+      <code>25</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>532</id>
+      <name>Closed Hat Snap</name>
+      <code>26</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>533</id>
+      <name>Closed Hat Filter</name>
+      <code>27</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>534</id>
+      <name>Closed Hat Decay</name>
+      <code>28</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>535</id>
+      <name>Closed Hat Time</name>
+      <code>29</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>536</id>
+      <name>Closed Hat OS/Wave</name>
+      <code>30</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>537</id>
+      <name>Closed Hat Distortion</name>
+      <code>31</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>538</id>
+      <name>Open Hat Pitch</name>
+      <code>32</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>539</id>
+      <name>Open Hat Bend</name>
+      <code>33</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>540</id>
+      <name>Open Hat Snap</name>
+      <code>34</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>541</id>
+      <name>Open Hat Filter</name>
+      <code>35</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>542</id>
+      <name>Open Hat Decay</name>
+      <code>36</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>543</id>
+      <name>Open Hat Time</name>
+      <code>37</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>544</id>
+      <name>Open Hat OS/Wave</name>
+      <code>38</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>545</id>
+      <name>Open Hat Distortion</name>
+      <code>39</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>546</id>
+      <name>Slice Pitch</name>
+      <code>40</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>547</id>
+      <name>Slice Bend</name>
+      <code>41</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>548</id>
+      <name>Slice Snap/Slice</name>
+      <code>42</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>549</id>
+      <name>Slice Filter</name>
+      <code>43</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>550</id>
+      <name>Slice Decay/Hold</name>
+      <code>44</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>551</id>
+      <name>Fx Perc Pitch</name>
+      <code>48</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>552</id>
+      <name>Fx Perc Bend</name>
+      <code>49</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>553</id>
+      <name>Fx Perc Snap</name>
+      <code>50</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>554</id>
+      <name>Fx Perc Filter</name>
+      <code>51</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>555</id>
+      <name>Fx Perc Decay</name>
+      <code>52</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>556</id>
+      <name>Fx Perc Time</name>
+      <code>53</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>557</id>
+      <name>Fx Perc OS/Wave</name>
+      <code>54</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>558</id>
+      <name>Fx Perc Distortion</name>
+      <code>55</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>559</id>
+      <name>Tom Pitch</name>
+      <code>56</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>560</id>
+      <name>Tom Bend</name>
+      <code>57</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>561</id>
+      <name>Tom Snap</name>
+      <code>58</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>562</id>
+      <name>Tom Filter</name>
+      <code>59</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>563</id>
+      <name>Tom Decay</name>
+      <code>60</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>564</id>
+      <name>Tom Time</name>
+      <code>61</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>565</id>
+      <name>Tom OS/Wave</name>
+      <code>62</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>566</id>
+      <name>Tom Distortion</name>
+      <code>63</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>567</id>
+      <name>Low Perc Bend</name>
+      <code>64</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>568</id>
+      <name>Low Perc Snap</name>
+      <code>66</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>569</id>
+      <name>Low Perc Filter</name>
+      <code>67</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>570</id>
+      <name>Low Perc Decay</name>
+      <code>68</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>571</id>
+      <name>Low Perc Time</name>
+      <code>69</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>572</id>
+      <name>Low Perc OS/Wave</name>
+      <code>70</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <controlCodes>
+      <id>573</id>
+      <name>Low Perc Distortion</name>
+      <code>71</code>
+      <lowerBound/>
+      <upperBound/>
+      <pad/>
+      <binary/>
+    </controlCodes>
+    <assignments/>
+    <boundaries/>
+    <captions/>
+    <name>Razzmatazz</name>
+    <deviceName>MRCC 880</deviceName>
+    <channels>9</channels>
+    <lowestNote>36</lowestNote>
+    <highestNote>43</highestNote>
+    <highestPreset>0</highestPreset>
+    <preferredPreset>0</preferredPreset>
+    <hasAssignments/>
+    <playerClassName/>
+    <available>false</available>
+    <initialized>false</initialized>
+    <assignmentCount>0</assignmentCount>
+    <multiTimbral>false</multiTimbral>
+    <defaultChannel>9</defaultChannel>
+  </instruments>
+</LinkedHashMap>

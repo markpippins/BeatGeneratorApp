@@ -5,6 +5,17 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
+import com.angrysurfer.core.api.Database;
+import com.angrysurfer.core.api.db.Delete;
+import com.angrysurfer.core.api.db.FindAll;
+import com.angrysurfer.core.api.db.FindOne;
+import com.angrysurfer.core.api.db.FindSet;
+import com.angrysurfer.core.api.db.Max;
+import com.angrysurfer.core.api.db.Min;
+import com.angrysurfer.core.api.db.Next;
+import com.angrysurfer.core.api.db.Prior;
+import com.angrysurfer.core.api.db.Save;
+// import com.angrysurfer.core.IDBService;
 import com.angrysurfer.core.model.Pad;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Rule;
@@ -16,15 +27,6 @@ import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.model.player.IPlayer;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.model.ui.Caption;
-import com.angrysurfer.core.util.db.Delete;
-import com.angrysurfer.core.util.db.FindAll;
-import com.angrysurfer.core.util.db.FindOne;
-import com.angrysurfer.core.util.db.FindSet;
-import com.angrysurfer.core.util.db.Max;
-import com.angrysurfer.core.util.db.Min;
-import com.angrysurfer.core.util.db.Next;
-import com.angrysurfer.core.util.db.Prior;
-import com.angrysurfer.core.util.db.Save;
 import com.angrysurfer.spring.repo.Captions;
 import com.angrysurfer.spring.repo.ControlCodes;
 import com.angrysurfer.spring.repo.Instruments;
@@ -42,7 +44,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Service
-public class DBService {
+public class HibernateService implements Database {
 
     private Instruments instrumentRepository;
     private Pads padRepository;
@@ -55,7 +57,7 @@ public class DBService {
     private ControlCodes controlCodeRepository;
     private Captions captionRepository;
 
-    public DBService(Strikes strikeRepository,
+    public HibernateService(Strikes strikeRepository,
             Rules ruleRepository, Tickers tickerRepo,
             Instruments InstrumentRepository,
             Captions captionRepository,
@@ -162,6 +164,7 @@ public class DBService {
     }
 
     // Caption related public methods
+
     public Caption findCaptionById(Long id) {
         return captionFindOne.find(id).orElse(null);
     }
@@ -179,6 +182,7 @@ public class DBService {
     }
 
     // ControlCode related public methods
+
     public ControlCode findControlCodeById(Long id) {
         return controlCodeFindOne.find(id).orElse(null);
     }
@@ -196,6 +200,7 @@ public class DBService {
     }
 
     // Instrument related public methods
+
     public Instrument findInstrumentById(Long id) {
         return instrumentFindOne.find(id).orElse(null);
     }
@@ -213,6 +218,7 @@ public class DBService {
     }
 
     // Pad related public methods
+
     public Pad findPadById(Long id) {
         return padFindOne.find(id).orElse(null);
     }
@@ -230,6 +236,7 @@ public class DBService {
     }
 
     // Pattern related public methods
+
     public Pattern findPatternById(Long id) {
         return patternFindOne.find(id).orElse(null);
     }
@@ -251,6 +258,7 @@ public class DBService {
     }
 
     // Rule related public methods
+
     public Rule findRuleById(Long id) {
         return ruleFindOne.find(id).orElse(null);
     }
@@ -268,6 +276,7 @@ public class DBService {
     }
 
     // Song related public methods
+
     public Song findSongById(Long id) {
         return songFindOne.find(id).orElse(null);
     }
@@ -301,6 +310,7 @@ public class DBService {
     }
 
     // Step related public methods
+
     public Step findStepById(Long id) {
         return stepFindOne.find(id).orElse(null);
     }
@@ -318,6 +328,7 @@ public class DBService {
     }
 
     // Strike related public methods
+
     public Strike findStrikeById(Long id) {
         return strikeFindOne.find(id).orElse(null);
     }
@@ -341,6 +352,7 @@ public class DBService {
     }
 
     // Ticker related public methods
+
     public Ticker findTickerById(Long id) {
         return tickerFindOne.find(id).orElse(null);
     }

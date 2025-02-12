@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.angrysurfer.core.api.Database;
 import com.angrysurfer.core.engine.TickerEngine;
 import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.util.ClockSource;
@@ -23,13 +24,13 @@ public class TickerService {
 
     private TickerEngine engine;
 
-    private DBService dbUtils;
+    private Database dbUtils;
 
     private SongService songService;
 
     InstrumentService instrumentService;
 
-    public TickerService(DBService dbUtils, SongService songService, InstrumentService instrumentService) {
+    public TickerService(Database dbUtils, SongService songService, InstrumentService instrumentService) {
         this.dbUtils = dbUtils;
         this.songService = songService;
         this.instrumentService = instrumentService;

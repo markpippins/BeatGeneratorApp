@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model.midi;
+package com.angrysurfer.beatsui.mock;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,12 +21,13 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.Pad;
-import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.converter.IntegerArrayConverter;
+import com.angrysurfer.core.model.midi.MidiMessage;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -49,6 +50,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "instrument")
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Instrument implements Serializable {
 
     static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
@@ -66,16 +68,14 @@ public class Instrument implements Serializable {
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
-    @JsonManagedReference
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "instrument_control_code", joinColumns = {
             @JoinColumn(name = "instrument_id") }, inverseJoinColumns = {
                     @JoinColumn(name = "control_code_id") })
     private List<ControlCode> controlCodes = new ArrayList<>();
 
-    @JsonManagedReference
     @ManyToMany
-    @JoinTable(name = "instrument_pad", joinColumns = @JoinColumn(name = "pad_id"), inverseJoinColumns = @JoinColumn(name = "instrument_id"))
+    @JoinTable(name = "instrument_pad", joinColumns = @JoinColumn(name = "instrument_id"), inverseJoinColumns = @JoinColumn(name = "pad_id"))
     private Set<Pad> pads = new HashSet<>();
 
     @Transient
@@ -118,9 +118,7 @@ public class Instrument implements Serializable {
 
     private Boolean available = false;
 
-    @JsonManagedReference
-    @OneToMany(mappedBy = "instrument")
-    private Set<Pattern> patterns;
+    // private Set<Pattern> patterns;
 
     public Instrument() {
 
@@ -303,5 +301,13 @@ public class Instrument implements Serializable {
 
     private String lookupTarget(int key) {
         return assignments.getOrDefault(key, Integer.toString(key));
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Instrument{id=%d, name='%s', deviceName='%s', channels=%s, controlCodes=%s, pads=%s}",
+                id, name, deviceName, Arrays.toString(channels),
+                controlCodes.stream().map(ControlCode::toString).toList(),
+                pads.stream().map(Pad::toString).toList());
     }
 }
