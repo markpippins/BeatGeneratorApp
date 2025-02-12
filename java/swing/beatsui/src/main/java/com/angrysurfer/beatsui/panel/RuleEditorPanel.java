@@ -1,39 +1,42 @@
 package com.angrysurfer.beatsui.panel;
 
 import javax.swing.*;
+
+import com.angrysurfer.beatsui.mock.Rule;
+
 import java.awt.*;
 
 public class RuleEditorPanel extends JPanel {
-    private final MockRule rule;
+    private final Rule rule;
     private final JComboBox<String> operatorCombo;
     private final JComboBox<String> comparisonCombo;
     private final JSpinner valueSpinner;
     private final JSpinner partSpinner;
 
-    public RuleEditorPanel(MockRule rule) {
+    public RuleEditorPanel(Rule rule) {
         this.rule = rule;
         setLayout(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        operatorCombo = new JComboBox<>(MockRule.OPERATORS);
+        operatorCombo = new JComboBox<>(Rule.OPERATORS);
         operatorCombo.setSelectedIndex(rule.getOperator());
 
-        comparisonCombo = new JComboBox<>(MockRule.COMPARISONS);
+        comparisonCombo = new JComboBox<>(Rule.COMPARISONS);
         comparisonCombo.setSelectedIndex(rule.getComparison());
 
         // Fix ambiguous constructor calls by explicitly specifying types
         valueSpinner = new JSpinner(new SpinnerNumberModel(
-            rule.getValue().doubleValue(),  // current value
-            0.0d,                          // minimum value
-            100.0d,                        // maximum value
-            1.0d                           // step size
+                rule.getValue().doubleValue(), // current value
+                0.0d, // minimum value
+                100.0d, // maximum value
+                1.0d // step size
         ));
-        
+
         partSpinner = new JSpinner(new SpinnerNumberModel(
-            rule.getPart().intValue(),     // current value
-            0,                             // minimum value
-            16,                            // maximum value
-            1                              // step size
+                rule.getPart().intValue(), // current value
+                0, // minimum value
+                16, // maximum value
+                1 // step size
         ));
 
         layoutComponents();
@@ -53,7 +56,7 @@ public class RuleEditorPanel extends JPanel {
     }
 
     private void addComponent(String label, JComponent component, int x, int y, GridBagConstraints gbc) {
-        gbc = (GridBagConstraints)gbc.clone();
+        gbc = (GridBagConstraints) gbc.clone();
         gbc.gridx = x;
         gbc.gridy = y;
 
@@ -63,7 +66,7 @@ public class RuleEditorPanel extends JPanel {
         add(panel, gbc);
     }
 
-    public MockRule getUpdatedRule() {
+    public Rule getUpdatedRule() {
         rule.setOperator(operatorCombo.getSelectedIndex());
         rule.setComparison(comparisonCombo.getSelectedIndex());
         rule.setValue((Double) valueSpinner.getValue());

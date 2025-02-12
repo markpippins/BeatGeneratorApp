@@ -88,4 +88,27 @@ public class Strike extends AbstractPlayer implements IPlayer {
             new Ratchet(this, i * numberOfTicksToWait, getRatchetInterval(), 0);
         });
     }
+
+    public Object[] toRow() {
+        return new Object[] {
+            getName(),
+            getChannel(),
+            getSwing(),
+            getLevel(),
+            getNote(),
+            getMinVelocity(),
+            getMaxVelocity(),
+            getPreset(),
+            getStickyPreset(),
+            getProbability(),
+            getRandomDegree(),
+            getRatchetCount(),
+            getRatchetInterval(),
+            getUseInternalBeats(),
+            getUseInternalBars(),
+            getPanPosition(),
+            getPreserveOnPurge(),
+            getSparse()
+        };
+    }
 }

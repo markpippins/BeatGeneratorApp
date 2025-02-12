@@ -24,6 +24,7 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Comparison;
+import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
 import com.angrysurfer.core.util.Operator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -43,8 +44,10 @@ import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
+
 @Setter
+@Getter
+
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public abstract class AbstractPlayer implements Callable<Boolean>, Serializable, IPlayer {
@@ -64,13 +67,13 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable,
     private Long minVelocity = 100L;
     private Long maxVelocity = 110L;
     private Long preset = 1L;
-    private Boolean stickyPreset;
+    private Boolean stickyPreset = false;
     private Long probability = 100L;
     private Long randomDegree = 0L;
     private Long ratchetCount = 0L;
     private Long ratchetInterval = 1L;
-    private Long internalBars;
-    private Long internalBeats;
+    private Integer internalBars  = Constants.DEFAULT_BAR_COUNT;
+    private Integer internalBeats = Constants.DEFAULT_BEATS_PER_BAR;
     private Boolean useInternalBeats = false;
     private Boolean useInternalBars = false;
     private Long panPosition = 63L;

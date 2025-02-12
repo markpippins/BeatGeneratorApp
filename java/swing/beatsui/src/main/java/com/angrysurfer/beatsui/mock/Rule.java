@@ -33,6 +33,17 @@ public class Rule implements Serializable {
     @JsonIgnore
     private transient IPlayer player;
 
+    // Update COMPARISONS array to match Comparison interface
+    public static final String[] COMPARISONS = {
+            "=", ">", "<", "%", "!="
+    };
+
+    // Update OPERATORS array to match Operator interface
+    public static final String[] OPERATORS = {
+            "Tick", "Beat", "Bar", "Part", "Beat Duration",
+            "Tick Count", "Beat Count", "Bar Count", "Part Count"
+    };
+
     public Rule() {
 
     }
@@ -74,5 +85,33 @@ public class Rule implements Serializable {
                 (this.getOperator() == rule.getOperator()));
         logger.debug("isEqualTo() - comparing with rule: {}, result: {}", rule.getId(), result);
         return result;
+    }
+
+    public Object[] toRow() {
+        return new Object[] {
+            OPERATORS[getOperator()],
+            COMPARISONS[getComparison()],
+            getValue(),
+            getPart()
+        };
+    }
+
+    public static Rule fromRow(Object[] row) {
+        Rule rule = new Rule();
+        for (int i = 0; i < OPERATORS.length; i++) {
+            if (OPERATORS[i].equals(row[0])) {
+                rule.setOperator(i);
+                break;
+            }
+        }
+        for (int i = 0; i < COMPARISONS.length; i++) {
+            if (COMPARISONS[i].equals(row[1])) {
+                rule.setComparison(i);
+                break;
+            }
+        }
+        rule.setValue((Double) row[2]);
+        rule.setPart((Integer) row[3]);
+        return rule;
     }
 }

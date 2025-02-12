@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.util.Comparison;
+import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
 import com.angrysurfer.core.util.Operator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -46,26 +47,26 @@ public abstract class AbstractPlayer implements Callable<Boolean>, Serializable,
     @Column(name = "id", nullable = false)
     private Long id;
 
-    private String name;
-    private int channel;
+    private String name = "Player";
+    private int channel = 0;
     private Long swing = 0L;
     private Long level = 100L;
     private Long note = 60L;
     private Long minVelocity = 100L;
     private Long maxVelocity = 110L;
     private Long preset = 1L;
-    private Boolean stickyPreset;
+    private Boolean stickyPreset = false;
     private Long probability = 100L;
     private Long randomDegree = 0L;
     private Long ratchetCount = 0L;
     private Long ratchetInterval = 1L;
-    private Long internalBars;
-    private Long internalBeats;
+    private Integer internalBars = Constants.DEFAULT_BAR_COUNT;
+    private Integer internalBeats = Constants.DEFAULT_BEATS_PER_BAR;
     private Boolean useInternalBeats = false;
     private Boolean useInternalBars = false;
     private Long panPosition = 63L;
     private Boolean preserveOnPurge = false;
-    private double sparse;
+    private double sparse = 0.0;
 
     @JsonIgnore
     private Cycler skipCycler = new Cycler(0);

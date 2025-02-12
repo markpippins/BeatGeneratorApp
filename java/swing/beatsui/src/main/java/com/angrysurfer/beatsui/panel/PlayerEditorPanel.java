@@ -14,11 +14,12 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import java.awt.Dimension;
 
+import com.angrysurfer.beatsui.mock.Strike;
 import com.angrysurfer.beatsui.widget.Dial;
 import com.angrysurfer.beatsui.widget.ToggleSwitch;
 
 public class PlayerEditorPanel extends JPanel {
-    private final MockPlayer player;
+    private final Strike player;
     private final JTextField nameField;
     private final JComboBox<Integer> channelCombo;
     private final JComboBox<Integer> presetCombo;
@@ -49,16 +50,16 @@ public class PlayerEditorPanel extends JPanel {
     // New toggle
     private final ToggleSwitch accentSwitch;
 
-    public PlayerEditorPanel(MockPlayer player) {
+    public PlayerEditorPanel(Strike player) {
         this.player = player;
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         nameField = new JTextField(player.getName(), 20);
-        
+
         channelCombo = new JComboBox<>(createChannelOptions());
         channelCombo.setSelectedItem(player.getChannel());
-        
+
         presetCombo = new JComboBox<>(createPresetOptions());
         presetCombo.setSelectedItem(player.getPreset().intValue());
 
@@ -87,12 +88,12 @@ public class PlayerEditorPanel extends JPanel {
         beatFractionDial = createDial("Beat Fraction", player.getBeatFraction(), 1, 16);
         fadeInDial = createDial("Fade In", player.getFadeIn(), 0, 127);
         fadeOutDial = createDial("Fade Out", player.getFadeOut(), 0, 127);
-        
+
         // Initialize new toggle
         accentSwitch = createToggleSwitch("Accent", player.getAccent());
 
         layoutComponents();
-        
+
         setPreferredSize(new Dimension(800, 500));
     }
 
@@ -114,7 +115,7 @@ public class PlayerEditorPanel extends JPanel {
 
     private Dial createDial(String name, long value, int min, int max) {
         Dial dial = new Dial();
-        dial.setValue((int)value);
+        dial.setValue((int) value);
         return dial;
     }
 
@@ -134,7 +135,7 @@ public class PlayerEditorPanel extends JPanel {
 
         // Add name field (wider)
         addComponent("Name", nameField, 0, 0, 2, topGbc, topPanel);
-        
+
         // Add channel and preset combos
         addComponent("Channel", channelCombo, 2, 0, 1, topGbc, topPanel);
         addComponent("Preset", presetCombo, 3, 0, 1, topGbc, topPanel);
@@ -165,7 +166,7 @@ public class PlayerEditorPanel extends JPanel {
         addDialComponent("Int Bars", internalBarsDial, 1, 2, centerPanel);
         addDialComponent("Subdivisions", subDivisionsDial, 2, 2, centerPanel);
         addDialComponent("Beat Fraction", beatFractionDial, 3, 2, centerPanel);
-        
+
         // Fourth row (fade controls)
         addDialComponent("Fade In", fadeInDial, 0, 3, centerPanel);
         addDialComponent("Fade Out", fadeOutDial, 1, 3, centerPanel);
@@ -183,9 +184,9 @@ public class PlayerEditorPanel extends JPanel {
         addToggleComponent("Int Bars", useInternalBarsSwitch, 2, 0, bottomPanel);
         addToggleComponent("Preserve", preserveOnPurgeSwitch, 3, 0, bottomPanel);
         addToggleComponent("Accent", accentSwitch, 4, 0, bottomPanel);
-        
+
         // Add sparse spinner
-        GridBagConstraints sparseGbc = (GridBagConstraints)toggleGbc.clone();
+        GridBagConstraints sparseGbc = (GridBagConstraints) toggleGbc.clone();
         sparseGbc.fill = GridBagConstraints.HORIZONTAL;
         addComponent("Sparse", sparseSpinner, 5, 0, 1, sparseGbc, bottomPanel);
 
@@ -195,9 +196,9 @@ public class PlayerEditorPanel extends JPanel {
         add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    private void addComponent(String label, JComponent component, int x, int y, int width, 
-                            GridBagConstraints gbc, JPanel targetPanel) {
-        gbc = (GridBagConstraints)gbc.clone();
+    private void addComponent(String label, JComponent component, int x, int y, int width,
+            GridBagConstraints gbc, JPanel targetPanel) {
+        gbc = (GridBagConstraints) gbc.clone();
         gbc.gridx = x;
         gbc.gridy = y;
         gbc.gridwidth = width;
@@ -236,7 +237,7 @@ public class PlayerEditorPanel extends JPanel {
         targetPanel.add(panel, gbc);
     }
 
-    public MockPlayer getUpdatedPlayer() {
+    public Strike getUpdatedPlayer() {
         player.setName(nameField.getText());
         player.setChannel((Integer) channelCombo.getSelectedItem());
         player.setPreset(((Integer) presetCombo.getSelectedItem()).longValue());
@@ -250,25 +251,25 @@ public class PlayerEditorPanel extends JPanel {
         player.setRatchetCount((long) ratchetCountDial.getValue());
         player.setRatchetInterval((long) ratchetIntervalDial.getValue());
         player.setPanPosition((long) panPositionDial.getValue());
-        
+
         // New values
-        player.setInternalBeats((long) internalBeatsDial.getValue());
-        player.setInternalBars((long) internalBarsDial.getValue());
+        player.setInternalBeats(internalBeatsDial.getValue());
+        player.setInternalBars(internalBarsDial.getValue());
         player.setSubDivisions((long) subDivisionsDial.getValue());
         player.setBeatFraction((long) beatFractionDial.getValue());
         player.setFadeIn((long) fadeInDial.getValue());
         player.setFadeOut((long) fadeOutDial.getValue());
-        
+
         // Toggles
         player.setStickyPreset(stickyPresetSwitch.isSelected());
         player.setUseInternalBeats(useInternalBeatsSwitch.isSelected());
         player.setUseInternalBars(useInternalBarsSwitch.isSelected());
         player.setPreserveOnPurge(preserveOnPurgeSwitch.isSelected());
         player.setAccent(accentSwitch.isSelected());
-        
+
         // Spinner
         player.setSparse((double) sparseSpinner.getValue());
-        
+
         return player;
     }
 }

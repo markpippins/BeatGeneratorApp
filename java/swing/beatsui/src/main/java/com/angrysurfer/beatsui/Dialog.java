@@ -12,7 +12,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import com.angrysurfer.beatsui.panel.MockPlayer;
+import com.angrysurfer.beatsui.mock.Strike;
 import com.angrysurfer.beatsui.panel.PlayerEditorPanel;
 
 import lombok.Getter;
@@ -146,19 +146,19 @@ public class Dialog<T> extends JDialog {
     // Test method
     public static void main(String[] args) {
         // Create sample player
-        MockPlayer samplePlayer = MockPlayer.getSampleData();
+        Strike samplePlayer = new Strike();
 
         // Create test panel with sample player
         JPanel testPanel = new PlayerEditorPanel(samplePlayer);
 
         // Create and show dialog
-        Dialog<MockPlayer> dialog = new Dialog<>(samplePlayer, testPanel);
+        Dialog<Strike> dialog = new Dialog<>(samplePlayer, testPanel);
         dialog.setTitle("Edit Player: " + samplePlayer.getName());
         boolean result = dialog.showDialog();
 
         System.out.println("Dialog result: " + result);
         if (result) {
-            MockPlayer updatedPlayer = ((PlayerEditorPanel) testPanel).getUpdatedPlayer();
+            Strike updatedPlayer = ((PlayerEditorPanel) testPanel).getUpdatedPlayer();
             System.out.println("Updated player name: " + updatedPlayer.getName());
         }
     }

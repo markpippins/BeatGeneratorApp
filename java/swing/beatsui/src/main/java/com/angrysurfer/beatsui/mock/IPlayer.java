@@ -38,9 +38,9 @@ public interface IPlayer extends Callable<Boolean> {
 
     Long getRatchetInterval();
 
-    Long getInternalBars();
+    Integer getInternalBars();
 
-    Long getInternalBeats();
+    Integer getInternalBeats();
 
     Boolean getUseInternalBeats();
 
@@ -128,9 +128,9 @@ public interface IPlayer extends Callable<Boolean> {
 
     void setRatchetInterval(Long ratchetInterval);
 
-    void setInternalBars(Long internalBars);
+    void setInternalBars(Integer internalBars);
 
-    void setInternalBeats(Long internalBeats);
+    void setInternalBeats(Integer internalBeats);
 
     void setUseInternalBeats(Boolean useInternalBeats);
 

@@ -4,13 +4,17 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Objects;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
@@ -21,13 +25,11 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.Dialog;
-import javax.swing.JPopupMenu;
-import javax.swing.JMenuItem;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import com.angrysurfer.beatsui.mock.Rule;
+import com.angrysurfer.beatsui.mock.Strike;
 
 public class PlayerPanel extends JPanel {
 
@@ -120,7 +122,7 @@ public class PlayerPanel extends JPanel {
 
     private JPanel createPlayerButtonPanel() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        
+
         addPlayerButton = new JButton("Add");
         editPlayerButton = new JButton("Edit");
         deletePlayerButton = new JButton("Delete");
@@ -132,14 +134,14 @@ public class PlayerPanel extends JPanel {
         editPlayerButton.addActionListener(e -> {
             int row = leftTable.getSelectedRow();
             if (row >= 0) {
-                MockPlayer player = getPlayerFromRow(row);
+                Strike player = getPlayerFromRow(row);
                 showPlayerDialog(player);
             }
         });
         deletePlayerButton.addActionListener(e -> {
             int row = leftTable.getSelectedRow();
             if (row >= 0) {
-                ((DefaultTableModel)leftTable.getModel()).removeRow(row);
+                ((DefaultTableModel) leftTable.getModel()).removeRow(row);
             }
         });
 
@@ -152,7 +154,7 @@ public class PlayerPanel extends JPanel {
 
     private JPanel createRuleButtonPanel() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        
+
         addRuleButton = new JButton("Add");
         editRuleButton = new JButton("Edit");
         deleteRuleButton = new JButton("Delete");
@@ -164,14 +166,14 @@ public class PlayerPanel extends JPanel {
         editRuleButton.addActionListener(e -> {
             int row = rightTable.getSelectedRow();
             if (row >= 0) {
-                MockRule rule = getRuleFromRow(row);
+                Rule rule = getRuleFromRow(row);
                 showRuleDialog(rule);
             }
         });
         deleteRuleButton.addActionListener(e -> {
             int row = rightTable.getSelectedRow();
             if (row >= 0) {
-                ((DefaultTableModel)rightTable.getModel()).removeRow(row);
+                ((DefaultTableModel) rightTable.getModel()).removeRow(row);
             }
         });
 
@@ -211,18 +213,24 @@ public class PlayerPanel extends JPanel {
         };
 
         // Add sample data
-        MockPlayer[] samplePlayers = {
-                new MockPlayer("Kick", 1, 36),
-                new MockPlayer("Snare", 2, 38),
-                new MockPlayer("HiHat", 3, 42),
-                new MockPlayer("Crash", 4, 49),
-                new MockPlayer("Tom1", 5, 45),
-                new MockPlayer("Tom2", 6, 47),
-                new MockPlayer("Tom3", 7, 48),
-                new MockPlayer("Ride", 8, 51)
+        Strike[] samplePlayers = {
+                new Strike("Kick", null, null, Strike.KICK, Strike.kickParams),
+                new Strike("Snare", null, null, Strike.SNARE, Strike.snarePrams),
+                new Strike("Closed Hat", null, null, Strike.CLOSED_HAT, Strike.closedHatParams),
+                new Strike("Open Hat", null, null, Strike.OPEN_HAT, Strike.razParams)
         };
 
-        for (MockPlayer player : samplePlayers) {
+        for (Strike player : samplePlayers) {
+            player.setChannel(1);
+            player.setLevel((long) 100);
+            player.setMinVelocity((long) 64);
+            player.setMaxVelocity((long) 127);
+            player.setProbability(100L);
+            player.setRandomDegree(0L);
+            player.setRatchetCount(0L);
+            player.setRatchetInterval(1L);
+            player.setPanPosition(64L);
+            player.setSparse(0.0);
             leftModel.addRow(player.toRow());
         }
 
@@ -296,11 +304,11 @@ public class PlayerPanel extends JPanel {
         rightTable.getTableHeader().setReorderingAllowed(false);
 
         // Setup combo box for Operator column
-        JComboBox<String> operatorCombo = new JComboBox<>(MockRule.OPERATORS);
+        JComboBox<String> operatorCombo = new JComboBox<>(Rule.OPERATORS);
         rightTable.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(operatorCombo));
 
         // Setup combo box for Comparison column
-        JComboBox<String> comparisonCombo = new JComboBox<>(MockRule.COMPARISONS);
+        JComboBox<String> comparisonCombo = new JComboBox<>(Rule.COMPARISONS);
         rightTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(comparisonCombo));
 
         // Setup spinner for Value column
@@ -363,14 +371,14 @@ public class PlayerPanel extends JPanel {
             rightTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
-        // Add some sample data
-        MockRule[] sampleRules = {
-                new MockRule(), // Add default rule
-                new MockRule(), // Add default rule
-                new MockRule(), // Add default rule
+        // Add some sample data for rules
+        Rule[] sampleRules = {
+                new Rule(0, 0, 1.0, 0), // Tick equals 1
+                new Rule(2, 1, 3.0, 0), // Bar not equals 3
+                new Rule(1, 4, 2.0, 0) // Beat modulo 2
         };
 
-        for (MockRule rule : sampleRules) {
+        for (Rule rule : sampleRules) {
             rightModel.addRow(rule.toRow());
         }
 
@@ -405,7 +413,7 @@ public class PlayerPanel extends JPanel {
         editPlayerMenuItem.addActionListener(e -> {
             int row = leftTable.getSelectedRow();
             if (row >= 0) {
-                MockPlayer player = getPlayerFromRow(row);
+                Strike player = getPlayerFromRow(row);
                 showPlayerDialog(player);
             }
         });
@@ -437,7 +445,7 @@ public class PlayerPanel extends JPanel {
         editRuleMenuItem.addActionListener(e -> {
             int row = rightTable.getSelectedRow();
             if (row >= 0) {
-                MockRule rule = getRuleFromRow(row);
+                Rule rule = getRuleFromRow(row);
                 showRuleDialog(rule);
             }
         });
@@ -465,7 +473,7 @@ public class PlayerPanel extends JPanel {
                 if (e.getClickCount() == 2) {
                     int row = leftTable.rowAtPoint(e.getPoint());
                     if (row >= 0) {
-                        MockPlayer player = getPlayerFromRow(row);
+                        Strike player = getPlayerFromRow(row);
                         showPlayerDialog(player);
                     }
                 }
@@ -478,7 +486,7 @@ public class PlayerPanel extends JPanel {
                 if (e.getClickCount() == 2) {
                     int row = rightTable.rowAtPoint(e.getPoint());
                     if (row >= 0) {
-                        MockRule rule = getRuleFromRow(row);
+                        Rule rule = getRuleFromRow(row);
                         showRuleDialog(rule);
                     }
                 }
@@ -486,46 +494,44 @@ public class PlayerPanel extends JPanel {
         });
     }
 
-    private void showPlayerDialog(MockPlayer player) {
+    private void showPlayerDialog(Strike player) {
         if (player == null) {
-            player = new MockPlayer("New Player", 1, 36);
+            player = new Strike();
+            player.setName("New Strike");
         }
 
         PlayerEditorPanel editorPanel = new PlayerEditorPanel(player);
-        Dialog<MockPlayer> dialog = new Dialog<>(player, editorPanel);
+        Dialog<Strike> dialog = new Dialog<>(player, editorPanel);
         dialog.setTitle(player.getName() == null ? "Add Player" : "Edit Player: " + player.getName());
 
         if (dialog.showDialog()) {
-            MockPlayer updatedPlayer = editorPanel.getUpdatedPlayer();
+            Strike updatedPlayer = editorPanel.getUpdatedPlayer();
             updatePlayerTable(updatedPlayer, leftTable.getSelectedRow());
         }
     }
 
-    private void showRuleDialog(MockRule rule) {
+    private void showRuleDialog(Rule rule) {
         if (rule == null) {
-            rule = new MockRule();
+            rule = new Rule();
         }
 
         RuleEditorPanel editorPanel = new RuleEditorPanel(rule);
-        Dialog<MockRule> dialog = new Dialog<>(rule, editorPanel);
+        Dialog<Rule> dialog = new Dialog<>(rule, editorPanel);
         dialog.setTitle(rule.getOperator() == null ? "Add Rule" : "Edit Rule");
 
         if (dialog.showDialog()) {
-            MockRule updatedRule = editorPanel.getUpdatedRule();
+            Rule updatedRule = editorPanel.getUpdatedRule();
             updateRuleTable(updatedRule, rightTable.getSelectedRow());
         }
     }
 
-    private MockPlayer getPlayerFromRow(int row) {
+    private Strike getPlayerFromRow(int row) {
         DefaultTableModel model = (DefaultTableModel) leftTable.getModel();
 
         // Create new player with basic info
-        MockPlayer player = new MockPlayer(
-                (String) model.getValueAt(row, 0),
-                ((Number) model.getValueAt(row, 1)).intValue(), // channel
-                ((Number) model.getValueAt(row, 4)).longValue() // note
-        );
-
+        Strike player = new Strike();
+        player.setName((String) model.getValueAt(row, 0));
+        player.setChannel(((Number) model.getValueAt(row, 1)).intValue());
         // Set all other values using the model data
         player.setSwing(((Number) model.getValueAt(row, 2)).longValue());
         player.setLevel(((Number) model.getValueAt(row, 3)).longValue());
@@ -546,17 +552,18 @@ public class PlayerPanel extends JPanel {
         return player;
     }
 
-    private MockRule getRuleFromRow(int row) {
-        MockRule rule = new MockRule();
+    private Rule getRuleFromRow(int row) {
         DefaultTableModel model = (DefaultTableModel) rightTable.getModel();
-        rule.setOperator(getOperatorIndex((String) model.getValueAt(row, 0)));
-        rule.setComparison(getComparisonIndex((String) model.getValueAt(row, 1)));
-        rule.setValue((Double) model.getValueAt(row, 2));
-        rule.setPart((Integer) model.getValueAt(row, 3));
-        return rule;
+        Object[] rowData = new Object[] {
+                model.getValueAt(row, 0),
+                model.getValueAt(row, 1),
+                model.getValueAt(row, 2),
+                model.getValueAt(row, 3)
+        };
+        return Rule.fromRow(rowData);
     }
 
-    private void updatePlayerTable(MockPlayer player, int selectedRow) {
+    private void updatePlayerTable(Strike player, int selectedRow) {
         DefaultTableModel model = (DefaultTableModel) leftTable.getModel();
         Object[] rowData = player.toRow();
 
@@ -571,7 +578,7 @@ public class PlayerPanel extends JPanel {
         }
     }
 
-    private void updateRuleTable(MockRule rule, int selectedRow) {
+    private void updateRuleTable(Rule rule, int selectedRow) {
         DefaultTableModel model = (DefaultTableModel) rightTable.getModel();
         Object[] rowData = rule.toRow();
 
@@ -587,16 +594,16 @@ public class PlayerPanel extends JPanel {
     }
 
     private int getOperatorIndex(String operator) {
-        for (int i = 0; i < MockRule.OPERATORS.length; i++) {
-            if (MockRule.OPERATORS[i].equals(operator))
+        for (int i = 0; i < Rule.OPERATORS.length; i++) {
+            if (Rule.OPERATORS[i].equals(operator))
                 return i;
         }
         return 0;
     }
 
     private int getComparisonIndex(String comparison) {
-        for (int i = 0; i < MockRule.COMPARISONS.length; i++) {
-            if (MockRule.COMPARISONS[i].equals(comparison))
+        for (int i = 0; i < Rule.COMPARISONS.length; i++) {
+            if (Rule.COMPARISONS[i].equals(comparison))
                 return i;
         }
         return 0;
