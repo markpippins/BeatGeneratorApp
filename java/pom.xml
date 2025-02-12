@@ -28,6 +28,7 @@
                 <scope>compile</scope>
             </dependency>
             <dependency>
+<<<<<<< HEAD
                 <groupId>com.formdev</groupId>
                 <artifactId>flatlaf</artifactId>
                 <version>3.5.4</version>
@@ -38,6 +39,8 @@
                 <version>3.5.4</version>
             </dependency>
             <dependency>
+=======
+>>>>>>> 446e65f13e976ae7343673ac0920a8aa3981424e
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
                 <version>${junit.version}</version>

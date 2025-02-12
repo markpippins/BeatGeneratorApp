@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.player.IPlayer;
-import com.angrysurfer.core.model.player.IPlayer;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
@@ -40,10 +39,6 @@ public class Ticker implements Serializable {
     @JsonIgnore
     @Transient
     ClockSource clockSource;
-
-    @JsonIgnore
-    @Transient
-    private Set<IPlayer> addList = new HashSet<>();
 
     @JsonIgnore
     @Transient
@@ -208,7 +203,7 @@ public class Ticker implements Serializable {
         getBarCounter().reset();
         getPartCounter().reset();
 
-        getAddList().clear();
+        // getAddList().clear();
         getRemoveList().forEach(r -> getPlayers().remove(r));
         getRemoveList().clear();
     }
@@ -305,17 +300,18 @@ public class Ticker implements Serializable {
     }
 
     private void updatePlayerConfig() {
-        logger.debug("updatePlayerConfig() - removing {} players, adding {} players",
-                getRemoveList().size(), getAddList().size());
+        // logger.debug("updatePlayerConfig() - removing {} players, adding {} players",
+        // getRemoveList().size(), getAddList().size());
+
         if (!getRemoveList().isEmpty()) {
             getPlayers().removeAll(getRemoveList());
             getRemoveList().clear();
         }
 
-        if (!getAddList().isEmpty()) {
-            getPlayers().addAll(getAddList());
-            getAddList().clear();
-        }
+        // if (!getAddList().isEmpty()) {
+        // getPlayers().addAll(getAddList());
+        // getAddList().clear();
+        // }
     }
 
     public Float getBeatDuration() {

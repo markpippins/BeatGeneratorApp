@@ -2,7 +2,6 @@ package com.angrysurfer.beatsui;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,8 +10,15 @@ import com.angrysurfer.beatsui.config.BeatsUIConfig;
 import com.angrysurfer.beatsui.config.RedisConfig;
 import com.angrysurfer.beatsui.mock.Caption;
 import com.angrysurfer.beatsui.mock.ControlCode;
+import com.angrysurfer.beatsui.mock.IPlayer;
 import com.angrysurfer.beatsui.mock.Instrument;
 import com.angrysurfer.beatsui.mock.Pad;
+import com.angrysurfer.beatsui.mock.Pattern;
+import com.angrysurfer.beatsui.mock.Rule;
+import com.angrysurfer.beatsui.mock.Song;
+import com.angrysurfer.beatsui.mock.Step;
+import com.angrysurfer.beatsui.mock.Strike;
+import com.angrysurfer.beatsui.mock.Ticker;
 import com.angrysurfer.core.api.db.Delete;
 import com.angrysurfer.core.api.db.FindAll;
 import com.angrysurfer.core.api.db.FindOne;
@@ -22,13 +28,6 @@ import com.angrysurfer.core.api.db.Min;
 import com.angrysurfer.core.api.db.Next;
 import com.angrysurfer.core.api.db.Prior;
 import com.angrysurfer.core.api.db.Save;
-import com.angrysurfer.core.model.Pattern;
-import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Song;
-import com.angrysurfer.core.model.Step;
-import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.player.IPlayer;
-import com.angrysurfer.core.model.player.Strike;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,6 +35,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+
 
 public class RedisService { // implements Database {
     private final JedisPool jedisPool;
@@ -62,46 +62,57 @@ public class RedisService { // implements Database {
     public static void main(String[] args) {
         RedisService service = new RedisService();
 
-        try {
-            // Clear database for fresh start
-            service.clearDatabase();
-            System.out.println("Database cleared");
-
-            // Load configuration from file into Redis
-            String configPath = "swing\\beatsui\\src\\main\\java\\com\\angrysurfer\\beatsui\\config\\beats-config.json";
-            System.out.println("Loading configuration from " + configPath);
-
-            // BeatsUIConfig config = BeatsUIConfig.loadDefaults(configPath, service);
-
-            // // Verify database content
-            // System.out.println("\n=== Database Content Verification ===");
-            // List<Instrument> instruments = service.findAllInstruments();
-            // System.out.println("Instruments in database: " + instruments.size());
-
-            // instruments.forEach(instrument -> {
-            // System.out.println("\nInstrument: " + instrument.getName());
-            // System.out.println("Control codes: " + instrument.getControlCodes().size());
-            // System.out.println("Pads: " + instrument.getPads().size());
-            // System.out.println(instrument.toString());
-            // });
-
-            // Clear database and load from XML
-            String xmlPath = "C:/Users/MarkP/dev/BeatGeneratorApp/java/swing/beatsui/src/main/java/com/angrysurfer/beatsui/config/beats-config.xml";
-            BeatsUIConfig configFromXml = service.loadConfigFromXml(xmlPath);
-
-            // Verify the loaded configuration
-            System.out.println("\n=== Loaded Configuration ===");
-            configFromXml.getInstruments().forEach(instrument -> {
-                System.out.println("\nInstrument: " + instrument.getName() + " (ID: " + instrument.getId() + ")");
-                System.out.println("Control codes: " + instrument.getControlCodes().size());
-                System.out.println("Pads: " + (instrument.getPads() != null ? instrument.getPads().size() : 0));
-            });
-
-        } catch (Exception e) {
-            System.err.println("Error during testing: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
+
+    
+    // public static void main(String[] args) {
+    // RedisService service = new RedisService();
+
+    // try {
+    // // Clear database for fresh start
+    // service.clearDatabase();
+    // System.out.println("Database cleared");
+
+    // // Load configuration from file into Redis
+    // String configPath =
+    // "swing\\beatsui\\src\\main\\java\\com\\angrysurfer\\beatsui\\config\\beats-config.json";
+    // System.out.println("Loading configuration from " + configPath);
+
+    // // BeatsUIConfig config = BeatsUIConfig.loadDefaults(configPath, service);
+
+    // // // Verify database content
+    // // System.out.println("\n=== Database Content Verification ===");
+    // // List<Instrument> instruments = service.findAllInstruments();
+    // // System.out.println("Instruments in database: " + instruments.size());
+
+    // // instruments.forEach(instrument -> {
+    // // System.out.println("\nInstrument: " + instrument.getName());
+    // // System.out.println("Control codes: " +
+    // instrument.getControlCodes().size());
+    // // System.out.println("Pads: " + instrument.getPads().size());
+    // // System.out.println(instrument.toString());
+    // // });
+
+    // // Clear database and load from XML
+    // String xmlPath =
+    // "C:/Users/MarkP/dev/BeatGeneratorApp/java/swing/beatsui/src/main/java/com/angrysurfer/beatsui/config/beats-config.xml";
+    // BeatsUIConfig configFromXml = service.loadConfigFromXml(xmlPath);
+
+    // // Verify the loaded configuration
+    // System.out.println("\n=== Loaded Configuration ===");
+    // configFromXml.getInstruments().forEach(instrument -> {
+    // System.out.println("\nInstrument: " + instrument.getName() + " (ID: " +
+    // instrument.getId() + ")");
+    // System.out.println("Control codes: " + instrument.getControlCodes().size());
+    // System.out.println("Pads: " + (instrument.getPads() != null ?
+    // instrument.getPads().size() : 0));
+    // });
+
+    // } catch (Exception e) {
+    // System.err.println("Error during testing: " + e.getMessage());
+    // e.printStackTrace();
+    // }
+    // }
 
     // @Override
     public Caption findCaptionById(Long id) {
