@@ -119,10 +119,8 @@ public class MIDIEngine {
 
     // Improved resource management
     public static boolean select(MidiDevice device) {
-        logger.info("select() - device: {}", device.getDeviceInfo().getName());
-        if (device == null) {
+        if (device == null)
             throw new IllegalArgumentException("Device cannot be null");
-        }
 
         logger.info("select({})", device.getDeviceInfo().getName());
 
@@ -146,13 +144,13 @@ public class MIDIEngine {
     // Add proper cleanup
     // @Override
     // public void finalize() {
-    //     reset();
+    // reset();
     // }
 
     // Improved message sending with validation
     public static void sendMessage(Instrument instrument, int channel, int messageType, int data1, int data2) {
-        logger.info("sendMessage() - instrument: {}, channel: {}, messageType: {}, data1: {}, data2: {}", 
-            instrument.getName(), channel, messageType, data1, data2);
+        logger.info("sendMessage() - instrument: {}, channel: {}, messageType: {}, data1: {}, data2: {}",
+                instrument.getName(), channel, messageType, data1, data2);
         if (instrument == null) {
             throw new IllegalArgumentException("Instrument cannot be null");
         }

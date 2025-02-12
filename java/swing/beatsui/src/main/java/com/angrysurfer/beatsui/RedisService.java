@@ -36,7 +36,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
-
 public class RedisService { // implements Database {
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
@@ -59,12 +58,6 @@ public class RedisService { // implements Database {
         return cls.getSimpleName().toLowerCase() + "s";
     }
 
-    public static void main(String[] args) {
-        RedisService service = new RedisService();
-
-    }
-
-    
     // public static void main(String[] args) {
     // RedisService service = new RedisService();
 

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -50,7 +49,7 @@ import lombok.Setter;
 
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-public abstract class AbstractPlayer implements Callable<Boolean>, Serializable, IPlayer {
+public abstract class AbstractPlayer implements Serializable, IPlayer {
 
     static final Random rand = new Random();
 

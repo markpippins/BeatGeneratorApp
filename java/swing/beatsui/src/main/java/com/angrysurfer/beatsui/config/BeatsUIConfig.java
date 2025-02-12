@@ -4,16 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.angrysurfer.beatsui.RedisService;
 import com.angrysurfer.beatsui.mock.Caption;
 import com.angrysurfer.beatsui.mock.ControlCode;
 import com.angrysurfer.beatsui.mock.Instrument;
 import com.angrysurfer.core.config.DeviceConfig;
-import com.angrysurfer.core.engine.MIDIEngine;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 

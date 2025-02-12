@@ -283,11 +283,11 @@ public class Instrument implements Serializable {
     }
 
     // Add finalizer to ensure cleanup
-    @Override
-    protected void finalize() throws Throwable {
-        cleanup();
-        super.finalize();
-    }
+    // @Override
+    // protected void finalize() throws Throwable {
+    // cleanup();
+    // super.finalize();
+    // }
 
     public void assign(int cc, String control) {
         getAssignments().put(cc, control);

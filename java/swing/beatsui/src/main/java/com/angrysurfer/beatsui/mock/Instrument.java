@@ -23,10 +23,9 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.converter.IntegerArrayConverter;
 import com.angrysurfer.core.model.midi.MidiMessage;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import jakarta.persistence.Column;
@@ -281,11 +280,11 @@ public class Instrument implements Serializable {
     }
 
     // Add finalizer to ensure cleanup
-    @Override
-    protected void finalize() throws Throwable {
-        cleanup();
-        super.finalize();
-    }
+    // @Override
+    // protected void finalize() throws Throwable {
+    //     cleanup();
+    //     super.finalize();
+    // }
 
     public void assign(int cc, String control) {
         getAssignments().put(cc, control);
