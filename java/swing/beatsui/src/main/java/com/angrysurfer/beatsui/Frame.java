@@ -23,8 +23,14 @@ public class Frame extends JFrame {
         setupFrame();
         setJMenuBar(new MenuBar(this));
         add(new ToolBar(), BorderLayout.NORTH);
-        add(new StatusBar(), BorderLayout.SOUTH);
+        setUpStatusBar();
         setupMainContent();
+    }
+
+    private void setUpStatusBar() {
+        this.statusBar = new StatusBar();
+        add(statusBar, BorderLayout.SOUTH);
+
     }
 
     private void setupFrame() {

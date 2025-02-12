@@ -8,6 +8,8 @@ import java.awt.event.MouseEvent;
 import javax.swing.Timer;
 import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.widget.GridButton;
+import com.angrysurfer.beatsui.api.StatusConsumer;
+import java.util.Objects;
 
 public class GridPanel extends JPanel {
 
@@ -51,6 +53,36 @@ public class GridPanel extends JPanel {
     private static final int MODE_CHANGE_DELAY = 10000; // 10 seconds
     private boolean isScreensaverMode = false;
 
+    // Add new instance variables
+    private double[] starX = new double[50];
+    private double[] starY = new double[50];
+    private double[] starZ = new double[50];
+    private int mazeX = 0, mazeY = 0;
+    private boolean[][] visited;
+    private Ant ant;
+    private double t = 0.0; // Time variable for plasma
+
+    private StatusConsumer statusConsumer;
+
+    // Add inner class for Langton's Ant
+    private class Ant {
+        int x, y, direction;
+        private static final int[] dx = {0, 1, 0, -1}; // N, E, S, W
+        private static final int[] dy = {-1, 0, 1, 0};
+        
+        Ant(int x, int y) {
+            this.x = x;
+            this.y = y;
+            this.direction = 0;
+        }
+        
+        void move(boolean turnRight) {
+            direction = (direction + (turnRight ? 1 : -1) + 4) % 4;
+            x = Math.floorMod(x + dx[direction], GRID_COLS);
+            y = Math.floorMod(y + dy[direction], GRID_ROWS);
+        }
+    }
+
     public enum DisplayMode {
         // Removed TEXT mode, start with EXPLOSION
         EXPLOSION("Explosion"),
@@ -72,7 +104,19 @@ public class GridPanel extends JPanel {
         PING_PONG("Ping Pong"),
         EQUALIZER("Equalizer"),
         TETRIS("Tetris"),
-        COMBAT("Combat");
+        COMBAT("Combat"),
+        STARFIELD("Starfield"),
+        RIPPLE("Ripple"),
+        MAZE("Maze Generator"),
+        LIFE_SOUP("Life Soup"),
+        PLASMA("Plasma"),
+        MANDELBROT("Mandelbrot"),
+        BINARY("Binary Rain"),
+        KALEIDOSCOPE("Kaleidoscope"),
+        CELLULAR("Cellular"),
+        BROWNIAN("Brownian Motion"),
+        CRYSTAL("Crystal Growth"),
+        LANGTON("Langton's Ant");
 
         private final String label;
 
@@ -86,10 +130,16 @@ public class GridPanel extends JPanel {
     }
 
     public GridPanel() {
+        this(null);
+    }
+
+    public GridPanel(StatusConsumer statusConsumer) {
         super(new GridLayout(GRID_ROWS, GRID_COLS, 2, 2));
+        this.statusConsumer = statusConsumer;
         setupTimers();
         setup();
         setupAnimation();
+        additionalSetup();
     }
 
     private void setupTimers() {
@@ -167,6 +217,21 @@ public class GridPanel extends JPanel {
         }
     }
 
+    private void additionalSetup() {
+        // Initialize stars
+        for (int i = 0; i < starX.length; i++) {
+            starX[i] = random.nextDouble() * 2 - 1;
+            starY[i] = random.nextDouble() * 2 - 1;
+            starZ[i] = random.nextDouble();
+        }
+        
+        // Initialize maze
+        visited = new boolean[GRID_ROWS][GRID_COLS];
+        
+        // Initialize ant
+        ant = new Ant(GRID_COLS/2, GRID_ROWS/2);
+    }
+
     public void updateDisplay() {
         if (!isScreensaverMode)
             return;
@@ -192,10 +257,23 @@ public class GridPanel extends JPanel {
             case EQUALIZER -> updateEqualizer();
             case TETRIS -> updateTetrisRain();
             case COMBAT -> updateCombat();
+            case STARFIELD -> updateStarfield();
+            case RIPPLE -> updateRipple();
+            case MAZE -> updateMaze();
+            case LIFE_SOUP -> updateLifeSoup();
+            case PLASMA -> updatePlasma();
+            case MANDELBROT -> updateMandelbrot();
+            case BINARY -> updateBinaryRain();
+            case KALEIDOSCOPE -> updateKaleidoscope();
+            case CELLULAR -> updateCellular();
+            case BROWNIAN -> updateBrownian();
+            case CRYSTAL -> updateCrystal();
+            case LANGTON -> updateLangton();
         }
     }
 
     private void updateExplosion() {
+        setStatus("Explosion");
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 if (random.nextInt(100) < 10) {
@@ -212,6 +290,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateSpace() {
+        setStatus("Space");
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 if (random.nextInt(100) < 2) {
@@ -224,6 +303,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateGameOfLife() {
+        setStatus("Game of Life");
         boolean[][] nextGen = new boolean[GRID_ROWS][GRID_COLS];
 
         for (int row = 0; row < GRID_ROWS; row++) {
@@ -271,6 +351,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateRain() {
+        setStatus("Matrix Rain");
         // Shift everything down
         for (int row = GRID_ROWS - 1; row > 0; row--) {
             for (int col = 0; col < GRID_COLS; col++) {
@@ -288,6 +369,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateWave() {
+        setStatus("Wave");
         for (int col = 0; col < GRID_COLS; col++) {
             int row = (int) (2 + Math.sin(angle + col * 0.3) * 1.5);
             clearDisplay();
@@ -299,6 +381,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateBounce() {
+        setStatus("Bounce");
         clearDisplay();
         for (int col = 0; col < GRID_COLS; col++) {
             buttons[bouncePos][col].setBackground(Color.YELLOW);
@@ -319,6 +402,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateSnake() {
+        setStatus("Snake");
         // Simple snake pattern
         clearDisplay();
         int row = 2 + (int) (Math.sin(angle) * 1.5);
@@ -330,6 +414,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateSpiral() {
+        setStatus("Spiral");
         clearDisplay();
         spiralAngle += 0.2;
         spiralRadius = (spiralAngle % 10) / 2;
@@ -341,6 +426,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateFireworks() {
+        setStatus("Fireworks");
         // Fade existing colors
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
@@ -372,6 +458,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updatePulse() {
+        setStatus("Pulse");
         clearDisplay();
         int centerX = GRID_COLS / 2;
         int centerY = 2;
@@ -390,6 +477,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateRainbow() {
+        setStatus("Rainbow");
         for (int col = 0; col < GRID_COLS; col++) {
             int colorIndex = (col + rainbowOffset) % rainbowColors.length;
             for (int row = 0; row < GRID_ROWS; row++) {
@@ -400,6 +488,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateClock() {
+        setStatus("Clock");
         clearDisplay();
         double time = System.currentTimeMillis() / 1000.0;
         // Hour hand
@@ -421,6 +510,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateConfetti() {
+        setStatus("Confetti");
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 if (random.nextInt(100) < 5) {
@@ -433,6 +523,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateMatrix() {
+        setStatus("Matrix");
         // Shift everything down
         for (int row = GRID_ROWS - 1; row > 0; row--) {
             for (int col = 0; col < GRID_COLS; col++) {
@@ -456,6 +547,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateHeart() {
+        setStatus("Heart Beat");
         clearDisplay();
         int centerX = GRID_COLS / 2;
         int centerY = 2;
@@ -479,6 +571,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateDNA() {
+        setStatus("DNA Helix");
         clearDisplay();
         for (int col = 0; col < GRID_COLS; col++) {
             double offset = angle + col * 0.3;
@@ -503,6 +596,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updatePingPong() {
+        setStatus("Ping Pong");
         clearDisplay();
         // Update ball position
         ballX += ballDX;
@@ -521,6 +615,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateEqualizer() {
+        setStatus("Equalizer");
         clearDisplay();
         // Update levels
         for (int col = 0; col < GRID_COLS; col++) {
@@ -542,6 +637,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateTetrisRain() {
+        setStatus("Tetris Rain");
         // Shift everything down
         for (int row = GRID_ROWS - 1; row > 0; row--) {
             for (int col = 0; col < GRID_COLS; col++) {
@@ -563,6 +659,7 @@ public class GridPanel extends JPanel {
     }
 
     private void updateCombat() {
+        setStatus("Combat");
         clearDisplay();
 
         // Update tank positions and shots
@@ -580,6 +677,385 @@ public class GridPanel extends JPanel {
             if (shotRow >= 0 && shotRow < GRID_ROWS && shotCol >= 0 && shotCol < GRID_COLS) {
                 buttons[shotRow][shotCol].setBackground(Color.RED);
             }
+        }
+    }
+
+    private void updateStarfield() {
+        setStatus("Starfield");
+        clearDisplay();
+        for (int i = 0; i < starX.length; i++) {
+            starZ[i] -= 0.02;
+            if (starZ[i] <= 0) {
+                starX[i] = random.nextDouble() * 2 - 1;
+                starY[i] = random.nextDouble() * 2 - 1;
+                starZ[i] = 1;
+            }
+            int x = (int) (GRID_COLS/2 + (starX[i]/starZ[i]) * GRID_COLS/2);
+            int y = (int) (GRID_ROWS/2 + (starY[i]/starZ[i]) * GRID_ROWS/2);
+            if (x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS) {
+                int brightness = (int)(255 * (1 - starZ[i]));
+                buttons[y][x].setBackground(new Color(brightness, brightness, brightness));
+            }
+        }
+    }
+
+    private void updateRipple() {
+        setStatus("Ripple");
+        double cx = GRID_COLS/2.0;
+        double cy = GRID_ROWS/2.0;
+        t += 0.1;
+        
+        for (int y = 0; y < GRID_ROWS; y++) {
+            for (int x = 0; x < GRID_COLS; x++) {
+                double dx = x - cx;
+                double dy = y - cy;
+                double dist = Math.sqrt(dx*dx + dy*dy);
+                double val = Math.sin(dist - t);
+                int rgb = (int)((val + 1) * 127);
+                buttons[y][x].setBackground(new Color(0, rgb, rgb));
+            }
+        }
+    }
+
+    private void updateMaze() {
+        setStatus("Maze Generator");
+        if (!visited[mazeY][mazeX]) {
+            visited[mazeY][mazeX] = true;
+            buttons[mazeY][mazeX].setBackground(Color.WHITE);
+            
+            int[] directions = {0,1,2,3};
+            for (int i = 0; i < 4; i++) {
+                int j = random.nextInt(4);
+                int temp = directions[i];
+                directions[i] = directions[j];
+                directions[j] = temp;
+            }
+            
+            for (int dir : directions) {
+                int nextX = mazeX + (dir == 1 ? 1 : dir == 3 ? -1 : 0);
+                int nextY = mazeY + (dir == 0 ? -1 : dir == 2 ? 1 : 0);
+                if (nextX >= 0 && nextX < GRID_COLS && nextY >= 0 && nextY < GRID_ROWS && !visited[nextY][nextX]) {
+                    mazeX = nextX;
+                    mazeY = nextY;
+                    return;
+                }
+            }
+        }
+        // Reset when maze is complete
+        if (random.nextInt(100) < 5) {
+            clearDisplay();
+            visited = new boolean[GRID_ROWS][GRID_COLS];
+            mazeX = random.nextInt(GRID_COLS);
+            mazeY = random.nextInt(GRID_ROWS);
+        }
+    }
+
+    private void updateLifeSoup() {
+        setStatus("Life Soup");
+        boolean[][] nextGen = new boolean[GRID_ROWS][GRID_COLS];
+        Color[][] nextColors = new Color[GRID_ROWS][GRID_COLS];
+        
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                int neighbors = countLiveNeighbors(row, col);
+                Color currentColor = buttons[row][col].getBackground();
+                boolean isAlive = !currentColor.equals(Utils.darkGray);
+
+                if (isAlive) {
+                    if (neighbors == 2 || neighbors == 3) {
+                        nextGen[row][col] = true;
+                        // Evolve color
+                        nextColors[row][col] = new Color(
+                            (currentColor.getRed() + 10) % 256,
+                            (currentColor.getGreen() + 5) % 256,
+                            (currentColor.getBlue() + 15) % 256
+                        );
+                    }
+                } else if (neighbors == 3) {
+                    nextGen[row][col] = true;
+                    nextColors[row][col] = new Color(
+                        random.nextInt(256),
+                        random.nextInt(256),
+                        random.nextInt(256)
+                    );
+                }
+            }
+        }
+
+        // Update grid
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                buttons[row][col].setBackground(
+                    nextGen[row][col] ? nextColors[row][col] : Utils.darkGray
+                );
+            }
+        }
+
+        // Random new cells
+        if (random.nextInt(100) < 5) {
+            int row = random.nextInt(GRID_ROWS);
+            int col = random.nextInt(GRID_COLS);
+            buttons[row][col].setBackground(new Color(
+                random.nextInt(256),
+                random.nextInt(256),
+                random.nextInt(256)
+            ));
+        }
+    }
+
+    private void updatePlasma() {
+        setStatus("Plasma");
+        t += 0.1;
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                double value = Math.sin(col * 0.2 + t) +
+                             Math.sin(row * 0.1 + t) +
+                             Math.sin((col + row) * 0.15 + t) +
+                             Math.sin(Math.sqrt(col*col + row*row) * 0.15);
+                value = value * 0.25 + 0.5; // Normalize to 0-1
+                int red = (int)(Math.sin(value * Math.PI * 2) * 127 + 128);
+                int green = (int)(Math.sin(value * Math.PI * 2 + 2*Math.PI/3) * 127 + 128);
+                int blue = (int)(Math.sin(value * Math.PI * 2 + 4*Math.PI/3) * 127 + 128);
+                buttons[row][col].setBackground(new Color(red, green, blue));
+            }
+        }
+    }
+
+    private void updateMandelbrot() {
+        setStatus("Mandelbrot");
+        double zoom = 1.5 + Math.sin(t * 0.1) * 0.5;
+        double centerX = -0.5 + Math.sin(t * 0.05) * 0.2;
+        double centerY = Math.cos(t * 0.05) * 0.2;
+        
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                double x0 = (col - GRID_COLS/2.0) * zoom / GRID_COLS + centerX;
+                double y0 = (row - GRID_ROWS/2.0) * zoom / GRID_ROWS + centerY;
+                
+                double x = 0, y = 0;
+                int iteration = 0;
+                while (x*x + y*y < 4 && iteration < 20) {
+                    double xtemp = x*x - y*y + x0;
+                    y = 2*x*y + y0;
+                    x = xtemp;
+                    iteration++;
+                }
+                
+                int hue = (iteration * 13) % 360;
+                buttons[row][col].setBackground(Color.getHSBColor(hue/360f, 0.8f, iteration < 20 ? 1f : 0f));
+            }
+        }
+        t += 0.1;
+    }
+
+    private void updateBinaryRain() {
+        setStatus("Binary Rain");
+        // Shift existing content down
+        for (int row = GRID_ROWS-1; row > 0; row--) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                buttons[row][col].setBackground(buttons[row-1][col].getBackground());
+                buttons[row][col].setText(buttons[row-1][col].getText());
+            }
+        }
+        
+        // Add new binary digits at top
+        for (int col = 0; col < GRID_COLS; col++) {
+            if (random.nextInt(100) < 15) {
+                buttons[0][col].setBackground(Utils.fadedLime);
+                buttons[0][col].setText(random.nextInt(2) + "");
+            } else {
+                buttons[0][col].setBackground(Utils.darkGray);
+                buttons[0][col].setText("");
+            }
+        }
+    }
+
+    private void updateKaleidoscope() {
+        setStatus("Kaleidoscope");
+        int centerX = GRID_COLS/2;
+        int centerY = GRID_ROWS/2;
+        t += 0.1;
+        
+        // Generate a pattern in one sector
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS/2; col++) {
+                if (row < GRID_ROWS/2) {
+                    double angle = t + Math.sqrt(col*col + row*row) * 0.2;
+                    int red = (int)(Math.sin(angle) * 127 + 128);
+                    int green = (int)(Math.sin(angle + 2*Math.PI/3) * 127 + 128);
+                    int blue = (int)(Math.sin(angle + 4*Math.PI/3) * 127 + 128);
+                    Color color = new Color(red, green, blue);
+                    
+                    // Mirror across all quadrants
+                    if (col < GRID_COLS/2 && row < GRID_ROWS/2) {
+                        setSymmetricPixels(col, row, color);
+                    }
+                }
+            }
+        }
+    }
+
+    private void setSymmetricPixels(int x, int y, Color color) {
+        int centerX = GRID_COLS/2;
+        int centerY = GRID_ROWS/2;
+        
+        // Set pixels in all quadrants
+        if (y + centerY < GRID_ROWS && x + centerX < GRID_COLS)
+            buttons[y + centerY][x + centerX].setBackground(color);
+        if (y + centerY < GRID_ROWS && centerX - x - 1 >= 0)
+            buttons[y + centerY][centerX - x - 1].setBackground(color);
+        if (centerY - y - 1 >= 0 && x + centerX < GRID_COLS)
+            buttons[centerY - y - 1][x + centerX].setBackground(color);
+        if (centerY - y - 1 >= 0 && centerX - x - 1 >= 0)
+            buttons[centerY - y - 1][centerX - x - 1].setBackground(color);
+    }
+
+    private void updateCellular() {
+        setStatus("Cellular Automaton");
+        Color[][] nextGen = new Color[GRID_ROWS][GRID_COLS];
+        
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                Color current = buttons[row][col].getBackground();
+                int[] neighborCounts = countColorNeighbors(row, col);
+                
+                if (current.equals(Utils.darkGray)) {
+                    if (neighborCounts[0] == 3) nextGen[row][col] = Color.RED;
+                    else if (neighborCounts[1] == 3) nextGen[row][col] = Color.BLUE;
+                    else nextGen[row][col] = Utils.darkGray;
+                } else {
+                    int total = neighborCounts[0] + neighborCounts[1];
+                    if (total < 2 || total > 3) nextGen[row][col] = Utils.darkGray;
+                    else nextGen[row][col] = current;
+                }
+            }
+        }
+        
+        // Update grid and randomly add new cells
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                buttons[row][col].setBackground(nextGen[row][col]);
+            }
+        }
+        
+        if (random.nextInt(100) < 5) {
+            int row = random.nextInt(GRID_ROWS);
+            int col = random.nextInt(GRID_COLS);
+            buttons[row][col].setBackground(random.nextBoolean() ? Color.RED : Color.BLUE);
+        }
+    }
+
+    private int[] countColorNeighbors(int row, int col) {
+        int[] counts = new int[2]; // [red, blue]
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                if (i == 0 && j == 0) continue;
+                int r = (row + i + GRID_ROWS) % GRID_ROWS;
+                int c = (col + j + GRID_COLS) % GRID_COLS;
+                Color neighbor = buttons[r][c].getBackground();
+                if (neighbor.equals(Color.RED)) counts[0]++;
+                else if (neighbor.equals(Color.BLUE)) counts[1]++;
+            }
+        }
+        return counts;
+    }
+
+    private void updateBrownian() {
+        setStatus("Brownian Motion");
+        if (random.nextInt(100) < 30) {
+            // Add new particle
+            int x = random.nextInt(GRID_COLS);
+            int y = random.nextInt(GRID_ROWS);
+            buttons[y][x].setBackground(new Color(
+                random.nextInt(256),
+                random.nextInt(256),
+                random.nextInt(256)
+            ));
+        }
+        
+        // Move existing particles
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLS; col++) {
+                if (!buttons[row][col].getBackground().equals(Utils.darkGray)) {
+                    int newRow = row + random.nextInt(3) - 1;
+                    int newCol = col + random.nextInt(3) - 1;
+                    
+                    if (newRow >= 0 && newRow < GRID_ROWS && 
+                        newCol >= 0 && newCol < GRID_COLS &&
+                        buttons[newRow][newCol].getBackground().equals(Utils.darkGray)) {
+                        buttons[newRow][newCol].setBackground(buttons[row][col].getBackground());
+                        buttons[row][col].setBackground(Utils.darkGray);
+                    }
+                }
+            }
+        }
+    }
+
+    private void updateCrystal() {
+        setStatus("Crystal Growth");
+        // Initialize center crystal if needed
+        if (buttons[GRID_ROWS/2][GRID_COLS/2].getBackground().equals(Utils.darkGray)) {
+            buttons[GRID_ROWS/2][GRID_COLS/2].setBackground(Color.WHITE);
+        }
+        
+        // Random walk particles until they stick to crystal
+        for (int i = 0; i < 3; i++) {
+            int x = random.nextInt(GRID_COLS);
+            int y = random.nextInt(GRID_ROWS);
+            Color particleColor = new Color(
+                200 + random.nextInt(56),
+                200 + random.nextInt(56),
+                255
+            );
+            
+            while (true) {
+                // Check for adjacent crystal
+                boolean stuck = false;
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        int nx = x + dx;
+                        int ny = y + dy;
+                        if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS) {
+                            Color neighbor = buttons[ny][nx].getBackground();
+                            if (!neighbor.equals(Utils.darkGray)) {
+                                stuck = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (stuck) break;
+                }
+                
+                if (stuck) {
+                    buttons[y][x].setBackground(particleColor);
+                    break;
+                }
+                
+                // Random walk
+                x = Math.floorMod(x + random.nextInt(3) - 1, GRID_COLS);
+                y = Math.floorMod(y + random.nextInt(3) - 1, GRID_ROWS);
+            }
+        }
+    }
+
+    private void updateLangton() {
+        setStatus("Langton's Ant");
+        // Implement Langton's Ant cellular automaton
+        Color current = buttons[ant.y][ant.x].getBackground();
+        boolean isWhite = current.equals(Color.WHITE);
+        buttons[ant.y][ant.x].setBackground(isWhite ? Utils.darkGray : Color.WHITE);
+        ant.move(!isWhite);
+    }
+
+    public void setStatus(String status) {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.setStatus(status);
+        }
+    }
+
+    public void clearStatus() {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.clearStatus();
         }
     }
 }

@@ -19,12 +19,32 @@ import javax.swing.border.EmptyBorder;
 import com.angrysurfer.beatsui.widget.Dial;
 import com.angrysurfer.beatsui.widget.DrumButton;
 import com.angrysurfer.beatsui.widget.TriggerButton;
+import com.angrysurfer.beatsui.api.StatusConsumer;
+import java.util.Objects;
 
 public class X0XPanel extends JPanel {
+    private StatusConsumer statusConsumer;
 
     public X0XPanel() {
+        this(null);
+    }
+
+    public X0XPanel(StatusConsumer statusConsumer) {
         super(new BorderLayout());
+        this.statusConsumer = statusConsumer;
         setup();
+    }
+
+    public void setStatus(String status) {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.setStatus(status);
+        }
+    }
+
+    public void clearStatus() {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.clearStatus();
+        }
     }
 
     private void setup() {

@@ -18,6 +18,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
 import com.angrysurfer.beatsui.Utils;
+import com.angrysurfer.beatsui.api.StatusConsumer;
+import java.util.Objects;
 
 public class LaunchPanel extends JPanel {
 
@@ -28,9 +30,28 @@ public class LaunchPanel extends JPanel {
             1, 2, 3, 4 // inputs 13-16 map to 1,2,3,4
     };
 
+    private StatusConsumer statusConsumer;
+
     public LaunchPanel() {
+        this(null);
+    }
+
+    public LaunchPanel(StatusConsumer statusConsumer) {
         super(new BorderLayout());
+        this.statusConsumer = statusConsumer;
         setup();
+    }
+
+    public void setStatus(String status) {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.setStatus(status);
+        }
+    }
+
+    public void clearStatus() {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.clearStatus();
+        }
     }
 
     private void setup() {
