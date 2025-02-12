@@ -1,9 +1,11 @@
 package com.angrysurfer.beatsui.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -12,13 +14,13 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
-import java.awt.Dimension;
 
+import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.mock.Strike;
 import com.angrysurfer.beatsui.widget.Dial;
 import com.angrysurfer.beatsui.widget.ToggleSwitch;
 
-public class PlayerEditorPanel extends JPanel {
+public class PlayerEditorPanel extends StatusProviderPanel {
     private final Strike player;
     private final JTextField nameField;
     private final JComboBox<Integer> channelCombo;
@@ -51,6 +53,11 @@ public class PlayerEditorPanel extends JPanel {
     private final ToggleSwitch accentSwitch;
 
     public PlayerEditorPanel(Strike player) {
+        this(player, null);
+    }
+
+    public PlayerEditorPanel(Strike player, StatusConsumer statusConsumer) {
+        super(new BorderLayout(), statusConsumer);
         this.player = player;
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));

@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -29,15 +30,19 @@ public class Dialog<T> extends JDialog {
     private JLabel titleLabel;
 
     public Dialog() {
-        this(null, null);
+        this(null, null, null);
     }
 
     public Dialog(T data) {
-        this(data, null);
+        this(null, data, null);
     }
 
     public Dialog(T data, JPanel content) {
-        super((Frame) null, true); // Make dialog modal
+        this(null, data, content);
+    }
+
+    public Dialog(Frame owner, T data, JPanel content) {
+        super(owner, true); // Make dialog modal with specified owner
         this.data = data;
         this.contentPanel = content;
         setupDialog();
@@ -59,7 +64,7 @@ public class Dialog<T> extends JDialog {
         // Increase minimum size for additional controls
         setMinimumSize(new Dimension(900, 700));
         pack();
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(getOwner());
         setResizable(true);
     }
 
@@ -145,14 +150,17 @@ public class Dialog<T> extends JDialog {
 
     // Test method
     public static void main(String[] args) {
+        Frame frame = new Frame();
+        frame.setVisible(true);
+
         // Create sample player
         Strike samplePlayer = new Strike();
 
         // Create test panel with sample player
         JPanel testPanel = new PlayerEditorPanel(samplePlayer);
 
-        // Create and show dialog
-        Dialog<Strike> dialog = new Dialog<>(samplePlayer, testPanel);
+        // Create and show dialog with frame as owner
+        Dialog<Strike> dialog = new Dialog<>(frame, samplePlayer, testPanel);
         dialog.setTitle("Edit Player: " + samplePlayer.getName());
         boolean result = dialog.showDialog();
 

@@ -2,11 +2,12 @@ package com.angrysurfer.beatsui.panel;
 
 import javax.swing.*;
 
+import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.mock.Rule;
 
 import java.awt.*;
 
-public class RuleEditorPanel extends JPanel {
+public class RuleEditorPanel extends StatusProviderPanel {
     private final Rule rule;
     private final JComboBox<String> operatorCombo;
     private final JComboBox<String> comparisonCombo;
@@ -14,6 +15,11 @@ public class RuleEditorPanel extends JPanel {
     private final JSpinner partSpinner;
 
     public RuleEditorPanel(Rule rule) {
+        this(rule, null);
+    }
+
+    public RuleEditorPanel(Rule rule, StatusConsumer statusConsumer) {
+        super(new GridBagLayout(), statusConsumer);
         this.rule = rule;
         setLayout(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));

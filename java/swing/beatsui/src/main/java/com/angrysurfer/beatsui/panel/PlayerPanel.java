@@ -31,11 +31,10 @@ import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.mock.Rule;
 import com.angrysurfer.beatsui.mock.Strike;
 
-public class PlayerPanel extends JPanel {
-
+public class PlayerPanel extends StatusProviderPanel {
     private JTable leftTable;
     private JTable rightTable;
-    private StatusConsumer statusConsumer;
+    private StatusConsumer status;
 
     // Add buttons as fields
     private JButton addPlayerButton;
@@ -52,8 +51,8 @@ public class PlayerPanel extends JPanel {
     private JMenuItem deleteRuleMenuItem;
 
     public PlayerPanel(StatusConsumer status) {
-        super(new BorderLayout());
-        this.statusConsumer = status;
+        super(new BorderLayout(), status);
+        this.status = status;
         setup();
         setupTables();
     }
@@ -65,18 +64,6 @@ public class PlayerPanel extends JPanel {
     private void setup() {
         setLayout(new BorderLayout());
         add(createBeatsPanel(), BorderLayout.CENTER);
-    }
-
-    public void setStatus(String status) {
-        if (Objects.nonNull(this.statusConsumer)) {
-            this.statusConsumer.setStatus(status);
-        }
-    }
-
-    public void clearStatus() {
-        if (Objects.nonNull(this.statusConsumer)) {
-            this.statusConsumer.clearStatus();
-        }
     }
 
     private JPanel createBeatsPanel() {
@@ -114,7 +101,7 @@ public class PlayerPanel extends JPanel {
 
         // Bottom section with button grid
 
-        JPanel buttonGridPanel = new GridPanel(this.statusConsumer);
+        JPanel buttonGridPanel = new GridPanel(this.status);
         JScrollPane buttonScrollPane = new JScrollPane(buttonGridPanel);
 
         // Add components to main split pane
@@ -331,7 +318,7 @@ public class PlayerPanel extends JPanel {
             public Component getTableCellEditorComponent(JTable table, Object value,
                     boolean isSelected, int row, int column) {
                 spinner.setValue(value == null ? 0.0 : value);
-                statusConsumer.setStatus("Set value at row " + row);
+                status.setStatus("Set value at row " + row);
                 return spinner;
             }
 
@@ -350,7 +337,7 @@ public class PlayerPanel extends JPanel {
             public Component getTableCellEditorComponent(JTable table, Object value,
                     boolean isSelected, int row, int column) {
                 spinner.setValue(value == null ? 0 : value);
-                statusConsumer.setStatus("Set value at row " + row);
+                status.setStatus("Set value at row " + row);
                 return spinner;
             }
 

@@ -21,7 +21,7 @@ import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.api.StatusConsumer;
 import java.util.Objects;
 
-public class LaunchPanel extends JPanel {
+public class LaunchPanel extends StatusProviderPanel {
 
     private static final int[] LAUNCH_PAD_LABELS = {
             13, 14, 15, 16, // inputs 1-4 map to 13,14,15,16
@@ -30,28 +30,13 @@ public class LaunchPanel extends JPanel {
             1, 2, 3, 4 // inputs 13-16 map to 1,2,3,4
     };
 
-    private StatusConsumer statusConsumer;
-
     public LaunchPanel() {
         this(null);
     }
 
     public LaunchPanel(StatusConsumer statusConsumer) {
-        super(new BorderLayout());
-        this.statusConsumer = statusConsumer;
+        super(new BorderLayout(), statusConsumer);
         setup();
-    }
-
-    public void setStatus(String status) {
-        if (Objects.nonNull(statusConsumer)) {
-            statusConsumer.setStatus(status);
-        }
-    }
-
-    public void clearStatus() {
-        if (Objects.nonNull(statusConsumer)) {
-            statusConsumer.clearStatus();
-        }
     }
 
     private void setup() {
@@ -63,14 +48,6 @@ public class LaunchPanel extends JPanel {
         JPanel gridPanel = new JPanel(new GridLayout(8, 8, 5, 5));
         gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        // Define colors for each quadrant
-        // Color[] quadrantColors = {
-        // new Color(255, 50, 50), // Top-left: bright red
-        // new Color(50, 255, 50), // Top-right: bright green
-        // new Color(50, 50, 255), // Bottom-left: bright blue
-        // new Color(205, 155, 50) // Bottom-right: bright yellow
-        // };
-
         Color[] quadrantColors = {
                 Utils.mutedRed, // Top-left
                 Utils.mutedOlive, // Top-right
@@ -78,14 +55,11 @@ public class LaunchPanel extends JPanel {
                 Utils.fadedOrange // Bottom-right
         };
 
-        // Create and add 64 drum pad buttons
         int[] count = { 1, 1, 1, 1 };
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                // Determine which quadrant we're in (0-3)
                 int quadrant = (row / 4) * 2 + (col / 4);
 
-                // Create button with quadrant-specific color
                 JButton padButton = createDrumPadButton(row * 8 + col, quadrantColors[quadrant]);
                 padButton.setText(Integer.toString(getLabelText(count[quadrant]++)));
 
@@ -103,21 +77,17 @@ public class LaunchPanel extends JPanel {
     private JButton createDrumPadButton(int index, Color baseColor) {
         JButton button = new JButton();
 
-        // Create flash color (lighter version of base color)
         Color flashColor = new Color(
                 Math.min(baseColor.getRed() + 100, 255),
                 Math.min(baseColor.getGreen() + 100, 255),
                 Math.min(baseColor.getBlue() + 100, 255));
 
-        // Track if we're in flash state
         final boolean[] isFlashing = { false };
 
         button.addActionListener(e -> {
-            // Start flash
             isFlashing[0] = true;
             button.repaint();
 
-            // Timer to end flash after 100ms
             Timer timer = new Timer(100, evt -> {
                 isFlashing[0] = false;
                 button.repaint();
@@ -138,24 +108,19 @@ public class LaunchPanel extends JPanel {
                 int h = c.getHeight();
 
                 if (isFlashing[0]) {
-                    // Draw flash state
                     g2d.setColor(flashColor);
                     g2d.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
                 } else {
-                    // Draw normal state
                     g2d.setColor(baseColor);
                     g2d.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
                 }
 
-                // Add border
                 g2d.setColor(new Color(80, 80, 80));
                 g2d.drawRoundRect(0, 0, w - 1, h - 1, 10, 10);
 
-                // Add highlight
                 g2d.setColor(new Color(255, 255, 255, 30));
                 g2d.drawLine(2, 2, w - 3, 2);
 
-                // Draw the button text if it exists
                 String text = ((JButton) c).getText();
                 if (text != null && !text.isEmpty()) {
                     g2d.setFont(new Font("Arial", Font.BOLD, 16));

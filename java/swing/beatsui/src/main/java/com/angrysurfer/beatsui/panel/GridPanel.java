@@ -11,7 +11,7 @@ import com.angrysurfer.beatsui.widget.GridButton;
 import com.angrysurfer.beatsui.api.StatusConsumer;
 import java.util.Objects;
 
-public class GridPanel extends JPanel {
+public class GridPanel extends StatusProviderPanel {
 
     private static final int GRID_ROWS = 5;
     private static final int GRID_COLS = 36;
@@ -61,8 +61,6 @@ public class GridPanel extends JPanel {
     private boolean[][] visited;
     private Ant ant;
     private double t = 0.0; // Time variable for plasma
-
-    private StatusConsumer statusConsumer;
 
     // Add inner class for Langton's Ant
     private class Ant {
@@ -134,8 +132,7 @@ public class GridPanel extends JPanel {
     }
 
     public GridPanel(StatusConsumer statusConsumer) {
-        super(new GridLayout(GRID_ROWS, GRID_COLS, 2, 2));
-        this.statusConsumer = statusConsumer;
+        super(new GridLayout(GRID_ROWS, GRID_COLS, 2, 2), statusConsumer);
         setupTimers();
         setup();
         setupAnimation();
@@ -1045,17 +1042,5 @@ public class GridPanel extends JPanel {
         boolean isWhite = current.equals(Color.WHITE);
         buttons[ant.y][ant.x].setBackground(isWhite ? Utils.darkGray : Color.WHITE);
         ant.move(!isWhite);
-    }
-
-    public void setStatus(String status) {
-        if (Objects.nonNull(statusConsumer)) {
-            statusConsumer.setStatus(status);
-        }
-    }
-
-    public void clearStatus() {
-        if (Objects.nonNull(statusConsumer)) {
-            statusConsumer.clearStatus();
-        }
     }
 }

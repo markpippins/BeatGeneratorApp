@@ -60,4 +60,8 @@ public class Frame extends JFrame {
         add(mainPanel, BorderLayout.CENTER);
     }
 
+    public <T> Dialog<T> createDialog(T data, JPanel content) {
+        return new Dialog<>(this, data, content);
+    }
+
 }

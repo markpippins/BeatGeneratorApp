@@ -18,29 +18,15 @@ import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.api.StatusConsumer;
 import java.util.Objects;
 
-public class OptionsPanel extends JPanel {
-    private StatusConsumer statusConsumer;
+public class OptionsPanel extends StatusProviderPanel {
 
     public OptionsPanel() {
         this(null);
     }
 
     public OptionsPanel(StatusConsumer statusConsumer) {
-        super(new BorderLayout());
-        this.statusConsumer = statusConsumer;
+        super(new BorderLayout(), statusConsumer);
         setup();
-    }
-
-    public void setStatus(String status) {
-        if (Objects.nonNull(statusConsumer)) {
-            statusConsumer.setStatus(status);
-        }
-    }
-
-    public void clearStatus() {
-        if (Objects.nonNull(statusConsumer)) {
-            statusConsumer.clearStatus();
-        }
     }
 
     private void setup() {

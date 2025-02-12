@@ -10,15 +10,18 @@ import java.awt.RenderingHints;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-public class PianoPanel extends JPanel {
+import com.angrysurfer.beatsui.api.StatusConsumer;
 
+public class PianoPanel extends StatusProviderPanel {
     public PianoPanel() {
-        super(null);
+        this(null);
+    }
 
+    public PianoPanel(StatusConsumer statusConsumer) {
+        super(null, statusConsumer);
         setPreferredSize(new Dimension(500, 80));
         setBorder(new EmptyBorder(10, 10, 10, 10));
         // setBackground(new Color(40, 40, 40));
@@ -31,7 +34,6 @@ public class PianoPanel extends JPanel {
 
         // Create white keys
 
-        
         String[] whiteNotes = { "C", "D", "E", "F", "G", "A", "B" };
         for (int i = 0; i < 7; i++) {
             JButton whiteKey = createPianoKey(true, whiteNotes[i]);
@@ -63,7 +65,7 @@ public class PianoPanel extends JPanel {
                 int h = c.getHeight();
 
                 // Check if button is pressed
-                boolean isPressed = ((JButton)c).getModel().isPressed();
+                boolean isPressed = ((JButton) c).getModel().isPressed();
 
                 // Base color with pressed effect
                 if (isWhite) {
