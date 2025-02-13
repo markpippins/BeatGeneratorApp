@@ -11,6 +11,7 @@ import javax.swing.border.EmptyBorder;
 import com.angrysurfer.beatsui.panel.LaunchPanel;
 import com.angrysurfer.beatsui.panel.OptionsPanel;
 import com.angrysurfer.beatsui.panel.PlayerPanel;
+import com.angrysurfer.beatsui.panel.SystemsPanel;
 import com.angrysurfer.beatsui.panel.X0XPanel;
 import com.angrysurfer.beatsui.widget.StatusBar;
 
@@ -48,7 +49,8 @@ public class Frame extends JFrame {
         tabbedPane.addTab("Params", new JPanel());
         tabbedPane.addTab("Controls", new JPanel());
 
-        tabbedPane.addTab("Options", new OptionsPanel());
+        tabbedPane.addTab("Instruments", new OptionsPanel());
+        tabbedPane.addTab("System", new SystemsPanel(statusBar));
 
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
         add(mainPanel, BorderLayout.CENTER);

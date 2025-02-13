@@ -1,6 +1,7 @@
 package com.angrysurfer.beatsui.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.HashSet;
 import java.util.List;
@@ -86,53 +87,48 @@ public class OptionsPanel extends StatusProviderPanel {
     private JPanel createOptionsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        // Create vertical split pane for main layout
-        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        mainSplitPane.setResizeWeight(0.5);
-
-        // Top section - MIDI Devices table
-        JTable devicesTable = createDevicesTable();
-        mainSplitPane.setTopComponent(new JScrollPane(devicesTable));
-
-        // Bottom section - Split into two parts
-        JSplitPane bottomSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        // Create horizontal split pane for instruments and control codes
+        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         
-        // Create instruments panel with toolbar
-        JPanel instrumentsPanel = new JPanel(new BorderLayout());
+        // Create tables first
         instrumentsTable = createConfigsTable();
-        JPanel instrumentsToolbar = setupInstrumentToolbar();
-        instrumentsPanel.add(instrumentsToolbar, BorderLayout.NORTH);
-        instrumentsPanel.add(new JScrollPane(instrumentsTable), BorderLayout.CENTER);
-        
-        bottomSplitPane.setLeftComponent(instrumentsPanel);
+        controlCodesTable = createControlCodesTable();
+        captionsTable = createCaptionsTable();
 
-        // Right side - Control Codes and Captions (now horizontal)
+        // Right side - Control Codes and Captions
         JSplitPane rightSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         
         // Create control codes panel with toolbar
         JPanel controlCodesPanel = new JPanel(new BorderLayout());
-        controlCodesTable = createControlCodesTable();
-        JPanel controlCodesToolbar = setupControlCodeToolbar();
+        JPanel controlCodesToolbar = setupControlCodeToolbar(); // Now tables exist when creating toolbars
         controlCodesPanel.add(controlCodesToolbar, BorderLayout.NORTH);
         controlCodesPanel.add(new JScrollPane(controlCodesTable), BorderLayout.CENTER);
         
         // Create captions panel with toolbar
         JPanel captionsPanel = new JPanel(new BorderLayout());
-        captionsTable = createCaptionsTable();
         JPanel captionsToolbar = setupCaptionsToolbar();
         captionsPanel.add(captionsToolbar, BorderLayout.NORTH);
         captionsPanel.add(new JScrollPane(captionsTable), BorderLayout.CENTER);
+
+        // Set fixed widths for the right panels
+        controlCodesPanel.setPreferredSize(new Dimension(300, controlCodesPanel.getPreferredSize().height));
+        captionsPanel.setPreferredSize(new Dimension(300, captionsPanel.getPreferredSize().height));
         
         rightSplitPane.setLeftComponent(controlCodesPanel);
         rightSplitPane.setRightComponent(captionsPanel);
         rightSplitPane.setResizeWeight(0.5);
 
-        bottomSplitPane.setRightComponent(rightSplitPane);
-        bottomSplitPane.setResizeWeight(0.5);
+        // Left side - Instruments panel with toolbar
+        JPanel instrumentsPanel = new JPanel(new BorderLayout());
+        JPanel instrumentsToolbar = setupInstrumentToolbar();
+        instrumentsPanel.add(instrumentsToolbar, BorderLayout.NORTH);
+        instrumentsPanel.add(new JScrollPane(instrumentsTable), BorderLayout.CENTER);
 
-        mainSplitPane.setBottomComponent(bottomSplitPane);
+        mainSplitPane.setLeftComponent(instrumentsPanel);
+        mainSplitPane.setRightComponent(rightSplitPane);
+        mainSplitPane.setResizeWeight(0.3);
+
         panel.add(mainSplitPane, BorderLayout.CENTER);
-
         return panel;
     }
 
@@ -337,15 +333,19 @@ public class OptionsPanel extends StatusProviderPanel {
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
-        // Set column widths
-        table.getColumnModel().getColumn(0).setPreferredWidth(100); // Name
+        // Set column widths - make name column extra wide
+        table.getColumnModel().getColumn(0).setPreferredWidth(250); // Name - wider
         table.getColumnModel().getColumn(1).setPreferredWidth(200); // Device Name
         
-        // Set fixed widths for numeric columns
-        table.getColumnModel().getColumn(3).setPreferredWidth(60); // Lowest Note
-        table.getColumnModel().getColumn(3).setMaxWidth(60);
-        table.getColumnModel().getColumn(4).setPreferredWidth(60); // Highest Note
-        table.getColumnModel().getColumn(4).setMaxWidth(60);
+        // Fixed minimum widths for numeric and boolean columns
+        table.getColumnModel().getColumn(2).setMaxWidth(60); // Available
+        table.getColumnModel().getColumn(2).setPreferredWidth(60);
+        table.getColumnModel().getColumn(3).setMaxWidth(80); // Lowest Note
+        table.getColumnModel().getColumn(3).setPreferredWidth(80);
+        table.getColumnModel().getColumn(4).setMaxWidth(80); // Highest Note
+        table.getColumnModel().getColumn(4).setPreferredWidth(80);
+        table.getColumnModel().getColumn(5).setMaxWidth(60); // Initialized
+        table.getColumnModel().getColumn(5).setPreferredWidth(60);
 
         // Add selection listener
         table.getSelectionModel().addListSelectionListener(e -> {
@@ -400,11 +400,13 @@ public class OptionsPanel extends StatusProviderPanel {
         // Set column widths
         table.getColumnModel().getColumn(0).setPreferredWidth(120); // Name
         
-        // Set fixed widths for numeric columns
-        for (int i = 1; i <= 3; i++) {
-            table.getColumnModel().getColumn(i).setPreferredWidth(60);
-            table.getColumnModel().getColumn(i).setMaxWidth(60);
-        }
+        // Fixed minimum widths for numeric columns
+        table.getColumnModel().getColumn(1).setMaxWidth(60); // Code
+        table.getColumnModel().getColumn(1).setPreferredWidth(60);
+        table.getColumnModel().getColumn(2).setMaxWidth(80); // Lower Bound
+        table.getColumnModel().getColumn(2).setPreferredWidth(80);
+        table.getColumnModel().getColumn(3).setMaxWidth(80); // Upper Bound
+        table.getColumnModel().getColumn(3).setPreferredWidth(80);
 
         // Modify selection listener to handle caption buttons
         table.getSelectionModel().addListSelectionListener(e -> {
@@ -452,9 +454,9 @@ public class OptionsPanel extends StatusProviderPanel {
         table.setAutoCreateRowSorter(true);  // Enable sorting
 
         // Set column widths
-        table.getColumnModel().getColumn(0).setPreferredWidth(60); // Code
-        table.getColumnModel().getColumn(0).setMaxWidth(60);
-        table.getColumnModel().getColumn(1).setPreferredWidth(200); // Description
+        table.getColumnModel().getColumn(0).setMaxWidth(60); // Code
+        table.getColumnModel().getColumn(0).setPreferredWidth(60);
+        table.getColumnModel().getColumn(1).setPreferredWidth(240); // Description
 
         // Modify selection listener to only enable edit/delete when caption is selected
         table.getSelectionModel().addListSelectionListener(e -> {
