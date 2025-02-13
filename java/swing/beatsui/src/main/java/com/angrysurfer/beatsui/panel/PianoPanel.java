@@ -191,41 +191,40 @@ public class PianoPanel extends StatusProviderPanel {
                 int w = c.getWidth();
                 int h = c.getHeight();
 
-                // Check if button is pressed
                 boolean isPressed = ((JButton) c).getModel().isPressed();
 
-                // Base color with pressed effect
+                // Adjusted colors for better contrast
                 if (isWhite) {
                     if (isPressed) {
-                        g2d.setColor(new Color(230, 230, 230));
-                        g2d.fillRect(0, 2, w, h); // Slight offset when pressed
+                        g2d.setColor(new Color(25, 25, 25));
+                        g2d.fillRect(0, 2, w, h);
                     } else {
-                        g2d.setColor(Color.WHITE);
+                        g2d.setColor(new Color(20, 20, 20));
                         g2d.fillRect(0, 0, w, h);
-                        // Shadow effect
-                        g2d.setColor(new Color(200, 200, 200));
-                        g2d.fillRect(0, h - 10, w, 10);
+                        // Slightly lighter highlight
+                        g2d.setColor(new Color(35, 35, 35));
+                        g2d.fillRect(0, 0, w, 5);
                     }
                 } else {
                     if (isPressed) {
-                        g2d.setColor(new Color(20, 20, 20));
-                        g2d.fillRect(0, 2, w, h); // Slight offset when pressed
+                        g2d.setColor(new Color(180, 180, 180));
+                        g2d.fillRect(0, 2, w, h);
                     } else {
-                        g2d.setColor(Color.BLACK);
+                        g2d.setColor(new Color(200, 200, 200));
                         g2d.fillRect(0, 0, w, h);
-                        // Highlight effect
-                        g2d.setColor(new Color(60, 60, 60));
-                        g2d.fillRect(0, 0, w, 5);
+                        // Shadow effect for light keys
+                        g2d.setColor(new Color(160, 160, 160));
+                        g2d.fillRect(0, h - 10, w, 10);
                     }
                 }
 
-                // Draw border
-                g2d.setColor(Color.BLACK);
+                // Border color based on key type
+                g2d.setColor(isWhite ? new Color(50, 50, 50) : new Color(150, 150, 150));
                 g2d.drawRect(0, 0, w - 1, h - 1);
 
-                // Draw note label at bottom of white keys
+                // Draw note label with reversed color
                 if (isWhite) {
-                    g2d.setColor(Color.BLACK);
+                    g2d.setColor(Color.LIGHT_GRAY);
                     g2d.setFont(new Font("Arial", Font.PLAIN, 10));
                     FontMetrics fm = g2d.getFontMetrics();
                     int noteWidth = fm.stringWidth(note);
