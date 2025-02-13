@@ -304,9 +304,6 @@ public class Instrument implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Instrument{id=%d, name='%s', deviceName='%s', channels=%s, controlCodes=%s, pads=%s}",
-                id, name, deviceName, Arrays.toString(channels),
-                controlCodes.stream().map(ControlCode::toString).toList(),
-                pads.stream().map(Pad::toString).toList());
+        return getName(); // This will be displayed in the combo box
     }
 }

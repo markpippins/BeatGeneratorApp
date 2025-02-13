@@ -55,7 +55,7 @@ public class Dialog<T> extends JDialog {
     private void setupDialog() {
         setLayout(new BorderLayout());
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
+        setResizable(false);
         // Add keyboard shortcuts
         setupKeyboardShortcuts();
 

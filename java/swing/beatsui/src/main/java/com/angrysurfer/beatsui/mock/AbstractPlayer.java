@@ -46,6 +46,8 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     @Column(name = "id", nullable = false)
     private Long id;
 
+    private Long InstrumentId;
+
     private String name = "Player";
     private int channel = 0;
     private Long swing = 0L;
@@ -137,6 +139,14 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
         setAllowedControlMessages(allowedControlMessages);
     }
 
+    public void setInstrument(Instrument instrument) {
+        this.instrument = instrument;
+        if (Objects.nonNull(instrument))
+            this.InstrumentId = instrument.getId();
+        else
+            this.InstrumentId = null;
+    }
+
     @Override
     public String getPlayerClass() {
         return getClass().getSimpleName();
@@ -145,10 +155,6 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     @Override
     public Long getSubPosition() {
         return getSubCycler().get();
-    }
-
-    public void setInstrument(Instrument instrument) {
-        this.instrument = instrument;
     }
 
     @Override

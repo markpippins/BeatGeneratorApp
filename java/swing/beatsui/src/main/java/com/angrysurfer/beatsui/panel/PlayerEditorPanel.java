@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.FlowLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
@@ -19,10 +20,13 @@ import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.mock.Strike;
 import com.angrysurfer.beatsui.widget.Dial;
 import com.angrysurfer.beatsui.widget.ToggleSwitch;
+import com.angrysurfer.beatsui.App;
+import com.angrysurfer.beatsui.mock.Instrument;
+import java.util.List;
 
 public class PlayerEditorPanel extends StatusProviderPanel {
     private final Strike player;
-    private final JTextField nameField;
+    private final JComboBox<Instrument> instrumentCombo; // Replace nameField
     private final JComboBox<Integer> channelCombo;
     private final JComboBox<Integer> presetCombo;
     private final Dial swingDial;
@@ -62,7 +66,17 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        nameField = new JTextField(player.getName(), 20);
+        // Replace nameField initialization with instrumentCombo
+        instrumentCombo = new JComboBox<>(loadInstruments());
+        if (player.getInstrumentId() != null) {
+            for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
+                Instrument inst = instrumentCombo.getItemAt(i);
+                if (inst.getId().equals(player.getInstrumentId())) {
+                    instrumentCombo.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
 
         channelCombo = new JComboBox<>(createChannelOptions());
         channelCombo.setSelectedItem(player.getChannel());
@@ -101,7 +115,7 @@ public class PlayerEditorPanel extends StatusProviderPanel {
 
         layoutComponents();
 
-        setPreferredSize(new Dimension(800, 500));
+        setPreferredSize(new Dimension(475, 700));
     }
 
     private Integer[] createChannelOptions() {
@@ -129,7 +143,16 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     private ToggleSwitch createToggleSwitch(String name, boolean value) {
         ToggleSwitch toggle = new ToggleSwitch();
         toggle.setSelected(value);
+        toggle.setPreferredSize(new Dimension(60, 30)); // Set a reasonable size
+        toggle.setMinimumSize(new Dimension(60, 30)); // Ensure minimum size
         return toggle;
+    }
+
+    private Instrument[] loadInstruments() {
+        List<Instrument> instruments = App.getRedisService().findAllInstruments();
+        // Sort instruments by name
+        instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+        return instruments.toArray(new Instrument[0]);
     }
 
     private void layoutComponents() {
@@ -140,8 +163,8 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         topGbc.fill = GridBagConstraints.HORIZONTAL;
         topGbc.weightx = 1.0;
 
-        // Add name field (wider)
-        addComponent("Name", nameField, 0, 0, 2, topGbc, topPanel);
+        // Replace "Name" with "Instrument" in the top panel
+        addComponent("Instrument", instrumentCombo, 0, 0, 2, topGbc, topPanel);
 
         // Add channel and preset combos
         addComponent("Channel", channelCombo, 2, 0, 1, topGbc, topPanel);
@@ -235,12 +258,17 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         gbc.gridx = x;
         gbc.gridy = y;
         gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.NONE;
+        gbc.fill = GridBagConstraints.NONE; // Changed from NONE to HORIZONTAL
         gbc.anchor = GridBagConstraints.CENTER;
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.add(new JLabel(label), BorderLayout.NORTH);
-        panel.add(toggle, BorderLayout.CENTER);
+
+        // Create a wrapper panel to center the toggle
+        JPanel toggleWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        toggleWrapper.add(toggle);
+        panel.add(toggleWrapper, BorderLayout.CENTER);
+
         targetPanel.add(panel, gbc);
     }
 
@@ -248,9 +276,10 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         // Since we're modifying the original player object directly,
         // we just need to preserve its ID and return it
         Long originalId = player.getId();
-        
+
         // Update all the fields
-        player.setName(nameField.getText());
+        player.setName(((Instrument) instrumentCombo.getSelectedItem()).getName());
+        player.setInstrument((Instrument) instrumentCombo.getSelectedItem());
         player.setChannel((Integer) channelCombo.getSelectedItem());
         player.setPreset(((Integer) presetCombo.getSelectedItem()).longValue());
         player.setSwing((long) swingDial.getValue());
@@ -281,6 +310,10 @@ public class PlayerEditorPanel extends StatusProviderPanel {
 
         // Spinner
         player.setSparse((double) sparseSpinner.getValue());
+
+        // Update Instrument ID instead of name
+        Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
+        player.setInstrumentId(selectedInstrument != null ? selectedInstrument.getId() : null);
 
         // Ensure ID is preserved
         player.setId(originalId);
