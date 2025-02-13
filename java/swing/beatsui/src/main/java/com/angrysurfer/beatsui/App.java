@@ -24,11 +24,10 @@ public class App {
     public static void main(String[] args) {
         try {
             // Initialize Redis first, before any Swing components
-            setupLookAndFeel();
             initializeRedis();
-
             // Only proceed with UI creation after Redis is initialized
             if (redisService != null) {
+                setupLookAndFeel();
                 SwingUtilities.invokeLater(() -> {
                     try {
                         App app = new App();
@@ -68,7 +67,7 @@ public class App {
             // Check if Redis is empty - only initialize if it is
             boolean isEmpty = redisService.isDatabaseEmpty();
             logger.info("Redis database is empty: " + isEmpty);
-            
+
             if (isEmpty) {
                 logger.info("Loading initial configuration...");
                 String configPath = "C:/Users/MarkP/dev/BeatGeneratorApp/java/swing/beatsui/src/main/java/com/angrysurfer/beatsui/config/beats-config.json";
@@ -79,9 +78,9 @@ public class App {
             // Check for existing Ticker
             try {
                 Ticker ticker = redisService.loadTicker();
-                logger.info("Loaded existing ticker: BPM=" + ticker.getTempoInBPM() + 
-                          ", Bars=" + ticker.getBars());
-                
+                logger.info("Loaded existing ticker: BPM=" + ticker.getTempoInBPM() +
+                        ", Bars=" + ticker.getBars());
+
                 // Publish ticker selection after a short delay
                 SwingUtilities.invokeLater(() -> {
                     Action action = new Action();
