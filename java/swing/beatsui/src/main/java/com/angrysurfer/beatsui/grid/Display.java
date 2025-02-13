@@ -15,10 +15,15 @@ import javax.swing.Timer;
 import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.grid.visualizer.ArpeggiatorVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.AsteroidsVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.BinaryRainVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.BounceVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.BreakoutVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.BrownianVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.CellularVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.ChordProgressionVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.ClockVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.ConfettiVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.CrystalVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.DNAVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.DigDugVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.DrumPatternVisualization;
@@ -27,16 +32,20 @@ import com.angrysurfer.beatsui.grid.visualizer.EuclideanRhythmVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.ExplosionVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.FireworksVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.FrequencyBandsVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.FroggerVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.GameOfLifeVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.GateSequencerVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.HarmonicsVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.HeartVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.KaleidoscopeVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.LFOMatrixVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.LangtonVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.LifeSoupVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.LoopPulseVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.MandelbrotVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.MatrixRainVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.MatrixVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.MazeVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.MidiGridVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.MissileCommandVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.ModularCVVisualization;
@@ -46,6 +55,7 @@ import com.angrysurfer.beatsui.grid.visualizer.PhaseShiftVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.PianoRollVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.PlasmaVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.PlatformClimberVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.PolePositionVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.PolyphonicVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.PolyrhythmVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.PongVisualization;
@@ -59,6 +69,7 @@ import com.angrysurfer.beatsui.grid.visualizer.SpaceInvadersVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.SpaceVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.SpectrumAnalyzerVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.SpiralVisualization;
+import com.angrysurfer.beatsui.grid.visualizer.StarfieldVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.StepSequencerVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.TimeDivisionVisualization;
 import com.angrysurfer.beatsui.grid.visualizer.TriggerBurstVisualization;
@@ -265,7 +276,9 @@ public class Display {
         ASTEROID("Asteroids"),
         PONG("Pong Classic"),
         DIGDUG("Dig Dug"),
-        CLIMBER("Platform Climber"); // Generic name for similar gameplay style
+        CLIMBER("Platform Climber"), // Generic name for similar gameplay style
+        FROGGER("Frogger"),
+        POLE_POSITION("Pole Position");
 
         private final String label;
 
@@ -281,18 +294,18 @@ public class Display {
     // Add new fields for game states
     private List<Point> tronTrail1 = new ArrayList<>();
     private List<Point> tronTrail2 = new ArrayList<>();
-    private int[] tronDirs1 = {0, 0}; // dx, dy
-    private int[] tronDirs2 = {0, 0};
-    
+    private int[] tronDirs1 = { 0, 0 }; // dx, dy
+    private int[] tronDirs2 = { 0, 0 };
+
     private List<Point> asteroids = new ArrayList<>();
     private double[] asteroidAngles = new double[5];
-    private Point shipPos = new Point(GRID_COLS/2, GRID_ROWS/2);
+    private Point shipPos = new Point(GRID_COLS / 2, GRID_ROWS / 2);
     private double shipAngle = 0;
 
     private List<Point> tunnels = new ArrayList<>();
-    private Point digger = new Point(GRID_COLS/2, GRID_ROWS-1);
+    private Point digger = new Point(GRID_COLS / 2, GRID_ROWS - 1);
     private List<Point> rocks = new ArrayList<>();
-    private Point climber = new Point(2, GRID_ROWS-2);
+    private Point climber = new Point(2, GRID_ROWS - 2);
     private List<Point> platforms = new ArrayList<>();
     private List<Point> ladders = new ArrayList<>();
     private int jumpPhase = 0;
@@ -315,7 +328,7 @@ public class Display {
         Point start, end;
         double progress;
         boolean enemy;
-        
+
         Missile(Point start, Point end, boolean enemy) {
             this.start = start;
             this.end = end;
@@ -327,7 +340,7 @@ public class Display {
     private static class City {
         int x;
         boolean alive;
-        
+
         City(int x) {
             this.x = x;
             this.alive = true;
@@ -338,7 +351,7 @@ public class Display {
         Point pos;
         int radius;
         int maxRadius;
-        
+
         Explosion(Point pos) {
             this.pos = pos;
             this.radius = 0;
@@ -412,6 +425,17 @@ public class Display {
         visualizations.put(DisplayMode.DIGDUG, new DigDugVisualization());
         visualizations.put(DisplayMode.CLIMBER, new PlatformClimberVisualization());
         visualizations.put(DisplayMode.RACING, new RacingVisualization());
+        visualizations.put(DisplayMode.CLOCK, new ClockVisualization());
+        visualizations.put(DisplayMode.STARFIELD, new StarfieldVisualization());
+        visualizations.put(DisplayMode.MAZE, new MazeVisualization());
+        visualizations.put(DisplayMode.CRYSTAL, new CrystalVisualization());
+        visualizations.put(DisplayMode.CELLULAR, new CellularVisualization());
+        visualizations.put(DisplayMode.LIFE_SOUP, new LifeSoupVisualization());
+        visualizations.put(DisplayMode.BROWNIAN, new BrownianVisualization());
+        visualizations.put(DisplayMode.BINARY, new BinaryRainVisualization());
+        visualizations.put(DisplayMode.LANGTON, new LangtonVisualization());
+        visualizations.put(DisplayMode.FROGGER, new FroggerVisualization());
+        visualizations.put(DisplayMode.POLE_POSITION, new PolePositionVisualization());
         // Add more visualizations as we create them...
     }
 
@@ -491,7 +515,11 @@ public class Display {
             if (statusConsumer != null) {
                 statusConsumer.setSender(viz.getName());
             }
-            viz.update(buttons);
+            try {
+                viz.update(buttons);
+            } catch (Exception e) {
+                System.err.println(viz.getName() + " Error updating display: " + e.getMessage());
+            }
         }
     }
 

@@ -1,47 +1,46 @@
 package com.angrysurfer.beatsui.grid.visualizer;
 
 import java.awt.Color;
+
 import com.angrysurfer.beatsui.grid.Visualization;
 import com.angrysurfer.beatsui.widget.GridButton;
 
 public class PolyrhythmVisualization implements Visualization {
-    private double phase = 0.0;
-    private final int[] rhythms = {3, 4, 5, 7, 8, 9, 11, 13}; // Different polyrhythm divisions
-    private final Color[] colors = {
-        Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, 
-        Color.CYAN, Color.BLUE, Color.MAGENTA, Color.PINK
-    };
+    private double[] phases;
+    private final double[] rhythms = {3, 4, 5, 7, 8, 9, 11, 13};
+    private double baseSpeed = 0.1;
 
     @Override
     public void update(GridButton[][] buttons) {
+        if (phases == null) {
+            phases = new double[buttons.length];
+        }
+
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
-        for (int row = 0; row < Math.min(buttons.length, rhythms.length); row++) {
-            int rhythm = rhythms[row];
-            double rhythmPhase = phase * rhythm;
-            
-            // Calculate current position in this rhythm
-            int position = (int)(rhythmPhase) % buttons[0].length;
-            int nextBeat = (position + buttons[0].length/rhythm) % buttons[0].length;
+        // Update and draw each rhythm line
+        for (int row = 0; row < buttons.length; row++) {
+            double rhythm = rhythms[row % rhythms.length];
+            phases[row] = (phases[row] + baseSpeed * rhythm) % (2 * Math.PI);
 
-            // Draw rhythm line
             for (int col = 0; col < buttons[0].length; col++) {
-                if (col == position) {
-                    buttons[row][col].setBackground(Color.WHITE);
-                } else if (col % (buttons[0].length/rhythm) == 0) {
-                    buttons[row][col].setBackground(colors[row % colors.length]);
-                }
+                double value = Math.sin(phases[row] + (col * 2 * Math.PI / buttons[0].length));
+                value = (value + 1) / 2; // Normalize to 0-1 range
 
-                // Draw moving highlight
-                double distance = Math.abs(col - position);
-                if (distance < 2) {
-                    int brightness = (int)(255 * (2 - distance));
-                    buttons[row][col].setBackground(new Color(
-                        brightness, brightness, brightness));
-                }
+                // Ensure color values are within valid range (0-255)
+                int intensity = (int)(value * 255);
+                intensity = Math.max(0, Math.min(255, intensity));
+
+                // Create colors using the bounded intensity value
+                Color color = new Color(
+                    intensity, 
+                    Math.max(0, Math.min(255, intensity / 2)), 
+                    Math.max(0, Math.min(255, 255 - intensity))
+                );
+                
+                buttons[row][col].setBackground(color);
             }
         }
-        phase += 0.05;
     }
 
     @Override

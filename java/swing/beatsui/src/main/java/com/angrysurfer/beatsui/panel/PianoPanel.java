@@ -196,34 +196,36 @@ public class PianoPanel extends StatusProviderPanel {
 
                 // Adjusted colors for better contrast
                 if (isWhite) {
+                    // Minor scale keys (previously white)
                     if (isPressed) {
                         g2d.setColor(new Color(25, 25, 25));
                     } else if (isHeld) {
-                        g2d.setColor(new Color(40, 30, 30)); // Subtle reddish tint for held
+                        g2d.setColor(new Color(40, 30, 30));
                     } else {
                         g2d.setColor(new Color(20, 20, 20));
                     }
                     g2d.fillRect(0, isPressed ? 2 : 0, w, h);
 
                     if (!isPressed && !isHeld) {
-                        // Highlight only for non-pressed, non-held keys
                         g2d.setColor(new Color(35, 35, 35));
                         g2d.fillRect(0, 0, w, 5);
                     }
                 } else {
+                    // Major scale keys (previously black)
                     if (isPressed) {
-                        g2d.setColor(new Color(180, 180, 180));
+                        g2d.setColor(new Color(240, 240, 240)); // Much lighter when pressed
                     } else if (isHeld) {
-                        g2d.setColor(new Color(210, 190, 190)); // Subtle reddish tint for held
+                        g2d.setColor(new Color(230, 220, 220)); // Lighter when held
                     } else {
                         g2d.setColor(new Color(200, 200, 200));
-                    }
-                    g2d.fillRect(0, isPressed ? 2 : 0, w, h);
-
-                    if (!isPressed && !isHeld) {
-                        // Shadow only for non-pressed, non-held keys
-                        g2d.setColor(new Color(160, 160, 160));
-                        g2d.fillRect(0, h - 10, w, 10);
+                        // Add gradient shading at bottom when not pressed
+                        g2d.fillRect(0, 0, w, h);
+                        g2d.setColor(new Color(160, 160, 160, 100));
+                        for (int i = 0; i < 10; i++) {
+                            int alpha = 15 + (i * 5);
+                            g2d.setColor(new Color(160, 160, 160, alpha));
+                            g2d.fillRect(0, h - 10 + i, w, 1);
+                        }
                     }
                 }
 
