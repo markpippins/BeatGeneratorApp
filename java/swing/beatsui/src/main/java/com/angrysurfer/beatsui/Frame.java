@@ -1,29 +1,33 @@
 package com.angrysurfer.beatsui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beatsui.panel.LaunchPanel;
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
+import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.panel.InstrumentsPanel;
+import com.angrysurfer.beatsui.panel.LaunchPanel;
 import com.angrysurfer.beatsui.panel.PlayerPanel;
 import com.angrysurfer.beatsui.panel.SystemsPanel;
 import com.angrysurfer.beatsui.panel.X0XPanel;
 import com.angrysurfer.beatsui.widget.StatusBar;
-import com.angrysurfer.beatsui.api.Action;
-import com.angrysurfer.beatsui.api.ActionBus;
-import com.angrysurfer.beatsui.api.Commands;
 
-public class Frame extends JFrame {
+public class Frame extends JFrame implements AutoCloseable {
+
+    private static final Logger logger = Logger.getLogger(Frame.class.getName());
 
     private StatusBar statusBar = new StatusBar();
     private JTabbedPane tabbedPane;
@@ -75,7 +79,7 @@ public class Frame extends JFrame {
 
                     if (keyNoteMap.containsKey(keyChar)) {
                         int note = keyNoteMap.get(keyChar);
-                        Action action = new Action();
+                        Command action = new Command();
 
                         switch (e.getID()) {
                             case KeyEvent.KEY_PRESSED -> {
@@ -86,13 +90,13 @@ public class Frame extends JFrame {
                                     action.setCommand(Commands.KEY_PRESSED);
                                 }
                                 action.setData(note);
-                                ActionBus.getInstance().publish(action);
+                                CommandBus.getInstance().publish(action);
                             }
                             case KeyEvent.KEY_RELEASED -> {
                                 if (!e.isShiftDown()) {
                                     action.setCommand(Commands.KEY_RELEASED);
                                     action.setData(note);
-                                    ActionBus.getInstance().publish(action);
+                                    CommandBus.getInstance().publish(action);
                                 }
                             }
                         }
@@ -136,4 +140,20 @@ public class Frame extends JFrame {
         tabbedPane.setSelectedIndex(index);
     }
 
+    @Override
+    public void close() {
+        // Clean up ActionBus subscriptions for child components
+        if (tabbedPane != null) {
+            for (Component comp : tabbedPane.getComponents()) {
+                if (comp instanceof AutoCloseable) {
+                    try {
+                        ((AutoCloseable) comp).close();
+                    } catch (Exception e) {
+                        logger.warning("Error closing component: " + e.getMessage());
+                    }
+                }
+            }
+        }
+        dispose();
+    }
 }

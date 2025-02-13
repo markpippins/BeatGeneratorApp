@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Action {
+public class Command {
 
     private String command;
     private Object sender;

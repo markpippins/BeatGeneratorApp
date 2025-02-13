@@ -20,8 +20,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.beatsui.Dialog;
-import com.angrysurfer.beatsui.api.Action;
-import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.mock.Caption;
 import com.angrysurfer.beatsui.mock.ControlCode;
@@ -32,7 +32,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ControlCodeEditorPanel extends JPanel {
-    private ActionBus actionBus = ActionBus.getInstance();
+    private CommandBus actionBus = CommandBus.getInstance();
     private ControlCode controlCode;
     private JTextField nameField;
     private JSpinner codeSpinner;
@@ -183,7 +183,7 @@ public class ControlCodeEditorPanel extends JPanel {
             updateCaptionsTable(updatedCaption, captionsTable.getSelectedRow());
             
             // Notify via ActionBus
-            Action action = new Action();
+            Command action = new Command();
             action.setCommand(isNew ? Commands.CAPTION_ADDED : Commands.CAPTION_UPDATED);
             action.setData(updatedCaption);
             actionBus.publish(action);
@@ -204,7 +204,7 @@ public class ControlCodeEditorPanel extends JPanel {
             Caption caption = getCaptionFromRow(row);
             ((DefaultTableModel) captionsTable.getModel()).removeRow(row);
             
-            Action action = new Action();
+            Command action = new Command();
             action.setCommand(Commands.CAPTION_DELETED);
             action.setData(caption);
             actionBus.publish(action);

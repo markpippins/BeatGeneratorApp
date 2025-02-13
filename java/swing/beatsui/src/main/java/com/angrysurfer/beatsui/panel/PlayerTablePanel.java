@@ -23,8 +23,8 @@ import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.mock.Strike;
 import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.App;
-import com.angrysurfer.beatsui.api.Action;
-import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.Commands;
 
 import lombok.Getter;
@@ -42,7 +42,7 @@ public class PlayerTablePanel extends JPanel {
     private final JMenuItem editMenuItem;
     private final JMenuItem deleteMenuItem;
     private final RuleTablePanel ruleTablePanel;
-    private final ActionBus actionBus = ActionBus.getInstance();
+    private final CommandBus actionBus = CommandBus.getInstance();
 
     public PlayerTablePanel(StatusConsumer status, RuleTablePanel ruleTablePanel) {
         super(new BorderLayout());
@@ -363,7 +363,7 @@ public class PlayerTablePanel extends JPanel {
     }
 
     private void publishPlayerSelected(Strike player) {
-        Action action = new Action();
+        Command action = new Command();
         action.setCommand(Commands.PLAYER_SELECTED);
         action.setData(player);
         action.setSender(this);
@@ -371,7 +371,7 @@ public class PlayerTablePanel extends JPanel {
     }
 
     private void publishPlayerUnselected() {
-        Action action = new Action();
+        Command action = new Command();
         action.setCommand(Commands.PLAYER_UNSELECTED);
         action.setSender(this);
         actionBus.publish(action);

@@ -16,9 +16,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.api.Action;
-import com.angrysurfer.beatsui.api.ActionBus;
-import com.angrysurfer.beatsui.api.ActionListener;
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
+import com.angrysurfer.beatsui.api.CommandListener;
 import com.angrysurfer.beatsui.api.Commands;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class PianoPanel extends StatusProviderPanel {
-    private final ActionBus actionBus = ActionBus.getInstance();
+    private final CommandBus actionBus = CommandBus.getInstance();
     private final Set<Integer> heldNotes = new HashSet<>();
     private Map<Integer, JButton> noteToKeyMap = new HashMap<>();
 
@@ -75,9 +75,9 @@ public class PianoPanel extends StatusProviderPanel {
     }
 
     private void setupActionBusListener() {
-        actionBus.register(new ActionListener() {
+        actionBus.register(new CommandListener() {
             @Override
-            public void onAction(Action action) {
+            public void onAction(Command action) {
                 if (action.getData() instanceof Integer note) {
 
                     switch (action.getCommand()) {

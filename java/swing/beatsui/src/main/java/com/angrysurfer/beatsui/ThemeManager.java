@@ -2,14 +2,14 @@ package com.angrysurfer.beatsui;
 
 import javax.swing.*;
 
-import com.angrysurfer.beatsui.api.Action;
-import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.Commands;
 import com.formdev.flatlaf.*;
 
 public class ThemeManager {
     private static ThemeManager instance;
-    private final ActionBus actionBus = ActionBus.getInstance();
+    private final CommandBus actionBus = CommandBus.getInstance();
     private final JFrame mainFrame;
 
     private ThemeManager(JFrame mainFrame) {
@@ -80,7 +80,7 @@ public class ThemeManager {
     }
 
     private void notifyThemeChange(String themeName) {
-        Action action = new Action();
+        Command action = new Command();
         action.setCommand(Commands.CHANGE_THEME);
         action.setSender(this);
         action.setData(themeName);

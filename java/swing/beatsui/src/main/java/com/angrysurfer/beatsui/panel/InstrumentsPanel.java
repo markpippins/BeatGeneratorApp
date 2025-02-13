@@ -22,7 +22,7 @@ import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.beatsui.App;
 import com.angrysurfer.beatsui.Dialog;
-import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.mock.Caption;
 import com.angrysurfer.beatsui.mock.ControlCode;
@@ -34,7 +34,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class InstrumentsPanel extends StatusProviderPanel {
-    private final ActionBus actionBus = ActionBus.getInstance();
+    private final CommandBus actionBus = CommandBus.getInstance();
     private JTable instrumentsTable;
     private JTable controlCodesTable;
     private JTable captionsTable;

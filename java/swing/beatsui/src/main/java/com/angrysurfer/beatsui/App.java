@@ -1,23 +1,22 @@
 package com.angrysurfer.beatsui;
 
 import java.util.logging.Logger;
-
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import com.angrysurfer.beatsui.api.Action;
-import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
+import com.angrysurfer.beatsui.api.CommandListener;  // Changed import
 import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.config.BeatsUIConfig;
 import com.angrysurfer.beatsui.mock.Ticker;
-import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
 /**
  * Hello world!
  *
  */
-public class App {
+public class App implements CommandListener {  // Changed to implement our ActionListener interface
     private Frame frame;
     private static RedisService redisService;
     private static final Logger logger = Logger.getLogger(App.class.getName());
@@ -77,6 +76,61 @@ public class App {
         }
     }
 
+    public App() {
+        // Register for theme changes using the correct method
+        CommandBus.getInstance().register(this);
+    }
+
+    @Override
+    public void onAction(Command action) {  // This is now the correct method from our interface
+        if (Commands.CHANGE_THEME.equals(action.getCommand())) {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    saveFrameState();
+                    String newLafClass = (String) action.getData();
+                    UIManager.setLookAndFeel(newLafClass);
+                    frame.close();
+                    recreateFrame();
+                } catch (Exception e) {
+                    logger.severe("Error handling theme change: " + e.getMessage());
+                }
+            });
+        }
+    }
+
+    private void saveFrameState() {
+        FrameState currentState = new FrameState(
+            frame.getSelectedTab(),
+            frame.getWidth(),
+            frame.getHeight(),
+            frame.getX(),
+            frame.getY(),
+            UIManager.getLookAndFeel().getClass().getName()
+        );
+        redisService.saveFrameState(currentState);
+    }
+
+    private void recreateFrame() {
+        frame = new Frame();
+        FrameState state = redisService.loadFrameState();
+        if (state != null) {
+            frame.setSize(state.frameSizeX, state.frameSizeY);
+            frame.setLocation(state.framePosX, state.framePosY);
+            frame.setSelectedTab(state.selectedTab);
+        }
+        
+        // Add window listener
+        frame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                saveFrameState();
+            }
+        });
+
+        frame.pack();
+        frame.setVisible(true);
+    }
+
     private void setupFrame() {
         
       }
@@ -123,10 +177,10 @@ public class App {
 
                 // Publish ticker selection after a short delay
                 SwingUtilities.invokeLater(() -> {
-                    Action action = new Action();
+                    Command action = new Command();
                     action.setCommand(Commands.TICKER_SELECTED);
                     action.setData(ticker);
-                    ActionBus.getInstance().publish(action);
+                    CommandBus.getInstance().publish(action);
                 });
 
             } catch (Exception e) {

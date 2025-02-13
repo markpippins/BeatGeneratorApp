@@ -20,12 +20,12 @@ import javax.swing.plaf.basic.BasicButtonUI;
 
 import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.api.ActionBus;
-import com.angrysurfer.beatsui.api.ActionListener;
+import com.angrysurfer.beatsui.api.CommandBus;
+import com.angrysurfer.beatsui.api.CommandListener;
 import com.angrysurfer.beatsui.api.Commands;
 import java.util.Objects;
 
-public class LaunchPanel extends StatusProviderPanel implements ActionListener {
+public class LaunchPanel extends StatusProviderPanel implements CommandListener {
 
     private static final int[] LAUNCH_PAD_LABELS = {
             13, 14, 15, 16, // inputs 1-4 map to 13,14,15,16
@@ -40,12 +40,12 @@ public class LaunchPanel extends StatusProviderPanel implements ActionListener {
 
     public LaunchPanel(StatusConsumer statusConsumer) {
         super(new BorderLayout(), statusConsumer);
-        ActionBus.getInstance().register(this);
+        CommandBus.getInstance().register(this);
         setup();
     }
 
     @Override
-    public void onAction(com.angrysurfer.beatsui.api.Action action) {
+    public void onAction(com.angrysurfer.beatsui.api.Command action) {
         if (Commands.CHANGE_THEME.equals(action.getCommand())) {
             SwingUtilities.invokeLater(this::repaint);
         }

@@ -23,16 +23,16 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
 
-import com.angrysurfer.beatsui.api.Action;
-import com.angrysurfer.beatsui.api.ActionBus;
-import com.angrysurfer.beatsui.api.ActionListener;
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
+import com.angrysurfer.beatsui.api.CommandListener;
 import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.mock.Ticker;
 
 public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();
     private final Map<String, JComponent> rightFields = new HashMap<>(); // Changed to JComponent
-    private final ActionBus actionBus = ActionBus.getInstance();
+    private final CommandBus actionBus = CommandBus.getInstance();
     private Ticker currentTicker; // Add field to track current ticker
 
     public ToolBar() {
@@ -42,9 +42,9 @@ public class ToolBar extends JToolBar {
     }
 
     private void setupActionBusListener() {
-        actionBus.register(new ActionListener() {
+        actionBus.register(new CommandListener() {
             @Override
-            public void onAction(Action action) {
+            public void onAction(Command action) {
                 if (action.getCommand().equals(Commands.TICKER_SELECTED) ||
                         action.getCommand().equals(Commands.TICKER_UPDATED)) {
                     if (action.getData() instanceof Ticker) {
@@ -88,7 +88,7 @@ public class ToolBar extends JToolBar {
                 App.getRedisService().saveTicker(currentTicker);
 
                 // Notify other components
-                Action action = new Action();
+                Command action = new Command();
                 action.setCommand(Commands.TICKER_UPDATED);
                 action.setData(currentTicker);
                 actionBus.publish(action);

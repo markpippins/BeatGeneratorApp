@@ -28,9 +28,9 @@ import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.mock.Rule;
 import com.angrysurfer.beatsui.mock.Strike;
-import com.angrysurfer.beatsui.api.Action;
-import com.angrysurfer.beatsui.api.ActionBus;
-import com.angrysurfer.beatsui.api.ActionListener;
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
+import com.angrysurfer.beatsui.api.CommandListener;
 import com.angrysurfer.beatsui.api.Commands;
 
 import lombok.Getter;
@@ -39,7 +39,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RuleTablePanel extends JPanel implements ActionListener {
+public class RuleTablePanel extends JPanel implements CommandListener {
     private static final Logger logger = Logger.getLogger(RuleTablePanel.class.getName());
     private final JTable table;
     private final StatusConsumer status;
@@ -51,7 +51,7 @@ public class RuleTablePanel extends JPanel implements ActionListener {
     private Strike selectedPlayer;
     private JPopupMenu popup; // Add this field
     private JMenuItem addPopupMenuItem; // Add this field
-    private final ActionBus actionBus = ActionBus.getInstance();
+    private final CommandBus actionBus = CommandBus.getInstance();
 
     public RuleTablePanel(StatusConsumer status) {
         super(new BorderLayout());
@@ -71,7 +71,7 @@ public class RuleTablePanel extends JPanel implements ActionListener {
     }
 
     @Override
-    public void onAction(Action action) {
+    public void onAction(Command action) {
         if (action.getSender() == this) return; // Ignore own actions
         
         switch (action.getCommand()) {

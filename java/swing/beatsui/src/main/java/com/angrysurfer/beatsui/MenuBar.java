@@ -9,14 +9,14 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
-import com.angrysurfer.beatsui.api.Action;
-import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.api.StatusConsumer;
 
 public class MenuBar extends JMenuBar {
     private final JFrame parentFrame;
-    private final ActionBus actionBus = ActionBus.getInstance();
+    private final CommandBus actionBus = CommandBus.getInstance();
     private final ThemeManager themeManager;
     private final StatusConsumer statusConsumer;
 
@@ -86,7 +86,7 @@ public class MenuBar extends JMenuBar {
             }
 
             // Then handle the action
-            Action action = new Action();
+            Command action = new Command();
             action.setCommand(command);
             action.setSender(this);
             actionBus.publish(action);
