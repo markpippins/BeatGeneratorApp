@@ -10,6 +10,7 @@ import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -98,6 +99,10 @@ public class ToolBar extends JToolBar {
     }
 
     private void updateTickerDisplay(Ticker ticker) {
+        
+        if (Objects.isNull(ticker) || Objects.isNull(ticker.getId()))
+            return;
+
         this.currentTicker = ticker; // Store current ticker
 
         // Update left fields
@@ -153,7 +158,7 @@ public class ToolBar extends JToolBar {
         // Transport controls
         JPanel transportPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         transportPanel.setPreferredSize(new Dimension(transportPanel.getPreferredSize().width, 75));
-        
+
         JButton rewindBtn = createToolbarButton("⏮", "Rewind");
         JButton pauseBtn = createToolbarButton("⏸", "Pause");
         JButton recordBtn = createToolbarButton("⏺", "Record");
@@ -228,7 +233,7 @@ public class ToolBar extends JToolBar {
         // Create wrapper panel to push transport controls to bottom
         JPanel wrapperPanel = new JPanel(new BorderLayout());
         wrapperPanel.add(transportPanel, BorderLayout.SOUTH);
-        
+
         return wrapperPanel;
     }
 

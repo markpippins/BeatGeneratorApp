@@ -51,7 +51,7 @@ public class PlayerPanel extends StatusProviderPanel {
         mainPane.add(tablesSplitPane, BorderLayout.CENTER);
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new PianoPanel(), BorderLayout.NORTH);
+        panel.add(new PianoPanel(statusConsumer), BorderLayout.NORTH);
         panel.add(buttonScrollPane, BorderLayout.SOUTH);
 
         mainPane.add(panel, BorderLayout.SOUTH);
