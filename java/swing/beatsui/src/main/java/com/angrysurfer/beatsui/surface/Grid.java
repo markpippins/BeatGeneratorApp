@@ -54,27 +54,13 @@ public class Grid {
 
     private void initializeVisualizations() {
         visualizations = new HashMap<>();
-        try {
-            Reflections reflections = new Reflections("com.angrysurfer.beatsui.surface.visualization");
-            Set<Class<? extends VisualizationHandler>> visualizationClasses = 
-                reflections.getSubTypesOf(VisualizationHandler.class);
-
-            for (Class<? extends VisualizationHandler> vizClass : visualizationClasses) {
-                // Skip abstract classes and interfaces
-                if (!Modifier.isAbstract(vizClass.getModifiers()) && !vizClass.isInterface()) {
-                    try {
-                        VisualizationHandler handler = vizClass.getDeclaredConstructor().newInstance();
-                        VisualizationEnum vizEnum = handler.getEnum();
-                        if (vizEnum != null) {
-                            visualizations.put(vizEnum, handler);
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Failed to instantiate " + vizClass.getSimpleName() + ": " + e.getMessage());
-                    }
-                }
+        for (VisualizationEnum vizEnum : VisualizationEnum.values()) {
+            try {
+                VisualizationHandler handler = vizEnum.createHandler();
+                visualizations.put(vizEnum, handler);
+            } catch (Exception e) {
+                System.err.println("Failed to initialize " + vizEnum.name() + ": " + e.getMessage());
             }
-        } catch (Exception e) {
-            System.err.println("Error initializing visualizations: " + e.getMessage());
         }
     }
 

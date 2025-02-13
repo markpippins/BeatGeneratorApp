@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.surface.visualization;
+package com.angrysurfer.beatsui.surface;
 
 import java.awt.Color;
 import java.awt.Point;

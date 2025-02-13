@@ -3,6 +3,7 @@ package com.angrysurfer.beatsui.surface.visualization;
 import java.awt.Color;
 
 import com.angrysurfer.beatsui.surface.VisualizationHandler;
+import com.angrysurfer.beatsui.surface.VisualizationUtils;
 import com.angrysurfer.beatsui.widget.GridButton;
 
 public class OscilloscopeVisualization implements VisualizationHandler {

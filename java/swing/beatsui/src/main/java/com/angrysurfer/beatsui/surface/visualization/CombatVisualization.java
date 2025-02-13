@@ -5,6 +5,7 @@ import java.awt.Point;
 import java.util.*;
 
 import com.angrysurfer.beatsui.surface.VisualizationHandler;
+import com.angrysurfer.beatsui.surface.VisualizationUtils;
 import com.angrysurfer.beatsui.widget.GridButton;
 
 public class CombatVisualization implements VisualizationHandler {
