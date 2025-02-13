@@ -80,13 +80,15 @@ public class PlayerTablePanel extends JPanel {
         deleteButton.addActionListener(e -> deleteSelectedPlayer());
     }
 
-    private void savePlayerToRedis(Strike player) {
+    private Strike savePlayerToRedis(Strike player) {
         try {
-            App.getRedisService().saveStrike(player);
-            status.setStatus("Saved player: " + player.getName());
+            Strike savedPlayer = App.getRedisService().saveStrike(player);
+            status.setStatus("Saved player: " + player.getName() + " (ID: " + savedPlayer.getId() + ")");
+            return savedPlayer;
         } catch (Exception ex) {
             status.setStatus("Error saving player: " + ex.getMessage());
             ex.printStackTrace();
+            return player;
         }
     }
 
@@ -218,19 +220,27 @@ public class PlayerTablePanel extends JPanel {
     }
 
     private void showPlayerDialog(Strike player) {
-        if (player == null) {
+        boolean isNewPlayer = (player == null);
+        if (isNewPlayer) {
             player = new Strike();
             player.setName("New Strike");
         }
 
         PlayerEditorPanel editorPanel = new PlayerEditorPanel(player);
         Dialog<Strike> dialog = new Dialog<>(player, editorPanel);
-        dialog.setTitle(player.getName() == null ? "Add Player" : "Edit Player: " + player.getName());
+        dialog.setTitle(isNewPlayer ? "Add Player" : "Edit Player: " + player.getName());
 
         if (dialog.showDialog()) {
             Strike updatedPlayer = editorPanel.getUpdatedPlayer();
-            savePlayerToRedis(updatedPlayer);
-            updatePlayerTable(updatedPlayer, table.getSelectedRow());
+            Strike savedPlayer = savePlayerToRedis(updatedPlayer);
+            logger.info("Saved player with ID: " + savedPlayer.getId());
+            updatePlayerTable(savedPlayer, table.getSelectedRow());
+            
+            // If this was a new player, select it
+            if (isNewPlayer) {
+                int lastRow = table.getModel().getRowCount() - 1;
+                table.setRowSelectionInterval(lastRow, lastRow);
+            }
         }
     }
 
@@ -255,7 +265,19 @@ public class PlayerTablePanel extends JPanel {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         Strike player = new Strike();
         
-        player.setName((String) model.getValueAt(row, 0));
+        // Get the ID from Redis based on the name
+        String name = (String) model.getValueAt(row, 0);
+        List<Strike> players = App.getRedisService().findAllStrikes();
+        Strike existingPlayer = players.stream()
+            .filter(p -> p.getName().equals(name))
+            .findFirst()
+            .orElse(null);
+        
+        if (existingPlayer != null) {
+            player.setId(existingPlayer.getId());
+        }
+        
+        player.setName(name);
         player.setChannel(((Number) model.getValueAt(row, 1)).intValue());
         player.setSwing(((Number) model.getValueAt(row, 2)).longValue());
         player.setLevel(((Number) model.getValueAt(row, 3)).longValue());
@@ -303,17 +325,12 @@ public class PlayerTablePanel extends JPanel {
             logger.info("Found " + players.size() + " players in Redis");
             
             DefaultTableModel model = (DefaultTableModel) table.getModel();
-            
-            // Clear existing rows
-            while (model.getRowCount() > 0) {
-                model.removeRow(0);
-            }
+            model.setRowCount(0);
 
-            // Add players from Redis
             for (Strike player : players) {
                 Object[] rowData = player.toRow();
                 model.addRow(rowData);
-                logger.info("Added player to table: " + player.getName());
+                logger.info("Added player to table: " + player.getName() + " (ID: " + player.getId() + ")");
             }
             
             status.setStatus("Loaded " + players.size() + " players from Redis");

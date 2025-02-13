@@ -85,11 +85,14 @@ public class RuleTablePanel extends JPanel implements ActionListener {
     }
 
     private void handlePlayerSelected(Strike player) {
+        logger.info("Player selected: " + player.getName() + " (ID: " + player.getId() + ")");
         this.selectedPlayer = player;
         addButton.setEnabled(true);
         addPopupMenuItem.setEnabled(true);
-        loadRulesFromRedis(); // Load rules for the new player
-        status.setStatus("Selected player: " + player.getName());
+        
+        // Clear and load rules
+        clearTable();
+        loadRulesFromRedis();
     }
 
     private void handlePlayerUnselected() {
@@ -244,20 +247,29 @@ public class RuleTablePanel extends JPanel implements ActionListener {
     private void loadRulesFromRedis() {
         try {
             if (selectedPlayer == null || selectedPlayer.getId() == null) {
-                return; // Silent return - no need to log this
+                logger.warning("Cannot load rules - player is null or has no ID");
+                return;
             }
 
-            clearTable();
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
-            
             List<Rule> rules = App.getRedisService().findRulesByPlayer(selectedPlayer);
-            logger.info("Loaded " + rules.size() + " rules for player: " + selectedPlayer.getName());
+            logger.info("Found " + rules.size() + " rules for player: " + selectedPlayer.getName());
             
-            rules.forEach(rule -> model.addRow(rule.toRow()));
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            rules.forEach(rule -> {
+                Object[] rowData = rule.toRow();
+                logger.info("Adding rule: " + rule.getId() + " - " + String.join(", ", 
+                    rowData[0].toString(), 
+                    rowData[1].toString(), 
+                    rowData[2].toString(), 
+                    rowData[3].toString()));
+                model.addRow(rowData);
+            });
             
+            status.setStatus("Loaded " + rules.size() + " rules for " + selectedPlayer.getName());
         } catch (Exception e) {
             logger.severe("Error loading rules: " + e.getMessage());
             status.setStatus("Error loading rules: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

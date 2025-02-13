@@ -245,6 +245,11 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     }
 
     public Strike getUpdatedPlayer() {
+        // Since we're modifying the original player object directly,
+        // we just need to preserve its ID and return it
+        Long originalId = player.getId();
+        
+        // Update all the fields
         player.setName(nameField.getText());
         player.setChannel((Integer) channelCombo.getSelectedItem());
         player.setPreset(((Integer) presetCombo.getSelectedItem()).longValue());
@@ -276,6 +281,9 @@ public class PlayerEditorPanel extends StatusProviderPanel {
 
         // Spinner
         player.setSparse((double) sparseSpinner.getValue());
+
+        // Ensure ID is preserved
+        player.setId(originalId);
 
         return player;
     }

@@ -1307,16 +1307,22 @@ public class RedisService { // implements Database {
 
     public Strike saveStrike(Strike strike) {
         try (Jedis jedis = jedisPool.getResource()) {
+            // Always generate new ID for new strikes
             if (strike.getId() == null) {
                 String seqKey = "seq:" + Strike.class.getSimpleName().toLowerCase();
                 Long newId = jedis.incr(seqKey);
                 strike.setId(newId);
-                logger.info("Generated new ID for strike: " + newId);
+                logger.info("Generated new ID for strike: " + newId + ", name: " + strike.getName());
             }
             
+            // Save the strike data
             String json = objectMapper.writeValueAsString(strike);
             String key = getKey(Strike.class, strike.getId());
             jedis.set(key, json);
+            
+            // Save name to ID mapping for lookups
+            String nameKey = "name_to_id:" + Strike.class.getSimpleName().toLowerCase() + ":" + strike.getName();
+            jedis.set(nameKey, strike.getId().toString());
             
             logger.info("Saved strike - Key: " + key + ", ID: " + strike.getId() + ", Name: " + strike.getName());
             return strike;

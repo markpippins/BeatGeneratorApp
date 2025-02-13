@@ -88,6 +88,9 @@ public class Rule implements Serializable {
     }
 
     public Object[] toRow() {
+        logger.debug("Converting rule to row - ID: {}, Operator: {}, Comparison: {}, Value: {}, Part: {}",
+            getId(), getOperator(), getComparison(), getValue(), getPart());
+            
         return new Object[] {
             OPERATORS[getOperator()],
             COMPARISONS[getComparison()],
@@ -98,20 +101,29 @@ public class Rule implements Serializable {
 
     public static Rule fromRow(Object[] row) {
         Rule rule = new Rule();
+        
+        // Find operator index
         for (int i = 0; i < OPERATORS.length; i++) {
             if (OPERATORS[i].equals(row[0])) {
                 rule.setOperator(i);
                 break;
             }
         }
+        
+        // Find comparison index
         for (int i = 0; i < COMPARISONS.length; i++) {
             if (COMPARISONS[i].equals(row[1])) {
                 rule.setComparison(i);
                 break;
             }
         }
-        rule.setValue((Double) row[2]);
+        
+        rule.setValue(((Number) row[2]).doubleValue());
         rule.setPart((Integer) row[3]);
+        
+        logger.debug("Created rule from row - Operator: {}, Comparison: {}, Value: {}, Part: {}",
+            rule.getOperator(), rule.getComparison(), rule.getValue(), rule.getPart());
+            
         return rule;
     }
 }

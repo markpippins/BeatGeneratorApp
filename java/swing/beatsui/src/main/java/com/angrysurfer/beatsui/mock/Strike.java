@@ -1,5 +1,6 @@
 package com.angrysurfer.beatsui.mock;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.LongStream;
@@ -12,9 +13,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Strike extends AbstractPlayer implements IPlayer {
+public class Strike extends AbstractPlayer implements IPlayer, Serializable {
 
-    static Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
+    private static final Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
+
+    private Long id;
 
     static final Random rand = new Random();
 
@@ -86,6 +89,7 @@ public class Strike extends AbstractPlayer implements IPlayer {
     }
 
     public Object[] toRow() {
+        logger.debug("Converting Strike to row - ID: {}, Name: {}", getId(), getName());
         return new Object[] {
             getName(),
             getChannel(),
@@ -106,5 +110,12 @@ public class Strike extends AbstractPlayer implements IPlayer {
             getPreserveOnPurge(),
             getSparse()
         };
+    }
+
+    public static Strike fromRow(Object[] row) {
+        Strike strike = new Strike();
+        strike.setName((String) row[0]);
+        // ... existing fromRow code ...
+        return strike;
     }
 }
