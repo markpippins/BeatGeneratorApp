@@ -6,6 +6,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import com.angrysurfer.beatsui.widget.GridButton;
 import com.angrysurfer.beatsui.api.StatusConsumer;
+import com.angrysurfer.beatsui.screensaver.GridSaver;
 
 public class GridPanel extends StatusProviderPanel {
 
