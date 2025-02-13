@@ -106,10 +106,20 @@ public class PianoPanel extends StatusProviderPanel {
     }
 
     private void handleKeyHold(int note) {
-        statusConsumer.setStatus("Holding note " + note);
-        heldNotes.add(note);
-        highlightKey(note);
-        playNote(note);
+        // Toggle behavior: if note is already held, release it
+        if (heldNotes.contains(note)) {
+            heldNotes.remove(note);
+            unhighlightKey(note);
+            stopNote(note);
+            if (Objects.nonNull(statusConsumer)) {
+                statusConsumer.setStatus("");
+            }
+        } else {
+            statusConsumer.setStatus("Holding note " + note);
+            heldNotes.add(note);
+            highlightKey(note);
+            playNote(note);
+        }
     }
 
     private void handleKeyRelease(int note) {
