@@ -33,7 +33,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class OptionsPanel extends StatusProviderPanel {
+public class InstrumentsPanel extends StatusProviderPanel {
     private final ActionBus actionBus = ActionBus.getInstance();
     private JTable instrumentsTable;
     private JTable controlCodesTable;
@@ -46,13 +46,13 @@ public class OptionsPanel extends StatusProviderPanel {
     private JButton addInstrumentButton;
     private JButton editInstrumentButton;
     private JButton deleteInstrumentButton;
-    private static final Logger logger = Logger.getLogger(OptionsPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(InstrumentsPanel.class.getName());
 
-    public OptionsPanel() {
+    public InstrumentsPanel() {
         this(null);
     }
 
-    public OptionsPanel(StatusConsumer statusConsumer) {
+    public InstrumentsPanel(StatusConsumer statusConsumer) {
         super(new BorderLayout(), statusConsumer);
         setup();
     }

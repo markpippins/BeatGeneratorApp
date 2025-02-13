@@ -12,6 +12,10 @@ public interface VisualizationHandler {
         return DisplayType.VISUALIZER;
     }
 
+    default VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.DEFAULT;
+    }
+
     default VisualizationEnum getEnum() {
         return VisualizationEnum.fromLabel(getName());
     }

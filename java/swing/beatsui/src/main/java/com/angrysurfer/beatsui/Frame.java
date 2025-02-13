@@ -14,7 +14,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.border.EmptyBorder;
 
 import com.angrysurfer.beatsui.panel.LaunchPanel;
-import com.angrysurfer.beatsui.panel.OptionsPanel;
+import com.angrysurfer.beatsui.panel.InstrumentsPanel;
 import com.angrysurfer.beatsui.panel.PlayerPanel;
 import com.angrysurfer.beatsui.panel.SystemsPanel;
 import com.angrysurfer.beatsui.panel.X0XPanel;
@@ -39,7 +39,7 @@ public class Frame extends JFrame {
 
     private void setupFrame() {
         setPreferredSize(new Dimension(1200, 800));
-        // setMinimumSize(new Dimension(1200, 800));
+        setMinimumSize(new Dimension(1200, 800));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setJMenuBar(new MenuBar(this, statusBar)); // We're passing statusBar correctly here
@@ -72,11 +72,11 @@ public class Frame extends JFrame {
             public boolean dispatchKeyEvent(KeyEvent e) {
                 if (tabbedPane.getSelectedComponent() instanceof PlayerPanel) {
                     char keyChar = Character.toLowerCase(e.getKeyChar());
-                    
+
                     if (keyNoteMap.containsKey(keyChar)) {
                         int note = keyNoteMap.get(keyChar);
                         Action action = new Action();
-                        
+
                         switch (e.getID()) {
                             case KeyEvent.KEY_PRESSED -> {
                                 // If shift is held, send KEY_HELD command
@@ -117,7 +117,7 @@ public class Frame extends JFrame {
         tabbedPane.addTab("Params", new JPanel());
         tabbedPane.addTab("Controls", new JPanel());
 
-        tabbedPane.addTab("Instruments", new OptionsPanel());
+        tabbedPane.addTab("Instruments", new InstrumentsPanel());
         tabbedPane.addTab("System", new SystemsPanel(statusBar));
 
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
@@ -126,6 +126,14 @@ public class Frame extends JFrame {
 
     public <T> Dialog<T> createDialog(T data, JPanel content) {
         return new Dialog<>(this, data, content);
+    }
+
+    public int getSelectedTab() {
+        return tabbedPane.getSelectedIndex();
+    }
+
+    public void setSelectedTab(int index) {
+        tabbedPane.setSelectedIndex(index);
     }
 
 }

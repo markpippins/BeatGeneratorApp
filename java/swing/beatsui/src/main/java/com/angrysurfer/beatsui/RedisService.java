@@ -1620,4 +1620,25 @@ public class RedisService { // implements Database {
             throw new RuntimeException("Failed to delete ticker", e);
         }
     }
+
+    public void saveFrameState(FrameState state) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String json = objectMapper.writeValueAsString(state);
+            jedis.set("frameState", json);
+        } catch (Exception e) {
+            logger.severe("Error saving frame state: " + e.getMessage());
+        }
+    }
+
+    public FrameState loadFrameState() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String json = jedis.get("frameState");
+            if (json != null) {
+                return objectMapper.readValue(json, FrameState.class);
+            }
+        } catch (Exception e) {
+            logger.severe("Error loading frame state: " + e.getMessage());
+        }
+        return null;
+    }
 }

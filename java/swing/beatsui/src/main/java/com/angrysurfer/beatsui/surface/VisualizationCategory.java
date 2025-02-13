@@ -1,12 +1,13 @@
 package com.angrysurfer.beatsui.surface;
 
-public enum DisplayCategory {
+public enum VisualizationCategory {
     DEFAULT("Default"),
-    CONTROL("Control");
+    GAME("Games"),
+    MUSIC("Music");
 
     private final String label;
 
-    DisplayCategory(String label) {
+    VisualizationCategory(String label) {
         this.label = label;
     }
 

@@ -1,16 +1,12 @@
 package com.angrysurfer.beatsui.surface;
 
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
-import java.util.Set;
 
 import javax.swing.JComponent;
 import javax.swing.Timer;
-
-import org.reflections.Reflections;
 
 import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.widget.GridButton;

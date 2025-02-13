@@ -24,17 +24,41 @@ public class App {
 
     public static void main(String[] args) {
         try {
-            // Initialize Redis first, before any Swing components
             initializeRedis();
-            // Only proceed with UI creation after Redis is initialized
             if (redisService != null) {
                 setupLookAndFeel();
                 SwingUtilities.invokeLater(() -> {
                     try {
                         App app = new App();
                         app.frame = new Frame();
+                        
+                        // Load and apply frame state
+                        FrameState state = redisService.loadFrameState();
+                        if (state != null) {
+                            app.frame.setSize(state.frameSizeX, state.frameSizeY);
+                            app.frame.setLocation(state.framePosX, state.framePosY);
+                            app.frame.setSelectedTab(state.selectedTab);
+                        }
+                        
+                        // Add window listener to save state before closing
+                        app.frame.addWindowListener(new java.awt.event.WindowAdapter() {
+                            @Override
+                            public void windowClosing(java.awt.event.WindowEvent e) {
+                                FrameState currentState = new FrameState(
+                                    app.frame.getSelectedTab(),
+                                    app.frame.getWidth(),
+                                    app.frame.getHeight(),
+                                    app.frame.getX(),
+                                    app.frame.getY()
+                                );
+                                redisService.saveFrameState(currentState);
+                            }
+                        });
+
                         app.frame.pack();
-                        app.frame.setLocationRelativeTo(null);
+                        if (state == null) {
+                            app.frame.setLocationRelativeTo(null);
+                        }
                         app.frame.setVisible(true);
                     } catch (Exception e) {
                         logger.severe("Error creating UI: " + e.getMessage());
@@ -51,6 +75,10 @@ public class App {
             System.exit(1);
         }
     }
+
+    private void setupFrame() {
+        
+      }
 
     private static void setupLookAndFeel() {
         try {
