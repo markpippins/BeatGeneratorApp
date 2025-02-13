@@ -11,6 +11,7 @@ import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.config.BeatsUIConfig;
 import com.angrysurfer.beatsui.mock.Ticker;
 import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 
 /**
  * Hello world!
@@ -53,7 +54,7 @@ public class App {
 
     private static void setupLookAndFeel() {
         try {
-            UIManager.setLookAndFeel(new FlatDarkLaf());
+            UIManager.setLookAndFeel(new FlatLightLaf());
         } catch (Exception e) {
             e.printStackTrace();
         }

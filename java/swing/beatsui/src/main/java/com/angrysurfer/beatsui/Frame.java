@@ -39,7 +39,7 @@ public class Frame extends JFrame {
 
     private void setupFrame() {
         setPreferredSize(new Dimension(1200, 800));
-        setMinimumSize(new Dimension(1200, 800));
+        // setMinimumSize(new Dimension(1200, 800));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setJMenuBar(new MenuBar(this, statusBar)); // We're passing statusBar correctly here
