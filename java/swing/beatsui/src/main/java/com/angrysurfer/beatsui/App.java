@@ -22,19 +22,34 @@ public class App {
     private static final Logger logger = Logger.getLogger(App.class.getName());
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                setupLookAndFeel();
-                initializeRedis();
+        try {
+            // Initialize Redis first, before any Swing components
+            setupLookAndFeel();
+            initializeRedis();
 
-                App app = new App();
-                app.frame = new Frame();
-                app.frame.setLocationRelativeTo(null);
-                app.frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
+            // Only proceed with UI creation after Redis is initialized
+            if (redisService != null) {
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        App app = new App();
+                        app.frame = new Frame();
+                        app.frame.pack();
+                        app.frame.setLocationRelativeTo(null);
+                        app.frame.setVisible(true);
+                    } catch (Exception e) {
+                        logger.severe("Error creating UI: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                });
+            } else {
+                logger.severe("Failed to initialize Redis service");
+                System.exit(1);
             }
-        });
+        } catch (Exception e) {
+            logger.severe("Critical error during startup: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
     private static void setupLookAndFeel() {
@@ -90,8 +105,9 @@ public class App {
             }
 
         } catch (Exception e) {
-            logger.severe("Error initializing Redis: " + e.getMessage());
+            logger.severe("Fatal error initializing Redis: " + e.getMessage());
             e.printStackTrace();
+            redisService = null;
         }
     }
 
