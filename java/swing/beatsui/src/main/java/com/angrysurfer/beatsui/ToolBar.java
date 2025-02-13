@@ -1,33 +1,133 @@
 package com.angrysurfer.beatsui;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
-import javax.swing.UIManager;
+
+import com.angrysurfer.beatsui.api.Action;
+import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.ActionListener;
+import com.angrysurfer.beatsui.api.Commands;
+import com.angrysurfer.beatsui.mock.Ticker;
 
 public class ToolBar extends JToolBar {
+    private final Map<String, JTextField> leftFields = new HashMap<>();
+    private final Map<String, JComponent> rightFields = new HashMap<>(); // Changed to JComponent
+    private final ActionBus actionBus = ActionBus.getInstance();
+    private Ticker currentTicker; // Add field to track current ticker
 
     public ToolBar() {
         super();
         setup();
+        setupActionBusListener();
+    }
+
+    private void setupActionBusListener() {
+        actionBus.register(new ActionListener() {
+            @Override
+            public void onAction(Action action) {
+                if (action.getCommand().equals(Commands.TICKER_SELECTED) ||
+                        action.getCommand().equals(Commands.TICKER_UPDATED)) {
+                    if (action.getData() instanceof Ticker) {
+                        updateTickerDisplay((Ticker) action.getData());
+                    }
+                }
+            }
+        });
+    }
+
+    private JComboBox<Integer> createTickerCombo(String field, int min, int max, int current) {
+        JComboBox<Integer> combo = new JComboBox<>();
+        for (int i = min; i <= max; i++) {
+            combo.addItem(i);
+        }
+        combo.setSelectedItem(current);
+        combo.setMaximumSize(new Dimension(70, 25));
+
+        combo.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED && currentTicker != null) {
+                int value = (Integer) combo.getSelectedItem();
+                updateTickerValue(field, value);
+            }
+        });
+
+        return combo;
+    }
+
+    private void updateTickerValue(String field, int value) {
+        if (currentTicker != null) {
+            try {
+                switch (field) {
+                    case "Ticks" -> currentTicker.setTicksPerBeat(value);
+                    case "BPM" -> currentTicker.setTempoInBPM((float) value); // Cast to float
+                    case "B/Bar" -> currentTicker.setBeatsPerBar(value);
+                    case "Bars" -> currentTicker.setBars(value);
+                    case "Parts" -> currentTicker.setParts(value);
+                }
+
+                // Save to Redis
+                App.getRedisService().saveTicker(currentTicker);
+
+                // Notify other components
+                Action action = new Action();
+                action.setCommand(Commands.TICKER_UPDATED);
+                action.setData(currentTicker);
+                actionBus.publish(action);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private void updateTickerDisplay(Ticker ticker) {
+        this.currentTicker = ticker; // Store current ticker
+
+        // Update left fields
+        leftFields.get("Tick").setText(String.valueOf(ticker.getTick()));
+        leftFields.get("Beat").setText(String.valueOf(ticker.getBeat()));
+        leftFields.get("Bar").setText(String.valueOf(ticker.getBar()));
+        leftFields.get("Part").setText(String.valueOf(ticker.getPart()));
+        leftFields.get("Players").setText(String.valueOf(ticker.getPlayers().size()));
+        leftFields.get("Ticks").setText(String.valueOf(ticker.getTickCount()));
+        leftFields.get("Beats").setText(String.valueOf(ticker.getBeatCount()));
+        leftFields.get("Bars").setText(String.valueOf(ticker.getBarCount()));
+
+        // Update right fields
+        ((JTextField) rightFields.get("Ticker")).setText(ticker.getId().toString());
+        ((JComboBox<?>) rightFields.get("Ticks")).setSelectedItem(ticker.getTicksPerBeat());
+        ((JComboBox<?>) rightFields.get("BPM")).setSelectedItem(ticker.getTempoInBPM().intValue());
+        ((JComboBox<?>) rightFields.get("B/Bar")).setSelectedItem(ticker.getBeatsPerBar());
+        ((JComboBox<?>) rightFields.get("Bars")).setSelectedItem(ticker.getBars());
+        ((JComboBox<?>) rightFields.get("Parts")).setSelectedItem(ticker.getParts());
+        ((JTextField) rightFields.get("Length")).setText(String.valueOf(ticker.getPartLength()));
+        ((JTextField) rightFields.get("Offset")).setText(String.valueOf(ticker.getNoteOffset()));
     }
 
     private void setup() {
         setFloatable(false);
+        setPreferredSize(new Dimension(getPreferredSize().width, 80)); // Set proper height for toolbar
 
-        // Left status fields
+        // Left status fields panel
         JPanel leftStatusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        leftStatusPanel.setPreferredSize(new Dimension(leftStatusPanel.getPreferredSize().width, 75));
         String[] leftLabels = { "Tick", "Beat", "Bar", "Part", "Players", "Ticks", "Beats", "Bars" };
         for (String label : leftLabels) {
             // Create panel for vertical stacking
@@ -41,15 +141,8 @@ public class ToolBar extends JToolBar {
             fieldPanel.add(nameLabel);
 
             // Create and add text field
-            JTextField field = new JTextField("0");
-            field.setColumns(4);
-            field.setEditable(false);
-            field.setEnabled(false);
-            field.setHorizontalAlignment(JTextField.CENTER);
-            field.setBackground(new Color(240, 240, 240));
-            field.setToolTipText("Current " + label.toLowerCase() + " value");
-            field.setMaximumSize(new Dimension(50, 25));
-            field.setAlignmentX(Component.CENTER_ALIGNMENT);
+            JTextField field = createTextField("0");
+            leftFields.put(label, field);
             fieldPanel.add(field);
 
             leftStatusPanel.add(fieldPanel);
@@ -57,10 +150,10 @@ public class ToolBar extends JToolBar {
         }
         add(leftStatusPanel);
 
-        // Center glue
-        add(Box.createHorizontalGlue());
-
-        // Transport controls with correct Unicode characters
+        // Transport controls
+        JPanel transportPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        transportPanel.setPreferredSize(new Dimension(transportPanel.getPreferredSize().width, 75));
+        
         JButton rewindBtn = createToolbarButton("⏮", "Rewind");
         JButton pauseBtn = createToolbarButton("⏸", "Pause");
         JButton recordBtn = createToolbarButton("⏺", "Record");
@@ -68,72 +161,87 @@ public class ToolBar extends JToolBar {
         JButton playBtn = createToolbarButton("▶", "Play");
         JButton forwardBtn = createToolbarButton("⏭", "Forward");
 
-        add(rewindBtn);
-        add(pauseBtn);
-        add(stopBtn);
-        add(recordBtn);
-        add(playBtn);
-        add(forwardBtn);
+        transportPanel.add(rewindBtn);
+        transportPanel.add(pauseBtn);
+        transportPanel.add(stopBtn);
+        transportPanel.add(recordBtn);
+        transportPanel.add(playBtn);
+        transportPanel.add(forwardBtn);
 
-        addSeparator();
+        // Add padding above transport panel
+        transportPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+        add(transportPanel);
 
-        // Use arrow icons instead of plus/minus
-        // JButton upButton = createToolbarButton("↓", "Down");
-        // JButton downButton = createToolbarButton("↑", "Up");
-
-        // Or alternatively, if you prefer different arrows:
-        JButton upButton = new JButton(UIManager.getIcon("ScrollBar.northButtonIcon"));
-        JButton downButton = new JButton(UIManager.getIcon("ScrollBar.southButtonIcon"));
-
-        upButton.setFocusPainted(false);
-        downButton.setFocusPainted(false);
-
-        add(upButton);
-        add(downButton);
-        // Center glue
-        add(Box.createHorizontalGlue());
-
-        // Right status fields
+        // Right status fields panel
         JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        String[][] rightFields = {
-                { "Ticker", "1" },
-                { "Ticks", "0" },
-                { "BPM", "120" },
-                { "B/Bar", "4" },
-                { "Bars", "4" },
-                { "Parts", "1" },
-                { "Length", "0" },
-                { "Offset", "0" }
+        rightStatusPanel.setPreferredSize(new Dimension(rightStatusPanel.getPreferredSize().width, 75));
+        Object[][] rightFieldsArray = {
+                { "Ticker", createTextField("1") },
+                { "Ticks", createTickerCombo("Ticks", 1, 384, 24) },
+                { "BPM", createTickerCombo("BPM", 1, 960, 120) },
+                { "B/Bar", createTickerCombo("B/Bar", 1, 16, 4) },
+                { "Bars", createTickerCombo("Bars", 1, 128, 4) },
+                { "Parts", createTickerCombo("Parts", 1, 64, 1) },
+                { "Length", createTextField("0") },
+                { "Offset", createTextField("0") }
         };
 
-        for (String[] field : rightFields) {
-            // Create panel for vertical stacking
+        for (Object[] field : rightFieldsArray) {
             JPanel fieldPanel = new JPanel();
             fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
 
-            // Create and add label
-            JLabel nameLabel = new JLabel(field[0]);
+            JLabel nameLabel = new JLabel((String) field[0]);
             nameLabel.setForeground(Color.GRAY);
             nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             fieldPanel.add(nameLabel);
 
-            // Create and add text field
-            JTextField textField = new JTextField(field[1]);
-            textField.setColumns(4);
-            textField.setEditable(false);
-            textField.setEnabled(false);
-            textField.setHorizontalAlignment(JTextField.CENTER);
-            textField.setBackground(new Color(240, 240, 240));
-            textField.setToolTipText(field[0] + " value");
-            textField.setMaximumSize(new Dimension(50, 25));
-            textField.setAlignmentX(Component.CENTER_ALIGNMENT);
-            fieldPanel.add(textField);
+            JComponent component = (JComponent) field[1];
+            component.setAlignmentX(Component.CENTER_ALIGNMENT);
+            rightFields.put((String) field[0], component);
+            fieldPanel.add(component);
 
             rightStatusPanel.add(fieldPanel);
             rightStatusPanel.add(Box.createHorizontalStrut(5));
         }
 
         add(rightStatusPanel);
+    }
+
+    private JPanel createTransportPanel() {
+        JPanel transportPanel = new JPanel();
+        transportPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+
+        JButton rewindBtn = createToolbarButton("⏮", "Rewind");
+        JButton pauseBtn = createToolbarButton("⏸", "Pause");
+        JButton recordBtn = createToolbarButton("⏺", "Record");
+        JButton stopBtn = createToolbarButton("⏹", "Stop");
+        JButton playBtn = createToolbarButton("▶", "Play");
+        JButton forwardBtn = createToolbarButton("⏭", "Forward");
+
+        transportPanel.add(rewindBtn);
+        transportPanel.add(pauseBtn);
+        transportPanel.add(stopBtn);
+        transportPanel.add(recordBtn);
+        transportPanel.add(playBtn);
+        transportPanel.add(forwardBtn);
+
+        // Create wrapper panel to push transport controls to bottom
+        JPanel wrapperPanel = new JPanel(new BorderLayout());
+        wrapperPanel.add(transportPanel, BorderLayout.SOUTH);
+        
+        return wrapperPanel;
+    }
+
+    private JTextField createTextField(String initialValue) {
+        JTextField field = new JTextField(initialValue);
+        field.setColumns(4);
+        field.setEditable(false);
+        field.setEnabled(false);
+        field.setHorizontalAlignment(JTextField.CENTER);
+        field.setBackground(new Color(240, 240, 240));
+        field.setMaximumSize(new Dimension(50, 25));
+        field.setAlignmentX(Component.CENTER_ALIGNMENT);
+        return field;
     }
 
     private JButton createToolbarButton(String text, String tooltip) {

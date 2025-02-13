@@ -2,27 +2,41 @@ package com.angrysurfer.beatsui.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.FlowLayout;
+import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
-import javax.swing.JTextField;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 
+import com.angrysurfer.beatsui.App;
+import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.StatusConsumer;
+import com.angrysurfer.beatsui.mock.Instrument;
+import com.angrysurfer.beatsui.mock.Rule;
 import com.angrysurfer.beatsui.mock.Strike;
 import com.angrysurfer.beatsui.widget.Dial;
 import com.angrysurfer.beatsui.widget.ToggleSwitch;
-import com.angrysurfer.beatsui.App;
-import com.angrysurfer.beatsui.mock.Instrument;
-import java.util.List;
+
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 public class PlayerEditorPanel extends StatusProviderPanel {
     private final Strike player;
@@ -55,6 +69,12 @@ public class PlayerEditorPanel extends StatusProviderPanel {
 
     // New toggle
     private final ToggleSwitch accentSwitch;
+
+    // Rules components
+    private JTable rulesTable;
+    private JButton addRuleButton;
+    private JButton editRuleButton;
+    private JButton deleteRuleButton;
 
     public PlayerEditorPanel(Strike player) {
         this(player, null);
@@ -113,9 +133,100 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         // Initialize new toggle
         accentSwitch = createToggleSwitch("Accent", player.getAccent());
 
+        // Initialize rules components
+        setupRulesComponents();
+
         layoutComponents();
 
-        setPreferredSize(new Dimension(475, 700));
+        setPreferredSize(new Dimension(475, 800)); // Made taller to accommodate rules
+    }
+
+    private void setupRulesComponents() {
+        rulesTable = createRulesTable();
+        addRuleButton = new JButton("Add");
+        editRuleButton = new JButton("Edit");
+        deleteRuleButton = new JButton("Delete");
+
+        addRuleButton.addActionListener(e -> {
+            // Check if player needs to be saved first
+            if (player.getId() == null) {
+                if (showSavePlayerDialog()) {
+                    showRuleDialog(null);
+                }
+            } else {
+                showRuleDialog(null);
+            }
+        });
+        
+        editRuleButton.addActionListener(e -> editSelectedRule());
+        deleteRuleButton.addActionListener(e -> deleteSelectedRule());
+
+        // Initial button states
+        editRuleButton.setEnabled(false);
+        deleteRuleButton.setEnabled(false);
+
+        // Selection listener for buttons
+        rulesTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean hasSelection = rulesTable.getSelectedRow() >= 0;
+                editRuleButton.setEnabled(hasSelection);
+                deleteRuleButton.setEnabled(hasSelection);
+            }
+        });
+    }
+
+    private boolean showSavePlayerDialog() {
+        int result = javax.swing.JOptionPane.showConfirmDialog(
+            this,
+            "The player needs to be saved before adding rules. Save now?",
+            "Save Player",
+            javax.swing.JOptionPane.YES_NO_OPTION
+        );
+
+        if (result == javax.swing.JOptionPane.YES_OPTION) {
+            // Save the player
+            Strike savedPlayer = App.getRedisService().saveStrike(getUpdatedPlayer());
+            if (savedPlayer != null && savedPlayer.getId() != null) {
+                player.setId(savedPlayer.getId()); // Update the ID
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private JTable createRulesTable() {
+        String[] columns = { "Operator", "Comparison", "Value", "Part" };
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        // Load existing rules
+        if (player.getRules() != null) {
+            for (Rule rule : player.getRules()) {
+                model.addRow(new Object[] {
+                        Rule.OPERATORS[rule.getOperator()],
+                        Rule.COMPARISONS[rule.getComparison()],
+                        rule.getValue(),
+                        rule.getPart()
+                });
+            }
+        }
+
+        JTable table = new JTable(model);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setAutoCreateRowSorter(true);
+
+        // Center align all columns
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+
+        return table;
     }
 
     private Integer[] createChannelOptions() {
@@ -149,13 +260,34 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     }
 
     private Instrument[] loadInstruments() {
-        List<Instrument> instruments = App.getRedisService().findAllInstruments();
-        // Sort instruments by name
-        instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+        // Get all available MIDI device names
+        Set<String> availableDeviceNames = new HashSet<>();
+        try {
+            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+            for (MidiDevice.Info info : infos) {
+                MidiDevice device = MidiSystem.getMidiDevice(info);
+                // Only add devices that can receive MIDI (have receivers)
+                if (device.getMaxReceivers() != 0) {
+                    availableDeviceNames.add(info.getName());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Filter and sort instruments
+        List<Instrument> instruments = App.getRedisService().findAllInstruments().stream()
+            .filter(i -> i.getDeviceName() != null && availableDeviceNames.contains(i.getDeviceName()))
+            .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+            .collect(Collectors.toList());
+
         return instruments.toArray(new Instrument[0]);
     }
 
     private void layoutComponents() {
+        // Create left panel for all controls except rules
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        
         // Top panel for name, channel, preset
         JPanel topPanel = new JPanel(new GridBagLayout());
         GridBagConstraints topGbc = new GridBagConstraints();
@@ -220,10 +352,33 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         sparseGbc.fill = GridBagConstraints.HORIZONTAL;
         addComponent("Sparse", sparseSpinner, 5, 0, 1, sparseGbc, bottomPanel);
 
-        // Main layout assembly
-        add(topPanel, BorderLayout.NORTH);
-        add(centerPanel, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        // Assemble left side
+        leftPanel.add(topPanel, BorderLayout.NORTH);
+        leftPanel.add(centerPanel, BorderLayout.CENTER);
+        leftPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        // Create right side rules panel
+        JPanel rulesPanel = new JPanel(new BorderLayout());
+        rulesPanel.setBorder(BorderFactory.createTitledBorder("Rules"));
+
+        // Rules toolbar
+        JPanel rulesToolbar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        rulesToolbar.add(addRuleButton);
+        rulesToolbar.add(editRuleButton);
+        rulesToolbar.add(deleteRuleButton);
+
+        rulesPanel.add(rulesToolbar, BorderLayout.NORTH);
+        rulesPanel.add(new JScrollPane(rulesTable), BorderLayout.CENTER);
+
+        // Set preferred sizes
+        leftPanel.setPreferredSize(new Dimension(475, 700));
+        rulesPanel.setPreferredSize(new Dimension(300, 700));
+
+        // Main layout assembly using JSplitPane
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rulesPanel);
+        splitPane.setResizeWeight(0.7); // Give more weight to the left side
+        
+        add(splitPane, BorderLayout.CENTER);
     }
 
     private void addComponent(String label, JComponent component, int x, int y, int width,
@@ -270,6 +425,72 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         panel.add(toggleWrapper, BorderLayout.CENTER);
 
         targetPanel.add(panel, gbc);
+    }
+
+    private void showRuleDialog(Rule rule) {
+        boolean isNew = (rule == null);
+        if (isNew) {
+            rule = new Rule();
+        }
+
+        RuleEditorPanel editorPanel = new RuleEditorPanel(rule);
+        Dialog<Rule> dialog = new Dialog<>(rule, editorPanel);
+        dialog.setTitle(isNew ? "Add Rule" : "Edit Rule");
+
+        if (dialog.showDialog()) {
+            Rule updatedRule = editorPanel.getUpdatedRule();
+            if (isNew) {
+                player.getRules().add(updatedRule);
+            }
+            refreshRulesTable();
+        }
+    }
+
+    private void editSelectedRule() {
+        int row = rulesTable.getSelectedRow();
+        if (row >= 0) {
+            Rule rule = getRuleFromRow(row);
+            showRuleDialog(rule);
+        }
+    }
+
+    private void deleteSelectedRule() {
+        int row = rulesTable.getSelectedRow();
+        if (row >= 0) {
+            Rule rule = getRuleFromRow(row);
+            player.getRules().remove(rule);
+            refreshRulesTable();
+        }
+    }
+
+    private Rule getRuleFromRow(int row) {
+        DefaultTableModel model = (DefaultTableModel) rulesTable.getModel();
+        Rule rule = new Rule();
+
+        // Convert displayed text back to indices
+        String operatorText = (String) model.getValueAt(row, 0);
+        String comparisonText = (String) model.getValueAt(row, 1);
+
+        rule.setOperator(java.util.Arrays.asList(Rule.OPERATORS).indexOf(operatorText));
+        rule.setComparison(java.util.Arrays.asList(Rule.COMPARISONS).indexOf(comparisonText));
+        rule.setValue((Double) model.getValueAt(row, 2));
+        rule.setPart((Integer) model.getValueAt(row, 3));
+
+        return rule;
+    }
+
+    private void refreshRulesTable() {
+        DefaultTableModel model = (DefaultTableModel) rulesTable.getModel();
+        model.setRowCount(0);
+
+        for (Rule rule : player.getRules()) {
+            model.addRow(new Object[] {
+                    Rule.OPERATORS[rule.getOperator()],
+                    Rule.COMPARISONS[rule.getComparison()],
+                    rule.getValue(),
+                    rule.getPart()
+            });
+        }
     }
 
     public Strike getUpdatedPlayer() {

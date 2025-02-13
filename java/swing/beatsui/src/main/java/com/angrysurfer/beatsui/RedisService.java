@@ -43,6 +43,8 @@ public class RedisService { // implements Database {
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
 
+    private static final String TICKER_KEY = "ticker";
+
     public RedisService() {
         this.jedisPool = RedisConfig.getJedisPool();
         this.objectMapper = new ObjectMapper();
@@ -1570,6 +1572,52 @@ public class RedisService { // implements Database {
         } catch (Exception e) {
             logger.severe("Error deleting rule: " + e.getMessage());
             throw new RuntimeException("Error deleting rule", e);
+        }
+    }
+
+    public Ticker saveTicker(Ticker ticker) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String json = objectMapper.writeValueAsString(ticker);
+            jedis.set(TICKER_KEY, json);
+            return ticker;
+        } catch (Exception e) {
+            logger.severe("Error saving ticker: " + e.getMessage());
+            throw new RuntimeException("Failed to save ticker", e);
+        }
+    }
+
+    public Ticker loadTicker() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String json = jedis.get(TICKER_KEY);
+            if (json != null) {
+                return objectMapper.readValue(json, Ticker.class);
+            }
+            // Return default ticker if none exists
+            return createDefaultTicker();
+        } catch (Exception e) {
+            logger.severe("Error loading ticker: " + e.getMessage());
+            throw new RuntimeException("Failed to load ticker", e);
+        }
+    }
+
+    private Ticker createDefaultTicker() {
+        Ticker ticker = new Ticker();
+        // Set default values
+        ticker.setTempoInBPM(120.0f);
+        ticker.setBars(4);
+        ticker.setBeatsPerBar(4);
+        ticker.setTicksPerBeat(24);
+        ticker.setParts(1);
+        ticker.setPartLength(4L);
+        return saveTicker(ticker); // Save and return the default ticker
+    }
+
+    public void deleteTicker() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            jedis.del(TICKER_KEY);
+        } catch (Exception e) {
+            logger.severe("Error deleting ticker: " + e.getMessage());
+            throw new RuntimeException("Failed to delete ticker", e);
         }
     }
 }

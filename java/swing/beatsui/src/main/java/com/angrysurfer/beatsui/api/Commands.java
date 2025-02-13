@@ -37,4 +37,8 @@ public class Commands {
     public static final String CAPTION_ADDED = "CAPTION_ADDED";
     public static final String CAPTION_UPDATED = "CAPTION_UPDATED";
     public static final String CAPTION_DELETED = "CAPTION_DELETED";
+
+    // Ticker selection commands
+    public static final String TICKER_SELECTED = "TICKER_SELECTED";
+    public static final String TICKER_UPDATED = "TICKER_UPDATED";
 }

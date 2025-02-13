@@ -46,7 +46,7 @@ public class RuleEditorPanel extends StatusProviderPanel {
         ));
 
         layoutComponents();
-        setPreferredSize(new Dimension(300, 200));
+        setPreferredSize(new Dimension(300, 350));
     }
 
     private void layoutComponents() {
