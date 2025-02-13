@@ -9,8 +9,8 @@ import javax.sound.midi.MidiDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.IInstrument;
 import com.angrysurfer.core.api.db.FindAll;
-import com.angrysurfer.core.model.midi.Instrument;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,15 +23,15 @@ public class InstrumentEngine {
 
     private boolean refresh = true;
 
-    private List<Instrument> instrumentList;
+    private List<IInstrument> instrumentList;
 
     private List<MidiDevice> midiDevices;
 
     private List<String> devices;
 
-    private FindAll<Instrument> instrumentsFindAll;
+    private FindAll<IInstrument> instrumentsFindAll;
 
-    public InstrumentEngine(FindAll<Instrument> instrumentsFindAll) {
+    public InstrumentEngine(FindAll<IInstrument> instrumentsFindAll) {
         this.instrumentList = instrumentsFindAll.findAll();
         this.instrumentsFindAll = instrumentsFindAll;
     }
@@ -41,7 +41,7 @@ public class InstrumentEngine {
         refresh = false;
     }
 
-    public List<Instrument> getInstrumentByChannel(int channel) {
+    public List<IInstrument> getInstrumentByChannel(int channel) {
         logger.info(String.format("getInstrumentByChannel(%s)", channel));
         if (refresh)
             refreshInstruments();
@@ -50,7 +50,7 @@ public class InstrumentEngine {
                 .collect(Collectors.toList());
     }
 
-    public Instrument getInstrumentById(Long id) {
+    public IInstrument getInstrumentById(Long id) {
         logger.info(String.format("getInstrumentById(%s)", id));
         if (refresh)
             refreshInstruments();
@@ -64,15 +64,15 @@ public class InstrumentEngine {
         return instrumentList.stream().map(i -> i.getName()).toList();
     }
 
-    public Instrument findByName(String name) {
+    public IInstrument findByName(String name) {
         logger.info(String.format("findByName(%s)", name));
-        Instrument result = null;
+        IInstrument result = null;
 
         if (refresh)
             refreshInstruments();
 
         if (getInstrumentNames().contains(name)) {
-            Optional<Instrument> opt = instrumentList.stream()
+            Optional<IInstrument> opt = instrumentList.stream()
                     .filter(i -> i.getName().toLowerCase().equals(name.toLowerCase())).findFirst();
             if (opt.isPresent())
                 result = opt.get();

@@ -11,6 +11,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.angrysurfer.core.api.ICaption;
+import com.angrysurfer.core.api.IControlCode;
+import com.angrysurfer.core.api.IInstrument;
+import com.angrysurfer.core.api.IPad;
 import com.angrysurfer.core.api.db.FindAll;
 import com.angrysurfer.core.api.db.Save;
 import com.angrysurfer.core.engine.MIDIEngine;
@@ -34,23 +38,23 @@ public class DeviceConfig implements Serializable {
             .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false) // Add this line
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false); // Add this line
 
-    List<Instrument> instruments = new ArrayList<>();
+    List<IInstrument> instruments = new ArrayList<>();
 
     public DeviceConfig() {
     }
 
-    public DeviceConfig(List<Instrument> instruments) {
+    public DeviceConfig(List<IInstrument> instruments) {
         this.instruments = instruments;
     }
 
-    public static void loadDefaults(String filepath, FindAll<Instrument> findAllInstruments,
-            Save<Instrument> saveInstrument, Save<Caption> saveCaption, Save<ControlCode> saveControlCode,
-            Save<Pad> savePad)
+    public static void loadDefaults(String filepath, FindAll<IInstrument> findAllInstruments,
+            Save<IInstrument> saveInstrument, Save<ICaption> saveCaption, Save<IControlCode> saveControlCode,
+            Save<IPad> savePad)
             throws IOException {
 
         // Get existing instruments from DB as a map
-        Map<String, Instrument> existingInstruments = findAllInstruments.findAll().stream()
-                .collect(Collectors.toMap(Instrument::getName, Function.identity()));
+        Map<String, IInstrument> existingInstruments = findAllInstruments.findAll().stream()
+                .collect(Collectors.toMap(ins -> ((Instrument) ins).getName(), Function.identity()));
 
         List<String> devices = new ArrayList<>();
 
@@ -70,7 +74,7 @@ public class DeviceConfig implements Serializable {
                 .map(d -> {
                     String deviceName = d.getDeviceInfo().getName();
                     if (!existingInstruments.containsKey(deviceName)) {
-                        Instrument instrument = new Instrument(deviceName, d);
+                        IInstrument instrument = new Instrument(deviceName, d);
                         instrument.setAvailable(true);
                         instrument = saveInstrument.save(instrument);
                         existingInstruments.put(deviceName, instrument);
@@ -89,7 +93,7 @@ public class DeviceConfig implements Serializable {
                 configInstrument.setAvailable(availableDevices.contains(configInstrument.getName()));
 
                 // Update existing or create new
-                Instrument dbInstrument = existingInstruments.containsKey(configInstrument.getName())
+                IInstrument dbInstrument = existingInstruments.containsKey(configInstrument.getName())
                         ? updateExistingInstrument(configInstrument,
                                 existingInstruments.get(configInstrument.getName()))
                         : configInstrument;
@@ -120,7 +124,7 @@ public class DeviceConfig implements Serializable {
         }
     }
 
-    private static Instrument updateExistingInstrument(Instrument source, Instrument target) {
+    private static IInstrument updateExistingInstrument(IInstrument source, IInstrument target) {
         // Update fields but preserve ID and relationships
         target.setChannels(source.getChannels());
         target.setDeviceName(source.getDeviceName());
@@ -134,8 +138,8 @@ public class DeviceConfig implements Serializable {
         return target;
     }
 
-    private static void processControlCodesCaptionsAssignmentsAndBoundaries(Instrument dbInstrument,
-            Instrument configInstrument, Save<Caption> saveCaption, Save<ControlCode> saveCC) {
+    private static void processControlCodesCaptionsAssignmentsAndBoundaries(IInstrument dbInstrument,
+            IInstrument configInstrument, Save<ICaption> saveCaption, Save<IControlCode> saveCC) {
 
         dbInstrument.getControlCodes().clear(); // Clear existing control codes for
         dbInstrument.getAssignments().clear();
@@ -145,7 +149,7 @@ public class DeviceConfig implements Serializable {
         // instrument.getAssignments().keySet().forEach(code -> {
         configInstrument.getControlCodes().forEach(cc -> {
             Integer code = cc.getCode();
-            ControlCode controlCode = new ControlCode();
+            IControlCode controlCode = new ControlCode();
             controlCode.setCode(code);
             controlCode.setName(cc.getName());
             controlCode.setLowerBound(cc.getLowerBound());
@@ -153,9 +157,9 @@ public class DeviceConfig implements Serializable {
             // controlCode.setPad(cc.getPad());
             controlCode.setBinary(cc.getBinary());
             if (!cc.getCaptions().isEmpty()) {
-                List<Caption> newCaptions = new ArrayList<>();
+                List<ICaption> newCaptions = new ArrayList<>();
                 cc.getCaptions().forEach(cap -> {
-                    Caption caption = new Caption();
+                    ICaption caption = new Caption();
                     caption.setCode(cap.getCode());
                     caption.setDescription(cap.getDescription());
                     caption = saveCaption.save(caption);
@@ -170,9 +174,9 @@ public class DeviceConfig implements Serializable {
                     new Integer[] { controlCode.getLowerBound(), controlCode.getUpperBound() });
 
             // if (!controlCode.getCaptions().isEmpty())
-            //     dbInstrument.getCaptions().put(controlCode.getCode(),
-            //             controlCode.getCaptions().stream()
-            //                     .collect(Collectors.toMap(Caption::getCode, Caption::getDescription)));
+            // dbInstrument.getCaptions().put(controlCode.getCode(),
+            // controlCode.getCaptions().stream()
+            // .collect(Collectors.toMap(Caption::getCode, Caption::getDescription)));
 
             dbInstrument.getControlCodes().add(controlCode);
         });
@@ -183,9 +187,9 @@ public class DeviceConfig implements Serializable {
         DeviceConfig currentConfig = new DeviceConfig();
 
         // Create clean copies of instruments without circular references
-        List<Instrument> cleanInstruments = instruments.stream()
+        List<IInstrument> cleanInstruments = instruments.stream()
                 .map(instrument -> {
-                    Instrument clean = new Instrument();
+                    IInstrument clean = new Instrument();
                     clean.setName(instrument.getName());
                     clean.setDeviceName(instrument.getDeviceName());
                     clean.setChannels(instrument.getChannels());
@@ -238,7 +242,7 @@ public class DeviceConfig implements Serializable {
         System.out.println("config saved");
     }
 
-    static void addPadInfo(Instrument instrument, Save<Pad> savePad) {
+    static void addPadInfo(IInstrument instrument, Save<IPad> savePad) {
 
         List<Pad> pads = new ArrayList<>(IntStream.range(instrument.getLowestNote(), instrument.getHighestNote())
                 .mapToObj(note -> new Pad(note)).toList());
@@ -307,8 +311,8 @@ public class DeviceConfig implements Serializable {
         pads.forEach(pad -> instrument.getPads().add(savePad.save(pad)));
     }
 
-    public ControlCode copy(ControlCode controlCode) {
-        ControlCode copy = new ControlCode();
+    public IControlCode copy(IControlCode controlCode) {
+        IControlCode copy = new ControlCode();
         copy.setCode(controlCode.getCode());
         copy.setName(controlCode.getName());
         copy.setLowerBound(controlCode.getLowerBound());
@@ -317,8 +321,8 @@ public class DeviceConfig implements Serializable {
         return copy;
     }
 
-    public Caption copy(Caption caption) {
-        Caption copy = new Caption();
+    public ICaption copy(ICaption caption) {
+        ICaption copy = new Caption();
         copy.setCode(caption.getCode());
         copy.setDescription(caption.getDescription());
         return copy;

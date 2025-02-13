@@ -18,9 +18,11 @@ import javax.sound.midi.MidiUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.Pad;
-import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.api.IInstrument;
+import com.angrysurfer.core.api.IPad;
+import com.angrysurfer.core.api.IPlayer;
+import com.angrysurfer.core.api.IRule;
+import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Constants;
@@ -43,7 +45,6 @@ import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
-
 @Setter
 @Getter
 
@@ -56,7 +57,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     static Logger logger = LoggerFactory.getLogger(AbstractPlayer.class.getCanonicalName());
 
     @Transient
-    private Set<Pad> pads = new HashSet<>();
+    private Set<IPad> pads = new HashSet<>();
 
     private String name;
     private int channel;
@@ -71,7 +72,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     private Long randomDegree = 0L;
     private Long ratchetCount = 0L;
     private Long ratchetInterval = 1L;
-    private Integer internalBars  = Constants.DEFAULT_BAR_COUNT;
+    private Integer internalBars = Constants.DEFAULT_BAR_COUNT;
     private Integer internalBeats = Constants.DEFAULT_BEATS_PER_BAR;
     private Boolean useInternalBeats = false;
     private Boolean useInternalBars = false;
@@ -140,7 +141,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     private Boolean armForNextTick = false;
 
     @Transient
-    private Set<Rule> rules = new HashSet<>();
+    private Set<IRule> rules = new HashSet<>();
 
     @ElementCollection
     @CollectionTable(name = "allowedControlMessages")
@@ -149,12 +150,12 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "instrument_id")
-    private Instrument instrument;
+    private IInstrument instrument;
 
     @JsonIgnore
     @ManyToOne()
     @JoinColumn(name = "ticker_id")
-    private Ticker ticker;
+    private ITicker ticker;
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -165,13 +166,13 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
 
     }
 
-    public AbstractPlayer(String name, Ticker ticker, Instrument instrument) {
+    public AbstractPlayer(String name, ITicker ticker, IInstrument instrument) {
         setName(name);
         setInstrument(instrument);
         setTicker(ticker);
     }
 
-    public AbstractPlayer(String name, Ticker ticker, Instrument instrument, List<Integer> allowedControlMessages) {
+    public AbstractPlayer(String name, ITicker ticker, IInstrument instrument, List<Integer> allowedControlMessages) {
         this(name, ticker, instrument);
         setAllowedControlMessages(allowedControlMessages);
     }
@@ -200,7 +201,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     }
 
     @Override
-    public void setInstrument(Instrument instrument) {
+    public void setInstrument(IInstrument instrument) {
         this.instrument = instrument;
     }
 
@@ -213,7 +214,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     }
 
     @Override
-    public Rule getRule(Long ruleId) {
+    public IRule getRule(Long ruleId) {
         return getRules().stream().filter(r -> r.getId().equals(ruleId)).findAny().orElseThrow();
     }
 
@@ -298,7 +299,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
                 .toList().size() == 0);
     }
 
-    private Set<Rule> filterByPart(Set<Rule> rules, boolean includeNoPart) {
+    private Set<IRule> filterByPart(Set<IRule> rules, boolean includeNoPart) {
         return rules.stream()
                 .filter(r -> r.getPart() == 0
                         || (includeNoPart && ((long) r.getPart()) == getTicker().getPart()))
@@ -308,7 +309,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     @Override
     public boolean shouldPlay() {
         logger.debug("shouldPlay() - evaluating rules for player: {}", getName());
-        Set<Rule> applicable = filterByPart(getRules(), true);
+        Set<IRule> applicable = filterByPart(getRules(), true);
 
         AtomicBoolean play = new AtomicBoolean(true);
         AtomicBoolean hasTick = new AtomicBoolean(false);

@@ -3,6 +3,8 @@ package com.angrysurfer.core.model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.IPattern;
+import com.angrysurfer.core.api.IStep;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -21,7 +23,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "step")
-public class Step {
+public class Step implements IStep {
 
     private static final Logger logger = LoggerFactory.getLogger(Step.class);
 
@@ -45,17 +47,19 @@ public class Step {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pattern_id")
-    private Pattern pattern;
+    private IPattern pattern;
 
     public Step() {
         logger.debug("Creating new Step");
     }
 
+    @Override
     public void setActive(Boolean active) {
         logger.debug("setActive() - value: {}", active);
         this.active = active;
     }
 
+    @Override
     public void setPitch(Integer pitch) {
         logger.debug("setPitch() - value: {}", pitch);
         this.pitch = pitch;

@@ -7,6 +7,10 @@ import java.util.Stack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.IInstrument;
+import com.angrysurfer.core.api.IPattern;
+import com.angrysurfer.core.api.ISong;
+import com.angrysurfer.core.api.IStep;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
@@ -37,7 +41,7 @@ import lombok.Setter;
 @Setter
 @Table(name = "pattern")
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Pattern {
+public class Pattern implements IPattern {
 
     private static final Logger logger = LoggerFactory.getLogger(Pattern.class);
 
@@ -108,15 +112,15 @@ public class Pattern {
     @JsonIgnore
     @ManyToOne()
     @JoinColumn(name = "song_id")
-    private Song song;
+    private ISong song;
 
     @OneToMany(mappedBy = "pattern", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Step> steps = new HashSet<>();
+    private Set<IStep> steps = new HashSet<>();
 
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instrument_id")
-    private Instrument instrument;
+    private IInstrument instrument;
 
     @JsonIgnore
     @Column(name = "step_cycler")
@@ -130,16 +134,19 @@ public class Pattern {
         logger.debug("Creating new Pattern");
     }
 
+    @Override
     public void setQuantize(Boolean quantize) {
         logger.debug("setQuantize() - value: {}", quantize);
         this.quantize = quantize;
     }
 
+    @Override
     public void setDirection(Integer direction) {
         logger.debug("setDirection() - value: {}", direction);
         this.direction = direction;
     }
 
+    @Override
     public void setSpeed(Integer speed) {
         logger.debug("setSpeed() - value: {}", speed);
         this.speed = speed;

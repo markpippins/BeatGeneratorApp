@@ -21,6 +21,10 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.IControlCode;
+import com.angrysurfer.core.api.IInstrument;
+import com.angrysurfer.core.api.IPad;
+import com.angrysurfer.core.api.IPattern;
 import com.angrysurfer.core.model.Pad;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.converter.IntegerArrayConverter;
@@ -49,17 +53,11 @@ import lombok.Setter;
 @Entity
 @Table(name = "instrument")
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Instrument implements Serializable {
+public class Instrument implements Serializable, IInstrument {
 
     static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
 
     static final Random rand = new Random();
-
-    public static final Integer DEFAULT_CHANNEL = 0;
-
-    public static final Integer[] DEFAULT_CHANNELS = new Integer[] { DEFAULT_CHANNEL };
-
-    public static final Integer[] ALL_CHANNELS = new Integer[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -71,12 +69,12 @@ public class Instrument implements Serializable {
     @JoinTable(name = "instrument_control_code", joinColumns = {
             @JoinColumn(name = "instrument_id") }, inverseJoinColumns = {
                     @JoinColumn(name = "control_code_id") })
-    private List<ControlCode> controlCodes = new ArrayList<>();
+    private List<IControlCode> controlCodes = new ArrayList<>();
 
     @JsonManagedReference
     @ManyToMany
     @JoinTable(name = "instrument_pad", joinColumns = @JoinColumn(name = "pad_id"), inverseJoinColumns = @JoinColumn(name = "instrument_id"))
-    private Set<Pad> pads = new HashSet<>();
+    private Set<IPad> pads = new HashSet<>();
 
     @Transient
     private Map<Integer, String> assignments = new HashMap<>();
@@ -120,7 +118,7 @@ public class Instrument implements Serializable {
 
     @JsonManagedReference
     @OneToMany(mappedBy = "instrument")
-    private Set<Pattern> patterns;
+    private Set<IPattern> patterns;
 
     public Instrument() {
 
@@ -143,61 +141,74 @@ public class Instrument implements Serializable {
     }
 
     // Helper method to determine if device is likely multi-timbral
+    @Override
     public boolean isMultiTimbral() {
         return channels != null && channels.length > 1;
     }
 
+    @Override
     public boolean receivesOn(Integer channel) {
         List<Integer> channels = Arrays.asList(this.channels);
         return channels.contains(channel);
     }
 
     // Convenience method for single-channel devices
+    @Override
     public int getDefaultChannel() {
         return channels != null && channels.length > 0 ? channels[0] : DEFAULT_CHANNEL;
     }
 
+    @Override
     public String assignedControl(int cc) {
         return assignments.getOrDefault(cc, "NONE");
     }
 
+    @Override
     public void channelPressure(int channel, long data1, long data2)
             throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, channel, (int) data1, (int) data2));
     }
 
+    @Override
     public void controlChange(int channel, long data1, long data2)
             throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, (int) data1, (int) data2));
     }
 
+    @Override
     public void noteOn(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, channel, (int) data1,
                 (int) data2));
     }
 
+    @Override
     public void noteOff(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.NOTE_OFF, channel, (int) data1, (int) data2));
     }
 
+    @Override
     public void polyPressure(int channel, long data1, long data2)
             throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.POLY_PRESSURE, channel, (int) data1, (int) data2));
     }
 
+    @Override
     public void programChange(int channel, long data1, long data2)
             throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.PROGRAM_CHANGE, channel, (int) data1, (int) data2));
     }
 
+    @Override
     public void start(int channel) throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.START, channel, 0, 0));
     }
 
+    @Override
     public void stop(int channel) throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.STOP, channel, 1, 1));
     }
 
+    @Override
     public void randomize(int channel, List<Integer> params) {
 
         new Thread(() -> params.forEach(cc -> {
@@ -228,6 +239,7 @@ public class Instrument implements Serializable {
         return current;
     }
 
+    @Override
     public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
         try {
             Receiver currentReceiver = getOrCreateReceiver();
@@ -250,6 +262,7 @@ public class Instrument implements Serializable {
         }
     }
 
+    @Override
     public void cleanup() {
         logger.info("Cleaning up device: {}", getName());
         try {
@@ -265,6 +278,7 @@ public class Instrument implements Serializable {
 
     boolean initialized = false;
 
+    @Override
     public void setDevice(MidiDevice device) {
         cleanup();
         this.device = device;
@@ -289,14 +303,17 @@ public class Instrument implements Serializable {
     // super.finalize();
     // }
 
+    @Override
     public void assign(int cc, String control) {
         getAssignments().put(cc, control);
     }
 
+    @Override
     public void setBounds(int cc, int lowerBound, int upperBound) {
         getBoundaries().put(cc, new Integer[] { lowerBound, upperBound });
     }
 
+    @Override
     public Integer getAssignmentCount() {
         return getAssignments().size();
     }

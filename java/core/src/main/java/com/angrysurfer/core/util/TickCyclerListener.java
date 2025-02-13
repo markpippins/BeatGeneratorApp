@@ -7,8 +7,8 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.IStep;
 import com.angrysurfer.core.engine.SongEngine;
-import com.angrysurfer.core.model.Step;
 
 public class TickCyclerListener implements CyclerListener {
 
@@ -43,7 +43,7 @@ public class TickCyclerListener implements CyclerListener {
             while (pattern.getStepCycler().get() < pattern.getFirstStep())
                 pattern.getStepCycler().advance();
 
-            Step step = pattern.getSteps().stream()
+            IStep step = pattern.getSteps().stream()
                     .filter(s -> s.getPosition() == (long) pattern.getStepCycler().get())
                     .findAny().orElseThrow();
 

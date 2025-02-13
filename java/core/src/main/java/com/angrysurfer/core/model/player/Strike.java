@@ -7,8 +7,8 @@ import java.util.stream.LongStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.api.IInstrument;
+import com.angrysurfer.core.api.ITicker;
 
 import jakarta.persistence.Entity;
 import lombok.Getter;
@@ -37,13 +37,13 @@ public class Strike extends AbstractPlayer {
         setNote(KICK);
     }
 
-    public Strike(String name, Ticker ticker, Instrument instrument, long note,
+    public Strike(String name, ITicker ticker, IInstrument instrument, long note,
             List<Integer> allowedControlMessages) {
         super(name, ticker, instrument, allowedControlMessages);
         setNote(note);
     }
 
-    public Strike(String name, Ticker ticker, Instrument instrument, long note,
+    public Strike(String name, ITicker ticker, IInstrument instrument, long note,
             List<Integer> allowableControlMessages, long minVelocity, long maxVelocity) {
         super(name, ticker, instrument, allowableControlMessages);
         setNote(note);

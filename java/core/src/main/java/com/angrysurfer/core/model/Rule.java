@@ -6,7 +6,8 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.api.IPlayer;
+import com.angrysurfer.core.api.IRule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -23,7 +24,7 @@ import lombok.Setter;
 // @RedisHash("rule")
 @Entity
 
-public class Rule implements Serializable {
+public class Rule implements Serializable, IRule {
     private static final Logger logger = LoggerFactory.getLogger(Rule.class);
 
     @Id
@@ -74,6 +75,7 @@ public class Rule implements Serializable {
         setPart(part);
     }
 
+    @Override
     public void setPlayer(IPlayer player) {
         logger.debug("setPlayer() - player: {}", player != null ? player.getName() : "null");
         this.player = player;
@@ -83,7 +85,8 @@ public class Rule implements Serializable {
             this.playerId = null;
     }
 
-    public boolean isEqualTo(Rule rule) {
+    @Override
+    public boolean isEqualTo(IRule rule) {
         boolean result = (getValue().equals(rule.getValue()) &&
                 (this.getComparison() == rule.getComparison()) &&
                 (this.getOperator() == rule.getOperator()));

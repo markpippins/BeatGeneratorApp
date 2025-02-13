@@ -7,6 +7,10 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.IPattern;
+import com.angrysurfer.core.api.ISong;
+import com.angrysurfer.core.api.IStep;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,7 +23,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class Song {
+public class Song implements ISong {
     private static final Logger logger = LoggerFactory.getLogger(Song.class);
 
     @Id
@@ -28,7 +32,7 @@ public class Song {
     private Long id;
 
     private String name;
-    
+
     @Transient
     private Float beatDuration;
 
@@ -36,20 +40,20 @@ public class Song {
     private Integer ticksPerBeat;
 
     @Transient
-    private Set<Pattern> patterns = new HashSet<>();
+    private Set<IPattern> patterns = new HashSet<>();
 
-
-    public Step getStep(Long stepId) {
+    @Override
+    public IStep getStep(Long stepId) {
         logger.debug("getStep() - looking for stepId: {}", stepId);
-        Step[] result = {null};
+        IStep[] result = { null };
         getPatterns().forEach(pattern -> {
-            Optional<Step> step = pattern.getSteps().stream().filter(s -> s.getId().equals(stepId)).findAny();
+            Optional<IStep> step = pattern.getSteps().stream().filter(s -> s.getId().equals(stepId)).findAny();
             if (step.isPresent()) {
                 logger.debug("Found step {} in pattern {}", stepId, pattern.getName());
                 result[0] = step.get();
             }
         });
-        
+
         if (result[0] == null) {
             logger.debug("Step {} not found", stepId);
         }

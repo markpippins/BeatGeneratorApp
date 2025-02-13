@@ -15,8 +15,8 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.IInstrument;
 import com.angrysurfer.core.exception.MidiDeviceException;
-import com.angrysurfer.core.model.midi.Instrument;
 
 public class MIDIEngine {
 
@@ -148,7 +148,7 @@ public class MIDIEngine {
     // }
 
     // Improved message sending with validation
-    public static void sendMessage(Instrument instrument, int channel, int messageType, int data1, int data2) {
+    public static void sendMessage(IInstrument instrument, int channel, int messageType, int data1, int data2) {
         logger.info("sendMessage() - instrument: {}, channel: {}, messageType: {}, data1: {}, data2: {}",
                 instrument.getName(), channel, messageType, data1, data2);
         if (instrument == null) {

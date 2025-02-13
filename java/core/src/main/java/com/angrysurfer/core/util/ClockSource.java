@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.model.Ticker;
 
 import lombok.Getter;
@@ -28,7 +29,7 @@ public class ClockSource implements Runnable {
 
     static Stack<Exception> exceptions = new Stack<>();
 
-    private final Ticker ticker;
+    private final ITicker ticker;
 
     private Boolean stopped = false;
 
@@ -46,7 +47,7 @@ public class ClockSource implements Runnable {
     /**
      * @param ticker
      */
-    public ClockSource(Ticker ticker) {
+    public ClockSource(ITicker ticker) {
         this.ticker = ticker;
         // Create executor with custom thread factory for high priority
         this.executor = Executors.newFixedThreadPool(

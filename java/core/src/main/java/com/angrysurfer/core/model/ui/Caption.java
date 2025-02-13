@@ -1,6 +1,9 @@
 package com.angrysurfer.core.model.ui;
 
 import java.io.Serializable;
+
+import com.angrysurfer.core.api.ICaption;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,7 +12,7 @@ import lombok.*;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-public class Caption implements Serializable {
+public class Caption implements Serializable, ICaption {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)

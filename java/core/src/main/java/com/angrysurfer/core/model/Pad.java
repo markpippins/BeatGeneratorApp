@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.angrysurfer.core.api.IInstrument;
+import com.angrysurfer.core.api.IPad;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -22,7 +24,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Pad {
+public class Pad implements IPad {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -38,7 +40,7 @@ public class Pad {
 
     @JsonBackReference
     @ManyToMany(mappedBy = "pads")
-    private Set<Instrument> instruments;
+    private Set<IInstrument> instruments;
 
     public Pad() {
 

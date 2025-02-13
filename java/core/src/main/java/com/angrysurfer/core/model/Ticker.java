@@ -12,7 +12,8 @@ import javax.sound.midi.MidiUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.api.IPlayer;
+import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
@@ -30,7 +31,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Ticker implements Serializable {
+public class Ticker implements Serializable, ITicker {
 
     @JsonIgnore
     @Transient
@@ -117,80 +118,95 @@ public class Ticker implements Serializable {
         setSongLength(Long.MAX_VALUE);
     }
 
+    @Override
     public IPlayer getPlayer(Long playerId) {
         logger.info("getPlayer() - playerId: {}", playerId);
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
 
+    @Override
     public double getBeat() {
         // // logger.debug("getBeat() - current beat: {}", getBeatCycler().get());
         return getBeatCycler().get();
     }
 
+    @Override
     public Long getBeatCount() {
         // // logger.debug("getBeatCount() - current count: {}",
         // getBeatCounter().get());
         return getBeatCounter().get();
     }
 
+    @Override
     public void setBeatsPerBar(int beatsPerBar) {
         logger.info("setBeatsPerBar() - new value: {}", beatsPerBar);
         this.beatsPerBar = beatsPerBar;
         getBeatCycler().setLength((long) beatsPerBar);
     }
 
+    @Override
     public Long getTick() {
         // logger.debug("getTick() - current tick: {}", getTickCycler().get());
         return getTickCycler().get();
     }
 
+    @Override
     public Long getTickCount() {
         // logger.debug("getTickCount() - current count: {}", getTickCounter().get());
         return getTickCounter().get();
     }
 
+    @Override
     public void setTicksPerBeat(int ticksPerBeat) {
         logger.info("setTicksPerBeat() - new value: {}", ticksPerBeat);
         this.ticksPerBeat = ticksPerBeat;
         getTickCycler().setLength((long) ticksPerBeat);
     }
 
+    @Override
     public Long getBar() {
         // logger.debug("getBar() - current bar: {}", getBarCycler().get());
         return getBarCycler().get();
     }
 
+    @Override
     public Long getBarCount() {
         // logger.debug("getBarCount() - current count: {}", getBarCounter().get());
         return getBarCounter().get();
     }
 
+    @Override
     public void setBars(int bars) {
         logger.info("setBars() - new value: {}", bars);
         this.bars = bars;
         getBarCycler().setLength((long) bars);
     }
 
+    @Override
     public Long getPart() {
         // logger.debug("getPart() - current part: {}", getPartCycler().get());
         return getPartCycler().get();
     }
 
+    @Override
     public Long getPartCount() {
         // logger.debug("getPartCount() - current count: {}", getPartCounter().get());
         return getPartCounter().get();
     }
 
+    @Override
     public void setParts(int parts) {
         logger.info("setParts() - new value: {}", parts);
         this.parts = parts;
         this.partCycler.setLength((long) parts);
     }
 
+    @Override
     public void setPartLength(long partLength) {
         this.partLength = partLength;
     }
 
+    @Override
     public void reset() {
         logger.info("reset() - resetting all cyclers and counters");
         getTickCycler().reset();
@@ -217,10 +233,12 @@ public class Ticker implements Serializable {
     private void updateMuteGroups() {
     }
 
+    @Override
     public double getBeatDivision() {
         return 1.0 / beatDivider;
     }
 
+    @Override
     public void afterEnd() {
         logger.info("afterEnd() - resetting cyclers and stopping all notes");
         getTickCycler().reset();
@@ -239,6 +257,7 @@ public class Ticker implements Serializable {
         });
     }
 
+    @Override
     public void beforeStart() {
         logger.info("beforeStart() - initializing cycler lengths");
         getTickCycler().setLength((long) getTicksPerBeat());
@@ -248,20 +267,24 @@ public class Ticker implements Serializable {
         getPlayers().forEach(p -> p.getSkipCycler().setLength(p.getSkips()));
     }
 
+    @Override
     public void onStart() {
         logger.info("onStart() - notifying beat and bar listeners");
         getBeatCycler().getListeners().forEach(l -> l.starting());
         getBarCycler().getListeners().forEach(l -> l.starting());
     }
 
+    @Override
     public void onStop() {
         logger.info("onStop() - resetting beat cycler");
         getBeatCycler().reset();
     }
 
+    @Override
     public void beforeTick() {
     }
 
+    @Override
     public void afterTick() {
         logger.debug("afterTick() - granularBeat: {}", granularBeat);
         granularBeat += 1.0 / getTicksPerBeat();
@@ -273,6 +296,7 @@ public class Ticker implements Serializable {
         getTickCounter().advance();
     }
 
+    @Override
     public void onBeatChange() {
         logger.debug("onBeatChange() - current beat: {}", getBeat());
         setGranularBeat(0.0);
@@ -283,6 +307,7 @@ public class Ticker implements Serializable {
             onBarChange();
     }
 
+    @Override
     public void onBarChange() {
         logger.debug("onBarChange() - current bar: {}", getBar());
         updatePlayerConfig();
@@ -293,6 +318,7 @@ public class Ticker implements Serializable {
         getBarCounter().advance();
     }
 
+    @Override
     public void onPartChange() {
         logger.debug("onPartChange() - current part: {}", getPart());
         getPartCycler().advance();
@@ -314,24 +340,28 @@ public class Ticker implements Serializable {
         // }
     }
 
+    @Override
     public Float getBeatDuration() {
         // logger.debug("getBeatDuration() - calculated duration: {}",
         // 60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar());
         return 60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar();
     }
 
+    @Override
     public double getInterval() {
         // logger.debug("getInterval() - calculated interval: {}",
         // 60000 / getTempoInBPM() / getTicksPerBeat());
         return 60000 / getTempoInBPM() / getTicksPerBeat();
     }
 
+    @Override
     public Boolean hasSolos() {
         boolean result = this.getPlayers().stream().anyMatch(player -> player.isSolo());
         // logger.debug("hasSolos() - result: {}", result);
         return result;
     }
 
+    @Override
     public boolean isRunning() {
         return (Objects.nonNull(clockSource) && clockSource.isRunning());
     }
