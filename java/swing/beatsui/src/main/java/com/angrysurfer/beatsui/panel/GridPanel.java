@@ -35,7 +35,7 @@ public class GridPanel extends StatusProviderPanel {
         MouseAdapter mouseHandler = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (gridSaver.isScreensaverMode()) {
+                if (gridSaver.isVisualizationMode()) {
                     gridSaver.stopScreensaver();
                 }
             }

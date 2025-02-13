@@ -1,7 +1,7 @@
 package com.angrysurfer.beatsui.surface;
 
 public enum DisplayType {
-    SIZZLE("Sizzle"),
+    VISUALIZER("Visualizer"),
     CONTROL("Control");
 
     private final String label;
