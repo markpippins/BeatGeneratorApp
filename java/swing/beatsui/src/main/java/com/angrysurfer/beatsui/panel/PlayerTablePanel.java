@@ -234,12 +234,22 @@ public class PlayerTablePanel extends JPanel {
             Strike updatedPlayer = editorPanel.getUpdatedPlayer();
             Strike savedPlayer = savePlayerToRedis(updatedPlayer);
             logger.info("Saved player with ID: " + savedPlayer.getId());
-            updatePlayerTable(savedPlayer, table.getSelectedRow());
             
-            // If this was a new player, select it
-            if (isNewPlayer) {
-                int lastRow = table.getModel().getRowCount() - 1;
-                table.setRowSelectionInterval(lastRow, lastRow);
+            // Refresh the entire table instead of just updating one row
+            loadPlayersFromRedis();
+            
+            // Select the newly added/edited player
+            selectPlayerByName(savedPlayer.getName());
+        }
+    }
+
+    // Add new helper method to select a player by name
+    private void selectPlayerByName(String name) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (name.equals(model.getValueAt(i, 0))) {
+                table.setRowSelectionInterval(i, i);
+                break;
             }
         }
     }

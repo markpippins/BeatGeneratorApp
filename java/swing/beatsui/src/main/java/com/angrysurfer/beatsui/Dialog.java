@@ -6,12 +6,16 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 
 import com.angrysurfer.beatsui.mock.Strike;
 import com.angrysurfer.beatsui.panel.PlayerEditorPanel;
@@ -52,6 +56,9 @@ public class Dialog<T> extends JDialog {
         setLayout(new BorderLayout());
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
+        // Add keyboard shortcuts
+        setupKeyboardShortcuts();
+
         // Title panel
         setupTitlePanel();
 
@@ -66,6 +73,32 @@ public class Dialog<T> extends JDialog {
         pack();
         setLocationRelativeTo(getOwner());
         setResizable(true);
+    }
+
+    private void setupKeyboardShortcuts() {
+        // Handle Enter key
+
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "accept");
+        getRootPane().getActionMap().put("accept", new javax.swing.AbstractAction() {
+
+            final Dialog dialog = Dialog.this;
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.accept();
+            }
+        });
+
+        // Handle Escape key
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancel");
+        getRootPane().getActionMap().put("cancel", new javax.swing.AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cancel();
+            }
+        });
     }
 
     private void setupTitlePanel() {

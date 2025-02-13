@@ -1369,6 +1369,11 @@ public class RedisService { // implements Database {
 
     public void deleteRule(Rule rule, Strike player) {
         try (Jedis jedis = jedisPool.getResource()) {
+            if (rule == null || rule.getId() == null || player == null || player.getId() == null) {
+                logger.warning("Cannot delete rule - missing rule or player ID");
+                return;
+            }
+            
             // Remove rule data
             String ruleKey = getKey(Rule.class, rule.getId());
             jedis.del(ruleKey);
