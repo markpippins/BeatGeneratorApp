@@ -51,7 +51,7 @@ public class PianoPanel extends StatusProviderPanel {
         // Create white keys
 
         String[] whiteNotes = { "C", "D", "E", "F", "G", "A", "B" };
-        int[] whiteNoteValues = {60, 62, 64, 65, 67, 69, 71}; // MIDI note values
+        int[] whiteNoteValues = { 60, 62, 64, 65, 67, 69, 71 }; // MIDI note values
         for (int i = 0; i < 7; i++) {
             JButton whiteKey = createPianoKey(true, whiteNotes[i]);
             whiteKey.setBounds(i * whiteKeyWidth + 10, 10, whiteKeyWidth - 1, whiteKeyHeight);
@@ -61,7 +61,7 @@ public class PianoPanel extends StatusProviderPanel {
 
         // Create black keys
         String[] blackNotes = { "C#", "D#", "", "F#", "G#", "A#", "" };
-        int[] blackNoteValues = {61, 63, -1, 66, 68, 70, -1}; // MIDI note values
+        int[] blackNoteValues = { 61, 63, -1, 66, 68, 70, -1 }; // MIDI note values
         for (int i = 0; i < 7; i++) {
             if (!blackNotes[i].isEmpty()) {
                 JButton blackKey = createPianoKey(false, blackNotes[i]);
@@ -70,7 +70,7 @@ public class PianoPanel extends StatusProviderPanel {
                 noteToKeyMap.put(blackNoteValues[i], blackKey); // Map MIDI note to key
             }
         }
-        
+
         setupActionBusListener();
     }
 
@@ -192,27 +192,36 @@ public class PianoPanel extends StatusProviderPanel {
                 int h = c.getHeight();
 
                 boolean isPressed = ((JButton) c).getModel().isPressed();
+                boolean isHeld = heldNotes.contains(getNoteForKey((JButton) c));
 
                 // Adjusted colors for better contrast
                 if (isWhite) {
                     if (isPressed) {
-                        g2d.setColor(new Color(25, 25, 25));
-                        g2d.fillRect(0, 2, w, h);
+.                        g2d.setColor(new Color(25, 25, 25));
+                    } else if (isHeld) {
+                        g2d.setColor(new Color(40, 30, 30)); // Subtle reddish tint for held
                     } else {
                         g2d.setColor(new Color(20, 20, 20));
-                        g2d.fillRect(0, 0, w, h);
-                        // Slightly lighter highlight
+                    }
+                    g2d.fillRect(0, isPressed ? 2 : 0, w, h);
+
+                    if (!isPressed && !isHeld) {
+                        // Highlight only for non-pressed, non-held keys
                         g2d.setColor(new Color(35, 35, 35));
                         g2d.fillRect(0, 0, w, 5);
                     }
                 } else {
                     if (isPressed) {
                         g2d.setColor(new Color(180, 180, 180));
-                        g2d.fillRect(0, 2, w, h);
+                    } else if (isHeld) {
+                        g2d.setColor(new Color(210, 190, 190)); // Subtle reddish tint for held
                     } else {
                         g2d.setColor(new Color(200, 200, 200));
-                        g2d.fillRect(0, 0, w, h);
-                        // Shadow effect for light keys
+                    }
+                    g2d.fillRect(0, isPressed ? 2 : 0, w, h);
+
+                    if (!isPressed && !isHeld) {
+                        // Shadow only for non-pressed, non-held keys
                         g2d.setColor(new Color(160, 160, 160));
                         g2d.fillRect(0, h - 10, w, 10);
                     }
@@ -243,5 +252,14 @@ public class PianoPanel extends StatusProviderPanel {
         key.setToolTipText(note);
 
         return key;
+    }
+
+    private Integer getNoteForKey(JButton key) {
+        for (Map.Entry<Integer, JButton> entry : noteToKeyMap.entrySet()) {
+            if (entry.getValue() == key) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 }
