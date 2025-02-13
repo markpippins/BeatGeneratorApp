@@ -197,7 +197,7 @@ public class PianoPanel extends StatusProviderPanel {
                 // Adjusted colors for better contrast
                 if (isWhite) {
                     if (isPressed) {
-.                        g2d.setColor(new Color(25, 25, 25));
+                        g2d.setColor(new Color(25, 25, 25));
                     } else if (isHeld) {
                         g2d.setColor(new Color(40, 30, 30)); // Subtle reddish tint for held
                     } else {
