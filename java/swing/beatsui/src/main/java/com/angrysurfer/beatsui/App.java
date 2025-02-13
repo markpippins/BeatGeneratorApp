@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import com.angrysurfer.beatsui.config.BeatsUIConfig;
 import com.formdev.flatlaf.FlatLightLaf;
 
 /**
@@ -21,7 +22,7 @@ public class App {
             try {
                 setupLookAndFeel();
                 initializeRedis();
-                
+
                 App app = new App();
                 app.frame = new Frame();
                 app.frame.setLocationRelativeTo(null);
@@ -45,14 +46,15 @@ public class App {
             logger.info("Initializing Redis service...");
             redisService = new RedisService();
             // redisService.clearDatabase();
-            
+
             // Check if Redis is empty - only initialize if it is
             boolean isEmpty = redisService.isDatabaseEmpty();
             logger.info("Redis database is empty: " + isEmpty);
             if (isEmpty) {
                 logger.info("Loading initial configuration...");
                 String configPath = "C:/Users/MarkP/dev/BeatGeneratorApp/java/swing/beatsui/src/main/java/com/angrysurfer/beatsui/config/beats-config.json";
-                redisService.loadConfigFromXml(configPath);
+                BeatsUIConfig config = redisService.loadConfigFromXml(configPath);
+                redisService.saveConfig(config);
             }
         } catch (Exception e) {
             logger.severe("Error initializing Redis: " + e.getMessage());

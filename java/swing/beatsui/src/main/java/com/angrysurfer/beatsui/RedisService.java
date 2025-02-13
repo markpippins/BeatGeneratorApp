@@ -65,6 +65,228 @@ public class RedisService { // implements Database {
         return key;
     }
 
+    public BeatsUIConfig loadConfigFromXml(String xmlFilePath) {
+        try {
+            // Clear existing data before loading config
+            clearDatabase();
+
+            // Create mapper configured for our needs
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+            // Read JSON config file
+            String jsonPath = xmlFilePath.replace(".xml", ".json");
+            File jsonFile = new File(jsonPath);
+            JsonNode rootNode = mapper.readTree(jsonFile);
+            JsonNode instrumentsNode = rootNode.get("instruments");
+
+            // Clear existing data
+            clearDatabase();
+
+            List<Instrument> instruments = new ArrayList<>();
+
+            // Process each instrument
+            for (JsonNode instrumentNode : instrumentsNode) {
+                Instrument instrument = new Instrument();
+
+                // Set basic properties
+                instrument.setName(instrumentNode.get("name").asText());
+                instrument.setDeviceName(instrumentNode.get("deviceName").asText());
+                instrument.setLowestNote(instrumentNode.get("lowestNote").asInt());
+                instrument.setHighestNote(instrumentNode.get("highestNote").asInt());
+                instrument.setAvailable(instrumentNode.get("available").asBoolean());
+                instrument.setInitialized(instrumentNode.get("initialized").asBoolean());
+                // instrument.setAssignmentCount(instrumentNode.get("assignmentCount").asInt());
+                // instrument.setMultiTimbral(instrumentNode.get("multiTimbral").asBoolean());
+                // instrument.setDefaultChannel(instrumentNode.get("defaultChannel").asInt());
+
+                // Process channels
+                JsonNode channelsNode = instrumentNode.get("channels");
+                if (channelsNode != null && !channelsNode.isEmpty()) {
+                    List<Integer> channels = new ArrayList<>();
+                    for (JsonNode channel : channelsNode) {
+                        channels.add(channel.asInt());
+                    }
+                    // instrument.setChannels((Integer[]) channels.toArray());
+                }
+
+                // Process control codes
+                JsonNode controlCodesNode = instrumentNode.get("controlCodes");
+                if (controlCodesNode != null && !controlCodesNode.isEmpty()) {
+                    List<ControlCode> controlCodes = new ArrayList<>();
+
+                    for (JsonNode ccNode : controlCodesNode) {
+                        ControlCode cc = new ControlCode();
+                        cc.setName(ccNode.get("name").asText());
+                        cc.setCode(ccNode.get("code").asInt());
+
+                        if (ccNode.has("lowerBound") && !ccNode.get("lowerBound").isNull()) {
+                            cc.setLowerBound(ccNode.get("lowerBound").asInt());
+                        }
+                        if (ccNode.has("upperBound") && !ccNode.get("upperBound").isNull()) {
+                            cc.setUpperBound(ccNode.get("upperBound").asInt());
+                        }
+
+                        // Process captions
+                        JsonNode captionsNode = ccNode.get("captions");
+                        if (captionsNode != null && !captionsNode.isEmpty()) {
+                            Set<Caption> captions = new HashSet<>();
+                            for (JsonNode captionNode : captionsNode) {
+                                Caption caption = new Caption();
+                                caption.setCode(ccNode.get("code").longValue());
+                                // caption.setCode(captionNode.has("code") ? captionNode.get("code").asInt() :
+                                // 0);
+                                caption.setDescription(captionNode.get("description").asText());
+                                // Save caption and get new ID
+                                captions.add(saveCaption(caption));
+                            }
+                            cc.setCaptions(captions);
+                        }
+
+                        // Save control code and get new ID
+                        controlCodes.add(saveControlCode(cc));
+                    }
+                    instrument.setControlCodes(controlCodes);
+                }
+
+                // Save instrument with new ID
+                instruments.add(saveInstrument(instrument));
+            }
+
+            // Create and return config
+            BeatsUIConfig config = new BeatsUIConfig();
+            config.setInstruments(instruments);
+            return config;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load configuration: " + e.getMessage(), e);
+        }
+    }
+
+    public List<Instrument> loadInstrumentsFromXML(String xmlFilePath) {
+        try {
+            logger.info("Loading instruments from XML: " + xmlFilePath);
+
+            // Create mapper configured for our needs
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+            // Read JSON config file
+            String jsonPath = xmlFilePath.replace(".xml", ".json");
+            File jsonFile = new File(jsonPath);
+            JsonNode rootNode = mapper.readTree(jsonFile);
+            JsonNode instrumentsNode = rootNode.get("instruments");
+
+            List<Instrument> instruments = new ArrayList<>();
+
+            // Process each instrument
+            for (JsonNode instrumentNode : instrumentsNode) {
+                Instrument instrument = new Instrument();
+
+                // Set basic properties
+                instrument.setName(instrumentNode.get("name").asText());
+                instrument.setDeviceName(instrumentNode.get("deviceName").asText());
+                instrument.setLowestNote(instrumentNode.get("lowestNote").asInt());
+                instrument.setHighestNote(instrumentNode.get("highestNote").asInt());
+                instrument.setAvailable(instrumentNode.get("available").asBoolean());
+                instrument.setInitialized(instrumentNode.get("initialized").asBoolean());
+
+                // Process control codes
+                JsonNode controlCodesNode = instrumentNode.get("controlCodes");
+                if (controlCodesNode != null && !controlCodesNode.isEmpty()) {
+                    List<ControlCode> controlCodes = new ArrayList<>();
+
+                    for (JsonNode ccNode : controlCodesNode) {
+                        ControlCode cc = new ControlCode();
+                        cc.setName(ccNode.get("name").asText());
+                        cc.setCode(ccNode.get("code").asInt());
+
+                        if (ccNode.has("lowerBound") && !ccNode.get("lowerBound").isNull()) {
+                            cc.setLowerBound(ccNode.get("lowerBound").asInt());
+                        }
+                        if (ccNode.has("upperBound") && !ccNode.get("upperBound").isNull()) {
+                            cc.setUpperBound(ccNode.get("upperBound").asInt());
+                        }
+
+                        // Process captions
+                        JsonNode captionsNode = ccNode.get("captions");
+                        if (captionsNode != null && !captionsNode.isEmpty()) {
+                            Set<Caption> captions = new HashSet<>();
+                            for (JsonNode captionNode : captionsNode) {
+                                Caption caption = new Caption();
+                                caption.setCode(ccNode.get("code").longValue());
+                                caption.setDescription(captionNode.get("description").asText());
+                                captions.add(saveCaption(caption));
+                            }
+                            cc.setCaptions(captions);
+                        }
+
+                        controlCodes.add(saveControlCode(cc));
+                    }
+                    instrument.setControlCodes(controlCodes);
+                }
+
+                // Save instrument and add to list
+                instruments.add(saveInstrument(instrument));
+                logger.info("Loaded and saved instrument: " + instrument.getName());
+            }
+
+            return instruments;
+
+        } catch (Exception e) {
+            logger.severe("Failed to load instruments from XML: " + e.getMessage());
+            throw new RuntimeException("Failed to load instruments from XML", e);
+        }
+    }
+
+    public BeatsUIConfig getConfig() {
+        try {
+            logger.info("Getting current configuration from Redis");
+
+            BeatsUIConfig config = new BeatsUIConfig();
+
+            // Load all instruments with their relationships
+            List<Instrument> instruments = findAllInstruments();
+            logger.info("Found " + instruments.size() + " instruments");
+
+            config.setInstruments(instruments);
+
+            return config;
+        } catch (Exception e) {
+            logger.severe("Error getting configuration: " + e.getMessage());
+            throw new RuntimeException("Error getting configuration", e);
+        }
+    }
+
+    public void saveConfig(BeatsUIConfig config) {
+        try {
+            logger.info("Saving configuration to Redis");
+
+            // Clear existing instruments
+            Set<String> instrumentKeys = jedisPool.getResource().keys(getCollectionKey(Instrument.class) + ":*");
+            if (instrumentKeys != null && !instrumentKeys.isEmpty()) {
+                try (Jedis jedis = jedisPool.getResource()) {
+                    for (String key : instrumentKeys) {
+                        jedis.del(key);
+                    }
+                }
+            }
+
+            // Save new instruments
+            if (config.getInstruments() != null) {
+                for (Instrument instrument : config.getInstruments()) {
+                    saveInstrument(instrument);
+                    logger.info("Saved instrument: " + instrument.getName());
+                }
+            }
+
+            logger.info("Configuration saved successfully");
+        } catch (Exception e) {
+            logger.severe("Error saving configuration: " + e.getMessage());
+            throw new RuntimeException("Error saving configuration", e);
+        }
+    }
+
     // public static void main(String[] args) {
     // RedisService service = new RedisService();
 
@@ -173,25 +395,25 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public FindAll<com.angrysurfer.core.model.ui.Caption> getCaptionFindAll() {
+    public FindAll<Caption> getCaptionFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCaptionFindAll'");
     }
 
     // @Override
-    public FindOne<com.angrysurfer.core.model.ui.Caption> getCaptionFindOne() {
+    public FindOne<Caption> getCaptionFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCaptionFindOne'");
     }
 
     // @Override
-    public Save<com.angrysurfer.core.model.ui.Caption> getCaptionSaver() {
+    public Save<Caption> getCaptionSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCaptionSaver'");
     }
 
     // @Override
-    public Delete<com.angrysurfer.core.model.ui.Caption> getCaptionDeleter() {
+    public Delete<Caption> getCaptionDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCaptionDeleter'");
     }
@@ -485,25 +707,25 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public void setCaptionFindAll(FindAll<com.angrysurfer.core.model.ui.Caption> captionFindAll) {
+    public void setCaptionFindAll(FindAll<Caption> captionFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setCaptionFindAll'");
     }
 
     // @Override
-    public void setCaptionFindOne(FindOne<com.angrysurfer.core.model.ui.Caption> captionFindOne) {
+    public void setCaptionFindOne(FindOne<Caption> captionFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setCaptionFindOne'");
     }
 
     // @Override
-    public void setCaptionSaver(Save<com.angrysurfer.core.model.ui.Caption> captionSaver) {
+    public void setCaptionSaver(Save<Caption> captionSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setCaptionSaver'");
     }
 
     // @Override
-    public void setCaptionDeleter(Delete<com.angrysurfer.core.model.ui.Caption> captionDeleter) {
+    public void setCaptionDeleter(Delete<Caption> captionDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setCaptionDeleter'");
     }
@@ -797,18 +1019,6 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public com.angrysurfer.core.model.ui.Caption saveCaption(com.angrysurfer.core.model.ui.Caption caption) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'saveCaption'");
-    }
-
-    // @Override
-    public void deleteCaption(com.angrysurfer.core.model.ui.Caption caption) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deleteCaption'");
-    }
-
-    // @Override
     public ControlCode findControlCodeById(Long id) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = getKey(ControlCode.class, id);
@@ -1072,7 +1282,7 @@ public class RedisService { // implements Database {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findRulesByPlayerId'");
     }
-    
+
     // @Override
     public Rule saveRule(Rule rule, Strike player) {
         try (Jedis jedis = jedisPool.getResource()) {
@@ -1083,18 +1293,18 @@ public class RedisService { // implements Database {
                 rule.setId(newId);
                 logger.info("Generated new rule ID: " + newId);
             }
-            
+
             rule.setPlayerId(player.getId()); // Ensure player ID is set
-            
+
             // Save the rule
             String json = objectMapper.writeValueAsString(rule);
             String ruleKey = getKey(Rule.class, rule.getId());
             jedis.set(ruleKey, json);
-            
+
             // Link rule to player
             String playerRulesKey = getKey(Strike.class, player.getId()) + ":rules";
             jedis.sadd(playerRulesKey, rule.getId().toString());
-            
+
             logger.info("Saved rule " + rule.getId() + " for player " + player.getName());
             return rule;
         } catch (Exception e) {
@@ -1132,17 +1342,23 @@ public class RedisService { // implements Database {
             List<Instrument> instruments = new ArrayList<>();
             Set<String> keys = jedis.keys(getCollectionKey(Instrument.class) + ":*");
 
+            logger.info("Found " + keys.size() + " instrument keys");
+
             for (String key : keys) {
-                // Extract ID from key (instrument:1 -> 1)
-                Long id = Long.valueOf(key.split(":")[1]);
-                // Use findInstrumentById to properly load relationships
-                Instrument instrument = findInstrumentById(id);
-                if (instrument != null) {
-                    instruments.add(instrument);
+                try {
+                    String json = jedis.get(key);
+                    if (json != null) {
+                        Instrument instrument = objectMapper.readValue(json, Instrument.class);
+                        logger.info("Loaded instrument: " + instrument.getName());
+                        instruments.add(instrument);
+                    }
+                } catch (Exception e) {
+                    logger.warning("Error loading instrument from key " + key + ": " + e.getMessage());
                 }
             }
             return instruments;
         } catch (Exception e) {
+            logger.severe("Error finding all instruments: " + e.getMessage());
             throw new RuntimeException("Error finding all instruments", e);
         }
     }
@@ -1152,104 +1368,6 @@ public class RedisService { // implements Database {
             Set<String> keys = jedis.keys("*");
             logger.info("All Redis keys: " + String.join(", ", keys));
             return keys.isEmpty();
-        }
-    }
-
-    public BeatsUIConfig loadConfigFromXml(String xmlFilePath) {
-        try {
-            // Clear existing data before loading config
-            clearDatabase();
-
-            // Create mapper configured for our needs
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-            // Read JSON config file
-            String jsonPath = xmlFilePath.replace(".xml", ".json");
-            File jsonFile = new File(jsonPath);
-            JsonNode rootNode = mapper.readTree(jsonFile);
-            JsonNode instrumentsNode = rootNode.get("instruments");
-
-            // Clear existing data
-            clearDatabase();
-
-            List<Instrument> instruments = new ArrayList<>();
-
-            // Process each instrument
-            for (JsonNode instrumentNode : instrumentsNode) {
-                Instrument instrument = new Instrument();
-
-                // Set basic properties
-                instrument.setName(instrumentNode.get("name").asText());
-                instrument.setDeviceName(instrumentNode.get("deviceName").asText());
-                instrument.setLowestNote(instrumentNode.get("lowestNote").asInt());
-                instrument.setHighestNote(instrumentNode.get("highestNote").asInt());
-                instrument.setAvailable(instrumentNode.get("available").asBoolean());
-                instrument.setInitialized(instrumentNode.get("initialized").asBoolean());
-                // instrument.setAssignmentCount(instrumentNode.get("assignmentCount").asInt());
-                // instrument.setMultiTimbral(instrumentNode.get("multiTimbral").asBoolean());
-                // instrument.setDefaultChannel(instrumentNode.get("defaultChannel").asInt());
-
-                // Process channels
-                JsonNode channelsNode = instrumentNode.get("channels");
-                if (channelsNode != null && !channelsNode.isEmpty()) {
-                    List<Integer> channels = new ArrayList<>();
-                    for (JsonNode channel : channelsNode) {
-                        channels.add(channel.asInt());
-                    }
-                    // instrument.setChannels((Integer[]) channels.toArray());
-                }
-
-                // Process control codes
-                JsonNode controlCodesNode = instrumentNode.get("controlCodes");
-                if (controlCodesNode != null && !controlCodesNode.isEmpty()) {
-                    List<ControlCode> controlCodes = new ArrayList<>();
-
-                    for (JsonNode ccNode : controlCodesNode) {
-                        ControlCode cc = new ControlCode();
-                        cc.setName(ccNode.get("name").asText());
-                        cc.setCode(ccNode.get("code").asInt());
-
-                        if (ccNode.has("lowerBound") && !ccNode.get("lowerBound").isNull()) {
-                            cc.setLowerBound(ccNode.get("lowerBound").asInt());
-                        }
-                        if (ccNode.has("upperBound") && !ccNode.get("upperBound").isNull()) {
-                            cc.setUpperBound(ccNode.get("upperBound").asInt());
-                        }
-
-                        // Process captions
-                        JsonNode captionsNode = ccNode.get("captions");
-                        if (captionsNode != null && !captionsNode.isEmpty()) {
-                            Set<Caption> captions = new HashSet<>();
-                            for (JsonNode captionNode : captionsNode) {
-                                Caption caption = new Caption();
-                                caption.setCode(ccNode.get("code").longValue());
-                                // caption.setCode(captionNode.has("code") ? captionNode.get("code").asInt() :
-                                // 0);
-                                caption.setDescription(captionNode.get("description").asText());
-                                // Save caption and get new ID
-                                captions.add(saveCaption(caption));
-                            }
-                            cc.setCaptions(captions);
-                        }
-
-                        // Save control code and get new ID
-                        controlCodes.add(saveControlCode(cc));
-                    }
-                    instrument.setControlCodes(controlCodes);
-                }
-
-                // Save instrument with new ID
-                instruments.add(saveInstrument(instrument));
-            }
-
-            // Create and return config
-            BeatsUIConfig config = new BeatsUIConfig();
-            config.setInstruments(instruments);
-            return config;
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load configuration: " + e.getMessage(), e);
         }
     }
 
@@ -1273,17 +1391,17 @@ public class RedisService { // implements Database {
         try (Jedis jedis = jedisPool.getResource()) {
             List<Strike> strikes = new ArrayList<>();
             String pattern = getCollectionKey(Strike.class) + ":*";
-            
+
             // Get all keys and filter only those that start with our pattern
             // This avoids issues with auxiliary keys (like name mappings)
             Set<String> allKeys = jedis.keys("*");
             Set<String> strikeKeys = allKeys.stream()
-                .filter(key -> key.matches(pattern + "\\d+"))
-                .collect(Collectors.toSet());
-            
+                    .filter(key -> key.matches(pattern + "\\d+"))
+                    .collect(Collectors.toSet());
+
             logger.info("Strike pattern: " + pattern);
             logger.info("Found strike keys: " + String.join(", ", strikeKeys));
-            
+
             for (String key : strikeKeys) {
                 try {
                     String json = jedis.get(key);
@@ -1297,7 +1415,7 @@ public class RedisService { // implements Database {
                     // Continue loading other strikes even if one fails
                 }
             }
-            
+
             return strikes;
         } catch (Exception e) {
             logger.severe("Error in findAllStrikes: " + e.getMessage());
@@ -1314,16 +1432,16 @@ public class RedisService { // implements Database {
                 strike.setId(newId);
                 logger.info("Generated new ID for strike: " + newId + ", name: " + strike.getName());
             }
-            
+
             // Save the strike data
             String json = objectMapper.writeValueAsString(strike);
             String key = getKey(Strike.class, strike.getId());
             jedis.set(key, json);
-            
+
             // Save name to ID mapping for lookups
             String nameKey = "name_to_id:" + Strike.class.getSimpleName().toLowerCase() + ":" + strike.getName();
             jedis.set(nameKey, strike.getId().toString());
-            
+
             logger.info("Saved strike - Key: " + key + ", ID: " + strike.getId() + ", Name: " + strike.getName());
             return strike;
         } catch (Exception e) {
@@ -1346,10 +1464,11 @@ public class RedisService { // implements Database {
             List<Rule> rules = new ArrayList<>();
             String playerRulesKey = getKey(Strike.class, player.getId()) + ":rules";
             Set<String> ruleIds = jedis.smembers(playerRulesKey);
-            
-            logger.info("Finding rules for player: " + player.getName() + " (ID: " + player.getId() + "), key: " + playerRulesKey);
+
+            logger.info("Finding rules for player: " + player.getName() + " (ID: " + player.getId() + "), key: "
+                    + playerRulesKey);
             logger.info("Found rule IDs: " + String.join(", ", ruleIds));
-            
+
             for (String ruleId : ruleIds) {
                 String key = getKey(Rule.class, Long.valueOf(ruleId));
                 String json = jedis.get(key);
@@ -1373,15 +1492,15 @@ public class RedisService { // implements Database {
                 logger.warning("Cannot delete rule - missing rule or player ID");
                 return;
             }
-            
+
             // Remove rule data
             String ruleKey = getKey(Rule.class, rule.getId());
             jedis.del(ruleKey);
-            
+
             // Remove link to player
             String playerRulesKey = getKey(Strike.class, player.getId()) + ":rules";
             jedis.srem(playerRulesKey, rule.getId().toString());
-            
+
             logger.info("Deleted rule " + rule.getId() + " from player " + player.getName());
         } catch (Exception e) {
             logger.severe("Error deleting rule: " + e.getMessage());

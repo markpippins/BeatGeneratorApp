@@ -2,7 +2,11 @@ package com.angrysurfer.beatsui.panel;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.util.List;
 
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -14,10 +18,16 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import com.angrysurfer.beatsui.App;
 import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import java.util.Objects;
+import com.angrysurfer.beatsui.mock.Instrument;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class OptionsPanel extends StatusProviderPanel {
 
     public OptionsPanel() {
@@ -32,39 +42,6 @@ public class OptionsPanel extends StatusProviderPanel {
     private void setup() {
         setLayout(new BorderLayout());
         add(createOptionsPanel(), BorderLayout.CENTER);
-    }
-
-    private static class Device {
-        String name;
-        String description;
-        String vendor;
-        String version;
-        int maxReceivers;
-        int maxTransmitters;
-        int receivers;
-        int transmitters;
-        boolean receiver;
-        boolean transmitter;
-
-        public Device(String name, String description, String vendor) {
-            this.name = name;
-            this.description = description;
-            this.vendor = vendor;
-            this.version = "1.0";
-            this.maxReceivers = 1;
-            this.maxTransmitters = 1;
-            this.receivers = 0;
-            this.transmitters = 0;
-            this.receiver = true;
-            this.transmitter = true;
-        }
-
-        public Object[] toRow() {
-            return new Object[] {
-                    name, description, vendor, version, maxReceivers, maxTransmitters,
-                    receivers, transmitters, receiver, transmitter
-            };
-        }
     }
 
     private static class Config {
@@ -96,14 +73,14 @@ public class OptionsPanel extends StatusProviderPanel {
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         splitPane.setResizeWeight(0.5); // Equal split
 
-        // Top section - Devices table
+        // Top section - MIDI Devices table
         JTable devicesTable = createDevicesTable();
         splitPane.setTopComponent(new JScrollPane(devicesTable));
 
         // Bottom section - Multiple tables
         JPanel bottomPanel = new JPanel(new GridLayout(1, 3, 5, 0));
 
-        // Configs table
+        // Instrument configurations table (moved from top)
         JTable configsTable = createConfigsTable();
         bottomPanel.add(new JScrollPane(configsTable));
 
@@ -119,8 +96,8 @@ public class OptionsPanel extends StatusProviderPanel {
 
     private JTable createDevicesTable() {
         String[] columns = {
-                "Name", "Description", "Vendor", "Version", "Max Receivers",
-                "Max Transmitters", "Receivers", "Transmitters", "Receiver", "Transmitter"
+            "Name", "Description", "Vendor", "Version", "Max Receivers", 
+            "Max Transmitters", "Receivers", "Transmitters", "Receiver", "Transmitter"
         };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
@@ -139,30 +116,41 @@ public class OptionsPanel extends StatusProviderPanel {
             }
         };
 
-        // Add sample data
-        Device[] sampleDevices = {
-                new Device("Midi Port 1", "Internal MIDI Port", "System"),
-                new Device("USB Device", "External USB MIDI Device", "Roland"),
-                new Device("Virtual Port", "Virtual MIDI Connection", "System")
-        };
-
-        for (Device device : sampleDevices) {
-            model.addRow(device.toRow());
+        // Load MIDI devices
+        try {
+            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+            for (MidiDevice.Info info : infos) {
+                MidiDevice device = MidiSystem.getMidiDevice(info);
+                model.addRow(new Object[] {
+                    info.getName(),
+                    info.getDescription(),
+                    info.getVendor(),
+                    info.getVersion(),
+                    device.getMaxReceivers(),
+                    device.getMaxTransmitters(),
+                    device.getReceivers().size(),
+                    device.getTransmitters().size(),
+                    device.getMaxReceivers() != 0,
+                    device.getMaxTransmitters() != 0
+                });
+            }
+        } catch (MidiUnavailableException e) {
+            setStatus("Error loading MIDI devices: " + e.getMessage());
         }
 
         JTable table = new JTable(model);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
 
-        // Center-align numeric columns (but not boolean columns)
+        // Center-align numeric columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        for (int i = 4; i < 8; i++) { // Only center Max Receivers through Transmitters
+        for (int i = 4; i < 8; i++) {
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
-        // Set preferred column widths
-        table.getColumnModel().getColumn(0).setPreferredWidth(100); // Name
+        // Set column widths
+        table.getColumnModel().getColumn(0).setPreferredWidth(150); // Name
         table.getColumnModel().getColumn(1).setPreferredWidth(200); // Description
         table.getColumnModel().getColumn(2).setPreferredWidth(100); // Vendor
 
@@ -170,53 +158,58 @@ public class OptionsPanel extends StatusProviderPanel {
     }
 
     private JTable createConfigsTable() {
-        String[] columns = { "Port", "Device", "Available", "Channels", "Low", "High" };
+        String[] columns = { 
+            "Name", "Device Name", "Available", "Lowest Note", "Highest Note", "Initialized" 
+        };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column != 1 && column != 2; // Device and Available are read-only
+                return false; // Make all cells read-only for now
             }
 
             @Override
             public Class<?> getColumnClass(int column) {
-                if (column == 2)
-                    return Boolean.class;
-                if (column >= 3)
-                    return Integer.class;
-                return String.class;
+                switch (column) {
+                    case 2: // Available
+                    case 5: // Initialized
+                        return Boolean.class;
+                    case 3: // Lowest Note
+                    case 4: // Highest Note
+                        return Integer.class;
+                    default:
+                        return String.class;
+                }
             }
         };
 
-        // Add sample data
-        Config[] sampleConfigs = {
-                new Config("Port 1", "Midi Port 1", true),
-                new Config("USB-1", "USB Device", true),
-                new Config("Virtual", "Virtual Port", false)
-        };
-
-        for (Config config : sampleConfigs) {
-            model.addRow(config.toRow());
+        // Load data from Redis
+        List<Instrument> instruments = App.getRedisService().findAllInstruments();
+        for (Instrument instrument : instruments) {
+            model.addRow(new Object[] {
+                instrument.getName(),
+                instrument.getDeviceName(),
+                false, // instrument.isAvailable(),
+                instrument.getLowestNote(),
+                instrument.getHighestNote(),
+                instrument.isInitialized()
+            });
         }
 
         JTable table = new JTable(model);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
 
-        // Set up port combo box
-        String[] ports = { "Port 1", "USB-1", "Virtual", "Network" };
-        JComboBox<String> portCombo = new JComboBox<>(ports);
-        table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(portCombo));
-
-        // Set up channels combo box (1-16)
-        Utils.setupColumnEditor(table, "Channels", 1, 16);
-
         // Center-align numeric columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        for (int i = 3; i < table.getColumnCount(); i++) {
+        for (int i = 3; i <= 4; i++) { // Center-align note columns
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
+
+        // Set column widths
+        table.getColumnModel().getColumn(0).setPreferredWidth(100); // Name
+        table.getColumnModel().getColumn(1).setPreferredWidth(200); // Device Name
 
         return table;
     }
