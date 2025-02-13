@@ -41,4 +41,9 @@ public class Commands {
     // Ticker selection commands
     public static final String TICKER_SELECTED = "TICKER_SELECTED";
     public static final String TICKER_UPDATED = "TICKER_UPDATED";
+    
+    // Piano key commands
+    public static final String KEY_PRESSED = "KEY_PRESSED";
+    public static final String KEY_HELD = "KEY_HELD";
+    public static final String KEY_RELEASED = "KEY_RELEASED";
 }

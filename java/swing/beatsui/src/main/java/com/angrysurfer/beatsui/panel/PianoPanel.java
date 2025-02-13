@@ -10,14 +10,30 @@ import java.awt.RenderingHints;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
 import com.angrysurfer.beatsui.api.StatusConsumer;
+import com.angrysurfer.beatsui.api.Action;
+import com.angrysurfer.beatsui.api.ActionBus;
+import com.angrysurfer.beatsui.api.ActionListener;
+import com.angrysurfer.beatsui.api.Commands;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class PianoPanel extends StatusProviderPanel {
+    private final ActionBus actionBus = ActionBus.getInstance();
+    private final Set<Integer> heldNotes = new HashSet<>();
+    private Map<Integer, JButton> noteToKeyMap = new HashMap<>();
+
     public PianoPanel() {
         this(null);
+        setupActionBusListener();
     }
 
     public PianoPanel(StatusConsumer statusConsumer) {
@@ -35,21 +51,122 @@ public class PianoPanel extends StatusProviderPanel {
         // Create white keys
 
         String[] whiteNotes = { "C", "D", "E", "F", "G", "A", "B" };
+        int[] whiteNoteValues = {60, 62, 64, 65, 67, 69, 71}; // MIDI note values
         for (int i = 0; i < 7; i++) {
             JButton whiteKey = createPianoKey(true, whiteNotes[i]);
             whiteKey.setBounds(i * whiteKeyWidth + 10, 10, whiteKeyWidth - 1, whiteKeyHeight);
             add(whiteKey);
+            noteToKeyMap.put(whiteNoteValues[i], whiteKey); // Map MIDI note to key
         }
 
         // Create black keys
         String[] blackNotes = { "C#", "D#", "", "F#", "G#", "A#", "" };
+        int[] blackNoteValues = {61, 63, -1, 66, 68, 70, -1}; // MIDI note values
         for (int i = 0; i < 7; i++) {
             if (!blackNotes[i].isEmpty()) {
                 JButton blackKey = createPianoKey(false, blackNotes[i]);
                 blackKey.setBounds(i * whiteKeyWidth + whiteKeyWidth / 2 + 10, 10, blackKeyWidth, blackKeyHeight);
                 add(blackKey, 0); // Add black keys first so they appear on top
+                noteToKeyMap.put(blackNoteValues[i], blackKey); // Map MIDI note to key
             }
         }
+        
+        setupActionBusListener();
+    }
+
+    private void setupActionBusListener() {
+        actionBus.register(new ActionListener() {
+            @Override
+            public void onAction(Action action) {
+                if (action.getData() instanceof Integer note) {
+
+                    switch (action.getCommand()) {
+                        case Commands.KEY_PRESSED -> handleKeyPress(note);
+                        case Commands.KEY_HELD -> handleKeyHold(note);
+                        case Commands.KEY_RELEASED -> handleKeyRelease(note);
+                    }
+                }
+            }
+        });
+    }
+
+    private void handleKeyPress(int note) {
+        if (!heldNotes.contains(note)) {
+            // Visual feedback
+            if (Objects.nonNull(statusConsumer))
+                statusConsumer.setStatus("Playing note " + note);
+            highlightKey(note);
+            // MIDI note on
+            playNote(note);
+            // If not held, schedule release
+            if (!heldNotes.contains(note)) {
+                releaseNoteAfterDelay(note);
+            }
+        }
+    }
+
+    private void handleKeyHold(int note) {
+        statusConsumer.setStatus("Holding note " + note);
+        heldNotes.add(note);
+        highlightKey(note);
+        playNote(note);
+    }
+
+    private void handleKeyRelease(int note) {
+        if (!heldNotes.contains(note)) {
+            unhighlightKey(note);
+            stopNote(note);
+            if (Objects.nonNull(statusConsumer))
+                statusConsumer.setStatus("");
+        }
+    }
+
+    private void highlightKey(int note) {
+        SwingUtilities.invokeLater(() -> {
+            JButton key = noteToKeyMap.get(note);
+            if (key != null) {
+                key.getModel().setPressed(true);
+                key.getModel().setArmed(true);
+                System.out.println("Highlighting key for note: " + note); // Debug
+            }
+        });
+    }
+
+    private void unhighlightKey(int note) {
+        SwingUtilities.invokeLater(() -> {
+            JButton key = noteToKeyMap.get(note);
+            if (key != null) {
+                key.getModel().setPressed(false);
+                key.getModel().setArmed(false);
+                System.out.println("Unhighlighting key for note: " + note); // Debug
+            }
+        });
+    }
+
+    private void playNote(int note) {
+        System.out.println("Playing note: " + note); // Debug
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.setStatus("Playing note " + note);
+        }
+        // Here you would add MIDI playback if needed
+    }
+
+    private void stopNote(int note) {
+        System.out.println("Stopping note: " + note); // Debug
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.setStatus("");
+        }
+        // Here you would stop MIDI playback if needed
+    }
+
+    private void releaseNoteAfterDelay(int note) {
+        // Schedule note release after brief delay
+        new Timer(150, e -> {
+            if (!heldNotes.contains(note)) {
+                handleKeyRelease(note);
+            }
+            ((Timer) e.getSource()).stop();
+        }).start();
     }
 
     private JButton createPianoKey(boolean isWhite, String note) {
