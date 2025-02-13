@@ -19,7 +19,7 @@ public class GridPanel extends StatusProviderPanel {
     public GridPanel(StatusConsumer statusConsumer) {
         super(new GridLayout(GridSaver.GRID_ROWS, GridSaver.GRID_COLS, 2, 2), statusConsumer);
         setup();
-        gridSaver = new GridSaver(statusConsumer, buttons);
+        gridSaver = new GridSaver(this, statusConsumer, buttons);
     }
 
     private void setup() {

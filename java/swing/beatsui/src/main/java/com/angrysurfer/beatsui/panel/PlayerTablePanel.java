@@ -148,10 +148,20 @@ public class PlayerTablePanel extends JPanel {
         table.setAutoCreateRowSorter(true);
         table.getTableHeader().setReorderingAllowed(false);
 
-        // Column setup
-        table.getColumnModel().getColumn(0).setPreferredWidth(100);
-        for (int i = 1; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setPreferredWidth(120);
+        // Column setup - keeping existing setup
+        table.getColumnModel().getColumn(0).setPreferredWidth(100); // Name
+        
+        // Set fixed widths for Channel and Preset columns
+        table.getColumnModel().getColumn(1).setMaxWidth(60);  // Channel
+        table.getColumnModel().getColumn(1).setPreferredWidth(60);
+        table.getColumnModel().getColumn(7).setMaxWidth(60);  // Preset
+        table.getColumnModel().getColumn(7).setPreferredWidth(60);
+
+        // Continue with existing column setups
+        for (int i = 2; i < table.getColumnCount(); i++) {
+            if (i != 7) { // Skip Preset column as it's already set
+                table.getColumnModel().getColumn(i).setPreferredWidth(120);
+            }
         }
 
         // Set up custom editors

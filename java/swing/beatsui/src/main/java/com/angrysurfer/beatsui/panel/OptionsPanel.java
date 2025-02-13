@@ -333,6 +333,12 @@ public class OptionsPanel extends StatusProviderPanel {
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
+        // Center-align and set up boolean renderer for numeric and boolean columns
+        table.getColumnModel().getColumn(2).setCellRenderer(table.getDefaultRenderer(Boolean.class)); // Available
+        table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer); // Lowest Note
+        table.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); // Highest Note
+        table.getColumnModel().getColumn(5).setCellRenderer(table.getDefaultRenderer(Boolean.class)); // Initialized
+
         // Set column widths - make name column extra wide
         table.getColumnModel().getColumn(0).setPreferredWidth(250); // Name - wider
         table.getColumnModel().getColumn(1).setPreferredWidth(200); // Device Name
@@ -397,16 +403,25 @@ public class OptionsPanel extends StatusProviderPanel {
         table.getTableHeader().setReorderingAllowed(false);
         table.setAutoCreateRowSorter(true);  // Enable sorting
 
-        // Set column widths
+        // Center-align all numeric columns
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        
+        // Code, Lower Bound, Upper Bound
+        table.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
+        table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+        table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
+
+        // Set column widths - minimize all except name
         table.getColumnModel().getColumn(0).setPreferredWidth(120); // Name
         
-        // Fixed minimum widths for numeric columns
-        table.getColumnModel().getColumn(1).setMaxWidth(60); // Code
-        table.getColumnModel().getColumn(1).setPreferredWidth(60);
-        table.getColumnModel().getColumn(2).setMaxWidth(80); // Lower Bound
-        table.getColumnModel().getColumn(2).setPreferredWidth(80);
-        table.getColumnModel().getColumn(3).setMaxWidth(80); // Upper Bound
-        table.getColumnModel().getColumn(3).setPreferredWidth(80);
+        // Fixed minimum widths for all numeric columns
+        table.getColumnModel().getColumn(1).setMaxWidth(50); // Code
+        table.getColumnModel().getColumn(1).setPreferredWidth(50);
+        table.getColumnModel().getColumn(2).setMaxWidth(70); // Lower Bound
+        table.getColumnModel().getColumn(2).setPreferredWidth(70);
+        table.getColumnModel().getColumn(3).setMaxWidth(70); // Upper Bound
+        table.getColumnModel().getColumn(3).setPreferredWidth(70);
 
         // Modify selection listener to handle caption buttons
         table.getSelectionModel().addListSelectionListener(e -> {
@@ -452,6 +467,11 @@ public class OptionsPanel extends StatusProviderPanel {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
         table.setAutoCreateRowSorter(true);  // Enable sorting
+
+        // Center-align the numeric code column
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
 
         // Set column widths
         table.getColumnModel().getColumn(0).setMaxWidth(60); // Code

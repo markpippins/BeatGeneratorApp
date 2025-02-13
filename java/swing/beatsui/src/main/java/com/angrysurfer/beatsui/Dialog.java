@@ -69,7 +69,9 @@ public class Dialog<T> extends JDialog {
         setupButtonPanel();
 
         // Increase minimum size for additional controls
-        setMinimumSize(new Dimension(900, 700));
+        setMinimumSize(getContentPanel().getMinimumSize());
+        setMaximumSize(getContentPanel().getMaximumSize());
+        setPreferredSize(getContentPanel().getPreferredSize());
         pack();
         setLocationRelativeTo(getOwner());
         setResizable(true);

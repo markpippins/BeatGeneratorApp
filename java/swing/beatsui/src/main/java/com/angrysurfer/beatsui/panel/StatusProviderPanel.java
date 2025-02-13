@@ -26,6 +26,43 @@ public class StatusProviderPanel extends JPanel {
         this.statusConsumer = statusConsumer;
     }
 
+    public void setSite(String site) {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.setSite(site);
+        }
+    }
+
+    public void clearSite() {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.clearSite();
+        }
+    }
+
+    public void setMessage(String message) {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.setMessage(message);
+        }
+    }
+
+    public void clearMessage() {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.clearMessage();
+            ;
+        }
+    }
+
+    public void setSender(String sender) {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.setSender(sender);
+        }
+    }
+
+    public void clearSender() {
+        if (Objects.nonNull(statusConsumer)) {
+            statusConsumer.clearSender();
+        }
+    }
+
     public void setStatus(String status) {
         if (Objects.nonNull(statusConsumer)) {
             statusConsumer.setStatus(status);

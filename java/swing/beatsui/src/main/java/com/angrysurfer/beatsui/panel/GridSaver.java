@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JComponent;
 import javax.swing.Timer;
 
 import com.angrysurfer.beatsui.Utils;
@@ -18,6 +19,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class GridSaver {
+
+    private final JComponent parent;
 
     public static final int GRID_ROWS = 8;
     public static final int GRID_COLS = 36;
@@ -82,10 +85,10 @@ public class GridSaver {
 
     // Add new instance variables
     private double[] phases = new double[GRID_ROWS];
-    private int[] euclidSteps = {3, 4, 5, 7};
-    private int[] euclidPulses = {2, 3, 2, 5};
+    private int[] euclidSteps = { 3, 4, 5, 7 };
+    private int[] euclidPulses = { 2, 3, 2, 5 };
     private double[][] lfoValues = new double[GRID_ROWS][GRID_COLS];
-    private double[] lfoFreqs = {1.0, 1.5, 2.0, 2.5, 3.0};
+    private double[] lfoFreqs = { 1.0, 1.5, 2.0, 2.5, 3.0 };
     private int burstCount = 0;
     private int burstX = 0, burstY = 0;
 
@@ -120,7 +123,7 @@ public class GridSaver {
             this.y = y;
             this.progress = 0.0;
             this.isWinner = false;
-            this.colors = new Color[]{
+            this.colors = new Color[] {
                     Color.RED, Color.ORANGE, Color.YELLOW,
                     Color.GREEN, Color.BLUE, Color.WHITE
             };
@@ -135,7 +138,7 @@ public class GridSaver {
         }
 
         Color getCurrentColor() {
-            int colorIndex = (int)(progress * colors.length);
+            int colorIndex = (int) (progress * colors.length);
             return colors[Math.min(colorIndex, colors.length - 1)];
         }
     }
@@ -213,7 +216,8 @@ public class GridSaver {
 
     private StatusConsumer statusConsumer;
 
-    public GridSaver(StatusConsumer statusConsumer, GridButton[][] buttons) {
+    public GridSaver(JComponent parent, StatusConsumer statusConsumer, GridButton[][] buttons) {
+        this.parent = parent;
         this.statusConsumer = statusConsumer;
         this.buttons = buttons;
         setupTimers();
@@ -254,7 +258,6 @@ public class GridSaver {
         currentMode = null; // Reset current mode
         lastInteraction = System.currentTimeMillis(); // Reset timer
     }
-   
 
     private void setupAnimation() {
         animationTimer = new Timer(100, e -> updateDisplay());
@@ -355,7 +358,7 @@ public class GridSaver {
     }
 
     private void updateExplosion() {
-        setStatus("Explosion");
+        setSender("Explosion");
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 if (random.nextInt(100) < 10) {
@@ -365,38 +368,38 @@ public class GridSaver {
                             0 // No blue
                     ));
                 } else {
-                    buttons[row][col].setBackground(Utils.darkGray);
+                    buttons[row][col].setBackground(getParent().getBackground());
                 }
             }
         }
     }
 
-    private void setStatus(String string) {
+    private void setSender(String string) {
         if (Objects.nonNull(statusConsumer))
-            statusConsumer.setStatus(string);
+            statusConsumer.setSender(string);
     }
 
     private void updateSpace() {
-        setStatus("Space");
+        setSender("Space");
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 if (random.nextInt(100) < 2) {
                     buttons[row][col].setBackground(Color.WHITE);
                 } else {
-                    buttons[row][col].setBackground(Utils.darkGray);
+                    buttons[row][col].setBackground(getParent().getBackground());
                 }
             }
         }
     }
 
     private void updateGameOfLife() {
-        setStatus("Game of Life");
+        setSender("Game of Life");
         boolean[][] nextGen = new boolean[GRID_ROWS][GRID_COLS];
 
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 int neighbors = countLiveNeighbors(row, col);
-                boolean isAlive = !buttons[row][col].getBackground().equals(Utils.darkGray);
+                boolean isAlive = !buttons[row][col].getBackground().equals(getParent().getBackground());
 
                 if (isAlive && (neighbors == 2 || neighbors == 3)) {
                     nextGen[row][col] = true;
@@ -409,7 +412,7 @@ public class GridSaver {
         // Update grid
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
-                buttons[row][col].setBackground(nextGen[row][col] ? Utils.fadedLime : Utils.darkGray);
+                buttons[row][col].setBackground(nextGen[row][col] ? Utils.fadedLime : getParent().getBackground());
             }
         }
 
@@ -429,7 +432,7 @@ public class GridSaver {
                     continue;
                 int r = (row + i + GRID_ROWS) % GRID_ROWS;
                 int c = (col + j + GRID_COLS) % GRID_COLS;
-                if (!buttons[r][c].getBackground().equals(Utils.darkGray)) {
+                if (!buttons[r][c].getBackground().equals(getParent().getBackground())) {
                     count++;
                 }
             }
@@ -438,7 +441,7 @@ public class GridSaver {
     }
 
     private void updateRain() {
-        setStatus("Matrix Rain");
+        setSender("Matrix Rain");
         // Shift everything down
         for (int row = GRID_ROWS - 1; row > 0; row--) {
             for (int col = 0; col < GRID_COLS; col++) {
@@ -450,13 +453,13 @@ public class GridSaver {
             if (random.nextInt(100) < 15) {
                 buttons[0][col].setBackground(Color.GREEN);
             } else {
-                buttons[0][col].setBackground(Utils.darkGray);
+                buttons[0][col].setBackground(getParent().getBackground());
             }
         }
     }
 
     private void updateWave() {
-        setStatus("Wave");
+        setSender("Wave");
         for (int col = 0; col < GRID_COLS; col++) {
             int row = (int) (2 + Math.sin(angle + col * 0.3) * 1.5);
             clearDisplay();
@@ -468,7 +471,7 @@ public class GridSaver {
     }
 
     private void updateBounce() {
-        setStatus("Bounce");
+        setSender("Bounce");
         clearDisplay();
         for (int col = 0; col < GRID_COLS; col++) {
             buttons[bouncePos][col].setBackground(Color.YELLOW);
@@ -489,7 +492,7 @@ public class GridSaver {
     }
 
     private void updateSnake() {
-        setStatus("Snake");
+        setSender("Snake");
         // Simple snake pattern
         clearDisplay();
         int row = 2 + (int) (Math.sin(angle) * 1.5);
@@ -501,7 +504,7 @@ public class GridSaver {
     }
 
     private void updateSpiral() {
-        setStatus("Spiral");
+        setSender("Spiral");
         clearDisplay();
         spiralAngle += 0.2;
         spiralRadius = (spiralAngle % 10) / 2;
@@ -513,12 +516,12 @@ public class GridSaver {
     }
 
     private void updateFireworks() {
-        setStatus("Fireworks");
+        setSender("Fireworks");
         // Fade existing colors
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 Color c = buttons[row][col].getBackground();
-                if (c != Utils.darkGray) {
+                if (c != getParent().getBackground()) {
                     buttons[row][col].setBackground(new Color(
                             Math.max(c.getRed() - 20, 0),
                             Math.max(c.getGreen() - 20, 0),
@@ -545,7 +548,7 @@ public class GridSaver {
     }
 
     private void updatePulse() {
-        setStatus("Pulse");
+        setSender("Pulse");
         clearDisplay();
         int centerX = GRID_COLS / 2;
         int centerY = 2;
@@ -564,7 +567,7 @@ public class GridSaver {
     }
 
     private void updateRainbow() {
-        setStatus("Rainbow");
+        setSender("Rainbow");
         for (int col = 0; col < GRID_COLS; col++) {
             int colorIndex = (col + rainbowOffset) % rainbowColors.length;
             for (int row = 0; row < GRID_ROWS; row++) {
@@ -575,7 +578,7 @@ public class GridSaver {
     }
 
     private void updateClock() {
-        setStatus("Clock");
+        setSender("Clock");
         clearDisplay();
         double time = System.currentTimeMillis() / 1000.0;
         // Hour hand
@@ -597,31 +600,31 @@ public class GridSaver {
     }
 
     private void updateConfetti() {
-        setStatus("Confetti");
+        setSender("Confetti");
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 if (random.nextInt(100) < 5) {
                     buttons[row][col].setBackground(rainbowColors[random.nextInt(rainbowColors.length)]);
                 } else if (random.nextInt(100) < 10) {
-                    buttons[row][col].setBackground(Utils.darkGray);
+                    buttons[row][col].setBackground(getParent().getBackground());
                 }
             }
         }
     }
 
     private void updateMatrix() {
-        setStatus("Matrix");
+        setSender("Matrix");
         // Shift everything down
         for (int row = GRID_ROWS - 1; row > 0; row--) {
             for (int col = 0; col < GRID_COLS; col++) {
                 Color above = buttons[row - 1][col].getBackground();
                 if (above.equals(Utils.fadedLime)) {
                     buttons[row][col].setBackground(Utils.mutedOlive);
-                } else if (!above.equals(Utils.darkGray)) {
+                } else if (!above.equals(getParent().getBackground())) {
                     buttons[row][col].setBackground(new Color(0,
                             Math.max(above.getGreen() - 20, 0), 0));
                 } else {
-                    buttons[row][col].setBackground(Utils.darkGray);
+                    buttons[row][col].setBackground(getParent().getBackground());
                 }
             }
         }
@@ -634,7 +637,7 @@ public class GridSaver {
     }
 
     private void updateHeart() {
-        setStatus("Heart Beat");
+        setSender("Heart Beat");
         clearDisplay();
         int centerX = GRID_COLS / 2;
         int centerY = 2;
@@ -658,7 +661,7 @@ public class GridSaver {
     }
 
     private void updateDNA() {
-        setStatus("DNA Helix");
+        setSender("DNA Helix");
         clearDisplay();
         for (int col = 0; col < GRID_COLS; col++) {
             double offset = angle + col * 0.3;
@@ -683,7 +686,7 @@ public class GridSaver {
     }
 
     private void updatePingPong() {
-        setStatus("Ping Pong");
+        setSender("Ping Pong");
         clearDisplay();
         // Update ball position
         ballX += ballDX;
@@ -702,7 +705,7 @@ public class GridSaver {
     }
 
     private void updateEqualizer() {
-        setStatus("Equalizer");
+        setSender("Equalizer");
         clearDisplay();
         // Update levels
         for (int col = 0; col < GRID_COLS; col++) {
@@ -724,7 +727,7 @@ public class GridSaver {
     }
 
     private void updateTetrisRain() {
-        setStatus("Tetris Rain");
+        setSender("Tetris Rain");
         // Shift everything down
         for (int row = GRID_ROWS - 1; row > 0; row--) {
             for (int col = 0; col < GRID_COLS; col++) {
@@ -746,7 +749,7 @@ public class GridSaver {
     }
 
     private void updateCombat() {
-        setStatus("Combat");
+        setSender("Combat");
         clearDisplay();
 
         // Update tank positions and shots
@@ -768,7 +771,7 @@ public class GridSaver {
     }
 
     private void updateStarfield() {
-        setStatus("Starfield");
+        setSender("Starfield");
         clearDisplay();
         for (int i = 0; i < starX.length; i++) {
             starZ[i] -= 0.02;
@@ -787,7 +790,7 @@ public class GridSaver {
     }
 
     private void updateRipple() {
-        setStatus("Ripple");
+        setSender("Ripple");
         double cx = GRID_COLS / 2.0;
         double cy = GRID_ROWS / 2.0;
         t += 0.1;
@@ -805,7 +808,7 @@ public class GridSaver {
     }
 
     private void updateMaze() {
-        setStatus("Maze Generator");
+        setSender("Maze Generator");
         if (!visited[mazeY][mazeX]) {
             visited[mazeY][mazeX] = true;
             buttons[mazeY][mazeX].setBackground(Color.WHITE);
@@ -838,7 +841,7 @@ public class GridSaver {
     }
 
     private void updateLifeSoup() {
-        setStatus("Life Soup");
+        setSender("Life Soup");
         boolean[][] nextGen = new boolean[GRID_ROWS][GRID_COLS];
         Color[][] nextColors = new Color[GRID_ROWS][GRID_COLS];
 
@@ -846,7 +849,7 @@ public class GridSaver {
             for (int col = 0; col < GRID_COLS; col++) {
                 int neighbors = countLiveNeighbors(row, col);
                 Color currentColor = buttons[row][col].getBackground();
-                boolean isAlive = !currentColor.equals(Utils.darkGray);
+                boolean isAlive = !currentColor.equals(getParent().getBackground());
 
                 if (isAlive) {
                     if (neighbors == 2 || neighbors == 3) {
@@ -871,7 +874,7 @@ public class GridSaver {
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 buttons[row][col].setBackground(
-                        nextGen[row][col] ? nextColors[row][col] : Utils.darkGray);
+                        nextGen[row][col] ? nextColors[row][col] : getParent().getBackground());
             }
         }
 
@@ -887,7 +890,7 @@ public class GridSaver {
     }
 
     private void updatePlasma() {
-        setStatus("Plasma");
+        setSender("Plasma");
         t += 0.1;
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
@@ -905,7 +908,7 @@ public class GridSaver {
     }
 
     private void updateMandelbrot() {
-        setStatus("Mandelbrot");
+        setSender("Mandelbrot");
         double zoom = 1.5 + Math.sin(t * 0.1) * 0.5;
         double centerX = -0.5 + Math.sin(t * 0.05) * 0.2;
         double centerY = Math.cos(t * 0.05) * 0.2;
@@ -932,7 +935,7 @@ public class GridSaver {
     }
 
     private void updateBinaryRain() {
-        setStatus("Binary Rain");
+        setSender("Binary Rain");
         // Shift existing content down
         for (int row = GRID_ROWS - 1; row > 0; row--) {
             for (int col = 0; col < GRID_COLS; col++) {
@@ -947,14 +950,14 @@ public class GridSaver {
                 buttons[0][col].setBackground(Utils.fadedLime);
                 buttons[0][col].setText(random.nextInt(2) + "");
             } else {
-                buttons[0][col].setBackground(Utils.darkGray);
+                buttons[0][col].setBackground(getParent().getBackground());
                 buttons[0][col].setText("");
             }
         }
     }
 
     private void updateKaleidoscope() {
-        setStatus("Kaleidoscope");
+        setSender("Kaleidoscope");
         int centerX = GRID_COLS / 2;
         int centerY = GRID_ROWS / 2;
         t += 0.1;
@@ -994,7 +997,7 @@ public class GridSaver {
     }
 
     private void updateCellular() {
-        setStatus("Cellular Automaton");
+        setSender("Cellular Automaton");
         Color[][] nextGen = new Color[GRID_ROWS][GRID_COLS];
 
         for (int row = 0; row < GRID_ROWS; row++) {
@@ -1002,17 +1005,17 @@ public class GridSaver {
                 Color current = buttons[row][col].getBackground();
                 int[] neighborCounts = countColorNeighbors(row, col);
 
-                if (current.equals(Utils.darkGray)) {
+                if (current.equals(getParent().getBackground())) {
                     if (neighborCounts[0] == 3)
                         nextGen[row][col] = Color.RED;
                     else if (neighborCounts[1] == 3)
                         nextGen[row][col] = Color.BLUE;
                     else
-                        nextGen[row][col] = Utils.darkGray;
+                        nextGen[row][col] = getParent().getBackground();
                 } else {
                     int total = neighborCounts[0] + neighborCounts[1];
                     if (total < 2 || total > 3)
-                        nextGen[row][col] = Utils.darkGray;
+                        nextGen[row][col] = getParent().getBackground();
                     else
                         nextGen[row][col] = current;
                 }
@@ -1052,7 +1055,7 @@ public class GridSaver {
     }
 
     private void updateBrownian() {
-        setStatus("Brownian Motion");
+        setSender("Brownian Motion");
         if (random.nextInt(100) < 30) {
             // Add new particle
             int x = random.nextInt(GRID_COLS);
@@ -1066,15 +1069,15 @@ public class GridSaver {
         // Move existing particles
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
-                if (!buttons[row][col].getBackground().equals(Utils.darkGray)) {
+                if (!buttons[row][col].getBackground().equals(getParent().getBackground())) {
                     int newRow = row + random.nextInt(3) - 1;
                     int newCol = col + random.nextInt(3) - 1;
 
                     if (newRow >= 0 && newRow < GRID_ROWS &&
                             newCol >= 0 && newCol < GRID_COLS &&
-                            buttons[newRow][newCol].getBackground().equals(Utils.darkGray)) {
+                            buttons[newRow][newCol].getBackground().equals(getParent().getBackground())) {
                         buttons[newRow][newCol].setBackground(buttons[row][col].getBackground());
-                        buttons[row][col].setBackground(Utils.darkGray);
+                        buttons[row][col].setBackground(getParent().getBackground());
                     }
                 }
             }
@@ -1082,9 +1085,9 @@ public class GridSaver {
     }
 
     private void updateCrystal() {
-        setStatus("Crystal Growth");
+        setSender("Crystal Growth");
         // Initialize center crystal if needed
-        if (buttons[GRID_ROWS / 2][GRID_COLS / 2].getBackground().equals(Utils.darkGray)) {
+        if (buttons[GRID_ROWS / 2][GRID_COLS / 2].getBackground().equals(getParent().getBackground())) {
             buttons[GRID_ROWS / 2][GRID_COLS / 2].setBackground(Color.WHITE);
         }
 
@@ -1106,7 +1109,7 @@ public class GridSaver {
                         int ny = y + dy;
                         if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS) {
                             Color neighbor = buttons[ny][nx].getBackground();
-                            if (!neighbor.equals(Utils.darkGray)) {
+                            if (!neighbor.equals(getParent().getBackground())) {
                                 stuck = true;
                                 break;
                             }
@@ -1129,26 +1132,26 @@ public class GridSaver {
     }
 
     private void updateLangton() {
-        setStatus("Langton's Ant");
+        setSender("Langton's Ant");
         // Implement Langton's Ant cellular automaton
         Color current = buttons[ant.y][ant.x].getBackground();
         boolean isWhite = current.equals(Color.WHITE);
-        buttons[ant.y][ant.x].setBackground(isWhite ? Utils.darkGray : Color.WHITE);
+        buttons[ant.y][ant.x].setBackground(isWhite ? getParent().getBackground() : Color.WHITE);
         ant.move(!isWhite);
     }
 
     private void updateSpectrumAnalyzer() {
-        setStatus("Spectrum Analyzer");
+        setSender("Spectrum Analyzer");
         clearDisplay();
-        
+
         // Simulate spectrum data
         for (int col = 0; col < GRID_COLS; col++) {
-            spectrumData[col] = Math.abs(Math.sin(phase + col * 0.2)) * 
-                               Math.abs(Math.cos(phase * 0.7 + col * 0.1));
-            int height = (int)(spectrumData[col] * GRID_ROWS);
-            
+            spectrumData[col] = Math.abs(Math.sin(phase + col * 0.2)) *
+                    Math.abs(Math.cos(phase * 0.7 + col * 0.1));
+            int height = (int) (spectrumData[col] * GRID_ROWS);
+
             for (int row = GRID_ROWS - 1; row >= GRID_ROWS - height; row--) {
-                float hue = (float)col / GRID_COLS;
+                float hue = (float) col / GRID_COLS;
                 buttons[row][col].setBackground(Color.getHSBColor(hue, 0.8f, 1.0f));
             }
         }
@@ -1156,30 +1159,30 @@ public class GridSaver {
     }
 
     private void updateWaveform() {
-        setStatus("Waveform");
+        setSender("Waveform");
         clearDisplay();
-        
+
         // Generate a complex waveform
         for (int col = 0; col < GRID_COLS; col++) {
             double t = phase + col * 0.2;
-            waveformData[col] = Math.sin(t) * 0.5 + 
-                               Math.sin(t * 2) * 0.25 + 
-                               Math.sin(t * 3) * 0.125;
-            int row = (int)((waveformData[col] + 1) * (GRID_ROWS - 1) / 2);
+            waveformData[col] = Math.sin(t) * 0.5 +
+                    Math.sin(t * 2) * 0.25 +
+                    Math.sin(t * 3) * 0.125;
+            int row = (int) ((waveformData[col] + 1) * (GRID_ROWS - 1) / 2);
             buttons[row][col].setBackground(Color.CYAN);
         }
         phase += 0.1;
     }
 
     private void updateOscilloscope() {
-        setStatus("Oscilloscope");
+        setSender("Oscilloscope");
         clearDisplay();
-        
+
         // Create Lissajous pattern
         for (int t = 0; t < 50; t++) {
             double angle = t * 0.1 + phase;
-            int x = (int)((Math.sin(angle * 3) + 1) * (GRID_COLS - 1) / 2);
-            int y = (int)((Math.sin(angle * 2) + 1) * (GRID_ROWS - 1) / 2);
+            int x = (int) ((Math.sin(angle * 3) + 1) * (GRID_COLS - 1) / 2);
+            int y = (int) ((Math.sin(angle * 2) + 1) * (GRID_ROWS - 1) / 2);
             if (x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS) {
                 buttons[y][x].setBackground(Color.GREEN);
             }
@@ -1188,19 +1191,19 @@ public class GridSaver {
     }
 
     private void updateVUMeters() {
-        setStatus("VU Meters");
+        setSender("VU Meters");
         clearDisplay();
-        
+
         // Simulate multiple VU meters
         int meterWidth = GRID_COLS / 4;
         for (int meter = 0; meter < 4; meter++) {
             double level = Math.abs(Math.sin(phase + meter * 0.5));
-            int height = (int)(level * GRID_ROWS);
-            
+            int height = (int) (level * GRID_ROWS);
+
             for (int row = GRID_ROWS - 1; row >= GRID_ROWS - height; row--) {
                 for (int col = meter * meterWidth; col < (meter + 1) * meterWidth - 1; col++) {
-                    Color color = row < GRID_ROWS * 0.2 ? Color.RED :
-                                 row < GRID_ROWS * 0.4 ? Color.YELLOW : Color.GREEN;
+                    Color color = row < GRID_ROWS * 0.2 ? Color.RED
+                            : row < GRID_ROWS * 0.4 ? Color.YELLOW : Color.GREEN;
                     buttons[row][col].setBackground(color);
                 }
             }
@@ -1209,22 +1212,21 @@ public class GridSaver {
     }
 
     private void updateFrequencyBands() {
-        setStatus("Frequency Bands");
+        setSender("Frequency Bands");
         clearDisplay();
-        
+
         // Simulate frequency band analysis
         int bandWidth = 3;
-        for (int band = 0; band < GRID_COLS/bandWidth; band++) {
+        for (int band = 0; band < GRID_COLS / bandWidth; band++) {
             double freq = band * 0.5;
-            int height = (int)(Math.abs(Math.sin(phase * freq)) * GRID_ROWS);
-            
+            int height = (int) (Math.abs(Math.sin(phase * freq)) * GRID_ROWS);
+
             for (int col = band * bandWidth; col < (band + 1) * bandWidth; col++) {
                 for (int row = GRID_ROWS - 1; row >= GRID_ROWS - height; row--) {
                     buttons[row][col].setBackground(new Color(
-                        100 + (155 * band / (GRID_COLS/bandWidth)),
-                        255 - (200 * band / (GRID_COLS/bandWidth)),
-                        255
-                    ));
+                            100 + (155 * band / (GRID_COLS / bandWidth)),
+                            255 - (200 * band / (GRID_COLS / bandWidth)),
+                            255));
                 }
             }
         }
@@ -1232,17 +1234,17 @@ public class GridSaver {
     }
 
     private void updateMidiGrid() {
-        setStatus("MIDI Grid");
+        setSender("MIDI Grid");
         clearDisplay();
-        
+
         // Simulate MIDI note grid with moving playhead
         seqPosition = (seqPosition + 1) % GRID_COLS;
-        
+
         // Randomly populate grid
         if (random.nextInt(100) < 10) {
             sequencerGrid[random.nextInt(GRID_ROWS)][random.nextInt(GRID_COLS)] = true;
         }
-        
+
         // Draw grid
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
@@ -1256,49 +1258,47 @@ public class GridSaver {
     }
 
     private void updateStepSequencer() {
-        setStatus("Step Sequencer");
+        setSender("Step Sequencer");
         clearDisplay();
-        
+
         seqPosition = (seqPosition + 1) % 16; // 16-step sequence
         int stepWidth = GRID_COLS / 16;
-        
+
         // Draw 4 instrument tracks
         for (int track = 0; track < GRID_ROWS; track++) {
             for (int step = 0; step < 16; step++) {
                 boolean isActive = random.nextInt(100) < 20;
-                Color trackColor = switch(track) {
-                    case 0 -> Color.RED;    // Kick
+                Color trackColor = switch (track) {
+                    case 0 -> Color.RED; // Kick
                     case 1 -> Color.YELLOW; // Snare
-                    case 2 -> Color.CYAN;   // Hi-hat
-                    case 3 -> Color.GREEN;  // Percussion
+                    case 2 -> Color.CYAN; // Hi-hat
+                    case 3 -> Color.GREEN; // Percussion
                     default -> Color.GRAY;
                 };
-                
+
                 for (int x = step * stepWidth; x < (step + 1) * stepWidth; x++) {
                     buttons[track][x].setBackground(
-                        step == seqPosition ? Color.WHITE :
-                        isActive ? trackColor : Utils.darkGray
-                    );
+                            step == seqPosition ? Color.WHITE : isActive ? trackColor : getParent().getBackground());
                 }
             }
         }
     }
 
     private void updateLoopPulse() {
-        setStatus("Loop Pulse");
+        setSender("Loop Pulse");
         clearDisplay();
-        
+
         // Create circular loop indicator
         double angle = phase;
         int centerX = GRID_COLS / 2;
         int centerY = GRID_ROWS / 2;
         int radius = 2;
-        
+
         for (int i = 0; i < 16; i++) {
             double beatAngle = i * Math.PI / 8;
-            int x = centerX + (int)(Math.cos(beatAngle) * radius);
-            int y = centerY + (int)(Math.sin(beatAngle) * radius);
-            
+            int x = centerX + (int) (Math.cos(beatAngle) * radius);
+            int y = centerY + (int) (Math.sin(beatAngle) * radius);
+
             if (x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS) {
                 boolean isOnBeat = Math.abs(angle % (Math.PI * 2) - beatAngle) < 0.2;
                 buttons[y][x].setBackground(isOnBeat ? Color.WHITE : Color.BLUE);
@@ -1308,27 +1308,26 @@ public class GridSaver {
     }
 
     private void updateDrumPattern() {
-        setStatus("Drum Pattern");
+        setSender("Drum Pattern");
         clearDisplay();
-        
+
         seqPosition = (seqPosition + 1) % GRID_COLS;
-        
+
         // Create drum pattern visualization
         for (int row = 0; row < GRID_ROWS; row++) {
-            int pattern = switch(row) {
+            int pattern = switch (row) {
                 case 0 -> 0b1000100010001000; // Kick
                 case 1 -> 0b0000100000001000; // Snare
                 case 2 -> 0b1010101010101010; // Hi-hat
                 case 3 -> 0b0010001000100010; // Percussion
                 default -> 0;
             };
-            
+
             for (int col = 0; col < GRID_COLS; col++) {
                 boolean isHit = (pattern & (1 << (col % 16))) != 0;
                 if (isHit) {
                     buttons[row][col].setBackground(
-                        col == seqPosition ? Color.WHITE : Color.ORANGE
-                    );
+                            col == seqPosition ? Color.WHITE : Color.ORANGE);
                 } else if (col == seqPosition) {
                     buttons[row][col].setBackground(Color.DARK_GRAY);
                 }
@@ -1337,39 +1336,37 @@ public class GridSaver {
     }
 
     private void updateTimeDivision() {
-        setStatus("Time Division");
+        setSender("Time Division");
         clearDisplay();
-        
+
         // Show different time divisions
-        int[] divisions = {1, 2, 4, 8, 16}; // Different timing divisions
-        
+        int[] divisions = { 1, 2, 4, 8, 16 }; // Different timing divisions
+
         for (int row = 0; row < GRID_ROWS; row++) {
             int div = divisions[row % divisions.length];
             double speed = div * phase;
-            
+
             for (int col = 0; col < GRID_COLS; col++) {
                 double pos = (col + speed) % GRID_COLS;
                 buttons[row][col].setBackground(
-                    pos < 2 ? Color.WHITE : Utils.darkGray
-                );
+                        pos < 2 ? Color.WHITE : getParent().getBackground());
             }
         }
         phase += 0.1;
     }
 
     private void updatePolyphonic() {
-        setStatus("Polyphonic Lines");
+        setSender("Polyphonic Lines");
         clearDisplay();
-        
+
         // Create multiple interweaving sine waves
         for (int voice = 0; voice < 3; voice++) {
             double freq = 1.0 + voice * 0.5;
-            Color color = voice == 0 ? Color.RED : 
-                         voice == 1 ? Color.BLUE : Color.GREEN;
-            
+            Color color = voice == 0 ? Color.RED : voice == 1 ? Color.BLUE : Color.GREEN;
+
             for (int col = 0; col < GRID_COLS; col++) {
                 double t = phase * freq + col * 0.2;
-                int row = (int)((Math.sin(t) + 1) * (GRID_ROWS - 1) / 2);
+                int row = (int) ((Math.sin(t) + 1) * (GRID_ROWS - 1) / 2);
                 if (row >= 0 && row < GRID_ROWS) {
                     buttons[row][col].setBackground(color);
                 }
@@ -1379,11 +1376,11 @@ public class GridSaver {
     }
 
     private void updatePianoRoll() {
-        setStatus("Piano Roll");
+        setSender("Piano Roll");
         clearDisplay();
-        
+
         seqPosition = (seqPosition + 1) % GRID_COLS;
-        
+
         // Create piano roll style notes
         for (int row = 0; row < GRID_ROWS; row++) {
             // Different note lengths for variety
@@ -1392,8 +1389,7 @@ public class GridSaver {
                 if (col % (8 * noteLength) == 0) {
                     for (int i = 0; i < noteLength && col + i < GRID_COLS; i++) {
                         buttons[row][col + i].setBackground(
-                            col + i == seqPosition ? Color.WHITE : Color.MAGENTA
-                        );
+                                col + i == seqPosition ? Color.WHITE : Color.MAGENTA);
                     }
                 } else if (col == seqPosition) {
                     buttons[row][col].setBackground(Color.DARK_GRAY);
@@ -1403,21 +1399,21 @@ public class GridSaver {
     }
 
     private void updateRubiksCompetition() {
-        setStatus("Rubik's Competition");
-        
+        setSender("Rubik's Competition");
+
         // Initialize competition if needed
         if (cubers.isEmpty()) {
             initializeCompetition();
         }
-        
+
         // Clear display
         clearDisplay();
-        
+
         // Update and draw each cuber
         boolean someoneWon = false;
         for (RubiksCuber cuber : cubers) {
             cuber.update();
-            
+
             // Draw 2x2 cube for each competitor
             for (int dy = 0; dy < 2; dy++) {
                 for (int dx = 0; dx < 2; dx++) {
@@ -1425,7 +1421,7 @@ public class GridSaver {
                     int y = cuber.y + dy;
                     if (y >= 0 && y < GRID_ROWS && x >= 0 && x < GRID_COLS) {
                         Color baseColor = cuber.getCurrentColor();
-                        
+
                         // Make winner's cube flash
                         if (cuber.isWinner) {
                             someoneWon = true;
@@ -1444,7 +1440,7 @@ public class GridSaver {
                 }
             }
         }
-        
+
         // Reset competition if it's been running too long or someone won
         if (someoneWon && System.currentTimeMillis() - competitionStartTime > 5000) {
             cubers.clear(); // This will trigger a new competition
@@ -1454,14 +1450,14 @@ public class GridSaver {
     private void initializeCompetition() {
         competitionStartTime = System.currentTimeMillis();
         hasWinner = false;
-        
+
         // Determine number of competitors (2 to max that fit in grid)
         int maxCompetitors = (GRID_COLS / 3) * (GRID_ROWS / 3); // Leave space between cubes
         int numCompetitors = Math.max(2, random.nextInt(maxCompetitors) + 2);
-        
+
         // Calculate spacing
         int spacing = GRID_COLS / (numCompetitors + 1);
-        
+
         // Create competitors
         for (int i = 0; i < numCompetitors; i++) {
             int x = (i + 1) * spacing - 1; // Center the 2x2 cube
@@ -1471,13 +1467,13 @@ public class GridSaver {
     }
 
     private void updateEuclidean() {
-        setStatus("Euclidean Rhythm");
+        setSender("Euclidean Rhythm");
         clearDisplay();
-        
+
         for (int row = 0; row < Math.min(GRID_ROWS, euclidSteps.length); row++) {
             int steps = euclidSteps[row];
             int pulses = euclidPulses[row];
-            
+
             for (int col = 0; col < GRID_COLS; col++) {
                 if ((col * pulses) % steps < pulses) {
                     Color color = col == seqPosition ? Color.WHITE : Color.ORANGE;
@@ -1491,36 +1487,35 @@ public class GridSaver {
     }
 
     private void updateModular() {
-        setStatus("Modular CV");
+        setSender("Modular CV");
         clearDisplay();
-        
+
         // Generate multiple CV signals
         for (int row = 0; row < GRID_ROWS; row++) {
             double freq = 0.5 + row * 0.25;
             phases[row] += freq * 0.1;
-            
+
             for (int col = 0; col < GRID_COLS; col++) {
                 double cv = Math.sin(phases[row] + col * 0.1);
-                int intensity = (int)((cv + 1) * 127);
+                int intensity = (int) ((cv + 1) * 127);
                 buttons[row][col].setBackground(new Color(0, intensity, intensity));
             }
         }
     }
 
     private void updatePolyrhythm() {
-        setStatus("Polyrhythm");
+        setSender("Polyrhythm");
         clearDisplay();
-        
-        int[] rhythms = {3, 4, 5, 7}; // Different rhythm divisions
-        
+
+        int[] rhythms = { 3, 4, 5, 7 }; // Different rhythm divisions
+
         for (int row = 0; row < Math.min(GRID_ROWS, rhythms.length); row++) {
             int rhythm = rhythms[row];
-            int position = (int)(phase * rhythm) % GRID_COLS;
-            
+            int position = (int) (phase * rhythm) % GRID_COLS;
+
             for (int col = 0; col < GRID_COLS; col++) {
                 if (col % (GRID_COLS / rhythm) == 0) {
-                    Color color = col == position ? Color.WHITE : 
-                                                   new Color(255, 100 + (50 * row), 0);
+                    Color color = col == position ? Color.WHITE : new Color(255, 100 + (50 * row), 0);
                     buttons[row][col].setBackground(color);
                 }
             }
@@ -1529,13 +1524,13 @@ public class GridSaver {
     }
 
     private void updateArpeggiator() {
-        setStatus("Arpeggiator");
+        setSender("Arpeggiator");
         clearDisplay();
-        
+
         // Define an arpeggio pattern
-        int[] notes = {0, 4, 7, 12, 7, 4}; // Major triad up and down
-        int position = (int)(phase * 8) % notes.length;
-        
+        int[] notes = { 0, 4, 7, 12, 7, 4 }; // Major triad up and down
+        int position = (int) (phase * 8) % notes.length;
+
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 if (col % (GRID_COLS / notes.length) == 0) {
@@ -1551,9 +1546,9 @@ public class GridSaver {
     }
 
     private void updateGateSequencer() {
-        setStatus("Gate Sequencer");
+        setSender("Gate Sequencer");
         clearDisplay();
-        
+
         // Simulate gate signals with different lengths
         for (int row = 0; row < GRID_ROWS; row++) {
             int gateLength = random.nextInt(4) + 1;
@@ -1568,20 +1563,20 @@ public class GridSaver {
     }
 
     private void updateChordProgression() {
-        setStatus("Chord Progression");
+        setSender("Chord Progression");
         clearDisplay();
-        
+
         // Define chord progression (I-IV-V-I)
         int[][] chords = {
-            {0, 4, 7},    // C major
-            {5, 9, 12},   // F major
-            {7, 11, 14},  // G major
-            {0, 4, 7}     // C major
+                { 0, 4, 7 }, // C major
+                { 5, 9, 12 }, // F major
+                { 7, 11, 14 }, // G major
+                { 0, 4, 7 } // C major
         };
-        
-        int chordIndex = ((int)(phase * 2)) % chords.length;
+
+        int chordIndex = ((int) (phase * 2)) % chords.length;
         int[] currentChord = chords[chordIndex];
-        
+
         // Display chord notes
         for (int note : currentChord) {
             int row = note % GRID_ROWS;
@@ -1595,15 +1590,15 @@ public class GridSaver {
     }
 
     private void updateProbability() {
-        setStatus("Probability Grid");
+        setSender("Probability Grid");
         clearDisplay();
-        
+
         for (int row = 0; row < GRID_ROWS; row++) {
-            double probability = (double)(GRID_ROWS - row) / GRID_ROWS;
-            
+            double probability = (double) (GRID_ROWS - row) / GRID_ROWS;
+
             for (int col = 0; col < GRID_COLS; col++) {
                 if (random.nextDouble() < probability) {
-                    int green = (int)(probability * 255);
+                    int green = (int) (probability * 255);
                     buttons[row][col].setBackground(new Color(0, green, 0));
                 }
             }
@@ -1611,18 +1606,18 @@ public class GridSaver {
     }
 
     private void updateHarmonics() {
-        setStatus("Harmonic Series");
+        setSender("Harmonic Series");
         clearDisplay();
-        
+
         double baseFreq = 1.0;
         for (int harmonic = 1; harmonic <= GRID_ROWS; harmonic++) {
             double freq = baseFreq * harmonic;
             for (int col = 0; col < GRID_COLS; col++) {
                 double amplitude = Math.sin(phase * freq + col * 0.1);
                 if (amplitude > 0.7) {
-                    int brightness = (int)((amplitude - 0.7) * 850);
-                    buttons[harmonic-1][col].setBackground(
-                        new Color(brightness, brightness/2, 0));
+                    int brightness = (int) ((amplitude - 0.7) * 850);
+                    buttons[harmonic - 1][col].setBackground(
+                            new Color(brightness, brightness / 2, 0));
                 }
             }
         }
@@ -1630,17 +1625,17 @@ public class GridSaver {
     }
 
     private void updateLFOMatrix() {
-        setStatus("LFO Matrix");
+        setSender("LFO Matrix");
         clearDisplay();
-        
+
         // Update LFO values
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 double lfo1 = Math.sin(phase * lfoFreqs[row % lfoFreqs.length]);
                 double lfo2 = Math.cos(phase * lfoFreqs[col % lfoFreqs.length]);
                 lfoValues[row][col] = (lfo1 + lfo2) / 2;
-                
-                int intensity = (int)((lfoValues[row][col] + 1) * 127);
+
+                int intensity = (int) ((lfoValues[row][col] + 1) * 127);
                 buttons[row][col].setBackground(new Color(intensity, 0, intensity));
             }
         }
@@ -1648,15 +1643,15 @@ public class GridSaver {
     }
 
     private void updatePhaseShift() {
-        setStatus("Phase Shifter");
+        setSender("Phase Shifter");
         clearDisplay();
-        
+
         for (int row = 0; row < GRID_ROWS; row++) {
-            double phaseOffset = (double)row / GRID_ROWS * Math.PI * 2;
+            double phaseOffset = (double) row / GRID_ROWS * Math.PI * 2;
             for (int col = 0; col < GRID_COLS; col++) {
                 double value = Math.sin(phase + phaseOffset + col * 0.2);
                 if (value > 0) {
-                    int brightness = (int)(value * 255);
+                    int brightness = (int) (value * 255);
                     buttons[row][col].setBackground(new Color(0, brightness, brightness));
                 }
             }
@@ -1665,24 +1660,24 @@ public class GridSaver {
     }
 
     private void updateXYPad() {
-        setStatus("XY Pad");
+        setSender("XY Pad");
         clearDisplay();
-        
+
         // Create circular motion
-        int centerX = (int)(GRID_COLS/2 + Math.cos(phase) * GRID_COLS/3);
-        int centerY = (int)(GRID_ROWS/2 + Math.sin(phase*1.5) * GRID_ROWS/3);
-        
+        int centerX = (int) (GRID_COLS / 2 + Math.cos(phase) * GRID_COLS / 3);
+        int centerY = (int) (GRID_ROWS / 2 + Math.sin(phase * 1.5) * GRID_ROWS / 3);
+
         // Draw crosshairs and intensity field
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 double distance = Math.sqrt(
-                    Math.pow(col - centerX, 2) + 
-                    Math.pow(row - centerY, 2));
-                
+                        Math.pow(col - centerX, 2) +
+                                Math.pow(row - centerY, 2));
+
                 if (row == centerY || col == centerX) {
                     buttons[row][col].setBackground(Color.RED);
                 } else if (distance < 3) {
-                    int intensity = (int)(255 * (3 - distance) / 3);
+                    int intensity = (int) (255 * (3 - distance) / 3);
                     buttons[row][col].setBackground(new Color(intensity, intensity, 0));
                 }
             }
@@ -1691,29 +1686,29 @@ public class GridSaver {
     }
 
     private void updateTriggerBurst() {
-        setStatus("Trigger Burst");
+        setSender("Trigger Burst");
         clearDisplay();
-        
+
         if (burstCount == 0) {
             // Start new burst
             burstX = random.nextInt(GRID_COLS);
             burstY = random.nextInt(GRID_ROWS);
             burstCount = 8;
         }
-        
+
         // Draw expanding burst
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 double distance = Math.sqrt(
-                    Math.pow(col - burstX, 2) + 
-                    Math.pow(row - burstY, 2));
-                
+                        Math.pow(col - burstX, 2) +
+                                Math.pow(row - burstY, 2));
+
                 if (distance <= (8 - burstCount) && distance > (7 - burstCount)) {
                     buttons[row][col].setBackground(Color.YELLOW);
                 }
             }
         }
-        
+
         burstCount--;
     }
 }
