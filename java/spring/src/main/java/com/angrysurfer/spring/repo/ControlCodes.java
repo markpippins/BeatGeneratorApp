@@ -2,7 +2,7 @@ package com.angrysurfer.spring.repo;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.angrysurfer.core.model.midi.ControlCode;
+import com.angrysurfer.core.api.IControlCode;
 
-public interface ControlCodes  extends JpaRepository<ControlCode, Long> {
+public interface ControlCodes extends JpaRepository<IControlCode, Long> {
 }

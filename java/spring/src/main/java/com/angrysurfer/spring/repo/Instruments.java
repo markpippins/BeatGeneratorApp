@@ -4,13 +4,13 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.api.IInstrument;
 
-public interface Instruments extends JpaRepository<Instrument, Long> {
+public interface Instruments extends JpaRepository<IInstrument, Long> {
 
     @SuppressWarnings("null")
-    public Optional<Instrument> findById(Long id);
+    public Optional<IInstrument> findById(Long id);
 
-    public Optional<Instrument> findByName(String instrument);
+    public Optional<IInstrument> findByName(String instrument);
 
 }

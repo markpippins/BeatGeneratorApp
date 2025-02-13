@@ -4,9 +4,9 @@ import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.angrysurfer.core.model.Pattern;
+import com.angrysurfer.core.api.IPattern;
 
-public interface Patterns  extends JpaRepository<Pattern, Long> {
+public interface Patterns  extends JpaRepository<IPattern, Long> {
 
-    Set<Pattern> findBySongId(Long id);
+    Set<IPattern> findBySongId(Long id);
 }

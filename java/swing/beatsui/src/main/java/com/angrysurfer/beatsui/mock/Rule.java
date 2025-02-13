@@ -6,7 +6,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.api.IPlayer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Getter;

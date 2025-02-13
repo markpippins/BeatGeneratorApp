@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.angrysurfer.core.api.IRule;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.PlayerService;
@@ -25,13 +26,13 @@ public class RuleController {
     }
 
     @GetMapping(Constants.RULES_FOR_PLAYER)
-    public Set<Rule> getRules(@RequestParam Long playerId) {
+    public Set<IRule> getRules(@RequestParam Long playerId) {
         logger.info(Constants.RULES_FOR_PLAYER);
         return service.getRules(playerId);
     }
 
     @GetMapping(Constants.ADD_RULE)
-    public Rule addRule(@RequestParam Long playerId) {
+    public IRule addRule(@RequestParam Long playerId) {
         logger.info(Constants.ADD_RULE);
         return service.addRule(playerId);
     }
@@ -44,18 +45,18 @@ public class RuleController {
 
     @GetMapping(Constants.SPECIFY_RULE)
     public void updateRule(@RequestParam Long playerId,
-                           @RequestParam int operator,
-                           @RequestParam int comparison,
-                           @RequestParam String value,
-                           @RequestParam int part) {
+            @RequestParam int operator,
+            @RequestParam int comparison,
+            @RequestParam String value,
+            @RequestParam int part) {
         logger.info(Constants.UPDATE_RULE);
         service.addRule(playerId, operator, comparison, Double.parseDouble(value), part);
     }
 
     @GetMapping(Constants.UPDATE_RULE)
-    public ResponseEntity<Rule> updateRule(@RequestParam Long ruleId, @RequestParam int updateType, @RequestParam int updateValue) {
+    public ResponseEntity<Rule> updateRule(@RequestParam Long ruleId, @RequestParam int updateType,
+            @RequestParam int updateValue) {
         logger.info(Constants.UPDATE_RULE);
         return new ResponseEntity<Rule>(service.updateRule(ruleId, updateType, updateValue), HttpStatus.OK);
     }
 }
-

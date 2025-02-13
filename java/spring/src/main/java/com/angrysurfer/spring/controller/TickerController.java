@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Timer;
 import com.angrysurfer.spring.dao.TickerStatus;
@@ -89,7 +89,7 @@ public class TickerController {
     // }
 
     @GetMapping(path = Constants.LOAD_TICKER)
-    public Ticker load(@RequestParam long tickerId) {
+    public ITicker load(@RequestParam long tickerId) {
         if (requestsToLog.contains("load"))
             logger.info(Constants.LOAD_TICKER);
         return tickerService.loadTicker(tickerId);
@@ -117,14 +117,14 @@ public class TickerController {
     }
 
     @GetMapping(path = Constants.NEXT_TICKER)
-    public Ticker next(@RequestParam long currentTickerId) {
+    public ITicker next(@RequestParam long currentTickerId) {
         if (requestsToLog.contains("next"))
             logger.info(Constants.NEXT_TICKER);
         return tickerService.next(currentTickerId);
     }
 
     @GetMapping(path = Constants.PREV_TICKER)
-    public Ticker previous(@RequestParam long currentTickerId) {
+    public ITicker previous(@RequestParam long currentTickerId) {
         if (requestsToLog.contains("previous"))
             logger.info(Constants.PREV_TICKER);
         return tickerService.previous(currentTickerId);
@@ -155,7 +155,7 @@ public class TickerController {
     }
 
     @GetMapping(Constants.UPDATE_TICKER)
-    public @ResponseBody Ticker updateTicker(@RequestParam Long tickerId, @RequestParam int updateType,
+    public @ResponseBody ITicker updateTicker(@RequestParam Long tickerId, @RequestParam int updateType,
             @RequestParam Long updateValue) {
         if (requestsToLog.contains("update"))
             logger.info(Constants.UPDATE_TICKER);

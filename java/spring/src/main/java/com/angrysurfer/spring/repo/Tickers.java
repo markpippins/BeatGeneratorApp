@@ -4,17 +4,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.model.Ticker;
 
-public interface Tickers extends JpaRepository<Ticker, Long> {
+public interface Tickers extends JpaRepository<ITicker, Long> {
     
     String NEXT_TICKER = "select * from ticker ti where ti.id = (select min(tii.id) from ticker tii WHERE tii.id > :currentTickerId)";
     @Query(value=NEXT_TICKER, nativeQuery = true)
-    Ticker getNextTicker(@Param("currentTickerId") Long currentTickerId);
+    ITicker getNextTicker(@Param("currentTickerId") Long currentTickerId);
     
     String PREV_TICKER = "select * from ticker ti where ti.id = (select max(tii.id) from ticker tii WHERE tii.id < :currentTickerId)";
     @Query(value=PREV_TICKER, nativeQuery = true)
-    Ticker getPreviousTicker(@Param("currentTickerId") Long currentTickerId);
+    ITicker getPreviousTicker(@Param("currentTickerId") Long currentTickerId);
 
     String NEXT_TICKER_ID = "select min(ti.id) from ticker ti where ti.id > :currentTickerId)";
     @Query(value=NEXT_TICKER, nativeQuery = true)

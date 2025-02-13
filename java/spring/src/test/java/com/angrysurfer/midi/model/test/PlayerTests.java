@@ -9,9 +9,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
+import com.angrysurfer.core.api.IPlayer;
+import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.player.IPlayer;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Operator;
@@ -48,7 +49,7 @@ public class PlayerTests {
     AtomicBoolean play2 = new AtomicBoolean(false);
     AtomicBoolean play3 = new AtomicBoolean(false);
 
-    Ticker ticker = new Ticker() {
+    ITicker ticker = new Ticker() {
       @Override
       public double getBeat() {
         return 1.0;

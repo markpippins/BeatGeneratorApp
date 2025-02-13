@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.angrysurfer.core.api.IInstrument;
 import com.angrysurfer.core.engine.MIDIEngine;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.InstrumentService;
 
@@ -76,7 +76,7 @@ public class MidiController {
                 "GET " + Constants.SEND_MESSAGE
                         + " - instrumentId: {}, channel: {}, messageType: {}, data1: {}, data2: {}",
                 instrumentId, channel, messageType, data1, data2);
-        Instrument instrument = instrumentService.getInstrumentById((long) instrumentId);
+        IInstrument instrument = instrumentService.getInstrumentById((long) instrumentId);
         if (Objects.nonNull(instrument)) {
             instrument.setDevice(MIDIEngine.getMidiDevice(instrument.getDeviceName()));
             if (Objects.nonNull(instrument.getDevice())) {
