@@ -27,4 +27,14 @@ public class Commands {
     // Player selection commands
     public static final String PLAYER_SELECTED = "PLAYER_SELECTED";
     public static final String PLAYER_UNSELECTED = "PLAYER_UNSELECTED";
+    
+    // Control code and caption commands
+    public static final String CONTROL_CODE_SELECTED = "CONTROL_CODE_SELECTED";
+    public static final String CONTROL_CODE_UNSELECTED = "CONTROL_CODE_UNSELECTED";
+    public static final String CONTROL_CODE_ADDED = "CONTROL_CODE_ADDED";
+    public static final String CONTROL_CODE_UPDATED = "CONTROL_CODE_UPDATED";
+    public static final String CONTROL_CODE_DELETED = "CONTROL_CODE_DELETED";
+    public static final String CAPTION_ADDED = "CAPTION_ADDED";
+    public static final String CAPTION_UPDATED = "CAPTION_UPDATED";
+    public static final String CAPTION_DELETED = "CAPTION_DELETED";
 }

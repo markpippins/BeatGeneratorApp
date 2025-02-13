@@ -150,7 +150,8 @@ public class RedisService { // implements Database {
                 }
 
                 // Save instrument with new ID
-                instruments.add(saveInstrument(instrument));
+                saveInstrument(instrument);
+                instruments.add(instrument);
             }
 
             // Create and return config
@@ -227,7 +228,8 @@ public class RedisService { // implements Database {
                 }
 
                 // Save instrument and add to list
-                instruments.add(saveInstrument(instrument));
+                saveInstrument(instrument);
+                instruments.add(instrument);
                 logger.info("Loaded and saved instrument: " + instrument.getName());
             }
 
@@ -1047,50 +1049,87 @@ public class RedisService { // implements Database {
         }
     }
 
-    // @Override
     public List<ControlCode> findAllControlCodes() {
         try (Jedis jedis = jedisPool.getResource()) {
             List<ControlCode> controlCodes = new ArrayList<>();
             Set<String> keys = jedis.keys(getCollectionKey(ControlCode.class) + ":*");
-            for (String key : keys) {
+            
+            // Filter out relationship keys
+            Set<String> ccKeys = keys.stream()
+                .filter(key -> !key.contains(":captions"))
+                .collect(Collectors.toSet());
+            
+            logger.info("Found " + ccKeys.size() + " control code keys");
+            
+            for (String key : ccKeys) {
                 String json = jedis.get(key);
                 if (json != null) {
-                    controlCodes.add(objectMapper.readValue(json, ControlCode.class));
+                    ControlCode cc = objectMapper.readValue(json, ControlCode.class);
+                    
+                    // Load captions
+                    String captionsKey = key + ":captions";
+                    Set<String> captionIds = jedis.smembers(captionsKey);
+                    if (captionIds != null && !captionIds.isEmpty()) {
+                        Set<Caption> captions = new HashSet<>();
+                        for (String captionId : captionIds) {
+                            Caption caption = findCaptionById(Long.valueOf(captionId));
+                            if (caption != null) {
+                                captions.add(caption);
+                            }
+                        }
+                        cc.setCaptions(captions);
+                    }
+                    
+                    controlCodes.add(cc);
+                    logger.info("Loaded control code: " + cc.getName() + 
+                              " with " + (cc.getCaptions() != null ? cc.getCaptions().size() : 0) + 
+                              " captions");
                 }
             }
             return controlCodes;
         } catch (Exception e) {
+            logger.severe("Error finding all control codes: " + e.getMessage());
             throw new RuntimeException("Error finding all control codes", e);
         }
     }
 
-    // @Override
     public ControlCode saveControlCode(ControlCode controlCode) {
         try (Jedis jedis = jedisPool.getResource()) {
             if (controlCode.getId() == null) {
-                // Get next ID from sequence
                 String seqKey = "seq:" + ControlCode.class.getSimpleName().toLowerCase();
                 controlCode.setId(jedis.incr(seqKey));
+                logger.info("Generated new control code ID: " + controlCode.getId());
             }
 
-            // Save captions first
+            // Save captions first and maintain relationships
+            Set<Caption> savedCaptions = new HashSet<>();
             if (controlCode.getCaptions() != null) {
-                controlCode.getCaptions().forEach(this::saveCaption);
+                for (Caption caption : controlCode.getCaptions()) {
+                    Caption savedCaption = saveCaption(caption);
+                    savedCaptions.add(savedCaption);
+                }
             }
+            controlCode.setCaptions(savedCaptions);
 
+            // Save control code
             String json = objectMapper.writeValueAsString(controlCode);
             String key = getKey(ControlCode.class, controlCode.getId());
             jedis.set(key, json);
 
             // Save caption relationships
             String captionsKey = key + ":captions";
-            jedis.del(captionsKey);
-            if (controlCode.getCaptions() != null) {
-                controlCode.getCaptions().forEach(caption -> jedis.sadd(captionsKey, String.valueOf(caption.getId())));
+            jedis.del(captionsKey); // Clear existing relationships
+            if (!savedCaptions.isEmpty()) {
+                for (Caption caption : savedCaptions) {
+                    jedis.sadd(captionsKey, String.valueOf(caption.getId()));
+                }
             }
 
+            logger.info("Saved control code: " + controlCode.getName() + 
+                       " with " + savedCaptions.size() + " captions");
             return controlCode;
         } catch (Exception e) {
+            logger.severe("Error saving control code: " + e.getMessage());
             throw new RuntimeException("Error saving control code", e);
         }
     }
@@ -1143,11 +1182,57 @@ public class RedisService { // implements Database {
         }
     }
 
-    // @Override
-    public Instrument saveInstrument(Instrument instrument) {
+    public List<Instrument> findAllInstruments() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            List<Instrument> instruments = new ArrayList<>();
+            Set<String> keys = jedis.keys(getCollectionKey(Instrument.class) + ":*");
+            
+            // Filter out relationship keys
+            Set<String> instrumentKeys = keys.stream()
+                .filter(key -> !key.contains(":controlcodes") && !key.contains(":pads"))
+                .collect(Collectors.toSet());
+            
+            logger.info("Found " + instrumentKeys.size() + " instrument keys");
+            
+            for (String key : instrumentKeys) {
+                try {
+                    String json = jedis.get(key);
+                    if (json != null) {
+                        Instrument instrument = objectMapper.readValue(json, Instrument.class);
+                        
+                        // Load control codes
+                        String controlCodesKey = key + ":controlcodes";
+                        Set<String> ccIds = jedis.smembers(controlCodesKey);
+                        if (ccIds != null && !ccIds.isEmpty()) {
+                            List<ControlCode> controlCodes = new ArrayList<>();
+                            for (String ccId : ccIds) {
+                                ControlCode cc = findControlCodeById(Long.valueOf(ccId));
+                                if (cc != null) {
+                                    controlCodes.add(cc);
+                                }
+                            }
+                            instrument.setControlCodes(controlCodes);
+                        }
+                        
+                        logger.info("Loaded instrument: " + instrument.getName() + 
+                                  " with " + (instrument.getControlCodes() != null ? 
+                                  instrument.getControlCodes().size() : 0) + " control codes");
+                        instruments.add(instrument);
+                    }
+                } catch (Exception e) {
+                    logger.warning("Error loading instrument from key " + key + ": " + e.getMessage());
+                }
+            }
+            return instruments;
+        } catch (Exception e) {
+            logger.severe("Error finding all instruments: " + e.getMessage());
+            throw new RuntimeException("Error finding all instruments", e);
+        }
+    }
+
+    public void saveInstrument(Instrument instrument) {
         try (Jedis jedis = jedisPool.getResource()) {
             if (instrument.getId() == null) {
-                // Get next ID from sequence
                 String seqKey = "seq:" + Instrument.class.getSimpleName().toLowerCase();
                 instrument.setId(jedis.incr(seqKey));
             }
@@ -1162,15 +1247,21 @@ public class RedisService { // implements Database {
             String key = getKey(Instrument.class, instrument.getId());
             jedis.set(key, json);
 
-            // Save control code relationships
+            // Save control code relationships using SET instead of LIST
             String controlCodesKey = key + ":controlcodes";
-            jedis.del(controlCodesKey);
+            jedis.del(controlCodesKey); // Clear existing
             if (instrument.getControlCodes() != null) {
-                instrument.getControlCodes().forEach(cc -> jedis.sadd(controlCodesKey, String.valueOf(cc.getId())));
+                instrument.getControlCodes().forEach(cc -> 
+                    jedis.sadd(controlCodesKey, String.valueOf(cc.getId()))
+                );
             }
 
-            return instrument;
+            logger.info("Saved instrument: " + instrument.getName() + 
+                       " with " + (instrument.getControlCodes() != null ? 
+                       instrument.getControlCodes().size() : 0) + " control codes");
+
         } catch (Exception e) {
+            logger.severe("Error saving instrument: " + e.getMessage());
             throw new RuntimeException("Error saving instrument", e);
         }
     }
@@ -1335,32 +1426,6 @@ public class RedisService { // implements Database {
     public Song saveSong(Song song) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'saveSong'");
-    }
-
-    public List<Instrument> findAllInstruments() {
-        try (Jedis jedis = jedisPool.getResource()) {
-            List<Instrument> instruments = new ArrayList<>();
-            Set<String> keys = jedis.keys(getCollectionKey(Instrument.class) + ":*");
-
-            logger.info("Found " + keys.size() + " instrument keys");
-
-            for (String key : keys) {
-                try {
-                    String json = jedis.get(key);
-                    if (json != null) {
-                        Instrument instrument = objectMapper.readValue(json, Instrument.class);
-                        logger.info("Loaded instrument: " + instrument.getName());
-                        instruments.add(instrument);
-                    }
-                } catch (Exception e) {
-                    logger.warning("Error loading instrument from key " + key + ": " + e.getMessage());
-                }
-            }
-            return instruments;
-        } catch (Exception e) {
-            logger.severe("Error finding all instruments: " + e.getMessage());
-            throw new RuntimeException("Error finding all instruments", e);
-        }
     }
 
     public boolean isDatabaseEmpty() {

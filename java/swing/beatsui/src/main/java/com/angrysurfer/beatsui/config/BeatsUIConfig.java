@@ -100,8 +100,8 @@ public class BeatsUIConfig {
             });
 
             // Save the complete instrument
-            Instrument savedInstrument = redisService.saveInstrument(newInstrument);
-            uiConfig.getInstruments().add(savedInstrument);
+            redisService.saveInstrument(newInstrument);
+            uiConfig.getInstruments().add(newInstrument);
         });
 
         return uiConfig;
