@@ -49,7 +49,8 @@ public class App {
                                     app.frame.getWidth(),
                                     app.frame.getHeight(),
                                     app.frame.getX(),
-                                    app.frame.getY()
+                                    app.frame.getY(),
+                                    UIManager.getLookAndFeel().getClass().getName()
                                 );
                                 redisService.saveFrameState(currentState);
                             }
@@ -82,9 +83,19 @@ public class App {
 
     private static void setupLookAndFeel() {
         try {
-            UIManager.setLookAndFeel(new FlatLightLaf());
+            FrameState state = redisService.loadFrameState();
+            if (state != null && state.getLookAndFeelClassName() != null) {
+                UIManager.setLookAndFeel(state.getLookAndFeelClassName());
+            } else {
+                UIManager.setLookAndFeel(new FlatLightLaf());
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warning("Error setting look and feel: " + e.getMessage());
+            try {
+                UIManager.setLookAndFeel(new FlatLightLaf());
+            } catch (Exception ex) {
+                logger.severe("Error setting default look and feel: " + ex.getMessage());
+            }
         }
     }
 

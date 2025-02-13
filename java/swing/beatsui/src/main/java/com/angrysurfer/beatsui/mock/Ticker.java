@@ -111,6 +111,15 @@ public class Ticker implements Serializable {
         setSongLength(Long.MAX_VALUE);
     }
 
+    public Ticker(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, long partLength) {
+        this.tempoInBPM = tempoInBPM;
+        this.bars = bars;
+        this.beatsPerBar = beatsPerBar;
+        this.ticksPerBeat = ticksPerBeat;
+        this.parts = parts;
+        this.partLength = partLength;
+    }
+
     public IPlayer getPlayer(Long playerId) {
         logger.info("getPlayer() - playerId: {}", playerId);
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
