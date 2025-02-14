@@ -9,7 +9,7 @@ import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.CommandListener;  // Changed import
 import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.config.BeatsUIConfig;
-import com.angrysurfer.beatsui.proxy.ProxyTicker;
+import com.angrysurfer.core.proxy.ProxyTicker;
 import com.formdev.flatlaf.FlatLightLaf;
 
 /**

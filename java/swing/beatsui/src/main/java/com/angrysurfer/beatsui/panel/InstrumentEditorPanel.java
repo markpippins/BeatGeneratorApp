@@ -12,7 +12,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
-import com.angrysurfer.beatsui.proxy.ProxyInstrument;
+import com.angrysurfer.core.proxy.ProxyInstrument;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;

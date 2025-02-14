@@ -20,7 +20,7 @@ import javax.swing.ListSelectionModel;
 
 import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.proxy.ProxyStrike;
+import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.App;
 import com.angrysurfer.beatsui.api.Command;

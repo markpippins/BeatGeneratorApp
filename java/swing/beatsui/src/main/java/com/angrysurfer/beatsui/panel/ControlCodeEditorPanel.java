@@ -23,8 +23,8 @@ import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.Command;
 import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.Commands;
-import com.angrysurfer.beatsui.proxy.ProxyCaption;
-import com.angrysurfer.beatsui.proxy.ProxyControlCode;
+import com.angrysurfer.core.proxy.ProxyCaption;
+import com.angrysurfer.core.proxy.ProxyControlCode;
 
 import lombok.Getter;
 import lombok.Setter;

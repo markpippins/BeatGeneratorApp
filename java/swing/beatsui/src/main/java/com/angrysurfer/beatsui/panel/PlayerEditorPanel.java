@@ -26,11 +26,11 @@ import javax.swing.table.DefaultTableModel;
 import com.angrysurfer.beatsui.App;
 import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.proxy.ProxyInstrument;
-import com.angrysurfer.beatsui.proxy.ProxyRule;
-import com.angrysurfer.beatsui.proxy.ProxyStrike;
 import com.angrysurfer.beatsui.widget.Dial;
 import com.angrysurfer.beatsui.widget.ToggleSwitch;
+import com.angrysurfer.core.proxy.ProxyInstrument;
+import com.angrysurfer.core.proxy.ProxyRule;
+import com.angrysurfer.core.proxy.ProxyStrike;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;

@@ -11,7 +11,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
-import com.angrysurfer.beatsui.proxy.ProxyCaption;
+import com.angrysurfer.core.proxy.ProxyCaption;
 
 import lombok.Getter;
 

@@ -6,10 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.angrysurfer.beatsui.RedisService;
-import com.angrysurfer.beatsui.proxy.ProxyCaption;
-import com.angrysurfer.beatsui.proxy.ProxyControlCode;
-import com.angrysurfer.beatsui.proxy.ProxyInstrument;
 import com.angrysurfer.core.config.DeviceConfig;
+import com.angrysurfer.core.proxy.ProxyCaption;
+import com.angrysurfer.core.proxy.ProxyControlCode;
+import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -87,7 +87,7 @@ public class BeatsUIConfig {
             // Copy pads
             sourceInstrument.getPads().forEach(sourcePad -> {
                 // Create new mock.Pad (not core.Pad)
-                com.angrysurfer.beatsui.proxy.ProxyPad newPad = new com.angrysurfer.beatsui.proxy.ProxyPad();
+                com.angrysurfer.core.proxy.ProxyPad newPad = new com.angrysurfer.core.proxy.ProxyPad();
                 if (sourcePad instanceof com.angrysurfer.core.model.Pad corePad) {
                     newPad.setNote(corePad.getNote());
                     newPad.setName(corePad.getName());
@@ -95,7 +95,7 @@ public class BeatsUIConfig {
                 }
                 
                 // Save pad and add to instrument
-                com.angrysurfer.beatsui.proxy.ProxyPad savedPad = redisService.savePad(newPad);
+                com.angrysurfer.core.proxy.ProxyPad savedPad = redisService.savePad(newPad);
                 newInstrument.getPads().add(savedPad);
             });
 

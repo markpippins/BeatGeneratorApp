@@ -18,7 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
 import com.angrysurfer.beatsui.panel.PlayerEditorPanel;
-import com.angrysurfer.beatsui.proxy.ProxyStrike;
+import com.angrysurfer.core.proxy.ProxyStrike;
 
 import lombok.Getter;
 import lombok.Setter;

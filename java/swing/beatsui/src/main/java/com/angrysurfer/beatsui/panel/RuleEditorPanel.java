@@ -3,7 +3,7 @@ package com.angrysurfer.beatsui.panel;
 import javax.swing.*;
 
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.proxy.ProxyRule;
+import com.angrysurfer.core.proxy.ProxyRule;
 
 import java.awt.*;
 

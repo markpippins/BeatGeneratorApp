@@ -27,7 +27,7 @@ import com.angrysurfer.beatsui.api.Command;
 import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.CommandListener;
 import com.angrysurfer.beatsui.api.Commands;
-import com.angrysurfer.beatsui.proxy.ProxyTicker;
+import com.angrysurfer.core.proxy.ProxyTicker;
 
 public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();
