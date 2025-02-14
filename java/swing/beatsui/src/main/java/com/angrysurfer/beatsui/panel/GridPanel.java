@@ -7,13 +7,13 @@ import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.surface.Grid;
+import com.angrysurfer.beatsui.visualization.Visualizer;
 import com.angrysurfer.beatsui.widget.GridButton;
 
 public class GridPanel extends StatusProviderPanel {
 
     private GridButton[][] buttons;
-    private Grid gridSaver;
+    private Visualizer gridSaver;
 
     static int GRID_ROWS = 8;
     static int GRID_COLS = 36;
@@ -25,7 +25,7 @@ public class GridPanel extends StatusProviderPanel {
     public GridPanel(StatusConsumer statusConsumer) {
         super(new GridLayout(GRID_ROWS, GRID_COLS, 2, 2), statusConsumer);
         setup();
-        gridSaver = new Grid(this, statusConsumer, buttons);
+        gridSaver = new Visualizer(this, statusConsumer, buttons);
     }
 
     private void setup() {
@@ -36,7 +36,7 @@ public class GridPanel extends StatusProviderPanel {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (gridSaver.isVisualizationMode()) {
-                    gridSaver.stopScreensaver();
+                    gridSaver.stopVisualizer();
                 }
             }
         };
