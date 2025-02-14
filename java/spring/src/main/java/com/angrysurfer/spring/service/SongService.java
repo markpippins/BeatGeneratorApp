@@ -11,10 +11,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.api.Database;
-import com.angrysurfer.core.api.IPattern;
-import com.angrysurfer.core.api.ISong;
-import com.angrysurfer.core.api.IStep;
 import com.angrysurfer.core.engine.SongEngine;
+import com.angrysurfer.core.model.Pattern;
+import com.angrysurfer.core.model.Song;
+import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.util.CyclerListener;
 import com.angrysurfer.core.util.TickCyclerListener;
 import com.angrysurfer.spring.dao.SongStatus;
@@ -23,7 +23,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 interface NoteProvider {
-    public int getNoteForStep(IStep step, IPattern pattern, long tick);
+    public int getNoteForStep(Step step, Pattern pattern, long tick);
 
 }
 
@@ -37,7 +37,7 @@ public class SongService implements NoteProvider {
     private Database dbUtils;
     private InstrumentService instrumentService;
 
-    private Map<Integer, Map<Integer, IPattern>> songStepsMap = new ConcurrentHashMap<>();
+    private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
 
     private CyclerListener tickListener;
     // private CyclerListener beatListener = new BeatCyclerListener();
@@ -53,7 +53,7 @@ public class SongService implements NoteProvider {
 
         Long songId = dbUtils.getMinimumSongId();
         if (Objects.nonNull(songId) && songId > 0) {
-            Optional<ISong> opt = dbUtils.getSongFindOne().find(songId);
+            Optional<Song> opt = dbUtils.getSongFindOne().find(songId);
             if (opt.isPresent())
                 loadSong(opt.get());
         }
@@ -62,7 +62,7 @@ public class SongService implements NoteProvider {
             songEngine.setSong(newSong());
     }
 
-    public int getNoteForStep(IStep step, IPattern pattern, long tick) {
+    public int getNoteForStep(Step step, Pattern pattern, long tick) {
         return this.songEngine.getNoteForStep(step, pattern, tick);
     }
 
@@ -70,19 +70,19 @@ public class SongService implements NoteProvider {
         return SongStatus.from(getSong());
     }
 
-    public IPattern updatePattern(Long patternId, int updateType, int updateValue) {
+    public Pattern updatePattern(Long patternId, int updateType, int updateValue) {
         logger.info("updatePattern() - patternId: {}, updateType: {}, updateValue: {}",
                 patternId, updateType, updateValue);
         return dbUtils.savePattern(this.songEngine.updatePattern(patternId, updateType, updateValue));
     }
 
-    public IStep updateStep(Long stepId, int updateType, int updateValue) {
+    public Step updateStep(Long stepId, int updateType, int updateValue) {
         logger.info("updateStep() - stepId: {}, updateType: {}, updateValue: {}",
                 stepId, updateType, updateValue);
         return dbUtils.saveStep(this.songEngine.updateStep(stepId, updateType, updateValue));
     }
 
-    public ISong loadSong(ISong song) {
+    public Song loadSong(Song song) {
 
         logger.info("loadSong() - songId: {}", song.getId());
         setSong(song);
@@ -96,18 +96,18 @@ public class SongService implements NoteProvider {
         return song;
     }
 
-    public ISong newSong() {
+    public Song newSong() {
         logger.info("newSong()");
         return this.songEngine.newSong(dbUtils.getInstrumentSaver(), dbUtils.getSongSaver(), dbUtils.getPatternSaver(),
                 dbUtils.getStepSaver());
 
     }
 
-    public synchronized ISong next(long currentSongId) {
+    public synchronized Song next(long currentSongId) {
         logger.info("next() - currentSongId: {}", currentSongId);
         if (currentSongId == 0 || getSong().getPatterns().size() > 0) {
             Long maxSongId = dbUtils.getMaximumSongId();
-            ISong song = Objects.nonNull(maxSongId) && currentSongId < maxSongId
+            Song song = Objects.nonNull(maxSongId) && currentSongId < maxSongId
                     ? dbUtils.getNextSong(currentSongId)
                     : null;
             if (Objects.nonNull(song))
@@ -119,7 +119,7 @@ public class SongService implements NoteProvider {
         return songEngine.getSong();
     }
 
-    public synchronized ISong previous(long currentSongId) {
+    public synchronized Song previous(long currentSongId) {
         logger.info("previous() - currentSongId: {}", currentSongId);
         // songRepo.flush();
         if (currentSongId > (dbUtils.getMinimumSongId()))
@@ -128,28 +128,28 @@ public class SongService implements NoteProvider {
         return songEngine.getSong();
     }
 
-    public synchronized void setSong(ISong song) {
+    public synchronized void setSong(Song song) {
         songEngine.setSong(song);
     }
 
-    public synchronized ISong getSong() {
+    public synchronized Song getSong() {
         return songEngine.getSong();
     }
 
-    public IPattern addPattern() {
+    public Pattern addPattern() {
         // getSongRepo().flush();
         return this.songEngine.addPattern(dbUtils.getPatternSaver());
     }
 
-    public Set<IPattern> removePattern(Long patternId) {
-        IPattern pattern = getSong().getPatterns().stream().filter(s -> s.getId().equals(patternId)).findAny()
+    public Set<Pattern> removePattern(Long patternId) {
+        Pattern pattern = getSong().getPatterns().stream().filter(s -> s.getId().equals(patternId)).findAny()
                 .orElseThrow();
         getSong().getPatterns().remove(pattern);
         dbUtils.deletePattern(pattern);
         return getSong().getPatterns();
     }
 
-    public ISong getSongInfo() {
+    public Song getSongInfo() {
         if (Objects.isNull(songEngine.getSong()))
             next(0);
         return getSong();

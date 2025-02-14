@@ -3,8 +3,8 @@ package com.angrysurfer.spring.dao;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import com.angrysurfer.core.api.ISong;
-import com.angrysurfer.core.api.ITicker;
+import com.angrysurfer.core.model.Song;
+import com.angrysurfer.core.model.Ticker;
 
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
@@ -48,7 +48,7 @@ public class TickerStatus implements Serializable {
 
     ArrayList<PatternStatus> patternStatuses = new ArrayList<>();
 
-    public static TickerStatus from(ITicker ticker, ISong song, boolean isPlaying) {
+    public static TickerStatus from(Ticker ticker, Song song, boolean isPlaying) {
 
         TickerStatus result = new TickerStatus();
 

@@ -26,9 +26,9 @@ import javax.swing.table.DefaultTableModel;
 import com.angrysurfer.beatsui.App;
 import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.mock.Instrument;
-import com.angrysurfer.beatsui.mock.Rule;
-import com.angrysurfer.beatsui.mock.Strike;
+import com.angrysurfer.beatsui.proxy.ProxyInstrument;
+import com.angrysurfer.beatsui.proxy.ProxyRule;
+import com.angrysurfer.beatsui.proxy.ProxyStrike;
 import com.angrysurfer.beatsui.widget.Dial;
 import com.angrysurfer.beatsui.widget.ToggleSwitch;
 
@@ -39,8 +39,8 @@ import java.util.HashSet;
 import java.util.stream.Collectors;
 
 public class PlayerEditorPanel extends StatusProviderPanel {
-    private final Strike player;
-    private final JComboBox<Instrument> instrumentCombo; // Replace nameField
+    private final ProxyStrike player;
+    private final JComboBox<ProxyInstrument> instrumentCombo; // Replace nameField
     private final JComboBox<Integer> channelCombo;
     private final JComboBox<Integer> presetCombo;
     private final Dial swingDial;
@@ -76,11 +76,11 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     private JButton editRuleButton;
     private JButton deleteRuleButton;
 
-    public PlayerEditorPanel(Strike player) {
+    public PlayerEditorPanel(ProxyStrike player) {
         this(player, null);
     }
 
-    public PlayerEditorPanel(Strike player, StatusConsumer statusConsumer) {
+    public PlayerEditorPanel(ProxyStrike player, StatusConsumer statusConsumer) {
         super(new BorderLayout(), statusConsumer);
         this.player = player;
         setLayout(new BorderLayout());
@@ -90,7 +90,7 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         instrumentCombo = new JComboBox<>(loadInstruments());
         if (player.getInstrumentId() != null) {
             for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
-                Instrument inst = instrumentCombo.getItemAt(i);
+                ProxyInstrument inst = instrumentCombo.getItemAt(i);
                 if (inst.getId().equals(player.getInstrumentId())) {
                     instrumentCombo.setSelectedIndex(i);
                     break;
@@ -185,7 +185,7 @@ public class PlayerEditorPanel extends StatusProviderPanel {
 
         if (result == javax.swing.JOptionPane.YES_OPTION) {
             // Save the player
-            Strike savedPlayer = App.getRedisService().saveStrike(getUpdatedPlayer());
+            ProxyStrike savedPlayer = App.getRedisService().saveStrike(getUpdatedPlayer());
             if (savedPlayer != null && savedPlayer.getId() != null) {
                 player.setId(savedPlayer.getId()); // Update the ID
                 return true;
@@ -205,10 +205,10 @@ public class PlayerEditorPanel extends StatusProviderPanel {
 
         // Load existing rules
         if (player.getRules() != null) {
-            for (Rule rule : player.getRules()) {
+            for (ProxyRule rule : player.getRules()) {
                 model.addRow(new Object[] {
-                        Rule.OPERATORS[rule.getOperator()],
-                        Rule.COMPARISONS[rule.getComparison()],
+                        ProxyRule.OPERATORS[rule.getOperator()],
+                        ProxyRule.COMPARISONS[rule.getComparison()],
                         rule.getValue(),
                         rule.getPart()
                 });
@@ -259,7 +259,7 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         return toggle;
     }
 
-    private Instrument[] loadInstruments() {
+    private ProxyInstrument[] loadInstruments() {
         // Get all available MIDI device names
         Set<String> availableDeviceNames = new HashSet<>();
         try {
@@ -276,12 +276,12 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         }
 
         // Filter and sort instruments
-        List<Instrument> instruments = App.getRedisService().findAllInstruments().stream()
+        List<ProxyInstrument> instruments = App.getRedisService().findAllInstruments().stream()
             .filter(i -> i.getDeviceName() != null && availableDeviceNames.contains(i.getDeviceName()))
             .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
             .collect(Collectors.toList());
 
-        return instruments.toArray(new Instrument[0]);
+        return instruments.toArray(new ProxyInstrument[0]);
     }
 
     private void layoutComponents() {
@@ -427,18 +427,18 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         targetPanel.add(panel, gbc);
     }
 
-    private void showRuleDialog(Rule rule) {
+    private void showRuleDialog(ProxyRule rule) {
         boolean isNew = (rule == null);
         if (isNew) {
-            rule = new Rule();
+            rule = new ProxyRule();
         }
 
         RuleEditorPanel editorPanel = new RuleEditorPanel(rule);
-        Dialog<Rule> dialog = new Dialog<>(rule, editorPanel);
+        Dialog<ProxyRule> dialog = new Dialog<>(rule, editorPanel);
         dialog.setTitle(isNew ? "Add Rule" : "Edit Rule");
 
         if (dialog.showDialog()) {
-            Rule updatedRule = editorPanel.getUpdatedRule();
+            ProxyRule updatedRule = editorPanel.getUpdatedRule();
             if (isNew) {
                 player.getRules().add(updatedRule);
             }
@@ -449,7 +449,7 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     private void editSelectedRule() {
         int row = rulesTable.getSelectedRow();
         if (row >= 0) {
-            Rule rule = getRuleFromRow(row);
+            ProxyRule rule = getRuleFromRow(row);
             showRuleDialog(rule);
         }
     }
@@ -457,22 +457,22 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     private void deleteSelectedRule() {
         int row = rulesTable.getSelectedRow();
         if (row >= 0) {
-            Rule rule = getRuleFromRow(row);
+            ProxyRule rule = getRuleFromRow(row);
             player.getRules().remove(rule);
             refreshRulesTable();
         }
     }
 
-    private Rule getRuleFromRow(int row) {
+    private ProxyRule getRuleFromRow(int row) {
         DefaultTableModel model = (DefaultTableModel) rulesTable.getModel();
-        Rule rule = new Rule();
+        ProxyRule rule = new ProxyRule();
 
         // Convert displayed text back to indices
         String operatorText = (String) model.getValueAt(row, 0);
         String comparisonText = (String) model.getValueAt(row, 1);
 
-        rule.setOperator(java.util.Arrays.asList(Rule.OPERATORS).indexOf(operatorText));
-        rule.setComparison(java.util.Arrays.asList(Rule.COMPARISONS).indexOf(comparisonText));
+        rule.setOperator(java.util.Arrays.asList(ProxyRule.OPERATORS).indexOf(operatorText));
+        rule.setComparison(java.util.Arrays.asList(ProxyRule.COMPARISONS).indexOf(comparisonText));
         rule.setValue((Double) model.getValueAt(row, 2));
         rule.setPart((Integer) model.getValueAt(row, 3));
 
@@ -483,24 +483,24 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         DefaultTableModel model = (DefaultTableModel) rulesTable.getModel();
         model.setRowCount(0);
 
-        for (Rule rule : player.getRules()) {
+        for (ProxyRule rule : player.getRules()) {
             model.addRow(new Object[] {
-                    Rule.OPERATORS[rule.getOperator()],
-                    Rule.COMPARISONS[rule.getComparison()],
+                    ProxyRule.OPERATORS[rule.getOperator()],
+                    ProxyRule.COMPARISONS[rule.getComparison()],
                     rule.getValue(),
                     rule.getPart()
             });
         }
     }
 
-    public Strike getUpdatedPlayer() {
+    public ProxyStrike getUpdatedPlayer() {
         // Since we're modifying the original player object directly,
         // we just need to preserve its ID and return it
         Long originalId = player.getId();
 
         // Update all the fields
-        player.setName(((Instrument) instrumentCombo.getSelectedItem()).getName());
-        player.setInstrument((Instrument) instrumentCombo.getSelectedItem());
+        player.setName(((ProxyInstrument) instrumentCombo.getSelectedItem()).getName());
+        player.setInstrument((ProxyInstrument) instrumentCombo.getSelectedItem());
         player.setChannel((Integer) channelCombo.getSelectedItem());
         player.setPreset(((Integer) presetCombo.getSelectedItem()).longValue());
         player.setSwing((long) swingDial.getValue());
@@ -533,7 +533,7 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         player.setSparse((double) sparseSpinner.getValue());
 
         // Update Instrument ID instead of name
-        Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
+        ProxyInstrument selectedInstrument = (ProxyInstrument) instrumentCombo.getSelectedItem();
         player.setInstrumentId(selectedInstrument != null ? selectedInstrument.getId() : null);
 
         // Ensure ID is preserved

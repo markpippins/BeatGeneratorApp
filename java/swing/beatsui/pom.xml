@@ -9,7 +9,7 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <groupId>com.angrysurfer.beatsui</groupId>
+  <groupId>com.angrysurfer.beats</groupId>
   <artifactId>beatgen-swing</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>

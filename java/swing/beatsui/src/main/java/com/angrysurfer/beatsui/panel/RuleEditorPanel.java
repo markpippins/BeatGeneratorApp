@@ -3,31 +3,31 @@ package com.angrysurfer.beatsui.panel;
 import javax.swing.*;
 
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.mock.Rule;
+import com.angrysurfer.beatsui.proxy.ProxyRule;
 
 import java.awt.*;
 
 public class RuleEditorPanel extends StatusProviderPanel {
-    private final Rule rule;
+    private final ProxyRule rule;
     private final JComboBox<String> operatorCombo;
     private final JComboBox<String> comparisonCombo;
     private final JSpinner valueSpinner;
     private final JSpinner partSpinner;
 
-    public RuleEditorPanel(Rule rule) {
+    public RuleEditorPanel(ProxyRule rule) {
         this(rule, null);
     }
 
-    public RuleEditorPanel(Rule rule, StatusConsumer statusConsumer) {
+    public RuleEditorPanel(ProxyRule rule, StatusConsumer statusConsumer) {
         super(new GridBagLayout(), statusConsumer);
         this.rule = rule;
         setLayout(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        operatorCombo = new JComboBox<>(Rule.OPERATORS);
+        operatorCombo = new JComboBox<>(ProxyRule.OPERATORS);
         operatorCombo.setSelectedIndex(rule.getOperator());
 
-        comparisonCombo = new JComboBox<>(Rule.COMPARISONS);
+        comparisonCombo = new JComboBox<>(ProxyRule.COMPARISONS);
         comparisonCombo.setSelectedIndex(rule.getComparison());
 
         // Fix ambiguous constructor calls by explicitly specifying types
@@ -72,7 +72,7 @@ public class RuleEditorPanel extends StatusProviderPanel {
         add(panel, gbc);
     }
 
-    public Rule getUpdatedRule() {
+    public ProxyRule getUpdatedRule() {
         rule.setOperator(operatorCombo.getSelectedIndex());
         rule.setComparison(comparisonCombo.getSelectedIndex());
         rule.setValue((Double) valueSpinner.getValue());

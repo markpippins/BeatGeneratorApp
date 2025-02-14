@@ -26,8 +26,8 @@ import javax.swing.table.DefaultTableModel;
 import com.angrysurfer.beatsui.App;
 import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.mock.Rule;
-import com.angrysurfer.beatsui.mock.Strike;
+import com.angrysurfer.beatsui.proxy.ProxyRule;
+import com.angrysurfer.beatsui.proxy.ProxyStrike;
 import com.angrysurfer.beatsui.api.Command;
 import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.CommandListener;
@@ -48,7 +48,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
     private final JButton deleteButton;
     private final JMenuItem editMenuItem;
     private final JMenuItem deleteMenuItem;
-    private Strike selectedPlayer;
+    private ProxyStrike selectedPlayer;
     private JPopupMenu popup; // Add this field
     private JMenuItem addPopupMenuItem; // Add this field
     private final CommandBus actionBus = CommandBus.getInstance();
@@ -76,7 +76,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         
         switch (action.getCommand()) {
             case Commands.PLAYER_SELECTED:
-                handlePlayerSelected((Strike) action.getData());
+                handlePlayerSelected((ProxyStrike) action.getData());
                 break;
             case Commands.PLAYER_UNSELECTED:
                 handlePlayerUnselected();
@@ -84,7 +84,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         }
     }
 
-    private void handlePlayerSelected(Strike player) {
+    private void handlePlayerSelected(ProxyStrike player) {
         logger.info("Player selected: " + player.getName() + " (ID: " + player.getId() + ")");
         this.selectedPlayer = player;
         addButton.setEnabled(true);
@@ -198,10 +198,10 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         table.getTableHeader().setReorderingAllowed(false);
 
         // Setup combo boxes and spinners
-        JComboBox<String> operatorCombo = new JComboBox<>(Rule.OPERATORS);
+        JComboBox<String> operatorCombo = new JComboBox<>(ProxyRule.OPERATORS);
         table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(operatorCombo));
 
-        JComboBox<String> comparisonCombo = new JComboBox<>(Rule.COMPARISONS);
+        JComboBox<String> comparisonCombo = new JComboBox<>(ProxyRule.COMPARISONS);
         table.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(comparisonCombo));
 
         setupValueSpinner();
@@ -251,7 +251,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
                 return;
             }
 
-            List<Rule> rules = App.getRedisService().findRulesByPlayer(selectedPlayer);
+            List<ProxyRule> rules = App.getRedisService().findRulesByPlayer(selectedPlayer);
             logger.info("Found " + rules.size() + " rules for player: " + selectedPlayer.getName());
             
             DefaultTableModel model = (DefaultTableModel) table.getModel();
@@ -313,32 +313,32 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         });
     }
 
-    private void showRuleDialog(Rule rule) {
+    private void showRuleDialog(ProxyRule rule) {
         if (selectedPlayer == null) {
             status.setStatus("No player selected");
             return;
         }
 
         if (rule == null) {
-            rule = new Rule();
+            rule = new ProxyRule();
         }
 
         RuleEditorPanel editorPanel = new RuleEditorPanel(rule);
-        Dialog<Rule> dialog = new Dialog<>(rule, editorPanel);
+        Dialog<ProxyRule> dialog = new Dialog<>(rule, editorPanel);
         dialog.setTitle(rule.getId() == null ? "Add Rule" : "Edit Rule");
 
         if (dialog.showDialog()) {
-            Rule updatedRule = editorPanel.getUpdatedRule();
+            ProxyRule updatedRule = editorPanel.getUpdatedRule();
             saveRuleToRedis(updatedRule);
             updateRuleTable(updatedRule, table.getSelectedRow());
         }
     }
 
-    private void saveRuleToRedis(Rule rule) {
+    private void saveRuleToRedis(ProxyRule rule) {
         try {
             if (rule.getId() == null) {
                 // Let Redis service handle ID generation
-                Rule savedRule = App.getRedisService().saveRule(rule, selectedPlayer);
+                ProxyRule savedRule = App.getRedisService().saveRule(rule, selectedPlayer);
                 // Update the rule with generated ID
                 rule.setId(savedRule.getId());
                 status.setStatus("Created new rule for player: " + selectedPlayer.getName());
@@ -355,7 +355,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
     private void editSelectedRule() {
         int row = table.getSelectedRow();
         if (row >= 0) {
-            Rule rule = getRuleFromRow(row);
+            ProxyRule rule = getRuleFromRow(row);
             showRuleDialog(rule);
         }
     }
@@ -363,7 +363,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
     private void deleteSelectedRule() {
         int row = table.getSelectedRow();
         if (row >= 0 && selectedPlayer != null) {
-            Rule rule = getRuleFromRow(row);
+            ProxyRule rule = getRuleFromRow(row);
             try {
                 App.getRedisService().deleteRule(rule, selectedPlayer);
                 ((DefaultTableModel) table.getModel()).removeRow(row);
@@ -375,9 +375,9 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         }
     }
 
-    private Rule getRuleFromRow(int row) {
+    private ProxyRule getRuleFromRow(int row) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
-        return Rule.fromRow(new Object[] {
+        return ProxyRule.fromRow(new Object[] {
             model.getValueAt(row, 0),
             model.getValueAt(row, 1),
             model.getValueAt(row, 2),
@@ -385,7 +385,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         });
     }
 
-    private void updateRuleTable(Rule rule, int selectedRow) {
+    private void updateRuleTable(ProxyRule rule, int selectedRow) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         Object[] rowData = rule.toRow();
 

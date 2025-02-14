@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -33,13 +33,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public abstract class AbstractPlayer implements Serializable, IPlayer {
+public abstract class ProxyAbstractPlayer implements Serializable, IProxyPlayer {
 
     static final Random rand = new Random();
 
-    static Logger logger = LoggerFactory.getLogger(AbstractPlayer.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(ProxyAbstractPlayer.class.getCanonicalName());
 
-    private Set<Pad> pads = new HashSet<>();
+    private Set<ProxyPad> pads = new HashSet<>();
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -114,32 +114,32 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     private Boolean armForNextTick = false;
 
     @JsonIgnore
-    private transient Set<Rule> rules = new HashSet<>();
+    private transient Set<ProxyRule> rules = new HashSet<>();
 
     private List<Integer> allowedControlMessages = new ArrayList<>();
 
     @JsonIgnore
-    private transient Instrument instrument;
+    private transient ProxyInstrument instrument;
 
     @JsonIgnore
-    private transient Ticker ticker;
+    private transient ProxyTicker ticker;
 
-    public AbstractPlayer() {
+    public ProxyAbstractPlayer() {
 
     }
 
-    public AbstractPlayer(String name, Ticker ticker, Instrument instrument) {
+    public ProxyAbstractPlayer(String name, ProxyTicker ticker, ProxyInstrument instrument) {
         setName(name);
         setInstrument(instrument);
         setTicker(ticker);
     }
 
-    public AbstractPlayer(String name, Ticker ticker, Instrument instrument, List<Integer> allowedControlMessages) {
+    public ProxyAbstractPlayer(String name, ProxyTicker ticker, ProxyInstrument instrument, List<Integer> allowedControlMessages) {
         this(name, ticker, instrument);
         setAllowedControlMessages(allowedControlMessages);
     }
 
-    public void setInstrument(Instrument instrument) {
+    public void setInstrument(ProxyInstrument instrument) {
         this.instrument = instrument;
         if (Objects.nonNull(instrument))
             this.InstrumentId = instrument.getId();
@@ -166,7 +166,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     }
 
     @Override
-    public Rule getRule(Long ruleId) {
+    public ProxyRule getRule(Long ruleId) {
         return getRules().stream().filter(r -> r.getId().equals(ruleId)).findAny().orElseThrow();
     }
 
@@ -240,7 +240,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
         return true;
     }
 
-    private Set<Rule> filterByPart(Set<Rule> rules, boolean includeNoPart) {
+    private Set<ProxyRule> filterByPart(Set<ProxyRule> rules, boolean includeNoPart) {
         return rules.stream()
                 .filter(r -> r.getPart() == 0
                         || (includeNoPart && ((long) r.getPart()) == getTicker().getPart()))
@@ -250,7 +250,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
     @Override
     public boolean shouldPlay() {
         logger.debug("shouldPlay() - evaluating rules for player: {}", getName());
-        Set<Rule> applicable = filterByPart(getRules(), true);
+        Set<ProxyRule> applicable = filterByPart(getRules(), true);
 
         AtomicBoolean play = new AtomicBoolean(true);
         AtomicBoolean hasTick = new AtomicBoolean(false);

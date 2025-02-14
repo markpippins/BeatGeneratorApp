@@ -14,10 +14,6 @@ import javax.sound.midi.MidiUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.IInstrument;
-import com.angrysurfer.core.api.IPattern;
-import com.angrysurfer.core.api.ISong;
-import com.angrysurfer.core.api.IStep;
 import com.angrysurfer.core.api.db.Delete;
 import com.angrysurfer.core.api.db.Save;
 import com.angrysurfer.core.model.Pattern;
@@ -34,7 +30,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 interface NoteProvider {
-    public int getNoteForStep(IStep step, IPattern pattern, long tick);
+    public int getNoteForStep(Step step, Pattern pattern, long tick);
 
 }
 
@@ -45,7 +41,7 @@ public class SongEngine implements NoteProvider {
 
     private InstrumentEngine instrumentEngine;
 
-    private ISong song;
+    private Song song;
     private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
 
     private CyclerListener tickListener = new TickCyclerListener(this);
@@ -57,7 +53,7 @@ public class SongEngine implements NoteProvider {
         // this.song = newSong();
     }
 
-    public int getNoteForStep(IStep step, IPattern pattern, long tick) {
+    public int getNoteForStep(Step step, Pattern pattern, long tick) {
         logger.info(String.format("getNoteForStep() Pattern %s, Step %s", pattern.getPosition(),
                 step.getPosition()));
 
@@ -81,10 +77,10 @@ public class SongEngine implements NoteProvider {
         return note;
     }
 
-    public IPattern updatePattern(Long patternId, int updateType, int updateValue) {
+    public Pattern updatePattern(Long patternId, int updateType, int updateValue) {
         logger.info("updatePattern() - patternId: {}, updateType: {}, updateValue: {}",
                 patternId, updateType, updateValue);
-        IPattern pattern = getSong().getPatterns().stream().filter(p -> p.getId().equals(patternId)).findFirst()
+        Pattern pattern = getSong().getPatterns().stream().filter(p -> p.getId().equals(patternId)).findFirst()
                 .orElseThrow();
 
         switch (updateType) {
@@ -187,10 +183,10 @@ public class SongEngine implements NoteProvider {
         return pattern;
     }
 
-    public IStep updateStep(Long stepId, int updateType, int updateValue) {
+    public Step updateStep(Long stepId, int updateType, int updateValue) {
         logger.info("updateStep() - stepId: {}, updateType: {}, updateValue: {}",
                 stepId, updateType, updateValue);
-        IStep step = getSong().getStep(stepId);
+        Step step = getSong().getStep(stepId);
 
         switch (updateType) {
             case StepUpdateType.ACTIVE:
@@ -234,8 +230,8 @@ public class SongEngine implements NoteProvider {
     // return song;
     // }
 
-    public ISong newSong(Save<IInstrument> instrumentSaver, Save<ISong> songSaver, Save<IPattern> patternSaver,
-            Save<IStep> stepSaver) {
+    public Song newSong(Save<Instrument> instrumentSaver, Save<Song> songSaver, Save<Pattern> patternSaver,
+            Save<Step> stepSaver) {
 
         logger.info("newSong()");
         this.song = new Song();
@@ -248,10 +244,10 @@ public class SongEngine implements NoteProvider {
             try {
                 songSaver.save(song);
 
-                final List<IInstrument> instruments = this.instrumentEngine.getInstrumentList();
+                final List<Instrument> instruments = this.instrumentEngine.getInstrumentList();
 
                 IntStream.range(0, Constants.DEFAULT_XOX_TRACKS).forEach(i -> {
-                    IPattern pattern = patternSaver.save(new Pattern());
+                    Pattern pattern = patternSaver.save(new Pattern());
                     pattern.setSong(song);
                     song.getPatterns().add(pattern);
                     pattern.setPosition(song.getPatterns().size() + 1);
@@ -259,12 +255,12 @@ public class SongEngine implements NoteProvider {
                     var vv = instruments.stream().filter(ins -> ins.receivesOn(i) && ins.getAvailable()).toList();
 
                     if (vv.size() > 0) {
-                        pattern.setInstrument((IInstrument) vv.getFirst());
-                        pattern.setName(((IInstrument) vv.getFirst()).getName());
+                        pattern.setInstrument((Instrument) vv.getFirst());
+                        pattern.setName(((Instrument) vv.getFirst()).getName());
                     } else {
 
                         if (devices.size() > 0) {
-                            IInstrument instrument = new Instrument();
+                            Instrument instrument = new Instrument();
                             Integer[] channels = { i };
                             instrument.setChannels(channels);
                             instrument.setDeviceName(devices.getFirst());
@@ -331,8 +327,8 @@ public class SongEngine implements NoteProvider {
     // return this.song;
     // }
 
-    public IPattern addPattern(Save<IPattern> patternSaver) {
-        IPattern pattern = new Pattern();
+    public Pattern addPattern(Save<Pattern> patternSaver) {
+        Pattern pattern = new Pattern();
         pattern.setPosition(getSong().getPatterns().size());
         pattern.setSong(getSong());
         pattern = patternSaver.save(pattern);
@@ -340,8 +336,8 @@ public class SongEngine implements NoteProvider {
         return pattern;
     }
 
-    public Set<IPattern> removePattern(Long patternId, Delete<IPattern> patternDeleter) {
-        IPattern pattern = getSong().getPatterns().stream().filter(s -> s.getId().equals(patternId)).findAny()
+    public Set<Pattern> removePattern(Long patternId, Delete<Pattern> patternDeleter) {
+        Pattern pattern = getSong().getPatterns().stream().filter(s -> s.getId().equals(patternId)).findAny()
                 .orElseThrow();
         getSong().getPatterns().remove(pattern);
         patternDeleter.delete(pattern);

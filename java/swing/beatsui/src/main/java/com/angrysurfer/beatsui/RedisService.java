@@ -10,17 +10,17 @@ import java.util.stream.Collectors;
 
 import com.angrysurfer.beatsui.config.BeatsUIConfig;
 import com.angrysurfer.beatsui.config.RedisConfig;
-import com.angrysurfer.beatsui.mock.Caption;
-import com.angrysurfer.beatsui.mock.ControlCode;
-import com.angrysurfer.beatsui.mock.IPlayer;
-import com.angrysurfer.beatsui.mock.Instrument;
-import com.angrysurfer.beatsui.mock.Pad;
-import com.angrysurfer.beatsui.mock.Pattern;
-import com.angrysurfer.beatsui.mock.Rule;
-import com.angrysurfer.beatsui.mock.Song;
-import com.angrysurfer.beatsui.mock.Step;
-import com.angrysurfer.beatsui.mock.Strike;
-import com.angrysurfer.beatsui.mock.Ticker;
+import com.angrysurfer.beatsui.proxy.ProxyCaption;
+import com.angrysurfer.beatsui.proxy.ProxyControlCode;
+import com.angrysurfer.beatsui.proxy.IProxyPlayer;
+import com.angrysurfer.beatsui.proxy.ProxyInstrument;
+import com.angrysurfer.beatsui.proxy.ProxyPad;
+import com.angrysurfer.beatsui.proxy.ProxyPattern;
+import com.angrysurfer.beatsui.proxy.ProxyRule;
+import com.angrysurfer.beatsui.proxy.ProxySong;
+import com.angrysurfer.beatsui.proxy.ProxyStep;
+import com.angrysurfer.beatsui.proxy.ProxyStrike;
+import com.angrysurfer.beatsui.proxy.ProxyTicker;
 import com.angrysurfer.core.api.db.Delete;
 import com.angrysurfer.core.api.db.FindAll;
 import com.angrysurfer.core.api.db.FindOne;
@@ -85,11 +85,11 @@ public class RedisService { // implements Database {
             // Clear existing data
             clearDatabase();
 
-            List<Instrument> instruments = new ArrayList<>();
+            List<ProxyInstrument> instruments = new ArrayList<>();
 
             // Process each instrument
             for (JsonNode instrumentNode : instrumentsNode) {
-                Instrument instrument = new Instrument();
+                ProxyInstrument instrument = new ProxyInstrument();
 
                 // Set basic properties
                 instrument.setName(instrumentNode.get("name").asText());
@@ -115,10 +115,10 @@ public class RedisService { // implements Database {
                 // Process control codes
                 JsonNode controlCodesNode = instrumentNode.get("controlCodes");
                 if (controlCodesNode != null && !controlCodesNode.isEmpty()) {
-                    List<ControlCode> controlCodes = new ArrayList<>();
+                    List<ProxyControlCode> controlCodes = new ArrayList<>();
 
                     for (JsonNode ccNode : controlCodesNode) {
-                        ControlCode cc = new ControlCode();
+                        ProxyControlCode cc = new ProxyControlCode();
                         cc.setName(ccNode.get("name").asText());
                         cc.setCode(ccNode.get("code").asInt());
 
@@ -132,9 +132,9 @@ public class RedisService { // implements Database {
                         // Process captions
                         JsonNode captionsNode = ccNode.get("captions");
                         if (captionsNode != null && !captionsNode.isEmpty()) {
-                            Set<Caption> captions = new HashSet<>();
+                            Set<ProxyCaption> captions = new HashSet<>();
                             for (JsonNode captionNode : captionsNode) {
-                                Caption caption = new Caption();
+                                ProxyCaption caption = new ProxyCaption();
                                 caption.setCode(ccNode.get("code").longValue());
                                 // caption.setCode(captionNode.has("code") ? captionNode.get("code").asInt() :
                                 // 0);
@@ -166,7 +166,7 @@ public class RedisService { // implements Database {
         }
     }
 
-    public List<Instrument> loadInstrumentsFromXML(String xmlFilePath) {
+    public List<ProxyInstrument> loadInstrumentsFromXML(String xmlFilePath) {
         try {
             logger.info("Loading instruments from XML: " + xmlFilePath);
 
@@ -180,11 +180,11 @@ public class RedisService { // implements Database {
             JsonNode rootNode = mapper.readTree(jsonFile);
             JsonNode instrumentsNode = rootNode.get("instruments");
 
-            List<Instrument> instruments = new ArrayList<>();
+            List<ProxyInstrument> instruments = new ArrayList<>();
 
             // Process each instrument
             for (JsonNode instrumentNode : instrumentsNode) {
-                Instrument instrument = new Instrument();
+                ProxyInstrument instrument = new ProxyInstrument();
 
                 // Set basic properties
                 instrument.setName(instrumentNode.get("name").asText());
@@ -197,10 +197,10 @@ public class RedisService { // implements Database {
                 // Process control codes
                 JsonNode controlCodesNode = instrumentNode.get("controlCodes");
                 if (controlCodesNode != null && !controlCodesNode.isEmpty()) {
-                    List<ControlCode> controlCodes = new ArrayList<>();
+                    List<ProxyControlCode> controlCodes = new ArrayList<>();
 
                     for (JsonNode ccNode : controlCodesNode) {
-                        ControlCode cc = new ControlCode();
+                        ProxyControlCode cc = new ProxyControlCode();
                         cc.setName(ccNode.get("name").asText());
                         cc.setCode(ccNode.get("code").asInt());
 
@@ -214,9 +214,9 @@ public class RedisService { // implements Database {
                         // Process captions
                         JsonNode captionsNode = ccNode.get("captions");
                         if (captionsNode != null && !captionsNode.isEmpty()) {
-                            Set<Caption> captions = new HashSet<>();
+                            Set<ProxyCaption> captions = new HashSet<>();
                             for (JsonNode captionNode : captionsNode) {
-                                Caption caption = new Caption();
+                                ProxyCaption caption = new ProxyCaption();
                                 caption.setCode(ccNode.get("code").longValue());
                                 caption.setDescription(captionNode.get("description").asText());
                                 captions.add(saveCaption(caption));
@@ -250,7 +250,7 @@ public class RedisService { // implements Database {
             BeatsUIConfig config = new BeatsUIConfig();
 
             // Load all instruments with their relationships
-            List<Instrument> instruments = findAllInstruments();
+            List<ProxyInstrument> instruments = findAllInstruments();
             logger.info("Found " + instruments.size() + " instruments");
 
             config.setInstruments(instruments);
@@ -267,7 +267,7 @@ public class RedisService { // implements Database {
             logger.info("Saving configuration to Redis");
 
             // Clear existing instruments
-            Set<String> instrumentKeys = jedisPool.getResource().keys(getCollectionKey(Instrument.class) + ":*");
+            Set<String> instrumentKeys = jedisPool.getResource().keys(getCollectionKey(ProxyInstrument.class) + ":*");
             if (instrumentKeys != null && !instrumentKeys.isEmpty()) {
                 try (Jedis jedis = jedisPool.getResource()) {
                     for (String key : instrumentKeys) {
@@ -278,7 +278,7 @@ public class RedisService { // implements Database {
 
             // Save new instruments
             if (config.getInstruments() != null) {
-                for (Instrument instrument : config.getInstruments()) {
+                for (ProxyInstrument instrument : config.getInstruments()) {
                     saveInstrument(instrument);
                     logger.info("Saved instrument: " + instrument.getName());
                 }
@@ -341,24 +341,24 @@ public class RedisService { // implements Database {
     // }
 
     // @Override
-    public Caption findCaptionById(Long id) {
+    public ProxyCaption findCaptionById(Long id) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String json = jedis.get(getKey(Caption.class, id));
-            return json != null ? objectMapper.readValue(json, Caption.class) : null;
+            String json = jedis.get(getKey(ProxyCaption.class, id));
+            return json != null ? objectMapper.readValue(json, ProxyCaption.class) : null;
         } catch (Exception e) {
             throw new RuntimeException("Error finding caption", e);
         }
     }
 
     // @Override
-    public List<Caption> findAllCaptions() {
+    public List<ProxyCaption> findAllCaptions() {
         try (Jedis jedis = jedisPool.getResource()) {
-            List<Caption> captions = new ArrayList<>();
-            Set<String> keys = jedis.keys(getCollectionKey(Caption.class) + ":*");
+            List<ProxyCaption> captions = new ArrayList<>();
+            Set<String> keys = jedis.keys(getCollectionKey(ProxyCaption.class) + ":*");
             for (String key : keys) {
                 String json = jedis.get(key);
                 if (json != null) {
-                    captions.add(objectMapper.readValue(json, Caption.class));
+                    captions.add(objectMapper.readValue(json, ProxyCaption.class));
                 }
             }
             return captions;
@@ -368,15 +368,15 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public Caption saveCaption(Caption caption) {
+    public ProxyCaption saveCaption(ProxyCaption caption) {
         try (Jedis jedis = jedisPool.getResource()) {
             if (caption.getId() == null) {
                 // Get next ID from sequence
-                String seqKey = "seq:" + Caption.class.getSimpleName().toLowerCase();
+                String seqKey = "seq:" + ProxyCaption.class.getSimpleName().toLowerCase();
                 caption.setId(jedis.incr(seqKey));
             }
             String json = objectMapper.writeValueAsString(caption);
-            String key = getKey(Caption.class, caption.getId());
+            String key = getKey(ProxyCaption.class, caption.getId());
             jedis.set(key, json);
             return caption;
         } catch (Exception e) {
@@ -385,9 +385,9 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public void deleteCaption(Caption caption) {
+    public void deleteCaption(ProxyCaption caption) {
         try (Jedis jedis = jedisPool.getResource()) {
-            jedis.del(getKey(Caption.class, caption.getId()));
+            jedis.del(getKey(ProxyCaption.class, caption.getId()));
         }
     }
 
@@ -399,646 +399,646 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public FindAll<Caption> getCaptionFindAll() {
+    public FindAll<ProxyCaption> getCaptionFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCaptionFindAll'");
     }
 
     // @Override
-    public FindOne<Caption> getCaptionFindOne() {
+    public FindOne<ProxyCaption> getCaptionFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCaptionFindOne'");
     }
 
     // @Override
-    public Save<Caption> getCaptionSaver() {
+    public Save<ProxyCaption> getCaptionSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCaptionSaver'");
     }
 
     // @Override
-    public Delete<Caption> getCaptionDeleter() {
+    public Delete<ProxyCaption> getCaptionDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCaptionDeleter'");
     }
 
     // @Override
-    public FindAll<ControlCode> getControlCodeFindAll() {
+    public FindAll<ProxyControlCode> getControlCodeFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getControlCodeFindAll'");
     }
 
     // @Override
-    public FindOne<ControlCode> getControlCodeFindOne() {
+    public FindOne<ProxyControlCode> getControlCodeFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getControlCodeFindOne'");
     }
 
     // @Override
-    public Save<ControlCode> getControlCodeSaver() {
+    public Save<ProxyControlCode> getControlCodeSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getControlCodeSaver'");
     }
 
     // @Override
-    public Delete<ControlCode> getControlCodeDeleter() {
+    public Delete<ProxyControlCode> getControlCodeDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getControlCodeDeleter'");
     }
 
     // @Override
-    public FindAll<Instrument> getInstrumentFindAll() {
+    public FindAll<ProxyInstrument> getInstrumentFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getInstrumentFindAll'");
     }
 
     // @Override
-    public FindOne<Instrument> getInstrumentFindOne() {
+    public FindOne<ProxyInstrument> getInstrumentFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getInstrumentFindOne'");
     }
 
     // @Override
-    public Save<Instrument> getInstrumentSaver() {
+    public Save<ProxyInstrument> getInstrumentSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getInstrumentSaver'");
     }
 
     // @Override
-    public Delete<Instrument> getInstrumentDeleter() {
+    public Delete<ProxyInstrument> getInstrumentDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getInstrumentDeleter'");
     }
 
     // @Override
-    public FindAll<Pad> getPadFindAll() {
+    public FindAll<ProxyPad> getPadFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPadFindAll'");
     }
 
     // @Override
-    public FindOne<Pad> getPadFindOne() {
+    public FindOne<ProxyPad> getPadFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPadFindOne'");
     }
 
     // @Override
-    public Save<Pad> getPadSaver() {
+    public Save<ProxyPad> getPadSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPadSaver'");
     }
 
     // @Override
-    public Delete<Pad> getPadDeleter() {
+    public Delete<ProxyPad> getPadDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPadDeleter'");
     }
 
     // @Override
-    public FindAll<Pattern> getPatternFindAll() {
+    public FindAll<ProxyPattern> getPatternFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPatternFindAll'");
     }
 
     // @Override
-    public FindOne<Pattern> getPatternFindOne() {
+    public FindOne<ProxyPattern> getPatternFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPatternFindOne'");
     }
 
     // @Override
-    public FindSet<Pattern> getSongPatternFinder() {
+    public FindSet<ProxyPattern> getSongPatternFinder() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSongPatternFinder'");
     }
 
     // @Override
-    public Save<Pattern> getPatternSaver() {
+    public Save<ProxyPattern> getPatternSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPatternSaver'");
     }
 
     // @Override
-    public Delete<Pattern> getPatternDeleter() {
+    public Delete<ProxyPattern> getPatternDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPatternDeleter'");
     }
 
     // @Override
-    public FindAll<Rule> getRuleFindAll() {
+    public FindAll<ProxyRule> getRuleFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getRuleFindAll'");
     }
 
     // @Override
-    public FindOne<Rule> getRuleFindOne() {
+    public FindOne<ProxyRule> getRuleFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getRuleFindOne'");
     }
 
     // @Override
-    public FindSet<Rule> getPlayerRuleFindSet() {
+    public FindSet<ProxyRule> getPlayerRuleFindSet() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPlayerRuleFindSet'");
     }
 
     // @Override
-    public Save<Rule> getRuleSaver() {
+    public Save<ProxyRule> getRuleSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getRuleSaver'");
     }
 
     // @Override
-    public Delete<Rule> getRuleDeleter() {
+    public Delete<ProxyRule> getRuleDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getRuleDeleter'");
     }
 
     // @Override
-    public FindAll<Song> getSongFindAll() {
+    public FindAll<ProxySong> getSongFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSongFindAll'");
     }
 
     // @Override
-    public FindOne<Song> getSongFindOne() {
+    public FindOne<ProxySong> getSongFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSongFindOne'");
     }
 
     // @Override
-    public Save<Song> getSongSaver() {
+    public Save<ProxySong> getSongSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSongSaver'");
     }
 
     // @Override
-    public Delete<Song> getSongDeleter() {
+    public Delete<ProxySong> getSongDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSongDeleter'");
     }
 
     // @Override
-    public Next<Song> getSongForward() {
+    public Next<ProxySong> getSongForward() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSongForward'");
     }
 
     // @Override
-    public Prior<Song> getSongBack() {
+    public Prior<ProxySong> getSongBack() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSongBack'");
     }
 
     // @Override
-    public Max<Song> getSongMax() {
+    public Max<ProxySong> getSongMax() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSongMax'");
     }
 
     // @Override
-    public Min<Song> getSongMin() {
+    public Min<ProxySong> getSongMin() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSongMin'");
     }
 
     // @Override
-    public FindAll<Step> getStepFindAll() {
+    public FindAll<ProxyStep> getStepFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getStepFindAll'");
     }
 
     // @Override
-    public FindOne<Step> getStepFindOne() {
+    public FindOne<ProxyStep> getStepFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getStepFindOne'");
     }
 
     // @Override
-    public FindSet<Step> getPatternStepFinder() {
+    public FindSet<ProxyStep> getPatternStepFinder() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getPatternStepFinder'");
     }
 
     // @Override
-    public Save<Step> getStepSaver() {
+    public Save<ProxyStep> getStepSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getStepSaver'");
     }
 
     // @Override
-    public Delete<Step> getStepDeleter() {
+    public Delete<ProxyStep> getStepDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getStepDeleter'");
     }
 
     // @Override
-    public FindAll<Strike> getStrikeFindAll() {
+    public FindAll<ProxyStrike> getStrikeFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getStrikeFindAll'");
     }
 
     // @Override
-    public FindOne<Strike> getStrikeFindOne() {
+    public FindOne<ProxyStrike> getStrikeFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getStrikeFindOne'");
     }
 
     // @Override
-    public FindSet<Strike> getTickerStrikeFinder() {
+    public FindSet<ProxyStrike> getTickerStrikeFinder() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getTickerStrikeFinder'");
     }
 
     // @Override
-    public Save<IPlayer> getStrikeSaver() {
+    public Save<IProxyPlayer> getStrikeSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getStrikeSaver'");
     }
 
     // @Override
-    public Delete<IPlayer> getStrikeDeleter() {
+    public Delete<IProxyPlayer> getStrikeDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getStrikeDeleter'");
     }
 
     // @Override
-    public FindAll<Ticker> getTickerFindAll() {
+    public FindAll<ProxyTicker> getTickerFindAll() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getTickerFindAll'");
     }
 
     // @Override
-    public FindOne<Ticker> getTickerFindOne() {
+    public FindOne<ProxyTicker> getTickerFindOne() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getTickerFindOne'");
     }
 
     // @Override
-    public Save<Ticker> getTickerSaver() {
+    public Save<ProxyTicker> getTickerSaver() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getTickerSaver'");
     }
 
     // @Override
-    public Delete<Ticker> getTickerDeleter() {
+    public Delete<ProxyTicker> getTickerDeleter() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getTickerDeleter'");
     }
 
     // @Override
-    public Next<Ticker> getTickerForward() {
+    public Next<ProxyTicker> getTickerForward() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getTickerForward'");
     }
 
     // @Override
-    public Prior<Ticker> getTickerBack() {
+    public Prior<ProxyTicker> getTickerBack() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getTickerBack'");
     }
 
     // @Override
-    public Max<Ticker> getTickerMax() {
+    public Max<ProxyTicker> getTickerMax() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getTickerMax'");
     }
 
     // @Override
-    public Min<Ticker> getTickerMin() {
+    public Min<ProxyTicker> getTickerMin() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getTickerMin'");
     }
 
     // @Override
-    public void setCaptionFindAll(FindAll<Caption> captionFindAll) {
+    public void setCaptionFindAll(FindAll<ProxyCaption> captionFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setCaptionFindAll'");
     }
 
     // @Override
-    public void setCaptionFindOne(FindOne<Caption> captionFindOne) {
+    public void setCaptionFindOne(FindOne<ProxyCaption> captionFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setCaptionFindOne'");
     }
 
     // @Override
-    public void setCaptionSaver(Save<Caption> captionSaver) {
+    public void setCaptionSaver(Save<ProxyCaption> captionSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setCaptionSaver'");
     }
 
     // @Override
-    public void setCaptionDeleter(Delete<Caption> captionDeleter) {
+    public void setCaptionDeleter(Delete<ProxyCaption> captionDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setCaptionDeleter'");
     }
 
     // @Override
-    public void setControlCodeFindAll(FindAll<ControlCode> controlCodeFindAll) {
+    public void setControlCodeFindAll(FindAll<ProxyControlCode> controlCodeFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setControlCodeFindAll'");
     }
 
     // @Override
-    public void setControlCodeFindOne(FindOne<ControlCode> controlCodeFindOne) {
+    public void setControlCodeFindOne(FindOne<ProxyControlCode> controlCodeFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setControlCodeFindOne'");
     }
 
     // @Override
-    public void setControlCodeSaver(Save<ControlCode> controlCodeSaver) {
+    public void setControlCodeSaver(Save<ProxyControlCode> controlCodeSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setControlCodeSaver'");
     }
 
     // @Override
-    public void setControlCodeDeleter(Delete<ControlCode> controlCodeDeleter) {
+    public void setControlCodeDeleter(Delete<ProxyControlCode> controlCodeDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setControlCodeDeleter'");
     }
 
     // @Override
-    public void setInstrumentFindAll(FindAll<Instrument> instrumentFindAll) {
+    public void setInstrumentFindAll(FindAll<ProxyInstrument> instrumentFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setInstrumentFindAll'");
     }
 
     // @Override
-    public void setInstrumentFindOne(FindOne<Instrument> instrumentFindOne) {
+    public void setInstrumentFindOne(FindOne<ProxyInstrument> instrumentFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setInstrumentFindOne'");
     }
 
     // @Override
-    public void setInstrumentSaver(Save<Instrument> instrumentSaver) {
+    public void setInstrumentSaver(Save<ProxyInstrument> instrumentSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setInstrumentSaver'");
     }
 
     // @Override
-    public void setInstrumentDeleter(Delete<Instrument> instrumentDeleter) {
+    public void setInstrumentDeleter(Delete<ProxyInstrument> instrumentDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setInstrumentDeleter'");
     }
 
     // @Override
-    public void setPadFindAll(FindAll<Pad> padFindAll) {
+    public void setPadFindAll(FindAll<ProxyPad> padFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPadFindAll'");
     }
 
     // @Override
-    public void setPadFindOne(FindOne<Pad> padFindOne) {
+    public void setPadFindOne(FindOne<ProxyPad> padFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPadFindOne'");
     }
 
     // @Override
-    public void setPadSaver(Save<Pad> padSaver) {
+    public void setPadSaver(Save<ProxyPad> padSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPadSaver'");
     }
 
     // @Override
-    public void setPadDeleter(Delete<Pad> padDeleter) {
+    public void setPadDeleter(Delete<ProxyPad> padDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPadDeleter'");
     }
 
     // @Override
-    public void setPatternFindAll(FindAll<Pattern> patternFindAll) {
+    public void setPatternFindAll(FindAll<ProxyPattern> patternFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPatternFindAll'");
     }
 
     // @Override
-    public void setPatternFindOne(FindOne<Pattern> patternFindOne) {
+    public void setPatternFindOne(FindOne<ProxyPattern> patternFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPatternFindOne'");
     }
 
     // @Override
-    public void setSongPatternFinder(FindSet<Pattern> songPatternFinder) {
+    public void setSongPatternFinder(FindSet<ProxyPattern> songPatternFinder) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSongPatternFinder'");
     }
 
     // @Override
-    public void setPatternSaver(Save<Pattern> patternSaver) {
+    public void setPatternSaver(Save<ProxyPattern> patternSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPatternSaver'");
     }
 
     // @Override
-    public void setPatternDeleter(Delete<Pattern> patternDeleter) {
+    public void setPatternDeleter(Delete<ProxyPattern> patternDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPatternDeleter'");
     }
 
     // @Override
-    public void setRuleFindAll(FindAll<Rule> ruleFindAll) {
+    public void setRuleFindAll(FindAll<ProxyRule> ruleFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setRuleFindAll'");
     }
 
     // @Override
-    public void setRuleFindOne(FindOne<Rule> ruleFindOne) {
+    public void setRuleFindOne(FindOne<ProxyRule> ruleFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setRuleFindOne'");
     }
 
     // @Override
-    public void setPlayerRuleFindSet(FindSet<Rule> playerRuleFindSet) {
+    public void setPlayerRuleFindSet(FindSet<ProxyRule> playerRuleFindSet) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPlayerRuleFindSet'");
     }
 
     // @Override
-    public void setRuleSaver(Save<Rule> ruleSaver) {
+    public void setRuleSaver(Save<ProxyRule> ruleSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setRuleSaver'");
     }
 
     // @Override
-    public void setRuleDeleter(Delete<Rule> ruleDeleter) {
+    public void setRuleDeleter(Delete<ProxyRule> ruleDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setRuleDeleter'");
     }
 
     // @Override
-    public void setSongFindAll(FindAll<Song> songFindAll) {
+    public void setSongFindAll(FindAll<ProxySong> songFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSongFindAll'");
     }
 
     // @Override
-    public void setSongFindOne(FindOne<Song> songFindOne) {
+    public void setSongFindOne(FindOne<ProxySong> songFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSongFindOne'");
     }
 
     // @Override
-    public void setSongSaver(Save<Song> songSaver) {
+    public void setSongSaver(Save<ProxySong> songSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSongSaver'");
     }
 
     // @Override
-    public void setSongDeleter(Delete<Song> songDeleter) {
+    public void setSongDeleter(Delete<ProxySong> songDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSongDeleter'");
     }
 
     // @Override
-    public void setSongForward(Next<Song> songForward) {
+    public void setSongForward(Next<ProxySong> songForward) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSongForward'");
     }
 
     // @Override
-    public void setSongBack(Prior<Song> songBack) {
+    public void setSongBack(Prior<ProxySong> songBack) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSongBack'");
     }
 
     // @Override
-    public void setSongMax(Max<Song> songMax) {
+    public void setSongMax(Max<ProxySong> songMax) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSongMax'");
     }
 
     // @Override
-    public void setSongMin(Min<Song> songMin) {
+    public void setSongMin(Min<ProxySong> songMin) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSongMin'");
     }
 
     // @Override
-    public void setStepFindAll(FindAll<Step> stepFindAll) {
+    public void setStepFindAll(FindAll<ProxyStep> stepFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setStepFindAll'");
     }
 
     // @Override
-    public void setStepFindOne(FindOne<Step> stepFindOne) {
+    public void setStepFindOne(FindOne<ProxyStep> stepFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setStepFindOne'");
     }
 
     // @Override
-    public void setPatternStepFinder(FindSet<Step> patternStepFinder) {
+    public void setPatternStepFinder(FindSet<ProxyStep> patternStepFinder) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setPatternStepFinder'");
     }
 
     // @Override
-    public void setStepSaver(Save<Step> stepSaver) {
+    public void setStepSaver(Save<ProxyStep> stepSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setStepSaver'");
     }
 
     // @Override
-    public void setStepDeleter(Delete<Step> stepDeleter) {
+    public void setStepDeleter(Delete<ProxyStep> stepDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setStepDeleter'");
     }
 
     // @Override
-    public void setStrikeFindAll(FindAll<Strike> strikeFindAll) {
+    public void setStrikeFindAll(FindAll<ProxyStrike> strikeFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setStrikeFindAll'");
     }
 
     // @Override
-    public void setStrikeFindOne(FindOne<Strike> strikeFindOne) {
+    public void setStrikeFindOne(FindOne<ProxyStrike> strikeFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setStrikeFindOne'");
     }
 
     // @Override
-    public void setTickerStrikeFinder(FindSet<Strike> tickerStrikeFinder) {
+    public void setTickerStrikeFinder(FindSet<ProxyStrike> tickerStrikeFinder) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setTickerStrikeFinder'");
     }
 
     // @Override
-    public void setStrikeSaver(Save<IPlayer> strikeSaver) {
+    public void setStrikeSaver(Save<IProxyPlayer> strikeSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setStrikeSaver'");
     }
 
     // @Override
-    public void setStrikeDeleter(Delete<IPlayer> strikeDeleter) {
+    public void setStrikeDeleter(Delete<IProxyPlayer> strikeDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setStrikeDeleter'");
     }
 
     // @Override
-    public void setTickerFindAll(FindAll<Ticker> tickerFindAll) {
+    public void setTickerFindAll(FindAll<ProxyTicker> tickerFindAll) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setTickerFindAll'");
     }
 
     // @Override
-    public void setTickerFindOne(FindOne<Ticker> tickerFindOne) {
+    public void setTickerFindOne(FindOne<ProxyTicker> tickerFindOne) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setTickerFindOne'");
     }
 
     // @Override
-    public void setTickerSaver(Save<Ticker> tickerSaver) {
+    public void setTickerSaver(Save<ProxyTicker> tickerSaver) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setTickerSaver'");
     }
 
     // @Override
-    public void setTickerDeleter(Delete<Ticker> tickerDeleter) {
+    public void setTickerDeleter(Delete<ProxyTicker> tickerDeleter) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setTickerDeleter'");
     }
 
     // @Override
-    public void setTickerForward(Next<Ticker> tickerForward) {
+    public void setTickerForward(Next<ProxyTicker> tickerForward) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setTickerForward'");
     }
 
     // @Override
-    public void setTickerBack(Prior<Ticker> tickerBack) {
+    public void setTickerBack(Prior<ProxyTicker> tickerBack) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setTickerBack'");
     }
 
     // @Override
-    public void setTickerMax(Max<Ticker> tickerMax) {
+    public void setTickerMax(Max<ProxyTicker> tickerMax) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setTickerMax'");
     }
 
     // @Override
-    public void setTickerMin(Min<Ticker> tickerMin) {
+    public void setTickerMin(Min<ProxyTicker> tickerMin) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setTickerMin'");
     }
 
     // @Override
-    public ControlCode findControlCodeById(Long id) {
+    public ProxyControlCode findControlCodeById(Long id) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String key = getKey(ControlCode.class, id);
+            String key = getKey(ProxyControlCode.class, id);
             String json = jedis.get(key);
             if (json == null)
                 return null;
 
-            ControlCode controlCode = objectMapper.readValue(json, ControlCode.class);
+            ProxyControlCode controlCode = objectMapper.readValue(json, ProxyControlCode.class);
 
             // Load captions
             String captionsKey = key + ":captions";
             Set<String> captionIds = jedis.smembers(captionsKey);
             if (captionIds != null) {
-                controlCode.setCaptions(new HashSet<Caption>());
+                controlCode.setCaptions(new HashSet<ProxyCaption>());
                 for (String captionId : captionIds) {
-                    Caption caption = findCaptionById(Long.valueOf(captionId));
+                    ProxyCaption caption = findCaptionById(Long.valueOf(captionId));
                     if (caption != null) {
                         controlCode.getCaptions().add(caption);
                     }
@@ -1051,10 +1051,10 @@ public class RedisService { // implements Database {
         }
     }
 
-    public List<ControlCode> findAllControlCodes() {
+    public List<ProxyControlCode> findAllControlCodes() {
         try (Jedis jedis = jedisPool.getResource()) {
-            List<ControlCode> controlCodes = new ArrayList<>();
-            Set<String> keys = jedis.keys(getCollectionKey(ControlCode.class) + ":*");
+            List<ProxyControlCode> controlCodes = new ArrayList<>();
+            Set<String> keys = jedis.keys(getCollectionKey(ProxyControlCode.class) + ":*");
             
             // Filter out relationship keys
             Set<String> ccKeys = keys.stream()
@@ -1066,15 +1066,15 @@ public class RedisService { // implements Database {
             for (String key : ccKeys) {
                 String json = jedis.get(key);
                 if (json != null) {
-                    ControlCode cc = objectMapper.readValue(json, ControlCode.class);
+                    ProxyControlCode cc = objectMapper.readValue(json, ProxyControlCode.class);
                     
                     // Load captions
                     String captionsKey = key + ":captions";
                     Set<String> captionIds = jedis.smembers(captionsKey);
                     if (captionIds != null && !captionIds.isEmpty()) {
-                        Set<Caption> captions = new HashSet<>();
+                        Set<ProxyCaption> captions = new HashSet<>();
                         for (String captionId : captionIds) {
-                            Caption caption = findCaptionById(Long.valueOf(captionId));
+                            ProxyCaption caption = findCaptionById(Long.valueOf(captionId));
                             if (caption != null) {
                                 captions.add(caption);
                             }
@@ -1095,19 +1095,19 @@ public class RedisService { // implements Database {
         }
     }
 
-    public ControlCode saveControlCode(ControlCode controlCode) {
+    public ProxyControlCode saveControlCode(ProxyControlCode controlCode) {
         try (Jedis jedis = jedisPool.getResource()) {
             if (controlCode.getId() == null) {
-                String seqKey = "seq:" + ControlCode.class.getSimpleName().toLowerCase();
+                String seqKey = "seq:" + ProxyControlCode.class.getSimpleName().toLowerCase();
                 controlCode.setId(jedis.incr(seqKey));
                 logger.info("Generated new control code ID: " + controlCode.getId());
             }
 
             // Save captions first and maintain relationships
-            Set<Caption> savedCaptions = new HashSet<>();
+            Set<ProxyCaption> savedCaptions = new HashSet<>();
             if (controlCode.getCaptions() != null) {
-                for (Caption caption : controlCode.getCaptions()) {
-                    Caption savedCaption = saveCaption(caption);
+                for (ProxyCaption caption : controlCode.getCaptions()) {
+                    ProxyCaption savedCaption = saveCaption(caption);
                     savedCaptions.add(savedCaption);
                 }
             }
@@ -1115,14 +1115,14 @@ public class RedisService { // implements Database {
 
             // Save control code
             String json = objectMapper.writeValueAsString(controlCode);
-            String key = getKey(ControlCode.class, controlCode.getId());
+            String key = getKey(ProxyControlCode.class, controlCode.getId());
             jedis.set(key, json);
 
             // Save caption relationships
             String captionsKey = key + ":captions";
             jedis.del(captionsKey); // Clear existing relationships
             if (!savedCaptions.isEmpty()) {
-                for (Caption caption : savedCaptions) {
+                for (ProxyCaption caption : savedCaptions) {
                     jedis.sadd(captionsKey, String.valueOf(caption.getId()));
                 }
             }
@@ -1137,32 +1137,32 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public void deleteControlCode(ControlCode controlCode) {
+    public void deleteControlCode(ProxyControlCode controlCode) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String key = getKey(ControlCode.class, controlCode.getId());
+            String key = getKey(ProxyControlCode.class, controlCode.getId());
             jedis.del(key);
             jedis.del(key + ":captions");
         }
     }
 
     // @Override
-    public Instrument findInstrumentById(Long id) {
+    public ProxyInstrument findInstrumentById(Long id) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String json = jedis.get(getKey(Instrument.class, id));
+            String json = jedis.get(getKey(ProxyInstrument.class, id));
             if (json == null)
                 return null;
 
-            Instrument instrument = objectMapper.readValue(json, Instrument.class);
+            ProxyInstrument instrument = objectMapper.readValue(json, ProxyInstrument.class);
 
             // Load relationships separately
-            String padsKey = getKey(Instrument.class, id) + ":pads";
-            String controlCodesKey = getKey(Instrument.class, id) + ":controlcodes";
+            String padsKey = getKey(ProxyInstrument.class, id) + ":pads";
+            String controlCodesKey = getKey(ProxyInstrument.class, id) + ":controlcodes";
 
             // Load pads
             Set<String> padIds = jedis.smembers(padsKey);
-            Set<Pad> pads = new HashSet<>();
+            Set<ProxyPad> pads = new HashSet<>();
             for (String padId : padIds) {
-                Pad pad = findPadById(Long.valueOf(padId));
+                ProxyPad pad = findPadById(Long.valueOf(padId));
                 if (pad != null)
                     pads.add(pad);
             }
@@ -1170,9 +1170,9 @@ public class RedisService { // implements Database {
 
             // Load control codes
             Set<String> ccIds = jedis.smembers(controlCodesKey);
-            List<ControlCode> controlCodes = new ArrayList<>();
+            List<ProxyControlCode> controlCodes = new ArrayList<>();
             for (String ccId : ccIds) {
-                ControlCode cc = findControlCodeById(Long.valueOf(ccId));
+                ProxyControlCode cc = findControlCodeById(Long.valueOf(ccId));
                 if (cc != null)
                     controlCodes.add(cc);
             }
@@ -1184,10 +1184,10 @@ public class RedisService { // implements Database {
         }
     }
 
-    public List<Instrument> findAllInstruments() {
+    public List<ProxyInstrument> findAllInstruments() {
         try (Jedis jedis = jedisPool.getResource()) {
-            List<Instrument> instruments = new ArrayList<>();
-            Set<String> keys = jedis.keys(getCollectionKey(Instrument.class) + ":*");
+            List<ProxyInstrument> instruments = new ArrayList<>();
+            Set<String> keys = jedis.keys(getCollectionKey(ProxyInstrument.class) + ":*");
             
             // Filter out relationship keys
             Set<String> instrumentKeys = keys.stream()
@@ -1200,15 +1200,15 @@ public class RedisService { // implements Database {
                 try {
                     String json = jedis.get(key);
                     if (json != null) {
-                        Instrument instrument = objectMapper.readValue(json, Instrument.class);
+                        ProxyInstrument instrument = objectMapper.readValue(json, ProxyInstrument.class);
                         
                         // Load control codes
                         String controlCodesKey = key + ":controlcodes";
                         Set<String> ccIds = jedis.smembers(controlCodesKey);
                         if (ccIds != null && !ccIds.isEmpty()) {
-                            List<ControlCode> controlCodes = new ArrayList<>();
+                            List<ProxyControlCode> controlCodes = new ArrayList<>();
                             for (String ccId : ccIds) {
-                                ControlCode cc = findControlCodeById(Long.valueOf(ccId));
+                                ProxyControlCode cc = findControlCodeById(Long.valueOf(ccId));
                                 if (cc != null) {
                                     controlCodes.add(cc);
                                 }
@@ -1232,10 +1232,10 @@ public class RedisService { // implements Database {
         }
     }
 
-    public void saveInstrument(Instrument instrument) {
+    public void saveInstrument(ProxyInstrument instrument) {
         try (Jedis jedis = jedisPool.getResource()) {
             if (instrument.getId() == null) {
-                String seqKey = "seq:" + Instrument.class.getSimpleName().toLowerCase();
+                String seqKey = "seq:" + ProxyInstrument.class.getSimpleName().toLowerCase();
                 instrument.setId(jedis.incr(seqKey));
             }
 
@@ -1246,7 +1246,7 @@ public class RedisService { // implements Database {
 
             // Save main instrument data
             String json = objectMapper.writeValueAsString(instrument);
-            String key = getKey(Instrument.class, instrument.getId());
+            String key = getKey(ProxyInstrument.class, instrument.getId());
             jedis.set(key, json);
 
             // Save control code relationships using SET instead of LIST
@@ -1269,9 +1269,9 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public void deleteInstrument(Instrument instrument) {
+    public void deleteInstrument(ProxyInstrument instrument) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String key = getKey(Instrument.class, instrument.getId());
+            String key = getKey(ProxyInstrument.class, instrument.getId());
             jedis.del(key);
             jedis.del(key + ":controlcodes");
             jedis.del(key + ":pads");
@@ -1279,24 +1279,24 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public Pad findPadById(Long id) {
+    public ProxyPad findPadById(Long id) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String json = jedis.get(getKey(Pad.class, id));
-            return json != null ? objectMapper.readValue(json, Pad.class) : null;
+            String json = jedis.get(getKey(ProxyPad.class, id));
+            return json != null ? objectMapper.readValue(json, ProxyPad.class) : null;
         } catch (Exception e) {
             throw new RuntimeException("Error finding pad", e);
         }
     }
 
     // @Override
-    public List<Pad> findAllPads() {
+    public List<ProxyPad> findAllPads() {
         try (Jedis jedis = jedisPool.getResource()) {
-            List<Pad> pads = new ArrayList<>();
-            Set<String> keys = jedis.keys(getCollectionKey(Pad.class) + ":*");
+            List<ProxyPad> pads = new ArrayList<>();
+            Set<String> keys = jedis.keys(getCollectionKey(ProxyPad.class) + ":*");
             for (String key : keys) {
                 String json = jedis.get(key);
                 if (json != null) {
-                    pads.add(objectMapper.readValue(json, Pad.class));
+                    pads.add(objectMapper.readValue(json, ProxyPad.class));
                 }
             }
             return pads;
@@ -1306,9 +1306,9 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public Pad savePad(Pad pad) {
+    public ProxyPad savePad(ProxyPad pad) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String key = getKey(Pad.class, pad.getId());
+            String key = getKey(ProxyPad.class, pad.getId());
             String json = objectMapper.writeValueAsString(pad);
             jedis.set(key, json);
 
@@ -1326,62 +1326,62 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public void deletePad(Pad pad) {
+    public void deletePad(ProxyPad pad) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String key = getKey(Pad.class, pad.getId());
+            String key = getKey(ProxyPad.class, pad.getId());
             jedis.del(key);
             jedis.del(key + ":controlcodes");
         }
     }
 
     // @Override
-    public Pattern findPatternById(Long id) {
+    public ProxyPattern findPatternById(Long id) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findPatternById'");
     }
 
     // @Override
-    public Set<Pattern> findPatternBySongId(Long id) {
+    public Set<ProxyPattern> findPatternBySongId(Long id) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findPatternBySongId'");
     }
 
     // @Override
-    public List<Pattern> findAllPatterns() {
+    public List<ProxyPattern> findAllPatterns() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findAllPatterns'");
     }
 
     // @Override
-    public Pattern savePattern(Pattern pattern) {
+    public ProxyPattern savePattern(ProxyPattern pattern) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'savePattern'");
     }
 
     // @Override
-    public void deletePattern(Pattern pattern) {
+    public void deletePattern(ProxyPattern pattern) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'deletePattern'");
     }
 
     // @Override
-    public Rule findRuleById(Long id) {
+    public ProxyRule findRuleById(Long id) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findRuleById'");
     }
 
     // @Override
-    public Set<Rule> findRulesByPlayerId(Long playerId) {
+    public Set<ProxyRule> findRulesByPlayerId(Long playerId) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findRulesByPlayerId'");
     }
 
     // @Override
-    public Rule saveRule(Rule rule, Strike player) {
+    public ProxyRule saveRule(ProxyRule rule, ProxyStrike player) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Generate new ID if needed
             if (rule.getId() == null) {
-                String seqKey = "seq:" + Rule.class.getSimpleName().toLowerCase();
+                String seqKey = "seq:" + ProxyRule.class.getSimpleName().toLowerCase();
                 Long newId = jedis.incr(seqKey);
                 rule.setId(newId);
                 logger.info("Generated new rule ID: " + newId);
@@ -1391,11 +1391,11 @@ public class RedisService { // implements Database {
 
             // Save the rule
             String json = objectMapper.writeValueAsString(rule);
-            String ruleKey = getKey(Rule.class, rule.getId());
+            String ruleKey = getKey(ProxyRule.class, rule.getId());
             jedis.set(ruleKey, json);
 
             // Link rule to player
-            String playerRulesKey = getKey(Strike.class, player.getId()) + ":rules";
+            String playerRulesKey = getKey(ProxyStrike.class, player.getId()) + ":rules";
             jedis.sadd(playerRulesKey, rule.getId().toString());
 
             logger.info("Saved rule " + rule.getId() + " for player " + player.getName());
@@ -1407,25 +1407,25 @@ public class RedisService { // implements Database {
     }
 
     // @Override
-    public void deleteRule(Rule rule) {
+    public void deleteRule(ProxyRule rule) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'deleteRule'");
     }
 
     // @Override
-    public Song findSongById(Long id) {
+    public ProxySong findSongById(Long id) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findSongById'");
     }
 
     // @Override
-    public List<Song> findAllSongs() {
+    public List<ProxySong> findAllSongs() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findAllSongs'");
     }
 
     // @Override
-    public Song saveSong(Song song) {
+    public ProxySong saveSong(ProxySong song) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'saveSong'");
     }
@@ -1438,14 +1438,14 @@ public class RedisService { // implements Database {
         }
     }
 
-    public List<Rule> findAllRules() {
+    public List<ProxyRule> findAllRules() {
         try (Jedis jedis = jedisPool.getResource()) {
-            List<Rule> rules = new ArrayList<>();
-            Set<String> keys = jedis.keys(getCollectionKey(Rule.class) + ":*");
+            List<ProxyRule> rules = new ArrayList<>();
+            Set<String> keys = jedis.keys(getCollectionKey(ProxyRule.class) + ":*");
             for (String key : keys) {
                 String json = jedis.get(key);
                 if (json != null) {
-                    rules.add(objectMapper.readValue(json, Rule.class));
+                    rules.add(objectMapper.readValue(json, ProxyRule.class));
                 }
             }
             return rules;
@@ -1454,10 +1454,10 @@ public class RedisService { // implements Database {
         }
     }
 
-    public List<Strike> findAllStrikes() {
+    public List<ProxyStrike> findAllStrikes() {
         try (Jedis jedis = jedisPool.getResource()) {
-            List<Strike> strikes = new ArrayList<>();
-            String pattern = getCollectionKey(Strike.class) + ":*";
+            List<ProxyStrike> strikes = new ArrayList<>();
+            String pattern = getCollectionKey(ProxyStrike.class) + ":*";
 
             // Get all keys and filter only those that start with our pattern
             // This avoids issues with auxiliary keys (like name mappings)
@@ -1473,7 +1473,7 @@ public class RedisService { // implements Database {
                 try {
                     String json = jedis.get(key);
                     if (json != null) {
-                        Strike strike = objectMapper.readValue(json, Strike.class);
+                        ProxyStrike strike = objectMapper.readValue(json, ProxyStrike.class);
                         logger.info("Loaded strike: " + strike.getName() + " from key: " + key);
                         strikes.add(strike);
                     }
@@ -1490,11 +1490,11 @@ public class RedisService { // implements Database {
         }
     }
 
-    public Strike saveStrike(Strike strike) {
+    public ProxyStrike saveStrike(ProxyStrike strike) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Always generate new ID for new strikes
             if (strike.getId() == null) {
-                String seqKey = "seq:" + Strike.class.getSimpleName().toLowerCase();
+                String seqKey = "seq:" + ProxyStrike.class.getSimpleName().toLowerCase();
                 Long newId = jedis.incr(seqKey);
                 strike.setId(newId);
                 logger.info("Generated new ID for strike: " + newId + ", name: " + strike.getName());
@@ -1502,11 +1502,11 @@ public class RedisService { // implements Database {
 
             // Save the strike data
             String json = objectMapper.writeValueAsString(strike);
-            String key = getKey(Strike.class, strike.getId());
+            String key = getKey(ProxyStrike.class, strike.getId());
             jedis.set(key, json);
 
             // Save name to ID mapping for lookups
-            String nameKey = "name_to_id:" + Strike.class.getSimpleName().toLowerCase() + ":" + strike.getName();
+            String nameKey = "name_to_id:" + ProxyStrike.class.getSimpleName().toLowerCase() + ":" + strike.getName();
             jedis.set(nameKey, strike.getId().toString());
 
             logger.info("Saved strike - Key: " + key + ", ID: " + strike.getId() + ", Name: " + strike.getName());
@@ -1517,19 +1517,19 @@ public class RedisService { // implements Database {
         }
     }
 
-    public void deleteStrike(Strike strike) {
+    public void deleteStrike(ProxyStrike strike) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String key = getKey(Strike.class, strike.getId());
+            String key = getKey(ProxyStrike.class, strike.getId());
             jedis.del(key);
         } catch (Exception e) {
             throw new RuntimeException("Error deleting strike", e);
         }
     }
 
-    public List<Rule> findRulesByPlayer(Strike player) {
+    public List<ProxyRule> findRulesByPlayer(ProxyStrike player) {
         try (Jedis jedis = jedisPool.getResource()) {
-            List<Rule> rules = new ArrayList<>();
-            String playerRulesKey = getKey(Strike.class, player.getId()) + ":rules";
+            List<ProxyRule> rules = new ArrayList<>();
+            String playerRulesKey = getKey(ProxyStrike.class, player.getId()) + ":rules";
             Set<String> ruleIds = jedis.smembers(playerRulesKey);
 
             logger.info("Finding rules for player: " + player.getName() + " (ID: " + player.getId() + "), key: "
@@ -1537,10 +1537,10 @@ public class RedisService { // implements Database {
             logger.info("Found rule IDs: " + String.join(", ", ruleIds));
 
             for (String ruleId : ruleIds) {
-                String key = getKey(Rule.class, Long.valueOf(ruleId));
+                String key = getKey(ProxyRule.class, Long.valueOf(ruleId));
                 String json = jedis.get(key);
                 if (json != null) {
-                    Rule rule = objectMapper.readValue(json, Rule.class);
+                    ProxyRule rule = objectMapper.readValue(json, ProxyRule.class);
                     rule.setPlayerId(player.getId()); // Ensure playerId is set
                     rules.add(rule);
                     logger.info("Loaded rule: " + json);
@@ -1553,7 +1553,7 @@ public class RedisService { // implements Database {
         }
     }
 
-    public void deleteRule(Rule rule, Strike player) {
+    public void deleteRule(ProxyRule rule, ProxyStrike player) {
         try (Jedis jedis = jedisPool.getResource()) {
             if (rule == null || rule.getId() == null || player == null || player.getId() == null) {
                 logger.warning("Cannot delete rule - missing rule or player ID");
@@ -1561,11 +1561,11 @@ public class RedisService { // implements Database {
             }
 
             // Remove rule data
-            String ruleKey = getKey(Rule.class, rule.getId());
+            String ruleKey = getKey(ProxyRule.class, rule.getId());
             jedis.del(ruleKey);
 
             // Remove link to player
-            String playerRulesKey = getKey(Strike.class, player.getId()) + ":rules";
+            String playerRulesKey = getKey(ProxyStrike.class, player.getId()) + ":rules";
             jedis.srem(playerRulesKey, rule.getId().toString());
 
             logger.info("Deleted rule " + rule.getId() + " from player " + player.getName());
@@ -1575,7 +1575,7 @@ public class RedisService { // implements Database {
         }
     }
 
-    public Ticker saveTicker(Ticker ticker) {
+    public ProxyTicker saveTicker(ProxyTicker ticker) {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = objectMapper.writeValueAsString(ticker);
             jedis.set(TICKER_KEY, json);
@@ -1586,11 +1586,11 @@ public class RedisService { // implements Database {
         }
     }
 
-    public Ticker loadTicker() {
+    public ProxyTicker loadTicker() {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = jedis.get(TICKER_KEY);
             if (json != null) {
-                return objectMapper.readValue(json, Ticker.class);
+                return objectMapper.readValue(json, ProxyTicker.class);
             }
             // Return default ticker if none exists
             return createDefaultTicker();
@@ -1600,8 +1600,8 @@ public class RedisService { // implements Database {
         }
     }
 
-    private Ticker createDefaultTicker() {
-        Ticker ticker = new Ticker();
+    private ProxyTicker createDefaultTicker() {
+        ProxyTicker ticker = new ProxyTicker();
         // Set default values
         ticker.setTempoInBPM(120.0f);
         ticker.setBars(4);

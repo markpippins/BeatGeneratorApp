@@ -23,8 +23,8 @@ import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.Command;
 import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.Commands;
-import com.angrysurfer.beatsui.mock.Caption;
-import com.angrysurfer.beatsui.mock.ControlCode;
+import com.angrysurfer.beatsui.proxy.ProxyCaption;
+import com.angrysurfer.beatsui.proxy.ProxyControlCode;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -33,7 +33,7 @@ import lombok.Setter;
 @Setter
 public class ControlCodeEditorPanel extends JPanel {
     private CommandBus actionBus = CommandBus.getInstance();
-    private ControlCode controlCode;
+    private ProxyControlCode controlCode;
     private JTextField nameField;
     private JSpinner codeSpinner;
     private JSpinner lowerBoundSpinner;
@@ -43,7 +43,7 @@ public class ControlCodeEditorPanel extends JPanel {
     private JButton editCaptionButton;
     private JButton deleteCaptionButton;
 
-    public ControlCodeEditorPanel(ControlCode controlCode) {
+    public ControlCodeEditorPanel(ProxyControlCode controlCode) {
         super(new BorderLayout());
         this.controlCode = controlCode;
 
@@ -140,7 +140,7 @@ public class ControlCodeEditorPanel extends JPanel {
         
         // Load existing captions
         if (controlCode.getCaptions() != null) {
-            for (Caption caption : controlCode.getCaptions()) {
+            for (ProxyCaption caption : controlCode.getCaptions()) {
                 model.addRow(new Object[]{caption.getCode(), caption.getDescription()});
             }
         }
@@ -167,19 +167,19 @@ public class ControlCodeEditorPanel extends JPanel {
         deleteCaptionButton.setEnabled(false);
     }
 
-    private void showCaptionDialog(Caption caption) {
+    private void showCaptionDialog(ProxyCaption caption) {
         boolean isNew = (caption == null);
         if (isNew) {
-            caption = new Caption();
+            caption = new ProxyCaption();
             caption.setCode((Long) codeSpinner.getValue());
         }
 
         CaptionEditorPanel editorPanel = new CaptionEditorPanel(caption);
-        Dialog<Caption> dialog = new Dialog<>(caption, editorPanel);
+        Dialog<ProxyCaption> dialog = new Dialog<>(caption, editorPanel);
         dialog.setTitle(isNew ? "Add Caption" : "Edit Caption");
 
         if (dialog.showDialog()) {
-            Caption updatedCaption = editorPanel.getUpdatedCaption();
+            ProxyCaption updatedCaption = editorPanel.getUpdatedCaption();
             updateCaptionsTable(updatedCaption, captionsTable.getSelectedRow());
             
             // Notify via ActionBus
@@ -193,7 +193,7 @@ public class ControlCodeEditorPanel extends JPanel {
     private void editSelectedCaption() {
         int row = captionsTable.getSelectedRow();
         if (row >= 0) {
-            Caption caption = getCaptionFromRow(row);
+            ProxyCaption caption = getCaptionFromRow(row);
             showCaptionDialog(caption);
         }
     }
@@ -201,7 +201,7 @@ public class ControlCodeEditorPanel extends JPanel {
     private void deleteSelectedCaption() {
         int row = captionsTable.getSelectedRow();
         if (row >= 0) {
-            Caption caption = getCaptionFromRow(row);
+            ProxyCaption caption = getCaptionFromRow(row);
             ((DefaultTableModel) captionsTable.getModel()).removeRow(row);
             
             Command action = new Command();
@@ -211,15 +211,15 @@ public class ControlCodeEditorPanel extends JPanel {
         }
     }
 
-    private Caption getCaptionFromRow(int row) {
+    private ProxyCaption getCaptionFromRow(int row) {
         DefaultTableModel model = (DefaultTableModel) captionsTable.getModel();
-        Caption caption = new Caption();
+        ProxyCaption caption = new ProxyCaption();
         caption.setCode((Long) model.getValueAt(row, 0));
         caption.setDescription((String) model.getValueAt(row, 1));
         return caption;
     }
 
-    private void updateCaptionsTable(Caption caption, int selectedRow) {
+    private void updateCaptionsTable(ProxyCaption caption, int selectedRow) {
         DefaultTableModel model = (DefaultTableModel) captionsTable.getModel();
         Object[] rowData = new Object[]{caption.getCode(), caption.getDescription()};
 
@@ -232,7 +232,7 @@ public class ControlCodeEditorPanel extends JPanel {
         }
     }
 
-    public ControlCode getUpdatedControlCode() {
+    public ProxyControlCode getUpdatedControlCode() {
         controlCode.setName(nameField.getText());
         controlCode.setCode((Integer) codeSpinner.getValue());
         controlCode.setLowerBound((Integer) lowerBoundSpinner.getValue());
@@ -240,9 +240,9 @@ public class ControlCodeEditorPanel extends JPanel {
         
         // Update captions
         DefaultTableModel model = (DefaultTableModel) captionsTable.getModel();
-        HashSet<Caption> captions = new HashSet<>();
+        HashSet<ProxyCaption> captions = new HashSet<>();
         for (int i = 0; i < model.getRowCount(); i++) {
-            Caption caption = new Caption();
+            ProxyCaption caption = new ProxyCaption();
             // Make sure we handle the Long value from caption code correctly
             caption.setCode((Long) model.getValueAt(i, 0));
             caption.setDescription((String) model.getValueAt(i, 1));

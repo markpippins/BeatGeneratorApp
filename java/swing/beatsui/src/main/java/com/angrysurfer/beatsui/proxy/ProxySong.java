@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -19,8 +19,8 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class Song {
-    private static final Logger logger = LoggerFactory.getLogger(Song.class);
+public class ProxySong {
+    private static final Logger logger = LoggerFactory.getLogger(ProxySong.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -36,14 +36,14 @@ public class Song {
     private Integer ticksPerBeat;
 
     @Transient
-    private Set<Pattern> patterns = new HashSet<>();
+    private Set<ProxyPattern> patterns = new HashSet<>();
 
 
-    public Step getStep(Long stepId) {
+    public ProxyStep getStep(Long stepId) {
         logger.debug("getStep() - looking for stepId: {}", stepId);
-        Step[] result = {null};
+        ProxyStep[] result = {null};
         getPatterns().forEach(pattern -> {
-            Optional<Step> step = pattern.getSteps().stream().filter(s -> s.getId().equals(stepId)).findAny();
+            Optional<ProxyStep> step = pattern.getSteps().stream().filter(s -> s.getId().equals(stepId)).findAny();
             if (step.isPresent()) {
                 logger.debug("Found step {} in pattern {}", stepId, pattern.getName());
                 result[0] = step.get();

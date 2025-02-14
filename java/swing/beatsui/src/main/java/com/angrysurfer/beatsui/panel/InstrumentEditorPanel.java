@@ -11,19 +11,20 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
+
+import com.angrysurfer.beatsui.proxy.ProxyInstrument;
+
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.swing.JComboBox;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.angrysurfer.beatsui.mock.Instrument;
-
 import lombok.Getter;
 
 @Getter
 public class InstrumentEditorPanel extends JPanel {
-    private final Instrument instrument;
+    private final ProxyInstrument instrument;
     private final JTextField nameField;
     private final JComboBox<String> deviceCombo; // Changed from JTextField
     private final JSpinner lowestNoteSpinner;
@@ -32,7 +33,7 @@ public class InstrumentEditorPanel extends JPanel {
     private final JCheckBox initializedCheckBox;
     private final List<MidiDevice.Info> deviceInfos; // Store device info objects
 
-    public InstrumentEditorPanel(Instrument instrument) {
+    public InstrumentEditorPanel(ProxyInstrument instrument) {
         super(new GridBagLayout());
         this.instrument = instrument;
         this.deviceInfos = new ArrayList<>();
@@ -109,7 +110,7 @@ public class InstrumentEditorPanel extends JPanel {
         add(field, gbc);
     }
 
-    public Instrument getUpdatedInstrument() {
+    public ProxyInstrument getUpdatedInstrument() {
         instrument.setName(nameField.getText());
         // Get the selected device name from combo
         int selectedIndex = deviceCombo.getSelectedIndex();

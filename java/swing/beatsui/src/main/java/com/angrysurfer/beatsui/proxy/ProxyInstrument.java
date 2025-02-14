@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -50,9 +50,9 @@ import lombok.Setter;
 @Table(name = "instrument")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class Instrument implements Serializable {
+public class ProxyInstrument implements Serializable {
 
-    static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(ProxyInstrument.class.getCanonicalName());
 
     static final Random rand = new Random();
 
@@ -71,11 +71,11 @@ public class Instrument implements Serializable {
     @JoinTable(name = "instrument_control_code", joinColumns = {
             @JoinColumn(name = "instrument_id") }, inverseJoinColumns = {
                     @JoinColumn(name = "control_code_id") })
-    private List<ControlCode> controlCodes = new ArrayList<>();
+    private List<ProxyControlCode> controlCodes = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(name = "instrument_pad", joinColumns = @JoinColumn(name = "instrument_id"), inverseJoinColumns = @JoinColumn(name = "pad_id"))
-    private Set<Pad> pads = new HashSet<>();
+    private Set<ProxyPad> pads = new HashSet<>();
 
     @Transient
     private Map<Integer, String> assignments = new HashMap<>();
@@ -119,19 +119,19 @@ public class Instrument implements Serializable {
 
     // private Set<Pattern> patterns;
 
-    public Instrument() {
+    public ProxyInstrument() {
 
     }
 
-    public Instrument(String name, MidiDevice device) {
+    public ProxyInstrument(String name, MidiDevice device) {
         this(name, device, DEFAULT_CHANNELS);
     }
 
-    public Instrument(String name, MidiDevice device, int channel) {
+    public ProxyInstrument(String name, MidiDevice device, int channel) {
         this(name, device, new Integer[] { channel });
     }
 
-    public Instrument(String name, MidiDevice device, Integer[] channels) {
+    public ProxyInstrument(String name, MidiDevice device, Integer[] channels) {
         setName(Objects.isNull(name) ? device.getDeviceInfo().getName() : name);
         setDevice(device);
         setDeviceName(device.getDeviceInfo().getName());

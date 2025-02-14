@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.io.Serializable;
 import jakarta.persistence.*;
@@ -9,7 +9,7 @@ import lombok.*;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-public class Caption implements Serializable {
+public class ProxyCaption implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)

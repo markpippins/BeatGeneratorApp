@@ -17,8 +17,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
-import com.angrysurfer.beatsui.mock.Strike;
 import com.angrysurfer.beatsui.panel.PlayerEditorPanel;
+import com.angrysurfer.beatsui.proxy.ProxyStrike;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -189,19 +189,19 @@ public class Dialog<T> extends JDialog {
         frame.setVisible(true);
 
         // Create sample player
-        Strike samplePlayer = new Strike();
+        ProxyStrike samplePlayer = new ProxyStrike();
 
         // Create test panel with sample player
         JPanel testPanel = new PlayerEditorPanel(samplePlayer);
 
         // Create and show dialog with frame as owner
-        Dialog<Strike> dialog = new Dialog<>(frame, samplePlayer, testPanel);
+        Dialog<ProxyStrike> dialog = new Dialog<>(frame, samplePlayer, testPanel);
         dialog.setTitle("Edit Player: " + samplePlayer.getName());
         boolean result = dialog.showDialog();
 
         System.out.println("Dialog result: " + result);
         if (result) {
-            Strike updatedPlayer = ((PlayerEditorPanel) testPanel).getUpdatedPlayer();
+            ProxyStrike updatedPlayer = ((PlayerEditorPanel) testPanel).getUpdatedPlayer();
             System.out.println("Updated player name: " + updatedPlayer.getName());
         }
     }

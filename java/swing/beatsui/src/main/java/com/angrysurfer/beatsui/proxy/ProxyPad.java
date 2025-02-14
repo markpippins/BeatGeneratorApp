@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,7 +25,7 @@ import lombok.Setter;
 @Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class Pad {
+public class ProxyPad {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -41,13 +41,13 @@ public class Pad {
 
     @JsonIgnore  // Ignore this field during serialization
     @ManyToMany(mappedBy = "pads")
-    private Set<Instrument> instruments = new HashSet<>();
+    private Set<ProxyInstrument> instruments = new HashSet<>();
 
-    public Pad() {
+    public ProxyPad() {
 
     }
 
-    public Pad(Integer note) {
+    public ProxyPad(Integer note) {
         this.note = note;
     }
 

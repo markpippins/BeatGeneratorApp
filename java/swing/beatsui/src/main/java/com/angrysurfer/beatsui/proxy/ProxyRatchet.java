@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,13 +11,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Ratchet extends Strike {
+public class ProxyRatchet extends ProxyStrike {
 
-    private static final Logger logger = LoggerFactory.getLogger(Ratchet.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProxyRatchet.class);
 
-    private Strike parent;
+    private ProxyStrike parent;
 
-    public Ratchet(Strike parent, double offset, long interval, int part) {
+    public ProxyRatchet(ProxyStrike parent, double offset, long interval, int part) {
         logger.info("Creating new Ratchet - parent: {}, offset: {}, interval: {}, part: {}", 
             parent.getName(), offset, interval, part);
         setParent(parent);
@@ -37,12 +37,12 @@ public class Ratchet extends Strike {
         setFadeOut(getParent().getFadeOut());
         setPreset(getParent().getPreset());
 
-        Long ratchets = getTicker().getPlayers().stream().filter(p -> p instanceof Ratchet).count();
+        Long ratchets = getTicker().getPlayers().stream().filter(p -> p instanceof ProxyRatchet).count();
         setId(-1 - ratchets);
         setName(getParent().getName() + String.format("s", getParent().getTicker().getPlayers().size()));
         double tick = getTicker().getTickCount() + offset;
         logger.debug("Adding rule - tick: {}, part: {}", tick, part);
-        getRules().add(new Rule(Operator.TICK_COUNT, Comparison.EQUALS, tick, part));
+        getRules().add(new ProxyRule(Operator.TICK_COUNT, Comparison.EQUALS, tick, part));
 
         synchronized (getTicker().getPlayers()) {
             synchronized (getTicker().getPlayers()) {

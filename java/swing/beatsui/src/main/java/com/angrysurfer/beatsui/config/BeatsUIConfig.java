@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.angrysurfer.beatsui.RedisService;
-import com.angrysurfer.beatsui.mock.Caption;
-import com.angrysurfer.beatsui.mock.ControlCode;
-import com.angrysurfer.beatsui.mock.Instrument;
+import com.angrysurfer.beatsui.proxy.ProxyCaption;
+import com.angrysurfer.beatsui.proxy.ProxyControlCode;
+import com.angrysurfer.beatsui.proxy.ProxyInstrument;
 import com.angrysurfer.core.config.DeviceConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -23,7 +23,7 @@ public class BeatsUIConfig {
             .configure(SerializationFeature.INDENT_OUTPUT, true)
             .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
-    private List<Instrument> instruments = new ArrayList<>();
+    private List<ProxyInstrument> instruments = new ArrayList<>();
 
     public static BeatsUIConfig loadDefaults(String filepath, RedisService redisService) throws IOException {
         BeatsUIConfig uiConfig = new BeatsUIConfig();
@@ -40,7 +40,7 @@ public class BeatsUIConfig {
 
         // Now copy each instrument from deviceConfig to our system
         deviceConfig.getInstruments().forEach(sourceInstrument -> {
-            Instrument newInstrument = new Instrument();
+            ProxyInstrument newInstrument = new ProxyInstrument();
             // Copy basic properties
             newInstrument.setName(sourceInstrument.getName());
             newInstrument.setDeviceName(sourceInstrument.getDeviceName());
@@ -55,7 +55,7 @@ public class BeatsUIConfig {
 
             // Copy and save control codes with their captions
             sourceInstrument.getControlCodes().forEach(sourceCC -> {
-                ControlCode newCC = new ControlCode();
+                ProxyControlCode newCC = new ProxyControlCode();
                 newCC.setCode(sourceCC.getCode());
                 newCC.setName(sourceCC.getName());
                 newCC.setLowerBound(sourceCC.getLowerBound());
@@ -64,16 +64,16 @@ public class BeatsUIConfig {
 
                 // Handle captions
                 sourceCC.getCaptions().forEach(sourceCap -> {
-                    Caption newCap = new Caption();
+                    ProxyCaption newCap = new ProxyCaption();
                     newCap.setCode(sourceCap.getCode());
                     newCap.setDescription(sourceCap.getDescription());
                     // Save caption and add to control code
-                    Caption savedCap = redisService.saveCaption(newCap);
+                    ProxyCaption savedCap = redisService.saveCaption(newCap);
                     newCC.getCaptions().add(savedCap);
                 });
 
                 // Save control code
-                ControlCode savedCC = redisService.saveControlCode(newCC);
+                ProxyControlCode savedCC = redisService.saveControlCode(newCC);
                 newInstrument.getControlCodes().add(savedCC);
 
                 // Update instrument mappings
@@ -87,7 +87,7 @@ public class BeatsUIConfig {
             // Copy pads
             sourceInstrument.getPads().forEach(sourcePad -> {
                 // Create new mock.Pad (not core.Pad)
-                com.angrysurfer.beatsui.mock.Pad newPad = new com.angrysurfer.beatsui.mock.Pad();
+                com.angrysurfer.beatsui.proxy.ProxyPad newPad = new com.angrysurfer.beatsui.proxy.ProxyPad();
                 if (sourcePad instanceof com.angrysurfer.core.model.Pad corePad) {
                     newPad.setNote(corePad.getNote());
                     newPad.setName(corePad.getName());
@@ -95,7 +95,7 @@ public class BeatsUIConfig {
                 }
                 
                 // Save pad and add to instrument
-                com.angrysurfer.beatsui.mock.Pad savedPad = redisService.savePad(newPad);
+                com.angrysurfer.beatsui.proxy.ProxyPad savedPad = redisService.savePad(newPad);
                 newInstrument.getPads().add(savedPad);
             });
 
@@ -107,7 +107,7 @@ public class BeatsUIConfig {
         return uiConfig;
     }
 
-    private static Instrument updateExistingInstrument(Instrument source, Instrument target) {
+    private static ProxyInstrument updateExistingInstrument(ProxyInstrument source, ProxyInstrument target) {
         target.setChannels(source.getChannels());
         target.setDeviceName(source.getDeviceName());
         target.setLowestNote(source.getLowestNote());
@@ -117,8 +117,8 @@ public class BeatsUIConfig {
         return target;
     }
 
-    private static void processControlCodes(Instrument dbInstrument,
-            Instrument configInstrument, RedisService redisService) {
+    private static void processControlCodes(ProxyInstrument dbInstrument,
+            ProxyInstrument configInstrument, RedisService redisService) {
         dbInstrument.getControlCodes().clear();
         dbInstrument.getAssignments().clear();
         dbInstrument.getBoundaries().clear();
@@ -127,21 +127,21 @@ public class BeatsUIConfig {
             // Reset ID for new assignment
             cc.setId(null);
             
-            ControlCode controlCode = new ControlCode();
+            ProxyControlCode controlCode = new ProxyControlCode();
             controlCode.setCode(cc.getCode());
             controlCode.setName(cc.getName());
             controlCode.setLowerBound(cc.getLowerBound());
             controlCode.setUpperBound(cc.getUpperBound());
             controlCode.setBinary(cc.getBinary());
 
-            final ControlCode controlCodeRef = controlCode;
+            final ProxyControlCode controlCodeRef = controlCode;
 
             // Process captions if they exist
             if (!cc.getCaptions().isEmpty()) {
                 cc.getCaptions().forEach(cap -> {
                     // Reset ID for new assignment
                     cap.setId(null);
-                    Caption caption = new Caption();
+                    ProxyCaption caption = new ProxyCaption();
                     caption.setCode(cap.getCode());
                     caption.setDescription(cap.getDescription());
                     caption = redisService.saveCaption(caption);

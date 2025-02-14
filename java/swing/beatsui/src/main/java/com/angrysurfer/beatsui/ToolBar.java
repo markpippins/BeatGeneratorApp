@@ -27,13 +27,13 @@ import com.angrysurfer.beatsui.api.Command;
 import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.CommandListener;
 import com.angrysurfer.beatsui.api.Commands;
-import com.angrysurfer.beatsui.mock.Ticker;
+import com.angrysurfer.beatsui.proxy.ProxyTicker;
 
 public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();
     private final Map<String, JComponent> rightFields = new HashMap<>(); // Changed to JComponent
     private final CommandBus actionBus = CommandBus.getInstance();
-    private Ticker currentTicker; // Add field to track current ticker
+    private ProxyTicker currentTicker; // Add field to track current ticker
 
     public ToolBar() {
         super();
@@ -47,8 +47,8 @@ public class ToolBar extends JToolBar {
             public void onAction(Command action) {
                 if (action.getCommand().equals(Commands.TICKER_SELECTED) ||
                         action.getCommand().equals(Commands.TICKER_UPDATED)) {
-                    if (action.getData() instanceof Ticker) {
-                        updateTickerDisplay((Ticker) action.getData());
+                    if (action.getData() instanceof ProxyTicker) {
+                        updateTickerDisplay((ProxyTicker) action.getData());
                     }
                 }
             }
@@ -98,7 +98,7 @@ public class ToolBar extends JToolBar {
         }
     }
 
-    private void updateTickerDisplay(Ticker ticker) {
+    private void updateTickerDisplay(ProxyTicker ticker) {
         
         if (Objects.isNull(ticker) || Objects.isNull(ticker.getId()))
             return;

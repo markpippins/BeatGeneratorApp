@@ -9,7 +9,7 @@ import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.CommandListener;  // Changed import
 import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.config.BeatsUIConfig;
-import com.angrysurfer.beatsui.mock.Ticker;
+import com.angrysurfer.beatsui.proxy.ProxyTicker;
 import com.formdev.flatlaf.FlatLightLaf;
 
 /**
@@ -171,7 +171,7 @@ public class App implements CommandListener {  // Changed to implement our Actio
 
             // Check for existing Ticker
             try {
-                Ticker ticker = redisService.loadTicker();
+                ProxyTicker ticker = redisService.loadTicker();
                 logger.info("Loaded existing ticker: BPM=" + ticker.getTempoInBPM() +
                         ", Bars=" + ticker.getBars());
 
@@ -185,7 +185,7 @@ public class App implements CommandListener {  // Changed to implement our Actio
 
             } catch (Exception e) {
                 logger.info("No existing ticker found, creating default ticker");
-                Ticker newTicker = new Ticker();
+                ProxyTicker newTicker = new ProxyTicker();
                 // Set default values
                 newTicker.setTempoInBPM(120.0f);
                 newTicker.setBars(4);

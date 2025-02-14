@@ -3,7 +3,7 @@ package com.angrysurfer.spring.dao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.IPattern;
+import com.angrysurfer.core.model.Pattern;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +23,7 @@ public class PatternStatus {
     private Integer direction;
     private Boolean muted;
 
-    public static PatternStatus from(IPattern pattern) {
+    public static PatternStatus from(Pattern pattern) {
         PatternStatus result = new PatternStatus();
         result.setPattern(pattern.getId());
         result.setActiveStep(pattern.getStepCycler().getPosition().get());

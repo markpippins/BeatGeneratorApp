@@ -24,9 +24,9 @@ import com.angrysurfer.beatsui.App;
 import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.mock.Caption;
-import com.angrysurfer.beatsui.mock.ControlCode;
-import com.angrysurfer.beatsui.mock.Instrument;
+import com.angrysurfer.beatsui.proxy.ProxyCaption;
+import com.angrysurfer.beatsui.proxy.ProxyControlCode;
+import com.angrysurfer.beatsui.proxy.ProxyInstrument;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -38,8 +38,8 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private JTable instrumentsTable;
     private JTable controlCodesTable;
     private JTable captionsTable;
-    private Instrument selectedInstrument;
-    private ControlCode selectedControlCode;
+    private ProxyInstrument selectedInstrument;
+    private ProxyControlCode selectedControlCode;
     private JButton addCaptionButton;
     private JButton editCaptionButton;
     private JButton deleteCaptionButton;
@@ -309,8 +309,8 @@ public class InstrumentsPanel extends StatusProviderPanel {
         };
 
         // Load data from Redis
-        List<Instrument> instruments = App.getRedisService().findAllInstruments();
-        for (Instrument instrument : instruments) {
+        List<ProxyInstrument> instruments = App.getRedisService().findAllInstruments();
+        for (ProxyInstrument instrument : instruments) {
             model.addRow(new Object[] {
                 instrument.getName(),
                 instrument.getDeviceName(),
@@ -498,7 +498,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
             logger.info("Updating control codes table for instrument: " + selectedInstrument.getName() + 
                        " with " + selectedInstrument.getControlCodes().size() + " codes");
             
-            for (ControlCode cc : selectedInstrument.getControlCodes()) {
+            for (ProxyControlCode cc : selectedInstrument.getControlCodes()) {
                 model.addRow(new Object[] {
                     cc.getName(),
                     cc.getCode(),
@@ -521,7 +521,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
             logger.info("Updating captions table for control code: " + selectedControlCode.getName() + 
                        " with " + selectedControlCode.getCaptions().size() + " captions");
             
-            for (Caption caption : selectedControlCode.getCaptions()) {
+            for (ProxyCaption caption : selectedControlCode.getCaptions()) {
                 model.addRow(new Object[] {
                     caption.getCode(),
                     caption.getDescription()
@@ -534,14 +534,14 @@ public class InstrumentsPanel extends StatusProviderPanel {
         }
     }
 
-    private Instrument findInstrumentByName(String name) {
+    private ProxyInstrument findInstrumentByName(String name) {
         return App.getRedisService().findAllInstruments().stream()
             .filter(i -> i.getName().equals(name))
             .findFirst()
             .orElse(null);
     }
 
-    private ControlCode findControlCodeByName(String name) {
+    private ProxyControlCode findControlCodeByName(String name) {
         if (selectedInstrument != null && selectedInstrument.getControlCodes() != null) {
             return selectedInstrument.getControlCodes().stream()
                 .filter(cc -> cc.getName().equals(name))
@@ -551,18 +551,18 @@ public class InstrumentsPanel extends StatusProviderPanel {
         return null;
     }
 
-    private void showControlCodeDialog(ControlCode controlCode) {
+    private void showControlCodeDialog(ProxyControlCode controlCode) {
         boolean isNew = (controlCode == null);
         if (isNew) {
-            controlCode = new ControlCode();
+            controlCode = new ProxyControlCode();
         }
 
         ControlCodeEditorPanel editorPanel = new ControlCodeEditorPanel(controlCode);
-        Dialog<ControlCode> dialog = new Dialog<>(controlCode, editorPanel);
+        Dialog<ProxyControlCode> dialog = new Dialog<>(controlCode, editorPanel);
         dialog.setTitle(isNew ? "Add Control Code" : "Edit Control Code");
 
         if (dialog.showDialog()) {
-            ControlCode updatedControlCode = editorPanel.getUpdatedControlCode();
+            ProxyControlCode updatedControlCode = editorPanel.getUpdatedControlCode();
             if (isNew) {
                 selectedInstrument.getControlCodes().add(updatedControlCode);
             }
@@ -575,7 +575,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         int row = controlCodesTable.getSelectedRow();
         if (row >= 0) {
             String name = (String) controlCodesTable.getValueAt(row, 0);
-            ControlCode controlCode = findControlCodeByName(name);
+            ProxyControlCode controlCode = findControlCodeByName(name);
             if (controlCode != null) {
                 showControlCodeDialog(controlCode);
             }
@@ -586,7 +586,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         int row = controlCodesTable.getSelectedRow();
         if (row >= 0) {
             String name = (String) controlCodesTable.getValueAt(row, 0);
-            ControlCode controlCode = findControlCodeByName(name);
+            ProxyControlCode controlCode = findControlCodeByName(name);
             if (controlCode != null) {
                 selectedInstrument.getControlCodes().remove(controlCode);
                 App.getRedisService().saveInstrument(selectedInstrument);
@@ -595,7 +595,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         }
     }
 
-    private void showCaptionDialog(Caption caption) {
+    private void showCaptionDialog(ProxyCaption caption) {
         if (selectedControlCode == null) {
             setStatus("No control code selected");
             return;
@@ -603,16 +603,16 @@ public class InstrumentsPanel extends StatusProviderPanel {
 
         boolean isNew = (caption == null);
         if (isNew) {
-            caption = new Caption();
+            caption = new ProxyCaption();
             caption.setCode((long) selectedControlCode.getCode());
         }
 
         CaptionEditorPanel editorPanel = new CaptionEditorPanel(caption);
-        Dialog<Caption> dialog = new Dialog<>(caption, editorPanel);
+        Dialog<ProxyCaption> dialog = new Dialog<>(caption, editorPanel);
         dialog.setTitle(isNew ? "Add Caption" : "Edit Caption");
 
         if (dialog.showDialog()) {
-            Caption updatedCaption = editorPanel.getUpdatedCaption();
+            ProxyCaption updatedCaption = editorPanel.getUpdatedCaption();
             if (isNew) {
                 if (selectedControlCode.getCaptions() == null) {
                     selectedControlCode.setCaptions(new HashSet<>());
@@ -627,7 +627,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private void editSelectedCaption() {
         int row = captionsTable.getSelectedRow();
         if (row >= 0) {
-            Caption caption = getCaptionFromRow(row);
+            ProxyCaption caption = getCaptionFromRow(row);
             showCaptionDialog(caption);
         }
     }
@@ -635,33 +635,33 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private void deleteSelectedCaption() {
         int row = captionsTable.getSelectedRow();
         if (row >= 0) {
-            Caption caption = getCaptionFromRow(row);
+            ProxyCaption caption = getCaptionFromRow(row);
             selectedControlCode.getCaptions().remove(caption);
             App.getRedisService().saveInstrument(selectedInstrument);
             updateCaptionsTable();
         }
     }
 
-    private Caption getCaptionFromRow(int row) {
+    private ProxyCaption getCaptionFromRow(int row) {
         DefaultTableModel model = (DefaultTableModel) captionsTable.getModel();
-        Caption caption = new Caption();
+        ProxyCaption caption = new ProxyCaption();
         caption.setCode((Long) model.getValueAt(row, 0));
         caption.setDescription((String) model.getValueAt(row, 1));
         return caption;
     }
 
-    private void showInstrumentDialog(Instrument instrument) {
+    private void showInstrumentDialog(ProxyInstrument instrument) {
         boolean isNew = (instrument == null);
         if (isNew) {
-            instrument = new Instrument();
+            instrument = new ProxyInstrument();
         }
 
         InstrumentEditorPanel editorPanel = new InstrumentEditorPanel(instrument);
-        Dialog<Instrument> dialog = new Dialog<>(instrument, editorPanel);
+        Dialog<ProxyInstrument> dialog = new Dialog<>(instrument, editorPanel);
         dialog.setTitle(isNew ? "Add Instrument" : "Edit Instrument");
 
         if (dialog.showDialog()) {
-            Instrument updatedInstrument = editorPanel.getUpdatedInstrument();
+            ProxyInstrument updatedInstrument = editorPanel.getUpdatedInstrument();
             if (isNew) {
                 // Let Redis assign an ID
                 App.getRedisService().saveInstrument(updatedInstrument);
@@ -676,7 +676,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         int row = instrumentsTable.getSelectedRow();
         if (row >= 0) {
             String name = (String) instrumentsTable.getValueAt(row, 0);
-            Instrument instrument = findInstrumentByName(name);
+            ProxyInstrument instrument = findInstrumentByName(name);
             if (instrument != null) {
                 showInstrumentDialog(instrument);
             }
@@ -687,7 +687,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         int row = instrumentsTable.getSelectedRow();
         if (row >= 0) {
             String name = (String) instrumentsTable.getValueAt(row, 0);
-            Instrument instrument = findInstrumentByName(name);
+            ProxyInstrument instrument = findInstrumentByName(name);
             if (instrument != null) {
                 App.getRedisService().deleteInstrument(instrument);
                 refreshInstrumentsTable();
@@ -698,8 +698,8 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private void refreshInstrumentsTable() {
         DefaultTableModel model = (DefaultTableModel) instrumentsTable.getModel();
         model.setRowCount(0);
-        List<Instrument> instruments = App.getRedisService().findAllInstruments();
-        for (Instrument instrument : instruments) {
+        List<ProxyInstrument> instruments = App.getRedisService().findAllInstruments();
+        for (ProxyInstrument instrument : instruments) {
             model.addRow(new Object[] {
                 instrument.getName(),
                 instrument.getDeviceName(),

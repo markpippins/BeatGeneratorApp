@@ -7,10 +7,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.HashMap;
 
-import com.angrysurfer.beatsui.mock.AbstractPlayer;
-import com.angrysurfer.beatsui.mock.Rule;
-import com.angrysurfer.beatsui.mock.Strike;
-import com.angrysurfer.beatsui.mock.Ticker;
+import com.angrysurfer.beatsui.proxy.ProxyAbstractPlayer;
+import com.angrysurfer.beatsui.proxy.ProxyRule;
+import com.angrysurfer.beatsui.proxy.ProxyStrike;
+import com.angrysurfer.beatsui.proxy.ProxyTicker;
 import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Operator;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -31,7 +31,7 @@ public class RedisService {
         this.mapper = new ObjectMapper();
     }
 
-    public void saveTicker(Ticker ticker) {
+    public void saveTicker(ProxyTicker ticker) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "ticker:" + ticker.getId().toString();
             jedis.hmset(key, convertToMap(ticker));
@@ -40,7 +40,7 @@ public class RedisService {
         }
     }
 
-    public void savePlayer(AbstractPlayer player) {
+    public void savePlayer(ProxyAbstractPlayer player) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Create a simplified version of the player for storage
             Map<String, String> playerData = new HashMap<>();
@@ -58,7 +58,7 @@ public class RedisService {
         }
     }
 
-    public void saveRule(Rule rule) {
+    public void saveRule(ProxyRule rule) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "rule:" + rule.getId().toString();
             jedis.hmset(key, convertToMap(rule));
@@ -69,17 +69,17 @@ public class RedisService {
         }
     }
 
-    public Optional<Ticker> getTicker(Long id) {
+    public Optional<ProxyTicker> getTicker(Long id) {
         try (Jedis jedis = jedisPool.getResource()) {
             Map<String, String> data = jedis.hgetAll("ticker:" + id.toString());
-            return Optional.ofNullable(convertFromMap(data, Ticker.class));
+            return Optional.ofNullable(convertFromMap(data, ProxyTicker.class));
         } catch (Exception e) {
             logger.error("Error retrieving ticker: {}", e.getMessage());
             return Optional.empty();
         }
     }
 
-    public Optional<AbstractPlayer> getPlayer(Long id) {
+    public Optional<ProxyAbstractPlayer> getPlayer(Long id) {
         try (Jedis jedis = jedisPool.getResource()) {
             Map<String, String> data = jedis.hgetAll("player:" + id.toString());
             if (data.isEmpty()) {
@@ -89,7 +89,7 @@ public class RedisService {
             // Create appropriate player type based on stored class name
             String className = data.get("playerClass");
             Class<?> playerClass = Class.forName(className);
-            AbstractPlayer player = (AbstractPlayer) playerClass.getDeclaredConstructor().newInstance();
+            ProxyAbstractPlayer player = (ProxyAbstractPlayer) playerClass.getDeclaredConstructor().newInstance();
             
             // Set basic properties
             player.setId(Long.parseLong(data.get("id")));
@@ -105,13 +105,13 @@ public class RedisService {
         }
     }
 
-    public List<Rule> getRulesForPlayer(Long playerId) {
+    public List<ProxyRule> getRulesForPlayer(Long playerId) {
         try (Jedis jedis = jedisPool.getResource()) {
             Set<String> ruleIds = jedis.smembers("player:" + playerId.toString() + ":rules");
-            List<Rule> rules = new ArrayList<>();
+            List<ProxyRule> rules = new ArrayList<>();
             for (String ruleId : ruleIds) {
                 Map<String, String> data = jedis.hgetAll("rule:" + ruleId);
-                rules.add(convertFromMap(data, Rule.class));
+                rules.add(convertFromMap(data, ProxyRule.class));
             }
             return rules;
         } catch (Exception e) {
@@ -152,20 +152,20 @@ public class RedisService {
 
         try {
             // Create and save a ticker
-            Ticker ticker = new Ticker();
+            ProxyTicker ticker = new ProxyTicker();
             ticker.setId(1L);
             ticker.setTempoInBPM(120.0f);
             redisService.saveTicker(ticker);
 
             // Create and save a player
-            Strike kick = new Strike();
+            ProxyStrike kick = new ProxyStrike();
             kick.setId(1L);
             kick.setName("Kick");
-            kick.setNote(Strike.KICK);
+            kick.setNote(ProxyStrike.KICK);
             redisService.savePlayer(kick);
 
             // Create and save a rule
-            Rule rule = new Rule();
+            ProxyRule rule = new ProxyRule();
             rule.setId(1L);
             rule.setPlayerId(kick.getId());
             rule.setOperator(Operator.BEAT);
@@ -174,9 +174,9 @@ public class RedisService {
             redisService.saveRule(rule);
 
             // Retrieve and verify with null checks
-            Optional<Ticker> savedTicker = redisService.getTicker(1L);
-            Optional<AbstractPlayer> savedPlayer = redisService.getPlayer(1L);
-            List<Rule> playerRules = redisService.getRulesForPlayer(1L);
+            Optional<ProxyTicker> savedTicker = redisService.getTicker(1L);
+            Optional<ProxyAbstractPlayer> savedPlayer = redisService.getPlayer(1L);
+            List<ProxyRule> playerRules = redisService.getRulesForPlayer(1L);
 
             savedTicker.ifPresent(t -> System.out.println("Ticker BPM: " + t.getTempoInBPM()));
             savedPlayer.ifPresent(p -> System.out.println("Player name: " + p.getName()));

@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.io.Serializable;
 import java.util.List;
@@ -13,9 +13,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Strike extends AbstractPlayer implements IPlayer, Serializable {
+public class ProxyStrike extends ProxyAbstractPlayer implements IProxyPlayer, Serializable {
 
-    private static final Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
+    private static final Logger logger = LoggerFactory.getLogger(ProxyStrike.class.getCanonicalName());
 
     private Long id;
 
@@ -31,17 +31,17 @@ public class Strike extends AbstractPlayer implements IPlayer, Serializable {
     public static List<Integer> kickParams = List.of(1, 2, 3, 4, 12, 13, 14, 15);
     public static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
 
-    public Strike() {
+    public ProxyStrike() {
         setNote(KICK);
     }
 
-    public Strike(String name, Ticker ticker, Instrument instrument, long note,
+    public ProxyStrike(String name, ProxyTicker ticker, ProxyInstrument instrument, long note,
             List<Integer> allowedControlMessages) {
         super(name, ticker, instrument, allowedControlMessages);
         setNote(note);
     }
 
-    public Strike(String name, Ticker ticker, Instrument instrument, long note,
+    public ProxyStrike(String name, ProxyTicker ticker, ProxyInstrument instrument, long note,
             List<Integer> allowableControlMessages, long minVelocity, long maxVelocity) {
         super(name, ticker, instrument, allowableControlMessages);
         setNote(note);
@@ -54,7 +54,7 @@ public class Strike extends AbstractPlayer implements IPlayer, Serializable {
         // logger.info(String.format("Tick: %s", tick));
         if (tick == 1 && getSubDivisions() > 1 && getBeatFraction() > 1) {
             double numberOfTicksToWait = getBeatFraction() * (getTicker().getTicksPerBeat() / getSubDivisions());
-            new Ratchet(this, numberOfTicksToWait, getRatchetInterval(), 0);
+            new ProxyRatchet(this, numberOfTicksToWait, getRatchetInterval(), 0);
             handleRachets();
         }
 
@@ -84,7 +84,7 @@ public class Strike extends AbstractPlayer implements IPlayer, Serializable {
         double numberOfTicksToWait = getRatchetInterval() * (getTicker().getTicksPerBeat() / getSubDivisions());
 
         LongStream.range(1, getRatchetCount() + 1).forEach(i -> {
-            new Ratchet(this, i * numberOfTicksToWait, getRatchetInterval(), 0);
+            new ProxyRatchet(this, i * numberOfTicksToWait, getRatchetInterval(), 0);
         });
     }
 
@@ -112,8 +112,8 @@ public class Strike extends AbstractPlayer implements IPlayer, Serializable {
         };
     }
 
-    public static Strike fromRow(Object[] row) {
-        Strike strike = new Strike();
+    public static ProxyStrike fromRow(Object[] row) {
+        ProxyStrike strike = new ProxyStrike();
         strike.setName((String) row[0]);
         // ... existing fromRow code ...
         return strike;

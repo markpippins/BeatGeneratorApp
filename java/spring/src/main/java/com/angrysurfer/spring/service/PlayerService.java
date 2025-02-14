@@ -10,17 +10,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.api.Database;
-import com.angrysurfer.core.api.IInstrument;
-import com.angrysurfer.core.api.IPlayer;
-import com.angrysurfer.core.api.IRule;
-import com.angrysurfer.core.api.ISong;
-import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.engine.PlayerEngine;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.player.IPlayer;
 import com.angrysurfer.core.util.ClockSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,7 +32,7 @@ public class PlayerService {
 
     public static ObjectMapper mapper = new ObjectMapper();
     static Logger log = LoggerFactory.getLogger(PlayerService.class.getCanonicalName());
-    private ISong song;
+    private Song song;
 
     private ClockSource clockSource;
 
@@ -57,11 +53,11 @@ public class PlayerService {
 
     public IPlayer addPlayer(String instrumentName) {
         logger.info("addPlayer() - instrumentName: {}", instrumentName);
-        IInstrument instrument = getInstrumentService().findByName(instrumentName);
+        Instrument instrument = getInstrumentService().findByName(instrumentName);
         return addPlayer(instrument, getNoteForMidiInstrument(instrument));
     }
 
-    private long getNoteForMidiInstrument(IInstrument instrument) {
+    private long getNoteForMidiInstrument(Instrument instrument) {
         logger.info("getNoteForMidiInstrument() - instrument: {}", instrument);
         return playerEngine.getNoteForMidiInstrument(getTicker(), instrument);
     }
@@ -76,27 +72,27 @@ public class PlayerService {
         return addPlayer(getInstrumentService().getInstrumentById(instrumentId));
     }
 
-    public IPlayer addPlayer(IInstrument instrument) {
+    public IPlayer addPlayer(Instrument instrument) {
         return addPlayer(instrument, getNoteForMidiInstrument(instrument));
     }
 
-    public IPlayer addPlayer(IInstrument instrument, long note) {
+    public IPlayer addPlayer(Instrument instrument, long note) {
         logger.info("addPlayer() - instrument: {}, note: {}", instrument.getName(), note);
         return playerEngine.addPlayer(getTicker(), instrument, note, dbUtils.getTickerSaver(), dbUtils.getStrikeSaver(), dbUtils.getRuleSaver());
     }
 
-    private ITicker getTicker() {
+    private Ticker getTicker() {
         return getTickerService().getTicker();
     }
 
-    public Set<IRule> getRules(Long playerId) {
+    public Set<Rule> getRules(Long playerId) {
         logger.info("getRules() - playerId: {}", playerId);
         return dbUtils.findStrikeById(playerId).getRules();
     }
 
     static Random rand = new Random();
 
-    public IRule addRule(Long playerId, int operator, int comparison, double value, int part) {
+    public Rule addRule(Long playerId, int operator, int comparison, double value, int part) {
         logger.info("addRule() - playerId: {}, operator: {}, comparison: {}, value: {}, part: {}",
                 playerId, operator, comparison, value, part);
 
@@ -105,7 +101,7 @@ public class PlayerService {
                 dbUtils.getRuleSaver(), dbUtils.getStrikeSaver());
     }
 
-    public IRule addRule(Long playerId) {
+    public Rule addRule(Long playerId) {
         return playerEngine.addRule(getTicker(), getTicker().getPlayer(playerId),
                 dbUtils.getRuleSaver(),
                 dbUtils.getStrikeSaver());
@@ -125,7 +121,7 @@ public class PlayerService {
 
     }
 
-    public IRule getRule(Long ruleId) {
+    public Rule getRule(Long ruleId) {
         return dbUtils.findRuleById(ruleId);
     }
 

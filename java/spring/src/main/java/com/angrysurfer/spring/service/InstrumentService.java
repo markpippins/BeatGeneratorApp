@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.api.Database;
-import com.angrysurfer.core.api.IInstrument;
 import com.angrysurfer.core.engine.InstrumentEngine;
 import com.angrysurfer.core.model.midi.Instrument;
 
@@ -30,22 +29,22 @@ public class InstrumentService {
         this.instrumentEngine = new InstrumentEngine(dbUtils.getInstrumentFindAll());
     }
 
-    public IInstrument save(Instrument instrument) {
+    public Instrument save(Instrument instrument) {
         logger.info("save");
         return dbUtils.getInstrumentSaver().save(instrument);
     }
 
-    public List<IInstrument> getAllInstruments() {
+    public List<Instrument> getAllInstruments() {
         logger.info("getAllInstruments");
         return instrumentEngine.getInstrumentList();
     }
 
-    public List<IInstrument> getInstrumentByChannel(int channel) {
+    public List<Instrument> getInstrumentByChannel(int channel) {
         logger.info(String.format("getInstrumentByChannel(%s)", channel));
         return instrumentEngine.getInstrumentByChannel(channel);
     }
 
-    public IInstrument getInstrumentById(Long id) {
+    public Instrument getInstrumentById(Long id) {
         logger.info(String.format("getInstrumentById(%s)", id));
         return instrumentEngine.getInstrumentById(id);
     }
@@ -55,7 +54,7 @@ public class InstrumentService {
         return instrumentEngine.getInstrumentNames();
     }
 
-    public IInstrument findByName(String instrumentName) {
+    public Instrument findByName(String instrumentName) {
         return instrumentEngine.findByName(instrumentName);
     }
 

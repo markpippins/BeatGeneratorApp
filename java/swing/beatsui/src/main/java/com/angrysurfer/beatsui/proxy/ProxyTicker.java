@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -23,13 +23,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Ticker implements Serializable {
+public class ProxyTicker implements Serializable {
 
     private Long id;
 
     @JsonIgnore
     @Transient
-    static Logger logger = LoggerFactory.getLogger(Ticker.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(ProxyTicker.class.getCanonicalName());
 
     @JsonIgnore
     @Transient
@@ -37,11 +37,11 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
-    private Set<IPlayer> addList = new HashSet<>();
+    private Set<IProxyPlayer> addList = new HashSet<>();
 
     @JsonIgnore
     @Transient
-    private Set<IPlayer> removeList = new HashSet<>();
+    private Set<IProxyPlayer> removeList = new HashSet<>();
 
     @JsonIgnore
     @Transient
@@ -79,7 +79,7 @@ public class Ticker implements Serializable {
     private boolean done = false;
 
     @JsonIgnore
-    private transient Set<IPlayer> players = new HashSet<>();
+    private transient Set<IProxyPlayer> players = new HashSet<>();
 
     @Transient
     Set<Long> activePlayerIds = new HashSet<>();
@@ -105,13 +105,13 @@ public class Ticker implements Serializable {
 
     @Transient
     @JsonIgnore
-    private Set<MuteGroup> muteGroups = new HashSet<>();
+    private Set<ProxyMuteGroup> muteGroups = new HashSet<>();
 
-    public Ticker() {
+    public ProxyTicker() {
         setSongLength(Long.MAX_VALUE);
     }
 
-    public Ticker(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, long partLength) {
+    public ProxyTicker(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, long partLength) {
         this.tempoInBPM = tempoInBPM;
         this.bars = bars;
         this.beatsPerBar = beatsPerBar;
@@ -120,7 +120,7 @@ public class Ticker implements Serializable {
         this.partLength = partLength;
     }
 
-    public IPlayer getPlayer(Long playerId) {
+    public IProxyPlayer getPlayer(Long playerId) {
         logger.info("getPlayer() - playerId: {}", playerId);
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }

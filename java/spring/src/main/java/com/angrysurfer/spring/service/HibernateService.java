@@ -6,16 +6,6 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.api.Database;
-import com.angrysurfer.core.api.ICaption;
-import com.angrysurfer.core.api.IControlCode;
-import com.angrysurfer.core.api.IInstrument;
-import com.angrysurfer.core.api.IPad;
-import com.angrysurfer.core.api.IPattern;
-import com.angrysurfer.core.api.IPlayer;
-import com.angrysurfer.core.api.IRule;
-import com.angrysurfer.core.api.ISong;
-import com.angrysurfer.core.api.IStep;
-import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.api.db.Delete;
 import com.angrysurfer.core.api.db.FindAll;
 import com.angrysurfer.core.api.db.FindOne;
@@ -25,9 +15,16 @@ import com.angrysurfer.core.api.db.Min;
 import com.angrysurfer.core.api.db.Next;
 import com.angrysurfer.core.api.db.Prior;
 import com.angrysurfer.core.api.db.Save;
-// import com.angrysurfer.core.IDBService;
+
 import com.angrysurfer.core.model.Pad;
+import com.angrysurfer.core.model.Pattern;
+import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.Song;
+import com.angrysurfer.core.model.Step;
+import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.midi.ControlCode;
 import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.player.IPlayer;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.model.ui.Caption;
 import com.angrysurfer.spring.repo.Captions;
@@ -83,80 +80,80 @@ public class HibernateService implements Database {
     };
 
     // Caption lambdas
-    private FindAll<ICaption> captionFindAll = () -> getCaptionRepository().findAll();
-    private FindOne<ICaption> captionFindOne = (Long id) -> getCaptionRepository().findById(id);
-    private Save<ICaption> captionSaver = (ICaption caption) -> getCaptionRepository().save(caption);
-    private Delete<ICaption> captionDeleter = (ICaption caption) -> getCaptionRepository().deleteById(caption.getId());
+    private FindAll<Caption> captionFindAll = () -> getCaptionRepository().findAll();
+    private FindOne<Caption> captionFindOne = (Long id) -> getCaptionRepository().findById(id);
+    private Save<Caption> captionSaver = (Caption caption) -> getCaptionRepository().save(caption);
+    private Delete<Caption> captionDeleter = (Caption caption) -> getCaptionRepository().deleteById(caption.getId());
 
     // ControlCode lambdas
-    private FindAll<IControlCode> controlCodeFindAll = () -> getControlCodeRepository().findAll();
-    private FindOne<IControlCode> controlCodeFindOne = (Long id) -> getControlCodeRepository().findById(id);
-    private Save<IControlCode> controlCodeSaver = (IControlCode c) -> getControlCodeRepository().save(c);
-    private Delete<IControlCode> controlCodeDeleter = (IControlCode c) -> getControlCodeRepository()
+    private FindAll<ControlCode> controlCodeFindAll = () -> getControlCodeRepository().findAll();
+    private FindOne<ControlCode> controlCodeFindOne = (Long id) -> getControlCodeRepository().findById(id);
+    private Save<ControlCode> controlCodeSaver = (ControlCode c) -> getControlCodeRepository().save(c);
+    private Delete<ControlCode> controlCodeDeleter = (ControlCode c) -> getControlCodeRepository()
             .deleteById(c.getId());
 
     // Instrument lambdas
-    private FindAll<IInstrument> instrumentFindAll = () -> getInstrumentRepository().findAll();
-    private FindOne<IInstrument> instrumentFindOne = (Long id) -> getInstrumentRepository().findById(id);
-    private Save<IInstrument> instrumentSaver = (IInstrument i) -> getInstrumentRepository().save(i);
-    private Delete<IInstrument> instrumentDeleter = (IInstrument i) -> getInstrumentRepository().deleteById(i.getId());
+    private FindAll<Instrument> instrumentFindAll = () -> getInstrumentRepository().findAll();
+    private FindOne<Instrument> instrumentFindOne = (Long id) -> getInstrumentRepository().findById(id);
+    private Save<Instrument> instrumentSaver = (Instrument i) -> getInstrumentRepository().save(i);
+    private Delete<Instrument> instrumentDeleter = (Instrument i) -> getInstrumentRepository().deleteById(i.getId());
 
     // Pad lambdas
-    private FindAll<IPad> padFindAll = () -> getPadRepository().findAll();
-    private FindOne<IPad> padFindOne = (Long id) -> getPadRepository().findById(id);
-    private Save<IPad> padSaver = (IPad p) -> getPadRepository().save(p);
-    private Delete<IPad> padDeleter = (IPad p) -> getPadRepository().deleteById(p.getId());
+    private FindAll<Pad> padFindAll = () -> getPadRepository().findAll();
+    private FindOne<Pad> padFindOne = (Long id) -> getPadRepository().findById(id);
+    private Save<Pad> padSaver = (Pad p) -> getPadRepository().save(p);
+    private Delete<Pad> padDeleter = (Pad p) -> getPadRepository().deleteById(p.getId());
 
     // Pattern lambdas
-    private FindAll<IPattern> patternFindAll = () -> getPatternRepository().findAll();
-    private FindOne<IPattern> patternFindOne = (Long id) -> getPatternRepository().findById(id);
-    private FindSet<IPattern> songPatternFinder = (Long id) -> getPatternRepository().findBySongId(id);
-    private Save<IPattern> patternSaver = (IPattern p) -> getPatternRepository().save(p);
-    private Delete<IPattern> patternDeleter = (IPattern p) -> getPatternRepository().deleteById(p.getId());
+    private FindAll<Pattern> patternFindAll = () -> getPatternRepository().findAll();
+    private FindOne<Pattern> patternFindOne = (Long id) -> getPatternRepository().findById(id);
+    private FindSet<Pattern> songPatternFinder = (Long id) -> getPatternRepository().findBySongId(id);
+    private Save<Pattern> patternSaver = (Pattern p) -> getPatternRepository().save(p);
+    private Delete<Pattern> patternDeleter = (Pattern p) -> getPatternRepository().deleteById(p.getId());
 
     // Rule lambdas
-    private FindAll<IRule> ruleFindAll = () -> getRuleRepository().findAll();
-    private FindOne<IRule> ruleFindOne = (Long id) -> getRuleRepository().findById(id);
-    private FindSet<IRule> playerRuleFindSet = (Long playerId) -> getRuleRepository().findByPlayerId(playerId);
-    private Save<IRule> ruleSaver = (IRule r) -> getRuleRepository().save(r);
-    private Delete<IRule> ruleDeleter = (IRule r) -> getRuleRepository().deleteById(r.getId());
+    private FindAll<Rule> ruleFindAll = () -> getRuleRepository().findAll();
+    private FindOne<Rule> ruleFindOne = (Long id) -> getRuleRepository().findById(id);
+    private FindSet<Rule> playerRuleFindSet = (Long playerId) -> getRuleRepository().findByPlayerId(playerId);
+    private Save<Rule> ruleSaver = (Rule r) -> getRuleRepository().save(r);
+    private Delete<Rule> ruleDeleter = (Rule r) -> getRuleRepository().deleteById(r.getId());
 
     // Song lambdas
-    private FindAll<ISong> songFindAll = () -> getSongRepository().findAll();
-    private FindOne<ISong> songFindOne = (Long id) -> getSongRepository().findById(id);
-    private Save<ISong> songSaver = (ISong s) -> getSongRepository().save(s);
-    private Delete<ISong> songDeleter = (ISong s) -> getSongRepository().deleteById(s.getId());
-    private Next<ISong> songForward = (Long id) -> getSongRepository().count() > 0 ? getSongRepository().getNextSong(id)
+    private FindAll<Song> songFindAll = () -> getSongRepository().findAll();
+    private FindOne<Song> songFindOne = (Long id) -> getSongRepository().findById(id);
+    private Save<Song> songSaver = (Song s) -> getSongRepository().save(s);
+    private Delete<Song> songDeleter = (Song s) -> getSongRepository().deleteById(s.getId());
+    private Next<Song> songForward = (Long id) -> getSongRepository().count() > 0 ? getSongRepository().getNextSong(id)
             : null;
-    private Prior<ISong> songBack = (
+    private Prior<Song> songBack = (
             Long id) -> getSongRepository().count() > 0 ? getSongRepository().getPreviousSong(id) : null;
 
-    private Max<ISong> songMax = () -> getSongRepository().count() > 0 ? getSongRepository().getMaximumSongId() : -1;
-    private Min<ISong> songMin = () -> getSongRepository().count() > 0 ? getSongRepository().getMinimumSongId() : -1;
+    private Max<Song> songMax = () -> getSongRepository().count() > 0 ? getSongRepository().getMaximumSongId() : -1;
+    private Min<Song> songMin = () -> getSongRepository().count() > 0 ? getSongRepository().getMinimumSongId() : -1;
 
     // Step lambdas
-    private FindAll<IStep> stepFindAll = () -> getStepDataRepository().findAll();
-    private FindOne<IStep> stepFindOne = (Long id) -> getStepDataRepository().findById(id);
-    private FindSet<IStep> patternStepFinder = (Long id) -> getStepDataRepository().findByPatternId(id);
-    private Save<IStep> stepSaver = (IStep s) -> getStepDataRepository().save(s);
-    private Delete<IStep> stepDeleter = (IStep s) -> getStepDataRepository().deleteById(s.getId());
+    private FindAll<Step> stepFindAll = () -> getStepDataRepository().findAll();
+    private FindOne<Step> stepFindOne = (Long id) -> getStepDataRepository().findById(id);
+    private FindSet<Step> patternStepFinder = (Long id) -> getStepDataRepository().findByPatternId(id);
+    private Save<Step> stepSaver = (Step s) -> getStepDataRepository().save(s);
+    private Delete<Step> stepDeleter = (Step s) -> getStepDataRepository().deleteById(s.getId());
 
     // Strike lambdas
-    private FindAll<IPlayer> strikeFindAll = () -> getStrikeRepository().findAll();
-    private FindOne<IPlayer> strikeFindOne = (Long id) -> getStrikeRepository().findById(id);
-    private FindSet<IPlayer> tickerStrikeFinder = (Long id) -> getStrikeRepository().findByTickerId(id);
+    private FindAll<Strike> strikeFindAll = () -> getStrikeRepository().findAll();
+    private FindOne<Strike> strikeFindOne = (Long id) -> getStrikeRepository().findById(id);
+    private FindSet<Strike> tickerStrikeFinder = (Long id) -> getStrikeRepository().findByTickerId(id);
     private Save<IPlayer> strikeSaver = (IPlayer s) -> getStrikeRepository().save((Strike) s);
     private Delete<IPlayer> strikeDeleter = (IPlayer s) -> getStrikeRepository().deleteById(s.getId());
 
     // Ticker lambdas
-    private FindAll<ITicker> tickerFindAll = () -> getTickerRepo().findAll();
-    private FindOne<ITicker> tickerFindOne = (Long id) -> getTickerRepo().findById(id);
-    private Save<ITicker> tickerSaver = (ITicker t) -> getTickerRepo().save(t);
-    private Delete<ITicker> tickerDeleter = (ITicker t) -> getTickerRepo().deleteById(t.getId());
-    private Next<ITicker> tickerForward = (Long id) -> getTickerRepo().getNextTicker(id);
-    private Prior<ITicker> tickerBack = (Long id) -> getTickerRepo().getPreviousTicker(id);
-    private Max<ITicker> tickerMax = () -> getTickerRepo().count() > 0 ? getTickerRepo().getMaximumTickerId() : -1;
-    private Min<ITicker> tickerMin = () -> getTickerRepo().count() > 0 ? getTickerRepo().getMinimumTickerId() : -1;
+    private FindAll<Ticker> tickerFindAll = () -> getTickerRepo().findAll();
+    private FindOne<Ticker> tickerFindOne = (Long id) -> getTickerRepo().findById(id);
+    private Save<Ticker> tickerSaver = (Ticker t) -> getTickerRepo().save(t);
+    private Delete<Ticker> tickerDeleter = (Ticker t) -> getTickerRepo().deleteById(t.getId());
+    private Next<Ticker> tickerForward = (Long id) -> getTickerRepo().getNextTicker(id);
+    private Prior<Ticker> tickerBack = (Long id) -> getTickerRepo().getPreviousTicker(id);
+    private Max<Ticker> tickerMax = () -> getTickerRepo().count() > 0 ? getTickerRepo().getMaximumTickerId() : -1;
+    private Min<Ticker> tickerMin = () -> getTickerRepo().count() > 0 ? getTickerRepo().getMinimumTickerId() : -1;
 
     public void clearDatabase() {
         strikeRepository.deleteAll();
@@ -168,15 +165,15 @@ public class HibernateService implements Database {
 
     // Caption related public methods
 
-    public ICaption findCaptionById(Long id) {
+    public Caption findCaptionById(Long id) {
         return captionFindOne.find(id).orElse(null);
     }
 
-    public List<ICaption> findAllCaptions() {
+    public List<Caption> findAllCaptions() {
         return captionFindAll.findAll();
     }
 
-    public ICaption saveCaption(Caption caption) {
+    public Caption saveCaption(Caption caption) {
         return captionSaver.save(caption);
     }
 
@@ -186,33 +183,33 @@ public class HibernateService implements Database {
 
     // ControlCode related public methods
 
-    public IControlCode findControlCodeById(Long id) {
+    public ControlCode findControlCodeById(Long id) {
         return controlCodeFindOne.find(id).orElse(null);
     }
 
-    public List<IControlCode> findAllControlCodes() {
+    public List<ControlCode> findAllControlCodes() {
         return controlCodeFindAll.findAll();
     }
 
-    public IControlCode saveControlCode(IControlCode controlCode) {
+    public ControlCode saveControlCode(ControlCode controlCode) {
         return controlCodeSaver.save(controlCode);
     }
 
-    public void deleteControlCode(IControlCode controlCode) {
+    public void deleteControlCode(ControlCode controlCode) {
         controlCodeDeleter.delete(controlCode);
     }
 
     // Instrument related public methods
 
-    public IInstrument findInstrumentById(Long id) {
+    public Instrument findInstrumentById(Long id) {
         return instrumentFindOne.find(id).orElse(null);
     }
 
-    public List<IInstrument> findAllInstruments() {
+    public List<Instrument> findAllInstruments() {
         return instrumentFindAll.findAll();
     }
 
-    public IInstrument saveInstrument(Instrument instrument) {
+    public Instrument saveInstrument(Instrument instrument) {
         return instrumentSaver.save(instrument);
     }
 
@@ -222,15 +219,15 @@ public class HibernateService implements Database {
 
     // Pad related public methods
 
-    public IPad findPadById(Long id) {
+    public Pad findPadById(Long id) {
         return padFindOne.find(id).orElse(null);
     }
 
-    public List<IPad> findAllPads() {
+    public List<Pad> findAllPads() {
         return padFindAll.findAll();
     }
 
-    public IPad savePad(Pad pad) {
+    public Pad savePad(Pad pad) {
         return padSaver.save(pad);
     }
 
@@ -240,67 +237,67 @@ public class HibernateService implements Database {
 
     // Pattern related public methods
 
-    public IPattern findPatternById(Long id) {
+    public Pattern findPatternById(Long id) {
         return patternFindOne.find(id).orElse(null);
     }
 
-    public Set<IPattern> findPatternBySongId(Long id) {
+    public Set<Pattern> findPatternBySongId(Long id) {
         return songPatternFinder.find(id);
     }
 
-    public List<IPattern> findAllPatterns() {
+    public List<Pattern> findAllPatterns() {
         return patternFindAll.findAll();
     }
 
-    public IPattern savePattern(IPattern pattern) {
+    public Pattern savePattern(Pattern pattern) {
         return patternSaver.save(pattern);
     }
 
-    public void deletePattern(IPattern pattern) {
+    public void deletePattern(Pattern pattern) {
         patternDeleter.delete(pattern);
     }
 
     // Rule related public methods
 
-    public IRule findRuleById(Long id) {
+    public Rule findRuleById(Long id) {
         return ruleFindOne.find(id).orElse(null);
     }
 
-    public Set<IRule> findRulesByPlayerId(Long playerId) {
+    public Set<Rule> findRulesByPlayerId(Long playerId) {
         return playerRuleFindSet.find(playerId);
     }
 
-    public IRule saveRule(IRule rule) {
+    public Rule saveRule(Rule rule) {
         return ruleSaver.save(rule);
     }
 
-    public void deleteRule(IRule rule) {
+    public void deleteRule(Rule rule) {
         ruleDeleter.delete(rule);
     }
 
     // Song related public methods
 
-    public ISong findSongById(Long id) {
+    public Song findSongById(Long id) {
         return songFindOne.find(id).orElse(null);
     }
 
-    public List<ISong> findAllSongs() {
+    public List<Song> findAllSongs() {
         return songFindAll.findAll();
     }
 
-    public ISong saveSong(ISong song) {
+    public Song saveSong(Song song) {
         return songSaver.save(song);
     }
 
-    public void deleteSong(ISong song) {
+    public void deleteSong(Song song) {
         songDeleter.delete(song);
     }
 
-    public ISong getNextSong(long currentSongId) {
+    public Song getNextSong(long currentSongId) {
         return songForward.next(currentSongId);
     }
 
-    public ISong getPreviousSong(long currentSongId) {
+    public Song getPreviousSong(long currentSongId) {
         return songBack.prior(currentSongId);
     }
 
@@ -314,29 +311,29 @@ public class HibernateService implements Database {
 
     // Step related public methods
 
-    public IStep findStepById(Long id) {
+    public Step findStepById(Long id) {
         return stepFindOne.find(id).orElse(null);
     }
 
-    public Set<IStep> findStepsByPatternId(Long id) {
+    public Set<Step> findStepsByPatternId(Long id) {
         return patternStepFinder.find(id);
     }
 
-    public IStep saveStep(IStep step) {
+    public Step saveStep(Step step) {
         return stepSaver.save(step);
     }
 
-    public void deleteStep(IStep step) {
+    public void deleteStep(Step step) {
         stepDeleter.delete(step);
     }
 
     // Strike related public methods
 
-    public IPlayer findStrikeById(Long id) {
+    public Strike findStrikeById(Long id) {
         return strikeFindOne.find(id).orElse(null);
     }
 
-    public Set<IPlayer> strikesForTicker(Long tickerId) {
+    public Set<Strike> strikesForTicker(Long tickerId) {
         return tickerStrikeFinder.find(tickerId);
     }
 
@@ -356,15 +353,15 @@ public class HibernateService implements Database {
 
     // Ticker related public methods
 
-    public ITicker findTickerById(Long id) {
+    public Ticker findTickerById(Long id) {
         return tickerFindOne.find(id).orElse(null);
     }
 
-    public List<ITicker> findAllTickers() {
+    public List<Ticker> findAllTickers() {
         return tickerFindAll.findAll();
     }
 
-    public ITicker saveTicker(ITicker ticker) {
+    public Ticker saveTicker(Ticker ticker) {
         return tickerSaver.save(ticker);
     }
 

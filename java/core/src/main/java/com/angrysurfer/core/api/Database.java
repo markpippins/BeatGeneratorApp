@@ -13,318 +13,326 @@ import com.angrysurfer.core.api.db.Next;
 import com.angrysurfer.core.api.db.Prior;
 import com.angrysurfer.core.api.db.Save;
 import com.angrysurfer.core.model.Pad;
+import com.angrysurfer.core.model.Pattern;
+import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.Song;
+import com.angrysurfer.core.model.Step;
+import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.midi.ControlCode;
 import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.model.ui.Caption;
 
 public interface Database {
 
-    FindAll<ICaption> getCaptionFindAll();
+    FindAll<Caption> getCaptionFindAll();
 
-    FindOne<ICaption> getCaptionFindOne();
+    FindOne<Caption> getCaptionFindOne();
 
-    Save<ICaption> getCaptionSaver();
+    Save<Caption> getCaptionSaver();
 
-    Delete<ICaption> getCaptionDeleter();
+    Delete<Caption> getCaptionDeleter();
 
-    FindAll<IControlCode> getControlCodeFindAll();
+    FindAll<ControlCode> getControlCodeFindAll();
 
-    FindOne<IControlCode> getControlCodeFindOne();
+    FindOne<ControlCode> getControlCodeFindOne();
 
-    Save<IControlCode> getControlCodeSaver();
+    Save<ControlCode> getControlCodeSaver();
 
-    Delete<IControlCode> getControlCodeDeleter();
+    Delete<ControlCode> getControlCodeDeleter();
 
-    FindAll<IInstrument> getInstrumentFindAll();
+    FindAll<Instrument> getInstrumentFindAll();
 
-    FindOne<IInstrument> getInstrumentFindOne();
+    FindOne<Instrument> getInstrumentFindOne();
 
-    Save<IInstrument> getInstrumentSaver();
+    Save<Instrument> getInstrumentSaver();
 
-    Delete<IInstrument> getInstrumentDeleter();
+    Delete<Instrument> getInstrumentDeleter();
 
-    FindAll<IPad> getPadFindAll();
+    FindAll<Pad> getPadFindAll();
 
-    FindOne<IPad> getPadFindOne();
+    FindOne<Pad> getPadFindOne();
 
-    Save<IPad> getPadSaver();
+    Save<Pad> getPadSaver();
 
-    Delete<IPad> getPadDeleter();
+    Delete<Pad> getPadDeleter();
 
-    FindAll<IPattern> getPatternFindAll();
+    FindAll<Pattern> getPatternFindAll();
 
-    FindOne<IPattern> getPatternFindOne();
+    FindOne<Pattern> getPatternFindOne();
 
-    FindSet<IPattern> getSongPatternFinder();
+    FindSet<Pattern> getSongPatternFinder();
 
-    Save<IPattern> getPatternSaver();
+    Save<Pattern> getPatternSaver();
 
-    Delete<IPattern> getPatternDeleter();
+    Delete<Pattern> getPatternDeleter();
 
-    FindAll<IRule> getRuleFindAll();
+    FindAll<Rule> getRuleFindAll();
 
-    FindOne<IRule> getRuleFindOne();
+    FindOne<Rule> getRuleFindOne();
 
-    FindSet<IRule> getPlayerRuleFindSet();
+    FindSet<Rule> getPlayerRuleFindSet();
 
-    Save<IRule> getRuleSaver();
+    Save<Rule> getRuleSaver();
 
-    Delete<IRule> getRuleDeleter();
+    Delete<Rule> getRuleDeleter();
 
-    FindAll<ISong> getSongFindAll();
+    FindAll<Song> getSongFindAll();
 
-    FindOne<ISong> getSongFindOne();
+    FindOne<Song> getSongFindOne();
 
-    Save<ISong> getSongSaver();
+    Save<Song> getSongSaver();
 
-    Delete<ISong> getSongDeleter();
+    Delete<Song> getSongDeleter();
 
-    Next<ISong> getSongForward();
+    Next<Song> getSongForward();
 
-    Prior<ISong> getSongBack();
+    Prior<Song> getSongBack();
 
-    Max<ISong> getSongMax();
+    Max<Song> getSongMax();
 
-    Min<ISong> getSongMin();
+    Min<Song> getSongMin();
 
-    FindAll<IStep> getStepFindAll();
+    FindAll<Step> getStepFindAll();
 
-    FindOne<IStep> getStepFindOne();
+    FindOne<Step> getStepFindOne();
 
-    FindSet<IStep> getPatternStepFinder();
+    FindSet<Step> getPatternStepFinder();
 
-    Save<IStep> getStepSaver();
+    Save<Step> getStepSaver();
 
-    Delete<IStep> getStepDeleter();
+    Delete<Step> getStepDeleter();
 
-    FindAll<IPlayer> getStrikeFindAll();
+    FindAll<Strike> getStrikeFindAll();
 
-    FindOne<IPlayer> getStrikeFindOne();
+    FindOne<Strike> getStrikeFindOne();
 
-    FindSet<IPlayer> getTickerStrikeFinder();
+    FindSet<Strike> getTickerStrikeFinder();
 
     Save<IPlayer> getStrikeSaver();
 
     Delete<IPlayer> getStrikeDeleter();
 
-    FindAll<ITicker> getTickerFindAll();
+    FindAll<Ticker> getTickerFindAll();
 
-    FindOne<ITicker> getTickerFindOne();
+    FindOne<Ticker> getTickerFindOne();
 
-    Save<ITicker> getTickerSaver();
+    Save<Ticker> getTickerSaver();
 
-    Delete<ITicker> getTickerDeleter();
+    Delete<Ticker> getTickerDeleter();
 
-    Next<ITicker> getTickerForward();
+    Next<Ticker> getTickerForward();
 
-    Prior<ITicker> getTickerBack();
+    Prior<Ticker> getTickerBack();
 
-    Max<ITicker> getTickerMax();
+    Max<Ticker> getTickerMax();
 
-    Min<ITicker> getTickerMin();
+    Min<Ticker> getTickerMin();
 
-    void setCaptionFindAll(FindAll<ICaption> captionFindAll);
+    void setCaptionFindAll(FindAll<Caption> captionFindAll);
 
-    void setCaptionFindOne(FindOne<ICaption> captionFindOne);
+    void setCaptionFindOne(FindOne<Caption> captionFindOne);
 
-    void setCaptionSaver(Save<ICaption> captionSaver);
+    void setCaptionSaver(Save<Caption> captionSaver);
 
-    void setCaptionDeleter(Delete<ICaption> captionDeleter);
+    void setCaptionDeleter(Delete<Caption> captionDeleter);
 
-    void setControlCodeFindAll(FindAll<IControlCode> controlCodeFindAll);
+    void setControlCodeFindAll(FindAll<ControlCode> controlCodeFindAll);
 
-    void setControlCodeFindOne(FindOne<IControlCode> controlCodeFindOne);
+    void setControlCodeFindOne(FindOne<ControlCode> controlCodeFindOne);
 
-    void setControlCodeSaver(Save<IControlCode> controlCodeSaver);
+    void setControlCodeSaver(Save<ControlCode> controlCodeSaver);
 
-    void setControlCodeDeleter(Delete<IControlCode> controlCodeDeleter);
+    void setControlCodeDeleter(Delete<ControlCode> controlCodeDeleter);
 
-    void setInstrumentFindAll(FindAll<IInstrument> instrumentFindAll);
+    void setInstrumentFindAll(FindAll<Instrument> instrumentFindAll);
 
-    void setInstrumentFindOne(FindOne<IInstrument> instrumentFindOne);
+    void setInstrumentFindOne(FindOne<Instrument> instrumentFindOne);
 
-    void setInstrumentSaver(Save<IInstrument> instrumentSaver);
+    void setInstrumentSaver(Save<Instrument> instrumentSaver);
 
-    void setInstrumentDeleter(Delete<IInstrument> instrumentDeleter);
+    void setInstrumentDeleter(Delete<Instrument> instrumentDeleter);
 
-    void setPadFindAll(FindAll<IPad> padFindAll);
+    void setPadFindAll(FindAll<Pad> padFindAll);
 
-    void setPadFindOne(FindOne<IPad> padFindOne);
+    void setPadFindOne(FindOne<Pad> padFindOne);
 
-    void setPadSaver(Save<IPad> padSaver);
+    void setPadSaver(Save<Pad> padSaver);
 
-    void setPadDeleter(Delete<IPad> padDeleter);
+    void setPadDeleter(Delete<Pad> padDeleter);
 
-    void setPatternFindAll(FindAll<IPattern> patternFindAll);
+    void setPatternFindAll(FindAll<Pattern> patternFindAll);
 
-    void setPatternFindOne(FindOne<IPattern> patternFindOne);
+    void setPatternFindOne(FindOne<Pattern> patternFindOne);
 
-    void setSongPatternFinder(FindSet<IPattern> songPatternFinder);
+    void setSongPatternFinder(FindSet<Pattern> songPatternFinder);
 
-    void setPatternSaver(Save<IPattern> patternSaver);
+    void setPatternSaver(Save<Pattern> patternSaver);
 
-    void setPatternDeleter(Delete<IPattern> patternDeleter);
+    void setPatternDeleter(Delete<Pattern> patternDeleter);
 
-    void setRuleFindAll(FindAll<IRule> ruleFindAll);
+    void setRuleFindAll(FindAll<Rule> ruleFindAll);
 
-    void setRuleFindOne(FindOne<IRule> ruleFindOne);
+    void setRuleFindOne(FindOne<Rule> ruleFindOne);
 
-    void setPlayerRuleFindSet(FindSet<IRule> playerRuleFindSet);
+    void setPlayerRuleFindSet(FindSet<Rule> playerRuleFindSet);
 
-    void setRuleSaver(Save<IRule> ruleSaver);
+    void setRuleSaver(Save<Rule> ruleSaver);
 
-    void setRuleDeleter(Delete<IRule> ruleDeleter);
+    void setRuleDeleter(Delete<Rule> ruleDeleter);
 
-    void setSongFindAll(FindAll<ISong> songFindAll);
+    void setSongFindAll(FindAll<Song> songFindAll);
 
-    void setSongFindOne(FindOne<ISong> songFindOne);
+    void setSongFindOne(FindOne<Song> songFindOne);
 
-    void setSongSaver(Save<ISong> songSaver);
+    void setSongSaver(Save<Song> songSaver);
 
-    void setSongDeleter(Delete<ISong> songDeleter);
+    void setSongDeleter(Delete<Song> songDeleter);
 
-    void setSongForward(Next<ISong> songForward);
+    void setSongForward(Next<Song> songForward);
 
-    void setSongBack(Prior<ISong> songBack);
+    void setSongBack(Prior<Song> songBack);
 
-    void setSongMax(Max<ISong> songMax);
+    void setSongMax(Max<Song> songMax);
 
-    void setSongMin(Min<ISong> songMin);
+    void setSongMin(Min<Song> songMin);
 
-    void setStepFindAll(FindAll<IStep> stepFindAll);
+    void setStepFindAll(FindAll<Step> stepFindAll);
 
-    void setStepFindOne(FindOne<IStep> stepFindOne);
+    void setStepFindOne(FindOne<Step> stepFindOne);
 
-    void setPatternStepFinder(FindSet<IStep> patternStepFinder);
+    void setPatternStepFinder(FindSet<Step> patternStepFinder);
 
-    void setStepSaver(Save<IStep> stepSaver);
+    void setStepSaver(Save<Step> stepSaver);
 
-    void setStepDeleter(Delete<IStep> stepDeleter);
+    void setStepDeleter(Delete<Step> stepDeleter);
 
-    void setStrikeFindAll(FindAll<IPlayer> strikeFindAll);
+    void setStrikeFindAll(FindAll<Strike> strikeFindAll);
 
-    void setStrikeFindOne(FindOne<IPlayer> strikeFindOne);
+    void setStrikeFindOne(FindOne<Strike> strikeFindOne);
 
-    void setTickerStrikeFinder(FindSet<IPlayer> tickerStrikeFinder);
+    void setTickerStrikeFinder(FindSet<Strike> tickerStrikeFinder);
 
     void setStrikeSaver(Save<IPlayer> strikeSaver);
 
     void setStrikeDeleter(Delete<IPlayer> strikeDeleter);
 
-    void setTickerFindAll(FindAll<ITicker> tickerFindAll);
+    void setTickerFindAll(FindAll<Ticker> tickerFindAll);
 
-    void setTickerFindOne(FindOne<ITicker> tickerFindOne);
+    void setTickerFindOne(FindOne<Ticker> tickerFindOne);
 
-    void setTickerSaver(Save<ITicker> tickerSaver);
+    void setTickerSaver(Save<Ticker> tickerSaver);
 
-    void setTickerDeleter(Delete<ITicker> tickerDeleter);
+    void setTickerDeleter(Delete<Ticker> tickerDeleter);
 
-    void setTickerForward(Next<ITicker> tickerForward);
+    void setTickerForward(Next<Ticker> tickerForward);
 
-    void setTickerBack(Prior<ITicker> tickerBack);
+    void setTickerBack(Prior<Ticker> tickerBack);
 
-    void setTickerMax(Max<ITicker> tickerMax);
+    void setTickerMax(Max<Ticker> tickerMax);
 
-    void setTickerMin(Min<ITicker> tickerMin);
+    void setTickerMin(Min<Ticker> tickerMin);
 
     void clearDatabase();
 
     // Caption related public methods
-    ICaption findCaptionById(Long id);
+    Caption findCaptionById(Long id);
 
-    List<ICaption> findAllCaptions();
+    List<Caption> findAllCaptions();
 
-    ICaption saveCaption(Caption caption);
+    Caption saveCaption(Caption caption);
 
     void deleteCaption(Caption caption);
 
     // ControlCode related public methods
-    IControlCode findControlCodeById(Long id);
+    ControlCode findControlCodeById(Long id);
 
-    List<IControlCode> findAllControlCodes();
+    List<ControlCode> findAllControlCodes();
 
-    IControlCode saveControlCode(IControlCode controlCode);
+    ControlCode saveControlCode(ControlCode controlCode);
 
-    void deleteControlCode(IControlCode controlCode);
+    void deleteControlCode(ControlCode controlCode);
 
     // Instrument related public methods
-    IInstrument findInstrumentById(Long id);
+    Instrument findInstrumentById(Long id);
 
-    List<IInstrument> findAllInstruments();
+    List<Instrument> findAllInstruments();
 
-    IInstrument saveInstrument(Instrument instrument);
+    Instrument saveInstrument(Instrument instrument);
 
     void deleteInstrument(Instrument instrument);
 
     // Pad related public methods
-    IPad findPadById(Long id);
+    Pad findPadById(Long id);
 
-    List<IPad> findAllPads();
+    List<Pad> findAllPads();
 
-    IPad savePad(Pad pad);
+    Pad savePad(Pad pad);
 
     void deletePad(Pad pad);
 
     // Pattern related public methods
-    IPattern findPatternById(Long id);
+    Pattern findPatternById(Long id);
 
-    Set<IPattern> findPatternBySongId(Long id);
+    Set<Pattern> findPatternBySongId(Long id);
 
-    List<IPattern> findAllPatterns();
+    List<Pattern> findAllPatterns();
 
-    IPattern savePattern(IPattern pattern);
+    Pattern savePattern(Pattern pattern);
 
-    void deletePattern(IPattern pattern);
+    void deletePattern(Pattern pattern);
 
     // Rule related public methods
-    IRule findRuleById(Long id);
+    Rule findRuleById(Long id);
 
-    Set<IRule> findRulesByPlayerId(Long playerId);
+    Set<Rule> findRulesByPlayerId(Long playerId);
 
-    IRule saveRule(IRule rule);
+    Rule saveRule(Rule rule);
 
-    void deleteRule(IRule rule);
+    void deleteRule(Rule rule);
 
     // Song related public methods
-    ISong findSongById(Long id);
+    Song findSongById(Long id);
 
-    List<ISong> findAllSongs();
+    List<Song> findAllSongs();
 
-    ISong saveSong(ISong song);
+    Song saveSong(Song song);
 
-    void deleteSong(ISong song);
+    void deleteSong(Song song);
 
-    ISong getNextSong(long currentSongId);
+    Song getNextSong(long currentSongId);
 
-    ISong getPreviousSong(long currentSongId);
+    Song getPreviousSong(long currentSongId);
 
     long getMinimumSongId();
 
     Long getMaximumSongId();
 
     // Step related public methods
-    IStep findStepById(Long id);
+    Step findStepById(Long id);
 
-    Set<IStep> findStepsByPatternId(Long id);
+    Set<Step> findStepsByPatternId(Long id);
 
-    IStep saveStep(IStep step);
+    Step saveStep(Step step);
 
-    void deleteStep(IStep step);
+    void deleteStep(Step step);
 
     // Strike related public methods
-    IPlayer findStrikeById(Long id);
+    Strike findStrikeById(Long id);
 
-    Set<IPlayer> strikesForTicker(Long tickerId);
+    Set<Strike> strikesForTicker(Long tickerId);
 
     IPlayer savePlayer(IPlayer player);
 
     void deletePlayer(IPlayer player);
 
     // Ticker related public methods
-    ITicker findTickerById(Long id);
+    Ticker findTickerById(Long id);
 
-    List<ITicker> findAllTickers();
+    List<Ticker> findAllTickers();
 
-    ITicker saveTicker(ITicker ticker);
+    Ticker saveTicker(Ticker ticker);
 
     void deleteTicker(Long id);
 

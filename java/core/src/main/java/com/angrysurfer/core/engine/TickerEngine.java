@@ -12,16 +12,15 @@ import javax.sound.midi.MidiUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.IInstrument;
-import com.angrysurfer.core.api.IPlayer;
-import com.angrysurfer.core.api.IRule;
-import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.api.db.FindOne;
 import com.angrysurfer.core.api.db.FindSet;
 import com.angrysurfer.core.api.db.Next;
 import com.angrysurfer.core.api.db.Prior;
 import com.angrysurfer.core.api.db.Save;
+import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.update.TickerUpdateType;
 
@@ -34,7 +33,7 @@ public class TickerEngine {
 
     static Logger logger = LoggerFactory.getLogger(TickerEngine.class.getCanonicalName());
 
-    private ITicker ticker;
+    private Ticker ticker;
     private ClockSource clockSource;
     private ArrayList<ClockSource> clocks = new ArrayList<>();
 
@@ -44,7 +43,7 @@ public class TickerEngine {
         setTicker(newTicker());
     }
 
-    public ITicker getNewTicker(Save<ITicker> tickerSaver) {
+    public Ticker getNewTicker(Save<Ticker> tickerSaver) {
 
         if (Objects.isNull(ticker)) {
             stopRunningClocks();
@@ -67,7 +66,7 @@ public class TickerEngine {
 
         getTicker().getPlayers().forEach(p -> {
 
-            IInstrument instrument = p.getInstrument();
+            Instrument instrument = p.getInstrument();
             if (Objects.nonNull(instrument)) {
                 Optional<MidiDevice> device = devices.stream()
                         .filter(d -> d.getDeviceInfo().getName().equals(instrument.getDeviceName())).findFirst();
@@ -99,7 +98,7 @@ public class TickerEngine {
 
     }
 
-    private ClockSource newClockSource(ITicker ticker) {
+    private ClockSource newClockSource(Ticker ticker) {
         stopRunningClocks();
         clockSource = new ClockSource(ticker);
         clocks.add(clockSource);
@@ -125,7 +124,7 @@ public class TickerEngine {
         stopRunningClocks();
     }
 
-    public ITicker updateTicker(ITicker ticker, int updateType, long updateValue) {
+    public Ticker updateTicker(Ticker ticker, int updateType, long updateValue) {
 
         switch (updateType) {
             case TickerUpdateType.PPQ:
@@ -170,13 +169,13 @@ public class TickerEngine {
         return ticker;
     }
 
-    public synchronized ITicker next(long currentTickerId, Long maxTickerId, Next<ITicker> tickerNav,
-            FindSet<IPlayer> tickerPlayerFinder, FindSet<IRule> playerRuleFinder, Save<ITicker> tickerSaver) {
+    public synchronized Ticker next(long currentTickerId, Long maxTickerId, Next<Ticker> tickerNav,
+            FindSet<Strike> tickerPlayerFinder, FindSet<Rule> playerRuleFinder, Save<Ticker> tickerSaver) {
 
         if (Objects.isNull(getTicker()))
             return tickerSaver.save(newTicker());
 
-        if ((maxTickerId > -1 && currentTickerId < maxTickerId) || getTicker().getPlayers().size() > 0) {
+        if ((maxTickerId > -1 && currentTickerId < maxTickerId )|| getTicker().getPlayers().size() > 0) {
 
             stopRunningClocks();
 
@@ -191,14 +190,15 @@ public class TickerEngine {
             ticker.getPlayers().forEach(p -> p.getRules().addAll(playerRuleFinder.find(p.getId())));
 
             newClockSource(ticker);
-        } else
+        }
+        else 
             setTicker(tickerSaver.save(newTicker()));
 
         return getTicker();
     }
 
-    public synchronized ITicker previous(long currentTickerId, Long minimumTickerId, Prior<ITicker> tickerNav,
-            FindSet<IPlayer> tickerStrikeFinder, FindSet<IRule> playerRuleFinder, Save<ITicker> tickerSaver) {
+    public synchronized Ticker previous(long currentTickerId, Long minimumTickerId, Prior<Ticker> tickerNav,
+            FindSet<Strike> tickerStrikeFinder, FindSet<Rule> playerRuleFinder, Save<Ticker> tickerSaver) {
 
         if (Objects.isNull(getTicker()))
             return tickerSaver.save(newTicker());
@@ -225,12 +225,12 @@ public class TickerEngine {
     // ticker.getPlayers().clear();
     // }
 
-    public ITicker loadTicker(long tickerId, FindOne<ITicker> tickerFindById) {
+    public Ticker loadTicker(long tickerId, FindOne<Ticker> tickerFindById) {
         stopRunningClocks();
         return tickerFindById.find(tickerId).orElseThrow();
     }
 
-    public ITicker newTicker() {
+    public Ticker newTicker() {
         stopRunningClocks();
         Ticker ticker = new Ticker();
         newClockSource(ticker);

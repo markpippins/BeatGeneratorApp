@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.model.Ticker;
 
 public class TickerTests {
@@ -21,7 +20,7 @@ public class TickerTests {
     public void whenTime_thenBarChanges() {
 
       AtomicInteger bar = new AtomicInteger(1);
-      ITicker ticker = new Ticker() {
+      Ticker ticker = new Ticker() {
         @Override
         public void onBarChange() {
             super.onBarChange();
@@ -50,7 +49,7 @@ public class TickerTests {
     @Test
     public void whenTime_thenPartChanges() {
 
-      ITicker ticker = new Ticker();
+      Ticker ticker = new Ticker();
 
       ticker.setParts(4);
       ticker.setBeatsPerBar(4);
@@ -96,7 +95,7 @@ public class TickerTests {
     @Test
     public void whenTime_thenPartCyclesBackToOne() {
 
-      ITicker ticker = new Ticker();
+      Ticker ticker = new Ticker();
 
       ticker.setBeatsPerBar(4);
       ticker.setTicksPerBeat(4);

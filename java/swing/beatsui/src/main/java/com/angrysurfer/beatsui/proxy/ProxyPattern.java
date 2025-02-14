@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -35,9 +35,9 @@ import lombok.Setter;
 @Setter
 @Table(name = "pattern")
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Pattern {
+public class ProxyPattern {
 
-    private static final Logger logger = LoggerFactory.getLogger(Pattern.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProxyPattern.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -106,15 +106,15 @@ public class Pattern {
     @JsonIgnore
     @ManyToOne()
     @JoinColumn(name = "song_id")
-    private Song song;
+    private ProxySong song;
 
     @OneToMany(mappedBy = "pattern", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Step> steps = new HashSet<>();
+    private Set<ProxyStep> steps = new HashSet<>();
 
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instrument_id")
-    private Instrument instrument;
+    private ProxyInstrument instrument;
 
     @JsonIgnore
     @Column(name = "step_cycler")
@@ -124,7 +124,7 @@ public class Pattern {
     @JsonIgnore
     private Cycler stepCycler = new Cycler();
 
-    public Pattern() {
+    public ProxyPattern() {
         logger.debug("Creating new Pattern");
     }
 

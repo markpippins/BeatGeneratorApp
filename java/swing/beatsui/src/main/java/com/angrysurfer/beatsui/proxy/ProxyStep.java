@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +21,9 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "step")
-public class Step {
+public class ProxyStep {
 
-    private static final Logger logger = LoggerFactory.getLogger(Step.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProxyStep.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -45,9 +45,9 @@ public class Step {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pattern_id")
-    private Pattern pattern;
+    private ProxyPattern pattern;
 
-    public Step() {
+    public ProxyStep() {
         logger.debug("Creating new Step");
     }
 

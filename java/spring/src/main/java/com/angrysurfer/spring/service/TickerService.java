@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.api.Database;
-import com.angrysurfer.core.api.ITicker;
 import com.angrysurfer.core.engine.TickerEngine;
 import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.util.ClockSource;
@@ -54,26 +53,26 @@ public class TickerService {
         return TickerStatus.from(engine.getTicker(), getSongService().getSong(), engine.getTicker().isRunning());
     }
 
-    public List<ITicker> getAllTickers() {
+    public List<Ticker> getAllTickers() {
         return dbUtils.findAllTickers();
     }
 
-    public ITicker getTicker() {
+    public Ticker getTicker() {
         return engine.getTicker();
     }
 
-    public ITicker updateTicker(Long tickerId, int updateType, long updateValue) {
+    public Ticker updateTicker(Long tickerId, int updateType, long updateValue) {
         return dbUtils.saveTicker(engine.updateTicker(dbUtils.findTickerById(tickerId), updateType, updateValue));
     }
 
-    public synchronized ITicker next(long currentTickerId) {
-        ITicker ticker = engine.next(currentTickerId, dbUtils.getMaximumTickerId(), dbUtils.getTickerForward(),
+    public synchronized Ticker next(long currentTickerId) {
+        Ticker ticker = engine.next(currentTickerId, dbUtils.getMaximumTickerId(), dbUtils.getTickerForward(),
                 dbUtils.getTickerStrikeFinder(), dbUtils.getPlayerRuleFindSet(), dbUtils.getTickerSaver());
 
             return ticker;
     }
 
-    public synchronized ITicker previous(long currentTickerId) {
+    public synchronized Ticker previous(long currentTickerId) {
         return engine.previous(currentTickerId, dbUtils.getMinimumTickerId(), dbUtils.getTickerBack(),
                 dbUtils.getTickerStrikeFinder(), dbUtils.getPlayerRuleFindSet(), dbUtils.getTickerSaver());
     }
@@ -83,7 +82,7 @@ public class TickerService {
         getTicker().getPlayers().clear();
     }
 
-    public ITicker loadTicker(long tickerId) {
+    public Ticker loadTicker(long tickerId) {
         return engine.loadTicker(tickerId, dbUtils.getTickerFindOne());
     }
 

@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.angrysurfer.core.api.ICaption;
-import com.angrysurfer.core.api.IControlCode;
 import com.angrysurfer.core.model.ui.Caption;
 
 import jakarta.persistence.Column;
@@ -24,7 +22,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "control_code")
-public class ControlCode implements Serializable, IControlCode {
+public class ControlCode implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
@@ -42,5 +40,5 @@ public class ControlCode implements Serializable, IControlCode {
             name = "control_code_caption",
             joinColumns = @JoinColumn(name = "caption_id"),
             inverseJoinColumns = @JoinColumn(name = "control_code_id"))
-    private Set<ICaption> captions = new HashSet<>();
+    private Set<Caption> captions = new HashSet<>();
 }

@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -20,7 +20,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "control_code")
-public class ControlCode implements Serializable {
+public class ProxyControlCode implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
@@ -35,12 +35,12 @@ public class ControlCode implements Serializable {
 
     @ManyToMany
     @JoinTable(name = "control_code_caption", joinColumns = @JoinColumn(name = "caption_id"), inverseJoinColumns = @JoinColumn(name = "control_code_id"))
-    private Set<Caption> captions = new HashSet<>();
+    private Set<ProxyCaption> captions = new HashSet<>();
 
     @Override
     public String toString() {
         return String.format("ControlCode{id=%d, name='%s', code=%d, bounds=[%d,%d], pad=%d, binary=%b, captions=%s}",
                 id, name, code, lowerBound, upperBound, pad, binary, 
-                captions.stream().map(Caption::toString).toList());
+                captions.stream().map(ProxyCaption::toString).toList());
     }
 }

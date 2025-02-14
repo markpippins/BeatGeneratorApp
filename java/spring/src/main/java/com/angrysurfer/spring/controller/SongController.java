@@ -4,9 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import com.angrysurfer.core.api.IPattern;
-import com.angrysurfer.core.api.ISong;
-import com.angrysurfer.core.api.IStep;
+import com.angrysurfer.core.model.Pattern;
+import com.angrysurfer.core.model.Song;
+import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.SongService;
 
@@ -30,23 +30,23 @@ public class SongController {
     }
 
     @GetMapping(path = "/steps/update")
-    public IStep updateStep(@RequestParam long stepId, @RequestParam int updateType, @RequestParam int updateValue) {
+    public Step updateStep(@RequestParam long stepId, @RequestParam int updateType, @RequestParam int updateValue) {
         return service.updateStep(stepId, updateType, updateValue);
     }
 
     @GetMapping(path = "/patterns/update")
-    public IPattern updatePatter(@RequestParam long patternId, @RequestParam int updateType,
+    public Pattern updatePatter(@RequestParam long patternId, @RequestParam int updateType,
             @RequestParam int updateValue) {
         return service.updatePattern(patternId, updateType, updateValue);
     }
 
     @GetMapping(path = Constants.SONG_INFO)
-    public ISong songInfo() {
+    public Song songInfo() {
         return service.getSongInfo();
     }
 
     @GetMapping(path = "/song/new")
-    public ISong newSong() {
+    public Song newSong() {
         if (requestsToLog.contains("new"))
             logger.info("/song/new");
         return service.newSong();
@@ -60,14 +60,14 @@ public class SongController {
     // }
 
     @GetMapping(path = Constants.NEXT_SONG)
-    public ISong next(@RequestParam long currentSongId) {
+    public Song next(@RequestParam long currentSongId) {
         if (requestsToLog.contains("next"))
             logger.info(Constants.NEXT_SONG);
         return service.next(currentSongId);
     }
 
     @GetMapping(path = Constants.PREV_SONG)
-    public ISong previous(@RequestParam long currentSongId) {
+    public Song previous(@RequestParam long currentSongId) {
         if (requestsToLog.contains("previous"))
             logger.info(Constants.PREV_SONG);
         return service.previous(currentSongId);

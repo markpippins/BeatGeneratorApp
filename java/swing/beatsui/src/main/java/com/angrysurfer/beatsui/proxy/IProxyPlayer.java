@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.util.List;
 import java.util.Set;
@@ -8,9 +8,9 @@ import java.util.concurrent.Callable;
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public interface IPlayer extends Callable<Boolean> {
+public interface IProxyPlayer extends Callable<Boolean> {
 
-    Set<Pad> getPads();
+    Set<ProxyPad> getPads();
 
     String getName();
 
@@ -90,17 +90,17 @@ public interface IPlayer extends Callable<Boolean> {
 
     Boolean getArmForNextTick();
 
-    Set<Rule> getRules();
+    Set<ProxyRule> getRules();
 
     List<Integer> getAllowedControlMessages();
 
-    Instrument getInstrument();
+    ProxyInstrument getInstrument();
 
-    Ticker getTicker();
+    ProxyTicker getTicker();
 
     Long getId();
 
-    void setPads(Set<Pad> pads);
+    void setPads(Set<ProxyPad> pads);
 
     void setName(String name);
 
@@ -186,12 +186,12 @@ public interface IPlayer extends Callable<Boolean> {
     @JsonIgnore
     void setArmForNextTick(Boolean armForNextTick);
 
-    void setRules(Set<Rule> rules);
+    void setRules(Set<ProxyRule> rules);
 
     void setAllowedControlMessages(List<Integer> allowedControlMessages);
 
     @JsonIgnore
-    void setTicker(Ticker ticker);
+    void setTicker(ProxyTicker ticker);
 
     void setId(Long id);
 
@@ -199,13 +199,13 @@ public interface IPlayer extends Callable<Boolean> {
 
     Long getSubPosition();
 
-    void setInstrument(Instrument instrument);
+    void setInstrument(ProxyInstrument instrument);
 
     void onTick(long tick, long bar);
 
     Long getInstrumentId();
 
-    Rule getRule(Long ruleId);
+    ProxyRule getRule(Long ruleId);
 
     void drumNoteOn(long note);
 

@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.mock;
+package com.angrysurfer.beatsui.proxy;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -6,7 +6,6 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.IPlayer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Getter;
@@ -14,8 +13,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Rule implements Serializable {
-    private static final Logger logger = LoggerFactory.getLogger(Rule.class);
+public class ProxyRule implements Serializable {
+    private static final Logger logger = LoggerFactory.getLogger(ProxyRule.class);
 
     private Long id;
     private Long playerId;
@@ -31,7 +30,7 @@ public class Rule implements Serializable {
     private transient boolean unsaved = false;
 
     @JsonIgnore
-    private transient IPlayer player;
+    private transient IProxyPlayer player;
 
     // Update COMPARISONS array to match Comparison interface
     public static final String[] COMPARISONS = {
@@ -44,11 +43,11 @@ public class Rule implements Serializable {
             "Tick Count", "Beat Count", "Bar Count", "Part Count"
     };
 
-    public Rule() {
+    public ProxyRule() {
 
     }
 
-    public Rule(int operator, int comparison, Double value, int part) {
+    public ProxyRule(int operator, int comparison, Double value, int part) {
         logger.debug("Creating new Rule - operator: {}, comparison: {}, value: {}, part: {}",
                 operator, comparison, value, part);
         setOperator(operator);
@@ -57,12 +56,12 @@ public class Rule implements Serializable {
         setPart(part);
     }
 
-    public Rule(int operator, int comparison, Double value, int part, boolean unsaved) {
+    public ProxyRule(int operator, int comparison, Double value, int part, boolean unsaved) {
         this(operator, comparison, value, part);
         setUnsaved(unsaved);
     }
 
-    public Rule(IPlayer player, int operator, int comparison, Double value, int part) {
+    public ProxyRule(IProxyPlayer player, int operator, int comparison, Double value, int part) {
         setPlayer(player);
         setOperator(operator);
         setComparison(comparison);
@@ -70,7 +69,7 @@ public class Rule implements Serializable {
         setPart(part);
     }
 
-    public void setPlayer(IPlayer player) {
+    public void setPlayer(IProxyPlayer player) {
         logger.debug("setPlayer() - player: {}", player != null ? player.getName() : "null");
         this.player = player;
         if (Objects.nonNull(player))
@@ -79,7 +78,7 @@ public class Rule implements Serializable {
             this.playerId = null;
     }
 
-    public boolean isEqualTo(Rule rule) {
+    public boolean isEqualTo(ProxyRule rule) {
         boolean result = (getValue().equals(rule.getValue()) &&
                 (this.getComparison() == rule.getComparison()) &&
                 (this.getOperator() == rule.getOperator()));
@@ -99,8 +98,8 @@ public class Rule implements Serializable {
         };
     }
 
-    public static Rule fromRow(Object[] row) {
-        Rule rule = new Rule();
+    public static ProxyRule fromRow(Object[] row) {
+        ProxyRule rule = new ProxyRule();
         
         // Find operator index
         for (int i = 0; i < OPERATORS.length; i++) {

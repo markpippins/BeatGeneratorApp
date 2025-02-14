@@ -4,8 +4,8 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.angrysurfer.core.api.IPlayer;
-import com.angrysurfer.core.api.ITicker;
+import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.player.IPlayer;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -26,7 +26,7 @@ public class TickerConfig implements Serializable {
     public TickerConfig() {
     }
 
-    public TickerConfig(ITicker ticker, Set<IPlayer> players) {
+    public TickerConfig(Ticker ticker, Set<IPlayer> players) {
         setTicksPerBeat(ticker.getTicksPerBeat());
         setBeatsPerBar(ticker.getBeatsPerBar());
         setBeatDivider(ticker.getBeatDivider());
@@ -38,7 +38,7 @@ public class TickerConfig implements Serializable {
         ticker.setPlayers(players);
     }
 
-    public void setup(ITicker ticker) {
+    public void setup(Ticker ticker) {
         ticker.setTicksPerBeat(getTicksPerBeat());
         ticker.setBeatsPerBar(getBeatsPerBar());
         ticker.setBeatDivider(getBeatDivider());

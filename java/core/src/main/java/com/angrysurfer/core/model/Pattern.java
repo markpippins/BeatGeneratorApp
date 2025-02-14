@@ -7,18 +7,12 @@ import java.util.Stack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.IInstrument;
-import com.angrysurfer.core.api.IPattern;
-import com.angrysurfer.core.api.ISong;
-import com.angrysurfer.core.api.IStep;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
 import com.angrysurfer.core.util.Quantizer;
 import com.angrysurfer.core.util.Scale;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -40,8 +34,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name = "pattern")
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Pattern implements IPattern {
+public class Pattern {
 
     private static final Logger logger = LoggerFactory.getLogger(Pattern.class);
 
@@ -96,10 +89,6 @@ public class Pattern implements IPattern {
 
     @JsonIgnore
     @Transient
-    private boolean unsaved = false;
-    
-    @JsonIgnore
-    @Transient
     private Quantizer quantizer = new Quantizer(Scale.getScale("C", "Chromatic"));
 
     @JsonIgnore
@@ -112,15 +101,14 @@ public class Pattern implements IPattern {
     @JsonIgnore
     @ManyToOne()
     @JoinColumn(name = "song_id")
-    private ISong song;
+    private Song song;
 
     @OneToMany(mappedBy = "pattern", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<IStep> steps = new HashSet<>();
+    private Set<Step> steps = new HashSet<>();
 
-    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instrument_id")
-    private IInstrument instrument;
+    private Instrument instrument;
 
     @JsonIgnore
     @Column(name = "step_cycler")
@@ -134,19 +122,16 @@ public class Pattern implements IPattern {
         logger.debug("Creating new Pattern");
     }
 
-    @Override
     public void setQuantize(Boolean quantize) {
         logger.debug("setQuantize() - value: {}", quantize);
         this.quantize = quantize;
     }
 
-    @Override
     public void setDirection(Integer direction) {
         logger.debug("setDirection() - value: {}", direction);
         this.direction = direction;
     }
 
-    @Override
     public void setSpeed(Integer speed) {
         logger.debug("setSpeed() - value: {}", speed);
         this.speed = speed;

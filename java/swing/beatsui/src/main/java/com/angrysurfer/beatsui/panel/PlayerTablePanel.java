@@ -20,7 +20,7 @@ import javax.swing.ListSelectionModel;
 
 import com.angrysurfer.beatsui.Dialog;
 import com.angrysurfer.beatsui.api.StatusConsumer;
-import com.angrysurfer.beatsui.mock.Strike;
+import com.angrysurfer.beatsui.proxy.ProxyStrike;
 import com.angrysurfer.beatsui.Utils;
 import com.angrysurfer.beatsui.App;
 import com.angrysurfer.beatsui.api.Command;
@@ -80,9 +80,9 @@ public class PlayerTablePanel extends JPanel {
         deleteButton.addActionListener(e -> deleteSelectedPlayer());
     }
 
-    private Strike savePlayerToRedis(Strike player) {
+    private ProxyStrike savePlayerToRedis(ProxyStrike player) {
         try {
-            Strike savedPlayer = App.getRedisService().saveStrike(player);
+            ProxyStrike savedPlayer = App.getRedisService().saveStrike(player);
             status.setStatus("Saved player: " + player.getName() + " (ID: " + savedPlayer.getId() + ")");
             return savedPlayer;
         } catch (Exception ex) {
@@ -92,7 +92,7 @@ public class PlayerTablePanel extends JPanel {
         }
     }
 
-    private void deletePlayerFromRedis(Strike player) {
+    private void deletePlayerFromRedis(ProxyStrike player) {
         try {
             App.getRedisService().deleteStrike(player);
             status.setStatus("Deleted player: " + player.getName());
@@ -196,7 +196,7 @@ public class PlayerTablePanel extends JPanel {
                 deleteMenuItem.setEnabled(hasSelection);
                 
                 if (hasSelection) {
-                    Strike selectedPlayer = getPlayerFromRow(table.getSelectedRow());
+                    ProxyStrike selectedPlayer = getPlayerFromRow(table.getSelectedRow());
                     ruleTablePanel.setSelectedPlayer(selectedPlayer);
                     status.setStatus("Selected player: " + selectedPlayer.getName());
                 } else {
@@ -209,7 +209,7 @@ public class PlayerTablePanel extends JPanel {
             if (!e.getValueIsAdjusting()) {
                 int selectedRow = table.getSelectedRow();
                 if (selectedRow >= 0) {
-                    Strike player = getPlayerFromRow(selectedRow);
+                    ProxyStrike player = getPlayerFromRow(selectedRow);
                     publishPlayerSelected(player);
                 } else {
                     publishPlayerUnselected();
@@ -229,20 +229,20 @@ public class PlayerTablePanel extends JPanel {
         loadPlayersFromRedis();
     }
 
-    private void showPlayerDialog(Strike player) {
+    private void showPlayerDialog(ProxyStrike player) {
         boolean isNewPlayer = (player == null);
         if (isNewPlayer) {
-            player = new Strike();
+            player = new ProxyStrike();
             player.setName("New Strike");
         }
 
         PlayerEditorPanel editorPanel = new PlayerEditorPanel(player);
-        Dialog<Strike> dialog = new Dialog<>(player, editorPanel);
+        Dialog<ProxyStrike> dialog = new Dialog<>(player, editorPanel);
         dialog.setTitle(isNewPlayer ? "Add Player" : "Edit Player: " + player.getName());
 
         if (dialog.showDialog()) {
-            Strike updatedPlayer = editorPanel.getUpdatedPlayer();
-            Strike savedPlayer = savePlayerToRedis(updatedPlayer);
+            ProxyStrike updatedPlayer = editorPanel.getUpdatedPlayer();
+            ProxyStrike savedPlayer = savePlayerToRedis(updatedPlayer);
             logger.info("Saved player with ID: " + savedPlayer.getId());
             
             // Refresh the entire table instead of just updating one row
@@ -267,7 +267,7 @@ public class PlayerTablePanel extends JPanel {
     private void editSelectedPlayer() {
         int row = table.getSelectedRow();
         if (row >= 0) {
-            Strike player = getPlayerFromRow(row);
+            ProxyStrike player = getPlayerFromRow(row);
             showPlayerDialog(player);
         }
     }
@@ -275,20 +275,20 @@ public class PlayerTablePanel extends JPanel {
     private void deleteSelectedPlayer() {
         int row = table.getSelectedRow();
         if (row >= 0) {
-            Strike player = getPlayerFromRow(row);
+            ProxyStrike player = getPlayerFromRow(row);
             deletePlayerFromRedis(player);
             ((DefaultTableModel) table.getModel()).removeRow(row);
         }
     }
 
-    private Strike getPlayerFromRow(int row) {
+    private ProxyStrike getPlayerFromRow(int row) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
-        Strike player = new Strike();
+        ProxyStrike player = new ProxyStrike();
         
         // Get the ID from Redis based on the name
         String name = (String) model.getValueAt(row, 0);
-        List<Strike> players = App.getRedisService().findAllStrikes();
-        Strike existingPlayer = players.stream()
+        List<ProxyStrike> players = App.getRedisService().findAllStrikes();
+        ProxyStrike existingPlayer = players.stream()
             .filter(p -> p.getName().equals(name))
             .findFirst()
             .orElse(null);
@@ -318,7 +318,7 @@ public class PlayerTablePanel extends JPanel {
         return player;
     }
 
-    private void updatePlayerTable(Strike player, int selectedRow) {
+    private void updatePlayerTable(ProxyStrike player, int selectedRow) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         Object[] rowData = player.toRow();
 
@@ -341,13 +341,13 @@ public class PlayerTablePanel extends JPanel {
     private void loadPlayersFromRedis() {
         try {
             logger.info("Starting to load players from Redis");
-            List<Strike> players = App.getRedisService().findAllStrikes();
+            List<ProxyStrike> players = App.getRedisService().findAllStrikes();
             logger.info("Found " + players.size() + " players in Redis");
             
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             model.setRowCount(0);
 
-            for (Strike player : players) {
+            for (ProxyStrike player : players) {
                 Object[] rowData = player.toRow();
                 model.addRow(rowData);
                 logger.info("Added player to table: " + player.getName() + " (ID: " + player.getId() + ")");
@@ -362,7 +362,7 @@ public class PlayerTablePanel extends JPanel {
         }
     }
 
-    private void publishPlayerSelected(Strike player) {
+    private void publishPlayerSelected(ProxyStrike player) {
         Command action = new Command();
         action.setCommand(Commands.PLAYER_SELECTED);
         action.setData(player);
