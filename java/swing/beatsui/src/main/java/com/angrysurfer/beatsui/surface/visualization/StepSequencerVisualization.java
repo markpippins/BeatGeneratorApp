@@ -3,10 +3,17 @@ package com.angrysurfer.beatsui.surface.visualization;
 import java.awt.Color;
 import java.util.Random;
 
+import com.angrysurfer.beatsui.surface.VisualizationCategory;
 import com.angrysurfer.beatsui.surface.VisualizationHandler;
 import com.angrysurfer.beatsui.widget.GridButton;
 
 public class StepSequencerVisualization implements VisualizationHandler {
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
+    }
+    
     private final Random random = new Random();
     private int seqPosition = 0;
     private boolean[][] sequencerGrid;

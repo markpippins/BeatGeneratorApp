@@ -2,11 +2,18 @@ package com.angrysurfer.beatsui.surface.visualization;
 
 import java.awt.Color;
 
+import com.angrysurfer.beatsui.surface.VisualizationCategory;
 import com.angrysurfer.beatsui.surface.VisualizationHandler;
 import com.angrysurfer.beatsui.surface.VisualizationUtils;
 import com.angrysurfer.beatsui.widget.GridButton;
 
 public class ModularCVVisualization implements VisualizationHandler {
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
+    }
+    
     private double[] phases;
     private final double[] frequencies = {0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0};
     private final double[] amplitudes = {1.0, 0.8, 0.6, 0.7, 0.9, 0.5, 0.4, 0.3};

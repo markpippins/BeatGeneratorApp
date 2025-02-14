@@ -2,10 +2,17 @@ package com.angrysurfer.beatsui.surface.visualization;
 
 import java.awt.Color;
 
+import com.angrysurfer.beatsui.surface.VisualizationCategory;
 import com.angrysurfer.beatsui.surface.VisualizationHandler;
 import com.angrysurfer.beatsui.widget.GridButton;
 
 public class LFOMatrixVisualization implements VisualizationHandler {
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
+    }
+    
     private double phase = 0.0;
     private double[][] lfoValues;
     private final double[] lfoFreqs = {1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5};

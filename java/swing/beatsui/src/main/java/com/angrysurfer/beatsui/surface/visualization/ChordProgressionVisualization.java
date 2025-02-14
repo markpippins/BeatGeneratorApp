@@ -2,11 +2,18 @@ package com.angrysurfer.beatsui.surface.visualization;
 
 import java.awt.Color;
 
+import com.angrysurfer.beatsui.surface.VisualizationCategory;
 import com.angrysurfer.beatsui.surface.VisualizationHandler;
 import com.angrysurfer.beatsui.surface.VisualizationUtils;
 import com.angrysurfer.beatsui.widget.GridButton;
 
 public class ChordProgressionVisualization implements VisualizationHandler {
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
+    }
+    
     private double phase = 0.0;
     private final int[][] chords = {
         {0, 4, 7},    // C major

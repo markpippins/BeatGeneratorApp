@@ -2,11 +2,18 @@ package com.angrysurfer.beatsui.surface.visualization;
 
 import java.awt.Color;
 
+import com.angrysurfer.beatsui.surface.VisualizationCategory;
 import com.angrysurfer.beatsui.surface.VisualizationHandler;
 import com.angrysurfer.beatsui.surface.VisualizationUtils;
 import com.angrysurfer.beatsui.widget.GridButton;
 
 public class EuclideanRhythmVisualization implements VisualizationHandler {
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
+    }
+    
     private int position = 0;
     private final int[] steps = {8, 16, 12, 10, 7, 5, 6, 9};
     private final int[] pulses = {3, 7, 5, 4, 3, 2, 4, 5};

@@ -2,11 +2,18 @@ package com.angrysurfer.beatsui.surface.visualization;
 
 import java.awt.Color;
 
+import com.angrysurfer.beatsui.surface.VisualizationCategory;
 import com.angrysurfer.beatsui.surface.VisualizationHandler;
 import com.angrysurfer.beatsui.surface.VisualizationUtils;
 import com.angrysurfer.beatsui.widget.GridButton;
 
 public class WaveVisualization implements VisualizationHandler {
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
+    }
+
     private double phase = 0.0;
     private final double frequency = 2.0;
     private final double amplitude = 2.0;
@@ -17,13 +24,13 @@ public class WaveVisualization implements VisualizationHandler {
 
         // Calculate wave parameters
         int centerY = buttons.length / 2;
-        
+
         // Draw sine wave
         for (int col = 0; col < buttons[0].length; col++) {
             double x = col * (2 * Math.PI) / buttons[0].length;
             double y = Math.sin(x * frequency + phase) * amplitude;
-            int row = centerY + (int)y;
-            
+            int row = centerY + (int) y;
+
             // Draw wave with gradient trail
             for (int offset = -2; offset <= 2; offset++) {
                 int drawRow = row + offset;
@@ -33,7 +40,7 @@ public class WaveVisualization implements VisualizationHandler {
                 }
             }
         }
-        
+
         phase += 0.1;
     }
 
