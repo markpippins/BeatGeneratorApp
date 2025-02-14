@@ -2,12 +2,15 @@ package com.angrysurfer.beatsui.surface;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 
 import javax.swing.JComponent;
 import javax.swing.Timer;
 
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
+import com.angrysurfer.beatsui.api.CommandListener;
+import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.api.StatusConsumer;
 import com.angrysurfer.beatsui.widget.GridButton;
 
@@ -16,7 +19,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Grid {
+public class Grid implements CommandListener {
 
     private final JComponent parent;
 
@@ -32,10 +35,11 @@ public class Grid {
     private Timer visualizationTimer;
     private Timer visualizationChangeTimer;
 
-    private static final int VISUALIZATION_DELAY = 30; // 30 seconds
-    private static final int VISUALIZATION_CHANGE_DELAY = 10000; // 10 seconds
+    private static final int VISUALIZATION_DELAY = 30000; // 30 seconds
+    private static final int VISUALIZATION_CHANGE_DELAY = 10000; // 30 seconds
 
     private StatusConsumer statusConsumer;
+    private final CommandBus commandBus = CommandBus.getInstance();
 
     private Map<VisualizationEnum, VisualizationHandler> visualizations = new HashMap<>();
 
@@ -46,6 +50,25 @@ public class Grid {
         initializeVisualizations();
         setupTimers();
         setupAnimation();
+        commandBus.register(this);
+    }
+
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == null)
+            return;
+
+        switch (action.getCommand()) {
+            case Commands.START_VISUALIZATION:
+                startScreensaver();
+                isVisualizationMode = true; 
+
+                break;
+            case Commands.STOP_VISUALIZATION:
+                stopScreensaver();
+                isVisualizationMode = false;                
+                break;
+        }
     }
 
     private void initializeVisualizations() {
@@ -82,12 +105,14 @@ public class Grid {
 
     public void startScreensaver() {
         isVisualizationMode = true;
+        commandBus.publish(new Command(Commands.VISUALIZATION_STARTED, this, null));
         visualizationChangeTimer.start();
         setDisplayMode(VisualizationEnum.values()[random.nextInt(VisualizationEnum.values().length)]);
     }
 
     public void stopScreensaver() {
         isVisualizationMode = false;
+        commandBus.publish(new Command(Commands.VISUALIZATION_STOPPED, this, null));
         visualizationChangeTimer.stop();
         clearDisplay();
         currentVisualization = null; // Reset current mode
@@ -127,11 +152,6 @@ public class Grid {
                 System.err.println(viz.getName() + " Error updating display: " + e.getMessage());
             }
         }
-    }
-
-    private void setSender(String string) {
-        if (Objects.nonNull(statusConsumer))
-            statusConsumer.setSender(string);
     }
 
     // Keep supporting classes and methods that are shared across visualizations
