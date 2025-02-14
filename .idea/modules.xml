@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/java/BeatGenerator.iml" filepath="$PROJECT_DIR$/java/BeatGenerator.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/BeatGeneratorApp.iml" filepath="$PROJECT_DIR$/.idea/BeatGeneratorApp.iml" />
-    </modules>
-  </component>
-</project>
