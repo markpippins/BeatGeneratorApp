@@ -1,21 +1,33 @@
 package com.angrysurfer.beatsui.widget;
 
 import java.awt.BorderLayout;
+import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
+import com.angrysurfer.beatsui.api.Command;
+import com.angrysurfer.beatsui.api.CommandBus;
+import com.angrysurfer.beatsui.api.CommandListener;
+import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.api.StatusConsumer;
 
-public class StatusBar extends JPanel implements StatusConsumer {
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class StatusBar extends JPanel implements CommandListener, StatusConsumer {
 
     private final JLabel siteLabel;
     private final JLabel senderLabel;
     private final JLabel statusLabel;
     private final JLabel messageLabel;
     // private final JLabel timeLabel;
+
+    private CommandBus commandBus = CommandBus.getInstance();
 
     public StatusBar() {
         super(new BorderLayout());
@@ -36,6 +48,8 @@ public class StatusBar extends JPanel implements StatusConsumer {
         messageLabel = new JLabel(" ");
         messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
         add(messageLabel, BorderLayout.CENTER);
+
+        getCommandBus().register(this);
     }
 
     @Override
@@ -77,5 +91,40 @@ public class StatusBar extends JPanel implements StatusConsumer {
     @Override
     public void clearStatus() {
         statusLabel.setText(" ");
+    }
+
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == null)
+            return;
+
+        if (Objects.nonNull(action.getCommand()))
+            setMessage(action.getCommand());
+
+        // if (Objects.nonNull(action.getSender()))
+        // setSender(action.getSender());
+
+        // switch (action.getCommand()) {
+        // case Commands.STATUS_MESSAGE:
+        // setMessage((String) action.getData());
+        // break;
+        // case Commands.STATUS_SENDER:
+        // setSender((String) action.getData());
+        // break;
+        // case Commands.STATUS_SITE:
+        // setSite((String) action.getData());
+        // break;
+        // case Commands.STATUS_CLEAR:
+        // clearMessage();
+        // clearSender();
+        // clearSite();
+        // break;
+        // case Commands.STATUS_STATUS:
+        // setStatus((String) action.getData());
+        // break;
+        // case Commands.STATUS_CLEAR_STATUS:
+        // clearStatus();
+        // break;
+        // }
     }
 }

@@ -33,6 +33,7 @@ import com.angrysurfer.beatsui.visualization.handler.LifeSoupVisualization;
 import com.angrysurfer.beatsui.visualization.handler.LightSpeedVisualization;
 import com.angrysurfer.beatsui.visualization.handler.LoopPulseVisualization;
 import com.angrysurfer.beatsui.visualization.handler.MandelbrotVisualization;
+import com.angrysurfer.beatsui.visualization.handler.MapVisualization;
 import com.angrysurfer.beatsui.visualization.handler.MatrixRainVisualization;
 import com.angrysurfer.beatsui.visualization.handler.MatrixVisualization;
 import com.angrysurfer.beatsui.visualization.handler.MazeVisualization;
@@ -45,6 +46,7 @@ import com.angrysurfer.beatsui.visualization.handler.PongVisualization;
 import com.angrysurfer.beatsui.visualization.handler.ProbabilityGridVisualization;
 import com.angrysurfer.beatsui.visualization.handler.PulseVisualization;
 import com.angrysurfer.beatsui.visualization.handler.RacingVisualization;
+import com.angrysurfer.beatsui.visualization.handler.RainbowJapaneseMatrixVisualization;
 import com.angrysurfer.beatsui.visualization.handler.RainbowVisualization;
 import com.angrysurfer.beatsui.visualization.handler.RippleVisualization;
 import com.angrysurfer.beatsui.visualization.handler.RubiksCompVisualization;
@@ -100,19 +102,19 @@ public enum VisualizationEnum {
     MANDELBROT(MandelbrotVisualization.class),
     MATRIX(MatrixVisualization.class),
     MAZE(MazeVisualization.class),
+    MAP(MapVisualization.class),
     PIANO_ROLL(PianoRollVisualization.class),
     PING_PONG(PongVisualization.class),
     PLASMA(PlasmaVisualization.class),
     POLE_POSITION(PolePositionVisualization.class),
     POLYPHONIC(PolyphonicVisualization.class),
     POLYRHYTHM(PolyrhythmVisualization.class),
-    // PONG(PongVisualization.class),
     PROBABILITY_GRID(ProbabilityGridVisualization.class),
     PULSE(PulseVisualization.class),
     RACING(RacingVisualization.class),
     RAIN(MatrixRainVisualization.class),
     RAINBOW(RainbowVisualization.class),
-    RAINBOW_MATRIX(RainbowVisualization.class),
+    RAINBOW_MATRIX(RainbowJapaneseMatrixVisualization.class),
     RIPPLE(RippleVisualization.class),
     RUBIKS_COMP(RubiksCompVisualization.class),
     SNAKE(SnakeVisualization.class),
@@ -141,10 +143,22 @@ public enum VisualizationEnum {
         return visualizationClass;
     }
 
+    public static VisualizationEnum fromHandler(VisualizationHandler handler) {
+        for (VisualizationEnum viz : values()) {
+            if (viz.getVisualizationClass().isInstance(handler)) {
+                return viz;
+            }
+        }
+        return null;
+    }
+
     public static VisualizationEnum fromLabel(String label) {
         try {
-            return valueOf(label.toUpperCase().replace(" ", "_"));
+            String processedLabel = label.toUpperCase().replace(" ", "_");
+            System.out.println("Looking for enum with label: " + processedLabel); // Debug line
+            return valueOf(processedLabel);
         } catch (IllegalArgumentException e) {
+            System.out.println("Failed to find enum for label: " + label); // Debug line
             return null;
         }
     }

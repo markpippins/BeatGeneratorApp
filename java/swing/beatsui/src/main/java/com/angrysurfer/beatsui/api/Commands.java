@@ -52,7 +52,9 @@ public class Commands {
     public static final String STOP_VISUALIZATION = "STOP_VISUALIZATION";
 
     // Visualization Commands
+    public static final String VISUALIZATION_SELECTED = "VISUALIZATION_SELECTED";
     public static final String VISUALIZATION_STARTED = "VISUALIZATION_STARTED";
     public static final String VISUALIZATION_STOPPED = "VISUALIZATION_STOPPED";
+    public static final String VISUALIZATION_REGISTERED = "VISUALIZATION_REGISTERED";
 
 }

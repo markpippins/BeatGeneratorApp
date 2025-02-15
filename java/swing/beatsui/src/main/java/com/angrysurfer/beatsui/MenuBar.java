@@ -14,6 +14,7 @@ import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.CommandListener;
 import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.api.StatusConsumer;
+import com.angrysurfer.beatsui.visualization.VisualizationHandler;
 
 public class MenuBar extends JMenuBar {
 
@@ -60,33 +61,51 @@ public class MenuBar extends JMenuBar {
         JMenu preferencesMenu = new JMenu("Preferences");
         preferencesMenu.add(themeManager.createThemeMenu());
 
-        preferencesMenu.addSeparator();
-
-        // Add Visualization submenu
-        JMenu visualizationMenu = new JMenu("Visualization");
-        final JMenuItem startVisualizationItem = new JMenuItem("Start Visualization");
-        final JMenuItem stopVisualizationItem = new JMenuItem("Stop Visualization");
-
-        stopVisualizationItem.setVisible(false);
-        
-        addMenuItem(visualizationMenu, startVisualizationItem, Commands.START_VISUALIZATION, null);
-        addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null);
-        preferencesMenu.add(visualizationMenu);
-
         commandBus.register(new CommandListener() {
+
+            final boolean[] visualizationsEnabled = { false };
+
+            // Add Visualization submenu
+            JMenu visualizationMenu = new JMenu("Visualization");
+            final JMenuItem startVisualizationItem = new JMenuItem("Start Visualization");
+            final JMenuItem stopVisualizationItem = new JMenuItem("Stop Visualization");
 
             public void onAction(Command action) {
                 if (action.getCommand() == null)
                     return;
 
                 switch (action.getCommand()) {
+                    case Commands.VISUALIZATION_REGISTERED:
+
+                        if (!visualizationsEnabled[0]) {
+                            visualizationsEnabled[0] = true;
+                            preferencesMenu.addSeparator();
+
+                            addMenuItem(visualizationMenu, startVisualizationItem, Commands.START_VISUALIZATION, null,
+                                    null);
+                            addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null,
+                                    null);
+                            preferencesMenu.add(visualizationMenu);
+
+                            startVisualizationItem.setVisible(true);
+                            stopVisualizationItem.setVisible(false);
+                        }
+
+                        JMenuItem visualizationItem = new JMenuItem(
+                                ((VisualizationHandler) action.getData()).getName());
+
+                        addMenuItem(visualizationMenu, visualizationItem, Commands.VISUALIZATION_SELECTED,
+                                action.getData(), null);
+
+                        break;
+
                     case Commands.VISUALIZATION_STARTED:
                         startVisualizationItem.setVisible(false);
-                        stopVisualizationItem.setVisible(true);
+                        stopVisualizationItem.setVisible(visualizationsEnabled[0]);
                         break;
 
                     case Commands.VISUALIZATION_STOPPED:
-                        startVisualizationItem.setVisible(true);
+                        startVisualizationItem.setVisible(visualizationsEnabled[0]);
                         stopVisualizationItem.setVisible(false);
                         break;
                 }
@@ -113,7 +132,7 @@ public class MenuBar extends JMenuBar {
         addMenuItem(menu, name, command, null);
     }
 
-    private void addMenuItem(JMenu menu, JMenuItem item, String command, ActionListener extraAction) {
+    private void addMenuItem(JMenu menu, JMenuItem item, String command, Object data, ActionListener extraAction) {
         item.addActionListener(e -> {
             // Update status first
             if (statusConsumer != null) {
@@ -124,6 +143,7 @@ public class MenuBar extends JMenuBar {
             Command action = new Command();
             action.setCommand(command);
             action.setSender(this);
+            action.setData(data);
             actionBus.publish(action);
 
             if (extraAction != null) {
