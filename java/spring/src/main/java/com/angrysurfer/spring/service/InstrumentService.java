@@ -29,7 +29,7 @@ public class InstrumentService {
         this.instrumentEngine = new InstrumentEngine(dbUtils.getInstrumentFindAll());
     }
 
-    public Instrument save(Instrument instrument) {
+    public Instrument saveInstrument(Instrument instrument) {
         logger.info("save");
         return dbUtils.getInstrumentSaver().save(instrument);
     }

@@ -1,6 +1,7 @@
 package com.angrysurfer.beatsui;
 
 import java.util.logging.Logger;
+
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
@@ -8,7 +9,11 @@ import com.angrysurfer.beatsui.api.Command;
 import com.angrysurfer.beatsui.api.CommandBus;
 import com.angrysurfer.beatsui.api.CommandListener;  // Changed import
 import com.angrysurfer.beatsui.api.Commands;
-import com.angrysurfer.beatsui.config.BeatsUIConfig;
+import com.angrysurfer.beatsui.config.UserConfig;
+import com.angrysurfer.beatsui.data.FrameState;
+import com.angrysurfer.beatsui.data.RedisService;
+import com.angrysurfer.beatsui.ui.Frame;
+import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
 import com.formdev.flatlaf.FlatLightLaf;
 
@@ -60,6 +65,10 @@ public class App implements CommandListener {  // Changed to implement our Actio
                             app.frame.setLocationRelativeTo(null);
                         }
                         app.frame.setVisible(true);
+                        
+                        // Call setupFrame after frame is visible
+                        app.setupFrame();
+                        
                     } catch (Exception e) {
                         logger.severe("Error creating UI: " + e.getMessage());
                         e.printStackTrace();
@@ -129,11 +138,35 @@ public class App implements CommandListener {  // Changed to implement our Actio
 
         frame.pack();
         frame.setVisible(true);
+        
+        // Add a small delay before auto-selecting player to ensure UI is ready
+        javax.swing.Timer timer = new javax.swing.Timer(500, e -> {
+            ((javax.swing.Timer) e.getSource()).stop();
+            setupFrame();
+        });
+        timer.setRepeats(false);
+        timer.start();
     }
 
     private void setupFrame() {
-        
-      }
+        // After frame is created and visible, select first player if available
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // Get all strikes/players
+                java.util.List<ProxyStrike> strikes = redisService.findAllStrikes();
+                if (!strikes.isEmpty()) {
+                    // Select the first player
+                    Command selectCommand = new Command();
+                    selectCommand.setCommand(Commands.PLAYER_SELECTED);
+                    selectCommand.setData(strikes.get(0));
+                    CommandBus.getInstance().publish(selectCommand);
+                    logger.info("Auto-selected first player: " + strikes.get(0).getName());
+                }
+            } catch (Exception e) {
+                logger.warning("Error auto-selecting first player: " + e.getMessage());
+            }
+        });
+    }
 
     private static void setupLookAndFeel() {
         try {
@@ -165,7 +198,7 @@ public class App implements CommandListener {  // Changed to implement our Actio
             if (isEmpty) {
                 logger.info("Loading initial configuration...");
                 String configPath = "C:/Users/MarkP/dev/BeatGeneratorApp/java/swing/beatsui/src/main/java/com/angrysurfer/beatsui/config/beats-config.json";
-                BeatsUIConfig config = redisService.loadConfigFromXml(configPath);
+                UserConfig config = redisService.loadConfigFromXml(configPath);
                 redisService.saveConfig(config);
             }
 
