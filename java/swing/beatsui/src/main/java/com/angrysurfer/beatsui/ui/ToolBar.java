@@ -1,4 +1,4 @@
-package com.angrysurfer.beatsui.ui.widget;
+package com.angrysurfer.beatsui.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -159,22 +159,7 @@ public class ToolBar extends JToolBar {
         // Transport controls
         JPanel transportPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         transportPanel.setPreferredSize(new Dimension(transportPanel.getPreferredSize().width, 75));
-
-        JButton rewindBtn = createToolbarButton("⏮", "Rewind");
-        JButton pauseBtn = createToolbarButton("⏸", "Pause");
-        JButton recordBtn = createToolbarButton("⏺", "Record");
-        JButton stopBtn = createToolbarButton("⏹", "Stop");
-        JButton playBtn = createToolbarButton("▶", "Play");
-        JButton forwardBtn = createToolbarButton("⏭", "Forward");
-
-        transportPanel.add(rewindBtn);
-        transportPanel.add(pauseBtn);
-        transportPanel.add(stopBtn);
-        transportPanel.add(recordBtn);
-        transportPanel.add(playBtn);
-        transportPanel.add(forwardBtn);
-
-        // Add padding above transport panel
+        setupTransportButtons(transportPanel);
         transportPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
         add(transportPanel);
 
@@ -253,6 +238,7 @@ public class ToolBar extends JToolBar {
     private JButton createToolbarButton(String text, String tooltip) {
         JButton button = new JButton(text);
         button.setToolTipText(tooltip);
+        button.setEnabled(true); // Enable all transport buttons
 
         // Increase button size
         int size = 32;
@@ -262,14 +248,42 @@ public class ToolBar extends JToolBar {
 
         // Use a font that supports Unicode symbols
         button.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
-        // Fallback fonts if Segoe UI Symbol isn't available
         if (!button.getFont().canDisplay('⏮')) {
             button.setFont(new Font("Dialog", Font.PLAIN, 18));
         }
 
-        // Optional: Add some padding around the text
         button.setMargin(new Insets(5, 5, 5, 5));
-
         return button;
+    }
+
+    private void createTransportCommand(String commandType) {
+        Command command = new Command();
+        command.setCommand(commandType);
+        command.setSender(this);
+        actionBus.publish(command);
+    }
+
+    private void setupTransportButtons(JPanel transportPanel) {
+        JButton rewindBtn = createToolbarButton("⏮", "Rewind");
+        JButton pauseBtn = createToolbarButton("⏸", "Pause");
+        JButton recordBtn = createToolbarButton("⏺", "Record");
+        JButton stopBtn = createToolbarButton("⏹", "Stop");
+        JButton playBtn = createToolbarButton("▶", "Play");
+        JButton forwardBtn = createToolbarButton("⏭", "Forward");
+
+        // Add action listeners
+        rewindBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_REWIND));
+        pauseBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_PAUSE));
+        recordBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_RECORD));
+        stopBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_STOP));
+        playBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_PLAY));
+        forwardBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_FORWARD));
+
+        transportPanel.add(rewindBtn);
+        transportPanel.add(pauseBtn);
+        transportPanel.add(stopBtn);
+        transportPanel.add(recordBtn);
+        transportPanel.add(playBtn);
+        transportPanel.add(forwardBtn);
     }
 }

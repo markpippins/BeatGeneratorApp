@@ -9,6 +9,14 @@ public class Commands {
     public static final String PLAY = "PLAY";
     public static final String FORWARD = "FORWARD";
 
+    // Transport commands
+    public static final String TRANSPORT_REWIND = "TRANSPORT_REWIND";
+    public static final String TRANSPORT_PAUSE = "TRANSPORT_PAUSE";
+    public static final String TRANSPORT_RECORD = "TRANSPORT_RECORD";
+    public static final String TRANSPORT_STOP = "TRANSPORT_STOP";
+    public static final String TRANSPORT_PLAY = "TRANSPORT_PLAY";
+    public static final String TRANSPORT_FORWARD = "TRANSPORT_FORWARD";
+
     // File Commands
     public static final String NEW_FILE = "NEW_FILE";
     public static final String OPEN_FILE = "OPEN_FILE";

@@ -1,6 +1,7 @@
 package com.angrysurfer.beatsui.ui.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -221,11 +222,27 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setAutoCreateRowSorter(true);
 
-        // Center align all columns
+        // Add custom renderer for the Part column (index 3)
+        table.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (value instanceof Integer && ((Integer) value) == ProxyRule.ALL_PARTS) {
+                    setText("All");
+                }
+                setHorizontalAlignment(JLabel.CENTER);
+                return c;
+            }
+        });
+
+        // Center align all other columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         for (int i = 0; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+            if (i != 3) { // Skip the Part column as it has its own renderer
+                table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+            }
         }
 
         return table;

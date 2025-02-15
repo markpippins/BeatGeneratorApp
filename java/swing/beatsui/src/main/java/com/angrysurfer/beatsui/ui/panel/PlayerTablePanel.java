@@ -357,6 +357,12 @@ public class PlayerTablePanel extends JPanel {
             if (model.getRowCount() > 0) {
                 table.setRowSelectionInterval(0, 0);
                 
+                // Enable edit/delete buttons
+                editButton.setEnabled(true);
+                deleteButton.setEnabled(true);
+                editMenuItem.setEnabled(true);
+                deleteMenuItem.setEnabled(true);
+                
                 // Get and publish the first player
                 ProxyStrike firstPlayer = getPlayerFromRow(0);
                 publishPlayerSelected(firstPlayer);

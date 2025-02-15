@@ -12,9 +12,9 @@ import com.angrysurfer.beatsui.api.Commands;
 import com.angrysurfer.beatsui.config.UserConfig;
 import com.angrysurfer.beatsui.data.FrameState;
 import com.angrysurfer.beatsui.data.RedisService;
+import com.angrysurfer.beatsui.service.TickerManager;
 import com.angrysurfer.beatsui.ui.Frame;
 import com.angrysurfer.core.proxy.ProxyStrike;
-import com.angrysurfer.core.proxy.ProxyTicker;
 import com.formdev.flatlaf.FlatLightLaf;
 
 /**
@@ -24,12 +24,14 @@ import com.formdev.flatlaf.FlatLightLaf;
 public class App implements CommandListener {  // Changed to implement our ActionListener interface
     private Frame frame;
     private static RedisService redisService;
+    private static TickerManager tickerManager;
     private static final Logger logger = Logger.getLogger(App.class.getName());
 
     public static void main(String[] args) {
         try {
             initializeRedis();
             if (redisService != null) {
+                tickerManager = new TickerManager(); // Initialize TickerManager
                 setupLookAndFeel();
                 SwingUtilities.invokeLater(() -> {
                     try {
@@ -202,34 +204,6 @@ public class App implements CommandListener {  // Changed to implement our Actio
                 redisService.saveConfig(config);
             }
 
-            // Check for existing Ticker
-            try {
-                ProxyTicker ticker = redisService.loadTicker();
-                logger.info("Loaded existing ticker: BPM=" + ticker.getTempoInBPM() +
-                        ", Bars=" + ticker.getBars());
-
-                // Publish ticker selection after a short delay
-                SwingUtilities.invokeLater(() -> {
-                    Command action = new Command();
-                    action.setCommand(Commands.TICKER_SELECTED);
-                    action.setData(ticker);
-                    CommandBus.getInstance().publish(action);
-                });
-
-            } catch (Exception e) {
-                logger.info("No existing ticker found, creating default ticker");
-                ProxyTicker newTicker = new ProxyTicker();
-                // Set default values
-                newTicker.setTempoInBPM(120.0f);
-                newTicker.setBars(4);
-                newTicker.setBeatsPerBar(4);
-                newTicker.setTicksPerBeat(24);
-                newTicker.setParts(1);
-                newTicker.setPartLength(4L);
-                redisService.saveTicker(newTicker);
-                logger.info("Created and saved default ticker");
-            }
-
         } catch (Exception e) {
             logger.severe("Fatal error initializing Redis: " + e.getMessage());
             e.printStackTrace();
@@ -239,5 +213,9 @@ public class App implements CommandListener {  // Changed to implement our Actio
 
     public static RedisService getRedisService() {
         return redisService;
+    }
+
+    public static TickerManager getTickerManager() {
+        return tickerManager;
     }
 }

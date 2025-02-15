@@ -285,6 +285,12 @@ public class RuleTablePanel extends JPanel implements CommandListener {
             // Select the first row if there are any rules
             if (model.getRowCount() > 0) {
                 table.setRowSelectionInterval(0, 0);
+                
+                // Enable edit/delete buttons
+                editButton.setEnabled(true);
+                deleteButton.setEnabled(true);
+                editMenuItem.setEnabled(true);
+                deleteMenuItem.setEnabled(true);
             }
             
             status.setStatus("Loaded " + rules.size() + " rules for " + selectedPlayer.getName());

@@ -27,7 +27,6 @@ import com.angrysurfer.beatsui.ui.panel.X0XPanel;
 import com.angrysurfer.beatsui.ui.panel.sorting.SortingVisualizerPanel;
 import com.angrysurfer.beatsui.ui.widget.Dialog;
 import com.angrysurfer.beatsui.ui.widget.StatusBar;
-import com.angrysurfer.beatsui.ui.widget.ToolBar;
 
 public class Frame extends JFrame implements AutoCloseable {
 
