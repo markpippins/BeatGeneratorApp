@@ -11,7 +11,7 @@ import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import com.angrysurfer.beatsui.panel.X0XPanel;
+import com.angrysurfer.beatsui.ui.panel.X0XPanel;
 
 public class TestFrame extends JFrame {
 

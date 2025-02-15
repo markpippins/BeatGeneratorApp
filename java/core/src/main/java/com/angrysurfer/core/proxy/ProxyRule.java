@@ -16,6 +16,8 @@ import lombok.Setter;
 public class ProxyRule implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(ProxyRule.class);
 
+    public static final int ALL_PARTS = 0;
+
     private Long id;
     private Long playerId;
     private Integer operator = 0;

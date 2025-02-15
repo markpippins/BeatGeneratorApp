@@ -38,8 +38,8 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.db.Delete;
-import com.angrysurfer.core.api.db.Save;
+// import com.angrysurfer.core.api.db.Delete;
+// import com.angrysurfer.core.api.db.Save;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Ticker;
@@ -100,9 +100,7 @@ public class PlayerEngine {
         return note + ticker.getPlayers().size();
     }
 
-    public IPlayer addPlayer(Ticker ticker, Instrument instrument, long note, Save<Ticker> tickerSaver,
-            Save<IPlayer> playerSaver,
-            Save<Rule> ruleSaver) {
+    public IPlayer addPlayer(Ticker ticker, Instrument instrument, long note) {
 
         logger.info("addPlayer() - instrument: {}", instrument.getName());
         // tickerRepo.flush();
@@ -121,16 +119,19 @@ public class PlayerEngine {
 
         ticker.getPlayers().add(player);
 
-        addRule(ticker, player, ruleSaver, playerSaver);
+        // addRule(ticker, player, ruleSaver, playerSaver);
 
         return player;
     }
 
     static Random rand = new Random();
 
-    public Rule addRule(Ticker ticker, IPlayer player, int operator, int comparison, double value, int part,
-            Save<Rule> ruleSaver,
-            Save<IPlayer> playerSaver) {
+    // public Rule addRule(Ticker ticker, IPlayer player, int operator, int
+    // comparison, double value, int part,
+    // Save<Rule> ruleSaver,
+    // Save<IPlayer> playerSaver) {
+
+    public Rule addRule(Ticker ticker, IPlayer player, int operator, int comparison, double value, int part) {
 
         logger.info("addRule() - playerId: {}, operator: {}, comparison: {}, value: {}, part: {}",
                 player.getId(), operator, comparison, value, part);
@@ -140,17 +141,19 @@ public class PlayerEngine {
 
         if (matches.size() == 0) {
             rule.setPlayer(player);
-            ruleSaver.save(rule);
+            // ruleSaver.save(rule);
             player.getRules().add(rule);
-            playerSaver.save(player);
+            // playerSaver.save(player);
             return rule;
         }
 
         return matches.get(0);
     }
 
-    public Rule addRule(Ticker ticker, IPlayer player, Save<Rule> ruleSaver,
-            Save<IPlayer> playerSaver) {
+    // public Rule addRule(Ticker ticker, IPlayer player, Save<Rule> ruleSaver,
+    // Save<IPlayer> playerSaver) {
+
+    public Rule addRule(Ticker ticker, IPlayer player) {
 
         Rule rule = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0, true);
 
@@ -158,43 +161,52 @@ public class PlayerEngine {
 
         if (matches.size() < 2) {
             rule.setPlayer(player);
-            ruleSaver.save(rule);
+            // ruleSaver.save(rule);
             player.getRules().add(rule);
-            playerSaver.save(player);
+            // playerSaver.save(player);
             return rule;
         }
 
         return matches.get(0);
     }
 
-    public void removeRule(Ticker ticker, Long playerId, Long ruleId, Delete<Rule> ruleDeleter,
-            Save<IPlayer> playerSaver) {
+    // public void removeRule(Ticker ticker, Long playerId, Long ruleId,
+    // Delete<Rule> ruleDeleter,
+    // Save<IPlayer> playerSaver) {
+
+    public void removeRule(Ticker ticker, Long playerId, Long ruleId) {
 
         logger.info("removeRule() - playerId: {}, ruleId: {}", playerId, ruleId);
         IPlayer player = ticker.getPlayer(playerId);
         Rule rule = player.getRule(ruleId);
         player.getRules().remove(rule);
         rule.setPlayer(null);
-        ruleDeleter.delete(rule);
-        playerSaver.save(player);
+        // ruleDeleter.delete(rule);
+        // playerSaver.save(player);
     }
 
-    public Set<IPlayer> removePlayer(Ticker ticker, Long playerId, Delete<IPlayer> playerDeleter,
-            Delete<Rule> ruleDeleter, Save<Ticker> tickerSaver) {
+    // public Set<IPlayer> removePlayer(Ticker ticker, Long playerId,
+    // Delete<IPlayer> playerDeleter,
+    // Delete<Rule> ruleDeleter, Save<Ticker> tickerSaver) {
+
+    public Set<IPlayer> removePlayer(Ticker ticker, Long playerId) {
 
         logger.info("removePlayer() - playerId: {}", playerId);
         IPlayer player = ticker.getPlayer(playerId);
 
-        player.getRules().forEach(r -> ruleDeleter.delete(r));
+        // player.getRules().forEach(r -> ruleDeleter.delete(r));
 
         ticker.getPlayers().remove(player);
-        playerDeleter.delete(player);
-        tickerSaver.save(ticker);
+        // playerDeleter.delete(player);
+        // tickerSaver.save(ticker);
         return ticker.getPlayers();
     }
 
-    public IPlayer updatePlayer(Ticker ticker, Long playerId, int updateType, long updateValue,
-            Save<IPlayer> playerSaver) {
+    // public IPlayer updatePlayer(Ticker ticker, Long playerId, int updateType,
+    // long updateValue,
+    // Save<IPlayer> playerSaver) {
+
+    public IPlayer updatePlayer(Ticker ticker, Long playerId, int updateType, long updateValue) {
 
         logger.info("updatePlayer() - playerId: {}, updateType: {}, updateValue: {}",
                 playerId, updateType, updateValue);
@@ -317,7 +329,8 @@ public class PlayerEngine {
             }
         }
 
-        return playerSaver.save(player);
+        // return playerSaver.save(player);
+        return player;
     }
 
     public Optional<Rule> getRule(Ticker ticker, Long ruleId) {
@@ -325,7 +338,9 @@ public class PlayerEngine {
         return rules.stream().filter(r -> r.getId().equals(ruleId)).findAny();
     }
 
-    public Rule updateRule(Ticker ticker, Long ruleId, int updateType, long updateValue, Save<Rule> ruleSaver) {
+    // public Rule updateRule(Ticker ticker, Long ruleId, int updateType, long
+    // updateValue, Save<Rule> ruleSaver) {
+    public Rule updateRule(Ticker ticker, Long ruleId, int updateType, long updateValue) {
 
         Optional<Rule> opt = getRule(ticker, ruleId);
         Rule rule = null;
@@ -354,7 +369,8 @@ public class PlayerEngine {
             }
         }
 
-        return ruleSaver.save(rule);
+        // return ruleSaver.save(rule);
+        return rule;
     }
 
     public IPlayer mutePlayer(Ticker ticker, Long playerId) {
@@ -410,29 +426,33 @@ public class PlayerEngine {
         // }
     }
 
-    public void clearPlayers(Ticker ticker, Delete<IPlayer> playerDeleter, Save<Ticker> tickerSaver) {
+    // public void clearPlayers(Ticker ticker, Delete<IPlayer> playerDeleter,
+    // Save<Ticker> tickerSaver) {
+    public void clearPlayers(Ticker ticker) {
         Set<IPlayer> players = ticker.getPlayers();
         players.stream().filter(p -> p.getRules().size() == 0)
                 .forEach(p -> {
                     ticker.getPlayers().remove(p);
                     p.setTicker(null);
-                    playerDeleter.delete((Strike) p);
+                    // playerDeleter.delete((Strike) p);
                 });
 
-        tickerSaver.save(ticker);
+        // tickerSaver.save(ticker);
     }
 
-    public void clearPlayersWithNoRules(Ticker ticker, Delete<IPlayer> playerDeleter, Save<Ticker> tickerSaver) {
+    // public void clearPlayersWithNoRules(Ticker ticker, Delete<IPlayer>
+    // playerDeleter, Save<Ticker> tickerSaver) {
+    public void clearPlayersWithNoRules(Ticker ticker) {
         ticker.getPlayers().stream().filter(p -> p.getRules().size() == 0)
                 .forEach(p -> {
                     if (p.getRules().size() > 0)
                         return;
                     ticker.getPlayers().remove(p);
                     p.setTicker(null);
-                    playerDeleter.delete((Strike) p);
+                    // playerDeleter.delete((Strike) p);
                 });
 
-        tickerSaver.save(ticker);
+        // tickerSaver.save(ticker);
     }
 
     public void playDrumNote(Instrument instrument, int channel, int note) {

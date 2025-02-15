@@ -78,7 +78,9 @@ public class PlayerService {
 
     public IPlayer addPlayer(Instrument instrument, long note) {
         logger.info("addPlayer() - instrument: {}, note: {}", instrument.getName(), note);
-        return playerEngine.addPlayer(getTicker(), instrument, note, dbUtils.getTickerSaver(), dbUtils.getStrikeSaver(), dbUtils.getRuleSaver());
+        // return playerEngine.addPlayer(getTicker(), instrument, note,
+        // dbUtils.getTickerSaver(), dbUtils.getStrikeSaver(), dbUtils.getRuleSaver());
+        return playerEngine.addPlayer(getTicker(), instrument, note);
     }
 
     private Ticker getTicker() {
@@ -96,28 +98,33 @@ public class PlayerService {
         logger.info("addRule() - playerId: {}, operator: {}, comparison: {}, value: {}, part: {}",
                 playerId, operator, comparison, value, part);
 
+        // return playerEngine.addRule(getTicker(), getTicker().getPlayer(playerId),
+        //         operator, comparison, value, part,
+        //         dbUtils.getRuleSaver(), dbUtils.getStrikeSaver());
         return playerEngine.addRule(getTicker(), getTicker().getPlayer(playerId),
-                operator, comparison, value, part,
-                dbUtils.getRuleSaver(), dbUtils.getStrikeSaver());
+                operator, comparison, value, part);
     }
 
     public Rule addRule(Long playerId) {
-        return playerEngine.addRule(getTicker(), getTicker().getPlayer(playerId),
-                dbUtils.getRuleSaver(),
-                dbUtils.getStrikeSaver());
+//        return playerEngine.addRule(getTicker(), getTicker().getPlayer(playerId),
+//            dbUtils.getRuleSaver(),
+//            dbUtils.getStrikeSaver());
+        return playerEngine.addRule(getTicker(), getTicker().getPlayer(playerId));
     }
 
     public void removeRule(Long playerId, Long ruleId) {
         logger.info("removeRule() - playerId: {}, ruleId: {}", playerId, ruleId);
-        playerEngine.removeRule(getTicker(), playerId, ruleId, dbUtils.getRuleDeleter(),
-                dbUtils.getStrikeSaver());
+//        playerEngine.removeRule(getTicker(), playerId, ruleId, dbUtils.getRuleDeleter(),
+//                dbUtils.getStrikeSaver());
+        playerEngine.removeRule(getTicker(), playerId, ruleId);
     }
 
     public IPlayer updatePlayer(Long playerId, int updateType, long updateValue) {
         logger.info("updatePlayer() - playerId: {}, updateType: {}, updateValue: {}",
                 playerId, updateType, updateValue);
-        return playerEngine.updatePlayer(getTicker(), playerId, updateType, updateValue,
-                dbUtils.getStrikeSaver());
+//        return playerEngine.updatePlayer(getTicker(), playerId, updateType, updateValue,
+//                dbUtils.getStrikeSaver());
+        return playerEngine.updatePlayer(getTicker(), playerId, updateType, updateValue);
 
     }
 
@@ -126,14 +133,16 @@ public class PlayerService {
     }
 
     public Rule updateRule(Long ruleId, int updateType, long updateValue) {
-        return playerEngine.updateRule(getTicker(), ruleId, updateType, updateValue,
-                dbUtils.getRuleSaver());
+//        return playerEngine.updateRule(getTicker(), ruleId, updateType, updateValue,
+//                dbUtils.getRuleSaver());
+        return playerEngine.updateRule(getTicker(), ruleId, updateType, updateValue);
     }
 
     public Set<IPlayer> removePlayer(Long playerId) {
         logger.info("removePlayer() - playerId: {}", playerId);
-        return playerEngine.removePlayer(getTicker(), playerId, dbUtils.getStrikeDeleter(),
-                dbUtils.getRuleDeleter(), dbUtils.getTickerSaver());
+//        return playerEngine.removePlayer(getTicker(), playerId, dbUtils.getStrikeDeleter(),
+//                dbUtils.getRuleDeleter(), dbUtils.getTickerSaver());
+        return playerEngine.removePlayer(getTicker(), playerId);
     }
 
     public IPlayer mutePlayer(Long playerId) {
@@ -141,12 +150,14 @@ public class PlayerService {
     }
 
     public void clearPlayers() {
-        playerEngine.clearPlayers(getTicker(), dbUtils.getStrikeDeleter(), dbUtils.getTickerSaver());
+//        playerEngine.clearPlayers(getTicker(), dbUtils.getStrikeDeleter(), dbUtils.getTickerSaver());
+        playerEngine.clearPlayers(getTicker());
     }
 
     public void clearPlayersWithNoRules() {
-        playerEngine.clearPlayersWithNoRules(getTicker(), dbUtils.getStrikeDeleter(),
-                dbUtils.getTickerSaver());
+//        playerEngine.clearPlayersWithNoRules(getTicker(), dbUtils.getStrikeDeleter(),
+//                dbUtils.getTickerSaver());
+        playerEngine.clearPlayersWithNoRules(getTicker());
     }
 
     public Set<IPlayer> getPlayers() {
