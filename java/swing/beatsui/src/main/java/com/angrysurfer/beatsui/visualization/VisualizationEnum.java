@@ -33,6 +33,7 @@ import com.angrysurfer.beatsui.visualization.handler.LifeSoupVisualization;
 import com.angrysurfer.beatsui.visualization.handler.LightSpeedVisualization;
 import com.angrysurfer.beatsui.visualization.handler.LoopPulseVisualization;
 import com.angrysurfer.beatsui.visualization.handler.MandelbrotVisualization;
+import com.angrysurfer.beatsui.visualization.handler.MapVisualization;
 import com.angrysurfer.beatsui.visualization.handler.MatrixRainVisualization;
 import com.angrysurfer.beatsui.visualization.handler.MatrixVisualization;
 import com.angrysurfer.beatsui.visualization.handler.MazeVisualization;
@@ -100,6 +101,7 @@ public enum VisualizationEnum {
     MANDELBROT(MandelbrotVisualization.class),
     MATRIX(MatrixVisualization.class),
     MAZE(MazeVisualization.class),
+    MAP(MapVisualization.class),
     PIANO_ROLL(PianoRollVisualization.class),
     PING_PONG(PongVisualization.class),
     PLASMA(PlasmaVisualization.class),

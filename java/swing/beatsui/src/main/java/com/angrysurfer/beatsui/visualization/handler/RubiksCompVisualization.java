@@ -12,8 +12,11 @@ public class RubiksCompVisualization implements VisualizationHandler {
     private List<RubiksCuber> cubers = new ArrayList<>();
     private long competitionStartTime;
     private boolean hasWinner = false;
-    private Random random = new Random();
+    private final Random random = new Random();
     private static final int NUM_COMPETITORS = 4;
+    private static final int COMPETITION_TIMEOUT = 10000; // 10 seconds
+    private static final int PROGRESS_BAR_WIDTH = 6;
+    private static final double MAX_SPEED = 0.03;
 
     public RubiksCompVisualization() {
         resetCompetition();
@@ -24,40 +27,54 @@ public class RubiksCompVisualization implements VisualizationHandler {
         hasWinner = false;
         competitionStartTime = System.currentTimeMillis();
         
-        // Create competitors spread across the grid
+        // Create competitors spread evenly across the grid
         for (int i = 0; i < NUM_COMPETITORS; i++) {
-            cubers.add(new RubiksCuber(i * 8 + 4, 4));
+            cubers.add(new RubiksCuber(i * 8 + 4, 4, random.nextDouble() * 0.5 + 0.5));
         }
     }
 
     @Override
     public void update(GridButton[][] buttons) {
-        // Clear the display
+        if (buttons == null || buttons.length == 0) return;
+
+        clearDisplay(buttons);
+        updateAndDrawCompetitors(buttons);
+
+        // Check for win condition or timeout
+        if (hasWinner || System.currentTimeMillis() - competitionStartTime > COMPETITION_TIMEOUT) {
+            resetCompetition();
+        }
+    }
+
+    private void clearDisplay(GridButton[][] buttons) {
         for (GridButton[] row : buttons) {
             for (GridButton button : row) {
                 button.setBackground(Color.BLACK);
             }
         }
+    }
 
-        // Update and draw competitors
-        boolean someoneWon = false;
+    private void updateAndDrawCompetitors(GridButton[][] buttons) {
         for (RubiksCuber cuber : cubers) {
             cuber.update();
             if (cuber.isWinner) {
-                someoneWon = true;
+                hasWinner = true;
             }
             
-            // Draw the cuber and their progress bar
-            int progressWidth = (int)(cuber.progress * 6);
-            for (int i = 0; i < 6; i++) {
-                Color color = i < progressWidth ? cuber.getCurrentColor() : Color.DARK_GRAY;
-                buttons[cuber.y][cuber.x + i].setBackground(color);
-            }
+            drawProgressBar(buttons, cuber);
         }
+    }
 
-        // Reset if someone won or after a timeout
-        if (someoneWon || System.currentTimeMillis() - competitionStartTime > 10000) {
-            resetCompetition();
+    private void drawProgressBar(GridButton[][] buttons, RubiksCuber cuber) {
+        if (cuber.y >= 0 && cuber.y < buttons.length) {
+            int progressWidth = (int)(cuber.progress * PROGRESS_BAR_WIDTH);
+            for (int i = 0; i < PROGRESS_BAR_WIDTH; i++) {
+                int x = cuber.x + i;
+                if (x >= 0 && x < buttons[0].length) {
+                    Color color = i < progressWidth ? cuber.getCurrentColor() : Color.DARK_GRAY;
+                    buttons[cuber.y][x].setBackground(color);
+                }
+            }
         }
     }
 
@@ -66,17 +83,19 @@ public class RubiksCompVisualization implements VisualizationHandler {
         return "Rubik's Competition";
     }
 
-    private class RubiksCuber {
-        int x, y;
-        double progress;
-        boolean isWinner;
-        Color[] colors;
+    private static class RubiksCuber {
+        private final int x, y;
+        private double progress;
+        private boolean isWinner;
+        private final Color[] colors;
+        private final double speed;
 
-        RubiksCuber(int x, int y) {
+        RubiksCuber(int x, int y, double speedMultiplier) {
             this.x = x;
             this.y = y;
             this.progress = 0.0;
             this.isWinner = false;
+            this.speed = MAX_SPEED * speedMultiplier;
             this.colors = new Color[] {
                 Color.RED, Color.ORANGE, Color.YELLOW,
                 Color.GREEN, Color.BLUE, Color.WHITE
@@ -85,10 +104,8 @@ public class RubiksCompVisualization implements VisualizationHandler {
 
         void update() {
             if (!isWinner) {
-                progress += random.nextDouble() * 0.03;
-                if (progress >= 1.0) {
-                    isWinner = true;
-                }
+                progress = Math.min(1.0, progress + speed);
+                isWinner = progress >= 1.0;
             }
         }
 
