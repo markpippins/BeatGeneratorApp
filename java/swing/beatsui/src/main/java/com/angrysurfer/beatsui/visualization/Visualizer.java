@@ -61,13 +61,18 @@ public class Visualizer implements CommandListener {
         switch (action.getCommand()) {
             case Commands.START_VISUALIZATION:
                 startVisualizer();
-                isVisualizationMode = true; 
+                isVisualizationMode = true;
 
                 break;
             case Commands.STOP_VISUALIZATION:
                 stopVisualizer();
-                isVisualizationMode = false;                
+                isVisualizationMode = false;
                 break;
+
+            case Commands.VISUALIZATION_SELECTED:
+                startVisualizer((VisualizationHandler) action.getData());
+                break;
+
         }
     }
 
@@ -77,6 +82,7 @@ public class Visualizer implements CommandListener {
             try {
                 VisualizationHandler handler = vizEnum.createHandler();
                 visualizations.put(vizEnum, handler);
+                getCommandBus().publish(new Command(Commands.VISUALIZATION_REGISTERED, this, handler));
             } catch (Exception e) {
                 System.err.println("Failed to initialize " + vizEnum.name() + ": " + e.getMessage());
             }
@@ -103,11 +109,24 @@ public class Visualizer implements CommandListener {
         }
     }
 
-    public void startVisualizer() {
+    public void startVisualizer(VisualizationEnum mode) {
         isVisualizationMode = true;
         commandBus.publish(new Command(Commands.VISUALIZATION_STARTED, this, null));
         visualizationChangeTimer.start();
-        setDisplayMode(VisualizationEnum.values()[random.nextInt(VisualizationEnum.values().length)]);
+        setDisplayMode(mode);
+    }
+
+    public void startVisualizer() {
+        startVisualizer(VisualizationEnum.values()[random.nextInt(VisualizationEnum.values().length)]);
+    }
+
+    public void startVisualizer(VisualizationHandler handler) {
+        VisualizationEnum mode = VisualizationEnum.fromHandler(handler);
+        if (mode != null) {
+            startVisualizer(mode);
+        } else {
+            System.err.println("No visualization enum found for handler: " + handler.getClass().getName());
+        }
     }
 
     public void stopVisualizer() {
