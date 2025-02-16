@@ -159,43 +159,6 @@ public class Frame extends JFrame implements AutoCloseable {
         tabbedPane.setSelectedIndex(index);
     }
 
-    // private void addPlayer() {
-    //     ProxyStrike strike = new ProxyStrike();
-    //     PlayerEditorPanel editor = new PlayerEditorPanel(strike, statusBar);
-    //     Dialog<ProxyStrike> dialog = new Dialog<>(strike, editor);
-    //     dialog.setTitle("Add Player");
-
-    //     if (dialog.showDialog()) {
-    //         try {
-    //             ProxyStrike updatedStrike = editor.getUpdatedPlayer();
-    //             ProxyStrike savedStrike = App.getRedisService().saveStrike(updatedStrike);
-
-    //             Component selectedComponent = tabbedPane.getSelectedComponent();
-    //             if (selectedComponent instanceof TickerPanel) {
-    //                 TickerPanel tickerPanel = (TickerPanel) selectedComponent;
-    //                 ProxyTicker currentTicker = tickerPanel.getTicker();
-                    
-    //                 currentTicker.getPlayers().add(savedStrike);
-    //                 savedStrike.setTicker(currentTicker);
-    //                 App.getRedisService().saveTicker(currentTicker);
-
-    //                 // Use consistent command
-    //                 Command cmd = new Command(Commands.PLAYER_ADDED, this, savedStrike);
-    //                 CommandBus.getInstance().publish(cmd);
-                    
-    //                 logger.info("Added player: " + savedStrike.getName());
-    //                 statusBar.setStatus("Added player: " + savedStrike.getName());
-                    
-    //             } else {
-    //                 logger.warning("Cannot add player - not on ticker panel");
-    //                 statusBar.setStatus("Please switch to Players tab to add players");
-    //             }
-    //         } catch (Exception e) {
-    //             logger.severe("Error saving new player: " + e.getMessage());
-    //             statusBar.setStatus("Error saving player: " + e.getMessage());
-    //         }
-    //     }
-    // }
 
     @Override
     public void close() {
