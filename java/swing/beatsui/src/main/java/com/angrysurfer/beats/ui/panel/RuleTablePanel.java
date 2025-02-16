@@ -144,15 +144,19 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
+        
+        // Set minimum width for button panel
+        int buttonPanelWidth = 240;
+        buttonPanel.setPreferredSize(new Dimension(buttonPanelWidth, buttonPanel.getPreferredSize().height));
+        buttonPanel.setMinimumSize(new Dimension(buttonPanelWidth, buttonPanel.getPreferredSize().height));
 
         add(buttonPanel, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // Set fixed width for the panel
-        int panelWidth = 200;
-        setPreferredSize(new Dimension(panelWidth, 0));
-        setMinimumSize(new Dimension(panelWidth, 0));
-        setMaximumSize(new Dimension(panelWidth, Integer.MAX_VALUE));
+        // Force panel to be as skinny as the buttons
+        setPreferredSize(new Dimension(buttonPanelWidth, 0));
+        setMinimumSize(new Dimension(buttonPanelWidth, 0));
+        setMaximumSize(new Dimension(buttonPanelWidth, Integer.MAX_VALUE));
     }
 
     private void setupButtons() {

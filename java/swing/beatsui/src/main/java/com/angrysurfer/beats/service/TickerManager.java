@@ -4,13 +4,13 @@ import java.util.HashSet;
 import java.util.List;
 
 import com.angrysurfer.beats.App;
-import com.angrysurfer.beats.LogManager;
 import com.angrysurfer.beats.api.Command;
 import com.angrysurfer.beats.api.CommandBus;
 import com.angrysurfer.beats.api.CommandListener;
 import com.angrysurfer.beats.api.Commands;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
+import com.angrysurfer.core.util.LogManager;
 
 import lombok.Getter;
 

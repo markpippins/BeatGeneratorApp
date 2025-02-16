@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.data;
+package com.angrysurfer.core.config;
 
 import java.util.List;
 import java.util.Set;

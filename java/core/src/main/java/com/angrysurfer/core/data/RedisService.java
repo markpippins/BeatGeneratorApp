@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.data;
+package com.angrysurfer.core.data;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -6,13 +6,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.angrysurfer.beats.LogManager;
+import com.angrysurfer.core.config.FrameState;
+import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.proxy.IProxyPlayer;
 import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
+import com.angrysurfer.core.util.LogManager;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

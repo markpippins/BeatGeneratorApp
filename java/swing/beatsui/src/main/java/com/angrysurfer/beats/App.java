@@ -9,19 +9,18 @@ import com.angrysurfer.beats.api.Command;
 import com.angrysurfer.beats.api.CommandBus;
 import com.angrysurfer.beats.api.CommandListener;
 import com.angrysurfer.beats.api.Commands;
-import com.angrysurfer.beats.config.UserConfig;
-import com.angrysurfer.beats.data.FrameState;
-import com.angrysurfer.beats.data.RedisService;
+import com.angrysurfer.beats.service.RedisMidiDeviceService;
 import com.angrysurfer.beats.service.TickerManager;
 import com.angrysurfer.beats.ui.Frame;
+import com.angrysurfer.core.config.FrameState;
+import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.data.RedisService;
 import com.angrysurfer.core.proxy.ProxyStrike;
+import com.angrysurfer.core.service.InstrumentManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
-/**
- * Hello world!
- *
- */
-public class App implements CommandListener {  // Changed to implement our ActionListener interface
+public class App implements CommandListener {
+
     private Frame frame;
     private static RedisService redisService;
     private static TickerManager tickerManager;
@@ -29,71 +28,39 @@ public class App implements CommandListener {  // Changed to implement our Actio
 
     public static void main(String[] args) {
         try {
-            initializeRedis();
-            if (redisService != null) {
-                tickerManager = new TickerManager(); // Initialize TickerManager
-                setupLookAndFeel();
-                SwingUtilities.invokeLater(() -> {
-                    try {
-                        App app = new App();
-                        app.frame = new Frame();
-                        
-                        // Load and apply frame state
-                        FrameState state = redisService.loadFrameState();
-                        if (state != null) {
-                            app.frame.setSize(state.frameSizeX, state.frameSizeY);
-                            app.frame.setLocation(state.framePosX, state.framePosY);
-                            app.frame.setSelectedTab(state.selectedTab);
-                        }
-                        
-                        // Add window listener to save state before closing
-                        app.frame.addWindowListener(new java.awt.event.WindowAdapter() {
-                            @Override
-                            public void windowClosing(java.awt.event.WindowEvent e) {
-                                FrameState currentState = new FrameState(
-                                    app.frame.getSelectedTab(),
-                                    app.frame.getWidth(),
-                                    app.frame.getHeight(),
-                                    app.frame.getX(),
-                                    app.frame.getY(),
-                                    UIManager.getLookAndFeel().getClass().getName()
-                                );
-                                redisService.saveFrameState(currentState);
-                            }
-                        });
+            setupLookAndFeel();
+            initializeServices();
+            
+            // Initialize InstrumentManager with Redis service
+            InstrumentManager.getInstance().setMidiDeviceService(new RedisMidiDeviceService());
 
-                        app.frame.pack();
-                        if (state == null) {
-                            app.frame.setLocationRelativeTo(null);
-                        }
-                        app.frame.setVisible(true);
-                        
-                        // Call setupFrame after frame is visible
-                        app.setupFrame();
-                        
-                    } catch (Exception e) {
-                        logger.severe("Error creating UI: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                });
-            } else {
-                logger.severe("Failed to initialize Redis service");
-                System.exit(1);
-            }
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    App app = new App();
+                    app.createAndShowGUI();
+                } catch (Exception e) {
+                    logger.severe("Error initializing application: " + e.getMessage());
+                }
+            });
         } catch (Exception e) {
-            logger.severe("Critical error during startup: " + e.getMessage());
-            e.printStackTrace();
-            System.exit(1);
+            logger.severe("Application startup error: " + e.getMessage());
         }
     }
 
-    public App() {
-        // Register for theme changes using the correct method
-        CommandBus.getInstance().register(this);
+    private void createAndShowGUI() {
+        frame = new Frame();
+        FrameState state = redisService.loadFrameState();
+        if (state != null) {
+            frame.setSize(state.getFrameSizeX(), state.getFrameSizeY());
+            frame.setLocation(state.getFramePosX(), state.getFramePosY());
+            frame.setSelectedTab(state.getSelectedTab());
+        }
+        setupFrame();
+        frame.setVisible(true);
     }
 
     @Override
-    public void onAction(Command action) {  // This is now the correct method from our interface
+    public void onAction(Command action) { // This is now the correct method from our interface
         if (Commands.CHANGE_THEME.equals(action.getCommand())) {
             SwingUtilities.invokeLater(() -> {
                 try {
@@ -110,14 +77,13 @@ public class App implements CommandListener {  // Changed to implement our Actio
     }
 
     private void saveFrameState() {
-        FrameState currentState = new FrameState(
-            frame.getSelectedTab(),
-            frame.getWidth(),
-            frame.getHeight(),
-            frame.getX(),
-            frame.getY(),
-            UIManager.getLookAndFeel().getClass().getName()
-        );
+        FrameState currentState = new FrameState();
+        currentState.setSelectedTab(frame.getSelectedTab());
+        currentState.setFrameSizeX(frame.getWidth());
+        currentState.setFrameSizeY(frame.getHeight());
+        currentState.setFramePosX(frame.getX());
+        currentState.setFramePosY(frame.getY());
+        currentState.setLookAndFeelClassName(UIManager.getLookAndFeel().getClass().getName());
         redisService.saveFrameState(currentState);
     }
 
@@ -125,11 +91,11 @@ public class App implements CommandListener {  // Changed to implement our Actio
         frame = new Frame();
         FrameState state = redisService.loadFrameState();
         if (state != null) {
-            frame.setSize(state.frameSizeX, state.frameSizeY);
-            frame.setLocation(state.framePosX, state.framePosY);
-            frame.setSelectedTab(state.selectedTab);
+            frame.setSize(state.getFrameSizeX(), state.getFrameSizeY());
+            frame.setLocation(state.getFramePosX(), state.getFramePosY());
+            frame.setSelectedTab(state.getSelectedTab());
         }
-        
+
         // Add window listener
         frame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
@@ -140,7 +106,7 @@ public class App implements CommandListener {  // Changed to implement our Actio
 
         frame.pack();
         frame.setVisible(true);
-        
+
         // Add a small delay before auto-selecting player to ensure UI is ready
         javax.swing.Timer timer = new javax.swing.Timer(500, e -> {
             ((javax.swing.Timer) e.getSource()).stop();
@@ -188,34 +154,44 @@ public class App implements CommandListener {  // Changed to implement our Actio
         }
     }
 
-    private static void initializeRedis() {
+    private static void initializeServices() {
         try {
-            logger.info("Initializing Redis service...");
             redisService = new RedisService();
+            logger.info("Redis service initialized");
 
-            // Check if Redis is empty - only initialize if it is
-            boolean isEmpty = redisService.isDatabaseEmpty();
-            logger.info("Redis database is empty: " + isEmpty);
-
-            if (isEmpty) {
-                logger.info("Loading initial configuration...");
-                String configPath = "C:/Users/MarkP/dev/BeatGeneratorApp/java/swing/beatsui/src/main/java/com/angrysurfer/beatsui/config/beats-config.json";
+            if (redisService.isDatabaseEmpty()) {
+                String configPath = "config/beats-config.json";
                 UserConfig config = redisService.loadConfigFromXml(configPath);
                 redisService.saveConfig(config);
+                logger.info("Initial configuration loaded");
             }
 
+            tickerManager = new TickerManager();
+            logger.info("Ticker manager initialized");
         } catch (Exception e) {
-            logger.severe("Fatal error initializing Redis: " + e.getMessage());
-            e.printStackTrace();
-            redisService = null;
+            logger.severe("Error initializing services: " + e.getMessage());
+            throw new RuntimeException("Failed to initialize services", e);
         }
     }
 
     public static RedisService getRedisService() {
+        if (redisService == null) {
+            logger.severe("Redis service not initialized");
+            throw new IllegalStateException("Redis service not initialized");
+        }
         return redisService;
     }
 
     public static TickerManager getTickerManager() {
+        if (tickerManager == null) {
+            logger.severe("Ticker manager not initialized");
+            throw new IllegalStateException("Ticker manager not initialized");
+        }
         return tickerManager;
+    }
+
+    public App() {
+        // Register for theme changes using the correct method
+        CommandBus.getInstance().register(this);
     }
 }

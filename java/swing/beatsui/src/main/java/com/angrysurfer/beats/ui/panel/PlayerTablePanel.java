@@ -152,8 +152,8 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
         table.setAutoCreateRowSorter(true);
         table.getTableHeader().setReorderingAllowed(false);
 
-        // Column setup - keeping existing setup
-        table.getColumnModel().getColumn(0).setPreferredWidth(100); // Name
+        // Column setup - tripling the Name column width
+        table.getColumnModel().getColumn(0).setPreferredWidth(300); // Name - tripled from 100
         
         // Set fixed widths for Channel and Preset columns
         table.getColumnModel().getColumn(1).setMaxWidth(60);  // Channel

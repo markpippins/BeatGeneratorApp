@@ -3,7 +3,7 @@ package com.angrysurfer.beats.api;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.angrysurfer.beats.LogManager;
+import com.angrysurfer.core.util.LogManager;
 
 public class CommandBus implements CommandListener {
     private static CommandBus instance;

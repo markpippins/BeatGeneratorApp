@@ -1,4 +1,4 @@
-package com.angrysurfer.beats;
+package com.angrysurfer.core.util;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

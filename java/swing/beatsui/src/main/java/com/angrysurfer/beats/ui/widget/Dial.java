@@ -7,15 +7,18 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
 import java.awt.Window;
 
-import com.angrysurfer.beats.ui.Utils;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 public class Dial extends JComponent {
     private static final int MIN_SIZE = 50;
     private static final int MAX_SIZE = 70;
+    private static final Color KNOB_COLOR = new Color(30, 100, 255);
+    private static final Color KNOB_GRADIENT_START = new Color(60, 130, 255);
+    private static final Color KNOB_GRADIENT_END = new Color(20, 80, 200);
+    private static final Color HIGHLIGHT_COLOR = new Color(255, 255, 255, 60);
     private static final int BASE_WINDOW_WIDTH = 1200;
     private static final int BASE_WINDOW_HEIGHT = 800;
     private int value = 64;
@@ -93,63 +96,34 @@ public class Dial extends JComponent {
         int w = getWidth();
         int h = getHeight();
         int min = Math.min(w, h);
-
-        // Draw outer rim (brushed aluminum effect)
-        g2d.setPaint(new GradientPaint(
-            0, 0,
-            new Color(180, 180, 180),
-            0, h,
-            new Color(120, 120, 120)
-        ));
-        g2d.fillOval(0, 0, min - 1, min - 1);
-
-        // Draw main knob body (vintage bakelite look)
-        g2d.setPaint(new GradientPaint(
-            min/4f, min/4f,
-            new Color(40, 40, 40),
-            min/2f, min/2f,
-            new Color(20, 20, 20)
-        ));
-        g2d.fillOval(4, 4, min - 8, min - 8);
-
-        // Add highlight reflection
-        g2d.setPaint(new GradientPaint(
-            min/4f, min/4f,
-            new Color(255, 255, 255, 30),
-            min/2f, min/2f,
-            new Color(255, 255, 255, 0)
-        ));
-        g2d.fillOval(6, 6, min - 12, min - 12);
-
-        // Draw indicator groove
-        g2d.setColor(new Color(200, 200, 200, 60));
-        g2d.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        double angle = Math.PI * 0.75 + (Math.PI * 1.5 * value / 127.0);
         int centerX = min / 2;
         int centerY = min / 2;
         int radius = min / 2 - 6;
 
-        // Draw indicator line with metallic effect
-        GradientPaint lineGradient = new GradientPaint(
-            centerX, centerY,
-            new Color(220, 220, 220),
-            centerX + (float)(Math.cos(angle) * radius),
-            centerY + (float)(Math.sin(angle) * radius),
-            new Color(180, 180, 180)
+        // Draw knob body with blue color
+        g2d.setColor(KNOB_COLOR);
+        g2d.fillOval(0, 0, min - 1, min - 1);
+
+        // Add a subtle gradient for 3D effect
+        GradientPaint gp = new GradientPaint(
+            0, 0, KNOB_GRADIENT_START,
+            0, h, KNOB_GRADIENT_END
         );
-        g2d.setPaint(lineGradient);
+        g2d.setPaint(gp);
+        g2d.fillOval(2, 2, min - 4, min - 4);
+
+        // Draw indicator line with thicker stroke
+        g2d.setColor(Color.WHITE);
+        g2d.setStroke(new BasicStroke(2.0f));
+        double angle = Math.PI * 0.75 + (Math.PI * 1.5 * value / 127.0);
+
         g2d.drawLine(centerX, centerY,
                 centerX + (int) (Math.cos(angle) * radius),
                 centerY + (int) (Math.sin(angle) * radius));
 
-        // Add center dot
-        g2d.setPaint(new GradientPaint(
-            centerX - 2, centerY - 2,
-            new Color(100, 100, 100),
-            centerX + 2, centerY + 2,
-            new Color(60, 60, 60)
-        ));
-        g2d.fillOval(centerX - 2, centerY - 2, 4, 4);
+        // Add highlight for 3D effect
+        g2d.setColor(HIGHLIGHT_COLOR);
+        g2d.fillOval(5, 3, min / 2 - 5, min / 2 - 5);
 
         g2d.dispose();
     }
