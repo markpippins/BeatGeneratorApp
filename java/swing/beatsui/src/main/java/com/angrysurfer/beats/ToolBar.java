@@ -27,6 +27,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyTicker;
 
 public class ToolBar extends JToolBar implements CommandListener {
@@ -34,11 +35,14 @@ public class ToolBar extends JToolBar implements CommandListener {
     private final Map<String, JComponent> rightFields = new HashMap<>(); // Changed to JComponent
     private final CommandBus actionBus = CommandBus.getInstance();
     private ProxyTicker currentTicker; // Add field to track current ticker
+    private final StatusConsumer statusConsumer;
 
-    public ToolBar() {
+    public ToolBar(StatusConsumer statusConsumer) {
         super();
-        setup();
-        setupActionBusListener();
+        this.statusConsumer = statusConsumer;
+        setFloatable(false);
+        setup();  // Changed from setupButtons() to setup()
+        CommandBus.getInstance().register(this);
     }
 
     private void setupActionBusListener() {
@@ -99,31 +103,50 @@ public class ToolBar extends JToolBar implements CommandListener {
     }
 
     private void updateTickerDisplay(ProxyTicker ticker) {
-        
-        if (Objects.isNull(ticker) || Objects.isNull(ticker.getId()))
+        if (Objects.isNull(ticker) || Objects.isNull(ticker.getId())) {
+            System.out.println("ToolBar: Received null ticker or ticker ID");
             return;
+        }
 
-        this.currentTicker = ticker; // Store current ticker
+        System.out.println("ToolBar: Updating display for ticker " + ticker.getId() + 
+                          " with " + ticker.getPlayers().size() + " players");
 
-        // Update left fields
-        leftFields.get("Tick").setText(String.valueOf(ticker.getTick()));
-        leftFields.get("Beat").setText(String.valueOf(ticker.getBeat()));
-        leftFields.get("Bar").setText(String.valueOf(ticker.getBar()));
-        leftFields.get("Part").setText(String.valueOf(ticker.getPart()));
-        leftFields.get("Players").setText(String.valueOf(ticker.getPlayers().size()));
-        leftFields.get("Ticks").setText(String.valueOf(ticker.getTickCount()));
-        leftFields.get("Beats").setText(String.valueOf(ticker.getBeatCount()));
-        leftFields.get("Bars").setText(String.valueOf(ticker.getBarCount()));
+        this.currentTicker = ticker;
 
-        // Update right fields
-        ((JTextField) rightFields.get("Ticker")).setText(ticker.getId().toString());
-        ((JComboBox<?>) rightFields.get("Ticks")).setSelectedItem(ticker.getTicksPerBeat());
-        ((JComboBox<?>) rightFields.get("BPM")).setSelectedItem(ticker.getTempoInBPM().intValue());
-        ((JComboBox<?>) rightFields.get("B/Bar")).setSelectedItem(ticker.getBeatsPerBar());
-        ((JComboBox<?>) rightFields.get("Bars")).setSelectedItem(ticker.getBars());
-        ((JComboBox<?>) rightFields.get("Parts")).setSelectedItem(ticker.getParts());
-        ((JTextField) rightFields.get("Length")).setText(String.valueOf(ticker.getPartLength()));
-        ((JTextField) rightFields.get("Offset")).setText(String.valueOf(ticker.getNoteOffset()));
+        // Update fields with synchronized block to prevent concurrent modification
+        synchronized (this) {
+            try {
+                // Update left fields
+                for (Map.Entry<String, JTextField> entry : leftFields.entrySet()) {
+                    String value = switch (entry.getKey()) {
+                        case "Tick" -> String.valueOf(ticker.getTick());
+                        case "Beat" -> String.valueOf(ticker.getBeat());
+                        case "Bar" -> String.valueOf(ticker.getBar());
+                        case "Part" -> String.valueOf(ticker.getPart());
+                        case "Players" -> String.valueOf(ticker.getPlayers().size());
+                        case "Ticks" -> String.valueOf(ticker.getTickCount());
+                        case "Beats" -> String.valueOf(ticker.getBeatCount());
+                        case "Bars" -> String.valueOf(ticker.getBarCount());
+                        default -> "0";
+                    };
+                    entry.getValue().setText(value);
+                }
+
+                // Update right fields
+                ((JTextField) rightFields.get("Ticker")).setText(ticker.getId().toString());
+                ((JComboBox<?>) rightFields.get("Ticks")).setSelectedItem(ticker.getTicksPerBeat());
+                ((JComboBox<?>) rightFields.get("BPM")).setSelectedItem(ticker.getTempoInBPM().intValue());
+                ((JComboBox<?>) rightFields.get("B/Bar")).setSelectedItem(ticker.getBeatsPerBar());
+                ((JComboBox<?>) rightFields.get("Bars")).setSelectedItem(ticker.getBars());
+                ((JComboBox<?>) rightFields.get("Parts")).setSelectedItem(ticker.getParts());
+                ((JTextField) rightFields.get("Length")).setText(String.valueOf(ticker.getPartLength()));
+                ((JTextField) rightFields.get("Offset")).setText(String.valueOf(ticker.getNoteOffset()));
+
+            } catch (Exception e) {
+                System.err.println("ToolBar: Error updating display: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }
 
     private void setup() {
@@ -275,7 +298,13 @@ public class ToolBar extends JToolBar implements CommandListener {
         forwardBtn.setToolTipText("Next Ticker (Forward)");
 
         // Add action listeners that publish commands
-        rewindBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_REWIND));
+        rewindBtn.addActionListener(e -> {
+            Command cmd = new Command();
+            cmd.setCommand(Commands.TRANSPORT_REWIND);
+            cmd.setSender(this);
+            actionBus.publish(cmd);
+            // logger.info("Published TRANSPORT_REWIND command");
+        });
         pauseBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_PAUSE));
         recordBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_RECORD));
         stopBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_STOP));
@@ -299,15 +328,37 @@ public class ToolBar extends JToolBar implements CommandListener {
 
     @Override
     public void onAction(Command action) {
-        // Update UI state based on received commands
+        if (action == null || action.getCommand() == null) return;
+
         switch (action.getCommand()) {
-            case Commands.TICKER_SELECTED, Commands.TICKER_CHANGED -> {
-                if (action.getData() instanceof ProxyTicker) {
-                    updateTickerDisplay((ProxyTicker) action.getData());
+            case Commands.TICKER_LOADED:
+            case Commands.TICKER_SELECTED:
+            case Commands.TICKER_CHANGED:
+            case Commands.PLAYER_ADDED_TO_TICKER:
+            case Commands.PLAYER_REMOVED_FROM_TICKER:
+                ProxyTicker ticker = (ProxyTicker) action.getData();
+                updateTickerDisplay(ticker);
+                updateToolbarState(ticker);
+                break;
+        }
+    }
+
+    private void updateToolbarState(ProxyTicker ticker) {
+        boolean hasActiveTicker = (ticker != null);
+        for (Component comp : getComponents()) {
+            if (comp instanceof JButton) {
+                JButton button = (JButton) comp;
+                // Enable all buttons except rewind/forward when there's an active ticker
+                if (button.getActionCommand().equals(Commands.TRANSPORT_REWIND) ||
+                    button.getActionCommand().equals(Commands.TRANSPORT_FORWARD)) {
+                    // These need a ticker and at least one player
+                    button.setEnabled(hasActiveTicker && 
+                                    ticker != null && 
+                                    !ticker.getPlayers().isEmpty());
+                } else {
+                    button.setEnabled(hasActiveTicker);
                 }
             }
-            case Commands.TRANSPORT_PLAY -> updatePlayState(true);
-            case Commands.TRANSPORT_STOP, Commands.TRANSPORT_PAUSE -> updatePlayState(false);
         }
     }
 

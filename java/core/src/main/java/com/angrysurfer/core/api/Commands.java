@@ -78,4 +78,11 @@ public class Commands {
     public static final String LOG_INFO = "LOG_INFO";
     public static final String LOG_WARN = "LOG_WARN";
     public static final String LOG_ERROR = "LOG_ERROR";
+
+    // Database commands
+    public static final String CLEAR_DATABASE = "CLEAR_DATABASE";
+    public static final String DATABASE_RESET = "DATABASE_RESET";
+
+    // Player editor command
+    public static final String SHOW_PLAYER_EDITOR = "SHOW_PLAYER_EDITOR";
 }

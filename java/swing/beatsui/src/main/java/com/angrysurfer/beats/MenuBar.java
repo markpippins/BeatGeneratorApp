@@ -61,6 +61,28 @@ public class MenuBar extends JMenuBar {
         JMenu preferencesMenu = new JMenu("Preferences");
         preferencesMenu.add(themeManager.createThemeMenu());
 
+        // Add Database submenu
+        JMenu dbMenu = new JMenu("Database");
+        JMenuItem clearDb = new JMenuItem("Clear Database");
+        clearDb.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(
+                parentFrame,
+                "Are you sure you want to clear the entire database?\nThis cannot be undone.",
+                "Clear Database",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            
+            if (result == JOptionPane.YES_OPTION) {
+                Command cmd = new Command();
+                cmd.setCommand(Commands.CLEAR_DATABASE);
+                commandBus.publish(cmd);
+            }
+        });
+        
+        dbMenu.add(clearDb);
+        preferencesMenu.add(dbMenu);
+
         commandBus.register(new CommandListener() {
 
             final boolean[] visualizationsEnabled = { false };

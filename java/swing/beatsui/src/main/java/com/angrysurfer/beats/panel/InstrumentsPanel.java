@@ -62,27 +62,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         add(createOptionsPanel(), BorderLayout.CENTER);
     }
 
-    private static class Config {
-        String port;
-        String device;
-        boolean available;
-        int channels;
-        int low;
-        int high;
-
-        public Config(String port, String device, boolean available) {
-            this.port = port;
-            this.device = device;
-            this.available = available;
-            this.channels = 16;
-            this.low = 0;
-            this.high = 127;
-        }
-
-        public Object[] toRow() {
-            return new Object[] { port, device, available, channels, low, high };
-        }
-    }
+   
 
     private JPanel createOptionsPanel() {
         JPanel panel = new JPanel(new BorderLayout());

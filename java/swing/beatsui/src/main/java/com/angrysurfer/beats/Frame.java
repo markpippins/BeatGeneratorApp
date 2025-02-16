@@ -16,9 +16,6 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.beats.panel.BackgroundPanel;
 import com.angrysurfer.beats.panel.InstrumentsPanel;
 import com.angrysurfer.beats.panel.LaunchPanel;
@@ -27,6 +24,9 @@ import com.angrysurfer.beats.panel.SystemsPanel;
 import com.angrysurfer.beats.panel.WebPanel;
 import com.angrysurfer.beats.panel.X0XPanel;
 import com.angrysurfer.beats.panel.sorting.SortingVisualizerPanel;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 
 public class Frame extends JFrame implements AutoCloseable {
 
@@ -61,7 +61,7 @@ public class Frame extends JFrame implements AutoCloseable {
         backgroundPanel.setBackground(new Color(245, 245, 245, 200)); // Light background with some transparency
         
         setJMenuBar(new MenuBar(this, statusBar));
-        add(new ToolBar(), BorderLayout.NORTH);
+        add(new ToolBar(statusBar), BorderLayout.NORTH);
         add(statusBar, BorderLayout.SOUTH);
     }
 

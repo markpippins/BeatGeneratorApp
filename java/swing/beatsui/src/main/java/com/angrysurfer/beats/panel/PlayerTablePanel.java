@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -15,6 +17,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
@@ -26,7 +29,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.proxy.IProxyPlayer;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
@@ -47,22 +49,42 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
     private final JMenuItem deleteMenuItem;
     private final RuleTablePanel ruleTablePanel;
     private final CommandBus actionBus = CommandBus.getInstance();
+    private ProxyTicker activeTicker; // Add this field
 
     public PlayerTablePanel(StatusConsumer status, RuleTablePanel ruleTablePanel) {
         super(new BorderLayout());
         this.status = status;
+        this.ruleTablePanel = ruleTablePanel;
+        
+        // Initialize UI components
         this.table = new JTable();
         this.addButton = new JButton("Add");
         this.editButton = new JButton("Edit");
         this.deleteButton = new JButton("Delete");
         this.editMenuItem = new JMenuItem("Edit...");
         this.deleteMenuItem = new JMenuItem("Delete");
-        this.ruleTablePanel = ruleTablePanel;
+        
+        // Get initial active ticker
+        this.activeTicker = App.getTickerManager().getActiveTicker();
+        logger.info("PlayerTablePanel initialized with ticker: " + 
+                   (activeTicker != null ? activeTicker.getId() : "null"));
         
         setupTable();
         setupButtons();
         setupLayout();
         setupPopupMenu();
+        actionBus.register(this);
+
+        // Initial button state
+        updateButtonStates(false);
+        addButton.setEnabled(activeTicker != null);
+        
+        // Log initial state
+        logger.info("PlayerTablePanel initialized with ticker: " + 
+                   (activeTicker != null ? activeTicker.getId() : "null"));
+        
+        // Initial refresh
+        refreshPlayerList();
     }
 
     private void setupLayout() {
@@ -76,11 +98,27 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
     }
 
     private void setupButtons() {
+        addButton.setEnabled(activeTicker != null);
         editButton.setEnabled(false);
         deleteButton.setEnabled(false);
 
-        addButton.addActionListener(e -> showPlayerDialog(null));
-        editButton.addActionListener(e -> editSelectedPlayer());
+        addButton.addActionListener(e -> {
+            Command cmd = new Command();
+            cmd.setCommand(Commands.SHOW_PLAYER_EDITOR);
+            cmd.setData(null); // null indicates new player
+            cmd.setSender(this);
+            actionBus.publish(cmd);
+        });
+        
+        editButton.addActionListener(e -> {
+            ProxyStrike player = (ProxyStrike) getPlayerFromRow(table.getSelectedRow());
+            Command cmd = new Command();
+            cmd.setCommand(Commands.SHOW_PLAYER_EDITOR);
+            cmd.setData(player);
+            cmd.setSender(this);
+            actionBus.publish(cmd);
+        });
+        
         deleteButton.addActionListener(e -> deleteSelectedPlayer());
     }
 
@@ -216,9 +254,6 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
                 }
             }
         });
-
-        // Remove sample data and load from Redis instead
-        loadPlayersFromRedis();
     }
 
     private void updateButtonStates(boolean hasSelection) {
@@ -230,25 +265,53 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
 
     private void showPlayerDialog(ProxyStrike player) {
         boolean isNewPlayer = (player == null);
-        if (isNewPlayer) {
-            player = new ProxyStrike();
-            player.setName("New Strike");
-        }
+        try {
+            if (isNewPlayer) {
+                if (activeTicker == null) {
+                    status.setStatus("No active ticker selected");
+                    logger.warning("Cannot add player - no active ticker");
+                    return;
+                }
+                player = new ProxyStrike();
+                player.setName("New Strike");
+                player.setTicker(activeTicker);
+                logger.info("Created new player for ticker: " + activeTicker.getId());
+            }
 
-        PlayerEditorPanel editorPanel = new PlayerEditorPanel(player);
-        Dialog<ProxyStrike> dialog = new Dialog<>(player, editorPanel);
-        dialog.setTitle(isNewPlayer ? "Add Player" : "Edit Player: " + player.getName());
+            PlayerEditorPanel editorPanel = new PlayerEditorPanel(player);
+            Dialog<ProxyStrike> dialog = new Dialog<>(player, editorPanel);
+            dialog.setTitle(isNewPlayer ? "Add Player" : "Edit Player: " + player.getName());
 
-        if (dialog.showDialog()) {
-            ProxyStrike updatedPlayer = editorPanel.getUpdatedPlayer();
-            ProxyStrike savedPlayer = savePlayerToRedis(updatedPlayer);
-            logger.info("Saved player with ID: " + savedPlayer.getId());
-            
-            // Refresh the entire table instead of just updating one row
-            loadPlayersFromRedis();
-            
-            // Select the newly added/edited player
-            selectPlayerByName(savedPlayer.getName());
+            if (dialog.showDialog()) {
+                // Get updated player and ensure ticker relationship
+                ProxyStrike updatedPlayer = editorPanel.getUpdatedPlayer();
+                updatedPlayer.setTicker(activeTicker);
+
+                // Save player and update UI
+                ProxyStrike savedPlayer = App.getRedisService().saveStrike(updatedPlayer);
+                logger.info("Saved player: " + savedPlayer.getName() + " (ID: " + savedPlayer.getId() + ")");
+
+                // Update ticker's player list and save ticker
+                if (isNewPlayer) {
+                    activeTicker.getPlayers().add(savedPlayer);
+                    App.getRedisService().saveTicker(activeTicker);
+                    logger.info("Updated ticker " + activeTicker.getId() + " with new player");
+                }
+
+                // Refresh UI
+                refreshPlayerList();
+                selectPlayerByName(savedPlayer.getName());
+
+                // Notify other components
+                Command cmd = new Command();
+                cmd.setCommand(isNewPlayer ? Commands.PLAYER_ADDED_TO_TICKER : Commands.TICKER_UPDATED);
+                cmd.setData(savedPlayer);
+                actionBus.publish(cmd);
+            }
+        } catch (Exception e) {
+            logger.severe("Error in player dialog: " + e.getMessage());
+            e.printStackTrace();
+            status.setStatus("Error: " + e.getMessage());
         }
     }
 
@@ -274,9 +337,20 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
     private void deleteSelectedPlayer() {
         int row = table.getSelectedRow();
         if (row >= 0) {
-            ProxyStrike player = (ProxyStrike) getPlayerFromRow(row);
-            deletePlayerFromRedis(player);
-            ((DefaultTableModel) table.getModel()).removeRow(row);
+            try {
+                ProxyStrike player = (ProxyStrike) getPlayerFromRow(row);
+                if (player != null) {
+                    // Use TickerManager to remove player
+                    App.getTickerManager().removePlayer(player);
+                    logger.info("Removed player " + player.getName() + " from ticker " + activeTicker.getId());
+                    
+                    // UI will be updated via PLAYER_REMOVED_FROM_TICKER event
+                }
+            } catch (Exception e) {
+                logger.severe("Error deleting player: " + e.getMessage());
+                e.printStackTrace();
+                status.setStatus("Error deleting player: " + e.getMessage());
+            }
         }
     }
 
@@ -337,43 +411,104 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
                columnName.equals("Preserve");
     }
 
-    private void loadPlayersFromRedis() {
-        try {
-            logger.info("Starting to load players from Redis");
-            List<ProxyStrike> players = App.getRedisService().findAllStrikes();
-            logger.info("Found " + players.size() + " players in Redis");
-            
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
-            model.setRowCount(0);
-
-            for (ProxyStrike player : players) {
-                Object[] rowData = player.toRow();
-                model.addRow(rowData);
-                logger.info("Added player to table: " + player.getName() + " (ID: " + player.getId() + ")");
-            }
-            
-            // Select the first row if there are any players
-            if (model.getRowCount() > 0) {
-                table.setRowSelectionInterval(0, 0);
-                
-                // Enable edit/delete buttons
-                editButton.setEnabled(true);
-                deleteButton.setEnabled(true);
-                editMenuItem.setEnabled(true);
-                deleteMenuItem.setEnabled(true);
-                
-                // Get and publish the first player
-                ProxyStrike firstPlayer = (ProxyStrike) getPlayerFromRow(0);
-                publishPlayerSelected(firstPlayer);
-            }
-            
-            status.setStatus("Loaded " + players.size() + " players from Redis");
-        } catch (Exception e) {
-            String error = "Error loading players: " + e.getMessage();
-            logger.severe(error);
-            status.setStatus(error);
-            e.printStackTrace();
+    @Override
+    public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) {
+            logger.warning("Received null action or command");
+            return;
         }
+        
+        logger.info("Received command: " + action.getCommand() + 
+                   ", active ticker: " + (activeTicker != null ? activeTicker.getId() : "null"));
+        
+        switch (action.getCommand()) {
+            case Commands.TICKER_LOADED:
+            case Commands.TICKER_SELECTED:
+            case Commands.TICKER_CHANGED:
+                ProxyTicker ticker = (ProxyTicker) action.getData();
+                if (ticker != null) {
+                    logger.info("Setting active ticker: " + ticker.getId() + 
+                              " with " + ticker.getPlayers().size() + " players");
+                    for (IProxyPlayer player : ticker.getPlayers()) {
+                        logger.info("Ticker contains player: " + player.getName() + 
+                                  " (ID: " + player.getId() + ")");
+                    }
+                } else {
+                    logger.warning("Received null ticker in command: " + action.getCommand());
+                }
+                setActiveTicker(ticker);
+                break;
+            case Commands.PLAYER_ADDED_TO_TICKER:
+            case Commands.PLAYER_REMOVED_FROM_TICKER:
+                if (activeTicker != null && activeTicker.equals(((ProxyStrike) action.getData()).getTicker())) {
+                    refreshPlayerList();
+                }
+                break;
+                
+            case Commands.SHOW_PLAYER_EDITOR:
+                showPlayerDialog((ProxyStrike) action.getData());
+                break;
+            case Commands.DATABASE_RESET:
+                refreshPlayerList();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void setActiveTicker(ProxyTicker ticker) {
+        if (ticker != null && ticker.equals(this.activeTicker)) {
+            logger.info("Ticker " + ticker.getId() + " already active, refreshing display");
+            refreshPlayerList();
+            return;
+        }
+
+        this.activeTicker = ticker;
+        logger.info("Setting active ticker: " + (ticker != null ? ticker.getId() : "null"));
+        
+        addButton.setEnabled(ticker != null);
+        refreshPlayerList();
+        
+        // Try to select first player if available
+        if (ticker != null && ticker.getPlayers() != null && !ticker.getPlayers().isEmpty()) {
+            SwingUtilities.invokeLater(() -> {
+                table.setRowSelectionInterval(0, 0);
+                logger.info("Auto-selected first player in list");
+            });
+        }
+    }
+
+    private void refreshPlayerList() {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setRowCount(0);
+        
+        if (activeTicker != null) {
+            logger.info("Refreshing player list for ticker " + activeTicker.getId());
+            
+            if (activeTicker.getPlayers() != null) {
+                logger.info("Found " + activeTicker.getPlayers().size() + " players");
+                
+                // Sort players by name for consistent display
+                List<IProxyPlayer> sortedPlayers = new ArrayList<>(activeTicker.getPlayers());
+                Collections.sort(sortedPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                
+                for (IProxyPlayer player : sortedPlayers) {
+                    try {
+                        Object[] rowData = player.toRow();
+                        model.addRow(rowData);
+                        logger.info("Added player: " + player.getName() + " (ID: " + player.getId() + ")");
+                    } catch (Exception e) {
+                        logger.warning("Error adding player to table: " + e.getMessage());
+                    }
+                }
+            } else {
+                logger.warning("Player list is null for ticker " + activeTicker.getId());
+            }
+        } else {
+            logger.warning("No active ticker set");
+        }
+
+        updateButtonStates(table.getSelectedRow() >= 0);
     }
 
     private void publishPlayerSelected(IProxyPlayer player) {
@@ -389,33 +524,5 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
         action.setCommand(Commands.PLAYER_UNSELECTED);
         action.setSender(this);
         actionBus.publish(action);
-    }
-
-    @Override
-    public void onAction(Command action) {
-        switch (action.getCommand()) {
-            case Commands.TICKER_LOADED:
-            case Commands.TICKER_CHANGED:
-                ProxyTicker ticker = (ProxyTicker) action.getData();
-                refreshPlayerList(ticker);
-                break;
-            
-            case Commands.PLAYER_ADDED_TO_TICKER:
-            case Commands.PLAYER_REMOVED_FROM_TICKER:
-                ProxyStrike player = (ProxyStrike) action.getData();
-                refreshPlayerList(App.getTickerManager().getActiveTicker());
-                break;
-        }
-    }
-
-    private void refreshPlayerList(ProxyTicker ticker) {
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        model.setRowCount(0);
-        
-        if (ticker != null && ticker.getPlayers() != null) {
-            for (IProxyPlayer player : ticker.getPlayers()) {
-                model.addRow(player.toRow());
-            }
-        }
     }
 }

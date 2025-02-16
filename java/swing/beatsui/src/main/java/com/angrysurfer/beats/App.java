@@ -1,5 +1,6 @@
 package com.angrysurfer.beats;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.swing.SwingUtilities;
@@ -14,16 +15,18 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.data.RedisService;
+import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public class App implements CommandListener {
 
+    private static final Logger logger = Logger.getLogger(App.class.getName());
+
     private Frame frame;
     private static RedisService redisService;
     private static TickerManager tickerManager;
-    private static final Logger logger = Logger.getLogger(App.class.getName());
 
     public static void main(String[] args) {
         try {
@@ -31,7 +34,7 @@ public class App implements CommandListener {
             initializeServices();
             // Then setup UI
             setupLookAndFeel();
-            
+
             // Initialize InstrumentManager with Redis service
             InstrumentManager.getInstance().setMidiDeviceService(new RedisMidiDeviceService());
 
@@ -50,20 +53,20 @@ public class App implements CommandListener {
 
     private void createAndShowGUI() {
         frame = new Frame();
-        
+
         // Add logging for frame state loading
         logger.info("Loading frame state for window");
         FrameState state = redisService.loadFrameState();
         logger.info("Frame state loaded: " + (state != null));
-        
+
         if (state != null) {
             frame.setSize(state.getFrameSizeX(), state.getFrameSizeY());
             frame.setLocation(state.getFramePosX(), state.getFramePosY());
             frame.setSelectedTab(state.getSelectedTab());
-            logger.info("Applied frame state: " + 
-                       "size=" + state.getFrameSizeX() + "x" + state.getFrameSizeY() + 
-                       ", pos=" + state.getFramePosX() + "," + state.getFramePosY() + 
-                       ", tab=" + state.getSelectedTab());
+            logger.info("Applied frame state: " +
+                    "size=" + state.getFrameSizeX() + "x" + state.getFrameSizeY() +
+                    ", pos=" + state.getFramePosX() + "," + state.getFramePosY() +
+                    ", tab=" + state.getSelectedTab());
         }
 
         // Add window listener for saving state on close
@@ -104,12 +107,12 @@ public class App implements CommandListener {
             currentState.setFramePosX(frame.getX());
             currentState.setFramePosY(frame.getY());
             currentState.setLookAndFeelClassName(UIManager.getLookAndFeel().getClass().getName());
-            
-            logger.info("Saving frame state: " + 
-                       "size=" + frame.getWidth() + "x" + frame.getHeight() + 
-                       ", pos=" + frame.getX() + "," + frame.getY() + 
-                       ", tab=" + frame.getSelectedTab());
-            
+
+            logger.info("Saving frame state: " +
+                    "size=" + frame.getWidth() + "x" + frame.getHeight() +
+                    ", pos=" + frame.getX() + "," + frame.getY() +
+                    ", tab=" + frame.getSelectedTab());
+
             redisService.saveFrameState(currentState);
         } catch (Exception e) {
             logger.severe("Error saving frame state: " + e.getMessage());
@@ -171,7 +174,7 @@ public class App implements CommandListener {
             logger.info("Loading frame state for Look and Feel");
             FrameState state = redisService.loadFrameState();
             logger.info("Frame state loaded: " + (state != null ? state.getLookAndFeelClassName() : "null"));
-            
+
             if (state != null && state.getLookAndFeelClassName() != null) {
                 UIManager.setLookAndFeel(state.getLookAndFeelClassName());
                 logger.info("Set Look and Feel to: " + state.getLookAndFeelClassName());
@@ -194,14 +197,23 @@ public class App implements CommandListener {
             redisService = new RedisService();
             logger.info("Redis service initialized");
 
-            if (redisService.isDatabaseEmpty()) {
+            tickerManager = new TickerManager();
+            logger.info("TickerManager instantiated");
+
+            // Changed to check for instruments specifically
+            List<ProxyInstrument> instruments = redisService.findAllInstruments();
+            if (instruments.isEmpty()) {
+                logger.info("No instruments found, loading initial configuration");
                 String configPath = "config/beats-config.json";
                 UserConfig config = redisService.loadConfigFromXml(configPath);
                 redisService.saveConfig(config);
                 logger.info("Initial configuration loaded");
+
+                App.getRedisService().createDefaultTicker();
+            } else {
+                logger.info("Found " + instruments.size() + " existing instruments");
             }
 
-            tickerManager = new TickerManager();
             logger.info("Ticker manager initialized");
         } catch (Exception e) {
             logger.severe("Error initializing services: " + e.getMessage());

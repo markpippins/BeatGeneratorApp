@@ -16,9 +16,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
-import com.angrysurfer.beats.panel.PlayerEditorPanel;
-import com.angrysurfer.core.proxy.ProxyStrike;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -183,25 +180,25 @@ public class Dialog<T> extends JDialog {
     }
 
     // Test method
-    public static void main(String[] args) {
-        Frame frame = new Frame();
-        frame.setVisible(true);
+    // public static void main(String[] args) {
+    //     Frame frame = new Frame();
+    //     frame.setVisible(true);
 
-        // Create sample player
-        ProxyStrike samplePlayer = new ProxyStrike();
+    //     // Create sample player
+    //     ProxyStrike samplePlayer = new ProxyStrike();
 
-        // Create test panel with sample player
-        JPanel testPanel = new PlayerEditorPanel(samplePlayer);
+    //     // Create test panel with sample player
+    //     JPanel testPanel = new PlayerEditorPanel(samplePlayer);
 
-        // Create and show dialog with frame as owner
-        Dialog<ProxyStrike> dialog = new Dialog<>(frame, samplePlayer, testPanel);
-        dialog.setTitle("Edit Player: " + samplePlayer.getName());
-        boolean result = dialog.showDialog();
+    //     // Create and show dialog with frame as owner
+    //     Dialog<ProxyStrike> dialog = new Dialog<>(frame, samplePlayer, testPanel);
+    //     dialog.setTitle("Edit Player: " + samplePlayer.getName());
+    //     boolean result = dialog.showDialog();
 
-        System.out.println("Dialog result: " + result);
-        if (result) {
-            ProxyStrike updatedPlayer = ((PlayerEditorPanel) testPanel).getUpdatedPlayer();
-            System.out.println("Updated player name: " + updatedPlayer.getName());
-        }
-    }
+    //     System.out.println("Dialog result: " + result);
+    //     if (result) {
+    //         ProxyStrike updatedPlayer = ((PlayerEditorPanel) testPanel).getUpdatedPlayer();
+    //         System.out.println("Updated player name: " + updatedPlayer.getName());
+    //     }
+    // }
 }
