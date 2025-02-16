@@ -22,8 +22,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.angrysurfer.beatsui.config.UserConfig;
-import com.angrysurfer.beatsui.data.RedisService;
+import com.angrysurfer.beats.config.UserConfig;
+import com.angrysurfer.beats.data.RedisService;
 import com.angrysurfer.core.proxy.ProxyCaption;
 import com.angrysurfer.core.proxy.ProxyControlCode;
 import com.angrysurfer.core.proxy.ProxyInstrument;
