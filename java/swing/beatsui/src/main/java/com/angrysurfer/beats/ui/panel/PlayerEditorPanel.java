@@ -29,10 +29,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.beats.App;
-import com.angrysurfer.beats.api.StatusConsumer;
 import com.angrysurfer.beats.ui.widget.Dial;
 import com.angrysurfer.beats.ui.widget.Dialog;
 import com.angrysurfer.beats.ui.widget.ToggleSwitch;
+import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;

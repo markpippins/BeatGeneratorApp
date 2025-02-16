@@ -2,7 +2,7 @@ package com.angrysurfer.beats.ui.panel;
 
 import javax.swing.JPanel;
 
-import com.angrysurfer.beats.api.StatusConsumer;
+import com.angrysurfer.core.api.StatusConsumer;
 
 import java.awt.LayoutManager;
 import java.util.Objects;

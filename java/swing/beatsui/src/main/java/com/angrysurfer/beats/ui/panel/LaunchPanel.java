@@ -18,11 +18,11 @@ import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.CommandListener;
-import com.angrysurfer.beats.api.Commands;
-import com.angrysurfer.beats.api.StatusConsumer;
 import com.angrysurfer.beats.ui.Utils;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.StatusConsumer;
 
 public class LaunchPanel extends StatusProviderPanel implements CommandListener {
 
@@ -44,7 +44,7 @@ public class LaunchPanel extends StatusProviderPanel implements CommandListener 
     }
 
     @Override
-    public void onAction(com.angrysurfer.beats.api.Command action) {
+    public void onAction(com.angrysurfer.core.api.Command action) {
         if (Commands.CHANGE_THEME.equals(action.getCommand())) {
             SwingUtilities.invokeLater(this::repaint);
         }

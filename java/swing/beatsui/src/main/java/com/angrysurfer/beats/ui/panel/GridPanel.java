@@ -6,9 +6,9 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
 
-import com.angrysurfer.beats.api.StatusConsumer;
 import com.angrysurfer.beats.ui.visualization.Visualizer;
 import com.angrysurfer.beats.ui.widget.GridButton;
+import com.angrysurfer.core.api.StatusConsumer;
 
 public class GridPanel extends StatusProviderPanel {
 

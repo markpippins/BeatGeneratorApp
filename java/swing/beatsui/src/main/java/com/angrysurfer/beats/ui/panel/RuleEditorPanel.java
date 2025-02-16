@@ -18,7 +18,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
 
-import com.angrysurfer.beats.api.StatusConsumer;
+import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyRule;
 
 public class RuleEditorPanel extends StatusProviderPanel {

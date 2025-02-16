@@ -7,12 +7,12 @@ import java.util.Random;
 import javax.swing.JComponent;
 import javax.swing.Timer;
 
-import com.angrysurfer.beats.api.Command;
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.CommandListener;
-import com.angrysurfer.beats.api.Commands;
-import com.angrysurfer.beats.api.StatusConsumer;
 import com.angrysurfer.beats.ui.widget.GridButton;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.StatusConsumer;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -30,12 +30,12 @@ import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
 
 import com.angrysurfer.beats.App;
-import com.angrysurfer.beats.api.Command;
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.CommandListener;
-import com.angrysurfer.beats.api.Commands;
-import com.angrysurfer.beats.api.StatusConsumer;
 import com.angrysurfer.beats.ui.widget.Dialog;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.IProxyPlayer;
 import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;

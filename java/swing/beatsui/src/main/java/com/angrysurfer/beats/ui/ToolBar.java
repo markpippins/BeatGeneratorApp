@@ -24,10 +24,10 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 
 import com.angrysurfer.beats.App;
-import com.angrysurfer.beats.api.Command;
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.CommandListener;
-import com.angrysurfer.beats.api.Commands;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.proxy.ProxyTicker;
 
 public class ToolBar extends JToolBar implements CommandListener {

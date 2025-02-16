@@ -19,10 +19,10 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableModel;
 
-import com.angrysurfer.beats.api.Command;
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.Commands;
 import com.angrysurfer.beats.ui.widget.Dialog;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.proxy.ProxyCaption;
 import com.angrysurfer.core.proxy.ProxyControlCode;
 

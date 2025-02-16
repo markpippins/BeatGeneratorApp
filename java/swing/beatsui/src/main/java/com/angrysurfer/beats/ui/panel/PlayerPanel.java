@@ -6,7 +6,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
-import com.angrysurfer.beats.api.StatusConsumer;
+import com.angrysurfer.core.api.StatusConsumer;
 
 import lombok.Getter;
 import lombok.Setter;

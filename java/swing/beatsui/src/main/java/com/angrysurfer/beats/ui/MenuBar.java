@@ -9,12 +9,12 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
-import com.angrysurfer.beats.api.Command;
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.CommandListener;
-import com.angrysurfer.beats.api.Commands;
-import com.angrysurfer.beats.api.StatusConsumer;
 import com.angrysurfer.beats.ui.visualization.IVisualizationHandler;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.StatusConsumer;
 
 public class MenuBar extends JMenuBar {
 

@@ -2,9 +2,9 @@ package com.angrysurfer.beats.ui;
 
 import javax.swing.*;
 
-import com.angrysurfer.beats.api.Command;
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.Commands;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.formdev.flatlaf.*;
 
 public class ThemeManager {

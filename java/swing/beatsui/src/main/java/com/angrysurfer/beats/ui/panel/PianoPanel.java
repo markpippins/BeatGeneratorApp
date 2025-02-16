@@ -15,11 +15,11 @@ import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-import com.angrysurfer.beats.api.Command;
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.CommandListener;
-import com.angrysurfer.beats.api.Commands;
-import com.angrysurfer.beats.api.StatusConsumer;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.StatusConsumer;
 
 import java.util.HashMap;
 import java.util.HashSet;

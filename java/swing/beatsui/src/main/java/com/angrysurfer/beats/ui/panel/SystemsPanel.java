@@ -12,7 +12,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import com.angrysurfer.beats.api.StatusConsumer;
+import com.angrysurfer.core.api.StatusConsumer;
 
 import lombok.Getter;
 import lombok.Setter;

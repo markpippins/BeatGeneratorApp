@@ -16,9 +16,6 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beats.api.Command;
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.Commands;
 import com.angrysurfer.beats.ui.panel.InstrumentsPanel;
 import com.angrysurfer.beats.ui.panel.LaunchPanel;
 import com.angrysurfer.beats.ui.panel.PlayerPanel;
@@ -28,6 +25,9 @@ import com.angrysurfer.beats.ui.panel.X0XPanel;
 import com.angrysurfer.beats.ui.panel.sorting.SortingVisualizerPanel;
 import com.angrysurfer.beats.ui.widget.Dialog;
 import com.angrysurfer.beats.ui.widget.StatusBar;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.beats.ui.widget.BackgroundPanel;
 
 public class Frame extends JFrame implements AutoCloseable {

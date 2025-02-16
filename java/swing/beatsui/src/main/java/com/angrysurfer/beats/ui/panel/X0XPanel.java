@@ -16,10 +16,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beats.api.StatusConsumer;
 import com.angrysurfer.beats.ui.widget.Dial;
 import com.angrysurfer.beats.ui.widget.DrumButton;
 import com.angrysurfer.beats.ui.widget.TriggerButton;
+import com.angrysurfer.core.api.StatusConsumer;
 
 import java.util.Objects;
 

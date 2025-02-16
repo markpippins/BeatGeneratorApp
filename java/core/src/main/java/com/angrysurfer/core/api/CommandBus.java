@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.api;
+package com.angrysurfer.core.api;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

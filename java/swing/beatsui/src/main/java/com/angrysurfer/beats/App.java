@@ -5,13 +5,13 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import com.angrysurfer.beats.api.Command;
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.CommandListener;
-import com.angrysurfer.beats.api.Commands;
 import com.angrysurfer.beats.service.RedisMidiDeviceService;
 import com.angrysurfer.beats.service.TickerManager;
 import com.angrysurfer.beats.ui.Frame;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.data.RedisService;

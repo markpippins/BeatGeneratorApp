@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.api;
+package com.angrysurfer.core.api;
 
 import lombok.Getter;
 import lombok.Setter;

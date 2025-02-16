@@ -19,13 +19,13 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.beats.App;
-import com.angrysurfer.beats.api.Command;
-import com.angrysurfer.beats.api.CommandBus;
-import com.angrysurfer.beats.api.CommandListener;
-import com.angrysurfer.beats.api.Commands;
-import com.angrysurfer.beats.api.StatusConsumer;
 import com.angrysurfer.beats.ui.Utils;
 import com.angrysurfer.beats.ui.widget.Dialog;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.proxy.IProxyPlayer;
 import com.angrysurfer.core.proxy.ProxyStrike;
