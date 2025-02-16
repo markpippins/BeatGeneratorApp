@@ -7,7 +7,6 @@ import javax.swing.UIManager;
 
 import com.angrysurfer.beats.service.RedisMidiDeviceService;
 import com.angrysurfer.beats.service.TickerManager;
-import com.angrysurfer.beats.ui.Frame;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
