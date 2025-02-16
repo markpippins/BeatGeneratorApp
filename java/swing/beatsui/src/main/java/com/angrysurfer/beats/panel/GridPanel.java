@@ -15,8 +15,8 @@ public class GridPanel extends StatusProviderPanel {
     private GridButton[][] buttons;
     private Visualizer gridSaver;
 
-    static int GRID_ROWS = 16;
-    static int GRID_COLS = 48;
+    static int GRID_ROWS = 8;
+    static int GRID_COLS = 36;
 
     public GridPanel() {
         this(null);

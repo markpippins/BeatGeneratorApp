@@ -27,8 +27,10 @@ public class App implements CommandListener {
 
     public static void main(String[] args) {
         try {
-            setupLookAndFeel();
+            // Initialize services first
             initializeServices();
+            // Then setup UI
+            setupLookAndFeel();
             
             // Initialize InstrumentManager with Redis service
             InstrumentManager.getInstance().setMidiDeviceService(new RedisMidiDeviceService());
@@ -48,12 +50,30 @@ public class App implements CommandListener {
 
     private void createAndShowGUI() {
         frame = new Frame();
+        
+        // Add logging for frame state loading
+        logger.info("Loading frame state for window");
         FrameState state = redisService.loadFrameState();
+        logger.info("Frame state loaded: " + (state != null));
+        
         if (state != null) {
             frame.setSize(state.getFrameSizeX(), state.getFrameSizeY());
             frame.setLocation(state.getFramePosX(), state.getFramePosY());
             frame.setSelectedTab(state.getSelectedTab());
+            logger.info("Applied frame state: " + 
+                       "size=" + state.getFrameSizeX() + "x" + state.getFrameSizeY() + 
+                       ", pos=" + state.getFramePosX() + "," + state.getFramePosY() + 
+                       ", tab=" + state.getSelectedTab());
         }
+
+        // Add window listener for saving state on close
+        frame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                saveFrameState();
+            }
+        });
+
         setupFrame();
         frame.setVisible(true);
     }
@@ -76,14 +96,24 @@ public class App implements CommandListener {
     }
 
     private void saveFrameState() {
-        FrameState currentState = new FrameState();
-        currentState.setSelectedTab(frame.getSelectedTab());
-        currentState.setFrameSizeX(frame.getWidth());
-        currentState.setFrameSizeY(frame.getHeight());
-        currentState.setFramePosX(frame.getX());
-        currentState.setFramePosY(frame.getY());
-        currentState.setLookAndFeelClassName(UIManager.getLookAndFeel().getClass().getName());
-        redisService.saveFrameState(currentState);
+        try {
+            FrameState currentState = new FrameState();
+            currentState.setSelectedTab(frame.getSelectedTab());
+            currentState.setFrameSizeX(frame.getWidth());
+            currentState.setFrameSizeY(frame.getHeight());
+            currentState.setFramePosX(frame.getX());
+            currentState.setFramePosY(frame.getY());
+            currentState.setLookAndFeelClassName(UIManager.getLookAndFeel().getClass().getName());
+            
+            logger.info("Saving frame state: " + 
+                       "size=" + frame.getWidth() + "x" + frame.getHeight() + 
+                       ", pos=" + frame.getX() + "," + frame.getY() + 
+                       ", tab=" + frame.getSelectedTab());
+            
+            redisService.saveFrameState(currentState);
+        } catch (Exception e) {
+            logger.severe("Error saving frame state: " + e.getMessage());
+        }
     }
 
     private void recreateFrame() {
@@ -137,11 +167,17 @@ public class App implements CommandListener {
 
     private static void setupLookAndFeel() {
         try {
+            // Add logging
+            logger.info("Loading frame state for Look and Feel");
             FrameState state = redisService.loadFrameState();
+            logger.info("Frame state loaded: " + (state != null ? state.getLookAndFeelClassName() : "null"));
+            
             if (state != null && state.getLookAndFeelClassName() != null) {
                 UIManager.setLookAndFeel(state.getLookAndFeelClassName());
+                logger.info("Set Look and Feel to: " + state.getLookAndFeelClassName());
             } else {
                 UIManager.setLookAndFeel(new FlatLightLaf());
+                logger.info("Set default Look and Feel: FlatLightLaf");
             }
         } catch (Exception e) {
             logger.warning("Error setting look and feel: " + e.getMessage());
