@@ -13,18 +13,18 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PlayerPanel extends StatusProviderPanel {
+public class TickerPanel extends StatusProviderPanel {
     private final PlayerTablePanel playerTablePanel;
     private final RuleTablePanel ruleTablePanel;
 
-    public PlayerPanel(StatusConsumer status) {
+    public TickerPanel(StatusConsumer status) {
         super(new BorderLayout(), status);
         this.ruleTablePanel = new RuleTablePanel(status);
         this.playerTablePanel = new PlayerTablePanel(status, ruleTablePanel);
         setup();
     }
 
-    public PlayerPanel() {
+    public TickerPanel() {
         this(null);
     }
 

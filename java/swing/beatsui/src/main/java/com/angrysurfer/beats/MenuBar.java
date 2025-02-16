@@ -53,16 +53,9 @@ public class MenuBar extends JMenuBar {
             }
         });
 
-        // Edit Menu
-        JMenu editMenu = new JMenu("Edit");
-        editMenu.setMnemonic(KeyEvent.VK_E);
-
-        // Preferences submenu
-        JMenu preferencesMenu = new JMenu("Preferences");
-        preferencesMenu.add(themeManager.createThemeMenu());
-
-        // Add Database submenu
+        // Database Menu
         JMenu dbMenu = new JMenu("Database");
+        dbMenu.setMnemonic(KeyEvent.VK_D);
         JMenuItem clearDb = new JMenuItem("Clear Database");
         clearDb.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
@@ -79,9 +72,15 @@ public class MenuBar extends JMenuBar {
                 commandBus.publish(cmd);
             }
         });
-        
         dbMenu.add(clearDb);
-        preferencesMenu.add(dbMenu);
+
+        // Edit Menu
+        JMenu editMenu = new JMenu("Edit");
+        editMenu.setMnemonic(KeyEvent.VK_E);
+
+        // Preferences submenu
+        JMenu preferencesMenu = new JMenu("Preferences");
+        preferencesMenu.add(themeManager.createThemeMenu());
 
         commandBus.register(new CommandListener() {
 
@@ -147,6 +146,7 @@ public class MenuBar extends JMenuBar {
 
         add(fileMenu);
         add(editMenu);
+        add(dbMenu);  // Add Database menu between Edit and Help
         add(helpMenu);
     }
 

@@ -97,6 +97,7 @@ public class RedisService implements CommandListener {
 
     public ProxyRule saveRule(ProxyRule rule, IProxyPlayer player) {
         try (Jedis jedis = jedisPool.getResource()) {
+            // Generate new ID if needed
             if (rule.getId() == null) {
                 String seqKey = "seq:" + ProxyRule.class.getSimpleName().toLowerCase();
                 rule.setId(jedis.incr(seqKey));
@@ -107,9 +108,12 @@ public class RedisService implements CommandListener {
             String ruleKey = getKey(ProxyRule.class, rule.getId());
             jedis.set(ruleKey, json);
 
-            // Add to player's rules set
+            // Link rule to player
             String rulesKey = "player:" + player.getId() + ":rules";
             jedis.sadd(rulesKey, rule.getId().toString());
+
+            // Also save/update the player to ensure it exists
+            saveStrike((ProxyStrike) player);
 
             return rule;
         } catch (Exception e) {
@@ -466,25 +470,27 @@ public class RedisService implements CommandListener {
 
     public void deleteStrike(ProxyStrike strike) {
         try (Jedis jedis = jedisPool.getResource()) {
-            // First remove from all ticker:player relationships
-            Set<String> tickerKeys = jedis.keys("proxyticker:*");
-            for (String tickerKey : tickerKeys) {
-                if (!tickerKey.endsWith(":players")) {
-                    String playersKey = tickerKey + ":players";
-                    jedis.srem(playersKey, strike.getId().toString());
-                }
+            // Remove rules first
+            String rulesKey = "player:" + strike.getId() + ":rules";
+            Set<String> ruleIds = jedis.smembers(rulesKey);
+            for (String ruleId : ruleIds) {
+                String ruleKey = getKey(ProxyRule.class, Long.valueOf(ruleId));
+                jedis.del(ruleKey);
+            }
+            jedis.del(rulesKey);
+
+            // Remove from ticker's player set
+            if (strike.getTicker() != null) {
+                String tickerPlayersKey = getKey(ProxyTicker.class, strike.getTicker().getId()) + ":players";
+                jedis.srem(tickerPlayersKey, strike.getId().toString());
             }
 
-            // Delete the strike
+            // Delete the strike itself
             String strikeKey = getKey(ProxyStrike.class, strike.getId());
             jedis.del(strikeKey);
 
-            // Clean up rules
-            String rulesKey = "player:" + strike.getId() + ":rules";
-            jedis.del(rulesKey);
-
             LogManager.getInstance().info("RedisService", 
-                "Deleted strike " + strike.getId() + " and all relationships");
+                "Deleted strike and all associated rules: " + strike.getName());
         }
     }
 
@@ -679,7 +685,19 @@ public class RedisService implements CommandListener {
 
     public void clearDatabase() {
         try (Jedis jedis = jedisPool.getResource()) {
-            // Delete all keys
+            // Find all rule keys first
+            Set<String> ruleKeys = jedis.keys("proxyrule:*");
+            for (String key : ruleKeys) {
+                jedis.del(key);
+            }
+
+            // Clear player-rule relationships
+            Set<String> ruleSetKeys = jedis.keys("player:*:rules");
+            for (String key : ruleSetKeys) {
+                jedis.del(key);
+            }
+
+            // Then delete everything else
             String result = jedis.flushDB();
             LogManager.getInstance().info("RedisService", "Database cleared: " + result);
 
@@ -688,8 +706,7 @@ public class RedisService implements CommandListener {
             jedis.del("seq:proxystrike");
             jedis.del("seq:proxyrule");
             jedis.del("seq:proxyinstrument");
-            LogManager.getInstance().info("RedisService", "All sequences reset");
-
+            
             // Create new ticker and publish
             Command cmd = new Command();
             cmd.setCommand(Commands.DATABASE_RESET);

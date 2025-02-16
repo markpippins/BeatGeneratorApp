@@ -19,7 +19,7 @@ import javax.swing.border.EmptyBorder;
 import com.angrysurfer.beats.panel.BackgroundPanel;
 import com.angrysurfer.beats.panel.InstrumentsPanel;
 import com.angrysurfer.beats.panel.LaunchPanel;
-import com.angrysurfer.beats.panel.PlayerPanel;
+import com.angrysurfer.beats.panel.TickerPanel;
 import com.angrysurfer.beats.panel.SystemsPanel;
 import com.angrysurfer.beats.panel.WebPanel;
 import com.angrysurfer.beats.panel.X0XPanel;
@@ -88,7 +88,7 @@ public class Frame extends JFrame implements AutoCloseable {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
-                if (tabbedPane.getSelectedComponent() instanceof PlayerPanel) {
+                if (tabbedPane.getSelectedComponent() instanceof TickerPanel) {
                     char keyChar = Character.toLowerCase(e.getKeyChar());
 
                     if (keyNoteMap.containsKey(keyChar)) {
@@ -128,7 +128,7 @@ public class Frame extends JFrame implements AutoCloseable {
 
         tabbedPane = new JTabbedPane();
 
-        tabbedPane.addTab("Players", new PlayerPanel(statusBar));
+        tabbedPane.addTab("Players", new TickerPanel(statusBar));
         tabbedPane.addTab("Launch", new LaunchPanel());
         tabbedPane.addTab("X0X", new X0XPanel());
         tabbedPane.addTab("Instruments", new InstrumentsPanel());

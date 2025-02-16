@@ -76,52 +76,78 @@ public class RuleTablePanel extends JPanel implements CommandListener {
 
     @Override
     public void onAction(Command action) {
-        if (action == null) {
-            logger.warning("Received null action");
-            return;
-        }
-
+        if (action == null || action.getCommand() == null) return;
+        
         logger.info("RuleTablePanel received action: " + action.getCommand());
         
         switch (action.getCommand()) {
-            case Commands.PLAYER_SELECTED -> {
-                IProxyPlayer player = (IProxyPlayer) action.getData();
-                if (player != null) {
-                    logger.info("Processing PLAYER_SELECTED for: " + player.getName());
-                    currentPlayer = player;
-                    refreshRuleList(player);
-                } else {
-                    logger.warning("PLAYER_SELECTED event had null player data");
+            case Commands.PLAYER_SELECTED:
+                handlePlayerSelected((ProxyStrike) action.getData());
+                break;
+                
+            case Commands.PLAYER_UNSELECTED:
+                handlePlayerUnselected();
+                break;
+                
+            case Commands.DATABASE_RESET:
+            case Commands.CLEAR_DATABASE:
+                clearDisplay();
+                break;
+
+            case Commands.RULE_ADDED_TO_PLAYER:
+                ProxyStrike updatedPlayer = (ProxyStrike) action.getData();
+                if (currentPlayer != null && currentPlayer.getId().equals(updatedPlayer.getId())) {
+                    loadRulesForCurrentPlayer();
                 }
-            }
-            case Commands.PLAYER_UNSELECTED -> {
-                logger.info("Processing PLAYER_UNSELECTED");
-                currentPlayer = null;
-                clearRules();
-            }
-            case Commands.RULE_ADDED_TO_PLAYER, Commands.RULE_REMOVED_FROM_PLAYER -> {
-                if (currentPlayer != null) {
-                    refreshRuleList(currentPlayer);
-                }
-            }
+                break;
+                
+            // ...rest of existing cases...
         }
+    }
+
+    private void clearDisplay() {
+        currentPlayer = null;
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setRowCount(0);
+        updateButtonStates(false);
     }
 
     private void updateButtonStates(boolean enabled) {
         addButton.setEnabled(enabled);
         editButton.setEnabled(enabled && table.getSelectedRow() >= 0);
         deleteButton.setEnabled(enabled && table.getSelectedRow() >= 0);
+        addPopupMenuItem.setEnabled(enabled);
+        editMenuItem.setEnabled(enabled && table.getSelectedRow() >= 0);
+        deleteMenuItem.setEnabled(enabled && table.getSelectedRow() >= 0);
     }
 
     private void handlePlayerSelected(ProxyStrike player) {
         logger.info("Player selected: " + player.getName() + " (ID: " + player.getId() + ")");
         this.currentPlayer = player;
-        addButton.setEnabled(true);
-        addPopupMenuItem.setEnabled(true);
-        
-        // Clear and load rules
+        loadRulesForCurrentPlayer();
+        updateButtonStates(true);
+    }
+
+    private void loadRulesForCurrentPlayer() {
         clearTable();
-        loadRulesFromRedis();
+        if (currentPlayer != null && currentPlayer.getId() != null) {
+            List<ProxyRule> rules = App.getRedisService().findRulesByPlayer(currentPlayer);
+            logger.info("Found " + rules.size() + " rules for player: " + currentPlayer.getName());
+            
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            for (ProxyRule rule : rules) {
+                model.addRow(rule.toRow());
+            }
+            
+            if (!rules.isEmpty()) {
+                table.setRowSelectionInterval(0, 0);
+                editButton.setEnabled(true);
+                deleteButton.setEnabled(true);
+            }
+            
+            addButton.setEnabled(true);
+            status.setStatus("Loaded " + rules.size() + " rules for " + currentPlayer.getName());
+        }
     }
 
     private void handlePlayerUnselected() {

@@ -32,6 +32,9 @@ import com.angrysurfer.beats.App;
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ToggleSwitch;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.proxy.ProxyRule;
@@ -43,7 +46,7 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     private static final Logger logger = Logger.getLogger(PlayerEditorPanel.class.getName());
 
     private final ProxyStrike player;
-    private final JComboBox<ProxyInstrument> instrumentCombo; // Replace nameField
+    private final JComboBox<ProxyInstrument> instrumentCombo; // Change to ProxyInstrument
     private final JComboBox<Integer> channelCombo;
     private final JComboBox<Integer> presetCombo;
     private final Dial swingDial;
@@ -286,24 +289,48 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     }
 
     private void setupInstrumentCombo() {
-        List<ProxyInstrument> instruments = getFilteredInstruments();
+        List<ProxyInstrument> instruments = InstrumentManager.getInstance().getAvailableInstruments();
         DefaultComboBoxModel<ProxyInstrument> model = new DefaultComboBoxModel<>();
-
-        // Add logging to debug
-        logger.info("Setting up instrument combo with " + instruments.size() + " instruments");
-
-        instruments.forEach(inst -> {
-            model.addElement(inst);
-            logger.info("Added instrument: " + inst.getName() + " (device: " + inst.getDeviceName() + ")");
-        });
-
+        
+        for (ProxyInstrument instrument : instruments) {
+            model.addElement(instrument);
+        }
         instrumentCombo.setModel(model);
 
-        if (player != null && player.getInstrument() != null) {
-            instrumentCombo.setSelectedItem(player.getInstrument());
-        } else if (model.getSize() > 0) {
-            instrumentCombo.setSelectedIndex(0);
+        // Set selected instrument based on player's name
+        if (player != null && player.getName() != null) {
+            for (int i = 0; i < model.getSize(); i++) {
+                ProxyInstrument inst = model.getElementAt(i);
+                if (inst.getName().equals(player.getName())) {
+                    instrumentCombo.setSelectedIndex(i);
+                    break;
+                }
+            }
         }
+
+        // Update rendering to show instrument name
+        instrumentCombo.setRenderer(new javax.swing.DefaultListCellRenderer() {
+            @Override
+            public java.awt.Component getListCellRendererComponent(
+                javax.swing.JList<?> list, Object value, int index,
+                boolean isSelected, boolean cellHasFocus) {
+                    
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof ProxyInstrument) {
+                    setText(((ProxyInstrument) value).getName());
+                }
+                return this;
+            }
+        });
+
+        instrumentCombo.addActionListener(e -> {
+            ProxyInstrument selected = (ProxyInstrument) instrumentCombo.getSelectedItem();
+            if (selected != null) {
+                player.setName(selected.getName());
+                player.setInstrumentId(selected.getId());
+                player.setInstrument(selected);
+            }
+        });
     }
 
     private void layoutComponents() {
@@ -461,10 +488,26 @@ public class PlayerEditorPanel extends StatusProviderPanel {
 
         if (dialog.showDialog()) {
             ProxyRule updatedRule = editorPanel.getUpdatedRule();
-            if (isNew) {
-                player.getRules().add(updatedRule);
+            
+            // Save the rule to Redis
+            ProxyRule savedRule = App.getRedisService().saveRule(updatedRule, player);
+            
+            // Update player's rules set if needed
+            if (player.getRules() == null) {
+                player.setRules(new HashSet<>());
             }
+            
+            // Add to player's rules collection
+            player.getRules().add(savedRule);
+            
+            // Update UI
             refreshRulesTable();
+            
+            // Notify other components
+            Command cmd = new Command();
+            cmd.setCommand(Commands.RULE_ADDED_TO_PLAYER);
+            cmd.setData(player);
+            CommandBus.getInstance().publish(cmd);
         }
     }
 
@@ -516,13 +559,16 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     }
 
     public ProxyStrike getUpdatedPlayer() {
-        // Since we're modifying the original player object directly,
-        // we just need to preserve its ID and return it
-        Long originalId = player.getId();
+        // Ensure instrument is set from combo selection
+        ProxyInstrument selectedInstrument = (ProxyInstrument) instrumentCombo.getSelectedItem();
+        if (selectedInstrument != null) {
+            player.setName(selectedInstrument.getName());
+            player.setInstrumentId(selectedInstrument.getId());
+            player.setInstrument(selectedInstrument);
+        }
 
-        // Update all the fields
-        player.setName(((ProxyInstrument) instrumentCombo.getSelectedItem()).getName());
-        player.setInstrument((ProxyInstrument) instrumentCombo.getSelectedItem());
+        // Update rest of player fields
+        Long originalId = player.getId();
         player.setChannel((Integer) channelCombo.getSelectedItem());
         player.setPreset(((Integer) presetCombo.getSelectedItem()).longValue());
         player.setSwing((long) swingDial.getValue());
@@ -553,10 +599,6 @@ public class PlayerEditorPanel extends StatusProviderPanel {
 
         // Spinner
         player.setSparse((double) sparseSpinner.getValue());
-
-        // Update Instrument ID instead of name
-        ProxyInstrument selectedInstrument = (ProxyInstrument) instrumentCombo.getSelectedItem();
-        player.setInstrumentId(selectedInstrument != null ? selectedInstrument.getId() : null);
 
         // Ensure ID is preserved
         player.setId(originalId);

@@ -287,16 +287,24 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
                 ProxyStrike updatedPlayer = editorPanel.getUpdatedPlayer();
                 updatedPlayer.setTicker(activeTicker);
 
-                // Save player and update UI
+                // Save player
                 ProxyStrike savedPlayer = App.getRedisService().saveStrike(updatedPlayer);
                 logger.info("Saved player: " + savedPlayer.getName() + " (ID: " + savedPlayer.getId() + ")");
 
-                // Update ticker's player list and save ticker
+                // For new players, add to ticker
                 if (isNewPlayer) {
                     activeTicker.getPlayers().add(savedPlayer);
-                    App.getRedisService().saveTicker(activeTicker);
-                    logger.info("Updated ticker " + activeTicker.getId() + " with new player");
+                } else {
+                    // For existing players, update the reference in the ticker's player list
+                    activeTicker.getPlayers().removeIf(p -> p.getId().equals(savedPlayer.getId()));
+                    activeTicker.getPlayers().add(savedPlayer);
                 }
+
+                // Save ticker with updated player list
+                App.getRedisService().saveTicker(activeTicker);
+                logger.info("Updated ticker " + activeTicker.getId() + 
+                          " with " + (isNewPlayer ? "new" : "updated") + 
+                          " player " + savedPlayer.getId());
 
                 // Refresh UI
                 refreshPlayerList();
@@ -304,7 +312,7 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
 
                 // Notify other components
                 Command cmd = new Command();
-                cmd.setCommand(isNewPlayer ? Commands.PLAYER_ADDED_TO_TICKER : Commands.TICKER_UPDATED);
+                cmd.setCommand(isNewPlayer ? Commands.PLAYER_ADDED_TO_TICKER : Commands.TICKER_CHANGED);
                 cmd.setData(savedPlayer);
                 actionBus.publish(cmd);
             }
@@ -413,32 +421,27 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
 
     @Override
     public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) {
-            logger.warning("Received null action or command");
-            return;
-        }
+        if (action == null || action.getCommand() == null) return;
         
-        logger.info("Received command: " + action.getCommand() + 
-                   ", active ticker: " + (activeTicker != null ? activeTicker.getId() : "null"));
+        logger.info("Received command: " + action.getCommand());
         
         switch (action.getCommand()) {
             case Commands.TICKER_LOADED:
             case Commands.TICKER_SELECTED:
             case Commands.TICKER_CHANGED:
                 ProxyTicker ticker = (ProxyTicker) action.getData();
-                if (ticker != null) {
-                    logger.info("Setting active ticker: " + ticker.getId() + 
-                              " with " + ticker.getPlayers().size() + " players");
-                    for (IProxyPlayer player : ticker.getPlayers()) {
-                        logger.info("Ticker contains player: " + player.getName() + 
-                                  " (ID: " + player.getId() + ")");
-                    }
-                } else {
-                    logger.warning("Received null ticker in command: " + action.getCommand());
-                }
                 setActiveTicker(ticker);
+                refreshPlayerList(); // Always refresh when ticker changes
                 break;
+
             case Commands.PLAYER_ADDED_TO_TICKER:
+                if (activeTicker != null) {
+                    refreshPlayerList();
+                    ProxyStrike player = (ProxyStrike) action.getData();
+                    selectPlayerByName(player.getName());
+                }
+                break;
+
             case Commands.PLAYER_REMOVED_FROM_TICKER:
                 if (activeTicker != null && activeTicker.equals(((ProxyStrike) action.getData()).getTicker())) {
                     refreshPlayerList();
@@ -448,9 +451,15 @@ public class PlayerTablePanel extends JPanel implements CommandListener {
             case Commands.SHOW_PLAYER_EDITOR:
                 showPlayerDialog((ProxyStrike) action.getData());
                 break;
+
             case Commands.DATABASE_RESET:
-                refreshPlayerList();
+            case Commands.CLEAR_DATABASE:
+                logger.info("Clearing player table due to database reset");
+                DefaultTableModel model = (DefaultTableModel) table.getModel();
+                model.setRowCount(0);
+                updateButtonStates(false);
                 break;
+
             default:
                 break;
         }
