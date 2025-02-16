@@ -65,4 +65,17 @@ public class Commands {
     public static final String VISUALIZATION_STOPPED = "VISUALIZATION_STOPPED";
     public static final String VISUALIZATION_REGISTERED = "VISUALIZATION_REGISTERED";
 
+    // Ticker-Player-Rule relationship commands
+    public static final String TICKER_LOADED = "TICKER_LOADED";
+    public static final String TICKER_CHANGED = "TICKER_CHANGED";
+    public static final String PLAYER_ADDED_TO_TICKER = "PLAYER_ADDED_TO_TICKER";
+    public static final String PLAYER_REMOVED_FROM_TICKER = "PLAYER_REMOVED_FROM_TICKER";
+    public static final String RULE_ADDED_TO_PLAYER = "RULE_ADDED_TO_PLAYER";
+    public static final String RULE_REMOVED_FROM_PLAYER = "RULE_REMOVED_FROM_PLAYER";
+
+    // Logging commands
+    public static final String LOG_DEBUG = "LOG_DEBUG";
+    public static final String LOG_INFO = "LOG_INFO";
+    public static final String LOG_WARN = "LOG_WARN";
+    public static final String LOG_ERROR = "LOG_ERROR";
 }

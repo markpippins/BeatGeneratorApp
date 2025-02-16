@@ -94,7 +94,7 @@ public class X0XPanel extends StatusProviderPanel {
         // Add the trigger button
         JButton triggerButton = new TriggerButton("");
         triggerButton.setName("TriggerButton-" + index);
-
+        triggerButton.setToolTipText("TriggerButton-" + index);
         // Center the button horizontally
         JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         buttonPanel1.add(triggerButton);

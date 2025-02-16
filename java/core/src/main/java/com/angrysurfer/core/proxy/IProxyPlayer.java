@@ -219,4 +219,27 @@ public interface IProxyPlayer extends Callable<Boolean> {
 
     boolean shouldPlay();
 
+    default Object[] toRow() {
+        return new Object[] {
+            getName(),
+            getChannel(),
+            getSwing(),
+            getLevel(),
+            getNote(),
+            getMinVelocity(),
+            getMaxVelocity(),
+            getPreset(),
+            getStickyPreset(),
+            getProbability(),
+            getRandomDegree(),
+            getRatchetCount(),
+            getRatchetInterval(),
+            getUseInternalBeats(),
+            getUseInternalBars(),
+            getPanPosition(),
+            getPreserveOnPurge(),
+            getSparse()
+        };
+    }
+
 }

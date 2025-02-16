@@ -1,68 +1,127 @@
 package com.angrysurfer.beats.service;
 
-import java.util.logging.Logger;
-
-import javax.swing.SwingUtilities;
+import java.util.HashSet;
+import java.util.List;
 
 import com.angrysurfer.beats.App;
+import com.angrysurfer.beats.LogManager;
 import com.angrysurfer.beats.api.Command;
 import com.angrysurfer.beats.api.CommandBus;
+import com.angrysurfer.beats.api.CommandListener;
 import com.angrysurfer.beats.api.Commands;
+import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
 
-public class TickerManager {
-    private static final Logger logger = Logger.getLogger(TickerManager.class.getName());
-    private ProxyTicker currentTicker;
-    private final CommandBus commandBus;
+import lombok.Getter;
+
+@Getter
+public class TickerManager implements CommandListener {
+    private ProxyTicker activeTicker;
+    private final CommandBus commandBus = CommandBus.getInstance();
+    private List<ProxyTicker> tickers;
 
     public TickerManager() {
-        this.commandBus = CommandBus.getInstance();
-        initialize();
+        commandBus.register(this);
+        loadTicker();
     }
 
-    private void initialize() {
-        try {
-            ProxyTicker ticker = App.getRedisService().loadTicker();
-            // logger.info(new LogMessage(getClass().getSimpleName(), "Loaded existing ticker: BPM=" + ticker.getTempoInBPM() +
-            //         ", Bars=" + ticker.getBars(), Level.INFO).getMessage());
-            setCurrentTicker(ticker);
-        } catch (Exception e) {
-            // logger.info(new LogMessage(getClass().getSimpleName(), "No existing ticker found, creating default ticker", 
-            //     Level.INFO).getMessage());
-            ProxyTicker newTicker = createDefaultTicker();
-            App.getRedisService().saveTicker(newTicker);
-            setCurrentTicker(newTicker);
-            // logger.info(new LogMessage(getClass().getSimpleName(), "Created and saved default ticker", 
-            //     Level.INFO).getMessage());
+    private void loadTicker() {
+        activeTicker = App.getRedisService().loadTicker();
+        publishTickerLoaded();
+    }
+
+    private void publishTickerLoaded() {
+        Command cmd = new Command();
+        cmd.setCommand(Commands.TICKER_LOADED);
+        cmd.setData(activeTicker);
+        commandBus.publish(cmd);
+    }
+
+    public void addPlayer(ProxyStrike player) {
+        if (activeTicker != null) {
+            activeTicker.getPlayers().add(player);
+            App.getRedisService().saveTicker(activeTicker);
+            
+            Command cmd = new Command();
+            cmd.setCommand(Commands.PLAYER_ADDED_TO_TICKER);
+            cmd.setData(player);
+            commandBus.publish(cmd);
         }
     }
 
-    private ProxyTicker createDefaultTicker() {
-        ProxyTicker ticker = new ProxyTicker();
-        ticker.setTempoInBPM(120.0f);
-        ticker.setBars(4);
-        ticker.setBeatsPerBar(4);
-        ticker.setTicksPerBeat(24);
-        ticker.setParts(1);
-        ticker.setPartLength(4L);
-        return ticker;
+    public void removePlayer(ProxyStrike player) {
+        if (activeTicker != null) {
+            activeTicker.getPlayers().remove(player);
+            App.getRedisService().deleteStrike(player); // Changed from deletePlayerFromTicker
+            
+            Command cmd = new Command();
+            cmd.setCommand(Commands.PLAYER_REMOVED_FROM_TICKER);
+            cmd.setData(player);
+            commandBus.publish(cmd);
+        }
     }
 
-    public void setCurrentTicker(ProxyTicker ticker) {
-        this.currentTicker = ticker;
+    @Override
+    public void onAction(Command action) {
+        switch (action.getCommand()) {
+            case Commands.TRANSPORT_FORWARD -> handleForwardCommand();
+            case Commands.TRANSPORT_REWIND -> handleRewindCommand();
+        }
+    }
+
+    private void handleForwardCommand() {
+        try {
+            if (tickers == null) {
+                tickers = App.getRedisService().findAllTickers();
+            }
+
+            int currentIndex = -1;
+            if (activeTicker != null) {
+                currentIndex = tickers.indexOf(activeTicker);
+            }
+
+            if (currentIndex < tickers.size() - 1) {
+                activeTicker = tickers.get(currentIndex + 1);
+                publishTickerSelected();
+            } else {
+                if (activeTicker != null && !activeTicker.getPlayers().isEmpty()) {
+                    createNewTicker();
+                }
+            }
+        } catch (Exception e) {
+            LogManager.getInstance().error("TickerManager", "Error navigating tickers", e);
+        }
+    }
+
+    private void handleRewindCommand() {
+        if (tickers == null || tickers.isEmpty()) return;
+
+        int currentIndex = tickers.indexOf(activeTicker);
+        if (currentIndex > 0) {
+            activeTicker = tickers.get(currentIndex - 1);
+            publishTickerSelected();
+        }
+    }
+
+    private void createNewTicker() {
+        ProxyTicker newTicker = new ProxyTicker();
+        newTicker.setTempoInBPM(120.0f);
+        newTicker.setBars(4);
+        newTicker.setBeatsPerBar(4);
+        newTicker.setTicksPerBeat(24);
+        newTicker.setParts(1);
+        newTicker.setPartLength(4L);
+        newTicker.setPlayers(new HashSet<>());
+
+        activeTicker = App.getRedisService().saveTicker(newTicker);
+        tickers.add(activeTicker);
         publishTickerSelected();
     }
 
-    public ProxyTicker getCurrentTicker() {
-        return currentTicker;
-    }
-
     private void publishTickerSelected() {
-        SwingUtilities.invokeLater(() -> {
-            Command action = new Command();
-            action.setCommand(Commands.TICKER_SELECTED);
-            action.setData(currentTicker);
-            commandBus.publish(action);
-        });
+        Command cmd = new Command();
+        cmd.setCommand(Commands.TICKER_SELECTED);
+        cmd.setData(activeTicker);
+        commandBus.publish(cmd);
     }
 }

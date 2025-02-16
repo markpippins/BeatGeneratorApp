@@ -21,18 +21,22 @@ import javax.swing.table.DefaultTableModel;
 import com.angrysurfer.beats.App;
 import com.angrysurfer.beats.api.Command;
 import com.angrysurfer.beats.api.CommandBus;
+import com.angrysurfer.beats.api.CommandListener;
 import com.angrysurfer.beats.api.Commands;
 import com.angrysurfer.beats.api.StatusConsumer;
 import com.angrysurfer.beats.ui.Utils;
 import com.angrysurfer.beats.ui.widget.Dialog;
+import com.angrysurfer.core.model.player.Strike;
+import com.angrysurfer.core.proxy.IProxyPlayer;
 import com.angrysurfer.core.proxy.ProxyStrike;
+import com.angrysurfer.core.proxy.ProxyTicker;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class PlayerTablePanel extends JPanel {
+public class PlayerTablePanel extends JPanel implements CommandListener {
     private static final Logger logger = Logger.getLogger(PlayerTablePanel.class.getName());
     private final JTable table;
     private final StatusConsumer status;
@@ -190,28 +194,16 @@ public class PlayerTablePanel extends JPanel {
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 boolean hasSelection = table.getSelectedRow() >= 0;
-                editButton.setEnabled(hasSelection);
-                deleteButton.setEnabled(hasSelection);
-                editMenuItem.setEnabled(hasSelection);
-                deleteMenuItem.setEnabled(hasSelection);
+                updateButtonStates(hasSelection);
                 
                 if (hasSelection) {
-                    ProxyStrike selectedPlayer = getPlayerFromRow(table.getSelectedRow());
-                    ruleTablePanel.setSelectedPlayer(selectedPlayer);
-                    status.setStatus("Selected player: " + selectedPlayer.getName());
+                    IProxyPlayer player = getPlayerFromRow(table.getSelectedRow());
+                    if (player != null) {
+                        logger.info("Publishing PLAYER_SELECTED event for: " + player.getName());
+                        publishPlayerSelected(player);
+                    }
                 } else {
-                    ruleTablePanel.setSelectedPlayer(null);
-                }
-            }
-        });
-
-        table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int selectedRow = table.getSelectedRow();
-                if (selectedRow >= 0) {
-                    ProxyStrike player = getPlayerFromRow(selectedRow);
-                    publishPlayerSelected(player);
-                } else {
+                    logger.info("Publishing PLAYER_UNSELECTED event");
                     publishPlayerUnselected();
                 }
             }
@@ -227,6 +219,13 @@ public class PlayerTablePanel extends JPanel {
 
         // Remove sample data and load from Redis instead
         loadPlayersFromRedis();
+    }
+
+    private void updateButtonStates(boolean hasSelection) {
+        editButton.setEnabled(hasSelection);
+        deleteButton.setEnabled(hasSelection);
+        editMenuItem.setEnabled(hasSelection);
+        deleteMenuItem.setEnabled(hasSelection);
     }
 
     private void showPlayerDialog(ProxyStrike player) {
@@ -267,7 +266,7 @@ public class PlayerTablePanel extends JPanel {
     private void editSelectedPlayer() {
         int row = table.getSelectedRow();
         if (row >= 0) {
-            ProxyStrike player = getPlayerFromRow(row);
+            ProxyStrike player = (ProxyStrike) getPlayerFromRow(row);
             showPlayerDialog(player);
         }
     }
@@ -275,43 +274,43 @@ public class PlayerTablePanel extends JPanel {
     private void deleteSelectedPlayer() {
         int row = table.getSelectedRow();
         if (row >= 0) {
-            ProxyStrike player = getPlayerFromRow(row);
+            ProxyStrike player = (ProxyStrike) getPlayerFromRow(row);
             deletePlayerFromRedis(player);
             ((DefaultTableModel) table.getModel()).removeRow(row);
         }
     }
 
-    private ProxyStrike getPlayerFromRow(int row) {
+    private IProxyPlayer getPlayerFromRow(int row) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
-        ProxyStrike player = new ProxyStrike();
-        
-        // Get the ID from Redis based on the name
         String name = (String) model.getValueAt(row, 0);
         List<ProxyStrike> players = App.getRedisService().findAllStrikes();
         ProxyStrike existingPlayer = players.stream()
             .filter(p -> p.getName().equals(name))
             .findFirst()
             .orElse(null);
-        
+
         if (existingPlayer != null) {
-            player.setId(existingPlayer.getId());
+            return existingPlayer;
         }
-        
+
+        // If not found, create new ProxyStrike with values from the row
+        ProxyStrike player = new ProxyStrike();
         player.setName(name);
-        player.setChannel(((Number) model.getValueAt(row, 1)).intValue());
-        player.setSwing(((Number) model.getValueAt(row, 2)).longValue());
-        player.setLevel(((Number) model.getValueAt(row, 3)).longValue());
-        player.setMinVelocity(((Number) model.getValueAt(row, 5)).longValue());
-        player.setMaxVelocity(((Number) model.getValueAt(row, 6)).longValue());
-        player.setPreset(((Number) model.getValueAt(row, 7)).longValue());
+        player.setChannel((int)((Long) model.getValueAt(row, 1)).longValue());
+        player.setSwing((Long) model.getValueAt(row, 2));
+        player.setLevel((Long) model.getValueAt(row, 3));
+        player.setNote((Long) model.getValueAt(row, 4));
+        player.setMinVelocity((Long) model.getValueAt(row, 5));
+        player.setMaxVelocity((Long) model.getValueAt(row, 6));
+        player.setPreset((Long) model.getValueAt(row, 7));
         player.setStickyPreset((Boolean) model.getValueAt(row, 8));
-        player.setProbability(((Number) model.getValueAt(row, 9)).longValue());
-        player.setRandomDegree(((Number) model.getValueAt(row, 10)).longValue());
-        player.setRatchetCount(((Number) model.getValueAt(row, 11)).longValue());
-        player.setRatchetInterval(((Number) model.getValueAt(row, 12)).longValue());
+        player.setProbability((Long) model.getValueAt(row, 9));
+        player.setRandomDegree((Long) model.getValueAt(row, 10));
+        player.setRatchetCount((Long) model.getValueAt(row, 11));
+        player.setRatchetInterval((Long) model.getValueAt(row, 12));
         player.setUseInternalBeats((Boolean) model.getValueAt(row, 13));
         player.setUseInternalBars((Boolean) model.getValueAt(row, 14));
-        player.setPanPosition(((Number) model.getValueAt(row, 15)).longValue());
+        player.setPanPosition((Long) model.getValueAt(row, 15));
         player.setPreserveOnPurge((Boolean) model.getValueAt(row, 16));
         player.setSparse((Double) model.getValueAt(row, 17));
 
@@ -364,7 +363,7 @@ public class PlayerTablePanel extends JPanel {
                 deleteMenuItem.setEnabled(true);
                 
                 // Get and publish the first player
-                ProxyStrike firstPlayer = getPlayerFromRow(0);
+                ProxyStrike firstPlayer = (ProxyStrike) getPlayerFromRow(0);
                 publishPlayerSelected(firstPlayer);
             }
             
@@ -377,7 +376,7 @@ public class PlayerTablePanel extends JPanel {
         }
     }
 
-    private void publishPlayerSelected(ProxyStrike player) {
+    private void publishPlayerSelected(IProxyPlayer player) {
         Command action = new Command();
         action.setCommand(Commands.PLAYER_SELECTED);
         action.setData(player);
@@ -390,5 +389,33 @@ public class PlayerTablePanel extends JPanel {
         action.setCommand(Commands.PLAYER_UNSELECTED);
         action.setSender(this);
         actionBus.publish(action);
+    }
+
+    @Override
+    public void onAction(Command action) {
+        switch (action.getCommand()) {
+            case Commands.TICKER_LOADED:
+            case Commands.TICKER_CHANGED:
+                ProxyTicker ticker = (ProxyTicker) action.getData();
+                refreshPlayerList(ticker);
+                break;
+            
+            case Commands.PLAYER_ADDED_TO_TICKER:
+            case Commands.PLAYER_REMOVED_FROM_TICKER:
+                ProxyStrike player = (ProxyStrike) action.getData();
+                refreshPlayerList(App.getTickerManager().getActiveTicker());
+                break;
+        }
+    }
+
+    private void refreshPlayerList(ProxyTicker ticker) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setRowCount(0);
+        
+        if (ticker != null && ticker.getPlayers() != null) {
+            for (IProxyPlayer player : ticker.getPlayers()) {
+                model.addRow(player.toRow());
+            }
+        }
     }
 }

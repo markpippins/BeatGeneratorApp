@@ -13,7 +13,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ProxyStrike extends ProxyAbstractPlayer implements IProxyPlayer, Serializable {
+public class ProxyStrike extends ProxyAbstractPlayer implements Serializable {
 
     private static final Logger logger = LoggerFactory.getLogger(ProxyStrike.class.getCanonicalName());
 

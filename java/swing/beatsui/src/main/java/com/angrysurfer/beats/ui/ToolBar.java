@@ -30,7 +30,7 @@ import com.angrysurfer.beats.api.CommandListener;
 import com.angrysurfer.beats.api.Commands;
 import com.angrysurfer.core.proxy.ProxyTicker;
 
-public class ToolBar extends JToolBar {
+public class ToolBar extends JToolBar implements CommandListener {
     private final Map<String, JTextField> leftFields = new HashMap<>();
     private final Map<String, JComponent> rightFields = new HashMap<>(); // Changed to JComponent
     private final CommandBus actionBus = CommandBus.getInstance();
@@ -264,20 +264,24 @@ public class ToolBar extends JToolBar {
     }
 
     private void setupTransportButtons(JPanel transportPanel) {
-        JButton rewindBtn = createToolbarButton("⏮", "Rewind");
+        JButton rewindBtn = createToolbarButton("⏮", "Previous Ticker");
         JButton pauseBtn = createToolbarButton("⏸", "Pause");
         JButton recordBtn = createToolbarButton("⏺", "Record");
         JButton stopBtn = createToolbarButton("⏹", "Stop");
         JButton playBtn = createToolbarButton("▶", "Play");
-        JButton forwardBtn = createToolbarButton("⏭", "Forward");
+        JButton forwardBtn = createToolbarButton("⏭", "Next Ticker");
 
-        // Add action listeners
-        rewindBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_REWIND));
-        pauseBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_PAUSE));
-        recordBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_RECORD));
-        stopBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_STOP));
-        playBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_PLAY));
-        forwardBtn.addActionListener(e -> createTransportCommand(Commands.TRANSPORT_FORWARD));
+        // Update tooltips to reflect ticker navigation
+        rewindBtn.setToolTipText("Previous Ticker (Rewind)");
+        forwardBtn.setToolTipText("Next Ticker (Forward)");
+
+        // Add action listeners that publish commands
+        rewindBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_REWIND));
+        pauseBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_PAUSE));
+        recordBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_RECORD));
+        stopBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_STOP));
+        playBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_PLAY));
+        forwardBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_FORWARD));
 
         transportPanel.add(rewindBtn);
         transportPanel.add(pauseBtn);
@@ -285,5 +289,42 @@ public class ToolBar extends JToolBar {
         transportPanel.add(recordBtn);
         transportPanel.add(playBtn);
         transportPanel.add(forwardBtn);
+    }
+
+    private void publishTransportCommand(String commandType) {
+        Command cmd = new Command();
+        cmd.setCommand(commandType);
+        cmd.setSender(this);
+        actionBus.publish(cmd);
+    }
+
+    @Override
+    public void onAction(Command action) {
+        // Update UI state based on received commands
+        switch (action.getCommand()) {
+            case Commands.TICKER_SELECTED, Commands.TICKER_CHANGED -> {
+                if (action.getData() instanceof ProxyTicker) {
+                    updateTickerDisplay((ProxyTicker) action.getData());
+                }
+            }
+            case Commands.TRANSPORT_PLAY -> updatePlayState(true);
+            case Commands.TRANSPORT_STOP, Commands.TRANSPORT_PAUSE -> updatePlayState(false);
+        }
+    }
+
+    private void updatePlayState(boolean isPlaying) {
+        // Update transport button states based on playing status
+        Component[] components = getComponents();
+        for (Component c : components) {
+            if (c instanceof JButton) {
+                JButton button = (JButton) c;
+                if (button.getToolTipText() != null) {
+                    switch (button.getToolTipText()) {
+                        case "Play" -> button.setEnabled(!isPlaying);
+                        case "Stop", "Pause" -> button.setEnabled(isPlaying);
+                    }
+                }
+            }
+        }
     }
 }

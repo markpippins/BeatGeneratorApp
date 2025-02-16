@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.config;
+package com.angrysurfer.beats.data;
 
 import java.io.File;
 import java.io.IOException;

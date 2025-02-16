@@ -36,6 +36,7 @@ import com.angrysurfer.beats.api.CommandListener;
 import com.angrysurfer.beats.api.Commands;
 import com.angrysurfer.beats.api.StatusConsumer;
 import com.angrysurfer.beats.ui.widget.Dialog;
+import com.angrysurfer.core.proxy.IProxyPlayer;
 import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;
 
@@ -54,7 +55,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
     private final JButton deleteButton;
     private final JMenuItem editMenuItem;
     private final JMenuItem deleteMenuItem;
-    private ProxyStrike selectedPlayer;
+    private IProxyPlayer currentPlayer; // rename from selectedPlayer
     private JPopupMenu popup; // Add this field
     private JMenuItem addPopupMenuItem; // Add this field
     private final CommandBus actionBus = CommandBus.getInstance();
@@ -70,29 +71,51 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         this.deleteMenuItem = new JMenuItem("Delete");
         
         actionBus.register(this); // Register for events
-        setupTable();
-        setupButtons();
-        setupLayout();
-        setupPopupMenu(); // Renamed from setupContextMenu for clarity
+        setupComponents();
     }
 
     @Override
     public void onAction(Command action) {
-        if (action.getSender() == this) return; // Ignore own actions
+        if (action == null) {
+            logger.warning("Received null action");
+            return;
+        }
+
+        logger.info("RuleTablePanel received action: " + action.getCommand());
         
         switch (action.getCommand()) {
-            case Commands.PLAYER_SELECTED:
-                handlePlayerSelected((ProxyStrike) action.getData());
-                break;
-            case Commands.PLAYER_UNSELECTED:
-                handlePlayerUnselected();
-                break;
+            case Commands.PLAYER_SELECTED -> {
+                IProxyPlayer player = (IProxyPlayer) action.getData();
+                if (player != null) {
+                    logger.info("Processing PLAYER_SELECTED for: " + player.getName());
+                    currentPlayer = player;
+                    refreshRuleList(player);
+                } else {
+                    logger.warning("PLAYER_SELECTED event had null player data");
+                }
+            }
+            case Commands.PLAYER_UNSELECTED -> {
+                logger.info("Processing PLAYER_UNSELECTED");
+                currentPlayer = null;
+                clearRules();
+            }
+            case Commands.RULE_ADDED_TO_PLAYER, Commands.RULE_REMOVED_FROM_PLAYER -> {
+                if (currentPlayer != null) {
+                    refreshRuleList(currentPlayer);
+                }
+            }
         }
+    }
+
+    private void updateButtonStates(boolean enabled) {
+        addButton.setEnabled(enabled);
+        editButton.setEnabled(enabled && table.getSelectedRow() >= 0);
+        deleteButton.setEnabled(enabled && table.getSelectedRow() >= 0);
     }
 
     private void handlePlayerSelected(ProxyStrike player) {
         logger.info("Player selected: " + player.getName() + " (ID: " + player.getId() + ")");
-        this.selectedPlayer = player;
+        this.currentPlayer = player;
         addButton.setEnabled(true);
         addPopupMenuItem.setEnabled(true);
         
@@ -102,7 +125,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
     }
 
     private void handlePlayerUnselected() {
-        this.selectedPlayer = null;
+        this.currentPlayer = null;
         clearTable();
         addButton.setEnabled(false);
         addPopupMenuItem.setEnabled(false);
@@ -169,7 +192,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
                     boolean hasSelection = table.getSelectedRow() >= 0;
                     editMenuItem.setEnabled(hasSelection);
                     deleteMenuItem.setEnabled(hasSelection);
-                    addPopupMenuItem.setEnabled(selectedPlayer != null);
+                    addPopupMenuItem.setEnabled(currentPlayer != null);
                     
                     popup.show(table, e.getX(), e.getY());
                 }
@@ -240,7 +263,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 boolean hasSelection = table.getSelectedRow() >= 0;
-                boolean hasPlayer = selectedPlayer != null;
+                boolean hasPlayer = currentPlayer != null;
 
                 // Update button states
                 editButton.setEnabled(hasSelection);
@@ -268,13 +291,13 @@ public class RuleTablePanel extends JPanel implements CommandListener {
 
     private void loadRulesFromRedis() {
         try {
-            if (selectedPlayer == null || selectedPlayer.getId() == null) {
+            if (currentPlayer == null || currentPlayer.getId() == null) {
                 logger.warning("Cannot load rules - player is null or has no ID");
                 return;
             }
 
-            List<ProxyRule> rules = App.getRedisService().findRulesByPlayer(selectedPlayer);
-            logger.info("Found " + rules.size() + " rules for player: " + selectedPlayer.getName());
+            List<ProxyRule> rules = App.getRedisService().findRulesByPlayer(currentPlayer);
+            logger.info("Found " + rules.size() + " rules for player: " + currentPlayer.getName());
             
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             rules.forEach(rule -> {
@@ -293,7 +316,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
                 deleteMenuItem.setEnabled(true);
             }
             
-            status.setStatus("Loaded " + rules.size() + " rules for " + selectedPlayer.getName());
+            status.setStatus("Loaded " + rules.size() + " rules for " + currentPlayer.getName());
         } catch (Exception e) {
             logger.severe("Error loading rules: " + e.getMessage());
             status.setStatus("Error loading rules: " + e.getMessage());
@@ -365,7 +388,7 @@ public class RuleTablePanel extends JPanel implements CommandListener {
     }
 
     private void showRuleDialog(ProxyRule rule) {
-        if (selectedPlayer == null) {
+        if (currentPlayer == null) {
             status.setStatus("No player selected");
             return;
         }
@@ -389,13 +412,13 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         try {
             if (rule.getId() == null) {
                 // Let Redis service handle ID generation
-                ProxyRule savedRule = App.getRedisService().saveRule(rule, selectedPlayer);
+                ProxyRule savedRule = App.getRedisService().saveRule(rule, currentPlayer);
                 // Update the rule with generated ID
                 rule.setId(savedRule.getId());
-                status.setStatus("Created new rule for player: " + selectedPlayer.getName());
+                status.setStatus("Created new rule for player: " + currentPlayer.getName());
             } else {
-                App.getRedisService().saveRule(rule, selectedPlayer);
-                status.setStatus("Updated rule for player: " + selectedPlayer.getName());
+                App.getRedisService().saveRule(rule, currentPlayer);
+                status.setStatus("Updated rule for player: " + currentPlayer.getName());
             }
         } catch (Exception e) {
             logger.severe("Error saving rule: " + e.getMessage());
@@ -413,12 +436,20 @@ public class RuleTablePanel extends JPanel implements CommandListener {
 
     private void deleteSelectedRule() {
         int row = table.getSelectedRow();
-        if (row >= 0 && selectedPlayer != null) {
+        if (row >= 0 && currentPlayer != null) {
             ProxyRule rule = getRuleFromRow(row);
             try {
-                App.getRedisService().deleteRule(rule, selectedPlayer);
+                App.getRedisService().deleteRule(rule, currentPlayer);
                 ((DefaultTableModel) table.getModel()).removeRow(row);
-                status.setStatus("Deleted rule from player: " + selectedPlayer.getName());
+                status.setStatus("Deleted rule from player: " + currentPlayer.getName());
+                
+                // Publish rule removed event
+                Command cmd = new Command();
+                cmd.setCommand(Commands.RULE_REMOVED_FROM_PLAYER);
+                cmd.setData(rule);
+                cmd.setSender(this);
+                actionBus.publish(cmd);
+                
             } catch (Exception e) {
                 logger.severe("Error deleting rule: " + e.getMessage());
                 status.setStatus("Error deleting rule: " + e.getMessage());
@@ -447,5 +478,53 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         } else {
             model.addRow(rowData);
         }
+    }
+
+    private void refreshRuleList(IProxyPlayer player) {
+        try {
+            clearTable();
+            if (player == null || player.getId() == null) {
+                logger.warning("Cannot load rules - player is null or has no ID");
+                return;
+            }
+
+            List<ProxyRule> rules = App.getRedisService().findRulesByPlayer(player);
+            logger.info("Found " + rules.size() + " rules for player: " + player.getName());
+            
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            rules.forEach(rule -> {
+                Object[] rowData = rule.toRow();
+                model.addRow(rowData);
+            });
+            
+            // Select the first row if there are any rules
+            if (model.getRowCount() > 0) {
+                table.setRowSelectionInterval(0, 0);
+            }
+            
+            updateButtonStates(true);
+            status.setStatus("Loaded " + rules.size() + " rules for " + player.getName());
+            
+        } catch (Exception e) {
+            logger.severe("Error loading rules: " + e.getMessage());
+            status.setStatus("Error loading rules: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void clearRules() {
+        clearTable();
+        updateButtonStates(false);
+        status.setStatus("Rules cleared");
+    }
+
+    private void setupComponents() {
+        setupTable();
+        setupButtons();
+        setupLayout();
+        setupPopupMenu();
+        
+        // Initialize in disabled state
+        updateButtonStates(false);
     }
 }

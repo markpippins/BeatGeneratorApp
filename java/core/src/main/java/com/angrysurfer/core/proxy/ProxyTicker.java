@@ -337,4 +337,12 @@ public class ProxyTicker implements Serializable {
     public boolean isRunning() {
         return (Objects.nonNull(clockSource) && clockSource.isRunning());
     }
+
+    public Set<IProxyPlayer> getPlayers() {
+        return players;
+    }
+
+    public void setPlayers(Set<IProxyPlayer> players) {
+        this.players = players;
+    }
 }

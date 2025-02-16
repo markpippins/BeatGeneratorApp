@@ -11,11 +11,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
 import javax.swing.BorderFactory;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -38,6 +36,7 @@ import com.angrysurfer.beats.ui.widget.ToggleSwitch;
 import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;
+import com.angrysurfer.core.service.InstrumentManager;
 
 public class PlayerEditorPanel extends StatusProviderPanel {
 
@@ -90,12 +89,14 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Replace nameField initialization with instrumentCombo
-        instrumentCombo = new JComboBox<>(loadInstruments());
+        // Initialize combo box first, then populate it
+        instrumentCombo = new JComboBox<>();
+        setupInstrumentCombo(); // Call this instead of loadInstruments()
+
         if (player.getInstrumentId() != null) {
             for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
                 ProxyInstrument inst = instrumentCombo.getItemAt(i);
-                if (inst.getId().equals(player.getInstrumentId())) {
+                if (inst.getId() != null && inst.getId().equals(player.getInstrumentId())) {
                     instrumentCombo.setSelectedIndex(i);
                     break;
                 }
@@ -279,28 +280,30 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     }
 
     private ProxyInstrument[] loadInstruments() {
-        // Get all available MIDI device names
-        Set<String> availableDeviceNames = new HashSet<>();
-        try {
-            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-            for (MidiDevice.Info info : infos) {
-                MidiDevice device = MidiSystem.getMidiDevice(info);
-                // Only add devices that can receive MIDI (have receivers)
-                if (device.getMaxReceivers() != 0) {
-                    availableDeviceNames.add(info.getName());
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Filter and sort instruments
-        List<ProxyInstrument> instruments = App.getRedisService().findAllInstruments().stream()
-                .filter(i -> i.getDeviceName() != null && availableDeviceNames.contains(i.getDeviceName()))
-                .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
-                .collect(Collectors.toList());
-
+        List<ProxyInstrument> instruments = getFilteredInstruments();
+        logger.info("Loaded " + instruments.size() + " instruments"); // Add logging
         return instruments.toArray(new ProxyInstrument[0]);
+    }
+
+    private void setupInstrumentCombo() {
+        List<ProxyInstrument> instruments = getFilteredInstruments();
+        DefaultComboBoxModel<ProxyInstrument> model = new DefaultComboBoxModel<>();
+
+        // Add logging to debug
+        logger.info("Setting up instrument combo with " + instruments.size() + " instruments");
+
+        instruments.forEach(inst -> {
+            model.addElement(inst);
+            logger.info("Added instrument: " + inst.getName() + " (device: " + inst.getDeviceName() + ")");
+        });
+
+        instrumentCombo.setModel(model);
+
+        if (player != null && player.getInstrument() != null) {
+            instrumentCombo.setSelectedItem(player.getInstrument());
+        } else if (model.getSize() > 0) {
+            instrumentCombo.setSelectedIndex(0);
+        }
     }
 
     private void layoutComponents() {
@@ -559,5 +562,14 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         player.setId(originalId);
 
         return player;
+    }
+
+    private List<ProxyInstrument> getFilteredInstruments() {
+        return InstrumentManager.getInstance().getAvailableInstruments();
+    }
+
+    public void showDialog() {
+        setupInstrumentCombo(); // Ensure fresh instrument list when dialog opens
+        // ...existing code...
     }
 }
