@@ -19,14 +19,17 @@ import javax.swing.border.EmptyBorder;
 import com.angrysurfer.beats.panel.BackgroundPanel;
 import com.angrysurfer.beats.panel.InstrumentsPanel;
 import com.angrysurfer.beats.panel.LaunchPanel;
-import com.angrysurfer.beats.panel.TickerPanel;
+import com.angrysurfer.beats.panel.PlayerEditorPanel;
 import com.angrysurfer.beats.panel.SystemsPanel;
+import com.angrysurfer.beats.panel.TickerPanel;
 import com.angrysurfer.beats.panel.WebPanel;
 import com.angrysurfer.beats.panel.X0XPanel;
 import com.angrysurfer.beats.panel.sorting.SortingVisualizerPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.proxy.ProxyStrike;
+import com.angrysurfer.core.proxy.ProxyTicker;
 
 public class Frame extends JFrame implements AutoCloseable {
 
@@ -155,6 +158,44 @@ public class Frame extends JFrame implements AutoCloseable {
     public void setSelectedTab(int index) {
         tabbedPane.setSelectedIndex(index);
     }
+
+    // private void addPlayer() {
+    //     ProxyStrike strike = new ProxyStrike();
+    //     PlayerEditorPanel editor = new PlayerEditorPanel(strike, statusBar);
+    //     Dialog<ProxyStrike> dialog = new Dialog<>(strike, editor);
+    //     dialog.setTitle("Add Player");
+
+    //     if (dialog.showDialog()) {
+    //         try {
+    //             ProxyStrike updatedStrike = editor.getUpdatedPlayer();
+    //             ProxyStrike savedStrike = App.getRedisService().saveStrike(updatedStrike);
+
+    //             Component selectedComponent = tabbedPane.getSelectedComponent();
+    //             if (selectedComponent instanceof TickerPanel) {
+    //                 TickerPanel tickerPanel = (TickerPanel) selectedComponent;
+    //                 ProxyTicker currentTicker = tickerPanel.getTicker();
+                    
+    //                 currentTicker.getPlayers().add(savedStrike);
+    //                 savedStrike.setTicker(currentTicker);
+    //                 App.getRedisService().saveTicker(currentTicker);
+
+    //                 // Use consistent command
+    //                 Command cmd = new Command(Commands.PLAYER_ADDED, this, savedStrike);
+    //                 CommandBus.getInstance().publish(cmd);
+                    
+    //                 logger.info("Added player: " + savedStrike.getName());
+    //                 statusBar.setStatus("Added player: " + savedStrike.getName());
+                    
+    //             } else {
+    //                 logger.warning("Cannot add player - not on ticker panel");
+    //                 statusBar.setStatus("Please switch to Players tab to add players");
+    //             }
+    //         } catch (Exception e) {
+    //             logger.severe("Error saving new player: " + e.getMessage());
+    //             statusBar.setStatus("Error saving player: " + e.getMessage());
+    //         }
+    //     }
+    // }
 
     @Override
     public void close() {

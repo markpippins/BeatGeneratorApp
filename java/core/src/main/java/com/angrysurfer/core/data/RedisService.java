@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.UserConfig;
@@ -29,6 +30,9 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.Commands;
 
 public class RedisService implements CommandListener {
+
+    private static final Logger logger = Logger.getLogger(RedisService.class.getName());
+
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
 
@@ -46,11 +50,11 @@ public class RedisService implements CommandListener {
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
         objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
-        
+
         // Configure proper handling of IProxyPlayer interface
         objectMapper.addMixIn(IProxyPlayer.class, ProxyStrike.class);
         objectMapper.enableDefaultTyping(); // Add this line for interface handling
-        
+
         CommandBus.getInstance().register(this);
     }
 
@@ -77,21 +81,35 @@ public class RedisService implements CommandListener {
 
     public List<ProxyRule> findRulesByPlayer(IProxyPlayer player) {
         List<ProxyRule> rules = new ArrayList<>();
+        
         try (Jedis jedis = jedisPool.getResource()) {
+            // Check keys exist
+            logger.info("All keys in database: " + jedis.keys("*"));
+            
             String rulesKey = "player:" + player.getId() + ":rules";
             Set<String> ruleIds = jedis.smembers(rulesKey);
+            
+            logger.info("Finding rules with key " + rulesKey + ", found IDs: " + ruleIds);
 
             for (String ruleId : ruleIds) {
-                String ruleKey = getKey(ProxyRule.class, Long.valueOf(ruleId));
+                String ruleKey = "proxyrule:" + ruleId;  // Use consistent key format
                 String json = jedis.get(ruleKey);
+                
+                logger.info("Rule " + ruleId + " json: " + json);
+                
                 if (json != null) {
                     ProxyRule rule = objectMapper.readValue(json, ProxyRule.class);
                     rules.add(rule);
+                    logger.info("Loaded rule: operator=" + rule.getOperator() + 
+                              ", value=" + rule.getValue());
                 }
             }
         } catch (Exception e) {
-            LogManager.getInstance().error("RedisService", "Error finding rules for player: " + player.getId(), e);
+            logger.severe("Error loading rules: " + e.getMessage());
+            e.printStackTrace();
         }
+        
+        logger.info("Returning " + rules.size() + " rules for player " + player.getId());
         return rules;
     }
 
@@ -99,26 +117,27 @@ public class RedisService implements CommandListener {
         try (Jedis jedis = jedisPool.getResource()) {
             // Generate new ID if needed
             if (rule.getId() == null) {
-                String seqKey = "seq:" + ProxyRule.class.getSimpleName().toLowerCase();
+                String seqKey = "seq:proxyrule";
                 rule.setId(jedis.incr(seqKey));
+                logger.info("Generated new rule ID: " + rule.getId());
             }
 
-            // Save the rule
-            String json = objectMapper.writeValueAsString(rule);
-            String ruleKey = getKey(ProxyRule.class, rule.getId());
-            jedis.set(ruleKey, json);
+            // Save rule object
+            String ruleJson = objectMapper.writeValueAsString(rule);
+            String ruleKey = "proxyrule:" + rule.getId();
+            jedis.set(ruleKey, ruleJson);
 
-            // Link rule to player
-            String rulesKey = "player:" + player.getId() + ":rules";
-            jedis.sadd(rulesKey, rule.getId().toString());
-
-            // Also save/update the player to ensure it exists
-            saveStrike((ProxyStrike) player);
+            // Link to player if not already linked
+            String playerRulesKey = "player:" + player.getId() + ":rules";
+            if (!jedis.sismember(playerRulesKey, rule.getId().toString())) {
+                jedis.sadd(playerRulesKey, rule.getId().toString());
+                logger.info("Linked rule " + rule.getId() + " to player " + player.getId());
+            }
 
             return rule;
         } catch (Exception e) {
-            LogManager.getInstance().error("RedisService", "Error saving rule", e);
-            throw new RuntimeException("Error saving rule", e);
+            logger.severe("Error saving rule: " + e.getMessage());
+            throw new RuntimeException("Failed to save rule", e);
         }
     }
 
@@ -173,8 +192,8 @@ public class RedisService implements CommandListener {
                     LogManager.getInstance().info("RedisService", "Key " + key + " is of type: " + type);
 
                     if (!"string".equals(type)) {
-                        LogManager.getInstance().warn("RedisService", 
-                            "Removing invalid key " + key + " of type " + type);
+                        LogManager.getInstance().warn("RedisService",
+                                "Removing invalid key " + key + " of type " + type);
                         jedis.del(key);
                         continue;
                     }
@@ -182,7 +201,7 @@ public class RedisService implements CommandListener {
                     String json = jedis.get(key);
                     if (json != null) {
                         ProxyTicker ticker = objectMapper.readValue(json, ProxyTicker.class);
-                        
+
                         // Initialize players set
                         if (ticker.getPlayers() == null) {
                             ticker.setPlayers(new HashSet<>());
@@ -191,8 +210,8 @@ public class RedisService implements CommandListener {
                         // Load associated players
                         String playersKey = key + ":players";
                         Set<String> playerIds = jedis.smembers(playersKey);
-                        LogManager.getInstance().info("RedisService", 
-                            "Found " + playerIds.size() + " players for ticker " + ticker.getId());
+                        LogManager.getInstance().info("RedisService",
+                                "Found " + playerIds.size() + " players for ticker " + ticker.getId());
 
                         for (String playerId : playerIds) {
                             String playerKey = getKey(ProxyStrike.class, Long.valueOf(playerId));
@@ -201,19 +220,19 @@ public class RedisService implements CommandListener {
                                 ProxyStrike player = objectMapper.readValue(playerJson, ProxyStrike.class);
                                 player.setTicker(ticker);
                                 ticker.getPlayers().add(player);
-                                LogManager.getInstance().info("RedisService", 
-                                    "Loaded player: " + player.getId() + " for ticker " + ticker.getId());
+                                LogManager.getInstance().info("RedisService",
+                                        "Loaded player: " + player.getId() + " for ticker " + ticker.getId());
                             }
                         }
 
                         tickers.add(ticker);
-                        LogManager.getInstance().info("RedisService", 
-                            "Added ticker " + ticker.getId() + " with " + 
-                            ticker.getPlayers().size() + " players");
+                        LogManager.getInstance().info("RedisService",
+                                "Added ticker " + ticker.getId() + " with " +
+                                        ticker.getPlayers().size() + " players");
                     }
                 } catch (Exception e) {
-                    LogManager.getInstance().error("RedisService", 
-                        "Error processing ticker key " + key + ": " + e.getMessage());
+                    LogManager.getInstance().error("RedisService",
+                            "Error processing ticker key " + key + ": " + e.getMessage());
                     // Try to clean up invalid key
                     try {
                         jedis.del(key);
@@ -252,39 +271,40 @@ public class RedisService implements CommandListener {
     }
 
     private void initializeTickerPlayers(ProxyTicker ticker, Jedis jedis) {
-        if (ticker == null) return;
-        
+        if (ticker == null)
+            return;
+
         ticker.setPlayers(new HashSet<>());
         String playersKey = getKey(ProxyTicker.class, ticker.getId()) + ":players";
-        
+
         // Get the player IDs for this ticker
         Set<String> playerIds = jedis.smembers(playersKey);
-        LogManager.getInstance().info("RedisService", 
-            "Loading " + playerIds.size() + " players for ticker " + ticker.getId());
+        LogManager.getInstance().info("RedisService",
+                "Loading " + playerIds.size() + " players for ticker " + ticker.getId());
 
         // Load each player
         for (String playerId : playerIds) {
             String playerKey = getKey(ProxyStrike.class, Long.valueOf(playerId));
             String playerJson = jedis.get(playerKey);
-            
+
             if (playerJson != null) {
                 try {
                     ProxyStrike player = objectMapper.readValue(playerJson, ProxyStrike.class);
                     player.setTicker(ticker);
                     ticker.getPlayers().add(player);
-                    LogManager.getInstance().info("RedisService", 
-                        "Loaded player: " + player.getName() + " (ID: " + player.getId() + 
-                        ") for ticker: " + ticker.getId());
+                    LogManager.getInstance().info("RedisService",
+                            "Loaded player: " + player.getName() + " (ID: " + player.getId() +
+                                    ") for ticker: " + ticker.getId());
                 } catch (Exception e) {
-                    LogManager.getInstance().error("RedisService", 
-                        "Error loading player " + playerId + ": " + e.getMessage());
+                    LogManager.getInstance().error("RedisService",
+                            "Error loading player " + playerId + ": " + e.getMessage());
                     // Remove invalid player ID from set
                     jedis.srem(playersKey, playerId);
                 }
             } else {
                 // Remove missing player ID from set
-                LogManager.getInstance().warn("RedisService", 
-                    "Removing missing player " + playerId + " from ticker " + ticker.getId());
+                LogManager.getInstance().warn("RedisService",
+                        "Removing missing player " + playerId + " from ticker " + ticker.getId());
                 jedis.srem(playersKey, playerId);
             }
         }
@@ -294,19 +314,19 @@ public class RedisService implements CommandListener {
         try (Jedis jedis = jedisPool.getResource()) {
             // Clean up orphaned strikes first
             cleanupOrphanedStrikes(jedis);
-            
+
             // Then load the ticker
             String activeTickerId = jedis.get("active:ticker");
             ProxyTicker ticker = null;
-            
+
             if (activeTickerId != null) {
                 ticker = loadTickerById(jedis, Long.valueOf(activeTickerId));
             }
-            
+
             if (ticker == null) {
                 ticker = createDefaultTicker();
             }
-            
+
             return ticker;
         } catch (Exception e) {
             LogManager.getInstance().error("RedisService", "Error loading ticker", e);
@@ -317,14 +337,14 @@ public class RedisService implements CommandListener {
     private ProxyTicker loadTickerById(Jedis jedis, Long tickerId) {
         try {
             String tickerKey = getKey(ProxyTicker.class, tickerId);
-            
+
             // Log all keys for debugging
-            LogManager.getInstance().info("RedisService", 
-                "All keys in database: " + jedis.keys("*"));
-            
+            LogManager.getInstance().info("RedisService",
+                    "All keys in database: " + jedis.keys("*"));
+
             String tickerJson = jedis.get(tickerKey);
-            LogManager.getInstance().info("RedisService", 
-                "Loading ticker " + tickerId + " JSON: " + tickerJson);
+            LogManager.getInstance().info("RedisService",
+                    "Loading ticker " + tickerId + " JSON: " + tickerJson);
 
             if (tickerJson != null) {
                 ProxyTicker ticker = objectMapper.readValue(tickerJson, ProxyTicker.class);
@@ -333,22 +353,22 @@ public class RedisService implements CommandListener {
                 // Get player IDs from Redis set
                 String playersKey = tickerKey + ":players";
                 Set<String> playerIds = jedis.smembers(playersKey);
-                LogManager.getInstance().info("RedisService", 
-                    "Found " + playerIds.size() + " player IDs for ticker " + tickerId + ": " + playerIds);
+                LogManager.getInstance().info("RedisService",
+                        "Found " + playerIds.size() + " player IDs for ticker " + tickerId + ": " + playerIds);
 
                 // Load each player
                 for (String playerId : playerIds) {
                     String playerKey = getKey(ProxyStrike.class, Long.valueOf(playerId));
                     String playerJson = jedis.get(playerKey);
-                    LogManager.getInstance().info("RedisService", 
-                        "Loading player " + playerId + ": " + playerJson);
-                    
+                    LogManager.getInstance().info("RedisService",
+                            "Loading player " + playerId + ": " + playerJson);
+
                     if (playerJson != null) {
                         ProxyStrike player = objectMapper.readValue(playerJson, ProxyStrike.class);
                         player.setTicker(ticker);
                         ticker.getPlayers().add(player);
-                        LogManager.getInstance().info("RedisService", 
-                            "Added player " + player.getName() + " (ID: " + player.getId() + ") to ticker");
+                        LogManager.getInstance().info("RedisService",
+                                "Added player " + player.getName() + " (ID: " + player.getId() + ") to ticker");
                     }
                 }
 
@@ -384,11 +404,11 @@ public class RedisService implements CommandListener {
             // Clear existing state
             String tickerKey = getKey(ProxyTicker.class, ticker.getId());
             String playersKey = tickerKey + ":players";
-            
+
             // Log current state
-            LogManager.getInstance().info("RedisService", 
-                "Saving ticker " + ticker.getId() + " with " + 
-                (ticker.getPlayers() != null ? ticker.getPlayers().size() : 0) + " players");
+            LogManager.getInstance().info("RedisService",
+                    "Saving ticker " + ticker.getId() + " with " +
+                            (ticker.getPlayers() != null ? ticker.getPlayers().size() : 0) + " players");
 
             // Save ticker without players field to avoid duplication
             HashSet<IProxyPlayer> players = new HashSet<>(ticker.getPlayers());
@@ -403,8 +423,8 @@ public class RedisService implements CommandListener {
                 for (IProxyPlayer player : players) {
                     if (player.getId() != null) {
                         jedis.sadd(playersKey, player.getId().toString());
-                        LogManager.getInstance().info("RedisService", 
-                            "Added player " + player.getId() + " to ticker " + ticker.getId());
+                        LogManager.getInstance().info("RedisService",
+                                "Added player " + player.getId() + " to ticker " + ticker.getId());
                     }
                 }
             }
@@ -418,52 +438,43 @@ public class RedisService implements CommandListener {
 
     public ProxyStrike saveStrike(ProxyStrike strike) {
         try (Jedis jedis = jedisPool.getResource()) {
-            // Debug existing strikes
-            Set<String> existingStrikes = jedis.keys("proxystrike:*");
-            LogManager.getInstance().info("RedisService", 
-                "Existing strikes before save: " + existingStrikes);
-
             // Generate new ID if needed
             if (strike.getId() == null) {
                 String seqKey = "seq:proxystrike";
-                Long newId = jedis.incr(seqKey);
-                strike.setId(newId);
-                LogManager.getInstance().info("RedisService", 
-                    "Generated new strike ID: " + newId + " from sequence " + seqKey);
+                strike.setId(jedis.incr(seqKey));
             }
 
-            // Get active ticker info
-            String activeTickerId = getActiveTickerId();
-            LogManager.getInstance().info("RedisService", 
-                "Saving strike " + strike.getId() + " with ticker " + 
-                (strike.getTicker() != null ? strike.getTicker().getId() : "null") + 
-                ", active ticker is " + activeTickerId);
-
-            // Save the strike object
+            // Save strike first
+            Set<ProxyRule> rules = strike.getRules();
+            strike.setRules(null); // Temporarily remove rules to avoid serialization issues
             String json = objectMapper.writeValueAsString(strike);
-            String strikeKey = getKey(ProxyStrike.class, strike.getId());
+            String strikeKey = "proxystrike:" + strike.getId();
             jedis.set(strikeKey, json);
+            strike.setRules(rules); // Restore rules
 
-            // Update ticker-player relationship
-            if (strike.getTicker() != null) {
-                String tickerPlayersKey = getKey(ProxyTicker.class, strike.getTicker().getId()) + ":players";
-                
-                // Get existing players for this ticker
-                Set<String> existingPlayers = jedis.smembers(tickerPlayersKey);
-                LogManager.getInstance().info("RedisService", 
-                    "Existing players for ticker " + strike.getTicker().getId() + 
-                    ": " + existingPlayers);
-
-                // Add the player ID to the set
-                jedis.sadd(tickerPlayersKey, strike.getId().toString());
-                LogManager.getInstance().info("RedisService", 
-                    "Added player " + strike.getId() + " to ticker " + 
-                    strike.getTicker().getId() + "'s player set");
+            // Handle rules if present
+            if (rules != null && !rules.isEmpty()) {
+                String rulesKey = "player:" + strike.getId() + ":rules";
+                for (ProxyRule rule : rules) {
+                    if (rule.getId() == null) {
+                        // Only save new rules
+                        saveRule(rule, strike);
+                    }
+                }
             }
 
+            // Update ticker relationship
+            if (strike.getTicker() != null) {
+                String tickerPlayersKey = "proxyticker:" + strike.getTicker().getId() + ":players";
+                jedis.sadd(tickerPlayersKey, strike.getId().toString());
+            }
+
+            logger.info("Saved strike " + strike.getId() + " with " + 
+                (rules != null ? rules.size() : 0) + " rules");
+                
             return strike;
         } catch (Exception e) {
-            LogManager.getInstance().error("RedisService", "Error saving strike", e);
+            logger.severe("Error saving strike: " + e.getMessage());
             throw new RuntimeException("Error saving strike", e);
         }
     }
@@ -489,8 +500,8 @@ public class RedisService implements CommandListener {
             String strikeKey = getKey(ProxyStrike.class, strike.getId());
             jedis.del(strikeKey);
 
-            LogManager.getInstance().info("RedisService", 
-                "Deleted strike and all associated rules: " + strike.getName());
+            LogManager.getInstance().info("RedisService",
+                    "Deleted strike and all associated rules: " + strike.getName());
         }
     }
 
@@ -706,7 +717,7 @@ public class RedisService implements CommandListener {
             jedis.del("seq:proxystrike");
             jedis.del("seq:proxyrule");
             jedis.del("seq:proxyinstrument");
-            
+
             // Create new ticker and publish
             Command cmd = new Command();
             cmd.setCommand(Commands.DATABASE_RESET);

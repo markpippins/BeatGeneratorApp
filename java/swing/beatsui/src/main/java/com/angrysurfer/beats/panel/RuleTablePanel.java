@@ -7,6 +7,7 @@ import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.ParseException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -125,28 +126,32 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         logger.info("Player selected: " + player.getName() + " (ID: " + player.getId() + ")");
         this.currentPlayer = player;
         loadRulesForCurrentPlayer();
-        updateButtonStates(true);
     }
 
     private void loadRulesForCurrentPlayer() {
-        clearTable();
-        if (currentPlayer != null && currentPlayer.getId() != null) {
+        try {
+            clearTable();
+            if (currentPlayer == null || currentPlayer.getId() == null) {
+                logger.warning("Cannot load rules - invalid player");
+                return;
+            }
+
             List<ProxyRule> rules = App.getRedisService().findRulesByPlayer(currentPlayer);
-            logger.info("Found " + rules.size() + " rules for player: " + currentPlayer.getName());
+            logger.info("Found " + rules.size() + " rules for player: " + currentPlayer.getId());
             
             DefaultTableModel model = (DefaultTableModel) table.getModel();
+            
             for (ProxyRule rule : rules) {
                 model.addRow(rule.toRow());
+                logger.info("Added rule: operator=" + rule.getOperator() + 
+                          ", value=" + rule.getValue());
             }
             
-            if (!rules.isEmpty()) {
-                table.setRowSelectionInterval(0, 0);
-                editButton.setEnabled(true);
-                deleteButton.setEnabled(true);
-            }
+            updateButtonStates(true);
             
-            addButton.setEnabled(true);
-            status.setStatus("Loaded " + rules.size() + " rules for " + currentPlayer.getName());
+        } catch (Exception e) {
+            logger.severe("Error loading rules: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -319,37 +324,31 @@ public class RuleTablePanel extends JPanel implements CommandListener {
         });
     }
 
-    private void loadRulesFromRedis() {
+    private void saveRuleToRedis(ProxyRule rule) {
         try {
             if (currentPlayer == null || currentPlayer.getId() == null) {
-                logger.warning("Cannot load rules - player is null or has no ID");
+                logger.warning("Cannot save rule - no current player");
                 return;
             }
 
-            List<ProxyRule> rules = App.getRedisService().findRulesByPlayer(currentPlayer);
-            logger.info("Found " + rules.size() + " rules for player: " + currentPlayer.getName());
+            // Save the rule
+            ProxyRule savedRule = App.getRedisService().saveRule(rule, currentPlayer);
+            logger.info("Saved rule " + savedRule.getId() + " for player " + currentPlayer.getId());
             
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
-            rules.forEach(rule -> {
-                Object[] rowData = rule.toRow();
-                model.addRow(rowData);
-            });
-            
-            // Select the first row if there are any rules
-            if (model.getRowCount() > 0) {
-                table.setRowSelectionInterval(0, 0);
-                
-                // Enable edit/delete buttons
-                editButton.setEnabled(true);
-                deleteButton.setEnabled(true);
-                editMenuItem.setEnabled(true);
-                deleteMenuItem.setEnabled(true);
+            // Update player's rules collection
+            if (currentPlayer.getRules() == null) {
+                currentPlayer.setRules(new HashSet<>());
             }
+            currentPlayer.getRules().add(savedRule);
             
-            status.setStatus("Loaded " + rules.size() + " rules for " + currentPlayer.getName());
+            // Save the player to ensure rules relationship is persisted
+            App.getRedisService().saveStrike((ProxyStrike)currentPlayer);
+            
+            // Refresh the display
+            loadRulesForCurrentPlayer();
+            
         } catch (Exception e) {
-            logger.severe("Error loading rules: " + e.getMessage());
-            status.setStatus("Error loading rules: " + e.getMessage());
+            logger.severe("Error saving rule: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -423,36 +422,23 @@ public class RuleTablePanel extends JPanel implements CommandListener {
             return;
         }
 
-        if (rule == null) {
+        boolean isNew = (rule == null);
+        if (isNew) {
             rule = new ProxyRule();
         }
 
         RuleEditorPanel editorPanel = new RuleEditorPanel(rule);
         Dialog<ProxyRule> dialog = new Dialog<>(rule, editorPanel);
-        dialog.setTitle(rule.getId() == null ? "Add Rule" : "Edit Rule");
+        dialog.setTitle(isNew ? "Add Rule" : "Edit Rule");
 
         if (dialog.showDialog()) {
-            ProxyRule updatedRule = editorPanel.getUpdatedRule();
-            saveRuleToRedis(updatedRule);
-            updateRuleTable(updatedRule, table.getSelectedRow());
-        }
-    }
-
-    private void saveRuleToRedis(ProxyRule rule) {
-        try {
-            if (rule.getId() == null) {
-                // Let Redis service handle ID generation
-                ProxyRule savedRule = App.getRedisService().saveRule(rule, currentPlayer);
-                // Update the rule with generated ID
-                rule.setId(savedRule.getId());
-                status.setStatus("Created new rule for player: " + currentPlayer.getName());
-            } else {
-                App.getRedisService().saveRule(rule, currentPlayer);
-                status.setStatus("Updated rule for player: " + currentPlayer.getName());
+            try {
+                ProxyRule updatedRule = editorPanel.getUpdatedRule();
+                saveRuleToRedis(updatedRule);
+            } catch (Exception e) {
+                logger.severe("Error saving rule: " + e.getMessage());
+                status.setStatus("Error saving rule: " + e.getMessage());
             }
-        } catch (Exception e) {
-            logger.severe("Error saving rule: " + e.getMessage());
-            status.setStatus("Error saving rule: " + e.getMessage());
         }
     }
 

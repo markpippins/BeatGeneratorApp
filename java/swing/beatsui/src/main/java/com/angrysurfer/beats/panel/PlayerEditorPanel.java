@@ -191,11 +191,16 @@ public class PlayerEditorPanel extends StatusProviderPanel {
                 javax.swing.JOptionPane.YES_NO_OPTION);
 
         if (result == javax.swing.JOptionPane.YES_OPTION) {
-            // Save the player
-            ProxyStrike savedPlayer = App.getRedisService().saveStrike(getUpdatedPlayer());
-            if (savedPlayer != null && savedPlayer.getId() != null) {
-                player.setId(savedPlayer.getId()); // Update the ID
-                return true;
+            try {
+                // Save the player
+                ProxyStrike savedPlayer = App.getRedisService().saveStrike(getUpdatedPlayer());
+                if (savedPlayer != null && savedPlayer.getId() != null) {
+                    player.setId(savedPlayer.getId()); // Update the ID
+                    return true;
+                }
+            } catch (Exception e) {
+                logger.severe("Error saving player: " + e.getMessage());
+                statusConsumer.setStatus("Error saving player: " + e.getMessage());
             }
         }
         return false;
@@ -203,7 +208,7 @@ public class PlayerEditorPanel extends StatusProviderPanel {
 
     private JTable createRulesTable() {
         String[] columns = { "Operator", "Comparison", "Value", "Part" };
-        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+                       DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -291,7 +296,7 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     private void setupInstrumentCombo() {
         List<ProxyInstrument> instruments = InstrumentManager.getInstance().getAvailableInstruments();
         DefaultComboBoxModel<ProxyInstrument> model = new DefaultComboBoxModel<>();
-        
+
         for (ProxyInstrument instrument : instruments) {
             model.addElement(instrument);
         }
@@ -312,9 +317,9 @@ public class PlayerEditorPanel extends StatusProviderPanel {
         instrumentCombo.setRenderer(new javax.swing.DefaultListCellRenderer() {
             @Override
             public java.awt.Component getListCellRendererComponent(
-                javax.swing.JList<?> list, Object value, int index,
-                boolean isSelected, boolean cellHasFocus) {
-                    
+                    javax.swing.JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof ProxyInstrument) {
                     setText(((ProxyInstrument) value).getName());
@@ -477,6 +482,14 @@ public class PlayerEditorPanel extends StatusProviderPanel {
     }
 
     private void showRuleDialog(ProxyRule rule) {
+        // Don't show save dialog if player is already saved
+        if (player.getId() == null) {
+            if (!showSavePlayerDialog()) {
+                return; // Exit if player wasn't saved
+            }
+        }
+
+        // Continue with rule dialog
         boolean isNew = (rule == null);
         if (isNew) {
             rule = new ProxyRule();
@@ -488,21 +501,22 @@ public class PlayerEditorPanel extends StatusProviderPanel {
 
         if (dialog.showDialog()) {
             ProxyRule updatedRule = editorPanel.getUpdatedRule();
-            
-            // Save the rule to Redis
+
+            // Save the rule and link to player
             ProxyRule savedRule = App.getRedisService().saveRule(updatedRule, player);
-            
-            // Update player's rules set if needed
+
+            // Update player's rules collection
             if (player.getRules() == null) {
                 player.setRules(new HashSet<>());
             }
-            
-            // Add to player's rules collection
             player.getRules().add(savedRule);
-            
+
+            // Save the player to persist the rules relationship
+            App.getRedisService().saveStrike(player);
+
             // Update UI
             refreshRulesTable();
-            
+
             // Notify other components
             Command cmd = new Command();
             cmd.setCommand(Commands.RULE_ADDED_TO_PLAYER);

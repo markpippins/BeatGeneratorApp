@@ -6,7 +6,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
+import com.angrysurfer.beats.App;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.proxy.ProxyTicker;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -58,5 +60,9 @@ public class TickerPanel extends StatusProviderPanel {
         beatsPanel.add(mainPane, BorderLayout.CENTER);
 
         return beatsPanel;
+    }
+
+    public ProxyTicker getTicker() {
+        return App.getRedisService().loadTicker();
     }
 }

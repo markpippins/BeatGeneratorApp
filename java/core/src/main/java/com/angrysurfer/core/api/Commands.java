@@ -35,6 +35,7 @@ public class Commands {
     // Player selection commands
     public static final String PLAYER_SELECTED = "PLAYER_SELECTED";
     public static final String PLAYER_UNSELECTED = "PLAYER_UNSELECTED";
+    public static final String PLAYER_ADDED = "PLAYER_ADDED";
 
     // Control code and caption commands
     public static final String CONTROL_CODE_SELECTED = "CONTROL_CODE_SELECTED";
