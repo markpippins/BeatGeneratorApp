@@ -2,6 +2,7 @@ package com.angrysurfer.beats.visualization;
 
 public enum VisualizationCategory {
     DEFAULT("Default"),
+    COMPSCI("Computer Science"),
     GAME("Games"),
     MUSIC("Music");
 

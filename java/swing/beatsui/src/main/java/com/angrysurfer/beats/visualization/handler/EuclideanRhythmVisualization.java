@@ -8,11 +8,6 @@ import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class EuclideanRhythmVisualization implements IVisualizationHandler {
-
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private int position = 0;
     private final int[] steps = {8, 16, 12, 10, 7, 5, 6, 9};
@@ -58,5 +53,10 @@ public class EuclideanRhythmVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Euclidean Rhythm";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

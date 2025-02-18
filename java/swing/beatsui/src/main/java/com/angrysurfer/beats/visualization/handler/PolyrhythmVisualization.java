@@ -9,10 +9,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class PolyrhythmVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private double[] phases;
     private final double[] rhythms = {3, 4, 5, 7, 8, 9, 11, 13};
@@ -54,5 +50,10 @@ public class PolyrhythmVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Polyrhythm";
+    } 
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

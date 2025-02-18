@@ -10,11 +10,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class PianoRollVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
-    
     private final Random random = new Random();
     private int seqPosition = 0;
 
@@ -46,5 +41,10 @@ public class PianoRollVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Piano Roll";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

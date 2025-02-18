@@ -9,10 +9,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class PolyphonicVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private double phase = 0.0;
     private final Color[] voiceColors = {Color.RED, Color.BLUE, Color.GREEN};
@@ -49,5 +45,10 @@ public class PolyphonicVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Polyphonic Lines";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

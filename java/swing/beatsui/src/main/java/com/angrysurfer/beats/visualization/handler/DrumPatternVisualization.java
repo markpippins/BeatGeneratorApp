@@ -9,11 +9,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class DrumPatternVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
-    
     private int seqPosition = 0;
 
     @Override
@@ -47,5 +42,10 @@ public class DrumPatternVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Drum Pattern";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

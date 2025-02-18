@@ -1,7 +1,6 @@
 package com.angrysurfer.beats.visualization.handler;
 
 import java.awt.Color;
-import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -64,12 +63,7 @@ public class TailGunnerVisualization implements IVisualizationHandler {
             }
         }
     }
-
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.GAME;
-    }
-
+    
     @Override
     public void update(GridButton[][] buttons) {
         int width = buttons[0].length;
@@ -144,5 +138,10 @@ public class TailGunnerVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Tail Gunner";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.GAME;
     }
 }

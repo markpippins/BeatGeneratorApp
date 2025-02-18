@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class MidiGridVisualization implements IVisualizationHandler {
@@ -47,5 +48,10 @@ public class MidiGridVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "MIDI Grid";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

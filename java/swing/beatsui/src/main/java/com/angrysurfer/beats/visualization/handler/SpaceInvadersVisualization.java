@@ -8,6 +8,7 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class SpaceInvadersVisualization implements IVisualizationHandler {
@@ -107,5 +108,10 @@ public class SpaceInvadersVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Space Invaders";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.GAME;
     }
 }

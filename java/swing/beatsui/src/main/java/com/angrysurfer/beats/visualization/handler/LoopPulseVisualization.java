@@ -5,15 +5,10 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
-import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class LoopPulseVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private final Random random = new Random();
     private int[] loopStates;

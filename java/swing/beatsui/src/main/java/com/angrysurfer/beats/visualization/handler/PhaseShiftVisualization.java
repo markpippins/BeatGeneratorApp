@@ -9,10 +9,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class PhaseShiftVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private double phase = 0.0;
     private final double[] phaseOffsets = {0, Math.PI/6, Math.PI/4, Math.PI/3, Math.PI/2, 2*Math.PI/3, 3*Math.PI/4, Math.PI};
@@ -38,5 +34,10 @@ public class PhaseShiftVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Phase Shift";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

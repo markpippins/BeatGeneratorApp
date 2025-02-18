@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class TicTacToeVisualization implements IVisualizationHandler {
@@ -165,5 +166,10 @@ public class TicTacToeVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Tic-Tac-Toe";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.GAME;
     }
 }

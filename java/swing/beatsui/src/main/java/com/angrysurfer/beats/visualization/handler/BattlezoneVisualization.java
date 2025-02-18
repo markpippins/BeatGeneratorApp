@@ -23,11 +23,6 @@ public class BattlezoneVisualization implements IVisualizationHandler {
     private static final double MOVEMENT_SPEED = 0.01;
     private static final double ROTATION_SPEED = 0.1;
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.GAME;
-    }
-
     private void spawnEnemies(int width, int height) {
         while (enemies.size() < MAX_ENEMIES) {
             int x = random.nextInt(width);
@@ -166,5 +161,10 @@ public class BattlezoneVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Battlezone";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.GAME;
     }
 }

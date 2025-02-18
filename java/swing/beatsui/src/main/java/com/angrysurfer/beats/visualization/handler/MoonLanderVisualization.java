@@ -18,11 +18,6 @@ public class MoonLanderVisualization implements IVisualizationHandler {
     private boolean gameOver = false;
     private boolean landed = false;
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.GAME;
-    }
-
     private void initTerrain(int width) {
         if (terrain == null || terrain.length != width) {
             terrain = new int[width];
@@ -122,5 +117,10 @@ public class MoonLanderVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Moon Lander";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.GAME;
     }
 }

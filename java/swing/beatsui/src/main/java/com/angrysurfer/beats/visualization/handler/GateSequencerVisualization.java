@@ -10,11 +10,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class GateSequencerVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
-    
     private final Random random = new Random();
     private int seqPosition = 0;
     private final int[] gateLengths = new int[8];
@@ -70,5 +65,10 @@ public class GateSequencerVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Gate Sequencer";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

@@ -8,11 +8,6 @@ import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class VUMeterVisualization implements IVisualizationHandler {
-
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private double phase = 0.0;
 
@@ -41,5 +36,10 @@ public class VUMeterVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "VU Meters";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

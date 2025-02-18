@@ -8,11 +8,6 @@ import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class OscilloscopeVisualization implements IVisualizationHandler {
-
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private double phase = 0.0;
 
@@ -36,5 +31,10 @@ public class OscilloscopeVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Oscilloscope";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

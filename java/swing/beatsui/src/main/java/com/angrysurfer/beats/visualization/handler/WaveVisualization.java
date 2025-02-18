@@ -9,11 +9,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class WaveVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
-
     private double phase = 0.0;
     private final double frequency = 2.0;
     private final double amplitude = 2.0;
@@ -47,5 +42,10 @@ public class WaveVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Wave";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

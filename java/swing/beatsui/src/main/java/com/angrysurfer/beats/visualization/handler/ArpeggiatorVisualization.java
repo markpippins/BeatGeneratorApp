@@ -4,6 +4,7 @@ import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class ArpeggiatorVisualization implements IVisualizationHandler {
@@ -35,5 +36,10 @@ public class ArpeggiatorVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Arpeggiator";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

@@ -8,11 +8,6 @@ import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class StepSequencerVisualization implements IVisualizationHandler {
-
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private final Random random = new Random();
     private int seqPosition = 0;
@@ -61,5 +56,10 @@ public class StepSequencerVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Step Sequencer";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

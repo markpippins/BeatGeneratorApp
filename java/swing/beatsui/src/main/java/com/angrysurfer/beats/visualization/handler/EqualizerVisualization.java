@@ -9,11 +9,6 @@ import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class EqualizerVisualization implements IVisualizationHandler {
-
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private final Random random = new Random();
     private int[] levels;
@@ -48,5 +43,10 @@ public class EqualizerVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Equalizer";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

@@ -9,10 +9,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class SpectrumAnalyzerVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private double phase = 0.0;
     private double[] spectrumData;
@@ -42,5 +38,10 @@ public class SpectrumAnalyzerVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Spectrum Analyzer";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

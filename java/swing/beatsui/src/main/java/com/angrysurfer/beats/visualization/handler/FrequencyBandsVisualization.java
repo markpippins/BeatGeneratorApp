@@ -9,10 +9,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class FrequencyBandsVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private double phase = 0.0;
 
@@ -41,5 +37,10 @@ public class FrequencyBandsVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Frequency Bands";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

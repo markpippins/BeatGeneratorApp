@@ -2,10 +2,12 @@ package com.angrysurfer.beats.visualization.handler;
 
 import java.awt.Color;
 import java.awt.Point;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class TetrisVisualization implements IVisualizationHandler {
@@ -180,5 +182,10 @@ public class TetrisVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Tetris";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.GAME;
     }
 }

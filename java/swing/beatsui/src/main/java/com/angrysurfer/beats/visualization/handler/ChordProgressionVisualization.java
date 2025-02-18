@@ -9,11 +9,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class ChordProgressionVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
-    
     private double phase = 0.0;
     private final int[][] chords = {
         {0, 4, 7},    // C major
@@ -56,4 +51,10 @@ public class ChordProgressionVisualization implements IVisualizationHandler {
     public String getName() {
         return "Chord Progression";
     }
+    
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
+    }
+
 }

@@ -8,6 +8,7 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class PacmanVisualization implements IVisualizationHandler {
@@ -103,5 +104,10 @@ public class PacmanVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Pac-Man";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.GAME;
     }
 }

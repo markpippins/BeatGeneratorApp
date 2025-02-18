@@ -2,10 +2,13 @@ package com.angrysurfer.beats.visualization.handler;
 
 import java.awt.Color;
 import java.awt.Point;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class CombatVisualization implements IVisualizationHandler {
@@ -229,5 +232,10 @@ public class CombatVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Combat";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.GAME;
     }
 }

@@ -1,8 +1,11 @@
 package com.angrysurfer.beats.visualization;
 
 public enum DisplayType {
+    GAME("Game"),
     VISUALIZER("Visualizer"),
-    CONTROL("Control");
+    CONTROL("Control"),
+    MUSIC("Music"),
+    COMPSCI("Compsci");
 
     private final String label;
 

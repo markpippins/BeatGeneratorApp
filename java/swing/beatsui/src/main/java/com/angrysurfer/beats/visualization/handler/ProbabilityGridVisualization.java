@@ -10,10 +10,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class ProbabilityGridVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
     
     private final Random random = new Random();
     private double[][] probabilities;
@@ -77,5 +73,11 @@ public class ProbabilityGridVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Probability Grid";
+    }
+
+    
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

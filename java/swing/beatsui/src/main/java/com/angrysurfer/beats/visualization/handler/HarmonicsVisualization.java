@@ -9,11 +9,6 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class HarmonicsVisualization implements IVisualizationHandler {
 
-    @Override
-    public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
-    }
-    
     private double phase = 0.0;
     private final Color[] harmonicColors = {
             Color.RED, // Fundamental
@@ -57,5 +52,10 @@ public class HarmonicsVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Harmonic Series";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MUSIC;
     }
 }

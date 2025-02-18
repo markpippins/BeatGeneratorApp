@@ -192,7 +192,7 @@ public class Visualizer implements CommandListener {
             return;
 
         if (statusConsumer != null) {
-            statusConsumer.setSender(currentVisualization.getName());
+            statusConsumer.setMessage(currentVisualization.getName());
         }
         try {
             currentVisualization.update(buttons);

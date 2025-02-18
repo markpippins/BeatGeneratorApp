@@ -17,6 +17,6 @@ public interface IVisualizationHandler {
     }
 
     // default VisualizationEnum getEnum() {
-    //     return VisualizationEnum.fromLabel(getName());
+    // return VisualizationEnum.fromLabel(getName());
     // }
 }
