@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -221,25 +220,30 @@ public interface IProxyPlayer extends Callable<Boolean> {
 
     default Object[] toRow() {
         return new Object[] {
-            getName(),
-            getChannel(),
-            getSwing(),
-            getLevel(),
-            getNote(),
-            getMinVelocity(),
-            getMaxVelocity(),
-            getPreset(),
-            getStickyPreset(),
-            getProbability(),
-            getRandomDegree(),
-            getRatchetCount(),
-            getRatchetInterval(),
-            getUseInternalBeats(),
-            getUseInternalBars(),
-            getPanPosition(),
-            getPreserveOnPurge(),
-            getSparse()
+                getName(),
+                getChannel(),
+                getSwing(),
+                getLevel(),
+                getNote(),
+                getMinVelocity(),
+                getMaxVelocity(),
+                getPreset(),
+                getStickyPreset(),
+                getProbability(),
+                getRandomDegree(),
+                getRatchetCount(),
+                getRatchetInterval(),
+                getUseInternalBeats(),
+                getUseInternalBars(),
+                getPanPosition(),
+                getPreserveOnPurge(),
+                getSparse()
         };
+    }
+
+    default boolean isValid() {
+        Set<ProxyRule> rules = getRules();
+        return rules != null && !rules.isEmpty();
     }
 
 }

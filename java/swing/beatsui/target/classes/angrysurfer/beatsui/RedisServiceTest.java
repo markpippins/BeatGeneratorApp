@@ -1,3 +1,4 @@
+package angrysurfer.beatsui;
 // package com.angrysurfer.beatsui;
 
 // import static org.junit.jupiter.api.Assertions.assertEquals;

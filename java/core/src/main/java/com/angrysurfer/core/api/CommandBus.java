@@ -32,6 +32,20 @@ public class CommandBus implements CommandListener {
         listeners.remove(listener);
     }
 
+    public void publish(String command) {
+        publish(new Command(command, this, this));
+    }
+
+    public void publish(String command, Object sender) {
+        Command cmd = new Command(command, sender, null);
+        publish(cmd);
+    }
+
+    public void publish(String command, Object sender, Object data) {
+        Command cmd = new Command(command, sender, data);
+        publish(cmd);
+    }
+
     public void publish(Command action) {
         if (action == null) {
             logManager.error("CommandBus", "Attempted to publish null action");
@@ -40,20 +54,20 @@ public class CommandBus implements CommandListener {
 
         String sender = action.getSender() != null ? action.getSender().getClass().getSimpleName() : "unknown";
         String dataType = action.getData() != null ? action.getData().getClass().getSimpleName() : "null";
-        
-        logManager.debug("CommandBus", 
-            String.format("Publishing command: %s from: %s data: %s", 
-                action.getCommand(), sender, dataType));
+
+        logManager.debug("CommandBus",
+                String.format("Publishing command: %s from: %s data: %s",
+                        action.getCommand(), sender, dataType));
 
         listeners.forEach(listener -> {
             try {
                 listener.onAction(action);
             } catch (Exception e) {
-                logManager.error("CommandBus", 
-                    String.format("Error in listener %s handling command %s: %s", 
-                        listener.getClass().getSimpleName(), 
-                        action.getCommand(), 
-                        e.getMessage()));
+                logManager.error("CommandBus",
+                        String.format("Error in listener %s handling command %s: %s",
+                                listener.getClass().getSimpleName(),
+                                action.getCommand(),
+                                e.getMessage()));
             }
         });
     }

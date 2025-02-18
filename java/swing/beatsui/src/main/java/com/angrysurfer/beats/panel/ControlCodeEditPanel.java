@@ -31,8 +31,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ControlCodeEditorPanel extends JPanel {
-    private CommandBus actionBus = CommandBus.getInstance();
+public class ControlCodeEditPanel extends JPanel {
+    private CommandBus commandBus = CommandBus.getInstance();
     private ProxyControlCode controlCode;
     private JTextField nameField;
     private JSpinner codeSpinner;
@@ -43,7 +43,7 @@ public class ControlCodeEditorPanel extends JPanel {
     private JButton editCaptionButton;
     private JButton deleteCaptionButton;
 
-    public ControlCodeEditorPanel(ProxyControlCode controlCode) {
+    public ControlCodeEditPanel(ProxyControlCode controlCode) {
         super(new BorderLayout());
         this.controlCode = controlCode;
 
@@ -174,7 +174,7 @@ public class ControlCodeEditorPanel extends JPanel {
             caption.setCode((Long) codeSpinner.getValue());
         }
 
-        CaptionEditorPanel editorPanel = new CaptionEditorPanel(caption);
+        CaptionEditPanel editorPanel = new CaptionEditPanel(caption);
         Dialog<ProxyCaption> dialog = new Dialog<>(caption, editorPanel);
         dialog.setTitle(isNew ? "Add Caption" : "Edit Caption");
 
@@ -182,11 +182,8 @@ public class ControlCodeEditorPanel extends JPanel {
             ProxyCaption updatedCaption = editorPanel.getUpdatedCaption();
             updateCaptionsTable(updatedCaption, captionsTable.getSelectedRow());
             
-            // Notify via ActionBus
-            Command action = new Command();
-            action.setCommand(isNew ? Commands.CAPTION_ADDED : Commands.CAPTION_UPDATED);
-            action.setData(updatedCaption);
-            actionBus.publish(action);
+            // Use CommandBus publish method directly
+            commandBus.publish(isNew ? Commands.CAPTION_ADDED : Commands.CAPTION_UPDATED, this, updatedCaption);
         }
     }
 
@@ -204,10 +201,7 @@ public class ControlCodeEditorPanel extends JPanel {
             ProxyCaption caption = getCaptionFromRow(row);
             ((DefaultTableModel) captionsTable.getModel()).removeRow(row);
             
-            Command action = new Command();
-            action.setCommand(Commands.CAPTION_DELETED);
-            action.setData(caption);
-            actionBus.publish(action);
+            commandBus.publish(Commands.CAPTION_DELETED, this, caption);
         }
     }
 

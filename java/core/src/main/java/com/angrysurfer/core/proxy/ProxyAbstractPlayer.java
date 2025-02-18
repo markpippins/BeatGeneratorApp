@@ -113,8 +113,7 @@ public abstract class ProxyAbstractPlayer implements Serializable, IProxyPlayer 
     @JsonIgnore
     private Boolean armForNextTick = false;
 
-    @JsonIgnore
-    private transient Set<ProxyRule> rules = new HashSet<>();
+    private Set<ProxyRule> rules = new HashSet<>();
 
     private List<Integer> allowedControlMessages = new ArrayList<>();
 
@@ -134,7 +133,8 @@ public abstract class ProxyAbstractPlayer implements Serializable, IProxyPlayer 
         setTicker(ticker);
     }
 
-    public ProxyAbstractPlayer(String name, ProxyTicker ticker, ProxyInstrument instrument, List<Integer> allowedControlMessages) {
+    public ProxyAbstractPlayer(String name, ProxyTicker ticker, ProxyInstrument instrument,
+            List<Integer> allowedControlMessages) {
         this(name, ticker, instrument);
         setAllowedControlMessages(allowedControlMessages);
     }

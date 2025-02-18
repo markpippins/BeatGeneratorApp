@@ -26,6 +26,8 @@ import com.angrysurfer.core.api.StatusConsumer;
 
 public class LaunchPanel extends StatusProviderPanel implements CommandListener {
 
+    private final CommandBus commandBus = CommandBus.getInstance();
+
     private static final int[] LAUNCH_PAD_LABELS = {
             13, 14, 15, 16, // inputs 1-4 map to 13,14,15,16
             9, 10, 11, 12, // inputs 5-8 map to 9,10,11,12
@@ -39,7 +41,7 @@ public class LaunchPanel extends StatusProviderPanel implements CommandListener 
 
     public LaunchPanel(StatusConsumer statusConsumer) {
         super(new BorderLayout(), statusConsumer);
-        CommandBus.getInstance().register(this);
+        commandBus.register(this);
         setup();
     }
 

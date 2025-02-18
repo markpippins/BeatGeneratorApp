@@ -9,7 +9,7 @@ import com.formdev.flatlaf.*;
 
 public class ThemeManager {
     private static ThemeManager instance;
-    private final CommandBus actionBus = CommandBus.getInstance();
+    private final CommandBus commandBus = CommandBus.getInstance();
     private final JFrame mainFrame;
 
     private ThemeManager(JFrame mainFrame) {
@@ -80,11 +80,7 @@ public class ThemeManager {
     }
 
     private void notifyThemeChange(String themeName) {
-        Command action = new Command();
-        action.setCommand(Commands.CHANGE_THEME);
-        action.setSender(this);
-        action.setData(themeName);
-        actionBus.publish(action);
+        commandBus.publish(Commands.CHANGE_THEME, this, themeName);
     }
 
     @FunctionalInterface

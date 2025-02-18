@@ -33,6 +33,14 @@ public class ProxyTicker implements Serializable {
 
     @JsonIgnore
     @Transient
+    public boolean isFirst = false;
+
+    @JsonIgnore
+    @Transient
+    public boolean isLast = false;
+
+    @JsonIgnore
+    @Transient
     ClockSource clockSource;
 
     @JsonIgnore
@@ -344,5 +352,10 @@ public class ProxyTicker implements Serializable {
 
     public void setPlayers(Set<IProxyPlayer> players) {
         this.players = players;
+    }
+
+    public synchronized boolean isValid() {
+        return (Objects.nonNull(getPlayers()) && !getPlayers().isEmpty()
+                && getPlayers().stream().anyMatch(p -> p.isValid()));
     }
 }

@@ -23,7 +23,7 @@ import java.util.List;
 import lombok.Getter;
 
 @Getter
-public class InstrumentEditorPanel extends JPanel {
+public class InstrumentEditPanel extends JPanel {
     private final ProxyInstrument instrument;
     private final JTextField nameField;
     private final JComboBox<String> deviceCombo; // Changed from JTextField
@@ -33,7 +33,7 @@ public class InstrumentEditorPanel extends JPanel {
     private final JCheckBox initializedCheckBox;
     private final List<MidiDevice.Info> deviceInfos; // Store device info objects
 
-    public InstrumentEditorPanel(ProxyInstrument instrument) {
+    public InstrumentEditPanel(ProxyInstrument instrument) {
         super(new GridBagLayout());
         this.instrument = instrument;
         this.deviceInfos = new ArrayList<>();

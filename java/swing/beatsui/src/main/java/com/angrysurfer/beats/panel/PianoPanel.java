@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class PianoPanel extends StatusProviderPanel {
-    private final CommandBus actionBus = CommandBus.getInstance();
+    private final CommandBus commandBus = CommandBus.getInstance();
     private final Set<Integer> heldNotes = new HashSet<>();
     private Map<Integer, JButton> noteToKeyMap = new HashMap<>();
 
@@ -76,7 +76,7 @@ public class PianoPanel extends StatusProviderPanel {
     }
 
     private void setupActionBusListener() {
-        actionBus.register(new CommandListener() {
+        commandBus.register(new CommandListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getData() instanceof Integer note) {

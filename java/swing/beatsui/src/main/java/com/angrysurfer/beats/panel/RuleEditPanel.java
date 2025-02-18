@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.text.ParseException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
@@ -21,18 +20,18 @@ import javax.swing.text.NumberFormatter;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyRule;
 
-public class RuleEditorPanel extends StatusProviderPanel {
+public class RuleEditPanel extends StatusProviderPanel {
     private final ProxyRule rule;
     private final JComboBox<String> operatorCombo;
     private final JComboBox<String> comparisonCombo;
     private final JSpinner valueSpinner;
     private final JSpinner partSpinner;
 
-    public RuleEditorPanel(ProxyRule rule) {
+    public RuleEditPanel(ProxyRule rule) {
         this(rule, null);
     }
 
-    public RuleEditorPanel(ProxyRule rule, StatusConsumer statusConsumer) {
+    public RuleEditPanel(ProxyRule rule, StatusConsumer statusConsumer) {
         super(new GridBagLayout(), statusConsumer);
         this.rule = rule;
         setLayout(new GridBagLayout());

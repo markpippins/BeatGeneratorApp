@@ -1,6 +1,7 @@
 package com.angrysurfer.core.proxy;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.LongStream;
@@ -33,6 +34,7 @@ public class ProxyStrike extends ProxyAbstractPlayer implements Serializable {
 
     public ProxyStrike() {
         setNote(KICK);
+        setRules(new HashSet<>()); // Initialize rules set
     }
 
     public ProxyStrike(String name, ProxyTicker ticker, ProxyInstrument instrument, long note,

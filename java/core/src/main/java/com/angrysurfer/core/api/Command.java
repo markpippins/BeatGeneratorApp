@@ -6,7 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Command {
-
     private String command;
     private Object sender;
     private Object data;
@@ -15,9 +14,5 @@ public class Command {
         this.command = command;
         this.sender = sender;
         this.data = data;
-    }
-
-    public Command() {
-        //TODO Auto-generated constructor stub
     }
 }

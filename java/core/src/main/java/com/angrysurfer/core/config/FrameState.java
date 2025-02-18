@@ -9,6 +9,7 @@ public class FrameState {
     private Point location = new Point(100, 100);
     private Dimension size = new Dimension(800, 600);
     private boolean maximized = false;
+    private boolean minimized = false;
     private int dividerLocation = 200;
     private int selectedTab = 0;
     private int frameSizeX = 800;
@@ -21,10 +22,11 @@ public class FrameState {
     public FrameState() {}
     
     // Constructor with window state
-    public FrameState(Point location, Dimension size, boolean maximized, int dividerLocation) {
+    public FrameState(Point location, Dimension size, boolean maximized, boolean minimized, int dividerLocation) {
         this.location = location;
         this.size = size;
         this.maximized = maximized;
+        this.minimized = minimized;
         this.dividerLocation = dividerLocation;
     }
 

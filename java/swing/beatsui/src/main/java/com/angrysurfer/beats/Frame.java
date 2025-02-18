@@ -2,7 +2,6 @@ package com.angrysurfer.beats;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
@@ -13,45 +12,111 @@ import java.util.logging.Logger;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.border.EmptyBorder;
+import javax.swing.UIManager;
 
 import com.angrysurfer.beats.panel.BackgroundPanel;
-import com.angrysurfer.beats.panel.InstrumentsPanel;
-import com.angrysurfer.beats.panel.LaunchPanel;
-import com.angrysurfer.beats.panel.PlayerEditorPanel;
-import com.angrysurfer.beats.panel.SystemsPanel;
+import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.TickerPanel;
-import com.angrysurfer.beats.panel.WebPanel;
-import com.angrysurfer.beats.panel.X0XPanel;
-import com.angrysurfer.beats.panel.sorting.SortingVisualizerPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.proxy.ProxyStrike;
-import com.angrysurfer.core.proxy.ProxyTicker;
+import com.angrysurfer.core.config.FrameState;
+import com.angrysurfer.core.data.RedisService;
 
 public class Frame extends JFrame implements AutoCloseable {
 
     private static final Logger logger = Logger.getLogger(Frame.class.getName());
 
     private StatusBar statusBar = new StatusBar();
-    private JTabbedPane tabbedPane;
+
     private final Map<Character, Integer> keyNoteMap;
     private BackgroundPanel backgroundPanel;
+    private MainPanel mainPanel;
 
     public Frame() {
         super("Beats");
         this.keyNoteMap = setupKeyMap();
-        
+
         // Create background panel first
         backgroundPanel = new BackgroundPanel();
         backgroundPanel.setLayout(new BorderLayout());
         setContentPane(backgroundPanel);
-        
+
         setupFrame();
         setupMainContent();
         setupKeyboardManager();
+    }
+
+    public void loadFrameState() {
+        logger.info("Loading frame state for window");
+        FrameState state = RedisService.getInstance().loadFrameState();
+        logger.info("Frame state loaded: " + (state != null));
+
+        if (state != null) {
+            setSize(state.getFrameSizeX(), state.getFrameSizeY());
+            setLocation(state.getFramePosX(), state.getFramePosY());
+            setSelectedTab(state.getSelectedTab());
+            
+            // Restore window state
+            if (state.isMaximized()) {
+                setExtendedState(JFrame.MAXIMIZED_BOTH);
+            } else if (state.isMinimized()) {
+                setExtendedState(JFrame.ICONIFIED);
+            } else {
+                setExtendedState(JFrame.NORMAL);
+            }
+            
+            logger.info("Applied frame state: " +
+                    "size=" + state.getFrameSizeX() + "x" + state.getFrameSizeY() +
+                    ", pos=" + state.getFramePosX() + "," + state.getFramePosY() +
+                    ", tab=" + state.getSelectedTab() +
+                    ", maximized=" + state.isMaximized() +
+                    ", minimized=" + state.isMinimized());
+        }
+
+        // Add window listener for saving state on close
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                saveFrameState();
+            }
+        });
+    }
+
+    public void saveFrameState() {
+        try {
+            FrameState currentState = new FrameState();
+            currentState.setSelectedTab(getSelectedTab());
+            
+            // Save normal window bounds even when maximized
+            if (getExtendedState() == JFrame.MAXIMIZED_BOTH || getExtendedState() == JFrame.ICONIFIED) {
+                currentState.setFrameSizeX(getWidth());
+                currentState.setFrameSizeY(getHeight());
+                currentState.setFramePosX(getX());
+                currentState.setFramePosY(getY());
+            } else {
+                currentState.setFrameSizeX(getWidth());
+                currentState.setFrameSizeY(getHeight());
+                currentState.setFramePosX(getX());
+                currentState.setFramePosY(getY());
+            }
+            
+            // Save window state
+            currentState.setMaximized(getExtendedState() == JFrame.MAXIMIZED_BOTH);
+            currentState.setMinimized(getExtendedState() == JFrame.ICONIFIED);
+            currentState.setLookAndFeelClassName(UIManager.getLookAndFeel().getClass().getName());
+
+            logger.info("Saving frame state: " +
+                    "size=" + getWidth() + "x" + getHeight() +
+                    ", pos=" + getX() + "," + getY() +
+                    ", tab=" + getSelectedTab() +
+                    ", maximized=" + currentState.isMaximized() +
+                    ", minimized=" + currentState.isMinimized());
+
+            RedisService.getInstance().saveFrameState(currentState);
+        } catch (Exception e) {
+            logger.severe("Error saving frame state: " + e.getMessage());
+        }
     }
 
     private void setupFrame() {
@@ -59,12 +124,12 @@ public class Frame extends JFrame implements AutoCloseable {
         setMinimumSize(new Dimension(1200, 800));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        
+
         // Make main content panel transparent
         backgroundPanel.setBackground(new Color(245, 245, 245, 200)); // Light background with some transparency
-        
+
         setJMenuBar(new MenuBar(this, statusBar));
-        add(new ToolBar(statusBar), BorderLayout.NORTH);
+        add(new ToolBar(), BorderLayout.NORTH);
         add(statusBar, BorderLayout.SOUTH);
     }
 
@@ -91,59 +156,32 @@ public class Frame extends JFrame implements AutoCloseable {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
-                if (tabbedPane.getSelectedComponent() instanceof TickerPanel) {
+                if (mainPanel != null && mainPanel.getSelectedComponent() instanceof TickerPanel) {
                     char keyChar = Character.toLowerCase(e.getKeyChar());
 
                     if (keyNoteMap.containsKey(keyChar)) {
                         int note = keyNoteMap.get(keyChar);
-                        Command action = new Command();
 
                         switch (e.getID()) {
                             case KeyEvent.KEY_PRESSED -> {
-                                // If shift is held, send KEY_HELD command
-                                if (e.isShiftDown()) {
-                                    action.setCommand(Commands.KEY_HELD);
-                                } else {
-                                    action.setCommand(Commands.KEY_PRESSED);
-                                }
-                                action.setData(note);
-                                CommandBus.getInstance().publish(action);
+                                String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
+                                CommandBus.getInstance().publish(command, this, note);
                             }
                             case KeyEvent.KEY_RELEASED -> {
                                 if (!e.isShiftDown()) {
-                                    action.setCommand(Commands.KEY_RELEASED);
-                                    action.setData(note);
-                                    CommandBus.getInstance().publish(action);
+                                    CommandBus.getInstance().publish(Commands.KEY_RELEASED, this, note);
                                 }
                             }
                         }
                     }
                 }
-                return false; // Allow other key listeners to process the event
+                return false;
             }
         });
     }
 
     private void setupMainContent() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
-
-        mainPanel.setBorder(new EmptyBorder(2, 5, 2, 5));
-
-        tabbedPane = new JTabbedPane();
-
-        tabbedPane.addTab("Players", new TickerPanel(statusBar));
-        tabbedPane.addTab("Launch", new LaunchPanel());
-        tabbedPane.addTab("X0X", new X0XPanel());
-        tabbedPane.addTab("Instruments", new InstrumentsPanel());
-        tabbedPane.addTab("System", new SystemsPanel(statusBar));
-
-        tabbedPane.addTab("Params", new JPanel());
-        tabbedPane.addTab("Controls", new JPanel());
-
-        tabbedPane.addTab("Web", new WebPanel());
-        tabbedPane.addTab("Sorting", new SortingVisualizerPanel());
-
-        mainPanel.add(tabbedPane, BorderLayout.CENTER);
+        mainPanel = new MainPanel(statusBar);
         add(mainPanel, BorderLayout.CENTER);
     }
 
@@ -152,26 +190,21 @@ public class Frame extends JFrame implements AutoCloseable {
     }
 
     public int getSelectedTab() {
-        return tabbedPane.getSelectedIndex();
+        return mainPanel.getSelectedTab();
     }
 
     public void setSelectedTab(int index) {
-        tabbedPane.setSelectedIndex(index);
+        mainPanel.setSelectedTab(index);
     }
-
 
     @Override
     public void close() {
         // Clean up ActionBus subscriptions for child components
-        if (tabbedPane != null) {
-            for (Component comp : tabbedPane.getComponents()) {
-                if (comp instanceof AutoCloseable) {
-                    try {
-                        ((AutoCloseable) comp).close();
-                    } catch (Exception e) {
-                        logger.warning("Error closing component: " + e.getMessage());
-                    }
-                }
+        if (mainPanel != null) {
+            try {
+                mainPanel.close();
+            } catch (Exception e) {
+                logger.warning("Error closing main panel: " + e.getMessage());
             }
         }
         dispose();

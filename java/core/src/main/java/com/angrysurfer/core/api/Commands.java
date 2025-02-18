@@ -33,9 +33,18 @@ public class Commands {
     public static final String CHANGE_THEME = "CHANGE_THEME";
 
     // Player selection commands
+    public static final String PLAYER = "PLAYER";
+
     public static final String PLAYER_SELECTED = "PLAYER_SELECTED";
     public static final String PLAYER_UNSELECTED = "PLAYER_UNSELECTED";
     public static final String PLAYER_ADDED = "PLAYER_ADDED";
+
+    // Rule selection commands
+    public static final String RULE = "RULE";
+
+    public static final String RULE_SELECTED = "RULE_SELECTED";
+    public static final String RULE_UNSELECTED = "RULE_UNSELECTED";
+    public static final String RULE_ADDED = "RULE_ADDED";
 
     // Control code and caption commands
     public static final String CONTROL_CODE_SELECTED = "CONTROL_CODE_SELECTED";
@@ -48,8 +57,19 @@ public class Commands {
     public static final String CAPTION_DELETED = "CAPTION_DELETED";
 
     // Ticker selection commands
+    public static final String TICKER = "TICKER";
     public static final String TICKER_SELECTED = "TICKER_SELECTED";
     public static final String TICKER_UPDATED = "TICKER_UPDATED";
+
+    // Ticker-Player-Rule relationship commands
+    public static final String TICKER_REQUEST = "TICKER_REQUEST";
+    public static final String TICKER_LOADED = "TICKER_LOADED";
+    public static final String TICKER_CHANGED = "TICKER_CHANGED";
+
+    public static final String PLAYER_ADDED_TO_TICKER = "PLAYER_ADDED_TO_TICKER";
+    public static final String PLAYER_REMOVED_FROM_TICKER = "PLAYER_REMOVED_FROM_TICKER";
+    public static final String RULE_ADDED_TO_PLAYER = "RULE_ADDED_TO_PLAYER";
+    public static final String RULE_REMOVED_FROM_PLAYER = "RULE_REMOVED_FROM_PLAYER";
 
     // Piano key commands
     public static final String KEY_PRESSED = "KEY_PRESSED";
@@ -65,14 +85,6 @@ public class Commands {
     public static final String VISUALIZATION_STARTED = "VISUALIZATION_STARTED";
     public static final String VISUALIZATION_STOPPED = "VISUALIZATION_STOPPED";
     public static final String VISUALIZATION_REGISTERED = "VISUALIZATION_REGISTERED";
-
-    // Ticker-Player-Rule relationship commands
-    public static final String TICKER_LOADED = "TICKER_LOADED";
-    public static final String TICKER_CHANGED = "TICKER_CHANGED";
-    public static final String PLAYER_ADDED_TO_TICKER = "PLAYER_ADDED_TO_TICKER";
-    public static final String PLAYER_REMOVED_FROM_TICKER = "PLAYER_REMOVED_FROM_TICKER";
-    public static final String RULE_ADDED_TO_PLAYER = "RULE_ADDED_TO_PLAYER";
-    public static final String RULE_REMOVED_FROM_PLAYER = "RULE_REMOVED_FROM_PLAYER";
 
     // Logging commands
     public static final String LOG_DEBUG = "LOG_DEBUG";

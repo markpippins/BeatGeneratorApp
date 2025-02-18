@@ -1,6 +1,5 @@
 package com.angrysurfer.beats;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -22,39 +21,53 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.service.TickerManager;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyTicker;
 
-public class ToolBar extends JToolBar implements CommandListener {
+public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();
     private final Map<String, JComponent> rightFields = new HashMap<>(); // Changed to JComponent
     private final CommandBus actionBus = CommandBus.getInstance();
     private ProxyTicker currentTicker; // Add field to track current ticker
-    private final StatusConsumer statusConsumer;
 
-    public ToolBar(StatusConsumer statusConsumer) {
+    public ToolBar() {
         super();
-        this.statusConsumer = statusConsumer;
         setFloatable(false);
-        setup();  // Changed from setupButtons() to setup()
-        CommandBus.getInstance().register(this);
-    }
-
-    private void setupActionBusListener() {
+        setup(); // Changed from setupButtons() to setup()
+        
+        // First register the listener to handle updates
         actionBus.register(new CommandListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand().equals(Commands.TICKER_SELECTED) ||
-                        action.getCommand().equals(Commands.TICKER_UPDATED)) {
-                    if (action.getData() instanceof ProxyTicker) {
-                        updateTickerDisplay((ProxyTicker) action.getData());
+                if (Objects.nonNull(action.getCommand()) 
+                        && Objects.nonNull(action.getData())
+                        && action.getData() instanceof ProxyTicker) {
+                    
+                    switch (action.getCommand()) {
+                        case Commands.TICKER_SELECTED, Commands.TICKER_UPDATED -> {
+                            ProxyTicker ticker = (ProxyTicker) action.getData();
+                            updateTickerDisplay(ticker);
+                            updateToolbarState(ticker);
+                        }
                     }
                 }
+            }
+        });
+
+        // Then request the initial ticker state after a short delay
+        SwingUtilities.invokeLater(() -> {
+            // First ensure TickerManager has an active ticker
+            ProxyTicker currentTicker = TickerManager.getInstance().getActiveTicker();
+            if (currentTicker != null) {
+                actionBus.publish(Commands.TICKER_SELECTED, this, currentTicker);
+            } else {
+                actionBus.publish(Commands.TICKER_REQUEST, this);
             }
         });
     }
@@ -66,7 +79,6 @@ public class ToolBar extends JToolBar implements CommandListener {
         }
         combo.setSelectedItem(current);
         combo.setMaximumSize(new Dimension(70, 25));
-
         combo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && currentTicker != null) {
                 int value = (Integer) combo.getSelectedItem();
@@ -87,15 +99,7 @@ public class ToolBar extends JToolBar implements CommandListener {
                     case "Bars" -> currentTicker.setBars(value);
                     case "Parts" -> currentTicker.setParts(value);
                 }
-
-                // Save to Redis
-                App.getRedisService().saveTicker(currentTicker);
-
-                // Notify other components
-                Command action = new Command();
-                action.setCommand(Commands.TICKER_UPDATED);
-                action.setData(currentTicker);
-                actionBus.publish(action);
+                actionBus.publish(Commands.TICKER_UPDATED, this, currentTicker);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -108,8 +112,8 @@ public class ToolBar extends JToolBar implements CommandListener {
             return;
         }
 
-        System.out.println("ToolBar: Updating display for ticker " + ticker.getId() + 
-                          " with " + ticker.getPlayers().size() + " players");
+        System.out.println("ToolBar: Updating display for ticker " + ticker.getId() +
+                " with " + ticker.getPlayers().size() + " players");
 
         this.currentTicker = ticker;
 
@@ -149,6 +153,8 @@ public class ToolBar extends JToolBar implements CommandListener {
         }
     }
 
+    JPanel transportPanel;
+
     private void setup() {
         setFloatable(false);
         setPreferredSize(new Dimension(getPreferredSize().width, 80)); // Set proper height for toolbar
@@ -179,7 +185,7 @@ public class ToolBar extends JToolBar implements CommandListener {
         add(leftStatusPanel);
 
         // Transport controls
-        JPanel transportPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        transportPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         transportPanel.setPreferredSize(new Dimension(transportPanel.getPreferredSize().width, 75));
         setupTransportButtons(transportPanel);
         transportPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
@@ -220,31 +226,6 @@ public class ToolBar extends JToolBar implements CommandListener {
         add(rightStatusPanel);
     }
 
-    private JPanel createTransportPanel() {
-        JPanel transportPanel = new JPanel();
-        transportPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-
-        JButton rewindBtn = createToolbarButton("⏮", "Rewind");
-        JButton pauseBtn = createToolbarButton("⏸", "Pause");
-        JButton recordBtn = createToolbarButton("⏺", "Record");
-        JButton stopBtn = createToolbarButton("⏹", "Stop");
-        JButton playBtn = createToolbarButton("▶", "Play");
-        JButton forwardBtn = createToolbarButton("⏭", "Forward");
-
-        transportPanel.add(rewindBtn);
-        transportPanel.add(pauseBtn);
-        transportPanel.add(stopBtn);
-        transportPanel.add(recordBtn);
-        transportPanel.add(playBtn);
-        transportPanel.add(forwardBtn);
-
-        // Create wrapper panel to push transport controls to bottom
-        JPanel wrapperPanel = new JPanel(new BorderLayout());
-        wrapperPanel.add(transportPanel, BorderLayout.SOUTH);
-
-        return wrapperPanel;
-    }
-
     private JTextField createTextField(String initialValue) {
         JTextField field = new JTextField(initialValue);
         field.setColumns(4);
@@ -257,10 +238,13 @@ public class ToolBar extends JToolBar implements CommandListener {
         return field;
     }
 
-    private JButton createToolbarButton(String text, String tooltip) {
+    private JButton createToolbarButton(String command, String text, String tooltip) {
         JButton button = new JButton(text);
         button.setToolTipText(tooltip);
         button.setEnabled(true); // Enable all transport buttons
+        button.setActionCommand(command);
+
+        button.addActionListener(e -> actionBus.publish(command, this));
 
         // Increase button size
         int size = 32;
@@ -278,38 +262,14 @@ public class ToolBar extends JToolBar implements CommandListener {
         return button;
     }
 
-    private void createTransportCommand(String commandType) {
-        Command command = new Command();
-        command.setCommand(commandType);
-        command.setSender(this);
-        actionBus.publish(command);
-    }
-
     private void setupTransportButtons(JPanel transportPanel) {
-        JButton rewindBtn = createToolbarButton("⏮", "Previous Ticker");
-        JButton pauseBtn = createToolbarButton("⏸", "Pause");
-        JButton recordBtn = createToolbarButton("⏺", "Record");
-        JButton stopBtn = createToolbarButton("⏹", "Stop");
-        JButton playBtn = createToolbarButton("▶", "Play");
-        JButton forwardBtn = createToolbarButton("⏭", "Next Ticker");
-
-        // Update tooltips to reflect ticker navigation
-        rewindBtn.setToolTipText("Previous Ticker (Rewind)");
-        forwardBtn.setToolTipText("Next Ticker (Forward)");
-
-        // Add action listeners that publish commands
-        rewindBtn.addActionListener(e -> {
-            Command cmd = new Command();
-            cmd.setCommand(Commands.TRANSPORT_REWIND);
-            cmd.setSender(this);
-            actionBus.publish(cmd);
-            // logger.info("Published TRANSPORT_REWIND command");
-        });
-        pauseBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_PAUSE));
-        recordBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_RECORD));
-        stopBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_STOP));
-        playBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_PLAY));
-        forwardBtn.addActionListener(e -> publishTransportCommand(Commands.TRANSPORT_FORWARD));
+        // Create buttons with single tooltip since we don't need navigation text
+        JButton rewindBtn = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Ticker");
+        JButton pauseBtn = createToolbarButton(Commands.TRANSPORT_PAUSE, "⏸", "Pause");
+        JButton recordBtn = createToolbarButton(Commands.TRANSPORT_RECORD, "⏺", "Record");
+        JButton stopBtn = createToolbarButton(Commands.TRANSPORT_STOP, "⏹", "Stop");
+        JButton playBtn = createToolbarButton(Commands.TRANSPORT_PLAY, "▶", "Play");
+        JButton forwardBtn = createToolbarButton(Commands.TRANSPORT_FORWARD, "⏭", "Next Ticker");
 
         transportPanel.add(rewindBtn);
         transportPanel.add(pauseBtn);
@@ -319,62 +279,28 @@ public class ToolBar extends JToolBar implements CommandListener {
         transportPanel.add(forwardBtn);
     }
 
-    private void publishTransportCommand(String commandType) {
-        Command cmd = new Command();
-        cmd.setCommand(commandType);
-        cmd.setSender(this);
-        actionBus.publish(cmd);
-    }
-
-    @Override
-    public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) return;
-
-        switch (action.getCommand()) {
-            case Commands.TICKER_LOADED:
-            case Commands.TICKER_SELECTED:
-            case Commands.TICKER_CHANGED:
-            case Commands.PLAYER_ADDED_TO_TICKER:
-            case Commands.PLAYER_REMOVED_FROM_TICKER:
-                ProxyTicker ticker = (ProxyTicker) action.getData();
-                updateTickerDisplay(ticker);
-                updateToolbarState(ticker);
-                break;
-        }
-    }
-
     private void updateToolbarState(ProxyTicker ticker) {
-        boolean hasActiveTicker = (ticker != null);
-        for (Component comp : getComponents()) {
+        boolean hasActiveTicker = Objects.nonNull(ticker);
+        for (Component comp : transportPanel.getComponents()) {
             if (comp instanceof JButton) {
                 JButton button = (JButton) comp;
-                // Enable all buttons except rewind/forward when there's an active ticker
-                if (button.getActionCommand().equals(Commands.TRANSPORT_REWIND) ||
-                    button.getActionCommand().equals(Commands.TRANSPORT_FORWARD)) {
-                    // These need a ticker and at least one player
-                    button.setEnabled(hasActiveTicker && 
-                                    ticker != null && 
-                                    !ticker.getPlayers().isEmpty());
-                } else {
-                    button.setEnabled(hasActiveTicker);
+
+                switch (button.getActionCommand()) {
+                    case Commands.TRANSPORT_REWIND ->
+                        button.setEnabled(hasActiveTicker && !ticker.isFirst());
+                    case Commands.TRANSPORT_FORWARD ->
+                        button.setEnabled(hasActiveTicker && (!ticker.isLast || ticker.isLast() && ticker.isValid()));
+                    case Commands.TRANSPORT_PAUSE ->
+                        button.setEnabled(false);
+                    case Commands.TRANSPORT_PLAY ->
+                        button.setEnabled(hasActiveTicker && !ticker.isRunning());
+                    case Commands.TRANSPORT_STOP ->
+                        button.setEnabled(hasActiveTicker && ticker.isRunning());
+                    case Commands.TRANSPORT_RECORD ->
+                        button.setEnabled(false);
                 }
             }
         }
     }
 
-    private void updatePlayState(boolean isPlaying) {
-        // Update transport button states based on playing status
-        Component[] components = getComponents();
-        for (Component c : components) {
-            if (c instanceof JButton) {
-                JButton button = (JButton) c;
-                if (button.getToolTipText() != null) {
-                    switch (button.getToolTipText()) {
-                        case "Play" -> button.setEnabled(!isPlaying);
-                        case "Stop", "Pause" -> button.setEnabled(isPlaying);
-                    }
-                }
-            }
-        }
-    }
 }

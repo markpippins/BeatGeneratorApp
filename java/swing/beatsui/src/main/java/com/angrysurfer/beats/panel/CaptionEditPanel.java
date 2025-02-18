@@ -16,12 +16,12 @@ import com.angrysurfer.core.proxy.ProxyCaption;
 import lombok.Getter;
 
 @Getter
-public class CaptionEditorPanel extends JPanel {
+public class CaptionEditPanel extends JPanel {
     private final ProxyCaption caption;
     private final JSpinner codeSpinner;
     private final JTextField descriptionField;
 
-    public CaptionEditorPanel(ProxyCaption caption) {
+    public CaptionEditPanel(ProxyCaption caption) {
         super(new GridBagLayout());
         this.caption = caption;
 

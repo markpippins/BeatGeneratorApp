@@ -19,10 +19,8 @@ import com.angrysurfer.core.api.StatusConsumer;
 public class MenuBar extends JMenuBar {
 
     private final JFrame parentFrame;
-    private final CommandBus actionBus = CommandBus.getInstance();
     private final ThemeManager themeManager;
     private final StatusConsumer statusConsumer;
-
     private final CommandBus commandBus = CommandBus.getInstance();
 
     public MenuBar(JFrame parentFrame, StatusConsumer statusConsumer) {
@@ -59,17 +57,14 @@ public class MenuBar extends JMenuBar {
         JMenuItem clearDb = new JMenuItem("Clear Database");
         clearDb.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
-                parentFrame,
-                "Are you sure you want to clear the entire database?\nThis cannot be undone.",
-                "Clear Database",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
-            );
-            
+                    parentFrame,
+                    "Are you sure you want to clear the entire database?\nThis cannot be undone.",
+                    "Clear Database",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
             if (result == JOptionPane.YES_OPTION) {
-                Command cmd = new Command();
-                cmd.setCommand(Commands.CLEAR_DATABASE);
-                commandBus.publish(cmd);
+                commandBus.publish(Commands.CLEAR_DATABASE, this);
             }
         });
         dbMenu.add(clearDb);
@@ -146,7 +141,7 @@ public class MenuBar extends JMenuBar {
 
         add(fileMenu);
         add(editMenu);
-        add(dbMenu);  // Add Database menu between Edit and Help
+        add(dbMenu); // Add Database menu between Edit and Help
         add(helpMenu);
     }
 
@@ -156,18 +151,10 @@ public class MenuBar extends JMenuBar {
 
     private void addMenuItem(JMenu menu, JMenuItem item, String command, Object data, ActionListener extraAction) {
         item.addActionListener(e -> {
-            // Update status first
             if (statusConsumer != null) {
-                statusConsumer.setStatus("Menu: " + item.getName()); // Make the status message more distinct
+                statusConsumer.setStatus("Menu: " + item.getName());
             }
-
-            // Then handle the action
-            Command action = new Command();
-            action.setCommand(command);
-            action.setSender(this);
-            action.setData(data);
-            actionBus.publish(action);
-
+            commandBus.publish(command, this, data);
             if (extraAction != null) {
                 extraAction.actionPerformed(e);
             }
@@ -178,17 +165,10 @@ public class MenuBar extends JMenuBar {
     private void addMenuItem(JMenu menu, String name, String command, ActionListener extraAction) {
         JMenuItem item = new JMenuItem(name);
         item.addActionListener(e -> {
-            // Update status first
             if (statusConsumer != null) {
-                statusConsumer.setStatus("Menu: " + name); // Make the status message more distinct
+                statusConsumer.setStatus("Menu: " + name);
             }
-
-            // Then handle the action
-            Command action = new Command();
-            action.setCommand(command);
-            action.setSender(this);
-            actionBus.publish(action);
-
+            commandBus.publish(command, this);
             if (extraAction != null) {
                 extraAction.actionPerformed(e);
             }

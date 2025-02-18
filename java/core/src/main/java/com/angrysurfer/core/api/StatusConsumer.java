@@ -14,8 +14,8 @@ public interface StatusConsumer {
 
     public void clearMessage();
 
-    public void setSender(String status);
+    // public void setSender(String status);
 
-    public void clearSender();
+    // public void clearSender();
 
 }

@@ -1,12 +1,12 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
+import java.util.logging.Logger;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
-import com.angrysurfer.beats.App;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyTicker;
 
@@ -16,53 +16,39 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TickerPanel extends StatusProviderPanel {
-    private final PlayerTablePanel playerTablePanel;
-    private final RuleTablePanel ruleTablePanel;
+
+    private static final Logger logger = Logger.getLogger(TickerPanel.class.getName());
+
+    private final PlayersPanel playerTablePanel;
+    private final RulesPanel ruleTablePanel;
+    private ProxyTicker activeTicker;
 
     public TickerPanel(StatusConsumer status) {
         super(new BorderLayout(), status);
-        this.ruleTablePanel = new RuleTablePanel(status);
-        this.playerTablePanel = new PlayerTablePanel(status, ruleTablePanel);
-        setup();
+
+        // Initialize panels and pass this reference for callbacks
+        this.ruleTablePanel = new RulesPanel(status);
+        this.playerTablePanel = new PlayersPanel(status, this.ruleTablePanel);
+
+        setupComponents();
     }
 
-    public TickerPanel() {
-        this(null);
-    }
-
-    private void setup() {
+    private void setupComponents() {
         setLayout(new BorderLayout());
-        add(createBeatsPanel(), BorderLayout.CENTER);
-    }
-
-    private JPanel createBeatsPanel() {
-        JPanel beatsPanel = new JPanel(new BorderLayout());
-        JPanel mainPane = new JPanel(new BorderLayout());
 
         // Create and configure split pane
-        JSplitPane tablesSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        tablesSplitPane.setResizeWeight(1.0);
-        tablesSplitPane.setLeftComponent(playerTablePanel);
-        tablesSplitPane.setRightComponent(ruleTablePanel);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setResizeWeight(0.7);
+        splitPane.setLeftComponent(playerTablePanel);
+        splitPane.setRightComponent(ruleTablePanel);
 
-        // Bottom section with button grid
-        JPanel buttonGridPanel = new GridPanel(statusConsumer);
-        JScrollPane buttonScrollPane = new JScrollPane(buttonGridPanel);
+        // Add piano and grid panels
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(new PianoPanel(statusConsumer), BorderLayout.NORTH);
+        bottomPanel.add(new JScrollPane(new GridPanel(statusConsumer)), BorderLayout.CENTER);
 
-        // Add components to main split pane
-        mainPane.add(tablesSplitPane, BorderLayout.CENTER);
-
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new PianoPanel(statusConsumer), BorderLayout.NORTH);
-        panel.add(buttonScrollPane, BorderLayout.SOUTH);
-
-        mainPane.add(panel, BorderLayout.SOUTH);
-        beatsPanel.add(mainPane, BorderLayout.CENTER);
-
-        return beatsPanel;
-    }
-
-    public ProxyTicker getTicker() {
-        return App.getRedisService().loadTicker();
+        // Add all components
+        add(splitPane, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 }
