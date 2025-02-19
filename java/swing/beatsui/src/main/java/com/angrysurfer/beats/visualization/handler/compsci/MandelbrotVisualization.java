@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.visualization.handler;
+package com.angrysurfer.beats.visualization.handler.compsci;
 
 import java.awt.Color;
 

@@ -64,7 +64,9 @@ public class GridButton extends JButton {
 
     public void setOn(boolean on) {
         this.on = on;
-        setBackground(on ? Color.RED : Color.DARK_GRAY);
+        if (!on) {
+            setBackground(Color.DARK_GRAY);
+        }
         repaint();
     }
 

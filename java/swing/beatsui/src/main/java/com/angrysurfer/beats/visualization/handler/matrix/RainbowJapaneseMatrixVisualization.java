@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.visualization.handler;
+package com.angrysurfer.beats.visualization.handler.matrix;
 
 import java.awt.Color;
 import java.util.Random;
