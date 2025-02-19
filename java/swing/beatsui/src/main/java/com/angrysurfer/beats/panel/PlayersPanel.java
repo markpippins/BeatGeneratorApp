@@ -39,10 +39,11 @@ public class PlayersPanel extends JPanel {
     private final ButtonPanel buttonPanel;
     private final ContextMenuHelper contextMenu;
     private static final int[] BOOLEAN_COLUMNS = {
-        8,    // Sticky preset
-        13,   // Internal Beats
-        14,   // Internal Bars
-        16    // Preserve
+        9,    // Sticky preset
+        14,   // Internal Beats
+        15,   // Internal Bars
+        17,   // Preserve
+        18    // Sparse
     };
     private boolean hasActiveTicker = false;  // Add this field
 
@@ -99,7 +100,7 @@ public class PlayersPanel extends JPanel {
 
     private void setupTable() {
         String[] columnNames = {
-            "Name", "Channel", "Swing", "Level", "Note", "Min Vel", "Max Vel",
+            "Name", "Instrument", "Channel", "Swing", "Level", "Note", "Min Vel", "Max Vel",
             "Preset", "Sticky", "Prob", "Random", "Ratchet #", "Ratchet Int",
             "Int Beats", "Int Bars", "Pan", "Preserve", "Sparse"
         };
@@ -124,8 +125,16 @@ public class PlayersPanel extends JPanel {
         
         table.setModel(model);
         
+        // Set minimum widths for Name and Instrument columns
+        table.getColumnModel().getColumn(0).setMinWidth(50);  // Name column
+        table.getColumnModel().getColumn(1).setMinWidth(70);  // Instrument column
+        
+        // Prevent these columns from getting too wide
+        table.getColumnModel().getColumn(0).setMaxWidth(150); // Name
+        table.getColumnModel().getColumn(1).setMaxWidth(150); // Instrument
+
         // Configure table appearance
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table.setAutoCreateRowSorter(true);
         
         // Set default checkbox renderer for Boolean columns
@@ -158,15 +167,14 @@ public class PlayersPanel extends JPanel {
         buttonPanel.addActionListener(e -> {
             logger.info("Button clicked: " + e.getActionCommand());
             if (e.getActionCommand().equals(Commands.PLAYER_ADD_REQUEST)) {
-                // For add, we don't need a selected player
                 CommandBus.getInstance().publish(Commands.PLAYER_ADD_REQUEST, this, null);
                 return;
             }
             
-            // For edit/delete, we need a selected player
-            ProxyStrike selectedPlayer = getSelectedPlayer();
-            if (selectedPlayer != null) {
-                CommandBus.getInstance().publish(e.getActionCommand(), this, selectedPlayer);
+            // Get all selected players for edit/delete operations
+            ProxyStrike[] selectedPlayers = getSelectedPlayers();
+            if (selectedPlayers.length > 0) {
+                CommandBus.getInstance().publish(e.getActionCommand(), this, selectedPlayers);
             }
         });
     }
@@ -320,6 +328,45 @@ public class PlayersPanel extends JPanel {
         return null;
     }
 
+    private ProxyStrike[] getSelectedPlayers() {
+        int[] selectedRows = table.getSelectedRows();
+        List<ProxyStrike> players = new ArrayList<>();
+        ProxyTicker currentTicker = TickerManager.getInstance().getActiveTicker();
+        
+        if (currentTicker != null) {
+            for (int row : selectedRows) {
+                int modelRow = table.convertRowIndexToModel(row);
+                String playerName = (String) table.getModel().getValueAt(modelRow, 0);
+                currentTicker.getPlayers().stream()
+                    .filter(p -> p.getName().equals(playerName))
+                    .findFirst()
+                    .ifPresent(p -> players.add((ProxyStrike) p));
+            }
+        }
+        return players.toArray(new ProxyStrike[0]);
+    }
+
+    // Column indices for reference:
+    // 0  - Name
+    // 1  - Instrument (new column)
+    // 2  - Channel
+    // 3  - Swing
+    // 4  - Level
+    // 5  - Note
+    // 6  - Min Vel
+    // 7  - Max Vel
+    // 8  - Preset
+    // 9  - Sticky       (Boolean)
+    // 10 - Prob
+    // 11 - Random
+    // 12 - Ratchet #
+    // 13 - Ratchet Int
+    // 14 - Int Beats    (Boolean)
+    // 15 - Int Bars     (Boolean)
+    // 16 - Pan
+    // 17 - Preserve     (Boolean)
+    // 18 - Sparse
+
     public void refreshPlayers(Set<IProxyPlayer> players) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
@@ -328,13 +375,24 @@ public class PlayersPanel extends JPanel {
             List<IProxyPlayer> sortedPlayers = new ArrayList<>(players);
             Collections.sort(sortedPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
             
-            for (IProxyPlayer player : sortedPlayers) {
+            for (IProxyPlayer p : sortedPlayers) {
+                ProxyStrike player = (ProxyStrike) p;
                 Object[] rowData = player.toRow();
-                // Convert boolean string values to actual booleans for checkbox columns
+                
+                // Insert instrument name after player name
+                Object[] newRowData = new Object[rowData.length + 1];
+                newRowData[0] = rowData[0]; // Name
+                newRowData[1] = player.getInstrument() != null ? player.getInstrument().getName() : ""; // Instrument
+                System.arraycopy(rowData, 1, newRowData, 2, rowData.length - 1);
+                
+                // Convert only specific columns to boolean
                 for (int booleanColumn : BOOLEAN_COLUMNS) {
-                    rowData[booleanColumn] = Boolean.valueOf(rowData[booleanColumn].toString());
+                    if (booleanColumn < newRowData.length) {
+                        newRowData[booleanColumn] = Boolean.valueOf(String.valueOf(newRowData[booleanColumn]));
+                    }
                 }
-                model.addRow(rowData);
+                
+                model.addRow(newRowData);
             }
         }
     }

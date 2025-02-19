@@ -2,6 +2,7 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
@@ -77,7 +78,9 @@ public class RulesPanel extends JPanel {
         String[] columnNames = {"Operator", "Comparison", "Value", "Part"};
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
         table.setModel(model);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        // Change selection mode to allow multiple selections
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         
         // Set very small initial column widths
         table.getColumnModel().getColumn(0).setPreferredWidth(60); // Operator
@@ -91,14 +94,16 @@ public class RulesPanel extends JPanel {
 
     private void setupButtonListeners() {
         buttonPanel.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
-            ProxyRule selectedRule = selectedRow >= 0 ? getSelectedRule() : null;
-            
-            CommandBus.getInstance().publish(
-                e.getActionCommand(),
-                this,
-                new RuleActionData(currentPlayer, selectedRule)
-            );
+            if (e.getActionCommand().equals(Commands.RULE_ADD_REQUEST)) {
+                CommandBus.getInstance().publish(e.getActionCommand(), this, currentPlayer);
+                return;
+            }
+
+            // Get all selected rules for edit/delete operations
+            ProxyRule[] selectedRules = getSelectedRules();
+            if (selectedRules.length > 0) {
+                CommandBus.getInstance().publish(e.getActionCommand(), this, selectedRules);
+            }
         });
     }
 
@@ -169,6 +174,23 @@ public class RulesPanel extends JPanel {
             return new ArrayList<>(currentPlayer.getRules()).get(row);
         }
         return null;
+    }
+
+    private ProxyRule[] getSelectedRules() {
+        int[] selectedRows = table.getSelectedRows();
+        List<ProxyRule> rules = new ArrayList<>();
+        
+        for (int row : selectedRows) {
+            int modelRow = table.convertRowIndexToModel(row);
+            ProxyRule rule = ProxyRule.fromRow(new Object[] {
+                table.getValueAt(modelRow, 0),
+                table.getValueAt(modelRow, 1),
+                table.getValueAt(modelRow, 2),
+                table.getValueAt(modelRow, 3)
+            });
+            rules.add(rule);
+        }
+        return rules.toArray(new ProxyRule[0]);
     }
 
     private void clearRules() {

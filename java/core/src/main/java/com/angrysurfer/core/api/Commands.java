@@ -111,6 +111,8 @@ public class Commands {
     public static final String CLEAR_DATABASE = "CLEAR_DATABASE";
     public static final String DATABASE_RESET = "DATABASE_RESET";
 
-    // Player editor command
+    // Player editor commands
     public static final String SHOW_PLAYER_EDITOR = "SHOW_PLAYER_EDITOR";
+    public static final String SHOW_PLAYER_EDITOR_OK = "SHOW_PLAYER_EDITOR_OK";
+    public static final String SHOW_PLAYER_EDITOR_CANCEL = "SHOW_PLAYER_EDITOR_CANCEL";
 }

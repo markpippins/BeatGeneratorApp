@@ -1,6 +1,8 @@
 package com.angrysurfer.beats.service;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import com.angrysurfer.core.api.Command;
@@ -36,37 +38,58 @@ public class TickerManager {
                     case Commands.TRANSPORT_REWIND -> moveBack();
                     case Commands.TRANSPORT_FORWARD -> moveForward();
                     case Commands.PLAYER_ADD_REQUEST -> {
-                        ProxyTicker currentTicker = getActiveTicker();
-                        if (currentTicker != null) {
+                        // Just show the editor, don't create player yet
+                        commandBus.publish(Commands.SHOW_PLAYER_EDITOR, this, null);
+                    }
+                    case Commands.PLAYER_EDIT_REQUEST -> {
+                        if (action.getData() instanceof ProxyStrike[] players && players.length > 0) {
+                            // Open editor with the first selected player
+                            commandBus.publish(Commands.SHOW_PLAYER_EDITOR, this, players[0]);
+                        }
+                    }
+                    case Commands.SHOW_PLAYER_EDITOR_OK -> {
+                        if (action.getData() instanceof ProxyStrike player) {
                             RedisService redis = RedisService.getInstance();
-                            // Create new player with default values
-                            ProxyStrike newPlayer = redis.newPlayer();
-                            initializeDefaultPlayerValues(newPlayer);
+                            if (player.getId() == null) {
+                                // This is a new player
+                                player = redis.newPlayer();
+                                initializeDefaultPlayerValues(player);
+                                redis.addPlayerToTicker(activeTicker, player);
+                            }
+                            redis.savePlayer(player);
                             
-                            // Add to ticker and save
-                            redis.addPlayerToTicker(currentTicker, newPlayer);
-                            redis.savePlayer(newPlayer);
-
-                            // Notify about new player
-                            commandBus.publish(Commands.TICKER_UPDATED, this, currentTicker);
+                            // Refresh UI with updated ticker
+                            activeTicker = redis.findTickerById(activeTicker.getId());
+                            commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
                         }
                     }
                     case Commands.RULE_DELETE_REQUEST -> {
-                        if (action.getData() instanceof ProxyRule rule) {
+                        if (action.getData() instanceof ProxyRule[] rules) {
                             RedisService redis = RedisService.getInstance();
-                            ProxyStrike player = redis.findPlayerForRule(rule);
-                            if (player != null) {
-                                redis.removeRuleFromPlayer(player, rule);
-                                // Notify UI of update
+                            // Track which players were affected
+                            Set<ProxyStrike> affectedPlayers = new HashSet<>();
+                            
+                            for (ProxyRule rule : rules) {
+                                ProxyStrike player = redis.findPlayerForRule(rule);
+                                if (player != null) {
+                                    redis.removeRuleFromPlayer(player, rule);
+                                    affectedPlayers.add(player);
+                                }
+                            }
+                            
+                            // Notify UI of updates for each affected player
+                            for (ProxyStrike player : affectedPlayers) {
                                 commandBus.publish(Commands.PLAYER_UPDATED, this, player);
                             }
                         }
                     }
                     case Commands.PLAYER_DELETE_REQUEST -> {
-                        if (action.getData() instanceof ProxyStrike player) {
+                        if (action.getData() instanceof ProxyStrike[] players) {
                             RedisService redis = RedisService.getInstance();
-                            redis.removePlayerFromTicker(activeTicker, player);
-                            redis.deletePlayer(player);
+                            for (ProxyStrike player : players) {
+                                redis.removePlayerFromTicker(activeTicker, player);
+                                redis.deletePlayer(player);
+                            }
                             
                             // Reload ticker after deletion to get fresh state
                             activeTicker = redis.findTickerById(activeTicker.getId());
