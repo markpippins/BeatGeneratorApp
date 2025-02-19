@@ -16,7 +16,7 @@ import com.angrysurfer.core.proxy.ProxyInstrument;
 public class InstrumentManager {
     private static final Logger logger = Logger.getLogger(InstrumentManager.class.getName());
     private static InstrumentManager instance;
-    private MidiDeviceService midiDeviceService;
+    private MidiDeviceManager midiDeviceService;
     
     private InstrumentManager() {}
     
@@ -27,7 +27,7 @@ public class InstrumentManager {
         return instance;
     }
 
-    public void setMidiDeviceService(MidiDeviceService service) {
+    public void setMidiDeviceService(MidiDeviceManager service) {
         this.midiDeviceService = service;
     }
     

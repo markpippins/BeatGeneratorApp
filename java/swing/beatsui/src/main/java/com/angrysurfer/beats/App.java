@@ -7,7 +7,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import com.angrysurfer.beats.service.RedisMidiDeviceService;
-import com.angrysurfer.beats.service.TickerManager;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
@@ -16,6 +15,7 @@ import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.data.RedisService;
 import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.TickerManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public class App implements CommandListener {

@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.service;
+package com.angrysurfer.core.service;
 
 import java.util.HashSet;
 import java.util.Objects;

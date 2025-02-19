@@ -23,12 +23,12 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.service.TickerManager;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.proxy.ProxyTicker;
+import com.angrysurfer.core.service.TickerManager;
 
 public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();

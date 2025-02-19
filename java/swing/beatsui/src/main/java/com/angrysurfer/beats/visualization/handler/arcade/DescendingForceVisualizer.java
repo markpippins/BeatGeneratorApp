@@ -16,15 +16,62 @@ public class DescendingForceVisualizer implements IVisualizationHandler {
     private int frameCount = 0;
     
     // Classic Space Invader patterns (8x8)
-    private static final int[][] INVADER_PATTERN = {
-        {0,0,1,1,1,1,0,0},
-        {0,1,1,1,1,1,1,0},
-        {1,1,1,1,1,1,1,1},
-        {1,1,0,1,1,0,1,1},
-        {1,1,1,1,1,1,1,1},
-        {0,0,1,0,0,1,0,0},
-        {0,1,0,1,1,0,1,0},
-        {1,0,1,0,0,1,0,1}
+    private static final int[][][] INVADER_PATTERNS = {
+        // Squid type
+        {
+            {0,0,1,1,1,1,0,0},
+            {0,1,1,1,1,1,1,0},
+            {1,1,1,1,1,1,1,1},
+            {1,1,0,1,1,0,1,1},
+            {1,1,1,1,1,1,1,1},
+            {0,0,1,0,0,1,0,0},
+            {0,1,0,1,1,0,1,0},
+            {1,0,1,0,0,1,0,1}
+        },
+        // Crab type
+        {
+            {0,1,0,0,0,0,1,0},
+            {0,0,1,0,0,1,0,0},
+            {0,1,1,1,1,1,1,0},
+            {1,1,0,1,1,0,1,1},
+            {1,1,1,1,1,1,1,1},
+            {0,1,1,1,1,1,1,0},
+            {1,0,1,0,0,1,0,1},
+            {0,1,0,0,0,0,1,0}
+        },
+        // Octopus type
+        {
+            {0,0,1,1,1,1,0,0},
+            {0,1,1,1,1,1,1,0},
+            {1,1,1,0,0,1,1,1},
+            {1,1,0,1,1,0,1,1},
+            {1,1,1,1,1,1,1,1},
+            {0,0,1,1,1,1,0,0},
+            {0,1,1,0,0,1,1,0},
+            {1,1,0,1,1,0,1,1}
+        },
+        // UFO type
+        {
+            {0,0,1,1,1,1,0,0},
+            {0,1,1,1,1,1,1,0},
+            {1,1,0,1,1,0,1,1},
+            {1,1,1,1,1,1,1,1},
+            {0,1,1,1,1,1,1,0},
+            {0,0,1,0,0,1,0,0},
+            {0,1,0,0,0,0,1,0},
+            {0,0,1,1,1,1,0,0}
+        },
+        // Mystery ship
+        {
+            {0,0,1,1,1,1,0,0},
+            {0,1,1,1,1,1,1,0},
+            {1,1,1,1,1,1,1,1},
+            {0,1,0,1,1,0,1,0},
+            {0,1,1,1,1,1,1,0},
+            {0,0,1,0,0,1,0,0},
+            {0,1,0,1,1,0,1,0},
+            {0,0,1,0,0,1,0,0}
+        }
     };
 
     private static final Color[] COLORS = {
@@ -44,16 +91,18 @@ public class DescendingForceVisualizer implements IVisualizationHandler {
         double speed;
         Color color;
         boolean isRainbow;
+        int patternIndex;  // Added to track which pattern to use
         
         Invader() {
             reset();
         }
         
         void reset() {
-            y = -INVADER_PATTERN.length;  // Start above viewport
+            y = -INVADER_PATTERNS[0].length;  // Start above viewport
             x = random.nextInt(40);       // Random horizontal position
             speed = 0.1 + random.nextDouble() * 0.2;  // Random speed
             isRainbow = random.nextDouble() < 0.1; // 10% chance of rainbow
+            patternIndex = random.nextInt(INVADER_PATTERNS.length);  // Randomly select pattern
             if (!isRainbow) {
                 color = COLORS[random.nextInt(COLORS.length)];
             }
@@ -68,13 +117,14 @@ public class DescendingForceVisualizer implements IVisualizationHandler {
         
         void draw(GridButton[][] buttons) {
             int startY = (int)y;
+            int[][] pattern = INVADER_PATTERNS[patternIndex];  // Use selected pattern
             // Only draw visible portions of the invader
-            for (int row = 0; row < INVADER_PATTERN.length; row++) {
+            for (int row = 0; row < pattern.length; row++) {
                 int gridY = startY + row;
                 if (gridY >= 0 && gridY < buttons.length) {
-                    for (int col = 0; col < INVADER_PATTERN[0].length; col++) {
+                    for (int col = 0; col < pattern[0].length; col++) {
                         int gridX = x + col;
-                        if (gridX >= 0 && gridX < buttons[0].length && INVADER_PATTERN[row][col] == 1) {
+                        if (gridX >= 0 && gridX < buttons[0].length && pattern[row][col] == 1) {
                             GridButton button = buttons[gridY][gridX];
                             if (isRainbow) {
                                 // For rainbow invaders, use different colors for each row
@@ -95,21 +145,22 @@ public class DescendingForceVisualizer implements IVisualizationHandler {
         for (int i = 0; i < 3; i++) {
             Invader invader = new Invader();
             // Stagger initial positions
-            invader.y = -INVADER_PATTERN.length - (i * (INVADER_PATTERN.length + 4));
+            invader.y = -INVADER_PATTERNS[0].length - (i * (INVADER_PATTERNS[0].length + 4));
             invaders.add(invader);
         }
     }
 
     @Override
     public void update(GridButton[][] buttons) {
-        // Clear the grid
+        // Paint the entire grid black first
         for (GridButton[] row : buttons) {
             for (GridButton button : row) {
-                button.setOn(false);
+                button.setBackground(Color.BLACK);
+                button.setOn(true);
             }
         }
 
-        // Update and draw all invaders
+        // Update and draw all invaders on top of black background
         for (Invader invader : invaders) {
             invader.update();
             invader.draw(buttons);

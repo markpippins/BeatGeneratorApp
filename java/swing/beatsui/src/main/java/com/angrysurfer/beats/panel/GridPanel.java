@@ -29,7 +29,12 @@ public class GridPanel extends StatusProviderPanel {
     }
 
     private void setup() {
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // Reduce horizontal spacing in GridLayout to 1 pixel
+        setLayout(new GridLayout(GRID_ROWS, GRID_COLS, 1, 1));
+        
+        // Reduce border padding, especially on left and right
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        
         buttons = new GridButton[GRID_ROWS][GRID_COLS];
 
         MouseAdapter mouseHandler = new MouseAdapter() {

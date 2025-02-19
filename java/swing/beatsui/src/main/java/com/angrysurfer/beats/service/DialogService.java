@@ -17,6 +17,7 @@ import com.angrysurfer.core.data.RedisService;
 import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
+import com.angrysurfer.core.service.TickerManager;
 
 public class DialogService implements CommandListener {
 
