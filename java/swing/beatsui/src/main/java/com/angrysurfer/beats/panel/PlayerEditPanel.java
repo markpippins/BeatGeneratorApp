@@ -47,20 +47,20 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private final JSpinner channelSpinner;  // Changed from Dial to JSpinner
     private final JSpinner presetSpinner;   // Changed from Dial to JSpinner
     
-    // Performance controls
-    private final Dial swingDial;
-    private final Dial levelDial;
-    private final Dial noteDial;
-    private final Dial velocityMinDial;
-    private final Dial velocityMaxDial;
-    private final Dial probabilityDial;
-    private final Dial randomDial;
-    private final Dial panDial;
+    // Change Dial fields to JSlider
+    private final JSlider swingSlider;
+    private final JSlider levelSlider;
+    private final JSlider noteSlider;
+    private final JSlider velocityMinSlider;
+    private final JSlider velocityMaxSlider;
+    private final JSlider probabilitySlider;
+    private final JSlider randomSlider;
+    private final JSlider panSlider;
+    private final JSlider sparseSlider;
     
     // Ratchet controls
     private final JSlider ratchetCountSlider;  // Changed from JSpinner to JSlider
     private final JSlider ratchetIntervalSlider;  // Changed from JSpinner to JSlider
-    private final Dial sparseDial;
     
     // Toggle switches
     private final ToggleSwitch stickyPresetSwitch;
@@ -83,8 +83,8 @@ public class PlayerEditPanel extends StatusProviderPanel {
         this.player = player;
         
         // Set fixed size
-        setPreferredSize(new Dimension(600, 400));
-        setMinimumSize(new Dimension(600, 400));
+        setPreferredSize(new Dimension(600, 500));
+        setMinimumSize(new Dimension(600, 500));
         setMaximumSize(new Dimension(600, 400));
         
         // Initialize basic properties
@@ -99,15 +99,16 @@ public class PlayerEditPanel extends StatusProviderPanel {
         int presetValue = Math.min(Math.max(1, player.getPreset().intValue()), 127);
         presetSpinner = new JSpinner(new SpinnerNumberModel(presetValue, 1, 127, 1));
         
-        // Initialize performance controls
-        swingDial = createDial("Swing", player.getSwing(), 0, 100);
-        levelDial = createDial("Level", player.getLevel(), 0, 127);
-        noteDial = createDial("Note", player.getNote(), 0, 127);
-        velocityMinDial = createDial("Min Vel", player.getMinVelocity(), 0, 127);
-        velocityMaxDial = createDial("Max Vel", player.getMaxVelocity(), 0, 127);
-        probabilityDial = createDial("Prob", player.getProbability(), 0, 100);
-        randomDial = createDial("Random", player.getRandomDegree(), 0, 100);
-        panDial = createDial("Pan", player.getPanPosition(), 0, 127);
+        // Initialize performance controls as JSliders
+        swingSlider = createSlider("Swing", player.getSwing(), 0, 100, 1);
+        levelSlider = createSlider("Level", player.getLevel(), 0, 127, 1);
+        noteSlider = createSlider("Note", player.getNote(), 0, 127, 1);
+        velocityMinSlider = createSlider("Min Vel", player.getMinVelocity(), 0, 127, 1);
+        velocityMaxSlider = createSlider("Max Vel", player.getMaxVelocity(), 0, 127, 1);
+        probabilitySlider = createSlider("Prob", player.getProbability(), 0, 100, 1);
+        randomSlider = createSlider("Random", player.getRandomDegree(), 0, 100, 1);
+        panSlider = createSlider("Pan", player.getPanPosition(), 0, 127, 1);
+        sparseSlider = createSlider("Sparse", (long)(player.getSparse() * 100), 0, 100, 1);
         
         // Initialize sliders instead of spinners
         ratchetCountSlider = new JSlider(JSlider.VERTICAL, 1, 8, player.getRatchetCount().intValue());
@@ -122,8 +123,6 @@ public class PlayerEditPanel extends StatusProviderPanel {
         ratchetIntervalSlider.setPaintLabels(true);
         ratchetIntervalSlider.setSnapToTicks(true);
 
-        sparseDial = createDial("Sparse", (long)(player.getSparse() * 100), 0, 100);
-        
         // Initialize switches
         stickyPresetSwitch = createToggleSwitch("Sticky", player.getStickyPreset());
         useInternalBeatsSwitch = createToggleSwitch("Int.Beats", player.getUseInternalBeats());
@@ -142,9 +141,9 @@ public class PlayerEditPanel extends StatusProviderPanel {
         // Add button listeners
         deleteRuleButton.addActionListener(e -> deleteSelectedRule());
         
-        // Initialize navigation buttons
-        prevButton = new JButton("⏮");
-        nextButton = new JButton("⏭");
+        // Initialize navigation buttons with arrows
+        prevButton = new JButton("↑");
+        nextButton = new JButton("↓");
         prevButton.setEnabled(false);  // Default to disabled
         nextButton.setEnabled(true);   // Default to enabled
         
@@ -163,7 +162,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         });
 
         layoutComponents();
-        setPreferredSize(new Dimension(800, 600));
+        setPreferredSize(new Dimension(800, 500));
         
         // Request row index after initialization
         CommandBus.getInstance().publish(Commands.PLAYER_ROW_INDEX_REQUEST, this, player);
@@ -205,23 +204,42 @@ public class PlayerEditPanel extends StatusProviderPanel {
         // Performance controls panel with size constraints
         JPanel performancePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         performancePanel.setBorder(BorderFactory.createTitledBorder("Performance"));
-        performancePanel.setPreferredSize(new Dimension(400, 80));
-        performancePanel.setMaximumSize(new Dimension(400, 80));
-        performancePanel.add(createLabeledDial("Level", levelDial));
-        performancePanel.add(createLabeledDial("Note", noteDial));
-        performancePanel.add(createLabeledDial("Min Vel", velocityMinDial));
-        performancePanel.add(createLabeledDial("Max Vel", velocityMaxDial));
-        performancePanel.add(createLabeledDial("Pan", panDial));
+        performancePanel.setPreferredSize(new Dimension(400, 150));
+        performancePanel.setMaximumSize(new Dimension(400, 150));
+        
+        // Performance controls panel layout
+        performancePanel.add(createLabeledSlider("Level", levelSlider));
+        performancePanel.add(createLabeledSlider("Note", noteSlider));
+
+        // Add navigation buttons panel with label
+        JPanel navPanel = new JPanel(new BorderLayout(0, 2));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5)); // Add margins
+        JLabel octaveLabel = new JLabel("Octave", JLabel.CENTER);
+        
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 2));
+        prevButton.setPreferredSize(new Dimension(35, 35));  // Reduce from 40x40 to 35x35
+        nextButton.setPreferredSize(new Dimension(35, 35));
+        buttonPanel.add(prevButton);
+        buttonPanel.add(nextButton);
+        
+        navPanel.add(octaveLabel, BorderLayout.NORTH);
+        navPanel.add(buttonPanel, BorderLayout.CENTER);
+        performancePanel.add(navPanel);
+
+        // Continue with remaining sliders
+        performancePanel.add(createLabeledSlider("Min Vel", velocityMinSlider));
+        performancePanel.add(createLabeledSlider("Max Vel", velocityMaxSlider));
+        performancePanel.add(createLabeledSlider("Pan", panSlider));
         
         // Modulation controls panel with size constraints
         JPanel modulationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         modulationPanel.setBorder(BorderFactory.createTitledBorder("Modulation"));
         modulationPanel.setPreferredSize(new Dimension(400, 80));
         modulationPanel.setMaximumSize(new Dimension(400, 80));
-        modulationPanel.add(createLabeledDial("Swing", swingDial));
-        modulationPanel.add(createLabeledDial("Probability", probabilityDial));
-        modulationPanel.add(createLabeledDial("Random", randomDial));
-        modulationPanel.add(createLabeledDial("Sparse", sparseDial));
+        modulationPanel.add(createLabeledSlider("Swing", swingSlider));
+        modulationPanel.add(createLabeledSlider("Probability", probabilitySlider));
+        modulationPanel.add(createLabeledSlider("Random", randomSlider));
+        modulationPanel.add(createLabeledSlider("Sparse", sparseSlider));
 
         // Create a container with GridBagLayout for all panels
         JPanel controlsContainer = new JPanel(new GridBagLayout());
@@ -369,49 +387,49 @@ public class PlayerEditPanel extends StatusProviderPanel {
         gbc.gridy++;
         panel.add(new JLabel("Swing:"), gbc);
         gbc.gridx = 1;
-        panel.add(swingDial, gbc);
+        panel.add(swingSlider, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
         panel.add(new JLabel("Level:"), gbc);
         gbc.gridx = 1;
-        panel.add(levelDial, gbc);
+        panel.add(levelSlider, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
         panel.add(new JLabel("Note:"), gbc);
         gbc.gridx = 1;
-        panel.add(noteDial, gbc);
+        panel.add(noteSlider, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
         panel.add(new JLabel("Min Vel:"), gbc);
         gbc.gridx = 1;
-        panel.add(velocityMinDial, gbc);
+        panel.add(velocityMinSlider, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
         panel.add(new JLabel("Max Vel:"), gbc);
         gbc.gridx = 1;
-        panel.add(velocityMaxDial, gbc);
+        panel.add(velocityMaxSlider, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
         panel.add(new JLabel("Prob:"), gbc);
         gbc.gridx = 1;
-        panel.add(probabilityDial, gbc);
+        panel.add(probabilitySlider, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
         panel.add(new JLabel("Random:"), gbc);
         gbc.gridx = 1;
-        panel.add(randomDial, gbc);
+        panel.add(randomSlider, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
         panel.add(new JLabel("Pan:"), gbc);
         gbc.gridx = 1;
-        panel.add(panDial, gbc);
+        panel.add(panSlider, gbc);
     }
 
     private void addRatchetControls(JPanel panel, GridBagConstraints gbc) {
@@ -431,7 +449,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         gbc.gridy++;
         panel.add(new JLabel("Sparse:"), gbc);
         gbc.gridx = 1;
-        panel.add(sparseDial, gbc);
+        panel.add(sparseSlider, gbc);
     }
 
     private void addSwitches(JPanel panel, GridBagConstraints gbc) {
@@ -508,17 +526,17 @@ public class PlayerEditPanel extends StatusProviderPanel {
         player.setChannel((Integer) channelSpinner.getValue());
         player.setPreset(((Number) presetSpinner.getValue()).longValue());
         player.setName(nameField.getText());
-        player.setSwing((long) swingDial.getValue());
-        player.setLevel((long) levelDial.getValue());
-        player.setNote((long) noteDial.getValue());
-        player.setMinVelocity((long) velocityMinDial.getValue());
-        player.setMaxVelocity((long) velocityMaxDial.getValue());
-        player.setProbability((long) probabilityDial.getValue());
-        player.setRandomDegree((long) randomDial.getValue());
-        player.setPanPosition((long) panDial.getValue());
+        player.setSwing((long) swingSlider.getValue());
+        player.setLevel((long) levelSlider.getValue());
+        player.setNote((long) noteSlider.getValue());
+        player.setMinVelocity((long) velocityMinSlider.getValue());
+        player.setMaxVelocity((long) velocityMaxSlider.getValue());
+        player.setProbability((long) probabilitySlider.getValue());
+        player.setRandomDegree((long) randomSlider.getValue());
+        player.setPanPosition((long) panSlider.getValue());
         player.setRatchetCount((long) ratchetCountSlider.getValue());
         player.setRatchetInterval((long) ratchetIntervalSlider.getValue());
-        player.setSparse(sparseDial.getValue() / 100.0); // Convert percentage back to 0-1 range
+        player.setSparse(sparseSlider.getValue() / 100.0); // Convert percentage back to 0-1 range
         player.setStickyPreset(stickyPresetSwitch.isSelected());
         player.setUseInternalBeats(useInternalBeatsSwitch.isSelected());
         player.setUseInternalBars(useInternalBarsSwitch.isSelected());
@@ -533,10 +551,11 @@ public class PlayerEditPanel extends StatusProviderPanel {
         return combo;
     }
 
-    private Dial createDial(String name, long value, int min, int max) {
-        Dial dial = new Dial();
-        dial.setValue((int) value);
-        return dial;
+    private JSlider createSlider(String name, long value, int min, int max, int majorTick) {
+        JSlider slider = new JSlider(JSlider.VERTICAL, min, max, (int)value);
+        slider.setPreferredSize(new Dimension(20, 80)); // Set width and max height
+        slider.setMaximumSize(new Dimension(20, 80));   // Enforce max height
+        return slider;
     }
 
     private ToggleSwitch createToggleSwitch(String name, boolean value) {
@@ -546,10 +565,10 @@ public class PlayerEditPanel extends StatusProviderPanel {
         return toggle;
     }
 
-    private JPanel createLabeledDial(String label, Dial dial) {
+    private JPanel createLabeledSlider(String label, JSlider slider) {
         JPanel panel = new JPanel(new BorderLayout(5, 2));
         panel.add(new JLabel(label, JLabel.CENTER), BorderLayout.NORTH);
-        panel.add(dial, BorderLayout.CENTER);
+        panel.add(slider, BorderLayout.CENTER);
         return panel;
     }
 
