@@ -37,7 +37,10 @@ public class RuleEditPanel extends StatusProviderPanel {
 
         operatorCombo = new JComboBox<>(ProxyRule.OPERATORS);
         comparisonCombo = new JComboBox<>(ProxyRule.COMPARISONS);
-        valueSpinner = new JSpinner(new SpinnerNumberModel(1.0, 0.0, 100.0, 0.5));  // Changed default to 1.0
+        
+        // Set default value to 1.0 with no upper limit
+        double initialValue = (rule != null && rule.getValue() != null) ? rule.getValue() : 1.0;
+        valueSpinner = new JSpinner(new SpinnerNumberModel(initialValue, 0.0, null, 0.5));
 
         // Special SpinnerListModel for Part with "All" option
         String[] partValues = new String[17]; // 0-16 where 0 is "All"

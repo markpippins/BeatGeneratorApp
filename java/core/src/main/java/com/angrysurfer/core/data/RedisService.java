@@ -370,7 +370,27 @@ public class RedisService implements CommandListener {
         }
     }
 
+    public boolean isValidNewRule(ProxyStrike player, ProxyRule newRule) {
+        if (player == null || player.getRules() == null || newRule == null) {
+            return false;
+        }
+
+        // Check if there's already a rule with the same operator and part
+        return player.getRules().stream()
+            .noneMatch(existingRule -> 
+                existingRule.getOperator() == newRule.getOperator() &&
+                existingRule.getPart() == newRule.getPart()
+            );
+    }
+
     public void addRuleToPlayer(ProxyStrike player, ProxyRule rule) {
+        if (!isValidNewRule(player, rule)) {
+            throw new IllegalArgumentException(
+                "A rule with this operator already exists for part " + 
+                (rule.getPart() == 0 ? "All" : rule.getPart())
+            );
+        }
+        
         try (Jedis jedis = jedisPool.getResource()) {
             saveRule(rule);
             String rulesKey = "player:" + player.getId() + ":rules";

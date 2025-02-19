@@ -3,6 +3,7 @@ package com.angrysurfer.beats;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
@@ -28,7 +29,6 @@ public class Dialog<T> extends JDialog {
     private boolean accepted = false;
     private JPanel buttonPanel;
     private JPanel titlePanel;
-    private JLabel titleLabel;
 
     public Dialog() {
         this(null, null, null);
@@ -98,14 +98,35 @@ public class Dialog<T> extends JDialog {
         titlePanel = new JPanel();
         titlePanel.setLayout(new BorderLayout());
         titlePanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        titlePanel.setBackground(Utils.charcoalGray);
+        titlePanel.setBackground(getBackground());  // Match dialog background
 
-        titleLabel = new JLabel("Dialog");
-        titleLabel.setForeground(Utils.warmOffWhite);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
-
-        titlePanel.add(titleLabel, BorderLayout.WEST);
+        // Create navigation buttons with same style as toolbar
+        JButton prevButton = createNavigationButton("⏮", "Previous");
+        JButton nextButton = createNavigationButton("⏭", "Next");
+        
+        // Add buttons to title panel
+        titlePanel.add(prevButton, BorderLayout.WEST);
+        titlePanel.add(nextButton, BorderLayout.EAST);
+        
         add(titlePanel, BorderLayout.NORTH);
+    }
+
+    private JButton createNavigationButton(String text, String tooltip) {
+        JButton button = new JButton(text);
+        button.setToolTipText(tooltip);
+        button.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
+        if (!button.getFont().canDisplay('⏮')) {
+            button.setFont(new Font("Dialog", Font.PLAIN, 18));
+        }
+        
+        // Match toolbar button styling but use dialog colors
+        button.setForeground(getForeground());
+        button.setBackground(getBackground());
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setPreferredSize(new Dimension(32, 32));
+        
+        return button;
     }
 
     private void setupContentPanel() {
@@ -139,7 +160,7 @@ public class Dialog<T> extends JDialog {
         buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        buttonPanel.setBackground(Utils.charcoalGray);
+        buttonPanel.setBackground(getBackground());  // Match dialog background
 
         JButton okButton = createButton("OK", e -> accept());
         JButton cancelButton = createButton("Cancel", e -> cancel());
@@ -160,9 +181,6 @@ public class Dialog<T> extends JDialog {
     @Override
     public void setTitle(String title) {
         super.setTitle(title);
-        if (titleLabel != null) {
-            titleLabel.setText(title);
-        }
     }
 
     public void setContent(JPanel content) {

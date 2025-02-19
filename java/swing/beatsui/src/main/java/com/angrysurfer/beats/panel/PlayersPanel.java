@@ -190,6 +190,18 @@ public class PlayersPanel extends JPanel {
                 }
             );
         }
+
+        // Add double-click listener
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getClickCount() == 2) {
+                    ProxyStrike selectedPlayer = getSelectedPlayer();
+                    if (selectedPlayer != null) {
+                        CommandBus.getInstance().publish(Commands.PLAYER_EDIT_REQUEST, this, selectedPlayer);
+                    }
+                }
+            }
+        });
     }
 
     private void setupButtonListeners() {
@@ -295,6 +307,16 @@ public class PlayersPanel extends JPanel {
                             }
                         }
                     }
+                    case Commands.PLAYER_ROW_INDEX_REQUEST -> {
+                        if (action.getData() instanceof ProxyStrike requestedPlayer) {
+                            int selectedRow = table.getSelectedRow();
+                            CommandBus.getInstance().publish(
+                                Commands.PLAYER_ROW_INDEX_RESPONSE,
+                                this,
+                                selectedRow
+                            );
+                        }
+                    }
                 }
             }
         });
@@ -334,9 +356,6 @@ public class PlayersPanel extends JPanel {
             }
         }
     }
-
-    // Helper record for player edit data
-    public record PlayerEditData(ProxyTicker ticker, ProxyStrike player) {}
 
     private int findPlayerRowIndex(ProxyStrike player) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();

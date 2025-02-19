@@ -46,6 +46,10 @@ public class Commands {
     public static final String PLAYER_DELETE_REQUEST = "PLAYER_DELETE_REQUEST";
     public static final String PLAYER_EDIT_CANCELLED = "PLAYER_EDIT_CANCELLED";
 
+    // Player navigation commands
+    public static final String PLAYER_ROW_INDEX_REQUEST = "PLAYER_ROW_INDEX_REQUEST";
+    public static final String PLAYER_ROW_INDEX_RESPONSE = "PLAYER_ROW_INDEX_RESPONSE";
+
     // Rule selection commands
     public static final String RULE = "RULE";
 
@@ -57,7 +61,7 @@ public class Commands {
     public static final String RULE_ADD_REQUEST = "RULE_ADD_REQUEST";
     public static final String RULE_EDIT_REQUEST = "RULE_EDIT_REQUEST";
     public static final String RULE_DELETE_REQUEST = "RULE_DELETE_REQUEST";
-    public static final String RULE_UPDATED = "RULE_UPDATED";  // Add this line
+    public static final String RULE_UPDATED = "RULE_UPDATED";
 
     // Additional Rule events
     public static final String RULE_LOADED = "RULE_LOADED";

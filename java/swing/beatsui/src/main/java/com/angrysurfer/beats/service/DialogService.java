@@ -2,13 +2,13 @@ package com.angrysurfer.beats.service;
 
 import java.util.logging.Logger;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.beats.Frame;
 import com.angrysurfer.beats.panel.PlayerEditPanel;
 import com.angrysurfer.beats.panel.RuleEditPanel;
-import com.angrysurfer.beats.panel.RulesPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
@@ -145,22 +145,37 @@ public class DialogService implements CommandListener {
     private void handleAddRule(ProxyStrike player) {
         if (player != null) {
             SwingUtilities.invokeLater(() -> {
-                ProxyRule newRule = redisService.newRule();
-                RuleEditPanel panel = new RuleEditPanel(newRule);
-                Dialog<ProxyRule> dialog = frame.createDialog(newRule, panel);
-                dialog.setTitle("Add Rule");
+                try {
+                    ProxyRule newRule = redisService.newRule();
+                    RuleEditPanel panel = new RuleEditPanel(newRule);
+                    Dialog<ProxyRule> dialog = frame.createDialog(newRule, panel);
+                    dialog.setTitle("Add Rule");
 
-                if (dialog.showDialog()) {
-                    ProxyRule updatedRule = panel.getUpdatedRule();
-                    redisService.addRuleToPlayer(player, updatedRule);
-                    
-                    // Get fresh player state and ticker
-                    ProxyStrike refreshedPlayer = redisService.findPlayerById(player.getId());
-                    ProxyTicker ticker = redisService.findTickerForPlayer(refreshedPlayer);
-                    
-                    // Update UI
-                    commandBus.publish(Commands.TICKER_UPDATED, this, ticker);
-                    commandBus.publish(Commands.PLAYER_UPDATED, this, refreshedPlayer);
+                    if (dialog.showDialog()) {
+                        ProxyRule updatedRule = panel.getUpdatedRule();
+                        if (redisService.isValidNewRule(player, updatedRule)) {
+                            redisService.addRuleToPlayer(player, updatedRule);
+                            // Get fresh state and ticker
+                            ProxyStrike refreshedPlayer = redisService.findPlayerById(player.getId());
+                            ProxyTicker ticker = redisService.findTickerForPlayer(refreshedPlayer);
+                            
+                            // Update UI
+                            commandBus.publish(Commands.TICKER_UPDATED, this, ticker);
+                            commandBus.publish(Commands.PLAYER_UPDATED, this, refreshedPlayer);
+                        } else {
+                            JOptionPane.showMessageDialog(frame,
+                                "A rule with this operator already exists for part " + 
+                                (updatedRule.getPart() == 0 ? "All" : updatedRule.getPart()),
+                                "Invalid Rule",
+                                JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.severe("Error adding rule: " + e.getMessage());
+                    JOptionPane.showMessageDialog(frame,
+                        "Error adding rule: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
                 }
             });
         }

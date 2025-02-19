@@ -7,6 +7,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
@@ -21,11 +22,14 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ToggleSwitch;
+import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyInstrument;
@@ -69,6 +73,10 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private final JButton addRuleButton;
     private final JButton editRuleButton;
     private final JButton deleteRuleButton;
+
+    // Add these fields near the top with other UI components
+    private final JButton prevButton;
+    private final JButton nextButton;
 
     public PlayerEditPanel(ProxyStrike player, StatusConsumer statusConsumer) {
         super(new BorderLayout(), statusConsumer);
@@ -134,8 +142,31 @@ public class PlayerEditPanel extends StatusProviderPanel {
         // Add button listeners
         deleteRuleButton.addActionListener(e -> deleteSelectedRule());
         
+        // Initialize navigation buttons
+        prevButton = new JButton("⏮");
+        nextButton = new JButton("⏭");
+        prevButton.setEnabled(false);  // Default to disabled
+        nextButton.setEnabled(true);   // Default to enabled
+        
+        // Add navigation button handling
+        CommandBus.getInstance().register(new CommandListener() {
+            @Override
+            public void onAction(Command action) {
+                if (Commands.PLAYER_ROW_INDEX_RESPONSE.equals(action.getCommand()) && 
+                    action.getData() instanceof Integer rowIndex) {
+                    // Enable prev button only if we're past the first row
+                    prevButton.setEnabled(rowIndex > 0);
+                    // Enable next button always for now (we can refine this later)
+                    nextButton.setEnabled(true);
+                }
+            }
+        });
+
         layoutComponents();
         setPreferredSize(new Dimension(800, 600));
+        
+        // Request row index after initialization
+        CommandBus.getInstance().publish(Commands.PLAYER_ROW_INDEX_REQUEST, this, player);
     }
 
     private void layoutComponents() {
@@ -254,11 +285,11 @@ public class PlayerEditPanel extends StatusProviderPanel {
         mainContent.add(optionsPanel, BorderLayout.SOUTH);
         
         // Rules panel
-        JPanel rulesPanel = createRulesPanel();
+        setupRulesPanel();
         
         // Combine parameters and rules with split pane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-                                            mainContent, rulesPanel);
+                                            mainContent, createRulesPanel());
         splitPane.setResizeWeight(0.7);
         add(splitPane, BorderLayout.CENTER);
     }
@@ -470,15 +501,6 @@ public class PlayerEditPanel extends StatusProviderPanel {
         }
     }
 
-    private void updateRulesTable() {
-        DefaultTableModel model = (DefaultTableModel) rulesTable.getModel();
-        model.setRowCount(0);
-        if (player.getRules() != null) {
-            for (ProxyRule rule : player.getRules()) {
-                model.addRow(rule.toRow());
-            }
-        }
-    }
 
     public ProxyStrike getUpdatedPlayer() {
         // Update player with current UI values
@@ -536,5 +558,111 @@ public class PlayerEditPanel extends StatusProviderPanel {
         panel.add(new JLabel(label, JLabel.CENTER), BorderLayout.NORTH);
         panel.add(toggle, BorderLayout.CENTER);
         return panel;
+    }
+
+    private void setupRulesPanel() {
+        JPanel rulesPanel = new JPanel(new BorderLayout(5, 5));
+        rulesPanel.setBorder(BorderFactory.createTitledBorder("Rules"));
+        
+        // Create rules table with same columns as RulesPanel
+        String[] columnNames = {"Operator", "Comparison", "Value", "Part"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        rulesTable.setModel(model);
+        
+        // Match the RulesPanel column alignments
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+        leftRenderer.setHorizontalAlignment(JLabel.LEFT);
+        
+        rulesTable.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);  // Operator column left-aligned
+        for (int i = 1; i < rulesTable.getColumnCount(); i++) {
+            rulesTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+
+        // Add double-click handler
+        rulesTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getClickCount() == 2) {
+                    ProxyRule selectedRule = getSelectedRule();
+                    if (selectedRule != null) {
+                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
+                    }
+                }
+            }
+        });
+        
+        // Add button handlers
+        addRuleButton.addActionListener(e -> 
+            CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, player));
+            
+        editRuleButton.addActionListener(e -> {
+            ProxyRule selectedRule = getSelectedRule();
+            if (selectedRule != null) {
+                CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
+            }
+        });
+        
+        deleteRuleButton.addActionListener(e -> {
+            ProxyRule selectedRule = getSelectedRule();
+            if (selectedRule != null) {
+                CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, 
+                    new ProxyRule[]{selectedRule});
+            }
+        });
+
+        // Listen for rule updates
+        CommandBus.getInstance().register(new CommandListener() {
+            @Override
+            public void onAction(Command action) {
+                switch (action.getCommand()) {
+                    case Commands.PLAYER_UPDATED -> {
+                        if (action.getData() instanceof ProxyStrike updatedPlayer && 
+                            updatedPlayer.getId().equals(player.getId())) {
+                            player.setRules(updatedPlayer.getRules());
+                            updateRulesTable();
+                            updateButtonStates();
+                        }
+                    }
+                }
+            }
+        });
+
+        // Layout
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttonPanel.add(addRuleButton);
+        buttonPanel.add(editRuleButton);
+        buttonPanel.add(deleteRuleButton);
+        rulesPanel.add(buttonPanel, BorderLayout.NORTH);
+        rulesPanel.add(new JScrollPane(rulesTable), BorderLayout.CENTER);
+    }
+
+    private ProxyRule getSelectedRule() {
+        int row = rulesTable.getSelectedRow();
+        if (row >= 0 && player != null && player.getRules() != null) {
+            return new ArrayList<>(player.getRules()).get(row);
+        }
+        return null;
+    }
+
+    private void updateRulesTable() {
+        DefaultTableModel model = (DefaultTableModel) rulesTable.getModel();
+        model.setRowCount(0);
+        if (player != null && player.getRules() != null) {
+            for (ProxyRule rule : player.getRules()) {
+                model.addRow(new Object[]{
+                    ProxyRule.OPERATORS[rule.getOperator()],
+                    ProxyRule.COMPARISONS[rule.getComparison()],
+                    rule.getValue(),
+                    rule.getPart() == 0 ? "All" : rule.getPart()
+                });
+            }
+        }
+    }
+
+    private void updateButtonStates() {
+        boolean hasSelection = rulesTable.getSelectedRow() >= 0;
+        editRuleButton.setEnabled(hasSelection);
+        deleteRuleButton.setEnabled(hasSelection);
     }
 }

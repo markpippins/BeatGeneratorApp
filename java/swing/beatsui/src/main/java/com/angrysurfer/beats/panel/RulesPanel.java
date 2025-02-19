@@ -1,20 +1,19 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.JLabel;
+import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -79,7 +78,12 @@ public class RulesPanel extends JPanel {
 
     private void setupTable() {
         String[] columnNames = { "Operator", "Comparison", "Value", "Part" };
-        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make all cells non-editable
+            }
+        };
         table.setModel(model);
 
         // Center align all columns first
@@ -107,6 +111,18 @@ public class RulesPanel extends JPanel {
 
         // Allow table to be smaller than the sum of column widths
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        // Add double-click listener
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getClickCount() == 2) {
+                    ProxyRule selectedRule = getSelectedRule();
+                    if (selectedRule != null) {
+                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
+                    }
+                }
+            }
+        });
     }
 
     private void setupButtonListeners() {
@@ -320,7 +336,7 @@ public class RulesPanel extends JPanel {
             List<ProxyRule> rules = new ArrayList<>(currentPlayer.getRules());
             for (int i = 0; i < rules.size(); i++) {
                 if (Objects.nonNull(rules.get(i)) && Objects.nonNull(rules.get(i).getId()) &&
-                        rules.get(i).getId().equals(rule.getId())) {
+                    rules.get(i).getId().equals(rule.getId())) {
                     return i;
                 }
             }

@@ -32,6 +32,12 @@ public class ProxyRule implements Serializable {
     private transient boolean unsaved = false;
 
     @JsonIgnore
+    private transient boolean isFirst = false;
+
+    @JsonIgnore
+    private transient boolean isLast = false;
+
+    @JsonIgnore
     private transient IProxyPlayer player;
 
     // Update COMPARISONS array to match Comparison interface
