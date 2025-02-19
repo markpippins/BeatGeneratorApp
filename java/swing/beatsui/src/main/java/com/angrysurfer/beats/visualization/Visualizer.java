@@ -78,7 +78,7 @@ public class Visualizer implements CommandListener {
 
     private List<IVisualizationHandler> getVisualizations() {
         List<IVisualizationHandler> visualizations = new ArrayList<>();
-        String basePackage = "com.angrysurfer.beats.visualization.handler";
+        String basePackage = "com.angrysurfer.beats";
         
         try {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
