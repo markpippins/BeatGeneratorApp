@@ -42,9 +42,9 @@ public class TickerManager {
                         commandBus.publish(Commands.SHOW_PLAYER_EDITOR, this, null);
                     }
                     case Commands.PLAYER_EDIT_REQUEST -> {
-                        if (action.getData() instanceof ProxyStrike[] players && players.length > 0) {
-                            // Open editor with the first selected player
-                            commandBus.publish(Commands.SHOW_PLAYER_EDITOR, this, players[0]);
+                        if (action.getData() instanceof ProxyStrike player) {  // Changed from ProxyStrike[]
+                            // Open editor with the selected player
+                            commandBus.publish(Commands.SHOW_PLAYER_EDITOR, this, player);
                         }
                     }
                     case Commands.SHOW_PLAYER_EDITOR_OK -> {
@@ -96,6 +96,34 @@ public class TickerManager {
                             
                             // Notify UI of update with fresh ticker state
                             commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
+                        }
+                    }
+                    case Commands.RULE_ADD_REQUEST -> {
+                        if (action.getData() instanceof ProxyStrike player) {
+                            // Just show the dialog, don't create rule yet
+                            commandBus.publish(Commands.SHOW_RULE_EDITOR, this, player);
+                        }
+                    }
+                    case Commands.SHOW_RULE_EDITOR_OK -> {
+                        if (action.getData() instanceof RuleEditData data) {
+                            RedisService redis = RedisService.getInstance();
+                            ProxyRule rule = redis.newRule();
+                            // Copy data from dialog
+                            rule.setOperator(data.operator());
+                            rule.setComparison(data.comparison());
+                            rule.setValue(data.value());
+                            rule.setPart(data.part());
+                            
+                            // Add rule to player
+                            redis.addRuleToPlayer(data.player(), rule);
+                            
+                            // Notify UI of update
+                            commandBus.publish(Commands.PLAYER_UPDATED, this, data.player());
+                        }
+                    }
+                    case Commands.RULE_EDIT_REQUEST -> {
+                        if (action.getData() instanceof ProxyRule rule) {
+                            commandBus.publish(Commands.SHOW_RULE_EDITOR, this, rule);
                         }
                     }
                 }
@@ -198,4 +226,6 @@ public class TickerManager {
         player.setRatchetInterval(1L);
         player.setPanPosition(64L);
     }
+
+    private record RuleEditData(ProxyStrike player, int operator, int comparison, double value, int part) {}
 }

@@ -38,7 +38,7 @@ public class TickerPanel extends StatusProviderPanel {
 
         // Create and configure split pane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setResizeWeight(0.7);
+        splitPane.setResizeWeight(1);
         splitPane.setLeftComponent(playerTablePanel);
         splitPane.setRightComponent(ruleTablePanel);
 

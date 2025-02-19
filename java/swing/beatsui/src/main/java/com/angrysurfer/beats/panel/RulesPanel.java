@@ -1,6 +1,7 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -27,7 +28,7 @@ import lombok.Setter;
 @Setter
 public class RulesPanel extends JPanel {
     private static final Logger logger = Logger.getLogger(RulesPanel.class.getName());
-    private static final int MIN_WIDTH = 300;  // Add minimum width constant
+    
     private final JTable table;
     private final StatusConsumer status;
     private final ButtonPanel buttonPanel;
@@ -54,7 +55,10 @@ public class RulesPanel extends JPanel {
         setupCommandBusListener();
         setupButtonListeners();
         setupContextMenu();
+
     }
+
+
 
     private void setupLayout() {
         JPanel topPanel = new JPanel(new BorderLayout());
@@ -94,15 +98,47 @@ public class RulesPanel extends JPanel {
 
     private void setupButtonListeners() {
         buttonPanel.addActionListener(e -> {
-            if (e.getActionCommand().equals(Commands.RULE_ADD_REQUEST)) {
-                CommandBus.getInstance().publish(e.getActionCommand(), this, currentPlayer);
-                return;
+            switch (e.getActionCommand()) {
+                case Commands.RULE_ADD_REQUEST -> {
+                    if (currentPlayer != null) {
+                        CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, currentPlayer);
+                    }
+                }
+                case Commands.RULE_EDIT_REQUEST -> {
+                    ProxyRule[] selectedRules = getSelectedRules();
+                    if (selectedRules.length > 0) {
+                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRules[0]);
+                    }
+                }
+                case Commands.RULE_DELETE_REQUEST -> {
+                    ProxyRule[] selectedRules = getSelectedRules();
+                    if (selectedRules.length > 0) {
+                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, selectedRules);
+                    }
+                }
             }
+        });
 
-            // Get all selected rules for edit/delete operations
-            ProxyRule[] selectedRules = getSelectedRules();
-            if (selectedRules.length > 0) {
-                CommandBus.getInstance().publish(e.getActionCommand(), this, selectedRules);
+        // Update context menu handler to match button behavior
+        contextMenu.addActionListener(e -> {
+            switch (e.getActionCommand()) {
+                case Commands.RULE_ADD_REQUEST -> {
+                    if (currentPlayer != null) {
+                        CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, currentPlayer);
+                    }
+                }
+                case Commands.RULE_EDIT_REQUEST -> {
+                    ProxyRule[] selectedRules = getSelectedRules();
+                    if (selectedRules.length > 0) {
+                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRules[0]);
+                    }
+                }
+                case Commands.RULE_DELETE_REQUEST -> {
+                    ProxyRule[] selectedRules = getSelectedRules();
+                    if (selectedRules.length > 0) {
+                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, selectedRules);
+                    }
+                }
             }
         });
     }
@@ -144,6 +180,17 @@ public class RulesPanel extends JPanel {
                                 CommandBus.getInstance().publish(Commands.RULE_SELECTED, this, firstRule);
                             }
                         }
+                    }
+                    case Commands.PLAYER_UPDATED -> {
+                        if (action.getData() instanceof ProxyStrike player && 
+                            player.equals(currentPlayer)) {
+                            loadRules(player);
+                        }
+                    }
+                    case Commands.PLAYER_UNSELECTED -> {
+                        currentPlayer = null;
+                        clearRules();
+                        updateButtonStates();
                     }
                 }
             }

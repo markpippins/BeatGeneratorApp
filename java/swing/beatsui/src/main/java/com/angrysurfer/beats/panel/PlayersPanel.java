@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -44,6 +45,20 @@ public class PlayersPanel extends JPanel {
         15,   // Internal Bars
         17,   // Preserve
         18    // Sparse
+    };
+    private static final int[] NUMERIC_COLUMNS = {
+        2,  // Channel
+        3,  // Swing
+        4,  // Level
+        5,  // Note
+        6,  // Min Vel
+        7,  // Max Vel
+        8,  // Preset
+        10, // Prob
+        11, // Random
+        12, // Ratchet #
+        13, // Ratchet Int
+        16  // Pan
     };
     private boolean hasActiveTicker = false;  // Add this field
 
@@ -125,18 +140,32 @@ public class PlayersPanel extends JPanel {
         
         table.setModel(model);
         
-        // Set minimum widths for Name and Instrument columns
-        table.getColumnModel().getColumn(0).setMinWidth(50);  // Name column
-        table.getColumnModel().getColumn(1).setMinWidth(70);  // Instrument column
+        // Set minimum and preferred widths for Name and Instrument columns
+        table.getColumnModel().getColumn(0).setMinWidth(100);   // Name column min
+        table.getColumnModel().getColumn(1).setMinWidth(100);   // Instrument column min
         
-        // Prevent these columns from getting too wide
-        table.getColumnModel().getColumn(0).setMaxWidth(150); // Name
-        table.getColumnModel().getColumn(1).setMaxWidth(150); // Instrument
+        // Set relative widths for columns to control resize behavior
+        table.getColumnModel().getColumn(0).setPreferredWidth(200);  // Name gets more space
+        table.getColumnModel().getColumn(1).setPreferredWidth(150);  // Instrument gets less space
+        
+        // Set fixed widths for other columns to prevent them from growing
+        for (int i = 2; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setMaxWidth(80);
+            table.getColumnModel().getColumn(i).setPreferredWidth(60);
+        }
 
         // Configure table appearance
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);  // Changed from default
         table.setAutoCreateRowSorter(true);
         
+        // Center-align numeric columns
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        for (int numericColumn : NUMERIC_COLUMNS) {
+            table.getColumnModel().getColumn(numericColumn).setCellRenderer(centerRenderer);
+        }
+
         // Set default checkbox renderer for Boolean columns
         for (int booleanColumn : BOOLEAN_COLUMNS) {
             table.getColumnModel().getColumn(booleanColumn).setCellRenderer(
@@ -166,15 +195,23 @@ public class PlayersPanel extends JPanel {
     private void setupButtonListeners() {
         buttonPanel.addActionListener(e -> {
             logger.info("Button clicked: " + e.getActionCommand());
-            if (e.getActionCommand().equals(Commands.PLAYER_ADD_REQUEST)) {
-                CommandBus.getInstance().publish(Commands.PLAYER_ADD_REQUEST, this, null);
-                return;
-            }
-            
-            // Get all selected players for edit/delete operations
-            ProxyStrike[] selectedPlayers = getSelectedPlayers();
-            if (selectedPlayers.length > 0) {
-                CommandBus.getInstance().publish(e.getActionCommand(), this, selectedPlayers);
+            switch (e.getActionCommand()) {
+                case Commands.PLAYER_ADD_REQUEST -> {
+                    CommandBus.getInstance().publish(Commands.PLAYER_ADD_REQUEST, this, null);
+                }
+                case Commands.PLAYER_EDIT_REQUEST -> {
+                    // Get directly selected player (no array)
+                    ProxyStrike selectedPlayer = getSelectedPlayer();
+                    if (selectedPlayer != null) {
+                        CommandBus.getInstance().publish(Commands.PLAYER_EDIT_REQUEST, this, selectedPlayer);
+                    }
+                }
+                case Commands.PLAYER_DELETE_REQUEST -> {
+                    ProxyStrike[] selectedPlayers = getSelectedPlayers();
+                    if (selectedPlayers.length > 0) {
+                        CommandBus.getInstance().publish(e.getActionCommand(), this, selectedPlayers);
+                    }
+                }
             }
         });
     }

@@ -58,6 +58,11 @@ public class Commands {
     public static final String RULE_EDIT_REQUEST = "RULE_EDIT_REQUEST";
     public static final String RULE_DELETE_REQUEST = "RULE_DELETE_REQUEST";
 
+    // Rule editor commands
+    public static final String SHOW_RULE_EDITOR = "SHOW_RULE_EDITOR";
+    public static final String SHOW_RULE_EDITOR_OK = "SHOW_RULE_EDITOR_OK";
+    public static final String SHOW_RULE_EDITOR_CANCEL = "SHOW_RULE_EDITOR_CANCEL";
+
     // Control code and caption commands
     public static final String CONTROL_CODE_SELECTED = "CONTROL_CODE_SELECTED";
     public static final String CONTROL_CODE_UNSELECTED = "CONTROL_CODE_UNSELECTED";
