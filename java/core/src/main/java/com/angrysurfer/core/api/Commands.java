@@ -114,6 +114,7 @@ public class Commands {
     public static final String VISUALIZATION_STARTED = "VISUALIZATION_STARTED";
     public static final String VISUALIZATION_STOPPED = "VISUALIZATION_STOPPED";
     public static final String VISUALIZATION_REGISTERED = "VISUALIZATION_REGISTERED";
+    public static final String VISUALIZATION_HANDLER_REFRESH_REQUESTED = "VISUALIZATION_HANDLER_REFRESH_REQUESTED";
 
     // Logging commands
     public static final String LOG_DEBUG = "LOG_DEBUG";
