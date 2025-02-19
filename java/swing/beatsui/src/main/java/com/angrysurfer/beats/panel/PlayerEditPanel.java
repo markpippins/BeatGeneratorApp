@@ -15,6 +15,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -51,8 +52,8 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private final Dial panDial;
     
     // Ratchet controls
-    private final JSpinner ratchetCountSpinner;  // Changed from Dial to JSpinner
-    private final JSpinner ratchetIntervalSpinner;  // Changed from Dial to JSpinner
+    private final JSlider ratchetCountSlider;  // Changed from JSpinner to JSlider
+    private final JSlider ratchetIntervalSlider;  // Changed from JSpinner to JSlider
     private final Dial sparseDial;
     
     // Toggle switches
@@ -70,6 +71,11 @@ public class PlayerEditPanel extends StatusProviderPanel {
     public PlayerEditPanel(ProxyStrike player, StatusConsumer statusConsumer) {
         super(new BorderLayout(), statusConsumer);
         this.player = player;
+        
+        // Set fixed size
+        setPreferredSize(new Dimension(600, 400));
+        setMinimumSize(new Dimension(600, 400));
+        setMaximumSize(new Dimension(600, 400));
         
         // Initialize basic properties
         nameField = new JTextField(player.getName(), 20);
@@ -93,11 +99,19 @@ public class PlayerEditPanel extends StatusProviderPanel {
         randomDial = createDial("Random", player.getRandomDegree(), 0, 100);
         panDial = createDial("Pan", player.getPanPosition(), 0, 127);
         
-        // Initialize ratchet controls
-        ratchetCountSpinner = new JSpinner(new SpinnerNumberModel(
-            player.getRatchetCount().intValue(), 1, 8, 1));
-        ratchetIntervalSpinner = new JSpinner(new SpinnerNumberModel(
-            player.getRatchetInterval().intValue(), 1, 16, 1));
+        // Initialize sliders instead of spinners
+        ratchetCountSlider = new JSlider(JSlider.VERTICAL, 1, 8, player.getRatchetCount().intValue());
+        ratchetCountSlider.setMajorTickSpacing(1);
+        ratchetCountSlider.setPaintTicks(true);
+        ratchetCountSlider.setPaintLabels(true);
+        ratchetCountSlider.setSnapToTicks(true);
+
+        ratchetIntervalSlider = new JSlider(JSlider.VERTICAL, 1, 16, player.getRatchetInterval().intValue());
+        ratchetIntervalSlider.setMajorTickSpacing(1);
+        ratchetIntervalSlider.setPaintTicks(true);
+        ratchetIntervalSlider.setPaintLabels(true);
+        ratchetIntervalSlider.setSnapToTicks(true);
+
         sparseDial = createDial("Sparse", (long)(player.getSparse() * 100), 0, 100);
         
         // Initialize switches
@@ -122,67 +136,114 @@ public class PlayerEditPanel extends StatusProviderPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Top panel for basic controls
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        // Top panel for basic controls - now using GridBagLayout for two rows
+        JPanel topPanel = new JPanel(new GridBagLayout());
         topPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createTitledBorder("Basic Properties"),
             BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         
-        // Add basic controls in a row
-        topPanel.add(new JLabel("Name:"));
-        topPanel.add(nameField);
-        topPanel.add(new JLabel("Instrument:"));
-        topPanel.add(instrumentCombo);
-        topPanel.add(new JLabel("Channel:"));
-        topPanel.add(channelSpinner);
-        topPanel.add(new JLabel("Preset:"));
-        topPanel.add(presetSpinner);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(2, 5, 2, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        // First row
+        gbc.gridy = 0;
+        gbc.gridx = 0; topPanel.add(new JLabel("Name:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0; topPanel.add(nameField, gbc);
+        gbc.gridx = 2; gbc.weightx = 0.0; topPanel.add(new JLabel("Instrument:"), gbc);
+        gbc.gridx = 3; gbc.weightx = 1.0; topPanel.add(instrumentCombo, gbc);
+        
+        // Second row
+        gbc.gridy = 1;
+        gbc.gridx = 0; gbc.weightx = 0.0; topPanel.add(new JLabel("Channel:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0; topPanel.add(channelSpinner, gbc);
+        gbc.gridx = 2; gbc.weightx = 0.0; topPanel.add(new JLabel("Preset:"), gbc);
+        gbc.gridx = 3; gbc.weightx = 1.0; topPanel.add(presetSpinner, gbc);
         
         add(topPanel, BorderLayout.NORTH);
 
         // Main content with parameters and rules
         JPanel mainContent = new JPanel(new BorderLayout());
         
-        // Performance controls panel (horizontal layout)
+        // Performance controls panel with size constraints
         JPanel performancePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         performancePanel.setBorder(BorderFactory.createTitledBorder("Performance"));
+        performancePanel.setPreferredSize(new Dimension(400, 80));
+        performancePanel.setMaximumSize(new Dimension(400, 80));
         performancePanel.add(createLabeledDial("Level", levelDial));
         performancePanel.add(createLabeledDial("Note", noteDial));
         performancePanel.add(createLabeledDial("Min Vel", velocityMinDial));
         performancePanel.add(createLabeledDial("Max Vel", velocityMaxDial));
         performancePanel.add(createLabeledDial("Pan", panDial));
         
-        // Modulation controls panel (horizontal layout)
+        // Modulation controls panel with size constraints
         JPanel modulationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         modulationPanel.setBorder(BorderFactory.createTitledBorder("Modulation"));
+        modulationPanel.setPreferredSize(new Dimension(400, 80));
+        modulationPanel.setMaximumSize(new Dimension(400, 80));
         modulationPanel.add(createLabeledDial("Swing", swingDial));
         modulationPanel.add(createLabeledDial("Probability", probabilityDial));
         modulationPanel.add(createLabeledDial("Random", randomDial));
         modulationPanel.add(createLabeledDial("Sparse", sparseDial));
 
-        // Combine performance and modulation panels
-        JPanel controlsPanel = new JPanel(new GridLayout(2, 1, 0, 5));
-        controlsPanel.add(performancePanel);
-        controlsPanel.add(modulationPanel);
-        mainContent.add(controlsPanel, BorderLayout.CENTER);
+        // Create a container with GridBagLayout for all panels
+        JPanel controlsContainer = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.insets = new Insets(2, 2, 2, 2);
         
-        // Options panel with switches and ratchet controls
-        JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        // Left column: Performance and Modulation stacked vertically
+        JPanel leftColumn = new JPanel(new GridLayout(2, 1, 0, 5));
+        leftColumn.add(performancePanel);
+        leftColumn.add(modulationPanel);
+        
+        // Add left column
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.weightx = 0.8;
+        gbc2.weighty = 1.0;
+        gbc2.fill = GridBagConstraints.BOTH;
+        controlsContainer.add(leftColumn, gbc2);
+        
+        // Create and add ratchet panel
+        JPanel ratchetPanel = new JPanel(new BorderLayout(5, 5));
+        ratchetPanel.setBorder(BorderFactory.createTitledBorder("Ratchet"));
+        ratchetPanel.setPreferredSize(new Dimension(120, 160)); // Match height of left column
+        
+        // Create panel for sliders with vertical layout
+        JPanel slidersPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        
+        // Add count slider with label in its own panel
+        JPanel countPanel = new JPanel(new BorderLayout(2, 2));
+        JLabel countLabel = new JLabel("Count", JLabel.CENTER);
+        countPanel.add(countLabel, BorderLayout.NORTH);
+        countPanel.add(ratchetCountSlider, BorderLayout.CENTER);
+        slidersPanel.add(countPanel);
+        
+        // Add interval slider with label in its own panel
+        JPanel intervalPanel = new JPanel(new BorderLayout(2, 2));
+        JLabel intervalLabel = new JLabel("Interval", JLabel.CENTER);
+        intervalPanel.add(intervalLabel, BorderLayout.NORTH);
+        intervalPanel.add(ratchetIntervalSlider, BorderLayout.CENTER);
+        slidersPanel.add(intervalPanel);
+        
+        ratchetPanel.add(slidersPanel, BorderLayout.CENTER);
+        
+        // Add ratchet panel to the right
+        gbc2.gridx = 1;
+        gbc2.weightx = 0.2;
+        controlsContainer.add(ratchetPanel, gbc2);
+        
+        mainContent.add(controlsContainer, BorderLayout.CENTER);
+        
+        // Options panel with improved toggle switch layout
+        JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 5));
         optionsPanel.setBorder(BorderFactory.createTitledBorder("Options"));
         
-        // Add ratchet controls
-        JPanel ratchetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        ratchetPanel.add(new JLabel("Count:"));
-        ratchetPanel.add(ratchetCountSpinner);
-        ratchetPanel.add(new JLabel("Interval:"));
-        ratchetPanel.add(ratchetIntervalSpinner);
-        optionsPanel.add(ratchetPanel);
-        
-        // Add switches
-        optionsPanel.add(stickyPresetSwitch);
-        optionsPanel.add(useInternalBeatsSwitch);
-        optionsPanel.add(useInternalBarsSwitch);
-        optionsPanel.add(preserveOnPurgeSwitch);
+        // Add switches with labels in vertical panels
+        optionsPanel.add(createLabeledSwitch("Sticky Preset", stickyPresetSwitch));
+        optionsPanel.add(createLabeledSwitch("Internal Beats", useInternalBeatsSwitch));
+        optionsPanel.add(createLabeledSwitch("Internal Bars", useInternalBarsSwitch));
+        optionsPanel.add(createLabeledSwitch("Preserve", preserveOnPurgeSwitch));
         
         mainContent.add(optionsPanel, BorderLayout.SOUTH);
         
@@ -321,13 +382,13 @@ public class PlayerEditPanel extends StatusProviderPanel {
         gbc.gridy++;
         panel.add(new JLabel("Count:"), gbc);
         gbc.gridx = 1;
-        panel.add(ratchetCountSpinner, gbc);
+        panel.add(ratchetCountSlider, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
         panel.add(new JLabel("Interval:"), gbc);
         gbc.gridx = 1;
-        panel.add(ratchetIntervalSpinner, gbc);
+        panel.add(ratchetIntervalSlider, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
@@ -357,15 +418,35 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private JPanel createRulesPanel() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Rules"));
-        panel.add(new JScrollPane(rulesTable), BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        
+        // Move buttons to the top
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.add(addRuleButton);
         buttonPanel.add(editRuleButton);
         buttonPanel.add(deleteRuleButton);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
+        panel.add(buttonPanel, BorderLayout.NORTH);
+        
+        // Add table below buttons
+        panel.add(new JScrollPane(rulesTable), BorderLayout.CENTER);
+        
         return panel;
+    }
+
+    // Add method to handle rule editing
+    private void editSelectedRule() {
+        int selectedRow = rulesTable.getSelectedRow();
+        if (selectedRow >= 0) {
+            ProxyRule rule = ProxyRule.fromRow(new Object[] {
+                rulesTable.getValueAt(selectedRow, 0),
+                rulesTable.getValueAt(selectedRow, 1),
+                rulesTable.getValueAt(selectedRow, 2),
+                rulesTable.getValueAt(selectedRow, 3)
+            });
+            
+            RuleEditPanel editPanel = new RuleEditPanel(rule, statusConsumer);
+            // Show dialog with edit panel...
+            // Update table after editing...
+        }
     }
 
     private void updateRulesTable() {
@@ -392,8 +473,8 @@ public class PlayerEditPanel extends StatusProviderPanel {
         player.setProbability((long) probabilityDial.getValue());
         player.setRandomDegree((long) randomDial.getValue());
         player.setPanPosition((long) panDial.getValue());
-        player.setRatchetCount(((Number) ratchetCountSpinner.getValue()).longValue());
-        player.setRatchetInterval(((Number) ratchetIntervalSpinner.getValue()).longValue());
+        player.setRatchetCount((long) ratchetCountSlider.getValue());
+        player.setRatchetInterval((long) ratchetIntervalSlider.getValue());
         player.setSparse(sparseDial.getValue() / 100.0); // Convert percentage back to 0-1 range
         player.setStickyPreset(stickyPresetSwitch.isSelected());
         player.setUseInternalBeats(useInternalBeatsSwitch.isSelected());
@@ -426,6 +507,13 @@ public class PlayerEditPanel extends StatusProviderPanel {
         JPanel panel = new JPanel(new BorderLayout(5, 2));
         panel.add(new JLabel(label, JLabel.CENTER), BorderLayout.NORTH);
         panel.add(dial, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel createLabeledSwitch(String label, ToggleSwitch toggle) {
+        JPanel panel = new JPanel(new BorderLayout(5, 2));
+        panel.add(new JLabel(label, JLabel.CENTER), BorderLayout.NORTH);
+        panel.add(toggle, BorderLayout.CENTER);
         return panel;
     }
 }
