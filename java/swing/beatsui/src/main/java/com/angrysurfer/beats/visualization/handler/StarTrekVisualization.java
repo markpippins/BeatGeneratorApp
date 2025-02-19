@@ -1,8 +1,9 @@
 package com.angrysurfer.beats.visualization.handler;
 
 import java.awt.Color;
-import java.awt.Point;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;

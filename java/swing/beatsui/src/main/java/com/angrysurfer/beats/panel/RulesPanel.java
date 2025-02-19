@@ -62,7 +62,7 @@ public class RulesPanel extends JPanel {
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(buttonPanel, BorderLayout.NORTH);
 
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));  // Remove the margin completely
         add(topPanel, BorderLayout.NORTH);
 
         // Wrap the scroll pane in a panel that respects preferred size

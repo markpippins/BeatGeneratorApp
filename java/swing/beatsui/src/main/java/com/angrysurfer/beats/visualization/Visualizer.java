@@ -78,43 +78,84 @@ public class Visualizer implements CommandListener {
 
     private List<IVisualizationHandler> getVisualizations() {
         List<IVisualizationHandler> visualizations = new ArrayList<>();
-        String packageName = "com.angrysurfer.beats.visualization.handler";
-
+        String basePackage = "com.angrysurfer.beats.visualization.handler";
+        
         try {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            String path = packageName.replace('.', '/');
-            java.net.URL resource = classLoader.getResource(path);
-
-            if (resource == null) {
-                System.err.println("Package not found: " + packageName);
-                return visualizations;
-            }
-
-            java.io.File directory = new java.io.File(resource.getFile());
-            if (directory.exists()) {
-                String[] files = directory.list();
-                for (String file : files) {
-                    if (file.endsWith(".class")) {
-                        String className = file.substring(0, file.length() - 6);
-                        try {
-                            Class<?> cls = Class.forName(packageName + "." + className);
-                            if (IVisualizationHandler.class.isAssignableFrom(cls) &&
-                                    !java.lang.reflect.Modifier.isAbstract(cls.getModifiers())) {
-                                IVisualizationHandler handler = (IVisualizationHandler) cls.getDeclaredConstructor()
-                                        .newInstance();
-                                visualizations.add(handler);
-                            }
-                        } catch (Exception e) {
-                            System.err.println("Failed to load visualization: " + className + " - " + e.getMessage());
-                        }
-                    }
-                }
-            }
+            scanPackageForVisualizations(basePackage, classLoader, visualizations);
         } catch (Exception e) {
             System.err.println("Error scanning for visualizations: " + e.getMessage());
         }
-
+        
         return visualizations;
+    }
+
+    private void scanPackageForVisualizations(String packageName, ClassLoader classLoader, 
+            List<IVisualizationHandler> visualizations) {
+        try {
+            String path = packageName.replace('.', '/');
+            java.net.URL resource = classLoader.getResource(path);
+            
+            if (resource == null) {
+                System.err.println("Package not found: " + packageName);
+                return;
+            }
+
+            if (resource.getProtocol().equals("jar")) {
+                // Handle JAR files
+                String jarPath = resource.getPath().substring(5, resource.getPath().indexOf("!"));
+                try (java.util.jar.JarFile jar = new java.util.jar.JarFile(java.net.URLDecoder.decode(jarPath, "UTF-8"))) {
+                    java.util.Enumeration<java.util.jar.JarEntry> entries = jar.entries();
+                    while (entries.hasMoreElements()) {
+                        String name = entries.nextElement().getName();
+                        if (name.startsWith(path) && name.endsWith(".class")) {
+                            String className = name.substring(0, name.length() - 6).replace('/', '.');
+                            processClass(className, visualizations);
+                        }
+                    }
+                }
+            } else {
+                // Handle directory structure
+                java.io.File directory = new java.io.File(resource.getFile());
+                if (directory.exists()) {
+                    scanDirectory(directory, packageName, visualizations);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error scanning package " + packageName + ": " + e.getMessage());
+        }
+    }
+
+    private void scanDirectory(java.io.File directory, String packageName, 
+            List<IVisualizationHandler> visualizations) {
+        java.io.File[] files = directory.listFiles();
+        if (files != null) {
+            for (java.io.File file : files) {
+                String fileName = file.getName();
+                if (file.isDirectory()) {
+                    // Recursive call for subdirectories
+                    scanDirectory(file, packageName + "." + fileName, visualizations);
+                } else if (fileName.endsWith(".class")) {
+                    // Process class files
+                    String className = packageName + "." + fileName.substring(0, fileName.length() - 6);
+                    processClass(className, visualizations);
+                }
+            }
+        }
+    }
+
+    private void processClass(String className, List<IVisualizationHandler> visualizations) {
+        try {
+            Class<?> cls = Class.forName(className);
+            if (IVisualizationHandler.class.isAssignableFrom(cls) &&
+                    !java.lang.reflect.Modifier.isAbstract(cls.getModifiers())) {
+                IVisualizationHandler handler = (IVisualizationHandler) cls.getDeclaredConstructor()
+                        .newInstance();
+                visualizations.add(handler);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to load visualization: " + className + " - " + e.getMessage());
+        }
     }
 
     private void initializeVisualizations() {

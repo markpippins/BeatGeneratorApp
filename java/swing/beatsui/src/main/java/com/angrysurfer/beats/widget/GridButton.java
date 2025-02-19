@@ -63,6 +63,8 @@ public class GridButton extends JButton {
 
     private void setup() {
         setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        setMinimumSize(getPreferredSize());
+        setMaximumSize(getPreferredSize());
         setBackground(colors[rand.nextInt(colors.length)]);
         setOpaque(true);
         setBorderPainted(true);

@@ -2,6 +2,8 @@ package com.angrysurfer.beats;
 
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -78,13 +80,26 @@ public class MenuBar extends JMenuBar {
         preferencesMenu.add(themeManager.createThemeMenu());
 
         commandBus.register(new CommandListener() {
-
             final boolean[] visualizationsEnabled = { false };
-
-            // Add Visualization submenu
             JMenu visualizationMenu = new JMenu("Visualization");
             final JMenuItem startVisualizationItem = new JMenuItem("Start Visualization");
             final JMenuItem stopVisualizationItem = new JMenuItem("Stop Visualization");
+            final List<VisualizationMenuItem> visualizationItems = new ArrayList<>();
+
+            private void rebuildVisualizationMenu() {
+                visualizationMenu.removeAll();
+                
+                // Add control items first
+                visualizationMenu.add(startVisualizationItem);
+                visualizationMenu.add(stopVisualizationItem);
+                visualizationMenu.addSeparator();
+                
+                // Sort and add visualization items
+                visualizationItems.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                for (VisualizationMenuItem item : visualizationItems) {
+                    visualizationMenu.add(item);
+                }
+            }
 
             public void onAction(Command action) {
                 if (action.getCommand() == null)
@@ -92,27 +107,25 @@ public class MenuBar extends JMenuBar {
 
                 switch (action.getCommand()) {
                     case Commands.VISUALIZATION_REGISTERED:
-
                         if (!visualizationsEnabled[0]) {
                             visualizationsEnabled[0] = true;
                             preferencesMenu.addSeparator();
-
-                            addMenuItem(visualizationMenu, startVisualizationItem, Commands.START_VISUALIZATION, null,
-                                    null);
-                            addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null,
-                                    null);
+                            
+                            addMenuItem(visualizationMenu, startVisualizationItem, Commands.START_VISUALIZATION, null, null);
+                            addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null, null);
                             preferencesMenu.add(visualizationMenu);
 
                             startVisualizationItem.setVisible(true);
                             stopVisualizationItem.setVisible(false);
                         }
 
-                        JMenuItem visualizationItem = new JMenuItem(
-                                ((IVisualizationHandler) action.getData()).getName());
-
-                        addMenuItem(visualizationMenu, visualizationItem, Commands.VISUALIZATION_SELECTED,
-                                action.getData(), null);
-
+                        IVisualizationHandler handler = (IVisualizationHandler) action.getData();
+                        VisualizationMenuItem newItem = new VisualizationMenuItem(handler.getName());
+                        addMenuItem(visualizationMenu, newItem, Commands.VISUALIZATION_SELECTED, handler, null);
+                        visualizationItems.add(newItem);
+                        
+                        // Rebuild menu with sorted items
+                        rebuildVisualizationMenu();
                         break;
 
                     case Commands.VISUALIZATION_STARTED:
@@ -176,4 +189,16 @@ public class MenuBar extends JMenuBar {
         menu.add(item);
     }
 
+    private static class VisualizationMenuItem extends JMenuItem {
+        private final String sortName;
+        
+        public VisualizationMenuItem(String name) {
+            super(name);
+            this.sortName = name.toLowerCase();
+        }
+        
+        public String getName() {
+            return sortName;
+        }
+    }
 }

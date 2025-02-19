@@ -5,7 +5,6 @@ import java.awt.Point;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class MapVisualization implements IVisualizationHandler {
