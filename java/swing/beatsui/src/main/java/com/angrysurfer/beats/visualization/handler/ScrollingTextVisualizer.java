@@ -5,9 +5,38 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class ScrollingTextVisualizer implements IVisualizationHandler {
     private int position = 0;
-    private static final String MESSAGE = "Your beats suck!";
+    private int currentMessageIndex = 0;
+    private static final List<String> MESSAGES = Arrays.asList(
+        "Eat at Joe's",
+        "Fresh Coffee Daily",
+        "Open 24 Hours",
+        "Sale Ends Sunday",
+        "Best Prices in Town",
+        "Free Wifi Inside",
+        "All You Can Eat",
+        "Grand Opening Soon",
+        "Under New Management",
+        "No Money Down",
+        "Buy One Get One Free",
+        "Limited Time Offer",
+        "Satisfaction Guaranteed",
+        "Now Hiring",
+        "Live Music Tonight",
+        "Happy Hour 4-7",
+        "Free Parking",
+        "No Purchase Necessary",
+        "Members Only",
+        "Cash Only",
+        "Credit Cards Welcome",
+        "Drive Thru Open",
+        "Call Now",
+        "While Supplies Last"
+    );
     private static final int CHAR_WIDTH = 4;
     private static final int CHAR_HEIGHT = 6;  // Changed from 5 to 6
     private static final int PADDING = 1;  // One row padding top and bottom
@@ -327,12 +356,13 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
             }
         }
 
+        String currentMessage = MESSAGES.get(currentMessageIndex);
         // Calculate the total width of the message
-        int messageWidth = MESSAGE.length() * (CHAR_WIDTH + 1) - 1;
+        int messageWidth = currentMessage.length() * (CHAR_WIDTH + 1) - 1;
         
         // Draw each character
-        for (int charIndex = 0; charIndex < MESSAGE.length(); charIndex++) {
-            int[][] charPattern = getCharacter(MESSAGE.charAt(charIndex));
+        for (int charIndex = 0; charIndex < currentMessage.length(); charIndex++) {
+            int[][] charPattern = getCharacter(currentMessage.charAt(charIndex));
             int startX = charIndex * (CHAR_WIDTH + 1) - position;
             
             // Skip if the character is completely off screen
@@ -352,7 +382,13 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
         }
 
         // Update position for next frame
-        position = (position + 1) % (messageWidth + buttons[0].length);
+        position = (position + 1);
+        
+        // If current message has scrolled completely off screen, move to next message
+        if (position > messageWidth + buttons[0].length) {
+            position = 0;
+            currentMessageIndex = (currentMessageIndex + 1) % MESSAGES.size();
+        }
     }
 
     @Override
