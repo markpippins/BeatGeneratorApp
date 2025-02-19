@@ -1,24 +1,22 @@
-package com.angrysurfer.beats.visualization.handler;
+package com.angrysurfer.beats.visualization.handler.classic;
 
-import java.awt.Color;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.Utils;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class ExplosionVisualization implements IVisualizationHandler {
+public class ConfettiVisualization implements IVisualizationHandler {
     private final Random random = new Random();
 
     @Override
     public void update(GridButton[][] buttons) {
         for (int row = 0; row < buttons.length; row++) {
             for (int col = 0; col < buttons[0].length; col++) {
-                if (random.nextInt(100) < 10) {
-                    buttons[row][col].setBackground(new Color(
-                            random.nextInt(156) + 100,
-                            random.nextInt(50),
-                            0));
-                } else {
+                if (random.nextInt(100) < 5) {
+                    buttons[row][col].setBackground(Utils.RAINBOW_COLORS[
+                        random.nextInt(Utils.RAINBOW_COLORS.length)]);
+                } else if (random.nextInt(100) < 10) {
                     buttons[row][col].setBackground(buttons[0][0].getParent().getBackground());
                 }
             }
@@ -27,6 +25,6 @@ public class ExplosionVisualization implements IVisualizationHandler {
 
     @Override
     public String getName() {
-        return "Explosion";
+        return "Confetti";
     }
 }

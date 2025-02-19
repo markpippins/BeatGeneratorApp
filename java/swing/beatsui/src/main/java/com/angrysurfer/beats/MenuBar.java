@@ -5,6 +5,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -98,19 +99,35 @@ public class MenuBar extends JMenuBar {
                 visualizationMenu.add(refreshVisualizationItem);
                 visualizationMenu.addSeparator();
                 
-                // Add category submenus
+                // Sort category menus alphabetically by label
                 categoryMenus.sort((a, b) -> a.getCategory().getLabel().compareToIgnoreCase(b.getCategory().getLabel()));
+                
+                // Process each category menu
                 for (CategoryMenuItem categoryMenu : categoryMenus) {
                     if (!categoryMenu.isEmpty()) {
+                        // Get all visualization items from this category
+                        List<VisualizationMenuItem> categoryItems = new ArrayList<>();
+                        for (int i = 0; i < categoryMenu.getItemCount(); i++) {
+                            if (categoryMenu.getItem(i) instanceof VisualizationMenuItem) {
+                                categoryItems.add((VisualizationMenuItem) categoryMenu.getItem(i));
+                            }
+                        }
+                        
+                        // Sort items within category alphabetically
+                        categoryItems.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                        
+                        // Clear and rebuild category menu with sorted items
+                        categoryMenu.removeAll();
+                        categoryItems.forEach(categoryMenu::add);
+                        
+                        // Add sorted category to main menu
                         visualizationMenu.add(categoryMenu);
                     }
                 }
                 
-                // Add default items directly to main menu
+                // Sort and add default items
                 defaultItems.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-                for (VisualizationMenuItem item : defaultItems) {
-                    visualizationMenu.add(item);
-                }
+                defaultItems.forEach(visualizationMenu::add);
             }
 
             private CategoryMenuItem findOrCreateCategoryMenu(VisualizationCategory category) {

@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.visualization.handler.game;
+package com.angrysurfer.beats.visualization.handler.arcade;
 
 import com.angrysurfer.beats.visualization.DisplayType;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
