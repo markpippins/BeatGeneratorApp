@@ -85,15 +85,17 @@ public class MenuBar extends JMenuBar {
             JMenu visualizationMenu = new JMenu("Visualization");
             final JMenuItem startVisualizationItem = new JMenuItem("Start Visualization");
             final JMenuItem stopVisualizationItem = new JMenuItem("Stop Visualization");
+            final JMenuItem refreshVisualizationItem = new JMenuItem("Refresh");
             final List<CategoryMenuItem> categoryMenus = new ArrayList<>();
             final List<VisualizationMenuItem> defaultItems = new ArrayList<>();
 
             private void rebuildVisualizationMenu() {
                 visualizationMenu.removeAll();
                 
-                // Add control items first
+                // Add control items at the top
                 visualizationMenu.add(startVisualizationItem);
                 visualizationMenu.add(stopVisualizationItem);
+                visualizationMenu.add(refreshVisualizationItem);
                 visualizationMenu.addSeparator();
                 
                 // Add category submenus
@@ -122,6 +124,23 @@ public class MenuBar extends JMenuBar {
                     });
             }
 
+            private void removeExistingHandler(IVisualizationHandler handler) {
+                // Remove from default items if present
+                defaultItems.removeIf(item -> item.getHandler().getName().equals(handler.getName()));
+                
+                // Remove from category menus if present
+                for (CategoryMenuItem categoryMenu : categoryMenus) {
+                    for (int i = 0; i < categoryMenu.getItemCount(); i++) {
+                        JMenuItem item = categoryMenu.getItem(i);
+                        if (item instanceof VisualizationMenuItem && 
+                            ((VisualizationMenuItem)item).getHandler().getName().equals(handler.getName())) {
+                            categoryMenu.remove(item);
+                            break;
+                        }
+                    }
+                }
+            }
+
             public void onAction(Command action) {
                 if (action.getCommand() == null) return;
 
@@ -133,14 +152,22 @@ public class MenuBar extends JMenuBar {
                             
                             addMenuItem(visualizationMenu, startVisualizationItem, Commands.START_VISUALIZATION, null, null);
                             addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null, null);
+                            addMenuItem(visualizationMenu, refreshVisualizationItem, 
+                                    Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED, null, null);
                             preferencesMenu.add(visualizationMenu);
 
                             startVisualizationItem.setVisible(true);
                             stopVisualizationItem.setVisible(false);
+                            refreshVisualizationItem.setVisible(true);
                         }
 
                         IVisualizationHandler handler = (IVisualizationHandler) action.getData();
-                        VisualizationMenuItem newItem = new VisualizationMenuItem(handler.getName());
+                        
+                        // Remove existing handler if present
+                        removeExistingHandler(handler);
+                        
+                        // Create new menu item
+                        VisualizationMenuItem newItem = new VisualizationMenuItem(handler.getName(), handler);
                         
                         if (handler.getVisualizationCategory() == VisualizationCategory.DEFAULT) {
                             addMenuItem(visualizationMenu, newItem, Commands.VISUALIZATION_SELECTED, handler, null);
@@ -234,14 +261,20 @@ public class MenuBar extends JMenuBar {
 
     private static class VisualizationMenuItem extends JMenuItem {
         private final String sortName;
+        private final IVisualizationHandler handler;
         
-        public VisualizationMenuItem(String name) {
+        public VisualizationMenuItem(String name, IVisualizationHandler handler) {
             super(name);
             this.sortName = name.toLowerCase();
+            this.handler = handler;
         }
         
         public String getName() {
             return sortName;
+        }
+        
+        public IVisualizationHandler getHandler() {
+            return handler;
         }
     }
 }

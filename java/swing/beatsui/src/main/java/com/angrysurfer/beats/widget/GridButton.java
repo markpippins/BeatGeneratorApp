@@ -23,6 +23,7 @@ public class GridButton extends JButton {
 
     private int row;
     private int col;
+    private boolean on;
 
     public GridButton() {
         super();
@@ -59,6 +60,12 @@ public class GridButton extends JButton {
 
     public int getCol() {
         return col;
+    }
+
+    public void setOn(boolean on) {
+        this.on = on;
+        setBackground(on ? Color.RED : Color.DARK_GRAY);
+        repaint();
     }
 
     private void setup() {

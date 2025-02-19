@@ -363,7 +363,8 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
         // Draw each character
         for (int charIndex = 0; charIndex < currentMessage.length(); charIndex++) {
             int[][] charPattern = getCharacter(currentMessage.charAt(charIndex));
-            int startX = charIndex * (CHAR_WIDTH + 1) - position;
+            // Start from the rightmost edge of the display
+            int startX = buttons[0].length + (charIndex * (CHAR_WIDTH + 1)) - position;
             
             // Skip if the character is completely off screen
             if (startX + CHAR_WIDTH <= 0 || startX >= buttons[0].length) continue;
@@ -385,7 +386,7 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
         position = (position + 1);
         
         // If current message has scrolled completely off screen, move to next message
-        if (position > messageWidth + buttons[0].length) {
+        if (position > messageWidth + buttons[0].length * 2) {  // Adjusted for new starting position
             position = 0;
             currentMessageIndex = (currentMessageIndex + 1) % MESSAGES.size();
         }

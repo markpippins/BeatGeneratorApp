@@ -62,8 +62,8 @@ public class Visualizer implements CommandListener {
             case Commands.START_VISUALIZATION:
                 startVisualizer();
                 isVisualizationMode = true;
-
                 break;
+
             case Commands.STOP_VISUALIZATION:
                 stopVisualizer();
                 isVisualizationMode = false;
@@ -73,14 +73,29 @@ public class Visualizer implements CommandListener {
                 startVisualizer((IVisualizationHandler) action.getData());
                 break;
 
+            case Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED:
+                refreshVisualizations();
+                break;
+        }
+    }
+
+    private void refreshVisualizations() {
+        visualizations.clear();
+        visualizations = getVisualizations();
+        for (IVisualizationHandler handler : visualizations) {
+            commandBus.publish(new Command(Commands.VISUALIZATION_REGISTERED, this, handler));
         }
     }
 
     private List<IVisualizationHandler> getVisualizations() {
         List<IVisualizationHandler> visualizations = new ArrayList<>();
-        String basePackage = "com.angrysurfer.beats";
         
         try {
+            // Get this class's package as the starting point
+            String basePackage = this.getClass().getPackage().getName();
+            // Go up one level to get the root package
+            basePackage = basePackage.substring(0, basePackage.lastIndexOf('.'));
+            
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             scanPackageForVisualizations(basePackage, classLoader, visualizations);
         } catch (Exception e) {
@@ -159,11 +174,7 @@ public class Visualizer implements CommandListener {
     }
 
     private void initializeVisualizations() {
-        visualizations = getVisualizations();
-        // Register visualizations with command bus
-        for (IVisualizationHandler handler : visualizations) {
-            commandBus.publish(new Command(Commands.VISUALIZATION_REGISTERED, this, handler));
-        }
+        refreshVisualizations();
     }
 
     private void setupTimers() {
