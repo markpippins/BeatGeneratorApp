@@ -9,13 +9,14 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
     private int position = 0;
     private static final String MESSAGE = "Your beats suck!";
     private static final int CHAR_WIDTH = 4;
-    private static final int CHAR_HEIGHT = 5;
+    private static final int CHAR_HEIGHT = 6;  // Changed from 5 to 6
     private static final int PADDING = 1;  // One row padding top and bottom
     
     // LED font definitions - 1 represents lit pixel, 0 represents unlit
     private static final int[][][] FONT = {
         // A
         {{0,1,1,0},
+         {1,0,0,1},
          {1,0,0,1},
          {1,1,1,1},
          {1,0,0,1},
@@ -25,9 +26,11 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
          {1,0,0,1},
          {1,1,1,0},
          {1,0,0,1},
+         {1,0,0,1},
          {1,1,1,0}},
         // C
         {{0,1,1,1},
+         {1,0,0,0},
          {1,0,0,0},
          {1,0,0,0},
          {1,0,0,0},
@@ -37,9 +40,11 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
          {1,0,0,1},
          {1,0,0,1},
          {1,0,0,1},
+         {1,0,0,1},
          {1,1,1,0}},
         // E
         {{1,1,1,1},
+         {1,0,0,0},
          {1,0,0,0},
          {1,1,1,0},
          {1,0,0,0},
@@ -47,17 +52,20 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
         // F
         {{1,1,1,1},
          {1,0,0,0},
+         {1,0,0,0},
          {1,1,1,0},
          {1,0,0,0},
          {1,0,0,0}},
         // G
         {{0,1,1,1},
          {1,0,0,0},
+         {1,0,0,0},
          {1,0,1,1},
          {1,0,0,1},
          {0,1,1,1}},
         // H
         {{1,0,0,1},
+         {1,0,0,1},
          {1,0,0,1},
          {1,1,1,1},
          {1,0,0,1},
@@ -67,9 +75,11 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
          {0,1,0,0},
          {0,1,0,0},
          {0,1,0,0},
+         {0,1,0,0},
          {1,1,1,0}},
         // J
         {{0,0,1,1},
+         {0,0,0,1},
          {0,0,0,1},
          {0,0,0,1},
          {1,0,0,1},
@@ -78,10 +88,12 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
         {{1,0,0,1},
          {1,0,1,0},
          {1,1,0,0},
+         {1,1,0,0},
          {1,0,1,0},
          {1,0,0,1}},
         // L
         {{1,0,0,0},
+         {1,0,0,0},
          {1,0,0,0},
          {1,0,0,0},
          {1,0,0,0},
@@ -91,21 +103,25 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
          {1,1,1,1},
          {1,0,0,1},
          {1,0,0,1},
+         {1,0,0,1},
          {1,0,0,1}},
         // N
         {{1,0,0,1},
          {1,1,0,1},
+         {1,1,0,1},
          {1,0,1,1},
-         {1,0,0,1},
+         {1,0,1,1},
          {1,0,0,1}},
         // O
         {{0,1,1,0},
          {1,0,0,1},
          {1,0,0,1},
          {1,0,0,1},
+         {1,0,0,1},
          {0,1,1,0}},
         // P
         {{1,1,1,0},
+         {1,0,0,1},
          {1,0,0,1},
          {1,1,1,0},
          {1,0,0,0},
@@ -114,16 +130,19 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
         {{0,1,1,0},
          {1,0,0,1},
          {1,0,0,1},
+         {1,0,0,1},
          {1,0,1,0},
          {0,1,0,1}},
         // R
         {{1,1,1,0},
+         {1,0,0,1},
          {1,0,0,1},
          {1,1,1,0},
          {1,0,1,0},
          {1,0,0,1}},
         // S
         {{0,1,1,1},
+         {1,0,0,0},
          {1,0,0,0},
          {0,1,1,0},
          {0,0,0,1},
@@ -133,9 +152,11 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
          {0,1,0,0},
          {0,1,0,0},
          {0,1,0,0},
+         {0,1,0,0},
          {0,1,0,0}},
         // U
         {{1,0,0,1},
+         {1,0,0,1},
          {1,0,0,1},
          {1,0,0,1},
          {1,0,0,1},
@@ -144,34 +165,40 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
         {{1,0,0,1},
          {1,0,0,1},
          {1,0,0,1},
+         {1,0,0,1},
          {0,1,1,0},
          {0,0,1,0}},
         // W
         {{1,0,0,1},
          {1,0,0,1},
          {1,0,0,1},
+         {1,0,0,1},
          {1,1,1,1},
          {0,1,1,0}},
         // X
         {{1,0,0,1},
+         {1,0,0,1},
          {0,1,1,0},
          {0,1,1,0},
-         {0,1,1,0},
+         {1,0,0,1},
          {1,0,0,1}},
         // Y
         {{1,0,0,1},
+         {1,0,0,1},
          {0,1,1,0},
          {0,1,0,0},
          {0,1,0,0},
          {0,1,0,0}},
         // Z
         {{1,1,1,1},
+         {0,0,0,1},
          {0,0,1,0},
          {0,1,0,0},
          {1,0,0,0},
          {1,1,1,1}},
         // 0
         {{0,1,1,0},
+         {1,0,0,1},
          {1,0,1,1},
          {1,1,0,1},
          {1,0,0,1},
@@ -181,17 +208,20 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
          {1,1,0,0},
          {0,1,0,0},
          {0,1,0,0},
+         {0,1,0,0},
          {1,1,1,0}},
         // 2
         {{0,1,1,0},
          {1,0,0,1},
          {0,0,1,0},
          {0,1,0,0},
+         {1,0,0,0},
          {1,1,1,1}},
         // 3
         {{1,1,1,0},
          {0,0,0,1},
          {0,1,1,0},
+         {0,0,0,1},
          {0,0,0,1},
          {1,1,1,0}},
         // 4
@@ -199,11 +229,13 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
          {1,0,0,1},
          {1,1,1,1},
          {0,0,0,1},
+         {0,0,0,1},
          {0,0,0,1}},
         // 5
         {{1,1,1,1},
          {1,0,0,0},
          {1,1,1,0},
+         {0,0,0,1},
          {0,0,0,1},
          {1,1,1,0}},
         // 6
@@ -211,11 +243,13 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
          {1,0,0,0},
          {1,1,1,0},
          {1,0,0,1},
+         {1,0,0,1},
          {0,1,1,0}},
         // 7
         {{1,1,1,1},
          {0,0,0,1},
          {0,0,1,0},
+         {0,1,0,0},
          {0,1,0,0},
          {0,1,0,0}},
         // 8
@@ -223,15 +257,18 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
          {1,0,0,1},
          {0,1,1,0},
          {1,0,0,1},
+         {1,0,0,1},
          {0,1,1,0}},
         // 9
         {{0,1,1,0},
          {1,0,0,1},
          {0,1,1,1},
          {0,0,0,1},
+         {0,0,0,1},
          {0,1,1,0}},
         // space
         {{0,0,0,0},
+         {0,0,0,0},
          {0,0,0,0},
          {0,0,0,0},
          {0,0,0,0},
@@ -241,9 +278,11 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
          {0,0,0,0},
          {0,0,0,0},
          {0,0,0,0},
+         {0,0,0,0},
          {0,1,0,0}},
         // !
         {{0,1,0,0},
+         {0,1,0,0},
          {0,1,0,0},
          {0,1,0,0},
          {0,0,0,0},
@@ -252,8 +291,9 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
         {{0,1,1,0},
          {1,0,0,1},
          {0,0,1,0},
+         {0,1,0,0},
          {0,0,0,0},
-         {0,0,1,0}}
+         {0,1,0,0}}
     };
 
     private static final int[][] getCharacter(char c) {

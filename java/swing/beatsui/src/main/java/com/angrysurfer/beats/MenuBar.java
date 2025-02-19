@@ -12,6 +12,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
@@ -84,7 +85,8 @@ public class MenuBar extends JMenuBar {
             JMenu visualizationMenu = new JMenu("Visualization");
             final JMenuItem startVisualizationItem = new JMenuItem("Start Visualization");
             final JMenuItem stopVisualizationItem = new JMenuItem("Stop Visualization");
-            final List<VisualizationMenuItem> visualizationItems = new ArrayList<>();
+            final List<CategoryMenuItem> categoryMenus = new ArrayList<>();
+            final List<VisualizationMenuItem> defaultItems = new ArrayList<>();
 
             private void rebuildVisualizationMenu() {
                 visualizationMenu.removeAll();
@@ -94,16 +96,34 @@ public class MenuBar extends JMenuBar {
                 visualizationMenu.add(stopVisualizationItem);
                 visualizationMenu.addSeparator();
                 
-                // Sort and add visualization items
-                visualizationItems.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-                for (VisualizationMenuItem item : visualizationItems) {
+                // Add category submenus
+                categoryMenus.sort((a, b) -> a.getCategory().getLabel().compareToIgnoreCase(b.getCategory().getLabel()));
+                for (CategoryMenuItem categoryMenu : categoryMenus) {
+                    if (!categoryMenu.isEmpty()) {
+                        visualizationMenu.add(categoryMenu);
+                    }
+                }
+                
+                // Add default items directly to main menu
+                defaultItems.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                for (VisualizationMenuItem item : defaultItems) {
                     visualizationMenu.add(item);
                 }
             }
 
+            private CategoryMenuItem findOrCreateCategoryMenu(VisualizationCategory category) {
+                return categoryMenus.stream()
+                    .filter(menu -> menu.getCategory() == category)
+                    .findFirst()
+                    .orElseGet(() -> {
+                        CategoryMenuItem newMenu = new CategoryMenuItem(category);
+                        categoryMenus.add(newMenu);
+                        return newMenu;
+                    });
+            }
+
             public void onAction(Command action) {
-                if (action.getCommand() == null)
-                    return;
+                if (action.getCommand() == null) return;
 
                 switch (action.getCommand()) {
                     case Commands.VISUALIZATION_REGISTERED:
@@ -121,8 +141,14 @@ public class MenuBar extends JMenuBar {
 
                         IVisualizationHandler handler = (IVisualizationHandler) action.getData();
                         VisualizationMenuItem newItem = new VisualizationMenuItem(handler.getName());
-                        addMenuItem(visualizationMenu, newItem, Commands.VISUALIZATION_SELECTED, handler, null);
-                        visualizationItems.add(newItem);
+                        
+                        if (handler.getVisualizationCategory() == VisualizationCategory.DEFAULT) {
+                            addMenuItem(visualizationMenu, newItem, Commands.VISUALIZATION_SELECTED, handler, null);
+                            defaultItems.add(newItem);
+                        } else {
+                            CategoryMenuItem categoryMenu = findOrCreateCategoryMenu(handler.getVisualizationCategory());
+                            addMenuItem(categoryMenu, newItem, Commands.VISUALIZATION_SELECTED, handler, null);
+                        }
                         
                         // Rebuild menu with sorted items
                         rebuildVisualizationMenu();
@@ -187,6 +213,23 @@ public class MenuBar extends JMenuBar {
             }
         });
         menu.add(item);
+    }
+
+    private static class CategoryMenuItem extends JMenu {
+        private final VisualizationCategory category;
+        
+        public CategoryMenuItem(VisualizationCategory category) {
+            super(category.getLabel());
+            this.category = category;
+        }
+        
+        public VisualizationCategory getCategory() {
+            return category;
+        }
+        
+        public boolean isEmpty() {
+            return getItemCount() == 0;
+        }
     }
 
     private static class VisualizationMenuItem extends JMenuItem {
