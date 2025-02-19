@@ -58,6 +58,10 @@ public class Commands {
     public static final String RULE_EDIT_REQUEST = "RULE_EDIT_REQUEST";
     public static final String RULE_DELETE_REQUEST = "RULE_DELETE_REQUEST";
 
+    // Additional Rule events
+    public static final String RULE_LOADED = "RULE_LOADED";
+    public static final String RULES_CLEARED = "RULES_CLEARED";
+
     // Rule editor commands
     public static final String SHOW_RULE_EDITOR = "SHOW_RULE_EDITOR";
     public static final String SHOW_RULE_EDITOR_OK = "SHOW_RULE_EDITOR_OK";

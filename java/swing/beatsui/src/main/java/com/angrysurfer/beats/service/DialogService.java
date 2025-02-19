@@ -156,7 +156,7 @@ public class DialogService implements CommandListener {
     private void handleAddRule(ProxyStrike player) {
         if (player != null) {
             SwingUtilities.invokeLater(() -> {
-                ProxyRule newRule = new ProxyRule();
+                ProxyRule newRule = redisService.newRule();
                 RuleEditPanel panel = new RuleEditPanel(newRule);
                 Dialog<ProxyRule> dialog = frame.createDialog(newRule, panel);
                 dialog.setTitle("Add Rule");
@@ -164,9 +164,10 @@ public class DialogService implements CommandListener {
                 if (dialog.showDialog()) {
                     ProxyRule updatedRule = panel.getUpdatedRule();
                     redisService.addRuleToPlayer(player, updatedRule);
-
-                    // Notify about rule update
-                    commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+                    commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                } else {
+                    // If canceled, use removeRuleFromPlayer instead of direct delete
+                    redisService.removeRuleFromPlayer(player, newRule);
                 }
             });
         }

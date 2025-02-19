@@ -12,6 +12,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.JLabel;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -83,6 +85,13 @@ public class RulesPanel extends JPanel {
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
         table.setModel(model);
         
+        // Center align all columns
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+        
         // Change selection mode to allow multiple selections
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         
@@ -101,19 +110,23 @@ public class RulesPanel extends JPanel {
             switch (e.getActionCommand()) {
                 case Commands.RULE_ADD_REQUEST -> {
                     if (currentPlayer != null) {
-                        CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, currentPlayer);
+                        // Send RuleActionData with player and null rule for new rule
+                        CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this,
+                            new RuleActionData(currentPlayer, null));
                     }
                 }
                 case Commands.RULE_EDIT_REQUEST -> {
-                    ProxyRule[] selectedRules = getSelectedRules();
-                    if (selectedRules.length > 0) {
-                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRules[0]);
+                    ProxyRule selectedRule = getSelectedRule();
+                    if (selectedRule != null) {
+                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
                     }
                 }
                 case Commands.RULE_DELETE_REQUEST -> {
-                    ProxyRule[] selectedRules = getSelectedRules();
-                    if (selectedRules.length > 0) {
-                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, selectedRules);
+                    // For single selection, convert to array
+                    ProxyRule selectedRule = getSelectedRule();
+                    if (selectedRule != null) {
+                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, 
+                            new ProxyRule[]{selectedRule});
                     }
                 }
             }
@@ -184,7 +197,9 @@ public class RulesPanel extends JPanel {
                     case Commands.PLAYER_UPDATED -> {
                         if (action.getData() instanceof ProxyStrike player && 
                             player.equals(currentPlayer)) {
+                            currentPlayer = player; // Update reference
                             loadRules(player);
+                            CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this);
                         }
                     }
                     case Commands.PLAYER_UNSELECTED -> {
@@ -192,13 +207,31 @@ public class RulesPanel extends JPanel {
                         clearRules();
                         updateButtonStates();
                     }
+                    case Commands.RULE_SELECTED -> {
+                        if (action.getData() instanceof ProxyRule rule) {
+                            // Find and select the rule in the table
+                            int index = findRuleIndex(rule);
+                            if (index >= 0) {
+                                table.setRowSelectionInterval(index, index);
+                                table.scrollRectToVisible(table.getCellRect(index, 0, true));
+                            }
+                        }
+                    }
                 }
             }
         });
 
-        // Update button states on selection
+        // Update selection listener to use command bus
         table.getSelectionModel().addListSelectionListener(e -> {
-            updateButtonStates();
+            if (!e.getValueIsAdjusting()) {
+                ProxyRule selectedRule = getSelectedRule();
+                if (selectedRule != null) {
+                    CommandBus.getInstance().publish(Commands.RULE_SELECTED, this, selectedRule);
+                } else {
+                    CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this);
+                }
+                updateButtonStates();
+            }
         });
     }
 
@@ -227,15 +260,15 @@ public class RulesPanel extends JPanel {
         int[] selectedRows = table.getSelectedRows();
         List<ProxyRule> rules = new ArrayList<>();
         
-        for (int row : selectedRows) {
-            int modelRow = table.convertRowIndexToModel(row);
-            ProxyRule rule = ProxyRule.fromRow(new Object[] {
-                table.getValueAt(modelRow, 0),
-                table.getValueAt(modelRow, 1),
-                table.getValueAt(modelRow, 2),
-                table.getValueAt(modelRow, 3)
-            });
-            rules.add(rule);
+        if (currentPlayer != null && currentPlayer.getRules() != null) {
+            List<ProxyRule> playerRules = new ArrayList<>(currentPlayer.getRules());
+            for (int row : selectedRows) {
+                // Use model index to get correct rule when table is sorted
+                int modelRow = table.convertRowIndexToModel(row);
+                if (modelRow < playerRules.size()) {
+                    rules.add(playerRules.get(modelRow));
+                }
+            }
         }
         return rules.toArray(new ProxyRule[0]);
     }
@@ -255,10 +288,24 @@ public class RulesPanel extends JPanel {
                     ProxyRule.OPERATORS[rule.getOperator()],
                     ProxyRule.COMPARISONS[rule.getComparison()],
                     rule.getValue(),
-                    rule.getPart()
+                    rule.getPart() == 0 ? "All" : rule.getPart()
                 });
+                // Notify that a rule was loaded
+                CommandBus.getInstance().publish(Commands.RULE_ADDED, this, rule);
             }
         }
+    }
+
+    private int findRuleIndex(ProxyRule rule) {
+        if (currentPlayer != null && currentPlayer.getRules() != null) {
+            List<ProxyRule> rules = new ArrayList<>(currentPlayer.getRules());
+            for (int i = 0; i < rules.size(); i++) {
+                if (rules.get(i).getId().equals(rule.getId())) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     // Helper class for rule actions

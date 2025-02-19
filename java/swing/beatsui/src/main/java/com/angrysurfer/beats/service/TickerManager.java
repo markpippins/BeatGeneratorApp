@@ -66,20 +66,20 @@ public class TickerManager {
                     case Commands.RULE_DELETE_REQUEST -> {
                         if (action.getData() instanceof ProxyRule[] rules) {
                             RedisService redis = RedisService.getInstance();
-                            // Track which players were affected
-                            Set<ProxyStrike> affectedPlayers = new HashSet<>();
-                            
-                            for (ProxyRule rule : rules) {
-                                ProxyStrike player = redis.findPlayerForRule(rule);
-                                if (player != null) {
+                            ProxyStrike player = redis.findPlayerForRule(rules[0]);
+                            if (player != null) {
+                                for (ProxyRule rule : rules) {
                                     redis.removeRuleFromPlayer(player, rule);
-                                    affectedPlayers.add(player);
                                 }
-                            }
-                            
-                            // Notify UI of updates for each affected player
-                            for (ProxyStrike player : affectedPlayers) {
-                                commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                                // Get fresh state of both player and ticker
+                                player = redis.findPlayerById(player.getId());
+                                activeTicker = redis.findTickerById(activeTicker.getId());
+                                
+                                // Notify UI of updates in correct order:
+                                // 1. Update ticker (updates player list)
+                                commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
+                                // 2. Re-select the player (refreshes rules panel)
+                                commandBus.publish(Commands.PLAYER_SELECTED, this, player);
                             }
                         }
                     }

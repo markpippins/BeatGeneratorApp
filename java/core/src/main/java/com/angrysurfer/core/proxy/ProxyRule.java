@@ -120,7 +120,16 @@ public class ProxyRule implements Serializable {
         }
         
         rule.setValue(((Number) row[2]).doubleValue());
-        rule.setPart((Integer) row[3]);
+        
+        // Handle "All" for part value
+        Object partValue = row[3];
+        if (partValue instanceof String && "All".equals(partValue)) {
+            rule.setPart(0);
+        } else if (partValue instanceof Number) {
+            rule.setPart(((Number) partValue).intValue());
+        } else {
+            rule.setPart(Integer.parseInt(partValue.toString()));
+        }
         
         logger.debug("Created rule from row - Operator: {}, Comparison: {}, Value: {}, Part: {}",
             rule.getOperator(), rule.getComparison(), rule.getValue(), rule.getPart());

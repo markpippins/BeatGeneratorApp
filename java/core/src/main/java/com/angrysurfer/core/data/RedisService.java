@@ -386,10 +386,28 @@ public class RedisService implements CommandListener {
         try (Jedis jedis = jedisPool.getResource()) {
             String rulesKey = "player:" + player.getId() + ":rules";
             jedis.srem(rulesKey, rule.getId().toString());
+            
+            // Update player's rules set
             if (player.getRules() != null) {
                 player.getRules().remove(rule);
             }
-            deleteRule(rule.getId());
+            
+            // Delete the actual rule from Redis
+            jedis.del("proxyrule:" + rule.getId());
+            
+            // Save player state
+            savePlayer(player);
+            
+            // Find and update player in its ticker's player list
+            if (player.getTicker() != null) {
+                ProxyTicker ticker = player.getTicker();
+                ticker.getPlayers().stream()
+                    .filter(p -> p.getId().equals(player.getId()))
+                    .findFirst()
+                    .ifPresent(p -> {
+                        ((ProxyStrike)p).setRules(player.getRules());
+                    });
+            }
         }
     }
 
@@ -403,7 +421,7 @@ public class RedisService implements CommandListener {
         }
     }
 
-    private void deleteRule(Long ruleId) {
+    public void deleteRule(Long ruleId) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.del("rule:" + ruleId);
         }

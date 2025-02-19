@@ -9,13 +9,11 @@ import java.awt.Insets;
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.SpinnerListModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.text.DefaultFormatterFactory;
-import javax.swing.text.NumberFormatter;
 
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyRule;
@@ -38,48 +36,23 @@ public class RuleEditPanel extends StatusProviderPanel {
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         operatorCombo = new JComboBox<>(ProxyRule.OPERATORS);
-        operatorCombo.setSelectedIndex(rule.getOperator());
-
         comparisonCombo = new JComboBox<>(ProxyRule.COMPARISONS);
-        comparisonCombo.setSelectedIndex(rule.getComparison());
+        valueSpinner = new JSpinner(new SpinnerNumberModel(1.0, 0.0, 100.0, 0.5));  // Changed default to 1.0
 
-        valueSpinner = new JSpinner(new SpinnerNumberModel(
-                rule.getValue().doubleValue(),
-                0.0d,
-                100.0d,
-                1.0d));
+        // Special SpinnerListModel for Part with "All" option
+        String[] partValues = new String[17]; // 0-16 where 0 is "All"
+        partValues[0] = "All";
+        for (int i = 1; i < 17; i++) {
+            partValues[i] = String.valueOf(i);
+        }
+        partSpinner = new JSpinner(new SpinnerListModel(partValues));
 
-        // Setup part spinner with custom formatter
-        SpinnerNumberModel partModel = new SpinnerNumberModel(
-                Integer.valueOf(rule.getPart()),  // current value as Integer
-                Integer.valueOf(0),               // minimum as Integer
-                Integer.valueOf(16),              // maximum as Integer
-                Integer.valueOf(1)                // step size as Integer
-        );
-        partSpinner = new JSpinner(partModel);
-        JSpinner.NumberEditor editor = new JSpinner.NumberEditor(partSpinner);
-        partSpinner.setEditor(editor);
-
-        // Create a basic NumberFormatter
-        NumberFormatter formatter = new NumberFormatter();
-        // Allow negative values in case needed
-        formatter.setMinimum(0);
-        formatter.setMaximum(16);
-        // Override the format method to show "All" for 0
-        formatter.setFormat(new java.text.DecimalFormat() {
-            @Override
-            public StringBuffer format(double number, StringBuffer result, java.text.FieldPosition fieldPosition) {
-                if (number == ProxyRule.ALL_PARTS) {
-                    result.append("All");
-                } else {
-                    super.format(number, result, fieldPosition);
-                }
-                return result;
-            }
-        });
-
-        JFormattedTextField ftf = ((JSpinner.DefaultEditor) partSpinner.getEditor()).getTextField();
-        ftf.setFormatterFactory(new DefaultFormatterFactory(formatter));
+        if (rule != null) {
+            operatorCombo.setSelectedIndex(rule.getOperator());
+            comparisonCombo.setSelectedIndex(rule.getComparison());
+            valueSpinner.setValue(rule.getValue());
+            partSpinner.setValue(rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart()));
+        }
 
         layoutComponents();
         setPreferredSize(new Dimension(300, 350));
@@ -112,7 +85,12 @@ public class RuleEditPanel extends StatusProviderPanel {
         rule.setOperator(operatorCombo.getSelectedIndex());
         rule.setComparison(comparisonCombo.getSelectedIndex());
         rule.setValue((Double) valueSpinner.getValue());
-        rule.setPart((Integer) partSpinner.getValue());
+        
+        // Convert "All" to 0, otherwise parse the string to integer
+        String partValue = (String) partSpinner.getValue();
+        int part = "All".equals(partValue) ? 0 : Integer.parseInt(partValue);
+        rule.setPart(part);
+        
         return rule;
     }
 }
