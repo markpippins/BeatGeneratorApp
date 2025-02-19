@@ -57,6 +57,7 @@ public class Commands {
     public static final String RULE_ADD_REQUEST = "RULE_ADD_REQUEST";
     public static final String RULE_EDIT_REQUEST = "RULE_EDIT_REQUEST";
     public static final String RULE_DELETE_REQUEST = "RULE_DELETE_REQUEST";
+    public static final String RULE_UPDATED = "RULE_UPDATED";  // Add this line
 
     // Additional Rule events
     public static final String RULE_LOADED = "RULE_LOADED";

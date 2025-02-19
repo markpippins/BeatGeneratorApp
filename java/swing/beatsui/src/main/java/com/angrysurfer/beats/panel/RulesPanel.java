@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
@@ -30,7 +31,7 @@ import lombok.Setter;
 @Setter
 public class RulesPanel extends JPanel {
     private static final Logger logger = Logger.getLogger(RulesPanel.class.getName());
-    
+
     private final JTable table;
     private final StatusConsumer status;
     private final ButtonPanel buttonPanel;
@@ -42,16 +43,14 @@ public class RulesPanel extends JPanel {
         this.status = status;
         this.table = new JTable();
         this.buttonPanel = new ButtonPanel(
-            Commands.RULE_ADD_REQUEST,
-            Commands.RULE_EDIT_REQUEST,
-            Commands.RULE_DELETE_REQUEST
-        );
+                Commands.RULE_ADD_REQUEST,
+                Commands.RULE_EDIT_REQUEST,
+                Commands.RULE_DELETE_REQUEST);
         this.contextMenu = new ContextMenuHelper(
-            Commands.RULE_ADD_REQUEST,
-            Commands.RULE_EDIT_REQUEST,
-            Commands.RULE_DELETE_REQUEST
-        );
-        
+                Commands.RULE_ADD_REQUEST,
+                Commands.RULE_EDIT_REQUEST,
+                Commands.RULE_DELETE_REQUEST);
+
         setupTable();
         setupLayout();
         setupCommandBusListener();
@@ -60,47 +59,45 @@ public class RulesPanel extends JPanel {
 
     }
 
-
-
     private void setupLayout() {
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(buttonPanel, BorderLayout.NORTH);
-        
+
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         add(topPanel, BorderLayout.NORTH);
-        
+
         // Wrap the scroll pane in a panel that respects preferred size
         JScrollPane scrollPane = new JScrollPane(table);
         JPanel tableWrapper = new JPanel(new BorderLayout());
         tableWrapper.add(scrollPane);
-        
+
         // Make the panel use the minimum width needed
         tableWrapper.setPreferredSize(buttonPanel.getPreferredSize());
-        
+
         add(tableWrapper, BorderLayout.CENTER);
     }
 
     private void setupTable() {
-        String[] columnNames = {"Operator", "Comparison", "Value", "Part"};
+        String[] columnNames = { "Operator", "Comparison", "Value", "Part" };
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
         table.setModel(model);
-        
+
         // Center align all columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         for (int i = 0; i < table.getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
-        
+
         // Change selection mode to allow multiple selections
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        
+
         // Set very small initial column widths
         table.getColumnModel().getColumn(0).setPreferredWidth(60); // Operator
         table.getColumnModel().getColumn(1).setPreferredWidth(60); // Comparison
         table.getColumnModel().getColumn(2).setPreferredWidth(40); // Value
         table.getColumnModel().getColumn(3).setPreferredWidth(40); // Part
-        
+
         // Allow table to be smaller than the sum of column widths
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
     }
@@ -109,10 +106,8 @@ public class RulesPanel extends JPanel {
         buttonPanel.addActionListener(e -> {
             switch (e.getActionCommand()) {
                 case Commands.RULE_ADD_REQUEST -> {
-                    if (currentPlayer != null) {
-                        // Send RuleActionData with player and null rule for new rule
-                        CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this,
-                            new RuleActionData(currentPlayer, null));
+                    if (Objects.nonNull(currentPlayer)) {
+                        CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, currentPlayer);
                     }
                 }
                 case Commands.RULE_EDIT_REQUEST -> {
@@ -122,11 +117,10 @@ public class RulesPanel extends JPanel {
                     }
                 }
                 case Commands.RULE_DELETE_REQUEST -> {
-                    // For single selection, convert to array
                     ProxyRule selectedRule = getSelectedRule();
                     if (selectedRule != null) {
-                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, 
-                            new ProxyRule[]{selectedRule});
+                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this,
+                                new ProxyRule[] { selectedRule });
                     }
                 }
             }
@@ -136,7 +130,7 @@ public class RulesPanel extends JPanel {
         contextMenu.addActionListener(e -> {
             switch (e.getActionCommand()) {
                 case Commands.RULE_ADD_REQUEST -> {
-                    if (currentPlayer != null) {
+                    if (Objects.nonNull(currentPlayer)) {
                         CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, currentPlayer);
                     }
                 }
@@ -159,14 +153,26 @@ public class RulesPanel extends JPanel {
     private void setupContextMenu() {
         contextMenu.install(table);
         contextMenu.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
-            ProxyRule selectedRule = selectedRow >= 0 ? getSelectedRule() : null;
-            
-            CommandBus.getInstance().publish(
-                e.getActionCommand(),
-                this,
-                new RuleActionData(currentPlayer, selectedRule)
-            );
+            switch (e.getActionCommand()) {
+                case Commands.RULE_ADD_REQUEST -> {
+                    if (Objects.nonNull(currentPlayer)) {
+                        CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, currentPlayer);
+                    }
+                }
+                case Commands.RULE_EDIT_REQUEST -> {
+                    ProxyRule selectedRule = getSelectedRule();
+                    if (selectedRule != null) {
+                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
+                    }
+                }
+                case Commands.RULE_DELETE_REQUEST -> {
+                    ProxyRule selectedRule = getSelectedRule();
+                    if (selectedRule != null) {
+                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this,
+                                new ProxyRule[] { selectedRule });
+                    }
+                }
+            }
         });
     }
 
@@ -185,7 +191,7 @@ public class RulesPanel extends JPanel {
                             currentPlayer = player;
                             loadRules(player);
                             updateButtonStates();
-                            
+
                             // Auto-select first rule if available
                             if (player.getRules() != null && !player.getRules().isEmpty()) {
                                 table.setRowSelectionInterval(0, 0);
@@ -195,12 +201,18 @@ public class RulesPanel extends JPanel {
                         }
                     }
                     case Commands.PLAYER_UPDATED -> {
-                        if (action.getData() instanceof ProxyStrike player && 
-                            player.equals(currentPlayer)) {
-                            currentPlayer = player; // Update reference
-                            loadRules(player);
-                            CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this);
+
+                        try {
+                            if (action.getData() instanceof ProxyStrike player && (Objects.isNull(currentPlayer)
+                                    || player.getId().equals(currentPlayer.getId()))) {
+                                currentPlayer = player; // Update reference
+                                loadRules(player);
+                                // CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this);
+                            }
+                        } catch (Exception e) {
+                            logger.severe("Error updating player: " + e.getMessage());
                         }
+
                     }
                     case Commands.PLAYER_UNSELECTED -> {
                         currentPlayer = null;
@@ -236,13 +248,13 @@ public class RulesPanel extends JPanel {
     }
 
     private void updateButtonStates() {
-        boolean hasPlayer = currentPlayer != null;
+        boolean hasPlayer = Objects.nonNull(currentPlayer);
         boolean hasSelection = table.getSelectedRow() >= 0;
-        
+
         buttonPanel.setAddEnabled(hasPlayer);
         buttonPanel.setEditEnabled(hasSelection);
         buttonPanel.setDeleteEnabled(hasSelection);
-        
+
         contextMenu.setAddEnabled(hasPlayer);
         contextMenu.setEditEnabled(hasSelection);
         contextMenu.setDeleteEnabled(hasSelection);
@@ -250,7 +262,7 @@ public class RulesPanel extends JPanel {
 
     private ProxyRule getSelectedRule() {
         int row = table.getSelectedRow();
-        if (row >= 0 && currentPlayer != null) {
+        if (row >= 0 && Objects.nonNull(currentPlayer) && Objects.nonNull(currentPlayer.getRules())) {
             return new ArrayList<>(currentPlayer.getRules()).get(row);
         }
         return null;
@@ -259,8 +271,8 @@ public class RulesPanel extends JPanel {
     private ProxyRule[] getSelectedRules() {
         int[] selectedRows = table.getSelectedRows();
         List<ProxyRule> rules = new ArrayList<>();
-        
-        if (currentPlayer != null && currentPlayer.getRules() != null) {
+
+        if (Objects.nonNull(currentPlayer) && Objects.nonNull(currentPlayer.getRules())) {
             List<ProxyRule> playerRules = new ArrayList<>(currentPlayer.getRules());
             for (int row : selectedRows) {
                 // Use model index to get correct rule when table is sorted
@@ -281,14 +293,14 @@ public class RulesPanel extends JPanel {
     public void loadRules(ProxyStrike player) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
-        
-        if (player != null && player.getRules() != null) {
+
+        if (Objects.nonNull(player) && Objects.nonNull(player.getRules())) {
             for (ProxyRule rule : player.getRules()) {
-                model.addRow(new Object[]{
-                    ProxyRule.OPERATORS[rule.getOperator()],
-                    ProxyRule.COMPARISONS[rule.getComparison()],
-                    rule.getValue(),
-                    rule.getPart() == 0 ? "All" : rule.getPart()
+                model.addRow(new Object[] {
+                        ProxyRule.OPERATORS[rule.getOperator()],
+                        ProxyRule.COMPARISONS[rule.getComparison()],
+                        rule.getValue(),
+                        rule.getPart() == 0 ? "All" : rule.getPart()
                 });
                 // Notify that a rule was loaded
                 CommandBus.getInstance().publish(Commands.RULE_ADDED, this, rule);
@@ -297,17 +309,15 @@ public class RulesPanel extends JPanel {
     }
 
     private int findRuleIndex(ProxyRule rule) {
-        if (currentPlayer != null && currentPlayer.getRules() != null) {
+        if (Objects.nonNull(currentPlayer) && Objects.nonNull(currentPlayer.getRules()) && Objects.nonNull(rule)) {
             List<ProxyRule> rules = new ArrayList<>(currentPlayer.getRules());
             for (int i = 0; i < rules.size(); i++) {
-                if (rules.get(i).getId().equals(rule.getId())) {
+                if (Objects.nonNull(rules.get(i)) && Objects.nonNull(rules.get(i).getId()) &&
+                        rules.get(i).getId().equals(rule.getId())) {
                     return i;
                 }
             }
         }
         return -1;
     }
-
-    // Helper class for rule actions
-    public record RuleActionData(ProxyStrike player, ProxyRule rule) {}
 }

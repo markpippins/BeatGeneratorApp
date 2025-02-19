@@ -18,8 +18,6 @@ public class ProxyStrike extends ProxyAbstractPlayer implements Serializable {
 
     private static final Logger logger = LoggerFactory.getLogger(ProxyStrike.class.getCanonicalName());
 
-    private Long id;
-
     static final Random rand = new Random();
 
     public static long KICK = 36;

@@ -43,21 +43,10 @@ public class DialogService implements CommandListener {
     public void onAction(Command action) {
         logger.info("DialogService received command: " + action.getCommand());
         switch (action.getCommand()) {
-            case Commands.PLAYER_ADD_REQUEST -> {
-                logger.info("Handling add player request");
-                handleAddPlayer();
-            }
+            case Commands.PLAYER_ADD_REQUEST -> handleAddPlayer();
             case Commands.PLAYER_EDIT_REQUEST -> handleEditPlayer((ProxyStrike) action.getData());
-            case Commands.RULE_ADD_REQUEST -> {
-                if (action.getData() instanceof RulesPanel.RuleActionData data) {
-                    handleAddRule(data.player());
-                }
-            }
-            case Commands.RULE_EDIT_REQUEST -> {
-                if (action.getData() instanceof RulesPanel.RuleActionData data) {
-                    handleEditRule(data.player(), data.rule());
-                }
-            }
+            case Commands.RULE_ADD_REQUEST -> handleAddRule((ProxyStrike) action.getData());
+            case Commands.RULE_EDIT_REQUEST -> handleEditRule((ProxyRule) action.getData());
         }
     }
 
@@ -164,17 +153,21 @@ public class DialogService implements CommandListener {
                 if (dialog.showDialog()) {
                     ProxyRule updatedRule = panel.getUpdatedRule();
                     redisService.addRuleToPlayer(player, updatedRule);
-                    commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-                } else {
-                    // If canceled, use removeRuleFromPlayer instead of direct delete
-                    redisService.removeRuleFromPlayer(player, newRule);
+                    
+                    // Get fresh player state and ticker
+                    ProxyStrike refreshedPlayer = redisService.findPlayerById(player.getId());
+                    ProxyTicker ticker = redisService.findTickerForPlayer(refreshedPlayer);
+                    
+                    // Update UI
+                    commandBus.publish(Commands.TICKER_UPDATED, this, ticker);
+                    commandBus.publish(Commands.PLAYER_UPDATED, this, refreshedPlayer);
                 }
             });
         }
     }
 
-    private void handleEditRule(ProxyStrike player, ProxyRule rule) {
-        if (player != null && rule != null) {
+    private void handleEditRule(ProxyRule rule) {
+        if (rule != null) {
             SwingUtilities.invokeLater(() -> {
                 RuleEditPanel panel = new RuleEditPanel(rule);
                 Dialog<ProxyRule> dialog = frame.createDialog(rule, panel);
@@ -182,10 +175,7 @@ public class DialogService implements CommandListener {
 
                 if (dialog.showDialog()) {
                     ProxyRule updatedRule = panel.getUpdatedRule();
-                    redisService.saveRule(updatedRule);
-
-                    // Notify about rule update
-                    commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+                    commandBus.publish(Commands.RULE_UPDATED, this, updatedRule);
                 }
             });
         }
