@@ -18,6 +18,7 @@ public class TickerManager {
     private static TickerManager instance;
     private final CommandBus commandBus = CommandBus.getInstance();
     private ProxyTicker activeTicker;
+    private final RedisService redisService = RedisService.getInstance();
 
     private TickerManager() {
         commandBus.register(new CommandListener() {
@@ -33,6 +34,7 @@ public class TickerManager {
                     }
                     case Commands.TRANSPORT_REWIND -> moveBack();
                     case Commands.TRANSPORT_FORWARD -> moveForward();
+                    case Commands.PLAYER_ADD_REQUEST -> handleAddPlayer();
                 }
             }
         });
@@ -119,4 +121,34 @@ public class TickerManager {
         tickerSelected(ticker);
     }
 
+    private void handleAddPlayer() {
+        ProxyTicker currentTicker = getActiveTicker();
+        if (currentTicker != null) {
+            // Create new player with default values
+            ProxyStrike newPlayer = redisService.newPlayer();
+            newPlayer.setName("New Player");
+            newPlayer.setChannel(1);
+            newPlayer.setPreset(0L);
+            newPlayer.setLevel(100L);
+            newPlayer.setNote(60L);
+            newPlayer.setMinVelocity(64L);
+            newPlayer.setMaxVelocity(127L);
+            newPlayer.setProbability(100L);
+            newPlayer.setRandomDegree(0L);
+            newPlayer.setRatchetCount(1L);
+            newPlayer.setRatchetInterval(1L);
+            newPlayer.setPanPosition(64L);
+            
+            // Add to ticker and save - now we pass the ticker in case of cancellation
+            redisService.addPlayerToTicker(currentTicker, newPlayer);
+            redisService.savePlayer(newPlayer);
+
+            // Notify about new player, passing both player and ticker for cancellation support
+            commandBus.publish(Commands.PLAYER_ADDED, this, 
+                new PlayerAddedData(currentTicker, newPlayer));
+        }
+    }
+
+    // Helper record for player addition data
+    public record PlayerAddedData(ProxyTicker ticker, ProxyStrike player) {}
 }

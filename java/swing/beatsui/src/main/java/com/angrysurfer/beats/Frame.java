@@ -17,7 +17,7 @@ import javax.swing.UIManager;
 import com.angrysurfer.beats.panel.BackgroundPanel;
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.TickerPanel;
-import com.angrysurfer.core.api.Command;
+import com.angrysurfer.beats.service.DialogService;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
@@ -45,6 +45,9 @@ public class Frame extends JFrame implements AutoCloseable {
         setupFrame();
         setupMainContent();
         setupKeyboardManager();
+        
+        // Initialize DialogService with this frame
+        DialogService.initialize(this);
     }
 
     public void loadFrameState() {
@@ -186,7 +189,12 @@ public class Frame extends JFrame implements AutoCloseable {
     }
 
     public <T> Dialog<T> createDialog(T data, JPanel content) {
-        return new Dialog<>(this, data, content);
+        logger.info("Creating dialog with content: " + content.getClass().getSimpleName());
+        Dialog<T> dialog = new Dialog<>(this, data, content);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        logger.info("Dialog created and positioned");
+        return dialog;
     }
 
     public int getSelectedTab() {

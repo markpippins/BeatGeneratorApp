@@ -18,8 +18,8 @@ public class RedisDemo {
         RedisService redis = RedisService.getInstance();
 
         // Clear database and create initial ticker
-        // redis.onAction(new Command(Commands.CLEAR_DATABASE, null, null));
-        // logger.info("Database cleared and initial ticker created");
+        redis.onAction(new Command(Commands.CLEAR_DATABASE, null, null));
+        logger.info("Database cleared and initial ticker created");
 
         // Create multiple tickers
         logger.info("=== Creating Multiple Tickers ===");

@@ -29,26 +29,41 @@ public class App implements CommandListener {
     private Frame frame;
 
     public static void main(String[] args) {
+        // Configure logging first
+        System.setProperty("java.util.logging.config.file", 
+            "src/main/resources/logging.properties");
+        
         try {
+            logger.info("Starting application...");
+            
             // Initialize services first
+            logger.info("Initializing services...");
             initializeServices();
+            
             // Then setup UI
+            logger.info("Setting up Look and Feel...");
             setupLookAndFeel();
 
             // Initialize InstrumentManager with Redis service
+            logger.info("Initializing InstrumentManager...");
             InstrumentManager.getInstance().setMidiDeviceService(new RedisMidiDeviceService());
 
             SwingUtilities.invokeLater(() -> {
                 try {
+                    logger.info("Creating main application window...");
                     App app = new App();
                     app.createAndShowGUI();
-
+                    logger.info("Application started successfully");
                 } catch (Exception e) {
-                    logger.severe("Error initializing application: " + e.getMessage());
+                    logger.severe("Error creating application window: " + e);
+                    e.printStackTrace();
+                    System.exit(1);
                 }
             });
         } catch (Exception e) {
-            logger.severe("Application startup error: " + e.getMessage());
+            logger.severe("Fatal error during application startup: " + e);
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 

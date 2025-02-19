@@ -39,12 +39,23 @@ public class Commands {
     public static final String PLAYER_UNSELECTED = "PLAYER_UNSELECTED";
     public static final String PLAYER_ADDED = "PLAYER_ADDED";
 
+    // Player CRUD commands
+    public static final String PLAYER_ADD_REQUEST = "PLAYER_ADD_REQUEST";
+    public static final String PLAYER_EDIT_REQUEST = "PLAYER_EDIT_REQUEST";
+    public static final String PLAYER_DELETE_REQUEST = "PLAYER_DELETE_REQUEST";
+    public static final String PLAYER_EDIT_CANCELLED = "PLAYER_EDIT_CANCELLED";
+
     // Rule selection commands
     public static final String RULE = "RULE";
 
     public static final String RULE_SELECTED = "RULE_SELECTED";
     public static final String RULE_UNSELECTED = "RULE_UNSELECTED";
     public static final String RULE_ADDED = "RULE_ADDED";
+
+    // Rule CRUD commands
+    public static final String RULE_ADD_REQUEST = "RULE_ADD_REQUEST";
+    public static final String RULE_EDIT_REQUEST = "RULE_EDIT_REQUEST";
+    public static final String RULE_DELETE_REQUEST = "RULE_DELETE_REQUEST";
 
     // Control code and caption commands
     public static final String CONTROL_CODE_SELECTED = "CONTROL_CODE_SELECTED";
@@ -60,6 +71,9 @@ public class Commands {
     public static final String TICKER = "TICKER";
     public static final String TICKER_SELECTED = "TICKER_SELECTED";
     public static final String TICKER_UPDATED = "TICKER_UPDATED";
+    
+    // Ticker state commands
+    public static final String TICKER_UNSELECTED = "TICKER_UNSELECTED";
 
     // Ticker-Player-Rule relationship commands
     public static final String TICKER_REQUEST = "TICKER_REQUEST";

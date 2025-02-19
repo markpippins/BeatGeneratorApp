@@ -294,11 +294,11 @@ public class RedisService implements CommandListener {
         }
     }
 
-    private void savePlayer(ProxyStrike player) {
+    public void savePlayer(ProxyStrike player) {
         try (Jedis jedis = jedisPool.getResource()) {
             ProxyTicker ticker = player.getTicker();
             Set<ProxyRule> rules = new HashSet<>(player.getRules() != null ? player.getRules() : new HashSet<>());
-            
+
             // Temporarily clear references to avoid circular dependencies
             player.setTicker(null);
             player.setRules(null);
@@ -393,7 +393,7 @@ public class RedisService implements CommandListener {
         }
     }
 
-    private void saveRule(ProxyRule rule) {
+    public void saveRule(ProxyRule rule) {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = objectMapper.writeValueAsString(rule);
             jedis.set("proxyrule:" + rule.getId(), json);

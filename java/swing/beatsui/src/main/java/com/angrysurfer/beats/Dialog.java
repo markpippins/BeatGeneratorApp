@@ -2,6 +2,7 @@ package com.angrysurfer.beats;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
@@ -51,26 +52,20 @@ public class Dialog<T> extends JDialog {
     private void setupDialog() {
         setLayout(new BorderLayout());
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setResizable(false);
-        // Add keyboard shortcuts
+        setResizable(true);
+        
         setupKeyboardShortcuts();
-
-        // Title panel
         setupTitlePanel();
-
-        // Content area
-        setupContentPanel();
-
-        // Button panel
         setupButtonPanel();
 
-        // Increase minimum size for additional controls
-        setMinimumSize(getContentPanel().getMinimumSize());
-        setMaximumSize(getContentPanel().getMaximumSize());
-        setPreferredSize(getContentPanel().getPreferredSize());
-        pack();
+        if (contentPanel != null) {
+            // Ensure content is properly added
+            add(contentPanel, BorderLayout.CENTER);
+        }
+
+        // Set reasonable initial size and center
+        setSize(600, 400);
         setLocationRelativeTo(getOwner());
-        setResizable(true);
     }
 
     private void setupKeyboardShortcuts() {
@@ -115,13 +110,29 @@ public class Dialog<T> extends JDialog {
 
     private void setupContentPanel() {
         if (contentPanel == null) {
-            // Create default black panel if no content provided
             contentPanel = new JPanel();
             contentPanel.setBackground(Color.BLACK);
         }
-
-        // Add content directly without scroll pane
+        
+        // Remove any existing content first
+        removeContentPanel();
+        
+        // Add new content
         add(contentPanel, BorderLayout.CENTER);
+        
+        // Ensure dialog updates its layout
+        revalidate();
+        repaint();
+    }
+
+    private void removeContentPanel() {
+        Component[] components = getContentPane().getComponents();
+        for (Component comp : components) {
+            if (comp == contentPanel) {
+                getContentPane().remove(comp);
+                break;
+            }
+        }
     }
 
     private void setupButtonPanel() {
@@ -155,13 +166,23 @@ public class Dialog<T> extends JDialog {
     }
 
     public void setContent(JPanel content) {
+        // Remove existing content if any
         if (contentPanel != null) {
             remove(contentPanel);
         }
+        
         contentPanel = content;
-        setupContentPanel();
-        revalidate();
-        repaint();
+        if (content != null) {
+            add(content, BorderLayout.CENTER);
+            
+            // Force layout update
+            revalidate();
+            repaint();
+            
+            // Adjust size to fit content
+            pack();
+            setLocationRelativeTo(getOwner());
+        }
     }
 
     private void accept() {
