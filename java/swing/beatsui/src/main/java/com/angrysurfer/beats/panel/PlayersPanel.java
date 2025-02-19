@@ -22,7 +22,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.data.RedisService;
 import com.angrysurfer.core.proxy.IProxyPlayer;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
@@ -39,7 +38,12 @@ public class PlayersPanel extends JPanel {
     private final RulesPanel ruleTablePanel;
     private final ButtonPanel buttonPanel;
     private final ContextMenuHelper contextMenu;
-    private static final int[] BOOLEAN_COLUMNS = {8, 15, 16}; // Sticky, Preserve, Sparse columns
+    private static final int[] BOOLEAN_COLUMNS = {
+        8,    // Sticky preset
+        13,   // Internal Beats
+        14,   // Internal Bars
+        16    // Preserve
+    };
     private boolean hasActiveTicker = false;  // Add this field
 
     public PlayersPanel(StatusConsumer status, RulesPanel ruleTablePanel) {
@@ -109,7 +113,7 @@ public class PlayersPanel extends JPanel {
                         return Boolean.class;
                     }
                 }
-                return super.getColumnClass(column);
+                return Object.class;  // Changed from super.getColumnClass(column)
             }
             
             @Override
@@ -203,7 +207,7 @@ public class PlayersPanel extends JPanel {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {
-                    case Commands.TICKER_SELECTED, Commands.TICKER_UPDATED, Commands.TICKER_LOADED -> {
+                    case Commands.TICKER_SELECTED, Commands.TICKER_LOADED -> {
                         if (action.getData() instanceof ProxyTicker ticker) {
                             hasActiveTicker = true;
                             enableControls(true);
@@ -217,36 +221,33 @@ public class PlayersPanel extends JPanel {
                             }
                         }
                     }
+                    case Commands.TICKER_UPDATED -> {
+                        if (action.getData() instanceof ProxyTicker ticker) {
+                            refreshPlayers(ticker.getPlayers());
+                            
+                            // Auto-select the newly added player if it was an add operation
+                            if (action.getSender() instanceof PlayerEditPanel) {
+                                selectLastPlayer();
+                            }
+                        }
+                    }
                     case Commands.TICKER_UNSELECTED -> {
                         hasActiveTicker = false;
                         enableControls(false);
                         refreshPlayers(null);
                     }
-                    case Commands.PLAYER_ADDED -> {
-                        if (action.getData() instanceof TickerManager.PlayerAddedData data) {
-                            // Update table with new player
-                            refreshPlayers(data.ticker().getPlayers());
-                            
-                            // Select the new player
-                            int rowIndex = findPlayerRowIndex(data.player());
-                            if (rowIndex >= 0) {
-                                table.setRowSelectionInterval(rowIndex, rowIndex);
-                            }
-                            
-                            // Show edit dialog
-                            CommandBus.getInstance().publish(Commands.PLAYER_EDIT_REQUEST, this, 
-                                new PlayerEditData(data.ticker(), data.player()));
+                    case Commands.PLAYER_EDIT_CANCELLED -> {
+                        if (action.getData() instanceof ProxyTicker ticker) {
+                            refreshPlayers(ticker.getPlayers());
                         }
                     }
-
-                    case Commands.PLAYER_EDIT_CANCELLED -> {
-                        if (action.getData() instanceof PlayerEditData data) {
-                            // Remove the player if this was a new player add that was cancelled
-                            RedisService.getInstance().removePlayerFromTicker(data.ticker(), data.player());
-                            RedisService.getInstance().deletePlayer(data.player());
-                            
-                            // Refresh the table
-                            refreshPlayers(data.ticker().getPlayers());
+                    case Commands.PLAYER_DELETE_REQUEST -> {
+                        if (action.getData() instanceof ProxyStrike player) {
+                            ProxyTicker currentTicker = TickerManager.getInstance().getActiveTicker();
+                            if (currentTicker != null) {
+                                CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
+                                refreshPlayers(currentTicker.getPlayers());
+                            }
                         }
                     }
                 }
@@ -276,6 +277,17 @@ public class PlayersPanel extends JPanel {
                 }
             }
         });
+    }
+
+    private void selectLastPlayer() {
+        if (table.getRowCount() > 0) {
+            int lastRow = table.getRowCount() - 1;
+            table.setRowSelectionInterval(lastRow, lastRow);
+            ProxyStrike selectedPlayer = getSelectedPlayer();
+            if (selectedPlayer != null) {
+                CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, selectedPlayer);
+            }
+        }
     }
 
     // Helper record for player edit data
@@ -318,10 +330,10 @@ public class PlayersPanel extends JPanel {
             
             for (IProxyPlayer player : sortedPlayers) {
                 Object[] rowData = player.toRow();
-                // Get boolean values from row data strings
-                rowData[8] = Boolean.valueOf(rowData[8].toString());   // Sticky
-                rowData[15] = Boolean.valueOf(rowData[15].toString()); // Preserve
-                rowData[16] = Boolean.valueOf(rowData[16].toString()); // Sparse
+                // Convert boolean string values to actual booleans for checkbox columns
+                for (int booleanColumn : BOOLEAN_COLUMNS) {
+                    rowData[booleanColumn] = Boolean.valueOf(rowData[booleanColumn].toString());
+                }
                 model.addRow(rowData);
             }
         }

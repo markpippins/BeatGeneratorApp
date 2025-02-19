@@ -38,6 +38,7 @@ public class Commands {
     public static final String PLAYER_SELECTED = "PLAYER_SELECTED";
     public static final String PLAYER_UNSELECTED = "PLAYER_UNSELECTED";
     public static final String PLAYER_ADDED = "PLAYER_ADDED";
+    public static final String PLAYER_UPDATED = "PLAYER_UPDATED";
 
     // Player CRUD commands
     public static final String PLAYER_ADD_REQUEST = "PLAYER_ADD_REQUEST";

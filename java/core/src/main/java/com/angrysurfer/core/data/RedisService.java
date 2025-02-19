@@ -409,6 +409,20 @@ public class RedisService implements CommandListener {
         }
     }
 
+    public ProxyStrike findPlayerForRule(ProxyRule rule) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            Set<String> playerKeys = jedis.keys("proxystrike:*");
+            for (String playerKey : playerKeys) {
+                String playerId = playerKey.split(":")[1];
+                String rulesKey = "player:" + playerId + ":rules";
+                if (jedis.sismember(rulesKey, rule.getId().toString())) {
+                    return findPlayerById(Long.valueOf(playerId));
+                }
+            }
+        }
+        return null;
+    }
+
     // Navigation methods
     public Long getPreviousTickerId(ProxyTicker ticker) {
         try (Jedis jedis = jedisPool.getResource()) {

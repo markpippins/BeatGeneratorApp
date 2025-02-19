@@ -9,6 +9,7 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.data.RedisService;
 import com.angrysurfer.core.proxy.IProxyPlayer;
+import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
 
@@ -34,7 +35,46 @@ public class TickerManager {
                     }
                     case Commands.TRANSPORT_REWIND -> moveBack();
                     case Commands.TRANSPORT_FORWARD -> moveForward();
-                    case Commands.PLAYER_ADD_REQUEST -> handleAddPlayer();
+                    case Commands.PLAYER_ADD_REQUEST -> {
+                        ProxyTicker currentTicker = getActiveTicker();
+                        if (currentTicker != null) {
+                            RedisService redis = RedisService.getInstance();
+                            // Create new player with default values
+                            ProxyStrike newPlayer = redis.newPlayer();
+                            initializeDefaultPlayerValues(newPlayer);
+                            
+                            // Add to ticker and save
+                            redis.addPlayerToTicker(currentTicker, newPlayer);
+                            redis.savePlayer(newPlayer);
+
+                            // Notify about new player
+                            commandBus.publish(Commands.TICKER_UPDATED, this, currentTicker);
+                        }
+                    }
+                    case Commands.RULE_DELETE_REQUEST -> {
+                        if (action.getData() instanceof ProxyRule rule) {
+                            RedisService redis = RedisService.getInstance();
+                            ProxyStrike player = redis.findPlayerForRule(rule);
+                            if (player != null) {
+                                redis.removeRuleFromPlayer(player, rule);
+                                // Notify UI of update
+                                commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                            }
+                        }
+                    }
+                    case Commands.PLAYER_DELETE_REQUEST -> {
+                        if (action.getData() instanceof ProxyStrike player) {
+                            RedisService redis = RedisService.getInstance();
+                            redis.removePlayerFromTicker(activeTicker, player);
+                            redis.deletePlayer(player);
+                            
+                            // Reload ticker after deletion to get fresh state
+                            activeTicker = redis.findTickerById(activeTicker.getId());
+                            
+                            // Notify UI of update with fresh ticker state
+                            commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
+                        }
+                    }
                 }
             }
         });
@@ -121,34 +161,18 @@ public class TickerManager {
         tickerSelected(ticker);
     }
 
-    private void handleAddPlayer() {
-        ProxyTicker currentTicker = getActiveTicker();
-        if (currentTicker != null) {
-            // Create new player with default values
-            ProxyStrike newPlayer = redisService.newPlayer();
-            newPlayer.setName("New Player");
-            newPlayer.setChannel(1);
-            newPlayer.setPreset(0L);
-            newPlayer.setLevel(100L);
-            newPlayer.setNote(60L);
-            newPlayer.setMinVelocity(64L);
-            newPlayer.setMaxVelocity(127L);
-            newPlayer.setProbability(100L);
-            newPlayer.setRandomDegree(0L);
-            newPlayer.setRatchetCount(1L);
-            newPlayer.setRatchetInterval(1L);
-            newPlayer.setPanPosition(64L);
-            
-            // Add to ticker and save - now we pass the ticker in case of cancellation
-            redisService.addPlayerToTicker(currentTicker, newPlayer);
-            redisService.savePlayer(newPlayer);
-
-            // Notify about new player, passing both player and ticker for cancellation support
-            commandBus.publish(Commands.PLAYER_ADDED, this, 
-                new PlayerAddedData(currentTicker, newPlayer));
-        }
+    private void initializeDefaultPlayerValues(ProxyStrike player) {
+        player.setName("New Player");
+        player.setChannel(1);
+        player.setPreset(0L);
+        player.setLevel(100L);
+        player.setNote(60L);
+        player.setMinVelocity(64L);
+        player.setMaxVelocity(127L);
+        player.setProbability(100L);
+        player.setRandomDegree(0L);
+        player.setRatchetCount(1L);
+        player.setRatchetInterval(1L);
+        player.setPanPosition(64L);
     }
-
-    // Helper record for player addition data
-    public record PlayerAddedData(ProxyTicker ticker, ProxyStrike player) {}
 }

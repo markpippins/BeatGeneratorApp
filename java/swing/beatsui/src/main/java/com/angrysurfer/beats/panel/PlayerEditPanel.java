@@ -25,6 +25,8 @@ import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ToggleSwitch;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.proxy.ProxyRule;
@@ -124,9 +126,13 @@ public class PlayerEditPanel extends StatusProviderPanel {
         rulesTable = new JTable(new DefaultTableModel(
             new Object[]{"Operator", "Comparison", "Value", "Part"}, 0));
         updateRulesTable();
+        
         addRuleButton = new JButton("Add");
         editRuleButton = new JButton("Edit");
         deleteRuleButton = new JButton("Delete");
+        
+        // Add button listeners
+        deleteRuleButton.addActionListener(e -> deleteSelectedRule());
         
         layoutComponents();
         setPreferredSize(new Dimension(800, 600));
@@ -446,6 +452,21 @@ public class PlayerEditPanel extends StatusProviderPanel {
             RuleEditPanel editPanel = new RuleEditPanel(rule, statusConsumer);
             // Show dialog with edit panel...
             // Update table after editing...
+        }
+    }
+
+    private void deleteSelectedRule() {
+        int selectedRow = rulesTable.getSelectedRow();
+        if (selectedRow >= 0) {
+            ProxyRule rule = ProxyRule.fromRow(new Object[] {
+                rulesTable.getValueAt(selectedRow, 0),
+                rulesTable.getValueAt(selectedRow, 1),
+                rulesTable.getValueAt(selectedRow, 2),
+                rulesTable.getValueAt(selectedRow, 3)
+            });
+            
+            // Just send the rule - TickerManager will handle finding the player
+            CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, rule);
         }
     }
 
