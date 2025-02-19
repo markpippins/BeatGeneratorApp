@@ -6,6 +6,7 @@ import java.util.*;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class LifeSoupVisualization implements IVisualizationHandler {
@@ -123,5 +124,11 @@ public class LifeSoupVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Life Soup";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        // TODO Auto-generated method stub
+        return IVisualizationHandler.super.getVisualizationCategory();
     }
 }

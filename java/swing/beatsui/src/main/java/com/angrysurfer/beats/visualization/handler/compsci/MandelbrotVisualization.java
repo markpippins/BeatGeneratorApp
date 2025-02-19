@@ -3,6 +3,7 @@ package com.angrysurfer.beats.visualization.handler.compsci;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class MandelbrotVisualization implements IVisualizationHandler {
@@ -39,5 +40,10 @@ public class MandelbrotVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Mandelbrot";
+    }
+
+        @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.COMPSCI;
     }
 }

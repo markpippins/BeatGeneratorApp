@@ -11,17 +11,21 @@ import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.data.RedisService;
 import com.angrysurfer.core.proxy.ProxyCaption;
@@ -55,6 +59,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
     public InstrumentsPanel(StatusConsumer statusConsumer) {
         super(new BorderLayout(), statusConsumer);
         setup();
+        registerCommandListener();
     }
 
     private void setup() {
@@ -62,7 +67,33 @@ public class InstrumentsPanel extends StatusProviderPanel {
         add(createOptionsPanel(), BorderLayout.CENTER);
     }
 
-   
+    private void registerCommandListener() {
+        commandBus.register(command -> {
+            if (Commands.LOAD_INSTRUMENTS_FROM_FILE.equals(command.getCommand())) {
+                SwingUtilities.invokeLater(() -> showFileChooserDialog());
+            }
+        });
+    }
+
+    private void showFileChooserDialog() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select Instruments XML File");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("JSON Files", "json"));
+        fileChooser.setAcceptAllFileFilterUsed(false);
+
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+            logger.info("Selected file: " + filePath);
+            try {
+                RedisService.getInstance().loadConfigFromJSON(filePath);
+                refreshInstrumentsTable();
+                setStatus("Instruments loaded successfully from " + filePath);
+            } catch (Exception e) {
+                logger.severe("Error loading instruments: " + e.getMessage());
+                setStatus("Error loading instruments: " + e.getMessage());
+            }
+        }
+    }
 
     private JPanel createOptionsPanel() {
         JPanel panel = new JPanel(new BorderLayout());

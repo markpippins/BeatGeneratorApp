@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class SpaceVisualization implements IVisualizationHandler {
@@ -25,5 +26,10 @@ public class SpaceVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Space";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.CLASSIC;
     }
 }

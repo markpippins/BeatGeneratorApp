@@ -35,6 +35,6 @@ public class OscilloscopeVisualization implements IVisualizationHandler {
 
     @Override
     public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.MUSIC;
+        return VisualizationCategory.COMPSCI;
     }
 }

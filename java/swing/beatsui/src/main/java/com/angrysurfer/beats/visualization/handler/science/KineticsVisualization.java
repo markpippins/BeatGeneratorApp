@@ -5,6 +5,7 @@ import java.util.*;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class KineticsVisualization implements IVisualizationHandler {
@@ -122,5 +123,10 @@ public class KineticsVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Kinetics";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.SCIENCE;
     }
 }

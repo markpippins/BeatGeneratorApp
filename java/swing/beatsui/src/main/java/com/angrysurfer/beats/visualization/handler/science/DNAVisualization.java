@@ -4,6 +4,7 @@ import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class DNAVisualization implements IVisualizationHandler {
@@ -38,5 +39,10 @@ public class DNAVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "DNA Helix";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.SCIENCE;
     }
 }

@@ -3,6 +3,7 @@ package com.angrysurfer.beats.visualization.handler.classic;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class RippleVisualization implements IVisualizationHandler {
@@ -29,5 +30,10 @@ public class RippleVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Ripple";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.CLASSIC;
     }
 }

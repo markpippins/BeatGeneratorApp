@@ -125,6 +125,7 @@ public class Commands {
     // Database commands
     public static final String CLEAR_DATABASE = "CLEAR_DATABASE";
     public static final String DATABASE_RESET = "DATABASE_RESET";
+    public static final String LOAD_INSTRUMENTS_FROM_FILE = "LOAD_INSTRUMENTS_FROM_FILE";
 
     // Player editor commands
     public static final String SHOW_PLAYER_EDITOR = "SHOW_PLAYER_EDITOR";

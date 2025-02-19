@@ -5,6 +5,7 @@ import java.util.Random;
 
 import com.angrysurfer.beats.Utils;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class GameOfLifeVisualization implements IVisualizationHandler {
@@ -49,7 +50,8 @@ public class GameOfLifeVisualization implements IVisualizationHandler {
         Color parentBg = buttons[0][0].getParent().getBackground();
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
-                if (i == 0 && j == 0) continue;
+                if (i == 0 && j == 0)
+                    continue;
                 int r = (row + i + buttons.length) % buttons.length;
                 int c = (col + j + buttons[0].length) % buttons[0].length;
                 if (!buttons[r][c].getBackground().equals(parentBg)) {
@@ -63,5 +65,10 @@ public class GameOfLifeVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Game of Life";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.COMPSCI;
     }
 }

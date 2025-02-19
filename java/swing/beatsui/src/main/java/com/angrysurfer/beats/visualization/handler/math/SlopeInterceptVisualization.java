@@ -3,6 +3,7 @@ package com.angrysurfer.beats.visualization.handler.math;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class SlopeInterceptVisualization implements IVisualizationHandler {
@@ -76,5 +77,10 @@ public class SlopeInterceptVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Slope & Intercept";
+    }
+   
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MATH;
     }
 }

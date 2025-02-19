@@ -4,6 +4,7 @@ import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class SnakeVisualization implements IVisualizationHandler {
@@ -24,5 +25,10 @@ public class SnakeVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Snake";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.CLASSIC;
     }
 }

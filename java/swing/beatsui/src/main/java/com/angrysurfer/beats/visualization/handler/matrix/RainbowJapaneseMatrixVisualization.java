@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class RainbowJapaneseMatrixVisualization implements IVisualizationHandler {
@@ -90,5 +91,10 @@ public class RainbowJapaneseMatrixVisualization implements IVisualizationHandler
     @Override
     public String getName() {
         return "Rainbow Japanese Matrix";
+    }
+   
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MATRIX;
     }
 }

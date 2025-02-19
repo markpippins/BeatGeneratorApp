@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class FireworksVisualization implements IVisualizationHandler {
@@ -47,5 +48,10 @@ public class FireworksVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Fireworks";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.CLASSIC;
     }
 }

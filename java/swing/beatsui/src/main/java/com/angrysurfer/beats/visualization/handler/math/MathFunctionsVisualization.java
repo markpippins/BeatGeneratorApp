@@ -4,6 +4,7 @@ import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class MathFunctionsVisualization implements IVisualizationHandler {
@@ -51,5 +52,10 @@ public class MathFunctionsVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Math Functions";
+    }
+   
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MATH;
     }
 }

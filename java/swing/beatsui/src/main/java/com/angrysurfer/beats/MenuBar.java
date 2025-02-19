@@ -55,9 +55,21 @@ public class MenuBar extends JMenuBar {
             }
         });
 
-        // Database Menu
-        JMenu dbMenu = new JMenu("Database");
-        dbMenu.setMnemonic(KeyEvent.VK_D);
+        // Edit Menu
+        JMenu editMenu = new JMenu("Edit");
+        editMenu.setMnemonic(KeyEvent.VK_E);
+        addMenuItem(editMenu, "Cut", Commands.CUT);
+        addMenuItem(editMenu, "Copy", Commands.COPY);
+        addMenuItem(editMenu, "Paste", Commands.PASTE);
+        editMenu.addSeparator();
+
+        // Preferences submenu
+        JMenu preferencesMenu = new JMenu("Preferences");
+        
+        // Add Theme menu
+        preferencesMenu.add(themeManager.createThemeMenu());
+        
+        // Add Database menu
         JMenuItem clearDb = new JMenuItem("Clear Database");
         clearDb.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
@@ -71,16 +83,22 @@ public class MenuBar extends JMenuBar {
                 commandBus.publish(Commands.CLEAR_DATABASE, this);
             }
         });
+        JMenu dbMenu = new JMenu("Database");
+        dbMenu.setMnemonic(KeyEvent.VK_D);
         dbMenu.add(clearDb);
+        dbMenu.addSeparator();
+        
+        // Add Load Instruments item
+        JMenuItem loadInstruments = new JMenuItem("Load Instruments from File");
+        loadInstruments.addActionListener(e -> {
+            commandBus.publish(Commands.LOAD_INSTRUMENTS_FROM_FILE, this);
+        });
+        dbMenu.add(loadInstruments);
+        preferencesMenu.add(dbMenu);
 
-        // Edit Menu
-        JMenu editMenu = new JMenu("Edit");
-        editMenu.setMnemonic(KeyEvent.VK_E);
+        editMenu.add(preferencesMenu);
 
-        // Preferences submenu
-        JMenu preferencesMenu = new JMenu("Preferences");
-        preferencesMenu.add(themeManager.createThemeMenu());
-
+        // Register visualization listener
         commandBus.register(new CommandListener() {
             final boolean[] visualizationsEnabled = { false };
             JMenu visualizationMenu = new JMenu("Visualization");
@@ -165,13 +183,11 @@ public class MenuBar extends JMenuBar {
                     case Commands.VISUALIZATION_REGISTERED:
                         if (!visualizationsEnabled[0]) {
                             visualizationsEnabled[0] = true;
-                            preferencesMenu.addSeparator();
-                            
                             addMenuItem(visualizationMenu, startVisualizationItem, Commands.START_VISUALIZATION, null, null);
                             addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null, null);
                             addMenuItem(visualizationMenu, refreshVisualizationItem, 
                                     Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED, null, null);
-                            preferencesMenu.add(visualizationMenu);
+                            preferencesMenu.add(visualizationMenu);  // No separator added
 
                             startVisualizationItem.setVisible(true);
                             stopVisualizationItem.setVisible(false);
@@ -211,12 +227,6 @@ public class MenuBar extends JMenuBar {
             }
         });
 
-        addMenuItem(editMenu, "Cut", Commands.CUT);
-        addMenuItem(editMenu, "Copy", Commands.COPY);
-        addMenuItem(editMenu, "Paste", Commands.PASTE);
-        editMenu.addSeparator();
-        editMenu.add(preferencesMenu);
-
         // Help Menu
         JMenu helpMenu = new JMenu("Help");
         helpMenu.setMnemonic(KeyEvent.VK_H);
@@ -224,7 +234,6 @@ public class MenuBar extends JMenuBar {
 
         add(fileMenu);
         add(editMenu);
-        add(dbMenu); // Add Database menu between Edit and Help
         add(helpMenu);
     }
 

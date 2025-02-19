@@ -2,9 +2,14 @@ package com.angrysurfer.beats.visualization;
 
 public enum VisualizationCategory {
     DEFAULT("Default"),
+    ARCADE("Arcade Games"),
+    CLASSIC("Classic Visualizations"),
     COMPSCI("Computer Science"),
     GAME("Games"),
-    MUSIC("Music");
+    MATH("Math"),
+    MATRIX("Matrix"),
+    MUSIC("Music"),
+    SCIENCE("Science");
 
     private final String label;
 

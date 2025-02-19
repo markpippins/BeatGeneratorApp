@@ -129,9 +129,52 @@ public class RedisService implements CommandListener {
         }
     }
 
-    public UserConfig loadConfigFromXml(String configPath) {
+    public UserConfig loadConfigFromJSON(String configPath) {
         try {
-            return objectMapper.readValue(new File(configPath), UserConfig.class);
+            UserConfig config = objectMapper.readValue(new File(configPath), UserConfig.class);
+
+            // Log overall config summary
+            logger.info("Loading UserConfig from: " + configPath);
+            logger.info(String.format("Found %d instruments, %d players, %d configs",
+                    config.getInstruments().size(),
+                    config.getPlayers() != null ? config.getPlayers().size() : 0,
+                    config.getConfigs() != null ? config.getConfigs().size() : 0));
+
+            // Log detailed instrument information
+            if (config.getInstruments() != null) {
+                for (ProxyInstrument instrument : config.getInstruments()) {
+                    logger.info("\nInstrument: " + instrument.getName());
+                    logger.info("  ID: " + instrument.getId());
+                    // logger.info(" Channel: " + instrument. getChannel());
+
+                    // Log control codes
+                    if (instrument.getControlCodes() != null) {
+                        logger.info("  Control Codes:");
+                        instrument.getControlCodes().forEach(code -> {
+                            logger.info("    Code: " + code.getCode());
+                            if (code.getCaptions() != null) {
+                                code.getCaptions()
+                                        .forEach(caption -> logger.info("      Caption: " + caption.getCode() +
+                                                " (From: " + caption.getDescription()));
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Log configuration details
+            if (config.getConfigs() != null) {
+                logger.info("\nInstrument Configurations:");
+                config.getConfigs().forEach(cfg -> {
+                    logger.info("  Device: " + cfg.getDevice());
+                    logger.info("    Port: " + cfg.getPort());
+                    logger.info("    Channels: " + cfg.getChannels());
+                    logger.info("    Range: " + cfg.getLow() + " - " + cfg.getHigh());
+                    logger.info("    Available: " + cfg.isAvailable());
+                });
+            }
+
+            return config;
         } catch (Exception e) {
             logger.severe("Error loading config: " + e.getMessage());
             throw new RuntimeException("Failed to load config", e);
@@ -377,20 +420,17 @@ public class RedisService implements CommandListener {
 
         // Check if there's already a rule with the same operator and part
         return player.getRules().stream()
-            .noneMatch(existingRule -> 
-                existingRule.getOperator() == newRule.getOperator() &&
-                existingRule.getPart() == newRule.getPart()
-            );
+                .noneMatch(existingRule -> existingRule.getOperator() == newRule.getOperator() &&
+                        existingRule.getPart() == newRule.getPart());
     }
 
     public void addRuleToPlayer(ProxyStrike player, ProxyRule rule) {
         if (!isValidNewRule(player, rule)) {
             throw new IllegalArgumentException(
-                "A rule with this operator already exists for part " + 
-                (rule.getPart() == 0 ? "All" : rule.getPart())
-            );
+                    "A rule with this operator already exists for part " +
+                            (rule.getPart() == 0 ? "All" : rule.getPart()));
         }
-        
+
         try (Jedis jedis = jedisPool.getResource()) {
             saveRule(rule);
             String rulesKey = "player:" + player.getId() + ":rules";
@@ -406,27 +446,27 @@ public class RedisService implements CommandListener {
         try (Jedis jedis = jedisPool.getResource()) {
             String rulesKey = "player:" + player.getId() + ":rules";
             jedis.srem(rulesKey, rule.getId().toString());
-            
+
             // Update player's rules set
             if (player.getRules() != null) {
                 player.getRules().remove(rule);
             }
-            
+
             // Delete the actual rule from Redis
             jedis.del("proxyrule:" + rule.getId());
-            
+
             // Save player state
             savePlayer(player);
-            
+
             // Find and update player in its ticker's player list
             if (player.getTicker() != null) {
                 ProxyTicker ticker = player.getTicker();
                 ticker.getPlayers().stream()
-                    .filter(p -> p.getId().equals(player.getId()))
-                    .findFirst()
-                    .ifPresent(p -> {
-                        ((ProxyStrike)p).setRules(player.getRules());
-                    });
+                        .filter(p -> p.getId().equals(player.getId()))
+                        .findFirst()
+                        .ifPresent(p -> {
+                            ((ProxyStrike) p).setRules(player.getRules());
+                        });
             }
         }
     }

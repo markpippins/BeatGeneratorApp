@@ -5,6 +5,7 @@ import java.util.Random;
 
 import com.angrysurfer.beats.Utils;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class MatrixVisualization implements IVisualizationHandler {
@@ -38,5 +39,10 @@ public class MatrixVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Matrix";
+    }
+   
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.MATRIX;
     }
 }

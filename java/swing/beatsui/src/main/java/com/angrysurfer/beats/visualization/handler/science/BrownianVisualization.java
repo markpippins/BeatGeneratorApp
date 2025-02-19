@@ -10,6 +10,7 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class BrownianVisualization implements IVisualizationHandler {
@@ -107,5 +108,10 @@ public class BrownianVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Brownian Motion";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.SCIENCE;
     }
 }

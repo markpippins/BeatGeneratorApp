@@ -3,6 +3,7 @@ package com.angrysurfer.beats.visualization.handler.classic;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class PlasmaVisualization implements IVisualizationHandler {
@@ -29,5 +30,10 @@ public class PlasmaVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Plasma";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.CLASSIC;
     }
 }
