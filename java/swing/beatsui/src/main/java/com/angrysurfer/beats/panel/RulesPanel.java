@@ -82,10 +82,17 @@ public class RulesPanel extends JPanel {
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
         table.setModel(model);
 
-        // Center align all columns
+        // Center align all columns first
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        for (int i = 0; i < table.getColumnCount(); i++) {
+        
+        // Left align for Operator column
+        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+        leftRenderer.setHorizontalAlignment(JLabel.LEFT);
+        
+        // Apply renderers to columns
+        table.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);  // Operator column left-aligned
+        for (int i = 1; i < table.getColumnCount(); i++) {                  // Rest centered
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
