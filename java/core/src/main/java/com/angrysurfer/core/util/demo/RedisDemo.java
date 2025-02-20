@@ -1,4 +1,4 @@
-package com.angrysurfer.core.demo;
+package com.angrysurfer.core.util.demo;
 
 import java.util.HashSet;
 import java.util.logging.Logger;

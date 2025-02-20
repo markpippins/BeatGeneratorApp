@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model.ui;
+package com.angrysurfer.core.model;
 
 public interface Auditionable {
     

@@ -5,6 +5,8 @@ import java.util.concurrent.Callable;
 
 public interface ITicker {
 
+    Long getId();
+
     List<Callable<Boolean>> getCallables();
 
     double getBeat();
@@ -107,5 +109,4 @@ public interface ITicker {
 
     void setNoteOffset(Double noteOffset);
 
-    Object getId();
 }

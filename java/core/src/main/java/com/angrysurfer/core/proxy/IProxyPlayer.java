@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.model.IPlayer;
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

@@ -16,10 +16,10 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.db.Delete;
 import com.angrysurfer.core.api.db.Save;
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.CyclerListener;
 import com.angrysurfer.core.util.TickCyclerListener;

@@ -7,8 +7,8 @@ import java.util.stream.LongStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.midi.Instrument;
 
 import jakarta.persistence.Entity;
 import lombok.Getter;

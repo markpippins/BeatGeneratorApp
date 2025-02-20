@@ -38,12 +38,12 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.model.Instrument;
 // import com.angrysurfer.core.api.db.Delete;
 // import com.angrysurfer.core.api.db.Save;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.model.player.AbstractPlayer;
 import com.angrysurfer.core.model.player.Strike;
 import com.angrysurfer.core.util.ClockSource;

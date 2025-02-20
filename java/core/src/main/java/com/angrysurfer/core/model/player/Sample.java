@@ -2,8 +2,8 @@ package com.angrysurfer.core.model.player;
 
 import java.util.ArrayList;
 
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.midi.Instrument;
 
 import lombok.Getter;
 import lombok.Setter;

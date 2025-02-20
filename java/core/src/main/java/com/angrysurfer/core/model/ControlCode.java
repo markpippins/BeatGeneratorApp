@@ -1,10 +1,8 @@
-package com.angrysurfer.core.model.midi;
+package com.angrysurfer.core.model;
 
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
-
-import com.angrysurfer.core.model.ui.Caption;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -3,8 +3,6 @@ package com.angrysurfer.core.model;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.angrysurfer.core.model.player.IPlayer;
-
 import lombok.Getter;
 import lombok.Setter;
 

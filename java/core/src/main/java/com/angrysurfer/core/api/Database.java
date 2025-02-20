@@ -12,17 +12,17 @@ import com.angrysurfer.core.api.db.Min;
 import com.angrysurfer.core.api.db.Next;
 import com.angrysurfer.core.api.db.Prior;
 import com.angrysurfer.core.api.db.Save;
+import com.angrysurfer.core.model.Caption;
+import com.angrysurfer.core.model.ControlCode;
+import com.angrysurfer.core.model.IPlayer;
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Pad;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.midi.ControlCode;
-import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.model.player.IPlayer;
 import com.angrysurfer.core.model.player.Strike;
-import com.angrysurfer.core.model.ui.Caption;
 
 public interface Database {
 

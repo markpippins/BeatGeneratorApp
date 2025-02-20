@@ -18,10 +18,11 @@ import javax.sound.midi.MidiUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.model.IPlayer;
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Pad;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
