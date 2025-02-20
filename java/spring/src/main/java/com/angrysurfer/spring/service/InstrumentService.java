@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.api.Database;
 import com.angrysurfer.core.engine.InstrumentEngine;
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.Instrument;
 
 import lombok.Getter;
 import lombok.Setter;

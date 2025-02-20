@@ -1,6 +1,7 @@
 package com.angrysurfer.core.model;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -37,10 +38,9 @@ public class Ticker implements Serializable, ITicker {
 
     @Override
     public List<Callable<Boolean>> getCallables() {
-        // Implement the method as required
-        return getPlayers().stream()
+        return Objects.nonNull(getPlayers()) ? getPlayers().stream()
                 .map(player -> (Callable<Boolean>) () -> player.call())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()) : Collections.emptyList();
     }
 
     @Override

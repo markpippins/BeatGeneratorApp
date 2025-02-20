@@ -1,15 +1,13 @@
 package com.angrysurfer.core.service;
 
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.proxy.IProxyPlayer;
+import com.angrysurfer.core.model.IPlayer;
 import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
@@ -176,7 +174,7 @@ public class TickerManager {
             return false;
         }
 
-        for (IProxyPlayer player : activeTicker.getPlayers()) {
+        for (IPlayer player : activeTicker.getPlayers()) {
             if (((ProxyStrike) player).getRules() != null && !((ProxyStrike) player).getRules().isEmpty()) {
                 return true;
             }

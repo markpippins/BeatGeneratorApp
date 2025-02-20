@@ -11,12 +11,13 @@ import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.api.Database;
 import com.angrysurfer.core.engine.PlayerEngine;
+import com.angrysurfer.core.model.IPlayer;
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.model.player.AbstractPlayer;
 import com.angrysurfer.core.util.ClockSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -138,7 +139,7 @@ public class PlayerService {
         return playerEngine.updateRule(getTicker(), ruleId, updateType, updateValue);
     }
 
-    public Set<IPlayer> removePlayer(Long playerId) {
+    public Set<AbstractPlayer> removePlayer(Long playerId) {
         logger.info("removePlayer() - playerId: {}", playerId);
 //        return playerEngine.removePlayer(getTicker(), playerId, dbUtils.getStrikeDeleter(),
 //                dbUtils.getRuleDeleter(), dbUtils.getTickerSaver());
@@ -160,7 +161,7 @@ public class PlayerService {
         playerEngine.clearPlayersWithNoRules(getTicker());
     }
 
-    public Set<IPlayer> getPlayers() {
+    public Set<AbstractPlayer> getPlayers() {
         return getTicker().getPlayers();
     }
 

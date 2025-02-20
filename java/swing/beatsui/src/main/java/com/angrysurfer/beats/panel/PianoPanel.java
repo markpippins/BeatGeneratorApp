@@ -8,6 +8,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -15,6 +16,7 @@ import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
+import com.angrysurfer.beats.Utils;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
@@ -39,9 +41,10 @@ public class PianoPanel extends StatusProviderPanel {
 
     public PianoPanel(StatusConsumer statusConsumer) {
         super(null, statusConsumer);
-        setPreferredSize(new Dimension(500, 80));
+        setPreferredSize(new Dimension(230, 80));
+        setMinimumSize(new Dimension(230, 80));
         setBorder(new EmptyBorder(10, 10, 10, 10));
-        // setBackground(new Color(40, 40, 40));
+        setBackground(Utils.fadedOrange);
 
         // Dimensions for keys
         int whiteKeyWidth = 30;

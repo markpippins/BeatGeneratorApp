@@ -1,17 +1,21 @@
 package com.angrysurfer.spring.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.SongService;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @CrossOrigin("*")
 @RestController

@@ -13,6 +13,7 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.model.IPlayer;
 import com.angrysurfer.core.proxy.IProxyPlayer;
 import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.proxy.ProxyRule;
@@ -541,7 +542,7 @@ public class RedisService implements CommandListener {
     private void saveTicker(ProxyTicker ticker) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Make a copy of players before clearing
-            Set<IProxyPlayer> players = new HashSet<>(ticker.getPlayers());
+            Set<IPlayer> players = new HashSet<>(ticker.getPlayers());
 
             // Clear players to avoid circular reference
             ticker.setPlayers(null);

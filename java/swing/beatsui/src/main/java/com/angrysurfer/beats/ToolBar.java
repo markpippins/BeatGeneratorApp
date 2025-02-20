@@ -282,7 +282,7 @@ public class ToolBar extends JToolBar {
         JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         // rightStatusPanel.setPreferredSize(new
         // Dimension(rightStatusPanel.getPreferredSize().width, 75));
-        setBorder(BorderFactory.createLineBorder(Color.BLUE));
+        setBorder(BorderFactory.createEmptyBorder());
         Object[][] rightFieldsArray = {
                 // { "Ticker", createTextField("1") },
                 { "Ticks", createTickerCombo("Ticks", 1, 384, 24) },
@@ -320,7 +320,7 @@ public class ToolBar extends JToolBar {
         JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         // rightStatusPanel.setPreferredSize(new
         // Dimension(rightStatusPanel.getPreferredSize().width, 75));
-        setBorder(BorderFactory.createLineBorder(Color.BLUE));
+        setBorder(BorderFactory.createEmptyBorder());
         Object[][] rightFieldsArray = {
                 { "Ticker", createTextField("1") },
                 { "Length", createTextField("0") },

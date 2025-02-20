@@ -1,6 +1,7 @@
 package com.angrysurfer.core.proxy;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.engine.MIDIEngine;
+import com.angrysurfer.core.model.IPlayer;
 import com.angrysurfer.core.model.ITicker;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.Constants;
@@ -35,9 +37,9 @@ public class ProxyTicker implements Serializable, ITicker {
     @Override
     public List<Callable<Boolean>> getCallables() {
         // Implement the method as required
-        return getPlayers().stream()
+        return Objects.nonNull(getPlayers())  ? getPlayers().stream()
                 .map(player -> (Callable<Boolean>) () -> player.call())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()) : Collections.emptyList(); 
     }
 
     @Override
@@ -120,7 +122,7 @@ public class ProxyTicker implements Serializable, ITicker {
     private boolean done = false;
 
     @JsonIgnore
-    private transient Set<IProxyPlayer> players = new HashSet<>();
+    private transient Set<IPlayer> players = new HashSet<>();
 
     @Transient
     Set<Long> activePlayerIds = new HashSet<>();
@@ -161,7 +163,7 @@ public class ProxyTicker implements Serializable, ITicker {
         this.partLength = partLength;
     }
 
-    public IProxyPlayer getPlayer(Long playerId) {
+    public IPlayer getPlayer(Long playerId) {
         logger.info("getPlayer() - playerId: {}", playerId);
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
@@ -274,7 +276,7 @@ public class ProxyTicker implements Serializable, ITicker {
         IntStream.range(0, 127).forEach(note -> {
             getPlayers().forEach(p -> {
                 try {
-                    p.getInstrument().noteOff(p.getChannel(), note, 0);
+                    ((IProxyPlayer) p).getInstrument().noteOff(p.getChannel(), note, 0);
                 } catch (InvalidMidiDataException | MidiUnavailableException e) {
                     logger.error("Error stopping note {} on channel {}: {}",
                             note, p.getChannel(), e.getMessage(), e);
@@ -379,17 +381,17 @@ public class ProxyTicker implements Serializable, ITicker {
         return (Objects.nonNull(clockSource) && clockSource.isRunning());
     }
 
-    public Set<IProxyPlayer> getPlayers() {
+    public Set<IPlayer> getPlayers() {
         return players;
     }
 
-    public void setPlayers(Set<IProxyPlayer> players) {
+    public void setPlayers(Set<IPlayer> players) {
         this.players = players;
     }
 
     public synchronized boolean isValid() {
         return (Objects.nonNull(getPlayers()) && !getPlayers().isEmpty()
-                && getPlayers().stream().anyMatch(p -> p.isValid()));
+                && getPlayers().stream().anyMatch(p -> ((IProxyPlayer) p).isValid()));
     }
 
     public void play() {
@@ -400,7 +402,7 @@ public class ProxyTicker implements Serializable, ITicker {
 
         getPlayers().forEach(p -> {
 
-            ProxyInstrument instrument = p.getInstrument();
+            ProxyInstrument instrument = ((IProxyPlayer) p).getInstrument();
             if (Objects.nonNull(instrument)) {
                 Optional<MidiDevice> device = devices.stream()
                         .filter(d -> d.getDeviceInfo().getName().equals(instrument.getDeviceName())).findFirst();
@@ -424,7 +426,7 @@ public class ProxyTicker implements Serializable, ITicker {
         getPlayers().forEach(p -> {
             try {
                 if (p.getPreset() > -1)
-                    p.getInstrument().programChange(p.getChannel(), p.getPreset(), 0);
+                    ((IProxyPlayer) p).getInstrument().programChange(p.getChannel(), p.getPreset(), 0);
             } catch (InvalidMidiDataException | MidiUnavailableException e) {
                 logger.error(e.getMessage(), e);
             }

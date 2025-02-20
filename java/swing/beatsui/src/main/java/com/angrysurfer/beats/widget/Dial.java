@@ -24,6 +24,8 @@ public class Dial extends JComponent {
     private int value = 64;
     private boolean isDragging = false;
     private int lastY;
+    private int min = 0;
+    private int max = 127;
 
     public Dial() {
         updateSize();
@@ -59,7 +61,7 @@ public class Dial extends JComponent {
             public void mouseDragged(java.awt.event.MouseEvent e) {
                 if (isDragging) {
                     int delta = lastY - e.getY();
-                    value = Math.min(127, Math.max(0, value + delta));
+                    value = Math.min(max, Math.max(min, value + delta));
                     lastY = e.getY();
                     repaint();
                 }
@@ -129,11 +131,29 @@ public class Dial extends JComponent {
     }
 
     public void setValue(int newValue) {
-        value = Math.min(127, Math.max(0, newValue));
+        value = Math.min(max, Math.max(min, newValue));
         repaint();
     }
 
     public int getValue() {
         return value;
+    }
+
+    public int getMinimum() {
+        return min;
+    }
+
+    public void setMinimum(int min) {
+        this.min = min;
+        repaint();
+    }
+
+    public int getMaximum() {
+        return max;
+    }
+
+    public void setMaximum(int max) {
+        this.max = max;
+        repaint();
     }
 }

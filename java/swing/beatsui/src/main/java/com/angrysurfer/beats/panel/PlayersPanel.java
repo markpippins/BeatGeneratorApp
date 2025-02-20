@@ -22,7 +22,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.proxy.IProxyPlayer;
+import com.angrysurfer.core.model.IPlayer;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
 import com.angrysurfer.core.service.TickerManager;
@@ -423,15 +423,15 @@ public class PlayersPanel extends JPanel {
     // 17 - Preserve     (Boolean)
     // 18 - Sparse
 
-    public void refreshPlayers(Set<IProxyPlayer> players) {
+    public void refreshPlayers(Set<IPlayer> players) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
         
         if (players != null) {
-            List<IProxyPlayer> sortedPlayers = new ArrayList<>(players);
+            List<IPlayer> sortedPlayers = new ArrayList<>(players);
             Collections.sort(sortedPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
             
-            for (IProxyPlayer p : sortedPlayers) {
+            for (IPlayer p : sortedPlayers) {
                 ProxyStrike player = (ProxyStrike) p;
                 Object[] rowData = player.toRow();
                 

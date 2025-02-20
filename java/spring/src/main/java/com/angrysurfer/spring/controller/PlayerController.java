@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.model.IPlayer;
+import com.angrysurfer.core.model.player.AbstractPlayer;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.PlayerService;
 
@@ -29,9 +30,9 @@ public class PlayerController {
     }
 
     @GetMapping(path = Constants.ALL_PLAYERS)
-    public @ResponseBody Set<IPlayer> getPlayers() {
+    public @ResponseBody Set<AbstractPlayer> getPlayers() {
         logger.info("GET " + Constants.ALL_PLAYERS);
-        Set<IPlayer> players = (service.getPlayers());
+        Set<AbstractPlayer> players = (service.getPlayers());
         return players;
     }
 
@@ -60,7 +61,7 @@ public class PlayerController {
     }
 
     @GetMapping(Constants.REMOVE_PLAYER)
-    public Set<IPlayer> removePlayer(@RequestParam Long playerId) {
+    public Set<AbstractPlayer> removePlayer(@RequestParam Long playerId) {
         logger.info("GET " + Constants.REMOVE_PLAYER + " - playerId: {}", playerId);
         return service.removePlayer(playerId);
     }
