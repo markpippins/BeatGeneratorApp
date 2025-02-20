@@ -12,12 +12,15 @@ import com.angrysurfer.core.api.Commands;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatPropertiesLaf;
+import com.formdev.flatlaf.intellijthemes.FlatArcOrangeIJTheme;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLightLaf;
-import com.formdev.flatlaf.themes.FlatMacDarkLaf; 
-import com.formdev.flatlaf.themes.FlatMacLightLaf; 
-import com.formdev.flatlaf.themes.FlatMacDarkLaf; 
-// import com.formdev.flatlaf.themes.FlatArcOrangeIJTheme;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
+import com.formdev.flatlaf.intellijthemes.FlatAllIJThemes;
+
+import java.util.Arrays;
 
 public class ThemeManager {
     private static ThemeManager instance;
@@ -41,28 +44,33 @@ public class ThemeManager {
         // Platform Themes
         JMenu platformThemes = new JMenu("Platform");
         UIManager.LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels();
+        Arrays.sort(looks, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
         for (UIManager.LookAndFeelInfo look : looks) {
             addThemeItem(platformThemes, look.getName(), look.getClassName());
         }
 
+        // Add basic themes
+        JMenu basicThemes = new JMenu("FlatLaf Basic");
+        addThemeItem(basicThemes, "Darcula", () -> new FlatDarculaLaf());
+        addThemeItem(basicThemes, "Dark", () -> new FlatDarkLaf());
+        addThemeItem(basicThemes, "IntelliJ", () -> new FlatIntelliJLaf());
+        addThemeItem(basicThemes, "Light", () -> new FlatLightLaf());
+        addThemeItem(basicThemes, "Mac Dark", () -> new FlatMacDarkLaf());
+        addThemeItem(basicThemes, "Mac Light", () -> new FlatMacLightLaf());
+
         // FlatLaf Themes
-        JMenu flatThemes = new JMenu("FlatLaf");
-        addThemeItem(flatThemes, "Dark", () -> new FlatDarkLaf());
-        addThemeItem(flatThemes, "Light", () -> new FlatLightLaf());
-        addThemeItem(flatThemes, "Darcula", () -> new FlatDarculaLaf());
-        addThemeItem(flatThemes, "IntelliJ", () -> new FlatIntelliJLaf());
-        addThemeItem(flatThemes, "Mac Dark", () -> new FlatMacDarkLaf());
-        addThemeItem(flatThemes, "Mac Light", () -> new FlatMacLightLaf());
+        JMenu flatThemes = new JMenu("FlatLaf Intellij");
 
-        // com.formdev.flatlaf.themes.
-        // com.formdev.flatlaf.intellijthemes.FlatArcOrangeIJTheme.setup();
-        // FlatArcOrangeIJTheme.setup();
+        // Sort and add all IntelliJ themes
+        FlatAllIJThemes.FlatIJLookAndFeelInfo[] sortedThemes = FlatAllIJThemes.INFOS.clone();
+        Arrays.sort(sortedThemes, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+        for (FlatAllIJThemes.FlatIJLookAndFeelInfo info : sortedThemes) {
+            addThemeItem(flatThemes, info.getName(), info.getClassName());
+        }
 
-        
-        
-
-        themeMenu.add(platformThemes);
+        themeMenu.add(basicThemes);
         themeMenu.add(flatThemes);
+        themeMenu.add(platformThemes);
 
         return themeMenu;
     }
