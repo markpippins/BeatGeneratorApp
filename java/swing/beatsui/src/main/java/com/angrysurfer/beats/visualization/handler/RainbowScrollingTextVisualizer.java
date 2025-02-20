@@ -10,40 +10,16 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class ScrollingTextVisualizer implements IVisualizationHandler {
+public class RainbowScrollingTextVisualizer implements IVisualizationHandler {
     private int position = 0;
+    private float hue = 0f;
     private final FontLoader fontLoader = FontLoader.getInstance();
     private static final int PADDING = 1;
     private final Random random = new Random();
     private int currentMessageIndex = 0;
     
-    public static final String[] MESSAGES = {
-        "Just Do It",
-        "Think Different",
-        "Got Milk?",
-        "I'm Lovin' It",
-        "Finger Lickin' Good",
-        "Have It Your Way",
-        "The Best A Man Can Get",
-        "Melts In Your Mouth",
-        "Taste The Rainbow",
-        "Red Bull Gives You Wings",
-        "The Happiest Place On Earth",
-        "Snap Crackle Pop",
-        "It's Finger Clickin' Good",
-        "Because You're Worth It",
-        "Diamonds Are Forever",
-        "The Breakfast of Champions",
-        "America Runs On Dunkin",
-        "Maybe She's Born With It",
-        "Eat Fresh",
-        "What's In Your Wallet?",
-        "Can You Hear Me Now?",
-        "The King Of Beers",
-        "Good To The Last Drop",
-        "Betcha Can't Eat Just One"
-    };
-
+    // Reuse the same messages array from ScrollingTextVisualizer
+    private static final String[] MESSAGES = ScrollingTextVisualizer.MESSAGES;
     private String currentMessage = MESSAGES[0];
 
     @Override
@@ -75,6 +51,10 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
             // Skip if character is completely off screen
             if (startX + font.getWidth() <= 0 || startX >= buttons[0].length) continue;
             
+            // Calculate color for this character
+            float characterHue = (hue + (i * 0.05f)) % 1.0f;
+            Color color = Color.getHSBColor(characterHue, 1.0f, 1.0f);
+            
             // Draw the character pattern
             for (int y = 0; y < font.getHeight(); y++) {
                 for (int x = 0; x < font.getWidth(); x++) {
@@ -83,20 +63,21 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
                     
                     if (gridX >= 0 && gridX < buttons[0].length && gridY < buttons.length) {
                         if (font.getPattern()[y][x] == 1) {
-                            buttons[gridY][gridX].setBackground(Color.GREEN);
+                            buttons[gridY][gridX].setBackground(color);
                         }
                     }
                 }
             }
         }
 
-        // Update position
+        // Update position and hue
         position++;
+        hue = (hue + 0.01f) % 1.0f;
     }
 
     @Override
     public String getName() {
-        return "Scrolling Text";
+        return "Rainbow Scrolling Text";
     }
 
     @Override
