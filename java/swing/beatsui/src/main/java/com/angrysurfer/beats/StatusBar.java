@@ -7,7 +7,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import com.angrysurfer.core.api.Command;
@@ -48,7 +47,7 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
     public StatusBar() {
         super(new BorderLayout());
         setup();
-        
+
         // Request initial ticker state through CommandBus
         SwingUtilities.invokeLater(() -> {
             CommandBus.getInstance().publish(Commands.TICKER_REQUEST, this);
@@ -92,7 +91,7 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
 
         statusLabel = new JLabel("Status: ");
         leftStatusPanel.add(statusLabel);
-        statusField = createTextField(16); // Reduced from 32
+        statusField = createTextField(10); // Reduced from 32
         leftStatusPanel.add(statusField);
 
         statusPanel.add(leftStatusPanel, BorderLayout.WEST);
@@ -100,14 +99,14 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
         messageLabel = new JLabel("Message: ");
         JPanel messagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         messagePanel.add(messageLabel);
-        messageField = createTextField(30); // Reduced from 60
+        messageField = createTextField(20); // Reduced from 60
         messagePanel.add(messageField);
         statusPanel.add(messagePanel, BorderLayout.CENTER);
 
         timeLabel = new JLabel("Time: ");
         JPanel timePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         timePanel.add(timeLabel);
-        timeField = createTextField(10);
+        timeField = createTextField(6);
         timePanel.add(timeField);
         statusPanel.add(timePanel, BorderLayout.EAST);
 
@@ -155,7 +154,8 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
 
     @Override
     public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) return;
+        if (action == null || action.getCommand() == null)
+            return;
 
         switch (action.getCommand()) {
             case Commands.TICKER_SELECTED, Commands.TICKER_UPDATED, Commands.TICKER_LOADED -> {

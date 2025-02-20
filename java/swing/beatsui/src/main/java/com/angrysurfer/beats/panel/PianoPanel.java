@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -17,6 +18,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
 import com.angrysurfer.beats.Utils;
+import com.angrysurfer.beats.animation.ColorAnimator;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
@@ -33,6 +35,7 @@ public class PianoPanel extends StatusProviderPanel {
     private final CommandBus commandBus = CommandBus.getInstance();
     private final Set<Integer> heldNotes = new HashSet<>();
     private Map<Integer, JButton> noteToKeyMap = new HashMap<>();
+    private final ColorAnimator colorAnimator;
 
     public PianoPanel() {
         this(null);
@@ -43,7 +46,9 @@ public class PianoPanel extends StatusProviderPanel {
         super(null, statusConsumer);
         setPreferredSize(new Dimension(230, 80));
         setMinimumSize(new Dimension(230, 80));
-        setBorder(new EmptyBorder(10, 10, 10, 10));
+        // setBorder(new EmptyBorder(10, 10, 10, 10));
+        setBorder(BorderFactory.createLineBorder(Color.lightGray, 1));
+        setOpaque(true); // Make sure panel is opaque
 
         setBackground(Utils.fadedOrange);
 
@@ -76,7 +81,40 @@ public class PianoPanel extends StatusProviderPanel {
             }
         }
 
+        // Initialize and start color animator
+        colorAnimator = new ColorAnimator();
+        colorAnimator.setOnColorUpdate(() -> repaint());
+        colorAnimator.start();
+
         setupActionBusListener();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g); // Call super first
+        Graphics2D g2d = (Graphics2D) g.create();
+        
+        // Create gradient paint using current animated color
+        Color currentColor = colorAnimator.getCurrentColor();
+        Color darkerColor = darker(currentColor, 0.7f);
+        
+        GradientPaint gradient = new GradientPaint(
+            0, 0, currentColor,
+            0, getHeight(), darkerColor
+        );
+        
+        g2d.setPaint(gradient);
+        g2d.fillRect(0, 0, getWidth(), getHeight());
+        
+        g2d.dispose();
+    }
+
+    private Color darker(Color color, float factor) {
+        return new Color(
+            Math.max((int)(color.getRed() * factor), 0),
+            Math.max((int)(color.getGreen() * factor), 0),
+            Math.max((int)(color.getBlue() * factor), 0)
+        );
     }
 
     private void setupActionBusListener() {

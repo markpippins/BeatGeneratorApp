@@ -1,11 +1,23 @@
 package com.angrysurfer.beats;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.LookAndFeel;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
-import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.formdev.flatlaf.*;
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatPropertiesLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf; 
+import com.formdev.flatlaf.themes.FlatMacLightLaf; 
+import com.formdev.flatlaf.themes.FlatMacDarkLaf; 
+// import com.formdev.flatlaf.themes.FlatArcOrangeIJTheme;
 
 public class ThemeManager {
     private static ThemeManager instance;
@@ -25,24 +37,33 @@ public class ThemeManager {
 
     public JMenu createThemeMenu() {
         JMenu themeMenu = new JMenu("Theme");
-        
+
         // Platform Themes
         JMenu platformThemes = new JMenu("Platform");
         UIManager.LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels();
         for (UIManager.LookAndFeelInfo look : looks) {
             addThemeItem(platformThemes, look.getName(), look.getClassName());
         }
-        
+
         // FlatLaf Themes
         JMenu flatThemes = new JMenu("FlatLaf");
         addThemeItem(flatThemes, "Dark", () -> new FlatDarkLaf());
         addThemeItem(flatThemes, "Light", () -> new FlatLightLaf());
         addThemeItem(flatThemes, "Darcula", () -> new FlatDarculaLaf());
         addThemeItem(flatThemes, "IntelliJ", () -> new FlatIntelliJLaf());
+        addThemeItem(flatThemes, "Mac Dark", () -> new FlatMacDarkLaf());
+        addThemeItem(flatThemes, "Mac Light", () -> new FlatMacLightLaf());
+
+        // com.formdev.flatlaf.themes.
+        // com.formdev.flatlaf.intellijthemes.FlatArcOrangeIJTheme.setup();
+        // FlatArcOrangeIJTheme.setup();
+
+        
+        
 
         themeMenu.add(platformThemes);
         themeMenu.add(flatThemes);
-        
+
         return themeMenu;
     }
 

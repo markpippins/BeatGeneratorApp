@@ -14,6 +14,9 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.JOptionPane;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyAdapter;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -55,6 +58,7 @@ public class RulesPanel extends JPanel {
         setupCommandBusListener();
         setupButtonListeners();
         setupContextMenu();
+        setupKeyboardShortcuts(); // Add this line
 
     }
 
@@ -266,6 +270,38 @@ public class RulesPanel extends JPanel {
                     CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this);
                 }
                 updateButtonStates();
+            }
+        });
+    }
+
+    private void setupKeyboardShortcuts() {
+        // Make the table focusable
+        table.setFocusable(true);
+        
+        // Add key listener to handle delete key
+        table.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+                    ProxyRule[] selectedRules = getSelectedRules();
+                    if (selectedRules.length > 0) {
+                        int confirm = JOptionPane.showConfirmDialog(
+                            RulesPanel.this,
+                            "Are you sure you want to delete the selected rule(s)?",
+                            "Confirm Delete",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                        );
+                        
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            CommandBus.getInstance().publish(
+                                Commands.RULE_DELETE_REQUEST,
+                                RulesPanel.this,
+                                selectedRules
+                            );
+                        }
+                    }
+                }
             }
         });
     }

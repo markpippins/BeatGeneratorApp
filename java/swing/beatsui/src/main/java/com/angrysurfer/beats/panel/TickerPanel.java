@@ -93,35 +93,32 @@ public class TickerPanel extends StatusProviderPanel {
         // Add horizontal spacer
         controlPanel.add(Box.createHorizontalStrut(10)); // Adjust the width as needed
 
-        // Performance controls
-        levelDial = createDial("Level", 64, 0, 127, 1);
-        noteDial = createDial("Note", 64, 0, 127, 1);
-        controlPanel.add(createLabeledControl("Level", levelDial));
-        controlPanel.add(createLabeledControl("Note", noteDial));
+        JPanel navPanel = createOctavePanel();
+        controlPanel.add(navPanel);
 
-        // Modulation controls
-        swingDial = createDial("Swing", 50, 0, 100, 1);
-        probabilityDial = createDial("Probability", 50, 0, 100, 1);
-        controlPanel.add(createLabeledControl("Swing", swingDial));
-        controlPanel.add(createLabeledControl("Probability", probabilityDial));
+        noteDial = createDial("Note", 64, 0, 127, 1);
+        levelDial = createDial("Level", 64, 0, 127, 1);
+        controlPanel.add(createLabeledControl("Note", noteDial));
+        controlPanel.add(createLabeledControl("Level", levelDial));
+
+        panDial = createDial("Pan", 64, 0, 127, 1);
+        controlPanel.add(createLabeledControl("Pan", panDial));
 
         velocityMinDial = createDial("Min Vel", 0, 0, 127, 1);
         velocityMaxDial = createDial("Max Vel", 127, 0, 127, 1);
         controlPanel.add(createLabeledControl("Min Vel", velocityMinDial));
         controlPanel.add(createLabeledControl("Max Vel", velocityMaxDial));
 
+        swingDial = createDial("Swing", 50, 0, 100, 1);
+        probabilityDial = createDial("Probability", 50, 0, 100, 1);
+        controlPanel.add(createLabeledControl("Swing", swingDial));
+        controlPanel.add(createLabeledControl("Probability", probabilityDial));
+
         randomDial = createDial("Random", 0, 0, 100, 1);
         controlPanel.add(createLabeledControl("Random", randomDial));
 
-        panDial = createDial("Pan", 64, 0, 127, 1);
-        controlPanel.add(createLabeledControl("Pan", panDial));
-
         sparseDial = createDial("Sparse", 0, 0, 100, 1);
         controlPanel.add(createLabeledControl("Sparse", sparseDial));
-
-        // Octave Panel
-        JPanel navPanel = createOctavePanel();
-        controlPanel.add(navPanel);
 
         disableDials();
 
@@ -161,7 +158,7 @@ public class TickerPanel extends StatusProviderPanel {
         velocityMaxDial.setValue(player.getMaxVelocity().intValue());
         randomDial.setValue(player.getRandomDegree().intValue());
         panDial.setValue(player.getPanPosition().intValue());
-        sparseDial.setValue((int)(player.getSparse() * 100));
+        sparseDial.setValue((int) (player.getSparse() * 100));
     }
 
     private JPanel createOctavePanel() {
@@ -189,7 +186,7 @@ public class TickerPanel extends StatusProviderPanel {
         Dial dial = new Dial();
         dial.setMinimum(min);
         dial.setMaximum(max);
-	    dial.setValue((int)value);
+        dial.setValue((int) value);
         dial.setPreferredSize(new Dimension(50, 50));
         dial.setMinimumSize(new Dimension(50, 50));
         dial.setMaximumSize(new Dimension(50, 50));

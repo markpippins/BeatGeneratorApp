@@ -99,30 +99,21 @@ public class PlayerEditPanel extends StatusProviderPanel {
         int presetValue = Math.min(Math.max(1, player.getPreset().intValue()), 127);
         presetSpinner = new JSpinner(new SpinnerNumberModel(presetValue, 1, 127, 1));
         
-        // Initialize performance controls as JSliders
-        swingSlider = createSlider("Swing", player.getSwing(), 0, 100, 1);
-        levelSlider = createSlider("Level", player.getLevel(), 0, 127, 1);
-        noteSlider = createSlider("Note", player.getNote(), 0, 127, 1);
-        velocityMinSlider = createSlider("Min Vel", player.getMinVelocity(), 0, 127, 1);
-        velocityMaxSlider = createSlider("Max Vel", player.getMaxVelocity(), 0, 127, 1);
-        probabilitySlider = createSlider("Prob", player.getProbability(), 0, 100, 1);
-        randomSlider = createSlider("Random", player.getRandomDegree(), 0, 100, 1);
-        panSlider = createSlider("Pan", player.getPanPosition(), 0, 127, 1);
-        sparseSlider = createSlider("Sparse", (long)(player.getSparse() * 100), 0, 100, 1);
+        // Initialize performance controls as JSliders with safe value clamping
+        swingSlider = createSlider("Swing", clampValue(player.getSwing(), 0, 100), 0, 100);
+        levelSlider = createSlider("Level", clampValue(player.getLevel(), 0, 127), 0, 127);
+        noteSlider = createSlider("Note", clampValue(player.getNote(), 0, 127), 0, 127);
+        velocityMinSlider = createSlider("Min Vel", clampValue(player.getMinVelocity(), 0, 127), 0, 127);
+        velocityMaxSlider = createSlider("Max Vel", clampValue(player.getMaxVelocity(), 0, 127), 0, 127);
+        probabilitySlider = createSlider("Prob", clampValue(player.getProbability(), 0, 100), 0, 100);
+        randomSlider = createSlider("Random", clampValue(player.getRandomDegree(), 0, 100), 0, 100);
+        panSlider = createSlider("Pan", clampValue(player.getPanPosition(), 0, 127), 0, 127);
+        sparseSlider = createSlider("Sparse", clampValue((long)(player.getSparse() * 100), 0, 100), 0, 100);
         
-        // Initialize sliders instead of spinners
-        ratchetCountSlider = new JSlider(JSlider.VERTICAL, 1, 8, player.getRatchetCount().intValue());
-        ratchetCountSlider.setMajorTickSpacing(1);
-        ratchetCountSlider.setPaintTicks(true);
-        ratchetCountSlider.setPaintLabels(true);
-        ratchetCountSlider.setSnapToTicks(true);
-
-        ratchetIntervalSlider = new JSlider(JSlider.VERTICAL, 1, 16, player.getRatchetInterval().intValue());
-        ratchetIntervalSlider.setMajorTickSpacing(1);
-        ratchetIntervalSlider.setPaintTicks(true);
-        ratchetIntervalSlider.setPaintLabels(true);
-        ratchetIntervalSlider.setSnapToTicks(true);
-
+        // Initialize ratchet sliders with safe value clamping
+        ratchetCountSlider = createSlider("Count", clampValue(player.getRatchetCount(), 1, 8), 1, 8);
+        ratchetIntervalSlider = createSlider("Interval", clampValue(player.getRatchetInterval(), 1, 16), 1, 16);
+        
         // Initialize switches
         stickyPresetSwitch = createToggleSwitch("Sticky", player.getStickyPreset());
         useInternalBeatsSwitch = createToggleSwitch("Int.Beats", player.getUseInternalBeats());
@@ -551,11 +542,20 @@ public class PlayerEditPanel extends StatusProviderPanel {
         return combo;
     }
 
-    private JSlider createSlider(String name, long value, int min, int max, int majorTick) {
+    private JSlider createSlider(String name, long value, int min, int max) {
         JSlider slider = new JSlider(JSlider.VERTICAL, min, max, (int)value);
-        slider.setPreferredSize(new Dimension(20, 80)); // Set width and max height
-        slider.setMaximumSize(new Dimension(20, 80));   // Enforce max height
+        slider.setMajorTickSpacing((max - min) / 4);
+        slider.setPaintTicks(true);
+        slider.setPaintLabels(true);
+        slider.setSnapToTicks(true);
         return slider;
+    }
+
+    private long clampValue(Long value, int min, int max) {
+        if (value == null) {
+            return min;
+        }
+        return Math.max(min, Math.min(max, value));
     }
 
     private ToggleSwitch createToggleSwitch(String name, boolean value) {

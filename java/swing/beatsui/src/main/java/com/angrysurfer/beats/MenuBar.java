@@ -5,7 +5,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -66,8 +65,6 @@ public class MenuBar extends JMenuBar {
         // Preferences submenu
         JMenu preferencesMenu = new JMenu("Preferences");
         
-        // Add Theme menu
-        preferencesMenu.add(themeManager.createThemeMenu());
         
         // Add Database menu
         JMenuItem clearDb = new JMenuItem("Clear Database");
@@ -83,10 +80,10 @@ public class MenuBar extends JMenuBar {
                 commandBus.publish(Commands.CLEAR_DATABASE, this);
             }
         });
+
         JMenu dbMenu = new JMenu("Database");
         dbMenu.setMnemonic(KeyEvent.VK_D);
         dbMenu.add(clearDb);
-        dbMenu.addSeparator();
         
         // Add Load Instruments item
         JMenuItem loadInstruments = new JMenuItem("Load Instruments from File");
@@ -95,6 +92,9 @@ public class MenuBar extends JMenuBar {
         });
         dbMenu.add(loadInstruments);
         preferencesMenu.add(dbMenu);
+
+        // Add Theme menu
+        preferencesMenu.add(themeManager.createThemeMenu());
 
         editMenu.add(preferencesMenu);
 
