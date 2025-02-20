@@ -1,9 +1,11 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
@@ -50,6 +52,7 @@ public class TickerPanel extends StatusProviderPanel {
     private Dial sparseDial;
 
     private ProxyStrike selectedPlayer; // Add this line
+    private JPanel controlPanel; // Add this field
 
     public TickerPanel(StatusConsumer status) {
         super(new BorderLayout(), status);
@@ -82,16 +85,19 @@ public class TickerPanel extends StatusProviderPanel {
     }
 
     private JPanel createControlPanel() {
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel.setMinimumSize(new Dimension(getMinimumSize().width, 100));
         controlPanel.setPreferredSize(new Dimension(getPreferredSize().width, 100));
+
+        controlPanel
+                .add(createVerticalAdjustPanel("Shift", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
 
         // Add PianoPanel to the LEFT
         PianoPanel pianoPanel = new PianoPanel(statusConsumer);
         controlPanel.add(pianoPanel);
 
         // Add horizontal spacer
-        controlPanel.add(Box.createHorizontalStrut(10)); // Adjust the width as needed
+        // controlPanel.add(Box.createHorizontalStrut(2)); // Adjust the width as needed
 
         JPanel navPanel = createOctavePanel();
         controlPanel.add(navPanel);
@@ -161,6 +167,8 @@ public class TickerPanel extends StatusProviderPanel {
         sparseDial.setValue((int) (player.getSparse() * 100));
     }
 
+    static final int BUTTON_SIZE = 30;
+
     private JPanel createOctavePanel() {
         JPanel navPanel = new JPanel(new BorderLayout(0, 2));
         navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5)); // Add margins
@@ -169,8 +177,42 @@ public class TickerPanel extends StatusProviderPanel {
         // Create up and down buttons
         JButton prevButton = new JButton("↑");
         JButton nextButton = new JButton("↓");
-        prevButton.setPreferredSize(new Dimension(35, 35));
-        nextButton.setPreferredSize(new Dimension(35, 35));
+        prevButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        nextButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 2));
+        buttonPanel.add(prevButton);
+        buttonPanel.add(nextButton);
+
+        navPanel.add(octaveLabel, BorderLayout.NORTH);
+        navPanel.add(buttonPanel, BorderLayout.CENTER);
+
+        return navPanel;
+    }
+
+    private JPanel createVerticalAdjustPanel(String label, String upLabel, String downLabel, String upCommand,
+            String downCommand) {
+
+        JPanel navPanel = new JPanel(new BorderLayout(0, 2));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5)); // Add margins
+        JLabel octaveLabel = new JLabel(label, JLabel.CENTER);
+
+        // Create up and down buttons
+        JButton prevButton = new JButton(upLabel);
+        prevButton.setActionCommand(upCommand);
+        prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this, selectedPlayer));
+        prevButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        prevButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+
+        JButton nextButton = new JButton(downLabel);
+        nextButton.setActionCommand(downCommand);
+        nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this, selectedPlayer));
+        nextButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        nextButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+
+        // Enable/disable buttons based on player selection
+        prevButton.setEnabled(true);
+        nextButton.setEnabled(true);
 
         JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 2));
         buttonPanel.add(prevButton);
@@ -266,11 +308,15 @@ public class TickerPanel extends StatusProviderPanel {
                         if (action.getData() instanceof ProxyStrike player) {
                             selectedPlayer = player; // Cache the selected player
                             setDialValues(player);
+                            // Enable vertical adjust buttons
+                            updateVerticalAdjustButtons(true);
                         }
                     }
                     case Commands.PLAYER_UNSELECTED -> {
                         disableDials();
                         selectedPlayer = null; // Clear the cached player
+                        // Disable vertical adjust buttons
+                        updateVerticalAdjustButtons(false);
                     }
                     case Commands.NEW_VALUE_LEVEL -> {
                         if (action.getData() instanceof Integer level) {
@@ -347,6 +393,19 @@ public class TickerPanel extends StatusProviderPanel {
                 }
             }
         });
+    }
+
+    private void updateVerticalAdjustButtons(boolean enabled) {
+        // Find and update all buttons in vertical adjust panels
+        for (Component comp : controlPanel.getComponents()) {
+            if (comp instanceof JPanel) {
+                for (Component inner : ((JPanel) comp).getComponents()) {
+                    if (inner instanceof JButton) {
+                        inner.setEnabled(enabled && selectedPlayer != null);
+                    }
+                }
+            }
+        }
     }
 
     private ProxyStrike getSelectedPlayer() {

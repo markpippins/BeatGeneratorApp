@@ -321,6 +321,11 @@ public class PlayersPanel extends JPanel {
                             );
                         }
                     }
+                    case Commands.PLAYER_UPDATED -> {
+                        if (action.getData() instanceof ProxyStrike player) {
+                            updatePlayerRow(player);
+                        }
+                    }
                 }
             }
         });
@@ -485,6 +490,32 @@ public class PlayersPanel extends JPanel {
                 }
                 
                 model.addRow(newRowData);
+            }
+        }
+    }
+
+    private void updatePlayerRow(ProxyStrike player) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        int rowIndex = findPlayerRowIndex(player);
+        
+        if (rowIndex != -1) {
+            Object[] rowData = player.toRow();
+            // Insert instrument name after player name
+            Object[] newRowData = new Object[rowData.length + 1];
+            newRowData[0] = rowData[0]; // Name
+            newRowData[1] = player.getInstrument() != null ? player.getInstrument().getName() : ""; // Instrument
+            System.arraycopy(rowData, 1, newRowData, 2, rowData.length - 1);
+            
+            // Convert boolean columns
+            for (int booleanColumn : BOOLEAN_COLUMNS) {
+                if (booleanColumn < newRowData.length) {
+                    newRowData[booleanColumn] = Boolean.valueOf(String.valueOf(newRowData[booleanColumn]));
+                }
+            }
+            
+            // Update each column individually to preserve sorting
+            for (int i = 0; i < newRowData.length; i++) {
+                model.setValueAt(newRowData[i], rowIndex, i);
             }
         }
     }

@@ -249,7 +249,7 @@ public class TickerManager {
         player.setRatchetCount(1L);
         player.setPanPosition(64L);
         player.setRatchetInterval(1L);
-        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, activeTicker);
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
     }
 
     public void updatePlayerLevel(ProxyStrike player, int level) {
@@ -290,22 +290,22 @@ public class TickerManager {
 
     public void savePlayerProperties(ProxyStrike player) {
         RedisService.getInstance().savePlayer(player);
-        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, activeTicker);
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
     }
 
     public void clearRules(IPlayer player) {
         // Logic to clear rules from the player
-        CommandBus.getInstance().publish(Commands.RULES_CLEARED, this, activeTicker);
+        CommandBus.getInstance().publish(Commands.RULES_CLEARED, this, player);
     }
 
     public void deleteRule(ProxyStrike player, String operator, String comparison, String value, String part) {
         // Logic to delete a rule from the player
-        CommandBus.getInstance().publish(Commands.RULE_DELETED, this, activeTicker);
+        CommandBus.getInstance().publish(Commands.RULE_DELETED, this, player);
     }
 
     public void addRule(ProxyStrike player, String operator, String comparison, String value, String part) {
         // Logic to add a rule to the player
-        CommandBus.getInstance().publish(Commands.RULE_ADDED, this, activeTicker);
+        CommandBus.getInstance().publish(Commands.RULE_ADDED, this, player);
     }
 
     public void deletePlayer(ProxyStrike player) {
@@ -315,11 +315,11 @@ public class TickerManager {
 
     public void updatePlayer(ProxyStrike player) {
         // activeTicker.updatePlayer(player);
-        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, activeTicker);
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
     }
 
     public void addPlayer(ProxyStrike player) {
         // activeTicker.addPlayer(player);
-        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, activeTicker);
+        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, player);
     }
 }

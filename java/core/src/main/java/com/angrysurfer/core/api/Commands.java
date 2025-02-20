@@ -143,5 +143,9 @@ public class Commands {
     public static final String NEW_VALUE_PAN = "newValuePan";
     public static final String NEW_VALUE_SPARSE = "newValueSparse";
     public static final String PLAYER_DELETED = "PLAYER_DELETED";
+
+    public static final String TRANSPOSE_UP = "TRANSPOSE_UP";
+    public static final String TRANSPOSE_DOWN = "TRANSPOSE_DOWN";
+
     public static String RULE_DELETED = "RULE_DELETED";
 }
