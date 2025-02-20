@@ -1,19 +1,15 @@
 package com.angrysurfer.core.model.player;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
-import com.angrysurfer.core.model.Pad;
-import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public interface IPlayer extends Callable<Boolean> {
 
-    Set<Pad> getPads();
+    // Set<Pad> getPads();
 
     String getName();
 
@@ -93,17 +89,17 @@ public interface IPlayer extends Callable<Boolean> {
 
     Boolean getArmForNextTick();
 
-    Set<Rule> getRules();
+    // Set<Rule> getRules();
 
     List<Integer> getAllowedControlMessages();
 
-    Instrument getInstrument();
+    // Instrument getInstrument();
 
-    Ticker getTicker();
+    // Ticker getTicker();
 
     Long getId();
 
-    void setPads(Set<Pad> pads);
+    // void setPads(Set<Pad> pads);
 
     void setName(String name);
 
@@ -189,12 +185,12 @@ public interface IPlayer extends Callable<Boolean> {
     @JsonIgnore
     void setArmForNextTick(Boolean armForNextTick);
 
-    void setRules(Set<Rule> rules);
+    // void setRules(Set<Rule> rules);
 
     void setAllowedControlMessages(List<Integer> allowedControlMessages);
 
-    @JsonIgnore
-    void setTicker(Ticker ticker);
+    // @JsonIgnore
+    // void setTicker(Ticker ticker);
 
     void setId(Long id);
 
@@ -202,13 +198,13 @@ public interface IPlayer extends Callable<Boolean> {
 
     Long getSubPosition();
 
-    void setInstrument(Instrument instrument);
+    // void setInstrument(Instrument instrument);
 
     void onTick(long tick, long bar);
 
     Long getInstrumentId();
 
-    Rule getRule(Long ruleId);
+    // Rule getRule(Long ruleId);
 
     void drumNoteOn(long note);
 

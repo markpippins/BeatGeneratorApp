@@ -1,4 +1,4 @@
-package com.angrysurfer.core.data;
+package com.angrysurfer.core.service;
 
 import java.io.File;
 import java.util.ArrayList;

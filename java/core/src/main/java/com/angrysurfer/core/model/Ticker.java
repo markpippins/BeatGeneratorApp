@@ -2,8 +2,11 @@ package com.angrysurfer.core.model;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -12,7 +15,7 @@ import javax.sound.midi.MidiUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.player.IPlayer;
+import com.angrysurfer.core.model.player.AbstractPlayer;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
@@ -30,7 +33,36 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Ticker implements Serializable {
+public class Ticker implements Serializable, ITicker {
+
+    @Override
+    public List<Callable<Boolean>> getCallables() {
+        // Implement the method as required
+        return getPlayers().stream()
+                .map(player -> (Callable<Boolean>) () -> player.call())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void setParts(Integer parts) {
+        logger.info("setParts() - new value: {}", parts);
+        this.parts = parts;
+        this.partCycler.setLength((long) parts);
+    }
+
+    @Override
+    public void setBars(Integer bars) {
+        logger.info("setBars() - new value: {}", bars);
+        this.bars = bars;
+        getBarCycler().setLength((long) bars);
+    }
+
+    @Override
+    public void setBeatsPerBar(Integer beatsPerBar) {
+        logger.info("setBeatsPerBar() - new value: {}", beatsPerBar);
+        this.beatsPerBar = beatsPerBar;
+        getBeatCycler().setLength((long) beatsPerBar);
+    }
 
     @JsonIgnore
     @Transient
@@ -42,7 +74,7 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
-    private Set<IPlayer> removeList = new HashSet<>();
+    private Set<AbstractPlayer> removeList = new HashSet<>();
 
     @JsonIgnore
     @Transient
@@ -85,7 +117,7 @@ public class Ticker implements Serializable {
     private Long id;
 
     @Transient
-    private Set<IPlayer> players = new HashSet<>();
+    private Set<AbstractPlayer> players = new HashSet<>();
 
     @Transient
     Set<Long> activePlayerIds = new HashSet<>();
@@ -117,7 +149,7 @@ public class Ticker implements Serializable {
         setSongLength(Long.MAX_VALUE);
     }
 
-    public IPlayer getPlayer(Long playerId) {
+    public AbstractPlayer getPlayer(Long playerId) {
         logger.info("getPlayer() - playerId: {}", playerId);
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
@@ -335,4 +367,5 @@ public class Ticker implements Serializable {
     public boolean isRunning() {
         return (Objects.nonNull(clockSource) && clockSource.isRunning());
     }
+
 }

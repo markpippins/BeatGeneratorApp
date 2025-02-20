@@ -27,10 +27,10 @@ import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.data.RedisService;
 import com.angrysurfer.core.proxy.ProxyCaption;
 import com.angrysurfer.core.proxy.ProxyControlCode;
 import com.angrysurfer.core.proxy.ProxyInstrument;
+import com.angrysurfer.core.service.RedisService;
 
 import lombok.Getter;
 import lombok.Setter;

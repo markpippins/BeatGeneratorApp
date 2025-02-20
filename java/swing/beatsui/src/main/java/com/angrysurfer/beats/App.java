@@ -12,9 +12,9 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
-import com.angrysurfer.core.data.RedisService;
 import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.RedisService;
 import com.angrysurfer.core.service.TickerManager;
 import com.formdev.flatlaf.FlatLightLaf;
 

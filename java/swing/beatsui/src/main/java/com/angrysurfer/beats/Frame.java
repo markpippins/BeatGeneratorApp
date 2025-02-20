@@ -21,7 +21,7 @@ import com.angrysurfer.beats.service.DialogService;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
-import com.angrysurfer.core.data.RedisService;
+import com.angrysurfer.core.service.RedisService;
 
 public class Frame extends JFrame implements AutoCloseable {
 

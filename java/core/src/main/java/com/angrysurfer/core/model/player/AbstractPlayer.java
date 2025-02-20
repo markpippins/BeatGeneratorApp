@@ -199,7 +199,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
         return getSubCycler().get();
     }
 
-    @Override
+    // @Override
     public void setInstrument(Instrument instrument) {
         this.instrument = instrument;
     }
@@ -212,7 +212,7 @@ public abstract class AbstractPlayer implements Serializable, IPlayer {
         return (Objects.nonNull(getInstrument()) ? getInstrument().getId() : null);
     }
 
-    @Override
+    // @Override
     public Rule getRule(Long ruleId) {
         return getRules().stream().filter(r -> r.getId().equals(ruleId)).findAny().orElseThrow();
     }

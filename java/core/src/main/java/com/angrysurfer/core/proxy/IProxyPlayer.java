@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import com.angrysurfer.core.model.player.IPlayer;
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public interface IProxyPlayer extends Callable<Boolean> {
+public interface IProxyPlayer extends Callable<Boolean>, IPlayer {
 
     Set<ProxyPad> getPads();
 

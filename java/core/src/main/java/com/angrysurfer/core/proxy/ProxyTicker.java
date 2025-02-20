@@ -2,16 +2,23 @@ package com.angrysurfer.core.proxy;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.engine.MIDIEngine;
+import com.angrysurfer.core.model.ITicker;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
@@ -23,7 +30,33 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ProxyTicker implements Serializable {
+public class ProxyTicker implements Serializable, ITicker {
+
+    @Override
+    public List<Callable<Boolean>> getCallables() {
+        // Implement the method as required
+        return getPlayers().stream()
+                .map(player -> (Callable<Boolean>) () -> player.call())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void setParts(Integer parts) {
+        this.parts = parts;
+        this.partCycler.setLength((long) parts);
+    }
+
+    @Override
+    public void setBars(Integer bars) {
+        this.bars = bars;
+        this.barCycler.setLength((long) bars);
+    }
+
+    @Override
+    public void setBeatsPerBar(Integer beatsPerBar) {
+        this.beatsPerBar = beatsPerBar;
+        this.beatCycler.setLength((long) beatsPerBar);
+    }
 
     private Long id;
 
@@ -358,4 +391,67 @@ public class ProxyTicker implements Serializable {
         return (Objects.nonNull(getPlayers()) && !getPlayers().isEmpty()
                 && getPlayers().stream().anyMatch(p -> p.isValid()));
     }
+
+    public void play() {
+
+        stopRunningClocks();
+
+        List<MidiDevice> devices = MIDIEngine.getMidiOutDevices();
+
+        getPlayers().forEach(p -> {
+
+            ProxyInstrument instrument = p.getInstrument();
+            if (Objects.nonNull(instrument)) {
+                Optional<MidiDevice> device = devices.stream()
+                        .filter(d -> d.getDeviceInfo().getName().equals(instrument.getDeviceName())).findFirst();
+
+                if (device.isPresent() && !device.get().isOpen())
+                    try {
+                        device.get().open();
+                        instrument.setDevice(device.get());
+                    } catch (MidiUnavailableException e) {
+                        logger.error(e.getMessage(), e);
+                    }
+
+                else
+                    logger.error(instrument.getDeviceName() + " not initialized");
+            } else
+                logger.error("Instrument not initialized");
+        });
+
+        // new Thread(newClockSource(this)).start();
+
+        getPlayers().forEach(p -> {
+            try {
+                if (p.getPreset() > -1)
+                    p.getInstrument().programChange(p.getChannel(), p.getPreset(), 0);
+            } catch (InvalidMidiDataException | MidiUnavailableException e) {
+                logger.error(e.getMessage(), e);
+            }
+        });
+
+    }
+
+    private ClockSource newClockSource() {
+        stopRunningClocks();
+        // clockSource = new ClockSource(this);
+        // clocks.add(clockSource);
+        setClockSource(clockSource);
+        return clockSource;
+    }
+
+    private void stopRunningClocks() {
+        // clocks.forEach(sr -> sr.stop());
+        // clocks.clear();
+    }
+
+    public void stop() {
+        stopRunningClocks();
+        setPaused(false);
+        getBeatCycler().reset();
+        getBarCycler().reset();
+        setDone(false);
+        reset();
+    }
+
 }

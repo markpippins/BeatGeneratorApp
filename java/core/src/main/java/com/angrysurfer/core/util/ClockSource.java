@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.model.ITicker;
 import com.angrysurfer.core.model.Ticker;
 
 import lombok.Getter;
@@ -28,7 +29,7 @@ public class ClockSource implements Runnable {
 
     static Stack<Exception> exceptions = new Stack<>();
 
-    private final Ticker ticker;
+    private final ITicker ticker;
 
     private Boolean stopped = false;
 
@@ -46,7 +47,7 @@ public class ClockSource implements Runnable {
     /**
      * @param ticker
      */
-    public ClockSource(Ticker ticker) {
+    public ClockSource(ITicker ticker) {
         this.ticker = ticker;
         // Create executor with custom thread factory for high priority
         this.executor = Executors.newFixedThreadPool(
@@ -93,7 +94,7 @@ public class ClockSource implements Runnable {
         getListeners().forEach(l -> l.onTick());
 
         try {
-            this.executor.invokeAll(ticker.getPlayers());
+            this.executor.invokeAll(ticker.getCallables());
         } catch (InterruptedException e) {
             logger.error("Error in tick processing", e);
         }
@@ -169,19 +170,19 @@ public class ClockSource implements Runnable {
             logger.error("Interrupted while stopping", e);
         }
 
-        getTicker().setPaused(false);
-        getTicker().getBeatCycler().reset();
-        getTicker().getBarCycler().reset();
-        getTicker().setDone(false);
+        // getTicker().setPaused(false);
+        // getTicker().getBeatCycler().reset();
+        // getTicker().getBarCycler().reset();
+        // getTicker().setDone(false);
         getTicker().reset();
     }
 
     public void pause() {
         // Only pause if we're currently running and not already paused
-        if (isRunning() && !getTicker().isPaused()) {
+        if (isRunning()) // && !getTicker().isPaused()) {
             timer.stop();
-            getTicker().setPaused(true);
-        }
+            // getTicker().setPaused(true);
+        // }
     }
 
     public boolean isRunning() {
