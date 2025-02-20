@@ -1,126 +1,93 @@
 package com.angrysurfer.beats.visualization.handler.arcade;
 
 import java.awt.Color;
-
-import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
-import com.angrysurfer.beats.visualization.VisualizationCategory;
+import com.angrysurfer.beats.visualization.*;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class MoonLanderVisualization implements IVisualizationHandler {
-    private double shipX = 0.5; // Ship position (0.0 to 1.0)
-    private double shipY = 0.2; // Ship starts near top
-    private double velocityY = 0.0;
-    private double velocityX = 0.0;
-    private double thrust = 0.001;
-    private double gravity = 0.0005;
-    private int[] terrain; // Terrain height at each x position
-    private boolean gameOver = false;
-    private boolean landed = false;
-
-    private void initTerrain(int width) {
-        if (terrain == null || terrain.length != width) {
-            terrain = new int[width];
-            // Generate random terrain with a flat landing pad
-            int padStart = width / 3;
-            int padWidth = width / 6;
-            int baseHeight = width / 2;
-
-            for (int i = 0; i < width; i++) {
-                if (i >= padStart && i <= padStart + padWidth) {
-                    terrain[i] = baseHeight; // Landing pad
-                } else {
-                    terrain[i] = baseHeight + (int) (Math.random() * 4) - 2;
-                }
-            }
-        }
-    }
+    private double landerX = 24; // Start in middle
+    private double landerY = 2;  // Start near top
+    private double velocityY = 0.1;
+    private double velocityX = 0.05;
+    private static final double GRAVITY = 0.05;
+    private static final double THRUST = -0.08;
+    private boolean thrust = false;
+    private int frameCount = 0;
 
     @Override
     public void update(GridButton[][] buttons) {
-        int width = buttons[0].length;
-        int height = buttons.length;
-
-        initTerrain(width);
         Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        int cols = buttons[0].length;
+        int rows = buttons.length;
 
-        if (!gameOver && !landed) {
-            // Update physics
-            velocityY += gravity;
-            shipY += velocityY;
-            shipX += velocityX;
-
-            // Bounce off walls
-            if (shipX < 0) {
-                shipX = 0;
-                velocityX = Math.abs(velocityX) * 0.5;
-            }
-            if (shipX > 1) {
-                shipX = 1;
-                velocityX = -Math.abs(velocityX) * 0.5;
-            }
-
-            // Random thrust adjustments
-            if (Math.random() < 0.1) {
-                velocityY -= thrust; // Apply upward thrust
-                velocityX += (Math.random() - 0.5) * thrust; // Random lateral adjustment
-            }
+        // Apply physics
+        velocityY += GRAVITY;
+        if (thrust && frameCount % 2 == 0) {
+            velocityY += THRUST;
         }
 
-        // Convert ship position to grid coordinates
-        int shipGridX = (int) (shipX * (width - 1));
-        int shipGridY = (int) (shipY * (height - 1));
+        // Update position
+        landerY += velocityY;
+        landerX += velocityX;
 
-        // Check for collision with terrain
-        if (shipGridY >= height - terrain[shipGridX]) {
-            shipGridY = height - terrain[shipGridX];
-            landed = true;
-            // Check if landing was successful (low velocity)
-            gameOver = Math.abs(velocityY) > 0.01 || Math.abs(velocityX) > 0.01;
+        // Bounce off walls
+        if (landerX <= 1 || landerX >= cols - 2) {
+            velocityX = -velocityX;
         }
 
-        // Draw terrain
-        for (int x = 0; x < width; x++) {
-            for (int y = height - terrain[x]; y < height; y++) {
-                buttons[y][x].setBackground(Color.GRAY);
+        // Ground collision
+        if (landerY >= rows - 3) {
+            landerY = rows - 3;
+            velocityY = -velocityY * 0.5; // Bounce with dampening
+        }
+
+        // Keep in bounds
+        landerY = Math.max(1, Math.min(landerY, rows - 2));
+        landerX = Math.max(1, Math.min(landerX, cols - 2));
+
+        // Draw terrain (moon surface)
+        for (int col = 0; col < cols; col++) {
+            int height = 2 + (int)(Math.sin(col * 0.3) * 1.5);
+            for (int row = rows - height; row < rows; row++) {
+                buttons[row][col].setBackground(Color.GRAY);
             }
         }
 
-        // Draw ship
-        Color shipColor = gameOver ? Color.RED : (landed ? Color.GREEN : Color.WHITE);
-        if (shipGridY >= 0 && shipGridY < height && shipGridX >= 0 && shipGridX < width) {
-            buttons[shipGridY][shipGridX].setBackground(shipColor);
-            // Draw thrust trail
-            if (!gameOver && !landed && Math.random() < 0.5) {
-                int trailY = shipGridY + 1;
-                if (trailY < height) {
-                    buttons[trailY][shipGridX].setBackground(Color.ORANGE);
-                }
-            }
+        // Draw lander
+        int x = (int) landerX;
+        int y = (int) landerY;
+
+        // Lander body
+        buttons[y][x].setBackground(Color.WHITE);
+        buttons[y][x-1].setBackground(Color.WHITE);
+        buttons[y][x+1].setBackground(Color.WHITE);
+        buttons[y-1][x].setBackground(Color.WHITE);
+
+        // Landing legs
+        buttons[y+1][x-1].setBackground(Color.WHITE);
+        buttons[y+1][x+1].setBackground(Color.WHITE);
+
+        // Thrust animation
+        if (thrust && frameCount % 2 == 0) {
+            buttons[y+1][x].setBackground(Color.ORANGE);
+            buttons[y+2][x].setBackground(Color.RED);
         }
 
-        // Reset game if needed
-        if ((gameOver || landed) && Math.random() < 0.02) {
-            resetGame();
+        // Toggle thrust periodically
+        if (frameCount % 20 == 0) {
+            thrust = !thrust;
         }
-    }
 
-    private void resetGame() {
-        shipX = Math.random(); // Random starting X position
-        shipY = 0.2; // Start near top
-        velocityY = 0.0;
-        velocityX = 0.0;
-        gameOver = false;
-        landed = false;
+        frameCount++;
     }
 
     @Override
     public String getName() {
-        return "Moon Lander";
+        return "Lunar Lander";
     }
 
     @Override
     public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.GAME;
+        return VisualizationCategory.ARCADE;
     }
 }

@@ -6,6 +6,7 @@ public enum VisualizationCategory {
     CLASSIC("Classic Visualizations"),
     COMPSCI("Computer Science"),
     GAME("Games"),
+    GEO("Geometric"),
     MATH("Math"),
     MATRIX("Matrix"),
     MUSIC("Music"),

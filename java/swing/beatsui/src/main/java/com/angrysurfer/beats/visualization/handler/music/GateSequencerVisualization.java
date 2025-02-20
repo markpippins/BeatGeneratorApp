@@ -1,30 +1,24 @@
 package com.angrysurfer.beats.visualization.handler.music;
 
 import java.awt.Color;
-import java.util.Random;
-
-import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
-import com.angrysurfer.beats.visualization.VisualizationCategory;
+import com.angrysurfer.beats.visualization.*;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class GateSequencerVisualization implements IVisualizationHandler {
-
-    private final Random random = new Random();
-    private int seqPosition = 0;
-    private final int[] gateLengths = new int[8];
-    private final boolean[][] gateStates;
+    private int currentStep = 0;
+    private boolean[][] gates;
+    private static final int NUM_CHANNELS = 8; // Increased from 4 to use more vertical space
+    private static final Color[] CHANNEL_COLORS = {
+        Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN,
+        Color.CYAN, Color.BLUE, Color.MAGENTA, Color.PINK
+    };
 
     public GateSequencerVisualization() {
-        gateStates = new boolean[8][16];
-        initializeGates();
-    }
-
-    private void initializeGates() {
-        for (int i = 0; i < gateLengths.length; i++) {
-            gateLengths[i] = random.nextInt(4) + 1;
-            for (int step = 0; step < 16; step++) {
-                gateStates[i][step] = random.nextInt(100) < 30;
+        gates = new boolean[NUM_CHANNELS][48]; // Match grid width
+        // Initialize some random patterns
+        for (int channel = 0; channel < NUM_CHANNELS; channel++) {
+            for (int step = 0; step < gates[0].length; step++) {
+                gates[channel][step] = Math.random() > 0.75;
             }
         }
     }
@@ -32,34 +26,38 @@ public class GateSequencerVisualization implements IVisualizationHandler {
     @Override
     public void update(GridButton[][] buttons) {
         Utils.clearDisplay(buttons, buttons[0][0].getParent());
-
-        int stepWidth = buttons[0].length / 16;
-        seqPosition = (seqPosition + 1) % 16;
-
-        // Draw gate patterns
-        for (int row = 0; row < Math.min(buttons.length, gateLengths.length); row++) {
-            for (int step = 0; step < 16; step++) {
-                if (gateStates[row][step]) {
-                    Color gateColor = (step % 2 == 0) ? Color.RED : Color.ORANGE;
-                    for (int x = step * stepWidth; x < (step + 1) * stepWidth; x++) {
-                        buttons[row][x].setBackground(
-                            step == seqPosition ? Color.WHITE : gateColor
-                        );
+        
+        int gridHeight = buttons.length;
+        int channelSpacing = gridHeight / (NUM_CHANNELS + 1); // Distribute channels evenly
+        
+        // Draw gates for each channel
+        for (int channel = 0; channel < NUM_CHANNELS; channel++) {
+            int row = (channel + 1) * channelSpacing;
+            Color channelColor = CHANNEL_COLORS[channel];
+            
+            for (int col = 0; col < gates[0].length; col++) {
+                if (gates[channel][col]) {
+                    // Draw taller gates
+                    for (int gateHeight = -1; gateHeight <= 1; gateHeight++) {
+                        int displayRow = row + gateHeight;
+                        if (displayRow >= 0 && displayRow < buttons.length) {
+                            buttons[displayRow][col].setBackground(channelColor);
+                        }
                     }
-                } else if (step == seqPosition) {
-                    for (int x = step * stepWidth; x < (step + 1) * stepWidth; x++) {
-                        buttons[row][x].setBackground(Color.DARK_GRAY);
+                }
+                
+                // Highlight current step
+                if (col == currentStep) {
+                    for (int i = 0; i < buttons.length; i++) {
+                        if (buttons[i][col].getBackground() == Color.BLACK) {
+                            buttons[i][col].setBackground(Color.DARK_GRAY);
+                        }
                     }
                 }
             }
         }
-
-        // Occasionally modify patterns
-        if (random.nextInt(100) < 5) {
-            int row = random.nextInt(gateLengths.length);
-            int step = random.nextInt(16);
-            gateStates[row][step] = !gateStates[row][step];
-        }
+        
+        currentStep = (currentStep + 1) % gates[0].length;
     }
 
     @Override

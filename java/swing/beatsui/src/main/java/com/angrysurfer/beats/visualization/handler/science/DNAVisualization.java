@@ -9,15 +9,18 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class DNAVisualization implements IVisualizationHandler {
     private double angle = 0;
+    private static final double AMPLITUDE_SCALE = 4.5; // Increased from 1.2
+    private static final double WAVE_FREQUENCY = 0.2; // Adjusted for smoother waves
+    private static final double VERTICAL_OFFSET = 5.5; // Center the helix vertically
 
     @Override
     public void update(GridButton[][] buttons) {
         Utils.clearDisplay(buttons, buttons[0][0].getParent());
 
         for (int col = 0; col < buttons[0].length; col++) {
-            double offset = angle + col * 0.3;
-            int row1 = (int) (2 + Math.sin(offset) * 1.2);
-            int row2 = (int) (2 + Math.sin(offset + Math.PI) * 1.2);
+            double offset = angle + col * WAVE_FREQUENCY;
+            int row1 = (int) (VERTICAL_OFFSET + Math.sin(offset) * AMPLITUDE_SCALE);
+            int row2 = (int) (VERTICAL_OFFSET + Math.sin(offset + Math.PI) * AMPLITUDE_SCALE);
 
             if (row1 >= 0 && row1 < buttons.length) {
                 buttons[row1][col].setBackground(Color.BLUE);
@@ -26,10 +29,12 @@ public class DNAVisualization implements IVisualizationHandler {
                 buttons[row2][col].setBackground(Color.RED);
             }
             
+            // Draw connecting bars every 4 columns
             if (col % 4 == 0) {
-                int middle = (row1 + row2) / 2;
-                if (middle >= 0 && middle < buttons.length) {
-                    buttons[middle][col].setBackground(Color.GREEN);
+                for (int row = Math.min(row1, row2); row <= Math.max(row1, row2); row++) {
+                    if (row >= 0 && row < buttons.length) {
+                        buttons[row][col].setBackground(Color.GREEN);
+                    }
                 }
             }
         }
