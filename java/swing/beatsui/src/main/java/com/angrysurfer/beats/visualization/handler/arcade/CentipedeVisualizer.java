@@ -122,6 +122,6 @@ public class CentipedeVisualizer implements IVisualizationHandler {
 
     @Override
     public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.GAME;
+        return VisualizationCategory.ARCADE;
     }
 }

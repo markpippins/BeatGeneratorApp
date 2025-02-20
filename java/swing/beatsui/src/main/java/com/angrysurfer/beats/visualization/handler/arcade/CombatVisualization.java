@@ -236,6 +236,6 @@ public class CombatVisualization implements IVisualizationHandler {
 
     @Override
     public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.GAME;
+        return VisualizationCategory.ARCADE;
     }
 }

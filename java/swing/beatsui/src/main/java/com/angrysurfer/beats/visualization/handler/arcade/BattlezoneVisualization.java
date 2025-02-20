@@ -165,6 +165,6 @@ public class BattlezoneVisualization implements IVisualizationHandler {
 
     @Override
     public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.GAME;
+        return VisualizationCategory.ARCADE;
     }
 }

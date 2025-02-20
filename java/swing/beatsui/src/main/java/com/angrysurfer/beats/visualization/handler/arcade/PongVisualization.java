@@ -84,6 +84,6 @@ public class PongVisualization implements IVisualizationHandler {
 
     @Override
     public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.GAME;
+        return VisualizationCategory.ARCADE;
     }
 }
