@@ -279,7 +279,7 @@ public class ToolBar extends JToolBar {
 
     private JPanel createTopRightStatusPanel() {
         // Right status fields panel
-        JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         // rightStatusPanel.setPreferredSize(new
         // Dimension(rightStatusPanel.getPreferredSize().width, 75));
         setBorder(BorderFactory.createEmptyBorder());
@@ -317,7 +317,7 @@ public class ToolBar extends JToolBar {
 
     private JPanel createBottomRightStatusPanel() {
         // Right status fields panel
-        JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         // rightStatusPanel.setPreferredSize(new
         // Dimension(rightStatusPanel.getPreferredSize().width, 75));
         setBorder(BorderFactory.createEmptyBorder());
