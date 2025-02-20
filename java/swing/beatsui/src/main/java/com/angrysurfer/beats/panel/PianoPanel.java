@@ -44,6 +44,7 @@ public class PianoPanel extends StatusProviderPanel {
         setPreferredSize(new Dimension(230, 80));
         setMinimumSize(new Dimension(230, 80));
         setBorder(new EmptyBorder(10, 10, 10, 10));
+
         setBackground(Utils.fadedOrange);
 
         // Dimensions for keys

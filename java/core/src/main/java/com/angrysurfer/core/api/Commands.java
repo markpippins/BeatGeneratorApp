@@ -86,7 +86,7 @@ public class Commands {
     public static final String TICKER = "TICKER";
     public static final String TICKER_SELECTED = "TICKER_SELECTED";
     public static final String TICKER_UPDATED = "TICKER_UPDATED";
-    
+
     // Ticker state commands
     public static final String TICKER_UNSELECTED = "TICKER_UNSELECTED";
 
@@ -131,4 +131,17 @@ public class Commands {
     public static final String SHOW_PLAYER_EDITOR = "SHOW_PLAYER_EDITOR";
     public static final String SHOW_PLAYER_EDITOR_OK = "SHOW_PLAYER_EDITOR_OK";
     public static final String SHOW_PLAYER_EDITOR_CANCEL = "SHOW_PLAYER_EDITOR_CANCEL";
+
+    // New commands for each dial
+    public static final String NEW_VALUE_LEVEL = "newValueLevel";
+    public static final String NEW_VALUE_NOTE = "newValueNote";
+    public static final String NEW_VALUE_SWING = "newValueSwing";
+    public static final String NEW_VALUE_PROBABILITY = "newValueProbability";
+    public static final String NEW_VALUE_VELOCITY_MIN = "newValueVelocityMin";
+    public static final String NEW_VALUE_VELOCITY_MAX = "newValueVelocityMax";
+    public static final String NEW_VALUE_RANDOM = "newValueRandom";
+    public static final String NEW_VALUE_PAN = "newValuePan";
+    public static final String NEW_VALUE_SPARSE = "newValueSparse";
+    public static final String PLAYER_DELETED = "PLAYER_DELETED";
+    public static String RULE_DELETED = "RULE_DELETED";
 }

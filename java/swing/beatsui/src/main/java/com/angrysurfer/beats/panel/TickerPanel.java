@@ -13,10 +13,18 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
+import com.angrysurfer.core.service.TickerManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -31,6 +39,18 @@ public class TickerPanel extends StatusProviderPanel {
     private final RulesPanel ruleTablePanel;
     private ProxyTicker activeTicker;
 
+    private Dial levelDial;
+    private Dial noteDial;
+    private Dial swingDial;
+    private Dial probabilityDial;
+    private Dial velocityMinDial;
+    private Dial velocityMaxDial;
+    private Dial randomDial;
+    private Dial panDial;
+    private Dial sparseDial;
+
+    private ProxyStrike selectedPlayer; // Add this line
+
     public TickerPanel(StatusConsumer status) {
         super(new BorderLayout(), status);
 
@@ -39,6 +59,7 @@ public class TickerPanel extends StatusProviderPanel {
         this.playerTablePanel = new PlayersPanel(status, this.ruleTablePanel);
 
         setupComponents();
+        setupCommandBusListener();
     }
 
     private void setupComponents() {
@@ -73,36 +94,74 @@ public class TickerPanel extends StatusProviderPanel {
         controlPanel.add(Box.createHorizontalStrut(10)); // Adjust the width as needed
 
         // Performance controls
-        Dial levelDial = createDial("Level", 64, 0, 127, 1);
-        Dial noteDial = createDial("Note", 64, 0, 127, 1);
-        controlPanel.add(createLabeledDial("Level", levelDial));
-        controlPanel.add(createLabeledDial("Note", noteDial));
+        levelDial = createDial("Level", 64, 0, 127, 1);
+        noteDial = createDial("Note", 64, 0, 127, 1);
+        controlPanel.add(createLabeledControl("Level", levelDial));
+        controlPanel.add(createLabeledControl("Note", noteDial));
 
         // Modulation controls
-        Dial swingDial = createDial("Swing", 50, 0, 100, 1);
-        Dial probabilityDial = createDial("Probability", 50, 0, 100, 1);
-        controlPanel.add(createLabeledDial("Swing", swingDial));
-        controlPanel.add(createLabeledDial("Probability", probabilityDial));
+        swingDial = createDial("Swing", 50, 0, 100, 1);
+        probabilityDial = createDial("Probability", 50, 0, 100, 1);
+        controlPanel.add(createLabeledControl("Swing", swingDial));
+        controlPanel.add(createLabeledControl("Probability", probabilityDial));
 
-        Dial velocityMinDial = createDial("Min Vel", 0, 0, 127, 1);
-        Dial velocityMaxDial = createDial("Max Vel", 127, 0, 127, 1);
-        controlPanel.add(createLabeledDial("Min Vel", velocityMinDial));
-        controlPanel.add(createLabeledDial("Max Vel", velocityMaxDial));
+        velocityMinDial = createDial("Min Vel", 0, 0, 127, 1);
+        velocityMaxDial = createDial("Max Vel", 127, 0, 127, 1);
+        controlPanel.add(createLabeledControl("Min Vel", velocityMinDial));
+        controlPanel.add(createLabeledControl("Max Vel", velocityMaxDial));
 
-        Dial randomDial = createDial("Random", 0, 0, 100, 1);
-        controlPanel.add(createLabeledDial("Random", randomDial));
+        randomDial = createDial("Random", 0, 0, 100, 1);
+        controlPanel.add(createLabeledControl("Random", randomDial));
 
-        Dial panDial = createDial("Pan", 64, 0, 127, 1);
-        controlPanel.add(createLabeledDial("Pan", panDial));
+        panDial = createDial("Pan", 64, 0, 127, 1);
+        controlPanel.add(createLabeledControl("Pan", panDial));
 
-        Dial sparseDial = createDial("Sparse", 0, 0, 100, 1);
-        controlPanel.add(createLabeledDial("Sparse", sparseDial));
+        sparseDial = createDial("Sparse", 0, 0, 100, 1);
+        controlPanel.add(createLabeledControl("Sparse", sparseDial));
 
         // Octave Panel
         JPanel navPanel = createOctavePanel();
         controlPanel.add(navPanel);
 
+        disableDials();
+
         return controlPanel;
+    }
+
+    private void enableDials() {
+        levelDial.setEnabled(true);
+        noteDial.setEnabled(true);
+        swingDial.setEnabled(true);
+        probabilityDial.setEnabled(true);
+        velocityMinDial.setEnabled(true);
+        velocityMaxDial.setEnabled(true);
+        randomDial.setEnabled(true);
+        panDial.setEnabled(true);
+        sparseDial.setEnabled(true);
+    }
+
+    private void disableDials() {
+        levelDial.setEnabled(false);
+        noteDial.setEnabled(false);
+        swingDial.setEnabled(false);
+        probabilityDial.setEnabled(false);
+        velocityMinDial.setEnabled(false);
+        velocityMaxDial.setEnabled(false);
+        randomDial.setEnabled(false);
+        panDial.setEnabled(false);
+        sparseDial.setEnabled(false);
+    }
+
+    private void setDialValues(ProxyStrike player) {
+        levelDial.setValue(player.getLevel().intValue());
+        noteDial.setValue(player.getNote().intValue());
+        swingDial.setValue(player.getSwing().intValue());
+        probabilityDial.setValue(player.getProbability().intValue());
+        velocityMinDial.setValue(player.getMinVelocity().intValue());
+        velocityMaxDial.setValue(player.getMaxVelocity().intValue());
+        randomDial.setValue(player.getRandomDegree().intValue());
+        panDial.setValue(player.getPanPosition().intValue());
+        sparseDial.setValue((int)(player.getSparse() * 100));
     }
 
     private JPanel createOctavePanel() {
@@ -134,10 +193,61 @@ public class TickerPanel extends StatusProviderPanel {
         dial.setPreferredSize(new Dimension(50, 50));
         dial.setMinimumSize(new Dimension(50, 50));
         dial.setMaximumSize(new Dimension(50, 50));
+        dial.setCommand(null); // Clear command
+        switch (name) {
+            case "Level":
+                levelDial = dial;
+                dial.setCommand(Commands.NEW_VALUE_LEVEL);
+                break;
+            case "Note":
+                noteDial = dial;
+                dial.setCommand(Commands.NEW_VALUE_NOTE);
+                break;
+            case "Swing":
+                swingDial = dial;
+                dial.setCommand(Commands.NEW_VALUE_SWING);
+                break;
+            case "Probability":
+                probabilityDial = dial;
+                dial.setCommand(Commands.NEW_VALUE_PROBABILITY);
+                break;
+            case "Min Vel":
+                velocityMinDial = dial;
+                dial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
+                break;
+            case "Max Vel":
+                velocityMaxDial = dial;
+                dial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
+                break;
+            case "Random":
+                randomDial = dial;
+                dial.setCommand(Commands.NEW_VALUE_RANDOM);
+                break;
+            case "Pan":
+                panDial = dial;
+                dial.setCommand(Commands.NEW_VALUE_PAN);
+                break;
+            case "Sparse":
+                sparseDial = dial;
+                dial.setCommand(Commands.NEW_VALUE_SPARSE);
+                break;
+        }
+
+        // Add change listener to publish value changes
+        dial.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                Dial sourceDial = (Dial) e.getSource();
+                if (sourceDial.getCommand() != null) {
+                    CommandBus.getInstance().publish(sourceDial.getCommand(), this, sourceDial.getValue());
+                }
+            }
+        });
+
         return dial;
     }
 
-    private JPanel createLabeledDial(String label, Dial dial) {
+    private JPanel createLabeledControl(String label, Dial dial) {
         JPanel panel = new JPanel(new BorderLayout(5, 2));
         JLabel l = new JLabel(label);
         l.setHorizontalAlignment(JLabel.CENTER);
@@ -147,5 +257,102 @@ public class TickerPanel extends StatusProviderPanel {
         panel.setMinimumSize(new Dimension(60, 80)); // Set minimum size
         panel.setMaximumSize(new Dimension(60, 80)); // Set maximum size
         return panel;
+    }
+
+    private void setupCommandBusListener() {
+        CommandBus.getInstance().register(new CommandListener() {
+            @Override
+            public void onAction(Command action) {
+                switch (action.getCommand()) {
+                    case Commands.PLAYER_SELECTED -> {
+                        enableDials();
+                        if (action.getData() instanceof ProxyStrike player) {
+                            selectedPlayer = player; // Cache the selected player
+                            setDialValues(player);
+                        }
+                    }
+                    case Commands.PLAYER_UNSELECTED -> {
+                        disableDials();
+                        selectedPlayer = null; // Clear the cached player
+                    }
+                    case Commands.NEW_VALUE_LEVEL -> {
+                        if (action.getData() instanceof Integer level) {
+                            if (selectedPlayer != null) {
+                                TickerManager.getInstance().updatePlayerLevel(selectedPlayer, level);
+                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
+                            }
+                        }
+                    }
+                    case Commands.NEW_VALUE_NOTE -> {
+                        if (action.getData() instanceof Integer note) {
+                            if (selectedPlayer != null) {
+                                TickerManager.getInstance().updatePlayerNote(selectedPlayer, note);
+                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
+                            }
+                        }
+                    }
+                    case Commands.NEW_VALUE_SWING -> {
+                        if (action.getData() instanceof Integer swing) {
+                            if (selectedPlayer != null) {
+                                TickerManager.getInstance().updatePlayerSwing(selectedPlayer, swing);
+                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
+                            }
+                        }
+                    }
+                    case Commands.NEW_VALUE_PROBABILITY -> {
+                        if (action.getData() instanceof Integer probability) {
+                            if (selectedPlayer != null) {
+                                TickerManager.getInstance().updatePlayerProbability(selectedPlayer, probability);
+                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
+                            }
+                        }
+                    }
+                    case Commands.NEW_VALUE_VELOCITY_MIN -> {
+                        if (action.getData() instanceof Integer velocityMin) {
+                            if (selectedPlayer != null) {
+                                TickerManager.getInstance().updatePlayerVelocityMin(selectedPlayer, velocityMin);
+                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
+                            }
+                        }
+                    }
+                    case Commands.NEW_VALUE_VELOCITY_MAX -> {
+                        if (action.getData() instanceof Integer velocityMax) {
+                            if (selectedPlayer != null) {
+                                TickerManager.getInstance().updatePlayerVelocityMax(selectedPlayer, velocityMax);
+                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
+                            }
+                        }
+                    }
+                    case Commands.NEW_VALUE_RANDOM -> {
+                        if (action.getData() instanceof Integer random) {
+                            if (selectedPlayer != null) {
+                                TickerManager.getInstance().updatePlayerRandom(selectedPlayer, random);
+                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
+                            }
+                        }
+                    }
+                    case Commands.NEW_VALUE_PAN -> {
+                        if (action.getData() instanceof Integer pan) {
+                            if (selectedPlayer != null) {
+                                TickerManager.getInstance().updatePlayerPan(selectedPlayer, pan);
+                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
+                            }
+                        }
+                    }
+                    case Commands.NEW_VALUE_SPARSE -> {
+                        if (action.getData() instanceof Integer sparse) {
+                            if (selectedPlayer != null) {
+                                TickerManager.getInstance().updatePlayerSparse(selectedPlayer, sparse);
+                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private ProxyStrike getSelectedPlayer() {
+        return selectedPlayer; // Return the cached player
     }
 }

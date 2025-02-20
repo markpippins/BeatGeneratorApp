@@ -32,30 +32,35 @@ public class RainbowJapaneseMatrixVisualization implements IVisualizationHandler
     };
 
     public RainbowJapaneseMatrixVisualization() {
-        dropY = new int[36];
-        active = new boolean[36];
-        for (int i = 0; i < dropY.length; i++) {
-            dropY[i] = random.nextInt(8);
-            active[i] = random.nextBoolean();
-        }
+        // Remove hardcoded initialization - we'll do it in update()
     }
 
     @Override
     public void update(GridButton[][] buttons) {
+        // Initialize arrays if needed or if grid size changed
+        if (dropY == null || dropY.length != buttons[0].length) {
+            dropY = new int[buttons[0].length];
+            active = new boolean[buttons[0].length];
+            for (int i = 0; i < dropY.length; i++) {
+                dropY[i] = random.nextInt(buttons.length);
+                active[i] = random.nextBoolean();
+            }
+        }
+
         // Clear all buttons
-        for (int x = 0; x < buttons[0].length; x++) {
+        for (int x2 = 0; x2 < buttons[0].length; x2++) {
             for (int y = 0; y < buttons.length; y++) {
-                buttons[y][x].setBackground(Color.BLACK);
-                buttons[y][x].setText("");
+                buttons[y][x2].setBackground(Color.BLACK);
+                buttons[y][x2].setText("");
             }
         }
 
         // Update and draw drops
-        for (int x = 0; x < dropY.length; x++) {
+        for (int x = 0; x < buttons[0].length; x++) {
             if (active[x]) {
                 // Draw the trail
                 for (int trail = 0; trail < 3; trail++) {
-                    int y = (dropY[x] - trail + 8) % 8;
+                    int y = (dropY[x] - trail + buttons.length) % buttons.length;
                     if (y >= 0 && y < buttons.length) {
                         // Get rainbow color based on position
                         Color color = RAINBOW_COLORS[(x + trail) % RAINBOW_COLORS.length];
@@ -73,7 +78,7 @@ public class RainbowJapaneseMatrixVisualization implements IVisualizationHandler
                 }
 
                 // Move drop down
-                dropY[x] = (dropY[x] + 1) % 8;
+                dropY[x] = (dropY[x] + 1) % buttons.length;
 
                 // Randomly deactivate
                 if (random.nextInt(50) == 0) {

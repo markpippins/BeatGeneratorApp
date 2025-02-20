@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.model.IPlayer;
 import com.angrysurfer.core.proxy.IProxyPlayer;
 import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;
@@ -102,7 +103,7 @@ public class RedisDemo {
         for (ProxyTicker ticker : tickers) {
             ProxyTicker loaded = redis.findTickerById(ticker.getId());
             logger.info("Ticker " + loaded.getId() + " has " + loaded.getPlayers().size() + " players");
-            for (IProxyPlayer p : loaded.getPlayers()) {
+            for (IPlayer p : loaded.getPlayers()) {
                 ProxyStrike player = (ProxyStrike) p;
                 logger.info("  Player: " + player.getName() + 
                           " (Rules: " + player.getRules().size() + ")");
@@ -144,7 +145,7 @@ public class RedisDemo {
         logger.info("Next ID: " + redis.getNextTickerId(loaded));
         logger.info("Players (" + loaded.getPlayers().size() + "):");
         
-        for (IProxyPlayer p : loaded.getPlayers()) {
+        for (IPlayer p : loaded.getPlayers()) {
             ProxyStrike player = (ProxyStrike) p;
             StringBuilder rules = new StringBuilder();
             for (ProxyRule rule : player.getRules()) {

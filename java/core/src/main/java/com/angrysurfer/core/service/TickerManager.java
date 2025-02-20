@@ -12,6 +12,11 @@ import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class TickerManager {
 
     private static final Logger logger = Logger.getLogger(TickerManager.class.getName());
@@ -39,7 +44,7 @@ public class TickerManager {
                         commandBus.publish(Commands.SHOW_PLAYER_EDITOR, this, null);
                     }
                     case Commands.PLAYER_EDIT_REQUEST -> {
-                        if (action.getData() instanceof ProxyStrike player) {  // Changed from ProxyStrike[]
+                        if (action.getData() instanceof ProxyStrike player) { // Changed from ProxyStrike[]
                             // Open editor with the selected player
                             commandBus.publish(Commands.SHOW_PLAYER_EDITOR, this, player);
                         }
@@ -54,7 +59,7 @@ public class TickerManager {
                                 redis.addPlayerToTicker(activeTicker, player);
                             }
                             redis.savePlayer(player);
-                            
+
                             // Refresh UI with updated ticker
                             activeTicker = redis.findTickerById(activeTicker.getId());
                             commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
@@ -71,7 +76,7 @@ public class TickerManager {
                                 // Get fresh state of both player and ticker
                                 player = redis.findPlayerById(player.getId());
                                 activeTicker = redis.findTickerById(activeTicker.getId());
-                                
+
                                 // Notify UI of updates in correct order:
                                 // 1. Update ticker (updates player list)
                                 commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
@@ -87,10 +92,10 @@ public class TickerManager {
                                 redis.removePlayerFromTicker(activeTicker, player);
                                 redis.deletePlayer(player);
                             }
-                            
+
                             // Reload ticker after deletion to get fresh state
                             activeTicker = redis.findTickerById(activeTicker.getId());
-                            
+
                             // Notify UI of update with fresh ticker state
                             commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
                         }
@@ -105,7 +110,7 @@ public class TickerManager {
                         if (action.getData() instanceof ProxyRule rule) {
                             RedisService redis = RedisService.getInstance();
                             ProxyStrike player = redis.findPlayerForRule(rule);
-                            
+
                             if (player != null) {
                                 // For existing rule, just save it
                                 if (rule.getId() != null) {
@@ -114,7 +119,7 @@ public class TickerManager {
                                     // For new rule, add it to player
                                     redis.addRuleToPlayer(player, rule);
                                 }
-                                
+
                                 // Get fresh state and notify UI
                                 player = redis.findPlayerById(player.getId());
                                 commandBus.publish(Commands.PLAYER_UPDATED, this, player);
@@ -132,11 +137,11 @@ public class TickerManager {
                             ProxyStrike player = redis.findPlayerForRule(rule);
                             if (player != null) {
                                 redis.saveRule(rule);
-                                
+
                                 // Get fresh state of both player and ticker
                                 player = redis.findPlayerById(player.getId());
                                 activeTicker = redis.findTickerById(activeTicker.getId());
-                                
+
                                 // Notify UI of updates in correct order:
                                 commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
                                 commandBus.publish(Commands.PLAYER_UPDATED, this, player);
@@ -242,7 +247,79 @@ public class TickerManager {
         player.setProbability(100L);
         player.setRandomDegree(0L);
         player.setRatchetCount(1L);
-        player.setRatchetInterval(1L);
         player.setPanPosition(64L);
+        player.setRatchetInterval(1L);
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, activeTicker);
+    }
+
+    public void updatePlayerLevel(ProxyStrike player, int level) {
+        player.setLevel((long) level);
+    }
+
+    public void updatePlayerSparse(ProxyStrike player, int sparse) {
+        player.setSparse(sparse / 100.0);
+    }
+
+    public void updatePlayerPan(ProxyStrike player, int pan) {
+        player.setPanPosition((long) pan);
+    }
+
+    public void updatePlayerRandom(ProxyStrike player, int random) {
+        player.setRandomDegree((long) random);
+    }
+
+    public void updatePlayerVelocityMax(ProxyStrike player, int velocityMax) {
+        player.setMaxVelocity((long) velocityMax);
+    }
+
+    public void updatePlayerVelocityMin(ProxyStrike player, int velocityMin) {
+        player.setMinVelocity((long) velocityMin);
+    }
+
+    public void updatePlayerProbability(ProxyStrike player, int probability) {
+        player.setProbability((long) probability);
+    }
+
+    public void updatePlayerSwing(ProxyStrike player, int swing) {
+        player.setSwing((long) swing);
+    }
+
+    public void updatePlayerNote(ProxyStrike player, int note) {
+        player.setNote((long) note);
+    }
+
+    public void savePlayerProperties(ProxyStrike player) {
+        RedisService.getInstance().savePlayer(player);
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, activeTicker);
+    }
+
+    public void clearRules(IPlayer player) {
+        // Logic to clear rules from the player
+        CommandBus.getInstance().publish(Commands.RULES_CLEARED, this, activeTicker);
+    }
+
+    public void deleteRule(ProxyStrike player, String operator, String comparison, String value, String part) {
+        // Logic to delete a rule from the player
+        CommandBus.getInstance().publish(Commands.RULE_DELETED, this, activeTicker);
+    }
+
+    public void addRule(ProxyStrike player, String operator, String comparison, String value, String part) {
+        // Logic to add a rule to the player
+        CommandBus.getInstance().publish(Commands.RULE_ADDED, this, activeTicker);
+    }
+
+    public void deletePlayer(ProxyStrike player) {
+        activeTicker.getPlayers().remove(player);
+        CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this, activeTicker);
+    }
+
+    public void updatePlayer(ProxyStrike player) {
+        // activeTicker.updatePlayer(player);
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, activeTicker);
+    }
+
+    public void addPlayer(ProxyStrike player) {
+        // activeTicker.addPlayer(player);
+        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, activeTicker);
     }
 }
