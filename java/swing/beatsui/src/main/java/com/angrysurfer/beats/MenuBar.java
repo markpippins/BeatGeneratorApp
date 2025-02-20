@@ -62,8 +62,8 @@ public class MenuBar extends JMenuBar {
         addMenuItem(editMenu, "Paste", Commands.PASTE);
         editMenu.addSeparator();
 
-        // Preferences submenu
-        JMenu preferencesMenu = new JMenu("Preferences");
+        // options menu
+        JMenu optionsMenu = new JMenu("Options");
         
         
         // Add Database menu
@@ -91,12 +91,11 @@ public class MenuBar extends JMenuBar {
             commandBus.publish(Commands.LOAD_INSTRUMENTS_FROM_FILE, this);
         });
         dbMenu.add(loadInstruments);
-        preferencesMenu.add(dbMenu);
+        optionsMenu.add(dbMenu);
 
         // Add Theme menu
-        preferencesMenu.add(themeManager.createThemeMenu());
+        optionsMenu.add(themeManager.createThemeMenu());
 
-        editMenu.add(preferencesMenu);
 
         // Register visualization listener
         commandBus.register(new CommandListener() {
@@ -187,7 +186,7 @@ public class MenuBar extends JMenuBar {
                             addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null, null);
                             addMenuItem(visualizationMenu, refreshVisualizationItem, 
                                     Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED, null, null);
-                            preferencesMenu.add(visualizationMenu);  // No separator added
+                            optionsMenu.add(visualizationMenu);  // No separator added
 
                             startVisualizationItem.setVisible(true);
                             stopVisualizationItem.setVisible(false);
@@ -234,6 +233,7 @@ public class MenuBar extends JMenuBar {
 
         add(fileMenu);
         add(editMenu);
+        add(optionsMenu);
         add(helpMenu);
     }
 
