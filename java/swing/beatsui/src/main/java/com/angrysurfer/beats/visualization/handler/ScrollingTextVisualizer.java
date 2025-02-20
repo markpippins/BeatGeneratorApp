@@ -1,395 +1,97 @@
 package com.angrysurfer.beats.visualization.handler;
 
+import java.awt.Color;
+import java.util.Random;
+
+import com.angrysurfer.beats.font.FontLoader;
+import com.angrysurfer.beats.font.LedFont;
 import com.angrysurfer.beats.visualization.DisplayType;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class ScrollingTextVisualizer implements IVisualizationHandler {
     private int position = 0;
+    private final FontLoader fontLoader = FontLoader.getInstance();
+    private static final int PADDING = 1;
+    private final Random random = new Random();
     private int currentMessageIndex = 0;
-    private static final List<String> MESSAGES = Arrays.asList(
-        "Eat at Joe's",
-        "Fresh Coffee Daily",
-        "Open 24 Hours",
-        "Sale Ends Sunday",
-        "Best Prices in Town",
-        "Free Wifi Inside",
-        "All You Can Eat",
-        "Grand Opening Soon",
-        "Under New Management",
-        "No Money Down",
-        "Buy One Get One Free",
-        "Limited Time Offer",
-        "Satisfaction Guaranteed",
-        "Now Hiring",
-        "Live Music Tonight",
-        "Happy Hour 4-7",
-        "Free Parking",
-        "No Purchase Necessary",
-        "Members Only",
-        "Cash Only",
-        "Credit Cards Welcome",
-        "Drive Thru Open",
-        "Call Now",
-        "While Supplies Last"
-    );
-    private static final int CHAR_WIDTH = 4;
-    private static final int CHAR_HEIGHT = 6;  // Changed from 5 to 6
-    private static final int PADDING = 1;  // One row padding top and bottom
     
-    // LED font definitions - 1 represents lit pixel, 0 represents unlit
-    private static final int[][][] FONT = {
-        // A
-        {{0,1,1,0},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,1,1,1},
-         {1,0,0,1},
-         {1,0,0,1}},
-        // B
-        {{1,1,1,0},
-         {1,0,0,1},
-         {1,1,1,0},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,1,1,0}},
-        // C
-        {{0,1,1,1},
-         {1,0,0,0},
-         {1,0,0,0},
-         {1,0,0,0},
-         {1,0,0,0},
-         {0,1,1,1}},
-        // D
-        {{1,1,1,0},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,1,1,0}},
-        // E
-        {{1,1,1,1},
-         {1,0,0,0},
-         {1,0,0,0},
-         {1,1,1,0},
-         {1,0,0,0},
-         {1,1,1,1}},
-        // F
-        {{1,1,1,1},
-         {1,0,0,0},
-         {1,0,0,0},
-         {1,1,1,0},
-         {1,0,0,0},
-         {1,0,0,0}},
-        // G
-        {{0,1,1,1},
-         {1,0,0,0},
-         {1,0,0,0},
-         {1,0,1,1},
-         {1,0,0,1},
-         {0,1,1,1}},
-        // H
-        {{1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,1,1,1},
-         {1,0,0,1},
-         {1,0,0,1}},
-        // I
-        {{1,1,1,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {1,1,1,0}},
-        // J
-        {{0,0,1,1},
-         {0,0,0,1},
-         {0,0,0,1},
-         {0,0,0,1},
-         {1,0,0,1},
-         {0,1,1,0}},
-        // K
-        {{1,0,0,1},
-         {1,0,1,0},
-         {1,1,0,0},
-         {1,1,0,0},
-         {1,0,1,0},
-         {1,0,0,1}},
-        // L
-        {{1,0,0,0},
-         {1,0,0,0},
-         {1,0,0,0},
-         {1,0,0,0},
-         {1,0,0,0},
-         {1,1,1,1}},
-        // M
-        {{1,0,0,1},
-         {1,1,1,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1}},
-        // N
-        {{1,0,0,1},
-         {1,1,0,1},
-         {1,1,0,1},
-         {1,0,1,1},
-         {1,0,1,1},
-         {1,0,0,1}},
-        // O
-        {{0,1,1,0},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {0,1,1,0}},
-        // P
-        {{1,1,1,0},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,1,1,0},
-         {1,0,0,0},
-         {1,0,0,0}},
-        // Q
-        {{0,1,1,0},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,1,0},
-         {0,1,0,1}},
-        // R
-        {{1,1,1,0},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,1,1,0},
-         {1,0,1,0},
-         {1,0,0,1}},
-        // S
-        {{0,1,1,1},
-         {1,0,0,0},
-         {1,0,0,0},
-         {0,1,1,0},
-         {0,0,0,1},
-         {1,1,1,0}},
-        // T
-        {{1,1,1,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0}},
-        // U
-        {{1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {0,1,1,0}},
-        // V
-        {{1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {0,1,1,0},
-         {0,0,1,0}},
-        // W
-        {{1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,0,0,1},
-         {1,1,1,1},
-         {0,1,1,0}},
-        // X
-        {{1,0,0,1},
-         {1,0,0,1},
-         {0,1,1,0},
-         {0,1,1,0},
-         {1,0,0,1},
-         {1,0,0,1}},
-        // Y
-        {{1,0,0,1},
-         {1,0,0,1},
-         {0,1,1,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0}},
-        // Z
-        {{1,1,1,1},
-         {0,0,0,1},
-         {0,0,1,0},
-         {0,1,0,0},
-         {1,0,0,0},
-         {1,1,1,1}},
-        // 0
-        {{0,1,1,0},
-         {1,0,0,1},
-         {1,0,1,1},
-         {1,1,0,1},
-         {1,0,0,1},
-         {0,1,1,0}},
-        // 1
-        {{0,1,0,0},
-         {1,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {1,1,1,0}},
-        // 2
-        {{0,1,1,0},
-         {1,0,0,1},
-         {0,0,1,0},
-         {0,1,0,0},
-         {1,0,0,0},
-         {1,1,1,1}},
-        // 3
-        {{1,1,1,0},
-         {0,0,0,1},
-         {0,1,1,0},
-         {0,0,0,1},
-         {0,0,0,1},
-         {1,1,1,0}},
-        // 4
-        {{1,0,0,1},
-         {1,0,0,1},
-         {1,1,1,1},
-         {0,0,0,1},
-         {0,0,0,1},
-         {0,0,0,1}},
-        // 5
-        {{1,1,1,1},
-         {1,0,0,0},
-         {1,1,1,0},
-         {0,0,0,1},
-         {0,0,0,1},
-         {1,1,1,0}},
-        // 6
-        {{0,1,1,0},
-         {1,0,0,0},
-         {1,1,1,0},
-         {1,0,0,1},
-         {1,0,0,1},
-         {0,1,1,0}},
-        // 7
-        {{1,1,1,1},
-         {0,0,0,1},
-         {0,0,1,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0}},
-        // 8
-        {{0,1,1,0},
-         {1,0,0,1},
-         {0,1,1,0},
-         {1,0,0,1},
-         {1,0,0,1},
-         {0,1,1,0}},
-        // 9
-        {{0,1,1,0},
-         {1,0,0,1},
-         {0,1,1,1},
-         {0,0,0,1},
-         {0,0,0,1},
-         {0,1,1,0}},
-        // space
-        {{0,0,0,0},
-         {0,0,0,0},
-         {0,0,0,0},
-         {0,0,0,0},
-         {0,0,0,0},
-         {0,0,0,0}},
-        // .
-        {{0,0,0,0},
-         {0,0,0,0},
-         {0,0,0,0},
-         {0,0,0,0},
-         {0,0,0,0},
-         {0,1,0,0}},
-        // !
-        {{0,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {0,1,0,0},
-         {0,0,0,0},
-         {0,1,0,0}},
-        // ?
-        {{0,1,1,0},
-         {1,0,0,1},
-         {0,0,1,0},
-         {0,1,0,0},
-         {0,0,0,0},
-         {0,1,0,0}}
+    private static final String[] MESSAGES = {
+        "Just Do It",
+        "Think Different",
+        "Got Milk?",
+        "I'm Lovin' It",
+        "Finger Lickin' Good",
+        "Have It Your Way",
+        "The Best A Man Can Get",
+        "Melts In Your Mouth",
+        "Taste The Rainbow",
+        "Red Bull Gives You Wings",
+        "The Happiest Place On Earth",
+        "Snap Crackle Pop",
+        "It's Finger Clickin' Good",
+        "Because You're Worth It",
+        "Diamonds Are Forever",
+        "The Breakfast of Champions",
+        "America Runs On Dunkin",
+        "Maybe She's Born With It",
+        "Eat Fresh",
+        "What's In Your Wallet?",
+        "Can You Hear Me Now?",
+        "The King Of Beers",
+        "Good To The Last Drop",
+        "Betcha Can't Eat Just One"
     };
 
-    private static final int[][] getCharacter(char c) {
-        if (Character.isWhitespace(c)) return FONT[36];  // space
-        
-        if (Character.isLetter(c)) {
-            int index = Character.toLowerCase(c) - 'a';
-            if (index >= 0 && index < 26) return FONT[index];
-        }
-        
-        if (Character.isDigit(c)) {
-            int index = (c - '0') + 26;
-            if (index >= 26 && index < 36) return FONT[index];
-        }
-        
-        // Special characters
-        return switch (c) {
-            case '.' -> FONT[37];
-            case '!' -> FONT[38];
-            case '?' -> FONT[39];
-            default -> FONT[36];  // space for unknown characters
-        };
-    }
+    private String currentMessage = MESSAGES[0];
 
     @Override
     public void update(GridButton[][] buttons) {
-        // Clear the grid
+        // Paint background black
         for (GridButton[] row : buttons) {
             for (GridButton button : row) {
-                button.setOn(false);
+                button.setBackground(Color.BLACK);
+                button.setOn(true);
             }
         }
 
-        String currentMessage = MESSAGES.get(currentMessageIndex);
-        // Calculate the total width of the message
-        int messageWidth = currentMessage.length() * (CHAR_WIDTH + 1) - 1;
-        
-        // Draw each character
-        for (int charIndex = 0; charIndex < currentMessage.length(); charIndex++) {
-            int[][] charPattern = getCharacter(currentMessage.charAt(charIndex));
-            // Start from the rightmost edge of the display
-            int startX = buttons[0].length + (charIndex * (CHAR_WIDTH + 1)) - position;
+        // Switch message when current one has completely scrolled off screen
+        int messageWidth = currentMessage.length() * (fontLoader.getFont('A').getWidth() + 1);
+        if (position > buttons[0].length + messageWidth) {
+            position = 0;
+            currentMessageIndex = random.nextInt(MESSAGES.length);
+            currentMessage = MESSAGES[currentMessageIndex];
+        }
+
+        // Draw each character in the current message
+        for (int i = 0; i < currentMessage.length(); i++) {
+            char currentChar = currentMessage.charAt(i);
+            LedFont font = fontLoader.getFont(currentChar);
             
-            // Skip if the character is completely off screen
-            if (startX + CHAR_WIDTH <= 0 || startX >= buttons[0].length) continue;
+            // Calculate X position for this character
+            int startX = buttons[0].length + (i * (font.getWidth() + 1)) - position;
             
-            // Draw the character
-            for (int y = 0; y < CHAR_HEIGHT; y++) {
-                for (int x = 0; x < CHAR_WIDTH; x++) {
+            // Skip if character is completely off screen
+            if (startX + font.getWidth() <= 0 || startX >= buttons[0].length) continue;
+            
+            // Draw the character pattern
+            for (int y = 0; y < font.getHeight(); y++) {
+                for (int x = 0; x < font.getWidth(); x++) {
                     int gridX = startX + x;
                     int gridY = y + PADDING;
                     
-                    if (gridX >= 0 && gridX < buttons[0].length) {
-                        buttons[gridY][gridX].setOn(charPattern[y][x] == 1);
+                    if (gridX >= 0 && gridX < buttons[0].length && gridY < buttons.length) {
+                        if (font.getPattern()[y][x] == 1) {
+                            buttons[gridY][gridX].setBackground(Color.GREEN);
+                        }
                     }
                 }
             }
         }
 
-        // Update position for next frame
-        position = (position + 1);
-        
-        // If current message has scrolled completely off screen, move to next message
-        if (position > messageWidth + buttons[0].length * 2) {  // Adjusted for new starting position
-            position = 0;
-            currentMessageIndex = (currentMessageIndex + 1) % MESSAGES.size();
-        }
+        // Update position
+        position++;
     }
 
     @Override
