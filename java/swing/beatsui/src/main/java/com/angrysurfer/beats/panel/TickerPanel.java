@@ -5,7 +5,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.util.Objects;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
@@ -27,6 +26,7 @@ import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
 import com.angrysurfer.core.service.TickerManager;
+import com.angrysurfer.core.util.Scale;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -89,12 +89,15 @@ public class TickerPanel extends StatusProviderPanel {
         controlPanel.setMinimumSize(new Dimension(getMinimumSize().width, 100));
         controlPanel.setPreferredSize(new Dimension(getPreferredSize().width, 100));
 
-        controlPanel
-                .add(createVerticalAdjustPanel("Shift", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
-
         // Add PianoPanel to the LEFT
         PianoPanel pianoPanel = new PianoPanel(statusConsumer);
         controlPanel.add(pianoPanel);
+
+        controlPanel
+                .add(createVerticalAdjustPanel("Shift", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
+
+        controlPanel
+                .add(createScaleAdjustPanel());
 
         // Add horizontal spacer
         // controlPanel.add(Box.createHorizontalStrut(2)); // Adjust the width as needed
@@ -219,6 +222,61 @@ public class TickerPanel extends StatusProviderPanel {
         buttonPanel.add(nextButton);
 
         navPanel.add(octaveLabel, BorderLayout.NORTH);
+        navPanel.add(buttonPanel, BorderLayout.CENTER);
+
+        return navPanel;
+    }
+
+    private JPanel createScaleAdjustPanel() {
+        JPanel navPanel = new JPanel(new BorderLayout(0, 2));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+        JLabel scaleLabel = new JLabel("Scale", JLabel.CENTER);
+
+        // Create scale navigation buttons
+        JButton prevButton = new JButton("↑");
+        prevButton.setActionCommand(Commands.PREV_SCALE_SELECTED);
+        prevButton.addActionListener(e -> {
+            CommandBus.getInstance().publish(Commands.PREV_SCALE_SELECTED, this, Scale.SCALE_PATTERNS.keySet());
+        });
+        prevButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        prevButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+
+        JButton nextButton = new JButton("↓");
+        nextButton.setActionCommand(Commands.NEXT_SCALE_SELECTED);
+        nextButton.addActionListener(e -> {
+            CommandBus.getInstance().publish(Commands.NEXT_SCALE_SELECTED, this, Scale.SCALE_PATTERNS.keySet());
+        });
+        nextButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        nextButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+
+        // Enable buttons by default
+        prevButton.setEnabled(true);
+        nextButton.setEnabled(true);
+
+        // Add command bus listener for scale events
+        CommandBus.getInstance().register(new CommandListener() {
+            @Override
+            public void onAction(Command action) {
+                if (action.getSender() == TickerPanel.this) {
+                    return;
+                }
+                switch (action.getCommand()) {
+                    case Commands.FIRST_SCALE_SELECTED -> prevButton.setEnabled(false);
+                    case Commands.LAST_SCALE_SELECTED -> nextButton.setEnabled(false);
+                    case Commands.SCALE_SELECTED -> {
+                        prevButton.setEnabled(true);
+                        nextButton.setEnabled(true);
+                    }
+                }
+            }
+        });
+
+        // Layout buttons vertically
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 2));
+        buttonPanel.add(prevButton);
+        buttonPanel.add(nextButton);
+
+        navPanel.add(scaleLabel, BorderLayout.NORTH);
         navPanel.add(buttonPanel, BorderLayout.CENTER);
 
         return navPanel;

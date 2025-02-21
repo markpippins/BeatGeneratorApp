@@ -43,21 +43,39 @@ public class ToolBar extends JToolBar {
     public ToolBar() {
         super();
         setFloatable(false);
-        setup(); // Changed from setupButtons() to setup()
+        setup();
 
-        // First register the listener to handle updates
+        // Modify the command bus listener
         actionBus.register(new CommandListener() {
             @Override
             public void onAction(Command action) {
-                if (Objects.nonNull(action.getCommand())
-                        && Objects.nonNull(action.getData())
-                        && action.getData() instanceof ProxyTicker) {
+                // Skip if this ToolBar is the sender
+                if (action.getSender() == ToolBar.this) {
+                    return;
+                }
 
+                if (Objects.nonNull(action.getCommand())) {
+                    JComboBox<String> scaleCombo = (JComboBox<String>) rightFields.get("Scale");
+                    
                     switch (action.getCommand()) {
+                        case Commands.NEXT_SCALE_SELECTED -> {
+                            int nextIndex = scaleCombo.getSelectedIndex() + 1;
+                            if (nextIndex < scaleCombo.getItemCount()) {
+                                scaleCombo.setSelectedIndex(nextIndex);
+                            }
+                        }
+                        case Commands.PREV_SCALE_SELECTED -> {
+                            int prevIndex = scaleCombo.getSelectedIndex() - 1;
+                            if (prevIndex >= 0) {
+                                scaleCombo.setSelectedIndex(prevIndex);
+                            }
+                        }
                         case Commands.TICKER_SELECTED, Commands.TICKER_UPDATED -> {
-                            ProxyTicker ticker = (ProxyTicker) action.getData();
-                            updateTickerDisplay(ticker);
-                            updateToolbarState(ticker);
+                            if (action.getData() instanceof ProxyTicker) {
+                                ProxyTicker ticker = (ProxyTicker) action.getData();
+                                updateTickerDisplay(ticker);
+                                updateToolbarState(ticker);
+                            }
                         }
                     }
                 }
@@ -479,8 +497,20 @@ public class ToolBar extends JToolBar {
         combo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 String selectedScale = (String) combo.getSelectedItem();
+                int selectedIndex = combo.getSelectedIndex();
+                
+                // Always publish the scale selection
                 actionBus.publish(Commands.SCALE_SELECTED, this, 
                     Map.of("scale", selectedScale));
+                
+                // Check for first/last selection
+                if (selectedIndex == 0) {
+                    actionBus.publish(Commands.FIRST_SCALE_SELECTED, this,
+                        Map.of("scale", selectedScale));
+                } else if (selectedIndex == combo.getItemCount() - 1) {
+                    actionBus.publish(Commands.LAST_SCALE_SELECTED, this,
+                        Map.of("scale", selectedScale));
+                }
             }
         });
         

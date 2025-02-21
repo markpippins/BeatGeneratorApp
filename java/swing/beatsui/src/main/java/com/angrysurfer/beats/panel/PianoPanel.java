@@ -8,13 +8,17 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
 import com.angrysurfer.beats.Utils;
@@ -24,12 +28,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 public class PianoPanel extends StatusProviderPanel {
     private final CommandBus commandBus = CommandBus.getInstance();
@@ -237,48 +235,47 @@ public class PianoPanel extends StatusProviderPanel {
                 boolean isPressed = ((JButton) c).getModel().isPressed();
                 boolean isHeld = heldNotes.contains(getNoteForKey((JButton) c));
 
-                // Adjusted colors for better contrast
+                // Traditional colors with better contrast
                 if (isWhite) {
-                    // Minor scale keys (previously white)
-                    if (isPressed) {
-                        g2d.setColor(new Color(25, 25, 25));
-                    } else if (isHeld) {
-                        g2d.setColor(new Color(40, 30, 30));
+                    // White keys
+                    if (isPressed || isHeld) {
+                        g2d.setColor(new Color(180, 180, 180)); // Darker when pressed
                     } else {
-                        g2d.setColor(new Color(20, 20, 20));
+                        g2d.setColor(new Color(248, 248, 248)); // Slightly off-white
                     }
                     g2d.fillRect(0, isPressed ? 2 : 0, w, h);
 
                     if (!isPressed && !isHeld) {
-                        g2d.setColor(new Color(35, 35, 35));
+                        // Top shadow for 3D effect
+                        g2d.setColor(new Color(255, 255, 255));
                         g2d.fillRect(0, 0, w, 5);
                     }
                 } else {
-                    // Major scale keys (previously black)
-                    if (isPressed) {
-                        g2d.setColor(new Color(240, 240, 240)); // Much lighter when pressed
-                    } else if (isHeld) {
-                        g2d.setColor(new Color(230, 220, 220)); // Lighter when held
+                    // Black keys
+                    if (isPressed || isHeld) {
+                        g2d.setColor(new Color(100, 100, 100)); // Lighter when pressed
                     } else {
-                        g2d.setColor(new Color(200, 200, 200));
-                        // Add gradient shading at bottom when not pressed
-                        g2d.fillRect(0, 0, w, h);
-                        g2d.setColor(new Color(160, 160, 160, 100));
+                        g2d.setColor(new Color(40, 40, 40)); // Dark but not pure black
+                    }
+                    g2d.fillRect(0, 0, w, h);
+
+                    // Add subtle gradient for better visibility
+                    if (!isPressed && !isHeld) {
                         for (int i = 0; i < 10; i++) {
                             int alpha = 15 + (i * 5);
-                            g2d.setColor(new Color(160, 160, 160, alpha));
+                            g2d.setColor(new Color(255, 255, 255, alpha));
                             g2d.fillRect(0, h - 10 + i, w, 1);
                         }
                     }
                 }
 
-                // Border color based on key type
-                g2d.setColor(isWhite ? new Color(50, 50, 50) : new Color(150, 150, 150));
+                // Border colors
+                g2d.setColor(isWhite ? new Color(180, 180, 180) : new Color(0, 0, 0));
                 g2d.drawRect(0, 0, w - 1, h - 1);
 
-                // Draw note label with reversed color
+                // Draw note labels on white keys
                 if (isWhite) {
-                    g2d.setColor(Color.LIGHT_GRAY);
+                    g2d.setColor(Color.GRAY);
                     g2d.setFont(new Font("Arial", Font.PLAIN, 10));
                     FontMetrics fm = g2d.getFontMetrics();
                     int noteWidth = fm.stringWidth(note);

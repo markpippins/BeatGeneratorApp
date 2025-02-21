@@ -148,4 +148,11 @@ public class Commands {
     public static final String TRANSPOSE_DOWN = "TRANSPOSE_DOWN";
 
     public static String RULE_DELETED = "RULE_DELETED";
+
+    public static final String SCALE_SELECTED = "SCALE_SELECTED";
+    public static final String FIRST_SCALE_SELECTED = "FIRST_SCALE_SELECTED";
+    public static final String LAST_SCALE_SELECTED = "LAST_SCALE_SELECTED";
+    public static final String NEXT_SCALE_SELECTED = "NEXT__SCALE_SELECTED";
+    public static final String PREV_SCALE_SELECTED = "PREV_SCALE_SELECTED";
+
 }

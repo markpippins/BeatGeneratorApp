@@ -359,32 +359,35 @@ public class PlayersPanel extends JPanel {
         // Make the table focusable
         table.setFocusable(true);
         
-        // Add key listener to handle delete key
         table.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-                    ProxyStrike[] selectedPlayers = getSelectedPlayers();
-                    if (selectedPlayers.length > 0) {
-                        int confirm = JOptionPane.showConfirmDialog(
-                            PlayersPanel.this,
-                            "Are you sure you want to delete the selected player(s)?",
-                            "Confirm Delete",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE
-                        );
-                        
-                        if (confirm == JOptionPane.YES_OPTION) {
-                            CommandBus.getInstance().publish(
-                                Commands.PLAYER_DELETE_REQUEST,
-                                PlayersPanel.this,
-                                selectedPlayers
-                            );
-                        }
-                    }
+                    handleDelete();
                 }
             }
         });
+    }
+
+    private void handleDelete() {
+        ProxyStrike[] selectedPlayers = getSelectedPlayers();
+        if (selectedPlayers.length > 0) {
+            int confirm = JOptionPane.showConfirmDialog(
+                PlayersPanel.this,
+                "Are you sure you want to delete the selected player(s)?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_DELETE_REQUEST,
+                    PlayersPanel.this,
+                    selectedPlayers
+                );
+            }
+        }
     }
 
     private void selectLastPlayer() {
