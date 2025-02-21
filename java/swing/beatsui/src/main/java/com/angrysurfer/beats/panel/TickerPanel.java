@@ -93,6 +93,9 @@ public class TickerPanel extends StatusProviderPanel {
         PianoPanel pianoPanel = new PianoPanel(statusConsumer);
         controlPanel.add(pianoPanel);
 
+        // Add new vertical button panel
+        controlPanel.add(createVerticalButtonPanel());
+
         controlPanel
                 .add(createVerticalAdjustPanel("Shift", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
 
@@ -105,33 +108,73 @@ public class TickerPanel extends StatusProviderPanel {
         JPanel navPanel = createOctavePanel();
         controlPanel.add(navPanel);
 
-        noteDial = createDial("Note", 64, 0, 127, 1);
-        levelDial = createDial("Level", 64, 0, 127, 1);
+        noteDial = createDial("Note", 60, 0, 127, 1);
+        noteDial.setCommand(Commands.NEW_VALUE_NOTE);
+
+        levelDial = createDial("Level", 100, 0, 127, 1);
+        levelDial.setCommand(Commands.NEW_VALUE_LEVEL);
+
+        panDial = createDial("Pan", 64, 0, 127, 1);
+        panDial.setCommand(Commands.NEW_VALUE_PAN);
+
+        velocityMinDial = createDial("Min Vel", 64, 0, 127, 1);
+        velocityMinDial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
+
+        velocityMaxDial = createDial("Max Vel", 127, 0, 127, 1);
+        velocityMaxDial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
+
+        swingDial = createDial("Swing", 50, 0, 100, 1);
+        swingDial.setCommand(Commands.NEW_VALUE_SWING);
+
+        probabilityDial = createDial("Probability", 100, 0, 100, 1);
+        probabilityDial.setCommand(Commands.NEW_VALUE_PROBABILITY);
+
+        randomDial = createDial("Random", 0, 0, 100, 1);
+        randomDial.setCommand(Commands.NEW_VALUE_RANDOM);
+
+        sparseDial = createDial("Sparse", 0, 0, 100, 1);
+        sparseDial.setCommand(Commands.NEW_VALUE_SPARSE);
+
         controlPanel.add(createLabeledControl("Note", noteDial));
         controlPanel.add(createLabeledControl("Level", levelDial));
 
-        panDial = createDial("Pan", 64, 0, 127, 1);
         controlPanel.add(createLabeledControl("Pan", panDial));
 
-        velocityMinDial = createDial("Min Vel", 0, 0, 127, 1);
-        velocityMaxDial = createDial("Max Vel", 127, 0, 127, 1);
         controlPanel.add(createLabeledControl("Min Vel", velocityMinDial));
         controlPanel.add(createLabeledControl("Max Vel", velocityMaxDial));
 
-        swingDial = createDial("Swing", 50, 0, 100, 1);
-        probabilityDial = createDial("Probability", 50, 0, 100, 1);
         controlPanel.add(createLabeledControl("Swing", swingDial));
         controlPanel.add(createLabeledControl("Probability", probabilityDial));
 
-        randomDial = createDial("Random", 0, 0, 100, 1);
         controlPanel.add(createLabeledControl("Random", randomDial));
 
-        sparseDial = createDial("Sparse", 0, 0, 100, 1);
         controlPanel.add(createLabeledControl("Sparse", sparseDial));
 
         disableDials();
 
         return controlPanel;
+    }
+
+    private JPanel createVerticalButtonPanel() {
+        JPanel panel = new JPanel(new GridLayout(3, 1, 2, 2));
+        panel.setPreferredSize(new Dimension(25, 80));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+
+        JButton button1 = new JButton();
+        JButton button2 = new JButton();
+        JButton button3 = new JButton();
+
+        // Configure each button
+        for (JButton button : new JButton[]{button1, button2, button3}) {
+            button.setPreferredSize(new Dimension(15, 15));
+            button.setMinimumSize(new Dimension(15, 15));
+            button.setMaximumSize(new Dimension(15, 15));
+            button.setFocusPainted(false);
+            button.setBorderPainted(true);
+            panel.add(button);
+        }
+
+        return panel;
     }
 
     private void enableDials() {
@@ -159,6 +202,8 @@ public class TickerPanel extends StatusProviderPanel {
     }
 
     private void setDialValues(ProxyStrike player) {
+        if (player == null) return;
+        
         levelDial.setValue(player.getLevel().intValue());
         noteDial.setValue(player.getNote().intValue());
         swingDial.setValue(player.getSwing().intValue());
@@ -167,7 +212,7 @@ public class TickerPanel extends StatusProviderPanel {
         velocityMaxDial.setValue(player.getMaxVelocity().intValue());
         randomDial.setValue(player.getRandomDegree().intValue());
         panDial.setValue(player.getPanPosition().intValue());
-        sparseDial.setValue((int) (player.getSparse() * 100));
+        sparseDial.setValue((int)(player.getSparse() * 100));  // Convert from 0-1.0 to 0-100
     }
 
     static final int BUTTON_SIZE = 30;
@@ -290,45 +335,6 @@ public class TickerPanel extends StatusProviderPanel {
         dial.setPreferredSize(new Dimension(50, 50));
         dial.setMinimumSize(new Dimension(50, 50));
         dial.setMaximumSize(new Dimension(50, 50));
-        dial.setCommand(null); // Clear command
-        switch (name) {
-            case "Level":
-                levelDial = dial;
-                dial.setCommand(Commands.NEW_VALUE_LEVEL);
-                break;
-            case "Note":
-                noteDial = dial;
-                dial.setCommand(Commands.NEW_VALUE_NOTE);
-                break;
-            case "Swing":
-                swingDial = dial;
-                dial.setCommand(Commands.NEW_VALUE_SWING);
-                break;
-            case "Probability":
-                probabilityDial = dial;
-                dial.setCommand(Commands.NEW_VALUE_PROBABILITY);
-                break;
-            case "Min Vel":
-                velocityMinDial = dial;
-                dial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
-                break;
-            case "Max Vel":
-                velocityMaxDial = dial;
-                dial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
-                break;
-            case "Random":
-                randomDial = dial;
-                dial.setCommand(Commands.NEW_VALUE_RANDOM);
-                break;
-            case "Pan":
-                panDial = dial;
-                dial.setCommand(Commands.NEW_VALUE_PAN);
-                break;
-            case "Sparse":
-                sparseDial = dial;
-                dial.setCommand(Commands.NEW_VALUE_SPARSE);
-                break;
-        }
 
         // Add change listener to publish value changes
         dial.addChangeListener(new ChangeListener() {
@@ -360,97 +366,53 @@ public class TickerPanel extends StatusProviderPanel {
         CommandBus.getInstance().register(new CommandListener() {
             @Override
             public void onAction(Command action) {
+                if (action.getCommand() == null) return;
+                
                 switch (action.getCommand()) {
                     case Commands.PLAYER_SELECTED -> {
-                        enableDials();
                         if (action.getData() instanceof ProxyStrike player) {
-                            selectedPlayer = player; // Cache the selected player
+                            selectedPlayer = player;
                             setDialValues(player);
-                            // Enable vertical adjust buttons
+                            enableDials();
                             updateVerticalAdjustButtons(true);
                         }
                     }
                     case Commands.PLAYER_UNSELECTED -> {
+                        selectedPlayer = null;
                         disableDials();
-                        selectedPlayer = null; // Clear the cached player
-                        // Disable vertical adjust buttons
                         updateVerticalAdjustButtons(false);
                     }
-                    case Commands.NEW_VALUE_LEVEL -> {
-                        if (action.getData() instanceof Integer level) {
-                            if (selectedPlayer != null) {
-                                TickerManager.getInstance().updatePlayerLevel(selectedPlayer, level);
-                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
-                            }
-                        }
-                    }
-                    case Commands.NEW_VALUE_NOTE -> {
-                        if (action.getData() instanceof Integer note) {
-                            if (selectedPlayer != null) {
-                                TickerManager.getInstance().updatePlayerNote(selectedPlayer, note);
-                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
-                            }
-                        }
-                    }
-                    case Commands.NEW_VALUE_SWING -> {
-                        if (action.getData() instanceof Integer swing) {
-                            if (selectedPlayer != null) {
-                                TickerManager.getInstance().updatePlayerSwing(selectedPlayer, swing);
-                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
-                            }
-                        }
-                    }
-                    case Commands.NEW_VALUE_PROBABILITY -> {
-                        if (action.getData() instanceof Integer probability) {
-                            if (selectedPlayer != null) {
-                                TickerManager.getInstance().updatePlayerProbability(selectedPlayer, probability);
-                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
-                            }
-                        }
-                    }
-                    case Commands.NEW_VALUE_VELOCITY_MIN -> {
-                        if (action.getData() instanceof Integer velocityMin) {
-                            if (selectedPlayer != null) {
-                                TickerManager.getInstance().updatePlayerVelocityMin(selectedPlayer, velocityMin);
-                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
-                            }
-                        }
-                    }
-                    case Commands.NEW_VALUE_VELOCITY_MAX -> {
-                        if (action.getData() instanceof Integer velocityMax) {
-                            if (selectedPlayer != null) {
-                                TickerManager.getInstance().updatePlayerVelocityMax(selectedPlayer, velocityMax);
-                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
-                            }
-                        }
-                    }
-                    case Commands.NEW_VALUE_RANDOM -> {
-                        if (action.getData() instanceof Integer random) {
-                            if (selectedPlayer != null) {
-                                TickerManager.getInstance().updatePlayerRandom(selectedPlayer, random);
-                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
-                            }
-                        }
-                    }
-                    case Commands.NEW_VALUE_PAN -> {
-                        if (action.getData() instanceof Integer pan) {
-                            if (selectedPlayer != null) {
-                                TickerManager.getInstance().updatePlayerPan(selectedPlayer, pan);
-                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
-                            }
-                        }
-                    }
-                    case Commands.NEW_VALUE_SPARSE -> {
-                        if (action.getData() instanceof Integer sparse) {
-                            if (selectedPlayer != null) {
-                                TickerManager.getInstance().updatePlayerSparse(selectedPlayer, sparse);
-                                TickerManager.getInstance().savePlayerProperties(selectedPlayer);
-                            }
+                    case Commands.NEW_VALUE_LEVEL, Commands.NEW_VALUE_NOTE, 
+                         Commands.NEW_VALUE_SWING, Commands.NEW_VALUE_PROBABILITY,
+                         Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
+                         Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN,
+                         Commands.NEW_VALUE_SPARSE -> {
+                        if (selectedPlayer != null && action.getData() instanceof Integer value) {
+                            updatePlayerValue(action.getCommand(), value);
                         }
                     }
                 }
             }
         });
+    }
+
+    private void updatePlayerValue(String command, int value) {
+        if (selectedPlayer == null) return;
+
+        switch (command) {
+            case Commands.NEW_VALUE_LEVEL -> selectedPlayer.setLevel((long) value);
+            case Commands.NEW_VALUE_NOTE -> selectedPlayer.setNote((long) value);
+            case Commands.NEW_VALUE_SWING -> selectedPlayer.setSwing((long) value);
+            case Commands.NEW_VALUE_PROBABILITY -> selectedPlayer.setProbability((long) value);
+            case Commands.NEW_VALUE_VELOCITY_MIN -> selectedPlayer.setMinVelocity((long) value);
+            case Commands.NEW_VALUE_VELOCITY_MAX -> selectedPlayer.setMaxVelocity((long) value);
+            case Commands.NEW_VALUE_RANDOM -> selectedPlayer.setRandomDegree((long) value);
+            case Commands.NEW_VALUE_PAN -> selectedPlayer.setPanPosition((long) value);
+            case Commands.NEW_VALUE_SPARSE -> selectedPlayer.setSparse(value / 100.0);
+        }
+        
+        // Save changes and notify UI
+        TickerManager.getInstance().savePlayerProperties(selectedPlayer);
     }
 
     private void updateVerticalAdjustButtons(boolean enabled) {
