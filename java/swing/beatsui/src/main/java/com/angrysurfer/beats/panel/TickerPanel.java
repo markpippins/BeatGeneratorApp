@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
@@ -108,31 +109,31 @@ public class TickerPanel extends StatusProviderPanel {
         JPanel navPanel = createOctavePanel();
         controlPanel.add(navPanel);
 
-        noteDial = createDial("Note", 60, 0, 127, 1);
+        noteDial = createDial("note", 60, 0, 127, 1);
         noteDial.setCommand(Commands.NEW_VALUE_NOTE);
 
-        levelDial = createDial("Level", 100, 0, 127, 1);
+        levelDial = createDial("level", 100, 0, 127, 1);
         levelDial.setCommand(Commands.NEW_VALUE_LEVEL);
 
-        panDial = createDial("Pan", 64, 0, 127, 1);
+        panDial = createDial("pan", 64, 0, 127, 1);
         panDial.setCommand(Commands.NEW_VALUE_PAN);
 
-        velocityMinDial = createDial("Min Vel", 64, 0, 127, 1);
+        velocityMinDial = createDial("minVelocity", 64, 0, 127, 1);
         velocityMinDial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
 
-        velocityMaxDial = createDial("Max Vel", 127, 0, 127, 1);
+        velocityMaxDial = createDial("maxVelocity", 127, 0, 127, 1);
         velocityMaxDial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
 
-        swingDial = createDial("Swing", 50, 0, 100, 1);
+        swingDial = createDial("swing", 50, 0, 100, 1);
         swingDial.setCommand(Commands.NEW_VALUE_SWING);
 
-        probabilityDial = createDial("Probability", 100, 0, 100, 1);
+        probabilityDial = createDial("probability", 100, 0, 100, 1);
         probabilityDial.setCommand(Commands.NEW_VALUE_PROBABILITY);
 
-        randomDial = createDial("Random", 0, 0, 100, 1);
+        randomDial = createDial("random", 0, 0, 100, 1);
         randomDial.setCommand(Commands.NEW_VALUE_RANDOM);
 
-        sparseDial = createDial("Sparse", 0, 0, 100, 1);
+        sparseDial = createDial("sparse", 0, 0, 100, 1);
         sparseDial.setCommand(Commands.NEW_VALUE_SPARSE);
 
         controlPanel.add(createLabeledControl("Note", noteDial));
@@ -327,7 +328,7 @@ public class TickerPanel extends StatusProviderPanel {
         return navPanel;
     }
 
-    private Dial createDial(String name, long value, int min, int max, int majorTick) {
+    private Dial createDial(String propertyName, long value, int min, int max, int majorTick) {
         Dial dial = new Dial();
         dial.setMinimum(min);
         dial.setMaximum(max);
@@ -335,14 +336,18 @@ public class TickerPanel extends StatusProviderPanel {
         dial.setPreferredSize(new Dimension(50, 50));
         dial.setMinimumSize(new Dimension(50, 50));
         dial.setMaximumSize(new Dimension(50, 50));
+        
+        // Store the property name in the dial
+        dial.setName(propertyName);  // Add this line
 
-        // Add change listener to publish value changes
         dial.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 Dial sourceDial = (Dial) e.getSource();
                 if (sourceDial.getCommand() != null) {
-                    CommandBus.getInstance().publish(sourceDial.getCommand(), this, sourceDial.getValue());
+                    // Send both property name and value
+                    CommandBus.getInstance().publish(sourceDial.getCommand(), this, 
+                        Map.of("property", sourceDial.getName(), "value", sourceDial.getValue()));
                 }
             }
         });
@@ -387,8 +392,8 @@ public class TickerPanel extends StatusProviderPanel {
                          Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
                          Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN,
                          Commands.NEW_VALUE_SPARSE -> {
-                        if (selectedPlayer != null && action.getData() instanceof Integer value) {
-                            updatePlayerValue(action.getCommand(), value);
+                        if (selectedPlayer != null && action.getData() instanceof Map) {
+                            updatePlayerValue(action.getCommand(), action.getData());
                         }
                     }
                 }
@@ -396,19 +401,23 @@ public class TickerPanel extends StatusProviderPanel {
         });
     }
 
-    private void updatePlayerValue(String command, int value) {
-        if (selectedPlayer == null) return;
-
-        switch (command) {
-            case Commands.NEW_VALUE_LEVEL -> selectedPlayer.setLevel((long) value);
-            case Commands.NEW_VALUE_NOTE -> selectedPlayer.setNote((long) value);
-            case Commands.NEW_VALUE_SWING -> selectedPlayer.setSwing((long) value);
-            case Commands.NEW_VALUE_PROBABILITY -> selectedPlayer.setProbability((long) value);
-            case Commands.NEW_VALUE_VELOCITY_MIN -> selectedPlayer.setMinVelocity((long) value);
-            case Commands.NEW_VALUE_VELOCITY_MAX -> selectedPlayer.setMaxVelocity((long) value);
-            case Commands.NEW_VALUE_RANDOM -> selectedPlayer.setRandomDegree((long) value);
-            case Commands.NEW_VALUE_PAN -> selectedPlayer.setPanPosition((long) value);
-            case Commands.NEW_VALUE_SPARSE -> selectedPlayer.setSparse(value / 100.0);
+    private void updatePlayerValue(String command, Object data) {
+        if (selectedPlayer == null || !(data instanceof Map)) return;
+        
+        Map<String, Object> params = (Map<String, Object>) data;
+        String property = (String) params.get("property");
+        int value = (Integer) params.get("value");
+        
+        switch (property) {
+            case "level" -> selectedPlayer.setLevel((long) value);
+            case "note" -> selectedPlayer.setNote((long) value);
+            case "swing" -> selectedPlayer.setSwing((long) value);
+            case "probability" -> selectedPlayer.setProbability((long) value);
+            case "minVelocity" -> selectedPlayer.setMinVelocity((long) value);
+            case "maxVelocity" -> selectedPlayer.setMaxVelocity((long) value);
+            case "random" -> selectedPlayer.setRandomDegree((long) value);
+            case "pan" -> selectedPlayer.setPanPosition((long) value);
+            case "sparse" -> selectedPlayer.setSparse(value / 100.0);
         }
         
         // Save changes and notify UI

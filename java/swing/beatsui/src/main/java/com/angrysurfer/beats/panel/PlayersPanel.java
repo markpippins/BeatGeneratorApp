@@ -67,24 +67,35 @@ public class PlayersPanel extends JPanel {
     private static final String COL_PRESERVE = "Preserve";
     private static final String COL_SPARSE = "Sparse";
 
-    // Replace array with LinkedHashSet using constants
     private static final Set<String> COLUMNS = new LinkedHashSet<>(Arrays.asList(
-            COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_SWING, COL_LEVEL, COL_NOTE, 
-            COL_MIN_VEL, COL_MAX_VEL, COL_PRESET, COL_STICKY, COL_PROBABILITY, 
-            COL_RANDOM, COL_RATCHET_COUNT, COL_RATCHET_INTERVAL, COL_INT_BEATS, 
-            COL_INT_BARS, COL_PAN, COL_PRESERVE, COL_SPARSE
-    ));
+            COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_PRESET, COL_NOTE, COL_LEVEL,
+            COL_PAN, COL_MIN_VEL, COL_MAX_VEL, COL_SWING,
+            COL_PROBABILITY, COL_RANDOM, COL_SPARSE,
+            COL_RATCHET_COUNT, COL_RATCHET_INTERVAL, COL_INT_BEATS,
+            COL_INT_BARS, COL_STICKY, COL_PRESERVE));
+
+    // Replace array with LinkedHashSet using constants
+    // private static final Set<String> COLUMNS = new LinkedHashSet<>(Arrays.asList(
+    // COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_SWING, COL_LEVEL, COL_NOTE,
+    // COL_MIN_VEL, COL_MAX_VEL, COL_PRESET, COL_STICKY, COL_PROBABILITY,
+    // COL_RANDOM, COL_RATCHET_COUNT, COL_RATCHET_INTERVAL, COL_INT_BEATS,
+    // COL_INT_BARS, COL_PAN, COL_PRESERVE, COL_SPARSE));
+
+    private static final Set<String> STRING_COLUMN_NAMES = Set.of(COL_NAME, COL_INSTRUMENT);
 
     // Define boolean column names using constants
     private static final Set<String> BOOLEAN_COLUMN_NAMES = Set.of(
             COL_STICKY,
             COL_INT_BEATS,
             COL_INT_BARS,
-            COL_PRESERVE
-    );
+            COL_PRESERVE);
 
     // Convert boolean column names to indices
     private static final int[] BOOLEAN_COLUMNS = BOOLEAN_COLUMN_NAMES.stream()
+            .mapToInt(name -> new ArrayList<>(COLUMNS).indexOf(name))
+            .toArray();
+
+    private static final int[] STRING_COLUMNS = STRING_COLUMN_NAMES.stream()
             .mapToInt(name -> new ArrayList<>(COLUMNS).indexOf(name))
             .toArray();
 
@@ -95,19 +106,20 @@ public class PlayersPanel extends JPanel {
 
     // Rest of column indices remain the same
 
-    private static final int[] NUMERIC_COLUMNS =  initNumericColumns();
+    private static final int[] NUMERIC_COLUMNS = initNumericColumns();
 
     private static int[] initNumericColumns() {
         // Create a set of boolean column indices for quick lookup
         Set<Integer> booleanCols = Arrays.stream(BOOLEAN_COLUMNS).boxed().collect(Collectors.toSet());
+        Set<Integer> stringCols = Arrays.stream(STRING_COLUMNS).boxed().collect(Collectors.toSet());
 
         // Create list to hold numeric column indices
         List<Integer> numericCols = new ArrayList<>();
 
         // Check each column except Name(0) and Instrument(1) which are strings
-        for (int i = 2; i < getColumnNames().length; i++) {
+        for (int i = 0; i < getColumnNames().length; i++) {
             // If it's not a boolean column, it's numeric
-            if (!booleanCols.contains(i)) {
+            if (!booleanCols.contains(i) && !stringCols.contains(i)) {
                 numericCols.add(i);
             }
         }
@@ -522,6 +534,11 @@ public class PlayersPanel extends JPanel {
     // 17 - Preserve (Boolean)
     // 18 - Sparse
 
+    // Add this new method
+    private int getColumnIndex(String columnName) {
+        return new ArrayList<>(COLUMNS).indexOf(columnName);
+    }
+
     public void refreshPlayers(Set<IPlayer> players) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
@@ -532,20 +549,30 @@ public class PlayersPanel extends JPanel {
 
             for (IPlayer p : sortedPlayers) {
                 ProxyStrike player = (ProxyStrike) p;
-                Object[] rowData = player.toRow();
+                Object[] newRowData = new Object[COLUMNS.size()];
 
-                // Insert instrument name after player name
-                Object[] newRowData = new Object[rowData.length + 1];
-                newRowData[0] = rowData[0]; // Name
-                newRowData[1] = player.getInstrument() != null ? player.getInstrument().getName() : ""; // Instrument
-                System.arraycopy(rowData, 1, newRowData, 2, rowData.length - 1);
-
-                // Convert only specific columns to boolean
-                for (int booleanColumn : BOOLEAN_COLUMNS) {
-                    if (booleanColumn < newRowData.length) {
-                        newRowData[booleanColumn] = Boolean.valueOf(String.valueOf(newRowData[booleanColumn]));
-                    }
-                }
+                // Map each property to its correct column position
+                newRowData[getColumnIndex(COL_NAME)] = player.getName();
+                newRowData[getColumnIndex(COL_INSTRUMENT)] = player.getInstrument() != null
+                        ? player.getInstrument().getName()
+                        : "";
+                newRowData[getColumnIndex(COL_CHANNEL)] = player.getChannel();
+                newRowData[getColumnIndex(COL_SWING)] = player.getSwing();
+                newRowData[getColumnIndex(COL_LEVEL)] = player.getLevel();
+                newRowData[getColumnIndex(COL_NOTE)] = player.getNote();
+                newRowData[getColumnIndex(COL_MIN_VEL)] = player.getMinVelocity();
+                newRowData[getColumnIndex(COL_MAX_VEL)] = player.getMaxVelocity();
+                newRowData[getColumnIndex(COL_PRESET)] = player.getPreset();
+                newRowData[getColumnIndex(COL_STICKY)] = false; // player.isSticky();
+                newRowData[getColumnIndex(COL_PROBABILITY)] = player.getProbability();
+                newRowData[getColumnIndex(COL_RANDOM)] = player.getRandomDegree();
+                newRowData[getColumnIndex(COL_RATCHET_COUNT)] = player.getRatchetCount();
+                newRowData[getColumnIndex(COL_RATCHET_INTERVAL)] = player.getRatchetInterval();
+                newRowData[getColumnIndex(COL_INT_BEATS)] = false; // player.isIntervalBeats();
+                newRowData[getColumnIndex(COL_INT_BARS)] = false; // player.isIntervalBars();
+                newRowData[getColumnIndex(COL_PAN)] = player.getPanPosition();
+                newRowData[getColumnIndex(COL_PRESERVE)] = false; // player.isPreserve();
+                newRowData[getColumnIndex(COL_SPARSE)] = player.getSparse();
 
                 model.addRow(newRowData);
             }
@@ -557,24 +584,30 @@ public class PlayersPanel extends JPanel {
         int rowIndex = findPlayerRowIndex(player);
 
         if (rowIndex != -1) {
-            Object[] rowData = player.toRow();
-            // Insert instrument name after player name
-            Object[] newRowData = new Object[rowData.length + 1];
-            newRowData[0] = rowData[0]; // Name
-            newRowData[1] = player.getInstrument() != null ? player.getInstrument().getName() : ""; // Instrument
-            System.arraycopy(rowData, 1, newRowData, 2, rowData.length - 1);
-
-            // Convert boolean columns
-            for (int booleanColumn : BOOLEAN_COLUMNS) {
-                if (booleanColumn < newRowData.length) {
-                    newRowData[booleanColumn] = Boolean.valueOf(String.valueOf(newRowData[booleanColumn]));
-                }
-            }
-
-            // Update each column individually to preserve sorting
-            for (int i = 0; i < newRowData.length; i++) {
-                model.setValueAt(newRowData[i], rowIndex, i);
-            }
+            // Update each column according to its current position
+            model.setValueAt(player.getName(), rowIndex, getColumnIndex(COL_NAME));
+            model.setValueAt(player.getInstrument() != null ? player.getInstrument().getName() : "",
+                    rowIndex, getColumnIndex(COL_INSTRUMENT));
+            model.setValueAt(player.getChannel(), rowIndex, getColumnIndex(COL_CHANNEL));
+            model.setValueAt(player.getSwing(), rowIndex, getColumnIndex(COL_SWING));
+            model.setValueAt(player.getLevel(), rowIndex, getColumnIndex(COL_LEVEL));
+            model.setValueAt(player.getNote(), rowIndex, getColumnIndex(COL_NOTE));
+            model.setValueAt(player.getMinVelocity(), rowIndex, getColumnIndex(COL_MIN_VEL));
+            model.setValueAt(player.getMaxVelocity(), rowIndex, getColumnIndex(COL_MAX_VEL));
+            model.setValueAt(player.getPreset(), rowIndex, getColumnIndex(COL_PRESET));
+            // model.setValueAt(player.isSticky(), rowIndex, getColumnIndex(COL_STICKY));
+            model.setValueAt(player.getProbability(), rowIndex, getColumnIndex(COL_PROBABILITY));
+            model.setValueAt(player.getRandomDegree(), rowIndex, getColumnIndex(COL_RANDOM));
+            model.setValueAt(player.getRatchetCount(), rowIndex, getColumnIndex(COL_RATCHET_COUNT));
+            model.setValueAt(player.getRatchetInterval(), rowIndex, getColumnIndex(COL_RATCHET_INTERVAL));
+            // model.setValueAt(player.isIntervalBeats(), rowIndex,
+            // getColumnIndex(COL_INT_BEATS));
+            // model.setValueAt(player.isIntervalBars(), rowIndex,
+            // getColumnIndex(COL_INT_BARS));
+            model.setValueAt(player.getPanPosition(), rowIndex, getColumnIndex(COL_PAN));
+            // model.setValueAt(player.isPreserve(), rowIndex,
+            // getColumnIndex(COL_PRESERVE));
+            model.setValueAt(player.getSparse(), rowIndex, getColumnIndex(COL_SPARSE));
         }
     }
 }
