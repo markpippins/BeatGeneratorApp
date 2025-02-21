@@ -186,6 +186,15 @@ public class Frame extends JFrame implements AutoCloseable {
     private void setupMainContent() {
         mainPanel = new MainPanel(statusBar);
         add(mainPanel, BorderLayout.CENTER);
+
+        // Replace direct access with command
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                CommandBus.getInstance().publish(Commands.WINDOW_CLOSING, this);
+                saveFrameState();
+            }
+        });
     }
 
     public <T> Dialog<T> createDialog(T data, JPanel content) {

@@ -105,8 +105,13 @@ public class RedisService implements CommandListener {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = jedis.get("framestate");
             if (json != null) {
-                return objectMapper.readValue(json, FrameState.class);
+                FrameState state = objectMapper.readValue(json, FrameState.class);
+                logger.info("Loaded frame state with column order: " + 
+                    (state.getPlayerColumnOrder() != null ? 
+                    String.join(", ", state.getPlayerColumnOrder()) : "null"));
+                return state;
             }
+            logger.info("No existing frame state found, creating new one");
         } catch (Exception e) {
             logger.severe("Error loading frame state: " + e.getMessage());
         }
@@ -117,6 +122,9 @@ public class RedisService implements CommandListener {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = objectMapper.writeValueAsString(state);
             jedis.set("framestate", json);
+            logger.info("Saved frame state with column order: " + 
+                (state.getPlayerColumnOrder() != null ? 
+                String.join(", ", state.getPlayerColumnOrder()) : "null"));
         } catch (Exception e) {
             logger.severe("Error saving frame state: " + e.getMessage());
         }

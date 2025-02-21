@@ -64,17 +64,18 @@ public class RulesPanel extends JPanel {
 
     private void setupLayout() {
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(buttonPanel, BorderLayout.NORTH);
+        
+        // Create a wrapper panel for the button panel with BorderLayout
+        JPanel buttonWrapper = new JPanel(new BorderLayout());
+        buttonWrapper.add(buttonPanel, BorderLayout.CENTER);
+        topPanel.add(buttonWrapper, BorderLayout.NORTH);
 
-        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));  // Remove the margin completely
+        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         add(topPanel, BorderLayout.NORTH);
 
-        // Wrap the scroll pane in a panel that respects preferred size
         JScrollPane scrollPane = new JScrollPane(table);
         JPanel tableWrapper = new JPanel(new BorderLayout());
         tableWrapper.add(scrollPane);
-
-        // Make the panel use the minimum width needed
         tableWrapper.setPreferredSize(buttonPanel.getPreferredSize());
 
         add(tableWrapper, BorderLayout.CENTER);

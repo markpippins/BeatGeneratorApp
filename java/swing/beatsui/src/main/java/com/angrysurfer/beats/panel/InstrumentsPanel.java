@@ -109,27 +109,27 @@ public class InstrumentsPanel extends StatusProviderPanel {
         // Right side - Control Codes and Captions
         JSplitPane rightSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         
-        // Create control codes panel with toolbar
+        // Create control codes panel with toolbar and fixed width
         JPanel controlCodesPanel = new JPanel(new BorderLayout());
-        JPanel controlCodesToolbar = setupControlCodeToolbar(); // Now tables exist when creating toolbars
+        JPanel controlCodesToolbar = setupControlCodeToolbar();
         controlCodesPanel.add(controlCodesToolbar, BorderLayout.NORTH);
         controlCodesPanel.add(new JScrollPane(controlCodesTable), BorderLayout.CENTER);
+        controlCodesPanel.setPreferredSize(new Dimension(250, controlCodesPanel.getPreferredSize().height));
+        controlCodesPanel.setMinimumSize(new Dimension(250, 0));
         
-        // Create captions panel with toolbar
+        // Create captions panel with toolbar and fixed width
         JPanel captionsPanel = new JPanel(new BorderLayout());
         JPanel captionsToolbar = setupCaptionsToolbar();
         captionsPanel.add(captionsToolbar, BorderLayout.NORTH);
         captionsPanel.add(new JScrollPane(captionsTable), BorderLayout.CENTER);
+        captionsPanel.setPreferredSize(new Dimension(250, captionsPanel.getPreferredSize().height));
+        captionsPanel.setMinimumSize(new Dimension(250, 0));
 
-        // Set fixed widths for the right panels
-        controlCodesPanel.setPreferredSize(new Dimension(300, controlCodesPanel.getPreferredSize().height));
-        captionsPanel.setPreferredSize(new Dimension(300, captionsPanel.getPreferredSize().height));
-        
         rightSplitPane.setLeftComponent(controlCodesPanel);
         rightSplitPane.setRightComponent(captionsPanel);
         rightSplitPane.setResizeWeight(0.5);
 
-        // Left side - Instruments panel with toolbar
+        // Left side - Instruments panel gets all extra space
         JPanel instrumentsPanel = new JPanel(new BorderLayout());
         JPanel instrumentsToolbar = setupInstrumentToolbar();
         instrumentsPanel.add(instrumentsToolbar, BorderLayout.NORTH);
@@ -137,14 +137,16 @@ public class InstrumentsPanel extends StatusProviderPanel {
 
         mainSplitPane.setLeftComponent(instrumentsPanel);
         mainSplitPane.setRightComponent(rightSplitPane);
-        mainSplitPane.setResizeWeight(0.3);
+        mainSplitPane.setResizeWeight(0.6); // Give more weight to instruments panel
 
         panel.add(mainSplitPane, BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel setupInstrumentToolbar() {
-        JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel toolBar = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        
         addInstrumentButton = new JButton("Add");
         editInstrumentButton = new JButton("Edit");
         deleteInstrumentButton = new JButton("Delete");
@@ -153,19 +155,18 @@ public class InstrumentsPanel extends StatusProviderPanel {
         editInstrumentButton.addActionListener(e -> editSelectedInstrument());
         // deleteInstrumentButton.addActionListener(e -> deleteSelectedInstrument());
 
-        toolBar.add(addInstrumentButton);
-        toolBar.add(editInstrumentButton);
-        toolBar.add(deleteInstrumentButton);
+        buttonPanel.add(addInstrumentButton);
+        buttonPanel.add(editInstrumentButton);
+        buttonPanel.add(deleteInstrumentButton);
 
-        // Initial button states
-        editInstrumentButton.setEnabled(false);
-        deleteInstrumentButton.setEnabled(false);
-
+        toolBar.add(buttonPanel, BorderLayout.CENTER);
         return toolBar;
     }
 
     private JPanel setupControlCodeToolbar() {
-        JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel toolBar = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        
         JButton addButton = new JButton("Add");
         JButton editButton = new JButton("Edit");
         JButton deleteButton = new JButton("Delete");
@@ -174,36 +175,18 @@ public class InstrumentsPanel extends StatusProviderPanel {
         editButton.addActionListener(e -> editSelectedControlCode());
         deleteButton.addActionListener(e -> deleteSelectedControlCode());
 
-        toolBar.add(addButton);
-        toolBar.add(editButton);
-        toolBar.add(deleteButton);
+        buttonPanel.add(addButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
 
-        // Initial button states - all disabled
-        addButton.setEnabled(false);
-        editButton.setEnabled(false);
-        deleteButton.setEnabled(false);
-
-        // Update add button when instrument is selected
-        instrumentsTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                addButton.setEnabled(instrumentsTable.getSelectedRow() >= 0);
-            }
-        });
-
-        // Update edit/delete buttons when control code is selected
-        controlCodesTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                boolean hasSelection = controlCodesTable.getSelectedRow() >= 0;
-                editButton.setEnabled(hasSelection);
-                deleteButton.setEnabled(hasSelection);
-            }
-        });
-
+        toolBar.add(buttonPanel, BorderLayout.CENTER);
         return toolBar;
     }
 
     private JPanel setupCaptionsToolbar() {
-        JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel toolBar = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        
         addCaptionButton = new JButton("Add");
         editCaptionButton = new JButton("Edit");
         deleteCaptionButton = new JButton("Delete");
@@ -212,15 +195,11 @@ public class InstrumentsPanel extends StatusProviderPanel {
         editCaptionButton.addActionListener(e -> editSelectedCaption());
         deleteCaptionButton.addActionListener(e -> deleteSelectedCaption());
 
-        toolBar.add(addCaptionButton);
-        toolBar.add(editCaptionButton);
-        toolBar.add(deleteCaptionButton);
+        buttonPanel.add(addCaptionButton);
+        buttonPanel.add(editCaptionButton);
+        buttonPanel.add(deleteCaptionButton);
 
-        // Initial button states
-        addCaptionButton.setEnabled(false);
-        editCaptionButton.setEnabled(false);
-        deleteCaptionButton.setEnabled(false);
-
+        toolBar.add(buttonPanel, BorderLayout.CENTER);
         return toolBar;
     }
 
@@ -423,16 +402,17 @@ public class InstrumentsPanel extends StatusProviderPanel {
         table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
 
-        // Set column widths - minimize all except name
-        table.getColumnModel().getColumn(0).setPreferredWidth(120); // Name
+        // Set fixed column widths for control codes table
+        table.getColumnModel().getColumn(0).setPreferredWidth(100); // Name
+        table.getColumnModel().getColumn(0).setMinWidth(100);
         
-        // Fixed minimum widths for all numeric columns
-        table.getColumnModel().getColumn(1).setMaxWidth(50); // Code
-        table.getColumnModel().getColumn(1).setPreferredWidth(50);
-        table.getColumnModel().getColumn(2).setMaxWidth(70); // Lower Bound
-        table.getColumnModel().getColumn(2).setPreferredWidth(70);
-        table.getColumnModel().getColumn(3).setMaxWidth(70); // Upper Bound
-        table.getColumnModel().getColumn(3).setPreferredWidth(70);
+        // Fixed widths for numeric columns
+        table.getColumnModel().getColumn(1).setMaxWidth(50);  // Code
+        table.getColumnModel().getColumn(1).setMinWidth(50);
+        table.getColumnModel().getColumn(2).setMaxWidth(45);  // Lower Bound
+        table.getColumnModel().getColumn(2).setMinWidth(45);
+        table.getColumnModel().getColumn(3).setMaxWidth(45);  // Upper Bound
+        table.getColumnModel().getColumn(3).setMinWidth(45);
 
         // Modify selection listener to handle caption buttons
         table.getSelectionModel().addListSelectionListener(e -> {
@@ -484,10 +464,11 @@ public class InstrumentsPanel extends StatusProviderPanel {
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
 
-        // Set column widths
-        table.getColumnModel().getColumn(0).setMaxWidth(60); // Code
-        table.getColumnModel().getColumn(0).setPreferredWidth(60);
-        table.getColumnModel().getColumn(1).setPreferredWidth(240); // Description
+        // Set fixed column widths for captions table
+        table.getColumnModel().getColumn(0).setMaxWidth(50);  // Code
+        table.getColumnModel().getColumn(0).setMinWidth(50);
+        table.getColumnModel().getColumn(1).setPreferredWidth(190); // Description
+        table.getColumnModel().getColumn(1).setMinWidth(190);
 
         // Modify selection listener to only enable edit/delete when caption is selected
         table.getSelectionModel().addListSelectionListener(e -> {

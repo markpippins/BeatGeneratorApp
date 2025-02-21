@@ -158,4 +158,5 @@ public class Commands {
     public static final String NEXT_SCALE_SELECTED = "NEXT__SCALE_SELECTED";
     public static final String PREV_SCALE_SELECTED = "PREV_SCALE_SELECTED";
 
+    public static final String WINDOW_CLOSING = "WINDOW_CLOSING";
 }

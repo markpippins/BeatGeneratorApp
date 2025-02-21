@@ -2,35 +2,44 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
-import java.util.Arrays;
 import java.util.stream.Collectors;
-import java.util.LinkedHashSet;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.JOptionPane;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyAdapter;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.model.IPlayer;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
+import com.angrysurfer.core.service.RedisService;
 import com.angrysurfer.core.service.TickerManager;
 
 import lombok.Getter;
@@ -173,10 +182,78 @@ public class PlayersPanel extends JPanel {
 
     private void setupLayout() {
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(buttonPanel, BorderLayout.NORTH);
+        
+        // Create a wrapper panel for the button panel with BorderLayout
+        JPanel buttonWrapper = new JPanel(new BorderLayout());
+        buttonWrapper.add(buttonPanel, BorderLayout.CENTER);
+        topPanel.add(buttonWrapper, BorderLayout.NORTH);
 
         add(topPanel, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
+    }
+
+    public void saveColumnOrder() {
+        try {
+            FrameState state = RedisService.getInstance().loadFrameState();
+            if (state != null) {
+                List<String> columnOrder = new ArrayList<>();
+                // Get visible column order
+                for (int i = 0; i < table.getColumnCount(); i++) {
+                    int modelIndex = table.convertColumnIndexToModel(i);
+                    String columnName = getColumnNames()[modelIndex];
+                    columnOrder.add(columnName);
+                }
+                
+                // Only save if we have all columns
+                if (columnOrder.size() == COLUMNS.size()) {
+                    logger.info("Saving column order: " + String.join(", ", columnOrder));
+                    state.setPlayerColumnOrder(columnOrder);
+                    RedisService.getInstance().saveFrameState(state);
+                } else {
+                    logger.warning("Column order incomplete, not saving");
+                }
+            }
+        } catch (Exception e) {
+            logger.severe("Error saving column order: " + e.getMessage());
+        }
+    }
+
+    public void restoreColumnOrder() {
+        try {
+            FrameState state = RedisService.getInstance().loadFrameState();
+            List<String> savedOrder = state != null ? state.getPlayerColumnOrder() : null;
+            
+            if (savedOrder != null && !savedOrder.isEmpty() && savedOrder.size() == COLUMNS.size()) {
+                logger.info("Restoring column order: " + String.join(", ", savedOrder));
+                
+                // Create a map of column names to their current positions
+                Map<String, Integer> currentOrder = new HashMap<>();
+                for (int i = 0; i < table.getColumnCount(); i++) {
+                    currentOrder.put(getColumnNames()[i], i);
+                }
+
+                // Move each column to its saved position
+                for (int i = 0; i < savedOrder.size(); i++) {
+                    String colName = savedOrder.get(i);
+                    Integer currentPos = currentOrder.get(colName);
+                    if (currentPos != null && currentPos != i) {
+                        table.getColumnModel().moveColumn(currentPos, i);
+                        // Update the currentOrder map after moving
+                        for (Map.Entry<String, Integer> entry : currentOrder.entrySet()) {
+                            if (entry.getValue() == i) {
+                                currentOrder.put(entry.getKey(), currentPos);
+                                break;
+                            }
+                        }
+                        currentOrder.put(colName, i);
+                    }
+                }
+            } else {
+                logger.info("No valid column order found to restore");
+            }
+        } catch (Exception e) {
+            logger.severe("Error restoring column order: " + e.getMessage());
+        }
     }
 
     private void setupTable() {
@@ -251,6 +328,15 @@ public class PlayersPanel extends JPanel {
                     });
         }
 
+        // Add left alignment for Name and Instrument column headers
+        DefaultTableCellRenderer leftHeaderRenderer = new DefaultTableCellRenderer();
+        leftHeaderRenderer.setHorizontalAlignment(JLabel.LEFT);
+        
+        table.getTableHeader().getColumnModel().getColumn(getColumnIndex(COL_NAME))
+            .setHeaderRenderer(leftHeaderRenderer);
+        table.getTableHeader().getColumnModel().getColumn(getColumnIndex(COL_INSTRUMENT))
+            .setHeaderRenderer(leftHeaderRenderer);
+
         // Add double-click listener
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -262,6 +348,29 @@ public class PlayersPanel extends JPanel {
                 }
             }
         });
+
+        // Add column reordering listener
+        table.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+            @Override
+            public void columnMoved(TableColumnModelEvent e) {
+                if (e.getFromIndex() != e.getToIndex()) {
+                    logger.info("Column moved from " + e.getFromIndex() + " to " + e.getToIndex());
+                    // Add slight delay to ensure column move is complete
+                    SwingUtilities.invokeLater(() -> saveColumnOrder());
+                }
+            }
+            // Implement other required methods with empty bodies
+            public void columnAdded(TableColumnModelEvent e) {}
+            public void columnRemoved(TableColumnModelEvent e) {}
+            public void columnMarginChanged(ChangeEvent e) {}
+            public void columnSelectionChanged(ListSelectionEvent e) {}
+        });
+
+        // Save initial column order
+        SwingUtilities.invokeLater(() -> saveColumnOrder());
+        
+        // Restore column order after table is fully set up
+        SwingUtilities.invokeLater(() -> restoreColumnOrder());
     }
 
     private void setupButtonListeners() {
@@ -394,6 +503,9 @@ public class PlayersPanel extends JPanel {
                             enableControls(true);
                             refreshPlayers(currentTicker.getPlayers());
                         }
+                    }
+                    case Commands.WINDOW_CLOSING -> {
+                        saveColumnOrder();
                     }
                 }
             }
