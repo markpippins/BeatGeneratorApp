@@ -3,7 +3,7 @@ package com.angrysurfer.beats.visualization.handler.classic;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -13,7 +13,7 @@ public class BounceVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         
         for (int col = 0; col < buttons[0].length; col++) {
             buttons[bouncePos][col].setBackground(Color.YELLOW);

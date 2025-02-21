@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -43,7 +43,7 @@ public class TetrisVisualization implements IVisualizationHandler {
             initializeGame(buttons);
         }
 
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         updateCount++;
         if (updateCount % 5 == 0) { // Move piece down every 5 updates

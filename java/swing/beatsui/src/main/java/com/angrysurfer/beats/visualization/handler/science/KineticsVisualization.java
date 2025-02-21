@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.util.*;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -85,7 +85,7 @@ public class KineticsVisualization implements IVisualizationHandler {
             }
         }
 
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Update particles
         for (Particle p : particles) {

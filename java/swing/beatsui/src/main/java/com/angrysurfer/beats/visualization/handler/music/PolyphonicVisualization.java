@@ -3,7 +3,7 @@ package com.angrysurfer.beats.visualization.handler.music;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -15,7 +15,7 @@ public class PolyphonicVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Create multiple interweaving sine waves
         for (int voice = 0; voice < voiceColors.length; voice++) {

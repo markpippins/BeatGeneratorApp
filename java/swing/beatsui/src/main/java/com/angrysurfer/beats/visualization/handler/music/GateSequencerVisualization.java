@@ -25,7 +25,7 @@ public class GateSequencerVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         
         int gridHeight = buttons.length;
         int channelSpacing = gridHeight / (NUM_CHANNELS + 1); // Distribute channels evenly

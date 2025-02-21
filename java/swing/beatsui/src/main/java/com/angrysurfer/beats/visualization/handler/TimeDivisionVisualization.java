@@ -3,7 +3,7 @@ package com.angrysurfer.beats.visualization.handler;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -20,7 +20,7 @@ public class TimeDivisionVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         int totalRows = buttons.length;
 
         // Calculate how many times to repeat the pattern to fill all rows

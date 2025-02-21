@@ -28,12 +28,16 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.util.Scale;
 
 public class PianoPanel extends StatusProviderPanel {
+    private static final String C_KEY = "C";
+    private String currentScale = "Major"; // Default scale
     private final CommandBus commandBus = CommandBus.getInstance();
     private final Set<Integer> heldNotes = new HashSet<>();
     private Map<Integer, JButton> noteToKeyMap = new HashMap<>();
     private final ColorAnimator colorAnimator;
+    private JButton activeButton = null; // Add this field to track active button
 
     public PianoPanel() {
         this(null);
@@ -42,13 +46,38 @@ public class PianoPanel extends StatusProviderPanel {
 
     public PianoPanel(StatusConsumer statusConsumer) {
         super(null, statusConsumer);
-        setPreferredSize(new Dimension(230, 80));
-        setMinimumSize(new Dimension(230, 80));
-        // setBorder(new EmptyBorder(10, 10, 10, 10));
+        // Increase width from 230 to 265 to accommodate the extra buttons
+        setPreferredSize(new Dimension(265, 80));
+        setMinimumSize(new Dimension(265, 80));
         setBorder(BorderFactory.createLineBorder(Color.lightGray, 1));
-        setOpaque(true); // Make sure panel is opaque
-
+        setOpaque(true);
         setBackground(Utils.fadedOrange);
+
+        // Add three colored buttons on the right side
+        int buttonWidth = 25;
+        int buttonHeight = 15;
+        int startX = getPreferredSize().width - buttonWidth - 5;
+        int startY = 12; // Changed from 10 to 12 to push buttons down 2px
+        int spacing = 5;
+
+        JButton button1 = new JButton();
+        button1.setBounds(startX, startY, buttonWidth, buttonHeight);
+        button1.setBackground(Utils.mutedRed);
+        configureToggleButton(button1);
+
+        JButton button2 = new JButton();
+        button2.setBounds(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight);
+        button2.setBackground(Utils.deepTeal);
+        configureToggleButton(button2);
+
+        JButton button3 = new JButton();
+        button3.setBounds(startX, startY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight);
+        button3.setBackground(Utils.mutedOlive);
+        configureToggleButton(button3);
+
+        add(button1);
+        add(button2);
+        add(button3);
 
         // Dimensions for keys
         int whiteKeyWidth = 30;
@@ -120,11 +149,19 @@ public class PianoPanel extends StatusProviderPanel {
             @Override
             public void onAction(Command action) {
                 if (action.getData() instanceof Integer note) {
-
                     switch (action.getCommand()) {
                         case Commands.KEY_PRESSED -> handleKeyPress(note);
                         case Commands.KEY_HELD -> handleKeyHold(note);
                         case Commands.KEY_RELEASED -> handleKeyRelease(note);
+                    }
+                } else { // if (activeButton == getComponent(0)) { // Only handle scale changes when first button is active
+                    switch (action.getCommand()) {
+                        case Commands.SCALE_SELECTED -> {
+                            if (action.getData() instanceof String scaleName) {
+                                currentScale = scaleName;
+                                applyCurrentScale();
+                            }
+                        }
                     }
                 }
             }
@@ -303,5 +340,57 @@ public class PianoPanel extends StatusProviderPanel {
             }
         }
         return null;
+    }
+
+    private void configureToggleButton(JButton button) {
+        Color defaultColor = button.getBackground();
+        button.addActionListener(e -> {
+            if (activeButton == button) {
+                // Deactivate if clicking the active button
+                button.setBackground(defaultColor);
+                activeButton = null;
+                // Release all held scale notes when deactivating first button
+                if (button == getComponent(0)) {  // First button
+                    releaseAllNotes();
+                }
+            } else {
+                // Restore previous active button's color
+                if (activeButton != null) {
+                    activeButton.setBackground((Color)activeButton.getClientProperty("defaultColor"));
+                }
+                // Activate new button
+                button.putClientProperty("defaultColor", defaultColor);
+                button.setBackground(Utils.fadedLime);
+                activeButton = button;
+                
+                // If it's the first button, apply current scale
+                if (button == getComponent(0)) {  // First button
+                    applyCurrentScale();
+                }
+            }
+        });
+        button.putClientProperty("defaultColor", defaultColor);
+    }
+
+    private void applyCurrentScale() {
+        releaseAllNotes();
+        Boolean[] scaleNotes = Scale.getScale(C_KEY, currentScale);
+        // Map scale positions to MIDI notes (starting from middle C = 60)
+        for (int i = 0; i < scaleNotes.length; i++) {
+            if (scaleNotes[i]) {
+                int midiNote = 60 + i; // Middle C (60) plus scale position
+                if (noteToKeyMap.containsKey(midiNote)) {
+                    heldNotes.add(midiNote);
+                    highlightKey(midiNote);
+                }
+            }
+        }
+    }
+
+    private void releaseAllNotes() {
+        new HashSet<>(heldNotes).forEach(note -> {
+            heldNotes.remove(note);
+            unhighlightKey(note);
+        });
     }
 }

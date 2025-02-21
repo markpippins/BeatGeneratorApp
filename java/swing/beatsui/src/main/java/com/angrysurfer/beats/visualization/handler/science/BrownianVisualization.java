@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -72,7 +72,7 @@ public class BrownianVisualization implements IVisualizationHandler {
         }
 
         // Draw trails
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         trails.forEach((pos, trail) -> {
             if (pos.x >= 0 && pos.x < buttons[0].length && 
                 pos.y >= 0 && pos.y < buttons.length) {

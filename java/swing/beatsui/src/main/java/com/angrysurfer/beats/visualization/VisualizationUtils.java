@@ -7,7 +7,7 @@ import com.angrysurfer.beats.widget.GridButton;
 
 import java.awt.Container;
 
-public class Utils {
+public class VisualizationUtils {
     public static final Color[] RAINBOW_COLORS = {
         Color.RED, Color.ORANGE, Color.YELLOW,
         Color.GREEN, Color.BLUE, new Color(75, 0, 130)

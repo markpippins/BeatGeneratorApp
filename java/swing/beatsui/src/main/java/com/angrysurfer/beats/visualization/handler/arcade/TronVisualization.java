@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -26,7 +26,7 @@ public class TronVisualization implements IVisualizationHandler {
             initializeGame(buttons);
         }
 
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // AI decision making
         decideDirection(bike1, dir1, trail1, trail2, buttons);

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class RacingVisualization implements IVisualizationHandler {
@@ -25,7 +25,7 @@ public class RacingVisualization implements IVisualizationHandler {
             initializeGame(buttons);
         }
 
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Generate track points
         updateTrack(buttons);

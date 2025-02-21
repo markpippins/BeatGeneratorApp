@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.util.*;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class BinaryRainVisualization implements IVisualizationHandler {
@@ -41,7 +41,7 @@ public class BinaryRainVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Add new raindrops
         if (raindrops.size() < MAX_DROPS && random.nextInt(3) == 0) {

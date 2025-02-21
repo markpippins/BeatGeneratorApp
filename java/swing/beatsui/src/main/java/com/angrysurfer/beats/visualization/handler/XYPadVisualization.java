@@ -3,7 +3,7 @@ package com.angrysurfer.beats.visualization.handler;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class XYPadVisualization implements IVisualizationHandler {
@@ -13,7 +13,7 @@ public class XYPadVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Calculate modulated XY position
         double xMod = Math.sin(phase * modulators[currentModulator]);

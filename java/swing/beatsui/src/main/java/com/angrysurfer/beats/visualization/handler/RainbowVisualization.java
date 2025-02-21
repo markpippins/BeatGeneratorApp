@@ -3,7 +3,7 @@ package com.angrysurfer.beats.visualization.handler;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class RainbowVisualization implements IVisualizationHandler {
@@ -16,7 +16,7 @@ public class RainbowVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Draw rainbow bands with smooth transitions
         for (int col = 0; col < buttons[0].length; col++) {

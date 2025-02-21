@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -37,7 +37,7 @@ public class DigDugVisualization implements IVisualizationHandler {
             initializeGame(buttons);
         }
 
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // AI movement - try to reach nearest monster or unexplored area
         if (monsters.size() > 0) {

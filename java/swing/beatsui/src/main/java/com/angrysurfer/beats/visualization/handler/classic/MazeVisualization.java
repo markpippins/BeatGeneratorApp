@@ -5,7 +5,7 @@ import java.awt.Point;
 import java.util.*;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -25,7 +25,7 @@ public class MazeVisualization implements IVisualizationHandler {
             initializeMaze(buttons);
         }
 
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Draw existing maze
         for (int y = 0; y < maze.length; y++) {

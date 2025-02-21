@@ -95,7 +95,7 @@ public class TickerPanel extends StatusProviderPanel {
         controlPanel.add(pianoPanel);
 
         // Add new vertical button panel
-        controlPanel.add(createVerticalButtonPanel());
+        // controlPanel.add(createVerticalButtonPanel());
 
         controlPanel
                 .add(createVerticalAdjustPanel("Shift", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));

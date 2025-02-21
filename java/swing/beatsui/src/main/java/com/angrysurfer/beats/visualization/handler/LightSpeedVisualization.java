@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class LightSpeedVisualization implements IVisualizationHandler {
@@ -75,7 +75,7 @@ public class LightSpeedVisualization implements IVisualizationHandler {
             }
         }
 
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Update and draw light beams
         for (LightBeam beam : beams) {

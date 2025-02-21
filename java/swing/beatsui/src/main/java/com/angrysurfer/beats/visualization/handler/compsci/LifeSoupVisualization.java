@@ -5,7 +5,7 @@ import java.awt.Point;
 import java.util.*;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -39,7 +39,7 @@ public class LifeSoupVisualization implements IVisualizationHandler {
             initializeSoup(buttons);
         }
 
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Update life soup
         Map<Point, Integer> newCells = new HashMap<>();

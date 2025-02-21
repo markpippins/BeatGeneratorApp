@@ -3,7 +3,7 @@ package com.angrysurfer.beats.visualization.handler.math;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -13,7 +13,7 @@ public class MathFunctionsVisualization implements IVisualizationHandler {
     
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         
         // Draw multiple mathematical functions
         for (int func = 0; func < NUM_FUNCTIONS; func++) {

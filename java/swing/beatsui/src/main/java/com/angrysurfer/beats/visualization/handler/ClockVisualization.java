@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.time.LocalTime;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.visualization.Utils;
+import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class ClockVisualization implements IVisualizationHandler {
@@ -14,7 +14,7 @@ public class ClockVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         LocalTime now = LocalTime.now();
         int hours = now.getHour();

@@ -28,7 +28,7 @@ public class MoonPatrolVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         int rows = buttons.length;
         int cols = buttons[0].length;
 

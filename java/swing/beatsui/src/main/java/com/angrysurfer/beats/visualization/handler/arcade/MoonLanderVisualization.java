@@ -16,7 +16,7 @@ public class MoonLanderVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        Utils.clearDisplay(buttons, buttons[0][0].getParent());
+        VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         int cols = buttons[0].length;
         int rows = buttons.length;
 
