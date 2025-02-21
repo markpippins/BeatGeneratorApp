@@ -30,6 +30,7 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.proxy.ProxyTicker;
 import com.angrysurfer.core.service.TickerManager;
+import com.angrysurfer.core.util.Scale;
 
 public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();
@@ -316,26 +317,27 @@ public class ToolBar extends JToolBar {
     }
 
     private JPanel createBottomRightStatusPanel() {
-        // Right status fields panel
         JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        // rightStatusPanel.setPreferredSize(new
-        // Dimension(rightStatusPanel.getPreferredSize().width, 75));
         setBorder(BorderFactory.createEmptyBorder());
         Object[][] rightFieldsArray = {
-                { "Ticker", createTextField("1") },
-                { "Length", createTextField("0") },
-                { "Offset", createTextField("0") }
+            { "Scale", createScaleCombo() },
+            { "Ticker", createTextField("1") },
+            { "Length", createTextField("0") },
+            { "Offset", createTextField("0") }
         };
 
         for (Object[] field : rightFieldsArray) {
             JPanel fieldPanel = new JPanel();
             fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
+            fieldPanel.setAlignmentX(Component.CENTER_ALIGNMENT); // Center align the field panel
 
+            // Create and add label
             JLabel nameLabel = new JLabel((String) field[0]);
             nameLabel.setForeground(Color.GRAY);
             nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             fieldPanel.add(nameLabel);
 
+            // Create and add component
             JComponent component = (JComponent) field[1];
             component.setAlignmentX(Component.CENTER_ALIGNMENT);
             rightFields.put((String) field[0], component);
@@ -348,14 +350,16 @@ public class ToolBar extends JToolBar {
         return rightStatusPanel;
     }
 
+    static final int STATUS_PANEL_WIDTH = 450;
+
     private void setup() {
         setFloatable(false);
         setPreferredSize(new Dimension(getPreferredSize().width, 90)); // Set proper height for toolbar
 
         JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.setPreferredSize(new Dimension(400, 180));
-        leftPanel.setMaximumSize(new Dimension(400, 180));
-        leftPanel.setMinimumSize(new Dimension(400, 180));
+        leftPanel.setPreferredSize(new Dimension(STATUS_PANEL_WIDTH, 180));
+        leftPanel.setMaximumSize(new Dimension(STATUS_PANEL_WIDTH, 180));
+        leftPanel.setMinimumSize(new Dimension(STATUS_PANEL_WIDTH, 180));
         leftPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 4, 5));
 
         leftPanel.add(createTopLeftStatusPanel(), BorderLayout.NORTH);
@@ -370,9 +374,9 @@ public class ToolBar extends JToolBar {
         add(transportPanel);
 
         JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setPreferredSize(new Dimension(400, 180));
-        rightPanel.setMaximumSize(new Dimension(400, 180));
-        rightPanel.setMinimumSize(new Dimension(400, 180));
+        rightPanel.setPreferredSize(new Dimension(STATUS_PANEL_WIDTH, 180));
+        rightPanel.setMaximumSize(new Dimension(STATUS_PANEL_WIDTH, 180));
+        rightPanel.setMinimumSize(new Dimension(STATUS_PANEL_WIDTH, 180));
         rightPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 4, 5));
         rightPanel.add(createTopRightStatusPanel(), BorderLayout.NORTH);
         rightPanel.add(createBottomRightStatusPanel(), BorderLayout.SOUTH);
@@ -458,4 +462,28 @@ public class ToolBar extends JToolBar {
         }
     }
 
+    private JComboBox<String> createScaleCombo() {
+        String[] scaleNames = Scale.SCALE_PATTERNS.keySet()
+                .stream()
+                .sorted()
+                .toArray(String[]::new);
+        
+        JComboBox<String> combo = new JComboBox<>(scaleNames);
+        combo.setSelectedItem("Chromatic");
+        combo.setMaximumSize(new Dimension(120, 25));
+        combo.setPreferredSize(new Dimension(120, 25));
+        combo.setMinimumSize(new Dimension(120, 25));
+        combo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        combo.setEnabled(true);
+        
+        combo.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                String selectedScale = (String) combo.getSelectedItem();
+                actionBus.publish(Commands.SCALE_SELECTED, this, 
+                    Map.of("scale", selectedScale));
+            }
+        });
+        
+        return combo;
+    }
 }
