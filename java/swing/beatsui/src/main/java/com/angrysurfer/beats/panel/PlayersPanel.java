@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.LinkedHashSet;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -45,37 +46,56 @@ public class PlayersPanel extends JPanel {
     private final ButtonPanel buttonPanel;
     private final ContextMenuHelper contextMenu;
 
-    private static final String[] columnNames = {
-            "Name", "Instrument", "Channel", "Swing", "Level", "Note", "Min Vel", "Max Vel",
-            "Preset", "Sticky", "Prob", "Random", "Ratchet #", "Ratchet Int",
-            "Int Beats", "Int Bars", "Pan", "Preserve", "Sparse"
-    };
+    // Column name constants
+    private static final String COL_NAME = "Name";
+    private static final String COL_INSTRUMENT = "Instrument";
+    private static final String COL_CHANNEL = "Channel";
+    private static final String COL_SWING = "Swing";
+    private static final String COL_LEVEL = "Level";
+    private static final String COL_NOTE = "Note";
+    private static final String COL_MIN_VEL = "Min Vel";
+    private static final String COL_MAX_VEL = "Max Vel";
+    private static final String COL_PRESET = "Preset";
+    private static final String COL_STICKY = "Sticky";
+    private static final String COL_PROBABILITY = "Prob";
+    private static final String COL_RANDOM = "Random";
+    private static final String COL_RATCHET_COUNT = "Ratchet #";
+    private static final String COL_RATCHET_INTERVAL = "Ratchet Int";
+    private static final String COL_INT_BEATS = "Int Beats";
+    private static final String COL_INT_BARS = "Int Bars";
+    private static final String COL_PAN = "Pan";
+    private static final String COL_PRESERVE = "Preserve";
+    private static final String COL_SPARSE = "Sparse";
 
-    private static final int[] BOOLEAN_COLUMNS = {
-            9,  // Sticky preset
-            14, // Internal Beats
-            15, // Internal Bars
-            17, // Preserve
-    };
+    // Replace array with LinkedHashSet using constants
+    private static final Set<String> COLUMNS = new LinkedHashSet<>(Arrays.asList(
+            COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_SWING, COL_LEVEL, COL_NOTE, 
+            COL_MIN_VEL, COL_MAX_VEL, COL_PRESET, COL_STICKY, COL_PROBABILITY, 
+            COL_RANDOM, COL_RATCHET_COUNT, COL_RATCHET_INTERVAL, COL_INT_BEATS, 
+            COL_INT_BARS, COL_PAN, COL_PRESERVE, COL_SPARSE
+    ));
 
-    private static final int[] NUMERIC_COLUMNS = {
-            2,  // Channel
-            3,  // Swing
-            4,  // Level
-            5,  // Note
-            6,  // Min Vel
-            7,  // Max Vel
-            8,  // Preset
-            10, // Prob
-            11, // Random
-            12, // Ratchet #
-            13, // Ratchet Int
-            16, // Pan
-            18  // Sparse
-    };
+    // Define boolean column names using constants
+    private static final Set<String> BOOLEAN_COLUMN_NAMES = Set.of(
+            COL_STICKY,
+            COL_INT_BEATS,
+            COL_INT_BARS,
+            COL_PRESERVE
+    );
 
-    // Replace the static NUMERIC_COLUMNS array with this computed version
-    // private static final int[] NUMERIC_COLUMNS = initNumericColumns();
+    // Convert boolean column names to indices
+    private static final int[] BOOLEAN_COLUMNS = BOOLEAN_COLUMN_NAMES.stream()
+            .mapToInt(name -> new ArrayList<>(COLUMNS).indexOf(name))
+            .toArray();
+
+    // Helper method to get columns as array when needed
+    private static String[] getColumnNames() {
+        return COLUMNS.toArray(new String[0]);
+    }
+
+    // Rest of column indices remain the same
+
+    private static final int[] NUMERIC_COLUMNS =  initNumericColumns();
 
     private static int[] initNumericColumns() {
         // Create a set of boolean column indices for quick lookup
@@ -85,7 +105,7 @@ public class PlayersPanel extends JPanel {
         List<Integer> numericCols = new ArrayList<>();
 
         // Check each column except Name(0) and Instrument(1) which are strings
-        for (int i = 2; i < columnNames.length; i++) {
+        for (int i = 2; i < getColumnNames().length; i++) {
             // If it's not a boolean column, it's numeric
             if (!booleanCols.contains(i)) {
                 numericCols.add(i);
@@ -149,7 +169,7 @@ public class PlayersPanel extends JPanel {
 
     private void setupTable() {
 
-        DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+        DefaultTableModel model = new DefaultTableModel(getColumnNames(), 0) {
             @Override
             public Class<?> getColumnClass(int column) {
                 // Return Boolean.class for boolean columns
