@@ -81,9 +81,24 @@ public class MenuBar extends JMenuBar {
             }
         });
 
+        JMenuItem clearInvalidTickers = new JMenuItem("Clear Invalid Tickers");
+        clearInvalidTickers.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(
+                    parentFrame,
+                    "Are you sure you want to remove all invalid tickers?",
+                    "Clear Invalid Tickers",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+            if (result == JOptionPane.YES_OPTION) {
+                commandBus.publish(Commands.CLEAR_INVALID_TICKERS, this);
+            }
+        });
+
         JMenu dbMenu = new JMenu("Database");
         dbMenu.setMnemonic(KeyEvent.VK_D);
         dbMenu.add(clearDb);
+        dbMenu.add(clearInvalidTickers);  // Add the new menu item
         
         // Add Load Instruments item
         JMenuItem loadInstruments = new JMenuItem("Load Instruments from File");

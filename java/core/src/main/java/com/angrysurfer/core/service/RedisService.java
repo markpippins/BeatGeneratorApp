@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -539,6 +540,15 @@ public class RedisService implements CommandListener {
         }
     }
 
+    public List<Long> getAllTickerIds() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            Set<String> keys = jedis.keys("ticker:*");
+            return keys.stream()
+                .map(k -> Long.parseLong(k.split(":")[1]))
+                .collect(Collectors.toList());
+        }
+    }
+
     private void saveTicker(ProxyTicker ticker) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Make a copy of players before clearing
@@ -559,6 +569,75 @@ public class RedisService implements CommandListener {
         } catch (Exception e) {
             logger.severe("Error saving ticker: " + e.getMessage());
             throw new RuntimeException("Failed to save ticker", e);
+        }
+    }
+
+    public void clearInvalidTickers() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            Set<String> keys = jedis.keys("ticker:*");
+            for (String key : keys) {
+                ProxyTicker ticker = findTickerById(Long.parseLong(key.split(":")[1]));
+                if (ticker != null && !ticker.isValid()) {
+                    deleteTicker(ticker.getId());
+                }
+            }
+        }
+    }
+
+    public boolean tickerExists(Long tickerId) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            return jedis.exists("ticker:" + tickerId);
+        }
+    }
+
+    public ProxyTicker findFirstValidTicker() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            Set<String> keys = jedis.keys("ticker:*");
+            for (String key : keys) {
+                ProxyTicker ticker = findTickerById(Long.parseLong(key.split(":")[1]));
+                if (ticker != null && ticker.isValid()) {
+                    return ticker;
+                }
+            }
+            return null;
+        }
+    }
+
+    public void deleteTicker(Long tickerId) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            // First, get the ticker to check if it exists
+            ProxyTicker ticker = findTickerById(tickerId);
+            if (ticker == null) return;
+
+            // Delete all rules for each player in the ticker
+            for (IPlayer p : ticker.getPlayers()) {
+                ProxyStrike player = (ProxyStrike) p;
+                String rulesKey = "player:" + player.getId() + ":rules";
+                Set<String> ruleIds = jedis.smembers(rulesKey);
+                
+                // Delete each rule
+                for (String ruleId : ruleIds) {
+                    deleteRule(Long.valueOf(ruleId));
+                }
+                jedis.del(rulesKey);
+                
+                // Delete the player
+                jedis.del("proxystrike:" + player.getId());
+            }
+
+            // Delete the ticker's player set
+            jedis.del("ticker:" + tickerId + ":players");
+
+            // Delete the ticker itself
+            jedis.del("ticker:" + tickerId);
+
+            // Notify via command bus
+            commandBus.publish(Commands.TICKER_DELETED, this, tickerId);
+            
+            logger.info("Successfully deleted ticker " + tickerId + " and all related entities");
+        } catch (Exception e) {
+            logger.severe("Error deleting ticker " + tickerId + ": " + e.getMessage());
+            throw new RuntimeException("Failed to delete ticker", e);
         }
     }
 

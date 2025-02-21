@@ -1,5 +1,7 @@
 package com.angrysurfer.core.service;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -150,6 +152,66 @@ public class TickerManager {
                             }
                         }
                     }
+                    case Commands.CLEAR_INVALID_TICKERS -> {
+                        RedisService redis = RedisService.getInstance();
+                        Long currentTickerId = activeTicker != null ? activeTicker.getId() : null;
+                        boolean wasActiveTickerDeleted = false;
+                        
+                        // Get all ticker IDs sorted before we start deleting
+                        List<Long> tickerIds = redis.getAllTickerIds();
+                        Collections.sort(tickerIds);
+                        
+                        // Track the nearest valid ticker to our current one
+                        Long nearestValidTickerId = null;
+                        Long lastValidTickerId = null;
+                        
+                        // First pass: find nearest valid ticker and track the last valid one
+                        for (Long id : tickerIds) {
+                            ProxyTicker ticker = redis.findTickerById(id);
+                            if (ticker != null && ticker.isValid()) {
+                                if (currentTickerId != null) {
+                                    if (id < currentTickerId && (nearestValidTickerId == null || id > nearestValidTickerId)) {
+                                        nearestValidTickerId = id;
+                                    }
+                                }
+                                lastValidTickerId = id;
+                            }
+                        }
+                        
+                        // Second pass: delete invalid tickers
+                        for (Long id : tickerIds) {
+                            ProxyTicker ticker = redis.findTickerById(id);
+                            if (ticker != null && !ticker.isValid()) {
+                                if (id.equals(currentTickerId)) {
+                                    wasActiveTickerDeleted = true;
+                                }
+                                redis.deleteTicker(id);
+                            }
+                        }
+                        
+                        // Handle active ticker selection if needed
+                        if (wasActiveTickerDeleted || activeTicker == null) {
+                            ProxyTicker newActiveTicker = null;
+                            
+                            if (nearestValidTickerId != null) {
+                                // Use the nearest valid ticker before our current position
+                                newActiveTicker = redis.findTickerById(nearestValidTickerId);
+                            } else if (lastValidTickerId != null) {
+                                // Fall back to the last valid ticker we found
+                                newActiveTicker = redis.findTickerById(lastValidTickerId);
+                            } else {
+                                // No valid tickers exist, create a new one
+                                newActiveTicker = redis.newTicker();
+                            }
+                            
+                            // Update active ticker and notify UI
+                            activeTicker = newActiveTicker;
+                            commandBus.publish(Commands.TICKER_SELECTED, this, activeTicker);
+                        } else {
+                            // Our ticker was valid, but refresh the UI anyway to show updated navigation state
+                            commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
+                        }
+                    }
                 }
             }
         });
@@ -203,10 +265,17 @@ public class TickerManager {
         Long maxId = redis.getMaximumTickerId();
 
         if (activeTicker != null && maxId != null && activeTicker.getId().equals(maxId)) {
-            // Create a new ticker if we're at the end
-            ProxyTicker newTicker = redis.newTicker();
-            tickerSelected(newTicker);
-            logger.info("Created new ticker and moved forward to it: " + newTicker.getId());
+            // Only create a new ticker if current one is valid and has active rules
+            if (activeTicker.isValid() && !activeTicker.getPlayers().isEmpty() && 
+                activeTicker.getPlayers().stream()
+                    .map(p -> (ProxyStrike)p)
+                    .anyMatch(p -> p.getRules() != null && !p.getRules().isEmpty())) {
+                
+                ProxyTicker newTicker = redis.newTicker();
+                tickerSelected(newTicker);
+                commandBus.publish(Commands.TICKER_CREATED, this, newTicker); // Add this line
+                logger.info("Created new ticker and moved forward to it: " + newTicker.getId());
+            }
         } else {
             // Otherwise, move to the next existing ticker
             Long nextId = redis.getNextTickerId(activeTicker);

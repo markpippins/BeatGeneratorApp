@@ -6,7 +6,11 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.awt.event.ItemEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,12 +26,14 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.proxy.ProxyTicker;
 import com.angrysurfer.core.service.TickerManager;
 import com.angrysurfer.core.util.Scale;
@@ -56,7 +62,7 @@ public class ToolBar extends JToolBar {
 
                 if (Objects.nonNull(action.getCommand())) {
                     JComboBox<String> scaleCombo = (JComboBox<String>) rightFields.get("Scale");
-                    
+
                     switch (action.getCommand()) {
                         case Commands.NEXT_SCALE_SELECTED -> {
                             int nextIndex = scaleCombo.getSelectedIndex() + 1;
@@ -75,6 +81,25 @@ public class ToolBar extends JToolBar {
                                 ProxyTicker ticker = (ProxyTicker) action.getData();
                                 updateTickerDisplay(ticker);
                                 updateToolbarState(ticker);
+                            }
+                        }
+                        case Commands.RULE_ADDED -> {
+                            // Re-evaluate forward button state when a rule is added
+                            if (currentTicker != null) {
+                                updateToolbarState(currentTicker);
+                            }
+                        }
+                        case Commands.TICKER_CREATED -> {
+                            if (action.getData() instanceof ProxyTicker ticker) {
+                                updateTickerDisplay(ticker);
+                                // Force disable forward button for new ticker
+                                for (Component comp : transportPanel.getComponents()) {
+                                    if (comp instanceof JButton && 
+                                        Commands.TRANSPORT_FORWARD.equals(((JButton)comp).getActionCommand())) {
+                                        comp.setEnabled(false);
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
@@ -338,10 +363,10 @@ public class ToolBar extends JToolBar {
         JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         setBorder(BorderFactory.createEmptyBorder());
         Object[][] rightFieldsArray = {
-            { "Scale", createScaleCombo() },
-            { "Ticker", createTextField("1") },
-            { "Length", createTextField("0") },
-            { "Offset", createTextField("0") }
+                { "Scale", createScaleCombo() },
+                { "Ticker", createTextField("1") },
+                { "Length", createTextField("0") },
+                { "Offset", createTextField("0") }
         };
 
         for (Object[] field : rightFieldsArray) {
@@ -416,26 +441,54 @@ public class ToolBar extends JToolBar {
     }
 
     private JButton createToolbarButton(String command, String text, String tooltip) {
-        JButton button = new JButton(text);
-        button.setToolTipText(tooltip);
-        button.setEnabled(true); // Enable all transport buttons
-        button.setActionCommand(command);
+        JButton button = new JButton(text) {
+            @Override
+            public void paint(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                        RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
+                // Calculate center position
+                FontMetrics fm = g2.getFontMetrics();
+                int textWidth = fm.stringWidth(getText());
+                int textHeight = fm.getHeight();
+                int x = (getWidth() - textWidth) / 2;
+                int y = (getHeight() + textHeight) / 2 - fm.getDescent();
+
+                // Draw background if button is pressed/selected
+                if (getModel().isPressed()) {
+                    g2.setColor(getBackground().darker());
+                    g2.fillRect(0, 0, getWidth(), getHeight());
+                }
+
+                // Draw the text
+                g2.setColor(getForeground());
+                g2.drawString(getText(), x, y);
+                g2.dispose();
+            }
+        };
+
+        button.setToolTipText(tooltip);
+        button.setEnabled(true);
+        button.setActionCommand(command);
         button.addActionListener(e -> actionBus.publish(command, this));
 
-        // Increase button size
+        // Adjust size and font
         int size = 32;
         button.setPreferredSize(new Dimension(size, size));
         button.setMinimumSize(new Dimension(size, size));
         button.setMaximumSize(new Dimension(size, size));
-
-        // Use a font that supports Unicode symbols
         button.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
+
+        // Fallback font if needed
         if (!button.getFont().canDisplay('⏮')) {
             button.setFont(new Font("Dialog", Font.PLAIN, 18));
         }
 
-        button.setMargin(new Insets(5, 5, 5, 5));
+        button.setMargin(new Insets(0, 0, 0, 0));
+        button.setVerticalAlignment(SwingConstants.CENTER);
+        button.setFocusPainted(false);
+
         return button;
     }
 
@@ -466,7 +519,12 @@ public class ToolBar extends JToolBar {
                     case Commands.TRANSPORT_REWIND ->
                         button.setEnabled(hasActiveTicker && !ticker.isFirst());
                     case Commands.TRANSPORT_FORWARD ->
-                        button.setEnabled(hasActiveTicker && (!ticker.isLast || ticker.isLast() && ticker.isValid()));
+                        button.setEnabled(hasActiveTicker && 
+                            (!ticker.isLast() || (ticker.isLast() && ticker.isValid() && 
+                             ticker.getPlayers().size() > 0 && 
+                             ticker.getPlayers().stream()
+                                .map(p -> (ProxyStrike)p)
+                                .anyMatch(p -> p.getRules() != null && !p.getRules().isEmpty()))));
                     case Commands.TRANSPORT_PAUSE ->
                         button.setEnabled(false);
                     case Commands.TRANSPORT_PLAY ->
@@ -485,7 +543,7 @@ public class ToolBar extends JToolBar {
                 .stream()
                 .sorted()
                 .toArray(String[]::new);
-        
+
         JComboBox<String> combo = new JComboBox<>(scaleNames);
         combo.setSelectedItem("Chromatic");
         combo.setMaximumSize(new Dimension(120, 25));
@@ -493,27 +551,27 @@ public class ToolBar extends JToolBar {
         combo.setMinimumSize(new Dimension(120, 25));
         combo.setAlignmentX(Component.CENTER_ALIGNMENT);
         combo.setEnabled(true);
-        
+
         combo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 String selectedScale = (String) combo.getSelectedItem();
                 int selectedIndex = combo.getSelectedIndex();
-                
+
                 // Always publish the scale selection
-                actionBus.publish(Commands.SCALE_SELECTED, this, 
-                    Map.of("scale", selectedScale));
-                
+                actionBus.publish(Commands.SCALE_SELECTED, this,
+                        Map.of("scale", selectedScale));
+
                 // Check for first/last selection
                 if (selectedIndex == 0) {
                     actionBus.publish(Commands.FIRST_SCALE_SELECTED, this,
-                        Map.of("scale", selectedScale));
+                            Map.of("scale", selectedScale));
                 } else if (selectedIndex == combo.getItemCount() - 1) {
                     actionBus.publish(Commands.LAST_SCALE_SELECTED, this,
-                        Map.of("scale", selectedScale));
+                            Map.of("scale", selectedScale));
                 }
             }
         });
-        
+
         return combo;
     }
 }

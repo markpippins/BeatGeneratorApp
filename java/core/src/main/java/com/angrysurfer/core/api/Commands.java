@@ -89,6 +89,8 @@ public class Commands {
 
     // Ticker state commands
     public static final String TICKER_UNSELECTED = "TICKER_UNSELECTED";
+    public static final String TICKER_DELETED = "TICKER_DELETED";
+    public static final String TICKER_CREATED = "TICKER_CREATED";  // Add this line
 
     // Ticker-Player-Rule relationship commands
     public static final String TICKER_REQUEST = "TICKER_REQUEST";
@@ -124,6 +126,7 @@ public class Commands {
 
     // Database commands
     public static final String CLEAR_DATABASE = "CLEAR_DATABASE";
+    public static final String CLEAR_INVALID_TICKERS = "CLEAR_INVALID_TICKERS";
     public static final String DATABASE_RESET = "DATABASE_RESET";
     public static final String LOAD_INSTRUMENTS_FROM_FILE = "LOAD_INSTRUMENTS_FROM_FILE";
 

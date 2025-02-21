@@ -50,7 +50,7 @@ public class ThemeManager {
         }
 
         // Add basic themes
-        JMenu basicThemes = new JMenu("FlatLaf Basic");
+        JMenu basicThemes = new JMenu("FlatLaf Core");
         addThemeItem(basicThemes, "Darcula", () -> new FlatDarculaLaf());
         addThemeItem(basicThemes, "Dark", () -> new FlatDarkLaf());
         addThemeItem(basicThemes, "IntelliJ", () -> new FlatIntelliJLaf());
@@ -59,17 +59,30 @@ public class ThemeManager {
         addThemeItem(basicThemes, "Mac Light", () -> new FlatMacLightLaf());
 
         // FlatLaf Themes
-        JMenu flatThemes = new JMenu("FlatLaf Intellij");
+        JMenu flatThemes = new JMenu("Intellij");
+        JMenu matThemes = new JMenu("Material Lite");
 
         // Sort and add all IntelliJ themes
         FlatAllIJThemes.FlatIJLookAndFeelInfo[] sortedThemes = FlatAllIJThemes.INFOS.clone();
         Arrays.sort(sortedThemes, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+        
+        // for themes that do not contain the word "Material" in their name, add to flatThemes  
         for (FlatAllIJThemes.FlatIJLookAndFeelInfo info : sortedThemes) {
-            addThemeItem(flatThemes, info.getName(), info.getClassName());
+            if (!info.getName().toLowerCase().contains("material")) {
+                addThemeItem(flatThemes, info.getName(), info.getClassName());
+            }
+        }
+
+        // for themes that contain the word "Material" in their name, add to matThemes  
+        for (FlatAllIJThemes.FlatIJLookAndFeelInfo info : sortedThemes) {
+            if (info.getName().toLowerCase().contains("material")) {
+                addThemeItem(matThemes, info.getName(), info.getClassName());
+            }
         }
 
         themeMenu.add(basicThemes);
         themeMenu.add(flatThemes);
+        themeMenu.add(matThemes);
         themeMenu.add(platformThemes);
 
         return themeMenu;
