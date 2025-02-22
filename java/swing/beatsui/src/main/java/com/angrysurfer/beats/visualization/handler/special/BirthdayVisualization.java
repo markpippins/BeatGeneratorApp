@@ -21,8 +21,8 @@ public class BirthdayVisualization implements IVisualizationHandler {
         "🍺",  // Beer
         "Happy Birthday, Leroy!!!",
         "🍷",  // Wine
-        "You're the best drummer in the house!",
-        "🥁",  // Drum
+        // "You're the best drummer in the house!",
+        // "🥁",  // Drum
         "We Love you!",
         "🎂"   // Cake
     };

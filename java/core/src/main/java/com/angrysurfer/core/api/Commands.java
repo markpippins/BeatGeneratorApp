@@ -156,6 +156,9 @@ public class Commands {
 
     public static String RULE_DELETED = "RULE_DELETED";
 
+    public static final String ROOT_NOTE_SELECTED = "ROOT_NOTE_SELECTED";
+
+
     public static final String SCALE_SELECTED = "SCALE_SELECTED";
     public static final String FIRST_SCALE_SELECTED = "FIRST_SCALE_SELECTED";
     public static final String LAST_SCALE_SELECTED = "LAST_SCALE_SELECTED";

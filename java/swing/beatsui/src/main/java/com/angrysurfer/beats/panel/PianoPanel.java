@@ -31,8 +31,9 @@ import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.util.Scale;
 
 public class PianoPanel extends StatusProviderPanel {
-    private static final String C_KEY = "C";
-    private String currentScale = "Major"; // Default scale
+    private static final String DEFAULT_ROOT = "C";
+    private String currentRoot = DEFAULT_ROOT;  // Add root note tracking
+    private String currentScale = "Chromatic"; // Default scale
     private final CommandBus commandBus = CommandBus.getInstance();
     private final Set<Integer> heldNotes = new HashSet<>();
     private Map<Integer, JButton> noteToKeyMap = new HashMap<>();
@@ -43,6 +44,9 @@ public class PianoPanel extends StatusProviderPanel {
         this(null);
         setupActionBusListener();
     }
+
+    private JButton followScaleBtn;
+    // private JButton followChordBtn;
 
     public PianoPanel(StatusConsumer statusConsumer) {
         super(null, statusConsumer);
@@ -62,17 +66,17 @@ public class PianoPanel extends StatusProviderPanel {
 
         JButton button1 = new JButton();
         button1.setBounds(startX, startY, buttonWidth, buttonHeight);
-        button1.setBackground(Utils.mutedRed);
+        button1.setBackground(Utils.coolBlue);
         configureToggleButton(button1);
 
         JButton button2 = new JButton();
         button2.setBounds(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight);
-        button2.setBackground(Utils.deepTeal);
+        button2.setBackground(Utils.warmMustard);
         configureToggleButton(button2);
 
         JButton button3 = new JButton();
         button3.setBounds(startX, startY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight);
-        button3.setBackground(Utils.mutedOlive);
+        button3.setBackground(Utils.fadedOrange);
         configureToggleButton(button3);
 
         add(button1);
@@ -120,28 +124,26 @@ public class PianoPanel extends StatusProviderPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g); // Call super first
         Graphics2D g2d = (Graphics2D) g.create();
-        
+
         // Create gradient paint using current animated color
         Color currentColor = colorAnimator.getCurrentColor();
         Color darkerColor = darker(currentColor, 0.7f);
-        
+
         GradientPaint gradient = new GradientPaint(
-            0, 0, currentColor,
-            0, getHeight(), darkerColor
-        );
-        
+                0, 0, currentColor,
+                0, getHeight(), darkerColor);
+
         g2d.setPaint(gradient);
         g2d.fillRect(0, 0, getWidth(), getHeight());
-        
+
         g2d.dispose();
     }
 
     private Color darker(Color color, float factor) {
         return new Color(
-            Math.max((int)(color.getRed() * factor), 0),
-            Math.max((int)(color.getGreen() * factor), 0),
-            Math.max((int)(color.getBlue() * factor), 0)
-        );
+                Math.max((int) (color.getRed() * factor), 0),
+                Math.max((int) (color.getGreen() * factor), 0),
+                Math.max((int) (color.getBlue() * factor), 0));
     }
 
     private void setupActionBusListener() {
@@ -154,12 +156,18 @@ public class PianoPanel extends StatusProviderPanel {
                         case Commands.KEY_HELD -> handleKeyHold(note);
                         case Commands.KEY_RELEASED -> handleKeyRelease(note);
                     }
-                } else { // if (activeButton == getComponent(0)) { // Only handle scale changes when first button is active
+                } else {
                     switch (action.getCommand()) {
                         case Commands.SCALE_SELECTED -> {
                             if (action.getData() instanceof String scaleName) {
                                 currentScale = scaleName;
-                                applyCurrentScale();
+                                applyCurrentScale();  // This will use currentRoot
+                            }
+                        }
+                        case Commands.ROOT_NOTE_SELECTED -> {
+                            if (action.getData() instanceof String rootNote) {
+                                currentRoot = rootNote;
+                                applyCurrentScale();  // Reapply scale with new root
                             }
                         }
                     }
@@ -350,21 +358,21 @@ public class PianoPanel extends StatusProviderPanel {
                 button.setBackground(defaultColor);
                 activeButton = null;
                 // Release all held scale notes when deactivating first button
-                if (button == getComponent(0)) {  // First button
+                if (button == getComponent(0)) { // First button
                     releaseAllNotes();
                 }
             } else {
                 // Restore previous active button's color
                 if (activeButton != null) {
-                    activeButton.setBackground((Color)activeButton.getClientProperty("defaultColor"));
+                    activeButton.setBackground((Color) activeButton.getClientProperty("defaultColor"));
                 }
                 // Activate new button
                 button.putClientProperty("defaultColor", defaultColor);
-                button.setBackground(Utils.fadedLime);
+                button.setBackground(Color.GREEN);
                 activeButton = button;
-                
+
                 // If it's the first button, apply current scale
-                if (button == getComponent(0)) {  // First button
+                if (button == getComponent(0)) { // First button
                     applyCurrentScale();
                 }
             }
@@ -374,7 +382,7 @@ public class PianoPanel extends StatusProviderPanel {
 
     private void applyCurrentScale() {
         releaseAllNotes();
-        Boolean[] scaleNotes = Scale.getScale(C_KEY, currentScale);
+        Boolean[] scaleNotes = Scale.getScale(currentRoot, currentScale);  // Use currentRoot instead of C_KEY
         // Map scale positions to MIDI notes (starting from middle C = 60)
         for (int i = 0; i < scaleNotes.length; i++) {
             if (scaleNotes[i]) {

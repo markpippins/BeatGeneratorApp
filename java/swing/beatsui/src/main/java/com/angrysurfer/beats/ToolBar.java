@@ -94,8 +94,8 @@ public class ToolBar extends JToolBar {
                                 updateTickerDisplay(ticker);
                                 // Force disable forward button for new ticker
                                 for (Component comp : transportPanel.getComponents()) {
-                                    if (comp instanceof JButton && 
-                                        Commands.TRANSPORT_FORWARD.equals(((JButton)comp).getActionCommand())) {
+                                    if (comp instanceof JButton &&
+                                            Commands.TRANSPORT_FORWARD.equals(((JButton) comp).getActionCommand())) {
                                         comp.setEnabled(false);
                                         break;
                                     }
@@ -363,6 +363,7 @@ public class ToolBar extends JToolBar {
         JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         setBorder(BorderFactory.createEmptyBorder());
         Object[][] rightFieldsArray = {
+                { "Root", createRootNoteCombo() },
                 { "Scale", createScaleCombo() },
                 { "Ticker", createTextField("1") },
                 { "Length", createTextField("0") },
@@ -519,12 +520,12 @@ public class ToolBar extends JToolBar {
                     case Commands.TRANSPORT_REWIND ->
                         button.setEnabled(hasActiveTicker && !ticker.isFirst());
                     case Commands.TRANSPORT_FORWARD ->
-                        button.setEnabled(hasActiveTicker && 
-                            (!ticker.isLast() || (ticker.isLast() && ticker.isValid() && 
-                             ticker.getPlayers().size() > 0 && 
-                             ticker.getPlayers().stream()
-                                .map(p -> (ProxyStrike)p)
-                                .anyMatch(p -> p.getRules() != null && !p.getRules().isEmpty()))));
+                        button.setEnabled(hasActiveTicker &&
+                                (!ticker.isLast() || (ticker.isLast() && ticker.isValid() &&
+                                        ticker.getPlayers().size() > 0 &&
+                                        ticker.getPlayers().stream()
+                                                .map(p -> (ProxyStrike) p)
+                                                .anyMatch(p -> p.getRules() != null && !p.getRules().isEmpty()))));
                     case Commands.TRANSPORT_PAUSE ->
                         button.setEnabled(false);
                     case Commands.TRANSPORT_PLAY ->
@@ -546,9 +547,9 @@ public class ToolBar extends JToolBar {
 
         JComboBox<String> combo = new JComboBox<>(scaleNames);
         combo.setSelectedItem("Chromatic");
-        combo.setMaximumSize(new Dimension(120, 25));
-        combo.setPreferredSize(new Dimension(120, 25));
-        combo.setMinimumSize(new Dimension(120, 25));
+        combo.setMaximumSize(new Dimension(140, 25));
+        combo.setPreferredSize(new Dimension(140, 25));
+        combo.setMinimumSize(new Dimension(140, 25));
         combo.setAlignmentX(Component.CENTER_ALIGNMENT);
         combo.setEnabled(true);
 
@@ -557,21 +558,41 @@ public class ToolBar extends JToolBar {
                 String selectedScale = (String) combo.getSelectedItem();
                 int selectedIndex = combo.getSelectedIndex();
 
-                // Always publish the scale selection
-                actionBus.publish(Commands.SCALE_SELECTED, this,
-                        Map.of("scale", selectedScale));
+                // Simply pass the scale name directly
+                actionBus.publish(Commands.SCALE_SELECTED, this, selectedScale);
 
                 // Check for first/last selection
                 if (selectedIndex == 0) {
-                    actionBus.publish(Commands.FIRST_SCALE_SELECTED, this,
-                            Map.of("scale", selectedScale));
+                    actionBus.publish(Commands.FIRST_SCALE_SELECTED, this, selectedScale);
                 } else if (selectedIndex == combo.getItemCount() - 1) {
-                    actionBus.publish(Commands.LAST_SCALE_SELECTED, this,
-                            Map.of("scale", selectedScale));
+                    actionBus.publish(Commands.LAST_SCALE_SELECTED, this, selectedScale);
                 }
             }
         });
 
         return combo;
     }
+
+    private JComboBox<String> createRootNoteCombo() {
+        String[] keys = {
+            "C", "C♯/D♭", "D", "D♯/E♭", "E",
+            "F", "F♯/G♭", "G", "G♯/A♭", "A", "A♯/B♭", "B"
+        };
+
+        JComboBox<String> combo = new JComboBox<>(keys);
+        combo.setSelectedItem("C");
+        combo.setMaximumSize(new Dimension(70, 25));
+        combo.setPreferredSize(new Dimension(70, 25));
+        combo.setMinimumSize(new Dimension(70, 25));
+        combo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        combo.setEnabled(true);
+
+        combo.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED)
+                actionBus.publish(Commands.ROOT_NOTE_SELECTED, this, (String) combo.getSelectedItem());
+        });
+
+        return combo;
+    }
+
 }
