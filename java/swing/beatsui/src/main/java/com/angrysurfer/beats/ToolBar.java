@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.event.ItemEvent;
@@ -200,87 +201,52 @@ public class ToolBar extends JToolBar {
         }
     }
 
-    // private JPanel createStatusPanel() {
-    // // Left status fields panel
-    // JPanel leftStatusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-    // // leftStatusPanel.setPreferredSize(new
-    // Dimension(leftStatusPanel.getPreferredSize().width, 75));
-    // String[] leftLabels = { "Tick", "Beat", "Bar", "Part", "Players", "Ticks",
-    // "Beats", "Bars" };
-    // for (String label : leftLabels) {
-    // // Create panel for vertical stacking
-    // JPanel fieldPanel = new JPanel();
-    // fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
-
-    // // Create and add label
-    // JLabel nameLabel = new JLabel(label);
-    // nameLabel.setForeground(Color.GRAY);
-    // nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-    // fieldPanel.add(nameLabel);
-
-    // // Create and add text field
-    // JTextField field = createTextField("0");
-    // leftFields.put(label, field);
-    // fieldPanel.add(field);
-
-    // leftStatusPanel.add(fieldPanel);
-    // leftStatusPanel.add(Box.createHorizontalStrut(5));
-    // }
-    // return leftStatusPanel;
-    // }
-
     private JPanel createTopLeftStatusPanel() {
-        // Left status fields panel
-        JPanel leftStatusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        // leftStatusPanel.setPreferredSize(new
-        // Dimension(leftStatusPanel.getPreferredSize().width, 75));
+        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 10, 0));  // 4 columns, variable rows, 10px gap
+        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
         String[] leftLabels = { "Tick", "Beat", "Bar", "Part" };
         for (String label : leftLabels) {
-            // Create panel for vertical stacking
-            JPanel fieldPanel = new JPanel();
-            fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
+            JPanel fieldPanel = new JPanel(new BorderLayout(0, 2));
+            fieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-            // Create and add label
+            JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             JLabel nameLabel = new JLabel(label);
             nameLabel.setForeground(Color.GRAY);
-            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            fieldPanel.add(nameLabel);
-
-            // Create and add text field
+            labelPanel.add(nameLabel);
+            
             JTextField field = createTextField("0");
             leftFields.put(label, field);
-            fieldPanel.add(field);
-
+            
+            fieldPanel.add(labelPanel, BorderLayout.NORTH);
+            fieldPanel.add(field, BorderLayout.CENTER);
+            
             leftStatusPanel.add(fieldPanel);
-            leftStatusPanel.add(Box.createHorizontalStrut(5));
         }
         return leftStatusPanel;
     }
 
     private JPanel createBottomLeftStatusPanel() {
-        // Left status fields panel
-        JPanel leftStatusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        // leftStatusPanel.setPreferredSize(new
-        // Dimension(leftStatusPanel.getPreferredSize().width, 75));
+        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 10, 0));  // 4 columns, variable rows, 10px gap
+        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
         String[] leftLabels = { "Players", "Ticks", "Beats", "Bars" };
         for (String label : leftLabels) {
-            // Create panel for vertical stacking
-            JPanel fieldPanel = new JPanel();
-            fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
+            JPanel fieldPanel = new JPanel(new BorderLayout(0, 2));
+            fieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-            // Create and add label
+            JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             JLabel nameLabel = new JLabel(label);
             nameLabel.setForeground(Color.GRAY);
-            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            fieldPanel.add(nameLabel);
-
-            // Create and add text field
+            labelPanel.add(nameLabel);
+            
             JTextField field = createTextField("0");
             leftFields.put(label, field);
-            fieldPanel.add(field);
-
+            
+            fieldPanel.add(labelPanel, BorderLayout.NORTH);
+            fieldPanel.add(field, BorderLayout.CENTER);
+            
             leftStatusPanel.add(fieldPanel);
-            leftStatusPanel.add(Box.createHorizontalStrut(5));
         }
         return leftStatusPanel;
     }
@@ -322,46 +288,42 @@ public class ToolBar extends JToolBar {
     }
 
     private JPanel createTopRightStatusPanel() {
-        // Right status fields panel
-        JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        // rightStatusPanel.setPreferredSize(new
-        // Dimension(rightStatusPanel.getPreferredSize().width, 75));
-        setBorder(BorderFactory.createEmptyBorder());
+        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 10, 0));  // 5 columns, variable rows, 10px horizontal gap
+        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
         Object[][] rightFieldsArray = {
-                // { "Ticker", createTextField("1") },
                 { "Ticks", createTickerCombo("Ticks", 1, 384, 24) },
                 { "BPM", createTickerCombo("BPM", 1, 960, 120) },
                 { "B/Bar", createTickerCombo("B/Bar", 1, 16, 4) },
                 { "Bars", createTickerCombo("Bars", 1, 128, 4) },
-                { "Parts", createTickerCombo("Parts", 1, 64, 1) },
-                // { "Length", createTextField("0") },
-                // { "Offset", createTextField("0") }
+                { "Parts", createTickerCombo("Parts", 1, 64, 1) }
         };
 
         for (Object[] field : rightFieldsArray) {
-            JPanel fieldPanel = new JPanel();
-            fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
+            JPanel fieldPanel = new JPanel(new BorderLayout(0, 2));
+            fieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
+            JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             JLabel nameLabel = new JLabel((String) field[0]);
             nameLabel.setForeground(Color.GRAY);
-            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            fieldPanel.add(nameLabel);
-
+            labelPanel.add(nameLabel);
+            
             JComponent component = (JComponent) field[1];
-            component.setAlignmentX(Component.CENTER_ALIGNMENT);
             rightFields.put((String) field[0], component);
-            fieldPanel.add(component);
-
+            
+            fieldPanel.add(labelPanel, BorderLayout.NORTH);
+            fieldPanel.add(component, BorderLayout.CENTER);
+            
             rightStatusPanel.add(fieldPanel);
-            rightStatusPanel.add(Box.createHorizontalStrut(5));
         }
 
         return rightStatusPanel;
     }
 
     private JPanel createBottomRightStatusPanel() {
-        JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        setBorder(BorderFactory.createEmptyBorder());
+        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 10, 0));  // 5 columns, variable rows, 10px horizontal gap
+        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
         Object[][] rightFieldsArray = {
                 { "Root", createRootNoteCombo() },
                 { "Scale", createScaleCombo() },
@@ -371,34 +333,43 @@ public class ToolBar extends JToolBar {
         };
 
         for (Object[] field : rightFieldsArray) {
-            JPanel fieldPanel = new JPanel();
-            fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
-            fieldPanel.setAlignmentX(Component.CENTER_ALIGNMENT); // Center align the field panel
+            JPanel fieldPanel = new JPanel(new BorderLayout(0, 2));
+            fieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-            // Create and add label
+            JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             JLabel nameLabel = new JLabel((String) field[0]);
             nameLabel.setForeground(Color.GRAY);
-            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            fieldPanel.add(nameLabel);
-
-            // Create and add component
+            labelPanel.add(nameLabel);
+            
             JComponent component = (JComponent) field[1];
-            component.setAlignmentX(Component.CENTER_ALIGNMENT);
             rightFields.put((String) field[0], component);
-            fieldPanel.add(component);
-
+            
+            fieldPanel.add(labelPanel, BorderLayout.NORTH);
+            fieldPanel.add(component, BorderLayout.CENTER);
+            
             rightStatusPanel.add(fieldPanel);
-            rightStatusPanel.add(Box.createHorizontalStrut(5));
         }
 
         return rightStatusPanel;
+    }
+
+    private JPanel createLabeledControl(String label, JComponent component) {
+        JPanel panel = new JPanel(new BorderLayout(5, 2));
+        JLabel l = new JLabel(label);
+        l.setHorizontalAlignment(JLabel.LEFT); // Align label to the left
+        panel.add(l, BorderLayout.NORTH);
+        panel.add(Box.createVerticalStrut(8), BorderLayout.CENTER);
+        panel.add(component, BorderLayout.SOUTH);
+        panel.setMinimumSize(new Dimension(60, 80));
+        panel.setMaximumSize(new Dimension(60, 80));
+        return panel;
     }
 
     static final int STATUS_PANEL_WIDTH = 450;
 
     private void setup() {
         setFloatable(false);
-        setPreferredSize(new Dimension(getPreferredSize().width, 90)); // Set proper height for toolbar
+        setPreferredSize(new Dimension(getPreferredSize().width, 110)); // Changed from 90 to 110
 
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setPreferredSize(new Dimension(STATUS_PANEL_WIDTH, 180));
@@ -547,9 +518,9 @@ public class ToolBar extends JToolBar {
 
         JComboBox<String> combo = new JComboBox<>(scaleNames);
         combo.setSelectedItem("Chromatic");
-        combo.setMaximumSize(new Dimension(140, 25));
-        combo.setPreferredSize(new Dimension(140, 25));
-        combo.setMinimumSize(new Dimension(140, 25));
+        combo.setMaximumSize(new Dimension(160, 25));
+        combo.setPreferredSize(new Dimension(160, 25));
+        combo.setMinimumSize(new Dimension(160, 25));
         combo.setAlignmentX(Component.CENTER_ALIGNMENT);
         combo.setEnabled(true);
 
@@ -575,8 +546,8 @@ public class ToolBar extends JToolBar {
 
     private JComboBox<String> createRootNoteCombo() {
         String[] keys = {
-            "C", "C♯/D♭", "D", "D♯/E♭", "E",
-            "F", "F♯/G♭", "G", "G♯/A♭", "A", "A♯/B♭", "B"
+                "C", "C♯/D♭", "D", "D♯/E♭", "E",
+                "F", "F♯/G♭", "G", "G♯/A♭", "A", "A♯/B♭", "B"
         };
 
         JComboBox<String> combo = new JComboBox<>(keys);

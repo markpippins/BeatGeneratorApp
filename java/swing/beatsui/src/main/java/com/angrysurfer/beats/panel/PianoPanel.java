@@ -32,7 +32,7 @@ import com.angrysurfer.core.util.Scale;
 
 public class PianoPanel extends StatusProviderPanel {
     private static final String DEFAULT_ROOT = "C";
-    private String currentRoot = DEFAULT_ROOT;  // Add root note tracking
+    private String currentRoot = DEFAULT_ROOT; // Add root note tracking
     private String currentScale = "Chromatic"; // Default scale
     private final CommandBus commandBus = CommandBus.getInstance();
     private final Set<Integer> heldNotes = new HashSet<>();
@@ -46,6 +46,7 @@ public class PianoPanel extends StatusProviderPanel {
     }
 
     private JButton followScaleBtn;
+
     // private JButton followChordBtn;
 
     public PianoPanel(StatusConsumer statusConsumer) {
@@ -64,10 +65,11 @@ public class PianoPanel extends StatusProviderPanel {
         int startY = 12; // Changed from 10 to 12 to push buttons down 2px
         int spacing = 5;
 
-        JButton button1 = new JButton();
-        button1.setBounds(startX, startY, buttonWidth, buttonHeight);
-        button1.setBackground(Utils.coolBlue);
-        configureToggleButton(button1);
+        followScaleBtn = new JButton();
+        followScaleBtn.setBounds(startX, startY, buttonWidth, buttonHeight);
+        followScaleBtn.setBackground(Utils.coolBlue);
+
+        configureToggleButton(followScaleBtn);
 
         JButton button2 = new JButton();
         button2.setBounds(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight);
@@ -79,7 +81,7 @@ public class PianoPanel extends StatusProviderPanel {
         button3.setBackground(Utils.fadedOrange);
         configureToggleButton(button3);
 
-        add(button1);
+        add(followScaleBtn);
         add(button2);
         add(button3);
 
@@ -159,15 +161,16 @@ public class PianoPanel extends StatusProviderPanel {
                 } else {
                     switch (action.getCommand()) {
                         case Commands.SCALE_SELECTED -> {
-                            if (action.getData() instanceof String scaleName) {
+                            if (activeButton == followScaleBtn &&
+                                    action.getData() instanceof String scaleName) {
                                 currentScale = scaleName;
-                                applyCurrentScale();  // This will use currentRoot
+                                applyCurrentScale(); // This will use currentRoot
                             }
                         }
                         case Commands.ROOT_NOTE_SELECTED -> {
                             if (action.getData() instanceof String rootNote) {
                                 currentRoot = rootNote;
-                                applyCurrentScale();  // Reapply scale with new root
+                                applyCurrentScale(); // Reapply scale with new root
                             }
                         }
                     }
@@ -358,9 +361,9 @@ public class PianoPanel extends StatusProviderPanel {
                 button.setBackground(defaultColor);
                 activeButton = null;
                 // Release all held scale notes when deactivating first button
-                if (button == getComponent(0)) { // First button
+                if (button == followScaleBtn)
                     releaseAllNotes();
-                }
+
             } else {
                 // Restore previous active button's color
                 if (activeButton != null) {
@@ -372,9 +375,8 @@ public class PianoPanel extends StatusProviderPanel {
                 activeButton = button;
 
                 // If it's the first button, apply current scale
-                if (button == getComponent(0)) { // First button
-                    applyCurrentScale();
-                }
+                if (button == followScaleBtn)
+                    releaseAllNotes();
             }
         });
         button.putClientProperty("defaultColor", defaultColor);
@@ -382,7 +384,7 @@ public class PianoPanel extends StatusProviderPanel {
 
     private void applyCurrentScale() {
         releaseAllNotes();
-        Boolean[] scaleNotes = Scale.getScale(currentRoot, currentScale);  // Use currentRoot instead of C_KEY
+        Boolean[] scaleNotes = Scale.getScale(currentRoot, currentScale); // Use currentRoot instead of C_KEY
         // Map scale positions to MIDI notes (starting from middle C = 60)
         for (int i = 0; i < scaleNotes.length; i++) {
             if (scaleNotes[i]) {

@@ -23,7 +23,7 @@ public class BirthdayVisualization implements IVisualizationHandler {
         "🍷",  // Wine
         // "You're the best drummer in the house!",
         // "🥁",  // Drum
-        "We Love you!",
+        // "We Love you!",
         "🎂"   // Cake
     };
 
