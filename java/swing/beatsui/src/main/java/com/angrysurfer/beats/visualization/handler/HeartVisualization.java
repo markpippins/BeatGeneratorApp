@@ -41,6 +41,8 @@ public class HeartVisualization implements IVisualizationHandler {
 
     private boolean isHeart(double x, double y) {
         x = Math.abs(x);
+        // Negate y to flip the heart right-side up
+        y = -y;
         return Math.pow((x * x + y * y - 1), 3) <= x * x * y * y * y;
     }
 
@@ -57,10 +59,11 @@ public class HeartVisualization implements IVisualizationHandler {
         float hue = (float)((Math.sin(heartBeat * 0.1) + 1) * 0.15); // Varies between red and pink
         currentColor = Color.getHSBColor(hue, 0.8f, 0.9f);
         
-        // Draw multiple hearts
+        // Draw multiple hearts with adjusted center position
         for (int h = 0; h < heartCount; h++) {
             int centerX = buttons[0].length / 2 + (h - heartCount/2) * (buttons[0].length/3);
-            int centerY = buttons.length / 3;
+            // Position hearts at about the middle of the grid (row 6 of 12)
+            int centerY = buttons.length / 2;
             double size = 1.5 + pulse * 0.5; // Pulsing effect
             
             // Draw heart

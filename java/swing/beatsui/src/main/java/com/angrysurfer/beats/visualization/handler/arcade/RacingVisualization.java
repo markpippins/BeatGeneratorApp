@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.visualization.handler;
+package com.angrysurfer.beats.visualization.handler.arcade;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -35,18 +36,18 @@ public class RacingVisualization implements IVisualizationHandler {
         if (nextTrackPoint != null) {
             double targetAngle = Math.atan2(nextTrackPoint.y - car.y, nextTrackPoint.x - car.x);
             double angleDiff = normalizeAngle(targetAngle - carAngle);
-            
+
             // Steer towards track
             carAngle += Math.signum(angleDiff) * 0.1;
-            
+
             // Adjust speed based on turn sharpness
             carSpeed = Math.max(0.5, 1.5 - Math.abs(angleDiff));
         }
 
         // Update car position
-        car.x = (int)(car.x + Math.cos(carAngle) * carSpeed);
-        car.y = (int)(car.y + Math.sin(carAngle) * carSpeed);
-        
+        car.x = (int) (car.x + Math.cos(carAngle) * carSpeed);
+        car.y = (int) (car.y + Math.sin(carAngle) * carSpeed);
+
         // Wrap around screen
         car.x = Math.floorMod(car.x, buttons[0].length);
         car.y = Math.floorMod(car.y, buttons.length);
@@ -63,10 +64,10 @@ public class RacingVisualization implements IVisualizationHandler {
 
         // Draw car with direction indicator
         buttons[car.y][car.x].setBackground(Color.YELLOW);
-        int frontX = (int)(car.x + Math.cos(carAngle));
-        int frontY = (int)(car.y + Math.sin(carAngle));
-        if (frontX >= 0 && frontX < buttons[0].length && 
-            frontY >= 0 && frontY < buttons.length) {
+        int frontX = (int) (car.x + Math.cos(carAngle));
+        int frontY = (int) (car.y + Math.sin(carAngle));
+        if (frontX >= 0 && frontX < buttons[0].length &&
+                frontY >= 0 && frontY < buttons.length) {
             buttons[frontY][frontX].setBackground(Color.WHITE);
         }
 
@@ -75,27 +76,29 @@ public class RacingVisualization implements IVisualizationHandler {
 
     private void updateTrack(GridButton[][] buttons) {
         track.clear();
-        
+
         // Generate sine wave track
         int centerY = buttons.length / 2;
         double amplitude = buttons.length / 3;
-        
+
         for (int x = 0; x < buttons[0].length; x++) {
-            int y = (int)(centerY + Math.sin(x * 0.3 + trackPhase) * amplitude);
+            int y = (int) (centerY + Math.sin(x * 0.3 + trackPhase) * amplitude);
             y = Math.max(1, Math.min(buttons.length - 2, y));
             track.add(new Point(x, y));
-            
+
             // Add track width
-            if (y > 0) track.add(new Point(x, y - 1));
-            if (y < buttons.length - 1) track.add(new Point(x, y + 1));
+            if (y > 0)
+                track.add(new Point(x, y - 1));
+            if (y < buttons.length - 1)
+                track.add(new Point(x, y + 1));
         }
-        
+
         // Update obstacles
         if (random.nextInt(20) == 0) {
             Point trackPoint = track.get(random.nextInt(track.size()));
             obstacles.add(new Point(buttons[0].length - 1, trackPoint.y));
         }
-        
+
         // Move obstacles
         for (Point obstacle : new ArrayList<>(obstacles)) {
             obstacle.x--;
@@ -108,7 +111,7 @@ public class RacingVisualization implements IVisualizationHandler {
     private Point findNextTrackPoint() {
         double minDist = Double.MAX_VALUE;
         Point nearest = null;
-        
+
         for (Point p : track) {
             double dist = Math.hypot(p.x - car.x, p.y - car.y);
             if (dist < minDist && p.x > car.x) {
@@ -116,13 +119,15 @@ public class RacingVisualization implements IVisualizationHandler {
                 nearest = p;
             }
         }
-        
+
         return nearest;
     }
 
     private double normalizeAngle(double angle) {
-        while (angle > Math.PI) angle -= 2 * Math.PI;
-        while (angle < -Math.PI) angle += 2 * Math.PI;
+        while (angle > Math.PI)
+            angle -= 2 * Math.PI;
+        while (angle < -Math.PI)
+            angle += 2 * Math.PI;
         return angle;
     }
 
@@ -137,5 +142,12 @@ public class RacingVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Racing";
+
     }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.ARCADE;
+    }
+
 }

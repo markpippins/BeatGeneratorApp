@@ -101,6 +101,9 @@ public class TickerPanel extends StatusProviderPanel {
                 .add(createVerticalAdjustPanel("Shift", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
 
         controlPanel
+                .add(createVerticalAdjustPanel("Spread", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
+
+        controlPanel
                 .add(createScaleAdjustPanel());
 
         // Add horizontal spacer
@@ -166,7 +169,7 @@ public class TickerPanel extends StatusProviderPanel {
         JButton button3 = new JButton();
 
         // Configure each button
-        for (JButton button : new JButton[]{button1, button2, button3}) {
+        for (JButton button : new JButton[] { button1, button2, button3 }) {
             button.setPreferredSize(new Dimension(15, 15));
             button.setMinimumSize(new Dimension(15, 15));
             button.setMaximumSize(new Dimension(15, 15));
@@ -203,8 +206,9 @@ public class TickerPanel extends StatusProviderPanel {
     }
 
     private void setDialValues(ProxyStrike player) {
-        if (player == null) return;
-        
+        if (player == null)
+            return;
+
         levelDial.setValue(player.getLevel().intValue());
         noteDial.setValue(player.getNote().intValue());
         swingDial.setValue(player.getSwing().intValue());
@@ -213,7 +217,7 @@ public class TickerPanel extends StatusProviderPanel {
         velocityMaxDial.setValue(player.getMaxVelocity().intValue());
         randomDial.setValue(player.getRandomDegree().intValue());
         panDial.setValue(player.getPanPosition().intValue());
-        sparseDial.setValue((int)(player.getSparse() * 100));  // Convert from 0-1.0 to 0-100
+        sparseDial.setValue((int) (player.getSparse() * 100)); // Convert from 0-1.0 to 0-100
     }
 
     static final int BUTTON_SIZE = 30;
@@ -336,9 +340,9 @@ public class TickerPanel extends StatusProviderPanel {
         dial.setPreferredSize(new Dimension(50, 50));
         dial.setMinimumSize(new Dimension(50, 50));
         dial.setMaximumSize(new Dimension(50, 50));
-        
+
         // Store the property name in the dial
-        dial.setName(propertyName);  // Add this line
+        dial.setName(propertyName); // Add this line
 
         dial.addChangeListener(new ChangeListener() {
             @Override
@@ -346,8 +350,8 @@ public class TickerPanel extends StatusProviderPanel {
                 Dial sourceDial = (Dial) e.getSource();
                 if (sourceDial.getCommand() != null) {
                     // Send both property name and value
-                    CommandBus.getInstance().publish(sourceDial.getCommand(), this, 
-                        Map.of("property", sourceDial.getName(), "value", sourceDial.getValue()));
+                    CommandBus.getInstance().publish(sourceDial.getCommand(), this,
+                            Map.of("property", sourceDial.getName(), "value", sourceDial.getValue()));
                 }
             }
         });
@@ -371,8 +375,9 @@ public class TickerPanel extends StatusProviderPanel {
         CommandBus.getInstance().register(new CommandListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null) return;
-                
+                if (action.getCommand() == null)
+                    return;
+
                 switch (action.getCommand()) {
                     case Commands.PLAYER_SELECTED -> {
                         if (action.getData() instanceof ProxyStrike player) {
@@ -387,11 +392,11 @@ public class TickerPanel extends StatusProviderPanel {
                         disableDials();
                         updateVerticalAdjustButtons(false);
                     }
-                    case Commands.NEW_VALUE_LEVEL, Commands.NEW_VALUE_NOTE, 
-                         Commands.NEW_VALUE_SWING, Commands.NEW_VALUE_PROBABILITY,
-                         Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
-                         Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN,
-                         Commands.NEW_VALUE_SPARSE -> {
+                    case Commands.NEW_VALUE_LEVEL, Commands.NEW_VALUE_NOTE,
+                            Commands.NEW_VALUE_SWING, Commands.NEW_VALUE_PROBABILITY,
+                            Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
+                            Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN,
+                            Commands.NEW_VALUE_SPARSE -> {
                         if (selectedPlayer != null && action.getData() instanceof Map) {
                             updatePlayerValue(action.getCommand(), action.getData());
                         }
@@ -402,12 +407,13 @@ public class TickerPanel extends StatusProviderPanel {
     }
 
     private void updatePlayerValue(String command, Object data) {
-        if (selectedPlayer == null || !(data instanceof Map)) return;
-        
+        if (selectedPlayer == null || !(data instanceof Map))
+            return;
+
         Map<String, Object> params = (Map<String, Object>) data;
         String property = (String) params.get("property");
         int value = (Integer) params.get("value");
-        
+
         switch (property) {
             case "level" -> selectedPlayer.setLevel((long) value);
             case "note" -> selectedPlayer.setNote((long) value);
@@ -419,7 +425,7 @@ public class TickerPanel extends StatusProviderPanel {
             case "pan" -> selectedPlayer.setPanPosition((long) value);
             case "sparse" -> selectedPlayer.setSparse(value / 100.0);
         }
-        
+
         // Save changes and notify UI
         TickerManager.getInstance().savePlayerProperties(selectedPlayer);
     }

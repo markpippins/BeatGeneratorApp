@@ -128,7 +128,6 @@ public class LifeSoupVisualization implements IVisualizationHandler {
 
     @Override
     public VisualizationCategory getVisualizationCategory() {
-        // TODO Auto-generated method stub
-        return IVisualizationHandler.super.getVisualizationCategory();
+        return VisualizationCategory.COMPSCI;
     }
 }

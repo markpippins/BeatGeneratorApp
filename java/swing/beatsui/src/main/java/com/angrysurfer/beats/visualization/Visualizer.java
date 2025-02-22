@@ -36,12 +36,14 @@ public class Visualizer implements CommandListener {
     private Timer visualizationChangeTimer;
 
     private static final int VISUALIZATION_DELAY = 30000; // 30 seconds
-    private static final int VISUALIZATION_CHANGE_DELAY = 10000 * 6; // 10 seconds * 6 = 1 minute
+    private static final int VISUALIZATION_CHANGE_DELAY = 10000;// * 6; // 10 seconds * 6 = 1 minute
 
     private StatusConsumer statusConsumer;
     private final CommandBus commandBus = CommandBus.getInstance();
 
     private List<IVisualizationHandler> visualizations = new ArrayList<>();
+
+    private boolean isLocked = false;  // Add this field
 
     public Visualizer(JComponent parent, StatusConsumer statusConsumer, GridButton[][] buttons) {
         this.parent = parent;
@@ -67,6 +69,18 @@ public class Visualizer implements CommandListener {
             case Commands.STOP_VISUALIZATION:
                 stopVisualizer();
                 isVisualizationMode = false;
+                isLocked = false;  // Reset lock state when stopping
+                break;
+
+            case Commands.LOCK_CURRENT_VISUALIZATION:
+                isLocked = true;
+                // Don't need to do anything else - current visualization will keep running
+                break;
+
+            case Commands.UNLOCK_CURRENT_VISUALIZATION:
+                isLocked = false;
+                // Resume random switching by restarting the change timer
+                visualizationChangeTimer.start();
                 break;
 
             case Commands.VISUALIZATION_SELECTED:
@@ -184,7 +198,7 @@ public class Visualizer implements CommandListener {
         visualizationTimer.start();
 
         visualizationChangeTimer = new Timer(VISUALIZATION_CHANGE_DELAY, e -> {
-            if (isVisualizationMode) {
+            if (isVisualizationMode && !isLocked) {  // Only change if not locked
                 setDisplayMode(getRandomVisualization());
             }
         });

@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.visualization.handler.compsci;
+package com.angrysurfer.beats.visualization.handler.geo;
 
 import java.awt.Color;
 
@@ -44,6 +44,6 @@ public class MandelbrotVisualization implements IVisualizationHandler {
 
         @Override
     public VisualizationCategory getVisualizationCategory() {
-        return VisualizationCategory.COMPSCI;
+        return VisualizationCategory.GEO;
     }
 }

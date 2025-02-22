@@ -16,7 +16,8 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
     private static final int PADDING = 1;
     private final Random random = new Random();
     private int currentMessageIndex = 0;
-    
+    private Color currentMessageColor = Color.GREEN;
+
     public static final String[] MESSAGES = {
         "Just Do It",
         "Think Different",
@@ -62,6 +63,9 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
             position = 0;
             currentMessageIndex = random.nextInt(MESSAGES.length);
             currentMessage = MESSAGES[currentMessageIndex];
+            // Generate new random color for the new message
+            float hue = random.nextFloat();
+            currentMessageColor = Color.getHSBColor(hue, 0.8f, 1.0f);
         }
 
         // Draw each character in the current message
@@ -83,7 +87,7 @@ public class ScrollingTextVisualizer implements IVisualizationHandler {
                     
                     if (gridX >= 0 && gridX < buttons[0].length && gridY < buttons.length) {
                         if (font.getPattern()[y][x] == 1) {
-                            buttons[gridY][gridX].setBackground(Color.GREEN);
+                            buttons[gridY][gridX].setBackground(currentMessageColor);
                         }
                     }
                 }

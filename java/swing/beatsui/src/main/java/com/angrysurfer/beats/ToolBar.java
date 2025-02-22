@@ -557,14 +557,17 @@ public class ToolBar extends JToolBar {
                 String selectedScale = (String) combo.getSelectedItem();
                 int selectedIndex = combo.getSelectedIndex();
 
-                // Directly publish the scale name
-                actionBus.publish(Commands.SCALE_SELECTED, this, selectedScale);
+                // Always publish the scale selection
+                actionBus.publish(Commands.SCALE_SELECTED, this,
+                        Map.of("scale", selectedScale));
 
                 // Check for first/last selection
                 if (selectedIndex == 0) {
-                    actionBus.publish(Commands.FIRST_SCALE_SELECTED, this, selectedScale);
+                    actionBus.publish(Commands.FIRST_SCALE_SELECTED, this,
+                            Map.of("scale", selectedScale));
                 } else if (selectedIndex == combo.getItemCount() - 1) {
-                    actionBus.publish(Commands.LAST_SCALE_SELECTED, this, selectedScale);
+                    actionBus.publish(Commands.LAST_SCALE_SELECTED, this,
+                            Map.of("scale", selectedScale));
                 }
             }
         });

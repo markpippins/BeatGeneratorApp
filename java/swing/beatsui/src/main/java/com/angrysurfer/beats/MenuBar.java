@@ -60,12 +60,12 @@ public class MenuBar extends JMenuBar {
         addMenuItem(editMenu, "Cut", Commands.CUT);
         addMenuItem(editMenu, "Copy", Commands.COPY);
         addMenuItem(editMenu, "Paste", Commands.PASTE);
-        editMenu.addSeparator();
+        editMenu.setEnabled(false);
+        // editMenu.addSeparator();
 
         // options menu
         JMenu optionsMenu = new JMenu("Options");
-        
-        
+
         // Add Database menu
         JMenuItem clearDb = new JMenuItem("Clear Database");
         clearDb.addActionListener(e -> {
@@ -98,8 +98,8 @@ public class MenuBar extends JMenuBar {
         JMenu dbMenu = new JMenu("Database");
         dbMenu.setMnemonic(KeyEvent.VK_D);
         dbMenu.add(clearDb);
-        dbMenu.add(clearInvalidTickers);  // Add the new menu item
-        
+        dbMenu.add(clearInvalidTickers); // Add the new menu item
+
         // Add Load Instruments item
         JMenuItem loadInstruments = new JMenuItem("Load Instruments from File");
         loadInstruments.addActionListener(e -> {
@@ -111,29 +111,33 @@ public class MenuBar extends JMenuBar {
         // Add Theme menu
         optionsMenu.add(themeManager.createThemeMenu());
 
-
         // Register visualization listener
         commandBus.register(new CommandListener() {
             final boolean[] visualizationsEnabled = { false };
             JMenu visualizationMenu = new JMenu("Visualization");
             final JMenuItem startVisualizationItem = new JMenuItem("Start Visualization");
             final JMenuItem stopVisualizationItem = new JMenuItem("Stop Visualization");
+            final JMenuItem lockVisualizationItem = new JMenuItem("Lock Current Visualization");
+            final JMenuItem unlockVisualizationItem = new JMenuItem("Unlock Visualization");  // Add this
             final JMenuItem refreshVisualizationItem = new JMenuItem("Refresh");
             final List<CategoryMenuItem> categoryMenus = new ArrayList<>();
             final List<VisualizationMenuItem> defaultItems = new ArrayList<>();
 
             private void rebuildVisualizationMenu() {
                 visualizationMenu.removeAll();
-                
+
                 // Add control items at the top
                 visualizationMenu.add(startVisualizationItem);
                 visualizationMenu.add(stopVisualizationItem);
+                visualizationMenu.add(lockVisualizationItem);  // Add this line
+                visualizationMenu.add(unlockVisualizationItem);  // Add unlock item
                 visualizationMenu.add(refreshVisualizationItem);
                 visualizationMenu.addSeparator();
-                
+
                 // Sort category menus alphabetically by label
-                categoryMenus.sort((a, b) -> a.getCategory().getLabel().compareToIgnoreCase(b.getCategory().getLabel()));
-                
+                categoryMenus
+                        .sort((a, b) -> a.getCategory().getLabel().compareToIgnoreCase(b.getCategory().getLabel()));
+
                 // Process each category menu
                 for (CategoryMenuItem categoryMenu : categoryMenus) {
                     if (!categoryMenu.isEmpty()) {
@@ -144,19 +148,19 @@ public class MenuBar extends JMenuBar {
                                 categoryItems.add((VisualizationMenuItem) categoryMenu.getItem(i));
                             }
                         }
-                        
+
                         // Sort items within category alphabetically
                         categoryItems.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-                        
+
                         // Clear and rebuild category menu with sorted items
                         categoryMenu.removeAll();
                         categoryItems.forEach(categoryMenu::add);
-                        
+
                         // Add sorted category to main menu
                         visualizationMenu.add(categoryMenu);
                     }
                 }
-                
+
                 // Sort and add default items
                 defaultItems.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
                 defaultItems.forEach(visualizationMenu::add);
@@ -164,25 +168,25 @@ public class MenuBar extends JMenuBar {
 
             private CategoryMenuItem findOrCreateCategoryMenu(VisualizationCategory category) {
                 return categoryMenus.stream()
-                    .filter(menu -> menu.getCategory() == category)
-                    .findFirst()
-                    .orElseGet(() -> {
-                        CategoryMenuItem newMenu = new CategoryMenuItem(category);
-                        categoryMenus.add(newMenu);
-                        return newMenu;
-                    });
+                        .filter(menu -> menu.getCategory() == category)
+                        .findFirst()
+                        .orElseGet(() -> {
+                            CategoryMenuItem newMenu = new CategoryMenuItem(category);
+                            categoryMenus.add(newMenu);
+                            return newMenu;
+                        });
             }
 
             private void removeExistingHandler(IVisualizationHandler handler) {
                 // Remove from default items if present
                 defaultItems.removeIf(item -> item.getHandler().getName().equals(handler.getName()));
-                
+
                 // Remove from category menus if present
                 for (CategoryMenuItem categoryMenu : categoryMenus) {
                     for (int i = 0; i < categoryMenu.getItemCount(); i++) {
                         JMenuItem item = categoryMenu.getItem(i);
-                        if (item instanceof VisualizationMenuItem && 
-                            ((VisualizationMenuItem)item).getHandler().getName().equals(handler.getName())) {
+                        if (item instanceof VisualizationMenuItem &&
+                                ((VisualizationMenuItem) item).getHandler().getName().equals(handler.getName())) {
                             categoryMenu.remove(item);
                             break;
                         }
@@ -191,51 +195,97 @@ public class MenuBar extends JMenuBar {
             }
 
             public void onAction(Command action) {
-                if (action.getCommand() == null) return;
+                if (action.getCommand() == null)
+                    return;
 
                 switch (action.getCommand()) {
                     case Commands.VISUALIZATION_REGISTERED:
                         if (!visualizationsEnabled[0]) {
                             visualizationsEnabled[0] = true;
+
+                            visualizationMenu.add(startVisualizationItem);
+                            visualizationMenu.add(stopVisualizationItem);
+                            visualizationMenu.add(lockVisualizationItem);
+                            visualizationMenu.add(unlockVisualizationItem);  // Add unlock item
+                            visualizationMenu.add(refreshVisualizationItem);
+                            visualizationMenu.addSeparator();
+                            
+                            // Add action listeners
                             addMenuItem(visualizationMenu, startVisualizationItem, Commands.START_VISUALIZATION, null, null);
                             addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null, null);
-                            addMenuItem(visualizationMenu, refreshVisualizationItem, 
-                                    Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED, null, null);
-                            optionsMenu.add(visualizationMenu);  // No separator added
+                            addMenuItem(visualizationMenu, lockVisualizationItem, Commands.LOCK_CURRENT_VISUALIZATION, null, null);
+                            addMenuItem(visualizationMenu, unlockVisualizationItem, Commands.UNLOCK_CURRENT_VISUALIZATION, null, null);
+                            addMenuItem(visualizationMenu, refreshVisualizationItem, Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED, null, null);
 
+                            optionsMenu.add(visualizationMenu);
+
+                            // Set initial states
                             startVisualizationItem.setVisible(true);
                             stopVisualizationItem.setVisible(false);
+                            lockVisualizationItem.setVisible(true);  // Make visible but disabled
+                            lockVisualizationItem.setEnabled(false);
+                            unlockVisualizationItem.setVisible(false);  // Initially hidden
                             refreshVisualizationItem.setVisible(true);
                         }
 
                         IVisualizationHandler handler = (IVisualizationHandler) action.getData();
-                        
+
                         // Remove existing handler if present
                         removeExistingHandler(handler);
-                        
+
                         // Create new menu item
                         VisualizationMenuItem newItem = new VisualizationMenuItem(handler.getName(), handler);
-                        
+
                         if (handler.getVisualizationCategory() == VisualizationCategory.DEFAULT) {
                             addMenuItem(visualizationMenu, newItem, Commands.VISUALIZATION_SELECTED, handler, null);
                             defaultItems.add(newItem);
                         } else {
-                            CategoryMenuItem categoryMenu = findOrCreateCategoryMenu(handler.getVisualizationCategory());
+                            CategoryMenuItem categoryMenu = findOrCreateCategoryMenu(
+                                    handler.getVisualizationCategory());
                             addMenuItem(categoryMenu, newItem, Commands.VISUALIZATION_SELECTED, handler, null);
                         }
-                        
+
                         // Rebuild menu with sorted items
                         rebuildVisualizationMenu();
                         break;
 
                     case Commands.VISUALIZATION_STARTED:
                         startVisualizationItem.setVisible(false);
-                        stopVisualizationItem.setVisible(visualizationsEnabled[0]);
+                        stopVisualizationItem.setVisible(true);
+                        lockVisualizationItem.setVisible(true);  // Ensure visible
+                        lockVisualizationItem.setEnabled(true);  // Enable when visualization starts
+                        unlockVisualizationItem.setVisible(false);
+                        break;
+
+                    case Commands.LOCK_CURRENT_VISUALIZATION:
+                        // The lock command was sent - follow up with the locked event
+                        commandBus.publish(Commands.VISUALIZATION_LOCKED, this);
+                        break;
+
+                    case Commands.VISUALIZATION_LOCKED:
+                        // Handle the locked event by updating menu items
+                        lockVisualizationItem.setVisible(false);
+                        unlockVisualizationItem.setVisible(true);
+                        unlockVisualizationItem.setEnabled(true);
+                        break;
+
+                    case Commands.UNLOCK_CURRENT_VISUALIZATION:
+                        // The unlock command was sent - follow up with the unlocked event
+                        commandBus.publish(Commands.VISUALIZATION_UNLOCKED, this);
+                        break;
+
+                    case Commands.VISUALIZATION_UNLOCKED:
+                        // Handle the unlocked event by updating menu items
+                        unlockVisualizationItem.setVisible(false);
+                        lockVisualizationItem.setVisible(true);
+                        lockVisualizationItem.setEnabled(true);
                         break;
 
                     case Commands.VISUALIZATION_STOPPED:
-                        startVisualizationItem.setVisible(visualizationsEnabled[0]);
+                        startVisualizationItem.setVisible(true);
                         stopVisualizationItem.setVisible(false);
+                        lockVisualizationItem.setEnabled(false);
+                        unlockVisualizationItem.setVisible(false);
                         break;
                 }
             }
@@ -285,16 +335,16 @@ public class MenuBar extends JMenuBar {
 
     private static class CategoryMenuItem extends JMenu {
         private final VisualizationCategory category;
-        
+
         public CategoryMenuItem(VisualizationCategory category) {
             super(category.getLabel());
             this.category = category;
         }
-        
+
         public VisualizationCategory getCategory() {
             return category;
         }
-        
+
         public boolean isEmpty() {
             return getItemCount() == 0;
         }
@@ -303,17 +353,17 @@ public class MenuBar extends JMenuBar {
     private static class VisualizationMenuItem extends JMenuItem {
         private final String sortName;
         private final IVisualizationHandler handler;
-        
+
         public VisualizationMenuItem(String name, IVisualizationHandler handler) {
             super(name);
             this.sortName = name.toLowerCase();
             this.handler = handler;
         }
-        
+
         public String getName() {
             return sortName;
         }
-        
+
         public IVisualizationHandler getHandler() {
             return handler;
         }

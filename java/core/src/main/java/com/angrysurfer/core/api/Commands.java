@@ -110,6 +110,10 @@ public class Commands {
     // Visualization Commands
     public static final String START_VISUALIZATION = "START_VISUALIZATION";
     public static final String STOP_VISUALIZATION = "STOP_VISUALIZATION";
+    public static final String LOCK_CURRENT_VISUALIZATION = "LOCK_CURRENT_VISUALIZATION";
+    public static final String UNLOCK_CURRENT_VISUALIZATION = "UNLOCK_CURRENT_VISUALIZATION";
+    public static final String VISUALIZATION_LOCKED = "VISUALIZATION_LOCKED";
+    public static final String VISUALIZATION_UNLOCKED = "VISUALIZATION_UNLOCKED";
 
     // Visualization Commands
     public static final String VISUALIZATION_SELECTED = "VISUALIZATION_SELECTED";
