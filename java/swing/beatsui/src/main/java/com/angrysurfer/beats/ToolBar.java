@@ -202,7 +202,7 @@ public class ToolBar extends JToolBar {
     }
 
     private JPanel createTopLeftStatusPanel() {
-        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 10, 0));  // 4 columns, variable rows, 10px gap
+        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 4, 0));  // 4 columns, variable rows, 10px gap
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         String[] leftLabels = { "Tick", "Beat", "Bar", "Part" };
@@ -227,7 +227,7 @@ public class ToolBar extends JToolBar {
     }
 
     private JPanel createBottomLeftStatusPanel() {
-        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 10, 0));  // 4 columns, variable rows, 10px gap
+        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 4, 0));  // 4 columns, variable rows, 10px gap
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         String[] leftLabels = { "Players", "Ticks", "Beats", "Bars" };
@@ -251,44 +251,8 @@ public class ToolBar extends JToolBar {
         return leftStatusPanel;
     }
 
-    private JPanel createStatusPanel() {
-        // Right status fields panel
-        JPanel rightStatusPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        rightStatusPanel.setPreferredSize(new Dimension(rightStatusPanel.getPreferredSize().width, 75));
-        Object[][] rightFieldsArray = {
-                { "Ticker", createTextField("1") },
-                { "Ticks", createTickerCombo("Ticks", 1, 384, 24) },
-                { "BPM", createTickerCombo("BPM", 1, 960, 120) },
-                { "B/Bar", createTickerCombo("B/Bar", 1, 16, 4) },
-                { "Bars", createTickerCombo("Bars", 1, 128, 4) },
-                { "Parts", createTickerCombo("Parts", 1, 64, 1) },
-                { "Length", createTextField("0") },
-                { "Offset", createTextField("0") }
-        };
-
-        for (Object[] field : rightFieldsArray) {
-            JPanel fieldPanel = new JPanel();
-            fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
-
-            JLabel nameLabel = new JLabel((String) field[0]);
-            nameLabel.setForeground(Color.GRAY);
-            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            fieldPanel.add(nameLabel);
-
-            JComponent component = (JComponent) field[1];
-            component.setAlignmentX(Component.CENTER_ALIGNMENT);
-            rightFields.put((String) field[0], component);
-            fieldPanel.add(component);
-
-            rightStatusPanel.add(fieldPanel);
-            rightStatusPanel.add(Box.createHorizontalStrut(5));
-        }
-
-        return rightStatusPanel;
-    }
-
     private JPanel createTopRightStatusPanel() {
-        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 10, 0));  // 5 columns, variable rows, 10px horizontal gap
+        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 4, 0));  // 5 columns, variable rows, 10px horizontal gap
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         Object[][] rightFieldsArray = {
@@ -321,7 +285,7 @@ public class ToolBar extends JToolBar {
     }
 
     private JPanel createBottomRightStatusPanel() {
-        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 10, 0));  // 5 columns, variable rows, 10px horizontal gap
+        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 4, 0));  // 5 columns, variable rows, 10px horizontal gap
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         Object[][] rightFieldsArray = {
