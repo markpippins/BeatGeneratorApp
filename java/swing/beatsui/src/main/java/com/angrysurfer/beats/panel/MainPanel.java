@@ -32,7 +32,7 @@ public class MainPanel extends JPanel implements AutoCloseable {
         tabbedPane.addTab("System", new SystemsPanel(statusBar));
 
         tabbedPane.addTab("Params", new JPanel());
-        tabbedPane.addTab("Controls", new JPanel());
+        tabbedPane.addTab("Controls", new ControlsPanel());
 
         tabbedPane.addTab("Sorting", new SortingVisualizerPanel());
     }
