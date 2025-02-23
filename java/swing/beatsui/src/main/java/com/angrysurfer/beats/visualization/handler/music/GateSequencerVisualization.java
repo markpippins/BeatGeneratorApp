@@ -4,7 +4,7 @@ import java.awt.Color;
 import com.angrysurfer.beats.visualization.*;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class GateSequencerVisualization implements IVisualizationHandler {
+public class GateSequencerVisualization extends LockHandler implements IVisualizationHandler {
     private int currentStep = 0;
     private boolean[][] gates;
     private static final int NUM_CHANNELS = 8; // Increased from 4 to use more vertical space

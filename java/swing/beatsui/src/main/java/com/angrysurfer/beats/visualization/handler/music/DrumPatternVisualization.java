@@ -3,11 +3,12 @@ package com.angrysurfer.beats.visualization.handler.music;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class DrumPatternVisualization implements IVisualizationHandler {
+public class DrumPatternVisualization extends LockHandler implements IVisualizationHandler {
 
     private int seqPosition = 0;
 

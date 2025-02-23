@@ -4,10 +4,11 @@ import java.awt.Color;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class StepSequencerVisualization implements IVisualizationHandler {
+public class StepSequencerVisualization extends LockHandler implements IVisualizationHandler {
 
     private final Random random = new Random();
     private int seqPosition = 0;
@@ -16,7 +17,7 @@ public class StepSequencerVisualization implements IVisualizationHandler {
     @Override
     public void update(GridButton[][] buttons) {
 
-        lockDisplay();
+       
 
         if (sequencerGrid == null) {
             sequencerGrid = new boolean[buttons.length][buttons[0].length];

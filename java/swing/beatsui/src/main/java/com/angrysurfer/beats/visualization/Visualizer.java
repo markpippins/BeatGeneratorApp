@@ -2,6 +2,7 @@ package com.angrysurfer.beats.visualization;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import javax.swing.JComponent;
@@ -43,7 +44,7 @@ public class Visualizer implements CommandListener {
 
     private List<IVisualizationHandler> visualizations = new ArrayList<>();
 
-    private boolean isLocked = false;  // Add this field
+    private boolean isLocked = false; // Add this field
 
     public Visualizer(JComponent parent, StatusConsumer statusConsumer, GridButton[][] buttons) {
         this.parent = parent;
@@ -69,7 +70,7 @@ public class Visualizer implements CommandListener {
             case Commands.STOP_VISUALIZATION:
                 stopVisualizer();
                 isVisualizationMode = false;
-                isLocked = false;  // Reset lock state when stopping
+                isLocked = false; // Reset lock state when stopping
                 break;
 
             case Commands.LOCK_CURRENT_VISUALIZATION:
@@ -103,28 +104,28 @@ public class Visualizer implements CommandListener {
 
     private List<IVisualizationHandler> getVisualizations() {
         List<IVisualizationHandler> visualizations = new ArrayList<>();
-        
+
         try {
             // Get this class's package as the starting point
             String basePackage = this.getClass().getPackage().getName();
             // Go up one level to get the root package
             basePackage = basePackage.substring(0, basePackage.lastIndexOf('.'));
-            
+
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             scanPackageForVisualizations(basePackage, classLoader, visualizations);
         } catch (Exception e) {
             System.err.println("Error scanning for visualizations: " + e.getMessage());
         }
-        
+
         return visualizations;
     }
 
-    private void scanPackageForVisualizations(String packageName, ClassLoader classLoader, 
+    private void scanPackageForVisualizations(String packageName, ClassLoader classLoader,
             List<IVisualizationHandler> visualizations) {
         try {
             String path = packageName.replace('.', '/');
             java.net.URL resource = classLoader.getResource(path);
-            
+
             if (resource == null) {
                 System.err.println("Package not found: " + packageName);
                 return;
@@ -133,7 +134,8 @@ public class Visualizer implements CommandListener {
             if (resource.getProtocol().equals("jar")) {
                 // Handle JAR files
                 String jarPath = resource.getPath().substring(5, resource.getPath().indexOf("!"));
-                try (java.util.jar.JarFile jar = new java.util.jar.JarFile(java.net.URLDecoder.decode(jarPath, "UTF-8"))) {
+                try (java.util.jar.JarFile jar = new java.util.jar.JarFile(
+                        java.net.URLDecoder.decode(jarPath, "UTF-8"))) {
                     java.util.Enumeration<java.util.jar.JarEntry> entries = jar.entries();
                     while (entries.hasMoreElements()) {
                         String name = entries.nextElement().getName();
@@ -155,7 +157,7 @@ public class Visualizer implements CommandListener {
         }
     }
 
-    private void scanDirectory(java.io.File directory, String packageName, 
+    private void scanDirectory(java.io.File directory, String packageName,
             List<IVisualizationHandler> visualizations) {
         java.io.File[] files = directory.listFiles();
         if (files != null) {
@@ -198,7 +200,7 @@ public class Visualizer implements CommandListener {
         visualizationTimer.start();
 
         visualizationChangeTimer = new Timer(VISUALIZATION_CHANGE_DELAY, e -> {
-            if (isVisualizationMode && !isLocked) {  // Only change if not locked
+            if (isVisualizationMode && !isLocked) { // Only change if not locked
                 setDisplayMode(getRandomVisualization());
             }
         });
@@ -242,6 +244,9 @@ public class Visualizer implements CommandListener {
 
     private void setDisplayMode(IVisualizationHandler visualization) {
         currentVisualization = visualization;
+        if (Objects.nonNull(currentVisualization) && currentVisualization instanceof LockHandler)
+            ((LockHandler) currentVisualization).lockDisplay();
+
         clearDisplay();
     }
 

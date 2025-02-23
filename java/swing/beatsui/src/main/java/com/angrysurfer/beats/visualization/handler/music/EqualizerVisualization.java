@@ -4,11 +4,12 @@ import java.awt.Color;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class EqualizerVisualization implements IVisualizationHandler {
+public class EqualizerVisualization extends LockHandler implements IVisualizationHandler {
     
     private final Random random = new Random();
     private int[] levels;
@@ -16,7 +17,7 @@ public class EqualizerVisualization implements IVisualizationHandler {
     @Override
     public void update(GridButton[][] buttons) {
         
-        lockDisplay();
+       
 
         if (levels == null) {
             levels = new int[buttons[0].length];

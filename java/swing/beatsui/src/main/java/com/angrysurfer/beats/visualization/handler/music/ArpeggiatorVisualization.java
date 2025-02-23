@@ -3,11 +3,12 @@ package com.angrysurfer.beats.visualization.handler.music;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class ArpeggiatorVisualization implements IVisualizationHandler {
+public class ArpeggiatorVisualization extends LockHandler implements IVisualizationHandler {
     private double phase = 0.0;
     private final int[] notes = {0, 4, 7, 12, 7, 4}; // Major triad up and down
 

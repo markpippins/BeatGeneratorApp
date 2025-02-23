@@ -3,10 +3,11 @@ package com.angrysurfer.beats.visualization.handler.music;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class LFOMatrixVisualization implements IVisualizationHandler {
+public class LFOMatrixVisualization extends LockHandler implements IVisualizationHandler {
 
     private double phase = 0.0;
     private double[][] lfoValues;

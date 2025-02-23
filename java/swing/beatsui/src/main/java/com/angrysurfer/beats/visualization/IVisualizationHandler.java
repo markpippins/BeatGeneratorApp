@@ -18,10 +18,6 @@ public interface IVisualizationHandler {
         return VisualizationCategory.DEFAULT;
     }
 
-    // default VisualizationEnum getEnum() {
-    // return VisualizationEnum.fromLabel(getName());
-    // }
-
     default void lockDisplay() {
         CommandBus.getInstance().publish(Commands.LOCK_CURRENT_VISUALIZATION);
     }

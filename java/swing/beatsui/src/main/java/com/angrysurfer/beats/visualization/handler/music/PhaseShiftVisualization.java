@@ -3,12 +3,12 @@ package com.angrysurfer.beats.visualization.handler.music;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class PhaseShiftVisualization implements IVisualizationHandler {
-
+public class PhaseShiftVisualization extends LockHandler implements IVisualizationHandler {
     
     private double phase = 0.0;
     private final double[] phaseOffsets = {0, Math.PI/6, Math.PI/4, Math.PI/3, Math.PI/2, 2*Math.PI/3, 3*Math.PI/4, Math.PI};

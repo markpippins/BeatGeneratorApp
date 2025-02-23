@@ -19,7 +19,7 @@ public class ChordProgressionVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
-        lockDisplay();
+       
 
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 

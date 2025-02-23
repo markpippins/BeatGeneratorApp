@@ -3,11 +3,12 @@ package com.angrysurfer.beats.visualization.handler.music;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class ModularCVVisualization implements IVisualizationHandler {
+public class ModularCVVisualization extends LockHandler implements IVisualizationHandler {
 
     private double[] phases;
     private final double[] frequencies = {0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0};

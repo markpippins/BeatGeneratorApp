@@ -3,11 +3,12 @@ package com.angrysurfer.beats.visualization.handler.music;
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class FrequencyBandsVisualization implements IVisualizationHandler {
+public class FrequencyBandsVisualization extends LockHandler implements IVisualizationHandler {
 
     
     private double phase = 0.0;
@@ -15,7 +16,7 @@ public class FrequencyBandsVisualization implements IVisualizationHandler {
     @Override
     public void update(GridButton[][] buttons) {
 
-        lockDisplay();
+       
 
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 

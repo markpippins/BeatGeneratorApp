@@ -4,10 +4,11 @@ import java.awt.Color;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class LoopPulseVisualization implements IVisualizationHandler {
+public class LoopPulseVisualization extends LockHandler implements IVisualizationHandler {
 
     
     private final Random random = new Random();

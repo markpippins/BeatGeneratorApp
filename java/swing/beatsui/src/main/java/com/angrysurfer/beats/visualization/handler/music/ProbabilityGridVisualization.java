@@ -4,11 +4,12 @@ import java.awt.Color;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 
-public class ProbabilityGridVisualization implements IVisualizationHandler {
+public class ProbabilityGridVisualization extends LockHandler implements IVisualizationHandler {
 
     
     private final Random random = new Random();
