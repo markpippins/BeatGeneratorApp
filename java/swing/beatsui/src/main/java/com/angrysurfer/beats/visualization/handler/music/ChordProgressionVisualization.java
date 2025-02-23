@@ -11,24 +11,26 @@ public class ChordProgressionVisualization implements IVisualizationHandler {
 
     private double phase = 0.0;
     private final int[][] chords = {
-        {0, 4, 7},    // C major
-        {5, 9, 12},   // F major
-        {7, 11, 14},  // G major
-        {0, 4, 7}     // C major
+            { 0, 4, 7 }, // C major
+            { 5, 9, 12 }, // F major
+            { 7, 11, 14 }, // G major
+            { 0, 4, 7 } // C major
     };
 
     @Override
     public void update(GridButton[][] buttons) {
+        lockDisplay();
+
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
-        int chordIndex = ((int)(phase * 2)) % chords.length;
+        int chordIndex = ((int) (phase * 2)) % chords.length;
         int[] currentChord = chords[chordIndex];
 
         // Display chord notes
         for (int note : currentChord) {
             int row = note % buttons.length;
             Color noteColor = Color.CYAN;
-            
+
             // Make root note brighter
             if (note == currentChord[0]) {
                 noteColor = Color.WHITE;
@@ -51,7 +53,7 @@ public class ChordProgressionVisualization implements IVisualizationHandler {
     public String getName() {
         return "Chord Progression";
     }
-    
+
     @Override
     public VisualizationCategory getVisualizationCategory() {
         return VisualizationCategory.MUSIC;

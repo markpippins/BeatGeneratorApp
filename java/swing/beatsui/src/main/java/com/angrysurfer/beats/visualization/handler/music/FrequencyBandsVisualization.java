@@ -14,6 +14,9 @@ public class FrequencyBandsVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
+
+        lockDisplay();
+
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Simulate frequency band analysis

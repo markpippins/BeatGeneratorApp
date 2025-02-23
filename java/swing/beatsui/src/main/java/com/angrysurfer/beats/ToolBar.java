@@ -19,7 +19,6 @@ import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -45,7 +44,7 @@ public class ToolBar extends JToolBar {
     private final CommandBus actionBus = CommandBus.getInstance();
     private ProxyTicker currentTicker; // Add field to track current ticker
 
-    JPanel transportPanel;
+    private JPanel transportPanel;
 
     public ToolBar() {
         super();
@@ -202,7 +201,7 @@ public class ToolBar extends JToolBar {
     }
 
     private JPanel createTopLeftStatusPanel() {
-        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 4, 0));  // 4 columns, variable rows, 10px gap
+        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 4, 0)); // 4 columns, variable rows, 10px gap
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         String[] leftLabels = { "Tick", "Beat", "Bar", "Part" };
@@ -214,20 +213,20 @@ public class ToolBar extends JToolBar {
             JLabel nameLabel = new JLabel(label);
             nameLabel.setForeground(Color.GRAY);
             labelPanel.add(nameLabel);
-            
+
             JTextField field = createTextField("0");
             leftFields.put(label, field);
-            
+
             fieldPanel.add(labelPanel, BorderLayout.NORTH);
             fieldPanel.add(field, BorderLayout.CENTER);
-            
+
             leftStatusPanel.add(fieldPanel);
         }
         return leftStatusPanel;
     }
 
     private JPanel createBottomLeftStatusPanel() {
-        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 4, 0));  // 4 columns, variable rows, 10px gap
+        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 4, 0)); // 4 columns, variable rows, 10px gap
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         String[] leftLabels = { "Players", "Ticks", "Beats", "Bars" };
@@ -239,20 +238,21 @@ public class ToolBar extends JToolBar {
             JLabel nameLabel = new JLabel(label);
             nameLabel.setForeground(Color.GRAY);
             labelPanel.add(nameLabel);
-            
+
             JTextField field = createTextField("0");
             leftFields.put(label, field);
-            
+
             fieldPanel.add(labelPanel, BorderLayout.NORTH);
             fieldPanel.add(field, BorderLayout.CENTER);
-            
+
             leftStatusPanel.add(fieldPanel);
         }
         return leftStatusPanel;
     }
 
     private JPanel createTopRightStatusPanel() {
-        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 4, 0));  // 5 columns, variable rows, 10px horizontal gap
+        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 4, 0)); // 5 columns, variable rows, 10px horizontal
+                                                                          // gap
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         Object[][] rightFieldsArray = {
@@ -271,13 +271,13 @@ public class ToolBar extends JToolBar {
             JLabel nameLabel = new JLabel((String) field[0]);
             nameLabel.setForeground(Color.GRAY);
             labelPanel.add(nameLabel);
-            
+
             JComponent component = (JComponent) field[1];
             rightFields.put((String) field[0], component);
-            
+
             fieldPanel.add(labelPanel, BorderLayout.NORTH);
             fieldPanel.add(component, BorderLayout.CENTER);
-            
+
             rightStatusPanel.add(fieldPanel);
         }
 
@@ -285,7 +285,8 @@ public class ToolBar extends JToolBar {
     }
 
     private JPanel createBottomRightStatusPanel() {
-        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 4, 0));  // 5 columns, variable rows, 10px horizontal gap
+        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 4, 0)); // 5 columns, variable rows, 10px horizontal
+                                                                          // gap
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         Object[][] rightFieldsArray = {
@@ -304,13 +305,13 @@ public class ToolBar extends JToolBar {
             JLabel nameLabel = new JLabel((String) field[0]);
             nameLabel.setForeground(Color.GRAY);
             labelPanel.add(nameLabel);
-            
+
             JComponent component = (JComponent) field[1];
             rightFields.put((String) field[0], component);
-            
+
             fieldPanel.add(labelPanel, BorderLayout.NORTH);
             fieldPanel.add(component, BorderLayout.CENTER);
-            
+
             rightStatusPanel.add(fieldPanel);
         }
 
@@ -510,8 +511,18 @@ public class ToolBar extends JToolBar {
 
     private JComboBox<String> createRootNoteCombo() {
         String[] keys = {
-                "C", "C♯/D♭", "D", "D♯/E♭", "E",
-                "F", "F♯/G♭", "G", "G♯/A♭", "A", "A♯/B♭", "B"
+                "C",
+                // "C♯/D♭",
+                "D",
+                // "D♯/E♭",
+                "E",
+                "F",
+                // "F♯/G♭",
+                "G",
+                // "G♯/A♭",
+                "A",
+                // "A♯/B♭",
+                "B"
         };
 
         JComboBox<String> combo = new JComboBox<>(keys);

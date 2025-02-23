@@ -14,6 +14,9 @@ public class MidiGridVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
+
+        lockDisplay();
+
         if (midiGrid == null) {
             midiGrid = new boolean[buttons.length][buttons[0].length];
         }
@@ -31,7 +34,7 @@ public class MidiGridVisualization implements IVisualizationHandler {
             for (int col = 0; col < buttons[0].length; col++) {
                 if (midiGrid[row][col]) {
                     buttons[row][col].setBackground(
-                        col == seqPosition ? Color.WHITE : Color.BLUE);
+                            col == seqPosition ? Color.WHITE : Color.BLUE);
                     // Fade out notes
                     if (random.nextInt(100) < 5) {
                         midiGrid[row][col] = false;

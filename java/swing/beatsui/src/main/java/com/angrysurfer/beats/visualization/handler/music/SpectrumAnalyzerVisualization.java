@@ -9,12 +9,13 @@ import com.angrysurfer.beats.widget.GridButton;
 
 public class SpectrumAnalyzerVisualization implements IVisualizationHandler {
 
-    
     private double phase = 0.0;
     private double[] spectrumData;
 
     @Override
     public void update(GridButton[][] buttons) {
+        lockDisplay();
+
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         if (spectrumData == null || spectrumData.length != buttons[0].length) {

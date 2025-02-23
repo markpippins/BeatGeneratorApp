@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel;
 
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -37,13 +38,17 @@ public class InstrumentEditPanel extends JPanel {
         super(new GridBagLayout());
         this.instrument = instrument;
         this.deviceInfos = new ArrayList<>();
+        
+        setMinimumSize(new Dimension(200, 200));
+        setMaximumSize(new Dimension(200, 200));
+        setPreferredSize(new Dimension(200, 200));
 
         nameField = new JTextField(instrument.getName(), 20);
-        
+
         // Setup device combo box
         deviceCombo = new JComboBox<>();
         populateDeviceCombo();
-        
+
         // Set selected device if it exists
         if (instrument.getDeviceName() != null) {
             for (int i = 0; i < deviceCombo.getItemCount(); i++) {
@@ -56,14 +61,14 @@ public class InstrumentEditPanel extends JPanel {
 
         // Fix spinner initialization with default values
         lowestNoteSpinner = new JSpinner(new SpinnerNumberModel(
-            instrument.getLowestNote() != null ? instrument.getLowestNote() : 0, 
-            0, 127, 1));
-            
+                instrument.getLowestNote() != null ? instrument.getLowestNote() : 0,
+                0, 127, 1));
+
         highestNoteSpinner = new JSpinner(new SpinnerNumberModel(
-            instrument.getHighestNote() != null ? instrument.getHighestNote() : 127, 
-            0, 127, 1));
-            
-        availableCheckBox = new JCheckBox("Available", false); //instrument.isAvailable());
+                instrument.getHighestNote() != null ? instrument.getHighestNote() : 127,
+                0, 127, 1));
+
+        availableCheckBox = new JCheckBox("Available", false); // instrument.isAvailable());
         initializedCheckBox = new JCheckBox("Initialized", instrument.isInitialized());
 
         setupLayout();

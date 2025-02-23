@@ -15,6 +15,9 @@ public class EqualizerVisualization implements IVisualizationHandler {
 
     @Override
     public void update(GridButton[][] buttons) {
+        
+        lockDisplay();
+
         if (levels == null) {
             levels = new int[buttons[0].length];
         }

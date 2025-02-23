@@ -6,6 +6,8 @@ import java.awt.FlowLayout;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Logger;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
@@ -368,6 +370,16 @@ public class InstrumentsPanel extends StatusProviderPanel {
             }
         });
 
+        // Add double-click handler
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    editSelectedInstrument();
+                }
+            }
+        });
+
         return table;
     }
 
@@ -434,6 +446,16 @@ public class InstrumentsPanel extends StatusProviderPanel {
             }
         });
 
+        // Add double-click handler
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    editSelectedControlCode();
+                }
+            }
+        });
+
         return table;
     }
 
@@ -476,6 +498,16 @@ public class InstrumentsPanel extends StatusProviderPanel {
                 boolean hasSelection = table.getSelectedRow() >= 0 && selectedControlCode != null;
                 editCaptionButton.setEnabled(hasSelection);
                 deleteCaptionButton.setEnabled(hasSelection);
+            }
+        });
+
+        // Add double-click handler
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    editSelectedCaption();
+                }
             }
         });
 
