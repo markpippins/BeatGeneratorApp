@@ -9,7 +9,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.border.EmptyBorder;
 
 import com.angrysurfer.beats.StatusBar;
-import com.angrysurfer.beats.panel.sorting.SortingVisualizerPanel;
+import com.angrysurfer.beats.visualization.handler.SortingVisualizerPanel;
 
 public class MainPanel extends JPanel implements AutoCloseable {
     private static final Logger logger = Logger.getLogger(MainPanel.class.getName());

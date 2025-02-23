@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel.sorting;
+package com.angrysurfer.beats.visualization.handler;
 
 import javax.swing.*;
 import java.awt.*;

@@ -29,6 +29,7 @@ import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.proxy.ProxyCaption;
 import com.angrysurfer.core.proxy.ProxyControlCode;
 import com.angrysurfer.core.proxy.ProxyInstrument;
@@ -79,7 +80,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
 
     private void showFileChooserDialog() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select Instruments XML File");
+        fileChooser.setDialogTitle("Select Instruments JSON File");
         fileChooser.setFileFilter(new FileNameExtensionFilter("JSON Files", "json"));
         fileChooser.setAcceptAllFileFilterUsed(false);
 
@@ -87,12 +88,37 @@ public class InstrumentsPanel extends StatusProviderPanel {
             String filePath = fileChooser.getSelectedFile().getAbsolutePath();
             logger.info("Selected file: " + filePath);
             try {
-                RedisService.getInstance().loadConfigFromJSON(filePath);
+                RedisService redisService = RedisService.getInstance();
+                
+                // Load and validate the config
+                UserConfig config = redisService.loadConfigFromJSON(filePath);
+                if (config == null || config.getInstruments() == null || config.getInstruments().isEmpty()) {
+                    setStatus("Error: No instruments found in config file");
+                    return;
+                }
+                
+                // Log what we're about to save
+                logger.info("Loaded " + config.getInstruments().size() + " instruments from file");
+                
+                // Save instruments to Redis
+                for (ProxyInstrument instrument : config.getInstruments()) {
+                    logger.info("Saving instrument: " + instrument.getName());
+                    redisService.saveInstrument(instrument);
+                }
+                
+                // Save the entire config
+                redisService.saveConfig(config);
+                
+                // Verify the save
+                List<ProxyInstrument> savedInstruments = redisService.findAllInstruments();
+                logger.info("Found " + savedInstruments.size() + " instruments in Redis after save");
+                
+                // Refresh the UI
                 refreshInstrumentsTable();
-                setStatus("Instruments loaded successfully from " + filePath);
+                setStatus("Database updated successfully from " + filePath);
             } catch (Exception e) {
-                logger.severe("Error loading instruments: " + e.getMessage());
-                setStatus("Error loading instruments: " + e.getMessage());
+                logger.severe("Error loading and saving database: " + e.getMessage());
+                setStatus("Error updating database: " + e.getMessage());
             }
         }
     }
@@ -559,6 +585,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
     }
 
     private ProxyInstrument findInstrumentByName(String name) {
+        // Convert view index to model index when getting data
         return RedisService.getInstance().findAllInstruments().stream()
             .filter(i -> i.getName().equals(name))
             .findFirst()
@@ -722,8 +749,14 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private void refreshInstrumentsTable() {
         DefaultTableModel model = (DefaultTableModel) instrumentsTable.getModel();
         model.setRowCount(0);
+        
+        // Get fresh data from Redis
         List<ProxyInstrument> instruments = RedisService.getInstance().findAllInstruments();
+        logger.info("Refreshing instruments table with " + instruments.size() + " instruments");
+        
+        // Add each instrument to the table
         for (ProxyInstrument instrument : instruments) {
+            logger.info("Adding instrument to table: " + instrument.getName());
             model.addRow(new Object[] {
                 instrument.getName(),
                 instrument.getDeviceName(),
@@ -733,5 +766,18 @@ public class InstrumentsPanel extends StatusProviderPanel {
                 instrument.isInitialized()
             });
         }
+        
+        // Notify the table that the model has changed
+        model.fireTableDataChanged();
+        instrumentsTable.revalidate();
+        instrumentsTable.repaint();
+        
+        // Clear selection and related data
+        instrumentsTable.clearSelection();
+        selectedInstrument = null;
+        updateControlCodesTable();
+        
+        // Log the current state
+        logger.info("Table refreshed with " + model.getRowCount() + " rows");
     }
 }
