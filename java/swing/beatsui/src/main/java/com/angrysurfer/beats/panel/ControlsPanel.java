@@ -17,6 +17,7 @@ import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -64,9 +65,16 @@ public class ControlsPanel extends JPanel {
             }
         });
         
-        // Add components to toolbar
+        // Add refresh button to toolbar
+        JButton refreshButton = new JButton("\u21BB"); // Unicode refresh symbol
+        refreshButton.setToolTipText("Refresh Controls");
+        refreshButton.addActionListener(e -> refreshControlsPanel());
+        
+        // Add components to toolbar with spacing
         toolBar.add(new JLabel("Instrument: "));
         toolBar.add(instrumentSelector);
+        toolBar.addSeparator(new Dimension(10, 0));
+        toolBar.add(refreshButton);
         
         // Create scrollable container for controls with improved layout
         controlsContainer = new JPanel(new GridBagLayout());
@@ -125,6 +133,24 @@ public class ControlsPanel extends JPanel {
             String[] parts = control.getName().split(" ");
             String prefix = parts[0];
             
+            // Special handling for numbered groups (Envelope N, Filter N, etc.)
+            if (parts.length > 2 && isNumberedGroup(prefix)) {
+                String groupKey = parts[0] + " " + parts[1];  // e.g., "Envelope 1", "Filter 2"
+                ControlGroup group = groups.computeIfAbsent(groupKey, ControlGroup::new);
+                group.controls.add(control);
+                continue;
+            }
+            
+            // Special handling for other prefixed groups (LFO, OSC, Wave)
+            if (isPrefixedGroup(prefix)) {
+                String restOfName = String.join(" ", java.util.Arrays.copyOfRange(parts, 1, parts.length));
+                if (!restOfName.trim().isEmpty()) {
+                    ControlGroup group = groups.computeIfAbsent(prefix, ControlGroup::new);
+                    group.controls.add(control);
+                    continue;
+                }
+            }
+            
             // Check for X/Y pairs
             if (prefix.equals("X") || prefix.equals("Y")) {
                 String key = "Position";
@@ -133,7 +159,7 @@ public class ControlsPanel extends JPanel {
                 continue;
             }
             
-            // Standard grouping logic
+            // Standard grouping logic for other controls
             if (parts.length > 1) {
                 String key = prefix;
                 ControlGroup group = groups.computeIfAbsent(key, ControlGroup::new);
@@ -206,6 +232,18 @@ public class ControlsPanel extends JPanel {
 
         revalidate();
         repaint();
+    }
+
+    private boolean isNumberedGroup(String prefix) {
+        return prefix.equals("LFO") ||
+                prefix.equals("Envelope") ||
+               prefix.equals("Filter") ||
+               prefix.equals("Oscillator");
+    }
+
+    private boolean isPrefixedGroup(String prefix) {
+        return prefix.equals("OSC") ||
+               prefix.equals("Wave");
     }
 
     private void layoutSingleControls(JPanel panel, List<ProxyControlCode> controls) {
@@ -478,5 +516,32 @@ public class ControlsPanel extends JPanel {
         }
         
         logger.info("Loaded " + instruments.size() + " instruments into selector");
+    }
+
+    private void refreshControlsPanel() {
+        // Store currently selected instrument
+        ProxyInstrument currentInstrument = (ProxyInstrument) instrumentSelector.getSelectedItem();
+        
+        // Clear and reload instruments from database
+        refreshInstruments();
+        
+        // If there was a previously selected instrument, try to reselect it
+        if (currentInstrument != null) {
+            for (int i = 0; i < instrumentSelector.getItemCount(); i++) {
+                ProxyInstrument item = instrumentSelector.getItemAt(i);
+                if (item.getId().equals(currentInstrument.getId())) {
+                    instrumentSelector.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+        
+        // Force update of controls display
+        ProxyInstrument selected = (ProxyInstrument) instrumentSelector.getSelectedItem();
+        if (selected != null) {
+            updateControlsDisplay(selected);
+        }
+        
+        logger.info("Controls panel refreshed");
     }
 }
