@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -24,7 +25,9 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JToolBar;
@@ -44,7 +47,7 @@ import com.angrysurfer.core.service.RedisService;
 
 public class ControlsPanel extends JPanel implements CommandListener {
     private static final Logger logger = Logger.getLogger(ControlsPanel.class.getName());
-    private final JComboBox<ProxyInstrument> instrumentSelector;
+    private JComboBox<ProxyInstrument> instrumentSelector;
     private final RedisService redisService;
     private final JPanel controlsContainer;
 
@@ -52,12 +55,38 @@ public class ControlsPanel extends JPanel implements CommandListener {
         setLayout(new BorderLayout());
         this.redisService = RedisService.getInstance();
         
+        // Initialize instrumentSelector first
+        this.instrumentSelector = new JComboBox<>();
+        
         // Create toolbar
         JToolBar toolBar = new JToolBar();
         toolBar.setFloatable(false);
+
+        // Add hamburger menu button
+        JButton menuButton = new JButton("☰");
+        menuButton.setFont(new Font("Dialog", Font.PLAIN, 16));
+        menuButton.setToolTipText("Menu");
+        
+        // Create popup menu
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem saveConfigItem = new JMenuItem("Save Config...");
+        saveConfigItem.addActionListener(e -> {
+            ProxyInstrument currentInstrument = (ProxyInstrument) instrumentSelector.getSelectedItem();
+            if (currentInstrument != null) {
+                CommandBus.getInstance().publish(Commands.SAVE_INSTRUMENT_CONFIG, this, currentInstrument);
+            }
+        });
+        popupMenu.add(saveConfigItem);
+        
+        // Add popup trigger to button
+        menuButton.addActionListener(e -> {
+            popupMenu.show(menuButton, 0, menuButton.getHeight());
+        });
+        
+        toolBar.add(menuButton);
+        toolBar.addSeparator(new Dimension(10, 0));
         
         // Create and configure instrument selector
-        instrumentSelector = new JComboBox<>();
         instrumentSelector.setRenderer(new DefaultListCellRenderer() {
             @Override
             public java.awt.Component getListCellRendererComponent(

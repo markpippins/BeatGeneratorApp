@@ -85,6 +85,7 @@ public class Commands {
 
     // Control sending commands
     public static final String SEND_ALL_CONTROLS = "SEND_ALL_CONTROLS";
+    public static final String SAVE_INSTRUMENT_CONFIG = "SAVE_INSTRUMENT_CONFIG";  // Add this line
 
     // Ticker selection commands
     public static final String TICKER = "TICKER";
