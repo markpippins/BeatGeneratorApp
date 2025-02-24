@@ -30,6 +30,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ToggleSwitch;
@@ -37,8 +38,12 @@ import com.angrysurfer.core.proxy.ProxyCaption;
 import com.angrysurfer.core.proxy.ProxyControlCode;
 import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.service.RedisService;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Command;
 
-public class ControlsPanel extends JPanel {
+public class ControlsPanel extends JPanel implements CommandListener {
     private static final Logger logger = Logger.getLogger(ControlsPanel.class.getName());
     private final JComboBox<ProxyInstrument> instrumentSelector;
     private final RedisService redisService;
@@ -109,6 +114,19 @@ public class ControlsPanel extends JPanel {
                 updateControlsDisplay(selected);
             }
         });
+
+        // Register for resize events
+        CommandBus.getInstance().register(this);
+    }
+
+    @Override
+    public void onAction(Command action) {
+        if (Commands.WINDOW_RESIZED.equals(action.getCommand())) {
+            ProxyInstrument currentInstrument = (ProxyInstrument) instrumentSelector.getSelectedItem();
+            if (currentInstrument != null) {
+                SwingUtilities.invokeLater(() -> updateControlsDisplay(currentInstrument));
+            }
+        }
     }
 
     private static class ControlGroup {
@@ -124,8 +142,18 @@ public class ControlsPanel extends JPanel {
     private void updateControlsDisplay(ProxyInstrument instrument) {
         controlsContainer.removeAll();
         
-        if (instrument.getControlCodes() == null || instrument.getControlCodes().isEmpty()) {
-            controlsContainer.add(new JLabel("No controls available"));
+        if (instrument == null || instrument.getControlCodes() == null || instrument.getControlCodes().isEmpty()) {
+            // Add empty message with center alignment
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.weightx = 1.0;
+            gbc.weighty = 1.0;
+            JLabel emptyLabel = new JLabel("No controls available");
+            emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            controlsContainer.add(emptyLabel, gbc);
+            
+            revalidate();
+            repaint();
             return;
         }
 

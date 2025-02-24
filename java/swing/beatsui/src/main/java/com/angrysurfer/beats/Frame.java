@@ -128,6 +128,15 @@ public class Frame extends JFrame implements AutoCloseable {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
+        // Add component listener for resize events
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                if (isShowing()) { // Only publish if window is visible
+                    CommandBus.getInstance().publish(Commands.WINDOW_RESIZED, this);
+                }
+            }
+        });
+
         // Make main content panel transparent
         backgroundPanel.setBackground(new Color(245, 245, 245, 200)); // Light background with some transparency
 
