@@ -478,6 +478,18 @@ public class ControlsPanel extends JPanel implements CommandListener {
         logger.info("Controls panel refreshed");
     }
 
+    public void selectInstrument(ProxyInstrument instrument) {
+        if (instrument != null) {
+            for (int i = 0; i < instrumentSelector.getItemCount(); i++) {
+                ProxyInstrument item = instrumentSelector.getItemAt(i);
+                if (item.getId().equals(instrument.getId())) {
+                    instrumentSelector.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+    }
+
     private void layoutControlsInGroup(JPanel groupPanel, ControlGroup group) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(2, 2, 2, 2);

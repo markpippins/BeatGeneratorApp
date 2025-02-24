@@ -49,8 +49,8 @@ public class InstrumentEditPanel extends JPanel {
         deviceCombo = new JComboBox<>();
         populateDeviceCombo();
 
-        // Set selected device if it exists
-        if (instrument.getDeviceName() != null) {
+        // Update device selection based on instrument
+        if (instrument != null && instrument.getDeviceName() != null) {
             for (int i = 0; i < deviceCombo.getItemCount(); i++) {
                 if (deviceCombo.getItemAt(i).equals(instrument.getDeviceName())) {
                     deviceCombo.setSelectedIndex(i);

@@ -8,6 +8,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
@@ -36,6 +37,7 @@ import com.angrysurfer.core.proxy.ProxyInstrument;
 import com.angrysurfer.core.proxy.ProxyRule;
 import com.angrysurfer.core.proxy.ProxyStrike;
 import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.RedisService;
 
 public class PlayerEditPanel extends StatusProviderPanel {
     private static final Logger logger = Logger.getLogger(PlayerEditPanel.class.getName());
@@ -43,7 +45,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
 
     // Basic properties
     private final JTextField nameField;
-    private final JComboBox<ProxyInstrument> instrumentCombo;
+    private JComboBox<ProxyInstrument> instrumentCombo;
     private final JSpinner channelSpinner; // Changed from Dial to JSpinner
     private final JSpinner presetSpinner; // Changed from Dial to JSpinner
 
@@ -89,7 +91,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
 
         // Initialize basic properties
         nameField = new JTextField(player.getName(), 20);
-        instrumentCombo = createInstrumentCombo();
+        setupInstrumentCombo();
 
         // Fix spinner initializations with proper value clamping
         int channelValue = Math.min(Math.max(1, (int) player.getChannel()), 16);
@@ -552,10 +554,29 @@ public class PlayerEditPanel extends StatusProviderPanel {
     }
 
     // Helper methods for creating components
-    private JComboBox<ProxyInstrument> createInstrumentCombo() {
-        JComboBox<ProxyInstrument> combo = new JComboBox<>(
-                InstrumentManager.getInstance().getAvailableInstruments().toArray(new ProxyInstrument[0]));
-        return combo;
+    private void setupInstrumentCombo() {
+        instrumentCombo = new JComboBox<>();
+        List<ProxyInstrument> instruments = RedisService.getInstance().findAllInstruments();
+        
+        // Sort instruments by name
+        instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+        
+        for (ProxyInstrument inst : instruments) {
+            instrumentCombo.addItem(inst);
+        }
+
+        // Select the player's instrument if it exists
+        if (player.getInstrument() != null) {
+            for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
+                ProxyInstrument item = (ProxyInstrument) instrumentCombo.getItemAt(i);
+                if (item.getId().equals(player.getInstrument().getId())) {
+                    instrumentCombo.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+
+        // ...rest of existing combo setup...
     }
 
     static int SLIDER_HEIGHT = 80;

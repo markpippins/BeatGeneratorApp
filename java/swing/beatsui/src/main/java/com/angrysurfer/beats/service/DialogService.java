@@ -201,25 +201,37 @@ public class DialogService implements CommandListener {
     }
 
     private void handlePlayerParameters(ProxyStrike player) {
-        if (player != null) {
+        if (player != null && player.getInstrument() != null) {
             SwingUtilities.invokeLater(() -> {
                 try {
-                    // Create controls panel
+                    // Create controls panel with instrument context
                     ControlsPanel controlsPanel = new ControlsPanel();
+                    
+                    // Pre-select the player's instrument
+                    controlsPanel.selectInstrument(player.getInstrument());
                     
                     // Create dialog using Frame's createDialog method
                     Dialog<ProxyStrike> dialog = frame.createDialog(player, controlsPanel);
-                    dialog.setTitle("Controls - " + player.getName());
+                    dialog.setTitle("Controls - " + player.getName() + " (" + player.getInstrument().getName() + ")");
                     
                     // Show dialog
                     dialog.showDialog();
                     
-                    logger.info("Showing controls dialog for player: " + player.getName());
+                    logger.info("Showing controls dialog for player: " + player.getName() + 
+                              " with instrument: " + player.getInstrument().getName());
                 } catch (Exception e) {
                     logger.severe("Error showing controls dialog: " + e.getMessage());
-                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(frame,
+                        "Could not show controls: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
                 }
             });
+        } else {
+            JOptionPane.showMessageDialog(frame,
+                "No instrument assigned to player",
+                "Warning",
+                JOptionPane.WARNING_MESSAGE);
         }
     }
 }
