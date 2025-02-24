@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -18,11 +20,11 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 
 import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.beats.widget.ToggleSwitch;
 import com.angrysurfer.core.proxy.ProxyCaption;
 import com.angrysurfer.core.proxy.ProxyControlCode;
 import com.angrysurfer.core.proxy.ProxyInstrument;
@@ -206,30 +208,47 @@ public class ControlsPanel extends JPanel {
         int lowerBound = controlCode.getLowerBound() != null ? controlCode.getLowerBound() : 0;
         int upperBound = controlCode.getUpperBound() != null ? controlCode.getUpperBound() : 127;
         
-        if (controlCode.getCaptions() != null && !controlCode.getCaptions().isEmpty()) {
-            if (controlCode.getCaptions().size() == 2) {
-                // Create a toggle button for binary choices
-                JToggleButton toggle = new JToggleButton();
+        if (controlCode.getCaptions() != null) {
+            int captionCount = controlCode.getCaptions().size();
+            logger.info("Creating control for " + controlCode.getName() + 
+                       " with " + captionCount + " captions");
+            
+            if (captionCount == 2) {
+                // Create a toggle switch instead of a toggle button
+                ToggleSwitch toggle = new ToggleSwitch();
                 
                 // Sort captions by code to ensure consistent ordering
                 List<ProxyCaption> sortedCaptions = new ArrayList<>(controlCode.getCaptions());
                 sortedCaptions.sort((a, b) -> a.getCode().compareTo(b.getCode()));
                 
-                // Use descriptions for button states
                 String offState = sortedCaptions.get(0).getDescription();
                 String onState = sortedCaptions.get(1).getDescription();
                 
-                toggle.setText(offState);
-                toggle.setPreferredSize(new Dimension(70, 30));
+                logger.info("Created toggle switch for " + controlCode.getName() + 
+                          " with states: " + offState + " / " + onState);
                 
-                // Update text based on toggle state
-                toggle.addActionListener(e -> {
-                    toggle.setText(toggle.isSelected() ? onState : offState);
+                // Set tool tip to show both states
+                toggle.setToolTipText(offState + " / " + onState);
+                toggle.setPreferredSize(new Dimension(60, 30));
+                
+                // Add label panel to show current state
+                JPanel togglePanel = new JPanel(new BorderLayout(5, 2));
+                JLabel stateLabel = new JLabel(offState, SwingConstants.CENTER);
+                togglePanel.add(toggle, BorderLayout.CENTER);
+                togglePanel.add(stateLabel, BorderLayout.SOUTH);
+                
+                toggle.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        stateLabel.setText(toggle.isSelected() ? onState : offState);
+                    }
                 });
                 
-                return toggle;
-            } else {
+                return togglePanel;
+            } else if (captionCount > 2) {
                 // Create slider for more than 2 captions
+                logger.info("Creating slider for " + controlCode.getName() + 
+                          " with " + captionCount + " captions");
                 JSlider slider = new JSlider(JSlider.VERTICAL, lowerBound, upperBound, lowerBound);
                 slider.setPaintTicks(true);
                 slider.setPaintLabels(true);
@@ -237,14 +256,15 @@ public class ControlsPanel extends JPanel {
                 slider.setPreferredSize(new Dimension(50, 120));
                 return slider;
             }
-        } else {
-            // Create dial for continuous control
-            Dial dial = new Dial();
-            dial.setMinimum(lowerBound);
-            dial.setMaximum(upperBound);
-            dial.setPreferredSize(new Dimension(50, 50));
-            return dial;
         }
+        
+        // Default to dial for continuous control
+        logger.info("Creating dial for " + controlCode.getName());
+        Dial dial = new Dial();
+        dial.setMinimum(lowerBound);
+        dial.setMaximum(upperBound);
+        dial.setPreferredSize(new Dimension(50, 50));
+        return dial;
     }
 
     public void refreshInstruments() {

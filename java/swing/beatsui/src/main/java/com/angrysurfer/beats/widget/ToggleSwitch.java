@@ -7,6 +7,10 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JComponent;
 
@@ -17,14 +21,36 @@ public class ToggleSwitch extends JComponent {
     private final int width = 60;
     private final int height = 30;
 
+    // Add ActionListener support
+    private final List<ActionListener> actionListeners = new ArrayList<>();
+
+    public void addActionListener(ActionListener listener) {
+        actionListeners.add(listener);
+    }
+
+    public void removeActionListener(ActionListener listener) {
+        actionListeners.remove(listener);
+    }
+
+    protected void fireActionPerformed() {
+        ActionEvent event = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "stateChanged");
+        for (ActionListener listener : actionListeners) {
+            listener.actionPerformed(event);
+        }
+    }
+
     public ToggleSwitch() {
         setPreferredSize(new Dimension(width, height));
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                boolean wasSelected = selected;
                 selected = !selected;
                 repaint();
                 firePropertyChange("selected", !selected, selected);
+                if (isSelected() != wasSelected) {
+                    fireActionPerformed();
+                }
             }
         });
     }
