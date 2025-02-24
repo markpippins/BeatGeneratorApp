@@ -174,31 +174,89 @@ public class ControlsPanel extends JPanel {
             }
         }
 
-        // Create wrapper panel with wrap layout
-        WrapLayout wrapLayout = new WrapLayout(FlowLayout.LEFT, 5, 5);
-        JPanel wrapperPanel = new JPanel(wrapLayout);
-        
-        // Add all group panels to wrapper
+        // Create outer wrapper panel with GridBagLayout
+        JPanel outerWrapper = new JPanel(new GridBagLayout());
+        GridBagConstraints outerGbc = new GridBagConstraints();
+        outerGbc.gridx = 0;
+        outerGbc.gridy = 0;
+        outerGbc.weightx = 1.0;
+        outerGbc.anchor = GridBagConstraints.CENTER;
+
+        // Create inner panel that will contain rows
+        JPanel rowsPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints rowGbc = new GridBagConstraints();
+        rowGbc.gridx = 0;
+        rowGbc.fill = GridBagConstraints.HORIZONTAL;
+        rowGbc.insets = new Insets(5, 5, 5, 5);
+
+        // Calculate max width for wrapping
+        int maxWidth = controlsContainer.getParent().getWidth() - 50;
+        int currentRowWidth = 0;
+        JPanel currentRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        int currentRowY = 0;
+
+        // Add groups with wrapping
         for (ControlGroup group : groups.values()) {
             JPanel groupPanel = new JPanel(new GridBagLayout());
             groupPanel.setBorder(BorderFactory.createTitledBorder(group.name));
             layoutControlsInGroup(groupPanel, group);
-            wrapperPanel.add(groupPanel);
+
+            Dimension groupSize = groupPanel.getPreferredSize();
+
+            if (currentRowWidth + groupSize.width > maxWidth && currentRowWidth > 0) {
+                // Add current row and start new one
+                rowGbc.gridy = currentRowY++;
+                rowsPanel.add(currentRow, rowGbc);
+                currentRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+                currentRowWidth = 0;
+            }
+
+            currentRow.add(groupPanel);
+            currentRowWidth += groupSize.width + 10;
         }
 
-        // Add singles panel if needed
+        // Add last row if it has components
+        if (currentRow.getComponentCount() > 0) {
+            rowGbc.gridy = currentRowY;
+            rowsPanel.add(currentRow, rowGbc);
+        }
+
+        // Add singles panel at the bottom if needed
         if (!singleControls.isEmpty()) {
+            rowGbc.gridy = currentRowY + 1;
             JPanel singlesPanel = createSinglesPanel(singleControls, 6);
-            wrapperPanel.add(singlesPanel);
+            rowsPanel.add(singlesPanel, rowGbc);
         }
 
-        // Add the wrapper to the scroll pane's view
-        controlsContainer.add(wrapperPanel, new GridBagConstraints());
+        // Add rows panel to outer wrapper
+        outerWrapper.add(rowsPanel, outerGbc);
+
+        // Add outer wrapper to container
+        GridBagConstraints containerGbc = new GridBagConstraints();
+        containerGbc.anchor = GridBagConstraints.NORTH;
+        containerGbc.fill = GridBagConstraints.BOTH;
+        containerGbc.weightx = 1.0;
+        containerGbc.weighty = 1.0;
+        controlsContainer.add(outerWrapper, containerGbc);
 
         revalidate();
         repaint();
     }
-    
+
+    private void alignPanelHeights(List<JPanel> panels) {
+        // Find maximum height in current row
+        int maxHeight = panels.stream()
+            .mapToInt(p -> p.getPreferredSize().height)
+            .max()
+            .orElse(0);
+
+        // Set all panels in row to same height
+        panels.forEach(p -> {
+            Dimension d = p.getPreferredSize();
+            p.setPreferredSize(new Dimension(d.width, maxHeight));
+        });
+    }
+
     // Custom WrapLayout class that properly handles wrapping
     private class WrapLayout extends FlowLayout {
         public WrapLayout(int align, int hgap, int vgap) {
