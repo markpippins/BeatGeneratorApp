@@ -17,6 +17,9 @@ public class Commands {
     public static final String TRANSPORT_PLAY = "TRANSPORT_PLAY";
     public static final String TRANSPORT_FORWARD = "TRANSPORT_FORWARD";
 
+    // Transport state commands
+    public static final String TRANSPORT_STATE_CHANGED = "TRANSPORT_STATE_CHANGED";
+
     // File Commands
     public static final String NEW_FILE = "NEW_FILE";
     public static final String OPEN_FILE = "OPEN_FILE";

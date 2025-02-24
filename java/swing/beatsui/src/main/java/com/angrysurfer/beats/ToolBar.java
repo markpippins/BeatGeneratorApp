@@ -45,6 +45,8 @@ public class ToolBar extends JToolBar {
     private ProxyTicker currentTicker; // Add field to track current ticker
 
     private JPanel transportPanel;
+    private JButton playButton;
+    private JButton stopButton;
 
     public ToolBar() {
         super();
@@ -102,6 +104,14 @@ public class ToolBar extends JToolBar {
                                 }
                             }
                         }
+                        case Commands.TRANSPORT_STATE_CHANGED -> {
+                            if (action.getData() instanceof Boolean isPlaying) {
+                                SwingUtilities.invokeLater(() -> {
+                                    playButton.setEnabled(!isPlaying);
+                                    stopButton.setEnabled(isPlaying);
+                                });
+                            }
+                        }
                     }
                 }
             }
@@ -117,6 +127,10 @@ public class ToolBar extends JToolBar {
                 actionBus.publish(Commands.TICKER_REQUEST, this);
             }
         });
+
+        // Set initial button states
+        playButton.setEnabled(true);
+        stopButton.setEnabled(false);
     }
 
     private JComboBox<Integer> createTickerCombo(String field, int min, int max, int current) {
@@ -444,6 +458,9 @@ public class ToolBar extends JToolBar {
         transportPanel.add(recordBtn);
         transportPanel.add(playBtn);
         transportPanel.add(forwardBtn);
+
+        this.playButton = playBtn;
+        this.stopButton = stopBtn;
     }
 
     private void updateToolbarState(ProxyTicker ticker) {

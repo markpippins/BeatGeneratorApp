@@ -212,6 +212,20 @@ public class TickerManager {
                             commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
                         }
                     }
+                    case Commands.TRANSPORT_PLAY -> {
+                        if (activeTicker != null) {
+                            activeTicker.play();
+                            // Notify UI about transport state change
+                            commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
+                        }
+                    }
+                    case Commands.TRANSPORT_STOP -> {
+                        if (activeTicker != null) {
+                            activeTicker.stop();
+                            // Notify UI about transport state change
+                            commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+                        }
+                    }
                 }
             }
         });
