@@ -70,4 +70,14 @@ public class ContextMenuHelper {
             }
         });
     }
+
+    public void addSeparator() {
+        popupMenu.addSeparator();
+    }
+
+    public void addMenuItem(String text, ActionListener listener) {
+        JMenuItem menuItem = new JMenuItem(text);
+        menuItem.addActionListener(listener);
+        popupMenu.add(menuItem);
+    }
 }

@@ -2,6 +2,7 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -137,6 +139,7 @@ public class PlayersPanel extends JPanel {
     }
 
     private boolean hasActiveTicker = false; // Add this field
+    private JButton controlButton; // Add this field
 
     public PlayersPanel(StatusConsumer status, RulesPanel ruleTablePanel) {
         super(new BorderLayout());
@@ -186,6 +189,22 @@ public class PlayersPanel extends JPanel {
         // Create a wrapper panel for the button panel with BorderLayout
         JPanel buttonWrapper = new JPanel(new BorderLayout());
         buttonWrapper.add(buttonPanel, BorderLayout.CENTER);
+        
+        // Create control button
+        controlButton = new JButton("Control");
+        controlButton.setEnabled(false);
+        controlButton.addActionListener(e -> {
+            ProxyStrike selectedPlayer = getSelectedPlayer();
+            if (selectedPlayer != null) {
+                CommandBus.getInstance().publish(Commands.EDIT_PLAYER_PARAMETERS, this, selectedPlayer);
+            }
+        });
+        
+        // Add control button to the right of the button panel
+        JPanel rightButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        rightButtonPanel.add(controlButton);
+        buttonWrapper.add(rightButtonPanel, BorderLayout.EAST);
+        
         topPanel.add(buttonWrapper, BorderLayout.NORTH);
 
         add(topPanel, BorderLayout.NORTH);
@@ -399,6 +418,15 @@ public class PlayersPanel extends JPanel {
 
     private void setupContextMenu() {
         contextMenu.install(table);
+        
+        // Add separator and Controls menu item
+        contextMenu.addSeparator();
+        contextMenu.addMenuItem("Control", e -> {
+            ProxyStrike selectedPlayer = getSelectedPlayer();
+            if (selectedPlayer != null) {
+                CommandBus.getInstance().publish(Commands.EDIT_PLAYER_PARAMETERS, this, selectedPlayer);
+            }
+        });
 
         contextMenu.addActionListener(e -> {
             String command = e.getActionCommand();
@@ -421,11 +449,14 @@ public class PlayersPanel extends JPanel {
     private void updateButtonStates() {
         boolean hasSelection = table.getSelectedRow() >= 0;
 
-        // Only update Edit and Delete states
+        // Update existing button states
         buttonPanel.setEditEnabled(hasSelection);
         buttonPanel.setDeleteEnabled(hasSelection);
         contextMenu.setEditEnabled(hasSelection);
         contextMenu.setDeleteEnabled(hasSelection);
+        
+        // Update control button state
+        controlButton.setEnabled(hasSelection);
     }
 
     private void setupCommandBusListener() {

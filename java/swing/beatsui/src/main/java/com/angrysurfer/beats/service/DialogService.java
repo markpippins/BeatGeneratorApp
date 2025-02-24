@@ -4,9 +4,11 @@ import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.JDialog;
 
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.beats.Frame;
+import com.angrysurfer.beats.panel.ControlsPanel;
 import com.angrysurfer.beats.panel.PlayerEditPanel;
 import com.angrysurfer.beats.panel.RuleEditPanel;
 import com.angrysurfer.core.api.Command;
@@ -48,6 +50,7 @@ public class DialogService implements CommandListener {
             case Commands.PLAYER_EDIT_REQUEST -> handleEditPlayer((ProxyStrike) action.getData());
             case Commands.RULE_ADD_REQUEST -> handleAddRule((ProxyStrike) action.getData());
             case Commands.RULE_EDIT_REQUEST -> handleEditRule((ProxyRule) action.getData());
+            case Commands.EDIT_PLAYER_PARAMETERS -> handlePlayerParameters((ProxyStrike) action.getData());
         }
     }
 
@@ -192,6 +195,29 @@ public class DialogService implements CommandListener {
                 if (dialog.showDialog()) {
                     ProxyRule updatedRule = panel.getUpdatedRule();
                     commandBus.publish(Commands.RULE_UPDATED, this, updatedRule);
+                }
+            });
+        }
+    }
+
+    private void handlePlayerParameters(ProxyStrike player) {
+        if (player != null) {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    // Create controls panel
+                    ControlsPanel controlsPanel = new ControlsPanel();
+                    
+                    // Create dialog using Frame's createDialog method
+                    Dialog<ProxyStrike> dialog = frame.createDialog(player, controlsPanel);
+                    dialog.setTitle("Controls - " + player.getName());
+                    
+                    // Show dialog
+                    dialog.showDialog();
+                    
+                    logger.info("Showing controls dialog for player: " + player.getName());
+                } catch (Exception e) {
+                    logger.severe("Error showing controls dialog: " + e.getMessage());
+                    e.printStackTrace();
                 }
             });
         }

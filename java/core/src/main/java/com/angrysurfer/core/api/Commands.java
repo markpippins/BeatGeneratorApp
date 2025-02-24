@@ -45,6 +45,7 @@ public class Commands {
     public static final String PLAYER_EDIT_REQUEST = "PLAYER_EDIT_REQUEST";
     public static final String PLAYER_DELETE_REQUEST = "PLAYER_DELETE_REQUEST";
     public static final String PLAYER_EDIT_CANCELLED = "PLAYER_EDIT_CANCELLED";
+    public static final String EDIT_PLAYER_PARAMETERS = "EDIT_PLAYER_PARAMETERS";  // Add this line
 
     // Player navigation commands
     public static final String PLAYER_ROW_INDEX_REQUEST = "PLAYER_ROW_INDEX_REQUEST";
