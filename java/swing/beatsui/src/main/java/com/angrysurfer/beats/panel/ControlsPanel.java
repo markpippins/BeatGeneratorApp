@@ -3,6 +3,7 @@ package com.angrysurfer.beats.panel;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -169,66 +170,34 @@ public class ControlsPanel extends JPanel {
             }
         }
 
-        // Layout with grid constraints
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        
-        // Process groups in a grid layout
-        int col = 0;
+        // Use FlowLayout for automatic wrapping
+        JPanel wrapperPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        wrapperPanel.setPreferredSize(new Dimension(
+            controlsContainer.getParent().getWidth() - 20, // Account for scrollbar
+            controlsContainer.getParent().getHeight()
+        ));
+
+        // Add all groups to wrapper
         for (ControlGroup group : groups.values()) {
-            gbc.gridx = col % 3;  // 3 columns
-            gbc.gridy = col / 3;
-            
             JPanel groupPanel = new JPanel(new GridBagLayout());
             groupPanel.setBorder(BorderFactory.createTitledBorder(group.name));
-            
-            // Layout controls within group
-            GridBagConstraints innerGbc = new GridBagConstraints();
-            innerGbc.insets = new Insets(2, 2, 2, 2);
-            innerGbc.anchor = GridBagConstraints.CENTER;
-            
-            int innerCol = 0;
-            int innerRow = 0;
-            
-            for (ProxyControlCode control : group.controls) {
-                // Add label
-                innerGbc.gridx = innerCol;
-                innerGbc.gridy = innerRow * 2;
-                innerGbc.gridheight = 1;
-                JLabel label = new JLabel(getShortName(control.getName()), SwingConstants.CENTER);
-                label.setPreferredSize(new Dimension(70, 20));
-                groupPanel.add(label, innerGbc);
-                
-                // Add control
-                innerGbc.gridy = innerRow * 2 + 1;
-                Component controlComponent = createControl(control);
-                groupPanel.add(controlComponent, innerGbc);
-                
-                innerCol++;
-                if (innerCol >= 4) {  // 4 controls per row within groups
-                    innerCol = 0;
-                    innerRow++;
-                }
-            }
-            
-            controlsContainer.add(groupPanel, gbc);
-            col++;
+            layoutControlsInGroup(groupPanel, group);
+            wrapperPanel.add(groupPanel);
         }
 
-        // Add singles at the bottom if any
+        // Add singles panel if needed
         if (!singleControls.isEmpty()) {
-            gbc.gridx = 0;
-            gbc.gridy = (col / 3) + 1;
-            gbc.gridwidth = 3;
-            
-            JPanel singlesPanel = new JPanel(new GridBagLayout());
-            layoutSingleControls(singlesPanel, singleControls);
-            controlsContainer.add(singlesPanel, gbc);
+            JPanel singlesPanel = createSinglesPanel(singleControls, 6);
+            wrapperPanel.add(singlesPanel);
         }
+
+        // Add wrapper to a constraint that allows horizontal expansion
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.weighty = 0.0;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        controlsContainer.add(wrapperPanel, gbc);
 
         revalidate();
         repaint();
@@ -342,49 +311,36 @@ public class ControlsPanel extends JPanel {
             return;
         }
 
-        // Regular group handling
+        // Create direct grid layout for controls with border
         JPanel groupPanel = new JPanel(new GridBagLayout());
         groupPanel.setBorder(BorderFactory.createTitledBorder(group.name));
-        
-        // Ensure group panel takes full width
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
         
         GridBagConstraints innerGbc = new GridBagConstraints();
         innerGbc.insets = new Insets(2, 2, 2, 2);
         innerGbc.fill = GridBagConstraints.NONE;
-        innerGbc.anchor = GridBagConstraints.CENTER;
+        innerGbc.anchor = GridBagConstraints.WEST;
         
-        // Calculate optimal layout for controls
-        int totalControls = group.controls.size() + group.subgroups.size();
-        int optimalColumns = Math.min(totalControls, CONTROLS_PER_ROW);
+        // Calculate optimal columns based on number of controls
+        int totalControls = group.controls.size();
+        int optimalColumns = Math.min(totalControls, 4); // Max 4 controls per row
         
-        // Create a wrapper panel for the controls with FlowLayout
-        JPanel controlsWrapper = new JPanel(new GridBagLayout());
+        // Layout controls directly in the group panel
         int currentRow = 0;
         int currentCol = 0;
         
-        // Layout controls in a grid
         for (ProxyControlCode control : group.controls) {
-            // Add control with its label
-            addControlToPanel(controlsWrapper, control, currentCol, currentRow, innerGbc);
-            
-            currentCol++;
-            if (currentCol >= optimalColumns) {
-                currentCol = 0;
-                currentRow++;
-            }
-        }
-        
-        // Add subgroups
-        for (ControlGroup subgroup : group.subgroups) {
+            // Add label
             innerGbc.gridx = currentCol;
             innerGbc.gridy = currentRow * 2;
-            innerGbc.gridheight = 2;
+            innerGbc.gridheight = 1;
+            JLabel label = new JLabel(getShortName(control.getName()), SwingConstants.LEFT);
+            label.setPreferredSize(new Dimension(70, 20));
+            groupPanel.add(label, innerGbc);
             
-            JPanel subPanel = new JPanel(new GridBagLayout());
-            addGroupToPanel(subPanel, subgroup, new GridBagConstraints());
-            controlsWrapper.add(subPanel, innerGbc);
+            // Add control
+            innerGbc.gridy = currentRow * 2 + 1;
+            Component controlComponent = createControl(control);
+            groupPanel.add(controlComponent, innerGbc);
             
             currentCol++;
             if (currentCol >= optimalColumns) {
@@ -392,11 +348,10 @@ public class ControlsPanel extends JPanel {
                 currentRow++;
             }
         }
-        
-        // Add the controls wrapper to the group panel
-        groupPanel.add(controlsWrapper, new GridBagConstraints());
-        
-        // Add group panel to parent
+
+        // Add panel directly to parent
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0.0;
         parent.add(groupPanel, gbc);
     }
 
@@ -425,7 +380,8 @@ public class ControlsPanel extends JPanel {
         gbc.gridx = col;
         gbc.gridy = row * 2;
         gbc.gridheight = 1;
-        JLabel label = new JLabel(getShortName(control.getName()), SwingConstants.CENTER);
+        gbc.anchor = GridBagConstraints.WEST; // Changed from CENTER to WEST
+        JLabel label = new JLabel(getShortName(control.getName()), SwingConstants.LEFT); // Changed to LEFT
         label.setPreferredSize(new Dimension(70, 20));
         panel.add(label, gbc);
         
@@ -543,5 +499,43 @@ public class ControlsPanel extends JPanel {
         }
         
         logger.info("Controls panel refreshed");
+    }
+
+    private void layoutControlsInGroup(JPanel groupPanel, ControlGroup group) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(2, 2, 2, 2);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER; // Changed from WEST to CENTER
+        
+        // Calculate optimal layout
+        int totalControls = group.controls.size();
+        int maxColumns = Math.min(4, totalControls);
+        int rows = (totalControls + maxColumns - 1) / maxColumns;
+        
+        // Center the controls grid within the panel
+        int currentControl = 0;
+        for (int row = 0; row < rows; row++) {
+            // Calculate controls in this row
+            int controlsInRow = Math.min(maxColumns, totalControls - (row * maxColumns));
+            
+            // Calculate starting X position to center the row
+            int startX = (maxColumns - controlsInRow) / 2;
+            
+            for (int col = 0; col < controlsInRow; col++) {
+                ProxyControlCode control = group.controls.get(currentControl++);
+                
+                // Add label
+                gbc.gridx = startX + col;
+                gbc.gridy = row * 2;
+                JLabel label = new JLabel(getShortName(control.getName()), SwingConstants.CENTER);
+                label.setPreferredSize(new Dimension(70, 20));
+                groupPanel.add(label, gbc);
+                
+                // Add control
+                gbc.gridy = row * 2 + 1;
+                Component controlComponent = createControl(control);
+                groupPanel.add(controlComponent, gbc);
+            }
+        }
     }
 }
