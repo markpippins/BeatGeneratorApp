@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
@@ -24,6 +25,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
+import javax.swing.table.TableModel;
 
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.core.api.CommandBus;
@@ -344,6 +348,12 @@ public class InstrumentsPanel extends StatusProviderPanel {
         table.getTableHeader().setReorderingAllowed(false);
         table.setAutoCreateRowSorter(true);  // Enable sorting
 
+        // Add default sorting by name (column 0)
+        RowSorter<? extends TableModel> sorter = table.getRowSorter();
+        ArrayList<RowSorter.SortKey> sortKeys = new ArrayList<>();
+        sortKeys.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
+        sorter.setSortKeys(sortKeys);
+
         // Center-align numeric columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
@@ -431,6 +441,12 @@ public class InstrumentsPanel extends StatusProviderPanel {
         table.getTableHeader().setReorderingAllowed(false);
         table.setAutoCreateRowSorter(true);  // Enable sorting
 
+        // Add default sorting by name (column 0)
+        RowSorter<? extends TableModel> sorter = table.getRowSorter();
+        ArrayList<RowSorter.SortKey> sortKeys = new ArrayList<>();
+        sortKeys.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
+        sorter.setSortKeys(sortKeys);
+
         // Center-align all numeric columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
@@ -506,6 +522,12 @@ public class InstrumentsPanel extends StatusProviderPanel {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
         table.setAutoCreateRowSorter(true);  // Enable sorting
+
+        // Add default sorting by description (column 1)
+        RowSorter<? extends TableModel> sorter = table.getRowSorter();
+        ArrayList<RowSorter.SortKey> sortKeys = new ArrayList<>();
+        sortKeys.add(new RowSorter.SortKey(1, SortOrder.ASCENDING));
+        sorter.setSortKeys(sortKeys);
 
         // Center-align the numeric code column
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
