@@ -2,6 +2,7 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -10,6 +11,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -171,63 +174,95 @@ public class ControlsPanel extends JPanel {
             }
         }
 
-        // Create wrapper panel with GridBagLayout for better control
-        JPanel wrapperPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints wrapperGbc = new GridBagConstraints();
-        wrapperGbc.insets = new Insets(5, 5, 5, 5);
-        wrapperGbc.fill = GridBagConstraints.NONE;
-        wrapperGbc.anchor = GridBagConstraints.NORTHWEST;
+        // Create wrapper panel with wrap layout
+        WrapLayout wrapLayout = new WrapLayout(FlowLayout.LEFT, 5, 5);
+        JPanel wrapperPanel = new JPanel(wrapLayout);
         
-        // Track current row and column
-        int row = 0;
-        int col = 0;
-        int maxWidth = Math.max(800, controlsContainer.getParent().getWidth() - 50); // Minimum width
-        int currentRowWidth = 0;
-
-        // Add groups with proper wrapping
+        // Add all group panels to wrapper
         for (ControlGroup group : groups.values()) {
-            // Create and setup the group panel
             JPanel groupPanel = new JPanel(new GridBagLayout());
             groupPanel.setBorder(BorderFactory.createTitledBorder(group.name));
             layoutControlsInGroup(groupPanel, group);
-
-            // Get preferred size before adding
-            Dimension prefSize = groupPanel.getPreferredSize();
-
-            // Check if we need to wrap to next row
-            if (col > 0 && (currentRowWidth + prefSize.width > maxWidth)) {
-                row++;
-                col = 0;
-                currentRowWidth = 0;
-            }
-
-            // Position the panel
-            wrapperGbc.gridx = col++;
-            wrapperGbc.gridy = row;
-            wrapperPanel.add(groupPanel, wrapperGbc);
-
-            currentRowWidth += prefSize.width + wrapperGbc.insets.left + wrapperGbc.insets.right;
+            wrapperPanel.add(groupPanel);
         }
 
-        // Add singles at the bottom if any
+        // Add singles panel if needed
         if (!singleControls.isEmpty()) {
-            wrapperGbc.gridx = 0;
-            wrapperGbc.gridy = row + 1;
-            wrapperGbc.gridwidth = GridBagConstraints.REMAINDER;
             JPanel singlesPanel = createSinglesPanel(singleControls, 6);
-            wrapperPanel.add(singlesPanel, wrapperGbc);
+            wrapperPanel.add(singlesPanel);
         }
 
-        // Add the wrapper to a constraint that allows proper scrolling
-        GridBagConstraints containerGbc = new GridBagConstraints();
-        containerGbc.anchor = GridBagConstraints.NORTHWEST;
-        containerGbc.weightx = 1.0;
-        containerGbc.weighty = 1.0;
-        containerGbc.fill = GridBagConstraints.BOTH;
-        controlsContainer.add(wrapperPanel, containerGbc);
+        // Add the wrapper to the scroll pane's view
+        controlsContainer.add(wrapperPanel, new GridBagConstraints());
 
         revalidate();
         repaint();
+    }
+    
+    // Custom WrapLayout class that properly handles wrapping
+    private class WrapLayout extends FlowLayout {
+        public WrapLayout(int align, int hgap, int vgap) {
+            super(align, hgap, vgap);
+        }
+
+        @Override
+        public Dimension preferredLayoutSize(Container target) {
+            return layoutSize(target, true);
+        }
+
+        @Override
+        public Dimension minimumLayoutSize(Container target) {
+            return layoutSize(target, false);
+        }
+
+        private Dimension layoutSize(Container target, boolean preferred) {
+            synchronized (target.getTreeLock()) {
+                int maxWidth = target.getParent().getWidth();
+                if (maxWidth == 0) maxWidth = Integer.MAX_VALUE;
+                
+                int hgap = getHgap();
+                int vgap = getVgap();
+                Insets insets = target.getInsets();
+                int horizontalInsetsAndGap = insets.left + insets.right + (hgap * 2);
+                int maxRowWidth = maxWidth - horizontalInsetsAndGap;
+
+                Dimension dim = new Dimension(0, 0);
+                int rowWidth = 0;
+                int rowHeight = 0;
+
+                int nmembers = target.getComponentCount();
+                for (int i = 0; i < nmembers; i++) {
+                    Component m = target.getComponent(i);
+                    if (m.isVisible()) {
+                        Dimension d = preferred ? m.getPreferredSize() : m.getMinimumSize();
+                        if (rowWidth + d.width > maxRowWidth) {
+                            addRow(dim, rowWidth, rowHeight);
+                            rowWidth = 0;
+                            rowHeight = 0;
+                        }
+                        if (rowWidth != 0) {
+                            rowWidth += hgap;
+                        }
+                        rowWidth += d.width;
+                        rowHeight = Math.max(rowHeight, d.height);
+                    }
+                }
+                addRow(dim, rowWidth, rowHeight);
+
+                dim.width += horizontalInsetsAndGap;
+                dim.height += insets.top + insets.bottom + vgap * 2;
+
+                return dim;
+            }
+        }
+
+        private void addRow(Dimension dim, int rowWidth, int rowHeight) {
+            dim.width = Math.max(dim.width, rowWidth);
+            if (dim.height > 0) {
+                dim.height += getVgap();
+            }
+            dim.height += rowHeight;
+        }
     }
 
     private boolean isNumberedGroup(String prefix) {
@@ -430,8 +465,6 @@ public class ControlsPanel extends JPanel {
         
         if (controlCode.getCaptions() != null) {
             int captionCount = controlCode.getCaptions().size();
-            logger.info("Creating control for " + controlCode.getName() + 
-                       " with " + captionCount + " captions");
             
             if (captionCount == 2) {
                 // Create a toggle switch instead of a toggle button
@@ -466,15 +499,32 @@ public class ControlsPanel extends JPanel {
                 
                 return togglePanel;
             } else if (captionCount > 2) {
-                // Create slider for more than 2 captions
-                logger.info("Creating slider for " + controlCode.getName() + 
-                          " with " + captionCount + " captions");
-                JSlider slider = new JSlider(JSlider.VERTICAL, lowerBound, upperBound, lowerBound);
+                // Create a panel to hold the slider and labels
+                JPanel sliderPanel = new JPanel(new BorderLayout(2, 2));
+                
+                // Create and configure the slider with wider dimensions
+                JSlider slider = new JSlider(JSlider.VERTICAL, 0, captionCount - 1, 0);
+                slider.setPreferredSize(new Dimension(80, 120)); // Changed from 60 to 80
+                slider.setMajorTickSpacing(1);
+                slider.setSnapToTicks(true);
                 slider.setPaintTicks(true);
+                
+                // Sort captions by code for consistent ordering
+                List<ProxyCaption> sortedCaptions = new ArrayList<>(controlCode.getCaptions());
+                sortedCaptions.sort((a, b) -> a.getCode().compareTo(b.getCode()));
+                
+                // Create a label table for the captions
+                Dictionary<Integer, JLabel> labelTable = new Hashtable<>();
+                for (int i = 0; i < sortedCaptions.size(); i++) {
+                    JLabel label = new JLabel(sortedCaptions.get(i).getDescription());
+                    label.setFont(label.getFont().deriveFont(10.0f)); // Smaller font
+                    labelTable.put(sortedCaptions.size() - 1 - i, label); // Reverse order for vertical slider
+                }
+                slider.setLabelTable(labelTable);
                 slider.setPaintLabels(true);
-                slider.setMajorTickSpacing((upperBound - lowerBound) / 4);
-                slider.setPreferredSize(new Dimension(50, 120));
-                return slider;
+                
+                sliderPanel.add(slider, BorderLayout.CENTER);
+                return sliderPanel;
             }
         }
         
