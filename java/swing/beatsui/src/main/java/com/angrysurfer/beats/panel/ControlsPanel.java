@@ -77,12 +77,13 @@ public class ControlsPanel extends JPanel {
         toolBar.addSeparator(new Dimension(10, 0));
         toolBar.add(refreshButton);
         
-        // Create scrollable container for controls with improved layout
+        // Create scrollable container with proper layout
         controlsContainer = new JPanel(new GridBagLayout());
         JScrollPane scrollPane = new JScrollPane(controlsContainer);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED); // Changed to AS_NEEDED
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);     // Added VERTICAL
         
         // Wrap controlsContainer in another panel to handle sizing
         JPanel containerWrapper = new JPanel(new BorderLayout());
@@ -170,34 +171,60 @@ public class ControlsPanel extends JPanel {
             }
         }
 
-        // Use FlowLayout for automatic wrapping
-        JPanel wrapperPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        wrapperPanel.setPreferredSize(new Dimension(
-            controlsContainer.getParent().getWidth() - 20, // Account for scrollbar
-            controlsContainer.getParent().getHeight()
-        ));
+        // Create wrapper panel with GridBagLayout for better control
+        JPanel wrapperPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints wrapperGbc = new GridBagConstraints();
+        wrapperGbc.insets = new Insets(5, 5, 5, 5);
+        wrapperGbc.fill = GridBagConstraints.NONE;
+        wrapperGbc.anchor = GridBagConstraints.NORTHWEST;
+        
+        // Track current row and column
+        int row = 0;
+        int col = 0;
+        int maxWidth = Math.max(800, controlsContainer.getParent().getWidth() - 50); // Minimum width
+        int currentRowWidth = 0;
 
-        // Add all groups to wrapper
+        // Add groups with proper wrapping
         for (ControlGroup group : groups.values()) {
+            // Create and setup the group panel
             JPanel groupPanel = new JPanel(new GridBagLayout());
             groupPanel.setBorder(BorderFactory.createTitledBorder(group.name));
             layoutControlsInGroup(groupPanel, group);
-            wrapperPanel.add(groupPanel);
+
+            // Get preferred size before adding
+            Dimension prefSize = groupPanel.getPreferredSize();
+
+            // Check if we need to wrap to next row
+            if (col > 0 && (currentRowWidth + prefSize.width > maxWidth)) {
+                row++;
+                col = 0;
+                currentRowWidth = 0;
+            }
+
+            // Position the panel
+            wrapperGbc.gridx = col++;
+            wrapperGbc.gridy = row;
+            wrapperPanel.add(groupPanel, wrapperGbc);
+
+            currentRowWidth += prefSize.width + wrapperGbc.insets.left + wrapperGbc.insets.right;
         }
 
-        // Add singles panel if needed
+        // Add singles at the bottom if any
         if (!singleControls.isEmpty()) {
+            wrapperGbc.gridx = 0;
+            wrapperGbc.gridy = row + 1;
+            wrapperGbc.gridwidth = GridBagConstraints.REMAINDER;
             JPanel singlesPanel = createSinglesPanel(singleControls, 6);
-            wrapperPanel.add(singlesPanel);
+            wrapperPanel.add(singlesPanel, wrapperGbc);
         }
 
-        // Add wrapper to a constraint that allows horizontal expansion
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-        gbc.weighty = 0.0;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        controlsContainer.add(wrapperPanel, gbc);
+        // Add the wrapper to a constraint that allows proper scrolling
+        GridBagConstraints containerGbc = new GridBagConstraints();
+        containerGbc.anchor = GridBagConstraints.NORTHWEST;
+        containerGbc.weightx = 1.0;
+        containerGbc.weighty = 1.0;
+        containerGbc.fill = GridBagConstraints.BOTH;
+        controlsContainer.add(wrapperPanel, containerGbc);
 
         revalidate();
         repaint();
