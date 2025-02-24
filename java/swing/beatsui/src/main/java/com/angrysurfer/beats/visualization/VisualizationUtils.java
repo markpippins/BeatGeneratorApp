@@ -32,4 +32,12 @@ public class VisualizationUtils {
             }
         }
     }
+
+    public static void fillBackground(GridButton[][] buttons, Color color) {
+        for (int row = 0; row < buttons.length; row++) {
+            for (int col = 0; col < buttons[0].length; col++) {
+                buttons[row][col].setBackground(color);
+            }
+        }
+    }
 }

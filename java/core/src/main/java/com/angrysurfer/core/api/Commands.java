@@ -82,6 +82,9 @@ public class Commands {
     public static final String CAPTION_UPDATED = "CAPTION_UPDATED";
     public static final String CAPTION_DELETED = "CAPTION_DELETED";
 
+    // Control sending commands
+    public static final String SEND_ALL_CONTROLS = "SEND_ALL_CONTROLS";
+
     // Ticker selection commands
     public static final String TICKER = "TICKER";
     public static final String TICKER_SELECTED = "TICKER_SELECTED";
@@ -166,4 +169,6 @@ public class Commands {
 
     public static final String WINDOW_CLOSING = "WINDOW_CLOSING";
     public static final String WINDOW_RESIZED = "WINDOW_RESIZED";
+
+    public static final String INSTRUMENT_UPDATED = "INSTRUMENT_UPDATED";
 }

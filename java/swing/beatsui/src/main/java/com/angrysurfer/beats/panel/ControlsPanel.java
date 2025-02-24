@@ -78,12 +78,24 @@ public class ControlsPanel extends JPanel implements CommandListener {
         JButton refreshButton = new JButton("\u21BB"); // Unicode refresh symbol
         refreshButton.setToolTipText("Refresh Controls");
         refreshButton.addActionListener(e -> refreshControlsPanel());
+
+        // Add send button after refresh
+        JButton sendButton = new JButton("\u2192"); // Unicode right arrow
+        sendButton.setToolTipText("Send All Controls");
+        sendButton.addActionListener(e -> {
+            ProxyInstrument current = (ProxyInstrument) instrumentSelector.getSelectedItem();
+            if (current != null) {
+                CommandBus.getInstance().publish(Commands.SEND_ALL_CONTROLS, this, current);
+            }
+        });
         
         // Add components to toolbar with spacing
         toolBar.add(new JLabel("Instrument: "));
         toolBar.add(instrumentSelector);
         toolBar.addSeparator(new Dimension(10, 0));
         toolBar.add(refreshButton);
+        toolBar.addSeparator(new Dimension(5, 0));
+        toolBar.add(sendButton);
         
         // Create scrollable container with proper layout
         controlsContainer = new JPanel(new GridBagLayout());
@@ -363,6 +375,34 @@ public class ControlsPanel extends JPanel implements CommandListener {
                prefix.equals("Wave");
     }
 
+    private boolean isAdsrControl(String name) {
+        return name.contains("Attack") || 
+               name.contains("Decay") || 
+               name.contains("Sustain") || 
+               name.contains("Release");
+    }
+
+    private boolean isEnvelopeControl(String name) {
+        // Check if it's in an envelope-type group
+        boolean isEnvelopeGroup = name.contains("Env") || 
+                                 name.contains("Envelope") || 
+                                 name.contains("Cycling");
+        
+        if (!isEnvelopeGroup) return false;
+
+        // Check for specific envelope parameters
+        String[] parts = name.split(" ");
+        String paramName = parts[parts.length - 1];
+        return paramName.equals("Rise") ||
+               paramName.equals("Fall") ||
+               paramName.equals("Amount") ||
+               paramName.equals("Hold") ||
+               paramName.equals("Attack") ||
+               paramName.equals("Decay") ||
+               paramName.equals("Sustain") ||
+               paramName.equals("Release");
+    }
+
     private void layoutSingleControls(JPanel panel, List<ProxyControlCode> controls) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(2, 2, 2, 2);
@@ -459,6 +499,40 @@ public class ControlsPanel extends JPanel implements CommandListener {
             return;
         }
 
+        // Special handling for all envelope-type groups
+        if (group.name.contains("Env") || group.name.contains("Envelope") || group.name.contains("Cycling")) {
+            List<ProxyControlCode> envelopeControls = group.controls.stream()
+                .filter(c -> isEnvelopeControl(c.getName()))
+                .sorted((a, b) -> {
+                    // Custom sort order for all envelope parameters
+                    String[] order = {"Rise", "Attack", "Fall", "Decay", "Amount", "Sustain", "Hold", "Release"};
+                    String aName = a.getName().split(" ")[a.getName().split(" ").length - 1];
+                    String bName = b.getName().split(" ")[b.getName().split(" ").length - 1];
+                    int aIdx = java.util.Arrays.asList(order).indexOf(aName);
+                    int bIdx = java.util.Arrays.asList(order).indexOf(bName);
+                    return Integer.compare(aIdx, bIdx);
+                })
+                .toList();
+            
+            if (!envelopeControls.isEmpty()) {
+                JPanel envPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+                envPanel.setBorder(BorderFactory.createTitledBorder(group.name));
+                
+                for (ProxyControlCode control : envelopeControls) {
+                    JPanel controlWrapper = new JPanel(new BorderLayout(2, 2));
+                    // Get just the parameter name (Rise, Fall, etc.)
+                    String paramName = control.getName().split(" ")[control.getName().split(" ").length - 1];
+                    JLabel label = new JLabel(paramName, SwingConstants.CENTER);
+                    controlWrapper.add(label, BorderLayout.NORTH);
+                    controlWrapper.add(createControl(control), BorderLayout.CENTER);
+                    envPanel.add(controlWrapper);
+                }
+                
+                parent.add(envPanel, gbc);
+                return;
+            }
+        }
+
         // Create direct grid layout for controls with border
         JPanel groupPanel = new JPanel(new GridBagLayout());
         groupPanel.setBorder(BorderFactory.createTitledBorder(group.name));
@@ -549,6 +623,17 @@ public class ControlsPanel extends JPanel implements CommandListener {
         int lowerBound = controlCode.getLowerBound() != null ? controlCode.getLowerBound() : 0;
         int upperBound = controlCode.getUpperBound() != null ? controlCode.getUpperBound() : 127;
         
+        // Special handling for all envelope-type controls
+        if (isEnvelopeControl(controlCode.getName())) {
+            JPanel sliderPanel = new JPanel(new BorderLayout(2, 2));
+            JSlider slider = new JSlider(JSlider.VERTICAL, lowerBound, upperBound, lowerBound);
+            slider.setPreferredSize(new Dimension(40, 100));
+            slider.setPaintTicks(false);
+            slider.setPaintLabels(false);
+            sliderPanel.add(slider, BorderLayout.CENTER);
+            return sliderPanel;
+        }
+
         if (controlCode.getCaptions() != null) {
             int captionCount = controlCode.getCaptions().size();
             
