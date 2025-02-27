@@ -3,12 +3,12 @@ package com.angrysurfer.beats.panel;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.util.HashSet;
-import java.util.List;
-import java.util.logging.Logger;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.logging.Logger;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
@@ -21,12 +21,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.RowSorter;
-import javax.swing.SortOrder;
 import javax.swing.table.TableModel;
 
 import com.angrysurfer.beats.Dialog;
@@ -34,10 +34,10 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.config.UserConfig;
-import com.angrysurfer.core.proxy.ProxyCaption;
-import com.angrysurfer.core.proxy.ProxyControlCode;
-import com.angrysurfer.core.proxy.ProxyInstrument;
-import com.angrysurfer.core.service.RedisService;
+import com.angrysurfer.core.model.midi.ControlCodeCaption;
+import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.midi.ControlCode;
+import com.angrysurfer.core.redis.RedisService;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -49,8 +49,8 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private JTable instrumentsTable;
     private JTable controlCodesTable;
     private JTable captionsTable;
-    private ProxyInstrument selectedInstrument;
-    private ProxyControlCode selectedControlCode;
+    private Instrument selectedInstrument;
+    private ControlCode selectedControlCode;
     private JButton addCaptionButton;
     private JButton editCaptionButton;
     private JButton deleteCaptionButton;
@@ -105,7 +105,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
                 logger.info("Loaded " + config.getInstruments().size() + " instruments from file");
                 
                 // Save instruments to Redis
-                for (ProxyInstrument instrument : config.getInstruments()) {
+                for (Instrument instrument : config.getInstruments()) {
                     logger.info("Saving instrument: " + instrument.getName());
                     redisService.saveInstrument(instrument);
                 }
@@ -114,7 +114,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
                 redisService.saveConfig(config);
                 
                 // Verify the save
-                List<ProxyInstrument> savedInstruments = redisService.findAllInstruments();
+                List<Instrument> savedInstruments = redisService.findAllInstruments();
                 logger.info("Found " + savedInstruments.size() + " instruments in Redis after save");
                 
                 // Refresh the UI
@@ -235,74 +235,74 @@ public class InstrumentsPanel extends StatusProviderPanel {
         return toolBar;
     }
 
-    private JTable createDevicesTable() {
-        String[] columns = {
-            "Name", "Description", "Vendor", "Version", "Max Receivers", 
-            "Max Transmitters", "Receivers", "Transmitters", "Receiver", "Transmitter"
-        };
+    // private JTable createDevicesTable() {
+    //     String[] columns = {
+    //         "Name", "Description", "Vendor", "Version", "Max Receivers", 
+    //         "Max Transmitters", "Receivers", "Transmitters", "Receiver", "Transmitter"
+    //     };
 
-        DefaultTableModel model = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Make all cells read-only
-            }
+    //     DefaultTableModel model = new DefaultTableModel(columns, 0) {
+    //         @Override
+    //         public boolean isCellEditable(int row, int column) {
+    //             return false; // Make all cells read-only
+    //         }
 
-            @Override
-            public Class<?> getColumnClass(int column) {
-                if (column == 8 || column == 9)
-                    return Boolean.class; // Receiver and Transmitter columns
-                if (column >= 4 && column <= 7)
-                    return Integer.class;
-                return String.class;
-            }
-        };
+    //         @Override
+    //         public Class<?> getColumnClass(int column) {
+    //             if (column == 8 || column == 9)
+    //                 return Boolean.class; // Receiver and Transmitter columns
+    //             if (column >= 4 && column <= 7)
+    //                 return Integer.class;
+    //             return String.class;
+    //         }
+    //     };
 
-        // Load MIDI devices
-        try {
-            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-            for (MidiDevice.Info info : infos) {
-                MidiDevice device = MidiSystem.getMidiDevice(info);
-                model.addRow(new Object[] {
-                    info.getName(),
-                    info.getDescription(),
-                    info.getVendor(),
-                    info.getVersion(),
-                    device.getMaxReceivers(),
-                    device.getMaxTransmitters(),
-                    device.getReceivers().size(),
-                    device.getTransmitters().size(),
-                    device.getMaxReceivers() != 0,
-                    device.getMaxTransmitters() != 0
-                });
-            }
-        } catch (MidiUnavailableException e) {
-            setStatus("Error loading MIDI devices: " + e.getMessage());
-        }
+    //     // Load MIDI devices
+    //     try {
+    //         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+    //         for (MidiDevice.Info info : infos) {
+    //             MidiDevice device = MidiSystem.getMidiDevice(info);
+    //             model.addRow(new Object[] {
+    //                 info.getName(),
+    //                 info.getDescription(),
+    //                 info.getVendor(),
+    //                 info.getVersion(),
+    //                 device.getMaxReceivers(),
+    //                 device.getMaxTransmitters(),
+    //                 device.getReceivers().size(),
+    //                 device.getTransmitters().size(),
+    //                 device.getMaxReceivers() != 0,
+    //                 device.getMaxTransmitters() != 0
+    //             });
+    //         }
+    //     } catch (MidiUnavailableException e) {
+    //         setStatus("Error loading MIDI devices: " + e.getMessage());
+    //     }
 
-        JTable table = new JTable(model);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.getTableHeader().setReorderingAllowed(false);
+    //     JTable table = new JTable(model);
+    //     table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    //     table.getTableHeader().setReorderingAllowed(false);
 
-        // Center-align numeric columns
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        for (int i = 4; i < 8; i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-        }
+    //     // Center-align numeric columns
+    //     DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+    //     centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+    //     for (int i = 4; i < 8; i++) {
+    //         table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+    //     }
 
-        // Set column widths
-        table.getColumnModel().getColumn(0).setPreferredWidth(150); // Name
-        table.getColumnModel().getColumn(1).setPreferredWidth(200); // Description
-        table.getColumnModel().getColumn(2).setPreferredWidth(100); // Vendor
+    //     // Set column widths
+    //     table.getColumnModel().getColumn(0).setPreferredWidth(150); // Name
+    //     table.getColumnModel().getColumn(1).setPreferredWidth(200); // Description
+    //     table.getColumnModel().getColumn(2).setPreferredWidth(100); // Vendor
         
-        // Set fixed widths for numeric columns
-        for (int i = 4; i <= 7; i++) {
-            table.getColumnModel().getColumn(i).setPreferredWidth(60);
-            table.getColumnModel().getColumn(i).setMaxWidth(60);
-        }
+    //     // Set fixed widths for numeric columns
+    //     for (int i = 4; i <= 7; i++) {
+    //         table.getColumnModel().getColumn(i).setPreferredWidth(60);
+    //         table.getColumnModel().getColumn(i).setMaxWidth(60);
+    //     }
 
-        return table;
-    }
+    //     return table;
+    // }
 
     private JTable createConfigsTable() {
         String[] columns = { 
@@ -331,8 +331,8 @@ public class InstrumentsPanel extends StatusProviderPanel {
         };
 
         // Load data from Redis
-        List<ProxyInstrument> instruments = RedisService.getInstance().findAllInstruments();
-        for (ProxyInstrument instrument : instruments) {
+        List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
+        for (Instrument instrument : instruments) {
             model.addRow(new Object[] {
                 instrument.getName(),
                 instrument.getDeviceName(),
@@ -570,7 +570,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
             logger.info("Updating control codes table for instrument: " + selectedInstrument.getName() + 
                        " with " + selectedInstrument.getControlCodes().size() + " codes");
             
-            for (ProxyControlCode cc : selectedInstrument.getControlCodes()) {
+            for (ControlCode cc : selectedInstrument.getControlCodes()) {
                 model.addRow(new Object[] {
                     cc.getName(),
                     cc.getCode(),
@@ -593,7 +593,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
             logger.info("Updating captions table for control code: " + selectedControlCode.getName() + 
                        " with " + selectedControlCode.getCaptions().size() + " captions");
             
-            for (ProxyCaption caption : selectedControlCode.getCaptions()) {
+            for (ControlCodeCaption caption : selectedControlCode.getCaptions()) {
                 model.addRow(new Object[] {
                     caption.getCode(),
                     caption.getDescription()
@@ -606,7 +606,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         }
     }
 
-    private ProxyInstrument findInstrumentByName(String name) {
+    private Instrument findInstrumentByName(String name) {
         // Convert view index to model index when getting data
         return RedisService.getInstance().findAllInstruments().stream()
             .filter(i -> i.getName().equals(name))
@@ -614,7 +614,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
             .orElse(null);
     }
 
-    private ProxyControlCode findControlCodeByName(String name) {
+    private ControlCode findControlCodeByName(String name) {
         if (selectedInstrument != null && selectedInstrument.getControlCodes() != null) {
             return selectedInstrument.getControlCodes().stream()
                 .filter(cc -> cc.getName().equals(name))
@@ -624,18 +624,18 @@ public class InstrumentsPanel extends StatusProviderPanel {
         return null;
     }
 
-    private void showControlCodeDialog(ProxyControlCode controlCode) {
+    private void showControlCodeDialog(ControlCode controlCode) {
         boolean isNew = (controlCode == null);
         if (isNew) {
-            controlCode = new ProxyControlCode();
+            controlCode = new ControlCode();
         }
 
         ControlCodeEditPanel editorPanel = new ControlCodeEditPanel(controlCode);
-        Dialog<ProxyControlCode> dialog = new Dialog<>(controlCode, editorPanel);
+        Dialog<ControlCode> dialog = new Dialog<>(controlCode, editorPanel);
         dialog.setTitle(isNew ? "Add Control Code" : "Edit Control Code");
 
         if (dialog.showDialog()) {
-            ProxyControlCode updatedControlCode = editorPanel.getUpdatedControlCode();
+            ControlCode updatedControlCode = editorPanel.getUpdatedControlCode();
             if (isNew) {
                 selectedInstrument.getControlCodes().add(updatedControlCode);
             }
@@ -648,7 +648,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         int row = controlCodesTable.getSelectedRow();
         if (row >= 0) {
             String name = (String) controlCodesTable.getValueAt(row, 0);
-            ProxyControlCode controlCode = findControlCodeByName(name);
+            ControlCode controlCode = findControlCodeByName(name);
             if (controlCode != null) {
                 showControlCodeDialog(controlCode);
             }
@@ -659,7 +659,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         int row = controlCodesTable.getSelectedRow();
         if (row >= 0) {
             String name = (String) controlCodesTable.getValueAt(row, 0);
-            ProxyControlCode controlCode = findControlCodeByName(name);
+            ControlCode controlCode = findControlCodeByName(name);
             if (controlCode != null) {
                 selectedInstrument.getControlCodes().remove(controlCode);
                 RedisService.getInstance().saveInstrument(selectedInstrument);
@@ -668,7 +668,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         }
     }
 
-    private void showCaptionDialog(ProxyCaption caption) {
+    private void showCaptionDialog(ControlCodeCaption caption) {
         if (selectedControlCode == null) {
             setStatus("No control code selected");
             return;
@@ -676,16 +676,16 @@ public class InstrumentsPanel extends StatusProviderPanel {
 
         boolean isNew = (caption == null);
         if (isNew) {
-            caption = new ProxyCaption();
+            caption = new ControlCodeCaption();
             caption.setCode((long) selectedControlCode.getCode());
         }
 
         CaptionEditPanel editorPanel = new CaptionEditPanel(caption);
-        Dialog<ProxyCaption> dialog = new Dialog<>(caption, editorPanel);
+        Dialog<ControlCodeCaption> dialog = new Dialog<>(caption, editorPanel);
         dialog.setTitle(isNew ? "Add Caption" : "Edit Caption");
 
         if (dialog.showDialog()) {
-            ProxyCaption updatedCaption = editorPanel.getUpdatedCaption();
+            ControlCodeCaption updatedCaption = editorPanel.getUpdatedCaption();
             if (isNew) {
                 if (selectedControlCode.getCaptions() == null) {
                     selectedControlCode.setCaptions(new HashSet<>());
@@ -700,7 +700,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private void editSelectedCaption() {
         int row = captionsTable.getSelectedRow();
         if (row >= 0) {
-            ProxyCaption caption = getCaptionFromRow(row);
+            ControlCodeCaption caption = getCaptionFromRow(row);
             showCaptionDialog(caption);
         }
     }
@@ -708,33 +708,33 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private void deleteSelectedCaption() {
         int row = captionsTable.getSelectedRow();
         if (row >= 0) {
-            ProxyCaption caption = getCaptionFromRow(row);
+            ControlCodeCaption caption = getCaptionFromRow(row);
             selectedControlCode.getCaptions().remove(caption);
             RedisService.getInstance().saveInstrument(selectedInstrument);
             updateCaptionsTable();
         }
     }
 
-    private ProxyCaption getCaptionFromRow(int row) {
+    private ControlCodeCaption getCaptionFromRow(int row) {
         DefaultTableModel model = (DefaultTableModel) captionsTable.getModel();
-        ProxyCaption caption = new ProxyCaption();
+        ControlCodeCaption caption = new ControlCodeCaption();
         caption.setCode((Long) model.getValueAt(row, 0));
         caption.setDescription((String) model.getValueAt(row, 1));
         return caption;
     }
 
-    private void showInstrumentDialog(ProxyInstrument instrument) {
+    private void showInstrumentDialog(Instrument instrument) {
         boolean isNew = (instrument == null);
         if (isNew) {
-            instrument = new ProxyInstrument();
+            instrument = new Instrument();
         }
 
         InstrumentEditPanel editorPanel = new InstrumentEditPanel(instrument);
-        Dialog<ProxyInstrument> dialog = new Dialog<>(instrument, editorPanel);
+        Dialog<Instrument> dialog = new Dialog<>(instrument, editorPanel);
         dialog.setTitle(isNew ? "Add Instrument" : "Edit Instrument");
 
         if (dialog.showDialog()) {
-            ProxyInstrument updatedInstrument = editorPanel.getUpdatedInstrument();
+            Instrument updatedInstrument = editorPanel.getUpdatedInstrument();
             if (isNew) {
                 // Let Redis assign an ID
                 RedisService.getInstance().saveInstrument(updatedInstrument);
@@ -749,7 +749,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         int row = instrumentsTable.getSelectedRow();
         if (row >= 0) {
             String name = (String) instrumentsTable.getValueAt(row, 0);
-            ProxyInstrument instrument = findInstrumentByName(name);
+            Instrument instrument = findInstrumentByName(name);
             if (instrument != null) {
                 showInstrumentDialog(instrument);
             }
@@ -773,11 +773,11 @@ public class InstrumentsPanel extends StatusProviderPanel {
         model.setRowCount(0);
         
         // Get fresh data from Redis
-        List<ProxyInstrument> instruments = RedisService.getInstance().findAllInstruments();
+        List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
         logger.info("Refreshing instruments table with " + instruments.size() + " instruments");
         
         // Add each instrument to the table
-        for (ProxyInstrument instrument : instruments) {
+        for (Instrument instrument : instruments) {
             logger.info("Adding instrument to table: " + instrument.getName());
             model.addRow(new Object[] {
                 instrument.getName(),

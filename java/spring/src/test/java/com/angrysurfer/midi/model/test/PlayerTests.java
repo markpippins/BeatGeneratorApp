@@ -9,7 +9,7 @@
 
 // import org.junit.jupiter.api.Test;
 
-// import com.angrysurfer.core.model.IPlayer;
+// import com.angrysurfer.core.model.AbstractPlayer;
 // import com.angrysurfer.core.model.Rule;
 // import com.angrysurfer.core.model.Ticker;
 // import com.angrysurfer.core.model.player.Strike;
@@ -24,7 +24,7 @@
 //   public void whenRuleExistsForFirstBeat_thenOnTickCalledFirstBeat() {
 
 //     AtomicBoolean play = new AtomicBoolean(false);
-//     IPlayer p = new Strike() {
+//     AbstractPlayer p = new Strike() {
 //       @Override
 //       public void onTick(long tick, long bar) {
 //         play.set(true);
@@ -58,7 +58,7 @@
 //     ticker.getBarCycler().reset();
 //     ticker.getBeatCycler().reset();
 
-//     IPlayer p1 = new Strike() {
+//     AbstractPlayer p1 = new Strike() {
 //       @Override
 //       public void onTick(long tick, long bar) {
 //         play1.set(true);
@@ -67,7 +67,7 @@
 //     };
 //     p1.setTicker(ticker);
 
-//     IPlayer p2 = new Strike() {
+//     AbstractPlayer p2 = new Strike() {
 //       @Override
 //       public void onTick(long tick, long bar) {
 //         play2.set(true);
@@ -76,7 +76,7 @@
 //     };
 //     p2.setTicker(ticker);
 
-//     IPlayer p3 = new Strike() {
+//     AbstractPlayer p3 = new Strike() {
 //       @Override
 //       public void onTick(long tick, long bar) {
 //         play3.set(true);

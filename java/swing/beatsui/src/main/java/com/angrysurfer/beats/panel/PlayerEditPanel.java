@@ -15,6 +15,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -26,26 +27,23 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ToggleSwitch;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.proxy.ProxyInstrument;
-import com.angrysurfer.core.proxy.ProxyRule;
-import com.angrysurfer.core.proxy.ProxyStrike;
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.RedisService;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.redis.RedisService;
 
 public class PlayerEditPanel extends StatusProviderPanel {
     private static final Logger logger = Logger.getLogger(PlayerEditPanel.class.getName());
-    private final ProxyStrike player;
+    private final Player player;
 
     // Basic properties
     private final JTextField nameField;
-    private JComboBox<ProxyInstrument> instrumentCombo;
+    private JComboBox<Instrument> instrumentCombo;
     private final JSpinner channelSpinner; // Changed from Dial to JSpinner
     private final JSpinner presetSpinner; // Changed from Dial to JSpinner
 
@@ -80,8 +78,8 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private final JButton prevButton;
     private final JButton nextButton;
 
-    public PlayerEditPanel(ProxyStrike player, StatusConsumer statusConsumer) {
-        super(new BorderLayout(), statusConsumer);
+    public PlayerEditPanel(Player player) {
+        super(new BorderLayout());
         this.player = player;
 
         // Set fixed size
@@ -129,7 +127,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         deleteRuleButton = new JButton("Delete");
 
         // Setup rules table with player's current rules
-        setupRulesTable();  // This now happens after player is properly initialized
+        setupRulesTable(); // This now happens after player is properly initialized
         updateRulesTable(); // Explicitly update the table with player's rules
 
         // Add button listeners
@@ -321,165 +319,6 @@ public class PlayerEditPanel extends StatusProviderPanel {
         add(splitPane, BorderLayout.CENTER);
     }
 
-    // Helper record for dial entries
-    private record DialEntry(String label, Dial dial) {
-    }
-
-    private JPanel createParameterColumn(String title, DialEntry... entries) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder(title));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        for (int i = 0; i < entries.length; i++) {
-            gbc.gridx = 0;
-            gbc.gridy = i;
-            panel.add(new JLabel(entries[i].label()), gbc);
-            gbc.gridx = 1;
-            panel.add(entries[i].dial(), gbc);
-        }
-
-        return panel;
-    }
-
-    private JPanel createPropertiesPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Player Properties"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-
-        // Basic properties section
-        addBasicProperties(panel, gbc);
-
-        // Performance controls section
-        addPerformanceControls(panel, gbc);
-
-        // Ratchet controls section
-        addRatchetControls(panel, gbc);
-
-        // Switches section
-        addSwitches(panel, gbc);
-
-        return panel;
-    }
-
-    private void addBasicProperties(JPanel panel, GridBagConstraints gbc) {
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("Name:"), gbc);
-        gbc.gridx = 1;
-        panel.add(nameField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Instrument:"), gbc);
-        gbc.gridx = 1;
-        panel.add(instrumentCombo, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Channel:"), gbc);
-        gbc.gridx = 1;
-        panel.add(channelSpinner, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Preset:"), gbc);
-        gbc.gridx = 1;
-        panel.add(presetSpinner, gbc);
-    }
-
-    private void addPerformanceControls(JPanel panel, GridBagConstraints gbc) {
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Swing:"), gbc);
-        gbc.gridx = 1;
-        panel.add(swingSlider, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Level:"), gbc);
-        gbc.gridx = 1;
-        panel.add(levelSlider, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Note:"), gbc);
-        gbc.gridx = 1;
-        panel.add(noteSlider, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Min Vel:"), gbc);
-        gbc.gridx = 1;
-        panel.add(velocityMinSlider, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Max Vel:"), gbc);
-        gbc.gridx = 1;
-        panel.add(velocityMaxSlider, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Prob:"), gbc);
-        gbc.gridx = 1;
-        panel.add(probabilitySlider, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Random:"), gbc);
-        gbc.gridx = 1;
-        panel.add(randomSlider, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Pan:"), gbc);
-        gbc.gridx = 1;
-        panel.add(panSlider, gbc);
-    }
-
-    private void addRatchetControls(JPanel panel, GridBagConstraints gbc) {
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Count:"), gbc);
-        gbc.gridx = 1;
-        panel.add(ratchetCountSlider, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Interval:"), gbc);
-        gbc.gridx = 1;
-        panel.add(ratchetIntervalSlider, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(new JLabel("Sparse:"), gbc);
-        gbc.gridx = 1;
-        panel.add(sparseSlider, gbc);
-    }
-
-    private void addSwitches(JPanel panel, GridBagConstraints gbc) {
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(stickyPresetSwitch, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(useInternalBeatsSwitch, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(useInternalBarsSwitch, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        panel.add(preserveOnPurgeSwitch, gbc);
-    }
-
     private JPanel createRulesPanel() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Rules"));
@@ -501,7 +340,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private void editSelectedRule() {
         int selectedRow = rulesTable.getSelectedRow();
         if (selectedRow >= 0) {
-            ProxyRule rule = ProxyRule.fromRow(new Object[] {
+            Rule rule = Rule.fromRow(new Object[] {
                     rulesTable.getValueAt(selectedRow, 0),
                     rulesTable.getValueAt(selectedRow, 1),
                     rulesTable.getValueAt(selectedRow, 2),
@@ -517,7 +356,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private void deleteSelectedRule() {
         int selectedRow = rulesTable.getSelectedRow();
         if (selectedRow >= 0) {
-            ProxyRule rule = ProxyRule.fromRow(new Object[] {
+            Rule rule = Rule.fromRow(new Object[] {
                     rulesTable.getValueAt(selectedRow, 0),
                     rulesTable.getValueAt(selectedRow, 1),
                     rulesTable.getValueAt(selectedRow, 2),
@@ -529,9 +368,10 @@ public class PlayerEditPanel extends StatusProviderPanel {
         }
     }
 
-    public ProxyStrike getUpdatedPlayer() {
+    public Player getUpdatedPlayer() {
         // Update player with current UI values
-        player.setInstrument((ProxyInstrument) instrumentCombo.getSelectedItem());
+        player.setInstrument((Instrument) instrumentCombo.getSelectedItem());
+        player.setInstrumentId(((Instrument) instrumentCombo.getSelectedItem()).getId());
         player.setChannel((Integer) channelSpinner.getValue());
         player.setPreset(((Number) presetSpinner.getValue()).longValue());
         player.setName(nameField.getText());
@@ -556,19 +396,19 @@ public class PlayerEditPanel extends StatusProviderPanel {
     // Helper methods for creating components
     private void setupInstrumentCombo() {
         instrumentCombo = new JComboBox<>();
-        List<ProxyInstrument> instruments = RedisService.getInstance().findAllInstruments();
-        
+        List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
+
         // Sort instruments by name
         instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-        
-        for (ProxyInstrument inst : instruments) {
+
+        for (Instrument inst : instruments) {
             instrumentCombo.addItem(inst);
         }
 
         // Select the player's instrument if it exists
         if (player.getInstrument() != null) {
             for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
-                ProxyInstrument item = (ProxyInstrument) instrumentCombo.getItemAt(i);
+                Instrument item = (Instrument) instrumentCombo.getItemAt(i);
                 if (item.getId().equals(player.getInstrument().getId())) {
                     instrumentCombo.setSelectedIndex(i);
                     break;
@@ -652,7 +492,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         rulesTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 if (evt.getClickCount() == 2) {
-                    ProxyRule selectedRule = getSelectedRule();
+                    Rule selectedRule = getSelectedRule();
                     if (selectedRule != null) {
                         CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
                     }
@@ -664,17 +504,17 @@ public class PlayerEditPanel extends StatusProviderPanel {
         addRuleButton.addActionListener(e -> CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, player));
 
         editRuleButton.addActionListener(e -> {
-            ProxyRule selectedRule = getSelectedRule();
+            Rule selectedRule = getSelectedRule();
             if (selectedRule != null) {
                 CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
             }
         });
 
         deleteRuleButton.addActionListener(e -> {
-            ProxyRule selectedRule = getSelectedRule();
+            Rule selectedRule = getSelectedRule();
             if (selectedRule != null) {
                 CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this,
-                        new ProxyRule[] { selectedRule });
+                        new Rule[] { selectedRule });
             }
         });
 
@@ -684,7 +524,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
             public void onAction(Command action) {
                 switch (action.getCommand()) {
                     case Commands.PLAYER_UPDATED -> {
-                        if (action.getData() instanceof ProxyStrike updatedPlayer &&
+                        if (action.getData() instanceof Player updatedPlayer &&
                                 updatedPlayer.getId().equals(player.getId())) {
                             player.setRules(updatedPlayer.getRules());
                             updateRulesTable();
@@ -704,7 +544,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         rulesPanel.add(new JScrollPane(rulesTable), BorderLayout.CENTER);
     }
 
-    private ProxyRule getSelectedRule() {
+    private Rule getSelectedRule() {
         int row = rulesTable.getSelectedRow();
         if (row >= 0 && player != null && player.getRules() != null) {
             return new ArrayList<>(player.getRules()).get(row);
@@ -715,45 +555,47 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private void updateRulesTable() {
         DefaultTableModel model = (DefaultTableModel) rulesTable.getModel();
         model.setRowCount(0);
-        
+
         if (player == null) {
             logger.warning("Cannot update rules table - player is null");
             return;
         }
-        
+
         if (player.getRules() == null) {
             logger.warning("Player " + player.getName() + " has null rules collection");
             return;
         }
-        
-        logger.info("Updating rules table for player " + player.getName() + 
-                   " (ID: " + player.getId() + ") with " + player.getRules().size() + " rules");
-        
-        for (ProxyRule rule : player.getRules()) {
+
+        logger.info("Updating rules table for player " + player.getName() +
+                " (ID: " + player.getId() + ") with " + player.getRules().size() + " rules");
+
+        for (Rule rule : player.getRules()) {
             if (rule == null) {
                 logger.warning("Encountered null rule in player's rules collection");
                 continue;
             }
-            
-            logger.info("Adding rule: Operator=" + rule.getOperator() + 
-                       ", Comparison=" + rule.getComparison() + 
-                       ", Value=" + rule.getValue() + 
-                       ", Part=" + rule.getPart());
-            
-            String operatorText = rule.getOperator() >= 0 && rule.getOperator() < ProxyRule.OPERATORS.length ? 
-                ProxyRule.OPERATORS[rule.getOperator()] : "Unknown";
-            String comparisonText = rule.getComparison() >= 0 && rule.getComparison() < ProxyRule.COMPARISONS.length ? 
-                ProxyRule.COMPARISONS[rule.getComparison()] : "Unknown";
+
+            logger.info("Adding rule: Operator=" + rule.getOperator() +
+                    ", Comparison=" + rule.getComparison() +
+                    ", Value=" + rule.getValue() +
+                    ", Part=" + rule.getPart());
+
+            String operatorText = rule.getOperator() >= 0 && rule.getOperator() < Rule.OPERATORS.length
+                    ? Rule.OPERATORS[rule.getOperator()]
+                    : "Unknown";
+            String comparisonText = rule.getComparison() >= 0 && rule.getComparison() < Rule.COMPARISONS.length
+                    ? Rule.COMPARISONS[rule.getComparison()]
+                    : "Unknown";
             String partText = rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart());
-            
+
             model.addRow(new Object[] {
-                operatorText,
-                comparisonText,
-                rule.getValue(),
-                partText
+                    operatorText,
+                    comparisonText,
+                    rule.getValue(),
+                    partText
             });
         }
-        
+
         // Force table to refresh
         rulesTable.revalidate();
         rulesTable.repaint();
@@ -772,7 +614,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
         leftRenderer.setHorizontalAlignment(JLabel.LEFT);
 
-        rulesTable.getColumnModel().getColumn(0).setCellRenderer(leftRenderer); 
+        rulesTable.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);
         for (int i = 1; i < rulesTable.getColumnCount(); i++) {
             rulesTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
@@ -787,5 +629,41 @@ public class PlayerEditPanel extends StatusProviderPanel {
         boolean hasSelection = rulesTable.getSelectedRow() >= 0;
         editRuleButton.setEnabled(hasSelection);
         deleteRuleButton.setEnabled(hasSelection);
+    }
+
+    private void handleOk() {
+        try {
+            // Update player properties
+            player.setName(nameField.getText());
+
+            // Update instrument and ID together
+            Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
+            if (selectedInstrument != null) {
+                player.setInstrument(selectedInstrument);
+                player.setInstrumentId(selectedInstrument.getId());
+                logger.info(String.format("Set instrument {} (ID: {}) for player {}",
+                        selectedInstrument.getName(),
+                        selectedInstrument.getId(),
+                        player.getName()));
+            }
+
+            // ...update other properties...
+
+            // Save player to Redis first
+            RedisService.getInstance().savePlayer(player);
+
+            // Then publish for ticker update
+            CommandBus.getInstance().publish(Commands.SHOW_PLAYER_EDITOR_OK, this, player);
+
+            logger.info(String.format("Player saved with instrument: %d (ID: %d)",
+                    player.getInstrument() != null ? player.getInstrument().getName() : "none",
+                    player.getInstrumentId()));
+        } catch (Exception e) {
+            logger.severe("Error saving player: " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    "Error saving player: " + e.getMessage(),
+                    "Save Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

@@ -10,5 +10,5 @@ import lombok.Setter;
 @Setter
 public class MuteGroup { // should extend event
     private String name;
-    private Set<IPlayer> players = new HashSet<>();
+    private Set<Player> players = new HashSet<>();
 }

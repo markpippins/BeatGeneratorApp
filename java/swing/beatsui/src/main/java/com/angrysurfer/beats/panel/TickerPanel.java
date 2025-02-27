@@ -24,9 +24,9 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.proxy.ProxyStrike;
-import com.angrysurfer.core.proxy.ProxyTicker;
-import com.angrysurfer.core.service.TickerManager;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.util.Scale;
 
 import lombok.Getter;
@@ -40,7 +40,7 @@ public class TickerPanel extends StatusProviderPanel {
 
     private final PlayersPanel playerTablePanel;
     private final RulesPanel ruleTablePanel;
-    private ProxyTicker activeTicker;
+    private Ticker activeTicker;
 
     private Dial levelDial;
     private Dial noteDial;
@@ -52,7 +52,7 @@ public class TickerPanel extends StatusProviderPanel {
     private Dial panDial;
     private Dial sparseDial;
 
-    private ProxyStrike selectedPlayer; // Add this line
+    private Player selectedPlayer; // Add this line
     private JPanel controlPanel; // Add this field
 
     public TickerPanel(StatusConsumer status) {
@@ -159,27 +159,27 @@ public class TickerPanel extends StatusProviderPanel {
         return controlPanel;
     }
 
-    private JPanel createVerticalButtonPanel() {
-        JPanel panel = new JPanel(new GridLayout(3, 1, 2, 2));
-        panel.setPreferredSize(new Dimension(25, 80));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+    // private JPanel createVerticalButtonPanel() {
+    // JPanel panel = new JPanel(new GridLayout(3, 1, 2, 2));
+    // panel.setPreferredSize(new Dimension(25, 80));
+    // panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-        JButton button1 = new JButton();
-        JButton button2 = new JButton();
-        JButton button3 = new JButton();
+    // JButton button1 = new JButton();
+    // JButton button2 = new JButton();
+    // JButton button3 = new JButton();
 
-        // Configure each button
-        for (JButton button : new JButton[] { button1, button2, button3 }) {
-            button.setPreferredSize(new Dimension(15, 15));
-            button.setMinimumSize(new Dimension(15, 15));
-            button.setMaximumSize(new Dimension(15, 15));
-            button.setFocusPainted(false);
-            button.setBorderPainted(true);
-            panel.add(button);
-        }
+    // // Configure each button
+    // for (JButton button : new JButton[] { button1, button2, button3 }) {
+    // button.setPreferredSize(new Dimension(15, 15));
+    // button.setMinimumSize(new Dimension(15, 15));
+    // button.setMaximumSize(new Dimension(15, 15));
+    // button.setFocusPainted(false);
+    // button.setBorderPainted(true);
+    // panel.add(button);
+    // }
 
-        return panel;
-    }
+    // return panel;
+    // }
 
     private void enableDials() {
         levelDial.setEnabled(true);
@@ -205,7 +205,7 @@ public class TickerPanel extends StatusProviderPanel {
         sparseDial.setEnabled(false);
     }
 
-    private void setDialValues(ProxyStrike player) {
+    private void setDialValues(Player player) {
         if (player == null)
             return;
 
@@ -380,7 +380,7 @@ public class TickerPanel extends StatusProviderPanel {
 
                 switch (action.getCommand()) {
                     case Commands.PLAYER_SELECTED -> {
-                        if (action.getData() instanceof ProxyStrike player) {
+                        if (action.getData() instanceof Player player) {
                             selectedPlayer = player;
                             setDialValues(player);
                             enableDials();
@@ -426,8 +426,8 @@ public class TickerPanel extends StatusProviderPanel {
             case "sparse" -> selectedPlayer.setSparse(value / 100.0);
         }
 
-        // Save changes and notify UI
-        TickerManager.getInstance().savePlayerProperties(selectedPlayer);
+        // Save changes and notify UI using PlayerManager instead
+        PlayerManager.getInstance().savePlayerProperties(selectedPlayer);
     }
 
     private void updateVerticalAdjustButtons(boolean enabled) {
@@ -443,7 +443,5 @@ public class TickerPanel extends StatusProviderPanel {
         }
     }
 
-    private ProxyStrike getSelectedPlayer() {
-        return selectedPlayer; // Return the cached player
-    }
+
 }

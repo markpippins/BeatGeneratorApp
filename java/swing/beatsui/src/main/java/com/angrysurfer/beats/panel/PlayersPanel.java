@@ -38,10 +38,12 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.config.FrameState;
-import com.angrysurfer.core.model.IPlayer;
-import com.angrysurfer.core.proxy.ProxyStrike;
-import com.angrysurfer.core.proxy.ProxyTicker;
-import com.angrysurfer.core.service.RedisService;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.TickerManager;
 
 import lombok.Getter;
@@ -167,7 +169,7 @@ public class PlayersPanel extends JPanel {
         setupContextMenu();
 
         // Check for active ticker and enable controls immediately
-        ProxyTicker currentTicker = TickerManager.getInstance().getActiveTicker();
+        Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
         if (currentTicker != null) {
             logger.info("Found active ticker on construction: " + currentTicker.getId());
             hasActiveTicker = true;
@@ -185,26 +187,26 @@ public class PlayersPanel extends JPanel {
 
     private void setupLayout() {
         JPanel topPanel = new JPanel(new BorderLayout());
-        
+
         // Create a wrapper panel for the button panel with BorderLayout
         JPanel buttonWrapper = new JPanel(new BorderLayout());
         buttonWrapper.add(buttonPanel, BorderLayout.CENTER);
-        
+
         // Create control button
         controlButton = new JButton("Control");
         controlButton.setEnabled(false);
         controlButton.addActionListener(e -> {
-            ProxyStrike selectedPlayer = getSelectedPlayer();
+            Player selectedPlayer = getSelectedPlayer();
             if (selectedPlayer != null) {
                 CommandBus.getInstance().publish(Commands.EDIT_PLAYER_PARAMETERS, this, selectedPlayer);
             }
         });
-        
+
         // Add control button to the right of the button panel
         JPanel rightButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightButtonPanel.add(controlButton);
         buttonWrapper.add(rightButtonPanel, BorderLayout.EAST);
-        
+
         topPanel.add(buttonWrapper, BorderLayout.NORTH);
 
         add(topPanel, BorderLayout.NORTH);
@@ -222,7 +224,7 @@ public class PlayersPanel extends JPanel {
                     String columnName = getColumnNames()[modelIndex];
                     columnOrder.add(columnName);
                 }
-                
+
                 // Only save if we have all columns
                 if (columnOrder.size() == COLUMNS.size()) {
                     logger.info("Saving column order: " + String.join(", ", columnOrder));
@@ -241,10 +243,10 @@ public class PlayersPanel extends JPanel {
         try {
             FrameState state = RedisService.getInstance().loadFrameState();
             List<String> savedOrder = state != null ? state.getPlayerColumnOrder() : null;
-            
+
             if (savedOrder != null && !savedOrder.isEmpty() && savedOrder.size() == COLUMNS.size()) {
                 logger.info("Restoring column order: " + String.join(", ", savedOrder));
-                
+
                 // Create a map of column names to their current positions
                 Map<String, Integer> currentOrder = new HashMap<>();
                 for (int i = 0; i < table.getColumnCount(); i++) {
@@ -350,17 +352,17 @@ public class PlayersPanel extends JPanel {
         // Add left alignment for Name and Instrument column headers
         DefaultTableCellRenderer leftHeaderRenderer = new DefaultTableCellRenderer();
         leftHeaderRenderer.setHorizontalAlignment(JLabel.LEFT);
-        
+
         table.getTableHeader().getColumnModel().getColumn(getColumnIndex(COL_NAME))
-            .setHeaderRenderer(leftHeaderRenderer);
+                .setHeaderRenderer(leftHeaderRenderer);
         table.getTableHeader().getColumnModel().getColumn(getColumnIndex(COL_INSTRUMENT))
-            .setHeaderRenderer(leftHeaderRenderer);
+                .setHeaderRenderer(leftHeaderRenderer);
 
         // Add double-click listener
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 if (evt.getClickCount() == 2) {
-                    ProxyStrike selectedPlayer = getSelectedPlayer();
+                    Player selectedPlayer = getSelectedPlayer();
                     if (selectedPlayer != null) {
                         CommandBus.getInstance().publish(Commands.PLAYER_EDIT_REQUEST, this, selectedPlayer);
                     }
@@ -378,18 +380,54 @@ public class PlayersPanel extends JPanel {
                     SwingUtilities.invokeLater(() -> saveColumnOrder());
                 }
             }
+
             // Implement other required methods with empty bodies
-            public void columnAdded(TableColumnModelEvent e) {}
-            public void columnRemoved(TableColumnModelEvent e) {}
-            public void columnMarginChanged(ChangeEvent e) {}
-            public void columnSelectionChanged(ListSelectionEvent e) {}
+            public void columnAdded(TableColumnModelEvent e) {
+            }
+
+            public void columnRemoved(TableColumnModelEvent e) {
+            }
+
+            public void columnMarginChanged(ChangeEvent e) {
+            }
+
+            public void columnSelectionChanged(ListSelectionEvent e) {
+            }
         });
 
         // Save initial column order
         SwingUtilities.invokeLater(() -> saveColumnOrder());
-        
+
         // Restore column order after table is fully set up
         SwingUtilities.invokeLater(() -> restoreColumnOrder());
+
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean hasSelection = table.getSelectedRow() >= 0;
+
+                // Update button states
+                buttonPanel.setEditEnabled(hasSelection);
+                buttonPanel.setDeleteEnabled(hasSelection);
+                contextMenu.setEditEnabled(hasSelection);
+                contextMenu.setDeleteEnabled(hasSelection);
+
+                // Add button enabled if we have an active ticker
+                buttonPanel.setAddEnabled(hasActiveTicker);
+                contextMenu.setAddEnabled(hasActiveTicker);
+
+                // Handle player selection for rules panel
+                if (hasSelection) {
+                    Player selectedPlayer = getSelectedPlayer();
+                    if (selectedPlayer != null) {
+                        CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, selectedPlayer);
+                        logger.info("Player selected: " + selectedPlayer.getName());
+                    }
+                } else {
+                    CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
+                    logger.info("Player unselected");
+                }
+            }
+        });
     }
 
     private void setupButtonListeners() {
@@ -401,13 +439,13 @@ public class PlayersPanel extends JPanel {
                 }
                 case Commands.PLAYER_EDIT_REQUEST -> {
                     // Get directly selected player (no array)
-                    ProxyStrike selectedPlayer = getSelectedPlayer();
+                    Player selectedPlayer = getSelectedPlayer();
                     if (selectedPlayer != null) {
                         CommandBus.getInstance().publish(Commands.PLAYER_EDIT_REQUEST, this, selectedPlayer);
                     }
                 }
                 case Commands.PLAYER_DELETE_REQUEST -> {
-                    ProxyStrike[] selectedPlayers = getSelectedPlayers();
+                    Player[] selectedPlayers = getSelectedPlayers();
                     if (selectedPlayers.length > 0) {
                         CommandBus.getInstance().publish(e.getActionCommand(), this, selectedPlayers);
                     }
@@ -418,11 +456,11 @@ public class PlayersPanel extends JPanel {
 
     private void setupContextMenu() {
         contextMenu.install(table);
-        
+
         // Add separator and Controls menu item
         contextMenu.addSeparator();
         contextMenu.addMenuItem("Control", e -> {
-            ProxyStrike selectedPlayer = getSelectedPlayer();
+            Player selectedPlayer = getSelectedPlayer();
             if (selectedPlayer != null) {
                 CommandBus.getInstance().publish(Commands.EDIT_PLAYER_PARAMETERS, this, selectedPlayer);
             }
@@ -439,7 +477,7 @@ public class PlayersPanel extends JPanel {
             }
 
             // Only check selection for Edit/Delete
-            ProxyStrike selectedPlayer = getSelectedPlayer();
+            Player selectedPlayer = getSelectedPlayer();
             if (selectedPlayer != null) {
                 CommandBus.getInstance().publish(command, this, selectedPlayer);
             }
@@ -454,7 +492,7 @@ public class PlayersPanel extends JPanel {
         buttonPanel.setDeleteEnabled(hasSelection);
         contextMenu.setEditEnabled(hasSelection);
         contextMenu.setDeleteEnabled(hasSelection);
-        
+
         // Update control button state
         controlButton.setEnabled(hasSelection);
     }
@@ -465,26 +503,45 @@ public class PlayersPanel extends JPanel {
             public void onAction(Command action) {
                 switch (action.getCommand()) {
                     case Commands.TICKER_SELECTED, Commands.TICKER_LOADED -> {
-                        if (action.getData() instanceof ProxyTicker ticker) {
+                        if (action.getData() instanceof Ticker ticker) {
+                            logger.info("Ticker selected/loaded: " + ticker.getId());
                             hasActiveTicker = true;
                             enableControls(true);
                             refreshPlayers(ticker.getPlayers());
 
-                            // Auto-select first player if available
-                            if (!ticker.getPlayers().isEmpty()) {
-                                table.setRowSelectionInterval(0, 0);
-                                ProxyStrike firstPlayer = (ProxyStrike) ticker.getPlayers().iterator().next();
-                                CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, firstPlayer);
+                            // Auto-select first player only if players exist
+                            if (ticker.getPlayers() != null && !ticker.getPlayers().isEmpty()) {
+                                // Ensure there are rows in the table before selecting
+                                if (table.getRowCount() > 0) {
+                                    try {
+                                        table.setRowSelectionInterval(0, 0);
+                                        Player firstPlayer = ticker.getPlayers().iterator().next();
+                                        CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, firstPlayer);
+                                        logger.info("Auto-selected first player: " + firstPlayer.getName());
+                                    } catch (IllegalArgumentException e) {
+                                        logger.warning("Could not select first row: " + e.getMessage());
+                                    }
+                                } else {
+                                    logger.info("Table is empty, skipping player selection");
+                                }
+                            } else {
+                                logger.info("No players in ticker, skipping player selection");
                             }
                         }
                     }
                     case Commands.TICKER_UPDATED -> {
-                        if (action.getData() instanceof ProxyTicker ticker) {
-                            refreshPlayers(ticker.getPlayers());
-
-                            // Auto-select the newly added player if it was an add operation
-                            if (action.getSender() instanceof PlayerEditPanel) {
-                                selectLastPlayer();
+                        if (action.getData() instanceof Ticker ticker) {
+                            logger.info("Ticker updated, refreshing players. Ticker ID: " + ticker.getId());
+                            // Ensure we get fresh data
+                            Ticker freshTicker = RedisService.getInstance().findTickerById(ticker.getId());
+                            if (freshTicker != null) {
+                                refreshPlayers(freshTicker.getPlayers());
+                                // Auto-select the newly added player if it was an add operation
+                                if (action.getSender() instanceof PlayerEditPanel) {
+                                    selectLastPlayer();
+                                }
+                            } else {
+                                logger.warning("Could not find ticker " + ticker.getId() + " after update");
                             }
                         }
                     }
@@ -494,13 +551,13 @@ public class PlayersPanel extends JPanel {
                         refreshPlayers(null);
                     }
                     case Commands.PLAYER_EDIT_CANCELLED -> {
-                        if (action.getData() instanceof ProxyTicker ticker) {
+                        if (action.getData() instanceof Ticker ticker) {
                             refreshPlayers(ticker.getPlayers());
                         }
                     }
                     case Commands.PLAYER_DELETE_REQUEST -> {
-                        if (action.getData() instanceof ProxyStrike player) {
-                            ProxyTicker currentTicker = TickerManager.getInstance().getActiveTicker();
+                        if (action.getData() instanceof Player player) {
+                            Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
                             if (currentTicker != null) {
                                 CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
                                 refreshPlayers(currentTicker.getPlayers());
@@ -508,7 +565,7 @@ public class PlayersPanel extends JPanel {
                         }
                     }
                     case Commands.PLAYER_ROW_INDEX_REQUEST -> {
-                        if (action.getData() instanceof ProxyStrike requestedPlayer) {
+                        if (action.getData() instanceof Player requestedPlayer) {
                             int selectedRow = table.getSelectedRow();
                             CommandBus.getInstance().publish(
                                     Commands.PLAYER_ROW_INDEX_RESPONSE,
@@ -517,13 +574,13 @@ public class PlayersPanel extends JPanel {
                         }
                     }
                     case Commands.PLAYER_UPDATED -> {
-                        if (action.getData() instanceof ProxyStrike player) {
+                        if (action.getData() instanceof Player player) {
                             updatePlayerRow(player);
                         }
                     }
                     case Commands.TICKER_DELETED -> {
                         // Clear current display and disable controls if no new ticker is active
-                        ProxyTicker currentTicker = TickerManager.getInstance().getActiveTicker();
+                        Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
                         if (currentTicker == null) {
                             hasActiveTicker = false;
                             enableControls(false);
@@ -538,6 +595,33 @@ public class PlayersPanel extends JPanel {
                     case Commands.WINDOW_CLOSING -> {
                         saveColumnOrder();
                     }
+                    case Commands.PLAYER_SELECTED -> {
+                        if (action.getData() instanceof Player player) {
+                            logger.info("Player selected: " + player.getName() + " (ID: " + player.getId() + ")");
+                            // Update RulesPanel with the selected player
+                            ruleTablePanel.setPlayer(player);
+                        }
+                    }
+
+                    case Commands.PLAYER_UNSELECTED -> {
+                        logger.info("Player unselected, clearing rules panel");
+                        ruleTablePanel.setPlayer(null);
+                    }
+                    case Commands.PLAYER_ADDED_TO_TICKER -> {
+                        if (action.getData() instanceof Object[] data) {
+                            if (data.length == 2 && data[0] instanceof Ticker ticker &&
+                                    data[1] instanceof Player player) {
+                                logger.info("Handling PLAYER_ADDED_TO_TICKER");
+                                refreshPlayers(ticker.getPlayers());
+                                // Auto-select the new player
+                                int row = findPlayerRowIndex(player);
+                                if (row >= 0) {
+                                    table.setRowSelectionInterval(row, row);
+                                    CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -548,19 +632,18 @@ public class PlayersPanel extends JPanel {
                 int selectedRow = table.getSelectedRow();
                 boolean hasSelection = selectedRow >= 0;
 
-                // Update edit/delete buttons
-                buttonPanel.setEditEnabled(hasSelection);
-                buttonPanel.setDeleteEnabled(hasSelection);
-                contextMenu.setEditEnabled(hasSelection);
-                contextMenu.setDeleteEnabled(hasSelection);
+                // Update button states
+                updateButtonStates();
 
-                // Notify about player selection/deselection
+                // Handle player selection
                 if (hasSelection) {
-                    ProxyStrike selectedPlayer = getSelectedPlayer();
+                    Player selectedPlayer = getSelectedPlayer();
                     if (selectedPlayer != null) {
+                        logger.info("Selected player in table: " + selectedPlayer.getName());
                         CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, selectedPlayer);
                     }
                 } else {
+                    logger.info("No player selected");
                     CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
                 }
             }
@@ -582,7 +665,7 @@ public class PlayersPanel extends JPanel {
     }
 
     private void handleDelete() {
-        ProxyStrike[] selectedPlayers = getSelectedPlayers();
+        Player[] selectedPlayers = getSelectedPlayers();
         if (selectedPlayers.length > 0) {
             int confirm = JOptionPane.showConfirmDialog(
                     PlayersPanel.this,
@@ -592,10 +675,9 @@ public class PlayersPanel extends JPanel {
                     JOptionPane.WARNING_MESSAGE);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_DELETE_REQUEST,
-                        PlayersPanel.this,
-                        selectedPlayers);
+                // Send just the selected players array
+                CommandBus.getInstance().publish(Commands.PLAYER_DELETE_REQUEST, this, selectedPlayers);
+                logger.info("Sent delete request for " + selectedPlayers.length + " players");
             }
         }
     }
@@ -604,14 +686,14 @@ public class PlayersPanel extends JPanel {
         if (table.getRowCount() > 0) {
             int lastRow = table.getRowCount() - 1;
             table.setRowSelectionInterval(lastRow, lastRow);
-            ProxyStrike selectedPlayer = getSelectedPlayer();
+            Player selectedPlayer = getSelectedPlayer();
             if (selectedPlayer != null) {
                 CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, selectedPlayer);
             }
         }
     }
 
-    private int findPlayerRowIndex(ProxyStrike player) {
+    private int findPlayerRowIndex(Player player) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         for (int i = 0; i < model.getRowCount(); i++) {
             String playerName = (String) model.getValueAt(i, 0);
@@ -622,14 +704,15 @@ public class PlayersPanel extends JPanel {
         return -1;
     }
 
-    private ProxyStrike getSelectedPlayer() {
+    private Player getSelectedPlayer() {
         int row = table.getSelectedRow();
         if (row >= 0) {
             int modelRow = table.convertRowIndexToModel(row);
-            String playerName = (String) table.getModel().getValueAt(modelRow, 0);
-            ProxyTicker currentTicker = TickerManager.getInstance().getActiveTicker();
-            if (currentTicker != null) {
-                return (ProxyStrike) currentTicker.getPlayers().stream()
+            String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
+            Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
+            if (currentTicker != null && currentTicker.getPlayers() != null) {
+                logger.info("Looking for player: " + playerName);
+                return currentTicker.getPlayers().stream()
                         .filter(p -> p.getName().equals(playerName))
                         .findFirst()
                         .orElse(null);
@@ -638,10 +721,10 @@ public class PlayersPanel extends JPanel {
         return null;
     }
 
-    private ProxyStrike[] getSelectedPlayers() {
+    private Player[] getSelectedPlayers() {
         int[] selectedRows = table.getSelectedRows();
-        List<ProxyStrike> players = new ArrayList<>();
-        ProxyTicker currentTicker = TickerManager.getInstance().getActiveTicker();
+        List<Player> players = new ArrayList<>();
+        Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
 
         if (currentTicker != null) {
             for (int row : selectedRows) {
@@ -650,10 +733,10 @@ public class PlayersPanel extends JPanel {
                 currentTicker.getPlayers().stream()
                         .filter(p -> p.getName().equals(playerName))
                         .findFirst()
-                        .ifPresent(p -> players.add((ProxyStrike) p));
+                        .ifPresent(p -> players.add(p));
             }
         }
-        return players.toArray(new ProxyStrike[0]);
+        return players.toArray(new Strike[0]);
     }
 
     // Column indices for reference:
@@ -682,23 +765,69 @@ public class PlayersPanel extends JPanel {
         return new ArrayList<>(COLUMNS).indexOf(columnName);
     }
 
-    public void refreshPlayers(Set<IPlayer> players) {
+    private void updateInstrumentCell(Object[] rowData, int columnIndex, Player player) {
+        String instrumentName = "";
+        Long id = player.getInstrumentId();
+
+        InstrumentManager instrumentManager = InstrumentManager.getInstance(null);
+
+        try {
+
+            if (player.getInstrumentId() != null) {
+                // Always try to get fresh instrument from cache first
+                Instrument instrument = instrumentManager.getInstrumentFromCache(player.getInstrumentId());
+                if (instrument != null) {
+                    instrumentName = instrument.getName();
+                    player.setInstrument(instrument); // Update player's reference
+                    logger.info(String.format("Found instrument in cache: %s (ID: %d)", instrumentName,
+                            player.getInstrumentId()));
+                } else {
+                    logger.warning(
+                            String.format("Could not find instrument in cache for ID: %d", player.getInstrumentId()));
+                    instrumentManager.refreshCache();
+                    instrument = instrumentManager.getInstrumentFromCache(player.getInstrumentId());
+                    if (instrument != null) {
+                        instrumentName = instrument.getName();
+                        player.setInstrument(instrument);
+                        logger.info(String.format("Found instrument after cache refresh: %s", instrumentName));
+                    } else {
+                        instrumentName = "Unknown (ID: " + player.getInstrumentId() + ")";
+                    }
+                }
+            } else if (player.getInstrument() != null) {
+                // If we have instrument but no ID, try to fix the state
+                instrumentName = player.getInstrument().getName();
+                player.setInstrumentId(player.getInstrument().getId());
+                logger.info(String.format("Fixed missing instrument ID for instrument: %d", instrumentName));
+                RedisService.getInstance().savePlayer(player);
+            }
+
+            rowData[columnIndex] = instrumentName;
+            // logger.info(String.format("Updated instrument cell for player %d to: %d", player.getId(), instrumentName));
+        } catch (Exception e) {
+            logger.severe("Error updating instrument cell: " + e.getMessage());
+            rowData[columnIndex] = "Error";
+        }
+    }
+
+    public void refreshPlayers(Set<Player> players) {
+        logger.info("Refreshing players table with " + (players != null ? players.size() : 0) + " players");
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
 
-        if (players != null) {
-            List<IPlayer> sortedPlayers = new ArrayList<>(players);
+        if (players != null && !players.isEmpty()) {
+            List<Player> sortedPlayers = new ArrayList<>(players);
             Collections.sort(sortedPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
-            for (IPlayer p : sortedPlayers) {
-                ProxyStrike player = (ProxyStrike) p;
+            for (Player p : sortedPlayers) {
+                Player player = p;
+                logger.info("Adding player to table: " + player.getName() + " (ID: " + player.getId() + ")");
                 Object[] newRowData = new Object[COLUMNS.size()];
 
                 // Map each property to its correct column position
                 newRowData[getColumnIndex(COL_NAME)] = player.getName();
-                newRowData[getColumnIndex(COL_INSTRUMENT)] = player.getInstrument() != null
-                        ? player.getInstrument().getName()
-                        : "";
+                updateInstrumentCell(newRowData, getColumnIndex(COL_INSTRUMENT), player);
+
                 newRowData[getColumnIndex(COL_CHANNEL)] = player.getChannel();
                 newRowData[getColumnIndex(COL_SWING)] = player.getSwing();
                 newRowData[getColumnIndex(COL_LEVEL)] = player.getLevel();
@@ -722,15 +851,18 @@ public class PlayersPanel extends JPanel {
         }
     }
 
-    private void updatePlayerRow(ProxyStrike player) {
+    private void updatePlayerRow(Player player) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         int rowIndex = findPlayerRowIndex(player);
 
         if (rowIndex != -1) {
-            // Update each column according to its current position
             model.setValueAt(player.getName(), rowIndex, getColumnIndex(COL_NAME));
-            model.setValueAt(player.getInstrument() != null ? player.getInstrument().getName() : "",
-                    rowIndex, getColumnIndex(COL_INSTRUMENT));
+
+            // Update instrument using same logic
+            Object[] tempRow = new Object[1];
+            updateInstrumentCell(tempRow, 0, player);
+            model.setValueAt(tempRow[0], rowIndex, getColumnIndex(COL_INSTRUMENT));
+
             model.setValueAt(player.getChannel(), rowIndex, getColumnIndex(COL_CHANNEL));
             model.setValueAt(player.getSwing(), rowIndex, getColumnIndex(COL_SWING));
             model.setValueAt(player.getLevel(), rowIndex, getColumnIndex(COL_LEVEL));

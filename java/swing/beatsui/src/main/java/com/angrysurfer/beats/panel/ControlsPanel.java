@@ -40,14 +40,14 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.proxy.ProxyCaption;
-import com.angrysurfer.core.proxy.ProxyControlCode;
-import com.angrysurfer.core.proxy.ProxyInstrument;
-import com.angrysurfer.core.service.RedisService;
+import com.angrysurfer.core.model.midi.ControlCodeCaption;
+import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.midi.ControlCode;
+import com.angrysurfer.core.redis.RedisService;
 
 public class ControlsPanel extends JPanel implements CommandListener {
     private static final Logger logger = Logger.getLogger(ControlsPanel.class.getName());
-    private JComboBox<ProxyInstrument> instrumentSelector;
+    private JComboBox<Instrument> instrumentSelector;
     private final RedisService redisService;
     private final JPanel controlsContainer;
 
@@ -71,7 +71,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
         JPopupMenu popupMenu = new JPopupMenu();
         JMenuItem saveConfigItem = new JMenuItem("Save Config...");
         saveConfigItem.addActionListener(e -> {
-            ProxyInstrument currentInstrument = (ProxyInstrument) instrumentSelector.getSelectedItem();
+            Instrument currentInstrument = (Instrument) instrumentSelector.getSelectedItem();
             if (currentInstrument != null) {
                 CommandBus.getInstance().publish(Commands.SAVE_INSTRUMENT_CONFIG, this, currentInstrument);
             }
@@ -93,8 +93,8 @@ public class ControlsPanel extends JPanel implements CommandListener {
                     JList<?> list, Object value, int index, 
                     boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof ProxyInstrument) {
-                    setText(((ProxyInstrument) value).getName());
+                if (value instanceof Instrument) {
+                    setText(((Instrument) value).getName());
                 }
                 return this;
             }
@@ -109,7 +109,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
         JButton sendButton = new JButton("\u2192"); // Unicode right arrow
         sendButton.setToolTipText("Send All Controls");
         sendButton.addActionListener(e -> {
-            ProxyInstrument current = (ProxyInstrument) instrumentSelector.getSelectedItem();
+            Instrument current = (Instrument) instrumentSelector.getSelectedItem();
             if (current != null) {
                 CommandBus.getInstance().publish(Commands.SEND_ALL_CONTROLS, this, current);
             }
@@ -146,7 +146,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
         
         // Add selection listener
         instrumentSelector.addActionListener(e -> {
-            ProxyInstrument selected = (ProxyInstrument) instrumentSelector.getSelectedItem();
+            Instrument selected = (Instrument) instrumentSelector.getSelectedItem();
             if (selected != null) {
                 logger.info("Selected instrument: " + selected.getName());
                 updateControlsDisplay(selected);
@@ -160,7 +160,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
     @Override
     public void onAction(Command action) {
         if (Commands.WINDOW_RESIZED.equals(action.getCommand())) {
-            ProxyInstrument currentInstrument = (ProxyInstrument) instrumentSelector.getSelectedItem();
+            Instrument currentInstrument = (Instrument) instrumentSelector.getSelectedItem();
             if (currentInstrument != null) {
                 SwingUtilities.invokeLater(() -> updateControlsDisplay(currentInstrument));
             }
@@ -170,14 +170,14 @@ public class ControlsPanel extends JPanel implements CommandListener {
     private static class ControlGroup {
         String name;
         List<ControlGroup> subgroups = new ArrayList<>();
-        List<ProxyControlCode> controls = new ArrayList<>();
+        List<ControlCode> controls = new ArrayList<>();
         
         ControlGroup(String name) {
             this.name = name;
         }
     }
 
-    private void updateControlsDisplay(ProxyInstrument instrument) {
+    private void updateControlsDisplay(Instrument instrument) {
         controlsContainer.removeAll();
         
         if (instrument == null || instrument.getControlCodes() == null || instrument.getControlCodes().isEmpty()) {
@@ -197,10 +197,10 @@ public class ControlsPanel extends JPanel implements CommandListener {
 
         // Create hierarchical groups
         Map<String, ControlGroup> groups = new TreeMap<>();
-        List<ProxyControlCode> singleControls = new ArrayList<>();
+        List<ControlCode> singleControls = new ArrayList<>();
         
         // Group controls by common prefixes
-        for (ProxyControlCode control : instrument.getControlCodes()) {
+        for (ControlCode control : instrument.getControlCodes()) {
             String[] parts = control.getName().split(" ");
             String prefix = parts[0];
             
@@ -341,13 +341,13 @@ public class ControlsPanel extends JPanel implements CommandListener {
                paramName.equals("Release");
     }
 
-    private JPanel createSinglesPanel(List<ProxyControlCode> singleControls, int maxControlsPerRow) {
+    private JPanel createSinglesPanel(List<ControlCode> singleControls, int maxControlsPerRow) {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(2, 2, 2, 2);
         
         int col = 0;
-        for (ProxyControlCode control : singleControls) {
+        for (ControlCode control : singleControls) {
             gbc.gridx = col;
             addSingleControl(panel, control, gbc);
             col = (col + 1) % maxControlsPerRow;  // Use maxControlsPerRow instead of CONTROLS_PER_ROW
@@ -356,7 +356,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
         return panel;
     }
 
-    private void addSingleControl(JPanel panel, ProxyControlCode control, GridBagConstraints gbc) {
+    private void addSingleControl(JPanel panel, ControlCode control, GridBagConstraints gbc) {
         JPanel wrapper = new JPanel(new BorderLayout(5, 2));
         
         // Add label
@@ -377,7 +377,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
         return lastSpace >= 0 ? fullName.substring(lastSpace + 1) : fullName;
     }
 
-    private Component createControl(ProxyControlCode controlCode) {
+    private Component createControl(ControlCode controlCode) {
         int lowerBound = controlCode.getLowerBound() != null ? controlCode.getLowerBound() : 0;
         int upperBound = controlCode.getUpperBound() != null ? controlCode.getUpperBound() : 127;
         
@@ -400,7 +400,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
                 ToggleSwitch toggle = new ToggleSwitch();
                 
                 // Sort captions by code to ensure consistent ordering
-                List<ProxyCaption> sortedCaptions = new ArrayList<>(controlCode.getCaptions());
+                List<ControlCodeCaption> sortedCaptions = new ArrayList<>(controlCode.getCaptions());
                 sortedCaptions.sort((a, b) -> a.getCode().compareTo(b.getCode()));
                 
                 String offState = sortedCaptions.get(0).getDescription();
@@ -439,7 +439,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
                 slider.setPaintTicks(true);
                 
                 // Sort captions by code for consistent ordering
-                List<ProxyCaption> sortedCaptions = new ArrayList<>(controlCode.getCaptions());
+                List<ControlCodeCaption> sortedCaptions = new ArrayList<>(controlCode.getCaptions());
                 sortedCaptions.sort((a, b) -> a.getCode().compareTo(b.getCode()));
                 
                 // Create a label table for the captions
@@ -468,12 +468,12 @@ public class ControlsPanel extends JPanel implements CommandListener {
 
     public void refreshInstruments() {
         instrumentSelector.removeAllItems();
-        List<ProxyInstrument> instruments = redisService.findAllInstruments();
+        List<Instrument> instruments = redisService.findAllInstruments();
         
         // Sort instruments by name
         instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
         
-        for (ProxyInstrument instrument : instruments) {
+        for (Instrument instrument : instruments) {
             instrumentSelector.addItem(instrument);
         }
         
@@ -482,7 +482,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
 
     private void refreshControlsPanel() {
         // Store currently selected instrument
-        ProxyInstrument currentInstrument = (ProxyInstrument) instrumentSelector.getSelectedItem();
+        Instrument currentInstrument = (Instrument) instrumentSelector.getSelectedItem();
         
         // Clear and reload instruments from database
         refreshInstruments();
@@ -490,7 +490,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
         // If there was a previously selected instrument, try to reselect it
         if (currentInstrument != null) {
             for (int i = 0; i < instrumentSelector.getItemCount(); i++) {
-                ProxyInstrument item = instrumentSelector.getItemAt(i);
+                Instrument item = instrumentSelector.getItemAt(i);
                 if (item.getId().equals(currentInstrument.getId())) {
                     instrumentSelector.setSelectedIndex(i);
                     break;
@@ -499,7 +499,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
         }
         
         // Force update of controls display
-        ProxyInstrument selected = (ProxyInstrument) instrumentSelector.getSelectedItem();
+        Instrument selected = (Instrument) instrumentSelector.getSelectedItem();
         if (selected != null) {
             updateControlsDisplay(selected);
         }
@@ -507,10 +507,10 @@ public class ControlsPanel extends JPanel implements CommandListener {
         logger.info("Controls panel refreshed");
     }
 
-    public void selectInstrument(ProxyInstrument instrument) {
+    public void selectInstrument(Instrument instrument) {
         if (instrument != null) {
             for (int i = 0; i < instrumentSelector.getItemCount(); i++) {
-                ProxyInstrument item = instrumentSelector.getItemAt(i);
+                Instrument item = instrumentSelector.getItemAt(i);
                 if (item.getId().equals(instrument.getId())) {
                     instrumentSelector.setSelectedIndex(i);
                     break;
@@ -540,7 +540,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
             int startX = (maxColumns - controlsInRow) / 2;
             
             for (int col = 0; col < controlsInRow; col++) {
-                ProxyControlCode control = group.controls.get(currentControl++);
+                ControlCode control = group.controls.get(currentControl++);
                 
                 // Add label
                 gbc.gridx = startX + col;

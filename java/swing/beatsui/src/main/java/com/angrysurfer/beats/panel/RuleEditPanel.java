@@ -16,31 +16,31 @@ import javax.swing.SpinnerListModel;
 import javax.swing.SpinnerNumberModel;
 
 import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.proxy.ProxyRule;
+import com.angrysurfer.core.model.Rule;
 
 public class RuleEditPanel extends StatusProviderPanel {
-    private final ProxyRule rule;
+    private final Rule rule;
     private final JComboBox<String> operatorCombo;
     private final JComboBox<String> comparisonCombo;
     private final JSpinner valueSpinner;
     private final JSpinner partSpinner;
 
-    public RuleEditPanel(ProxyRule rule) {
+    public RuleEditPanel(Rule rule) {
         this(rule, null);
     }
 
-    public RuleEditPanel(ProxyRule rule, StatusConsumer statusConsumer) {
+    public RuleEditPanel(Rule rule, StatusConsumer statusConsumer) {
         super(new GridBagLayout(), statusConsumer);
         this.rule = rule;
         setLayout(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        operatorCombo = new JComboBox<>(ProxyRule.OPERATORS);
-        comparisonCombo = new JComboBox<>(ProxyRule.COMPARISONS);
+        operatorCombo = new JComboBox<>(Rule.OPERATORS);
+        comparisonCombo = new JComboBox<>(Rule.COMPARISONS);
         
         // Set default value to 1.0 with no upper limit
         double initialValue = (rule != null && rule.getValue() != null) ? rule.getValue() : 1.0;
-        valueSpinner = new JSpinner(new SpinnerNumberModel(initialValue, 0.0, null, 0.5));
+        valueSpinner = new JSpinner(new SpinnerNumberModel(initialValue, 1.0, null, 0.5));
 
         // Special SpinnerListModel for Part with "All" option
         String[] partValues = new String[17]; // 0-16 where 0 is "All"
@@ -84,7 +84,7 @@ public class RuleEditPanel extends StatusProviderPanel {
         add(panel, gbc);
     }
 
-    public ProxyRule getUpdatedRule() {
+    public Rule getUpdatedRule() {
         rule.setOperator(operatorCombo.getSelectedIndex());
         rule.setComparison(comparisonCombo.getSelectedIndex());
         rule.setValue((Double) valueSpinner.getValue());

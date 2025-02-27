@@ -11,17 +11,17 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
-import com.angrysurfer.core.proxy.ProxyCaption;
+import com.angrysurfer.core.model.midi.ControlCodeCaption;
 
 import lombok.Getter;
 
 @Getter
 public class CaptionEditPanel extends JPanel {
-    private final ProxyCaption caption;
+    private final ControlCodeCaption caption;
     private final JSpinner codeSpinner;
     private final JTextField descriptionField;
 
-    public CaptionEditPanel(ProxyCaption caption) {
+    public CaptionEditPanel(ControlCodeCaption caption) {
         super(new GridBagLayout());
         this.caption = caption;
 
@@ -57,7 +57,7 @@ public class CaptionEditPanel extends JPanel {
         add(field, gbc);
     }
 
-    public ProxyCaption getUpdatedCaption() {
+    public ControlCodeCaption getUpdatedCaption() {
         // No need to cast, we're already using Long
         caption.setCode((Long) codeSpinner.getValue());
         caption.setDescription(descriptionField.getText());

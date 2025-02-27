@@ -5,68 +5,47 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.player.AbstractPlayer;
+import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.service.MIDIDeviceManager;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@Entity
-public class Ticker implements Serializable, ITicker {
-
-    @Override
-    public List<Callable<Boolean>> getCallables() {
-        return Objects.nonNull(getPlayers()) ? getPlayers().stream()
-                .map(player -> (Callable<Boolean>) () -> player.call())
-                .collect(Collectors.toList()) : Collections.emptyList();
-    }
-
-    @Override
-    public void setParts(Integer parts) {
-        logger.info("setParts() - new value: {}", parts);
-        this.parts = parts;
-        this.partCycler.setLength((long) parts);
-    }
-
-    @Override
-    public void setBars(Integer bars) {
-        logger.info("setBars() - new value: {}", bars);
-        this.bars = bars;
-        getBarCycler().setLength((long) bars);
-    }
-
-    @Override
-    public void setBeatsPerBar(Integer beatsPerBar) {
-        logger.info("setBeatsPerBar() - new value: {}", beatsPerBar);
-        this.beatsPerBar = beatsPerBar;
-        getBeatCycler().setLength((long) beatsPerBar);
-    }
+public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
     static Logger logger = LoggerFactory.getLogger(Ticker.class.getCanonicalName());
+
+    private Long id;
+
+    @JsonIgnore
+    @Transient
+    public boolean isFirst = false;
+
+    @JsonIgnore
+    @Transient
+    public boolean isLast = false;
 
     @JsonIgnore
     @Transient
@@ -74,7 +53,11 @@ public class Ticker implements Serializable, ITicker {
 
     @JsonIgnore
     @Transient
-    private Set<AbstractPlayer> removeList = new HashSet<>();
+    private Set<Player> addList = new HashSet<>();
+
+    @JsonIgnore
+    @Transient
+    private Set<Player> removeList = new HashSet<>();
 
     @JsonIgnore
     @Transient
@@ -111,13 +94,8 @@ public class Ticker implements Serializable, ITicker {
     @Transient
     private boolean done = false;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Column(name = "id", nullable = false)
-    private Long id;
-
-    @Transient
-    private Set<AbstractPlayer> players = new HashSet<>();
+    @JsonIgnore
+    private transient Set<Player> players = new HashSet<>();
 
     @Transient
     Set<Long> activePlayerIds = new HashSet<>();
@@ -149,7 +127,38 @@ public class Ticker implements Serializable, ITicker {
         setSongLength(Long.MAX_VALUE);
     }
 
-    public AbstractPlayer getPlayer(Long playerId) {
+    public Ticker(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, long partLength) {
+        this.tempoInBPM = tempoInBPM;
+        this.bars = bars;
+        this.beatsPerBar = beatsPerBar;
+        this.ticksPerBeat = ticksPerBeat;
+        this.parts = parts;
+        this.partLength = partLength;
+    }
+
+    public List<Callable<Boolean>> getCallables() {
+        // Implement the method as required
+        return Objects.nonNull(getPlayers()) ? getPlayers().stream()
+                .map(player -> (Callable<Boolean>) () -> player.call())
+                .collect(Collectors.toList()) : Collections.emptyList();
+    }
+
+    public void setParts(Integer parts) {
+        this.parts = parts;
+        this.partCycler.setLength((long) parts);
+    }
+
+    public void setBars(Integer bars) {
+        this.bars = bars;
+        this.barCycler.setLength((long) bars);
+    }
+
+    public void setBeatsPerBar(Integer beatsPerBar) {
+        this.beatsPerBar = beatsPerBar;
+        this.beatCycler.setLength((long) beatsPerBar);
+    }
+
+    public Player getPlayer(Long playerId) {
         logger.info("getPlayer() - playerId: {}", playerId);
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
@@ -235,7 +244,7 @@ public class Ticker implements Serializable, ITicker {
         getBarCounter().reset();
         getPartCounter().reset();
 
-        // getAddList().clear();
+        getAddList().clear();
         getRemoveList().forEach(r -> getPlayers().remove(r));
         getRemoveList().clear();
     }
@@ -292,6 +301,8 @@ public class Ticker implements Serializable, ITicker {
     }
 
     public void beforeTick() {
+        for (Player player : getPlayers())
+            player.setTicker(this);
     }
 
     public void afterTick() {
@@ -332,18 +343,17 @@ public class Ticker implements Serializable, ITicker {
     }
 
     private void updatePlayerConfig() {
-        // logger.debug("updatePlayerConfig() - removing {} players, adding {} players",
-        // getRemoveList().size(), getAddList().size());
-
+        logger.debug("updatePlayerConfig() - removing {} players, adding {} players",
+                getRemoveList().size(), getAddList().size());
         if (!getRemoveList().isEmpty()) {
             getPlayers().removeAll(getRemoveList());
             getRemoveList().clear();
         }
 
-        // if (!getAddList().isEmpty()) {
-        // getPlayers().addAll(getAddList());
-        // getAddList().clear();
-        // }
+        if (!getAddList().isEmpty()) {
+            getPlayers().addAll(getAddList());
+            getAddList().clear();
+        }
     }
 
     public Float getBeatDuration() {
@@ -366,6 +376,78 @@ public class Ticker implements Serializable, ITicker {
 
     public boolean isRunning() {
         return (Objects.nonNull(clockSource) && clockSource.isRunning());
+    }
+
+    public Set<Player> getPlayers() {
+        return players;
+    }
+
+    public void setPlayers(Set<Player> players) {
+        this.players = players;
+    }
+
+    public synchronized boolean isValid() {
+        return (Objects.nonNull(getPlayers()) && !getPlayers().isEmpty()
+                && getPlayers().stream().anyMatch(p -> Objects.nonNull(p.getRules()) && p.getRules().size() > 0));
+    }
+
+    public void play() {
+
+        stopRunningClocks();
+
+        List<MidiDevice> devices = MIDIDeviceManager.getMidiOutDevices();
+
+        getPlayers().forEach(p -> {
+
+            Instrument instrument = p.getInstrument();
+            if (Objects.nonNull(instrument)) {
+                Optional<MidiDevice> device = devices.stream()
+                        .filter(d -> d.getDeviceInfo().getName().equals(instrument.getDeviceName())).findFirst();
+
+                if (device.isPresent() && !device.get().isOpen())
+                    try {
+                        device.get().open();
+                        instrument.setDevice(device.get());
+                    } catch (MidiUnavailableException e) {
+                        logger.error(e.getMessage(), e);
+                    }
+
+                else
+                    logger.error(instrument.getDeviceName() + " not initialized");
+            } else
+                logger.error("Instrument not initialized");
+
+            try {
+                if (p.getPreset() > -1)
+                    p.getInstrument().programChange(p.getChannel(), p.getPreset(), 0);
+            } catch (InvalidMidiDataException | MidiUnavailableException e) {
+                logger.error(e.getMessage(), e);
+            }
+
+            p.setTicker(this);
+        });
+
+        new Thread(newClockSource()).start();
+    }
+
+    private ClockSource newClockSource() {
+        stopRunningClocks();
+        setClockSource(new ClockSource(this));
+        return clockSource;
+    }
+
+    private void stopRunningClocks() {
+        if (Objects.nonNull(getClockSource()))
+            getClockSource().stop();
+    }
+
+    public void stop() {
+        stopRunningClocks();
+        setPaused(false);
+        getBeatCycler().reset();
+        getBarCycler().reset();
+        setDone(false);
+        reset();
     }
 
 }

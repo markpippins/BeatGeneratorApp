@@ -14,8 +14,8 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.proxy.ProxyStrike;
-import com.angrysurfer.core.proxy.ProxyTicker;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Ticker;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -159,12 +159,12 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
 
         switch (action.getCommand()) {
             case Commands.TICKER_SELECTED, Commands.TICKER_UPDATED, Commands.TICKER_LOADED -> {
-                if (action.getData() instanceof ProxyTicker ticker) {
+                if (action.getData() instanceof Ticker ticker) {
                     updateTickerInfo(ticker);
                 }
             }
             case Commands.PLAYER_SELECTED -> {
-                if (action.getData() instanceof ProxyStrike player) {
+                if (action.getData() instanceof Player player) {
                     updatePlayerInfo(player);
                 }
             }
@@ -173,7 +173,7 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
         }
     }
 
-    private void updateTickerInfo(ProxyTicker ticker) {
+    private void updateTickerInfo(Ticker ticker) {
         if (ticker != null) {
             tickerIdField.setText(String.valueOf(ticker.getId()));
             playerCountField.setText(String.valueOf(ticker.getPlayers().size()));
@@ -182,7 +182,7 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
         }
     }
 
-    private void updatePlayerInfo(ProxyStrike player) {
+    private void updatePlayerInfo(Player player) {
         if (player != null) {
             playerIdField.setText(String.valueOf(player.getId()));
             ruleCountField.setText(String.valueOf(player.getRules().size()));

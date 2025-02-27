@@ -1,11 +1,15 @@
 package com.angrysurfer.core.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.angrysurfer.core.model.midi.Instrument;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -21,6 +25,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Pad {
 
     @Id
@@ -31,13 +36,13 @@ public class Pad {
     private Integer note;
 
     @ElementCollection
-    List<Integer> controlCodes = new ArrayList<>();
+    private List<Integer> controlCodes = new ArrayList<>();
 
     private String name;
 
-    @JsonBackReference
+    @JsonIgnore  // Ignore this field during serialization
     @ManyToMany(mappedBy = "pads")
-    private Set<Instrument> instruments;
+    private Set<Instrument> instruments = new HashSet<>();
 
     public Pad() {
 
@@ -45,5 +50,11 @@ public class Pad {
 
     public Pad(Integer note) {
         this.note = note;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Pad{id=%d, note=%d, name='%s', controlCodes=%s}",
+                id, note, name, controlCodes);
     }
 }

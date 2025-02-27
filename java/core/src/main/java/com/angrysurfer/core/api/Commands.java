@@ -48,7 +48,7 @@ public class Commands {
     public static final String PLAYER_EDIT_REQUEST = "PLAYER_EDIT_REQUEST";
     public static final String PLAYER_DELETE_REQUEST = "PLAYER_DELETE_REQUEST";
     public static final String PLAYER_EDIT_CANCELLED = "PLAYER_EDIT_CANCELLED";
-    public static final String EDIT_PLAYER_PARAMETERS = "EDIT_PLAYER_PARAMETERS";  // Add this line
+    public static final String EDIT_PLAYER_PARAMETERS = "EDIT_PLAYER_PARAMETERS"; // Add this line
 
     // Player navigation commands
     public static final String PLAYER_ROW_INDEX_REQUEST = "PLAYER_ROW_INDEX_REQUEST";
@@ -88,7 +88,7 @@ public class Commands {
 
     // Control sending commands
     public static final String SEND_ALL_CONTROLS = "SEND_ALL_CONTROLS";
-    public static final String SAVE_INSTRUMENT_CONFIG = "SAVE_INSTRUMENT_CONFIG";  // Add this line
+    public static final String SAVE_INSTRUMENT_CONFIG = "SAVE_INSTRUMENT_CONFIG"; // Add this line
 
     // Ticker selection commands
     public static final String TICKER = "TICKER";
@@ -98,7 +98,7 @@ public class Commands {
     // Ticker state commands
     public static final String TICKER_UNSELECTED = "TICKER_UNSELECTED";
     public static final String TICKER_DELETED = "TICKER_DELETED";
-    public static final String TICKER_CREATED = "TICKER_CREATED";  // Add this line
+    public static final String TICKER_CREATED = "TICKER_CREATED"; // Add this line
 
     // Ticker-Player-Rule relationship commands
     public static final String TICKER_REQUEST = "TICKER_REQUEST";
@@ -176,4 +176,26 @@ public class Commands {
     public static final String WINDOW_RESIZED = "WINDOW_RESIZED";
 
     public static final String INSTRUMENT_UPDATED = "INSTRUMENT_UPDATED";
+
+    public static final String BASIC_TIMING_TICK = "BASIC_TIMING_TICK";
+    public static final String BASIC_TIMING_BEAT = "BASIC_TIMING_BEAT";
+
+    public static final String SONG_SELECTED = "SONG_SELECTED";
+    public static final String SONG_UPDATED = "SONG_UPDATED";
+    public static final String SONG_CHANGED = "SONG_CHANGED";
+    public static final String SONG_DELETED = "SONG_DELETED";
+
+    public static final String PATTERN_ADDED = "PATTERN_ADDED";
+    public static final String PATTERN_REMOVED = "PATTERN_REMOVED";
+    public static final String PATTERN_UPDATED = "PATTERN_UPDATED";
+
+    public static final String STEP_UPDATED = "STEP_UPDATED";
+
+    public static final String INSTRUMENT_ADDED = "INSTRUMENT_ADDED";
+    public static final String INSTRUMENT_REMOVED = "INSTRUMENT_REMOVED";
+
+    public static final String USER_CONFIG_LOADED = "USER_CONFIG_LOADED";
+
+    // System Commands
+    public static final String SYSTEM_READY = "SYSTEM_READY";
 }

@@ -9,10 +9,10 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.IPlayer;
-import com.angrysurfer.core.proxy.ProxyRule;
-import com.angrysurfer.core.proxy.ProxyStrike;
-import com.angrysurfer.core.proxy.ProxyTicker;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.redis.RedisService;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +24,7 @@ public class TickerManager {
     private static final Logger logger = Logger.getLogger(TickerManager.class.getName());
     private static TickerManager instance;
     private final CommandBus commandBus = CommandBus.getInstance();
-    private ProxyTicker activeTicker;
+    private Ticker activeTicker;
     private final RedisService redisService = RedisService.getInstance();
 
     private TickerManager() {
@@ -46,72 +46,109 @@ public class TickerManager {
                         commandBus.publish(Commands.SHOW_PLAYER_EDITOR, this, null);
                     }
                     case Commands.PLAYER_EDIT_REQUEST -> {
-                        if (action.getData() instanceof ProxyStrike player) { // Changed from ProxyStrike[]
+                        if (action.getData() instanceof Player player) { // Changed from ProxyStrike[]
                             // Open editor with the selected player
                             commandBus.publish(Commands.SHOW_PLAYER_EDITOR, this, player);
                         }
                     }
                     case Commands.SHOW_PLAYER_EDITOR_OK -> {
-                        if (action.getData() instanceof ProxyStrike player) {
+                        if (action.getData() instanceof Player player) {
                             RedisService redis = RedisService.getInstance();
-                            if (player.getId() == null) {
-                                // This is a new player
-                                player = redis.newPlayer();
-                                initializeDefaultPlayerValues(player);
-                                redis.addPlayerToTicker(activeTicker, player);
-                            }
-                            redis.savePlayer(player);
+                            logger.info("Processing player update: " + player.getName());
 
-                            // Refresh UI with updated ticker
-                            activeTicker = redis.findTickerById(activeTicker.getId());
+                            if (player.getId() == null) {
+                                // New player
+                                player = redis.newPlayer();
+                                if (activeTicker != null) {
+                                    redis.addPlayerToTicker(activeTicker, player);
+                                    // Get fresh ticker state after adding player
+                                    activeTicker = redis.findTickerById(activeTicker.getId());
+
+                                    logger.info("Added new player to ticker");
+                                }
+                            } else {
+                                // Existing player update
+                                redis.savePlayer(player);
+                                // Get fresh ticker state after updating player
+                                activeTicker = redis.findTickerById(activeTicker.getId());
+
+                                logger.info("Updated existing player");
+                            }
+
+                            // Save ticker with updated player
+                            redis.saveTicker(activeTicker);
+
+                            // Notify UI in correct order
                             commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
+                            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+
+                            logger.info(String.format("Completed player update with instrument: {} (ID: {})",
+                                    player.getInstrument() != null ? player.getInstrument().getName() : "none",
+                                    player.getInstrumentId()));
                         }
                     }
                     case Commands.RULE_DELETE_REQUEST -> {
-                        if (action.getData() instanceof ProxyRule[] rules) {
-                            RedisService redis = RedisService.getInstance();
-                            ProxyStrike player = redis.findPlayerForRule(rules[0]);
-                            if (player != null) {
-                                for (ProxyRule rule : rules) {
-                                    redis.removeRuleFromPlayer(player, rule);
-                                }
-                                // Get fresh state of both player and ticker
-                                player = redis.findPlayerById(player.getId());
-                                activeTicker = redis.findTickerById(activeTicker.getId());
+                        Player selected = PlayerManager.getInstance().getActivePlayer();
+                        boolean wasDeleted = false;
 
-                                // Notify UI of updates in correct order:
-                                // 1. Update ticker (updates player list)
-                                commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
-                                // 2. Re-select the player (refreshes rules panel)
-                                commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-                            }
+                        if (selected != null && action.getData() instanceof Rule[] rules)
+                            for (Rule rule : rules)
+                                if (selected.getRules().remove(rule)) {
+                                    logger.info("Processing rule delete request for Rule " + rule.getId());
+                                    redisService.deleteRule(rule.getId());
+                                    redisService.savePlayer(selected);
+                                    commandBus.publish(Commands.PLAYER_UPDATED, this, selected);
+                                    logger.info("Rule deleted and player updated");
+                                    wasDeleted = true;
+                                }
+
+                        if (wasDeleted) {
+                            redisService.saveTicker(activeTicker);
+                            commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
+                            commandBus.publish(Commands.PLAYER_SELECTED, this, selected);
                         }
                     }
+
                     case Commands.PLAYER_DELETE_REQUEST -> {
-                        if (action.getData() instanceof ProxyStrike[] players) {
-                            RedisService redis = RedisService.getInstance();
-                            for (ProxyStrike player : players) {
-                                redis.removePlayerFromTicker(activeTicker, player);
-                                redis.deletePlayer(player);
+                        if (action.getData() instanceof Player[] players) {
+                            logger.info("Processing delete request for " + players.length + " players");
+
+                            // We already have the active ticker
+                            if (activeTicker != null) {
+                                boolean wasDeleted = false;
+
+                                // Process each player
+                                for (Player player : players) {
+                                    logger.info("Deleting player: " + player.getId());
+                                    if (activeTicker.getPlayers().remove(player)) {
+                                        wasDeleted = true;
+                                        redisService.deletePlayer(player);
+                                        logger.info("Player deleted: " + player.getId());
+                                    }
+                                }
+
+                                if (wasDeleted) {
+                                    // Save updated ticker
+                                    redisService.saveTicker(activeTicker);
+                                    logger.info("Saved ticker after player deletion");
+
+                                    // Notify UI
+                                    commandBus.publish(Commands.PLAYER_UNSELECTED, this);
+                                    commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
+                                }
                             }
-
-                            // Reload ticker after deletion to get fresh state
-                            activeTicker = redis.findTickerById(activeTicker.getId());
-
-                            // Notify UI of update with fresh ticker state
-                            commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
                         }
                     }
                     case Commands.RULE_ADD_REQUEST -> {
-                        if (action.getData() instanceof ProxyStrike player) {
+                        if (action.getData() instanceof Player player) {
                             // Just show the dialog, don't create rule yet
                             commandBus.publish(Commands.SHOW_RULE_EDITOR, this, player);
                         }
                     }
                     case Commands.SHOW_RULE_EDITOR_OK -> {
-                        if (action.getData() instanceof ProxyRule rule) {
+                        if (action.getData() instanceof Rule rule) {
                             RedisService redis = RedisService.getInstance();
-                            ProxyStrike player = redis.findPlayerForRule(rule);
+                            Player player = redis.findPlayerForRule(rule);
 
                             if (player != null) {
                                 // For existing rule, just save it
@@ -120,23 +157,35 @@ public class TickerManager {
                                 } else {
                                     // For new rule, add it to player
                                     redis.addRuleToPlayer(player, rule);
+                                    // Notify about new rule
+                                    commandBus.publish(Commands.RULE_ADDED, this, new Object[] { player, rule });
                                 }
 
-                                // Get fresh state and notify UI
-                                player = redis.findPlayerById(player.getId());
-                                commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                                // Get fresh states
+                                Player refreshedPlayer = redis.findPlayerById(player.getId());
+                                activeTicker = redis.findTickerById(activeTicker.getId());
+
+                                // Notify UI in correct order
+                                commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
+                                // Force rules panel to update by re-selecting the player
+                                commandBus.publish(Commands.PLAYER_UNSELECTED, this);
+                                commandBus.publish(Commands.PLAYER_SELECTED, this, refreshedPlayer);
+
+                                logger.info(String.format("Rule saved and player refreshed - Player: %d, Rules: %d",
+                                        refreshedPlayer.getName(),
+                                        refreshedPlayer.getRules() != null ? refreshedPlayer.getRules().size() : 0));
                             }
                         }
                     }
                     case Commands.RULE_EDIT_REQUEST -> {
-                        if (action.getData() instanceof ProxyRule rule) {
+                        if (action.getData() instanceof Rule rule) {
                             commandBus.publish(Commands.SHOW_RULE_EDITOR, this, rule);
                         }
                     }
                     case Commands.RULE_UPDATED -> {
-                        if (action.getData() instanceof ProxyRule rule) {
+                        if (action.getData() instanceof Rule rule) {
                             RedisService redis = RedisService.getInstance();
-                            ProxyStrike player = redis.findPlayerForRule(rule);
+                            Player player = redis.findPlayerForRule(rule);
                             if (player != null) {
                                 redis.saveRule(rule);
 
@@ -156,31 +205,32 @@ public class TickerManager {
                         RedisService redis = RedisService.getInstance();
                         Long currentTickerId = activeTicker != null ? activeTicker.getId() : null;
                         boolean wasActiveTickerDeleted = false;
-                        
+
                         // Get all ticker IDs sorted before we start deleting
                         List<Long> tickerIds = redis.getAllTickerIds();
                         Collections.sort(tickerIds);
-                        
+
                         // Track the nearest valid ticker to our current one
                         Long nearestValidTickerId = null;
                         Long lastValidTickerId = null;
-                        
+
                         // First pass: find nearest valid ticker and track the last valid one
                         for (Long id : tickerIds) {
-                            ProxyTicker ticker = redis.findTickerById(id);
+                            Ticker ticker = redis.findTickerById(id);
                             if (ticker != null && ticker.isValid()) {
                                 if (currentTickerId != null) {
-                                    if (id < currentTickerId && (nearestValidTickerId == null || id > nearestValidTickerId)) {
+                                    if (id < currentTickerId
+                                            && (nearestValidTickerId == null || id > nearestValidTickerId)) {
                                         nearestValidTickerId = id;
                                     }
                                 }
                                 lastValidTickerId = id;
                             }
                         }
-                        
+
                         // Second pass: delete invalid tickers
                         for (Long id : tickerIds) {
-                            ProxyTicker ticker = redis.findTickerById(id);
+                            Ticker ticker = redis.findTickerById(id);
                             if (ticker != null && !ticker.isValid()) {
                                 if (id.equals(currentTickerId)) {
                                     wasActiveTickerDeleted = true;
@@ -188,11 +238,11 @@ public class TickerManager {
                                 redis.deleteTicker(id);
                             }
                         }
-                        
+
                         // Handle active ticker selection if needed
                         if (wasActiveTickerDeleted || activeTicker == null) {
-                            ProxyTicker newActiveTicker = null;
-                            
+                            Ticker newActiveTicker = null;
+
                             if (nearestValidTickerId != null) {
                                 // Use the nearest valid ticker before our current position
                                 newActiveTicker = redis.findTickerById(nearestValidTickerId);
@@ -203,12 +253,13 @@ public class TickerManager {
                                 // No valid tickers exist, create a new one
                                 newActiveTicker = redis.newTicker();
                             }
-                            
+
                             // Update active ticker and notify UI
                             activeTicker = newActiveTicker;
                             commandBus.publish(Commands.TICKER_SELECTED, this, activeTicker);
                         } else {
-                            // Our ticker was valid, but refresh the UI anyway to show updated navigation state
+                            // Our ticker was valid, but refresh the UI anyway to show updated navigation
+                            // state
                             commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
                         }
                     }
@@ -226,6 +277,11 @@ public class TickerManager {
                             commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
                         }
                     }
+                    case Commands.TRANSPORT_RECORD -> {
+                        if (activeTicker != null) {
+                            redisService.saveTicker(activeTicker);
+                        }
+                    }
                 }
             }
         });
@@ -235,12 +291,21 @@ public class TickerManager {
 
     public static TickerManager getInstance() {
         if (instance == null) {
-            instance = new TickerManager();
+            synchronized (TickerManager.class) {
+                if (instance == null) {
+                    instance = new TickerManager();
+                }
+            }
         }
         return instance;
     }
 
-    public ProxyTicker getActiveTicker() {
+    public void setActiveTicker(Ticker ticker) {
+        activeTicker = ticker;
+        commandBus.publish(Commands.TICKER_SELECTED, this, ticker);
+    }
+
+    public Ticker getActiveTicker() {
         return activeTicker;
     }
 
@@ -255,8 +320,8 @@ public class TickerManager {
             return false;
         }
 
-        for (IPlayer player : activeTicker.getPlayers()) {
-            if (((ProxyStrike) player).getRules() != null && !((ProxyStrike) player).getRules().isEmpty()) {
+        for (Player player : activeTicker.getPlayers()) {
+            if (player.getRules() != null && !player.getRules().isEmpty()) {
                 return true;
             }
         }
@@ -280,12 +345,12 @@ public class TickerManager {
 
         if (activeTicker != null && maxId != null && activeTicker.getId().equals(maxId)) {
             // Only create a new ticker if current one is valid and has active rules
-            if (activeTicker.isValid() && !activeTicker.getPlayers().isEmpty() && 
-                activeTicker.getPlayers().stream()
-                    .map(p -> (ProxyStrike)p)
-                    .anyMatch(p -> p.getRules() != null && !p.getRules().isEmpty())) {
-                
-                ProxyTicker newTicker = redis.newTicker();
+            if (activeTicker.isValid() && !activeTicker.getPlayers().isEmpty() &&
+                    activeTicker.getPlayers().stream()
+                            .map(p -> p)
+                            .anyMatch(p -> p.getRules() != null && !p.getRules().isEmpty())) {
+
+                Ticker newTicker = redis.newTicker();
                 tickerSelected(newTicker);
                 commandBus.publish(Commands.TICKER_CREATED, this, newTicker); // Add this line
                 logger.info("Created new ticker and moved forward to it: " + newTicker.getId());
@@ -302,7 +367,7 @@ public class TickerManager {
         }
     }
 
-    public void tickerSelected(ProxyTicker ticker) {
+    public void tickerSelected(Ticker ticker) {
         if (ticker != null && !ticker.equals(this.activeTicker)) {
             this.activeTicker = ticker;
             commandBus.publish(Commands.TICKER_SELECTED, this, ticker);
@@ -310,99 +375,184 @@ public class TickerManager {
         }
     }
 
+    public void deleteAllTickers() {
+        RedisService redis = RedisService.getInstance();
+
+        logger.info("Deleting tickers");
+        redis.getAllTickerIds().forEach(id -> {
+            Ticker ticker = redis.findTickerById(id);
+            if (ticker != null) {
+                logger.info(String.format("Loading ticker {}", id));
+                redis.deleteTicker(id);
+            }
+        });
+    }
+
     private void loadActiveTicker() {
         RedisService redis = RedisService.getInstance();
-        ProxyTicker ticker = redis.findTickerById(1L); // Load ticker ID 1
-        if (ticker == null) {
-            ticker = redis.newTicker();
+
+        logger.info("Loading ticker");
+        Long minId = redis.getMinimumTickerId();
+        Long maxId = redis.getMaximumTickerId();
+
+        logger.info("Minimum ticker ID: " + minId);
+        logger.info("Maximum ticker ID: " + maxId);
+
+        Ticker ticker = null;
+
+        // If we have existing tickers, try to load the first valid one
+        if (minId != null && maxId != null) {
+            for (Long id = minId; id <= maxId; id++) {
+                ticker = redis.findTickerById(id);
+                if (ticker != null) {
+                    logger.info("Found valid ticker " + ticker.getId());
+                    break;
+                }
+            }
         }
-        tickerSelected(ticker);
+
+        // If no valid ticker found or no tickers exist, create a new one
+        if (ticker == null) {
+            logger.info("No valid ticker found, creating new ticker");
+            ticker = redis.newTicker();
+            redis.saveTicker(ticker);
+            logger.info("Created new ticker with ID: " + ticker.getId());
+        }
+
+        setActiveTicker(ticker);
+        logTickerState(ticker);
     }
 
-    private void initializeDefaultPlayerValues(ProxyStrike player) {
-        player.setName("New Player");
-        player.setChannel(1);
-        player.setPreset(0L);
-        player.setLevel(100L);
-        player.setNote(60L);
-        player.setMinVelocity(64L);
-        player.setMaxVelocity(127L);
-        player.setProbability(100L);
-        player.setRandomDegree(0L);
-        player.setRatchetCount(1L);
-        player.setPanPosition(64L);
-        player.setRatchetInterval(1L);
-        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+    private void logTickerState(Ticker ticker) {
+        if (ticker != null) {
+            logger.info("Ticker state:");
+            logger.info("  ID: " + ticker.getId());
+            logger.info("  BPM: " + ticker.getTempoInBPM());
+            logger.info("  Ticks per beat: " + ticker.getTicksPerBeat());
+            logger.info("  Beats per bar: " + ticker.getBeatsPerBar());
+            logger.info("  Bars: " + ticker.getBars());
+            logger.info("  Parts: " + ticker.getParts());
+
+            if (ticker.getPlayers() != null) {
+                logger.info("  Players: " + ticker.getPlayers().size());
+                ticker.getPlayers().forEach(this::logPlayerState);
+            }
+        }
     }
 
-    public void updatePlayerLevel(ProxyStrike player, int level) {
-        player.setLevel((long) level);
+    private void logPlayerState(Player player) {
+        logger.info("    Player: " + player.getId() + " - " + player.getName());
+        if (player.getRules() != null) {
+            logger.info("      Rules: " + player.getRules().size());
+            player.getRules().forEach(r -> logger.info("        Rule: " + r.getId() +
+                    " - Op: " + r.getOperator() +
+                    ", Comp: " + r.getComparison() +
+                    ", Value: " + r.getValue() +
+                    ", Part: " + r.getPart()));
+        }
     }
 
-    public void updatePlayerSparse(ProxyStrike player, int sparse) {
-        player.setSparse(sparse / 100.0);
+    public void addPlayerToTicker(Ticker currentTicker, Player updatedPlayer) {
+        redisService.addPlayerToTicker(currentTicker, updatedPlayer);
     }
 
-    public void updatePlayerPan(ProxyStrike player, int pan) {
-        player.setPanPosition((long) pan);
-    }
+    // public static void main(String[] args) {
+    // Logger logger = Logger.getLogger(TickerManager.class.getName());
+    // logger.info("Starting TickerManager demonstration");
 
-    public void updatePlayerRandom(ProxyStrike player, int random) {
-        player.setRandomDegree((long) random);
-    }
+    // try {
+    // // Get services
+    // RedisService redis = RedisService.getInstance();
+    // TickerManager manager = TickerManager.getInstance();
 
-    public void updatePlayerVelocityMax(ProxyStrike player, int velocityMax) {
-        player.setMaxVelocity((long) velocityMax);
-    }
+    // manager.deleteAllTickers();
 
-    public void updatePlayerVelocityMin(ProxyStrike player, int velocityMin) {
-        player.setMinVelocity((long) velocityMin);
-    }
+    // // Create and save a ticker
+    // logger.info("Creating new ticker");
+    // Ticker ticker = redis.newTicker();
+    // ticker.setTempoInBPM(120F);
+    // ticker.setTicksPerBeat(4);
+    // ticker.setBeatsPerBar(4);
+    // ticker.setBars(4);
+    // ticker.setParts(16);
 
-    public void updatePlayerProbability(ProxyStrike player, int probability) {
-        player.setProbability((long) probability);
-    }
+    // // Create a player (Player)
+    // logger.info("Creating new player");
+    // Strike player = new Strike();
+    // player.setId(redis.getNextPlayerId());
+    // player.setName("Test Player");
+    // player.setMuted(false);
+    // player.setChannel(9); // Typical drum channel
+    // player.setNote(36L); // Bass drum
+    // // player.setVelocity(100);
 
-    public void updatePlayerSwing(ProxyStrike player, int swing) {
-        player.setSwing((long) swing);
-    }
+    // // Create a rule
+    // logger.info("Creating new rule");
+    // Rule rule = new Rule();
+    // rule.setId(redis.getNextRuleId());
+    // rule.setOperator(0);
+    // rule.setComparison(1);
+    // rule.setValue(1.0); // Hit on first beat
+    // rule.setPart(1);
 
-    public void updatePlayerNote(ProxyStrike player, int note) {
-        player.setNote((long) note);
-    }
+    // // Add rule to player
+    // logger.info("Adding rule to player");
+    // player.setRules(new HashSet<>());
+    // player.getRules().add(rule);
 
-    public void savePlayerProperties(ProxyStrike player) {
-        RedisService.getInstance().savePlayer(player);
-        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
-    }
+    // // Add player to ticker
+    // logger.info("Adding player to ticker");
+    // manager.addPlayerToTicker(ticker, player);
 
-    public void clearRules(IPlayer player) {
-        // Logic to clear rules from the player
-        CommandBus.getInstance().publish(Commands.RULES_CLEARED, this, player);
-    }
+    // // Save ticker
+    // logger.info("Saving ticker");
+    // redis.saveTicker(ticker);
+    // Long savedTickerId = ticker.getId();
+    // logger.info("Saved ticker with ID: " + savedTickerId);
 
-    public void deleteRule(ProxyStrike player, String operator, String comparison, String value, String part) {
-        // Logic to delete a rule from the player
-        CommandBus.getInstance().publish(Commands.RULE_DELETED, this, player);
-    }
+    // // Clear references
+    // ticker = null;
+    // player = null;
+    // rule = null;
+    // manager.setActiveTicker(null);
 
-    public void addRule(ProxyStrike player, String operator, String comparison, String value, String part) {
-        // Logic to add a rule to the player
-        CommandBus.getInstance().publish(Commands.RULE_ADDED, this, player);
-    }
+    // // Reload ticker
+    // logger.info("Reloading ticker from Redis");
+    // Ticker loadedTicker = redis.findTickerById(savedTickerId);
 
-    public void deletePlayer(ProxyStrike player) {
-        activeTicker.getPlayers().remove(player);
-        CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this, activeTicker);
-    }
+    // // Verify loaded data
+    // if (loadedTicker != null) {
+    // logger.info("Successfully loaded ticker: " + loadedTicker.getId());
+    // logger.info("Ticker state:");
+    // logger.info(" BPM: " + loadedTicker.getTempoInBPM());
+    // logger.info(" Ticks per beat: " + loadedTicker.getTicksPerBeat());
+    // logger.info(" Beats per bar: " + loadedTicker.getBeatsPerBar());
 
-    public void updatePlayer(ProxyStrike player) {
-        // activeTicker.updatePlayer(player);
-        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
-    }
+    // if (loadedTicker.getPlayers() != null) {
+    // loadedTicker.getPlayers().forEach(p -> {
+    // Player loadedPlayer = p;
+    // logger.info(" Player: " + loadedPlayer.getId() + " - " +
+    // loadedPlayer.getName());
+    // logger.info(" Channel: " + loadedPlayer.getChannel());
+    // logger.info(" Note: " + loadedPlayer.getNote());
+    // // logger.info(" Velocity: " + loadedPlayer.getVelocity());
 
-    public void addPlayer(ProxyStrike player) {
-        // activeTicker.addPlayer(player);
-        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, player);
-    }
+    // if (loadedPlayer.getRules() != null) {
+    // loadedPlayer.getRules().forEach(r -> logger.info(" Rule: " + r.getId() +
+    // " - Op: " + r.getOperator() +
+    // ", Comp: " + r.getComparison() +
+    // ", Value: " + r.getValue() +
+    // ", Part: " + r.getPart()));
+    // }
+    // });
+    // }
+    // }
+
+    // logger.info("Demonstration completed successfully");
+
+    // } catch (Exception e) {
+    // logger.severe("Error in demonstration: " + e.getMessage());
+    // e.printStackTrace();
+    // }
+    // }
 }

@@ -21,8 +21,6 @@ import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.StatusConsumer;
 
-import java.util.Objects;
-
 public class X0XPanel extends StatusProviderPanel {
 
     public X0XPanel() {

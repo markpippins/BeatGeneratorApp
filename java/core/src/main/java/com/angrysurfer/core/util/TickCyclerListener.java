@@ -7,22 +7,31 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.engine.SongEngine;
+import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
+import com.angrysurfer.core.service.SongManager;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class TickCyclerListener implements CyclerListener {
 
     static Logger logger = LoggerFactory.getLogger(TickCyclerListener.class.getCanonicalName());
     /**
      *
      */
-    private final SongEngine songEngine;
+    private Song song;
 
     /**
      * @param songEngine
      */
-    public TickCyclerListener(SongEngine songEngine) {
-        this.songEngine = songEngine;
+    public TickCyclerListener(Song song) {
+        this.song = song;
+    }
+
+    public TickCyclerListener() {
     }
 
     private Integer ticks = 0;
@@ -36,7 +45,7 @@ public class TickCyclerListener implements CyclerListener {
 
     private void handleTick(long tick) {
         // logger.info(String.format("Tick %s", tick));
-        this.songEngine.getSong().getPatterns().forEach(pattern -> {
+        getSong().getPatterns().forEach(pattern -> {
 
             // logger.info(String.format("Pattern %s", pattern.getPosition()));
 
@@ -47,7 +56,7 @@ public class TickCyclerListener implements CyclerListener {
                     .filter(s -> s.getPosition() == (long) pattern.getStepCycler().get())
                     .findAny().orElseThrow();
 
-            final int note = this.songEngine.getNoteForStep(step, pattern, tick);
+            final int note = SongManager.getInstance().getNoteForStep(step, pattern, tick);
             if (note > -1) {
                 logger.info(String.format("Note: %s", note));
 
@@ -62,7 +71,7 @@ public class TickCyclerListener implements CyclerListener {
                             pattern.getInstrument().sendToDevice(
                                     new ShortMessage(ShortMessage.NOTE_ON, pattern.getChannel(), note, note));
                             Thread.sleep((long) (1.0 / step.getGate()
-                                    * TickCyclerListener.this.songEngine.getSong().getBeatDuration()));
+                                    * getSong().getBeatDuration()));
                             pattern.getInstrument().sendToDevice(
                                     new ShortMessage(ShortMessage.NOTE_OFF, pattern.getChannel(), 0, 0));
                         } catch (InterruptedException | MidiUnavailableException | InvalidMidiDataException e) {
@@ -90,8 +99,8 @@ public class TickCyclerListener implements CyclerListener {
     @Override
     public void starting() {
         logger.info("starting");
-        this.songEngine.getSong().getPatterns().forEach(p -> p.getStepCycler().setLength((long) p.getSteps().size()));
-        this.songEngine.getSong().getPatterns().forEach(p -> p.getStepCycler().reset());
+        getSong().getPatterns().forEach(p -> p.getStepCycler().setLength((long) p.getSteps().size()));
+        getSong().getPatterns().forEach(p -> p.getStepCycler().reset());
         this.advanced(0);
     }
 }

@@ -5,17 +5,20 @@ import java.util.logging.Logger;
 
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.JOptionPane;
 
-import com.angrysurfer.beats.service.RedisMidiDeviceService;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
-import com.angrysurfer.core.proxy.ProxyInstrument;
+import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.redis.RedisInstrumentHelper;
+import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.RedisService;
 import com.angrysurfer.core.service.TickerManager;
+import com.angrysurfer.core.service.UserConfigurationManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public class App implements CommandListener {
@@ -24,29 +27,24 @@ public class App implements CommandListener {
 
     private static final CommandBus commandBus = CommandBus.getInstance();
     private static final RedisService redisService = RedisService.getInstance();
-    private static final TickerManager tickerManager = TickerManager.getInstance();
 
     private Frame frame;
 
     public static void main(String[] args) {
         // Configure logging first
-        System.setProperty("java.util.logging.config.file", 
-            "src/main/resources/logging.properties");
-        
+        System.setProperty("java.util.logging.config.file",
+                "src/main/resources/logging.properties");
+
         try {
             logger.info("Starting application...");
-            
+
             // Initialize services first
             logger.info("Initializing services...");
             initializeServices();
-            
+
             // Then setup UI
             logger.info("Setting up Look and Feel...");
             setupLookAndFeel();
-
-            // Initialize InstrumentManager with Redis service
-            logger.info("Initializing InstrumentManager...");
-            InstrumentManager.getInstance().setMidiDeviceService(new RedisMidiDeviceService());
 
             SwingUtilities.invokeLater(() -> {
                 try {
@@ -55,15 +53,11 @@ public class App implements CommandListener {
                     app.createAndShowGUI();
                     logger.info("Application started successfully");
                 } catch (Exception e) {
-                    logger.severe("Error creating application window: " + e);
-                    e.printStackTrace();
-                    System.exit(1);
+                    handleInitializationFailure("Failed to create application window", e);
                 }
             });
         } catch (Exception e) {
-            logger.severe("Fatal error during application startup: " + e);
-            e.printStackTrace();
-            System.exit(1);
+            handleInitializationFailure("Fatal error during application startup", e);
         }
     }
 
@@ -96,7 +90,7 @@ public class App implements CommandListener {
         try {
             // Add logging
             logger.info("Loading frame state for Look and Feel");
-            FrameState state = redisService.getInstance().loadFrameState();
+            FrameState state = RedisService.getInstance().loadFrameState();
             logger.info("Frame state loaded: " + (state != null ? state.getLookAndFeelClassName() : "null"));
 
             if (state != null && state.getLookAndFeelClassName() != null) {
@@ -118,38 +112,65 @@ public class App implements CommandListener {
 
     private static void initializeServices() {
         try {
-            // Get RedisService instance
+            // Initialize RedisService first
             RedisService redisService = RedisService.getInstance();
             logger.info("Redis service initialized");
 
-            // Check for instruments
-            List<ProxyInstrument> instruments = redisService.findAllInstruments();
-            if (instruments.isEmpty()) {
-                logger.info("No instruments found, loading initial configuration");
-                // String configPath = "config/beats-config.json";
-                // UserConfig config = redisService.loadConfigFromXml(configPath);
-                // redisService.saveConfig(config);
-                logger.info("Initial configuration loaded");
-            } else {
-                logger.info("Found " + instruments.size() + " existing instruments");
+            // Initialize managers in correct order
+            UserConfigurationManager.getInstance();
+            if (UserConfigurationManager.getInstance().getCurrentConfig() == null) {
+                logger.warning("No user configuration found, creating default configuration");
+                UserConfigurationManager.getInstance().setCurrentConfig(new UserConfig());
             }
+
+            logger.info("User configuration manager initialized");
+
+            // Initialize TickerManager before any UI components
+            TickerManager tickerManager = TickerManager.getInstance();
+            logger.info("Ticker manager initialized");
+
+            // Initialize instrument management after ticker
+            RedisInstrumentHelper instrumentHelper = redisService.getInstrumentHelper();
+            InstrumentManager instrumentManager = InstrumentManager.getInstance(instrumentHelper);
+            
+            // Verify instrument cache initialization
+            List<Instrument> instruments = instrumentHelper.findAllInstruments();
+            logger.info("Found " + instruments.size() + " instruments in Redis");
+            instrumentManager.refreshCache();  // Ensure cache is populated
+
+            // Signal system ready
+            CommandBus.getInstance().publish(Commands.SYSTEM_READY, App.class, null);
+            logger.info("System initialization complete");
+
         } catch (Exception e) {
-            logger.severe("Error initializing services: " + e.getMessage());
-            throw new RuntimeException("Failed to initialize services", e);
+            handleInitializationFailure("Failed to initialize services", e);
         }
     }
 
-    // public static RedisService getRedisService() {
-    // return RedisService.getInstance();
-    // }
+    private static void handleInitializationFailure(String errorMessage, Exception e) {
+        logger.severe("Critical initialization error: " + errorMessage);
+        logger.severe("Exception: " + e.getMessage());
+        e.printStackTrace();
 
-    // public static TickerManager getTickerManager() {
-    // if (tickerManager == null) {
-    // logger.severe("Ticker manager not initialized");
-    // throw new IllegalStateException("Ticker manager not initialized");
-    // }
-    // return tickerManager;
-    // }
+        SwingUtilities.invokeLater(() -> {
+            String fullMessage = String.format("""
+                Failed to initialize application: %s
+                
+                Error details: %s
+                
+                Please ensure Redis is running and try again.
+                
+                The application will now exit.""", 
+                errorMessage, e.getMessage());
+
+            JOptionPane.showMessageDialog(null,
+                fullMessage,
+                "Initialization Error",
+                JOptionPane.ERROR_MESSAGE);
+            
+            System.exit(1);
+        });
+    }
 
     public App() {
         // Register for theme changes using the correct method

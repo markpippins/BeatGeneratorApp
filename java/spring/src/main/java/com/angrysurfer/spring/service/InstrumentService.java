@@ -6,9 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.angrysurfer.core.api.Database;
-import com.angrysurfer.core.engine.InstrumentEngine;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.redis.RedisInstrumentHelper;
+import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.service.InstrumentManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -18,44 +19,44 @@ import lombok.Setter;
 @Service
 public class InstrumentService {
 
-    static Logger logger = LoggerFactory.getLogger(InstrumentService.class.getCanonicalName());
+    private static final Logger logger = LoggerFactory.getLogger(InstrumentService.class);
 
-    private Database dbUtils;
+    private final RedisInstrumentHelper instrumentHelper;
+    private final InstrumentManager instrumentManager;
 
-    private InstrumentEngine instrumentEngine;
-
-    public InstrumentService(Database dbUtils) {
-        this.dbUtils = dbUtils;
-        this.instrumentEngine = new InstrumentEngine(dbUtils.getInstrumentFindAll());
-    }
-
-    public Instrument saveInstrument(Instrument instrument) {
-        logger.info("save");
-        return dbUtils.getInstrumentSaver().save(instrument);
+    public InstrumentService(RedisService redisService) {
+        this.instrumentHelper = redisService.getInstrumentHelper();
+        this.instrumentManager = InstrumentManager.getInstance(instrumentHelper);
     }
 
     public List<Instrument> getAllInstruments() {
-        logger.info("getAllInstruments");
-        return instrumentEngine.getInstrumentList();
-    }
-
-    public List<Instrument> getInstrumentByChannel(int channel) {
-        logger.info(String.format("getInstrumentByChannel(%s)", channel));
-        return instrumentEngine.getInstrumentByChannel(channel);
+        return instrumentManager.getCachedInstruments();
     }
 
     public Instrument getInstrumentById(Long id) {
-        logger.info(String.format("getInstrumentById(%s)", id));
-        return instrumentEngine.getInstrumentById(id);
+        return instrumentManager.getInstrumentById(id);
     }
 
     public List<String> getInstrumentNames() {
-        logger.info("getInstrumentNames()");
-        return instrumentEngine.getInstrumentNames();
+        return instrumentManager.getInstrumentNames();
     }
 
-    public Instrument findByName(String instrumentName) {
-        return instrumentEngine.findByName(instrumentName);
+    public List<Instrument> getInstrumentByChannel(int channel) {
+        return instrumentManager.getInstrumentByChannel(channel);
     }
 
+    public void saveInstrument(Instrument instrument) {
+        instrumentHelper.saveInstrument(instrument);
+        instrumentManager.setNeedsRefresh(true);
+    }
+
+    public List<Instrument> getInstrumentList() {
+        logger.debug("Getting instrument list");
+        return instrumentManager.getCachedInstruments();
+    }
+
+    public Instrument findByName(String name) {
+        logger.debug("Finding instrument by name: {}", name);
+        return instrumentManager.findByName(name);
+    }
 }

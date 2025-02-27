@@ -33,8 +33,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.proxy.ProxyStrike;
-import com.angrysurfer.core.proxy.ProxyTicker;
+import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.service.TickerManager;
 import com.angrysurfer.core.util.Scale;
 
@@ -42,7 +41,7 @@ public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();
     private final Map<String, JComponent> rightFields = new HashMap<>(); // Changed to JComponent
     private final CommandBus actionBus = CommandBus.getInstance();
-    private ProxyTicker currentTicker; // Add field to track current ticker
+    private Ticker currentTicker; // Add field to track current ticker
 
     private JPanel transportPanel;
     private JButton playButton;
@@ -79,8 +78,8 @@ public class ToolBar extends JToolBar {
                             }
                         }
                         case Commands.TICKER_SELECTED, Commands.TICKER_UPDATED -> {
-                            if (action.getData() instanceof ProxyTicker) {
-                                ProxyTicker ticker = (ProxyTicker) action.getData();
+                            if (action.getData() instanceof Ticker) {
+                                Ticker ticker = (Ticker) action.getData();
                                 updateTickerDisplay(ticker);
                                 updateToolbarState(ticker);
                             }
@@ -92,7 +91,7 @@ public class ToolBar extends JToolBar {
                             }
                         }
                         case Commands.TICKER_CREATED -> {
-                            if (action.getData() instanceof ProxyTicker ticker) {
+                            if (action.getData() instanceof Ticker ticker) {
                                 updateTickerDisplay(ticker);
                                 // Force disable forward button for new ticker
                                 for (Component comp : transportPanel.getComponents()) {
@@ -120,7 +119,7 @@ public class ToolBar extends JToolBar {
         // Then request the initial ticker state after a short delay
         SwingUtilities.invokeLater(() -> {
             // First ensure TickerManager has an active ticker
-            ProxyTicker currentTicker = TickerManager.getInstance().getActiveTicker();
+            Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
             if (currentTicker != null) {
                 actionBus.publish(Commands.TICKER_SELECTED, this, currentTicker);
             } else {
@@ -167,7 +166,7 @@ public class ToolBar extends JToolBar {
         }
     }
 
-    private void updateTickerDisplay(ProxyTicker ticker) {
+    private void updateTickerDisplay(Ticker ticker) {
         if (Objects.isNull(ticker) || Objects.isNull(ticker.getId())) {
             System.out.println("ToolBar: Received null ticker or ticker ID");
             return;
@@ -463,7 +462,7 @@ public class ToolBar extends JToolBar {
         this.stopButton = stopBtn;
     }
 
-    private void updateToolbarState(ProxyTicker ticker) {
+    private void updateToolbarState(Ticker ticker) {
         boolean hasActiveTicker = Objects.nonNull(ticker);
         for (Component comp : transportPanel.getComponents()) {
             if (comp instanceof JButton) {
@@ -477,7 +476,7 @@ public class ToolBar extends JToolBar {
                                 (!ticker.isLast() || (ticker.isLast() && ticker.isValid() &&
                                         ticker.getPlayers().size() > 0 &&
                                         ticker.getPlayers().stream()
-                                                .map(p -> (ProxyStrike) p)
+                                                .map(p -> p)
                                                 .anyMatch(p -> p.getRules() != null && !p.getRules().isEmpty()))));
                     case Commands.TRANSPORT_PAUSE ->
                         button.setEnabled(false);
@@ -486,7 +485,7 @@ public class ToolBar extends JToolBar {
                     case Commands.TRANSPORT_STOP ->
                         button.setEnabled(hasActiveTicker && ticker.isRunning());
                     case Commands.TRANSPORT_RECORD ->
-                        button.setEnabled(false);
+                        button.setEnabled(hasActiveTicker); // Enable if we have an active ticker
                 }
             }
         }

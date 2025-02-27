@@ -17,11 +17,11 @@ import javax.swing.UIManager;
 import com.angrysurfer.beats.panel.BackgroundPanel;
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.TickerPanel;
-import com.angrysurfer.beats.service.DialogService;
+import com.angrysurfer.beats.service.DialogManager;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
-import com.angrysurfer.core.service.RedisService;
+import com.angrysurfer.core.redis.RedisService;
 
 public class Frame extends JFrame implements AutoCloseable {
 
@@ -47,7 +47,7 @@ public class Frame extends JFrame implements AutoCloseable {
         setupKeyboardManager();
         
         // Initialize DialogService with this frame
-        DialogService.initialize(this);
+        DialogManager.initialize(this);
     }
 
     public void loadFrameState() {

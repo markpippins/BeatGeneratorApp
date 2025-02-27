@@ -4,16 +4,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Stack;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.ITicker;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Ticker;
 
 import lombok.Getter;
@@ -25,11 +22,7 @@ public class ClockSource implements Runnable {
 
     static Logger logger = LoggerFactory.getLogger(ClockSource.class.getCanonicalName());
 
-    private ExecutorService executor;
-
-    static Stack<Exception> exceptions = new Stack<>();
-
-    private final ITicker ticker;
+    private final Ticker ticker;
 
     private Boolean stopped = false;
 
@@ -41,41 +34,16 @@ public class ClockSource implements Runnable {
 
     private Timer timer;
 
-    private final ExecutorService tickExecutor;
-    private final ExecutorService beatExecutor;
-
     /**
      * @param ticker
      */
-    public ClockSource(ITicker ticker) {
+    public ClockSource(Ticker ticker) {
         this.ticker = ticker;
-        // Create executor with custom thread factory for high priority
-        this.executor = Executors.newFixedThreadPool(
-            ticker.getMaxTracks(),
-            r -> {
-                Thread t = new Thread(r, "ClockSource-Worker");
-                t.setPriority(Thread.MAX_PRIORITY);
-                return t;
-            }
-        );
-        
-        // Create separate executors for ticks and beats
-        this.tickExecutor = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "Tick-Processor");
-            t.setPriority(Thread.MAX_PRIORITY);
-            return t;
-        });
-        
-        this.beatExecutor = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "Beat-Processor");
-            t.setPriority(Thread.MAX_PRIORITY);
-            return t;
-        });
 
         timer = new PreciseTimer(
                 Math.round(ticker.getTempoInBPM()),
                 ticker.getTicksPerBeat());
-                
+
         // Register single callbacks for tick and beat events
         timer.addTickCallback(this::handleTick);
         timer.addBeatCallback(this::handleBeat);
@@ -87,44 +55,23 @@ public class ClockSource implements Runnable {
         stopped = false;
     }
 
-    public void onTick() {
-        logger.debug("onTick() - ticker: {}", ticker.getId());
-        
+    // public void onTick() {
+    // logger.debug("onTick() - ticker: {}", ticker.getId());
+    // ticker.beforeTick();
+    // getListeners().forEach(l -> l.onTick());
+    // ticker.afterTick();
+    // }
+
+    private void handleTick() {
+        logger.debug("handleTick() - ticker: {}", ticker.getId());
         ticker.beforeTick();
-        getListeners().forEach(l -> l.onTick());
-
-        try {
-            this.executor.invokeAll(ticker.getCallables());
-        } catch (InterruptedException e) {
-            logger.error("Error in tick processing", e);
-        }
-
+        CommandBus.getInstance().publish(Commands.BASIC_TIMING_TICK, this);
         ticker.afterTick();
     }
 
-    private void handleTick() {
-        // Use tickExecutor to handle tick processing
-        tickExecutor.execute(() -> {
-            try {
-                onTick();
-                // Notify all tick listeners in parallel
-                listeners.parallelStream().forEach(ClockListener::onTick);
-            } catch (Exception e) {
-                logger.error("Error processing tick", e);
-            }
-        });
-    }
-    
     private void handleBeat() {
-        // Use beatExecutor to handle beat processing
-        beatExecutor.execute(() -> {
-            try {
-                // Notify all beat listeners in parallel
-                cycleListeners.parallelStream().forEach(CyclerListener::cycleComplete);
-            } catch (Exception e) {
-                logger.error("Error processing beat", e);
-            }
-        });
+        logger.debug("handleBeat() - ticker: {}", ticker.getId());
+        CommandBus.getInstance().publish(Commands.BASIC_TIMING_BEAT, this);
     }
 
     @Override
@@ -132,21 +79,21 @@ public class ClockSource implements Runnable {
         try {
             running.set(true);
             handleStarted();
-            
+
             // Start the timer in high-priority thread
             Thread timerThread = new Thread(timer, "PreciseTimer-Main");
             timerThread.setPriority(Thread.MAX_PRIORITY);
             timerThread.start();
-            
+
             while (!stopped) {
                 Thread.sleep(1);
             }
-            
+
             running.set(false);
             cleanup();
             timerThread.join();
             afterEnd();
-            
+
         } catch (InterruptedException e) {
             stop();
             throw new RuntimeException(e);
@@ -181,7 +128,7 @@ public class ClockSource implements Runnable {
         // Only pause if we're currently running and not already paused
         if (isRunning()) // && !getTicker().isPaused()) {
             timer.stop();
-            // getTicker().setPaused(true);
+        // getTicker().setPaused(true);
         // }
     }
 
@@ -203,17 +150,17 @@ public class ClockSource implements Runnable {
 
     private void cleanup() {
         getTimer().stop();
-        tickExecutor.shutdown();
-        beatExecutor.shutdown();
-        executor.shutdown();
-        
-        try {
-            tickExecutor.awaitTermination(1, TimeUnit.SECONDS);
-            beatExecutor.awaitTermination(1, TimeUnit.SECONDS);
-            executor.awaitTermination(1, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            logger.error("Error shutting down executors", e);
-            Thread.currentThread().interrupt();
-        }
+        // tickExecutor.shutdown();
+        // beatExecutor.shutdown();
+        // executor.shutdown();
+
+        // try {
+        // tickExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        // beatExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        // executor.awaitTermination(1, TimeUnit.SECONDS);
+        // } catch (InterruptedException e) {
+        // logger.error("Error shutting down executors", e);
+        // Thread.currentThread().interrupt();
+        // }
     }
 }

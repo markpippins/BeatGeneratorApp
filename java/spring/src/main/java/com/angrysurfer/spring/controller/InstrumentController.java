@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.InstrumentService;
 
@@ -45,11 +45,11 @@ public class InstrumentController {
         return instrumentService.getInstrumentNames();
     }
 
-    @GetMapping(path = Constants.GET_INSTRUMENT_BY_CHANNEL)
-    public @ResponseBody List<Instrument> getInstrumentsByChannel(String deviceName, int channel) {
-        logger.info("GET " + Constants.GET_INSTRUMENT_BY_CHANNEL + " - deviceName: {}, channel: {}", deviceName, channel);
-        return instrumentService.getInstrumentByChannel(channel);
-    }
+    // @GetMapping(path = Constants.GET_INSTRUMENT_BY_CHANNEL)
+    // public @ResponseBody List<Instrument> getInstrumentsByChannel(String deviceName, int channel) {
+    //     logger.info("GET " + Constants.GET_INSTRUMENT_BY_CHANNEL + " - deviceName: {}, channel: {}", deviceName, channel);
+    //     return instrumentService.getInstrumentByChannel(channel);
+    // }
 
     // @GetMapping(path = Constants.INSTRUMENT_LOOKUP)
     // public @ResponseBody List<LookupItem> getInstrumentLookupItems() {
