@@ -787,9 +787,9 @@ public class PlayersPanel extends JPanel {
                 Instrument instrument = SessionManager.getInstance().getInstrumentFromCache(player.getInstrumentId());
                 if (instrument != null) {
                     instrumentName = instrument.getName();
+                    player.setInstrument(instrument);
 
                     // Update player's reference
-                    // player.setInstrument(instrument);
                     // RedisService.getInstance().savePlayer(player);
                     // CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
 

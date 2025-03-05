@@ -192,7 +192,13 @@ public class DialogManager implements CommandListener {
 
                     // Show dialog
                     dialog.setResizable(true);
+                    
+                    // Delay the refresh until after dialog is visible
+                    SwingUtilities.invokeLater(() -> {
+                        controlsPanel.refreshControlsPanel();
+                    });
                     dialog.showDialog();
+                    
                     logger.info("Showing controls dialog for player: " + player.getName() +
                             " with instrument: " + player.getInstrument().getName());
                 } catch (Exception e) {

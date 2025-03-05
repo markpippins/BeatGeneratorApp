@@ -591,10 +591,14 @@ public class InstrumentsPanel extends StatusProviderPanel {
     }
 
     private void editSelectedCaption() {
-        int row = captionsTable.getSelectedRow();
-        if (row >= 0) {
-            ControlCodeCaption caption = getCaptionFromRow(row);
-            showCaptionDialog(caption);
+        int selectedRow = captionsTable.getSelectedRow();
+        if (selectedRow >= 0) {
+            // Get caption from selected row, not just first caption
+            ControlCodeCaption caption = getCaptionFromRow(selectedRow);
+            if (caption != null) {
+                logger.info("Editing caption: " + caption.getDescription() + " for control code: " + selectedControlCode.getName());
+                showCaptionDialog(caption);
+            }
         }
     }
 
@@ -609,11 +613,22 @@ public class InstrumentsPanel extends StatusProviderPanel {
     }
 
     private ControlCodeCaption getCaptionFromRow(int row) {
-        DefaultTableModel model = (DefaultTableModel) captionsTable.getModel();
-        ControlCodeCaption caption = new ControlCodeCaption();
-        caption.setCode((Long) model.getValueAt(row, 0));
-        caption.setDescription((String) model.getValueAt(row, 1));
-        return caption;
+        if (selectedControlCode != null && selectedControlCode.getCaptions() != null) {
+            // Convert view index to model index if table is sorted
+            int modelRow = captionsTable.convertRowIndexToModel(row);
+            
+            // Get values from table model
+            Long code = (Long) captionsTable.getModel().getValueAt(modelRow, 0);
+            String description = (String) captionsTable.getModel().getValueAt(modelRow, 1);
+            
+            // Find matching caption in control code's captions
+            return selectedControlCode.getCaptions().stream()
+                .filter(c -> c.getCode().equals(code) && 
+                            c.getDescription().equals(description))
+                .findFirst()
+                .orElse(null);
+        }
+        return null;
     }
 
     private void showInstrumentDialog(Instrument instrument) {

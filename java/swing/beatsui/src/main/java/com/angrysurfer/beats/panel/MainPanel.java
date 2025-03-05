@@ -30,8 +30,8 @@ public class MainPanel extends JPanel implements AutoCloseable {
         tabbedPane.addTab("Instruments", new InstrumentsPanel());
         tabbedPane.addTab("Launch", new LaunchPanel());
         tabbedPane.addTab("Controls", new ControlsPanel());
-        // tabbedPane.addTab("System", new SystemsPanel(statusBar));
-        // tabbedPane.addTab("Params", new JPanel());
+        tabbedPane.addTab("System", new SystemsPanel(statusBar));
+        tabbedPane.addTab("MIDI Hacks", new TransportPanel());
 
         tabbedPane.addTab("Sorting", new SortingVisualizerPanel());
     }

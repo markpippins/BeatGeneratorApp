@@ -94,10 +94,10 @@ public class Frame extends JFrame implements AutoCloseable {
 
             // Save normal window bounds even when maximized
             if (getExtendedState() == JFrame.MAXIMIZED_BOTH || getExtendedState() == JFrame.ICONIFIED) {
-                currentState.setFrameSizeX(getWidth());
-                currentState.setFrameSizeY(getHeight());
-                currentState.setFramePosX(getX());
-                currentState.setFramePosY(getY());
+                currentState.setFrameSizeX((int) getPreferredSize().getWidth());
+                currentState.setFrameSizeY((int) getPreferredSize().getHeight());
+                // currentState.setFramePosX(getX());
+                // currentState.setFramePosY(getY());
             } else {
                 currentState.setFrameSizeX(getWidth());
                 currentState.setFrameSizeY(getHeight());
@@ -129,11 +129,19 @@ public class Frame extends JFrame implements AutoCloseable {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Add component listener for resize events
+        // Add component listener for resize and move events
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent e) {
-                if (isShowing()) { // Only publish if window is visible
+                if (isShowing()) { // Only handle if window is visible
                     CommandBus.getInstance().publish(Commands.WINDOW_RESIZED, this);
+                    saveFrameState();
+                }
+            }
+
+            public void componentMoved(java.awt.event.ComponentEvent e) {
+                if (isShowing() && getExtendedState() != JFrame.MAXIMIZED_BOTH) {
+                    // Don't save position when maximized
+                    saveFrameState();
                 }
             }
         });

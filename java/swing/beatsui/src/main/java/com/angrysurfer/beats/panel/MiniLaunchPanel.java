@@ -17,6 +17,36 @@ public class MiniLaunchPanel extends StatusProviderPanel implements CommandListe
     private static final int GRID_COLS = 4;
     private static final int GRID_GAP = 5;
     private final CommandBus commandBus = CommandBus.getInstance();
+    
+    // Add label mapping array
+    private static final int[] PAD_LABELS = {
+        43, 44, 45, 46,  // top row
+        36, 37, 38, 39   // bottom row
+    };
+
+    private static final class PadButton extends JButton {
+        private final int midiNote;
+        private boolean isFlashing;
+
+        PadButton(int midiNote) {
+            super(String.valueOf(midiNote));
+            this.midiNote = midiNote;
+            this.isFlashing = false;
+        }
+
+        public int getMidiNote() {
+            return midiNote;
+        }
+
+        public void setFlashing(boolean flashing) {
+            isFlashing = flashing;
+            repaint();
+        }
+
+        public boolean isFlashing() {
+            return isFlashing;
+        }
+    }
 
     public MiniLaunchPanel(StatusConsumer statusConsumer) {
         super(new BorderLayout(), statusConsumer);
@@ -48,22 +78,22 @@ public class MiniLaunchPanel extends StatusProviderPanel implements CommandListe
         gridPanel.setOpaque(false);
 
         for (int i = 0; i < GRID_ROWS * GRID_COLS; i++) {
-            gridPanel.add(createPadButton(i + 1));
+            int midiNote = PAD_LABELS[i];
+            PadButton padButton = createPadButton(midiNote);
+            gridPanel.add(padButton);
         }
 
         return gridPanel;
     }
 
-    private JButton createPadButton(int index) {
-        JButton button = new JButton(String.valueOf(index));
+    private PadButton createPadButton(int midiNote) {
+        PadButton button = new PadButton(midiNote);
         Color baseColor = ColorUtils.mutedRed;
         Color flashColor = new Color(
             Math.min(baseColor.getRed() + 100, 255),
             Math.min(baseColor.getGreen() + 100, 255),
             Math.min(baseColor.getBlue() + 100, 255)
         );
-        
-        final boolean[] isFlashing = {false};
 
         button.setUI(new BasicButtonUI() {
             @Override
@@ -76,7 +106,7 @@ public class MiniLaunchPanel extends StatusProviderPanel implements CommandListe
                 int h = c.getHeight();
 
                 // Fill background
-                g2d.setColor(isFlashing[0] ? flashColor : baseColor);
+                g2d.setColor(button.isFlashing() ? flashColor : baseColor);
                 g2d.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
 
                 // Draw border
@@ -102,15 +132,16 @@ public class MiniLaunchPanel extends StatusProviderPanel implements CommandListe
             }
         });
 
-        // Add flash effect
+        // Update action listener to send command
         button.addActionListener(e -> {
-            isFlashing[0] = true;
-            button.repaint();
-            setStatus("Mini pad " + index + " pressed");
+            button.setFlashing(true);
+            setStatus("Mini pad " + midiNote + " pressed");
+            
+            // Send command with MIDI note value
+            commandBus.publish(Commands.MINI_NOTE_SELECTED, this, midiNote);
 
             Timer timer = new Timer(100, evt -> {
-                isFlashing[0] = false;
-                button.repaint();
+                button.setFlashing(false);
                 ((Timer) evt.getSource()).stop();
             });
             timer.setRepeats(false);
@@ -121,7 +152,7 @@ public class MiniLaunchPanel extends StatusProviderPanel implements CommandListe
         button.setContentAreaFilled(false);
         button.setBorderPainted(false);
         button.setFocusPainted(false);
-        button.setToolTipText("Mini Pad " + index);
+        button.setToolTipText("MIDI Note " + midiNote);
 
         return button;
     }
