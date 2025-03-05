@@ -137,10 +137,16 @@ public class Dial extends JComponent {
         g2d.setPaint(gp);
         g2d.fillOval(2, 2, min - 4, min - 4);
 
+        // Calculate normalized value between 0 and 1 based on min/max range
+        double normalizedValue = (value - minimum) / (double)(maximum - minimum);
+        
         // Draw indicator line with thicker stroke
         g2d.setColor(Color.WHITE);
         g2d.setStroke(new BasicStroke(2.0f));
-        double angle = Math.PI * 0.75 + (Math.PI * 1.5 * value / 127.0);
+        
+        // Use normalized value for angle calculation
+        // Start at 7:30 (0.75π) and rotate 1.5π radians (270 degrees)
+        double angle = Math.PI * 0.75 + (Math.PI * 1.5 * normalizedValue);
 
         g2d.drawLine(centerX, centerY,
                 centerX + (int) (Math.cos(angle) * radius),
