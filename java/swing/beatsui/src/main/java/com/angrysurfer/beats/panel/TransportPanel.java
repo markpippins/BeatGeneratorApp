@@ -35,22 +35,24 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 
 import com.angrysurfer.beats.component.LedIndicator;
 import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.TimingBus;
 
 public class TransportPanel extends JPanel implements CommandListener {
+    // Add CommandBus alongside TimingBus
+    private final CommandBus commandBus;
+    private final TimingBus timeBus;
     private final JButton playButton;
     private final JButton stopButton;
     private final JButton recordButton;
     private final JButton rewindButton;
     private final JButton forwardButton;
     private final JButton pauseButton;
-    private final TimingBus timeBus;
     private final JTextArea logArea;
     private final SimpleDateFormat timeFormat;
     private static final int MAX_LOG_LINES = 1000;
@@ -78,6 +80,8 @@ public class TransportPanel extends JPanel implements CommandListener {
 
     public TransportPanel() {
         super(new BorderLayout(PADDING, PADDING));
+        // Initialize both buses
+        this.commandBus = CommandBus.getInstance();
         this.timeBus = TimingBus.getInstance();
         this.timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
@@ -359,7 +363,11 @@ public class TransportPanel extends JPanel implements CommandListener {
         switch (command) {
             case Commands.TRANSPORT_PLAY -> {
                 startMetronome();
+                // Send state change to both buses - timing bus for sequencer, command bus for UI
                 timeBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
+                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
+                // Send play command to command bus for visualizer
+                commandBus.publish(Commands.TRANSPORT_PLAY, this);
             }
             case Commands.TRANSPORT_STOP -> {
                 stopMetronome();
@@ -367,18 +375,20 @@ public class TransportPanel extends JPanel implements CommandListener {
                 litBeat = false;
                 litBar = false;
                 timeBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+                commandBus.publish(Commands.TRANSPORT_STOP, this);
             }
             case Commands.TRANSPORT_PAUSE -> {
                 stopMetronome();
                 timeBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+                commandBus.publish(Commands.TRANSPORT_PAUSE, this);
             }
         }
-        timeBus.publish(command, this);
-        log("Transport command: " + command);
     }
 
     private void handleTimingClock() {
-        // Send timing message first
+        // Only timing events go on timing bus
         timeBus.publish(Commands.BASIC_TIMING_TICK, this);
         
         currentTick++;

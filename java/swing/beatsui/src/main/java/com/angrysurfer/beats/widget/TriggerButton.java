@@ -9,6 +9,7 @@ public class TriggerButton extends JButton {
     private Color baseColor;
     private Color activeColor;
     private boolean isActive = false;
+    private boolean isHighlighted = false;
     private static final Dimension BUTTON_SIZE = new Dimension(30, 20);
 
     public TriggerButton(String text) {
@@ -37,6 +38,13 @@ public class TriggerButton extends JButton {
         repaint();
     }
 
+    public void setHighlighted(boolean highlighted) {
+        if (this.isHighlighted != highlighted) {
+            this.isHighlighted = highlighted;
+            repaint();
+        }
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g.create();
@@ -44,7 +52,10 @@ public class TriggerButton extends JButton {
 
         int width = getWidth();
         int height = getHeight();
-        Color currentColor = isActive ? activeColor : baseColor;
+        
+        // Use highlight color if step is active
+        Color currentColor = isHighlighted ? Color.WHITE : 
+                           isActive ? activeColor : baseColor;
 
         // Draw main button body
         g2d.setPaint(new GradientPaint(

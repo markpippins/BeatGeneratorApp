@@ -6,6 +6,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -20,8 +22,16 @@ import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.TimingBus;
 
-public class X0XPanel extends StatusProviderPanel {
+public class X0XPanel extends StatusProviderPanel implements CommandListener {
+    private final List<TriggerButton> triggerButtons = new ArrayList<>();
+    private final TimingBus timingBus;
+    private boolean isPlaying = false;
+    private int currentStep = 0;
 
     public X0XPanel() {
         this(null);
@@ -29,7 +39,50 @@ public class X0XPanel extends StatusProviderPanel {
 
     public X0XPanel(StatusConsumer statusConsumer) {
         super(new BorderLayout(), statusConsumer);
+        this.timingBus = TimingBus.getInstance();
+        timingBus.register(this);
         setup();
+    }
+
+    @Override
+    public void onAction(Command action) {
+        switch (action.getCommand()) {
+            case Commands.TRANSPORT_STATE_CHANGED -> {
+                if (action.getData() instanceof Boolean playing) {
+                    isPlaying = playing;
+                    if (!playing) {
+                        resetSequence();
+                    }
+                }
+            }
+            case Commands.BASIC_TIMING_BEAT -> {
+                if (isPlaying) {
+                    advanceSequence();
+                }
+            }
+        }
+    }
+
+    private void resetSequence() {
+        currentStep = 0;
+        updateTriggerButtons();
+    }
+
+    private void advanceSequence() {
+        // Clear previous step
+        triggerButtons.get(currentStep).setHighlighted(false);
+        
+        // Advance to next step
+        currentStep = (currentStep + 1) % 16;
+        
+        // Highlight current step
+        triggerButtons.get(currentStep).setHighlighted(true);
+    }
+
+    private void updateTriggerButtons() {
+        for (int i = 0; i < triggerButtons.size(); i++) {
+            triggerButtons.get(i).setHighlighted(i == currentStep && isPlaying);
+        }
     }
 
     private void setup() {
@@ -90,9 +143,10 @@ public class X0XPanel extends StatusProviderPanel {
         }
 
         // Add the trigger button
-        JButton triggerButton = new TriggerButton("");
+        TriggerButton triggerButton = new TriggerButton("");
         triggerButton.setName("TriggerButton-" + index);
-        triggerButton.setToolTipText("TriggerButton-" + index);
+        triggerButton.setToolTipText("Step " + (index + 1));
+        triggerButtons.add(triggerButton);
         // Center the button horizontally
         JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         buttonPanel1.add(triggerButton);
