@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -22,6 +21,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.service.MIDIDeviceManager;
 import com.angrysurfer.core.util.ClockSource;
@@ -124,10 +124,12 @@ public class Ticker implements Serializable, CommandListener {
     private Set<MuteGroup> muteGroups = new HashSet<>();
 
     private CommandBus commandBus = CommandBus.getInstance();
+    private TimingBus timingBus = TimingBus.getInstance(); // Add this
 
     public Ticker() {
         setSongLength(Long.MAX_VALUE);
         commandBus.register(this);
+        timingBus.register(this);  // Add this registration
     }
 
     public Ticker(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, long partLength) {
@@ -168,13 +170,6 @@ public class Ticker implements Serializable, CommandListener {
     public Player getPlayer(Long playerId) {
         logger.info("getPlayer() - playerId: {}", playerId);
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
-    }
-
-    public List<Callable<Boolean>> getCallables() {
-        // Implement the method as required
-        return Objects.nonNull(getPlayers()) ? getPlayers().stream()
-                .map(player -> (Callable<Boolean>) () -> player.call())
-                .collect(Collectors.toList()) : Collections.emptyList();
     }
 
     public void setParts(Integer parts) {
@@ -421,54 +416,59 @@ public class Ticker implements Serializable, CommandListener {
     }
 
     public void play() {
-
         stopRunningClocks();
-
-        List<MidiDevice> devices = MIDIDeviceManager.getMidiOutDevices();
-
-        getPlayers().forEach(p -> {
-
-            Instrument instrument = p.getInstrument();
-            if (Objects.nonNull(instrument)) {
-                Optional<MidiDevice> device = devices.stream()
-                        .filter(d -> d.getDeviceInfo().getName().equals(instrument.getDeviceName())).findFirst();
-
-                if (device.isPresent() && !device.get().isOpen())
-                    try {
-                        device.get().open();
-                        instrument.setDevice(device.get());
-                    } catch (MidiUnavailableException e) {
-                        logger.error(e.getMessage(), e);
-                    }
-
-                else
-                    logger.error(instrument.getDeviceName() + " not initialized");
-            } else
-                logger.error("Instrument not initialized");
-
-            try {
-                if (p.getPreset() > -1)
-                    p.getInstrument().programChange(p.getChannel(), p.getPreset(), 0);
-            } catch (InvalidMidiDataException | MidiUnavailableException e) {
-                logger.error(e.getMessage(), e);
-            }
-
-            p.setTicker(this);
-        });
-
-        new Thread(newClockSource()).start();
+        initializeDevices();
+        commandBus.publish(Commands.TRANSPORT_PLAY, this);
     }
 
-    private ClockSource newClockSource() {
-        stopRunningClocks();
-        setClockSource(new ClockSource(this));
-        return clockSource;
+    private void initializeDevices() {
+        List<MidiDevice> devices = MIDIDeviceManager.getMidiOutDevices();
+        
+        getPlayers().forEach(p -> {
+            initializePlayerDevice(p, devices);
+            initializePlayerPreset(p);
+            p.setTicker(this);
+        });
+    }
+
+    private void initializePlayerDevice(Player player, List<MidiDevice> devices) {
+        Instrument instrument = player.getInstrument();
+        if (instrument != null) {
+            devices.stream()
+                  .filter(d -> d.getDeviceInfo().getName().equals(instrument.getDeviceName()))
+                  .findFirst()
+                  .ifPresent(device -> {
+                      try {
+                          if (!device.isOpen()) {
+                              device.open();
+                          }
+                          instrument.setDevice(device);
+                      } catch (MidiUnavailableException e) {
+                          logger.error("Failed to open device: " + e.getMessage(), e);
+                      }
+                  });
+        }
+    }
+
+    private void initializePlayerPreset(Player player) {
+        try {
+            if (player.getPreset() > -1) {
+                player.getInstrument().programChange(
+                    player.getChannel(), 
+                    player.getPreset(), 
+                    0
+                );
+            }
+        } catch (InvalidMidiDataException | MidiUnavailableException e) {
+            logger.error("Failed to set preset: " + e.getMessage(), e);
+        }
     }
 
     private void stopRunningClocks() {
-
-        if (Objects.nonNull(getClockSource()))
-            getClockSource().stop();
+        if (clockSource != null) {
+            clockSource.stop();
+            clockSource = null;
+        }
     }
 
     public void stop() {
@@ -482,8 +482,38 @@ public class Ticker implements Serializable, CommandListener {
 
     @Override
     public void onAction(Command action) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'onAction'");
+        switch (action.getCommand()) {
+            case Commands.BASIC_TIMING_TICK -> {
+                beforeTick();
+                // Players now handle their own timing
+                afterTick();
+            }
+            case Commands.TRANSPORT_PLAY -> {
+                beforeStart();
+                if (clockSource == null) {
+                    clockSource = new ClockSource();
+                }
+                clockSource.start();
+                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
+            }
+            case Commands.TRANSPORT_STOP -> {
+                if (clockSource != null) {
+                    clockSource.stop();
+                }
+                stop();
+                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+            }
+            case Commands.TRANSPORT_PAUSE -> {
+                if (clockSource != null) {
+                    clockSource.pause();
+                }
+                setPaused(true);
+                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+            }
+            case Commands.BASIC_TIMING_BEAT -> {
+                onBeatChange();
+            }
+        }
     }
 
 }

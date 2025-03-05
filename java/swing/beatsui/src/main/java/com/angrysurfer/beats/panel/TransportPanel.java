@@ -175,8 +175,11 @@ public class TransportPanel extends JPanel implements CommandListener {
     }
 
     private void handleMidiClock() {
-        // Only timing events go on timing bus
+        // Send timing first, before any processing
         timeBus.publish(Commands.BASIC_TIMING_TICK, this);
+        
+        // Log to verify messages are being sent
+        // logger.debug("Sending BASIC_TIMING_TICK");
         
         currentTick++;
         flashTickLed(tickLed);
@@ -186,6 +189,7 @@ public class TransportPanel extends JPanel implements CommandListener {
             currentBeat++;
             flashBeatLed(beatLed);
             timeBus.publish(Commands.BASIC_TIMING_BEAT, this);
+            // logger.debug("Sending BASIC_TIMING_BEAT");
 
             if (currentBeat >= BEATS_PER_BAR) {
                 currentBeat = 0;

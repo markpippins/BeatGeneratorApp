@@ -23,11 +23,12 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.util.Operator;
+import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
-import com.angrysurfer.core.util.Comparison;
+import com.angrysurfer.core.util.Operator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -134,8 +135,13 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
     @JsonIgnore
     private Ticker ticker;
 
+    // Add TimingBus
+    private final TimingBus timingBus = TimingBus.getInstance();
+    private final CommandBus commandBus = CommandBus.getInstance();
+
     public Player() {
-        CommandBus.getInstance().register(this); // Register for command events
+        commandBus.register(this);
+        timingBus.register(this); // Register for timing events
     }
 
     public Player(String name, Ticker ticker, Instrument instrument) {
@@ -210,22 +216,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
 
     @Override
     public Boolean call() {
-        logger.debug("call() - lastTick: {}, currentTick: {}", getLastTick(), getTicker().getTick());
-        if (getLastTick() == getTicker().getTick())
-            return Boolean.FALSE;
-        var solo = getTicker().hasSolos();
-
-        if ((!solo && !isMuted()) || (solo && isSolo()) && shouldPlay()) {
-            logger.debug("Player {} will play on tick {}", getName(), getTicker().getTick());
-            ((Ticker) getTicker()).getActivePlayerIds().add(getId());
-            setLastPlayedBar(getTicker().getBar());
-            setLastPlayedBeat(getTicker().getBeat());
-            setLastPlayedTick(getTicker().getTick());
-            onTick(getTicker().getTick(), getTicker().getBar());
-        }
-
-        setLastTick(getTicker().getTick());
-        return Boolean.TRUE;
+        // Deprecated - keep for interface compatibility
+        return true;
     }
 
     @JsonIgnore
@@ -326,8 +318,28 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
 
     @Override
     public void onAction(Command action) {
-        if (Commands.BASIC_TIMING_TICK.equals(action.getCommand())) {
-            call();
+        switch (action.getCommand()) {
+            case Commands.BASIC_TIMING_TICK -> {
+                // if (getTicker() != null && getTicker().isRunning()) {
+                // Only process if our ticker is running
+                if (getTicker() != null) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            var solo = getTicker().hasSolos();
+                            if ((!solo && !isMuted()) || (solo && isSolo()) && shouldPlay()) {
+                                logger.debug("Player {} will play on tick {}", getName(), getTicker().getTick());
+                                getTicker().getActivePlayerIds().add(getId());
+                                setLastPlayedBar(getTicker().getBar());
+                                setLastPlayedBeat(getTicker().getBeat());
+                                setLastPlayedTick(getTicker().getTick());
+                                onTick(getTicker().getTick(), getTicker().getBar());
+                            }
+                            setLastTick(getTicker().getTick());
+                        }
+                    }).start();
+                }
+            }
         }
     }
 
