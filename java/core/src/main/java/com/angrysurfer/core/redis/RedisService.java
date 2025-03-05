@@ -12,6 +12,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
+import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Player;
@@ -194,13 +195,27 @@ public class RedisService implements CommandListener {
 
     @Override
     public void onAction(Command action) {
-        if (Commands.CLEAR_DATABASE.equals(action.getCommand())) {
-            try (Jedis jedis = jedisPool.getResource()) {
-                jedis.flushDB();
-                logger.info("Database cleared");
-                // Ticker ticker = tickerHelper.newTicker();
-                // commandBus.publish(new Command(Commands.TICKER_LOADED, this, ticker));
-            }
+
+        switch (action.getCommand()) {
+            case Commands.CLEAR_DATABASE:
+                clearDatabase();
+                break;
+            // case Commands.LOAD_CONFIG:
+            // String configPath = (String) action.getPayload();
+            // UserConfig config = loadConfigFromJSON(configPath);
+            // commandBus.publish(Commands.USER_CONFIG_LOADED, this, config);
+            // break;
+            default:
+                logger.warning("Unknown command: " + action.getCommand());
+        }
+    }
+
+    public void clearDatabase() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            jedis.flushDB();
+            logger.info("Database cleared");
+            Ticker ticker = tickerHelper.newTicker();
+            commandBus.publish(Commands.TICKER_LOADED, this, ticker);
         }
     }
 
@@ -227,6 +242,14 @@ public class RedisService implements CommandListener {
         return instruments;
     }
 
+    public void deleteInstrument(Instrument instrument) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            jedis.del("DialogManagerinstrument:" + instrument.getId());
+        } catch (Exception e) {
+            logger.severe("Error deleting instrument: " + e.getMessage());
+        }   
+    }
+
     public void saveInstrument(Instrument instrument) {
         try (Jedis jedis = jedisPool.getResource()) {
             if (instrument.getId() == null) {
@@ -240,13 +263,41 @@ public class RedisService implements CommandListener {
         }
     }
 
-    public FrameState loadFrameState() {
+    public TableState loadTableState(String table) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String json = jedis.get("framestate");
+            String json = jedis.get("tablestate-" + table);
+            if (json != null) {
+                TableState state = objectMapper.readValue(json, TableState.class);
+                logger.info("Loaded table state with column order: " +
+                        (state.getColumnOrder() != null ? String.join(", ", state.getColumnOrder())
+                                : "null"));
+                return state;
+            }
+            logger.info("No existing table state found, creating new one");
+        } catch (Exception e) {
+            logger.severe("Error loading table state: " + e.getMessage());
+        }
+        return new TableState();
+    }
+
+    public void saveTableState(TableState state, String table) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String json = objectMapper.writeValueAsString(state);
+            jedis.set("tablestate-" + table, json);
+            logger.info("Saved table state with column order: " +
+                    (state.getColumnOrder() != null ? String.join(", ", state.getColumnOrder()) : "null"));
+        } catch (Exception e) {
+            logger.severe("Error saving frame state: " + e.getMessage());
+        }
+    }
+
+    public FrameState loadFrameState(String window) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String json = jedis.get("framestate-" + window);
             if (json != null) {
                 FrameState state = objectMapper.readValue(json, FrameState.class);
                 logger.info("Loaded frame state with column order: " +
-                        (state.getPlayerColumnOrder() != null ? String.join(", ", state.getPlayerColumnOrder())
+                        (state.getColumnOrder() != null ? String.join(", ", state.getColumnOrder())
                                 : "null"));
                 return state;
             }
@@ -257,12 +308,12 @@ public class RedisService implements CommandListener {
         return new FrameState();
     }
 
-    public void saveFrameState(FrameState state) {
+    public void saveFrameState(FrameState state, String window) {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = objectMapper.writeValueAsString(state);
-            jedis.set("framestate", json);
+            jedis.set("framestate-" + window, json);
             logger.info("Saved frame state with column order: " +
-                    (state.getPlayerColumnOrder() != null ? String.join(", ", state.getPlayerColumnOrder()) : "null"));
+                    (state.getColumnOrder() != null ? String.join(", ", state.getColumnOrder()) : "null"));
         } catch (Exception e) {
             logger.severe("Error saving frame state: " + e.getMessage());
         }
@@ -358,7 +409,7 @@ public class RedisService implements CommandListener {
     public void deletePlayer(Player player) {
         try (Jedis jedis = jedisPool.getResource()) {
             logger.info("Deleting player: " + player.getId());
-            
+
             // Delete player's rules first
             String rulesKey = "player:" + player.getId() + ":rules";
             Set<String> ruleIds = jedis.smembers(rulesKey);

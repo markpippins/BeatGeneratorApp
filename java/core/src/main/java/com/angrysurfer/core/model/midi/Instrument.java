@@ -208,11 +208,11 @@ public class Instrument implements Serializable {
             Receiver currentReceiver = getOrCreateReceiver();
             if (Objects.nonNull(currentReceiver)) {
                 currentReceiver.send(message, -1);
-                logger.debug("Sent message: {} to device: {}",
+                logger.debug("Sent message: %s to device: %s",
                         MidiMessage.lookupCommand(message.getCommand()),
                         getName());
             } else
-                logger.error("Failed message to {}", getName());
+                logger.error("Failed message to %s", getName());
         } catch (Exception e) {
             logger.error("Send failed: {} - will attempt recovery", e.getMessage());
             cleanup();
@@ -221,7 +221,7 @@ public class Instrument implements Serializable {
             if (Objects.nonNull(receiver))
                 receiver.send(message, -1);
             else
-                logger.error("Failed retry message to {}", getName());
+                logger.error("Failed retry message to %s", getName());
         }
     }
 

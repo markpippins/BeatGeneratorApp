@@ -1,24 +1,19 @@
 package com.angrysurfer.beats;
 
-import java.util.List;
 import java.util.logging.Logger;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.JOptionPane;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
-import com.angrysurfer.core.config.UserConfig;
-import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.redis.RedisInstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.TickerManager;
-import com.angrysurfer.core.service.UserConfigurationManager;
+import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.util.Constants;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public class App implements CommandListener {
@@ -75,6 +70,7 @@ public class App implements CommandListener {
                     frame.saveFrameState();
                     String newLafClass = (String) action.getData();
                     UIManager.setLookAndFeel(newLafClass);
+
                     frame.close();
                     frame = new Frame();
                     frame.loadFrameState();
@@ -90,7 +86,7 @@ public class App implements CommandListener {
         try {
             // Add logging
             logger.info("Loading frame state for Look and Feel");
-            FrameState state = RedisService.getInstance().loadFrameState();
+            FrameState state = RedisService.getInstance().loadFrameState(Constants.APPLICATION_FRAME);
             logger.info("Frame state loaded: " + (state != null ? state.getLookAndFeelClassName() : "null"));
 
             if (state != null && state.getLookAndFeelClassName() != null) {
@@ -117,26 +113,31 @@ public class App implements CommandListener {
             logger.info("Redis service initialized");
 
             // Initialize managers in correct order
-            UserConfigurationManager.getInstance();
-            if (UserConfigurationManager.getInstance().getCurrentConfig() == null) {
-                logger.warning("No user configuration found, creating default configuration");
-                UserConfigurationManager.getInstance().setCurrentConfig(new UserConfig());
-            }
+            // UserConfigurationEngine.getInstance();
+            // if (UserConfigurationEngine.getInstance().getCurrentConfig() == null) {
+            // logger.warning("No user configuration found, creating default
+            // configuration");
+            // UserConfigurationEngine.getInstance().setCurrentConfig(new UserConfig());
+            // }
+            // logger.info("User configuration manager initialized");
 
-            logger.info("User configuration manager initialized");
+            SessionManager.getInstance().initialize();
+            logger.info("Session manager initialized");
 
             // Initialize TickerManager before any UI components
-            TickerManager tickerManager = TickerManager.getInstance();
-            logger.info("Ticker manager initialized");
 
-            // Initialize instrument management after ticker
-            RedisInstrumentHelper instrumentHelper = redisService.getInstrumentHelper();
-            InstrumentManager instrumentManager = InstrumentManager.getInstance(instrumentHelper);
-            
-            // Verify instrument cache initialization
-            List<Instrument> instruments = instrumentHelper.findAllInstruments();
-            logger.info("Found " + instruments.size() + " instruments in Redis");
-            instrumentManager.refreshCache();  // Ensure cache is populated
+            // TickerManager tickerManager = TickerManager.getInstance();
+            // logger.info("Ticker manager initialized");
+
+            // // Initialize instrument management after ticker
+            // RedisInstrumentHelper instrumentHelper = redisService.getInstrumentHelper();
+            // // InstrumentEngine instrumentManager =
+            // // InstrumentEngine.getInstance(instrumentHelper);
+
+            // // Verify instrument cache initialization
+            // List<Instrument> instruments = instrumentHelper.findAllInstruments();
+            // logger.info("Found " + instruments.size() + " instruments in Redis");
+            // // instrumentManager.refreshCache(); // Ensure cache is populated
 
             // Signal system ready
             CommandBus.getInstance().publish(Commands.SYSTEM_READY, App.class, null);
@@ -154,20 +155,20 @@ public class App implements CommandListener {
 
         SwingUtilities.invokeLater(() -> {
             String fullMessage = String.format("""
-                Failed to initialize application: %s
-                
-                Error details: %s
-                
-                Please ensure Redis is running and try again.
-                
-                The application will now exit.""", 
-                errorMessage, e.getMessage());
+                    Failed to initialize application: %s
+
+                    Error details: %s
+
+                    Please ensure Redis is running and try again.
+
+                    The application will now exit.""",
+                    errorMessage, e.getMessage());
 
             JOptionPane.showMessageDialog(null,
-                fullMessage,
-                "Initialization Error",
-                JOptionPane.ERROR_MESSAGE);
-            
+                    fullMessage,
+                    "Initialization Error",
+                    JOptionPane.ERROR_MESSAGE);
+
             System.exit(1);
         });
     }

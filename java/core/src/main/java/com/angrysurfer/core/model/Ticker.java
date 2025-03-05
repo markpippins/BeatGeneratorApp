@@ -18,6 +18,10 @@ import javax.sound.midi.MidiUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.service.MIDIDeviceManager;
 import com.angrysurfer.core.util.ClockSource;
@@ -31,7 +35,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Ticker implements Serializable {
+public class Ticker implements Serializable, CommandListener {
 
     @JsonIgnore
     @Transient
@@ -41,11 +45,7 @@ public class Ticker implements Serializable {
 
     @JsonIgnore
     @Transient
-    public boolean isFirst = false;
-
-    @JsonIgnore
-    @Transient
-    public boolean isLast = false;
+    public boolean isActive = false;
 
     @JsonIgnore
     @Transient
@@ -123,8 +123,11 @@ public class Ticker implements Serializable {
     @JsonIgnore
     private Set<MuteGroup> muteGroups = new HashSet<>();
 
+    private CommandBus commandBus = CommandBus.getInstance();
+
     public Ticker() {
         setSongLength(Long.MAX_VALUE);
+        commandBus.register(this);
     }
 
     public Ticker(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, long partLength) {
@@ -134,6 +137,37 @@ public class Ticker implements Serializable {
         this.ticksPerBeat = ticksPerBeat;
         this.parts = parts;
         this.partLength = partLength;
+    }
+
+    public void addPlayer(Player player) {
+        logger.info("addPlayer() - adding player: {}", player);
+        if (isRunning())
+            synchronized (getAddList()) {
+                getAddList().add(player);
+            }
+        else
+            getPlayers().add(player);
+
+        player.setTicker(this);
+        commandBus.publish(Commands.PLAYER_ADDED, this, player);
+    }
+
+    public void removePlayer(Player player) {
+        logger.info("addPlayer() - removing player: {}", player);
+        if (isRunning())
+            synchronized (getRemoveList()) {
+                getRemoveList().add(player);
+            }
+        else
+            getPlayers().remove(player);
+
+        player.setTicker(null);
+        commandBus.publish(Commands.PLAYER_ADDED, this, player);
+    }
+
+    public Player getPlayer(Long playerId) {
+        logger.info("getPlayer() - playerId: {}", playerId);
+        return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
 
     public List<Callable<Boolean>> getCallables() {
@@ -156,11 +190,6 @@ public class Ticker implements Serializable {
     public void setBeatsPerBar(Integer beatsPerBar) {
         this.beatsPerBar = beatsPerBar;
         this.beatCycler.setLength((long) beatsPerBar);
-    }
-
-    public Player getPlayer(Long playerId) {
-        logger.info("getPlayer() - playerId: {}", playerId);
-        return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
     }
 
     public double getBeat() {
@@ -437,6 +466,7 @@ public class Ticker implements Serializable {
     }
 
     private void stopRunningClocks() {
+
         if (Objects.nonNull(getClockSource()))
             getClockSource().stop();
     }
@@ -448,6 +478,12 @@ public class Ticker implements Serializable {
         getBarCycler().reset();
         setDone(false);
         reset();
+    }
+
+    @Override
+    public void onAction(Command action) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'onAction'");
     }
 
 }

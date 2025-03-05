@@ -1,6 +1,8 @@
 package com.angrysurfer.core.redis;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -81,6 +83,41 @@ public class RedisPlayerHelper {
             return players;
         }
     }
+
+    public Long nextPlayerId() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            return jedis.incr("seq:player");
+        } catch (Exception e) {
+            logger.severe("Error getting next player ID: " + e.getMessage());
+            throw new RuntimeException("Failed to get next player ID", e);
+        }
+    }
+
+    static final int CACHE_SIZE = 50;
+
+    public Long[] getCachedPlayerIds() {
+        List<Long> ids = new ArrayList<>();
+
+        for (int i = 0; i < CACHE_SIZE; i++)
+            ids.add(nextPlayerId());
+
+        return ids.toArray(new Long[ids.size()]);
+
+    }
+    // public Long[] getPlayerIdsForTicker() {
+    // try (Jedis jedis = jedisPool.getResource()) {
+    // Set<String> keys = jedis.keys("player:*");
+    // Long[] ids = new Long[keys.size()];
+    // int i = 0;
+    // for (String key : keys) {
+    // ids[i++] = Long.valueOf(key.split(":")[2]);
+    // }
+    // return ids;
+    // } catch (Exception e) {
+    // logger.severe("Error getting player IDs: " + e.getMessage());
+    // throw new RuntimeException("Failed to get player IDs", e);
+    // }
+    // }
 
     public void savePlayer(Player player) {
         try (Jedis jedis = jedisPool.getResource()) {

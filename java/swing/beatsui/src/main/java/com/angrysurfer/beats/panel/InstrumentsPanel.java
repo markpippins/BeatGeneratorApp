@@ -10,12 +10,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Logger;
 
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -23,8 +20,6 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
-import javax.swing.SwingUtilities;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -33,10 +28,9 @@ import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.model.midi.ControlCode;
 import com.angrysurfer.core.model.midi.ControlCodeCaption;
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.model.midi.ControlCode;
 import com.angrysurfer.core.redis.RedisService;
 
 import lombok.Getter;
@@ -58,6 +52,9 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private JButton editInstrumentButton;
     private JButton deleteInstrumentButton;
     private static final Logger logger = Logger.getLogger(InstrumentsPanel.class.getName());
+    private ContextMenuHelper instrumentsContextMenu;
+    private ContextMenuHelper controlCodesContextMenu;
+    private ContextMenuHelper captionsContextMenu;
 
     public InstrumentsPanel() {
         this(null);
@@ -71,60 +68,30 @@ public class InstrumentsPanel extends StatusProviderPanel {
 
     private void setup() {
         setLayout(new BorderLayout());
+
+        // Create tables first
+        instrumentsTable = createInstrumentsTable();
+        setupInstrumentsTableSelectionListener();
+
+        controlCodesTable = createControlCodesTable();
+        setupControlCodesTableSelectionListener();
+
+        captionsTable = createCaptionsTable();
+        setupCaptionsTableSelectionListener();
+
+        // Setup context menus after tables exist
+        setupContextMenus();
+
+        // Finally add everything to the panel
         add(createOptionsPanel(), BorderLayout.CENTER);
     }
 
     private void registerCommandListener() {
         commandBus.register(command -> {
-            if (Commands.LOAD_INSTRUMENTS_FROM_FILE.equals(command.getCommand())) {
-                SwingUtilities.invokeLater(() -> showFileChooserDialog());
+            if (Commands.LOAD_CONFIG.equals(command.getCommand())) {
+                // SwingUtilities.invokeLater(() -> showConfigFileChooserDialog());
             }
         });
-    }
-
-    private void showFileChooserDialog() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select Instruments JSON File");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("JSON Files", "json"));
-        fileChooser.setAcceptAllFileFilterUsed(false);
-
-        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-            logger.info("Selected file: " + filePath);
-            try {
-                RedisService redisService = RedisService.getInstance();
-                
-                // Load and validate the config
-                UserConfig config = redisService.loadConfigFromJSON(filePath);
-                if (config == null || config.getInstruments() == null || config.getInstruments().isEmpty()) {
-                    setStatus("Error: No instruments found in config file");
-                    return;
-                }
-                
-                // Log what we're about to save
-                logger.info("Loaded " + config.getInstruments().size() + " instruments from file");
-                
-                // Save instruments to Redis
-                for (Instrument instrument : config.getInstruments()) {
-                    logger.info("Saving instrument: " + instrument.getName());
-                    redisService.saveInstrument(instrument);
-                }
-                
-                // Save the entire config
-                redisService.saveConfig(config);
-                
-                // Verify the save
-                List<Instrument> savedInstruments = redisService.findAllInstruments();
-                logger.info("Found " + savedInstruments.size() + " instruments in Redis after save");
-                
-                // Refresh the UI
-                refreshInstrumentsTable();
-                setStatus("Database updated successfully from " + filePath);
-            } catch (Exception e) {
-                logger.severe("Error loading and saving database: " + e.getMessage());
-                setStatus("Error updating database: " + e.getMessage());
-            }
-        }
     }
 
     private JPanel createOptionsPanel() {
@@ -132,23 +99,18 @@ public class InstrumentsPanel extends StatusProviderPanel {
 
         // Create horizontal split pane for instruments and control codes
         JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        
-        // Create tables first
-        instrumentsTable = createConfigsTable();
-        controlCodesTable = createControlCodesTable();
-        captionsTable = createCaptionsTable();
 
         // Right side - Control Codes and Captions
         JSplitPane rightSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        
-        // Create control codes panel with toolbar and fixed width
+
+        // Create panels using already created tables
         JPanel controlCodesPanel = new JPanel(new BorderLayout());
         JPanel controlCodesToolbar = setupControlCodeToolbar();
         controlCodesPanel.add(controlCodesToolbar, BorderLayout.NORTH);
         controlCodesPanel.add(new JScrollPane(controlCodesTable), BorderLayout.CENTER);
         controlCodesPanel.setPreferredSize(new Dimension(250, controlCodesPanel.getPreferredSize().height));
         controlCodesPanel.setMinimumSize(new Dimension(250, 0));
-        
+
         // Create captions panel with toolbar and fixed width
         JPanel captionsPanel = new JPanel(new BorderLayout());
         JPanel captionsToolbar = setupCaptionsToolbar();
@@ -178,7 +140,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private JPanel setupInstrumentToolbar() {
         JPanel toolBar = new JPanel(new BorderLayout());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        
+
         addInstrumentButton = new JButton("Add");
         editInstrumentButton = new JButton("Edit");
         deleteInstrumentButton = new JButton("Delete");
@@ -198,7 +160,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private JPanel setupControlCodeToolbar() {
         JPanel toolBar = new JPanel(new BorderLayout());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        
+
         JButton addButton = new JButton("Add");
         JButton editButton = new JButton("Edit");
         JButton deleteButton = new JButton("Delete");
@@ -218,7 +180,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
     private JPanel setupCaptionsToolbar() {
         JPanel toolBar = new JPanel(new BorderLayout());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        
+
         addCaptionButton = new JButton("Add");
         editCaptionButton = new JButton("Edit");
         deleteCaptionButton = new JButton("Delete");
@@ -235,78 +197,9 @@ public class InstrumentsPanel extends StatusProviderPanel {
         return toolBar;
     }
 
-    // private JTable createDevicesTable() {
-    //     String[] columns = {
-    //         "Name", "Description", "Vendor", "Version", "Max Receivers", 
-    //         "Max Transmitters", "Receivers", "Transmitters", "Receiver", "Transmitter"
-    //     };
-
-    //     DefaultTableModel model = new DefaultTableModel(columns, 0) {
-    //         @Override
-    //         public boolean isCellEditable(int row, int column) {
-    //             return false; // Make all cells read-only
-    //         }
-
-    //         @Override
-    //         public Class<?> getColumnClass(int column) {
-    //             if (column == 8 || column == 9)
-    //                 return Boolean.class; // Receiver and Transmitter columns
-    //             if (column >= 4 && column <= 7)
-    //                 return Integer.class;
-    //             return String.class;
-    //         }
-    //     };
-
-    //     // Load MIDI devices
-    //     try {
-    //         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-    //         for (MidiDevice.Info info : infos) {
-    //             MidiDevice device = MidiSystem.getMidiDevice(info);
-    //             model.addRow(new Object[] {
-    //                 info.getName(),
-    //                 info.getDescription(),
-    //                 info.getVendor(),
-    //                 info.getVersion(),
-    //                 device.getMaxReceivers(),
-    //                 device.getMaxTransmitters(),
-    //                 device.getReceivers().size(),
-    //                 device.getTransmitters().size(),
-    //                 device.getMaxReceivers() != 0,
-    //                 device.getMaxTransmitters() != 0
-    //             });
-    //         }
-    //     } catch (MidiUnavailableException e) {
-    //         setStatus("Error loading MIDI devices: " + e.getMessage());
-    //     }
-
-    //     JTable table = new JTable(model);
-    //     table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    //     table.getTableHeader().setReorderingAllowed(false);
-
-    //     // Center-align numeric columns
-    //     DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-    //     centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-    //     for (int i = 4; i < 8; i++) {
-    //         table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-    //     }
-
-    //     // Set column widths
-    //     table.getColumnModel().getColumn(0).setPreferredWidth(150); // Name
-    //     table.getColumnModel().getColumn(1).setPreferredWidth(200); // Description
-    //     table.getColumnModel().getColumn(2).setPreferredWidth(100); // Vendor
-        
-    //     // Set fixed widths for numeric columns
-    //     for (int i = 4; i <= 7; i++) {
-    //         table.getColumnModel().getColumn(i).setPreferredWidth(60);
-    //         table.getColumnModel().getColumn(i).setMaxWidth(60);
-    //     }
-
-    //     return table;
-    // }
-
-    private JTable createConfigsTable() {
-        String[] columns = { 
-            "Name", "Device Name", "Available", "Lowest Note", "Highest Note", "Initialized" 
+    private JTable createInstrumentsTable() {
+        String[] columns = {
+                "Name", "Device Name", "Available", "Low", "High", "Initialized"
         };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
@@ -334,19 +227,19 @@ public class InstrumentsPanel extends StatusProviderPanel {
         List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
         for (Instrument instrument : instruments) {
             model.addRow(new Object[] {
-                instrument.getName(),
-                instrument.getDeviceName(),
-                false, // instrument.isAvailable(),
-                instrument.getLowestNote(),
-                instrument.getHighestNote(),
-                instrument.isInitialized()
+                    instrument.getName(),
+                    instrument.getDeviceName(),
+                    instrument.getAvailable(),
+                    instrument.getLowestNote(),
+                    instrument.getHighestNote(),
+                    instrument.isInitialized()
             });
         }
 
         JTable table = new JTable(model);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
-        table.setAutoCreateRowSorter(true);  // Enable sorting
+        table.setAutoCreateRowSorter(true); // Enable sorting
 
         // Add default sorting by name (column 0)
         RowSorter<? extends TableModel> sorter = table.getRowSorter();
@@ -370,7 +263,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         // Set column widths - make name column extra wide
         table.getColumnModel().getColumn(0).setPreferredWidth(250); // Name - wider
         table.getColumnModel().getColumn(1).setPreferredWidth(200); // Device Name
-        
+
         // Fixed minimum widths for numeric and boolean columns
         table.getColumnModel().getColumn(2).setMaxWidth(60); // Available
         table.getColumnModel().getColumn(2).setPreferredWidth(60);
@@ -421,7 +314,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
 
     private JTable createControlCodesTable() {
         String[] columns = {
-            "Name", "Code", "Lower Bound", "Upper Bound"
+                "Name", "Code", "Min", "Max"
         };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
@@ -437,9 +330,9 @@ public class InstrumentsPanel extends StatusProviderPanel {
         };
 
         JTable table = new JTable(model);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
-        table.setAutoCreateRowSorter(true);  // Enable sorting
+        table.setAutoCreateRowSorter(true); // Enable sorting
 
         // Add default sorting by name (column 0)
         RowSorter<? extends TableModel> sorter = table.getRowSorter();
@@ -450,7 +343,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         // Center-align all numeric columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        
+
         // Code, Lower Bound, Upper Bound
         table.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
@@ -459,13 +352,13 @@ public class InstrumentsPanel extends StatusProviderPanel {
         // Set fixed column widths for control codes table
         table.getColumnModel().getColumn(0).setPreferredWidth(100); // Name
         table.getColumnModel().getColumn(0).setMinWidth(100);
-        
+
         // Fixed widths for numeric columns
-        table.getColumnModel().getColumn(1).setMaxWidth(50);  // Code
+        table.getColumnModel().getColumn(1).setMaxWidth(50); // Code
         table.getColumnModel().getColumn(1).setMinWidth(50);
-        table.getColumnModel().getColumn(2).setMaxWidth(45);  // Lower Bound
+        table.getColumnModel().getColumn(2).setMaxWidth(45); // Lower Bound
         table.getColumnModel().getColumn(2).setMinWidth(45);
-        table.getColumnModel().getColumn(3).setMaxWidth(45);  // Upper Bound
+        table.getColumnModel().getColumn(3).setMaxWidth(45); // Upper Bound
         table.getColumnModel().getColumn(3).setMinWidth(45);
 
         // Modify selection listener to handle caption buttons
@@ -503,7 +396,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
 
     private JTable createCaptionsTable() {
         String[] columns = {
-            "Code", "Description"
+                "Code", "Description"
         };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
@@ -521,7 +414,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         JTable table = new JTable(model);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
-        table.setAutoCreateRowSorter(true);  // Enable sorting
+        table.setAutoCreateRowSorter(true); // Enable sorting
 
         // Add default sorting by description (column 1)
         RowSorter<? extends TableModel> sorter = table.getRowSorter();
@@ -535,7 +428,7 @@ public class InstrumentsPanel extends StatusProviderPanel {
         table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
 
         // Set fixed column widths for captions table
-        table.getColumnModel().getColumn(0).setMaxWidth(50);  // Code
+        table.getColumnModel().getColumn(0).setMaxWidth(50); // Code
         table.getColumnModel().getColumn(0).setMinWidth(50);
         table.getColumnModel().getColumn(1).setPreferredWidth(190); // Description
         table.getColumnModel().getColumn(1).setMinWidth(190);
@@ -567,21 +460,21 @@ public class InstrumentsPanel extends StatusProviderPanel {
         model.setRowCount(0);
 
         if (selectedInstrument != null && selectedInstrument.getControlCodes() != null) {
-            logger.info("Updating control codes table for instrument: " + selectedInstrument.getName() + 
-                       " with " + selectedInstrument.getControlCodes().size() + " codes");
-            
+            logger.info("Updating control codes table for instrument: " + selectedInstrument.getName() +
+                    " with " + selectedInstrument.getControlCodes().size() + " codes");
+
             for (ControlCode cc : selectedInstrument.getControlCodes()) {
                 model.addRow(new Object[] {
-                    cc.getName(),
-                    cc.getCode(),
-                    cc.getLowerBound(),
-                    cc.getUpperBound()
+                        cc.getName(),
+                        cc.getCode(),
+                        cc.getLowerBound(),
+                        cc.getUpperBound()
                 });
                 logger.info("Added control code to table: " + cc.getName());
             }
         } else {
-            logger.warning("No control codes to display - instrument: " + 
-                         (selectedInstrument == null ? "null" : selectedInstrument.getName()));
+            logger.warning("No control codes to display - instrument: " +
+                    (selectedInstrument == null ? "null" : selectedInstrument.getName()));
         }
     }
 
@@ -590,36 +483,36 @@ public class InstrumentsPanel extends StatusProviderPanel {
         model.setRowCount(0);
 
         if (selectedControlCode != null && selectedControlCode.getCaptions() != null) {
-            logger.info("Updating captions table for control code: " + selectedControlCode.getName() + 
-                       " with " + selectedControlCode.getCaptions().size() + " captions");
-            
+            logger.info("Updating captions table for control code: " + selectedControlCode.getName() +
+                    " with " + selectedControlCode.getCaptions().size() + " captions");
+
             for (ControlCodeCaption caption : selectedControlCode.getCaptions()) {
                 model.addRow(new Object[] {
-                    caption.getCode(),
-                    caption.getDescription()
+                        caption.getCode(),
+                        caption.getDescription()
                 });
                 logger.info("Added caption to table: " + caption.getDescription());
             }
         } else {
-            logger.warning("No captions to display - control code: " + 
-                         (selectedControlCode == null ? "null" : selectedControlCode.getName()));
+            logger.warning("No captions to display - control code: " +
+                    (selectedControlCode == null ? "null" : selectedControlCode.getName()));
         }
     }
 
     private Instrument findInstrumentByName(String name) {
         // Convert view index to model index when getting data
         return RedisService.getInstance().findAllInstruments().stream()
-            .filter(i -> i.getName().equals(name))
-            .findFirst()
-            .orElse(null);
+                .filter(i -> i.getName().equals(name))
+                .findFirst()
+                .orElse(null);
     }
 
     private ControlCode findControlCodeByName(String name) {
         if (selectedInstrument != null && selectedInstrument.getControlCodes() != null) {
             return selectedInstrument.getControlCodes().stream()
-                .filter(cc -> cc.getName().equals(name))
-                .findFirst()
-                .orElse(null);
+                    .filter(cc -> cc.getName().equals(name))
+                    .findFirst()
+                    .orElse(null);
         }
         return null;
     }
@@ -745,6 +638,18 @@ public class InstrumentsPanel extends StatusProviderPanel {
         }
     }
 
+    private void deleteSelectedInstrument() {
+        if (selectedInstrument != null) {
+            if (JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this instrument?",
+                    "Delete Instrument", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            RedisService.getInstance().deleteInstrument(selectedInstrument);
+            refreshInstrumentsTable();
+        }
+    }
+
     private void editSelectedInstrument() {
         int row = instrumentsTable.getSelectedRow();
         if (row >= 0) {
@@ -757,49 +662,140 @@ public class InstrumentsPanel extends StatusProviderPanel {
     }
 
     // private void deleteSelectedInstrument() {
-    //     int row = instrumentsTable.getSelectedRow();
-    //     if (row >= 0) {
-    //         String name = (String) instrumentsTable.getValueAt(row, 0);
-    //         ProxyInstrument instrument = findInstrumentByName(name);
-    //         if (instrument != null) {
-    //             RedisService.getInstance().deleteInstrument(instrument);
-    //             refreshInstrumentsTable();
-    //         }
-    //     }
+    // int row = instrumentsTable.getSelectedRow();
+    // if (row >= 0) {
+    // String name = (String) instrumentsTable.getValueAt(row, 0);
+    // ProxyInstrument instrument = findInstrumentByName(name);
+    // if (instrument != null) {
+    // RedisService.getInstance().deleteInstrument(instrument);
+    // refreshInstrumentsTable();
+    // }
+    // }
     // }
 
     private void refreshInstrumentsTable() {
         DefaultTableModel model = (DefaultTableModel) instrumentsTable.getModel();
         model.setRowCount(0);
-        
+
         // Get fresh data from Redis
         List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
         logger.info("Refreshing instruments table with " + instruments.size() + " instruments");
-        
+
         // Add each instrument to the table
         for (Instrument instrument : instruments) {
             logger.info("Adding instrument to table: " + instrument.getName());
             model.addRow(new Object[] {
-                instrument.getName(),
-                instrument.getDeviceName(),
-                false, // instrument.isAvailable(),
-                instrument.getLowestNote(),
-                instrument.getHighestNote(),
-                instrument.isInitialized()
+                    instrument.getName(),
+                    instrument.getDeviceName(),
+                    instrument.getAvailable(),
+                    instrument.getLowestNote(),
+                    instrument.getHighestNote(),
+                    instrument.isInitialized()
             });
         }
-        
+
         // Notify the table that the model has changed
         model.fireTableDataChanged();
         instrumentsTable.revalidate();
         instrumentsTable.repaint();
-        
+
         // Clear selection and related data
         instrumentsTable.clearSelection();
         selectedInstrument = null;
         updateControlCodesTable();
-        
+
         // Log the current state
         logger.info("Table refreshed with " + model.getRowCount() + " rows");
+    }
+
+    private void setupContextMenus() {
+        // Create context menus
+        instrumentsContextMenu = new ContextMenuHelper(
+                "ADD_INSTRUMENT",
+                "EDIT_INSTRUMENT",
+                "DELETE_INSTRUMENT");
+
+        controlCodesContextMenu = new ContextMenuHelper(
+                "ADD_CONTROL_CODE",
+                "EDIT_CONTROL_CODE",
+                "DELETE_CONTROL_CODE");
+
+        captionsContextMenu = new ContextMenuHelper(
+                "ADD_CAPTION",
+                "EDIT_CAPTION",
+                "DELETE_CAPTION");
+
+        // Now safe to install on existing tables
+        instrumentsContextMenu.install(instrumentsTable);
+        controlCodesContextMenu.install(controlCodesTable);
+        captionsContextMenu.install(captionsTable);
+
+        // Setup action listeners
+        setupContextMenuListeners();
+    }
+
+    private void setupContextMenuListeners() {
+        instrumentsContextMenu.addActionListener(e -> {
+            switch (e.getActionCommand()) {
+                case "ADD_INSTRUMENT" -> showInstrumentDialog(null);
+                case "EDIT_INSTRUMENT" -> editSelectedInstrument();
+                case "DELETE_INSTRUMENT" -> deleteSelectedInstrument();
+            }
+        });
+
+        controlCodesContextMenu.addActionListener(e -> {
+            switch (e.getActionCommand()) {
+                case "ADD_CONTROL_CODE" -> showControlCodeDialog(null);
+                case "EDIT_CONTROL_CODE" -> editSelectedControlCode();
+                case "DELETE_CONTROL_CODE" -> deleteSelectedControlCode();
+            }
+        });
+
+        captionsContextMenu.addActionListener(e -> {
+            switch (e.getActionCommand()) {
+                case "ADD_CAPTION" -> showCaptionDialog(null);
+                case "EDIT_CAPTION" -> editSelectedCaption();
+                case "DELETE_CAPTION" -> deleteSelectedCaption();
+            }
+        });
+    }
+
+    // Update selection listeners to handle context menu state
+
+    private void setupInstrumentsTableSelectionListener() {
+        instrumentsTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean hasSelection = instrumentsTable.getSelectedRow() >= 0;
+                // Update both button and context menu states
+                editInstrumentButton.setEnabled(hasSelection);
+                deleteInstrumentButton.setEnabled(hasSelection);
+                instrumentsContextMenu.setEditEnabled(hasSelection);
+                instrumentsContextMenu.setDeleteEnabled(hasSelection);
+            }
+        });
+    }
+
+    private void setupControlCodesTableSelectionListener() {
+        controlCodesTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean hasSelection = controlCodesTable.getSelectedRow() >= 0;
+                controlCodesContextMenu.setEditEnabled(hasSelection);
+                controlCodesContextMenu.setDeleteEnabled(hasSelection);
+                addCaptionButton.setEnabled(hasSelection);
+                captionsContextMenu.setAddEnabled(hasSelection);
+            }
+        });
+    }
+
+    private void setupCaptionsTableSelectionListener() {
+        captionsTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean hasSelection = captionsTable.getSelectedRow() >= 0 && selectedControlCode != null;
+                editCaptionButton.setEnabled(hasSelection);
+                deleteCaptionButton.setEnabled(hasSelection);
+                captionsContextMenu.setEditEnabled(hasSelection);
+                captionsContextMenu.setDeleteEnabled(hasSelection);
+            }
+        });
     }
 }

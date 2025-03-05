@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.angrysurfer.beats.Utils;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
@@ -14,7 +13,7 @@ public class RainbowStarVisualization implements IVisualizationHandler {
     private double scale = 1.0;
     private boolean growing = true;
     private final List<Point> starPoints = new ArrayList<>();
-    private final Color[] rainbowColors = Utils.getRainbowColors();
+    private final Color[] rainbowColors = getRainbowColors();
     private int colorIndex = 0;
 
     private static class Point {

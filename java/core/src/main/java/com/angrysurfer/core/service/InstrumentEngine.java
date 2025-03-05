@@ -1,10 +1,10 @@
 package com.angrysurfer.core.service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.sound.midi.MidiDevice;
 
@@ -13,58 +13,60 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisInstrumentHelper;
+import com.angrysurfer.core.redis.RedisService;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class InstrumentManager {
-    private static final Logger logger = LoggerFactory.getLogger(InstrumentManager.class);
-    private static InstrumentManager instance;
+public class InstrumentEngine {
+    private static final Logger logger = LoggerFactory.getLogger(InstrumentEngine.class);
+    // private static InstrumentEngine instance;
     private final RedisInstrumentHelper instrumentHelper;
     private final Map<Long, Instrument> instrumentCache = new HashMap<>();
     private List<MidiDevice> midiDevices;
     private List<String> devices;
     private boolean needsRefresh = true;
 
-    private InstrumentManager(RedisInstrumentHelper instrumentHelper) {
-        this.instrumentHelper = instrumentHelper;
-        initializeCache();
+    public InstrumentEngine() {
+        this.instrumentHelper = RedisService.getInstance().getInstrumentHelper();
+        // initializeCache();
     }
 
-    public static InstrumentManager getInstance(RedisInstrumentHelper instrumentHelper) {
-        if (instance == null) {
-            synchronized (InstrumentManager.class) {
-                if (instance == null) {
-                    instance = new InstrumentManager(instrumentHelper);
-                }
-            }
-        }
-        return instance;
-    }
+    // public static InstrumentManager getInstance(RedisInstrumentHelper
+    // instrumentHelper) {
+    // if (instance == null) {
+    // synchronized (InstrumentManager.class) {
+    // if (instance == null) {
+    // instance = new InstrumentManager(instrumentHelper);
+    // }
+    // }
+    // }
+    // return instance;
+    // }
 
-    private void initializeCache() {
+    public void initializeCache(List<Instrument> instruments) {
         logger.info("Initializing instrument cache");
         // List<Instrument> instruments = instrumentHelper.findAllInstruments();
-        List<Instrument> instruments = UserConfigurationManager.getInstance().getCurrentConfig().getInstruments();
+        // List<Instrument> instruments =
+        // SessionManager.getInstance().getUserConfig().getInstruments();
         instrumentCache.clear();
-        
-        for (Instrument instrument : instruments) {
+
+        for (Instrument instrument : instruments) 
             instrumentCache.put(instrument.getId(), instrument);
-        }
-        
+
         logger.info("Cached {} instruments", instrumentCache.size());
     }
 
     public void refreshCache() {
         logger.info("Refreshing instrument cache");
-        initializeCache();
+        // initializeCache();
     }
 
     public void refreshInstruments() {
         logger.info("Refreshing instruments cache");
-        initializeCache();
+        // initializeCache();
         needsRefresh = false;
     }
 
@@ -103,7 +105,7 @@ public class InstrumentManager {
         Instrument instrument = instrumentCache.get(instrumentId);
         if (instrument == null) {
             logger.warn("Cache miss for instrument ID: " + instrumentId + ", refreshing cache");
-            initializeCache();
+            // initializeCache();
             instrument = instrumentCache.get(instrumentId);
         }
         return instrument;
@@ -112,7 +114,7 @@ public class InstrumentManager {
     public List<Instrument> getCachedInstruments() {
         if (instrumentCache.isEmpty()) {
             logger.info("Cache is empty, initializing...");
-            initializeCache();
+            // initializeCache();
         }
         return new ArrayList<>(instrumentCache.values());
     }

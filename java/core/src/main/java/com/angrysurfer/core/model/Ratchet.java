@@ -3,8 +3,8 @@ package com.angrysurfer.core.model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Operator;
+import com.angrysurfer.core.util.Comparison;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +19,7 @@ public class Ratchet extends Strike {
 
     public Ratchet(Player parent, double offset, long interval, int part) {
 
-        logger.info("Creating new Ratchet - parent: {}, offset: {}, interval: {}, part: {}",
+        logger.info("Creating new Ratchet - parent: %s, offset: %d, interval: %d, part: %d",
                 parent.getName(), offset, interval, part);
 
         setParent(parent);
@@ -46,7 +46,7 @@ public class Ratchet extends Strike {
                 + String.format("s", ((Ticker) getParent().getTicker()).getPlayers().size()));
         double tick = getTicker().getTickCount() + offset;
         logger.debug("Adding rule - tick: {}, part: {}", tick, part);
-        getRules().add(new Rule(Operator.TICK_COUNT, Comparison.EQUALS, tick, part));
+        getRules().add(new Rule(Comparison.TICK_COUNT, Operator.EQUALS, tick, part));
 
         synchronized (((Ticker) getTicker()).getPlayers()) {
             synchronized (((Ticker) getTicker()).getPlayers()) {

@@ -73,7 +73,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
         saveConfigItem.addActionListener(e -> {
             Instrument currentInstrument = (Instrument) instrumentSelector.getSelectedItem();
             if (currentInstrument != null) {
-                CommandBus.getInstance().publish(Commands.SAVE_INSTRUMENT_CONFIG, this, currentInstrument);
+                CommandBus.getInstance().publish(Commands.SAVE_CONFIG, this, currentInstrument);
             }
         });
         popupMenu.add(saveConfigItem);

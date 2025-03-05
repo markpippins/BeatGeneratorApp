@@ -34,8 +34,9 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Ticker;
-import com.angrysurfer.core.service.TickerManager;
+import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Scale;
+import com.formdev.flatlaf.ui.FlatComboBoxUI;
 
 public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();
@@ -119,7 +120,7 @@ public class ToolBar extends JToolBar {
         // Then request the initial ticker state after a short delay
         SwingUtilities.invokeLater(() -> {
             // First ensure TickerManager has an active ticker
-            Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
+            Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
             if (currentTicker != null) {
                 actionBus.publish(Commands.TICKER_SELECTED, this, currentTicker);
             } else {
@@ -132,7 +133,18 @@ public class ToolBar extends JToolBar {
         stopButton.setEnabled(false);
     }
 
+    // TODO: Investigate custom UI for combo boxes
+    // FlatComboBoxUI comboBoxUI = new FlatComboBoxUI() {
+    // @Override
+    // protected JButton createArrowButton() {
+    // JButton button = super.createArrowButton();
+    // button.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    // return button;
+    // }
+    // };
+
     private JComboBox<Integer> createTickerCombo(String field, int min, int max, int current) {
+
         JComboBox<Integer> combo = new JComboBox<>();
         for (int i = min; i <= max; i++) {
             combo.addItem(i);
@@ -470,14 +482,9 @@ public class ToolBar extends JToolBar {
 
                 switch (button.getActionCommand()) {
                     case Commands.TRANSPORT_REWIND ->
-                        button.setEnabled(hasActiveTicker && !ticker.isFirst());
+                        button.setEnabled(hasActiveTicker && SessionManager.getInstance().canMoveBack());
                     case Commands.TRANSPORT_FORWARD ->
-                        button.setEnabled(hasActiveTicker &&
-                                (!ticker.isLast() || (ticker.isLast() && ticker.isValid() &&
-                                        ticker.getPlayers().size() > 0 &&
-                                        ticker.getPlayers().stream()
-                                                .map(p -> p)
-                                                .anyMatch(p -> p.getRules() != null && !p.getRules().isEmpty()))));
+                        button.setEnabled(SessionManager.getInstance().canMoveForward());
                     case Commands.TRANSPORT_PAUSE ->
                         button.setEnabled(false);
                     case Commands.TRANSPORT_PLAY ->

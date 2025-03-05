@@ -37,14 +37,14 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.config.FrameState;
+import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.TickerManager;
+import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.util.Constants;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -52,7 +52,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PlayersPanel extends JPanel {
+
     private static final Logger logger = Logger.getLogger(PlayersPanel.class.getName());
+
     private final JTable table;
     private final StatusConsumer status;
     private final RulesPanel ruleTablePanel;
@@ -169,7 +171,7 @@ public class PlayersPanel extends JPanel {
         setupContextMenu();
 
         // Check for active ticker and enable controls immediately
-        Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
+        Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
         if (currentTicker != null) {
             logger.info("Found active ticker on construction: " + currentTicker.getId());
             hasActiveTicker = true;
@@ -215,7 +217,7 @@ public class PlayersPanel extends JPanel {
 
     public void saveColumnOrder() {
         try {
-            FrameState state = RedisService.getInstance().loadFrameState();
+            TableState state = RedisService.getInstance().loadTableState(Constants.PLAYER);
             if (state != null) {
                 List<String> columnOrder = new ArrayList<>();
                 // Get visible column order
@@ -228,8 +230,8 @@ public class PlayersPanel extends JPanel {
                 // Only save if we have all columns
                 if (columnOrder.size() == COLUMNS.size()) {
                     logger.info("Saving column order: " + String.join(", ", columnOrder));
-                    state.setPlayerColumnOrder(columnOrder);
-                    RedisService.getInstance().saveFrameState(state);
+                    state.setColumnOrder(columnOrder);
+                    RedisService.getInstance().saveTableState(state, Constants.PLAYER);
                 } else {
                     logger.warning("Column order incomplete, not saving");
                 }
@@ -241,8 +243,8 @@ public class PlayersPanel extends JPanel {
 
     public void restoreColumnOrder() {
         try {
-            FrameState state = RedisService.getInstance().loadFrameState();
-            List<String> savedOrder = state != null ? state.getPlayerColumnOrder() : null;
+            TableState state = RedisService.getInstance().loadTableState(Constants.PLAYER);
+            List<String> savedOrder = state != null ? state.getColumnOrder() : null;
 
             if (savedOrder != null && !savedOrder.isEmpty() && savedOrder.size() == COLUMNS.size()) {
                 logger.info("Restoring column order: " + String.join(", ", savedOrder));
@@ -532,16 +534,10 @@ public class PlayersPanel extends JPanel {
                     case Commands.TICKER_UPDATED -> {
                         if (action.getData() instanceof Ticker ticker) {
                             logger.info("Ticker updated, refreshing players. Ticker ID: " + ticker.getId());
-                            // Ensure we get fresh data
-                            Ticker freshTicker = RedisService.getInstance().findTickerById(ticker.getId());
-                            if (freshTicker != null) {
-                                refreshPlayers(freshTicker.getPlayers());
-                                // Auto-select the newly added player if it was an add operation
-                                if (action.getSender() instanceof PlayerEditPanel) {
-                                    selectLastPlayer();
-                                }
-                            } else {
-                                logger.warning("Could not find ticker " + ticker.getId() + " after update");
+                            refreshPlayers(ticker.getPlayers());
+                            // Auto-select the newly added player if it was an add operation
+                            if (action.getSender() instanceof PlayerEditPanel) {
+                                selectLastPlayer();
                             }
                         }
                     }
@@ -555,9 +551,14 @@ public class PlayersPanel extends JPanel {
                             refreshPlayers(ticker.getPlayers());
                         }
                     }
+                    case Commands.SHOW_PLAYER_EDITOR_OK -> {
+                        if (action.getData() instanceof Ticker ticker) {
+                            refreshPlayers(ticker.getPlayers());
+                        }
+                    }
                     case Commands.PLAYER_DELETE_REQUEST -> {
                         if (action.getData() instanceof Player player) {
-                            Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
+                            Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
                             if (currentTicker != null) {
                                 CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
                                 refreshPlayers(currentTicker.getPlayers());
@@ -580,7 +581,7 @@ public class PlayersPanel extends JPanel {
                     }
                     case Commands.TICKER_DELETED -> {
                         // Clear current display and disable controls if no new ticker is active
-                        Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
+                        Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
                         if (currentTicker == null) {
                             hasActiveTicker = false;
                             enableControls(false);
@@ -607,20 +608,21 @@ public class PlayersPanel extends JPanel {
                         logger.info("Player unselected, clearing rules panel");
                         ruleTablePanel.setPlayer(null);
                     }
-                    case Commands.PLAYER_ADDED_TO_TICKER -> {
-                        if (action.getData() instanceof Object[] data) {
-                            if (data.length == 2 && data[0] instanceof Ticker ticker &&
-                                    data[1] instanceof Player player) {
-                                logger.info("Handling PLAYER_ADDED_TO_TICKER");
-                                refreshPlayers(ticker.getPlayers());
-                                // Auto-select the new player
-                                int row = findPlayerRowIndex(player);
-                                if (row >= 0) {
-                                    table.setRowSelectionInterval(row, row);
-                                    CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
-                                }
+                    case Commands.PLAYER_ADDED -> {
+                        if (action.getData() instanceof Player player) {
+                            logger.info("Handling PLAYER_ADDED_TO_TICKER");
+                            // Refresh with new ticker state
+                            refreshPlayers(SessionManager.getInstance().getActiveTicker().getPlayers());
+
+                            // Auto-select the new player
+                            int row = findPlayerRowIndex(player);
+                            if (row >= 0) {
+                                table.setRowSelectionInterval(row, row);
+                                CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
+                                logger.info("Auto-selected newly added player: " + player.getName());
                             }
                         }
+
                     }
                 }
             }
@@ -709,7 +711,7 @@ public class PlayersPanel extends JPanel {
         if (row >= 0) {
             int modelRow = table.convertRowIndexToModel(row);
             String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
-            Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
+            Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
             if (currentTicker != null && currentTicker.getPlayers() != null) {
                 logger.info("Looking for player: " + playerName);
                 return currentTicker.getPlayers().stream()
@@ -724,7 +726,7 @@ public class PlayersPanel extends JPanel {
     private Player[] getSelectedPlayers() {
         int[] selectedRows = table.getSelectedRows();
         List<Player> players = new ArrayList<>();
-        Ticker currentTicker = TickerManager.getInstance().getActiveTicker();
+        Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
 
         if (currentTicker != null) {
             for (int row : selectedRows) {
@@ -769,41 +771,51 @@ public class PlayersPanel extends JPanel {
         String instrumentName = "";
         Long id = player.getInstrumentId();
 
-        InstrumentManager instrumentManager = InstrumentManager.getInstance(null);
-
         try {
 
             if (player.getInstrumentId() != null) {
                 // Always try to get fresh instrument from cache first
-                Instrument instrument = instrumentManager.getInstrumentFromCache(player.getInstrumentId());
+                Instrument instrument = SessionManager.getInstance().getInstrumentFromCache(player.getInstrumentId());
                 if (instrument != null) {
                     instrumentName = instrument.getName();
-                    player.setInstrument(instrument); // Update player's reference
-                    logger.info(String.format("Found instrument in cache: %s (ID: %d)", instrumentName,
-                            player.getInstrumentId()));
-                } else {
-                    logger.warning(
-                            String.format("Could not find instrument in cache for ID: %d", player.getInstrumentId()));
-                    instrumentManager.refreshCache();
-                    instrument = instrumentManager.getInstrumentFromCache(player.getInstrumentId());
-                    if (instrument != null) {
-                        instrumentName = instrument.getName();
-                        player.setInstrument(instrument);
-                        logger.info(String.format("Found instrument after cache refresh: %s", instrumentName));
-                    } else {
-                        instrumentName = "Unknown (ID: " + player.getInstrumentId() + ")";
-                    }
-                }
-            } else if (player.getInstrument() != null) {
-                // If we have instrument but no ID, try to fix the state
-                instrumentName = player.getInstrument().getName();
-                player.setInstrumentId(player.getInstrument().getId());
-                logger.info(String.format("Fixed missing instrument ID for instrument: %d", instrumentName));
-                RedisService.getInstance().savePlayer(player);
-            }
 
+                    // Update player's reference
+                    // player.setInstrument(instrument);
+                    // RedisService.getInstance().savePlayer(player);
+                    // CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+
+                    // logger.info(String.format("Found instrument in cache: %s (ID: %d)",
+                    // // instrumentName,
+                    // // player.getInstrumentId()));
+                    // } else {
+                    // logger.warning(
+                    // String.format("Could not find instrument in cache for ID: %d",
+                    // player.getInstrumentId()));
+                    // instrumentEngine.refreshCache();
+                    // instrument =
+                    // instrumentEngine.getInstrumentFromCache(player.getInstrumentId());
+                    // if (instrument != null) {
+                    // instrumentName = instrument.getName();
+                    // player.setInstrument(instrument);
+                    // // logger.info(String.format("Found instrument after cache refresh: %s",
+                    // // instrumentName));
+                    // } else {
+                    // instrumentName = "Unknown (ID: " + player.getInstrumentId() + ")";
+                    // }
+                    // }
+                    // } else if (player.getInstrument() != null) {
+                    // // If we have instrument but no ID, try to fix the state
+                    // instrumentName = player.getInstrument().getName();
+                    // player.setInstrumentId(player.getInstrument().getId());
+                    // // logger.info(String.format("Fixed missing instrument ID for instrument:
+                    // %d",
+                    // // instrumentName));
+                    // RedisService.getInstance().savePlayer(player);
+                }
+            }
             rowData[columnIndex] = instrumentName;
-            // logger.info(String.format("Updated instrument cell for player %d to: %d", player.getId(), instrumentName));
+            // logger.info(String.format("Updated instrument cell for player %d to: %d",
+            // player.getId(), instrumentName));
         } catch (Exception e) {
             logger.severe("Error updating instrument cell: " + e.getMessage());
             rowData[columnIndex] = "Error";

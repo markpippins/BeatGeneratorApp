@@ -3,7 +3,7 @@ package com.angrysurfer.beats.widget;
 import java.awt.*;
 import javax.swing.JButton;
 
-import com.angrysurfer.beats.Utils;
+import com.angrysurfer.beats.ColorUtils;
 
 public class TriggerButton extends JButton {
     private Color baseColor;
@@ -17,7 +17,7 @@ public class TriggerButton extends JButton {
     }
 
     private void setup() {
-        baseColor = Utils.deepOrange;
+        baseColor = ColorUtils.deepOrange;
         activeColor = Color.GREEN;
         
         setContentAreaFilled(false);

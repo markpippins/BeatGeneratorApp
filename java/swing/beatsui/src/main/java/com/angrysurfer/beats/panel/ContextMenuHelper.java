@@ -38,7 +38,7 @@ public class ContextMenuHelper {
     }
 
     public void setAddEnabled(boolean enabled) {
-        // addMenuItem.setEnabled(enabled);
+        addMenuItem.setEnabled(enabled);
     }
 
     public void setEditEnabled(boolean enabled) {

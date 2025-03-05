@@ -11,7 +11,8 @@ import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.SongManager;
+import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.service.SongEngine;
 import com.angrysurfer.core.util.TickCyclerListener;
 import com.angrysurfer.spring.dao.SongStatus;
 
@@ -32,12 +33,15 @@ public class SongService implements NoteProvider {
 
     private InstrumentService instrumentService;
     private RedisService redisService = RedisService.getInstance();
-    private SongManager songManager = SongManager.getInstance();
+
     private TickCyclerListener tickListener;
 
+    private SongEngine songEngine = SessionManager.getInstance().getSongEngine();
+
     public SongService(InstrumentService instrumentService) {
+
         this.instrumentService = instrumentService;
-        this.tickListener = new TickCyclerListener();
+        this.tickListener = new TickCyclerListener(songEngine);
 
         // Initialize with first song if available
         Long songId = redisService.getMinimumSongId();
@@ -48,14 +52,13 @@ public class SongService implements NoteProvider {
             }
         }
 
-        if (Objects.isNull(songManager.getActiveSong())) {
-            songManager.songSelected(newSong());
-        }
+        if (Objects.isNull(songEngine.getActiveSong()))
+            songEngine.songSelected(newSong());
     }
 
     @Override
     public int getNoteForStep(Step step, Pattern pattern, long tick) {
-        return songManager.getNoteForStep(step, pattern, tick);
+        return songEngine.getNoteForStep(step, pattern, tick);
     }
 
     public SongStatus getSongStatus() {
@@ -67,7 +70,7 @@ public class SongService implements NoteProvider {
                 patternId, updateType, updateValue);
         Pattern pattern = getSong().getPattern(patternId);
         if (pattern != null) {
-            pattern = songManager.updatePattern(pattern, updateType, updateValue);
+            pattern = songEngine.updatePattern(pattern, updateType, updateValue);
             return redisService.savePattern(pattern);
         }
         return null;
@@ -78,7 +81,7 @@ public class SongService implements NoteProvider {
                 stepId, updateType, updateValue);
         Step step = findStep(stepId);
         if (step != null) {
-            step = songManager.updateStep(step, updateType, updateValue);
+            step = songEngine.updateStep(step, updateType, updateValue);
             return redisService.saveStep(step);
         }
         return null;
@@ -93,14 +96,13 @@ public class SongService implements NoteProvider {
             pattern.setSteps(redisService.findStepsByPatternId(pattern.getId()));
             pattern.getSteps().forEach(s -> s.setPattern(pattern));
         });
-        songManager.songSelected(song);
-        tickListener.setSong(song);
+        songEngine.songSelected(song);
         return song;
     }
 
     public Song newSong() {
         logger.info("newSong()");
-        Song song = new Song();// songManager.createNewSong(instrumentService.getInstrumentList());
+        Song song = new Song();// songEngine.createNewSong(instrumentService.getInstrumentList());
         return redisService.saveSong(song);
     }
 
@@ -115,7 +117,7 @@ public class SongService implements NoteProvider {
                     loadSong(nextSong);
                 }
             } else {
-                songManager.songSelected(newSong());
+                songEngine.songSelected(newSong());
             }
         }
         return getSong();
@@ -134,23 +136,23 @@ public class SongService implements NoteProvider {
     }
 
     public synchronized void setSong(Song song) {
-        songManager.songSelected(song);
+        songEngine.songSelected(song);
     }
 
     public synchronized Song getSong() {
-        return songManager.getActiveSong();
+        return songEngine.getActiveSong();
     }
 
     public Pattern addPattern() {
         Pattern pattern = new Pattern();
-        pattern = songManager.addPattern(pattern);
+        pattern = songEngine.addPattern(pattern);
         return redisService.savePattern(pattern);
     }
 
     public Set<Pattern> removePattern(Long patternId) {
         Pattern pattern = getSong().getPattern(patternId);
         if (pattern != null) {
-            Set<Pattern> patterns = songManager.removePattern(pattern);
+            Set<Pattern> patterns = songEngine.removePattern(pattern);
             redisService.deletePattern(pattern);
             return patterns;
         }

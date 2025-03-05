@@ -1,8 +1,9 @@
-package com.angrysurfer.beats.visualization.handler;
+package com.angrysurfer.beats.visualization.handler.geo;
 
 import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -43,5 +44,10 @@ public class RainbowVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Rainbow";
+    }
+     
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.CLASSIC;
     }
 }

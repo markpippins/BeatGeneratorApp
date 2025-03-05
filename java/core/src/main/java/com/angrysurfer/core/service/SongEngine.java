@@ -27,27 +27,27 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SongManager {
-    private static final Logger logger = LoggerFactory.getLogger(SongManager.class);
-    private static SongManager instance;
+public class SongEngine {
+    private static final Logger logger = LoggerFactory.getLogger(SongEngine.class);
+
     private Song activeSong;
     private CommandBus actionBus = CommandBus.getInstance();
     private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
 
-    private SongManager() {
+    public SongEngine() {
         setupCommandBusListener();
     }
 
-    public static SongManager getInstance() {
-        if (instance == null) {
-            instance = new SongManager();
-        }
-        return instance;
-    }
+    // public static SongEngine getInstance() {
+    // if (instance == null) {
+    // instance = new SongEngine();
+    // }
+    // return instance;
+    // }
 
     public Pattern updatePattern(Pattern pattern, int updateType, int updateValue) {
-        logger.info("updatePattern() - patternId: {}, updateType: {}, updateValue: {}", 
-            pattern.getId(), updateType, updateValue);
+        logger.info("updatePattern() - patternId: {}, updateType: {}, updateValue: {}",
+                pattern.getId(), updateType, updateValue);
 
         switch (updateType) {
             case PatternUpdateType.ACTIVE -> pattern.setActive(!pattern.getActive());
@@ -87,8 +87,8 @@ public class SongManager {
     }
 
     public Step updateStep(Step step, int updateType, int updateValue) {
-        logger.info("updateStep() - stepId: {}, updateType: {}, updateValue: {}", 
-            step.getId(), updateType, updateValue);
+        logger.info("updateStep() - stepId: {}, updateType: {}, updateValue: {}",
+                step.getId(), updateType, updateValue);
 
         switch (updateType) {
             case StepUpdateType.ACTIVE -> step.setActive(!step.getActive());
@@ -119,13 +119,13 @@ public class SongManager {
     public int getNoteForStep(Step step, Pattern pattern, long tick) {
         if (!pattern.getMuted() && (tick == 0 || (tick % (activeSong.getTicksPerBeat() / pattern.getSpeed()) == 0))) {
             Random rand = new Random();
-            if (step.getActive() && step.getProbability() == 100 || 
-                (step.getProbability() > rand.nextInt(100)) && pattern.getLength() > step.getPosition()) {
-                
-                return pattern.getQuantize() ? 
-                    pattern.getQuantizer().quantizeNote(pattern.getRootNote() + step.getPitch() + 
-                        (12 * pattern.getTranspose())) :
-                    pattern.getRootNote() + step.getPitch() + (12 * pattern.getTranspose());
+            if (step.getActive() && step.getProbability() == 100 ||
+                    (step.getProbability() > rand.nextInt(100)) && pattern.getLength() > step.getPosition()) {
+
+                return pattern.getQuantize()
+                        ? pattern.getQuantizer().quantizeNote(pattern.getRootNote() + step.getPitch() +
+                                (12 * pattern.getTranspose()))
+                        : pattern.getRootNote() + step.getPitch() + (12 * pattern.getTranspose());
             }
         }
         return -1;

@@ -98,7 +98,7 @@ public class Visualizer implements CommandListener {
         visualizations.clear();
         visualizations = getVisualizations();
         for (IVisualizationHandler handler : visualizations) {
-            commandBus.publish(new Command(Commands.VISUALIZATION_REGISTERED, this, handler));
+            commandBus.publish(Commands.VISUALIZATION_REGISTERED, this, handler);
         }
     }
 
@@ -223,14 +223,14 @@ public class Visualizer implements CommandListener {
 
     public void startVisualizer(IVisualizationHandler handler) {
         isVisualizationMode = true;
-        commandBus.publish(new Command(Commands.VISUALIZATION_STARTED, this, null));
+        commandBus.publish(Commands.VISUALIZATION_STARTED, this, null);
         visualizationChangeTimer.start();
         setDisplayMode(handler);
     }
 
     public void stopVisualizer() {
         isVisualizationMode = false;
-        commandBus.publish(new Command(Commands.VISUALIZATION_STOPPED, this, null));
+        commandBus.publish(Commands.VISUALIZATION_STOPPED, this, null);
         visualizationChangeTimer.stop();
         clearDisplay();
         currentVisualization = null; // Reset current mode

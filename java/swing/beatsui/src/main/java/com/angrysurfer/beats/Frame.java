@@ -22,6 +22,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.util.Constants;
 
 public class Frame extends JFrame implements AutoCloseable {
 
@@ -45,21 +46,21 @@ public class Frame extends JFrame implements AutoCloseable {
         setupFrame();
         setupMainContent();
         setupKeyboardManager();
-        
+
         // Initialize DialogService with this frame
         DialogManager.initialize(this);
     }
 
     public void loadFrameState() {
         logger.info("Loading frame state for window");
-        FrameState state = RedisService.getInstance().loadFrameState();
+        FrameState state = RedisService.getInstance().loadFrameState(Constants.APPLICATION_FRAME);
         logger.info("Frame state loaded: " + (state != null));
 
         if (state != null) {
             setSize(state.getFrameSizeX(), state.getFrameSizeY());
             setLocation(state.getFramePosX(), state.getFramePosY());
             setSelectedTab(state.getSelectedTab());
-            
+
             // Restore window state
             if (state.isMaximized()) {
                 setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -68,7 +69,7 @@ public class Frame extends JFrame implements AutoCloseable {
             } else {
                 setExtendedState(JFrame.NORMAL);
             }
-            
+
             logger.info("Applied frame state: " +
                     "size=" + state.getFrameSizeX() + "x" + state.getFrameSizeY() +
                     ", pos=" + state.getFramePosX() + "," + state.getFramePosY() +
@@ -90,7 +91,7 @@ public class Frame extends JFrame implements AutoCloseable {
         try {
             FrameState currentState = new FrameState();
             currentState.setSelectedTab(getSelectedTab());
-            
+
             // Save normal window bounds even when maximized
             if (getExtendedState() == JFrame.MAXIMIZED_BOTH || getExtendedState() == JFrame.ICONIFIED) {
                 currentState.setFrameSizeX(getWidth());
@@ -103,7 +104,7 @@ public class Frame extends JFrame implements AutoCloseable {
                 currentState.setFramePosX(getX());
                 currentState.setFramePosY(getY());
             }
-            
+
             // Save window state
             currentState.setMaximized(getExtendedState() == JFrame.MAXIMIZED_BOTH);
             currentState.setMinimized(getExtendedState() == JFrame.ICONIFIED);
@@ -116,7 +117,7 @@ public class Frame extends JFrame implements AutoCloseable {
                     ", maximized=" + currentState.isMaximized() +
                     ", minimized=" + currentState.isMinimized());
 
-            RedisService.getInstance().saveFrameState(currentState);
+            RedisService.getInstance().saveFrameState(currentState, Constants.APPLICATION_FRAME);
         } catch (Exception e) {
             logger.severe("Error saving frame state: " + e.getMessage());
         }

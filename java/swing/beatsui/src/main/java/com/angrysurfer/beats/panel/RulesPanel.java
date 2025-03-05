@@ -65,7 +65,7 @@ public class RulesPanel extends JPanel {
 
     private void setupLayout() {
         JPanel topPanel = new JPanel(new BorderLayout());
-        
+
         // Create a wrapper panel for the button panel with BorderLayout
         JPanel buttonWrapper = new JPanel(new BorderLayout());
         buttonWrapper.add(buttonPanel, BorderLayout.CENTER);
@@ -83,7 +83,7 @@ public class RulesPanel extends JPanel {
     }
 
     private void setupTable() {
-        String[] columnNames = { "Operator", "Comparison", "Value", "Part" };
+        String[] columnNames = { "Comparison", "Operator", "Value", "Part" };
         DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -95,14 +95,14 @@ public class RulesPanel extends JPanel {
         // Center align all columns first
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        
+
         // Left align for Operator column
         DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
         leftRenderer.setHorizontalAlignment(JLabel.LEFT);
-        
+
         // Apply renderers to columns
-        table.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);  // Operator column left-aligned
-        for (int i = 1; i < table.getColumnCount(); i++) {                  // Rest centered
+        table.getColumnModel().getColumn(0).setCellRenderer(leftRenderer); // Operator column left-aligned
+        for (int i = 1; i < table.getColumnCount(); i++) { // Rest centered
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
@@ -133,17 +133,17 @@ public class RulesPanel extends JPanel {
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 boolean hasSelection = table.getSelectedRow() >= 0;
-                
+
                 // Update button states based on selection
                 buttonPanel.setEditEnabled(hasSelection);
                 buttonPanel.setDeleteEnabled(hasSelection);
                 contextMenu.setEditEnabled(hasSelection);
                 contextMenu.setDeleteEnabled(hasSelection);
-                
+
                 // Add button enabled if we have a current player
                 buttonPanel.setAddEnabled(currentPlayer != null);
                 contextMenu.setAddEnabled(currentPlayer != null);
-                
+
                 logger.info("Rule selection changed - Has selection: " + hasSelection);
             }
         });
@@ -297,7 +297,7 @@ public class RulesPanel extends JPanel {
     private void setupKeyboardShortcuts() {
         // Make the table focusable
         table.setFocusable(true);
-        
+
         // Add key listener to handle delete key
         table.addKeyListener(new KeyAdapter() {
             @Override
@@ -306,19 +306,17 @@ public class RulesPanel extends JPanel {
                     Rule[] selectedRules = getSelectedRules();
                     if (selectedRules.length > 0) {
                         int confirm = JOptionPane.showConfirmDialog(
-                            RulesPanel.this,
-                            "Are you sure you want to delete the selected rule(s)?",
-                            "Confirm Delete",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE
-                        );
-                        
+                                RulesPanel.this,
+                                "Are you sure you want to delete the selected rule(s)?",
+                                "Confirm Delete",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.WARNING_MESSAGE);
+
                         if (confirm == JOptionPane.YES_OPTION) {
                             CommandBus.getInstance().publish(
-                                Commands.RULE_DELETE_REQUEST,
-                                RulesPanel.this,
-                                selectedRules
-                            );
+                                    Commands.RULE_DELETE_REQUEST,
+                                    RulesPanel.this,
+                                    selectedRules);
                         }
                     }
                 }
@@ -365,19 +363,20 @@ public class RulesPanel extends JPanel {
     }
 
     public void setPlayer(Player player) {
-        logger.info("Setting player: " + (player != null ? player.getName() + " (ID: " + player.getId() + ")" : "null"));
+        logger.info(
+                "Setting player: " + (player != null ? player.getName() + " (ID: " + player.getId() + ")" : "null"));
         this.currentPlayer = player;
-        
+
         // Update rules display
         if (player != null) {
-            logger.info("Loading rules for player. Rules count: " + 
-                (player.getRules() != null ? player.getRules().size() : 0));
+            logger.info("Loading rules for player. Rules count: " +
+                    (player.getRules() != null ? player.getRules().size() : 0));
             loadRules(player);
         } else {
             logger.info("Clearing rules display - no player selected");
             clearRules();
         }
-        
+
         // Update UI state
         updateButtonStates();
     }
@@ -392,39 +391,39 @@ public class RulesPanel extends JPanel {
 
             for (Rule rule : sortedRules) {
                 model.addRow(new Object[] {
-                    Rule.OPERATORS[rule.getOperator()],
-                    Rule.COMPARISONS[rule.getComparison()],
-                    rule.getValue(),
-                    rule.getPart() == 0 ? "All" : rule.getPart()
+                        Rule.OPERATORS[rule.getOperator()],
+                        Rule.COMPARISONS[rule.getComparison()],
+                        rule.getValue(),
+                        rule.getPart() == 0 ? "All" : rule.getPart()
                 });
-                logger.fine("Added rule: " + rule.getId() + 
-                          " - Op: " + rule.getOperator() + 
-                          ", Comp: " + rule.getComparison() + 
-                          ", Value: " + rule.getValue() + 
-                          ", Part: " + rule.getPart());
+                logger.fine("Added rule: " + rule.getId() +
+                        " - Op: " + rule.getOperator() +
+                        ", Comp: " + rule.getComparison() +
+                        ", Value: " + rule.getValue() +
+                        ", Part: " + rule.getPart());
             }
         }
     }
 
     // private void refreshRules() {
-    //     DefaultTableModel model = (DefaultTableModel) table.getModel();
-    //     model.setRowCount(0);
-        
-    //     if (currentPlayer != null && currentPlayer.getRules() != null) {
-    //         logger.info("Refreshing rules for player: " + currentPlayer.getName() + 
-    //                    " (Rules: " + currentPlayer.getRules().size() + ")");
-    //         // Add rules to table
-    //         currentPlayer.getRules().forEach(rule -> {
-    //             model.addRow(new Object[]{
-    //                 Rule.OPERATORS[rule.getOperator()],
-    //                 Rule.COMPARISONS[rule.getComparison()],
-    //                 rule.getValue(),
-    //                 rule.getPart()
-    //             });
-    //         });
-    //     } else {
-    //         logger.info("No player or rules to display");
-    //     }
+    // DefaultTableModel model = (DefaultTableModel) table.getModel();
+    // model.setRowCount(0);
+
+    // if (currentPlayer != null && currentPlayer.getRules() != null) {
+    // logger.info("Refreshing rules for player: " + currentPlayer.getName() +
+    // " (Rules: " + currentPlayer.getRules().size() + ")");
+    // // Add rules to table
+    // currentPlayer.getRules().forEach(rule -> {
+    // model.addRow(new Object[]{
+    // Rule.OPERATORS[rule.getOperator()],
+    // Rule.COMPARISONS[rule.getComparison()],
+    // rule.getValue(),
+    // rule.getPart()
+    // });
+    // });
+    // } else {
+    // logger.info("No player or rules to display");
+    // }
     // }
 
     private int findRuleIndex(Rule rule) {
@@ -432,7 +431,7 @@ public class RulesPanel extends JPanel {
             List<Rule> rules = new ArrayList<>(currentPlayer.getRules());
             for (int i = 0; i < rules.size(); i++) {
                 if (Objects.nonNull(rules.get(i)) && Objects.nonNull(rules.get(i).getId()) &&
-                    rules.get(i).getId().equals(rule.getId())) {
+                        rules.get(i).getId().equals(rule.getId())) {
                     return i;
                 }
             }

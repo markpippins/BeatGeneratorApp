@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.service.TickerManager;
+import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.ClockSource;
 import com.angrysurfer.core.util.update.TickerUpdateType;
 import com.angrysurfer.spring.dao.TickerStatus;
@@ -26,7 +26,6 @@ public class TickerService {
 
     static Logger logger = LoggerFactory.getLogger(TickerService.class.getCanonicalName());
 
-    private TickerManager tickerManager = TickerManager.getInstance();
     private RedisService redisService = RedisService.getInstance();
     private SongService songService;
     private InstrumentService instrumentService;
@@ -37,7 +36,7 @@ public class TickerService {
     }
 
     public void play() {
-        Ticker activeTicker = tickerManager.getActiveTicker();
+        Ticker activeTicker = SessionManager.getInstance().getActiveTicker();
         if (!activeTicker.getClockSource().getCycleListeners().contains(getSongService().getTickListener())) {
             activeTicker.getClockSource().getCycleListeners().add(getSongService().getTickListener());
         }
@@ -45,11 +44,11 @@ public class TickerService {
         getSongService().getSong().setBeatDuration(activeTicker.getBeatDuration());
         getSongService().getSong().setTicksPerBeat(activeTicker.getTicksPerBeat());
 
-        tickerManager.getActiveTicker().play();
+        SessionManager.getInstance().getActiveTicker().play();
     }
 
     public TickerStatus getTickerStatus() {
-        Ticker activeTicker = tickerManager.getActiveTicker();
+        Ticker activeTicker = SessionManager.getInstance().getActiveTicker();
         return TickerStatus.from(activeTicker, getSongService().getSong(), activeTicker.isRunning());
     }
 
@@ -61,7 +60,7 @@ public class TickerService {
     }
 
     public Ticker getTicker() {
-        return tickerManager.getActiveTicker();
+        return SessionManager.getInstance().getActiveTicker();
     }
 
     public Ticker updateTicker(Long tickerId, int updateType, long updateValue) {
@@ -93,17 +92,17 @@ public class TickerService {
     }
 
     public synchronized Ticker next(long currentTickerId) {
-        if (tickerManager.canMoveForward()) {
-            tickerManager.moveForward();
+        if (SessionManager.getInstance().canMoveForward()) {
+            SessionManager.getInstance().moveForward();
         }
-        return tickerManager.getActiveTicker();
+        return SessionManager.getInstance().getActiveTicker();
     }
 
     public synchronized Ticker previous(long currentTickerId) {
-        if (tickerManager.canMoveBack()) {
-            tickerManager.moveBack();
+        if (SessionManager.getInstance().canMoveBack()) {
+            SessionManager.getInstance().moveBack();
         }
-        return tickerManager.getActiveTicker();
+        return SessionManager.getInstance().getActiveTicker();
     }
 
     public void clearPlayers() {
@@ -116,7 +115,7 @@ public class TickerService {
     public Ticker loadTicker(long tickerId) {
         Ticker ticker = redisService.findTickerById(tickerId);
         if (ticker != null) {
-            tickerManager.tickerSelected(ticker);
+            SessionManager.getInstance().tickerSelected(ticker);
         }
         return ticker;
     }
@@ -127,11 +126,11 @@ public class TickerService {
     }
 
     public void pause() {
-        tickerManager.getActiveTicker().setPaused(true);
+        SessionManager.getInstance().getActiveTicker().setPaused(true);
     }
 
     public void stop() {
-        tickerManager.getActiveTicker().stop();
+        SessionManager.getInstance().getActiveTicker().stop();
     }
 
 }

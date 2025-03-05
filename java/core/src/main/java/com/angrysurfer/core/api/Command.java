@@ -10,7 +10,7 @@ public class Command {
     private Object sender;
     private Object data;
 
-    public Command(String command, Object sender, Object data) {
+    Command(String command, Object sender, Object data) {
         this.command = command;
         this.sender = sender;
         this.data = data;

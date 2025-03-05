@@ -76,7 +76,7 @@ public class SystemsPanel extends StatusProviderPanel {
         }
 
         JTable table = new JTable(model);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
 
         // Center-align numeric columns

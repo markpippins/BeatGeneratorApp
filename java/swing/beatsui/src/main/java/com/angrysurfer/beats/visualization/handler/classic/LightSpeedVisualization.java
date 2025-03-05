@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.visualization.handler;
+package com.angrysurfer.beats.visualization.handler.classic;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
+import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
@@ -20,11 +21,11 @@ public class LightSpeedVisualization implements IVisualizationHandler {
         double vx, vy;
         float hue;
         int length;
-        
+
         LightBeam(int width, int height) {
             reset(width, height);
         }
-        
+
         void reset(int width, int height) {
             x = width / 2.0;
             y = height / 2.0;
@@ -35,33 +36,32 @@ public class LightSpeedVisualization implements IVisualizationHandler {
             hue = random.nextFloat();
             length = random.nextInt(5) + 3;
         }
-        
+
         void update(int width, int height) {
             x += vx * speed;
             y += vy * speed;
             vx *= 1.05;
             vy *= 1.05;
-            
-            if (Math.abs(x - width/2) > width/2 ||
-                Math.abs(y - height/2) > height/2) {
+
+            if (Math.abs(x - width / 2) > width / 2 ||
+                    Math.abs(y - height / 2) > height / 2) {
                 reset(width, height);
             }
         }
-        
+
         void draw(GridButton[][] buttons) {
-            int px = (int)x;
-            int py = (int)y;
-            
+            int px = (int) x;
+            int py = (int) y;
+
             for (int i = 0; i < length; i++) {
-                int drawX = px - (int)(vx * i);
-                int drawY = py - (int)(vy * i);
-                
+                int drawX = px - (int) (vx * i);
+                int drawY = py - (int) (vy * i);
+
                 if (drawX >= 0 && drawX < buttons[0].length &&
-                    drawY >= 0 && drawY < buttons.length) {
-                    float brightness = 1.0f - (float)i/length;
+                        drawY >= 0 && drawY < buttons.length) {
+                    float brightness = 1.0f - (float) i / length;
                     buttons[drawY][drawX].setBackground(
-                        Color.getHSBColor(hue, 0.5f, brightness)
-                    );
+                            Color.getHSBColor(hue, 0.5f, brightness));
                 }
             }
         }
@@ -96,5 +96,10 @@ public class LightSpeedVisualization implements IVisualizationHandler {
     @Override
     public String getName() {
         return "Light Speed";
+    }
+
+    @Override
+    public VisualizationCategory getVisualizationCategory() {
+        return VisualizationCategory.CLASSIC;
     }
 }

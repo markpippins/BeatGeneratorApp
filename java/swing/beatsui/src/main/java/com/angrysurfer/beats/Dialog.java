@@ -51,8 +51,8 @@ public class Dialog<T> extends JDialog {
     private void setupDialog() {
         setLayout(new BorderLayout());
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setResizable(true);
-        
+        setResizable(false);
+
         setupKeyboardShortcuts();
         setupTitlePanel();
         setupButtonPanel();
@@ -97,16 +97,16 @@ public class Dialog<T> extends JDialog {
         titlePanel = new JPanel();
         titlePanel.setLayout(new BorderLayout());
         titlePanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        titlePanel.setBackground(getBackground());  // Match dialog background
+        titlePanel.setBackground(getBackground()); // Match dialog background
 
         // Create navigation buttons with same style as toolbar
         JButton prevButton = createNavigationButton("⏮", "Previous");
         JButton nextButton = createNavigationButton("⏭", "Next");
-        
+
         // Add buttons to title panel
         titlePanel.add(prevButton, BorderLayout.WEST);
         titlePanel.add(nextButton, BorderLayout.EAST);
-        
+
         add(titlePanel, BorderLayout.NORTH);
     }
 
@@ -117,14 +117,14 @@ public class Dialog<T> extends JDialog {
         if (!button.getFont().canDisplay('⏮')) {
             button.setFont(new Font("Dialog", Font.PLAIN, 18));
         }
-        
+
         // Match toolbar button styling but use dialog colors
         button.setForeground(getForeground());
         button.setBackground(getBackground());
         button.setBorderPainted(false);
         button.setFocusPainted(false);
         button.setPreferredSize(new Dimension(32, 32));
-        
+
         return button;
     }
 
@@ -133,13 +133,13 @@ public class Dialog<T> extends JDialog {
             contentPanel = new JPanel();
             contentPanel.setBackground(Color.BLACK);
         }
-        
+
         // Remove any existing content first
         removeContentPanel();
-        
+
         // Add new content
         add(contentPanel, BorderLayout.CENTER);
-        
+
         // Ensure dialog updates its layout
         revalidate();
         repaint();
@@ -159,7 +159,7 @@ public class Dialog<T> extends JDialog {
         buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        buttonPanel.setBackground(getBackground());  // Match dialog background
+        buttonPanel.setBackground(getBackground()); // Match dialog background
 
         JButton okButton = createButton("OK", e -> accept());
         JButton cancelButton = createButton("Cancel", e -> cancel());
@@ -187,15 +187,15 @@ public class Dialog<T> extends JDialog {
         if (contentPanel != null) {
             remove(contentPanel);
         }
-        
+
         contentPanel = content;
         if (content != null) {
             add(content, BorderLayout.CENTER);
-            
+
             // Force layout update
             revalidate();
             repaint();
-            
+
             // Adjust size to fit content
             pack();
             setLocationRelativeTo(getOwner());
@@ -219,24 +219,25 @@ public class Dialog<T> extends JDialog {
 
     // Test method
     // public static void main(String[] args) {
-    //     Frame frame = new Frame();
-    //     frame.setVisible(true);
+    // Frame frame = new Frame();
+    // frame.setVisible(true);
 
-    //     // Create sample player
-    //     ProxyStrike samplePlayer = new ProxyStrike();
+    // // Create sample player
+    // ProxyStrike samplePlayer = new ProxyStrike();
 
-    //     // Create test panel with sample player
-    //     JPanel testPanel = new PlayerEditorPanel(samplePlayer);
+    // // Create test panel with sample player
+    // JPanel testPanel = new PlayerEditorPanel(samplePlayer);
 
-    //     // Create and show dialog with frame as owner
-    //     Dialog<ProxyStrike> dialog = new Dialog<>(frame, samplePlayer, testPanel);
-    //     dialog.setTitle("Edit Player: " + samplePlayer.getName());
-    //     boolean result = dialog.showDialog();
+    // // Create and show dialog with frame as owner
+    // Dialog<ProxyStrike> dialog = new Dialog<>(frame, samplePlayer, testPanel);
+    // dialog.setTitle("Edit Player: " + samplePlayer.getName());
+    // boolean result = dialog.showDialog();
 
-    //     System.out.println("Dialog result: " + result);
-    //     if (result) {
-    //         ProxyStrike updatedPlayer = ((PlayerEditorPanel) testPanel).getUpdatedPlayer();
-    //         System.out.println("Updated player name: " + updatedPlayer.getName());
-    //     }
+    // System.out.println("Dialog result: " + result);
+    // if (result) {
+    // ProxyStrike updatedPlayer = ((PlayerEditorPanel)
+    // testPanel).getUpdatedPlayer();
+    // System.out.println("Updated player name: " + updatedPlayer.getName());
+    // }
     // }
 }

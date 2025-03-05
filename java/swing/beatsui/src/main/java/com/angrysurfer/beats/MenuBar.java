@@ -101,12 +101,19 @@ public class MenuBar extends JMenuBar {
         dbMenu.add(clearDb);
         dbMenu.add(clearInvalidTickers); // Add the new menu item
 
-        // Add Load Instruments item
-        JMenuItem loadInstruments = new JMenuItem("Load Instruments from File");
-        loadInstruments.addActionListener(e -> {
-            commandBus.publish(Commands.LOAD_INSTRUMENTS_FROM_FILE, this);
+        JMenuItem loadConfig = new JMenuItem("Load Configuration...");
+        loadConfig.addActionListener(e -> {
+            commandBus.publish(Commands.LOAD_CONFIG, this);
         });
-        dbMenu.add(loadInstruments);
+        dbMenu.add(loadConfig);
+        optionsMenu.add(dbMenu);
+
+        // Add Load Config
+        JMenuItem saveConfig = new JMenuItem("Save Configuration");
+        saveConfig.addActionListener(e -> {
+            commandBus.publish(Commands.SAVE_CONFIG, this);
+        });
+        dbMenu.add(saveConfig);
         optionsMenu.add(dbMenu);
 
         // Add Theme menu

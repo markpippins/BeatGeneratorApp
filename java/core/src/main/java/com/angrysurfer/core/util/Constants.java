@@ -87,6 +87,9 @@ public class Constants {
     public static final float DEFAULT_TEMPO = 130.0F;
     public static final float DEFAULT_TEMPO_FACTOR = 1.0F;
     public static final float DEFAULT_TEMPO_IN_MPQ = 0;
+
+    public static final String APPLICATION_FRAME = "APPLICATION_FRAME";
+    public static final String PLAYER = "PLAYER";
 }
 
 // package com.angrysurfer.midi.model;

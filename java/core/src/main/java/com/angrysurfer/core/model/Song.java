@@ -48,7 +48,7 @@ public class Song {
             result[0] = opt.get();
         }
 
-        if (result[0] == null)
+        // if (result[0] == null)
             logger.debug("Pattern {} not found", patternId);
 
         return result[0];

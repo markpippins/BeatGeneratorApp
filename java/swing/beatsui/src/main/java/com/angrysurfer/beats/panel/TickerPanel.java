@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
@@ -15,8 +16,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
@@ -25,7 +24,6 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.util.Scale;
 
@@ -40,7 +38,6 @@ public class TickerPanel extends StatusProviderPanel {
 
     private final PlayersPanel playerTablePanel;
     private final RulesPanel ruleTablePanel;
-    private Ticker activeTicker;
 
     private Dial levelDial;
     private Dial noteDial;
@@ -52,7 +49,7 @@ public class TickerPanel extends StatusProviderPanel {
     private Dial panDial;
     private Dial sparseDial;
 
-    private Player selectedPlayer; // Add this line
+    // private Player selectedPlayer; // Add this line
     private JPanel controlPanel; // Add this field
 
     public TickerPanel(StatusConsumer status) {
@@ -159,28 +156,6 @@ public class TickerPanel extends StatusProviderPanel {
         return controlPanel;
     }
 
-    // private JPanel createVerticalButtonPanel() {
-    // JPanel panel = new JPanel(new GridLayout(3, 1, 2, 2));
-    // panel.setPreferredSize(new Dimension(25, 80));
-    // panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-
-    // JButton button1 = new JButton();
-    // JButton button2 = new JButton();
-    // JButton button3 = new JButton();
-
-    // // Configure each button
-    // for (JButton button : new JButton[] { button1, button2, button3 }) {
-    // button.setPreferredSize(new Dimension(15, 15));
-    // button.setMinimumSize(new Dimension(15, 15));
-    // button.setMaximumSize(new Dimension(15, 15));
-    // button.setFocusPainted(false);
-    // button.setBorderPainted(true);
-    // panel.add(button);
-    // }
-
-    // return panel;
-    // }
-
     private void enableDials() {
         levelDial.setEnabled(true);
         noteDial.setEnabled(true);
@@ -253,13 +228,15 @@ public class TickerPanel extends StatusProviderPanel {
         // Create up and down buttons
         JButton prevButton = new JButton(upLabel);
         prevButton.setActionCommand(upCommand);
-        prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this, selectedPlayer));
+        prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
+                PlayerManager.getInstance().getActivePlayer()));
         prevButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
         prevButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
 
         JButton nextButton = new JButton(downLabel);
         nextButton.setActionCommand(downCommand);
-        nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this, selectedPlayer));
+        nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
+                PlayerManager.getInstance().getActivePlayer()));
         nextButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
         nextButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
 
@@ -344,18 +321,30 @@ public class TickerPanel extends StatusProviderPanel {
         // Store the property name in the dial
         dial.setName(propertyName); // Add this line
 
-        dial.addChangeListener(new ChangeListener() {
+        // dial.addChangeListener(new ChangeListener() {
+        // @Override
+        // public void stateChanged(ChangeEvent e) {
+        // Dial sourceDial = (Dial) e.getSource();
+        // if (sourceDial.getCommand() != null) {
+        // // Send both property name and value
+        // CommandBus.getInstance().publish(sourceDial.getCommand(), this,
+        // Map.of("property", sourceDial.getName(), "value", sourceDial.getValue()));
+        // }
+        // }
+        // });
+
+        CommandBus.getInstance().register(new CommandListener() {
             @Override
-            public void stateChanged(ChangeEvent e) {
-                Dial sourceDial = (Dial) e.getSource();
-                if (sourceDial.getCommand() != null) {
-                    // Send both property name and value
-                    CommandBus.getInstance().publish(sourceDial.getCommand(), this,
-                            Map.of("property", sourceDial.getName(), "value", sourceDial.getValue()));
+            public void onAction(Command action) {
+                if (action.getCommand() == null)
+                    return;
+
+                switch (action.getCommand()) {
+                    case Commands.PLAYER_SELECTED -> dial.setEnabled(true);
+                    case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
                 }
             }
         });
-
         return dial;
     }
 
@@ -375,20 +364,20 @@ public class TickerPanel extends StatusProviderPanel {
         CommandBus.getInstance().register(new CommandListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null)
+                if (Objects.isNull(action.getCommand()))
                     return;
 
                 switch (action.getCommand()) {
                     case Commands.PLAYER_SELECTED -> {
                         if (action.getData() instanceof Player player) {
-                            selectedPlayer = player;
+                            PlayerManager.getInstance().setActivePlayer(player);
                             setDialValues(player);
                             enableDials();
                             updateVerticalAdjustButtons(true);
                         }
                     }
                     case Commands.PLAYER_UNSELECTED -> {
-                        selectedPlayer = null;
+                        PlayerManager.getInstance().setActivePlayer(null);
                         disableDials();
                         updateVerticalAdjustButtons(false);
                     }
@@ -396,38 +385,34 @@ public class TickerPanel extends StatusProviderPanel {
                             Commands.NEW_VALUE_SWING, Commands.NEW_VALUE_PROBABILITY,
                             Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
                             Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN,
-                            Commands.NEW_VALUE_SPARSE -> {
-                        if (selectedPlayer != null && action.getData() instanceof Map) {
-                            updatePlayerValue(action.getCommand(), action.getData());
-                        }
-                    }
+                            Commands.NEW_VALUE_SPARSE ->
+                        updatePlayerValue(action.getCommand(), (Long) action.getData());
                 }
             }
         });
     }
 
-    private void updatePlayerValue(String command, Object data) {
-        if (selectedPlayer == null || !(data instanceof Map))
+    private void updatePlayerValue(String command, Long value) {
+        if (Objects.isNull(PlayerManager.getInstance().getActivePlayer()))
             return;
 
-        Map<String, Object> params = (Map<String, Object>) data;
-        String property = (String) params.get("property");
-        int value = (Integer) params.get("value");
+        Player selectedPlayer = PlayerManager.getInstance().getActivePlayer();
 
-        switch (property) {
-            case "level" -> selectedPlayer.setLevel((long) value);
-            case "note" -> selectedPlayer.setNote((long) value);
-            case "swing" -> selectedPlayer.setSwing((long) value);
-            case "probability" -> selectedPlayer.setProbability((long) value);
-            case "minVelocity" -> selectedPlayer.setMinVelocity((long) value);
-            case "maxVelocity" -> selectedPlayer.setMaxVelocity((long) value);
-            case "random" -> selectedPlayer.setRandomDegree((long) value);
-            case "pan" -> selectedPlayer.setPanPosition((long) value);
-            case "sparse" -> selectedPlayer.setSparse(value / 100.0);
+        switch (command) {
+            case Commands.NEW_VALUE_LEVEL -> selectedPlayer.setLevel((long) value);
+            case Commands.NEW_VALUE_NOTE -> selectedPlayer.setNote((long) value);
+            case Commands.NEW_VALUE_SWING -> selectedPlayer.setSwing((long) value);
+            case Commands.NEW_VALUE_PROBABILITY -> selectedPlayer.setProbability((long) value);
+            case Commands.NEW_VALUE_VELOCITY_MIN -> selectedPlayer.setMinVelocity((long) value);
+            case Commands.NEW_VALUE_VELOCITY_MAX -> selectedPlayer.setMaxVelocity((long) value);
+            case Commands.NEW_VALUE_RANDOM -> selectedPlayer.setRandomDegree((long) value);
+            case Commands.NEW_VALUE_PAN -> selectedPlayer.setPanPosition((long) value);
+            case Commands.NEW_VALUE_SPARSE -> selectedPlayer.setSparse(value / 100.0);
         }
 
         // Save changes and notify UI using PlayerManager instead
-        PlayerManager.getInstance().savePlayerProperties(selectedPlayer);
+        // PlayerManager.getInstance().savePlayerProperties(selectedPlayer);
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, selectedPlayer);
     }
 
     private void updateVerticalAdjustButtons(boolean enabled) {
@@ -436,12 +421,11 @@ public class TickerPanel extends StatusProviderPanel {
             if (comp instanceof JPanel) {
                 for (Component inner : ((JPanel) comp).getComponents()) {
                     if (inner instanceof JButton) {
-                        inner.setEnabled(enabled && selectedPlayer != null);
+                        inner.setEnabled(enabled && Objects.nonNull(PlayerManager.getInstance().getActivePlayer()));
                     }
                 }
             }
         }
     }
-
 
 }

@@ -135,7 +135,7 @@ public class ControlCodeEditPanel extends JPanel {
         };
 
         JTable table = new JTable(model);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         
         // Load existing captions
         if (controlCode.getCaptions() != null) {

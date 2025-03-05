@@ -64,6 +64,13 @@ public class PlayerManager {
         return instance;
     }
 
+    public Player initializeNewPlayer() {
+        Player player = new Strike();
+        player.setId(redisService.getNextPlayerId());
+        player.setRules(new HashSet<>());
+        return player;
+    }
+
     private void setupCommandBusListener() {
         actionBus.register(new CommandListener() {
             @Override
@@ -74,14 +81,21 @@ public class PlayerManager {
                             playerSelected((Player) action.getData());
                         }
                     }
+
+                    case Commands.PLAYER_UNSELECTED -> {
+                        logger.info("Player unselected");
+                        activePlayer = null;
+                    }
+
                     case Commands.PLAYER_UPDATED -> {
                         if (action.getData() instanceof Player) {
                             playerUpdated((Player) action.getData());
                         }
                     }
+                    
                     case Commands.RULE_DELETE_REQUEST -> {
                         if (action.getData() instanceof Rule[] rules) {
-                            logger.info("Processing rule delete request for {} rules", rules.length);
+                            // logger.info("Processing rule delete request for {} rules", rules.length);
 
                             // Get player for first rule (all rules should be from same player)
                             Player player = rules[0].getPlayer();
@@ -313,4 +327,5 @@ public class PlayerManager {
         for (Player player : players)
             redisService.deletePlayer(player);
     }
+
 }

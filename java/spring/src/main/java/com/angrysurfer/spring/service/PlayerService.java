@@ -14,8 +14,8 @@ import com.angrysurfer.core.model.Ticker;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Operator;
+import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.update.RuleUpdateType;
 
 import lombok.Getter;
@@ -65,7 +65,7 @@ public class PlayerService {
     public Rule addRule(Long playerId) {
         logger.info("addRule() - playerId: {}", playerId);
         Player player = getTicker().getPlayer(playerId);
-        Rule rule = playerManager.addRule(player, Operator.BEAT, Comparison.EQUALS, 1.0, 0);
+        Rule rule = playerManager.addRule(player, Comparison.BEAT, Operator.EQUALS, 1.0, 0);
         redisService.saveRule(rule);
         return rule;
     }

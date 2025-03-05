@@ -3,8 +3,6 @@ package com.angrysurfer.core.util.demo;
 import java.util.HashSet;
 import java.util.logging.Logger;
 
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Ticker;
@@ -17,7 +15,7 @@ public class RedisDemo {
         RedisService redis = RedisService.getInstance();
 
         // Clear database and create initial ticker
-        redis.onAction(new Command(Commands.CLEAR_DATABASE, null, null));
+        redis.clearDatabase();
         logger.info("Database cleared and initial ticker created");
 
         // Create multiple tickers

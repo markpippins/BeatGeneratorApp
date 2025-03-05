@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,6 +20,11 @@ public class Rule implements Serializable {
     public static final int ALL_PARTS = 0;
 
     private Long id;
+
+    @JsonIgnore
+    @Transient
+    public boolean isSelected = false;
+
     private Long playerId;
     private Integer operator = 0;
     private Integer comparison = 0;;

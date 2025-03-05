@@ -24,16 +24,17 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.util.Comparison;
+import com.angrysurfer.core.util.Operator;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
-import com.angrysurfer.core.util.Operator;
+import com.angrysurfer.core.util.Comparison;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -53,6 +54,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
     private Long id;
 
     private Long instrumentId;
+
+    @JsonIgnore
+    @Transient
+    public boolean isSelected = false;
 
     private String name = "Player";
     private int channel = 0;
@@ -162,7 +167,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
     public abstract void onTick(long tick, long bar);
 
     // public Long getInstrumentId() {
-    //     return (Objects.nonNull(getInstrument()) ? getInstrument().getId() : null);
+    // return (Objects.nonNull(getInstrument()) ? getInstrument().getId() : null);
     // }
 
     public Rule getRule(Long ruleId) {
@@ -261,50 +266,50 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
 
         applicable.forEach(rule -> {
             switch (rule.getOperator()) {
-                case Operator.TICK -> {
-                    if (Comparison.evaluate(rule.getComparison(), tick, rule.getValue()))
+                case Comparison.TICK -> {
+                    if (Operator.evaluate(rule.getComparison(), tick, rule.getValue()))
                         hasTick.set(true);
                     break;
                 }
 
-                case Operator.BEAT -> {
-                    if (Comparison.evaluate(rule.getComparison(), beat, rule.getValue()))
+                case Comparison.BEAT -> {
+                    if (Operator.evaluate(rule.getComparison(), beat, rule.getValue()))
                         hasBeat.set(true);
                     break;
                 }
 
-                case Operator.BAR -> {
-                    if (Comparison.evaluate(rule.getComparison(), bar, rule.getValue()))
+                case Comparison.BAR -> {
+                    if (Operator.evaluate(rule.getComparison(), bar, rule.getValue()))
                         hasBar.set(true);
                     break;
                 }
 
-                case Operator.BEAT_DURATION -> {
-                    if (!Comparison.evaluate(rule.getComparison(), beat, rule.getValue()))
+                case Comparison.BEAT_DURATION -> {
+                    if (!Operator.evaluate(rule.getComparison(), beat, rule.getValue()))
                         play.set(false);
                     break;
                 }
 
-                case Operator.TICK_COUNT -> {
-                    if (!Comparison.evaluate(rule.getComparison(), ((Ticker) getTicker()).getTickCounter().get(),
+                case Comparison.TICK_COUNT -> {
+                    if (!Operator.evaluate(rule.getComparison(), ((Ticker) getTicker()).getTickCounter().get(),
                             rule.getValue()))
                         play.set(false);
                 }
 
-                case Operator.BEAT_COUNT -> {
-                    if (!Comparison.evaluate(rule.getComparison(), ((Ticker) getTicker()).getBeatCounter().get(),
+                case Comparison.BEAT_COUNT -> {
+                    if (!Operator.evaluate(rule.getComparison(), ((Ticker) getTicker()).getBeatCounter().get(),
                             rule.getValue()))
                         play.set(false);
                 }
 
-                case Operator.BAR_COUNT -> {
-                    if (!Comparison.evaluate(rule.getComparison(), ((Ticker) getTicker()).getBarCounter().get(),
+                case Comparison.BAR_COUNT -> {
+                    if (!Operator.evaluate(rule.getComparison(), ((Ticker) getTicker()).getBarCounter().get(),
                             rule.getValue()))
                         play.set(false);
                 }
 
-                case Operator.PART_COUNT -> {
-                    if (!Comparison.evaluate(rule.getComparison(), ((Ticker) getTicker()).getPartCounter().get(),
+                case Comparison.PART_COUNT -> {
+                    if (!Operator.evaluate(rule.getComparison(), ((Ticker) getTicker()).getPartCounter().get(),
                             rule.getValue()))
                         play.set(false);
                 }

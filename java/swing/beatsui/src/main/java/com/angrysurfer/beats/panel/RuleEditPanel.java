@@ -20,8 +20,8 @@ import com.angrysurfer.core.model.Rule;
 
 public class RuleEditPanel extends StatusProviderPanel {
     private final Rule rule;
-    private final JComboBox<String> operatorCombo;
     private final JComboBox<String> comparisonCombo;
+    private final JComboBox<String> operatorCombo;
     private final JSpinner valueSpinner;
     private final JSpinner partSpinner;
 
@@ -33,11 +33,11 @@ public class RuleEditPanel extends StatusProviderPanel {
         super(new GridBagLayout(), statusConsumer);
         this.rule = rule;
         setLayout(new GridBagLayout());
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        operatorCombo = new JComboBox<>(Rule.OPERATORS);
-        comparisonCombo = new JComboBox<>(Rule.COMPARISONS);
-        
+        comparisonCombo = new JComboBox<>(Rule.OPERATORS);
+        operatorCombo = new JComboBox<>(Rule.COMPARISONS);
+
         // Set default value to 1.0 with no upper limit
         double initialValue = (rule != null && rule.getValue() != null) ? rule.getValue() : 1.0;
         valueSpinner = new JSpinner(new SpinnerNumberModel(initialValue, 1.0, null, 0.5));
@@ -51,14 +51,14 @@ public class RuleEditPanel extends StatusProviderPanel {
         partSpinner = new JSpinner(new SpinnerListModel(partValues));
 
         if (rule != null) {
-            operatorCombo.setSelectedIndex(rule.getOperator());
-            comparisonCombo.setSelectedIndex(rule.getComparison());
+            comparisonCombo.setSelectedIndex(rule.getOperator());
+            operatorCombo.setSelectedIndex(rule.getComparison());
             valueSpinner.setValue(rule.getValue());
             partSpinner.setValue(rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart()));
         }
 
         layoutComponents();
-        setPreferredSize(new Dimension(300, 250));
+        setPreferredSize(new Dimension(250, 220));
     }
 
     private void layoutComponents() {
@@ -67,8 +67,8 @@ public class RuleEditPanel extends StatusProviderPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        addComponent("Operator", operatorCombo, 0, 0, gbc);
-        addComponent("Comparison", comparisonCombo, 0, 1, gbc);
+        addComponent("Comparison", comparisonCombo, 0, 0, gbc);
+        addComponent("Operator", operatorCombo, 0, 1, gbc);
         addComponent("Value", valueSpinner, 0, 2, gbc);
         addComponent("Part", partSpinner, 0, 3, gbc);
     }
@@ -85,15 +85,15 @@ public class RuleEditPanel extends StatusProviderPanel {
     }
 
     public Rule getUpdatedRule() {
-        rule.setOperator(operatorCombo.getSelectedIndex());
-        rule.setComparison(comparisonCombo.getSelectedIndex());
+        rule.setOperator(comparisonCombo.getSelectedIndex());
+        rule.setComparison(operatorCombo.getSelectedIndex());
         rule.setValue((Double) valueSpinner.getValue());
-        
+
         // Convert "All" to 0, otherwise parse the string to integer
         String partValue = (String) partSpinner.getValue();
         int part = "All".equals(partValue) ? 0 : Integer.parseInt(partValue);
         rule.setPart(part);
-        
+
         return rule;
     }
 }

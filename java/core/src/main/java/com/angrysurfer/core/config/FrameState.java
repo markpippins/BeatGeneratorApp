@@ -21,11 +21,11 @@ public class FrameState {
     private int framePosX = 100;
     private int framePosY = 100;
     private String lookAndFeelClassName;
-    private List<String> playerColumnOrder;
+    private List<String> columnOrder;
 
     // Default constructor uses default values
     public FrameState() {
-        this.playerColumnOrder = new ArrayList<>();
+        this.columnOrder = new ArrayList<>();
     }
 
     // Constructor with window state
@@ -35,7 +35,7 @@ public class FrameState {
         this.maximized = maximized;
         this.minimized = minimized;
         this.dividerLocation = dividerLocation;
-        this.playerColumnOrder = new ArrayList<>();
+        this.columnOrder = new ArrayList<>();
     }
 
     // Constructor with individual components
@@ -46,37 +46,37 @@ public class FrameState {
         this.framePosX = posX;
         this.framePosY = posY;
         this.lookAndFeelClassName = lookAndFeel;
-        this.playerColumnOrder = new ArrayList<>();
+        this.columnOrder = new ArrayList<>();
     }
 
     // Add helper method
     public void setPlayerColumnOrderFromSet(Set<String> columns) {
         if (columns != null) {
-            this.playerColumnOrder = new ArrayList<>(columns);
+            this.columnOrder = new ArrayList<>(columns);
         } else {
-            this.playerColumnOrder = new ArrayList<>();
+            this.columnOrder = new ArrayList<>();
         }
     }
 
     public Set<String> getPlayerColumnOrderAsSet() {
-        if (playerColumnOrder == null) {
-            playerColumnOrder = new ArrayList<>();
-        }
-        return new LinkedHashSet<>(playerColumnOrder);
-    }
-
-    public void setPlayerColumnOrder(List<String> columnOrder) {
         if (columnOrder == null) {
-            this.playerColumnOrder = new ArrayList<>();
+            columnOrder = new ArrayList<>();
+        }
+        return new LinkedHashSet<>(columnOrder);
+    }
+
+    public void setColumnOrder(List<String> columnOrder) {
+        if (columnOrder == null) {
+            this.columnOrder = new ArrayList<>();
         } else {
-            this.playerColumnOrder = new ArrayList<>(columnOrder);
+            this.columnOrder = new ArrayList<>(columnOrder);
         }
     }
 
-    public List<String> getPlayerColumnOrder() {
-        if (playerColumnOrder == null) {
-            playerColumnOrder = new ArrayList<>();
+    public List<String> getColumnOrder() {
+        if (columnOrder == null) {
+            columnOrder = new ArrayList<>();
         }
-        return new ArrayList<>(playerColumnOrder); // Return a copy to prevent modification
+        return new ArrayList<>(columnOrder); // Return a copy to prevent modification
     }
 }

@@ -8,6 +8,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Window;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -19,14 +21,12 @@ import com.angrysurfer.core.api.CommandBus;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Getter
 @Setter
 public class Dial extends JComponent {
-    private static final int MIN_SIZE = 50;
-    private static final int MAX_SIZE = 70;
+
+    private static final int MIN_SIZE = 40;
+    private static final int MAX_SIZE = 60;
     private static final Color KNOB_COLOR = new Color(30, 100, 255);
     private static final Color KNOB_GRADIENT_START = new Color(60, 130, 255);
     private static final Color KNOB_GRADIENT_END = new Color(20, 80, 200);
@@ -36,8 +36,8 @@ public class Dial extends JComponent {
     private int value = 64;
     private boolean isDragging = false;
     private int lastY;
-    private int min = 0;
-    private int max = 127;
+    private int minimum = 0;
+    private int maximum = 127;
     private String command;
     private List<ChangeListener> changeListeners = new ArrayList<>();
 
@@ -80,7 +80,7 @@ public class Dial extends JComponent {
             public void mouseDragged(java.awt.event.MouseEvent e) {
                 if (isDragging) {
                     int delta = lastY - e.getY();
-                    int newValue = Math.min(max, Math.max(min, value + delta));
+                    int newValue = Math.min(maximum, Math.max(minimum, value + delta));
                     setValue(newValue);
                     lastY = e.getY();
                 }
@@ -88,8 +88,9 @@ public class Dial extends JComponent {
         });
     }
 
-    public void setCommand(String command) {
-        this.command = command;
+    public Dial(String command) {
+        this();
+        setCommand(command);
     }
 
     private void updateSize() {
@@ -154,7 +155,7 @@ public class Dial extends JComponent {
 
     public void setValue(int newValue) {
         if (value != newValue) {
-            value = Math.min(max, Math.max(min, newValue));
+            value = Math.min(maximum, Math.max(minimum, newValue));
             repaint();
             fireStateChanged();
             if (command != null) {
@@ -163,25 +164,13 @@ public class Dial extends JComponent {
         }
     }
 
-    public int getValue() {
-        return value;
-    }
-
-    public int getMinimum() {
-        return min;
-    }
-
     public void setMinimum(int min) {
-        this.min = min;
+        this.minimum = min;
         repaint();
     }
 
-    public int getMaximum() {
-        return max;
-    }
-
     public void setMaximum(int max) {
-        this.max = max;
+        this.maximum = max;
         repaint();
     }
 

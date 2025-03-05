@@ -88,7 +88,7 @@ public class Commands {
 
     // Control sending commands
     public static final String SEND_ALL_CONTROLS = "SEND_ALL_CONTROLS";
-    public static final String SAVE_INSTRUMENT_CONFIG = "SAVE_INSTRUMENT_CONFIG"; // Add this line
+    public static final String SAVE_CONFIG = "SAVE_INSTRUMENT_CONFIG"; // Add this line
 
     // Ticker selection commands
     public static final String TICKER = "TICKER";
@@ -105,8 +105,8 @@ public class Commands {
     public static final String TICKER_LOADED = "TICKER_LOADED";
     public static final String TICKER_CHANGED = "TICKER_CHANGED";
 
-    public static final String PLAYER_ADDED_TO_TICKER = "PLAYER_ADDED_TO_TICKER";
-    public static final String PLAYER_REMOVED_FROM_TICKER = "PLAYER_REMOVED_FROM_TICKER";
+    // public static final String PLAYER_ADDED_TO_TICKER = "PLAYER_ADDED_TO_TICKER";
+    // public static final String PLAYER_REMOVED_FROM_TICKER = "PLAYER_REMOVED_FROM_TICKER";
     public static final String RULE_ADDED_TO_PLAYER = "RULE_ADDED_TO_PLAYER";
     public static final String RULE_REMOVED_FROM_PLAYER = "RULE_REMOVED_FROM_PLAYER";
 
@@ -140,7 +140,7 @@ public class Commands {
     public static final String CLEAR_DATABASE = "CLEAR_DATABASE";
     public static final String CLEAR_INVALID_TICKERS = "CLEAR_INVALID_TICKERS";
     public static final String DATABASE_RESET = "DATABASE_RESET";
-    public static final String LOAD_INSTRUMENTS_FROM_FILE = "LOAD_INSTRUMENTS_FROM_FILE";
+    public static final String LOAD_CONFIG = "LOAD_INSTRUMENTS_FROM_FILE";
 
     // Player editor commands
     public static final String SHOW_PLAYER_EDITOR = "SHOW_PLAYER_EDITOR";
@@ -148,16 +148,15 @@ public class Commands {
     public static final String SHOW_PLAYER_EDITOR_CANCEL = "SHOW_PLAYER_EDITOR_CANCEL";
 
     // New commands for each dial
-    public static final String NEW_VALUE_LEVEL = "newValueLevel";
-    public static final String NEW_VALUE_NOTE = "newValueNote";
-    public static final String NEW_VALUE_SWING = "newValueSwing";
-    public static final String NEW_VALUE_PROBABILITY = "newValueProbability";
-    public static final String NEW_VALUE_VELOCITY_MIN = "newValueVelocityMin";
-    public static final String NEW_VALUE_VELOCITY_MAX = "newValueVelocityMax";
-    public static final String NEW_VALUE_RANDOM = "newValueRandom";
-    public static final String NEW_VALUE_PAN = "newValuePan";
-    public static final String NEW_VALUE_SPARSE = "newValueSparse";
-    public static final String PLAYER_DELETED = "PLAYER_DELETED";
+    public static final String NEW_VALUE_LEVEL = "NEW_VALUE_LEVEL";
+    public static final String NEW_VALUE_NOTE = "NEW_VALUE_NOTE";
+    public static final String NEW_VALUE_SWING = "NEW_VALUE_SWING";
+    public static final String NEW_VALUE_PROBABILITY = "NEW_VALUE_PROBABILITY";
+    public static final String NEW_VALUE_VELOCITY_MIN = "NEW_VALUE_VELOCITY_MIN";
+    public static final String NEW_VALUE_VELOCITY_MAX = "NEW_VALUE_VELOCITY_MAX";
+    public static final String NEW_VALUE_RANDOM = "NEW_VALUE_RANDOM";
+    public static final String NEW_VALUE_PAN = "NEW_VALUE_PAN";
+    public static final String NEW_VALUE_SPARSE = "NEW_VALUE_SPARSE";
 
     public static final String TRANSPOSE_UP = "TRANSPOSE_UP";
     public static final String TRANSPOSE_DOWN = "TRANSPOSE_DOWN";
