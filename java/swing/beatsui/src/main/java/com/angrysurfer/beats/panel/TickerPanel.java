@@ -89,6 +89,8 @@ public class TickerPanel extends StatusProviderPanel {
         controlPanel.setMinimumSize(new Dimension(getMinimumSize().width, 100));
         controlPanel.setPreferredSize(new Dimension(getPreferredSize().width, 100));
 
+        controlPanel.add(new MiniLaunchPanel(null), FlowLayout.LEFT);
+
         // Add PianoPanel to the LEFT
         PianoPanel pianoPanel = new PianoPanel(statusConsumer);
         controlPanel.add(pianoPanel);
@@ -159,7 +161,6 @@ public class TickerPanel extends StatusProviderPanel {
 
         controlPanel.add(createLabeledControl("Sparse", sparseDial));
 
-        controlPanel.add(new MiniLaunchPanel(null));
 
         disableDials();
 

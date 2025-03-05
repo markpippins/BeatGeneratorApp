@@ -17,13 +17,15 @@ public class NoteSelectionDial extends Dial {
     private static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     private static final int DETENT_COUNT = 12;
     private static final double SNAP_THRESHOLD = 0.2; // Radians
-    private static final double START_ANGLE = -150; // Degrees
+    private static final double START_ANGLE = -90; // Start at top (-90 degrees)
     private static final double TOTAL_ARC = 300;    // Degrees
     private static final int NOTES_PER_OCTAVE = 12;
+    private static final double DEGREES_PER_DETENT = 360.0 / DETENT_COUNT; // 30 degrees per note
     
     private int currentDetent = 0;
     private boolean snapping = false;
     private int baseOctave = 0;  // Store the octave
+    private boolean infiniteTurn = true; // Allow wrapping around
 
     // Add drag starting position
     private double startAngle = 0;
@@ -68,12 +70,18 @@ public class NoteSelectionDial extends Dial {
                 
                 // Convert to degrees and calculate detent position
                 double angleDegrees = Math.toDegrees(angleDelta);
-                double detentAngle = TOTAL_ARC / (DETENT_COUNT - 1);
-                int detentDelta = (int) Math.round(angleDegrees / (detentAngle / 4));
+                int detentDelta = (int) Math.round(angleDegrees / DEGREES_PER_DETENT);
                 
-                // Calculate new detent position while maintaining octave
+                // Calculate new detent position
                 int newDetent = currentDetent + detentDelta;
-                newDetent = Math.min(Math.max(newDetent, 0), DETENT_COUNT - 1);
+                
+                if (infiniteTurn) {
+                    // Wrap around within octave
+                    newDetent = ((newDetent % DETENT_COUNT) + DETENT_COUNT) % DETENT_COUNT;
+                } else {
+                    // Constrain to range
+                    newDetent = Math.min(Math.max(newDetent, 0), DETENT_COUNT - 1);
+                }
                 
                 if (newDetent != currentDetent) {
                     int oldValue = getValue();
@@ -109,7 +117,7 @@ public class NoteSelectionDial extends Dial {
         int y = (h - size) / 2;
         
         // Draw base dial
-        g2d.setColor(ColorUtils.mutedOlive);
+        g2d.setColor(ColorUtils.warmMustard);
         g2d.fillOval(x + margin, y + margin, size - 2*margin, size - 2*margin);
         
         // Draw outer ring
@@ -127,7 +135,8 @@ public class NoteSelectionDial extends Dial {
         double radius = (size - 2*margin) / 2.0;
         
         for (int i = 0; i < DETENT_COUNT; i++) {
-            double angle = Math.toRadians(START_ANGLE + (TOTAL_ARC * i / (DETENT_COUNT - 1)));
+            // Calculate evenly spaced angles
+            double angle = Math.toRadians(START_ANGLE + (i * DEGREES_PER_DETENT));
             
             // Draw detent marker
             Point2D p1 = new Point2D.Double(
@@ -172,21 +181,19 @@ public class NoteSelectionDial extends Dial {
                 (int)(labelPos.getY() + labelH/4));
         }
         
-        // Draw pointer
-        double angle = Math.toRadians(START_ANGLE + (TOTAL_ARC * currentDetent / (DETENT_COUNT - 1)));
+        // Update pointer angle calculation
+        double pointerAngle = Math.toRadians(START_ANGLE + (currentDetent * DEGREES_PER_DETENT));
         g2d.setStroke(new BasicStroke(2.5f));
         g2d.setColor(isEnabled() ? Color.RED : Color.GRAY);
         g2d.drawLine(
             (int)centerX, 
             (int)centerY,
-            (int)(centerX + Math.cos(angle) * (radius - margin/2)),
-            (int)(centerY + Math.sin(angle) * (radius - margin/2))
+            (int)(centerX + Math.cos(pointerAngle) * (radius - margin/2)),
+            (int)(centerY + Math.sin(pointerAngle) * (radius - margin/2))
         );
         
         g2d.dispose();
     }
-
-
 
     @Override
     public int getValue() {
@@ -222,18 +229,15 @@ public class NoteSelectionDial extends Dial {
         //     absoluteNote, baseOctave, noteInOctave));
     }
 
-    // @Override
-    // public void setValue(int value, boolean notify) {
-    //     int oldValue = getValue();
-    //     super.setValue(value, notify);
-    //     currentDetent = getValue();
-        
-    //     if (notify && oldValue != value) {
-    //         fireStateChanged();
-    //     }
-    // }
-
     public String getCurrentNoteName() {
         return NOTE_NAMES[currentDetent];
+    }
+
+    public void setInfiniteTurn(boolean infinite) {
+        this.infiniteTurn = infinite;
+    }
+
+    public boolean isInfiniteTurn() {
+        return infiniteTurn;
     }
 }
