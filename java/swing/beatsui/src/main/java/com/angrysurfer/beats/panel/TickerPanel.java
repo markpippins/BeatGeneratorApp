@@ -20,6 +20,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
@@ -42,7 +43,7 @@ public class TickerPanel extends StatusProviderPanel {
     private final RulesPanel ruleTablePanel;
 
     private Dial levelDial;
-    private Dial noteDial;
+    private NoteSelectionDial noteDial;
     private Dial swingDial;
     private Dial probabilityDial;
     private Dial velocityMinDial;
@@ -111,7 +112,13 @@ public class TickerPanel extends StatusProviderPanel {
         JPanel navPanel = createOctavePanel();
         controlPanel.add(navPanel);
 
-        noteDial = createDial("note", 60, 0, 127, 1);
+        var dialSize = new Dimension(85, 85);
+        noteDial = new NoteSelectionDial();
+        // dial.setValue((int) value);
+        noteDial.setPreferredSize(dialSize);
+        noteDial.setMinimumSize(dialSize);
+        noteDial.setMaximumSize(dialSize);
+        // createDial("note", 60, 0, 127, 1);
         noteDial.setCommand(Commands.NEW_VALUE_NOTE);
 
         levelDial = createDial("level", 100, 0, 127, 1);
@@ -138,7 +145,7 @@ public class TickerPanel extends StatusProviderPanel {
         sparseDial = createDial("sparse", 0, 0, 100, 1);
         sparseDial.setCommand(Commands.NEW_VALUE_SPARSE);
 
-        controlPanel.add(createLabeledControl("Note", noteDial));
+        controlPanel.add(createLabeledControl(null, noteDial));
         controlPanel.add(createLabeledControl("Level", levelDial));
 
         controlPanel.add(createLabeledControl("Pan", panDial));
@@ -354,9 +361,11 @@ public class TickerPanel extends StatusProviderPanel {
 
     private JPanel createLabeledControl(String label, Dial dial) {
         JPanel panel = new JPanel(new BorderLayout(5, 2));
-        JLabel l = new JLabel(label);
-        l.setHorizontalAlignment(JLabel.CENTER);
-        panel.add(l, BorderLayout.NORTH);
+        if (label != null) {
+            JLabel l = new JLabel(label);
+            l.setHorizontalAlignment(JLabel.CENTER);
+            panel.add(l, BorderLayout.NORTH);
+        }
         panel.add(Box.createVerticalStrut(8), BorderLayout.CENTER); // Add vertical space
         panel.add(dial, BorderLayout.SOUTH);
         panel.setMinimumSize(new Dimension(60, 80)); // Set minimum size

@@ -27,6 +27,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.ToggleSwitch;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -213,6 +214,15 @@ public class PlayerEditPanel extends StatusProviderPanel {
         performancePanel.setBorder(BorderFactory.createTitledBorder("Performance"));
         performancePanel.setPreferredSize(new Dimension(400, 150));
         performancePanel.setMaximumSize(new Dimension(400, 150));
+
+        var dialSize = new Dimension(85, 85);
+        NoteSelectionDial noteDial = new NoteSelectionDial();
+        noteDial.setPreferredSize(dialSize);
+        noteDial.setMinimumSize(dialSize);
+        noteDial.setMaximumSize(dialSize);
+        noteDial.setCommand(Commands.NEW_VALUE_NOTE);
+
+        performancePanel.add(noteDial);
 
         // Performance controls panel layout
         performancePanel.add(createLabeledSlider("Level", levelSlider));
