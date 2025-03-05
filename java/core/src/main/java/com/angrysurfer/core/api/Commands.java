@@ -19,6 +19,7 @@ public class Commands {
 
     // Transport state commands
     public static final String TRANSPORT_STATE_CHANGED = "TRANSPORT_STATE_CHANGED";
+    public static final String TRANSPORT_RECORD_STATE_CHANGED = "TRANSPORT_RECORD_STATE_CHANGED";
 
     // File Commands
     public static final String NEW_FILE = "NEW_FILE";
@@ -107,7 +108,8 @@ public class Commands {
     public static final String TICKER_CHANGED = "TICKER_CHANGED";
 
     // public static final String PLAYER_ADDED_TO_TICKER = "PLAYER_ADDED_TO_TICKER";
-    // public static final String PLAYER_REMOVED_FROM_TICKER = "PLAYER_REMOVED_FROM_TICKER";
+    // public static final String PLAYER_REMOVED_FROM_TICKER =
+    // "PLAYER_REMOVED_FROM_TICKER";
     public static final String RULE_ADDED_TO_PLAYER = "RULE_ADDED_TO_PLAYER";
     public static final String RULE_REMOVED_FROM_PLAYER = "RULE_REMOVED_FROM_PLAYER";
 
@@ -164,6 +166,7 @@ public class Commands {
 
     public static String RULE_DELETED = "RULE_DELETED";
 
+    public static final String MINI_NOTE_SELECTED = "MINI_NOTE_SELECTED";
     public static final String ROOT_NOTE_SELECTED = "ROOT_NOTE_SELECTED";
 
     public static final String SCALE_SELECTED = "SCALE_SELECTED";

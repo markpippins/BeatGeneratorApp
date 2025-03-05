@@ -181,11 +181,10 @@ public class DialogManager implements CommandListener {
             SwingUtilities.invokeLater(() -> {
                 try {
                     // Create controls panel with instrument context
-                    ControlsPanel controlsPanel = new ControlsPanel();
+                    ControlsPanel controlsPanel = new ControlsPanel(false);
 
                     // Pre-select the player's instrument
                     controlsPanel.selectInstrument(player.getInstrument());
-
                     // Create dialog using Frame's createDialog method
                     Dialog<Player> dialog = frame.createDialog(player, controlsPanel);
                     dialog.setTitle("Controls - " + player.getName() + " (" + player.getInstrument().getName() + ")");

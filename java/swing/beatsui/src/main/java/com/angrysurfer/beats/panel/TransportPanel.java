@@ -1,17 +1,47 @@
 package com.angrysurfer.beats.panel;
 
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
-import com.angrysurfer.core.api.Commands;
-
-import javax.sound.midi.*;
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiEvent;
+import javax.sound.midi.MidiMessage;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Receiver;
+import javax.sound.midi.Sequence;
+import javax.sound.midi.Sequencer;
+import javax.sound.midi.ShortMessage;
+import javax.sound.midi.Synthesizer;
+import javax.sound.midi.Track;
+import javax.sound.midi.Transmitter;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+
+import com.angrysurfer.beats.component.LedIndicator;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Commands;
 
 public class TransportPanel extends JPanel implements CommandListener {
     private final JButton playButton;
@@ -20,7 +50,7 @@ public class TransportPanel extends JPanel implements CommandListener {
     private final JButton rewindButton;
     private final JButton forwardButton;
     private final JButton pauseButton;
-    private final CommandBus commandBus;
+    private final TimingBus timeBus;
     private final JTextArea logArea;
     private final SimpleDateFormat timeFormat;
     private static final int MAX_LOG_LINES = 1000;
@@ -42,9 +72,13 @@ public class TransportPanel extends JPanel implements CommandListener {
     private static final int TICKS_PER_BEAT = PPQ;
     private static final int BEATS_PER_BAR = 4;
 
+    private final LedIndicator tickLed;
+    private final LedIndicator beatLed;
+    private final LedIndicator barLed;
+
     public TransportPanel() {
         super(new BorderLayout(PADDING, PADDING));
-        this.commandBus = CommandBus.getInstance();
+        this.timeBus = TimingBus.getInstance();
         this.timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
         // Set panel padding
@@ -98,9 +132,32 @@ public class TransportPanel extends JPanel implements CommandListener {
         // Add components to main panel
         add(transportControls, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
+        add(new JScrollPane(new GridPanel(null)), BorderLayout.CENTER);
+
+        // Create indicator panel
+        JPanel indicatorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        indicatorPanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+
+        // Create LEDs
+        tickLed = new LedIndicator(new Color(255, 50, 50)); // Red
+        beatLed = new LedIndicator(new Color(50, 255, 50)); // Green
+        barLed = new LedIndicator(new Color(50, 50, 255)); // Blue
+
+        // Add labels and LEDs
+        indicatorPanel.add(new JLabel("T"));
+        indicatorPanel.add(tickLed);
+        indicatorPanel.add(Box.createHorizontalStrut(8));
+        indicatorPanel.add(new JLabel("B"));
+        indicatorPanel.add(beatLed);
+        indicatorPanel.add(Box.createHorizontalStrut(8));
+        indicatorPanel.add(new JLabel("M"));
+        indicatorPanel.add(barLed);
+
+        // Add indicator panel to bottom
+        add(indicatorPanel, BorderLayout.SOUTH);
 
         // Register for command bus events
-        commandBus.register(this);
+        timeBus.register(this);
 
         // Initialize MIDI
         initializeMIDI();
@@ -128,17 +185,17 @@ public class TransportPanel extends JPanel implements CommandListener {
                 // Add 24 timing clock messages per beat (standard MIDI spec)
                 for (int clock = 0; clock < PPQ; clock++) {
                     track.add(new MidiEvent(
-                        new ShortMessage(0xF8), // Timing Clock message
-                        beat * PPQ + clock));
+                            new ShortMessage(0xF8), // Timing Clock message
+                            beat * PPQ + clock));
                 }
-                
+
                 // Add note events
                 track.add(new MidiEvent(
-                    new ShortMessage(ShortMessage.NOTE_ON, METRONOME_CHANNEL, METRONOME_NOTE, METRONOME_VELOCITY),
-                    beat * PPQ));
+                        new ShortMessage(ShortMessage.NOTE_ON, METRONOME_CHANNEL, METRONOME_NOTE, METRONOME_VELOCITY),
+                        beat * PPQ));
                 track.add(new MidiEvent(
-                    new ShortMessage(ShortMessage.NOTE_OFF, METRONOME_CHANNEL, METRONOME_NOTE, 0),
-                    beat * PPQ + PPQ/2));
+                        new ShortMessage(ShortMessage.NOTE_OFF, METRONOME_CHANNEL, METRONOME_NOTE, 0),
+                        beat * PPQ + PPQ / 2));
             }
 
             // Set up sequencer
@@ -159,26 +216,37 @@ public class TransportPanel extends JPanel implements CommandListener {
                 public void send(MidiMessage message, long timeStamp) {
                     if (message instanceof ShortMessage msg) {
                         int status = msg.getStatus();
+                        // Handle timing messages silently
                         switch (status) {
-                            case 0xF8 -> handleTimingClock();  // MIDI Clock
-                            case 0xFA -> handleStart();        // Start
-                            case 0xFC -> handleStop();         // Stop
-                            case 0xFB -> handleContinue();     // Continue
+                            case 0xF8 -> handleTimingClock(); // MIDI Clock
+                            case 0xFA -> handleStart(); // Start
+                            case 0xFC -> handleStop(); // Stop
+                            case 0xFB -> handleContinue(); // Continue
                             default -> {
-                                if (msg.getCommand() == ShortMessage.NOTE_ON || 
-                                    msg.getCommand() == ShortMessage.NOTE_OFF) {
-                                    log(String.format("Note %s Ch:%d N:%d V:%d", 
-                                        msg.getCommand() == ShortMessage.NOTE_ON ? "ON" : "OFF",
-                                        msg.getChannel() + 1, 
-                                        msg.getData1(), 
+                                // Log regular MIDI messages
+                                String messageType = switch (msg.getCommand()) {
+                                    case ShortMessage.NOTE_ON -> "Note ON";
+                                    case ShortMessage.NOTE_OFF -> "Note OFF";
+                                    case ShortMessage.CONTROL_CHANGE -> "Control Change";
+                                    case ShortMessage.PROGRAM_CHANGE -> "Program Change";
+                                    case ShortMessage.PITCH_BEND -> "Pitch Bend";
+                                    case ShortMessage.CHANNEL_PRESSURE -> "Channel Pressure";
+                                    case ShortMessage.POLY_PRESSURE -> "Poly Pressure";
+                                    default -> String.format("Unknown (0x%02X)", msg.getCommand());
+                                };
+                                log(String.format("MIDI %s Ch:%d Data1:%d Data2:%d",
+                                        messageType,
+                                        msg.getChannel() + 1,
+                                        msg.getData1(),
                                         msg.getData2()));
-                                }
                             }
                         }
                     }
                 }
+
                 @Override
-                public void close() {}
+                public void close() {
+                }
             };
 
             // Connect timing transmitter first
@@ -291,38 +359,71 @@ public class TransportPanel extends JPanel implements CommandListener {
         switch (command) {
             case Commands.TRANSPORT_PLAY -> {
                 startMetronome();
-                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
+                timeBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
             }
             case Commands.TRANSPORT_STOP -> {
                 stopMetronome();
-                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+                litTick = false;
+                litBeat = false;
+                litBar = false;
+                timeBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
             }
             case Commands.TRANSPORT_PAUSE -> {
                 stopMetronome();
-                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+                timeBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
             }
         }
-        commandBus.publish(command, this);
+        timeBus.publish(command, this);
         log("Transport command: " + command);
     }
 
     private void handleTimingClock() {
+        // Send timing message first
+        timeBus.publish(Commands.BASIC_TIMING_TICK, this);
+        
         currentTick++;
+        flashTickLed(tickLed);
+
         if (currentTick >= TICKS_PER_BEAT) {
             currentTick = 0;
             currentBeat++;
+            flashBeatLed(beatLed);
+            timeBus.publish(Commands.BASIC_TIMING_BEAT, this);
+
             if (currentBeat >= BEATS_PER_BAR) {
                 currentBeat = 0;
                 currentBar++;
-                log(String.format("Bar: %d Beat: %d Tick: %d", currentBar, currentBeat, currentTick));
-            } else {
-                log(String.format("Beat: %d Tick: %d", currentBeat, currentTick));
+                flashBarLed(barLed);
             }
         }
-        // Only log every 6 ticks (quarter of a beat) to reduce spam
-        else if (currentTick % 6 == 0) {
-            log(String.format("Tick: %d", currentTick));
-        }
+    }
+
+    boolean litTick = false;
+    boolean litBeat = false;
+    boolean litBar = false;
+
+    private void flashTickLed(LedIndicator led) {
+        litTick = !litTick;
+        led.setLit(litTick);
+    }
+
+    private void flashBeatLed(LedIndicator led) {
+        litBeat = !litBeat;
+        led.setLit(litBeat);
+    }
+
+    private void flashBarLed(LedIndicator led) {
+        litBar = !litBar;
+        led.setLit(litBar);
+    }
+
+    private void flashLed(LedIndicator led) {
+        // SwingUtilities.invokeLater(() -> {
+        // led.setLit(true);
+        // Timer timer = new Timer(50, e -> led.setLit(false));
+        // // timer.setRepeats(false);
+        // // timer.start();
+        // });
     }
 
     private void handleStart() {

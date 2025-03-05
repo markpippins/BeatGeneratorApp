@@ -8,6 +8,7 @@ import java.util.Random;
 import javax.swing.JComponent;
 import javax.swing.Timer;
 
+import com.angrysurfer.beats.visualization.handler.music.ScrollingSequencerVisualization;
 import com.angrysurfer.beats.widget.GridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -90,6 +91,20 @@ public class Visualizer implements CommandListener {
 
             case Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED:
                 refreshVisualizations();
+                break;
+
+            case Commands.TRANSPORT_PLAY:
+                // Find and start the ScrollingSequencerVisualization
+                for (IVisualizationHandler vis : visualizations) {
+                    if (vis instanceof ScrollingSequencerVisualization) {
+                        startVisualizer(vis);
+                        break;
+                    }
+                }
+                break;
+
+            case Commands.TRANSPORT_STOP:
+                stopVisualizer();
                 break;
         }
     }
@@ -223,9 +238,9 @@ public class Visualizer implements CommandListener {
 
     public void startVisualizer(IVisualizationHandler handler) {
         isVisualizationMode = true;
-        commandBus.publish(Commands.VISUALIZATION_STARTED, this, null);
-        visualizationChangeTimer.start();
+        visualizationChangeTimer.stop(); // Don't auto-change during sequencer mode
         setDisplayMode(handler);
+        commandBus.publish(Commands.VISUALIZATION_STARTED, this, handler);
     }
 
     public void stopVisualizer() {

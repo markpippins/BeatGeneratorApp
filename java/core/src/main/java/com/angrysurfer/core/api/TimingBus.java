@@ -5,19 +5,19 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.angrysurfer.core.util.LogManager;
 
-public class CommandBus implements CommandListener {
-    private static CommandBus instance;
+public class TimingBus implements CommandListener {
+    private static TimingBus instance;
     private final List<CommandListener> listeners = new CopyOnWriteArrayList<>();
     private final LogManager logManager = LogManager.getInstance();
 
-    private CommandBus() {
+    private TimingBus() {
         // Register self to handle logging commands
         register(this);
     }
 
-    public static CommandBus getInstance() {
+    public static TimingBus getInstance() {
         if (instance == null) {
-            instance = new CommandBus();
+            instance = new TimingBus();
         }
         return instance;
     }

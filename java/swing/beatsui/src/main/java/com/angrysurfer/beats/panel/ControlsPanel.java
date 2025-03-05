@@ -55,6 +55,9 @@ public class ControlsPanel extends JPanel implements CommandListener {
     private JComboBox<Instrument> instrumentSelector;
     private final RedisService redisService;
     private final JPanel controlsContainer;
+    private JToolBar toolBar;
+
+    private boolean showToolbar = true;
 
     public ControlsPanel() {
         setLayout(new BorderLayout());
@@ -65,7 +68,7 @@ public class ControlsPanel extends JPanel implements CommandListener {
         this.instrumentSelector = new JComboBox<>();
 
         // Create toolbar
-        JToolBar toolBar = new JToolBar();
+        toolBar = new JToolBar();
         toolBar.setFloatable(false);
 
         // Add hamburger menu button
@@ -161,10 +164,11 @@ public class ControlsPanel extends JPanel implements CommandListener {
 
         // Register for resize events
         CommandBus.getInstance().register(this);
-        // Delay the refresh until after dialog is visible
-        // SwingUtilities.invokeLater(() -> {
-        //     refreshControlsPanel();
-        // });
+    }
+
+    public ControlsPanel(boolean showToolbar) {
+        this();
+        showToolbar(showToolbar);
     }
 
     @Override
@@ -524,6 +528,10 @@ public class ControlsPanel extends JPanel implements CommandListener {
         }
 
         logger.info("Controls panel refreshed");
+    }
+
+    public void showToolbar(boolean show) {
+        toolBar.setVisible(show);
     }
 
     public void selectInstrument(Instrument instrument) {
