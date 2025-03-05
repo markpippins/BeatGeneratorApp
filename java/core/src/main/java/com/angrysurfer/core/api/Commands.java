@@ -197,4 +197,5 @@ public class Commands {
 
     // System Commands
     public static final String SYSTEM_READY = "SYSTEM_READY";
+    public static final String PLAYER_ROW_REFRESH = "PLAYER_ROW_REFRESH";
 }

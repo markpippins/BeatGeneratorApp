@@ -81,7 +81,7 @@ public class Dial extends JComponent {
                 if (isDragging) {
                     int delta = lastY - e.getY();
                     int newValue = Math.min(maximum, Math.max(minimum, value + delta));
-                    setValue(newValue);
+                    setValue(newValue, true);
                     lastY = e.getY();
                 }
             }
@@ -153,12 +153,13 @@ public class Dial extends JComponent {
         g2d.dispose();
     }
 
-    public void setValue(int newValue) {
+    public void setValue(int newValue, boolean notify) {
         if (value != newValue) {
             value = Math.min(maximum, Math.max(minimum, newValue));
             repaint();
-            fireStateChanged();
-            if (command != null) {
+            if (notify)
+                fireStateChanged();
+            if (command != null && notify) {
                 CommandBus.getInstance().publish(command, this, value);
             }
         }

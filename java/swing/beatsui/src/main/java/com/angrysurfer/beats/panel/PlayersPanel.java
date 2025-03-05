@@ -57,7 +57,6 @@ public class PlayersPanel extends JPanel {
 
     private final JTable table;
     private final StatusConsumer status;
-    private final RulesPanel ruleTablePanel;
     private final ButtonPanel buttonPanel;
     private final ContextMenuHelper contextMenu;
 
@@ -145,10 +144,9 @@ public class PlayersPanel extends JPanel {
     private boolean hasActiveTicker = false; // Add this field
     private JButton controlButton; // Add this field
 
-    public PlayersPanel(StatusConsumer status, RulesPanel ruleTablePanel) {
+    public PlayersPanel(StatusConsumer status) {
         super(new BorderLayout());
         this.status = status;
-        this.ruleTablePanel = ruleTablePanel;
         this.table = new JTable();
         this.buttonPanel = new ButtonPanel(
                 Commands.PLAYER_ADD_REQUEST,
@@ -565,6 +563,14 @@ public class PlayersPanel extends JPanel {
                             }
                         }
                     }
+
+                    
+                    case Commands.PLAYER_ROW_REFRESH -> {
+                        if (action.getData() instanceof Player player) {
+                            updatePlayerRow(player);
+                        }
+                    }
+
                     case Commands.PLAYER_ROW_INDEX_REQUEST -> {
                         if (action.getData() instanceof Player requestedPlayer) {
                             int selectedRow = table.getSelectedRow();
@@ -600,14 +606,10 @@ public class PlayersPanel extends JPanel {
                         if (action.getData() instanceof Player player) {
                             logger.info("Player selected: " + player.getName() + " (ID: " + player.getId() + ")");
                             // Update RulesPanel with the selected player
-                            ruleTablePanel.setPlayer(player);
+                            // ruleTablePanel.setPlayer(player);
                         }
                     }
 
-                    case Commands.PLAYER_UNSELECTED -> {
-                        logger.info("Player unselected, clearing rules panel");
-                        ruleTablePanel.setPlayer(null);
-                    }
                     case Commands.PLAYER_ADDED -> {
                         if (action.getData() instanceof Player player) {
                             logger.info("Handling PLAYER_ADDED_TO_TICKER");
@@ -624,6 +626,7 @@ public class PlayersPanel extends JPanel {
                         }
 
                     }
+
                 }
             }
         });

@@ -16,6 +16,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
@@ -57,7 +59,7 @@ public class TickerPanel extends StatusProviderPanel {
 
         // Initialize panels and pass this reference for callbacks
         this.ruleTablePanel = new RulesPanel(status);
-        this.playerTablePanel = new PlayersPanel(status, this.ruleTablePanel);
+        this.playerTablePanel = new PlayersPanel(status);
 
         setupComponents();
         setupCommandBusListener();
@@ -184,15 +186,15 @@ public class TickerPanel extends StatusProviderPanel {
         if (player == null)
             return;
 
-        levelDial.setValue(player.getLevel().intValue());
-        noteDial.setValue(player.getNote().intValue());
-        swingDial.setValue(player.getSwing().intValue());
-        probabilityDial.setValue(player.getProbability().intValue());
-        velocityMinDial.setValue(player.getMinVelocity().intValue());
-        velocityMaxDial.setValue(player.getMaxVelocity().intValue());
-        randomDial.setValue(player.getRandomDegree().intValue());
-        panDial.setValue(player.getPanPosition().intValue());
-        sparseDial.setValue((int) (player.getSparse() * 100)); // Convert from 0-1.0 to 0-100
+        levelDial.setValue(player.getLevel().intValue(), false);
+        noteDial.setValue(player.getNote().intValue(), false);
+        swingDial.setValue(player.getSwing().intValue(), false);
+        probabilityDial.setValue(player.getProbability().intValue(), false);
+        velocityMinDial.setValue(player.getMinVelocity().intValue(), false);
+        velocityMaxDial.setValue(player.getMaxVelocity().intValue(), false);
+        randomDial.setValue(player.getRandomDegree().intValue(), false);
+        panDial.setValue(player.getPanPosition().intValue(), false);
+        sparseDial.setValue((int) (player.getSparse() * 100), false); // Convert from 0-1.0 to 0-100
     }
 
     static final int BUTTON_SIZE = 30;
@@ -321,17 +323,19 @@ public class TickerPanel extends StatusProviderPanel {
         // Store the property name in the dial
         dial.setName(propertyName); // Add this line
 
-        // dial.addChangeListener(new ChangeListener() {
-        // @Override
-        // public void stateChanged(ChangeEvent e) {
-        // Dial sourceDial = (Dial) e.getSource();
-        // if (sourceDial.getCommand() != null) {
-        // // Send both property name and value
-        // CommandBus.getInstance().publish(sourceDial.getCommand(), this,
-        // Map.of("property", sourceDial.getName(), "value", sourceDial.getValue()));
-        // }
-        // }
-        // });
+        dial.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                Dial sourceDial = (Dial) e.getSource();
+                if (sourceDial.getCommand() != null) {
+                    CommandBus.getInstance().publish(sourceDial.getCommand(),
+                            PlayerManager.getInstance().getActivePlayer(), sourceDial.getValue());
+                    // Send both property name and value
+                    // CommandBus.getInstance().publish(sourceDial.getCommand(), this,
+                    // Map.of("property", sourceDial.getName(), "value", sourceDial.getValue()));
+                }
+            }
+        });
 
         CommandBus.getInstance().register(new CommandListener() {
             @Override
@@ -386,7 +390,7 @@ public class TickerPanel extends StatusProviderPanel {
                             Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
                             Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN,
                             Commands.NEW_VALUE_SPARSE ->
-                        updatePlayerValue(action.getCommand(), (Long) action.getData());
+                        updatePlayerValue(action.getCommand(), ((Integer) action.getData()).longValue());
                 }
             }
         });
@@ -412,7 +416,8 @@ public class TickerPanel extends StatusProviderPanel {
 
         // Save changes and notify UI using PlayerManager instead
         // PlayerManager.getInstance().savePlayerProperties(selectedPlayer);
-        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, selectedPlayer);
+        CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this,
+                selectedPlayer);
     }
 
     private void updateVerticalAdjustButtons(boolean enabled) {

@@ -87,6 +87,7 @@ public class PlayerManager {
                         activePlayer = null;
                     }
 
+
                     case Commands.PLAYER_UPDATED -> {
                         if (action.getData() instanceof Player) {
                             playerUpdated((Player) action.getData());

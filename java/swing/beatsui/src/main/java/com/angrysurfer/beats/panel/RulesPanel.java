@@ -247,6 +247,7 @@ public class RulesPanel extends JPanel {
                             }
                         }
                     }
+
                     case Commands.PLAYER_UPDATED -> {
 
                         try {
@@ -262,6 +263,7 @@ public class RulesPanel extends JPanel {
 
                     }
                     case Commands.PLAYER_UNSELECTED -> {
+                        setPlayer(null);
                         currentPlayer = null;
                         clearRules();
                         updateButtonStates();
@@ -363,14 +365,15 @@ public class RulesPanel extends JPanel {
     }
 
     public void setPlayer(Player player) {
-        logger.info(
-                "Setting player: " + (player != null ? player.getName() + " (ID: " + player.getId() + ")" : "null"));
+        // logger.info(
+        // "Setting player: " + (player != null ? player.getName() + " (ID: " +
+        // player.getId() + ")" : "null"));
         this.currentPlayer = player;
 
         // Update rules display
         if (player != null) {
-            logger.info("Loading rules for player. Rules count: " +
-                    (player.getRules() != null ? player.getRules().size() : 0));
+            // logger.info("Loading rules for player. Rules count: " +
+            // (player.getRules() != null ? player.getRules().size() : 0));
             loadRules(player);
         } else {
             logger.info("Clearing rules display - no player selected");
