@@ -11,15 +11,19 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.geom.Point2D;
 
+import com.angrysurfer.beats.ColorUtils;
+
 public class NoteSelectionDial extends Dial {
     private static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     private static final int DETENT_COUNT = 12;
     private static final double SNAP_THRESHOLD = 0.2; // Radians
     private static final double START_ANGLE = -150; // Degrees
     private static final double TOTAL_ARC = 300;    // Degrees
+    private static final int NOTES_PER_OCTAVE = 12;
     
     private int currentDetent = 0;
     private boolean snapping = false;
+    private int baseOctave = 0;  // Store the octave
 
     // Add drag starting position
     private double startAngle = 0;
@@ -67,14 +71,24 @@ public class NoteSelectionDial extends Dial {
                 double detentAngle = TOTAL_ARC / (DETENT_COUNT - 1);
                 int detentDelta = (int) Math.round(angleDegrees / (detentAngle / 4));
                 
-                // Calculate new detent position
+                // Calculate new detent position while maintaining octave
                 int newDetent = currentDetent + detentDelta;
                 newDetent = Math.min(Math.max(newDetent, 0), DETENT_COUNT - 1);
                 
                 if (newDetent != currentDetent) {
+                    int oldValue = getValue();
                     currentDetent = newDetent;
-                    setValue(currentDetent, true);
+                    
+                    // Calculate new MIDI note while preserving octave
+                    int newNote = (baseOctave * NOTES_PER_OCTAVE) + currentDetent;
+                    
+                    // Use fireStateChanged() instead of directly accessing changeListener
+                    if (oldValue != newNote) {
+                        fireStateChanged();
+                    }
+                    
                     startAngle = currentAngle; // Update start angle for next movement
+                    repaint();
                 }
             }
         });
@@ -95,7 +109,7 @@ public class NoteSelectionDial extends Dial {
         int y = (h - size) / 2;
         
         // Draw base dial
-        g2d.setColor(Color.DARK_GRAY);
+        g2d.setColor(ColorUtils.mutedOlive);
         g2d.fillOval(x + margin, y + margin, size - 2*margin, size - 2*margin);
         
         // Draw outer ring
@@ -134,7 +148,13 @@ public class NoteSelectionDial extends Dial {
                 g2d.setStroke(new BasicStroke(1f));
             }
             
-            g2d.drawLine((int)p1.getX(), (int)p1.getY(), (int)p2.getX(), (int)p2.getY());
+            // Fix: Add missing Y coordinate for p2
+            g2d.drawLine(
+                (int)p1.getX(), 
+                (int)p1.getY(), 
+                (int)p2.getX(), 
+                (int)p2.getY()
+            );
             
             // Draw note label
             Point2D labelPos = new Point2D.Double(
@@ -166,16 +186,52 @@ public class NoteSelectionDial extends Dial {
         g2d.dispose();
     }
 
+
+
     @Override
-    public void setValue(int value, boolean notify) {
-        int oldValue = getValue();
-        super.setValue(value, notify);
-        currentDetent = getValue();
-        
-        if (notify && oldValue != value) {
-            fireStateChanged();
-        }
+    public int getValue() {
+        // Return the absolute MIDI note number
+        return (baseOctave * NOTES_PER_OCTAVE) + super.getValue();
     }
+
+    // Add method to get just the note within the octave
+    public int getNoteInOctave() {
+        return super.getValue();
+    }
+
+    // Add method to get current octave
+    public int getOctave() {
+        return baseOctave;
+    }
+
+    // Helper method to get note name with octave
+    public String getFullNoteName() {
+        return String.format("%s%d", NOTE_NAMES[getNoteInOctave()], baseOctave);
+    }
+
+    @Override
+    public void setValue(int absoluteNote, boolean notify) {
+        // Calculate octave and note within octave
+        baseOctave = absoluteNote / NOTES_PER_OCTAVE;
+        int noteInOctave = absoluteNote % NOTES_PER_OCTAVE;
+        
+        // Set the dial position to the note within the octave
+        super.setValue(noteInOctave, notify);
+        
+        // logger.info(String.format("Set note %d (octave %d, note %d)", 
+        //     absoluteNote, baseOctave, noteInOctave));
+    }
+
+    // @Override
+    // public void setValue(int value, boolean notify) {
+    //     int oldValue = getValue();
+    //     super.setValue(value, notify);
+    //     currentDetent = getValue();
+        
+    //     if (notify && oldValue != value) {
+    //         fireStateChanged();
+    //     }
+    // }
 
     public String getCurrentNoteName() {
         return NOTE_NAMES[currentDetent];

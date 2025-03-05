@@ -5,7 +5,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -112,7 +111,7 @@ public class TickerPanel extends StatusProviderPanel {
         JPanel navPanel = createOctavePanel();
         controlPanel.add(navPanel);
 
-        var dialSize = new Dimension(85, 85);
+        var dialSize = new Dimension(90, 90);
         noteDial = new NoteSelectionDial();
         // dial.setValue((int) value);
         noteDial.setPreferredSize(dialSize);
@@ -159,6 +158,8 @@ public class TickerPanel extends StatusProviderPanel {
         controlPanel.add(createLabeledControl("Random", randomDial));
 
         controlPanel.add(createLabeledControl("Sparse", sparseDial));
+
+        controlPanel.add(new MiniLaunchPanel(null));
 
         disableDials();
 
