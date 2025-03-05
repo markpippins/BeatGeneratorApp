@@ -5,6 +5,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 
+import javax.sound.midi.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -24,6 +25,22 @@ public class TransportPanel extends JPanel implements CommandListener {
     private final SimpleDateFormat timeFormat;
     private static final int MAX_LOG_LINES = 1000;
     private static final int PADDING = 12;
+
+    private Sequence sequence;
+    private Sequencer sequencer;
+    private Synthesizer synthesizer;
+    private static final int METRONOME_CHANNEL = 9; // Channel 10 (0-based)
+    private static final int METRONOME_NOTE = 60; // Middle C
+    private static final int METRONOME_VELOCITY = 100;
+    private static final int PPQ = 24; // Pulses per quarter note
+    private static final int BPM = 120; // Beats per minute
+
+    // Add these fields after the existing constants
+    private int currentTick = 0;
+    private int currentBeat = 0;
+    private int currentBar = 0;
+    private static final int TICKS_PER_BEAT = PPQ;
+    private static final int BEATS_PER_BAR = 4;
 
     public TransportPanel() {
         super(new BorderLayout(PADDING, PADDING));
@@ -85,39 +102,242 @@ public class TransportPanel extends JPanel implements CommandListener {
         // Register for command bus events
         commandBus.register(this);
 
+        // Initialize MIDI
+        initializeMIDI();
+
         // Log initial message
         log("Transport panel initialized");
     }
 
-    private JButton createTransportButton(String symbol, String command, String tooltip) {
-        JButton button = new JButton(symbol);
-        button.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
+    private void initializeMIDI() {
+        try {
+            // Get and setup the sequencer first
+            sequencer = MidiSystem.getSequencer(false);
+            sequencer.open();
 
-        // Fallback font if needed
-        if (!button.getFont().canDisplay(symbol.charAt(0))) {
-            button.setFont(new Font("Dialog", Font.PLAIN, 18));
+            // Get and open synthesizer
+            synthesizer = MidiSystem.getSynthesizer();
+            synthesizer.open();
+
+            // Create sequence with metronome
+            sequence = new Sequence(Sequence.PPQ, PPQ);
+            Track track = sequence.createTrack();
+
+            // Add metronome events and timing clocks for one bar
+            for (int beat = 0; beat < 4; beat++) {
+                // Add 24 timing clock messages per beat (standard MIDI spec)
+                for (int clock = 0; clock < PPQ; clock++) {
+                    track.add(new MidiEvent(
+                        new ShortMessage(0xF8), // Timing Clock message
+                        beat * PPQ + clock));
+                }
+                
+                // Add note events
+                track.add(new MidiEvent(
+                    new ShortMessage(ShortMessage.NOTE_ON, METRONOME_CHANNEL, METRONOME_NOTE, METRONOME_VELOCITY),
+                    beat * PPQ));
+                track.add(new MidiEvent(
+                    new ShortMessage(ShortMessage.NOTE_OFF, METRONOME_CHANNEL, METRONOME_NOTE, 0),
+                    beat * PPQ + PPQ/2));
+            }
+
+            // Set up sequencer
+            sequencer.setSequence(sequence);
+            sequencer.setLoopCount(Sequencer.LOOP_CONTINUOUSLY);
+            sequencer.setTempoInBPM(BPM);
+
+            // Important: Set sync modes before creating transmitters/receivers
+            sequencer.setMasterSyncMode(Sequencer.SyncMode.MIDI_SYNC);
+            sequencer.setSlaveSyncMode(Sequencer.SyncMode.MIDI_SYNC);
+
+            log("Master mode: " + sequencer.getMasterSyncMode());
+            log("Slave mode: " + sequencer.getSlaveSyncMode());
+
+            // Create timing receiver first
+            Receiver timingReceiver = new Receiver() {
+                @Override
+                public void send(MidiMessage message, long timeStamp) {
+                    if (message instanceof ShortMessage msg) {
+                        int status = msg.getStatus();
+                        switch (status) {
+                            case 0xF8 -> handleTimingClock();  // MIDI Clock
+                            case 0xFA -> handleStart();        // Start
+                            case 0xFC -> handleStop();         // Stop
+                            case 0xFB -> handleContinue();     // Continue
+                            default -> {
+                                if (msg.getCommand() == ShortMessage.NOTE_ON || 
+                                    msg.getCommand() == ShortMessage.NOTE_OFF) {
+                                    log(String.format("Note %s Ch:%d N:%d V:%d", 
+                                        msg.getCommand() == ShortMessage.NOTE_ON ? "ON" : "OFF",
+                                        msg.getChannel() + 1, 
+                                        msg.getData1(), 
+                                        msg.getData2()));
+                                }
+                            }
+                        }
+                    }
+                }
+                @Override
+                public void close() {}
+            };
+
+            // Connect timing transmitter first
+            Transmitter timingTransmitter = sequencer.getTransmitter();
+            timingTransmitter.setReceiver(timingReceiver);
+
+            // Then connect audio transmitter
+            Transmitter audioTransmitter = sequencer.getTransmitter();
+            audioTransmitter.setReceiver(synthesizer.getReceiver());
+
+            log("MIDI initialized with timing and audio receivers");
+
+        } catch (MidiUnavailableException | InvalidMidiDataException e) {
+            log("Error initializing MIDI: " + e.getMessage());
         }
+    }
 
-        // Set button properties
+    private void startMetronome() {
+        try {
+            if (sequencer != null && !sequencer.isRunning()) {
+                sequencer.start();
+                log("Metronome started");
+            }
+        } catch (Exception e) {
+            log("Error starting metronome: " + e.getMessage());
+        }
+    }
+
+    private void stopMetronome() {
+        try {
+            if (sequencer != null && sequencer.isRunning()) {
+                sequencer.stop();
+                sequencer.setMicrosecondPosition(0); // Reset position to start
+                log("Metronome stopped");
+            }
+        } catch (Exception e) {
+            log("Error stopping metronome: " + e.getMessage());
+        }
+    }
+
+    private void cleanupMIDI() {
+        try {
+            if (sequencer != null) {
+                sequencer.stop();
+                sequencer.close();
+            }
+            if (synthesizer != null) {
+                synthesizer.close();
+            }
+            log("MIDI resources cleaned up");
+        } catch (Exception e) {
+            log("Error cleaning up MIDI resources: " + e.getMessage());
+        }
+    }
+
+    private JButton createTransportButton(String symbol, String command, String tooltip) {
+        JButton button = new JButton(symbol) {
+            @Override
+            public void paint(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                        RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+                // Calculate center position
+                FontMetrics fm = g2.getFontMetrics();
+                int textWidth = fm.stringWidth(getText());
+                int textHeight = fm.getHeight();
+                int x = (getWidth() - textWidth) / 2;
+                int y = (getHeight() + textHeight) / 2 - fm.getDescent();
+
+                // Draw background if button is pressed/selected
+                if (getModel().isPressed()) {
+                    g2.setColor(getBackground().darker());
+                    g2.fillRect(0, 0, getWidth(), getHeight());
+                }
+
+                // Draw the text
+                g2.setColor(getForeground());
+                g2.drawString(getText(), x, y);
+                g2.dispose();
+            }
+        };
+
         button.setToolTipText(tooltip);
+        button.setEnabled(true);
         button.setActionCommand(command);
         button.addActionListener(this::handleButtonAction);
-        button.setFocusPainted(false);
-        button.setMargin(new Insets(6, 12, 6, 12));
 
-        // Set size constraints
-        int size = 44;
+        // Adjust size and font
+        int size = 32;
         button.setPreferredSize(new Dimension(size, size));
         button.setMinimumSize(new Dimension(size, size));
         button.setMaximumSize(new Dimension(size, size));
+        button.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
+
+        // Fallback font if needed
+        if (!button.getFont().canDisplay('⏮')) {
+            button.setFont(new Font("Dialog", Font.PLAIN, 18));
+        }
+
+        button.setMargin(new Insets(0, 0, 0, 0));
+        button.setVerticalAlignment(SwingConstants.CENTER);
+        button.setFocusPainted(false);
 
         return button;
     }
 
     private void handleButtonAction(ActionEvent e) {
         String command = e.getActionCommand();
+        switch (command) {
+            case Commands.TRANSPORT_PLAY -> {
+                startMetronome();
+                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
+            }
+            case Commands.TRANSPORT_STOP -> {
+                stopMetronome();
+                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+            }
+            case Commands.TRANSPORT_PAUSE -> {
+                stopMetronome();
+                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+            }
+        }
         commandBus.publish(command, this);
         log("Transport command: " + command);
+    }
+
+    private void handleTimingClock() {
+        currentTick++;
+        if (currentTick >= TICKS_PER_BEAT) {
+            currentTick = 0;
+            currentBeat++;
+            if (currentBeat >= BEATS_PER_BAR) {
+                currentBeat = 0;
+                currentBar++;
+                log(String.format("Bar: %d Beat: %d Tick: %d", currentBar, currentBeat, currentTick));
+            } else {
+                log(String.format("Beat: %d Tick: %d", currentBeat, currentTick));
+            }
+        }
+        // Only log every 6 ticks (quarter of a beat) to reduce spam
+        else if (currentTick % 6 == 0) {
+            log(String.format("Tick: %d", currentTick));
+        }
+    }
+
+    private void handleStart() {
+        currentTick = 0;
+        currentBeat = 0;
+        currentBar = 0;
+        log("Sequencer started");
+    }
+
+    private void handleStop() {
+        log("Sequencer stopped");
+    }
+
+    private void handleContinue() {
+        log("Sequencer continued");
     }
 
     /**
@@ -160,9 +380,23 @@ public class TransportPanel extends JPanel implements CommandListener {
                         playButton.setEnabled(!isPlaying);
                         stopButton.setEnabled(isPlaying);
                         pauseButton.setEnabled(isPlaying);
+                        if (isPlaying) {
+                            startMetronome();
+                        } else {
+                            stopMetronome();
+                        }
                     });
                     log("Transport state changed: " + (isPlaying ? "Playing" : "Stopped"));
                 }
+            }
+            case Commands.TRANSPORT_STOP -> {
+                stopMetronome();
+                SwingUtilities.invokeLater(() -> {
+                    playButton.setEnabled(true);
+                    stopButton.setEnabled(false);
+                    pauseButton.setEnabled(false);
+                });
+                log("Transport stopped");
             }
             case Commands.TRANSPORT_RECORD_STATE_CHANGED -> {
                 if (action.getData() instanceof Boolean isRecording) {
@@ -173,5 +407,11 @@ public class TransportPanel extends JPanel implements CommandListener {
                 }
             }
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        cleanupMIDI();
+        super.finalize();
     }
 }
