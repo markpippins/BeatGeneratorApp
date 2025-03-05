@@ -76,6 +76,8 @@ public class PlayerManager {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {
+                    
+                    
                     case Commands.PLAYER_SELECTED -> {
                         if (action.getData() instanceof Player) {
                             playerSelected((Player) action.getData());

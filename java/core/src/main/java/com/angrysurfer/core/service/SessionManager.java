@@ -102,6 +102,21 @@ public class SessionManager {
                     case Commands.TRANSPORT_RECORD -> redisService.saveTicker(getActiveTicker());
                     case Commands.SHOW_PLAYER_EDITOR_OK -> processPlayerEdit((Player) action.getData());
                     case Commands.SHOW_RULE_EDITOR_OK -> processRuleEdit((Rule) action.getData());
+                    case Commands.PLAYER_DELETE_REQUEST -> processPlayerDelete((Player[]) action.getData());
+                    // case Commands.RULE_DELETE_REQUEST -> processRuleDelete((Rule[])
+                    // action.getData());
+                }
+            }
+
+            private void processPlayerDelete(Player[] data) {
+
+                for (Player player : data) {
+                    logger.info("Deleting player: " + player.getId());
+                    if (getActiveTicker().getPlayers().remove(player)) {
+                        redisService.deletePlayer(player);
+                        logger.info("Player deleted: " + player.getId());
+                        commandBus.publish(Commands.PLAYER_DELETED, this);
+                    }
                 }
             }
         });

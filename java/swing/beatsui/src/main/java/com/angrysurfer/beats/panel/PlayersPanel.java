@@ -564,7 +564,13 @@ public class PlayersPanel extends JPanel {
                         }
                     }
 
-                    
+                    case Commands.PLAYER_DELETED -> {
+                        Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
+                        if (currentTicker != null) {
+                            refreshPlayers(currentTicker.getPlayers());
+                        }
+                    }
+
                     case Commands.PLAYER_ROW_REFRESH -> {
                         if (action.getData() instanceof Player player) {
                             updatePlayerRow(player);
