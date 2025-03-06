@@ -38,7 +38,7 @@ public class Visualizer implements CommandListener {
     private Timer visualizationChangeTimer;
 
     private static final int VISUALIZATION_DELAY = 30000; // 30 seconds
-    private static final int VISUALIZATION_CHANGE_DELAY = 10000 * 6; // 10 seconds * 6 = 1 minute
+    private static final int VISUALIZATION_CHANGE_DELAY = 10000; // 10 seconds * 6 = 1 minute
 
     private StatusConsumer statusConsumer;
     private final CommandBus commandBus = CommandBus.getInstance();
