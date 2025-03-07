@@ -33,16 +33,15 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Scale;
-import com.formdev.flatlaf.ui.FlatComboBoxUI;
 
 public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();
     private final Map<String, JComponent> rightFields = new HashMap<>(); // Changed to JComponent
     private final CommandBus actionBus = CommandBus.getInstance();
-    private Ticker currentTicker; // Add field to track current ticker
+    private Session currentSession; // Add field to track current session
 
     private JPanel transportPanel;
     private JButton playButton;
@@ -78,23 +77,23 @@ public class ToolBar extends JToolBar {
                                 scaleCombo.setSelectedIndex(prevIndex);
                             }
                         }
-                        case Commands.TICKER_SELECTED, Commands.TICKER_UPDATED -> {
-                            if (action.getData() instanceof Ticker) {
-                                Ticker ticker = (Ticker) action.getData();
-                                updateTickerDisplay(ticker);
-                                updateToolbarState(ticker);
+                        case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED -> {
+                            if (action.getData() instanceof Session) {
+                                Session session = (Session) action.getData();
+                                updateSessionDisplay(session);
+                                updateToolbarState(session);
                             }
                         }
                         case Commands.RULE_ADDED -> {
                             // Re-evaluate forward button state when a rule is added
-                            if (currentTicker != null) {
-                                updateToolbarState(currentTicker);
+                            if (currentSession != null) {
+                                updateToolbarState(currentSession);
                             }
                         }
-                        case Commands.TICKER_CREATED -> {
-                            if (action.getData() instanceof Ticker ticker) {
-                                updateTickerDisplay(ticker);
-                                // Force disable forward button for new ticker
+                        case Commands.SESSION_CREATED -> {
+                            if (action.getData() instanceof Session session) {
+                                updateSessionDisplay(session);
+                                // Force disable forward button for new session
                                 for (Component comp : transportPanel.getComponents()) {
                                     if (comp instanceof JButton &&
                                             Commands.TRANSPORT_FORWARD.equals(((JButton) comp).getActionCommand())) {
@@ -117,14 +116,14 @@ public class ToolBar extends JToolBar {
             }
         });
 
-        // Then request the initial ticker state after a short delay
+        // Then request the initial session state after a short delay
         SwingUtilities.invokeLater(() -> {
-            // First ensure TickerManager has an active ticker
-            Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
-            if (currentTicker != null) {
-                actionBus.publish(Commands.TICKER_SELECTED, this, currentTicker);
+            // First ensure SessionManager has an active session
+            Session currentSession = SessionManager.getInstance().getActiveSession();
+            if (currentSession != null) {
+                actionBus.publish(Commands.SESSION_SELECTED, this, currentSession);
             } else {
-                actionBus.publish(Commands.TICKER_REQUEST, this);
+                actionBus.publish(Commands.SESSION_REQUEST, this);
             }
         });
 
@@ -143,7 +142,7 @@ public class ToolBar extends JToolBar {
     // }
     // };
 
-    private JComboBox<Integer> createTickerCombo(String field, int min, int max, int current) {
+    private JComboBox<Integer> createSessionCombo(String field, int min, int max, int current) {
 
         JComboBox<Integer> combo = new JComboBox<>();
         for (int i = min; i <= max; i++) {
@@ -152,42 +151,42 @@ public class ToolBar extends JToolBar {
         combo.setSelectedItem(current);
         combo.setMaximumSize(new Dimension(70, 25));
         combo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED && currentTicker != null) {
+            if (e.getStateChange() == ItemEvent.SELECTED && currentSession != null) {
                 int value = (Integer) combo.getSelectedItem();
-                updateTickerValue(field, value);
+                updateSessionValue(field, value);
             }
         });
 
         return combo;
     }
 
-    private void updateTickerValue(String field, int value) {
-        if (currentTicker != null) {
+    private void updateSessionValue(String field, int value) {
+        if (currentSession != null) {
             try {
                 switch (field) {
-                    case "Ticks" -> currentTicker.setTicksPerBeat(value);
-                    case "BPM" -> currentTicker.setTempoInBPM((float) value); // Cast to float
-                    case "B/Bar" -> currentTicker.setBeatsPerBar(value);
-                    case "Bars" -> currentTicker.setBars(value);
-                    case "Parts" -> currentTicker.setParts(value);
+                    case "Ticks" -> currentSession.setTicksPerBeat(value);
+                    case "BPM" -> currentSession.setTempoInBPM((float) value); // Cast to float
+                    case "B/Bar" -> currentSession.setBeatsPerBar(value);
+                    case "Bars" -> currentSession.setBars(value);
+                    case "Parts" -> currentSession.setParts(value);
                 }
-                actionBus.publish(Commands.TICKER_UPDATED, this, currentTicker);
+                actionBus.publish(Commands.SESSION_UPDATED, this, currentSession);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
     }
 
-    private void updateTickerDisplay(Ticker ticker) {
-        if (Objects.isNull(ticker) || Objects.isNull(ticker.getId())) {
-            System.out.println("ToolBar: Received null ticker or ticker ID");
+    private void updateSessionDisplay(Session session) {
+        if (Objects.isNull(session) || Objects.isNull(session.getId())) {
+            System.out.println("ToolBar: Received null session or session ID");
             return;
         }
 
-        System.out.println("ToolBar: Updating display for ticker " + ticker.getId() +
-                " with " + ticker.getPlayers().size() + " players");
+        System.out.println("ToolBar: Updating display for session " + session.getId() +
+                " with " + session.getPlayers().size() + " players");
 
-        this.currentTicker = ticker;
+        this.currentSession = session;
 
         // Update fields with synchronized block to prevent concurrent modification
         synchronized (this) {
@@ -195,28 +194,28 @@ public class ToolBar extends JToolBar {
                 // Update left fields
                 for (Map.Entry<String, JTextField> entry : leftFields.entrySet()) {
                     String value = switch (entry.getKey()) {
-                        case "Tick" -> String.valueOf(ticker.getTick());
-                        case "Beat" -> String.valueOf(ticker.getBeat());
-                        case "Bar" -> String.valueOf(ticker.getBar());
-                        case "Part" -> String.valueOf(ticker.getPart());
-                        case "Players" -> String.valueOf(ticker.getPlayers().size());
-                        case "Ticks" -> String.valueOf(ticker.getTickCount());
-                        case "Beats" -> String.valueOf(ticker.getBeatCount());
-                        case "Bars" -> String.valueOf(ticker.getBarCount());
+                        case "Tick" -> String.valueOf(session.getTick());
+                        case "Beat" -> String.valueOf(session.getBeat());
+                        case "Bar" -> String.valueOf(session.getBar());
+                        case "Part" -> String.valueOf(session.getPart());
+                        case "Players" -> String.valueOf(session.getPlayers().size());
+                        case "Ticks" -> String.valueOf(session.getTickCount());
+                        case "Beats" -> String.valueOf(session.getBeatCount());
+                        case "Bars" -> String.valueOf(session.getBarCount());
                         default -> "0";
                     };
                     entry.getValue().setText(value);
                 }
 
                 // Update right fields
-                ((JTextField) rightFields.get("Ticker")).setText(ticker.getId().toString());
-                ((JComboBox<?>) rightFields.get("Ticks")).setSelectedItem(ticker.getTicksPerBeat());
-                ((JComboBox<?>) rightFields.get("BPM")).setSelectedItem(ticker.getTempoInBPM().intValue());
-                ((JComboBox<?>) rightFields.get("B/Bar")).setSelectedItem(ticker.getBeatsPerBar());
-                ((JComboBox<?>) rightFields.get("Bars")).setSelectedItem(ticker.getBars());
-                ((JComboBox<?>) rightFields.get("Parts")).setSelectedItem(ticker.getParts());
-                ((JTextField) rightFields.get("Length")).setText(String.valueOf(ticker.getPartLength()));
-                ((JTextField) rightFields.get("Offset")).setText(String.valueOf(ticker.getNoteOffset()));
+                ((JTextField) rightFields.get("Session")).setText(session.getId().toString());
+                ((JComboBox<?>) rightFields.get("Ticks")).setSelectedItem(session.getTicksPerBeat());
+                ((JComboBox<?>) rightFields.get("BPM")).setSelectedItem(session.getTempoInBPM().intValue());
+                ((JComboBox<?>) rightFields.get("B/Bar")).setSelectedItem(session.getBeatsPerBar());
+                ((JComboBox<?>) rightFields.get("Bars")).setSelectedItem(session.getBars());
+                ((JComboBox<?>) rightFields.get("Parts")).setSelectedItem(session.getParts());
+                ((JTextField) rightFields.get("Length")).setText(String.valueOf(session.getPartLength()));
+                ((JTextField) rightFields.get("Offset")).setText(String.valueOf(session.getNoteOffset()));
 
             } catch (Exception e) {
                 System.err.println("ToolBar: Error updating display: " + e.getMessage());
@@ -281,11 +280,11 @@ public class ToolBar extends JToolBar {
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         Object[][] rightFieldsArray = {
-                { "Ticks", createTickerCombo("Ticks", 1, 384, 24) },
-                { "BPM", createTickerCombo("BPM", 1, 960, 120) },
-                { "B/Bar", createTickerCombo("B/Bar", 1, 16, 4) },
-                { "Bars", createTickerCombo("Bars", 1, 128, 4) },
-                { "Parts", createTickerCombo("Parts", 1, 64, 1) }
+                { "Ticks", createSessionCombo("Ticks", 1, 384, 24) },
+                { "BPM", createSessionCombo("BPM", 1, 960, 120) },
+                { "B/Bar", createSessionCombo("B/Bar", 1, 16, 4) },
+                { "Bars", createSessionCombo("Bars", 1, 128, 4) },
+                { "Parts", createSessionCombo("Parts", 1, 64, 1) }
         };
 
         for (Object[] field : rightFieldsArray) {
@@ -317,7 +316,7 @@ public class ToolBar extends JToolBar {
         Object[][] rightFieldsArray = {
                 { "Root", createRootNoteCombo() },
                 { "Scale", createScaleCombo() },
-                { "Ticker", createTextField("1") },
+                { "Session", createTextField("1") },
                 { "Length", createTextField("0") },
                 { "Offset", createTextField("0") }
         };
@@ -456,12 +455,12 @@ public class ToolBar extends JToolBar {
 
     private void setupTransportButtons(JPanel transportPanel) {
         // Create buttons with single tooltip since we don't need navigation text
-        JButton rewindBtn = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Ticker");
+        JButton rewindBtn = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Session");
         JButton pauseBtn = createToolbarButton(Commands.TRANSPORT_PAUSE, "⏸", "Pause");
         JButton recordBtn = createToolbarButton(Commands.TRANSPORT_RECORD, "⏺", "Record");
         JButton stopBtn = createToolbarButton(Commands.TRANSPORT_STOP, "⏹", "Stop");
         JButton playBtn = createToolbarButton(Commands.TRANSPORT_PLAY, "▶", "Play");
-        JButton forwardBtn = createToolbarButton(Commands.TRANSPORT_FORWARD, "⏭", "Next Ticker");
+        JButton forwardBtn = createToolbarButton(Commands.TRANSPORT_FORWARD, "⏭", "Next Session");
 
         transportPanel.add(rewindBtn);
         transportPanel.add(pauseBtn);
@@ -474,25 +473,25 @@ public class ToolBar extends JToolBar {
         this.stopButton = stopBtn;
     }
 
-    private void updateToolbarState(Ticker ticker) {
-        boolean hasActiveTicker = Objects.nonNull(ticker);
+    private void updateToolbarState(Session session) {
+        boolean hasActiveSession = Objects.nonNull(session);
         for (Component comp : transportPanel.getComponents()) {
             if (comp instanceof JButton) {
                 JButton button = (JButton) comp;
 
                 switch (button.getActionCommand()) {
                     case Commands.TRANSPORT_REWIND ->
-                        button.setEnabled(hasActiveTicker && SessionManager.getInstance().canMoveBack());
+                        button.setEnabled(hasActiveSession && SessionManager.getInstance().canMoveBack());
                     case Commands.TRANSPORT_FORWARD ->
                         button.setEnabled(SessionManager.getInstance().canMoveForward());
                     case Commands.TRANSPORT_PAUSE ->
                         button.setEnabled(false);
                     case Commands.TRANSPORT_PLAY ->
-                        button.setEnabled(hasActiveTicker && !ticker.isRunning());
+                        button.setEnabled(hasActiveSession && !session.isRunning());
                     case Commands.TRANSPORT_STOP ->
-                        button.setEnabled(hasActiveTicker && ticker.isRunning());
+                        button.setEnabled(hasActiveSession && session.isRunning());
                     case Commands.TRANSPORT_RECORD ->
-                        button.setEnabled(hasActiveTicker); // Enable if we have an active ticker
+                        button.setEnabled(hasActiveSession); // Enable if we have an active session
                 }
             }
         }

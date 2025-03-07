@@ -36,15 +36,15 @@ public class Strike extends Player {
         setRules(new HashSet<>()); // Initialize rules set
     }
 
-    public Strike(String name, Ticker ticker, Instrument instrument, long note,
+    public Strike(String name, Session session, Instrument instrument, long note,
             List<Integer> allowedControlMessages) {
-        super(name, ticker, instrument, allowedControlMessages);
+        super(name, session, instrument, allowedControlMessages);
         setNote(note);
     }
 
-    public Strike(String name, Ticker ticker, Instrument instrument, long note,
+    public Strike(String name, Session session, Instrument instrument, long note,
             List<Integer> allowableControlMessages, long minVelocity, long maxVelocity) {
-        super(name, ticker, instrument, allowableControlMessages);
+        super(name, session, instrument, allowableControlMessages);
         setNote(note);
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
@@ -54,7 +54,7 @@ public class Strike extends Player {
     public void onTick(long tick, long bar) {
         // logger.info(String.format("Tick: %s", tick));
         if (tick == 1 && getSubDivisions() > 1 && getBeatFraction() > 1) {
-            double numberOfTicksToWait = getBeatFraction() * (getTicker().getTicksPerBeat() / getSubDivisions());
+            double numberOfTicksToWait = getBeatFraction() * (getSession().getTicksPerBeat() / getSubDivisions());
             new Ratchet(this, numberOfTicksToWait, getRatchetInterval(), 0);
             handleRachets();
         }
@@ -63,25 +63,25 @@ public class Strike extends Player {
             if (getSwing() > 0)
                 handleSwing();
             if (getProbability().equals(100L) || rand.nextInt(100) > getProbability())
-                drumNoteOn((long) (getNote() + getTicker().getNoteOffset()));
+                drumNoteOn((long) (getNote() + getSession().getNoteOffset()));
         }
 
         getSkipCycler().advance();
     }
 
     private void handleSwing() {
-        double offset = getTicker().getBeatDuration() * rand.nextLong(getSwing()) * .01;
+        double offset = getSession().getBeatDuration() * rand.nextLong(getSwing()) * .01;
         try {
             Thread.sleep((long) offset);
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        new Ratchet(this, getTicker().getTick() + (long) offset, 1, 0);
+        new Ratchet(this, getSession().getTick() + (long) offset, 1, 0);
     }
 
     private void handleRachets() {
-        double numberOfTicksToWait = getRatchetInterval() * (getTicker().getTicksPerBeat() / getSubDivisions());
+        double numberOfTicksToWait = getRatchetInterval() * (getSession().getTicksPerBeat() / getSubDivisions());
 
         LongStream.range(1, getRatchetCount() + 1).forEach(i -> {
             new Ratchet(this, i * numberOfTicksToWait, getRatchetInterval(), 0);

@@ -18,9 +18,9 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.core.exception.MidiDeviceException;
 import com.angrysurfer.core.model.midi.Instrument;
 
-public class MIDIDeviceManager {
+public class DeviceManager {
 
-    static Logger logger = LoggerFactory.getLogger(MIDIDeviceManager.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(DeviceManager.class.getCanonicalName());
 
     public static void cleanupMidiDevices() {
         logger.info("cleanupMidiDevices()");

@@ -23,7 +23,7 @@ import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.config.UserConfigConverter;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
@@ -68,12 +68,12 @@ public class DialogManager implements CommandListener {
         logger.info("Starting handleAddPlayer");
         SwingUtilities.invokeLater(() -> {
             try {
-                Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
+                Session currentSession = SessionManager.getInstance().getActiveSession();
 
                 logger.info(
-                        String.format("Current ticker: %s", currentTicker != null ? currentTicker.getId() : "null"));
+                        String.format("Current session: %s", currentSession != null ? currentSession.getId() : "null"));
 
-                if (currentTicker != null) {
+                if (currentSession != null) {
                     // Initialize player
                     Player newPlayer = PlayerManager.getInstance().initializeNewPlayer();
                     logger.info(String.format("Created new player with ID: %d", newPlayer.getId()));
@@ -88,7 +88,7 @@ public class DialogManager implements CommandListener {
 
                     if (result) {
                         Player updatedPlayer = panel.getUpdatedPlayer();
-                        SessionManager.getInstance().addPlayerToTicker(currentTicker, updatedPlayer);
+                        SessionManager.getInstance().addPlayerToSession(currentSession, updatedPlayer);
                         logger.info(String.format("Player %d added successfully", updatedPlayer.getId()));
                         CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, updatedPlayer);
                     }
@@ -138,12 +138,12 @@ public class DialogManager implements CommandListener {
                             redisService.addRuleToPlayer(player, updatedRule);
                             // Get fresh state
                             // Player refreshedPlayer = redisService.findPlayerById(player.getId());
-                            // Ticker ticker = redisService.findTickerForPlayer(refreshedPlayer);
+                            // Session session = redisService.findSessionForPlayer(refreshedPlayer);
 
                             // Re-select the player to update rules display
                             commandBus.publish(Commands.PLAYER_SELECTED, this, player);
                             commandBus.publish(Commands.RULE_ADDED, this, player);
-                            // commandBus.publish(Commands.TICKER_UPDATED, this, ticker);
+                            // commandBus.publish(Commands.SESSION_UPDATED, this, session);
                         } else {
                             // ... existing error handling ...
                         }

@@ -373,7 +373,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
                     rulesTable.getValueAt(selectedRow, 3)
             });
 
-            // Just send the rule - TickerManager will handle finding the player
+            // Just send the rule - SessionManager will handle finding the player
             CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, rule);
         }
     }
@@ -662,7 +662,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
             // Save player to Redis first
             RedisService.getInstance().savePlayer(player);
 
-            // Then publish for ticker update
+            // Then publish for session update
             CommandBus.getInstance().publish(Commands.SHOW_PLAYER_EDITOR_OK, this, player);
 
             logger.info(String.format("Player saved with instrument: %d (ID: %d)",

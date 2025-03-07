@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 
 public class RedisDemo {
@@ -14,26 +14,26 @@ public class RedisDemo {
     public static void main(String[] args) {
         RedisService redis = RedisService.getInstance();
 
-        // Clear database and create initial ticker
+        // Clear database and create initial session
         redis.clearDatabase();
-        logger.info("Database cleared and initial ticker created");
+        logger.info("Database cleared and initial session created");
 
-        // Create multiple tickers
-        logger.info("=== Creating Multiple Tickers ===");
-        Ticker[] tickers = new Ticker[3];
+        // Create multiple sessions
+        logger.info("=== Creating Multiple Sessions ===");
+        Session[] sessions = new Session[3];
         for (int i = 0; i < 3; i++) {
-            tickers[i] = redis.newTicker();
-            logger.info("Created ticker " + (i + 1) + " with ID: " + tickers[i].getId());
+            sessions[i] = redis.newSession();
+            logger.info("Created session " + (i + 1) + " with ID: " + sessions[i].getId());
         }
 
-        // Add players to first ticker
-        logger.info("\n=== Adding Players to Ticker 1 ===");
+        // Add players to first session
+        logger.info("\n=== Adding Players to Session 1 ===");
         Player[] drums = {
-                createDrumPlayer(redis, "Kick", 36, tickers[0]),
-                createDrumPlayer(redis, "Snare", 38, tickers[0]),
-                createDrumPlayer(redis, "HiHat", 42, tickers[0])
+                createDrumPlayer(redis, "Kick", 36, sessions[0]),
+                createDrumPlayer(redis, "Snare", 38, sessions[0]),
+                createDrumPlayer(redis, "HiHat", 42, sessions[0])
         };
-        logger.info("Added " + drums.length + " drum players to ticker 1");
+        logger.info("Added " + drums.length + " drum players to session 1");
 
         // Add rules to players
         logger.info("\n=== Adding Rules to Players ===");
@@ -43,46 +43,46 @@ public class RedisDemo {
 
         // Enhanced navigation testing
         logger.info("\n=== Testing Bi-directional Navigation ===");
-        Ticker current = tickers[0];
+        Session current = sessions[0];
 
         // Forward navigation
         logger.info("Forward Navigation:");
         while (true) {
-            describeTickerState(redis, current);
-            Long nextId = redis.getNextTickerId(current);
+            describeSessionState(redis, current);
+            Long nextId = redis.getNextSessionId(current);
             if (nextId == null)
                 break;
-            current = redis.findTickerById(nextId);
+            current = redis.findSessionById(nextId);
         }
 
         // Backward navigation
         logger.info("\nBackward Navigation:");
         while (true) {
-            describeTickerState(redis, current);
-            Long prevId = redis.getPreviousTickerId(current);
+            describeSessionState(redis, current);
+            Long prevId = redis.getPreviousSessionId(current);
             if (prevId == null)
                 break;
-            current = redis.findTickerById(prevId);
+            current = redis.findSessionById(prevId);
         }
 
         // Interleaved operations and navigation
         logger.info("\n=== Interleaved Operations ===");
 
-        // Add player to middle ticker
-        current = tickers[1];
+        // Add player to middle session
+        current = sessions[1];
         Player cymbal = createDrumPlayer(redis, "Cymbal", 49, current);
-        describeTickerState(redis, current);
+        describeSessionState(redis, current);
 
-        // Move to next ticker and add rules
-        current = redis.findTickerById(redis.getNextTickerId(current));
+        // Move to next session and add rules
+        current = redis.findSessionById(redis.getNextSessionId(current));
         Player tom = createDrumPlayer(redis, "Tom", 45, current);
         addRhythmRules(redis, tom, new double[] { 2.0, 4.0 });
-        describeTickerState(redis, current);
+        describeSessionState(redis, current);
 
         // Move back and modify
-        current = redis.findTickerById(redis.getPreviousTickerId(current));
+        current = redis.findSessionById(redis.getPreviousSessionId(current));
         addRhythmRules(redis, cymbal, new double[] { 1.0, 3.0 });
-        describeTickerState(redis, current);
+        describeSessionState(redis, current);
 
         // Test player modification
         logger.info("\n=== Testing Player Modifications ===");
@@ -92,15 +92,15 @@ public class RedisDemo {
             logger.info("  Removed rule: " + rule.getId());
         }
 
-        logger.info("Moving HiHat to ticker 2");
-        // redis.removePlayerFromTicker(tickers[0], drums[2]);
-        // redis.addPlayerToTicker(tickers[1], drums[2]);
+        logger.info("Moving HiHat to session 2");
+        // redis.removePlayerFromSession(sessions[0], drums[2]);
+        // redis.addPlayerToSession(sessions[1], drums[2]);
 
         // Verify final state
         logger.info("\n=== Verifying Final State ===");
-        for (Ticker ticker : tickers) {
-            Ticker loaded = redis.findTickerById(ticker.getId());
-            logger.info("Ticker " + loaded.getId() + " has " + loaded.getPlayers().size() + " players");
+        for (Session session : sessions) {
+            Session loaded = redis.findSessionById(session.getId());
+            logger.info("Session " + loaded.getId() + " has " + loaded.getPlayers().size() + " players");
             for (Player p : loaded.getPlayers()) {
                 Player player = p;
                 logger.info("  Player: " + player.getName() +
@@ -109,18 +109,18 @@ public class RedisDemo {
         }
 
         logger.info("\n=== Cleanup ===");
-        // redis.removeAllPlayers(tickers[0]);
-        // redis.removeAllPlayers(tickers[1]);
-        // redis.removeAllPlayers(tickers[2]);
-        logger.info("All players removed from all tickers");
+        // redis.removeAllPlayers(sessions[0]);
+        // redis.removeAllPlayers(sessions[1]);
+        // redis.removeAllPlayers(sessions[2]);
+        logger.info("All players removed from all sessions");
     }
 
-    private static Player createDrumPlayer(RedisService redis, String name, int note, Ticker ticker) {
+    private static Player createDrumPlayer(RedisService redis, String name, int note, Session session) {
         Player player = redis.newPlayer();
         player.setName(name);
         player.setChannel(10); // General MIDI drum channel
         player.setNote((long) note);
-        // redis.addPlayerToTicker(ticker, player);
+        // redis.addPlayerToSession(session, player);
         logger.info("Created " + name + " player (ID: " + player.getId() + ")");
         return player;
     }
@@ -136,11 +136,11 @@ public class RedisDemo {
         }
     }
 
-    private static void describeTickerState(RedisService redis, Ticker ticker) {
-        Ticker loaded = redis.findTickerById(ticker.getId());
-        logger.info("\nTicker " + loaded.getId() + ":");
-        logger.info("Previous ID: " + redis.getPreviousTickerId(loaded));
-        logger.info("Next ID: " + redis.getNextTickerId(loaded));
+    private static void describeSessionState(RedisService redis, Session session) {
+        Session loaded = redis.findSessionById(session.getId());
+        logger.info("\nSession " + loaded.getId() + ":");
+        logger.info("Previous ID: " + redis.getPreviousSessionId(loaded));
+        logger.info("Next ID: " + redis.getNextSessionId(loaded));
         logger.info("Players (" + loaded.getPlayers().size() + "):");
 
         for (Player p : loaded.getPlayers()) {

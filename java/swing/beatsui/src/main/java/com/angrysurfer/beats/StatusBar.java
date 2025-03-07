@@ -15,7 +15,7 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.Session;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +24,7 @@ import lombok.Setter;
 @Setter
 public class StatusBar extends JPanel implements CommandListener, StatusConsumer {
 
-    private JLabel tickerIdLabel;
+    private JLabel sessionIdLabel;
     private JLabel playerCountLabel;
     private JLabel playerIdLabel;
     private JLabel ruleCountLabel;
@@ -33,7 +33,7 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
     private JLabel messageLabel;
     private JLabel timeLabel;
 
-    private JTextField tickerIdField;
+    private JTextField sessionIdField;
     private JTextField playerCountField;
     private JTextField playerIdField;
     private JTextField ruleCountField;
@@ -48,38 +48,38 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
         super(new BorderLayout());
         setup();
 
-        // Request initial ticker state through CommandBus
+        // Request initial session state through CommandBus
         SwingUtilities.invokeLater(() -> {
-            CommandBus.getInstance().publish(Commands.TICKER_REQUEST, this);
+            CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
         });
     }
 
     private void setup() {
         setBorder(BorderFactory.createEmptyBorder(2, 6, 8, 6));
 
-        JPanel tickerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel sessionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        tickerIdLabel = new JLabel("Ticker: ");
-        tickerPanel.add(tickerIdLabel);
-        tickerIdField = createTextField(2); // Reduced from 4
-        tickerPanel.add(tickerIdField);
+        sessionIdLabel = new JLabel("Session: ");
+        sessionPanel.add(sessionIdLabel);
+        sessionIdField = createTextField(2); // Reduced from 4
+        sessionPanel.add(sessionIdField);
 
         playerCountLabel = new JLabel("Players: ");
-        tickerPanel.add(playerCountLabel);
+        sessionPanel.add(playerCountLabel);
         playerCountField = createTextField(2); // Reduced from 4
-        tickerPanel.add(playerCountField);
+        sessionPanel.add(playerCountField);
 
         playerIdLabel = new JLabel("Player: ");
-        tickerPanel.add(playerIdLabel);
+        sessionPanel.add(playerIdLabel);
         playerIdField = createTextField(2); // Reduced from 4
-        tickerPanel.add(playerIdField);
+        sessionPanel.add(playerIdField);
 
         ruleCountLabel = new JLabel("Rules: ");
-        tickerPanel.add(ruleCountLabel);
+        sessionPanel.add(ruleCountLabel);
         ruleCountField = createTextField(2); // Reduced from 4
-        tickerPanel.add(ruleCountField);
+        sessionPanel.add(ruleCountField);
 
-        add(tickerPanel, BorderLayout.WEST);
+        add(sessionPanel, BorderLayout.WEST);
 
         JPanel statusPanel = new JPanel(new BorderLayout());
 
@@ -158,9 +158,9 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
             return;
 
         switch (action.getCommand()) {
-            case Commands.TICKER_SELECTED, Commands.TICKER_UPDATED, Commands.TICKER_LOADED -> {
-                if (action.getData() instanceof Ticker ticker) {
-                    updateTickerInfo(ticker);
+            case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED, Commands.SESSION_LOADED -> {
+                if (action.getData() instanceof Session session) {
+                    updateSessionInfo(session);
                 }
             }
             case Commands.PLAYER_SELECTED -> {
@@ -173,12 +173,12 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
         }
     }
 
-    private void updateTickerInfo(Ticker ticker) {
-        if (ticker != null) {
-            tickerIdField.setText(String.valueOf(ticker.getId()));
-            playerCountField.setText(String.valueOf(ticker.getPlayers().size()));
+    private void updateSessionInfo(Session session) {
+        if (session != null) {
+            sessionIdField.setText(String.valueOf(session.getId()));
+            playerCountField.setText(String.valueOf(session.getPlayers().size()));
         } else {
-            clearTickerInfo();
+            clearSessionInfo();
         }
     }
 
@@ -191,8 +191,8 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
         }
     }
 
-    private void clearTickerInfo() {
-        tickerIdField.setText("");
+    private void clearSessionInfo() {
+        sessionIdField.setText("");
         playerCountField.setText("");
     }
 

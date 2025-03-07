@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisInstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.InstrumentEngine;
+import com.angrysurfer.core.service.InstrumentManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -22,11 +22,11 @@ public class InstrumentService {
     private static final Logger logger = LoggerFactory.getLogger(InstrumentService.class);
 
     private final RedisInstrumentHelper instrumentHelper;
-    private final InstrumentEngine instrumentEngine;
+    private final InstrumentManager instrumentEngine;
 
     public InstrumentService(RedisService redisService) {
         this.instrumentHelper = redisService.getInstrumentHelper();
-        this.instrumentEngine = new InstrumentEngine(); // SessionM anager.getInstance().getInstrumentEngine();
+        this.instrumentEngine = new InstrumentManager(); // SessionM anager.getInstance().getInstrumentEngine();
     }
 
     public List<Instrument> getAllInstruments() {

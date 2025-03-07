@@ -25,14 +25,14 @@
 // import com.angrysurfer.core.repo.Songs;
 // import com.angrysurfer.core.repo.Steps;
 // import com.angrysurfer.core.repo.Strikes;
-// import com.angrysurfer.core.repo.Tickers;
+// import com.angrysurfer.core.repo.Sessions;
 // import com.angrysurfer.core.util.Comparison;
 // import com.angrysurfer.core.util.update.PlayerUpdateType;
 // import com.angrysurfer.core.util.update.RuleUpdateType;
 // import com.angrysurfer.spring.Application;
 // import com.angrysurfer.spring.service.MIDIService;
 // import com.angrysurfer.spring.service.PlayerService;
-// import com.angrysurfer.spring.service.TickerService;
+// import com.angrysurfer.spring.service.SessionService;
 
 // @RunWith(SpringRunner.class)
 // @SpringBootTest(
@@ -49,7 +49,7 @@
 //     PlayerService playerService;
 
 //     @Autowired
-//     TickerService tickerService;
+//     SessionService sessionService;
 
 //     @Autowired
 //     MIDIService midiService;
@@ -61,7 +61,7 @@
 //     Rules ruleRepo;
 
 //     @Autowired
-//     Tickers tickerRepo;
+//     Sessions sessionRepo;
 
 //     @Autowired
 //     Instruments instrumentRepo;
@@ -94,9 +94,9 @@
 //     }
 
 //     @Test
-//     public void whenPlayerAdded_thenTickerShouldNotBeNull() {
+//     public void whenPlayerAdded_thenSessionShouldNotBeNull() {
 //         AbstractPlayer player = playerService.addPlayer(RAZ);
-//         assertNotNull(player.getTicker());
+//         assertNotNull(player.getSession());
 //     }
     
 //     @Test
@@ -111,8 +111,8 @@
 //         Rule r3 = playerService.addRule(player.getId());
 //         r3.setComparison(Comparison.LESS_THAN);
         
-//         AbstractPlayer tickerPlayer = tickerService.getTicker().getPlayer(player.getId());
-//         assertEquals(3, tickerPlayer.getRules().size());
+//         AbstractPlayer sessionPlayer = sessionService.getSession().getPlayer(player.getId());
+//         assertEquals(3, sessionPlayer.getRules().size());
 //     }
 
 //     @Test
@@ -305,34 +305,34 @@
 //     }
 
 //     @Test
-//     public void whenPlayerAdded_thenTickerContainsPlayer() {
+//     public void whenPlayerAdded_thenSessionContainsPlayer() {
 //         AbstractPlayer player = playerService.addPlayer(RAZ);
-//         assertTrue(tickerService.getTicker().getPlayers().contains(player)); 
+//         assertTrue(sessionService.getSession().getPlayers().contains(player)); 
 //     }
 
 //     @Test
-//     public void whenPlayerRemoved_thenTickerNoLongerContainsPlayer() {
+//     public void whenPlayerRemoved_thenSessionNoLongerContainsPlayer() {
 //         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.removePlayer(player.getId());
-//         assertTrue(!tickerService.getTicker().getPlayers().contains(player)); 
+//         assertTrue(!sessionService.getSession().getPlayers().contains(player)); 
 //     }
 
 //     @Test
-//     public void whenPlayersAdded_thenTickerContainsPlayers() {
-//         tickerService.getTicker().getPlayers().clear();
+//     public void whenPlayersAdded_thenSessionContainsPlayers() {
+//         sessionService.getSession().getPlayers().clear();
 //         playerService.addPlayer(RAZ);
 //         playerService.addPlayer(RAZ);
 //         playerService.addPlayer(RAZ);
-//         assertTrue(tickerService.getTicker().getPlayers().size() > 0); 
+//         assertTrue(sessionService.getSession().getPlayers().size() > 0); 
 //     }
 
 //     // @Test
-//     // public void whenPlayersCleared_thenTickerNoLongerContainsPlayers() {
+//     // public void whenPlayersCleared_thenSessionNoLongerContainsPlayers() {
 //     //     playerService.addPlayer(RAZ);
 //     //     playerService.addPlayer(RAZ);
 //     //     playerService.addPlayer(RAZ);
 //     //     playerService.clearPlayers();
-//     //     assertTrue(tickerService.getTicker().getPlayers().size() == 0); 
+//     //     assertTrue(sessionService.getSession().getPlayers().size() == 0); 
 //     // }
 
 // }

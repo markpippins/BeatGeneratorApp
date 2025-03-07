@@ -16,7 +16,7 @@ import javax.swing.UIManager;
 
 import com.angrysurfer.beats.panel.BackgroundPanel;
 import com.angrysurfer.beats.panel.MainPanel;
-import com.angrysurfer.beats.panel.TickerPanel;
+import com.angrysurfer.beats.panel.SessionPanel;
 import com.angrysurfer.beats.service.DialogManager;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -177,7 +177,7 @@ public class Frame extends JFrame implements AutoCloseable {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
-                if (mainPanel != null && mainPanel.getSelectedComponent() instanceof TickerPanel) {
+                if (mainPanel != null && mainPanel.getSelectedComponent() instanceof SessionPanel) {
                     char keyChar = Character.toLowerCase(e.getKeyChar());
 
                     if (keyNoteMap.containsKey(keyChar)) {

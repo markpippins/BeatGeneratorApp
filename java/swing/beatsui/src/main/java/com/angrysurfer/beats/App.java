@@ -124,12 +124,12 @@ public class App implements CommandListener {
             SessionManager.getInstance().initialize();
             logger.info("Session manager initialized");
 
-            // Initialize TickerManager before any UI components
+            // Initialize SessionManager before any UI components
 
-            // TickerManager tickerManager = TickerManager.getInstance();
-            // logger.info("Ticker manager initialized");
+            // SessionManager sessionManager = SessionManager.getInstance();
+            // logger.info("Session manager initialized");
 
-            // // Initialize instrument management after ticker
+            // // Initialize instrument management after session
             // RedisInstrumentHelper instrumentHelper = redisService.getInstrumentHelper();
             // // InstrumentEngine instrumentManager =
             // // InstrumentEngine.getInstance(instrumentHelper);

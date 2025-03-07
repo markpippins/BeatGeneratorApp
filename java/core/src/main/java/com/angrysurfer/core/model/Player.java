@@ -133,7 +133,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
     private Instrument instrument;
 
     @JsonIgnore
-    private Ticker ticker;
+    private Session session;
 
     // Add TimingBus
     private final TimingBus timingBus = TimingBus.getInstance();
@@ -144,16 +144,16 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
         timingBus.register(this); // Register for timing events
     }
 
-    public Player(String name, Ticker ticker, Instrument instrument) {
+    public Player(String name, Session session, Instrument instrument) {
         this(); // Call default constructor to ensure registration
         setName(name);
         setInstrument(instrument);
-        setTicker(ticker);
+        setSession(session);
     }
 
-    public Player(String name, Ticker ticker, Instrument instrument,
+    public Player(String name, Session session, Instrument instrument,
             List<Integer> allowedControlMessages) {
-        this(name, ticker, instrument);
+        this(name, session, instrument);
         setAllowedControlMessages(allowedControlMessages);
     }
 
@@ -235,7 +235,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
     private Set<Rule> filterByPart(Set<Rule> rules, boolean includeNoPart) {
         return rules.stream()
                 .filter(r -> r.getPart() == 0
-                        || (includeNoPart && ((long) r.getPart()) == getTicker().getPart()))
+                        || (includeNoPart && ((long) r.getPart()) == getSession().getPart()))
                 .collect(Collectors.toSet());
     }
 
@@ -248,10 +248,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
         AtomicBoolean hasBeat = new AtomicBoolean(false);
         AtomicBoolean hasBar = new AtomicBoolean(false);
 
-        long tick = getTicker().getTick();
-        long bar = getTicker().getBar();
-        double beat = getTicker().getBeat();
-        long fractionLength = getTicker().getTicksPerBeat() / getSubDivisions();
+        long tick = getSession().getTick();
+        long bar = getSession().getBar();
+        double beat = getSession().getBeat();
+        long fractionLength = getSession().getTicksPerBeat() / getSubDivisions();
         AtomicLong beatFraction = new AtomicLong(0L);
         if (getBeatFraction() > 1)
             LongStream.range(1L, getBeatFraction()).forEach(f -> beatFraction.addAndGet(fractionLength));
@@ -283,25 +283,25 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
                 }
 
                 case Comparison.TICK_COUNT -> {
-                    if (!Operator.evaluate(rule.getComparison(), ((Ticker) getTicker()).getTickCounter().get(),
+                    if (!Operator.evaluate(rule.getComparison(), ((Session) getSession()).getTickCounter().get(),
                             rule.getValue()))
                         play.set(false);
                 }
 
                 case Comparison.BEAT_COUNT -> {
-                    if (!Operator.evaluate(rule.getComparison(), ((Ticker) getTicker()).getBeatCounter().get(),
+                    if (!Operator.evaluate(rule.getComparison(), ((Session) getSession()).getBeatCounter().get(),
                             rule.getValue()))
                         play.set(false);
                 }
 
                 case Comparison.BAR_COUNT -> {
-                    if (!Operator.evaluate(rule.getComparison(), ((Ticker) getTicker()).getBarCounter().get(),
+                    if (!Operator.evaluate(rule.getComparison(), ((Session) getSession()).getBarCounter().get(),
                             rule.getValue()))
                         play.set(false);
                 }
 
                 case Comparison.PART_COUNT -> {
-                    if (!Operator.evaluate(rule.getComparison(), ((Ticker) getTicker()).getPartCounter().get(),
+                    if (!Operator.evaluate(rule.getComparison(), ((Session) getSession()).getPartCounter().get(),
                             rule.getValue()))
                         play.set(false);
                 }
@@ -320,24 +320,22 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
     public void onAction(Command action) {
         switch (action.getCommand()) {
             case Commands.BASIC_TIMING_TICK -> {
-                // if (getTicker() != null && getTicker().isRunning()) {
-                // Only process if our ticker is running
-                if (getTicker() != null) {
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            var solo = getTicker().hasSolos();
-                            if ((!solo && !isMuted()) || (solo && isSolo()) && shouldPlay()) {
-                                logger.debug("Player {} will play on tick {}", getName(), getTicker().getTick());
-                                getTicker().getActivePlayerIds().add(getId());
-                                setLastPlayedBar(getTicker().getBar());
-                                setLastPlayedBeat(getTicker().getBeat());
-                                setLastPlayedTick(getTicker().getTick());
-                                onTick(getTicker().getTick(), getTicker().getBar());
-                            }
-                            setLastTick(getTicker().getTick());
-                        }
-                    }).start();
+                // Only process if our session is running
+                if (getSession() != null) {
+                    if (((!getSession().hasSolos() && !isMuted()) || 
+                        (getSession().hasSolos() && isSolo())) && shouldPlay()) {
+                        
+                        var tick = getSession().getTick();
+                        var beat = getSession().getBeat();
+                        var bar = getSession().getBar();
+                        
+                        getSession().getActivePlayerIds().add(getId());
+                        setLastPlayedBar(bar);
+                        setLastPlayedBeat(beat);
+                        setLastPlayedTick(tick);
+                        onTick(tick, lastPlayedBar);
+                        setLastTick(tick);
+                    }
                 }
             }
         }

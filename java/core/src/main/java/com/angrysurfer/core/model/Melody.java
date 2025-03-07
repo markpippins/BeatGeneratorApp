@@ -21,8 +21,8 @@ package com.angrysurfer.core.model;
 //     @ElementCollection
 //     private final List<Integer> notes = new ArrayList<>();
 
-//     public Melody(String name, Ticker ticker, MidiInstrument instrument) {
-//         super(name, ticker, instrument);
+//     public Melody(String name, Session session, MidiInstrument instrument) {
+//         super(name, session, instrument);
 //     }
 
 //     public Melody() {

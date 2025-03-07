@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
@@ -68,10 +68,10 @@ public class RedisPlayerHelper {
         }
     }
 
-    public Set<Player> findPlayersForTicker(Long tickerId, String className) {
+    public Set<Player> findPlayersForSession(Long sessionId, String className) {
         try (Jedis jedis = jedisPool.getResource()) {
             Set<Player> players = new HashSet<>();
-            String playersKey = String.format("ticker:%d:players:%s", tickerId, className);
+            String playersKey = String.format("session:%d:players:%s", sessionId, className);
             Set<String> playerIds = jedis.smembers(playersKey);
 
             for (String id : playerIds) {
@@ -104,7 +104,7 @@ public class RedisPlayerHelper {
         return ids.toArray(new Long[ids.size()]);
 
     }
-    // public Long[] getPlayerIdsForTicker() {
+    // public Long[] getPlayerIdsForSession() {
     // try (Jedis jedis = jedisPool.getResource()) {
     // Set<String> keys = jedis.keys("player:*");
     // Long[] ids = new Long[keys.size()];
@@ -144,10 +144,10 @@ public class RedisPlayerHelper {
 
             // Store references before removing
             Set<Rule> rules = new HashSet<>(player.getRules() != null ? player.getRules() : new HashSet<>());
-            Ticker ticker = player.getTicker();
+            Session session = player.getSession();
 
             // Temporarily remove circular references
-            player.setTicker(null);
+            player.setSession(null);
             player.setRules(null);
 
             // Save the player
@@ -156,7 +156,7 @@ public class RedisPlayerHelper {
             jedis.set(playerKey, json);
 
             // Restore references
-            player.setTicker(ticker);
+            player.setSession(session);
             player.setRules(rules);
 
             logger.info(String.format("Saved player %d with %d rules", player.getId(), rules.size()));
@@ -173,10 +173,10 @@ public class RedisPlayerHelper {
                 player.getRules().forEach(rule -> ruleHelper.deleteRule(rule.getId()));
             }
 
-            // Remove player from ticker's player set
-            if (player.getTicker() != null) {
-                String playersKey = String.format("ticker:%d:players:%s",
-                        player.getTicker().getId(),
+            // Remove player from session's player set
+            if (player.getSession() != null) {
+                String playersKey = String.format("session:%d:players:%s",
+                        player.getSession().getId(),
                         player.getPlayerClassName());
                 jedis.srem(playersKey, player.getId().toString());
             }
@@ -199,25 +199,25 @@ public class RedisPlayerHelper {
         }
     }
 
-    public void addPlayerToTicker(Ticker ticker, Player player) {
-        logger.info("Adding player " + player.getId() + " to ticker " + ticker.getId());
+    public void addPlayerToSession(Session session, Player player) {
+        logger.info("Adding player " + player.getId() + " to session " + session.getId());
 
         try {
             // Set up relationships
-            player.setTicker(ticker);
-            if (ticker.getPlayers() == null) {
-                ticker.setPlayers(new HashSet<>());
+            player.setSession(session);
+            if (session.getPlayers() == null) {
+                session.setPlayers(new HashSet<>());
             }
-            ticker.getPlayers().add(player);
+            session.getPlayers().add(player);
 
             // Save both entities
             savePlayer(player);
 
             logger.info("Successfully added player " + player.getId() +
-                    " (" + player.getName() + ") to ticker " + ticker.getId());
+                    " (" + player.getName() + ") to session " + session.getId());
         } catch (Exception e) {
-            logger.severe("Error adding player to ticker: " + e.getMessage());
-            throw new RuntimeException("Failed to add player to ticker", e);
+            logger.severe("Error adding player to session: " + e.getMessage());
+            throw new RuntimeException("Failed to add player to session", e);
         }
     }
 }

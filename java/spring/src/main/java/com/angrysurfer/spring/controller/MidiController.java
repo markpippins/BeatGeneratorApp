@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.service.MIDIDeviceManager;
+import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.InstrumentService;
 
@@ -39,26 +39,26 @@ public class MidiController {
     @GetMapping(path = Constants.DEVICES_INFO)
     public @ResponseBody List<MidiDevice.Info> getDeviceInfo() {
         logger.info("GET " + Constants.DEVICES_INFO);
-        return MIDIDeviceManager.getMidiDeviceInfos();
+        return DeviceManager.getMidiDeviceInfos();
     }
 
     @GetMapping(path = Constants.DEVICE_NAMES)
     public @ResponseBody List<String> getDeviceNames() {
         logger.info("GET " + Constants.DEVICE_NAMES);
-        return MIDIDeviceManager.getMidiOutDevices().stream().map(d -> d.getDeviceInfo().getName()).toList();
+        return DeviceManager.getMidiOutDevices().stream().map(d -> d.getDeviceInfo().getName()).toList();
     }
 
     @PostMapping(path = Constants.SERVICE_RESET)
     public void reset() {
         logger.info("POST " + Constants.SERVICE_RESET);
-        MIDIDeviceManager.reset();
+        DeviceManager.reset();
     }
 
     @PostMapping(path = Constants.SERVICE_SELECT)
     public @ResponseBody boolean select(String name) {
         logger.info("POST " + Constants.SERVICE_SELECT + " - name: {}", name);
         try {
-            return MIDIDeviceManager.select(name);
+            return DeviceManager.select(name);
         } catch (MidiUnavailableException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -77,10 +77,10 @@ public class MidiController {
                 instrumentId, channel, messageType, data1, data2);
         Instrument instrument = instrumentService.getInstrumentById((long) instrumentId);
         if (Objects.nonNull(instrument)) {
-            instrument.setDevice(MIDIDeviceManager.getMidiDevice(instrument.getDeviceName()));
+            instrument.setDevice(DeviceManager.getMidiDevice(instrument.getDeviceName()));
             if (Objects.nonNull(instrument.getDevice())) {
                 // instrument.setChannel(channel);
-                MIDIDeviceManager.sendMessage(instrument, channel, messageType, data1, data2);
+                DeviceManager.sendMessage(instrument, channel, messageType, data1, data2);
             }
         }
 

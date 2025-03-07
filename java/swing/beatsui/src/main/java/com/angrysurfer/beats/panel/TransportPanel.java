@@ -20,12 +20,13 @@ import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.component.LedIndicator;
+import com.angrysurfer.beats.widget.LedIndicator;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.service.SequencerManager;
 
 public class TransportPanel extends JPanel implements CommandListener {
     // Add CommandBus alongside TimingBus
@@ -41,8 +42,6 @@ public class TransportPanel extends JPanel implements CommandListener {
     private final SimpleDateFormat timeFormat;
     private static final int MAX_LOG_LINES = 1000;
     private static final int PADDING = 12;
-
-    private final SequencerManager sequencerManager;
 
     // Add these fields after the existing constants
     private int currentTick = 0;
@@ -62,8 +61,6 @@ public class TransportPanel extends JPanel implements CommandListener {
         this.timeBus = TimingBus.getInstance();
         this.timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
-        // Create sequencer manager
-        this.sequencerManager = new SequencerManager(this::log, this::handleMidiClock);
 
         // Set panel padding
         setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
@@ -151,51 +148,16 @@ public class TransportPanel extends JPanel implements CommandListener {
         String command = e.getActionCommand();
         switch (command) {
             case Commands.TRANSPORT_PLAY -> {
-                sequencerManager.start();
-                timeBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
-                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
-                commandBus.publish(Commands.TRANSPORT_PLAY, this);
+                // Delegate to SequencerManager
+                SequencerManager.getInstance().start();
+                // UI updates will happen through command listeners
             }
             case Commands.TRANSPORT_STOP -> {
-                sequencerManager.stop();
-                litTick = false;
-                litBeat = false;
-                litBar = false;
-                timeBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
-                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
-                commandBus.publish(Commands.TRANSPORT_STOP, this);
+                // Delegate to SequencerManager
+                SequencerManager.getInstance().stop();
+                // UI updates will happen through command listeners
             }
-            case Commands.TRANSPORT_PAUSE -> {
-                sequencerManager.stop();
-                timeBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
-                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
-                commandBus.publish(Commands.TRANSPORT_PAUSE, this);
-            }
-        }
-    }
-
-    private void handleMidiClock() {
-        // Send timing first, before any processing
-        timeBus.publish(Commands.BASIC_TIMING_TICK, this);
-        
-        // Log to verify messages are being sent
-        // logger.debug("Sending BASIC_TIMING_TICK");
-        
-        currentTick++;
-        flashTickLed(tickLed);
-
-        if (currentTick >= TICKS_PER_BEAT) {
-            currentTick = 0;
-            currentBeat++;
-            flashBeatLed(beatLed);
-            timeBus.publish(Commands.BASIC_TIMING_BEAT, this);
-            // logger.debug("Sending BASIC_TIMING_BEAT");
-
-            if (currentBeat >= BEATS_PER_BAR) {
-                currentBeat = 0;
-                currentBar++;
-                flashBarLed(barLed);
-            }
+            // Other cases...
         }
     }
 
@@ -260,45 +222,30 @@ public class TransportPanel extends JPanel implements CommandListener {
 
     @Override
     public void onAction(Command action) {
+        if (action.getCommand() == null) return;
+        
         switch (action.getCommand()) {
+            case Commands.BASIC_TIMING_TICK -> {
+                // Flash tick LED
+                flashTickLed(tickLed);
+            }
+            case Commands.BASIC_TIMING_BEAT -> {
+                // Flash beat LED
+                flashBeatLed(beatLed);
+            }
             case Commands.TRANSPORT_STATE_CHANGED -> {
-                if (action.getData() instanceof Boolean isPlaying) {
-                    SwingUtilities.invokeLater(() -> {
-                        playButton.setEnabled(!isPlaying);
-                        stopButton.setEnabled(isPlaying);
-                        pauseButton.setEnabled(isPlaying);
-                        if (isPlaying) {
-                            sequencerManager.start();
-                        } else {
-                            sequencerManager.stop();
-                        }
-                    });
-                    log("Transport state changed: " + (isPlaying ? "Playing" : "Stopped"));
-                }
+                boolean isPlaying = (boolean)action.getData();
+                playButton.setEnabled(!isPlaying);
+                stopButton.setEnabled(isPlaying);
+                // Other transport UI updates
             }
-            case Commands.TRANSPORT_STOP -> {
-                sequencerManager.stop();
-                SwingUtilities.invokeLater(() -> {
-                    playButton.setEnabled(true);
-                    stopButton.setEnabled(false);
-                    pauseButton.setEnabled(false);
-                });
-                log("Transport stopped");
-            }
-            case Commands.TRANSPORT_RECORD_STATE_CHANGED -> {
-                if (action.getData() instanceof Boolean isRecording) {
-                    SwingUtilities.invokeLater(() -> {
-                        recordButton.setEnabled(!isRecording);
-                    });
-                    log("Record state changed: " + (isRecording ? "Recording" : "Stopped"));
-                }
-            }
+            // Other cases...
         }
     }
 
     @Override
     protected void finalize() throws Throwable {
-        sequencerManager.cleanup();
+        SequencerManager.getInstance().cleanup();
         super.finalize();
     }
 

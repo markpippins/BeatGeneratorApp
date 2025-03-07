@@ -228,7 +228,7 @@ public class RulesPanel extends JPanel {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {
-                    case Commands.TICKER_SELECTED -> {
+                    case Commands.SESSION_SELECTED -> {
                         clearRules();
                         currentPlayer = null;
                         updateButtonStates();

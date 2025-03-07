@@ -40,7 +40,7 @@ import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.SessionManager;
@@ -141,7 +141,7 @@ public class PlayersPanel extends JPanel {
         return numericCols.stream().mapToInt(Integer::intValue).toArray();
     }
 
-    private boolean hasActiveTicker = false; // Add this field
+    private boolean hasActiveSession = false; // Add this field
     private JButton controlButton; // Add this field
 
     public PlayersPanel(StatusConsumer status) {
@@ -168,13 +168,13 @@ public class PlayersPanel extends JPanel {
         setupButtonListeners();
         setupContextMenu();
 
-        // Check for active ticker and enable controls immediately
-        Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
-        if (currentTicker != null) {
-            logger.info("Found active ticker on construction: " + currentTicker.getId());
-            hasActiveTicker = true;
+        // Check for active session and enable controls immediately
+        Session currentSession = SessionManager.getInstance().getActiveSession();
+        if (currentSession != null) {
+            logger.info("Found active session on construction: " + currentSession.getId());
+            hasActiveSession = true;
             enableControls(true);
-            refreshPlayers(currentTicker.getPlayers());
+            refreshPlayers(currentSession.getPlayers());
         }
     }
 
@@ -411,9 +411,9 @@ public class PlayersPanel extends JPanel {
                 contextMenu.setEditEnabled(hasSelection);
                 contextMenu.setDeleteEnabled(hasSelection);
 
-                // Add button enabled if we have an active ticker
-                buttonPanel.setAddEnabled(hasActiveTicker);
-                contextMenu.setAddEnabled(hasActiveTicker);
+                // Add button enabled if we have an active session
+                buttonPanel.setAddEnabled(hasActiveSession);
+                contextMenu.setAddEnabled(hasActiveSession);
 
                 // Handle player selection for rules panel
                 if (hasSelection) {
@@ -502,20 +502,20 @@ public class PlayersPanel extends JPanel {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {
-                    case Commands.TICKER_SELECTED, Commands.TICKER_LOADED -> {
-                        if (action.getData() instanceof Ticker ticker) {
-                            logger.info("Ticker selected/loaded: " + ticker.getId());
-                            hasActiveTicker = true;
+                    case Commands.SESSION_SELECTED, Commands.SESSION_LOADED -> {
+                        if (action.getData() instanceof Session session) {
+                            logger.info("Session selected/loaded: " + session.getId());
+                            hasActiveSession = true;
                             enableControls(true);
-                            refreshPlayers(ticker.getPlayers());
+                            refreshPlayers(session.getPlayers());
 
                             // Auto-select first player only if players exist
-                            if (ticker.getPlayers() != null && !ticker.getPlayers().isEmpty()) {
+                            if (session.getPlayers() != null && !session.getPlayers().isEmpty()) {
                                 // Ensure there are rows in the table before selecting
                                 if (table.getRowCount() > 0) {
                                     try {
                                         table.setRowSelectionInterval(0, 0);
-                                        Player firstPlayer = ticker.getPlayers().iterator().next();
+                                        Player firstPlayer = session.getPlayers().iterator().next();
                                         CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, firstPlayer);
                                         logger.info("Auto-selected first player: " + firstPlayer.getName());
                                     } catch (IllegalArgumentException e) {
@@ -525,49 +525,49 @@ public class PlayersPanel extends JPanel {
                                     logger.info("Table is empty, skipping player selection");
                                 }
                             } else {
-                                logger.info("No players in ticker, skipping player selection");
+                                logger.info("No players in session, skipping player selection");
                             }
                         }
                     }
-                    case Commands.TICKER_UPDATED -> {
-                        if (action.getData() instanceof Ticker ticker) {
-                            logger.info("Ticker updated, refreshing players. Ticker ID: " + ticker.getId());
-                            refreshPlayers(ticker.getPlayers());
+                    case Commands.SESSION_UPDATED -> {
+                        if (action.getData() instanceof Session session) {
+                            logger.info("Session updated, refreshing players. Session ID: " + session.getId());
+                            refreshPlayers(session.getPlayers());
                             // Auto-select the newly added player if it was an add operation
                             if (action.getSender() instanceof PlayerEditPanel) {
                                 selectLastPlayer();
                             }
                         }
                     }
-                    case Commands.TICKER_UNSELECTED -> {
-                        hasActiveTicker = false;
+                    case Commands.SESSION_UNSELECTED -> {
+                        hasActiveSession = false;
                         enableControls(false);
                         refreshPlayers(null);
                     }
                     case Commands.PLAYER_EDIT_CANCELLED -> {
-                        if (action.getData() instanceof Ticker ticker) {
-                            refreshPlayers(ticker.getPlayers());
+                        if (action.getData() instanceof Session session) {
+                            refreshPlayers(session.getPlayers());
                         }
                     }
                     case Commands.SHOW_PLAYER_EDITOR_OK -> {
-                        if (action.getData() instanceof Ticker ticker) {
-                            refreshPlayers(ticker.getPlayers());
+                        if (action.getData() instanceof Session session) {
+                            refreshPlayers(session.getPlayers());
                         }
                     }
                     case Commands.PLAYER_DELETE_REQUEST -> {
                         if (action.getData() instanceof Player player) {
-                            Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
-                            if (currentTicker != null) {
+                            Session currentSession = SessionManager.getInstance().getActiveSession();
+                            if (currentSession != null) {
                                 CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
-                                refreshPlayers(currentTicker.getPlayers());
+                                refreshPlayers(currentSession.getPlayers());
                             }
                         }
                     }
 
                     case Commands.PLAYER_DELETED -> {
-                        Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
-                        if (currentTicker != null) {
-                            refreshPlayers(currentTicker.getPlayers());
+                        Session currentSession = SessionManager.getInstance().getActiveSession();
+                        if (currentSession != null) {
+                            refreshPlayers(currentSession.getPlayers());
                         }
                     }
 
@@ -591,18 +591,18 @@ public class PlayersPanel extends JPanel {
                             updatePlayerRow(player);
                         }
                     }
-                    case Commands.TICKER_DELETED -> {
-                        // Clear current display and disable controls if no new ticker is active
-                        Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
-                        if (currentTicker == null) {
-                            hasActiveTicker = false;
+                    case Commands.SESSION_DELETED -> {
+                        // Clear current display and disable controls if no new session is active
+                        Session currentSession = SessionManager.getInstance().getActiveSession();
+                        if (currentSession == null) {
+                            hasActiveSession = false;
                             enableControls(false);
                             refreshPlayers(null);
                         } else {
-                            // Update with new active ticker's data
-                            hasActiveTicker = true;
+                            // Update with new active session's data
+                            hasActiveSession = true;
                             enableControls(true);
-                            refreshPlayers(currentTicker.getPlayers());
+                            refreshPlayers(currentSession.getPlayers());
                         }
                     }
                     case Commands.WINDOW_CLOSING -> {
@@ -618,9 +618,9 @@ public class PlayersPanel extends JPanel {
 
                     case Commands.PLAYER_ADDED -> {
                         if (action.getData() instanceof Player player) {
-                            logger.info("Handling PLAYER_ADDED_TO_TICKER");
-                            // Refresh with new ticker state
-                            refreshPlayers(SessionManager.getInstance().getActiveTicker().getPlayers());
+                            logger.info("Handling PLAYER_ADDED_TO_SESSION");
+                            // Refresh with new session state
+                            refreshPlayers(SessionManager.getInstance().getActiveSession().getPlayers());
 
                             // Auto-select the new player
                             int row = findPlayerRowIndex(player);
@@ -720,10 +720,10 @@ public class PlayersPanel extends JPanel {
         if (row >= 0) {
             int modelRow = table.convertRowIndexToModel(row);
             String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
-            Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
-            if (currentTicker != null && currentTicker.getPlayers() != null) {
+            Session currentSession = SessionManager.getInstance().getActiveSession();
+            if (currentSession != null && currentSession.getPlayers() != null) {
                 logger.info("Looking for player: " + playerName);
-                return currentTicker.getPlayers().stream()
+                return currentSession.getPlayers().stream()
                         .filter(p -> p.getName().equals(playerName))
                         .findFirst()
                         .orElse(null);
@@ -735,13 +735,13 @@ public class PlayersPanel extends JPanel {
     private Player[] getSelectedPlayers() {
         int[] selectedRows = table.getSelectedRows();
         List<Player> players = new ArrayList<>();
-        Ticker currentTicker = SessionManager.getInstance().getActiveTicker();
+        Session currentSession = SessionManager.getInstance().getActiveSession();
 
-        if (currentTicker != null) {
+        if (currentSession != null) {
             for (int row : selectedRows) {
                 int modelRow = table.convertRowIndexToModel(row);
                 String playerName = (String) table.getModel().getValueAt(modelRow, 0);
-                currentTicker.getPlayers().stream()
+                currentSession.getPlayers().stream()
                         .filter(p -> p.getName().equals(playerName))
                         .findFirst()
                         .ifPresent(p -> players.add(p));

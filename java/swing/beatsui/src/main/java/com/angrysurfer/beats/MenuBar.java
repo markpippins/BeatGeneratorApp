@@ -82,24 +82,24 @@ public class MenuBar extends JMenuBar {
             }
         });
 
-        JMenuItem clearInvalidTickers = new JMenuItem("Clear Invalid Tickers");
-        clearInvalidTickers.addActionListener(e -> {
+        JMenuItem clearInvalidSessions = new JMenuItem("Clear Invalid Sessions");
+        clearInvalidSessions.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
                     parentFrame,
-                    "Are you sure you want to remove all invalid tickers?",
-                    "Clear Invalid Tickers",
+                    "Are you sure you want to remove all invalid sessions?",
+                    "Clear Invalid Sessions",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.WARNING_MESSAGE);
 
             if (result == JOptionPane.YES_OPTION) {
-                commandBus.publish(Commands.CLEAR_INVALID_TICKERS, this);
+                commandBus.publish(Commands.CLEAR_INVALID_SESSIONS, this);
             }
         });
 
         JMenu dbMenu = new JMenu("Database");
         dbMenu.setMnemonic(KeyEvent.VK_D);
         dbMenu.add(clearDb);
-        dbMenu.add(clearInvalidTickers); // Add the new menu item
+        dbMenu.add(clearInvalidSessions); // Add the new menu item
 
         JMenuItem loadConfig = new JMenuItem("Load Configuration...");
         loadConfig.addActionListener(e -> {

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
@@ -29,14 +29,14 @@ public class PlayerService {
     private static final Logger logger = LoggerFactory.getLogger(PlayerService.class);
 
     private PlayerManager playerManager = PlayerManager.getInstance();
-    private TickerService tickerService;
+    private SessionService sessionService;
     private InstrumentService instrumentService;
     private RedisService redisService;
 
-    public PlayerService(TickerService tickerService,
+    public PlayerService(SessionService sessionService,
             InstrumentService instrumentService,
             RedisService redisService) {
-        this.tickerService = tickerService;
+        this.sessionService = sessionService;
         this.instrumentService = instrumentService;
         this.redisService = redisService;
     }
@@ -53,18 +53,18 @@ public class PlayerService {
 
     private long getNoteForMidiInstrument(Instrument instrument) {
         Long note = Objects.nonNull(instrument.getLowestNote()) ? instrument.getLowestNote() : 60L;
-        return note + getTicker().getPlayers().size();
+        return note + getSession().getPlayers().size();
     }
 
     public Player addPlayer(Instrument instrument, long note) {
-        Player player = playerManager.addPlayer(getTicker(), instrument, note);
+        Player player = playerManager.addPlayer(getSession(), instrument, note);
         redisService.savePlayer(player);
         return player;
     }
 
     public Rule addRule(Long playerId) {
         logger.info("addRule() - playerId: {}", playerId);
-        Player player = getTicker().getPlayer(playerId);
+        Player player = getSession().getPlayer(playerId);
         Rule rule = playerManager.addRule(player, Comparison.BEAT, Operator.EQUALS, 1.0, 0);
         redisService.saveRule(rule);
         return rule;
@@ -73,7 +73,7 @@ public class PlayerService {
     public Rule addRule(Long playerId, int operator, int comparison, double value, int part) {
         logger.info("addRule() - playerId: {}, operator: {}, comparison: {}, value: {}, part: {}",
                 playerId, operator, comparison, value, part);
-        Player player = getTicker().getPlayer(playerId);
+        Player player = getSession().getPlayer(playerId);
         Rule rule = playerManager.addRule(player, operator, comparison, value, part);
         redisService.saveRule(rule);
         return rule;
@@ -81,7 +81,7 @@ public class PlayerService {
 
     public void removeRule(Long playerId, Long ruleId) {
         logger.info("removeRule() - playerId: {}, ruleId: {}", playerId, ruleId);
-        Player player = getTicker().getPlayer(playerId);
+        Player player = getSession().getPlayer(playerId);
         playerManager.removeRule(player, ruleId);
         redisService.savePlayer(player);
     }
@@ -107,9 +107,9 @@ public class PlayerService {
     public Player updatePlayer(Long playerId, int updateType, int updateValue) {
         logger.info("updatePlayer() - playerId: {}, updateType: {}, updateValue: {}",
                 playerId, updateType, updateValue);
-        Ticker ticker = getTicker();
-        if (ticker != null) {
-            Player player = playerManager.updatePlayer(ticker, playerId, updateType, updateValue);
+        Session session = getSession();
+        if (session != null) {
+            Player player = playerManager.updatePlayer(session, playerId, updateType, updateValue);
             if (player != null) {
                 redisService.savePlayer(player);
             }
@@ -120,9 +120,9 @@ public class PlayerService {
 
     public Player mutePlayer(Long playerId) {
         logger.info("mutePlayer() - playerId: {}", playerId);
-        Ticker ticker = getTicker();
-        if (ticker != null) {
-            Player player = playerManager.mutePlayer(ticker, playerId);
+        Session session = getSession();
+        if (session != null) {
+            Player player = playerManager.mutePlayer(session, playerId);
             if (player != null) {
                 redisService.savePlayer(player);
             }
@@ -133,36 +133,36 @@ public class PlayerService {
 
     public Set<Rule> getRules(Long playerId) {
         logger.info("getRules() - playerId: {}", playerId);
-        Player player = getTicker().getPlayer(playerId);
+        Player player = getSession().getPlayer(playerId);
         return player != null ? player.getRules() : new HashSet<>();
     }
 
     public Set<Player> removePlayer(Long playerId) {
-        Set<Player> players = playerManager.removePlayer(getTicker(), playerId);
-        redisService.saveTicker(getTicker());
+        Set<Player> players = playerManager.removePlayer(getSession(), playerId);
+        redisService.saveSession(getSession());
         return players;
     }
 
     public void clearPlayers() {
-        playerManager.clearPlayers(getTicker());
-        redisService.saveTicker(getTicker());
+        playerManager.clearPlayers(getSession());
+        redisService.saveSession(getSession());
     }
 
     public void clearPlayersWithNoRules() {
         logger.info("clearPlayersWithNoRules()");
-        Ticker ticker = getTicker();
-        if (ticker != null) {
-            playerManager.clearPlayersWithNoRules(ticker);
-            redisService.saveTicker(ticker);
+        Session session = getSession();
+        if (session != null) {
+            playerManager.clearPlayersWithNoRules(session);
+            redisService.saveSession(session);
         }
     }
 
-    private Ticker getTicker() {
-        return tickerService.getTicker();
+    private Session getSession() {
+        return sessionService.getSession();
     }
 
     public Set<Player> getPlayers() {
-        return getTicker().getPlayers();
+        return getSession().getPlayers();
     }
 
     // ... other necessary methods ...

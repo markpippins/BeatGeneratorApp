@@ -22,7 +22,7 @@ import com.angrysurfer.spring.service.SongService;
 @RequestMapping("/api")
 public class SongController {
     // double numberOfTicksToWait = getBeatFraction() *
-    // (getTicker().getTicksPerBeat() / getSubDivisions());
+    // (getSession().getTicksPerBeat() / getSubDivisions());
     List<String> requestsToLog = new ArrayList<>();
 
     static Logger logger = LoggerFactory.getLogger(SongController.class.getCanonicalName());

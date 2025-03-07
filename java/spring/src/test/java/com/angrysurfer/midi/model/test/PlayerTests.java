@@ -11,7 +11,7 @@
 
 // import com.angrysurfer.core.model.AbstractPlayer;
 // import com.angrysurfer.core.model.Rule;
-// import com.angrysurfer.core.model.Ticker;
+// import com.angrysurfer.core.model.Session;
 // import com.angrysurfer.core.model.player.Strike;
 // import com.angrysurfer.core.util.Comparison;
 // import com.angrysurfer.core.util.Operator;
@@ -30,7 +30,7 @@
 //         play.set(true);
 //       }
 //     };
-//     p.setTicker(new Ticker());
+//     p.setSession(new Session());
 
 //     Rule r = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0);
 //     p.getRules().add(r);
@@ -48,15 +48,15 @@
 //     AtomicBoolean play2 = new AtomicBoolean(false);
 //     AtomicBoolean play3 = new AtomicBoolean(false);
 
-//     Ticker ticker = new Ticker() {
+//     Session session = new Session() {
 //       @Override
 //       public double getBeat() {
 //         return 1.0;
 //       }
 //     };
 
-//     ticker.getBarCycler().reset();
-//     ticker.getBeatCycler().reset();
+//     session.getBarCycler().reset();
+//     session.getBeatCycler().reset();
 
 //     AbstractPlayer p1 = new Strike() {
 //       @Override
@@ -65,7 +65,7 @@
 //       }
 
 //     };
-//     p1.setTicker(ticker);
+//     p1.setSession(session);
 
 //     AbstractPlayer p2 = new Strike() {
 //       @Override
@@ -74,7 +74,7 @@
 //       }
 
 //     };
-//     p2.setTicker(ticker);
+//     p2.setSession(session);
 
 //     AbstractPlayer p3 = new Strike() {
 //       @Override
@@ -82,7 +82,7 @@
 //         play3.set(true);
 //       }
 //     };
-//     p3.setTicker(ticker);
+//     p3.setSession(session);
 
 //     p1.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
 //     p2.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));

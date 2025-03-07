@@ -1,6 +1,6 @@
 package com.angrysurfer.core.util.update;
 
-public interface TickerUpdateType {
+public interface SessionUpdateType {
     static int PPQ = 0;
     static int BPM = 1;
     static int BEATS_PER_BAR = 2;

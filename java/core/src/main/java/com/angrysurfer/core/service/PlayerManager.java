@@ -36,7 +36,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 
@@ -143,12 +143,12 @@ public class PlayerManager {
         }
     }
 
-    public Player addPlayer(Ticker ticker, Instrument instrument, long note) {
-        String name = instrument.getName() + ticker.getPlayers().size();
-        Player player = new Strike(name, ticker, instrument, note,
+    public Player addPlayer(Session session, Instrument instrument, long note) {
+        String name = instrument.getName() + session.getPlayers().size();
+        Player player = new Strike(name, session, instrument, note,
                 instrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
-        player.setTicker(ticker);
-        ticker.getPlayers().add(player);
+        player.setSession(session);
+        session.getPlayers().add(player);
         return player;
     }
 
@@ -171,24 +171,24 @@ public class PlayerManager {
         rule.setPlayer(null);
     }
 
-    public Set<Player> removePlayer(Ticker ticker, Long playerId) {
-        Player player = ticker.getPlayer(playerId);
-        ticker.getPlayers().remove(player);
-        return ticker.getPlayers();
+    public Set<Player> removePlayer(Session session, Long playerId) {
+        Player player = session.getPlayer(playerId);
+        session.getPlayers().remove(player);
+        return session.getPlayers();
     }
 
-    public void clearPlayers(Ticker ticker) {
-        Set<Player> players = ticker.getPlayers();
+    public void clearPlayers(Session session) {
+        Set<Player> players = session.getPlayers();
         players.stream()
                 .filter(p -> p.getRules().isEmpty())
                 .forEach(p -> {
-                    ticker.getPlayers().remove(p);
-                    p.setTicker(null);
+                    session.getPlayers().remove(p);
+                    p.setSession(null);
                 });
     }
 
-    public Player updatePlayer(Ticker ticker, Long playerId, int updateType, long updateValue) {
-        Player player = ticker.getPlayer(playerId);
+    public Player updatePlayer(Session session, Long playerId, int updateType, long updateValue) {
+        Player player = session.getPlayer(playerId);
         if (player == null)
             return null;
 
@@ -231,27 +231,27 @@ public class PlayerManager {
         try {
             player.noteOff(0, 0);
             player.setPreset(updateValue);
-            player.getInstrument().setDevice(MIDIDeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
+            player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
             player.getInstrument().programChange(player.getChannel(), updateValue, 0);
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
             // logger.error(e.getMessage(), e);
         }
     }
 
-    public Player mutePlayer(Ticker ticker, Long playerId) {
-        Player player = ticker.getPlayer(playerId);
+    public Player mutePlayer(Session session, Long playerId) {
+        Player player = session.getPlayer(playerId);
         if (player != null) {
             player.setMuted(!player.isMuted());
         }
         return player;
     }
 
-    public void clearPlayersWithNoRules(Ticker ticker) {
-        ticker.getPlayers().stream()
+    public void clearPlayersWithNoRules(Session session) {
+        session.getPlayers().stream()
                 .filter(p -> p.getRules().isEmpty())
                 .forEach(p -> {
-                    ticker.getPlayers().remove(p);
-                    p.setTicker(null);
+                    session.getPlayers().remove(p);
+                    p.setSession(null);
                 });
     }
 
@@ -319,13 +319,13 @@ public class PlayerManager {
         actionBus.publish(Commands.PLAYER_ADDED, this, player);
     }
 
-    public void removeAllPlayers(Ticker ticker) {
-        logger.info("Removing all players from ticker: {}", ticker.getId());
+    public void removeAllPlayers(Session session) {
+        logger.info("Removing all players from session: {}", session.getId());
 
-        Set<Player> players = ticker.getPlayers();
+        Set<Player> players = session.getPlayers();
 
-        ticker.setPlayers(new HashSet<>());
-        redisService.saveTicker(ticker);
+        session.setPlayers(new HashSet<>());
+        redisService.saveSession(session);
 
         for (Player player : players)
             redisService.deletePlayer(player);

@@ -20,7 +20,7 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,7 +46,7 @@ public class RedisService implements CommandListener {
     private final RedisPatternHelper patternHelper;
     private final RedisStepHelper stepHelper;
     private final RedisInstrumentHelper instrumentHelper;
-    private final RedisTickerHelper tickerHelper;
+    private final RedisSessionHelper sessionHelper;
     private final RedisUserConfigurationHelper userConfigHelper;
     // private final RedisConfigHelper configHelper;
 
@@ -61,7 +61,7 @@ public class RedisService implements CommandListener {
         this.songHelper = new RedisSongHelper(jedisPool, objectMapper);
         this.ruleHelper = new RedisRuleHelper(jedisPool, objectMapper);
         this.playerHelper = new RedisPlayerHelper(jedisPool, objectMapper);
-        this.tickerHelper = new RedisTickerHelper(jedisPool, objectMapper);
+        this.sessionHelper = new RedisSessionHelper(jedisPool, objectMapper);
         this.userConfigHelper = new RedisUserConfigurationHelper(jedisPool, objectMapper);
         // this.configHelper = new RedisConfigHelper(jedisPool, objectMapper);
 
@@ -100,41 +100,41 @@ public class RedisService implements CommandListener {
 
     // Facade methods delegating to helpers
 
-    // Ticker operations
-    public Ticker findTickerById(Long id) {
-        return tickerHelper.findTickerById(id);
+    // Session operations
+    public Session findSessionById(Long id) {
+        return sessionHelper.findSessionById(id);
     }
 
-    public void saveTicker(Ticker ticker) {
-        tickerHelper.saveTicker(ticker);
+    public void saveSession(Session session) {
+        sessionHelper.saveSession(session);
     }
 
-    public Long getMinimumTickerId() {
-        return tickerHelper.getMinimumTickerId();
+    public Long getMinimumSessionId() {
+        return sessionHelper.getMinimumSessionId();
     }
 
-    public Long getMaximumTickerId() {
-        return tickerHelper.getMaximumTickerId();
+    public Long getMaximumSessionId() {
+        return sessionHelper.getMaximumSessionId();
     }
 
-    public Long getPreviousTickerId(Ticker ticker) {
-        return tickerHelper.getPreviousTickerId(ticker);
+    public Long getPreviousSessionId(Session session) {
+        return sessionHelper.getPreviousSessionId(session);
     }
 
-    public Long getNextTickerId(Ticker ticker) {
-        return tickerHelper.getNextTickerId(ticker);
+    public Long getNextSessionId(Session session) {
+        return sessionHelper.getNextSessionId(session);
     }
 
-    public List<Long> getAllTickerIds() {
-        return tickerHelper.getAllTickerIds();
+    public List<Long> getAllSessionIds() {
+        return sessionHelper.getAllSessionIds();
     }
 
-    public void deleteTicker(Long tickerId) {
-        tickerHelper.deleteTicker(tickerId);
+    public void deleteSession(Long sessionId) {
+        sessionHelper.deleteSession(sessionId);
     }
 
-    public Ticker newTicker() {
-        return tickerHelper.newTicker();
+    public Session newSession() {
+        return sessionHelper.newSession();
     }
 
     // Player operations
@@ -214,8 +214,8 @@ public class RedisService implements CommandListener {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.flushDB();
             logger.info("Database cleared");
-            Ticker ticker = tickerHelper.newTicker();
-            commandBus.publish(Commands.TICKER_LOADED, this, ticker);
+            Session session = sessionHelper.newSession();
+            commandBus.publish(Commands.SESSION_LOADED, this, session);
         }
     }
 
@@ -381,10 +381,10 @@ public class RedisService implements CommandListener {
     }
 
     // Player methods
-    public Set<Player> findPlayersForTicker(Long tickerId) {
+    public Set<Player> findPlayersForSession(Long sessionId) {
         try (Jedis jedis = jedisPool.getResource()) {
             Set<Player> players = new HashSet<>();
-            String playersKey = "ticker:" + tickerId + ":players";
+            String playersKey = "session:" + sessionId + ":players";
             Set<String> playerIds = jedis.smembers(playersKey);
             for (String id : playerIds) {
                 Player player = findPlayerById(Long.valueOf(id));
@@ -419,11 +419,11 @@ public class RedisService implements CommandListener {
             jedis.del(rulesKey);
             logger.info("Deleted player's rules");
 
-            // Remove from ticker's player set
-            if (player.getTicker() != null) {
-                String tickerPlayersKey = "ticker:" + player.getTicker().getId() + ":players";
-                jedis.srem(tickerPlayersKey, player.getId().toString());
-                logger.info("Removed player from ticker's player set in Redis");
+            // Remove from session's player set
+            if (player.getSession() != null) {
+                String sessionPlayersKey = "session:" + player.getSession().getId() + ":players";
+                jedis.srem(sessionPlayersKey, player.getId().toString());
+                logger.info("Removed player from session's player set in Redis");
             }
 
             // Delete the player itself
@@ -505,10 +505,10 @@ public class RedisService implements CommandListener {
             // Save player state
             savePlayer(player);
 
-            // Find and update player in its ticker's player list
-            if (player.getTicker() != null) {
-                Ticker ticker = (Ticker) player.getTicker();
-                ticker.getPlayers().stream()
+            // Find and update player in its session's player list
+            if (player.getSession() != null) {
+                Session session = (Session) player.getSession();
+                session.getPlayers().stream()
                         .filter(p -> p.getId().equals(player.getId()))
                         .findFirst()
                         .ifPresent(p -> {
@@ -538,45 +538,45 @@ public class RedisService implements CommandListener {
         return null;
     }
 
-    public Ticker findTickerForPlayer(Player player) {
+    public Session findSessionForPlayer(Player player) {
         try (Jedis jedis = jedisPool.getResource()) {
-            Set<String> tickerKeys = jedis.keys("ticker:*");
-            for (String tickerKey : tickerKeys) {
-                String playersKey = tickerKey + ":players";
+            Set<String> sessionKeys = jedis.keys("session:*");
+            for (String sessionKey : sessionKeys) {
+                String playersKey = sessionKey + ":players";
                 if (jedis.sismember(playersKey, player.getId().toString())) {
-                    String tickerId = tickerKey.split(":")[1];
-                    return findTickerById(Long.valueOf(tickerId));
+                    String sessionId = sessionKey.split(":")[1];
+                    return findSessionById(Long.valueOf(sessionId));
                 }
             }
         }
         return null;
     }
 
-    public void clearInvalidTickers() {
+    public void clearInvalidSessions() {
         try (Jedis jedis = jedisPool.getResource()) {
-            Set<String> keys = jedis.keys("ticker:*");
+            Set<String> keys = jedis.keys("session:*");
             for (String key : keys) {
-                Ticker ticker = findTickerById(Long.parseLong(key.split(":")[1]));
-                if (ticker != null && !ticker.isValid()) {
-                    deleteTicker(ticker.getId());
+                Session session = findSessionById(Long.parseLong(key.split(":")[1]));
+                if (session != null && !session.isValid()) {
+                    deleteSession(session.getId());
                 }
             }
         }
     }
 
-    public boolean tickerExists(Long tickerId) {
+    public boolean sessionExists(Long sessionId) {
         try (Jedis jedis = jedisPool.getResource()) {
-            return jedis.exists("ticker:" + tickerId);
+            return jedis.exists("session:" + sessionId);
         }
     }
 
-    public Ticker findFirstValidTicker() {
+    public Session findFirstValidSession() {
         try (Jedis jedis = jedisPool.getResource()) {
-            Set<String> keys = jedis.keys("ticker:*");
+            Set<String> keys = jedis.keys("session:*");
             for (String key : keys) {
-                Ticker ticker = findTickerById(Long.parseLong(key.split(":")[1]));
-                if (ticker != null && ticker.isValid()) {
-                    return ticker;
+                Session session = findSessionById(Long.parseLong(key.split(":")[1]));
+                if (session != null && session.isValid()) {
+                    return session;
                 }
             }
             return null;
@@ -622,9 +622,9 @@ public class RedisService implements CommandListener {
         return songHelper.getMinimumSongId();
     }
 
-    public void addPlayerToTicker(Ticker ticker, Player player) {
-        playerHelper.addPlayerToTicker(ticker, player);
-        // Save the ticker after updating its players
-        saveTicker(ticker);
+    public void addPlayerToSession(Session session, Player player) {
+        playerHelper.addPlayerToSession(session, player);
+        // Save the session after updating its players
+        saveSession(session);
     }
 }

@@ -7,7 +7,6 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.service.SongEngine;
 

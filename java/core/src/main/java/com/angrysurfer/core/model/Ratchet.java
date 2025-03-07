@@ -23,7 +23,7 @@ public class Ratchet extends Strike {
                 parent.getName(), offset, interval, part);
 
         setParent(parent);
-        setTicker(getParent().getTicker());
+        setSession(getParent().getSession());
         setNote(getParent().getNote());
         setInstrument(getParent().getInstrument());
         setAllowedControlMessages(getParent().getAllowedControlMessages());
@@ -39,19 +39,19 @@ public class Ratchet extends Strike {
         setFadeOut(getParent().getFadeOut());
         setPreset(getParent().getPreset());
 
-        Long ratchets = ((Ticker) getTicker()).getPlayers().stream().filter(p -> p instanceof Ratchet)
+        Long ratchets = ((Session) getSession()).getPlayers().stream().filter(p -> p instanceof Ratchet)
                 .count();
         setId(-1 - ratchets);
         setName(getParent().getName()
-                + String.format("s", ((Ticker) getParent().getTicker()).getPlayers().size()));
-        double tick = getTicker().getTickCount() + offset;
+                + String.format("s", ((Session) getParent().getSession()).getPlayers().size()));
+        double tick = getSession().getTickCount() + offset;
         logger.debug("Adding rule - tick: {}, part: {}", tick, part);
         getRules().add(new Rule(Comparison.TICK_COUNT, Operator.EQUALS, tick, part));
 
-        synchronized (((Ticker) getTicker()).getPlayers()) {
-            synchronized (((Ticker) getTicker()).getPlayers()) {
-                ((Ticker) getTicker()).getPlayers().add(this);
-                ((Ticker) getTicker()).getRemoveList().add(this);
+        synchronized (((Session) getSession()).getPlayers()) {
+            synchronized (((Session) getSession()).getPlayers()) {
+                ((Session) getSession()).getPlayers().add(this);
+                ((Session) getSession()).getRemoveList().add(this);
             }
         }
     }
@@ -60,6 +60,6 @@ public class Ratchet extends Strike {
     public void onTick(long tick, long bar) {
         logger.debug("onTick() - tick: {}, bar: {}", tick, bar);
         if (isProbable())
-            drumNoteOn((long) (getNote() + getTicker().getNoteOffset()));
+            drumNoteOn((long) (getNote() + getSession().getNoteOffset()));
     }
 }

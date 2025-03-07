@@ -30,7 +30,7 @@ package angrysurfer.beatsui;
 // import com.angrysurfer.core.proxy.ProxyInstrument;
 // import com.angrysurfer.core.proxy.ProxyRule;
 // import com.angrysurfer.core.proxy.ProxyStrike;
-// import com.angrysurfer.core.proxy.ProxyTicker;
+// import com.angrysurfer.core.proxy.ProxySession;
 
 // import redis.clients.jedis.Jedis;
 // import redis.clients.jedis.JedisPool;
@@ -164,34 +164,34 @@ package angrysurfer.beatsui;
 //     }
 
 //     @Nested
-//     @DisplayName("Ticker Tests")
-//     class TickerTests {
+//     @DisplayName("Session Tests")
+//     class SessionTests {
         
 //         @Test
-//         @DisplayName("Should save and load ticker")
-//         void saveAndLoadTicker() {
+//         @DisplayName("Should save and load session")
+//         void saveAndLoadSession() {
 //             // Arrange
-//             ProxyTicker ticker = new ProxyTicker();
-//             ticker.setTempoInBPM(120.0f);
+//             ProxySession session = new ProxySession();
+//             session.setTempoInBPM(120.0f);
             
 //             // Mock behavior for save
 //             when(jedis.set(anyString(), anyString())).thenReturn("OK");
             
 //             // Mock behavior for load
-//             when(jedis.get("ticker")).thenReturn("{\"tempoInBPM\":120.0}");
+//             when(jedis.get("session")).thenReturn("{\"tempoInBPM\":120.0}");
             
 //             // Act
-//             ProxyTicker savedTicker = redisService.saveTicker(ticker);
-//             ProxyTicker loadedTicker = redisService.loadTicker();
+//             ProxySession savedSession = redisService.saveSession(session);
+//             ProxySession loadedSession = redisService.loadSession();
             
 //             // Assert
-//             assertNotNull(savedTicker);
-//             assertNotNull(loadedTicker);
-//             assertEquals(120.0f, loadedTicker.getTempoInBPM());
+//             assertNotNull(savedSession);
+//             assertNotNull(loadedSession);
+//             assertEquals(120.0f, loadedSession.getTempoInBPM());
             
 //             // Verify interactions
-//             verify(jedis).set(eq("ticker"), anyString());
-//             verify(jedis).get("ticker");
+//             verify(jedis).set(eq("session"), anyString());
+//             verify(jedis).get("session");
 //         }
 //     }
 

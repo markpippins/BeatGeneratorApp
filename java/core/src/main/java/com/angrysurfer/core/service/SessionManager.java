@@ -12,7 +12,7 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Ticker;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 
@@ -28,15 +28,15 @@ public class SessionManager {
 
     private final CommandBus commandBus = CommandBus.getInstance();
     private final RedisService redisService = RedisService.getInstance();
+    private final SequencerManager sequencerManager = SequencerManager.getInstance();
 
     private final Map<Long, Instrument> instrumentCache = new HashMap<>();
 
-    private TickerEngine tickerEngine;
+    // Directly store activeSession instead of using SessionManager
+    private Session activeSession;
 
-    private UserConfigurationEngine userConfigurationEngine;
-
-    private InstrumentEngine instrumentEngine;
-
+    private UserConfigManager userConfigurationEngine;
+    private InstrumentManager instrumentEngine;
     private SongEngine songEngine;
 
     private Player[] activePlayers[];
@@ -53,40 +53,43 @@ public class SessionManager {
         return instance;
     }
 
-    public void addPlayerToTicker(Ticker currentTicker, Player updatedPlayer) {
-        // getTickerEngine()addPlayerToTicker(currentTicker, updatedPlayer);
-        redisService.addPlayerToTicker(currentTicker, updatedPlayer);
+    public void addPlayerToSession(Session currentSession, Player updatedPlayer) {
+        redisService.addPlayerToSession(currentSession, updatedPlayer);
     }
 
-    void handleTickerRequest() {
-        if (Objects.nonNull(getTickerEngine().getActiveTicker()))
-            commandBus.publish(Commands.TICKER_SELECTED, this, getTickerEngine().getActiveTicker());
+    void handleSessionRequest() {
+        if (Objects.nonNull(getActiveSession()))
+            commandBus.publish(Commands.SESSION_SELECTED, this, getActiveSession());
     }
 
-    public Ticker getActiveTicker() {
-        return getTickerEngine().getActiveTicker();
+    // Direct getter instead of delegating
+    public Session getActiveSession() {
+        return activeSession;
     }
 
-    public void setActiveTicker(Ticker ticker) {
-        getTickerEngine().setActiveTicker(ticker);
+    // Direct setter instead of delegating
+    public void setActiveSession(Session session) {
+        if (session != null && !session.equals(this.activeSession)) {
+            this.activeSession = session;
+            commandBus.publish(Commands.SESSION_SELECTED, this, session);
+            logger.info("Session selected: " + session.getId());
+        }
     }
 
     public void initialize() {
         logger.info("Initializing session manager");
 
-        userConfigurationEngine = new UserConfigurationEngine();
-        // userConfigurationEngine.loadConfiguration();
-
-        instrumentEngine = new InstrumentEngine();
+        userConfigurationEngine = new UserConfigManager();
+        
+        instrumentEngine = new InstrumentManager();
         List<Instrument> instruments = userConfigurationEngine.getCurrentConfig().getInstruments();
         instrumentEngine.initializeCache(instruments);
 
-        tickerEngine = new TickerEngine();
-        getTickerEngine().loadActiveTicker();
-        logTickerState(getTickerEngine().getActiveTicker());
+        // Instead of creating SessionManager, directly load session
+        loadActiveSession();
+        logSessionState(getActiveSession());
 
         songEngine = new SongEngine();
-        // songEngine.initialize();
 
         commandBus.register(new CommandListener() {
             public void onAction(Command action) {
@@ -94,25 +97,43 @@ public class SessionManager {
                     return;
 
                 switch (action.getCommand()) {
-                    case Commands.TICKER_REQUEST -> handleTickerRequest();
+                    case Commands.SESSION_REQUEST -> handleSessionRequest();
                     case Commands.TRANSPORT_REWIND -> moveBack();
                     case Commands.TRANSPORT_FORWARD -> moveForward();
-                    case Commands.TRANSPORT_PLAY -> getActiveTicker().play();
-                    case Commands.TRANSPORT_STOP -> getActiveTicker().stop();
-                    case Commands.TRANSPORT_RECORD -> redisService.saveTicker(getActiveTicker());
+                    case Commands.TRANSPORT_PLAY -> {
+                        // Direct control of transport
+                        if (activeSession != null) {
+                            // Let Session handle its own device initialization
+                            // (Since initializeDevices() is private)
+                            
+                            // Set this session as the active session in SequencerManager
+                            sequencerManager.setActiveSession(activeSession);
+                            
+                            // Start the sequencer directly
+                            sequencerManager.start();
+                        }
+                    }
+                    case Commands.TRANSPORT_STOP -> {
+                        // Direct control of transport
+                        if (activeSession != null) {
+                            sequencerManager.stop();
+                        }
+                    }
+                    case Commands.TRANSPORT_RECORD -> {
+                        if (activeSession != null) {
+                            redisService.saveSession(activeSession);
+                        }
+                    }
                     case Commands.SHOW_PLAYER_EDITOR_OK -> processPlayerEdit((Player) action.getData());
                     case Commands.SHOW_RULE_EDITOR_OK -> processRuleEdit((Rule) action.getData());
                     case Commands.PLAYER_DELETE_REQUEST -> processPlayerDelete((Player[]) action.getData());
-                    // case Commands.RULE_DELETE_REQUEST -> processRuleDelete((Rule[])
-                    // action.getData());
                 }
             }
 
             private void processPlayerDelete(Player[] data) {
-
                 for (Player player : data) {
                     logger.info("Deleting player: " + player.getId());
-                    if (getActiveTicker().getPlayers().remove(player)) {
+                    if (getActiveSession().getPlayers().remove(player)) {
                         redisService.deletePlayer(player);
                         logger.info("Player deleted: " + player.getId());
                         commandBus.publish(Commands.PLAYER_DELETED, this);
@@ -122,24 +143,103 @@ public class SessionManager {
         });
     }
 
+    // Moved from SessionManager
     public boolean canMoveBack() {
-        return getTickerEngine().canMoveBack();
+        Long minId = redisService.getMinimumSessionId();
+        return (Objects.nonNull(getActiveSession()) && Objects.nonNull(minId) && getActiveSession().getId() > minId);
     }
 
+    // Moved from SessionManager
     public boolean canMoveForward() {
-        return getTickerEngine().canMoveForward();
+        return Objects.nonNull(getActiveSession()) && getActiveSession().isValid();
     }
 
+    // Moved from SessionManager
     public void moveBack() {
-        getTickerEngine().moveBack();
+        Long prevId = redisService.getPreviousSessionId(activeSession);
+        if (prevId != null) {
+            setActiveSession(redisService.findSessionById(prevId));
+            if (activeSession != null) {
+                logger.info("Moved back to session: " + activeSession.getId());
+            }
+        }
     }
 
+    // Moved from SessionManager
     public void moveForward() {
-        getTickerEngine().moveForward();
+        Long maxId = redisService.getMaximumSessionId();
+
+        if (activeSession != null && maxId != null && activeSession.getId().equals(maxId)) {
+            // Only create a new session if current one is valid and has active rules
+            if (activeSession.isValid() && !activeSession.getPlayers().isEmpty() &&
+                    activeSession.getPlayers().stream()
+                            .map(p -> p)
+                            .anyMatch(p -> p.getRules() != null && !p.getRules().isEmpty())) {
+
+                Session newSession = redisService.newSession();
+                setActiveSession(newSession);
+                logger.info("Created new session and moved forward to it: " + newSession.getId());
+            }
+        } else {
+            // Otherwise, move to the next existing session
+            Long nextId = redisService.getNextSessionId(activeSession);
+            if (nextId != null) {
+                setActiveSession(redisService.findSessionById(nextId));
+                if (activeSession != null) {
+                    logger.info("Moved forward to session: " + activeSession.getId());
+                }
+            }
+        }
     }
 
-    public void tickerSelected(Ticker ticker) {
-        getTickerEngine().tickerSelected(ticker);
+    // Moved from SessionManager
+    public void loadActiveSession() {
+        logger.info("Loading session");
+        Long minId = redisService.getMinimumSessionId();
+        Long maxId = redisService.getMaximumSessionId();
+
+        logger.info("Minimum session ID: " + minId);
+        logger.info("Maximum session ID: " + maxId);
+
+        Session session = null;
+
+        // If we have existing sessions, try to load the first valid one
+        if (minId != null && maxId != null) {
+            for (Long id = minId; id <= maxId; id++) {
+                session = redisService.findSessionById(id);
+                if (session != null) {
+                    logger.info("Found valid session " + session.getId());
+                    break;
+                }
+            }
+        }
+
+        // If no valid session found or no sessions exist, create a new one
+        if (session == null) {
+            logger.info("No valid session found, creating new session");
+            session = redisService.newSession();
+            redisService.saveSession(session);
+            logger.info("Created new session with ID: " + session.getId());
+        }
+
+        setActiveSession(session);
+    }
+    
+    // Moved from SessionManager
+    public void deleteAllSessions() {
+        logger.info("Deleting sessions");
+        redisService.getAllSessionIds().forEach(id -> {
+            Session session = redisService.findSessionById(id);
+            if (session != null) {
+                logger.info(String.format("Loading session {}", id));
+                redisService.deleteSession(id);
+                commandBus.publish(Commands.SESSION_DELETED, this, id);
+            }
+        });
+    }
+
+    public void sessionSelected(Session session) {
+        setActiveSession(session);
     }
 
     private void processPlayerEdit(Player player) {
@@ -150,29 +250,29 @@ public class SessionManager {
         if (player.getId() == null) {
             redis.savePlayer(player);
 
-            // Add to ticker
-            getActiveTicker().getPlayers().add(player);
+            // Add to session
+            getActiveSession().getPlayers().add(player);
 
-            // TODO: don't save ticker here
+            // TODO: don't save session here
 
-            redis.saveTicker(getActiveTicker());
+            redis.saveSession(getActiveSession());
 
-            // Get fresh ticker state
-            // activeTicker = redis.findTickerById(activeTicker.getId());
+            // Get fresh session state
+            // activeSession = redis.findSessionById(activeSession.getId());
 
-            logger.info("Added new player and updated ticker");
+            logger.info("Added new player and updated session");
         } else {
-            // TODO: don't save player here, just update the active ticker
+            // TODO: don't save player here, just update the active session
 
             // Existing player update
             redis.savePlayer(player);
-            // activeTicker = redis.findTickerById(activeTicker.getId());
-            redis.saveTicker(getActiveTicker());
-            logger.info("Updated existing player and ticker");
+            // activeSession = redis.findSessionById(activeSession.getId());
+            redis.saveSession(getActiveSession());
+            logger.info("Updated existing player and session");
         }
 
         // Notify UI
-        commandBus.publish(Commands.TICKER_UPDATED, this, getActiveTicker());
+        commandBus.publish(Commands.SESSION_UPDATED, this, getActiveSession());
     }
 
     private Object processRuleEdit(Rule data) {
@@ -180,260 +280,19 @@ public class SessionManager {
         throw new UnsupportedOperationException("Unimplemented method 'processRuleEdit'");
     }
 
-    // case Commands.SHOW_PLAYER_EDITOR_OK -> {
-    // if (action.getData() instanceof Player player) {
-    // logger.info("Processing player edit/add: " + player.getName());
-    // RedisService redis = RedisService.getInstance();
+    private void logSessionState(Session session) {
+        if (session != null) {
+            logger.info("Session state:");
+            logger.info("  ID: " + session.getId());
+            logger.info("  BPM: " + session.getTempoInBPM());
+            logger.info("  Ticks per beat: " + session.getTicksPerBeat());
+            logger.info("  Beats per bar: " + session.getBeatsPerBar());
+            logger.info("  Bars: " + session.getBars());
+            logger.info("  Parts: " + session.getParts());
 
-    // if (player.getId() == null) {
-    // // New player
-    // Player newPlayer = redis.newPlayer();
-    // // Copy edited properties to new player
-    // newPlayer.setName(player.getName());
-    // newPlayer.setInstrument(player.getInstrument());
-    // newPlayer.setInstrumentId(player.getInstrumentId());
-    // // ... copy other properties ...
-
-    // // Save player first
-    // redis.savePlayer(newPlayer);
-
-    // // Add to ticker
-    // if (activeTicker != null) {
-    // activeTicker.getPlayers().add(newPlayer);
-    // redis.saveTicker(activeTicker);
-
-    // // Get fresh ticker state
-    // activeTicker = redis.findTickerById(activeTicker.getId());
-
-    // // Notify UI
-    // commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
-    // logger.info("Added new player and updated ticker");
-    // }
-    // } else {
-    // // Existing player update
-    // redis.savePlayer(player);
-    // activeTicker = redis.findTickerById(activeTicker.getId());
-    // redis.saveTicker(activeTicker);
-    // commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
-    // logger.info("Updated existing player and ticker");
-    // }
-    // }
-    // }
-    // case Commands.RULE_DELETE_REQUEST -> {
-    // Player selected = PlayerManager.getInstance().getActivePlayer();
-    // boolean wasDeleted = false;
-
-    // if (selected != null && action.getData() instanceof Rule[] rules)
-    // for (Rule rule : rules)
-    // if (selected.getRules().remove(rule)) {
-    // logger.info("Processing rule delete request for Rule " + rule.getId());
-    // redisService.deleteRule(rule.getId());
-    // redisService.savePlayer(selected);
-    // commandBus.publish(Commands.PLAYER_UPDATED, this, selected);
-    // logger.info("Rule deleted and player updated");
-    // wasDeleted = true;
-    // }
-
-    // if (wasDeleted) {
-    // redisService.saveTicker(activeTicker);
-    // commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
-    // commandBus.publish(Commands.PLAYER_SELECTED, this, selected);
-    // }
-    // }
-
-    // case Commands.PLAYER_DELETE_REQUEST -> {
-    // if (action.getData() instanceof Player[] players) {
-    // logger.info("Processing delete request for " + players.length + " players");
-
-    // // We already have the active ticker
-    // if (activeTicker != null) {
-    // boolean wasDeleted = false;
-
-    // // Process each player
-    // for (Player player : players) {
-    // logger.info("Deleting player: " + player.getId());
-    // if (activeTicker.getPlayers().remove(player)) {
-    // wasDeleted = true;
-    // redisService.deletePlayer(player);
-    // logger.info("Player deleted: " + player.getId());
-    // }
-    // }
-
-    // if (wasDeleted) {
-    // // Save updated ticker
-    // redisService.saveTicker(activeTicker);
-    // logger.info("Saved ticker after player deletion");
-
-    // // Notify UI
-    // commandBus.publish(Commands.PLAYER_UNSELECTED, this);
-    // commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
-    // }
-    // }
-    // }
-    // }
-    // case Commands.RULE_ADD_REQUEST -> {
-    // if (action.getData() instanceof Player player) {
-    // // Just show the dialog, don't create rule yet
-    // commandBus.publish(Commands.SHOW_RULE_EDITOR, this, player);
-    // }
-    // }
-    // case Commands.SHOW_RULE_EDITOR_OK -> {
-    // if (action.getData() instanceof Rule rule) {
-    // RedisService redis = RedisService.getInstance();
-    // Player player = redis.findPlayerForRule(rule);
-
-    // if (player != null) {
-    // // For existing rule, just save it
-    // if (rule.getId() != null) {
-    // redis.saveRule(rule);
-    // } else {
-    // // For new rule, add it to player
-    // redis.addRuleToPlayer(player, rule);
-    // // Notify about new rule
-    // commandBus.publish(Commands.RULE_ADDED, this, new Object[] { player, rule });
-    // }
-
-    // // Get fresh states
-    // Player refreshedPlayer = redis.findPlayerById(player.getId());
-    // activeTicker = redis.findTickerById(activeTicker.getId());
-
-    // // Notify UI in correct order
-    // commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
-    // // Force rules panel to update by re-selecting the player
-    // commandBus.publish(Commands.PLAYER_UNSELECTED, this);
-    // commandBus.publish(Commands.PLAYER_SELECTED, this, refreshedPlayer);
-
-    // logger.info(String.format("Rule saved and player refreshed - Player: %d,
-    // Rules: %d",
-    // refreshedPlayer.getName(),
-    // refreshedPlayer.getRules() != null ? refreshedPlayer.getRules().size() : 0));
-    // }
-    // }
-    // }
-    // case Commands.RULE_EDIT_REQUEST -> {
-    // if (action.getData() instanceof Rule rule) {
-    // commandBus.publish(Commands.SHOW_RULE_EDITOR, this, rule);
-    // }
-    // }
-    // case Commands.RULE_UPDATED -> {
-    // if (action.getData() instanceof Rule rule) {
-    // RedisService redis = RedisService.getInstance();
-    // Player player = redis.findPlayerForRule(rule);
-    // if (player != null) {
-    // redis.saveRule(rule);
-
-    // // Get fresh state of both player and ticker
-    // player = redis.findPlayerById(player.getId());
-    // activeTicker = redis.findTickerById(activeTicker.getId());
-
-    // // Notify UI of updates in correct order:
-    // commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
-    // commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-    // // Send rule selected to restore selection
-    // // commandBus.publish(Commands.RULE_SELECTED, this, rule);
-    // }
-    // }
-    // }
-    // case Commands.CLEAR_INVALID_TICKERS -> {
-    // RedisService redis = RedisService.getInstance();
-    // Long currentTickerId = activeTicker != null ? activeTicker.getId() : null;
-    // boolean wasActiveTickerDeleted = false;
-
-    // // Get all ticker IDs sorted before we start deleting
-    // List<Long> tickerIds = redis.getAllTickerIds();
-    // Collections.sort(tickerIds);
-
-    // // Track the nearest valid ticker to our current one
-    // Long nearestValidTickerId = null;
-    // Long lastValidTickerId = null;
-
-    // // First pass: find nearest valid ticker and track the last valid one
-    // for (Long id : tickerIds) {
-    // Ticker ticker = redis.findTickerById(id);
-    // if (ticker != null && ticker.isValid()) {
-    // if (currentTickerId != null) {
-    // if (id < currentTickerId
-    // && (nearestValidTickerId == null || id > nearestValidTickerId)) {
-    // nearestValidTickerId = id;
-    // }
-    // }
-    // lastValidTickerId = id;
-    // }
-    // }
-
-    // // Second pass: delete invalid tickers
-    // for (Long id : tickerIds) {
-    // Ticker ticker = redis.findTickerById(id);
-    // if (ticker != null && !ticker.isValid()) {
-    // if (id.equals(currentTickerId)) {
-    // wasActiveTickerDeleted = true;
-    // }
-    // redis.deleteTicker(id);
-    // }
-    // }
-
-    // // Handle active ticker selection if needed
-    // if (wasActiveTickerDeleted || activeTicker == null) {
-    // Ticker newActiveTicker = null;
-
-    // if (nearestValidTickerId != null) {
-    // // Use the nearest valid ticker before our current position
-    // newActiveTicker = redis.findTickerById(nearestValidTickerId);
-    // } else if (lastValidTickerId != null) {
-    // // Fall back to the last valid ticker we found
-    // newActiveTicker = redis.findTickerById(lastValidTickerId);
-    // } else {
-    // // No valid tickers exist, create a new one
-    // newActiveTicker = redis.newTicker();
-    // }
-
-    // // Update active ticker and notify UI
-    // activeTicker = newActiveTicker;
-    // commandBus.publish(Commands.TICKER_SELECTED, this, activeTicker);
-    // } else {
-    // // Our ticker was valid, but refresh the UI anyway to show updated navigation
-    // // state
-    // commandBus.publish(Commands.TICKER_UPDATED, this, activeTicker);
-    // }
-    // }
-    // case Commands.TRANSPORT_PLAY -> {
-    // if (activeTicker != null) {
-    // activeTicker.play();
-    // // Notify UI about transport state change
-    // commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
-    // }
-    // }
-    // case Commands.TRANSPORT_STOP -> {
-    // if (activeTicker != null) {
-    // activeTicker.stop();
-    // // Notify UI about transport state change
-    // commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
-    // }
-    // }
-    // case Commands.TRANSPORT_RECORD -> {
-    // if (activeTicker != null) {
-    // redisService.saveTicker(activeTicker);
-    // }
-    // }
-    // }
-    // }
-    // });
-    // loadActiveTicker();
-    // logger.info("TickerManager initialized");
-
-    private void logTickerState(Ticker ticker) {
-        if (ticker != null) {
-            logger.info("Ticker state:");
-            logger.info("  ID: " + ticker.getId());
-            logger.info("  BPM: " + ticker.getTempoInBPM());
-            logger.info("  Ticks per beat: " + ticker.getTicksPerBeat());
-            logger.info("  Beats per bar: " + ticker.getBeatsPerBar());
-            logger.info("  Bars: " + ticker.getBars());
-            logger.info("  Parts: " + ticker.getParts());
-
-            if (ticker.getPlayers() != null) {
-                logger.info("  Players: " + ticker.getPlayers().size());
-                ticker.getPlayers().forEach(this::logPlayerState);
+            if (session.getPlayers() != null) {
+                logger.info("  Players: " + session.getPlayers().size());
+                session.getPlayers().forEach(this::logPlayerState);
             }
         }
     }
