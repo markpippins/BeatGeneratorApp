@@ -94,17 +94,29 @@ public class Visualizer implements CommandListener {
                 break;
 
             case Commands.TRANSPORT_PLAY:
+            case Commands.TRANSPORT_STATE_CHANGED: // <-- Add this case
+                // For state changed, check if it's true (playing)
+                if (Commands.TRANSPORT_STATE_CHANGED.equals(action.getCommand()) && 
+                    !(action.getData() instanceof Boolean && (Boolean)action.getData())) {
+                    break; // Only proceed if transport is starting
+                }
+                
                 // Find and start the ScrollingSequencerVisualization
                 for (IVisualizationHandler vis : visualizations) {
                     if (vis instanceof ScrollingSequencerVisualization) {
                         startVisualizer(vis);
+                        isLocked = true; // Lock to prevent auto-switching during sequencer mode
                         break;
                     }
                 }
                 break;
 
             case Commands.TRANSPORT_STOP:
-                stopVisualizer();
+                // Only stop visualization if we were showing the sequencer
+                if (currentVisualization instanceof ScrollingSequencerVisualization) {
+                    stopVisualizer();
+                    isLocked = false; // Unlock when stopping
+                }
                 break;
         }
     }
