@@ -413,8 +413,8 @@ public class Session implements Serializable, CommandListener {
         // We don't need to publish the command here - that's handled by UI or other components
     }
 
-    // Keep initializeDevices() private in Session
-    private void initializeDevices() {
+    // Change from private to public
+    public void initializeDevices() {
         List<MidiDevice> devices = DeviceManager.getMidiOutDevices();
 
         getPlayers().forEach(p -> {

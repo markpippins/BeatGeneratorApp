@@ -149,7 +149,7 @@ public class SequencerManager {
         // Increment tick counter
         currentTick = (currentTick + 1) % getPpq();
         
-        // Publish standard tick event (for Players)
+        // Publish standard tick event (for Players and Visualizations)
         timingBus.publish(Commands.BASIC_TIMING_TICK, this, currentTick);
         
         // Publish after-tick event
@@ -160,7 +160,7 @@ public class SequencerManager {
             // Before beat event
             timingBus.publish(Commands.BEFORE_BEAT, this, currentBeat);
             
-            currentBeat = (currentBeat + 1) % getBeatsPerBar();
+            currentBeat = (currentBeat + 1) % getBeatsPerBar();  
             
             // Standard beat event
             timingBus.publish(Commands.BASIC_TIMING_BEAT, this, currentBeat);

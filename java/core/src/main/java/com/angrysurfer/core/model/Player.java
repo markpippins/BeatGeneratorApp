@@ -25,6 +25,7 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.service.PlayerExecutor;
 import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
@@ -185,13 +186,25 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
         long velocity = (long) ((getLevel() * 0.01)
                 * rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100,
                         getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
+        
+        // Send note on message
         noteOn(note, velocity);
-        try {
-            Thread.sleep(2500);
-            noteOff(note, velocity);
-        } catch (InterruptedException e) {
-            logger.error("Error in drumNoteOn: {}", e.getMessage(), e);
-        }
+        
+        // Schedule note off instead of blocking with Thread.sleep
+        final long finalVelocity = velocity;
+        
+        // Use ScheduledExecutorService for note-off scheduling
+        java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
+            () -> {
+                try {
+                    noteOff(note, finalVelocity);
+                } catch (Exception e) {
+                    logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
+                }
+            },
+            100, // Shorter note duration (100ms instead of 2500ms)
+            java.util.concurrent.TimeUnit.MILLISECONDS
+        );
     }
 
     public void noteOn(long note, long velocity) {
@@ -322,19 +335,24 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
             case Commands.BASIC_TIMING_TICK -> {
                 // Only process if our session is running
                 if (getSession() != null) {
+                    // Check if we should play this tick
                     if (((!getSession().hasSolos() && !isMuted()) || 
                         (getSession().hasSolos() && isSolo())) && shouldPlay()) {
                         
-                        var tick = getSession().getTick();
-                        var beat = getSession().getBeat();
-                        var bar = getSession().getBar();
+                        // Capture variables for use in lambda
+                        final long tick = getSession().getTick();
+                        final long bar = getSession().getBar();
+                        final double beat = getSession().getBeat();
                         
-                        getSession().getActivePlayerIds().add(getId());
-                        setLastPlayedBar(bar);
-                        setLastPlayedBeat(beat);
-                        setLastPlayedTick(tick);
-                        onTick(tick, lastPlayedBar);
-                        setLastTick(tick);
+                        // Submit to thread pool instead of executing directly
+                        PlayerExecutor.getInstance().submit(() -> {
+                            getSession().getActivePlayerIds().add(getId());
+                            setLastPlayedBar(bar);
+                            setLastPlayedBeat(beat);
+                            setLastPlayedTick(tick);
+                            onTick(tick, lastPlayedBar);
+                            setLastTick(tick);
+                        });
                     }
                 }
             }

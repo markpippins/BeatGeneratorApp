@@ -103,8 +103,8 @@ public class SessionManager {
                     case Commands.TRANSPORT_PLAY -> {
                         // Direct control of transport
                         if (activeSession != null) {
-                            // Let Session handle its own device initialization
-                            // (Since initializeDevices() is private)
+                            // Make session.initializeDevices() public, not private!
+                            activeSession.initializeDevices(); // Call this first to ensure devices are ready
                             
                             // Set this session as the active session in SequencerManager
                             sequencerManager.setActiveSession(activeSession);
