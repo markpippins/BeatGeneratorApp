@@ -1,19 +1,23 @@
 package com.angrysurfer.beats;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.widget.LedIndicator;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 
@@ -44,10 +48,28 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
 
     private CommandBus commandBus = CommandBus.getInstance();
 
+    private final LedIndicator tickLed;
+    private final LedIndicator beatLed;
+    private final LedIndicator barLed;
+    private boolean litTick = false;
+    private boolean litBeat = false;
+    private boolean litBar = false;
+
     public StatusBar() {
         super(new BorderLayout());
+        
+        // Create LEDs
+        tickLed = new LedIndicator(new Color(255, 50, 50)); // Red
+        beatLed = new LedIndicator(new Color(50, 255, 50)); // Green
+        barLed = new LedIndicator(new Color(50, 50, 255));  // Blue
+        
+        // Setup panels
         setup();
+        setupLedIndicators();
 
+        // Register for timing events as well
+        TimingBus.getInstance().register(this);
+        
         // Request initial session state through CommandBus
         SwingUtilities.invokeLater(() -> {
             CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
@@ -115,6 +137,32 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
         getCommandBus().register(this);
     }
 
+    private void setupLedIndicators() {
+        // Create indicator panel
+        JPanel indicatorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        indicatorPanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+
+        // Add labels and LEDs
+        indicatorPanel.add(new JLabel("T"));
+        indicatorPanel.add(tickLed);
+        indicatorPanel.add(Box.createHorizontalStrut(8));
+        indicatorPanel.add(new JLabel("B"));
+        indicatorPanel.add(beatLed);
+        indicatorPanel.add(Box.createHorizontalStrut(8));
+        indicatorPanel.add(new JLabel("M"));
+        indicatorPanel.add(barLed);
+        
+        // Add some spacing to separate from other elements
+        indicatorPanel.add(Box.createHorizontalStrut(20));
+        
+        // Add to the west side of the south area to match position
+        JPanel southPanel = new JPanel(new BorderLayout());
+        southPanel.add(indicatorPanel, BorderLayout.WEST);
+        
+        // Add the panel to the status bar
+        add(southPanel, BorderLayout.SOUTH);
+    }
+
     private JTextField createTextField(int columns) {
         JTextField field = new JTextField(columns);
         field.setEditable(false);
@@ -169,6 +217,9 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
                 }
             }
             case Commands.PLAYER_UNSELECTED -> clearPlayerInfo();
+            case Commands.BASIC_TIMING_TICK -> flashTickLed();
+            case Commands.BASIC_TIMING_BEAT -> flashBeatLed();
+            case Commands.BASIC_TIMING_BAR -> flashBarLed();
             default -> setMessage(action.getCommand());
         }
     }
@@ -199,5 +250,20 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
     private void clearPlayerInfo() {
         playerIdField.setText("");
         ruleCountField.setText("");
+    }
+
+    private void flashTickLed() {
+        litTick = !litTick;
+        tickLed.setLit(litTick);
+    }
+
+    private void flashBeatLed() {
+        litBeat = !litBeat;
+        beatLed.setLit(litBeat);
+    }
+
+    private void flashBarLed() {
+        litBar = !litBar;
+        barLed.setLit(litBar);
     }
 }

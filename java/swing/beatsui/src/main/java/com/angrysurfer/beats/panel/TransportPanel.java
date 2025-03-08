@@ -113,8 +113,7 @@ public class TransportPanel extends JPanel implements CommandListener {
         // Add components to main panel
         add(transportControls, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
-        add(new JScrollPane(new GridPanel(null)), BorderLayout.CENTER);
-
+        
         // Create indicator panel
         JPanel indicatorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         indicatorPanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));

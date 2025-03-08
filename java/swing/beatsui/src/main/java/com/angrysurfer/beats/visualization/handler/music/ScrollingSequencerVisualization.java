@@ -17,8 +17,8 @@ import com.angrysurfer.core.service.SequencerManager;
 public class ScrollingSequencerVisualization extends LockHandler implements IVisualizationHandler, CommandListener {
     private static final int PIXELS_PER_BEAT = 4;  // How many grid columns per beat
     
-    private static final Color BEAT_MARKER_COLOR = new Color(40, 40, 40);
-    private static final Color BAR_MARKER_COLOR = new Color(60, 60, 60);
+    private static final Color BEAT_MARKER_COLOR = Color.BLUE; // new Color(40, 40, 40);
+    private static final Color BAR_MARKER_COLOR = Color.GREEN; // new Color(60, 60, 60);
     private static final Color POSITION_INDICATOR = Color.WHITE;
     private static final Color CURRENT_BEAT = Color.GREEN;
     private static final Color CURRENT_BAR = Color.BLUE;
