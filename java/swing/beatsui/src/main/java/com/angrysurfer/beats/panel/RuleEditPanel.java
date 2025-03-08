@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.HashSet;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
@@ -16,6 +17,7 @@ import javax.swing.SpinnerListModel;
 import javax.swing.SpinnerNumberModel;
 
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 
 public class RuleEditPanel extends StatusProviderPanel {
@@ -95,5 +97,26 @@ public class RuleEditPanel extends StatusProviderPanel {
         rule.setPart(part);
 
         return rule;
+    }
+
+    // When creating a new rule in RuleEditPanel
+    public void addRuleToPlayer(Player player, int selectedComparison, int selectedOperator, double value, int part) {
+        Rule rule = new Rule();
+        rule.setComparison(selectedComparison);
+        rule.setOperator(selectedOperator);
+        rule.setValue(value);
+        rule.setPart(part);
+
+        // Add to current player
+        if (player != null) {
+            if (player.getRules() == null) {
+                player.setRules(new HashSet<>());
+            }
+            player.getRules().add(rule);
+            
+            // Debug output
+            // logger.info("Added rule to player " + player.getName() + 
+            //            " - now has " + player.getRules().size() + " rules");
+        }
     }
 }

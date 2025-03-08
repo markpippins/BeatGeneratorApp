@@ -148,4 +148,32 @@ public class Rule implements Serializable {
 
         return rule;
     }
+
+    // Add these helper methods to Rule class for safer formatting
+    public String getComparisonText() {
+        return getComparison() >= 0 && getComparison() < COMPARISONS.length ? 
+               COMPARISONS[getComparison()] : "Unknown";
+    }
+
+    public String getOperatorText() {
+        return getOperator() >= 0 && getOperator() < OPERATORS.length ? 
+               OPERATORS[getOperator()] : "Unknown";
+    }
+
+    public String getPartText() {
+        return getPart() == 0 ? "All" : String.valueOf(getPart());
+    }
+
+    @Override
+    public String toString() {
+        String compStr = getComparison() >= 0 && getComparison() < COMPARISONS.length ? 
+                        COMPARISONS[getComparison()] : "Unknown";
+        String opStr = getOperator() >= 0 && getOperator() < OPERATORS.length ? 
+                      OPERATORS[getOperator()] : "Unknown";
+        String partStr = getPart() == 0 ? "All" : String.valueOf(getPart());
+        
+        // Change %d to %s for getValue() to handle any numeric type
+        return String.format("Rule[id=%d, %s %s %s, Part=%s]", 
+                getId(), compStr, opStr, String.valueOf(getValue()), partStr);
+    }
 }

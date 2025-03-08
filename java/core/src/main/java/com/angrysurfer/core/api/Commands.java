@@ -63,6 +63,7 @@ public class Commands {
     public static final String RULE_UNSELECTED = "RULE_UNSELECTED";
     public static final String RULE_ADDED = "RULE_ADDED";
 
+    public static final String RULE_EDITED = "RULE_EDITED";
     // Rule CRUD commands
     public static final String RULE_ADD_REQUEST = "RULE_ADD_REQUEST";
     public static final String RULE_EDIT_REQUEST = "RULE_EDIT_REQUEST";

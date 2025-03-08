@@ -80,7 +80,7 @@ public class SessionManager {
         logger.info("Initializing session manager");
 
         userConfigurationEngine = new UserConfigManager();
-        
+
         instrumentEngine = new InstrumentManager();
         List<Instrument> instruments = userConfigurationEngine.getCurrentConfig().getInstruments();
         instrumentEngine.initializeCache(instruments);
@@ -105,10 +105,10 @@ public class SessionManager {
                         if (activeSession != null) {
                             // Make session.initializeDevices() public, not private!
                             activeSession.initializeDevices(); // Call this first to ensure devices are ready
-                            
+
                             // Set this session as the active session in SequencerManager
                             sequencerManager.setActiveSession(activeSession);
-                            
+
                             // Start the sequencer directly
                             sequencerManager.start();
                         }
@@ -224,7 +224,7 @@ public class SessionManager {
 
         setActiveSession(session);
     }
-    
+
     // Moved from SessionManager
     public void deleteAllSessions() {
         logger.info("Deleting sessions");
@@ -275,9 +275,11 @@ public class SessionManager {
         commandBus.publish(Commands.SESSION_UPDATED, this, getActiveSession());
     }
 
-    private Object processRuleEdit(Rule data) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'processRuleEdit'");
+    private void processRuleEdit(Rule data) {
+        // Publish rule event
+        if (Objects.nonNull(PlayerManager.getInstance().getActivePlayer())) {
+            commandBus.publish(Commands.RULE_EDITED, this, PlayerManager.getInstance().getActivePlayer());
+        }
     }
 
     private void logSessionState(Session session) {
