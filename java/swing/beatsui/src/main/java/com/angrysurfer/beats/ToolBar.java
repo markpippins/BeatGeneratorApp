@@ -28,6 +28,7 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -402,54 +403,49 @@ public class ToolBar extends JToolBar {
     }
 
     private JButton createToolbarButton(String command, String text, String tooltip) {
-        JButton button = new JButton(text) {
-            @Override
-            public void paint(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                        RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-                // Calculate center position
-                FontMetrics fm = g2.getFontMetrics();
-                int textWidth = fm.stringWidth(getText());
-                int textHeight = fm.getHeight();
-                int x = (getWidth() - textWidth) / 2;
-                int y = (getHeight() + textHeight) / 2 - fm.getDescent();
-
-                // Draw background if button is pressed/selected
-                if (getModel().isPressed()) {
-                    g2.setColor(getBackground().darker());
-                    g2.fillRect(0, 0, getWidth(), getHeight());
-                }
-
-                // Draw the text
-                g2.setColor(getForeground());
-                g2.drawString(getText(), x, y);
-                g2.dispose();
-            }
-        };
-
+        // Use standard JButton instead of custom painted one
+        JButton button = new JButton(text);
+        
         button.setToolTipText(tooltip);
         button.setEnabled(true);
         button.setActionCommand(command);
         button.addActionListener(e -> commandBus.publish(command, this));
-
-        // Adjust size and font
+    
+        // Styling copied from TransportPanel
         int size = 32;
         button.setPreferredSize(new Dimension(size, size));
         button.setMinimumSize(new Dimension(size, size));
         button.setMaximumSize(new Dimension(size, size));
+        
+        // Use same font as TransportPanel
         button.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
-
+        
         // Fallback font if needed
         if (!button.getFont().canDisplay('⏮')) {
             button.setFont(new Font("Dialog", Font.PLAIN, 18));
         }
-
+    
+        // Additional styling from TransportPanel
         button.setMargin(new Insets(0, 0, 0, 0));
-        button.setVerticalAlignment(SwingConstants.CENTER);
         button.setFocusPainted(false);
-
+        button.setVerticalAlignment(SwingConstants.CENTER);
+        
+        // Optional: Add a more modern look
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(true);
+        button.setOpaque(true);
+        
+        // Optional: Add hover effect with mouse listeners
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(button.getBackground().brighter());
+            }
+            
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(UIManager.getColor("Button.background"));
+            }
+        });
+    
         return button;
     }
 
