@@ -8,7 +8,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.redis.RedisUserConfigurationHelper;
+import com.angrysurfer.core.redis.UserConfigHelper;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +19,7 @@ public class UserConfigManager {
     
     private static final Logger logger = Logger.getLogger(UserConfigManager.class.getName());
     // private static UserConfigurationEngine instance;
-    private final RedisUserConfigurationHelper configHelper;
+    private final UserConfigHelper configHelper;
     private final CommandBus commandBus = CommandBus.getInstance();
     private boolean initialized = false;
     private UserConfig currentConfig = new UserConfig();

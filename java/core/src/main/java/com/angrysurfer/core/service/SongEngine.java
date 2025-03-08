@@ -31,7 +31,7 @@ public class SongEngine {
     private static final Logger logger = LoggerFactory.getLogger(SongEngine.class);
 
     private Song activeSong;
-    private CommandBus actionBus = CommandBus.getInstance();
+    private CommandBus commandBus = CommandBus.getInstance();
     private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
 
     public SongEngine() {
@@ -71,7 +71,7 @@ public class SongEngine {
             case PatternUpdateType.TRANSPOSE -> pattern.setTranspose(updateValue);
         }
 
-        actionBus.publish(Commands.PATTERN_UPDATED, this, pattern);
+        commandBus.publish(Commands.PATTERN_UPDATED, this, pattern);
         return pattern;
     }
 
@@ -98,7 +98,7 @@ public class SongEngine {
             case StepUpdateType.VELOCITY -> step.setVelocity(updateValue);
         }
 
-        actionBus.publish(Commands.STEP_UPDATED, this, step);
+        commandBus.publish(Commands.STEP_UPDATED, this, step);
         return step;
     }
 
@@ -106,13 +106,13 @@ public class SongEngine {
         pattern.setPosition(activeSong.getPatterns().size());
         pattern.setSong(activeSong);
         activeSong.getPatterns().add(pattern);
-        actionBus.publish(Commands.PATTERN_ADDED, this, pattern);
+        commandBus.publish(Commands.PATTERN_ADDED, this, pattern);
         return pattern;
     }
 
     public Set<Pattern> removePattern(Pattern pattern) {
         activeSong.getPatterns().remove(pattern);
-        actionBus.publish(Commands.PATTERN_REMOVED, this, pattern);
+        commandBus.publish(Commands.PATTERN_REMOVED, this, pattern);
         return activeSong.getPatterns();
     }
 
@@ -132,7 +132,7 @@ public class SongEngine {
     }
 
     private void setupCommandBusListener() {
-        actionBus.register(new CommandListener() {
+        commandBus.register(new CommandListener() {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {
@@ -154,14 +154,14 @@ public class SongEngine {
     public void songSelected(Song song) {
         if (!Objects.equals(activeSong, song)) {
             this.activeSong = song;
-            actionBus.publish(Commands.SONG_CHANGED, this, song);
+            commandBus.publish(Commands.SONG_CHANGED, this, song);
         }
     }
 
     public void songUpdated(Song song) {
         if (Objects.equals(activeSong.getId(), song.getId())) {
             this.activeSong = song;
-            actionBus.publish(Commands.SONG_CHANGED, this, song);
+            commandBus.publish(Commands.SONG_CHANGED, this, song);
         }
     }
 

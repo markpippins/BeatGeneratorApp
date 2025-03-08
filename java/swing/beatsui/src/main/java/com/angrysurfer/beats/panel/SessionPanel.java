@@ -161,7 +161,6 @@ public class SessionPanel extends StatusProviderPanel {
 
         controlPanel.add(createLabeledControl("Sparse", sparseDial));
 
-
         disableDials();
 
         return controlPanel;
@@ -339,9 +338,6 @@ public class SessionPanel extends StatusProviderPanel {
                 if (sourceDial.getCommand() != null) {
                     CommandBus.getInstance().publish(sourceDial.getCommand(),
                             PlayerManager.getInstance().getActivePlayer(), sourceDial.getValue());
-                    // Send both property name and value
-                    // CommandBus.getInstance().publish(sourceDial.getCommand(), this,
-                    // Map.of("property", sourceDial.getName(), "value", sourceDial.getValue()));
                 }
             }
         });

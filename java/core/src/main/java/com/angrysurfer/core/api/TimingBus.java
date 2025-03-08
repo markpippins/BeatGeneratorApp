@@ -64,10 +64,10 @@ public class TimingBus implements CommandListener {
                 listener.onAction(action);
             } catch (Exception e) {
                 // logManager.error("CommandBus",
-                //         String.format("Error in listener %s handling command %s: %s",
-                //                 listener.getClass().getSimpleName(),
-                //                 action.getCommand(),
-                //                 e.getMessage()));
+                // String.format("Error in listener %s handling command %s: %s",
+                // listener.getClass().getSimpleName(),
+                // action.getCommand(),
+                // e.getMessage()));
             }
         });
     }

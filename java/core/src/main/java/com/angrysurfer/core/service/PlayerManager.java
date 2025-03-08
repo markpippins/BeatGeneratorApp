@@ -48,7 +48,7 @@ import lombok.Setter;
 public class PlayerManager {
     private static final Logger logger = LoggerFactory.getLogger(PlayerManager.class);
     private static PlayerManager instance;
-    private CommandBus actionBus = CommandBus.getInstance();
+    private CommandBus commandBus = CommandBus.getInstance();
     private Player activePlayer;
     private final RedisService redisService;
 
@@ -72,7 +72,7 @@ public class PlayerManager {
     }
 
     private void setupCommandBusListener() {
-        actionBus.register(new CommandListener() {
+        commandBus.register(new CommandListener() {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {
@@ -117,8 +117,8 @@ public class PlayerManager {
                                 Player refreshedPlayer = redisService.findPlayerById(player.getId());
 
                                 // Notify UI
-                                actionBus.publish(Commands.PLAYER_UPDATED, this, refreshedPlayer);
-                                actionBus.publish(Commands.PLAYER_SELECTED, this, refreshedPlayer);
+                                commandBus.publish(Commands.PLAYER_UPDATED, this, refreshedPlayer);
+                                commandBus.publish(Commands.PLAYER_SELECTED, this, refreshedPlayer);
 
                                 logger.info("Player {} updated after rule deletion", player.getId());
                             }
@@ -132,14 +132,14 @@ public class PlayerManager {
     public void playerSelected(Player player) {
         if (!Objects.equals(activePlayer, player)) {
             this.activePlayer = player;
-            actionBus.publish(Commands.PLAYER_SELECTED, this, player);
+            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
         }
     }
 
     public void playerUpdated(Player player) {
         if (Objects.equals(activePlayer.getId(), player.getId())) {
             this.activePlayer = player;
-            actionBus.publish(Commands.PLAYER_UPDATED, this, player);
+            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
         }
     }
 
@@ -157,8 +157,8 @@ public class PlayerManager {
         if (player.getRules().stream().noneMatch(r -> r.isEqualTo(rule))) {
             rule.setPlayer(player);
             player.getRules().add(rule);
-            actionBus.publish(Commands.RULE_ADDED, this, player);
-            actionBus.publish(Commands.PLAYER_SELECTED, this, player);
+            commandBus.publish(Commands.RULE_ADDED, this, player);
+            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
 
             return rule;
         }
@@ -295,28 +295,28 @@ public class PlayerManager {
     public void savePlayerProperties(Player player) {
         if (player != null) {
             RedisService.getInstance().savePlayer(player);
-            actionBus.publish(Commands.PLAYER_UPDATED, this, player);
+            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
         }
     }
 
     // Rule management methods
     public void clearRules(Player player) {
         player.getRules().clear();
-        actionBus.publish(Commands.RULES_CLEARED, this, player);
+        commandBus.publish(Commands.RULES_CLEARED, this, player);
     }
 
     public void deleteRule(Rule rule) {
         Player player = rule.getPlayer();
         player.getRules().remove(rule);
-        actionBus.publish(Commands.RULE_DELETED, this, player);
+        commandBus.publish(Commands.RULE_DELETED, this, player);
     }
 
     public void updatePlayer(Player player) {
-        actionBus.publish(Commands.PLAYER_UPDATED, this, player);
+        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
     }
 
     public void addPlayer(Player player) {
-        actionBus.publish(Commands.PLAYER_ADDED, this, player);
+        commandBus.publish(Commands.PLAYER_ADDED, this, player);
     }
 
     public void removeAllPlayers(Session session) {
@@ -331,4 +331,18 @@ public class PlayerManager {
             redisService.deletePlayer(player);
     }
 
+    public void setActivePlayer(Player player) {
+        if (!Objects.equals(this.activePlayer, player)) {
+            logger.info("PlayerManager: Setting active player to " + 
+                      (player != null ? player.getName() + " (ID: " + player.getId() + ")" : "null"));
+            this.activePlayer = player;
+            
+            // Re-publish the event to ensure all listeners are notified
+            if (player != null) {
+                commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+            } else {
+                commandBus.publish(Commands.PLAYER_UNSELECTED, this, null);
+            }
+        }
+    }
 }

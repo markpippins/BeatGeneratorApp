@@ -8,10 +8,8 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -32,17 +30,17 @@ import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import com.angrysurfer.beats.service.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
-import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Constants;
 
@@ -213,70 +211,6 @@ public class PlayersPanel extends JPanel {
         add(new JScrollPane(table), BorderLayout.CENTER);
     }
 
-    public void saveColumnOrder() {
-        try {
-            TableState state = RedisService.getInstance().loadTableState(Constants.PLAYER);
-            if (state != null) {
-                List<String> columnOrder = new ArrayList<>();
-                // Get visible column order
-                for (int i = 0; i < table.getColumnCount(); i++) {
-                    int modelIndex = table.convertColumnIndexToModel(i);
-                    String columnName = getColumnNames()[modelIndex];
-                    columnOrder.add(columnName);
-                }
-
-                // Only save if we have all columns
-                if (columnOrder.size() == COLUMNS.size()) {
-                    logger.info("Saving column order: " + String.join(", ", columnOrder));
-                    state.setColumnOrder(columnOrder);
-                    RedisService.getInstance().saveTableState(state, Constants.PLAYER);
-                } else {
-                    logger.warning("Column order incomplete, not saving");
-                }
-            }
-        } catch (Exception e) {
-            logger.severe("Error saving column order: " + e.getMessage());
-        }
-    }
-
-    public void restoreColumnOrder() {
-        try {
-            TableState state = RedisService.getInstance().loadTableState(Constants.PLAYER);
-            List<String> savedOrder = state != null ? state.getColumnOrder() : null;
-
-            if (savedOrder != null && !savedOrder.isEmpty() && savedOrder.size() == COLUMNS.size()) {
-                logger.info("Restoring column order: " + String.join(", ", savedOrder));
-
-                // Create a map of column names to their current positions
-                Map<String, Integer> currentOrder = new HashMap<>();
-                for (int i = 0; i < table.getColumnCount(); i++) {
-                    currentOrder.put(getColumnNames()[i], i);
-                }
-
-                // Move each column to its saved position
-                for (int i = 0; i < savedOrder.size(); i++) {
-                    String colName = savedOrder.get(i);
-                    Integer currentPos = currentOrder.get(colName);
-                    if (currentPos != null && currentPos != i) {
-                        table.getColumnModel().moveColumn(currentPos, i);
-                        // Update the currentOrder map after moving
-                        for (Map.Entry<String, Integer> entry : currentOrder.entrySet()) {
-                            if (entry.getValue() == i) {
-                                currentOrder.put(entry.getKey(), currentPos);
-                                break;
-                            }
-                        }
-                        currentOrder.put(colName, i);
-                    }
-                }
-            } else {
-                logger.info("No valid column order found to restore");
-            }
-        } catch (Exception e) {
-            logger.severe("Error restoring column order: " + e.getMessage());
-        }
-    }
-
     private void setupTable() {
 
         DefaultTableModel model = new DefaultTableModel(getColumnNames(), 0) {
@@ -377,7 +311,8 @@ public class PlayersPanel extends JPanel {
                 if (e.getFromIndex() != e.getToIndex()) {
                     logger.info("Column moved from " + e.getFromIndex() + " to " + e.getToIndex());
                     // Add slight delay to ensure column move is complete
-                    SwingUtilities.invokeLater(() -> saveColumnOrder());
+                    SwingUtilities.invokeLater(
+                            () -> UIHelper.getInstance().saveColumnOrder(table, Constants.PLAYER, COLUMNS));
                 }
             }
 
@@ -396,38 +331,46 @@ public class PlayersPanel extends JPanel {
         });
 
         // Save initial column order
-        SwingUtilities.invokeLater(() -> saveColumnOrder());
+        SwingUtilities.invokeLater(() -> UIHelper.getInstance().saveColumnOrder(table, Constants.PLAYER, COLUMNS));
 
         // Restore column order after table is fully set up
-        SwingUtilities.invokeLater(() -> restoreColumnOrder());
+        SwingUtilities.invokeLater(() -> UIHelper.getInstance().restoreColumnOrder(table, Constants.PLAYER, COLUMNS));
 
+        // Replace both selection listeners with this single implementation in
+        // setupTable()
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                boolean hasSelection = table.getSelectedRow() >= 0;
+                int selectedRow = table.getSelectedRow();
+                boolean hasSelection = selectedRow >= 0;
 
                 // Update button states
-                buttonPanel.setEditEnabled(hasSelection);
-                buttonPanel.setDeleteEnabled(hasSelection);
-                contextMenu.setEditEnabled(hasSelection);
-                contextMenu.setDeleteEnabled(hasSelection);
+                updateButtonStates();
 
-                // Add button enabled if we have an active session
-                buttonPanel.setAddEnabled(hasActiveSession);
-                contextMenu.setAddEnabled(hasActiveSession);
-
-                // Handle player selection for rules panel
+                // Handle player selection with a single approach
                 if (hasSelection) {
                     Player selectedPlayer = getSelectedPlayer();
                     if (selectedPlayer != null) {
+                        logger.info("PlayersPanel: Selected player " + selectedPlayer.getName() +
+                                " (ID: " + selectedPlayer.getId() + ")");
+
+                        // 1. Update PlayerManager first (source of truth)
+                        PlayerManager.getInstance().setActivePlayer(selectedPlayer);
+
+                        // 2. Then publish the event for other components
                         CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, selectedPlayer);
-                        logger.info("Player selected: " + selectedPlayer.getName());
                     }
                 } else {
+                    logger.info("PlayersPanel: No player selected");
+
+                    // Clear active player in PlayerManager
+                    PlayerManager.getInstance().setActivePlayer(null);
+
+                    // Notify other components
                     CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
-                    logger.info("Player unselected");
                 }
             }
         });
+
     }
 
     private void setupButtonListeners() {
@@ -606,7 +549,7 @@ public class PlayersPanel extends JPanel {
                         }
                     }
                     case Commands.WINDOW_CLOSING -> {
-                        saveColumnOrder();
+                        UIHelper.getInstance().saveColumnOrder(table, Constants.PLAYER, COLUMNS);
                     }
                     case Commands.PLAYER_SELECTED -> {
                         if (action.getData() instanceof Player player) {
@@ -633,29 +576,6 @@ public class PlayersPanel extends JPanel {
 
                     }
 
-                }
-            }
-        });
-
-        // Combine selection listeners into one
-        table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int selectedRow = table.getSelectedRow();
-                boolean hasSelection = selectedRow >= 0;
-
-                // Update button states
-                updateButtonStates();
-
-                // Handle player selection
-                if (hasSelection) {
-                    Player selectedPlayer = getSelectedPlayer();
-                    if (selectedPlayer != null) {
-                        logger.info("Selected player in table: " + selectedPlayer.getName());
-                        CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, selectedPlayer);
-                    }
-                } else {
-                    logger.info("No player selected");
-                    CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
                 }
             }
         });
@@ -705,8 +625,14 @@ public class PlayersPanel extends JPanel {
     }
 
     private int findPlayerRowIndex(Player player) {
+        if (player == null || player.getId() == null) {
+            return -1;
+        }
+        
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         for (int i = 0; i < model.getRowCount(); i++) {
+            // Store player IDs in table using a hidden column or row properties
+            // For now, match by name but add a player ID column later
             String playerName = (String) model.getValueAt(i, 0);
             if (playerName.equals(player.getName())) {
                 return i;
@@ -716,19 +642,41 @@ public class PlayersPanel extends JPanel {
     }
 
     private Player getSelectedPlayer() {
-        int row = table.getSelectedRow();
-        if (row >= 0) {
-            int modelRow = table.convertRowIndexToModel(row);
-            String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
-            Session currentSession = SessionManager.getInstance().getActiveSession();
-            if (currentSession != null && currentSession.getPlayers() != null) {
-                logger.info("Looking for player: " + playerName);
-                return currentSession.getPlayers().stream()
-                        .filter(p -> p.getName().equals(playerName))
-                        .findFirst()
-                        .orElse(null);
-            }
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            logger.info("No row selected in players table");
+            return null;
         }
+
+        try {
+            // Convert view index to model index in case of sorting/filtering
+            int modelRow = table.convertRowIndexToModel(selectedRow);
+            
+            // Get the player name from the Name column
+            String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
+            logger.info("Selected player name from table: " + playerName);
+            
+            // Get the current session
+            Session currentSession = SessionManager.getInstance().getActiveSession();
+            
+            if (currentSession != null && currentSession.getPlayers() != null) {
+                // Find the player with the matching name
+                for (Player player : currentSession.getPlayers()) {
+                    if (playerName.equals(player.getName())) {
+                        logger.info("Found matching player in session: " + player.getName() + 
+                                   " (ID: " + player.getId() + ")");
+                        return player;
+                    }
+                }
+                logger.warning("No player found with name: " + playerName);
+            } else {
+                logger.warning("No active session or no players in session");
+            }
+        } catch (Exception e) {
+            logger.severe("Error getting selected player: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
         return null;
     }
 
@@ -778,53 +726,18 @@ public class PlayersPanel extends JPanel {
 
     private void updateInstrumentCell(Object[] rowData, int columnIndex, Player player) {
         String instrumentName = "";
-        Long id = player.getInstrumentId();
 
         try {
 
             if (player.getInstrumentId() != null) {
-                // Always try to get fresh instrument from cache first
+
                 Instrument instrument = SessionManager.getInstance().getInstrumentFromCache(player.getInstrumentId());
                 if (instrument != null) {
                     instrumentName = instrument.getName();
                     player.setInstrument(instrument);
-
-                    // Update player's reference
-                    // RedisService.getInstance().savePlayer(player);
-                    // CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
-
-                    // logger.info(String.format("Found instrument in cache: %s (ID: %d)",
-                    // // instrumentName,
-                    // // player.getInstrumentId()));
-                    // } else {
-                    // logger.warning(
-                    // String.format("Could not find instrument in cache for ID: %d",
-                    // player.getInstrumentId()));
-                    // instrumentEngine.refreshCache();
-                    // instrument =
-                    // instrumentEngine.getInstrumentFromCache(player.getInstrumentId());
-                    // if (instrument != null) {
-                    // instrumentName = instrument.getName();
-                    // player.setInstrument(instrument);
-                    // // logger.info(String.format("Found instrument after cache refresh: %s",
-                    // // instrumentName));
-                    // } else {
-                    // instrumentName = "Unknown (ID: " + player.getInstrumentId() + ")";
-                    // }
-                    // }
-                    // } else if (player.getInstrument() != null) {
-                    // // If we have instrument but no ID, try to fix the state
-                    // instrumentName = player.getInstrument().getName();
-                    // player.setInstrumentId(player.getInstrument().getId());
-                    // // logger.info(String.format("Fixed missing instrument ID for instrument:
-                    // %d",
-                    // // instrumentName));
-                    // RedisService.getInstance().savePlayer(player);
                 }
             }
             rowData[columnIndex] = instrumentName;
-            // logger.info(String.format("Updated instrument cell for player %d to: %d",
-            // player.getId(), instrumentName));
         } catch (Exception e) {
             logger.severe("Error updating instrument cell: " + e.getMessage());
             rowData[columnIndex] = "Error";
@@ -856,15 +769,15 @@ public class PlayersPanel extends JPanel {
                 newRowData[getColumnIndex(COL_MIN_VEL)] = player.getMinVelocity();
                 newRowData[getColumnIndex(COL_MAX_VEL)] = player.getMaxVelocity();
                 newRowData[getColumnIndex(COL_PRESET)] = player.getPreset();
-                newRowData[getColumnIndex(COL_STICKY)] = false; // player.isSticky();
+                newRowData[getColumnIndex(COL_STICKY)] = player.getStickyPreset();
                 newRowData[getColumnIndex(COL_PROBABILITY)] = player.getProbability();
                 newRowData[getColumnIndex(COL_RANDOM)] = player.getRandomDegree();
                 newRowData[getColumnIndex(COL_RATCHET_COUNT)] = player.getRatchetCount();
                 newRowData[getColumnIndex(COL_RATCHET_INTERVAL)] = player.getRatchetInterval();
-                newRowData[getColumnIndex(COL_INT_BEATS)] = false; // player.isIntervalBeats();
-                newRowData[getColumnIndex(COL_INT_BARS)] = false; // player.isIntervalBars();
+                newRowData[getColumnIndex(COL_INT_BEATS)] = player.getInternalBeats();
+                newRowData[getColumnIndex(COL_INT_BARS)] = player.getInternalBars();
                 newRowData[getColumnIndex(COL_PAN)] = player.getPanPosition();
-                newRowData[getColumnIndex(COL_PRESERVE)] = false; // player.isPreserve();
+                newRowData[getColumnIndex(COL_PRESERVE)] = player.getPreserveOnPurge();
                 newRowData[getColumnIndex(COL_SPARSE)] = player.getSparse();
 
                 model.addRow(newRowData);
@@ -891,19 +804,53 @@ public class PlayersPanel extends JPanel {
             model.setValueAt(player.getMinVelocity(), rowIndex, getColumnIndex(COL_MIN_VEL));
             model.setValueAt(player.getMaxVelocity(), rowIndex, getColumnIndex(COL_MAX_VEL));
             model.setValueAt(player.getPreset(), rowIndex, getColumnIndex(COL_PRESET));
-            // model.setValueAt(player.isSticky(), rowIndex, getColumnIndex(COL_STICKY));
+            model.setValueAt(player.getStickyPreset(), rowIndex, getColumnIndex(COL_STICKY));
             model.setValueAt(player.getProbability(), rowIndex, getColumnIndex(COL_PROBABILITY));
             model.setValueAt(player.getRandomDegree(), rowIndex, getColumnIndex(COL_RANDOM));
             model.setValueAt(player.getRatchetCount(), rowIndex, getColumnIndex(COL_RATCHET_COUNT));
             model.setValueAt(player.getRatchetInterval(), rowIndex, getColumnIndex(COL_RATCHET_INTERVAL));
-            // model.setValueAt(player.isIntervalBeats(), rowIndex,
-            // getColumnIndex(COL_INT_BEATS));
-            // model.setValueAt(player.isIntervalBars(), rowIndex,
-            // getColumnIndex(COL_INT_BARS));
+            model.setValueAt(player.getInternalBeats(), rowIndex, getColumnIndex(COL_INT_BEATS));
+            model.setValueAt(player.getInternalBars(), rowIndex, getColumnIndex(COL_INT_BARS));
             model.setValueAt(player.getPanPosition(), rowIndex, getColumnIndex(COL_PAN));
             // model.setValueAt(player.isPreserve(), rowIndex,
             // getColumnIndex(COL_PRESERVE));
             model.setValueAt(player.getSparse(), rowIndex, getColumnIndex(COL_SPARSE));
+        }
+    }
+
+    // Add this to your player selection method in PlayersPanel
+    private void handlePlayerSelection(int row) {
+        if (row >= 0 && row < table.getRowCount()) {
+            // Convert view index to model index
+            int modelRow = table.convertRowIndexToModel(row);
+            String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
+
+            // Get player from session
+            Session currentSession = SessionManager.getInstance().getActiveSession();
+            if (currentSession != null && currentSession.getPlayers() != null) {
+                Player selectedPlayer = currentSession.getPlayers().stream()
+                        .filter(p -> p.getName().equals(playerName))
+                        .findFirst()
+                        .orElse(null);
+
+                if (selectedPlayer != null) {
+                    logger.info("PlayersPanel: Selected player " + selectedPlayer.getName() +
+                            " (ID: " + selectedPlayer.getId() + ")");
+
+                    // Publish the selected player event - THIS WAS MISSING
+                    CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, selectedPlayer);
+
+                    // Also update PlayerManager directly
+                    PlayerManager.getInstance().setActivePlayer(selectedPlayer);
+                }
+            }
+        } else {
+            // No player selected
+            logger.info("PlayersPanel: No player selected (row=" + row + ")");
+            CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
+
+            // Also update PlayerManager directly
+            PlayerManager.getInstance().setActivePlayer(null);
         }
     }
 }

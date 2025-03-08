@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -26,6 +25,8 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -151,23 +152,34 @@ public class RulesPanel extends JPanel {
 
     private void setupButtonListeners() {
         buttonPanel.addActionListener(e -> {
-            switch (e.getActionCommand()) {
+            String command = e.getActionCommand();
+            logger.info("Button clicked: " + command);
+            
+            switch (command) {
                 case Commands.RULE_ADD_REQUEST -> {
-                    if (Objects.nonNull(currentPlayer)) {
+                    if (currentPlayer != null) {
+                        logger.info("Publishing RULE_ADD_REQUEST for player: " + currentPlayer.getName());
                         CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, currentPlayer);
+                    } else {
+                        logger.warning("Cannot add rule - no player selected");
                     }
                 }
                 case Commands.RULE_EDIT_REQUEST -> {
                     Rule selectedRule = getSelectedRule();
                     if (selectedRule != null) {
+                        logger.info("Publishing RULE_EDIT_REQUEST for rule: " + selectedRule.getId());
                         CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
+                    } else {
+                        logger.warning("Cannot edit rule - no rule selected");
                     }
                 }
                 case Commands.RULE_DELETE_REQUEST -> {
-                    Rule selectedRule = getSelectedRule();
-                    if (selectedRule != null) {
-                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this,
-                                new Rule[] { selectedRule });
+                    Rule[] selectedRules = getSelectedRules();
+                    if (selectedRules.length > 0) {
+                        logger.info("Publishing RULE_DELETE_REQUEST for " + selectedRules.length + " rules");
+                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, selectedRules);
+                    } else {
+                        logger.warning("Cannot delete rules - no rules selected");
                     }
                 }
             }
@@ -200,23 +212,28 @@ public class RulesPanel extends JPanel {
     private void setupContextMenu() {
         contextMenu.install(table);
         contextMenu.addActionListener(e -> {
-            switch (e.getActionCommand()) {
+            String command = e.getActionCommand();
+            logger.info("Context menu action: " + command);
+            
+            switch (command) {
                 case Commands.RULE_ADD_REQUEST -> {
-                    if (Objects.nonNull(currentPlayer)) {
+                    if (currentPlayer != null) {
+                        logger.info("Publishing RULE_ADD_REQUEST from context menu");
                         CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, currentPlayer);
                     }
                 }
                 case Commands.RULE_EDIT_REQUEST -> {
                     Rule selectedRule = getSelectedRule();
                     if (selectedRule != null) {
+                        logger.info("Publishing RULE_EDIT_REQUEST from context menu");
                         CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
                     }
                 }
                 case Commands.RULE_DELETE_REQUEST -> {
-                    Rule selectedRule = getSelectedRule();
-                    if (selectedRule != null) {
-                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this,
-                                new Rule[] { selectedRule });
+                    Rule[] selectedRules = getSelectedRules();
+                    if (selectedRules.length > 0) {
+                        logger.info("Publishing RULE_DELETE_REQUEST from context menu");
+                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, selectedRules);
                     }
                 }
             }
@@ -227,71 +244,90 @@ public class RulesPanel extends JPanel {
         CommandBus.getInstance().register(new CommandListener() {
             @Override
             public void onAction(Command action) {
-                switch (action.getCommand()) {
-                    case Commands.SESSION_SELECTED -> {
-                        clearRules();
-                        currentPlayer = null;
+                if (action.getCommand() == null) return;
+                
+                String cmd = action.getCommand();
+                
+                // Add debug logging to trace command flow
+                logger.info("RulesPanel received command: " + cmd);
+                
+                if (Commands.PLAYER_SELECTED.equals(cmd)) {
+                    if (action.getData() instanceof Player) {
+                        Player player = (Player) action.getData();
+                        logger.info("RulesPanel received PLAYER_SELECTED: " + player.getName() + 
+                                   " (ID: " + player.getId() + ") with " + 
+                                   (player.getRules() != null ? player.getRules().size() : 0) + " rules");
+                        
+                        // Update current player reference
+                        currentPlayer = player;
+                        
+                        // Get fresh copy from SessionManager for most up-to-date rules
+                        Session session = SessionManager.getInstance().getActiveSession();
+                        if (session != null) {
+                            Player updatedPlayer = session.getPlayer(player.getId());
+                            if (updatedPlayer != null) {
+                                logger.info("Using fresh player copy with " + 
+                                          (updatedPlayer.getRules() != null ? 
+                                           updatedPlayer.getRules().size() : 0) + " rules");
+                                currentPlayer = updatedPlayer;
+                            }
+                        }
+                        
+                        // Clear and reload rules table with this player's rules
+                        loadRules(currentPlayer);
                         updateButtonStates();
                     }
-                    case Commands.PLAYER_SELECTED -> {
-                        if (action.getData() instanceof Player player) {
-                            currentPlayer = player;
-                            loadRules(player);
+                }
+                else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {
+                    logger.info("RulesPanel received PLAYER_UNSELECTED");
+                    currentPlayer = null;
+                    clearRules();
+                    updateButtonStates();
+                }
+                else if (Commands.PLAYER_UPDATED.equals(cmd)) {
+                    if (action.getData() instanceof Player) {
+                        Player updatedPlayer = (Player) action.getData();
+                        if (currentPlayer != null && 
+                                updatedPlayer.getId().equals(currentPlayer.getId())) {
+                            
+                            logger.info("RulesPanel updating rules for player: " + updatedPlayer.getName());
+                            currentPlayer = updatedPlayer;  // Update our reference
+                            loadRules(updatedPlayer);
                             updateButtonStates();
-
-                            // Auto-select first rule if available
-                            if (player.getRules() != null && !player.getRules().isEmpty()) {
-                                table.setRowSelectionInterval(0, 0);
-                                Rule firstRule = player.getRules().iterator().next();
-                                CommandBus.getInstance().publish(Commands.RULE_SELECTED, this, firstRule);
-                            }
                         }
                     }
-
-                    case Commands.PLAYER_UPDATED -> {
-
-                        try {
-                            if (action.getData() instanceof Player player && (Objects.isNull(currentPlayer)
-                                    || player.getId().equals(currentPlayer.getId()))) {
-                                currentPlayer = player; // Update reference
-                                loadRules(player);
-                                // CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this);
-                            }
-                        } catch (Exception e) {
-                            logger.severe("Error updating player: " + e.getMessage());
-                        }
-
-                    }
-                    case Commands.PLAYER_UNSELECTED -> {
-                        setPlayer(null);
-                        currentPlayer = null;
-                        clearRules();
-                        updateButtonStates();
-                    }
-                    case Commands.RULE_SELECTED -> {
-                        if (action.getData() instanceof Rule rule) {
-                            // Find and select the rule in the table
-                            int index = findRuleIndex(rule);
-                            if (index >= 0) {
-                                table.setRowSelectionInterval(index, index);
-                                table.scrollRectToVisible(table.getCellRect(index, 0, true));
-                            }
+                }
+                else if (Commands.RULE_DELETED.equals(cmd) || 
+                         Commands.RULE_ADDED.equals(cmd) || 
+                         Commands.RULE_EDITED.equals(cmd)) {
+                    if (currentPlayer != null) {
+                        logger.info("Rule changed, refreshing rules for player: " + currentPlayer.getName());
+                        // Get fresh player data from SessionManager
+                        Player updatedPlayer = SessionManager.getInstance()
+                            .getActiveSession()
+                            .getPlayer(currentPlayer.getId());
+                            
+                        if (updatedPlayer != null) {
+                            currentPlayer = updatedPlayer;  // Update reference
+                            loadRules(updatedPlayer);
+                            updateButtonStates();
                         }
                     }
                 }
             }
         });
-
+        
         // Update selection listener to use command bus
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
+                updateButtonStates(); // Update button states on selection change
+                
                 Rule selectedRule = getSelectedRule();
                 if (selectedRule != null) {
                     CommandBus.getInstance().publish(Commands.RULE_SELECTED, this, selectedRule);
                 } else {
-                    CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this);
+                    CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this, null);
                 }
-                updateButtonStates();
             }
         });
     }
@@ -327,18 +363,49 @@ public class RulesPanel extends JPanel {
     }
 
     private void updateButtonStates() {
+        // Enable add button if we have a current player
         boolean hasPlayer = currentPlayer != null;
-        // Update button states based on having a player
         buttonPanel.setAddEnabled(hasPlayer);
-        buttonPanel.setEditEnabled(false); // Will be enabled when a rule is selected
-        buttonPanel.setDeleteEnabled(false);
+        contextMenu.setAddEnabled(hasPlayer);
+        
+        // Enable edit and delete only if we have both a player AND a selection
+        boolean hasSelection = table.getSelectedRow() >= 0;
+        boolean canEdit = hasPlayer && hasSelection;
+        
+        buttonPanel.setEditEnabled(canEdit);
+        buttonPanel.setDeleteEnabled(canEdit);
+        contextMenu.setEditEnabled(canEdit);
+        contextMenu.setDeleteEnabled(canEdit);
+        
+        logger.info("Button states updated - Add: " + hasPlayer + 
+                   ", Edit/Delete: " + canEdit);
     }
 
     private Rule getSelectedRule() {
         int row = table.getSelectedRow();
-        if (row >= 0 && Objects.nonNull(currentPlayer) && Objects.nonNull(currentPlayer.getRules())) {
-            return new ArrayList<>(currentPlayer.getRules()).get(row);
+        if (row < 0 || currentPlayer == null || currentPlayer.getRules() == null || currentPlayer.getRules().isEmpty()) {
+            return null;
         }
+        
+        try {
+            // Convert view row to model row if table is sorted
+            int modelRow = table.convertRowIndexToModel(row);
+            
+            // Get rules as a list for indexing
+            List<Rule> rulesList = new ArrayList<>(currentPlayer.getRules());
+            
+            if (modelRow < rulesList.size()) {
+                Rule rule = rulesList.get(modelRow);
+                logger.info("Selected rule: " + rule);
+                return rule;
+            } else {
+                logger.warning("Selected row " + modelRow + " is out of bounds (rules size: " + rulesList.size() + ")");
+            }
+        } catch (Exception e) {
+            logger.severe("Error getting selected rule: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
         return null;
     }
 
@@ -384,27 +451,45 @@ public class RulesPanel extends JPanel {
         updateButtonStates();
     }
 
+    // Ensure the loadRules method properly clears and populates the table
     private void loadRules(Player player) {
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        model.setRowCount(0);
-
-        if (player != null && player.getRules() != null) {
-            List<Rule> sortedRules = new ArrayList<>(player.getRules());
-            Collections.sort(sortedRules, (a, b) -> Long.compare(a.getId(), b.getId()));
-
-            for (Rule rule : sortedRules) {
-                model.addRow(new Object[] {
-                        Rule.OPERATORS[rule.getOperator()],
-                        Rule.COMPARISONS[rule.getComparison()],
-                        rule.getValue(),
-                        rule.getPart() == 0 ? "All" : rule.getPart()
-                });
-                logger.fine("Added rule: " + rule.getId() +
-                        " - Op: " + rule.getOperator() +
-                        ", Comp: " + rule.getComparison() +
-                        ", Value: " + rule.getValue() +
-                        ", Part: " + rule.getPart());
+        try {
+            logger.info("Loading rules for player: " + (player != null ? player.getName() : "null"));
+            
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            model.setRowCount(0);  // Clear existing content
+        
+            if (player != null && player.getRules() != null && !player.getRules().isEmpty()) {
+                logger.info("Found " + player.getRules().size() + " rules to display");
+                
+                // Debug each rule
+                int count = 0;
+                for (Rule rule : player.getRules()) {
+                    logger.info("Rule " + (++count) + ": " + rule);
+                }
+                
+                // Add rules to table
+                for (Rule rule : player.getRules()) {
+                    if (rule == null) continue;
+                    
+                    // Add row with correct column order
+                    model.addRow(new Object[] {
+                        rule.getOperatorText(),     // Property column - "Beat", "Tick", etc.
+                        rule.getComparisonText(),   // Operator column - "==", "<", etc.
+                        rule.getValue(),            // Value column
+                        rule.getPartText()          // Part column
+                    });
+                }
+            } else {
+                logger.warning("No rules to display for player: " + 
+                            (player != null ? player.getName() : "null"));
             }
+            
+            table.revalidate();
+            table.repaint();
+        } catch (Exception e) {
+            logger.severe("Error loading rules: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

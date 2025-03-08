@@ -2,6 +2,7 @@ package com.angrysurfer.core.model;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -163,6 +164,17 @@ public class Session implements Serializable, CommandListener {
     public Player getPlayer(Long playerId) {
         logger.info("getPlayer() - playerId: {}", playerId);
         return getPlayers().stream().filter(p -> p.getId().equals(playerId)).findFirst().orElseThrow();
+    }
+
+    public Player getPlayerById(Long id) {
+        if (players == null || id == null) return null;
+        
+        for (Player player : players) {
+            if (id.equals(player.getId())) {
+                return player;
+            }
+        }
+        return null;
     }
 
     public void setParts(Integer parts) {
@@ -540,5 +552,40 @@ public class Session implements Serializable, CommandListener {
         if (isRunning()) {
             syncToSequencer();
         }
+    }
+
+    // // Add this method to Session class
+    // public void updatePlayer(Player updatedPlayer) {
+    //     if (players == null) {
+    //         players = new LinkedHashSet<>();
+    //     }
+        
+    //     // Remove existing player with same ID if found
+    //     players.removeIf(p -> p.getId().equals(updatedPlayer.getId()));
+        
+    //     // Add the updated player
+    //     players.add(updatedPlayer);
+    // }
+
+    /**
+     * Updates an existing player in the session or adds it if not present
+     * @param updatedPlayer The player with updated details
+     */
+    public void updatePlayer(Player updatedPlayer) {
+        if (updatedPlayer == null || updatedPlayer.getId() == null) {
+            return;
+        }
+        
+        // Initialize players set if needed
+        if (players == null) {
+            players = new LinkedHashSet<>();
+        }
+        
+        // Remove existing player with same ID
+        players.removeIf(p -> p.getId().equals(updatedPlayer.getId()));
+        
+        // Add the updated player
+        updatedPlayer.setSession(this);
+        players.add(updatedPlayer);
     }
 }

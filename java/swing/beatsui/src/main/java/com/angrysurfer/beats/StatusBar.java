@@ -184,7 +184,7 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
 
     private void updatePlayerInfo(Player player) {
         if (player != null) {
-            playerIdField.setText(String.valueOf(player.getId()));
+            playerIdField.setText(String.valueOf(   player.getId()));
             ruleCountField.setText(String.valueOf(player.getRules().size()));
         } else {
             clearPlayerInfo();

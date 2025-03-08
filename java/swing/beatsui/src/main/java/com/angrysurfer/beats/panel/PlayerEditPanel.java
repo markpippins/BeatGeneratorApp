@@ -37,6 +37,7 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.SessionManager;
@@ -405,15 +406,43 @@ public class PlayerEditPanel extends StatusProviderPanel {
         }
     }
 
+    // Fix the getUpdatedPlayer() method with proper null checking
     public Player getUpdatedPlayer() {
         // Update player with current UI values
-        player.setInstrument((Instrument) instrumentCombo.getSelectedItem());
-        player.setInstrumentId(((Instrument) instrumentCombo.getSelectedItem()).getId());
-        player.setChannel(((Number) channelSpinner.getValue()).intValue());  // Ensure integer
-        player.setPreset(((Number) presetSpinner.getValue()).longValue());   // Ensure long
+        Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
         
-        // Other fields...
-        player.setSparse(((double) sparseSlider.getValue()) / 100.0); // Ensure double
+        // Only set instrument and ID if an instrument is actually selected
+        if (selectedInstrument != null) {
+            player.setInstrument(selectedInstrument);
+            player.setInstrumentId(selectedInstrument.getId());
+            logger.fine("Selected instrument: " + selectedInstrument.getName() + 
+                       " (ID: " + selectedInstrument.getId() + ")");
+        } else {
+            // Log warning and keep existing instrument (if any)
+            logger.warning("No instrument selected in combo box");
+        }
+        
+        // These operations are safe as spinners always have values
+        player.setChannel(((Number) channelSpinner.getValue()).intValue());
+        player.setPreset(((Number) presetSpinner.getValue()).longValue());
+        
+        // Set other slider values
+        player.setLevel((long)levelSlider.getValue());
+        player.setNote((long)noteSlider.getValue());
+        player.setSwing((long)swingSlider.getValue());
+        player.setMinVelocity((long)velocityMinSlider.getValue());
+        player.setMaxVelocity((long)velocityMaxSlider.getValue());
+        player.setProbability((long)probabilitySlider.getValue());
+        player.setRandomDegree((long)randomSlider.getValue());
+        player.setPanPosition((long)panSlider.getValue());
+        player.setSparse(((double) sparseSlider.getValue()) / 100.0);
+        player.setName(nameField.getText());
+        
+        // Set toggle switch values
+        player.setStickyPreset(stickyPresetSwitch.isSelected());
+        player.setUseInternalBeats(useInternalBeatsSwitch.isSelected());
+        player.setUseInternalBars(useInternalBarsSwitch.isSelected());
+        player.setPreserveOnPurge(preserveOnPurgeSwitch.isSelected());
         
         return player;
     }
@@ -423,25 +452,32 @@ public class PlayerEditPanel extends StatusProviderPanel {
         instrumentCombo = new JComboBox<>();
         List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
 
-        // Sort instruments by name
-        instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+        if (instruments == null || instruments.isEmpty()) {
+            logger.warning("No instruments found in database");
+            // Add a default instrument to prevent null selections
+            Instrument defaultInstrument = new Instrument();
+            defaultInstrument.setId(0L);
+            defaultInstrument.setName("Default Instrument");
+            instrumentCombo.addItem(defaultInstrument);
+        } else {
+            // Sort instruments by name
+            instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
-        for (Instrument inst : instruments) {
-            instrumentCombo.addItem(inst);
+            for (Instrument inst : instruments) {
+                instrumentCombo.addItem(inst);
+            }
         }
 
         // Select the player's instrument if it exists
         if (player.getInstrument() != null) {
             for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
-                Instrument item = (Instrument) instrumentCombo.getItemAt(i);
+                Instrument item = instrumentCombo.getItemAt(i);
                 if (item.getId().equals(player.getInstrument().getId())) {
                     instrumentCombo.setSelectedIndex(i);
                     break;
                 }
             }
         }
-
-        // ...rest of existing combo setup...
     }
 
     static int SLIDER_HEIGHT = 80;
@@ -765,8 +801,21 @@ public class PlayerEditPanel extends StatusProviderPanel {
             // Save player to Redis first
             RedisService.getInstance().savePlayer(player);
 
-            // Then publish for session update
-            CommandBus.getInstance().publish(Commands.SHOW_PLAYER_EDITOR_OK, this, player);
+            // THIS IS THE PROBLEM: We need to update the session too
+            Session currentSession = SessionManager.getInstance().getActiveSession();
+            if (currentSession != null) {
+                // Update player in session's player set
+                currentSession.updatePlayer(player);
+                
+                // Explicitly save updated session
+                SessionManager.getInstance().saveSession(currentSession);
+                
+                // Then publish with the UPDATED SESSION
+                CommandBus.getInstance().publish(Commands.SHOW_PLAYER_EDITOR_OK, this, currentSession);
+            } else {
+                // Fallback to just publishing the player
+                CommandBus.getInstance().publish(Commands.SHOW_PLAYER_EDITOR_OK, this, player);
+            }
 
             // Use %s instead of %d for ID values
             logger.info(String.format("Player saved with instrument: %s (ID: %s)",

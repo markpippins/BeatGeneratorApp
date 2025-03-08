@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.redis.RedisInstrumentHelper;
+import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
 
 import lombok.Getter;
@@ -23,7 +23,7 @@ import lombok.Setter;
 public class InstrumentManager {
     private static final Logger logger = LoggerFactory.getLogger(InstrumentManager.class);
     // private static InstrumentEngine instance;
-    private final RedisInstrumentHelper instrumentHelper;
+    private final InstrumentHelper instrumentHelper;
     private final Map<Long, Instrument> instrumentCache = new HashMap<>();
     private List<MidiDevice> midiDevices;
     private List<String> devices;

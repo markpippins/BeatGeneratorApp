@@ -1,6 +1,7 @@
 package com.angrysurfer.core.service;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -313,5 +314,30 @@ public class SessionManager {
 
     public Instrument getInstrumentFromCache(Long instrumentId) {
         return instrumentEngine.getInstrumentFromCache(instrumentId);
+    }
+
+    public void saveSession(Session currentSession) {
+        RedisService.getInstance().saveSession(currentSession);
+    }
+
+    /**
+     * Updates a player in the active session and saves changes to Redis
+     * @param player The player to update
+     */
+    public void updatePlayer(Player player) {
+        if (player != null && activeSession != null) {
+            // Update player in active session
+            activeSession.updatePlayer(player);
+            
+            // Save player to Redis
+            RedisService.getInstance().savePlayer(player);
+            
+            // Save updated session to Redis
+            RedisService.getInstance().saveSession(activeSession);
+            
+            // Publish update events
+            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+            commandBus.publish(Commands.SESSION_UPDATED, this, activeSession);
+        }
     }
 }

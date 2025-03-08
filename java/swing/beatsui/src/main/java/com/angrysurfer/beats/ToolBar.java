@@ -40,7 +40,7 @@ import com.angrysurfer.core.util.Scale;
 public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();
     private final Map<String, JComponent> rightFields = new HashMap<>(); // Changed to JComponent
-    private final CommandBus actionBus = CommandBus.getInstance();
+    private final CommandBus commandBus = CommandBus.getInstance();
     private Session currentSession; // Add field to track current session
 
     private JPanel transportPanel;
@@ -53,7 +53,7 @@ public class ToolBar extends JToolBar {
         setup();
 
         // Modify the command bus listener
-        actionBus.register(new CommandListener() {
+        commandBus.register(new CommandListener() {
             @Override
             public void onAction(Command action) {
                 // Skip if this ToolBar is the sender
@@ -121,9 +121,9 @@ public class ToolBar extends JToolBar {
             // First ensure SessionManager has an active session
             Session currentSession = SessionManager.getInstance().getActiveSession();
             if (currentSession != null) {
-                actionBus.publish(Commands.SESSION_SELECTED, this, currentSession);
+                commandBus.publish(Commands.SESSION_SELECTED, this, currentSession);
             } else {
-                actionBus.publish(Commands.SESSION_REQUEST, this);
+                commandBus.publish(Commands.SESSION_REQUEST, this);
             }
         });
 
@@ -170,7 +170,7 @@ public class ToolBar extends JToolBar {
                     case "Bars" -> currentSession.setBars(value);
                     case "Parts" -> currentSession.setParts(value);
                 }
-                actionBus.publish(Commands.SESSION_UPDATED, this, currentSession);
+                commandBus.publish(Commands.SESSION_UPDATED, this, currentSession);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -432,7 +432,7 @@ public class ToolBar extends JToolBar {
         button.setToolTipText(tooltip);
         button.setEnabled(true);
         button.setActionCommand(command);
-        button.addActionListener(e -> actionBus.publish(command, this));
+        button.addActionListener(e -> commandBus.publish(command, this));
 
         // Adjust size and font
         int size = 32;
@@ -517,13 +517,13 @@ public class ToolBar extends JToolBar {
                 int selectedIndex = combo.getSelectedIndex();
 
                 // Simply pass the scale name directly
-                actionBus.publish(Commands.SCALE_SELECTED, this, selectedScale);
+                commandBus.publish(Commands.SCALE_SELECTED, this, selectedScale);
 
                 // Check for first/last selection
                 if (selectedIndex == 0) {
-                    actionBus.publish(Commands.FIRST_SCALE_SELECTED, this, selectedScale);
+                    commandBus.publish(Commands.FIRST_SCALE_SELECTED, this, selectedScale);
                 } else if (selectedIndex == combo.getItemCount() - 1) {
-                    actionBus.publish(Commands.LAST_SCALE_SELECTED, this, selectedScale);
+                    commandBus.publish(Commands.LAST_SCALE_SELECTED, this, selectedScale);
                 }
             }
         });
@@ -557,7 +557,7 @@ public class ToolBar extends JToolBar {
 
         combo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED)
-                actionBus.publish(Commands.ROOT_NOTE_SELECTED, this, (String) combo.getSelectedItem());
+                commandBus.publish(Commands.ROOT_NOTE_SELECTED, this, (String) combo.getSelectedItem());
         });
 
         return combo;

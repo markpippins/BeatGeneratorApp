@@ -165,7 +165,7 @@ public class Commands {
     public static final String TRANSPOSE_UP = "TRANSPOSE_UP";
     public static final String TRANSPOSE_DOWN = "TRANSPOSE_DOWN";
 
-    public static String RULE_DELETED = "RULE_DELETED";
+    public static final String RULE_DELETED = "RULE_DELETED";
 
     public static final String MINI_NOTE_SELECTED = "MINI_NOTE_SELECTED";
     public static final String ROOT_NOTE_SELECTED = "ROOT_NOTE_SELECTED";

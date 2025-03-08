@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.redis.RedisInstrumentHelper;
+import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.InstrumentManager;
 
@@ -21,7 +21,7 @@ public class InstrumentService {
 
     private static final Logger logger = LoggerFactory.getLogger(InstrumentService.class);
 
-    private final RedisInstrumentHelper instrumentHelper;
+    private final InstrumentHelper instrumentHelper;
     private final InstrumentManager instrumentEngine;
 
     public InstrumentService(RedisService redisService) {
