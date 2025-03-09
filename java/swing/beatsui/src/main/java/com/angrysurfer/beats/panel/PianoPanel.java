@@ -8,8 +8,10 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -380,6 +382,32 @@ public class PianoPanel extends StatusProviderPanel {
         key.setBorderPainted(false);
         key.setFocusPainted(false);
         key.setToolTipText(note);
+        
+        // Add mouse listeners to handle mouse clicks on piano keys
+        key.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                Integer noteValue = getNoteForKey(key);
+                if (noteValue != null) {
+                    if (e.isShiftDown()) {
+                        // Shift+click acts like a key hold
+                        handleKeyHold(noteValue);
+                    } else {
+                        // Regular click acts like a key press
+                        handleKeyPress(noteValue);
+                    }
+                }
+            }
+            
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent e) {
+                Integer noteValue = getNoteForKey(key);
+                if (noteValue != null && !heldNotes.contains(noteValue)) {
+                    // Only release if not in held notes list
+                    handleKeyRelease(noteValue);
+                }
+            }
+        });
 
         return key;
     }
@@ -423,17 +451,49 @@ public class PianoPanel extends StatusProviderPanel {
     }
 
     private void applyCurrentScale() {
+        // First release any previously held notes
         releaseAllNotes();
-        Boolean[] scaleNotes = Scale.getScale(currentRoot, currentScale); // Use currentRoot instead of C_KEY
+        
+        // Get the new scale pattern based on current root and scale type
+        Boolean[] scaleNotes = Scale.getScale(currentRoot, currentScale);
+        
+        // Collect the MIDI notes that are part of the scale
+        List<Integer> scaleNotesList = new ArrayList<>();
+        
         // Map scale positions to MIDI notes (starting from middle C = 60)
         for (int i = 0; i < scaleNotes.length; i++) {
             if (scaleNotes[i]) {
                 int midiNote = 60 + i; // Middle C (60) plus scale position
                 if (noteToKeyMap.containsKey(midiNote)) {
+                    // Mark as held and highlight
                     heldNotes.add(midiNote);
                     highlightKey(midiNote);
+                    scaleNotesList.add(midiNote);
                 }
             }
+        }
+        
+        // Play the notes as a chord if the scale button is active
+        if (activeButton == followScaleBtn && !scaleNotesList.isEmpty()) {
+            // Update status to show what's being played
+            if (Objects.nonNull(statusConsumer)) {
+                statusConsumer.setStatus(String.format("Playing %s %s", currentRoot, currentScale));
+            }
+            
+            // Play each note in the scale with slight delay for arpeggio effect
+            final int[] delayMs = {0};
+            Timer chordTimer = new Timer(30, null);
+            chordTimer.addActionListener(e -> {
+                if (delayMs[0] < scaleNotesList.size()) {
+                    int noteToPlay = scaleNotesList.get(delayMs[0]);
+                    playNote(noteToPlay);
+                    delayMs[0]++;
+                } else {
+                    // Stop the timer once all notes have been played
+                    ((Timer)e.getSource()).stop();
+                }
+            });
+            chordTimer.start();
         }
     }
 
