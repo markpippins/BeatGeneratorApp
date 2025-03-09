@@ -168,6 +168,7 @@ public class Commands {
     public static final String RULE_DELETED = "RULE_DELETED";
 
     public static final String MINI_NOTE_SELECTED = "MINI_NOTE_SELECTED";
+
     public static final String ROOT_NOTE_SELECTED = "ROOT_NOTE_SELECTED";
 
     public static final String SCALE_SELECTED = "SCALE_SELECTED";
@@ -216,4 +217,8 @@ public class Commands {
 
     public static final String UPDATE_TEMPO = "UPDATE_TEMPO";
     public static final String UPDATE_TIME_SIGNATURE = "UPDATE_TIME_SIGNATURE";
+    public static final String METRONOME_STOP = "METRONOME_STOP";
+    public static final String METRONOME_STARTED = "METRONOME_STARTED";
+    public static final String METRONOME_STOPPED = "METRONOME_STOPPED";
+    public static final String METRONOME_START = "METRONOME_START";
 }

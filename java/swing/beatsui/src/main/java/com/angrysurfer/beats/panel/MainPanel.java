@@ -43,9 +43,8 @@ public class MainPanel extends JPanel implements AutoCloseable {
         tabbedPane.addTab("Players", new SessionPanel(statusBar));
         tabbedPane.addTab("Instruments", new InstrumentsPanel());
         tabbedPane.addTab("Launch", new LaunchPanel());
-        tabbedPane.addTab("Controls", new ControlsPanel());
         tabbedPane.addTab("System", new SystemsPanel(statusBar));
-        tabbedPane.addTab("Sorting", new SortingVisualizerPanel());
+        // tabbedPane.addTab("Sorting", new SortingVisualizerPanel());
         
         // Create a panel for the trailing component with proper vertical alignment
         JPanel tabToolbar = new JPanel();

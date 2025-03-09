@@ -83,6 +83,9 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
     private double sparse = 0.0;
 
     @JsonIgnore
+    private Boolean enabled = false;
+
+    @JsonIgnore
     private Cycler skipCycler = new Cycler(0);
 
     @JsonIgnore
@@ -330,10 +333,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
 
     @Override
     public void onAction(Command action) {
-        switch (action.getCommand()) {
-            case Commands.BASIC_TIMING_TICK -> {
-                // Only process if our session is running
-                if (getSession() != null) {
+        if (getSession() != null && getEnabled())
+            switch (action.getCommand()) {
+                case Commands.BASIC_TIMING_TICK -> {
+                    // Only process if our session is running
                     // Check if we should play this tick
                     if (((!getSession().hasSolos() && !isMuted()) ||
                             (isSolo())) && shouldPlay()) {
@@ -353,9 +356,9 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
                             setLastTick(tick);
                         });
                     }
+
                 }
             }
-        }
     }
 
 }

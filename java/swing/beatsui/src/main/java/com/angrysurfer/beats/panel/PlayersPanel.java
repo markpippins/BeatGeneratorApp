@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Constants;
@@ -195,7 +197,8 @@ public class PlayersPanel extends JPanel {
         controlButton.setEnabled(false);
         controlButton.addActionListener(e -> {
             Player selectedPlayer = getSelectedPlayer();
-            if (selectedPlayer != null) {
+            if (selectedPlayer != null && selectedPlayer.getInstrument() != null
+                    && !selectedPlayer.getInstrument().getControlCodes().isEmpty()) {
                 CommandBus.getInstance().publish(Commands.EDIT_PLAYER_PARAMETERS, this, selectedPlayer);
             }
         });
@@ -554,6 +557,9 @@ public class PlayersPanel extends JPanel {
                     case Commands.PLAYER_SELECTED -> {
                         if (action.getData() instanceof Player player) {
                             logger.info("Player selected: " + player.getName() + " (ID: " + player.getId() + ")");
+                            controlButton.setEnabled(player != null && player.getInstrument() != null
+                                    && !player.getInstrument().getControlCodes().isEmpty());
+
                             // Update RulesPanel with the selected player
                             // ruleTablePanel.setPlayer(player);
                         }
@@ -628,7 +634,7 @@ public class PlayersPanel extends JPanel {
         if (player == null || player.getId() == null) {
             return -1;
         }
-        
+
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         for (int i = 0; i < model.getRowCount(); i++) {
             // Store player IDs in table using a hidden column or row properties
@@ -651,20 +657,20 @@ public class PlayersPanel extends JPanel {
         try {
             // Convert view index to model index in case of sorting/filtering
             int modelRow = table.convertRowIndexToModel(selectedRow);
-            
+
             // Get the player name from the Name column
             String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
             logger.info("Selected player name from table: " + playerName);
-            
+
             // Get the current session
             Session currentSession = SessionManager.getInstance().getActiveSession();
-            
+
             if (currentSession != null && currentSession.getPlayers() != null) {
                 // Find the player with the matching name
                 for (Player player : currentSession.getPlayers()) {
                     if (playerName.equals(player.getName())) {
-                        logger.info("Found matching player in session: " + player.getName() + 
-                                   " (ID: " + player.getId() + ")");
+                        logger.info("Found matching player in session: " + player.getName() +
+                                " (ID: " + player.getId() + ")");
                         return player;
                     }
                 }
@@ -676,7 +682,7 @@ public class PlayersPanel extends JPanel {
             logger.severe("Error getting selected player: " + e.getMessage());
             e.printStackTrace();
         }
-        
+
         return null;
     }
 
@@ -728,12 +734,34 @@ public class PlayersPanel extends JPanel {
         String instrumentName = "";
 
         try {
-
             if (player.getInstrumentId() != null) {
-
                 Instrument instrument = SessionManager.getInstance().getInstrumentFromCache(player.getInstrumentId());
                 if (instrument != null) {
                     instrumentName = instrument.getName();
+
+                    // Initialize device if needed
+                    if (Objects.isNull(instrument.getDevice()) && Objects.nonNull(instrument.getDeviceName())) {
+                        try {
+                            // Get device from DeviceManager
+                            javax.sound.midi.MidiDevice device = DeviceManager
+                                    .getMidiDevice(instrument.getDeviceName());
+
+                            if (device != null) {
+                                // Set device on instrument
+                                instrument.setDevice(device);
+                                logger.info("Initialized device for instrument: " + instrument.getName() +
+                                        " with device: " + device.getDeviceInfo().getName());
+                            } else {
+                                logger.warning("Device not found: " + instrument.getDeviceName() +
+                                        " for instrument: " + instrument.getName());
+                            }
+                        } catch (Exception e) {
+                            logger.warning("Error initializing device for instrument " +
+                                    instrument.getName() + ": " + e.getMessage());
+                        }
+                    }
+
+                    // Set the instrument on the player
                     player.setInstrument(instrument);
                 }
             }

@@ -1,6 +1,5 @@
 package com.angrysurfer.core.redis;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -18,7 +17,6 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
-import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -347,11 +345,7 @@ public class RedisService implements CommandListener {
     }
 
     public Player newPlayer() {
-        Player player = new Strike();
-        player.setId(playerHelper.getNextPlayerId());
-        player.setRules(new HashSet<>()); // Ensure rules are initialized
-        playerHelper.savePlayer(player);
-        return player;
+        return playerHelper.newPlayer();
     }
 
     public void deletePlayer(Player player) {

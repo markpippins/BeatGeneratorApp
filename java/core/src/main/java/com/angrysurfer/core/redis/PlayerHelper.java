@@ -220,4 +220,13 @@ public class PlayerHelper {
             throw new RuntimeException("Failed to add player to session", e);
         }
     }
+
+    public Player newPlayer() {
+        Player player = new Strike();
+        player.setId(getNextPlayerId());
+        player.setRules(new HashSet<>()); // Ensure rules are initialized
+        savePlayer(player);
+        return player;
+
+    }
 }

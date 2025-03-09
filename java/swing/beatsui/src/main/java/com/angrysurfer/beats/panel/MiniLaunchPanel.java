@@ -134,12 +134,11 @@ public class MiniLaunchPanel extends StatusProviderPanel implements CommandListe
 
         // Update action listener to send command
         button.addActionListener(e -> {
-            button.setFlashing(true);
-            setStatus("Mini pad " + midiNote + " pressed");
+            // Send note command
+            CommandBus.getInstance().publish(Commands.MINI_NOTE_SELECTED, this, midiNote);
             
-            // Send command with MIDI note value
-            commandBus.publish(Commands.MINI_NOTE_SELECTED, this, midiNote);
-
+            // Visual feedback
+            button.setFlashing(true);
             Timer timer = new Timer(100, evt -> {
                 button.setFlashing(false);
                 ((Timer) evt.getSource()).stop();
