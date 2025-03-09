@@ -17,6 +17,7 @@ import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.plaf.basic.BasicButtonUI;
@@ -28,6 +29,8 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.util.Scale;
 
 public class PianoPanel extends StatusProviderPanel {
@@ -120,6 +123,7 @@ public class PianoPanel extends StatusProviderPanel {
         colorAnimator.start();
 
         setupActionBusListener();
+        setupPlayerStatusIndicator();
     }
 
     @Override
@@ -199,15 +203,26 @@ public class PianoPanel extends StatusProviderPanel {
         if (heldNotes.contains(note)) {
             heldNotes.remove(note);
             unhighlightKey(note);
-            stopNote(note);
+            // We don't need to send MIDI note-off here since PlayerManager
+            // already scheduled it
             if (Objects.nonNull(statusConsumer)) {
                 statusConsumer.setStatus("");
             }
         } else {
-            statusConsumer.setStatus("Holding note " + note);
+            // Add to held notes and play
+            if (Objects.nonNull(statusConsumer)) {
+                Player activePlayer = PlayerManager.getInstance().getActivePlayer();
+                String playerInfo = activePlayer != null ? 
+                                " through " + activePlayer.getName() : 
+                                " (no active player)";
+                statusConsumer.setStatus("Holding note " + note + playerInfo);
+            }
             heldNotes.add(note);
             highlightKey(note);
             playNote(note);
+            
+            // For held notes, we want them to continue playing, so we don't 
+            // schedule a release
         }
     }
 
@@ -243,19 +258,44 @@ public class PianoPanel extends StatusProviderPanel {
     }
 
     private void playNote(int note) {
-        System.out.println("Playing note: " + note); // Debug
+        System.out.println("Playing note: " + note);
         if (Objects.nonNull(statusConsumer)) {
-            statusConsumer.setStatus("Playing note " + note);
+            Player activePlayer = PlayerManager.getInstance().getActivePlayer();
+            String playerInfo = activePlayer != null ? 
+                                " through " + activePlayer.getName() : 
+                                " (no active player)";
+            statusConsumer.setStatus("Playing note " + note + playerInfo);
         }
-        // Here you would add MIDI playback if needed
+        
+        // Send MIDI note to active player
+        boolean notePlayed = PlayerManager.getInstance().sendNoteToActivePlayer(note);
+        
+        // Visual feedback based on success
+        if (!notePlayed) {
+            // Flash the key briefly with red to indicate failure
+            JButton key = noteToKeyMap.get(note);
+            if (key != null) {
+                Color originalBackground = key.getBackground();
+                key.setBackground(new Color(255, 100, 100));
+                
+                // Reset after brief delay
+                new Timer(150, e -> {
+                    key.setBackground(originalBackground);
+                    ((Timer) e.getSource()).stop();
+                }).start();
+            }
+        }
     }
 
     private void stopNote(int note) {
-        System.out.println("Stopping note: " + note); // Debug
+        System.out.println("Stopping note: " + note);
         if (Objects.nonNull(statusConsumer)) {
             statusConsumer.setStatus("");
         }
-        // Here you would stop MIDI playback if needed
+        
+        // For held notes we don't want to send MIDI note-off since the PlayerManager
+        // already schedules note-off. If we implement longer held notes, we'd need
+        // to modify PlayerManager to support this.
     }
 
     private void releaseNoteAfterDelay(int note) {
@@ -401,6 +441,46 @@ public class PianoPanel extends StatusProviderPanel {
         new HashSet<>(heldNotes).forEach(note -> {
             heldNotes.remove(note);
             unhighlightKey(note);
+        });
+    }
+
+    // Optional: Add player state indicator to the panel
+    private JLabel playerStatusIndicator;
+
+    // Add this to the constructor after other UI elements are set up
+    private void setupPlayerStatusIndicator() {
+        playerStatusIndicator = new JLabel("●");
+        playerStatusIndicator.setFont(new Font("Arial", Font.BOLD, 12));
+        playerStatusIndicator.setForeground(Color.RED); // Default to red (no active player)
+        playerStatusIndicator.setBounds(getWidth() - 15, getHeight() - 15, 10, 10);
+        playerStatusIndicator.setToolTipText("No active player selected");
+        add(playerStatusIndicator);
+        
+        // Update the indicator when player selection changes
+        commandBus.register(new CommandListener() {
+            @Override
+            public void onAction(Command action) {
+                switch (action.getCommand()) {
+                    case Commands.PLAYER_SELECTED:
+                    case Commands.PLAYER_UNSELECTED:
+                        updatePlayerStatusIndicator();
+                        break;
+                }
+            }
+        });
+        
+        // Set initial state
+        updatePlayerStatusIndicator();
+    }
+
+    private void updatePlayerStatusIndicator() {
+        SwingUtilities.invokeLater(() -> {
+            Player activePlayer = PlayerManager.getInstance().getActivePlayer();
+            boolean hasActivePlayer = activePlayer != null;
+            playerStatusIndicator.setForeground(hasActivePlayer ? Color.GREEN : Color.RED);
+            playerStatusIndicator.setToolTipText(hasActivePlayer ? 
+                    "Active player: " + activePlayer.getName() :
+                    "No active player selected");
         });
     }
 }
