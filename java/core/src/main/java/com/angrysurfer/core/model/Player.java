@@ -358,7 +358,36 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
                     }
 
                 }
+                case Commands.TRANSPORT_STOP -> {
+                    // Disable self when transport stops
+                    setEnabled(false);
+
+                    // Optional: Log this action if needed
+                    if (logger != null) {
+                        logger.debug("Player " + getName() + " (ID: " + getId() + ") disabled due to transport stop");
+                    }
+                }
+
+                case Commands.TRANSPORT_PLAY -> {
+                    // Optionally re-enable self on transport start/play
+                    setEnabled(true);
+
+                    // Optional: Log this action if needed
+                    if (logger != null) {
+                        logger.debug("Player " + getName() + " (ID: " + getId() + ") enabled due to transport start");
+                    }
+                }
             }
+    }
+
+    /**
+     * Clean up resources when this player is no longer needed
+     */
+    public void dispose() {
+        // Unregister from command bus to prevent memory leaks
+        commandBus.unregister(this);
+
+        // Any other cleanup code...
     }
 
 }

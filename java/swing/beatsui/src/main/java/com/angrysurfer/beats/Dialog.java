@@ -1,8 +1,6 @@
 package com.angrysurfer.beats;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -126,33 +124,6 @@ public class Dialog<T> extends JDialog {
         button.setPreferredSize(new Dimension(32, 32));
 
         return button;
-    }
-
-    private void setupContentPanel() {
-        if (contentPanel == null) {
-            contentPanel = new JPanel();
-            contentPanel.setBackground(Color.BLACK);
-        }
-
-        // Remove any existing content first
-        removeContentPanel();
-
-        // Add new content
-        add(contentPanel, BorderLayout.CENTER);
-
-        // Ensure dialog updates its layout
-        revalidate();
-        repaint();
-    }
-
-    private void removeContentPanel() {
-        Component[] components = getContentPane().getComponents();
-        for (Component comp : components) {
-            if (comp == contentPanel) {
-                getContentPane().remove(comp);
-                break;
-            }
-        }
     }
 
     private void setupButtonPanel() {

@@ -6,12 +6,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.RenderingHints;
 import java.awt.event.ItemEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -341,18 +337,6 @@ public class ToolBar extends JToolBar {
         }
 
         return rightStatusPanel;
-    }
-
-    private JPanel createLabeledControl(String label, JComponent component) {
-        JPanel panel = new JPanel(new BorderLayout(5, 2));
-        JLabel l = new JLabel(label);
-        l.setHorizontalAlignment(JLabel.LEFT); // Align label to the left
-        panel.add(l, BorderLayout.NORTH);
-        panel.add(Box.createVerticalStrut(8), BorderLayout.CENTER);
-        panel.add(component, BorderLayout.SOUTH);
-        panel.setMinimumSize(new Dimension(60, 80));
-        panel.setMaximumSize(new Dimension(60, 80));
-        return panel;
     }
 
     static final int STATUS_PANEL_WIDTH = 450;

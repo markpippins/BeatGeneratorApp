@@ -492,38 +492,5 @@ public class RulesPanel extends JPanel {
             e.printStackTrace();
         }
     }
-
-    // private void refreshRules() {
-    // DefaultTableModel model = (DefaultTableModel) table.getModel();
-    // model.setRowCount(0);
-
-    // if (currentPlayer != null && currentPlayer.getRules() != null) {
-    // logger.info("Refreshing rules for player: " + currentPlayer.getName() +
-    // " (Rules: " + currentPlayer.getRules().size() + ")");
-    // // Add rules to table
-    // currentPlayer.getRules().forEach(rule -> {
-    // model.addRow(new Object[]{
-    // Rule.OPERATORS[rule.getOperator()],
-    // Rule.COMPARISONS[rule.getComparison()],
-    // rule.getValue(),
-    // rule.getPart()
-    // });
-    // });
-    // } else {
-    // logger.info("No player or rules to display");
-    // }
-    // }
-
-    private int findRuleIndex(Rule rule) {
-        if (Objects.nonNull(currentPlayer) && Objects.nonNull(currentPlayer.getRules()) && Objects.nonNull(rule)) {
-            List<Rule> rules = new ArrayList<>(currentPlayer.getRules());
-            for (int i = 0; i < rules.size(); i++) {
-                if (Objects.nonNull(rules.get(i)) && Objects.nonNull(rules.get(i).getId()) &&
-                        rules.get(i).getId().equals(rule.getId())) {
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
+   
 }

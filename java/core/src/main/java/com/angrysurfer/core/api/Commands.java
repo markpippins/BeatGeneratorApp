@@ -108,7 +108,8 @@ public class Commands {
     public static final String SESSION_LOADED = "SESSION_LOADED";
     public static final String SESSION_CHANGED = "SESSION_CHANGED";
 
-    // public static final String PLAYER_ADDED_TO_SESSION = "PLAYER_ADDED_TO_SESSION";
+    // public static final String PLAYER_ADDED_TO_SESSION =
+    // "PLAYER_ADDED_TO_SESSION";
     // public static final String PLAYER_REMOVED_FROM_SESSION =
     // "PLAYER_REMOVED_FROM_SESSION";
     public static final String RULE_ADDED_TO_PLAYER = "RULE_ADDED_TO_PLAYER";
@@ -221,4 +222,8 @@ public class Commands {
     public static final String METRONOME_STARTED = "METRONOME_STARTED";
     public static final String METRONOME_STOPPED = "METRONOME_STOPPED";
     public static final String METRONOME_START = "METRONOME_START";
+    public static final String PRESET_DOWN = "PRESET_DOWN";
+    public static final String PRESET_UP = "PRESET_UP";
+    public static final String PRESET_SELECTED = "PRESET_SELECTED";
+    public static final String PRESET_CHANGED = "PRESET_CHANGED";
 }

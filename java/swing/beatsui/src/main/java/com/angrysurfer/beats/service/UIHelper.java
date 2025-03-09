@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 
 import javax.swing.JTable;
 
-import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.redis.RedisService;
 
@@ -18,7 +17,6 @@ public class UIHelper {
     private static final Logger logger = Logger.getLogger(UIHelper.class.getName());
 
     private static UIHelper instance;
-    private final CommandBus commandBus = CommandBus.getInstance();
 
     private UIHelper() {
     }

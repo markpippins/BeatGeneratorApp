@@ -99,7 +99,7 @@ public class SessionPanel extends StatusProviderPanel {
         // controlPanel.add(createVerticalButtonPanel());
 
         controlPanel
-                .add(createVerticalAdjustPanel("Shift", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
+                .add(createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP, Commands.PRESET_DOWN));
 
         controlPanel
                 .add(createVerticalAdjustPanel("Spread", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));

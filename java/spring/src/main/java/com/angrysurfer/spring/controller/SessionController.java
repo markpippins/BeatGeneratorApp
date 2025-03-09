@@ -1,10 +1,7 @@
 package com.angrysurfer.spring.controller;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +15,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.util.Constants;
-import com.angrysurfer.core.util.Timer;
 import com.angrysurfer.spring.dao.SessionStatus;
-import com.angrysurfer.spring.service.SongService;
 import com.angrysurfer.spring.service.SessionService;
+import com.angrysurfer.spring.service.SongService;
 
 import reactor.core.publisher.Flux;
-import reactor.util.function.Tuple2;
 
 @CrossOrigin("*")
 @Controller

@@ -20,6 +20,7 @@ import static com.angrysurfer.core.util.update.PlayerUpdateType.SUBDIVISIONS;
 import static com.angrysurfer.core.util.update.PlayerUpdateType.SWING;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -35,8 +36,8 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 
@@ -51,6 +52,7 @@ public class PlayerManager {
     private CommandBus commandBus = CommandBus.getInstance();
     private Player activePlayer;
     private final RedisService redisService;
+    private java.util.Timer saveTimer;
 
     private PlayerManager() {
         setupCommandBusListener();
@@ -75,21 +77,20 @@ public class PlayerManager {
         commandBus.register(new CommandListener() {
             @Override
             public void onAction(Command action) {
+                if (action.getCommand() == null) return;
+                
                 switch (action.getCommand()) {
-                    
-                    
                     case Commands.PLAYER_SELECTED -> {
                         if (action.getData() instanceof Player) {
                             playerSelected((Player) action.getData());
                         }
                     }
-
+                    
                     case Commands.PLAYER_UNSELECTED -> {
                         logger.info("Player unselected");
                         activePlayer = null;
                     }
-
-
+                    
                     case Commands.PLAYER_UPDATED -> {
                         if (action.getData() instanceof Player) {
                             playerUpdated((Player) action.getData());
@@ -100,6 +101,55 @@ public class PlayerManager {
                         if (action.getData() instanceof Number) {
                             int midiNote = ((Number) action.getData()).intValue();
                             sendNoteToActivePlayer(midiNote);
+                        }
+                    }
+                    
+                    // Add preset change handlers with preview - replace existing implementation
+                    case Commands.PRESET_UP -> {
+                        if (activePlayer != null) {
+                            // Increment preset value (with upper bound of 127)
+                            int currentPreset = activePlayer.getPreset() != null ? 
+                                              activePlayer.getPreset().intValue() : 0;
+                            int newPreset = Math.min(127, currentPreset + 1);
+                            
+                            // Update the preset
+                            activePlayer.setPreset((long) newPreset);
+                            
+                            // Use a lightweight update instead of full player update
+                            commandBus.publish(Commands.PRESET_CHANGED, this, 
+                                Map.of("playerId", activePlayer.getId(), 
+                                       "preset", newPreset, 
+                                       "playerName", activePlayer.getName()));
+                            
+                            // Play a preview note immediately
+                            sendNoteToActivePlayer(60);
+                            
+                            // Schedule saving to Redis after a delay to avoid rapid successive saves
+                            schedulePlayerSave(activePlayer);
+                        }
+                    }
+                    
+                    case Commands.PRESET_DOWN -> {
+                        if (activePlayer != null) {
+                            // Decrement preset value (with lower bound of 0)
+                            int currentPreset = activePlayer.getPreset() != null ? 
+                                              activePlayer.getPreset().intValue() : 0;
+                            int newPreset = Math.max(0, currentPreset - 1);
+                            
+                            // Update the preset
+                            activePlayer.setPreset((long) newPreset);
+                            
+                            // Use a lightweight update instead of full player update
+                            commandBus.publish(Commands.PRESET_CHANGED, this, 
+                                Map.of("playerId", activePlayer.getId(), 
+                                       "preset", newPreset, 
+                                       "playerName", activePlayer.getName()));
+                            
+                            // Play a preview note immediately
+                            sendNoteToActivePlayer(60);
+                            
+                            // Schedule saving to Redis after a delay to avoid rapid successive saves
+                            schedulePlayerSave(activePlayer);
                         }
                     }
                     
@@ -419,5 +469,29 @@ public class PlayerManager {
             logger.warn("Error sending MIDI note: {}", e.getMessage());
             return false;
         }
+    }
+
+    private void schedulePlayerSave(Player player) {
+        // Cancel any pending save
+        if (saveTimer != null) {
+            saveTimer.cancel();
+        }
+        
+        // Create new timer
+        saveTimer = new java.util.Timer(true);
+        
+        // Schedule save after a short delay (500ms)
+        saveTimer.schedule(new java.util.TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    // Save to Redis
+                    redisService.savePlayer(player);
+                    logger.debug("Saved player {} after preset change", player.getName());
+                } catch (Exception e) {
+                    logger.warn("Error saving player after preset change: {}", e.getMessage());
+                }
+            }
+        }, 500);
     }
 }

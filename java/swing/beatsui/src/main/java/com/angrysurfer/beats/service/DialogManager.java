@@ -1,6 +1,5 @@
 package com.angrysurfer.beats.service;
 
-import java.awt.Dimension;
 import java.io.File;
 import java.util.List;
 import java.util.logging.Logger;

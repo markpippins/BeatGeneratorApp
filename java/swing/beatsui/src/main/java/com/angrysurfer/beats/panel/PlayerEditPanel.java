@@ -374,38 +374,6 @@ public class PlayerEditPanel extends StatusProviderPanel {
         return panel;
     }
 
-    // Add method to handle rule editing
-    private void editSelectedRule() {
-        int selectedRow = rulesTable.getSelectedRow();
-        if (selectedRow >= 0) {
-            Rule rule = Rule.fromRow(new Object[] {
-                    rulesTable.getValueAt(selectedRow, 0),
-                    rulesTable.getValueAt(selectedRow, 1),
-                    rulesTable.getValueAt(selectedRow, 2),
-                    rulesTable.getValueAt(selectedRow, 3)
-            });
-
-            RuleEditPanel editPanel = new RuleEditPanel(rule, statusConsumer);
-            // Show dialog with edit panel...
-            // Update table after editing...
-        }
-    }
-
-    private void deleteSelectedRule() {
-        int selectedRow = rulesTable.getSelectedRow();
-        if (selectedRow >= 0) {
-            Rule rule = Rule.fromRow(new Object[] {
-                    rulesTable.getValueAt(selectedRow, 0),
-                    rulesTable.getValueAt(selectedRow, 1),
-                    rulesTable.getValueAt(selectedRow, 2),
-                    rulesTable.getValueAt(selectedRow, 3)
-            });
-
-            // Just send the rule - SessionManager will handle finding the player
-            CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, rule);
-        }
-    }
-
     // Fix the getUpdatedPlayer() method with proper null checking
     public Player getUpdatedPlayer() {
         // Update player with current UI values
@@ -515,13 +483,6 @@ public class PlayerEditPanel extends StatusProviderPanel {
             slider.setSnapToTicks(true);
         }
         return slider;
-    }
-
-    private long clampValue(Long value, int min, int max) {
-        if (value == null) {
-            return min;
-        }
-        return Math.max(min, Math.min(max, value));
     }
 
     private ToggleSwitch createToggleSwitch(String name, boolean value) {

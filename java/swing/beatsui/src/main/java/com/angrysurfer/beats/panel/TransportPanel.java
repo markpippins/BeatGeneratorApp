@@ -22,15 +22,13 @@ import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.widget.LedIndicator;
 import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.service.SequencerManager;
 
 public class TransportPanel extends JPanel implements CommandListener {
-    // Add CommandBus alongside TimingBus
-    private final CommandBus commandBus;
+
     private final TimingBus timeBus;
     private final JButton playButton;
     private final JButton stopButton;
@@ -43,12 +41,6 @@ public class TransportPanel extends JPanel implements CommandListener {
     private static final int MAX_LOG_LINES = 1000;
     private static final int PADDING = 12;
 
-    // Add these fields after the existing constants
-    private int currentTick = 0;
-    private int currentBeat = 0;
-    private int currentBar = 0;
-    private static final int TICKS_PER_BEAT = 24;
-    private static final int BEATS_PER_BAR = 4;
 
     private final LedIndicator tickLed;
     private final LedIndicator beatLed;
@@ -56,8 +48,6 @@ public class TransportPanel extends JPanel implements CommandListener {
 
     public TransportPanel() {
         super(new BorderLayout(PADDING, PADDING));
-        // Initialize both buses
-        this.commandBus = CommandBus.getInstance();
         this.timeBus = TimingBus.getInstance();
         this.timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
@@ -172,20 +162,6 @@ public class TransportPanel extends JPanel implements CommandListener {
     private void flashBeatLed(LedIndicator led) {
         litBeat = !litBeat;
         led.setLit(litBeat);
-    }
-
-    private void flashBarLed(LedIndicator led) {
-        litBar = !litBar;
-        led.setLit(litBar);
-    }
-
-    private void flashLed(LedIndicator led) {
-        // SwingUtilities.invokeLater(() -> {
-        // led.setLit(true);
-        // Timer timer = new Timer(50, e -> led.setLit(false));
-        // // timer.setRepeats(false);
-        // // timer.start();
-        // });
     }
 
     /**

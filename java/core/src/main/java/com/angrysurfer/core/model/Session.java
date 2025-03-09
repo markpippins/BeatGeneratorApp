@@ -433,6 +433,7 @@ public class Session implements Serializable, CommandListener {
             initializePlayerDevice(p, devices);
             initializePlayerPreset(p);
             p.setSession(this);
+            p.setEnabled(true);
         });
     }
 
@@ -472,6 +473,9 @@ public class Session implements Serializable, CommandListener {
         // Reset state
         setPaused(false);
         getBeatCycler().reset();
+        
+        // Disable all players when stopping
+        getPlayers().forEach(p -> p.setEnabled(false));
 
         // Delegate stop command to SequencerManager
         commandBus.publish(Commands.TRANSPORT_STOP, this);

@@ -1,12 +1,17 @@
 package com.angrysurfer.beats.panel;
 
+import java.awt.LayoutManager;
+import java.util.Objects;
+
 import javax.swing.JPanel;
 
 import com.angrysurfer.core.api.StatusConsumer;
 
-import java.awt.LayoutManager;
-import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class StatusProviderPanel extends JPanel {
     protected StatusConsumer statusConsumer;
 

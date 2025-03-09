@@ -34,10 +34,6 @@ public class MiniLaunchPanel extends StatusProviderPanel implements CommandListe
             this.isFlashing = false;
         }
 
-        public int getMidiNote() {
-            return midiNote;
-        }
-
         public void setFlashing(boolean flashing) {
             isFlashing = flashing;
             repaint();

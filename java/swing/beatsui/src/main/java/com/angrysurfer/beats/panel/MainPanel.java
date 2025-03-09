@@ -18,7 +18,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import com.angrysurfer.beats.StatusBar;
-import com.angrysurfer.beats.visualization.handler.SortingVisualizerPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.CommandListener;
