@@ -354,62 +354,6 @@ public class PlayerManager {
     }
 
     /**
-     * Directly sends a MIDI note to the active player if one exists
-     * @param midiNote The MIDI note to send
-     * @return true if note was successfully sent, false otherwise
-     */
-    // public boolean sendNoteToActivePlayer(int midiNote) {
-    //     if (activePlayer == null) {
-    //         logger.info("No active player to receive MIDI note: {}", midiNote);
-    //         return false;
-    //     }
-        
-    //     try {
-    //         logger.info("Sending MIDI note {} to active player: {} (ID: {})", 
-    //                   midiNote, activePlayer.getName(), activePlayer.getId());
-            
-    //         // Use the player's instrument, channel, and a reasonable velocity
-    //         Instrument instrument = activePlayer.getInstrument();
-    //         if (instrument == null) {
-    //             logger.warn("Active player has no instrument");
-    //             return false;
-    //         }
-            
-    //         // Set the note in the player for future use
-    //         // activePlayer.setNote((long) midiNote);
-    //         // redisService.savePlayer(activePlayer);
-            
-    //         // Send the note to the device
-    //         int velocity = (int) Math.round((activePlayer.getMinVelocity() + activePlayer.getMaxVelocity()) / 2.0);
-    //         instrument.noteOn(activePlayer.getChannel(), midiNote, velocity);
-            
-    //         // Schedule note-off after a reasonable duration
-    //         long duration = 250; // milliseconds
-    //         new java.util.Timer().schedule(
-    //             new java.util.TimerTask() {
-    //                 @Override
-    //                 public void run() {
-    //                     try {
-    //                         instrument.noteOff(activePlayer.getChannel(), midiNote, 0);
-    //                     } catch (Exception e) {
-    //                         logger.warn("Error sending note-off: {}", e.getMessage());
-    //                     }
-    //                 }
-    //             },
-    //             duration
-    //         );
-            
-    //         // Still publish player updated event so UI can refresh
-    //         commandBus.publish(Commands.PLAYER_UPDATED, this, activePlayer);
-    //         return true;
-            
-    //     } catch (Exception e) {
-    //         logger.error("Error sending MIDI note to active player: {}", e.getMessage(), e);
-    //         return false;
-    //     }
-    // }
-
-    /**
      * Sends a MIDI note to the active player without triggering heavy updates
      * @param midiNote The MIDI note to send
      * @return true if note was successfully sent, false otherwise
@@ -428,6 +372,20 @@ public class PlayerManager {
                 return false;
             }
             
+            int channel = activePlayer.getChannel();
+            
+            // CRITICAL FIX: Send program change before playing the note
+            if (activePlayer.getPreset() != null) {
+                try {
+                    logger.debug("Sending program change: channel={}, preset={}", 
+                               channel, activePlayer.getPreset());
+                    instrument.programChange(channel, activePlayer.getPreset(), 0);
+                } catch (Exception e) {
+                    logger.warn("Failed to send program change: {}", e.getMessage());
+                    // Continue anyway to play the note
+                }
+            }
+            
             // Calculate velocity from player settings
             int velocity = (int) Math.round((activePlayer.getMinVelocity() + activePlayer.getMaxVelocity()) / 2.0);
             
@@ -435,7 +393,8 @@ public class PlayerManager {
             activePlayer.setNote((long) midiNote);
             
             // Send the note to the device
-            instrument.noteOn(activePlayer.getChannel(), midiNote, velocity);
+            logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);
+            instrument.noteOn(channel, midiNote, velocity);
             
             // Schedule note-off after a reasonable duration
             long duration = 250; // milliseconds
@@ -444,7 +403,7 @@ public class PlayerManager {
                     @Override
                     public void run() {
                         try {
-                            instrument.noteOff(activePlayer.getChannel(), midiNote, 0);
+                            instrument.noteOff(channel, midiNote, 0);
                         } catch (Exception e) {
                             // Just log at debug level - not a critical error
                             logger.debug("Error sending note-off: {}", e.getMessage());
@@ -454,14 +413,10 @@ public class PlayerManager {
                 duration
             );
             
-            // Skip heavy updates entirely - no need to notify UI components at all
-            // The UI only needs to know that the note was played for visual feedback
-            // if needed, which is much lighter than a full PLAYER_UPDATED event
-            
             return true;
             
         } catch (Exception e) {
-            logger.debug("Error sending MIDI note: {}", e.getMessage());
+            logger.warn("Error sending MIDI note: {}", e.getMessage());
             return false;
         }
     }
