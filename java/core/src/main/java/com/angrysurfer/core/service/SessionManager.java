@@ -36,8 +36,6 @@ public class SessionManager {
     // Directly store activeSession instead of using SessionManager
     private Session activeSession;
 
-    private UserConfigManager userConfigurationEngine;
-    private InstrumentManager instrumentEngine;
     private SongEngine songEngine;
 
     private Player[] activePlayers[];
@@ -80,11 +78,7 @@ public class SessionManager {
     public void initialize() {
         logger.info("Initializing session manager");
 
-        userConfigurationEngine = new UserConfigManager();
-
-        instrumentEngine = new InstrumentManager();
-        List<Instrument> instruments = userConfigurationEngine.getCurrentConfig().getInstruments();
-        instrumentEngine.initializeCache(instruments);
+        List<Instrument> instruments = UserConfigManager.getInstance().getCurrentConfig().getInstruments();
 
         // Instead of creating SessionManager, directly load session
         loadActiveSession();
@@ -310,10 +304,6 @@ public class SessionManager {
                     ", Value: " + r.getValue() +
                     ", Part: " + r.getPart()));
         }
-    }
-
-    public Instrument getInstrumentFromCache(Long instrumentId) {
-        return instrumentEngine.getInstrumentFromCache(instrumentId);
     }
 
     public void saveSession(Session currentSession) {

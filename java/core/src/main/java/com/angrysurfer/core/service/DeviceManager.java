@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
@@ -15,13 +16,64 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.exception.MidiDeviceException;
 import com.angrysurfer.core.model.midi.Instrument;
 
-public class DeviceManager {
+import lombok.Getter;
 
-    static Logger logger = LoggerFactory.getLogger(DeviceManager.class.getCanonicalName());
-
+public class DeviceManager implements CommandListener {
+    
+    private static final Logger logger = LoggerFactory.getLogger(DeviceManager.class);
+    private static DeviceManager instance;
+    private final List<MidiDevice> availableOutputDevices = new ArrayList<>();
+    private final CommandBus commandBus = CommandBus.getInstance();
+    
+    // Private constructor for singleton
+    private DeviceManager() {
+        refreshDeviceList();
+        commandBus.register(this);
+    }
+    
+    // Singleton accessor
+    public static synchronized DeviceManager getInstance() {
+        if (instance == null) {
+            instance = new DeviceManager();
+        }
+        return instance;
+    }
+    
+    // CommandListener implementation
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == null) return;
+        
+        switch (action.getCommand()) {
+            case "REFRESH_MIDI_DEVICES" -> refreshDeviceList();
+        }
+    }
+    
+    // Update the device list
+    public void refreshDeviceList() {
+        logger.info("Refreshing MIDI device list");
+        availableOutputDevices.clear();
+        availableOutputDevices.addAll(getMidiOutDevices());
+    }
+    
+    // Get names of available output devices
+    public List<String> getAvailableOutputDeviceNames() {
+        if (availableOutputDevices.isEmpty()) {
+            refreshDeviceList();
+        }
+        
+        return availableOutputDevices.stream()
+            .map(device -> device.getDeviceInfo().getName())
+            .collect(Collectors.toList());
+    }
+    
+    // Existing static methods can remain for backwards compatibility
     public static void cleanupMidiDevices() {
         logger.info("cleanupMidiDevices()");
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
@@ -38,6 +90,7 @@ public class DeviceManager {
         }
     }
 
+    // Get a specific MIDI device by name
     public static MidiDevice getMidiDevice(String name) {
         logger.info("getMidiDevice() - name: {}", name);
         cleanupMidiDevices(); // Add cleanup before getting new device
@@ -61,6 +114,7 @@ public class DeviceManager {
         return null;
     }
 
+    // Get all MIDI output devices
     public static List<MidiDevice> getMidiOutDevices() {
         logger.info("getMidiOutDevices()");
         List<MidiDevice> devices = new ArrayList<>();

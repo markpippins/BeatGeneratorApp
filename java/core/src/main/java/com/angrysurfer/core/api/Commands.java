@@ -182,6 +182,7 @@ public class Commands {
     public static final String WINDOW_RESIZED = "WINDOW_RESIZED";
 
     public static final String INSTRUMENT_UPDATED = "INSTRUMENT_UPDATED";
+    public static final String INSTRUMENTS_REFRESHED = "INSTRUMENTS_REFRESHED";
 
     // Add timing-specific commands
     public static final String BASIC_TIMING_TICK = "BASIC_TIMING_TICK";

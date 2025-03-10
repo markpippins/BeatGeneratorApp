@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -26,6 +27,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
@@ -40,7 +42,10 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.service.UserConfigManager;
 
 public class PlayerEditPanel extends StatusProviderPanel {
     private static final Logger logger = Logger.getLogger(PlayerEditPanel.class.getName());
@@ -179,6 +184,9 @@ public class PlayerEditPanel extends StatusProviderPanel {
                 }
             }
         });
+
+        // Add this in the constructor after other initializations
+        registerForInstrumentUpdates();
     }
 
     private void layoutComponents() {
@@ -376,8 +384,13 @@ public class PlayerEditPanel extends StatusProviderPanel {
 
     // Fix the getUpdatedPlayer() method with proper null checking
     public Player getUpdatedPlayer() {
-        // Update player with current UI values
+        // Get currently selected instrument from combo box
         Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
+        
+        // Ensure the device setting is preserved when returning the updated player
+        if (selectedInstrument != null) {
+            player.setInstrument(selectedInstrument);
+        }
         
         // Only set instrument and ID if an instrument is actually selected
         if (selectedInstrument != null) {
@@ -418,10 +431,12 @@ public class PlayerEditPanel extends StatusProviderPanel {
     // Helper methods for creating components
     private void setupInstrumentCombo() {
         instrumentCombo = new JComboBox<>();
-        List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
+        
+        // CHANGE: Use UserConfigManager instead of SessionManager.getInstrumentEngine()
+        List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
 
         if (instruments == null || instruments.isEmpty()) {
-            logger.warning("No instruments found in database");
+            logger.warning("No instruments found in UserConfigManager");
             // Add a default instrument to prevent null selections
             Instrument defaultInstrument = new Instrument();
             defaultInstrument.setId(0L);
@@ -795,5 +810,148 @@ public class PlayerEditPanel extends StatusProviderPanel {
 
     private SpinnerNumberModel createLongSpinnerModel(long value, long min, long max, long step) {
             return new SpinnerNumberModel(value, min, max, step);
+    }
+
+    private void registerForInstrumentUpdates() {
+        CommandBus.getInstance().register(new CommandListener() {
+            @Override
+            public void onAction(Command action) {
+                if (action.getCommand() == null) return;
+                
+                // Listen for instrument changes
+                if (Commands.INSTRUMENT_UPDATED.equals(action.getCommand()) || 
+                    Commands.USER_CONFIG_LOADED.equals(action.getCommand())) {
+                    
+                    // Refresh the instrument combo
+                    SwingUtilities.invokeLater(() -> {
+                        // Remember selected instrument
+                        Instrument selected = (Instrument) instrumentCombo.getSelectedItem();
+                        
+                        // Update combo with fresh instruments
+                        instrumentCombo.removeAllItems();
+                        List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
+                        
+                        if (instruments != null && !instruments.isEmpty()) {
+                            instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                            
+                            for (Instrument inst : instruments) {
+                                instrumentCombo.addItem(inst);
+                            }
+                            
+                            // Restore selection if possible
+                            if (selected != null) {
+                                for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
+                                    Instrument item = instrumentCombo.getItemAt(i);
+                                    if (item.getId().equals(selected.getId())) {
+                                        instrumentCombo.setSelectedIndex(i);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    private void setupTopControls() {
+        // Create panel for top row controls with instrument and device selectors
+        JPanel topControlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        
+        // === INSTRUMENT SELECTOR ===
+        // Create label and combo components
+        JLabel instrumentLabel = new JLabel("Instrument:");
+        instrumentCombo = new JComboBox<>();
+        
+        // Get instruments from UserConfigManager
+        List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
+        if (instruments != null && !instruments.isEmpty()) {
+            // Sort instruments by name
+            instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+            
+            for (Instrument inst : instruments) {
+                instrumentCombo.addItem(inst);
+            }
+            
+            // Select current instrument if it exists
+            if (player.getInstrument() != null) {
+                for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
+                    Instrument item = instrumentCombo.getItemAt(i);
+                    if (item.getId().equals(player.getInstrument().getId())) {
+                        instrumentCombo.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // === DEVICE SELECTOR ===
+        JLabel deviceLabel = new JLabel("Device:");
+        JComboBox<String> deviceCombo = new JComboBox<>();
+
+        // Get available MIDI devices using singleton pattern
+        List<String> deviceNames = DeviceManager.getInstance().getAvailableOutputDeviceNames();
+
+        // Add "Default" as first option  
+        deviceCombo.addItem("Default");
+
+        // Add all available devices
+        for (String deviceName : deviceNames) {
+            deviceCombo.addItem(deviceName);
+        }
+        
+        // Select current device if set
+        if (player.getInstrument() != null && player.getInstrument().getDeviceName() != null) {
+            String currentDevice = player.getInstrument().getDeviceName();
+            deviceCombo.setSelectedItem(currentDevice);
+        }
+        
+        // Add listener to update instrument device when selection changes
+        deviceCombo.addActionListener(e -> {
+            if (instrumentCombo.getSelectedItem() instanceof Instrument selectedInstrument) {
+                String selectedDevice = (String) deviceCombo.getSelectedItem();
+                
+                // Only set device if not "Default" (null is default)
+                if ("Default".equals(selectedDevice)) {
+                    selectedInstrument.setDeviceName(null);
+                } else {
+                    selectedInstrument.setDeviceName(selectedDevice);
+                }
+                
+                // Update the player's instrument
+                player.setInstrument(selectedInstrument);
+                
+                // Update in UserConfigManager and InstrumentManager immediately
+                InstrumentManager.getInstance().updateInstrument(selectedInstrument);
+                // logger.info("Device for instrument {} set to {}", 
+                //     selectedInstrument.getName(), 
+                //     selectedDevice.equals("Default") ? "Default" : selectedDevice);
+            }
+        });
+        
+        // Add to top controls panel
+        topControlsPanel.add(instrumentLabel);
+        topControlsPanel.add(instrumentCombo);
+        topControlsPanel.add(Box.createHorizontalStrut(15)); // Add some space
+        topControlsPanel.add(deviceLabel);
+        topControlsPanel.add(deviceCombo);
+        
+        // Add to main panel (assuming there's a mainPanel or similar container)
+        // near the top of the component hierarchy
+        add(topControlsPanel, BorderLayout.NORTH);
+        
+        // Add listener to update device combo when instrument changes
+        instrumentCombo.addActionListener(e -> {
+            if (instrumentCombo.getSelectedItem() instanceof Instrument selectedInstrument) {
+                // Update device selector to match the selected instrument
+                String deviceName = selectedInstrument.getDeviceName();
+                if (deviceName == null) {
+                    deviceCombo.setSelectedItem("Default");
+                } else {
+                    deviceCombo.setSelectedItem(deviceName);
+                }
+            }
+        });
     }
 }

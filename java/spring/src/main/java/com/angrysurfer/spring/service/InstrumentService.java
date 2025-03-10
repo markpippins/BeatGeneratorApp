@@ -22,41 +22,38 @@ public class InstrumentService {
     private static final Logger logger = LoggerFactory.getLogger(InstrumentService.class);
 
     private final InstrumentHelper instrumentHelper;
-    private final InstrumentManager instrumentEngine;
-
     public InstrumentService(RedisService redisService) {
         this.instrumentHelper = redisService.getInstrumentHelper();
-        this.instrumentEngine = new InstrumentManager(); // SessionM anager.getInstance().getInstrumentEngine();
     }
 
     public List<Instrument> getAllInstruments() {
-        return instrumentEngine.getCachedInstruments();
+        return InstrumentManager.getInstance().getCachedInstruments();
     }
 
     public Instrument getInstrumentById(Long id) {
-        return instrumentEngine.getInstrumentById(id);
+        return InstrumentManager.getInstance().getInstrumentById(id);
     }
 
     public List<String> getInstrumentNames() {
-        return instrumentEngine.getInstrumentNames();
+        return InstrumentManager.getInstance().getInstrumentNames();
     }
 
     public List<Instrument> getInstrumentByChannel(int channel) {
-        return instrumentEngine.getInstrumentByChannel(channel);
+        return InstrumentManager.getInstance().getInstrumentByChannel(channel);
     }
 
     public void saveInstrument(Instrument instrument) {
         instrumentHelper.saveInstrument(instrument);
-        instrumentEngine.setNeedsRefresh(true);
+        InstrumentManager.getInstance().setNeedsRefresh(true);
     }
 
     public List<Instrument> getInstrumentList() {
         logger.debug("Getting instrument list");
-        return instrumentEngine.getCachedInstruments();
+        return InstrumentManager.getInstance().getCachedInstruments();
     }
 
     public Instrument findByName(String name) {
         logger.debug("Finding instrument by name: {}", name);
-        return instrumentEngine.findByName(name);
+        return InstrumentManager.getInstance().findByName(name);
     }
 }

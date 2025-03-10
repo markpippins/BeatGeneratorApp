@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Pad;
 import com.angrysurfer.core.model.converter.IntegerArrayConverter;
+import com.angrysurfer.core.service.DeviceManager;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -255,6 +256,41 @@ public class Instrument implements Serializable {
             logger.error("Failed to initialize device: {}", e.getMessage());
         }
         initialized = true;
+    }
+
+    /**
+     * Initializes the connection to the MIDI device for this instrument
+     * 
+     * @param deviceName The name of the device to connect to
+     * @return true if successfully connected, false otherwise
+     */
+    public boolean initializeDevice(String deviceName) {
+        try {
+            if (deviceName == null || deviceName.isEmpty()) {
+                logger.warn("Cannot initialize device with null or empty name");
+                return false;
+            }
+            
+            // Get the device by name
+            MidiDevice device = DeviceManager.getMidiDevice(deviceName);
+            if (device == null) {
+                logger.warn("Device not found: {}", deviceName);
+                return false;
+            }
+            
+            // Set the device and clean up previous connections
+            setDevice(device);
+            
+            // Now the device is properly set up with receiver initialized through setDevice method
+            setInitialized(true);
+            setAvailable(true);
+            
+            logger.info("Successfully initialized device: {}", deviceName);
+            return true;
+        } catch (Exception e) {
+            logger.error("Failed to initialize device {}: {}", deviceName, e.getMessage());
+            return false;
+        }
     }
 
     // Add finalizer to ensure cleanup

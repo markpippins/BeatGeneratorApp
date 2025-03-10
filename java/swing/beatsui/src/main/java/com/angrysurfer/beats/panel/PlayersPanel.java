@@ -42,6 +42,7 @@ import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Constants;
@@ -735,7 +736,8 @@ public class PlayersPanel extends JPanel {
 
         try {
             if (player.getInstrumentId() != null) {
-                Instrument instrument = SessionManager.getInstance().getInstrumentFromCache(player.getInstrumentId());
+                Instrument instrument = InstrumentManager.getInstance()
+                        .getInstrumentFromCache(player.getInstrumentId());
                 if (instrument != null) {
                     instrumentName = instrument.getName();
 
