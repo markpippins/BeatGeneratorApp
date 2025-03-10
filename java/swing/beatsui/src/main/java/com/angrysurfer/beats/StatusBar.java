@@ -204,23 +204,35 @@ public class StatusBar extends JPanel implements CommandListener, StatusConsumer
     public void onAction(Command action) {
         if (action == null || action.getCommand() == null)
             return;
+        
+        // Debug all commands received
+        System.out.println("StatusBar received: " + action.getCommand());
 
-        switch (action.getCommand()) {
-            case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED, Commands.SESSION_LOADED -> {
-                if (action.getData() instanceof Session session) {
-                    updateSessionInfo(session);
+        try {
+            switch (action.getCommand()) {
+                case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED, Commands.SESSION_LOADED -> {
+                    if (action.getData() instanceof Session session) {
+                        updateSessionInfo(session);
+                    }
                 }
-            }
-            case Commands.PLAYER_SELECTED -> {
-                if (action.getData() instanceof Player player) {
-                    updatePlayerInfo(player);
+                case Commands.PLAYER_SELECTED -> {
+                    if (action.getData() instanceof Player player) {
+                        System.out.println("StatusBar updating player info: " + player.getName());
+                        updatePlayerInfo(player);
+                    }
                 }
+                case Commands.PLAYER_UNSELECTED -> {
+                    System.out.println("StatusBar clearing player info");
+                    clearPlayerInfo();
+                }
+                case Commands.BASIC_TIMING_TICK -> flashTickLed();
+                case Commands.BASIC_TIMING_BEAT -> flashBeatLed();
+                case Commands.BASIC_TIMING_BAR -> flashBarLed();
+                default -> {}
             }
-            case Commands.PLAYER_UNSELECTED -> clearPlayerInfo();
-            case Commands.BASIC_TIMING_TICK -> flashTickLed();
-            case Commands.BASIC_TIMING_BEAT -> flashBeatLed();
-            case Commands.BASIC_TIMING_BAR -> flashBarLed();
-            default -> setMessage(action.getCommand());
+        } catch (Exception e) {
+            System.err.println("Error in StatusBar.onAction: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

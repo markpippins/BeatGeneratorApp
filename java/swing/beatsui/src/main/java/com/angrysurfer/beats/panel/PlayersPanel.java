@@ -168,6 +168,7 @@ public class PlayersPanel extends JPanel {
         setupCommandBusListener();
         setupButtonListeners();
         setupContextMenu();
+        setupTableSelectionListener(); // Add this line
 
         // Check for active session and enable controls immediately
         Session currentSession = SessionManager.getInstance().getActiveSession();
@@ -208,6 +209,27 @@ public class PlayersPanel extends JPanel {
         JPanel rightButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightButtonPanel.add(controlButton);
         buttonWrapper.add(rightButtonPanel, BorderLayout.EAST);
+
+        // Add to setupLayout method
+        JButton debugButton = new JButton("Force Selection Event");
+        debugButton.addActionListener(e -> {
+            Player player = getSelectedPlayer();
+            if (player != null) {
+                logger.info("Forcing PLAYER_SELECTED event for: " + player.getName());
+                
+                // First set the active player in PlayerManager
+                PlayerManager.getInstance().setActivePlayer(player);
+                
+                // Then publish the selection event
+                CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
+                
+                // Update button states
+                updateButtonStates();
+            } else {
+                logger.warning("No player selected to force event");
+            }
+        });
+        rightButtonPanel.add(debugButton);
 
         topPanel.add(buttonWrapper, BorderLayout.NORTH);
 
@@ -848,39 +870,56 @@ public class PlayersPanel extends JPanel {
         }
     }
 
-    // Add this to your player selection method in PlayersPanel
     private void handlePlayerSelection(int row) {
-        if (row >= 0 && row < table.getRowCount()) {
-            // Convert view index to model index
-            int modelRow = table.convertRowIndexToModel(row);
-            String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
-
-            // Get player from session
-            Session currentSession = SessionManager.getInstance().getActiveSession();
-            if (currentSession != null && currentSession.getPlayers() != null) {
-                Player selectedPlayer = currentSession.getPlayers().stream()
-                        .filter(p -> p.getName().equals(playerName))
-                        .findFirst()
-                        .orElse(null);
-
-                if (selectedPlayer != null) {
-                    logger.info("PlayersPanel: Selected player " + selectedPlayer.getName() +
-                            " (ID: " + selectedPlayer.getId() + ")");
-
-                    // Publish the selected player event - THIS WAS MISSING
-                    CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, selectedPlayer);
-
-                    // Also update PlayerManager directly
-                    PlayerManager.getInstance().setActivePlayer(selectedPlayer);
+        try {
+            Player player = null;
+            
+            if (row >= 0) {
+                // Convert row index to model index if table is sorted
+                int modelRow = table.convertRowIndexToModel(row);
+                // Get player name from the first column
+                String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
+                
+                // Find player in the current session
+                Session session = SessionManager.getInstance().getActiveSession();
+                if (session != null && session.getPlayers() != null) {
+                    for (Player p : session.getPlayers()) {
+                        if (p.getName().equals(playerName)) {
+                            player = p;
+                            break;
+                        }
+                    }
                 }
             }
-        } else {
-            // No player selected
-            logger.info("PlayersPanel: No player selected (row=" + row + ")");
-            CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
-
-            // Also update PlayerManager directly
-            PlayerManager.getInstance().setActivePlayer(null);
+            
+            // Log selection for debugging
+            logger.info("Player selection changed: " + (player != null ? player.getName() + " (ID: " + player.getId() + ")" : "null"));
+            
+            // First update PlayerManager's state directly
+            PlayerManager.getInstance().setActivePlayer(player);
+            
+            // Then explicitly publish events - CRITICAL STEP!
+            if (player != null) {
+                logger.info("Publishing PLAYER_SELECTED event for: " + player.getName());
+                CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
+            } else {
+                logger.info("Publishing PLAYER_UNSELECTED event");
+                CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
+            }
+        } catch (Exception ex) {
+            logger.severe("Error in player selection: " + ex.getMessage());
+            ex.printStackTrace();
         }
+    }
+
+    // In PlayersPanel, find the table selection listener method (likely called setupTableSelectionListener)
+    private void setupTableSelectionListener() {
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {  // Only handle when selection is complete
+                int selectedRow = table.getSelectedRow();
+                handlePlayerSelection(selectedRow);
+                updateButtonStates();
+            }
+        });
     }
 }

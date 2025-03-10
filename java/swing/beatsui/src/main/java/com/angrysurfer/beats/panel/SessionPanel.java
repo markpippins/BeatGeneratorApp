@@ -15,6 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -51,8 +52,10 @@ public class SessionPanel extends StatusProviderPanel {
     private Dial panDial;
     private Dial sparseDial;
 
-    // private Player selectedPlayer; // Add this line
-    private JPanel controlPanel; // Add this field
+    // Add this field to track the currently selected player
+    private Player activePlayer;
+    
+    private JPanel controlPanel;
 
     public SessionPanel(StatusConsumer status) {
         super(new BorderLayout(), status);
@@ -163,6 +166,8 @@ public class SessionPanel extends StatusProviderPanel {
 
         disableDials();
 
+        setupControlChangeListeners();
+
         return controlPanel;
     }
 
@@ -224,6 +229,19 @@ public class SessionPanel extends StatusProviderPanel {
 
         navPanel.add(octaveLabel, BorderLayout.NORTH);
         navPanel.add(buttonPanel, BorderLayout.CENTER);
+
+        // Add to SessionPanel's setupLayout or similar method
+        JButton debugButton = new JButton("Refresh Controls");
+        debugButton.addActionListener(e -> {
+            Player player = PlayerManager.getInstance().getActivePlayer();
+            if (player != null) {
+                logger.info("Manually refreshing controls for player: " + player.getName());
+                updateControlsFromPlayer(player);
+            } else {
+                logger.warning("No active player to refresh controls for");
+            }
+        });
+        buttonPanel.add(debugButton);
 
         return navPanel;
     }
@@ -375,32 +393,79 @@ public class SessionPanel extends StatusProviderPanel {
         CommandBus.getInstance().register(new CommandListener() {
             @Override
             public void onAction(Command action) {
-                if (Objects.isNull(action.getCommand()))
-                    return;
-
-                switch (action.getCommand()) {
-                    case Commands.PLAYER_SELECTED -> {
-                        if (action.getData() instanceof Player player) {
-                            PlayerManager.getInstance().setActivePlayer(player);
-                            setDialValues(player);
-                            enableDials();
-                            updateVerticalAdjustButtons(true);
+                if (action == null || action.getCommand() == null) return;
+                
+                String cmd = action.getCommand();
+                logger.info("SessionPanel received command: " + cmd);
+                
+                try {
+                    switch (cmd) {
+                        case Commands.PLAYER_SELECTED -> {
+                            if (action.getData() instanceof Player player) {
+                                logger.info("SessionPanel updating controls for player: " + 
+                                           player.getName() + " (ID: " + player.getId() + ")");
+                                
+                                // Store reference to current player
+                                activePlayer = player;
+                                
+                                // Update all control values
+                                SwingUtilities.invokeLater(() -> {
+                                    updateControlsFromPlayer(player);
+                                });
+                            }
+                        }
+                        case Commands.PLAYER_UNSELECTED -> {
+                            logger.info("Player unselected, disabling controls");
+                            activePlayer = null;
+                            disableControls();
                         }
                     }
-                    case Commands.PLAYER_UNSELECTED -> {
-                        PlayerManager.getInstance().setActivePlayer(null);
-                        disableDials();
-                        updateVerticalAdjustButtons(false);
-                    }
-                    case Commands.NEW_VALUE_LEVEL, Commands.NEW_VALUE_NOTE,
-                            Commands.NEW_VALUE_SWING, Commands.NEW_VALUE_PROBABILITY,
-                            Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
-                            Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN,
-                            Commands.NEW_VALUE_SPARSE ->
-                        updatePlayerValue(action.getCommand(), ((Integer) action.getData()).longValue());
+                } catch (Exception e) {
+                    logger.severe("Error in SessionPanel command handler: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         });
+    }
+
+    // Add this method to update all controls from player
+    private void updateControlsFromPlayer(Player player) {
+        if (player == null) return;
+        
+        // Disable listeners temporarily to prevent feedback loops
+        disableChangeListeners();
+        
+        try {
+            // Update all sliders and controls with values from player
+            levelDial.setValue(player.getLevel().intValue());
+            swingDial.setValue(player.getSwing().intValue());
+            velocityMinDial.setValue(player.getMinVelocity().intValue());
+            velocityMaxDial.setValue(player.getMaxVelocity().intValue());
+            probabilityDial.setValue(player.getProbability().intValue());
+            randomDial.setValue(player.getRandomDegree().intValue());
+            sparseDial.setValue((int) player.getSparse());
+            // presetField.setValue(player.getPreset()).intValue();
+            panDial.setValue(player.getPanPosition().intValue());
+            
+            // Enable all controls
+            enableControls(true);
+            
+            logger.info("Updated all controls for player: " + player.getName());
+        } finally {
+            // Re-enable listeners
+            enableChangeListeners();
+        }
+    }
+
+    // Helper methods to prevent feedback when programmatically updating controls
+    private boolean listenersEnabled = true;
+
+    private void disableChangeListeners() {
+        listenersEnabled = false;
+    }
+
+    private void enableChangeListeners() {
+        listenersEnabled = true;
     }
 
     private void updatePlayerValue(String command, Long value) {
@@ -438,6 +503,64 @@ public class SessionPanel extends StatusProviderPanel {
                 }
             }
         }
+    }
+
+    // In setupControls() or similar method where you set up your dials
+    private void setupControlChangeListeners() {
+        // For level dial
+        levelDial.addChangeListener(e -> {
+            if (activePlayer == null) return;
+            
+            int value = levelDial.getValue();
+            logger.info("Updating player level to: " + value);
+            
+            // Update player
+            activePlayer.setLevel((long)value);
+            
+            // Save the change and notify UI
+            PlayerManager.getInstance().updatePlayerLevel(activePlayer, value);
+        });
+        
+        // For swing dial
+        swingDial.addChangeListener(e -> {
+            if (activePlayer == null) return;
+            
+            int value = swingDial.getValue();
+            logger.info("Updating player swing to: " + value);
+            
+            // Update player
+            activePlayer.setSwing((long)value);
+            
+            // Save the change and notify UI
+            PlayerManager.getInstance().updatePlayerSwing(activePlayer, value);
+        });
+        
+        // For probability dial
+        probabilityDial.addChangeListener(e -> {
+            if (activePlayer == null) return;
+            
+            int value = probabilityDial.getValue();
+            logger.info("Updating player probability to: " + value);
+            
+            // Update player and save
+            PlayerManager.getInstance().updatePlayerProbability(activePlayer, value);
+        });
+        
+        // Add similar listeners for other dials...
+    }
+
+    private void enableControls(boolean enabled) {
+        // Enable/disable all dials
+        enableDials();
+        // Enable/disable all buttons
+        updateVerticalAdjustButtons(enabled);
+    }
+
+    private void disableControls() {
+        // Disable all dials
+        disableDials();
+        // Disable all buttons
+        updateVerticalAdjustButtons(false);
     }
 
 }

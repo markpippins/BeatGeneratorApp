@@ -94,24 +94,24 @@ public class Dial extends JComponent {
     }
 
     private void updateSize() {
-        Window window = SwingUtilities.getWindowAncestor(this);
-        if (window != null) {
-            // Calculate size based on window dimensions
-            double widthRatio = (double) window.getWidth() / BASE_WINDOW_WIDTH;
-            double heightRatio = (double) window.getHeight() / BASE_WINDOW_HEIGHT;
-            double scaleFactor = Math.min(Math.max(widthRatio, heightRatio), MAX_SIZE / (double) MIN_SIZE);
+        // Window window = SwingUtilities.getWindowAncestor(this);
+        // if (window != null) {
+        //     // Calculate size based on window dimensions
+        //     double widthRatio = (double) window.getWidth() / BASE_WINDOW_WIDTH;
+        //     double heightRatio = (double) window.getHeight() / BASE_WINDOW_HEIGHT;
+        //     double scaleFactor = Math.min(Math.max(widthRatio, heightRatio), MAX_SIZE / (double) MIN_SIZE);
 
-            int size = Math.min(MAX_SIZE, (int) (MIN_SIZE * scaleFactor));
+        //     int size = Math.min(MAX_SIZE, (int) (MIN_SIZE * scaleFactor));
 
-            Dimension newSize = new Dimension(size, size);
-            setPreferredSize(newSize);
-            setMinimumSize(newSize);
-            revalidate();
-        } else {
-            // Default size when no window is available
-            setPreferredSize(new Dimension(MIN_SIZE, MIN_SIZE));
-            setMinimumSize(new Dimension(MIN_SIZE, MIN_SIZE));
-        }
+        //     Dimension newSize = new Dimension(size, size);
+        //     setPreferredSize(newSize);
+        //     setMinimumSize(newSize);
+        //     revalidate();
+        // } else {
+        //     // Default size when no window is available
+        //     setPreferredSize(new Dimension(MIN_SIZE, MIN_SIZE));
+        //     setMinimumSize(new Dimension(MIN_SIZE, MIN_SIZE));
+        // }
     }
 
     @Override

@@ -161,29 +161,60 @@ public class PlayerManager {
                     
                     case Commands.RULE_DELETE_REQUEST -> {
                         if (action.getData() instanceof Rule[] rules) {
-                            // logger.info("Processing rule delete request for {} rules", rules.length);
+                            logger.info("Processing rule delete request for {} rules", rules.length);
 
                             // Get player for first rule (all rules should be from same player)
                             Player player = rules[0].getPlayer();
                             if (player != null) {
-                                // Remove rules from player
-                                for (Rule rule : rules) {
-                                    player.getRules().remove(rule);
-                                    redisService.deleteRule(rule.getId());
-                                    logger.info("Deleted rule: {}", rule.getId());
+                                // Get a fresh copy of the player to ensure we have current state
+                                Player freshPlayer = redisService.findPlayerById(player.getId());
+                                if (freshPlayer == null) {
+                                    logger.error("Could not find player with ID: {}", player.getId());
+                                    return;
                                 }
-
-                                // Save updated player
-                                redisService.savePlayer(player);
-
-                                // Get fresh player state
-                                Player refreshedPlayer = redisService.findPlayerById(player.getId());
-
-                                // Notify UI
-                                commandBus.publish(Commands.PLAYER_UPDATED, this, refreshedPlayer);
-                                commandBus.publish(Commands.PLAYER_SELECTED, this, refreshedPlayer);
-
-                                logger.info("Player {} updated after rule deletion", player.getId());
+                                
+                                // Track if we deleted any rules
+                                boolean deletedRules = false;
+                                
+                                // Remove rules from player and Redis
+                                for (Rule rule : rules) {
+                                    Long ruleId = rule.getId();
+                                    
+                                    // First remove from Redis directly
+                                    redisService.deleteRule(ruleId);
+                                    logger.info("Attempted to delete rule from Redis: {}", ruleId);
+                                    
+                                    // Then remove from player's collection
+                                    if (freshPlayer.getRules() != null) {
+                                        boolean removed = freshPlayer.getRules().removeIf(r -> r.getId().equals(ruleId));
+                                        if (removed) {
+                                            deletedRules = true;
+                                            logger.info("Removed rule {} from player's collection", ruleId);
+                                        } else {
+                                            logger.warn("Rule {} not found in player's collection", ruleId);
+                                        }
+                                    }
+                                }
+                                
+                                if (deletedRules) {
+                                    // Save updated player - Don't assign to boolean since method returns void
+                                    redisService.savePlayer(freshPlayer);
+                                    logger.info("Player {} saved after rule deletion", freshPlayer.getId());
+                                    
+                                    // Get another fresh copy after saving
+                                    Player refreshedPlayer = redisService.findPlayerById(freshPlayer.getId());
+                                    
+                                    // Notify UI
+                                    commandBus.publish(Commands.RULE_DELETED, this, refreshedPlayer);
+                                    commandBus.publish(Commands.PLAYER_UPDATED, this, refreshedPlayer);
+                                    commandBus.publish(Commands.PLAYER_SELECTED, this, refreshedPlayer);
+                                    
+                                    // Log rules count after operation
+                                    int rulesCount = refreshedPlayer.getRules() != null ? refreshedPlayer.getRules().size() : 0;
+                                    logger.info("Player {} now has {} rules after deletion", refreshedPlayer.getId(), rulesCount);
+                                    
+                                    debugPlayerRules(refreshedPlayer);
+                                }
                             }
                         }
                     }
@@ -192,10 +223,13 @@ public class PlayerManager {
         });
     }
 
+    // Fix the playerSelected method
     public void playerSelected(Player player) {
+        // DON'T publish another event here - this method should just update state
         if (!Objects.equals(activePlayer, player)) {
             this.activePlayer = player;
-            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+            // Remove this line to prevent event loop
+            // commandBus.publish(Commands.PLAYER_SELECTED, this, player);
         }
     }
 
@@ -217,21 +251,106 @@ public class PlayerManager {
 
     public Rule addRule(Player player, int operator, int comparison, double value, int part) {
         Rule rule = new Rule(operator, comparison, value, part, true);
+        
+        // Set bidirectional relationship
+        rule.setPlayer(player);
+        
+        // Initialize rules collection if needed
+        if (player.getRules() == null) {
+            player.setRules(new HashSet<>());
+        }
+        
+        // Don't add duplicate rules
         if (player.getRules().stream().noneMatch(r -> r.isEqualTo(rule))) {
-            rule.setPlayer(player);
             player.getRules().add(rule);
+            
+            // IMPORTANT: Save the player to persist the rule relationship
+            savePlayerWithRules(player);
+            
+            // Publish events
             commandBus.publish(Commands.RULE_ADDED, this, player);
             commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-
+            
             return rule;
         }
         return null;
     }
 
+    /**
+     * Saves a player and ensures rules are properly persisted
+     * @param player The player to save
+     */
+    private void savePlayerWithRules(Player player) {
+        try {
+            // Save to Redis without expecting boolean return
+            redisService.savePlayer(player);
+            
+            // Also update in session to ensure consistency
+            Session session = SessionManager.getInstance().getActiveSession();
+            if (session != null) {
+                // Find and update player in session
+                Set<Player> players = session.getPlayers();
+                
+                // Remove existing player with same ID
+                players.removeIf(p -> p.getId().equals(player.getId()));
+                
+                // Add updated player
+                players.add(player);
+                
+                // Save session to persist changes without expecting boolean return
+                redisService.saveSession(session);
+                
+                logger.info("Saved player " + player.getName() + " with " + 
+                          (player.getRules() != null ? player.getRules().size() : 0) + " rules");
+            }
+        } catch (Exception e) {
+            logger.error("Error saving player: " + e.getMessage());
+        }
+    }
+
     public void removeRule(Player player, Long ruleId) {
-        Rule rule = player.getRule(ruleId);
-        player.getRules().remove(rule);
-        rule.setPlayer(null);
+        if (player == null || ruleId == null) {
+            logger.error("Cannot remove rule: player or ruleId is null");
+            return;
+        }
+        
+        // Get the rule from player's rules collection
+        Rule ruleToRemove = null;
+        if (player.getRules() != null) {
+            for (Rule r : player.getRules()) {
+                if (r.getId().equals(ruleId)) {
+                    ruleToRemove = r;
+                    break;
+                }
+            }
+        }
+        
+        if (ruleToRemove != null) {
+            // Remove from player's collection
+            boolean removed = player.getRules().remove(ruleToRemove);
+            if (!removed) {
+                logger.warn("Failed to remove rule from player's collection: {}", ruleId);
+            }
+            
+            // Delete from Redis directly without expecting boolean return
+            redisService.deleteRule(ruleId);
+            logger.info("Attempted to delete rule from Redis: {}", ruleId);
+            
+            // Save the updated player (without the rule)
+            savePlayerWithRules(player);
+            
+            // Debug the state after removal
+            debugPlayerRules(player);
+            
+            // Notify listeners about the change
+            commandBus.publish(Commands.RULE_DELETED, this, player);
+            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+            
+            logger.info("Removed rule {} from player {}", ruleId, player.getName());
+        } else {
+            logger.warn("Rule {} not found in player {}", ruleId, player.getName());
+        }
     }
 
     public Set<Player> removePlayer(Session session, Long playerId) {
@@ -355,10 +474,36 @@ public class PlayerManager {
         player.setNote((long) note);
     }
 
+    /**
+     * Saves player properties and ensures persistence
+     * @param player The player to save
+     */
     public void savePlayerProperties(Player player) {
-        if (player != null) {
-            RedisService.getInstance().savePlayer(player);
-            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+        if (player == null) {
+            logger.error("Cannot save null player");
+            return;
+        }
+        
+        try {
+            // Save to Redis without expecting boolean return
+            redisService.savePlayer(player);
+            logger.info("Saved player properties: " + player.getName());
+            
+            // Also update in session to ensure consistency
+            Session session = SessionManager.getInstance().getActiveSession();
+            if (session != null) {
+                // Find and update player in session
+                Set<Player> players = session.getPlayers();
+                
+                // Remove existing player with same ID and add updated one
+                players.removeIf(p -> p.getId().equals(player.getId()));
+                players.add(player);
+                
+                // Update session in Redis if needed
+                redisService.saveSession(session);
+            }
+        } catch (Exception e) {
+            logger.error("Error saving player properties: " + e.getMessage());
         }
     }
 
@@ -369,9 +514,34 @@ public class PlayerManager {
     }
 
     public void deleteRule(Rule rule) {
+        if (rule == null || rule.getId() == null) {
+            logger.error("Cannot delete null rule");
+            return;
+        }
+        
         Player player = rule.getPlayer();
-        player.getRules().remove(rule);
+        if (player == null) {
+            logger.error("Rule {} has no associated player", rule.getId());
+            return;
+        }
+        
+        // Delete from Redis first without expecting boolean return
+        redisService.deleteRule(rule.getId());
+        logger.info("Attempted to delete rule from Redis: {}", rule.getId());
+        
+        // Remove from player
+        if (player.getRules() != null) {
+            boolean removed = player.getRules().remove(rule);
+            logger.info("Rule {} removed from player's collection: {}", rule.getId(), removed);
+        }
+        
+        // Save updated player
+        savePlayerWithRules(player);
+        
+        // Notify listeners
         commandBus.publish(Commands.RULE_DELETED, this, player);
+        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+        commandBus.publish(Commands.PLAYER_SELECTED, this, player);
     }
 
     public void updatePlayer(Player player) {
@@ -396,16 +566,9 @@ public class PlayerManager {
 
     public void setActivePlayer(Player player) {
         if (!Objects.equals(this.activePlayer, player)) {
-            logger.info("PlayerManager: Setting active player to " + 
+            logger.info("PlayerManager.setActivePlayer: " + 
                       (player != null ? player.getName() + " (ID: " + player.getId() + ")" : "null"));
             this.activePlayer = player;
-            
-            // Re-publish the event to ensure all listeners are notified
-            if (player != null) {
-                commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-            } else {
-                commandBus.publish(Commands.PLAYER_UNSELECTED, this, null);
-            }
         }
     }
 
@@ -499,5 +662,26 @@ public class PlayerManager {
                 }
             }
         }, 500);
+    }
+
+    // Add a utility method to help debug rule-player associations
+    public void debugPlayerRules(Player player) {
+        logger.info("=== DEBUG PLAYER RULES ===");
+        logger.info("Player: " + player.getName() + " (ID: " + player.getId() + ")");
+        
+        if (player.getRules() == null) {
+            logger.info("Rules collection is NULL");
+            return;
+        }
+        
+        logger.info("Rules count: " + player.getRules().size());
+        
+        for (Rule rule : player.getRules()) {
+            logger.info("Rule ID: " + rule.getId() + 
+                      " - Player ID: " + (rule.getPlayer() != null ? rule.getPlayer().getId() : "NULL") +
+                      " - " + rule.getOperatorText() + " " + 
+                      rule.getComparisonText() + " " + rule.getValue());
+        }
+        logger.info("=========================");
     }
 }

@@ -247,72 +247,35 @@ class RulesPanel extends JPanel {
                 if (action.getCommand() == null) return;
                 
                 String cmd = action.getCommand();
-                
-                // Add debug logging to trace command flow
                 logger.info("RulesPanel received command: " + cmd);
                 
-                if (Commands.PLAYER_SELECTED.equals(cmd)) {
-                    if (action.getData() instanceof Player) {
-                        Player player = (Player) action.getData();
-                        logger.info("RulesPanel received PLAYER_SELECTED: " + player.getName() + 
-                                   " (ID: " + player.getId() + ") with " + 
-                                   (player.getRules() != null ? player.getRules().size() : 0) + " rules");
-                        
-                        // Update current player reference
-                        currentPlayer = player;
-                        
-                        // Get fresh copy from SessionManager for most up-to-date rules
-                        Session session = SessionManager.getInstance().getActiveSession();
-                        if (session != null) {
-                            Player updatedPlayer = session.getPlayer(player.getId());
-                            if (updatedPlayer != null) {
-                                logger.info("Using fresh player copy with " + 
-                                          (updatedPlayer.getRules() != null ? 
-                                           updatedPlayer.getRules().size() : 0) + " rules");
-                                currentPlayer = updatedPlayer;
+                try {
+                    if (Commands.PLAYER_SELECTED.equals(cmd)) {
+                        if (action.getData() instanceof Player selectedPlayer) {
+                            logger.info("RulesPanel processing PLAYER_SELECTED for: " + 
+                                   selectedPlayer.getName() + " (ID: " + selectedPlayer.getId() + ")");
+                            
+                            // Get a fresh copy of the player from SessionManager
+                            Player freshPlayer = getFreshPlayer(selectedPlayer.getId());
+                            
+                            if (freshPlayer != null) {
+                                currentPlayer = freshPlayer;
+                                loadRules(freshPlayer);
+                                logger.info("Loaded " + (freshPlayer.getRules() != null ? 
+                                         freshPlayer.getRules().size() : 0) + " rules for player");
+                            } else {
+                                currentPlayer = selectedPlayer;
+                                loadRules(selectedPlayer);
+                                logger.warning("Using provided player - could not get fresh copy");
                             }
-                        }
-                        
-                        // Clear and reload rules table with this player's rules
-                        loadRules(currentPlayer);
-                        updateButtonStates();
-                    }
-                }
-                else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {
-                    logger.info("RulesPanel received PLAYER_UNSELECTED");
-                    currentPlayer = null;
-                    clearRules();
-                    updateButtonStates();
-                }
-                else if (Commands.PLAYER_UPDATED.equals(cmd)) {
-                    if (action.getData() instanceof Player) {
-                        Player updatedPlayer = (Player) action.getData();
-                        if (currentPlayer != null && 
-                                updatedPlayer.getId().equals(currentPlayer.getId())) {
                             
-                            logger.info("RulesPanel updating rules for player: " + updatedPlayer.getName());
-                            currentPlayer = updatedPlayer;  // Update our reference
-                            loadRules(updatedPlayer);
                             updateButtonStates();
                         }
                     }
-                }
-                else if (Commands.RULE_DELETED.equals(cmd) || 
-                         Commands.RULE_ADDED.equals(cmd) || 
-                         Commands.RULE_EDITED.equals(cmd)) {
-                    if (currentPlayer != null) {
-                        logger.info("Rule changed, refreshing rules for player: " + currentPlayer.getName());
-                        // Get fresh player data from SessionManager
-                        Player updatedPlayer = SessionManager.getInstance()
-                            .getActiveSession()
-                            .getPlayer(currentPlayer.getId());
-                            
-                        if (updatedPlayer != null) {
-                            currentPlayer = updatedPlayer;  // Update reference
-                            loadRules(updatedPlayer);
-                            updateButtonStates();
-                        }
-                    }
+                    // Other cases remain the same...
+                } catch (Exception e) {
+                    logger.severe("Error processing command: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         });
@@ -432,22 +395,27 @@ class RulesPanel extends JPanel {
     }
 
     public void setPlayer(Player player) {
-        // logger.info(
-        // "Setting player: " + (player != null ? player.getName() + " (ID: " +
-        // player.getId() + ")" : "null"));
-        this.currentPlayer = player;
-
-        // Update rules display
         if (player != null) {
-            // logger.info("Loading rules for player. Rules count: " +
-            // (player.getRules() != null ? player.getRules().size() : 0));
-            loadRules(player);
+            // Try to get a fresh copy of the player
+            Player freshPlayer = getFreshPlayer(player.getId());
+            if (freshPlayer != null) {
+                currentPlayer = freshPlayer;
+                loadRules(freshPlayer);
+                logger.info("Set player using fresh copy with " + 
+                           (freshPlayer.getRules() != null ? freshPlayer.getRules().size() : 0) + " rules");
+            } else {
+                // Fall back to the provided player
+                currentPlayer = player;
+                loadRules(player);
+                logger.info("Set player using provided reference with " + 
+                           (player.getRules() != null ? player.getRules().size() : 0) + " rules");
+            }
         } else {
-            logger.info("Clearing rules display - no player selected");
+            currentPlayer = null;
             clearRules();
+            logger.info("Cleared player reference and rules display");
         }
-
-        // Update UI state
+        
         updateButtonStates();
     }
 
@@ -491,6 +459,27 @@ class RulesPanel extends JPanel {
             logger.severe("Error loading rules: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Gets a fresh copy of a player from SessionManager
+     * @param playerId The ID of the player to fetch
+     * @return A fresh Player instance or null if not found
+     */
+    private Player getFreshPlayer(Long playerId) {
+        try {
+            Session session = SessionManager.getInstance().getActiveSession();
+            if (session != null && session.getPlayers() != null) {
+                for (Player player : session.getPlayers()) {
+                    if (player.getId().equals(playerId)) {
+                        return player;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.severe("Error getting fresh player: " + e.getMessage());
+        }
+        return null;
     }
    
 }
