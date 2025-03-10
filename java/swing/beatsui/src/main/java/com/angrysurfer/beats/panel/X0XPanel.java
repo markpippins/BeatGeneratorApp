@@ -30,7 +30,7 @@ import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
 
-public class X0XPanel extends StatusProviderPanel implements CommandListener {
+class X0XPanel extends StatusProviderPanel implements CommandListener {
     private final List<TriggerButton> triggerButtons = new ArrayList<>();
 
     private boolean isPlaying = false;

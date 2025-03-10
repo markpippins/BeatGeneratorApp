@@ -38,7 +38,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class InstrumentsPanel extends StatusProviderPanel {
+class InstrumentsPanel extends StatusProviderPanel {
     private final CommandBus commandBus = CommandBus.getInstance();
     private JTable instrumentsTable;
     private JTable controlCodesTable;

@@ -101,12 +101,12 @@ public class SequencerManager {
             }
 
             // Add metronome notes
-            track.add(new MidiEvent(
-                    new ShortMessage(ShortMessage.NOTE_ON, metronomeChannel, metronomeNote, metronomeVelocity),
-                    beat * getPpq()));
-            track.add(new MidiEvent(
-                    new ShortMessage(ShortMessage.NOTE_OFF, metronomeChannel, metronomeNote, 0),
-                    beat * getPpq() + getPpq() / 2));
+            // track.add(new MidiEvent(
+            //         new ShortMessage(ShortMessage.NOTE_ON, metronomeChannel, metronomeNote, metronomeVelocity),
+            //         beat * getPpq()));
+            // track.add(new MidiEvent(
+            //         new ShortMessage(ShortMessage.NOTE_OFF, metronomeChannel, metronomeNote, 0),
+            //         beat * getPpq() + getPpq() / 2));
         }
 
         sequencer.setSequence(sequence);

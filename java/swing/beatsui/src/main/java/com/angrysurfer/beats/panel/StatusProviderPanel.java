@@ -12,7 +12,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class StatusProviderPanel extends JPanel {
+class StatusProviderPanel extends JPanel {
     protected StatusConsumer statusConsumer;
 
     public StatusProviderPanel() {

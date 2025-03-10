@@ -10,7 +10,7 @@ import com.angrysurfer.beats.visualization.Visualizer;
 import com.angrysurfer.beats.widget.GridButton;
 import com.angrysurfer.core.api.StatusConsumer;
 
-public class GridPanel extends StatusProviderPanel {
+class GridPanel extends StatusProviderPanel {
 
     private GridButton[][] buttons;
     private Visualizer gridSaver;

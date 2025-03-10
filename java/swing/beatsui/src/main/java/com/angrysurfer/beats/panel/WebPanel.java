@@ -5,7 +5,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.IOException;
 
-public class WebPanel extends JPanel {
+class WebPanel extends JPanel {
     private final JEditorPane webView;
 
     public WebPanel() {

@@ -19,7 +19,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SystemsPanel extends StatusProviderPanel {
+class SystemsPanel extends StatusProviderPanel {
     private final JTable devicesTable;
 
     public SystemsPanel(StatusConsumer statusConsumer) {

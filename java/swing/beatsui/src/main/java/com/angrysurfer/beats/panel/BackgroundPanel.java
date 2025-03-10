@@ -7,7 +7,7 @@ import javax.imageio.ImageIO;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
-public class BackgroundPanel extends JPanel {
+class BackgroundPanel extends JPanel {
     private static final Logger logger = Logger.getLogger(BackgroundPanel.class.getName());
     private BufferedImage backgroundImage;
     private float opacity = 0.15f; // Reduced opacity to make it more subtle

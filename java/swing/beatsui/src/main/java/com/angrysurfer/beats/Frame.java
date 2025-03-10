@@ -1,7 +1,6 @@
 package com.angrysurfer.beats;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
@@ -14,7 +13,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 
-import com.angrysurfer.beats.panel.BackgroundPanel;
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.SessionPanel;
 import com.angrysurfer.beats.service.DialogManager;
@@ -31,7 +29,7 @@ public class Frame extends JFrame implements AutoCloseable {
     private StatusBar statusBar = new StatusBar();
 
     private final Map<Character, Integer> keyNoteMap;
-    private BackgroundPanel backgroundPanel;
+    // private BackgroundPanel backgroundPanel;
     private MainPanel mainPanel;
 
     public Frame() {
@@ -39,9 +37,9 @@ public class Frame extends JFrame implements AutoCloseable {
         this.keyNoteMap = setupKeyMap();
 
         // Create background panel first
-        backgroundPanel = new BackgroundPanel();
-        backgroundPanel.setLayout(new BorderLayout());
-        setContentPane(backgroundPanel);
+        // backgroundPanel = new BackgroundPanel();
+        // backgroundPanel.setLayout(new BorderLayout());
+        // setContentPane(backgroundPanel);
 
         setupFrame();
         setupMainContent();
@@ -147,7 +145,8 @@ public class Frame extends JFrame implements AutoCloseable {
         });
 
         // Make main content panel transparent
-        backgroundPanel.setBackground(new Color(245, 245, 245, 200)); // Light background with some transparency
+        // backgroundPanel.setBackground(new Color(245, 245, 245, 200)); // Light
+        // background with some transparency
 
         setJMenuBar(new MenuBar(this, statusBar));
         add(new ToolBar(), BorderLayout.NORTH);

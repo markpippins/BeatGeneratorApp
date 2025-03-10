@@ -115,11 +115,14 @@ public class PlayerManager {
                             // Update the preset
                             activePlayer.setPreset((long) newPreset);
                             
-                            // Use a lightweight update instead of full player update
+                            // First publish lightweight update for immediate UI feedback
                             commandBus.publish(Commands.PRESET_CHANGED, this, 
                                 Map.of("playerId", activePlayer.getId(), 
                                        "preset", newPreset, 
                                        "playerName", activePlayer.getName()));
+                            
+                            // Then publish full player update for complete UI refresh
+                            commandBus.publish(Commands.PLAYER_UPDATED, activePlayer);
                             
                             // Play a preview note immediately
                             sendNoteToActivePlayer(60);
@@ -139,11 +142,14 @@ public class PlayerManager {
                             // Update the preset
                             activePlayer.setPreset((long) newPreset);
                             
-                            // Use a lightweight update instead of full player update
+                            // First publish lightweight update for immediate UI feedback
                             commandBus.publish(Commands.PRESET_CHANGED, this, 
                                 Map.of("playerId", activePlayer.getId(), 
                                        "preset", newPreset, 
                                        "playerName", activePlayer.getName()));
+                            
+                            // Then publish full player update for complete UI refresh
+                            commandBus.publish(Commands.PLAYER_UPDATED, activePlayer);
                             
                             // Play a preview note immediately
                             sendNoteToActivePlayer(60);

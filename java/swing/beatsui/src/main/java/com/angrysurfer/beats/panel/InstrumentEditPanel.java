@@ -24,7 +24,7 @@ import java.util.List;
 import lombok.Getter;
 
 @Getter
-public class InstrumentEditPanel extends JPanel {
+class InstrumentEditPanel extends JPanel {
     private final Instrument instrument;
     private final JTextField nameField;
     private final JComboBox<String> deviceCombo; // Changed from JTextField

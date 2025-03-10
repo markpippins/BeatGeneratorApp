@@ -27,7 +27,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.service.SequencerManager;
 
-public class TransportPanel extends JPanel implements CommandListener {
+class TransportPanel extends JPanel implements CommandListener {
 
     private final TimingBus timeBus;
     private final JButton playButton;
