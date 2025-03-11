@@ -443,69 +443,9 @@ public class SessionPanel extends StatusProviderPanel {
         });
     }
 
-    // Add this method to update all controls from player
-    private void updateControlsFromPlayer(Player player) {
-        if (player == null) return;
-        
-        // Disable listeners temporarily to prevent feedback loops
-        disableChangeListeners();
-        
-        try {
-            // Update all sliders and controls with values from player
-            levelDial.setValue(player.getLevel().intValue());
-            swingDial.setValue(player.getSwing().intValue());
-            velocityMinDial.setValue(player.getMinVelocity().intValue());
-            velocityMaxDial.setValue(player.getMaxVelocity().intValue());
-            probabilityDial.setValue(player.getProbability().intValue());
-            randomDial.setValue(player.getRandomDegree().intValue());
-            sparseDial.setValue((int) player.getSparse());
-            // presetField.setValue(player.getPreset()).intValue();
-            panDial.setValue(player.getPanPosition().intValue());
-            
-            // Enable all controls
-            enableControls(true);
-            
-            logger.info("Updated all controls for player: " + player.getName());
-        } finally {
-            // Re-enable listeners
-            enableChangeListeners();
-        }
-    }
 
     // Helper methods to prevent feedback when programmatically updating controls
     private boolean listenersEnabled = true;
-
-    private void disableChangeListeners() {
-        listenersEnabled = false;
-    }
-
-    private void enableChangeListeners() {
-        listenersEnabled = true;
-    }
-
-    private void updatePlayerValue(String command, Long value) {
-        if (Objects.isNull(PlayerManager.getInstance().getActivePlayer()))
-            return;
-
-        Player selectedPlayer = PlayerManager.getInstance().getActivePlayer();
-
-        switch (command) {
-            case Commands.NEW_VALUE_LEVEL -> selectedPlayer.setLevel((long) value);
-            case Commands.NEW_VALUE_NOTE -> selectedPlayer.setNote((long) value);
-            case Commands.NEW_VALUE_SWING -> selectedPlayer.setSwing((long) value);
-            case Commands.NEW_VALUE_PROBABILITY -> selectedPlayer.setProbability((long) value);
-            case Commands.NEW_VALUE_VELOCITY_MIN -> selectedPlayer.setMinVelocity((long) value);
-            case Commands.NEW_VALUE_VELOCITY_MAX -> selectedPlayer.setMaxVelocity((long) value);
-            case Commands.NEW_VALUE_RANDOM -> selectedPlayer.setRandomDegree((long) value);
-            case Commands.NEW_VALUE_PAN -> selectedPlayer.setPanPosition((long) value);
-            case Commands.NEW_VALUE_SPARSE -> selectedPlayer.setSparse(value / 100.0);
-        }
-
-        // Save changes and notify UI using PlayerManager instead
-        // PlayerManager.getInstance().savePlayerProperties(selectedPlayer);
-        CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this,
-                selectedPlayer);
-    }
 
     private void updateVerticalAdjustButtons(boolean enabled) {
         // Find and update all buttons in vertical adjust panels

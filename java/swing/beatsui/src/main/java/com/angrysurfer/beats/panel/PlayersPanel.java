@@ -507,7 +507,59 @@ public class PlayersPanel extends JPanel {
                             }
                         }
 
-                        // Other cases remain the same...
+                        // Handle player operations completed
+                        case Commands.PLAYER_ADDED -> {
+                            logger.info("Player added, refreshing table");
+                            // Refresh table with current session players
+                            Session session = SessionManager.getInstance().getActiveSession();
+                            if (session != null) {
+                                refreshPlayers(session.getPlayers());
+                                
+                                // Select the newly added player if available in data
+                                if (action.getData() instanceof Player player) {
+                                    selectPlayerByName(player.getName());
+                                } else {
+                                    // If no specific player, select the last one
+                                    selectLastPlayer();
+                                }
+                            }
+                        }
+                        
+                        case Commands.SHOW_PLAYER_EDITOR_OK -> {
+                            logger.info("Player edited, refreshing table");
+                            Session session = SessionManager.getInstance().getActiveSession();
+                            if (session != null) {
+                                refreshPlayers(session.getPlayers());
+                                
+                                // Reselect the edited player
+                                if (action.getData() instanceof Player player) {
+                                    selectPlayerByName(player.getName());
+                                }
+                            }
+                        }
+                        
+                        case Commands.PLAYER_DELETED -> {
+                            logger.info("Player(s) deleted, refreshing table");
+                            Session session = SessionManager.getInstance().getActiveSession();
+                            if (session != null) {
+                                refreshPlayers(session.getPlayers());
+                                
+                                // Select closest available player or clear selection
+                                if (table.getRowCount() > 0) {
+                                    // Try to select same row index if possible
+                                    int rowToSelect = Math.min(lastSelectedRow, table.getRowCount() - 1);
+                                    if (rowToSelect >= 0) {
+                                        table.setRowSelectionInterval(rowToSelect, rowToSelect);
+                                        handlePlayerSelection(rowToSelect);
+                                    }
+                                } else {
+                                    // No players left
+                                    CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
+                                }
+                            }
+                        }
+
+                        // Other cases...
                     }
                 } catch (Exception e) {
                     logger.severe("Error processing command: " + e.getMessage());
@@ -515,6 +567,29 @@ public class PlayersPanel extends JPanel {
                 }
             }
         });
+    }
+
+    // Add a field to track the last selected row
+    private int lastSelectedRow = -1;
+
+    // Add a helper method to select a player by name
+    private void selectPlayerByName(String playerName) {
+        if (playerName == null) return;
+        
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        int nameColIndex = getColumnIndex(COL_NAME);
+        
+        for (int i = 0; i < model.getRowCount(); i++) {
+            String name = (String) model.getValueAt(i, nameColIndex);
+            if (playerName.equals(name)) {
+                table.setRowSelectionInterval(i, i);
+                lastSelectedRow = i;
+                handlePlayerSelection(i);
+                // Ensure the row is visible
+                table.scrollRectToVisible(table.getCellRect(i, 0, true));
+                return;
+            }
+        }
     }
 
     private void setupKeyboardShortcuts() {
@@ -851,6 +926,10 @@ public class PlayersPanel extends JPanel {
     }
 
     private void handlePlayerSelection(int row) {
+        if (row >= 0) {
+            lastSelectedRow = row;
+        }
+        
         try {
             Player player = null;
 

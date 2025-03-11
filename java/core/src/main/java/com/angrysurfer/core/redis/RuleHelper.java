@@ -79,6 +79,25 @@ public class RuleHelper {
         }
     }
 
+    
+    // public static boolean deleteRule(Long ruleId) {
+    //     try {
+    //         logger.info("Deleting rule with ID: " + ruleId);
+    //         RedisService redis = RedisService.getInstance();
+            
+    //         // Delete rule from Redis
+    //         long result = redis.deleteKey("rule:" + ruleId);
+    //         boolean success = result > 0;
+            
+    //         logger.info("Rule deletion result: " + (success ? "SUCCESS" : "FAILED"));
+    //         return success;
+    //     } catch (Exception e) {
+    //         logger.severe("Error deleting rule: " + e.getMessage());
+    //         e.printStackTrace();
+    //         return false;
+    //     }
+    // }
+
     public void deleteRule(Long ruleId) {
         try (Jedis jedis = jedisPool.getResource()) {
             Rule rule = findRuleById(ruleId);
@@ -92,6 +111,7 @@ public class RuleHelper {
             throw new RuntimeException("Failed to delete rule", e);
         }
     }
+
 
     public Long getNextRuleId() {
         try (Jedis jedis = jedisPool.getResource()) {

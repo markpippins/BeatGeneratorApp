@@ -61,11 +61,7 @@ public class KineticsVisualization implements IVisualizationHandler {
                     double dist = Math.hypot(dx, dy);
                     if (dist < 1.5) {
                         // Elastic collision
-                        double angle = Math.atan2(dy, dx);
                         double totalMass = mass + other.mass;
-                        double v1 = Math.hypot(vx, vy);
-                        double v2 = Math.hypot(other.vx, other.vy);
-                        
                         // Exchange momentum
                         double newVx = ((mass - other.mass) * vx + 2 * other.mass * other.vx) / totalMass;
                         double newVy = ((mass - other.mass) * vy + 2 * other.mass * other.vy) / totalMass;

@@ -13,11 +13,9 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -39,11 +37,7 @@ import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.service.UserConfigManager;
 
@@ -92,12 +86,12 @@ public class PlayerEditPanel extends StatusProviderPanel {
     public PlayerEditPanel(Player player) {
         super(new BorderLayout());
         this.player = player; // Store player reference immediately
-        
+
         // Initialize UI components
         nameField = new JTextField(player.getName());
         channelSpinner = new JSpinner(createLongSpinnerModel(player.getChannel(), 0, 15, 1));
         presetSpinner = new JSpinner(createLongSpinnerModel(player.getPreset(), 0, 127, 1));
-        
+
         // Initialize all sliders
         swingSlider = createSlider("Swing", player.getSwing(), 0, 100);
         levelSlider = createSlider("Level", player.getLevel(), 0, 100);
@@ -107,18 +101,18 @@ public class PlayerEditPanel extends StatusProviderPanel {
         probabilitySlider = createSlider("Probability", player.getProbability(), 0, 100);
         randomSlider = createSlider("Random", player.getRandomDegree(), 0, 100);
         panSlider = createSlider("Pan", player.getPanPosition(), -64, 63);
-        sparseSlider = createSlider("Sparse", (long)(player.getSparse() * 100), 0, 100);
+        sparseSlider = createSlider("Sparse", (long) (player.getSparse() * 100), 0, 100);
 
         // Ratchet controls with tick spacing
         ratchetCountSlider = createSlider("Count", player.getRatchetCount(), 0, 6, true);
         ratchetIntervalSlider = createSlider("Interval", player.getRatchetInterval(), 1, 16, true);
-        
+
         // Initialize toggle switches
         stickyPresetSwitch = createToggleSwitch("Sticky Preset", player.getStickyPreset());
         useInternalBeatsSwitch = createToggleSwitch("Internal Beats", player.getUseInternalBeats());
         useInternalBarsSwitch = createToggleSwitch("Internal Bars", player.getUseInternalBars());
         preserveOnPurgeSwitch = createToggleSwitch("Preserve", player.getPreserveOnPurge());
-        
+
         // Initialize table and buttons
         rulesTable = new JTable();
         addRuleButton = new JButton("Add");
@@ -126,19 +120,19 @@ public class PlayerEditPanel extends StatusProviderPanel {
         deleteRuleButton = new JButton("Delete");
         prevButton = new JButton("▲");
         nextButton = new JButton("▼");
-        
+
         // Setup instrument combo
         setupInstrumentCombo();
-        
+
         // Layout all components
         layoutComponents();
-        
+
         // Now setup the rules table AFTER all components are initialized
         setupRulesTable();
-        
+
         // Debug player rules
         debugPlayerState();
-        
+
         // The rest of your constructor...
 
         // Rest of initialization
@@ -148,12 +142,9 @@ public class PlayerEditPanel extends StatusProviderPanel {
         // ...existing command listener code...
 
         // Add debugging to verify player and rules
-        if (player != null) {
-            logger.info("PlayerEditPanel initialized for player: " + player.getName() +
-                    " with " + (player.getRules() != null ? player.getRules().size() : 0) + " rules");
-        } else {
-            logger.warning("PlayerEditPanel initialized with null player!");
-        }
+        logger.info(player != null ? "PlayerEditPanel initialized for player: " + player.getName() +
+                " with " + (player.getRules() != null ? player.getRules().size() : 0) + " rules"
+                : "Player is null");
 
         // Register for rule-related commands
         CommandBus.getInstance().register(new CommandListener() {
@@ -386,52 +377,52 @@ public class PlayerEditPanel extends StatusProviderPanel {
     public Player getUpdatedPlayer() {
         // Get currently selected instrument from combo box
         Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
-        
+
         // Ensure the device setting is preserved when returning the updated player
         if (selectedInstrument != null) {
             player.setInstrument(selectedInstrument);
         }
-        
+
         // Only set instrument and ID if an instrument is actually selected
         if (selectedInstrument != null) {
             player.setInstrument(selectedInstrument);
             player.setInstrumentId(selectedInstrument.getId());
-            logger.fine("Selected instrument: " + selectedInstrument.getName() + 
-                       " (ID: " + selectedInstrument.getId() + ")");
+            logger.fine("Selected instrument: " + selectedInstrument.getName() +
+                    " (ID: " + selectedInstrument.getId() + ")");
         } else {
             // Log warning and keep existing instrument (if any)
             logger.warning("No instrument selected in combo box");
         }
-        
+
         // These operations are safe as spinners always have values
         player.setChannel(((Number) channelSpinner.getValue()).intValue());
         player.setPreset(((Number) presetSpinner.getValue()).longValue());
-        
+
         // Set other slider values
-        player.setLevel((long)levelSlider.getValue());
-        player.setNote((long)noteSlider.getValue());
-        player.setSwing((long)swingSlider.getValue());
-        player.setMinVelocity((long)velocityMinSlider.getValue());
-        player.setMaxVelocity((long)velocityMaxSlider.getValue());
-        player.setProbability((long)probabilitySlider.getValue());
-        player.setRandomDegree((long)randomSlider.getValue());
-        player.setPanPosition((long)panSlider.getValue());
+        player.setLevel((long) levelSlider.getValue());
+        player.setNote((long) noteSlider.getValue());
+        player.setSwing((long) swingSlider.getValue());
+        player.setMinVelocity((long) velocityMinSlider.getValue());
+        player.setMaxVelocity((long) velocityMaxSlider.getValue());
+        player.setProbability((long) probabilitySlider.getValue());
+        player.setRandomDegree((long) randomSlider.getValue());
+        player.setPanPosition((long) panSlider.getValue());
         player.setSparse(((double) sparseSlider.getValue()) / 100.0);
         player.setName(nameField.getText());
-        
+
         // Set toggle switch values
         player.setStickyPreset(stickyPresetSwitch.isSelected());
         player.setUseInternalBeats(useInternalBeatsSwitch.isSelected());
         player.setUseInternalBars(useInternalBarsSwitch.isSelected());
         player.setPreserveOnPurge(preserveOnPurgeSwitch.isSelected());
-        
+
         return player;
     }
 
     // Helper methods for creating components
     private void setupInstrumentCombo() {
         instrumentCombo = new JComboBox<>();
-        
+
         // CHANGE: Use UserConfigManager instead of SessionManager.getInstrumentEngine()
         List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
 
@@ -474,14 +465,14 @@ public class PlayerEditPanel extends StatusProviderPanel {
         } else {
             // Clamp to valid range
             safeValue = (int) Math.max(min, Math.min(max, value));
-            
+
             // Debug logging
             if (safeValue != value) {
                 logger.warning(String.format("%s value %d out of range [%d-%d], clamped to %d",
-                    name, value, min, max, safeValue));
+                        name, value, min, max, safeValue));
             }
         }
-        
+
         JSlider slider = new JSlider(JSlider.VERTICAL, min, max, safeValue);
         slider.setPreferredSize(new Dimension(20, SLIDER_HEIGHT));
         slider.setMinimumSize(new Dimension(20, SLIDER_HEIGHT));
@@ -523,10 +514,9 @@ public class PlayerEditPanel extends StatusProviderPanel {
 
     private void setupRulesPanel() {
         // No need to create JPanel here as createRulesPanel() already does this
-        
+
         // Add button handlers
-        addRuleButton.addActionListener(e -> 
-            CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, player));
+        addRuleButton.addActionListener(e -> CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, player));
 
         editRuleButton.addActionListener(e -> {
             Rule selectedRule = getSelectedRule();
@@ -570,13 +560,13 @@ public class PlayerEditPanel extends StatusProviderPanel {
             try {
                 // Get all rules as a list for indexed access
                 List<Rule> rulesList = new ArrayList<>(player.getRules());
-                
+
                 // Get the rule at the selected row
                 if (row < rulesList.size()) {
                     return rulesList.get(row);
                 } else {
-                    logger.warning("Selected row " + row + " is out of bounds (rules size: " + 
-                                  rulesList.size() + ")");
+                    logger.warning("Selected row " + row + " is out of bounds (rules size: " +
+                            rulesList.size() + ")");
                 }
             } catch (Exception e) {
                 logger.severe("Error accessing rule at row " + row + ": " + e.getMessage());
@@ -589,64 +579,65 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private void updateRulesTable() {
         try {
             // Debug output
-            logger.info("Updating rules table for player: " + 
-                       (player != null ? player.getName() : "null"));
+            logger.info("Updating rules table for player: " +
+                    (player != null ? player.getName() : "null"));
 
             // Basic validation
             if (rulesTable == null || player == null || player.getRules() == null) {
-                logger.warning("Cannot update rules table - " + 
-                             (rulesTable == null ? "table is null" : 
-                              player == null ? "player is null" : 
-                              "player rules is null"));
+                logger.warning("Cannot update rules table - " +
+                        (rulesTable == null ? "table is null"
+                                : player == null ? "player is null" : "player rules is null"));
                 return;
             }
 
             // Get table model
             DefaultTableModel model = (DefaultTableModel) rulesTable.getModel();
-            model.setRowCount(0);  // Clear existing rows
-            
+            model.setRowCount(0); // Clear existing rows
+
             // Log rule count
-            logger.info("Player " + player.getName() + " has " + 
-                       player.getRules().size() + " rules");
+            logger.info("Player " + player.getName() + " has " +
+                    player.getRules().size() + " rules");
 
             // Add each rule to the table
             for (Rule rule : player.getRules()) {
-                if (rule == null) continue;
-                
+                if (rule == null)
+                    continue;
+
                 try {
                     // Get display text for rule properties with CORRECT VARIABLE NAMES
                     // Rule.OPERATORS = {"Beat", "Tick", "Bar", ...} - what we're comparing
-                    String operatorText = rule.getOperator() >= 0 && 
-                                       rule.getOperator() < Rule.OPERATORS.length ? 
-                                       Rule.OPERATORS[rule.getOperator()] : "Unknown";
-                                       
+                    String operatorText = rule.getOperator() >= 0 &&
+                            rule.getOperator() < Rule.OPERATORS.length ? Rule.OPERATORS[rule.getOperator()] : "Unknown";
+
                     // Rule.COMPARISONS = {"==", "<", ">", ...} - how we're comparing
-                    String comparisonText = rule.getComparison() >= 0 && 
-                                         rule.getComparison() < Rule.COMPARISONS.length ? 
-                                         Rule.COMPARISONS[rule.getComparison()] : "Unknown";
-                                         
+                    String comparisonText = rule.getComparison() >= 0 &&
+                            rule.getComparison() < Rule.COMPARISONS.length ? Rule.COMPARISONS[rule.getComparison()]
+                                    : "Unknown";
+
                     String partText = rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart());
-                    
+
                     // SWAP the order to match column headers
                     model.addRow(new Object[] {
-                        operatorText,     // Column 0: "Comparison" (Beat, Tick, etc)
-                        comparisonText,   // Column 1: "Operator" (==, <, >, etc)
-                        rule.getValue(),  // Column 2: Value
-                        partText          // Column 3: Part
+                            operatorText, // Column 0: "Comparison" (Beat, Tick, etc)
+                            comparisonText, // Column 1: "Operator" (==, <, >, etc)
+                            rule.getValue(), // Column 2: Value
+                            partText // Column 3: Part
                     });
                 } catch (IllegalFormatConversionException e) {
                     logger.severe("Format conversion error: " + e.getMessage());
-                    
+
                     // Use safer string conversion with SWAPPED order
                     model.addRow(new Object[] {
-                        rule.getOperator() >= 0 ? Rule.OPERATORS[rule.getOperator()] : "Unknown",     // Column 0: "Comparison"
-                        rule.getComparison() >= 0 ? Rule.COMPARISONS[rule.getComparison()] : "Unknown", // Column 1: "Operator"
-                        String.valueOf(rule.getValue()),   // Column 2: Value
-                        rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart())  // Column 3: Part
+                            rule.getOperator() >= 0 ? Rule.OPERATORS[rule.getOperator()] : "Unknown", // Column 0:
+                                                                                                      // "Comparison"
+                            rule.getComparison() >= 0 ? Rule.COMPARISONS[rule.getComparison()] : "Unknown", // Column 1:
+                                                                                                            // "Operator"
+                            String.valueOf(rule.getValue()), // Column 2: Value
+                            rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart()) // Column 3: Part
                     });
                 }
             }
-            
+
             // Refresh display
             rulesTable.revalidate();
             rulesTable.repaint();
@@ -678,34 +669,35 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private void setupRulesTable() {
         // Debug output
         logger.info("Setting up rules table for player: " + player.getName());
-        
-        // Define column names in the CORRECT order to match the data order used in updateRulesTable
+
+        // Define column names in the CORRECT order to match the data order used in
+        // updateRulesTable
         String[] columnNames = { "Comparison", "Operator", "Value", "Part" };
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
-        
+
         // Apply model to table
         rulesTable.setModel(model);
         rulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
+
         // Configure cell renderers
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
         leftRenderer.setHorizontalAlignment(JLabel.LEFT);
-        
+
         // Apply renderers - first column left aligned, others centered
         rulesTable.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);
         for (int i = 1; i < rulesTable.getColumnCount(); i++) {
             rulesTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
-        
+
         // Add selection listener for button state management
         rulesTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 updateButtonStates();
             }
         });
-        
+
         // Add double-click handler
         rulesTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -717,10 +709,10 @@ public class PlayerEditPanel extends StatusProviderPanel {
                 }
             }
         });
-        
+
         // Load initial rules - this is crucial
         updateRulesTable();
-        
+
         // Initialize button states
         updateButtonStates();
     }
@@ -731,113 +723,37 @@ public class PlayerEditPanel extends StatusProviderPanel {
         deleteRuleButton.setEnabled(hasSelection);
     }
 
-    // Replace the format string calls in handleOk() with these safer versions
-    private void handleOk() {
-        try {
-            // Update player properties
-            player.setName(nameField.getText());
-
-            // Update instrument and ID together
-            Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
-            if (selectedInstrument != null) {
-                player.setInstrument(selectedInstrument);
-                player.setInstrumentId(selectedInstrument.getId());
-                
-                // Use %s instead of %d for ID values to avoid format conversion errors
-                logger.info(String.format("Set instrument %s (ID: %s) for player %s",
-                        selectedInstrument.getName(),
-                        selectedInstrument.getId(), // Use %s instead of %d
-                        player.getName()));
-            }
-
-            // Update remaining properties from UI components
-            player.setChannel(((Number)channelSpinner.getValue()).intValue());
-            player.setPreset((long)((Number)presetSpinner.getValue()).intValue());
-            
-            // Update slider values
-            player.setLevel((long)levelSlider.getValue());
-            player.setNote((long)noteSlider.getValue());
-            player.setMinVelocity((long)velocityMinSlider.getValue());
-            player.setMaxVelocity((long)velocityMaxSlider.getValue());
-            player.setProbability((long)probabilitySlider.getValue());
-            player.setRandomDegree((long)randomSlider.getValue());
-            player.setPanPosition((long)panSlider.getValue());
-            player.setSparse((double)sparseSlider.getValue() / 100.0); // Convert percent to 0-1 range
-            
-            // Update ratchet values
-            player.setRatchetCount((long)ratchetCountSlider.getValue());
-            player.setRatchetInterval((long)ratchetIntervalSlider.getValue());
-            
-            // Update toggle switches
-            player.setStickyPreset(stickyPresetSwitch.isSelected());
-            player.setUseInternalBeats(useInternalBeatsSwitch.isSelected());
-            player.setUseInternalBars(useInternalBarsSwitch.isSelected());
-            player.setPreserveOnPurge(preserveOnPurgeSwitch.isSelected());
-
-            // Save player to Redis first
-            RedisService.getInstance().savePlayer(player);
-
-            // THIS IS THE PROBLEM: We need to update the session too
-            Session currentSession = SessionManager.getInstance().getActiveSession();
-            if (currentSession != null) {
-                // Update player in session's player set
-                currentSession.updatePlayer(player);
-                
-                // Explicitly save updated session
-                SessionManager.getInstance().saveSession(currentSession);
-                
-                // Then publish with the UPDATED SESSION
-                CommandBus.getInstance().publish(Commands.SHOW_PLAYER_EDITOR_OK, this, currentSession);
-            } else {
-                // Fallback to just publishing the player
-                CommandBus.getInstance().publish(Commands.SHOW_PLAYER_EDITOR_OK, this, player);
-            }
-
-            // Use %s instead of %d for ID values
-            logger.info(String.format("Player saved with instrument: %s (ID: %s)",
-                    player.getInstrument() != null ? player.getInstrument().getName() : "none",
-                    player.getInstrumentId())); // Use %s instead of %d
-                    
-        } catch (Exception e) {
-            logger.severe("Error saving player: " + e.getMessage());
-            e.printStackTrace();  // Add stack trace for more detailed debugging
-            JOptionPane.showMessageDialog(this,
-                    "Error saving player: " + e.getMessage(),
-                    "Save Error",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
     private SpinnerNumberModel createLongSpinnerModel(long value, long min, long max, long step) {
-            return new SpinnerNumberModel(value, min, max, step);
+        return new SpinnerNumberModel(value, min, max, step);
     }
 
     private void registerForInstrumentUpdates() {
         CommandBus.getInstance().register(new CommandListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null) return;
-                
+                if (action.getCommand() == null)
+                    return;
+
                 // Listen for instrument changes
-                if (Commands.INSTRUMENT_UPDATED.equals(action.getCommand()) || 
-                    Commands.USER_CONFIG_LOADED.equals(action.getCommand())) {
-                    
+                if (Commands.INSTRUMENT_UPDATED.equals(action.getCommand()) ||
+                        Commands.USER_CONFIG_LOADED.equals(action.getCommand())) {
+
                     // Refresh the instrument combo
                     SwingUtilities.invokeLater(() -> {
                         // Remember selected instrument
                         Instrument selected = (Instrument) instrumentCombo.getSelectedItem();
-                        
+
                         // Update combo with fresh instruments
                         instrumentCombo.removeAllItems();
                         List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
-                        
+
                         if (instruments != null && !instruments.isEmpty()) {
                             instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-                            
+
                             for (Instrument inst : instruments) {
                                 instrumentCombo.addItem(inst);
                             }
-                            
+
                             // Restore selection if possible
                             if (selected != null) {
                                 for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
@@ -850,106 +766,6 @@ public class PlayerEditPanel extends StatusProviderPanel {
                             }
                         }
                     });
-                }
-            }
-        });
-    }
-
-    private void setupTopControls() {
-        // Create panel for top row controls with instrument and device selectors
-        JPanel topControlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        
-        // === INSTRUMENT SELECTOR ===
-        // Create label and combo components
-        JLabel instrumentLabel = new JLabel("Instrument:");
-        instrumentCombo = new JComboBox<>();
-        
-        // Get instruments from UserConfigManager
-        List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
-        if (instruments != null && !instruments.isEmpty()) {
-            // Sort instruments by name
-            instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-            
-            for (Instrument inst : instruments) {
-                instrumentCombo.addItem(inst);
-            }
-            
-            // Select current instrument if it exists
-            if (player.getInstrument() != null) {
-                for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
-                    Instrument item = instrumentCombo.getItemAt(i);
-                    if (item.getId().equals(player.getInstrument().getId())) {
-                        instrumentCombo.setSelectedIndex(i);
-                        break;
-                    }
-                }
-            }
-        }
-        
-        // === DEVICE SELECTOR ===
-        JLabel deviceLabel = new JLabel("Device:");
-        JComboBox<String> deviceCombo = new JComboBox<>();
-
-        // Get available MIDI devices using singleton pattern
-        List<String> deviceNames = DeviceManager.getInstance().getAvailableOutputDeviceNames();
-
-        // Add "Default" as first option  
-        deviceCombo.addItem("Default");
-
-        // Add all available devices
-        for (String deviceName : deviceNames) {
-            deviceCombo.addItem(deviceName);
-        }
-        
-        // Select current device if set
-        if (player.getInstrument() != null && player.getInstrument().getDeviceName() != null) {
-            String currentDevice = player.getInstrument().getDeviceName();
-            deviceCombo.setSelectedItem(currentDevice);
-        }
-        
-        // Add listener to update instrument device when selection changes
-        deviceCombo.addActionListener(e -> {
-            if (instrumentCombo.getSelectedItem() instanceof Instrument selectedInstrument) {
-                String selectedDevice = (String) deviceCombo.getSelectedItem();
-                
-                // Only set device if not "Default" (null is default)
-                if ("Default".equals(selectedDevice)) {
-                    selectedInstrument.setDeviceName(null);
-                } else {
-                    selectedInstrument.setDeviceName(selectedDevice);
-                }
-                
-                // Update the player's instrument
-                player.setInstrument(selectedInstrument);
-                
-                // Update in UserConfigManager and InstrumentManager immediately
-                InstrumentManager.getInstance().updateInstrument(selectedInstrument);
-                // logger.info("Device for instrument {} set to {}", 
-                //     selectedInstrument.getName(), 
-                //     selectedDevice.equals("Default") ? "Default" : selectedDevice);
-            }
-        });
-        
-        // Add to top controls panel
-        topControlsPanel.add(instrumentLabel);
-        topControlsPanel.add(instrumentCombo);
-        topControlsPanel.add(Box.createHorizontalStrut(15)); // Add some space
-        topControlsPanel.add(deviceLabel);
-        topControlsPanel.add(deviceCombo);
-        
-        // Add to main panel (assuming there's a mainPanel or similar container)
-        // near the top of the component hierarchy
-        add(topControlsPanel, BorderLayout.NORTH);
-        
-        // Add listener to update device combo when instrument changes
-        instrumentCombo.addActionListener(e -> {
-            if (instrumentCombo.getSelectedItem() instanceof Instrument selectedInstrument) {
-                // Update device selector to match the selected instrument
-                String deviceName = selectedInstrument.getDeviceName();
-                if (deviceName == null) {
-                    deviceCombo.setSelectedItem("Default");
-                } else {
-                    deviceCombo.setSelectedItem(deviceName);
                 }
             }
         });

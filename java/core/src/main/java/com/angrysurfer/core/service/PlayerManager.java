@@ -92,7 +92,7 @@ public class PlayerManager {
                     }
                     
                     case Commands.PLAYER_UPDATED -> {
-                        if (action.getData() instanceof Player) {
+                        if (action.getData() instanceof Player && !action.getSender().equals(this)) {
                             playerUpdated((Player) action.getData());
                         }
                     }
@@ -164,14 +164,14 @@ public class PlayerManager {
                             logger.info("Processing rule delete request for {} rules", rules.length);
 
                             // Get player for first rule (all rules should be from same player)
-                            Player player = rules[0].getPlayer();
+                            Player player = getActivePlayer();
                             if (player != null) {
                                 // Get a fresh copy of the player to ensure we have current state
-                                Player freshPlayer = redisService.findPlayerById(player.getId());
-                                if (freshPlayer == null) {
-                                    logger.error("Could not find player with ID: {}", player.getId());
-                                    return;
-                                }
+                                // Player freshPlayer = redisService.findPlayerById(player.getId());
+                                // if (freshPlayer == null) {
+                                //     logger.error("Could not find player with ID: {}", player.getId());
+                                //     return;
+                                // }
                                 
                                 // Track if we deleted any rules
                                 boolean deletedRules = false;
@@ -185,8 +185,8 @@ public class PlayerManager {
                                     logger.info("Attempted to delete rule from Redis: {}", ruleId);
                                     
                                     // Then remove from player's collection
-                                    if (freshPlayer.getRules() != null) {
-                                        boolean removed = freshPlayer.getRules().removeIf(r -> r.getId().equals(ruleId));
+                                    if (player.getRules() != null) {
+                                        boolean removed = player.getRules().removeIf(r -> r.getId().equals(ruleId));
                                         if (removed) {
                                             deletedRules = true;
                                             logger.info("Removed rule {} from player's collection", ruleId);
@@ -198,22 +198,22 @@ public class PlayerManager {
                                 
                                 if (deletedRules) {
                                     // Save updated player - Don't assign to boolean since method returns void
-                                    redisService.savePlayer(freshPlayer);
-                                    logger.info("Player {} saved after rule deletion", freshPlayer.getId());
+                                    redisService.savePlayer(player);
+                                    logger.info("Player {} saved after rule deletion", player.getId());
                                     
                                     // Get another fresh copy after saving
-                                    Player refreshedPlayer = redisService.findPlayerById(freshPlayer.getId());
+                                    // Player refreshedPlayer = redisService.findPlayerById(freshPlayer.getId());
                                     
                                     // Notify UI
-                                    commandBus.publish(Commands.RULE_DELETED, this, refreshedPlayer);
-                                    commandBus.publish(Commands.PLAYER_UPDATED, this, refreshedPlayer);
-                                    commandBus.publish(Commands.PLAYER_SELECTED, this, refreshedPlayer);
+                                    commandBus.publish(Commands.RULE_DELETED, this, player);
+                                    commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                                    commandBus.publish(Commands.PLAYER_SELECTED, this, player);
                                     
                                     // Log rules count after operation
-                                    int rulesCount = refreshedPlayer.getRules() != null ? refreshedPlayer.getRules().size() : 0;
-                                    logger.info("Player {} now has {} rules after deletion", refreshedPlayer.getId(), rulesCount);
+                                    int rulesCount = player.getRules() != null ? player.getRules().size() : 0;
+                                    logger.info("Player {} now has {} rules after deletion", player.getId(), rulesCount);
                                     
-                                    debugPlayerRules(refreshedPlayer);
+                                    debugPlayerRules(player);
                                 }
                             }
                         }

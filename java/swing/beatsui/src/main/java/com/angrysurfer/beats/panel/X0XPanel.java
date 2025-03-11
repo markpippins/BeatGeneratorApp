@@ -36,10 +36,6 @@ class X0XPanel extends StatusProviderPanel implements CommandListener {
     private boolean isPlaying = false;
     private int currentStep = 0;
 
-    private int patternBeats = 4;  // Number of beats in pattern
-    private int stepsPerBeat = 4;  // Steps per beat
-    private int ticksPerBeat = 24; // Standard MIDI ticks per beat
-
     // Add a class member for timer-based stepping
     private javax.swing.Timer stepTimer;
 
