@@ -16,7 +16,7 @@ import com.angrysurfer.beats.panel.PlayerEditPanel;
 import com.angrysurfer.beats.panel.RuleEditPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.config.UserConfigConverter;
@@ -28,7 +28,7 @@ import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
-public class DialogManager implements CommandListener {
+public class DialogManager implements BusListener {
 
     private static final Logger logger = Logger.getLogger(DialogManager.class.getName());
 

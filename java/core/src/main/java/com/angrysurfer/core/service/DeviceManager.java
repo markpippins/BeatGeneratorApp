@@ -17,14 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.exception.MidiDeviceException;
 import com.angrysurfer.core.model.midi.Instrument;
 
 import lombok.Getter;
 
-public class DeviceManager implements CommandListener {
+public class DeviceManager implements BusListener {
     
     private static final Logger logger = LoggerFactory.getLogger(DeviceManager.class);
     private static DeviceManager instance;

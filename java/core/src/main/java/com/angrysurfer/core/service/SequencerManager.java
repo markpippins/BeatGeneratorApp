@@ -17,7 +17,7 @@ import javax.sound.midi.Transmitter;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Session;
@@ -27,7 +27,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SequencerManager implements CommandListener {
+public class SequencerManager implements BusListener {
 
     private static SequencerManager instance;
 

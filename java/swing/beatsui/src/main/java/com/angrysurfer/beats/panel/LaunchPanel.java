@@ -20,11 +20,11 @@ import javax.swing.plaf.basic.BasicButtonUI;
 
 import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 
-public class LaunchPanel extends StatusProviderPanel implements CommandListener {
+public class LaunchPanel extends StatusProviderPanel implements BusListener {
 
     private final CommandBus commandBus = CommandBus.getInstance();
 

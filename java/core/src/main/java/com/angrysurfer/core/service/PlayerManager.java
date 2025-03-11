@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -74,7 +74,7 @@ public class PlayerManager {
     }
 
     private void setupCommandBusListener() {
-        commandBus.register(new CommandListener() {
+        commandBus.register(new BusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() == null) return;

@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -85,7 +85,7 @@ public class SessionManager {
 
         songEngine = new SongEngine();
 
-        commandBus.register(new CommandListener() {
+        commandBus.register(new BusListener() {
             public void onAction(Command action) {
                 if (action == null || action.getCommand() == null)
                     return;
@@ -126,6 +126,7 @@ public class SessionManager {
 
             private void processPlayerDelete(Player[] data) {
                 for (Player player : data) {
+                    player.setEnabled(false);
                     logger.info("Deleting player: " + player.getId());
                     if (getActiveSession().getPlayers().remove(player)) {
                         redisService.deletePlayer(player);
@@ -311,19 +312,20 @@ public class SessionManager {
 
     /**
      * Updates a player in the active session and saves changes to Redis
+     * 
      * @param player The player to update
      */
     public void updatePlayer(Player player) {
         if (player != null && activeSession != null) {
             // Update player in active session
             activeSession.updatePlayer(player);
-            
+
             // Save player to Redis
             RedisService.getInstance().savePlayer(player);
-            
+
             // Save updated session to Redis
             RedisService.getInstance().saveSession(activeSession);
-            
+
             // Publish update events
             commandBus.publish(Commands.PLAYER_UPDATED, this, player);
             commandBus.publish(Commands.SESSION_UPDATED, this, activeSession);

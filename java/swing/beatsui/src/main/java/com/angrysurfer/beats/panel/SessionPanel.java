@@ -23,7 +23,7 @@ import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
@@ -324,7 +324,7 @@ public class SessionPanel extends StatusProviderPanel {
         nextButton.setEnabled(true);
 
         // Add command bus listener for scale events
-        CommandBus.getInstance().register(new CommandListener() {
+        CommandBus.getInstance().register(new BusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getSender() == SessionPanel.this) {
@@ -375,7 +375,7 @@ public class SessionPanel extends StatusProviderPanel {
             }
         });
 
-        CommandBus.getInstance().register(new CommandListener() {
+        CommandBus.getInstance().register(new BusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() == null)
@@ -405,7 +405,7 @@ public class SessionPanel extends StatusProviderPanel {
     }
 
     private void setupCommandBusListener() {
-        CommandBus.getInstance().register(new CommandListener() {
+        CommandBus.getInstance().register(new BusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() == null) return;
@@ -675,7 +675,7 @@ public class SessionPanel extends StatusProviderPanel {
         // Existing setup code...
         
         // Debug that CommandBus is registered
-        CommandBus.getInstance().register(new CommandListener() {
+        CommandBus.getInstance().register(new BusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() != null && action.getCommand().equals("TEST_COMMAND")) {

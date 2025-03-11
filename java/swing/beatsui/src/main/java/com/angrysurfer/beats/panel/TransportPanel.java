@@ -22,12 +22,12 @@ import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.widget.LedIndicator;
 import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.service.SequencerManager;
 
-class TransportPanel extends JPanel implements CommandListener {
+class TransportPanel extends JPanel implements BusListener {
 
     private final TimingBus timeBus;
     private final JButton playButton;

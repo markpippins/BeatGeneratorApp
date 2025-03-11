@@ -21,7 +21,7 @@ import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
@@ -243,7 +243,7 @@ class RulesPanel extends JPanel {
     }
 
     private void setupCommandBusListener() {
-        CommandBus.getInstance().register(new CommandListener() {
+        CommandBus.getInstance().register(new BusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() == null) return;
@@ -296,14 +296,43 @@ class RulesPanel extends JPanel {
                         
                         case Commands.RULE_EDITED -> {
                             logger.info("Rule edited, refreshing table");
+    
+                            // Store the edited rule ID before refreshing
+                            Long editedRuleId = null;
+                            if (action.getData() instanceof Rule rule) {
+                                editedRuleId = rule.getId();
+                                logger.info("Edited rule ID: " + editedRuleId);
+                            }
+                            
+                            // Get a fresh copy of the player to ensure we have updated rules
                             Player player = PlayerManager.getInstance().getActivePlayer();
                             if (player != null) {
+                                Player freshPlayer = getFreshPlayer(player.getId());
+                                if (freshPlayer != null) {
+                                    player = freshPlayer;
+                                    logger.info("Got fresh player data with " + 
+                                              (player.getRules() != null ? player.getRules().size() : 0) + " rules");
+                                }
+                                
+                                // Update current player and refresh rules table
+                                currentPlayer = player;
                                 refreshRules(player.getRules());
                                 
-                                // Reselect the edited rule
-                                if (action.getData() instanceof Rule rule) {
-                                    selectRuleById(rule.getId());
+                                // Re-select the edited rule if we have its ID
+                                if (editedRuleId != null) {
+                                    // Log all available rule IDs to help diagnose selection issues
+                                    if (player.getRules() != null) {
+                                        logger.info("Available rule IDs for selection:");
+                                        for (Rule r : player.getRules()) {
+                                            logger.info("  Rule ID: " + r.getId() + ", Op: " + r.getOperatorText() + 
+                                                    ", Comp: " + r.getComparisonText() + ", Value: " + r.getValue());
+                                        }
+                                    }
+                                    
+                                    selectRuleById(editedRuleId);
                                 }
+                            } else {
+                                logger.warning("No player available after rule edit");
                             }
                         }
                         
@@ -572,34 +601,44 @@ class RulesPanel extends JPanel {
 
     // Add a helper method to select a rule by ID
     private void selectRuleById(Long ruleId) {
-        if (ruleId == null || currentPlayer == null || currentPlayer.getRules() == null) return;
+        if (ruleId == null || currentPlayer == null || currentPlayer.getRules() == null) {
+            logger.warning("Cannot select rule: " + 
+                          (ruleId == null ? "null rule ID" : 
+                           currentPlayer == null ? "null player" : "null rules collection"));
+            return;
+        }
         
         try {
-            // Since we don't have an ID column in the table, we need to match rules differently
-            List<Rule> playerRules = new ArrayList<>(currentPlayer.getRules());
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            logger.info("Looking for rule with ID: " + ruleId + " among " + 
+                       currentPlayer.getRules().size() + " rules");
             
-            // Find the rule by ID in the player's rules collection
-            Rule targetRule = null;
-            for (Rule rule : playerRules) {
+            // Convert rules to a list with predictable order
+            List<Rule> playerRules = new ArrayList<>(currentPlayer.getRules());
+            
+            // Find the rule by ID
+            int matchIndex = -1;
+            for (int i = 0; i < playerRules.size(); i++) {
+                Rule rule = playerRules.get(i);
                 if (rule.getId().equals(ruleId)) {
-                    targetRule = rule;
+                    matchIndex = i;
+                    logger.info("Found matching rule at index: " + i);
                     break;
                 }
             }
             
-            // If we found the rule, find its row in the table
-            if (targetRule != null) {
-                int index = playerRules.indexOf(targetRule);
-                if (index >= 0 && index < model.getRowCount()) {
-                    table.setRowSelectionInterval(index, index);
-                    lastSelectedRow = index;
-                    table.scrollRectToVisible(table.getCellRect(index, 0, true));
-                    return;
-                }
+            // If found, select it
+            if (matchIndex >= 0 && matchIndex < table.getRowCount()) {
+                logger.info("Selecting rule at row: " + matchIndex);
+                table.setRowSelectionInterval(matchIndex, matchIndex);
+                lastSelectedRow = matchIndex;
+                table.scrollRectToVisible(table.getCellRect(matchIndex, 0, true));
+                
+                // Also trigger selection event
+                handleRuleSelection(matchIndex);
+            } else {
+                logger.warning("Could not find matching row for rule ID: " + ruleId + 
+                             " (match index: " + matchIndex + ", table rows: " + table.getRowCount() + ")");
             }
-            
-            logger.warning("Could not find rule with ID " + ruleId + " in table");
         } catch (Exception e) {
             logger.severe("Error selecting rule by ID: " + e.getMessage());
             e.printStackTrace();
@@ -635,7 +674,7 @@ class RulesPanel extends JPanel {
             
             // Always get a fresh copy of the player's rules
             if (currentPlayer != null) {
-                Player freshPlayer = getFreshPlayer(currentPlayer.getId());
+                Player freshPlayer = PlayerManager.getInstance().getActivePlayer(); //, getFreshPlayer(currentPlayer.getId());
                 if (freshPlayer != null) {
                     // Use the fresh player's rules instead
                     rules = freshPlayer.getRules();

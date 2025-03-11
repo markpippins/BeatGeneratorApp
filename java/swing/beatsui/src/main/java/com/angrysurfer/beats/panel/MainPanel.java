@@ -20,7 +20,7 @@ import javax.swing.border.EmptyBorder;
 import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 
 public class MainPanel extends JPanel implements AutoCloseable {
@@ -111,7 +111,7 @@ public class MainPanel extends JPanel implements AutoCloseable {
         });
         
         // Register for command bus events to sync button state
-        CommandBus.getInstance().register(new CommandListener() {
+        CommandBus.getInstance().register(new BusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() == null) return;

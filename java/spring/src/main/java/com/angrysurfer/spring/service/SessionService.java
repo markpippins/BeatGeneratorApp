@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
@@ -25,7 +25,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Service
-public class SessionService implements CommandListener {
+public class SessionService implements BusListener {
 
     static Logger logger = LoggerFactory.getLogger(SessionService.class.getCanonicalName());
 

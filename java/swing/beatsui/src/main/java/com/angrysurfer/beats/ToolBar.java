@@ -28,7 +28,7 @@ import javax.swing.UIManager;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
@@ -50,7 +50,7 @@ public class ToolBar extends JToolBar {
         setup();
 
         // Modify the command bus listener
-        commandBus.register(new CommandListener() {
+        commandBus.register(new BusListener() {
             @Override
             public void onAction(Command action) {
                 // Skip if this ToolBar is the sender

@@ -14,12 +14,12 @@ import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.CommandListener;
+import com.angrysurfer.core.api.BusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.service.SequencerManager;
 
-public class ScrollingSequencerVisualization extends LockHandler implements IVisualizationHandler, CommandListener {
+public class ScrollingSequencerVisualization extends LockHandler implements IVisualizationHandler, BusListener {
     // Frame rate for visual updates (60fps for smoother animation)
     private static final int FRAMES_PER_SECOND = 60;
     
