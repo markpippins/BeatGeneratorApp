@@ -485,12 +485,16 @@ public class ToolBar extends JToolBar {
 
         JComboBox<String> combo = new JComboBox<>(scaleNames);
         combo.setSelectedItem("Chromatic");
-        combo.setMaximumSize(new Dimension(160, 25));
-        combo.setPreferredSize(new Dimension(160, 25));
-        combo.setMinimumSize(new Dimension(160, 25));
+        
+        // Increase width to 195px (160px + 35px from Root)
+        combo.setMaximumSize(new Dimension(195, 25));
+        combo.setPreferredSize(new Dimension(195, 25));
+        combo.setMinimumSize(new Dimension(195, 25));
+        
         combo.setAlignmentX(Component.CENTER_ALIGNMENT);
         combo.setEnabled(true);
 
+        // Existing listener code
         combo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 String selectedScale = (String) combo.getSelectedItem();
@@ -529,9 +533,12 @@ public class ToolBar extends JToolBar {
 
         JComboBox<String> combo = new JComboBox<>(keys);
         combo.setSelectedItem("C");
-        combo.setMaximumSize(new Dimension(70, 25));
-        combo.setPreferredSize(new Dimension(70, 25));
-        combo.setMinimumSize(new Dimension(70, 25));
+        
+        // Reduce width to 35px (half of current 70px)
+        combo.setMaximumSize(new Dimension(35, 25));
+        combo.setPreferredSize(new Dimension(35, 25));
+        combo.setMinimumSize(new Dimension(35, 25));
+        
         combo.setAlignmentX(Component.CENTER_ALIGNMENT);
         combo.setEnabled(true);
 

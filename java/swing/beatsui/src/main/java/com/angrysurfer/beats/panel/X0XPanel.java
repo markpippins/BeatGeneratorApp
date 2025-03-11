@@ -355,6 +355,7 @@ class X0XPanel extends StatusProviderPanel implements CommandListener {
             column.add(labelPanel);
 
             Dial dial = new Dial();
+            dial.setUpdateOnResize(false);
             dial.setToolTipText(String.format("Step %d Knob %d", index + 1, i + 1));
             dial.setName("JDial-" + index + "-" + i);
             // Center the dial horizontally

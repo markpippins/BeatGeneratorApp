@@ -1,5 +1,7 @@
 package com.angrysurfer.core.service;
 
+import java.util.Objects;
+
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
@@ -13,15 +15,23 @@ import javax.sound.midi.Synthesizer;
 import javax.sound.midi.Track;
 import javax.sound.midi.Transmitter;
 
+import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.CommandListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Session;
 
-// In SequencerManager.java - enhance to be a singleton
-public class SequencerManager {
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class SequencerManager implements CommandListener {
 
     private static SequencerManager instance;
+
+    private boolean metronomeAudible = true;
 
     // Add timing state tracking
     private int currentTick = 0;
@@ -30,7 +40,7 @@ public class SequencerManager {
 
     // Reference to current active session instead of duplicating parameters
     private Session activeSession = null;
-    
+
     // These remain for initial/default values only
     private int defaultPpq = 24;
     private float defaultBpm = 120;
@@ -70,6 +80,8 @@ public class SequencerManager {
         } catch (Exception e) {
             // logManager.error("Error initializing MIDI: " + e.getMessage());
         }
+
+        CommandBus.getInstance().register(this);
     }
 
     private void setupSequencer() throws MidiUnavailableException {
@@ -101,12 +113,12 @@ public class SequencerManager {
             }
 
             // Add metronome notes
-            // track.add(new MidiEvent(
-            //         new ShortMessage(ShortMessage.NOTE_ON, metronomeChannel, metronomeNote, metronomeVelocity),
-            //         beat * getPpq()));
-            // track.add(new MidiEvent(
-            //         new ShortMessage(ShortMessage.NOTE_OFF, metronomeChannel, metronomeNote, 0),
-            //         beat * getPpq() + getPpq() / 2));
+            track.add(new MidiEvent(
+                    new ShortMessage(ShortMessage.NOTE_ON, metronomeChannel, metronomeNote, metronomeVelocity),
+                    beat * getPpq()));
+            track.add(new MidiEvent(
+                    new ShortMessage(ShortMessage.NOTE_OFF, metronomeChannel, metronomeNote, 0),
+                    beat * getPpq() + getPpq() / 2));
         }
 
         sequencer.setSequence(sequence);
@@ -143,41 +155,41 @@ public class SequencerManager {
 
     // In SequencerManager.java - fix handleMidiClock() method
     private void handleMidiClock() {
-        // First publish before-tick event 
+        // First publish before-tick event
         timingBus.publish(Commands.BEFORE_TICK, this, currentTick);
-        
+
         // Increment tick counter
         currentTick = (currentTick + 1) % getPpq();
-        
+
         // Publish standard tick event (for Players and Visualizations)
         timingBus.publish(Commands.BASIC_TIMING_TICK, this, currentTick);
-        
+
         // Publish after-tick event
         timingBus.publish(Commands.AFTER_TICK, this, currentTick);
-        
+
         // Handle beat change
         if (currentTick == 0) {
             // Before beat event
             timingBus.publish(Commands.BEFORE_BEAT, this, currentBeat);
-            
-            currentBeat = (currentBeat + 1) % getBeatsPerBar();  
-            
+
+            currentBeat = (currentBeat + 1) % getBeatsPerBar();
+
             // Standard beat event
             timingBus.publish(Commands.BASIC_TIMING_BEAT, this, currentBeat);
-            
+
             // After beat event
             timingBus.publish(Commands.AFTER_BEAT, this, currentBeat);
-            
+
             // Handle bar change
             if (currentBeat == 0) {
                 // Before bar event
                 timingBus.publish(Commands.BEFORE_BAR, this, currentBar);
-                
+
                 currentBar++;
-                
+
                 // Standard bar event
                 timingBus.publish(Commands.BASIC_TIMING_BAR, this, currentBar);
-                
+
                 // After bar event
                 timingBus.publish(Commands.AFTER_BAR, this, currentBar);
             }
@@ -191,10 +203,10 @@ public class SequencerManager {
                 currentTick = 0;
                 currentBeat = 0;
                 currentBar = 0;
-                
+
                 // Start sequencer
                 sequencer.start();
-                
+
                 // Notify about transport state change
                 commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
             }
@@ -235,15 +247,15 @@ public class SequencerManager {
     public boolean isRunning() {
         return sequencer != null && sequencer.isRunning();
     }
-    
+
     public int getCurrentTick() {
         return currentTick;
     }
-    
+
     public int getCurrentBeat() {
         return currentBeat;
     }
-    
+
     public int getCurrentBar() {
         return currentBar;
     }
@@ -251,23 +263,23 @@ public class SequencerManager {
     // Add a method to update timing parameters
     public void updateTimingParameters(float tempoInBPM, int ticksPerBeat, int beatsPerBar) {
         boolean wasRunning = isRunning();
-        
+
         // If running, stop temporarily
         if (wasRunning) {
             sequencer.stop();
         }
-        
+
         try {
             // Update our internal values
             this.defaultBpm = tempoInBPM;
             this.defaultPpq = ticksPerBeat;
-            
+
             // Update sequencer parameters
             sequencer.setTempoInBPM(tempoInBPM);
-            
+
             // Recreate the sequence with the new PPQ value if it changed
             createSequence(beatsPerBar);
-            
+
             // Restart if it was running
             if (wasRunning) {
                 sequencer.start();
@@ -281,15 +293,15 @@ public class SequencerManager {
     public int getPpq() {
         return (activeSession != null) ? activeSession.getTicksPerBeat() : defaultPpq;
     }
-    
+
     public float getBpm() {
         return (activeSession != null) ? activeSession.getTempoInBPM() : defaultBpm;
     }
-    
+
     public int getBeatsPerBar() {
         return (activeSession != null) ? activeSession.getBeatsPerBar() : 4;
     }
-    
+
     // Update the method to set the active session
     public void setActiveSession(Session session) {
         this.activeSession = session;
@@ -298,25 +310,26 @@ public class SequencerManager {
             updateSequencerSettings();
         }
     }
-    
+
     // Method to apply current session settings to sequencer
     private void updateSequencerSettings() {
-        if (activeSession == null) return;
-        
+        if (activeSession == null)
+            return;
+
         boolean wasRunning = isRunning();
-        
+
         // If running, stop temporarily
         if (wasRunning) {
             sequencer.stop();
         }
-        
+
         try {
             // Update sequencer parameters from session
             sequencer.setTempoInBPM(activeSession.getTempoInBPM());
-            
+
             // Recreate sequence if PPQ changed
             createSequence(activeSession.getBeatsPerBar());
-            
+
             // Restart if it was running
             if (wasRunning) {
                 sequencer.start();
@@ -325,9 +338,24 @@ public class SequencerManager {
             // Handle error
         }
     }
-    
+
     // Replace syncFromSession with setActiveSession
     public void syncFromSession(Session session) {
         setActiveSession(session);
+    }
+
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == Commands.METRONOME_START) {
+            setMetronomeAudible(true);
+            if ((Objects.nonNull(synthesizer)) && (synthesizer.isOpen())) {
+                synthesizer.getChannels()[metronomeChannel].setMute(false);
+            }
+        } else if (action.getCommand() == Commands.METRONOME_STOP) {
+            setMetronomeAudible(false);
+            if ((Objects.nonNull(synthesizer)) && (synthesizer.isOpen())) {
+                synthesizer.getChannels()[metronomeChannel].setMute(true);
+            }
+        }
     }
 }

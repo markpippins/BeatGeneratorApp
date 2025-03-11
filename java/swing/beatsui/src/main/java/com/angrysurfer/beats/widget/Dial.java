@@ -93,25 +93,28 @@ public class Dial extends JComponent {
         setCommand(command);
     }
 
+    private boolean updateOnResize = false;
+
     private void updateSize() {
-        // Window window = SwingUtilities.getWindowAncestor(this);
-        // if (window != null) {
-        //     // Calculate size based on window dimensions
-        //     double widthRatio = (double) window.getWidth() / BASE_WINDOW_WIDTH;
-        //     double heightRatio = (double) window.getHeight() / BASE_WINDOW_HEIGHT;
-        //     double scaleFactor = Math.min(Math.max(widthRatio, heightRatio), MAX_SIZE / (double) MIN_SIZE);
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window != null) {
+            // Calculate size based on window dimensions
+            double widthRatio = (double) window.getWidth() / BASE_WINDOW_WIDTH;
+            double heightRatio = (double) window.getHeight() / BASE_WINDOW_HEIGHT;
+            double scaleFactor = updateOnResize ? 1
+                    : Math.min(Math.max(widthRatio, heightRatio), MAX_SIZE / (double) MIN_SIZE);
 
-        //     int size = Math.min(MAX_SIZE, (int) (MIN_SIZE * scaleFactor));
+            int size = Math.min(MAX_SIZE, (int) (MIN_SIZE * scaleFactor));
 
-        //     Dimension newSize = new Dimension(size, size);
-        //     setPreferredSize(newSize);
-        //     setMinimumSize(newSize);
-        //     revalidate();
-        // } else {
-        //     // Default size when no window is available
-        //     setPreferredSize(new Dimension(MIN_SIZE, MIN_SIZE));
-        //     setMinimumSize(new Dimension(MIN_SIZE, MIN_SIZE));
-        // }
+            Dimension newSize = new Dimension(size, size);
+            setPreferredSize(newSize);
+            setMinimumSize(newSize);
+            revalidate();
+        } else {
+            // Default size when no window is available
+            setPreferredSize(new Dimension(MIN_SIZE, MIN_SIZE));
+            setMinimumSize(new Dimension(MIN_SIZE, MIN_SIZE));
+        }
     }
 
     @Override
@@ -138,12 +141,12 @@ public class Dial extends JComponent {
         g2d.fillOval(2, 2, min - 4, min - 4);
 
         // Calculate normalized value between 0 and 1 based on min/max range
-        double normalizedValue = (value - minimum) / (double)(maximum - minimum);
-        
+        double normalizedValue = (value - minimum) / (double) (maximum - minimum);
+
         // Draw indicator line with thicker stroke
         g2d.setColor(Color.WHITE);
         g2d.setStroke(new BasicStroke(2.0f));
-        
+
         // Use normalized value for angle calculation
         // Start at 7:30 (0.75π) and rotate 1.5π radians (270 degrees)
         double angle = Math.PI * 0.75 + (Math.PI * 1.5 * normalizedValue);

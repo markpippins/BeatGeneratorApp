@@ -169,19 +169,19 @@ public class SessionPanel extends StatusProviderPanel {
 
         setupControlChangeListeners();
 
-        // Add this to your SessionPanel constructor or setupComponents method
-        JButton syncButton = new JButton("Sync Dials");
-        syncButton.addActionListener(e -> {
-            Player player = PlayerManager.getInstance().getActivePlayer();
-            if (player != null) {
-                logger.info("Manually syncing dials for player: " + player.getName());
-                updateDialsFromPlayer(player);
-            } else {
-                logger.warning("No active player to sync dials for");
-            }
-        });
+        // // Add this to your SessionPanel constructor or setupComponents method
+        // JButton syncButton = new JButton("Sync Dials");
+        // syncButton.addActionListener(e -> {
+        //     Player player = PlayerManager.getInstance().getActivePlayer();
+        //     if (player != null) {
+        //         logger.info("Manually syncing dials for player: " + player.getName());
+        //         updateDialsFromPlayer(player);
+        //     } else {
+        //         logger.warning("No active player to sync dials for");
+        //     }
+        // });
         // Add to your layout
-        controlPanel.add(syncButton);
+        // controlPanel.add(syncButton);
 
         return controlPanel;
     }
@@ -246,17 +246,17 @@ public class SessionPanel extends StatusProviderPanel {
         navPanel.add(buttonPanel, BorderLayout.CENTER);
 
         // Add to SessionPanel's setupLayout or similar method
-        JButton debugButton = new JButton("Refresh Controls");
-        debugButton.addActionListener(e -> {
-            Player player = PlayerManager.getInstance().getActivePlayer();
-            if (player != null) {
-                logger.info("Manually refreshing controls for player: " + player.getName());
-                updateControlsFromPlayer(player);
-            } else {
-                logger.warning("No active player to refresh controls for");
-            }
-        });
-        buttonPanel.add(debugButton);
+        // JButton debugButton = new JButton("Refresh Controls");
+        // debugButton.addActionListener(e -> {
+        //     Player player = PlayerManager.getInstance().getActivePlayer();
+        //     if (player != null) {
+        //         logger.info("Manually refreshing controls for player: " + player.getName());
+        //         updateControlsFromPlayer(player);
+        //     } else {
+        //         logger.warning("No active player to refresh controls for");
+        //     }
+        // });
+        // buttonPanel.add(debugButton);
 
         return navPanel;
     }

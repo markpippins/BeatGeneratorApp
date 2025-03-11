@@ -265,13 +265,25 @@ public abstract class Player implements Callable<Boolean>, Serializable, Command
         }
 
         // Timing values
+        // Long sessionTick = getSession().getTickCounter().get();
+        // Long sessionBeat = getSession().getBeatCounter().get();
+        // Long sessionBar = getSession().getBarCounter().get();
+        // Long sessionPart = ((Session) getSession()).getPartCounter().get();
+
+        Long sessionTick = getSession().getTickCycler().get();
+        Long sessionBeat = getSession().getBeatCycler().get();
+        Long sessionBar = getSession().getBarCycler().get();
+        Long sessionPart = getSession().getPartCycler().get();
+
+        return shouldPlay(applicable, sessionTick, sessionBeat, sessionBar, sessionPart);
+    }
+
+    public boolean shouldPlay(Set<Rule> applicable, Long sessionTick, Long sessionBeat, Long sessionBar,
+            Long sessionPart) {
+
         long tick = getSession().getTick();
         long bar = getSession().getBar();
         double beat = getSession().getBeat();
-        Long sessionTick = getSession().getTickCounter().get();
-        Long sessionBeat = getSession().getBeatCounter().get();
-        Long sessionBar = getSession().getBarCounter().get();
-        Long sessionPart = ((Session) getSession()).getPartCounter().get();
 
         // Group rules by operator type
         Map<Integer, List<Rule>> rulesByType = applicable.stream()

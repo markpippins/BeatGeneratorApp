@@ -110,7 +110,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         sparseSlider = createSlider("Sparse", (long)(player.getSparse() * 100), 0, 100);
 
         // Ratchet controls with tick spacing
-        ratchetCountSlider = createSlider("Count", player.getRatchetCount(), 1, 16, true);
+        ratchetCountSlider = createSlider("Count", player.getRatchetCount(), 0, 6, true);
         ratchetIntervalSlider = createSlider("Interval", player.getRatchetInterval(), 1, 16, true);
         
         // Initialize toggle switches
