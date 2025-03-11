@@ -66,6 +66,7 @@ public class SessionPanel extends StatusProviderPanel {
 
         setupComponents();
         setupCommandBusListener();
+        setupSessionPanel();
     }
 
     private void setupComponents() {
@@ -167,6 +168,20 @@ public class SessionPanel extends StatusProviderPanel {
         disableDials();
 
         setupControlChangeListeners();
+
+        // Add this to your SessionPanel constructor or setupComponents method
+        JButton syncButton = new JButton("Sync Dials");
+        syncButton.addActionListener(e -> {
+            Player player = PlayerManager.getInstance().getActivePlayer();
+            if (player != null) {
+                logger.info("Manually syncing dials for player: " + player.getName());
+                updateDialsFromPlayer(player);
+            } else {
+                logger.warning("No active player to sync dials for");
+            }
+        });
+        // Add to your layout
+        controlPanel.add(syncButton);
 
         return controlPanel;
     }
@@ -393,35 +408,35 @@ public class SessionPanel extends StatusProviderPanel {
         CommandBus.getInstance().register(new CommandListener() {
             @Override
             public void onAction(Command action) {
-                if (action == null || action.getCommand() == null) return;
+                if (action.getCommand() == null) return;
                 
                 String cmd = action.getCommand();
                 logger.info("SessionPanel received command: " + cmd);
                 
                 try {
-                    switch (cmd) {
-                        case Commands.PLAYER_SELECTED -> {
-                            if (action.getData() instanceof Player player) {
-                                logger.info("SessionPanel updating controls for player: " + 
-                                           player.getName() + " (ID: " + player.getId() + ")");
-                                
-                                // Store reference to current player
-                                activePlayer = player;
-                                
-                                // Update all control values
-                                SwingUtilities.invokeLater(() -> {
-                                    updateControlsFromPlayer(player);
-                                });
-                            }
-                        }
-                        case Commands.PLAYER_UNSELECTED -> {
-                            logger.info("Player unselected, disabling controls");
-                            activePlayer = null;
-                            disableControls();
+                    if (Commands.PLAYER_SELECTED.equals(cmd)) {
+                        if (action.getData() instanceof Player player) {
+                            logger.info("SessionPanel updating controls for player: " + 
+                                       player.getName() + " (ID: " + player.getId() + ")");
+                            
+                            // Store reference to current player
+                            activePlayer = player;
+                            
+                            // Update dials on EDT to avoid concurrency issues
+                            SwingUtilities.invokeLater(() -> {
+                                updateDialsFromPlayer(player);
+                            });
                         }
                     }
+                    else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {
+                        logger.info("SessionPanel received PLAYER_UNSELECTED");
+                        activePlayer = null;
+                        disableDials();
+                        updateVerticalAdjustButtons(false);
+                    }
+                    // Other cases...
                 } catch (Exception e) {
-                    logger.severe("Error in SessionPanel command handler: " + e.getMessage());
+                    logger.severe("Error in command handler: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -509,7 +524,7 @@ public class SessionPanel extends StatusProviderPanel {
     private void setupControlChangeListeners() {
         // For level dial
         levelDial.addChangeListener(e -> {
-            if (activePlayer == null) return;
+            if (!listenersEnabled || activePlayer == null) return;
             
             int value = levelDial.getValue();
             logger.info("Updating player level to: " + value);
@@ -519,11 +534,14 @@ public class SessionPanel extends StatusProviderPanel {
             
             // Save the change and notify UI
             PlayerManager.getInstance().updatePlayerLevel(activePlayer, value);
+            
+            // Request row refresh in players panel (important!)
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
         });
-        
+
         // For swing dial
         swingDial.addChangeListener(e -> {
-            if (activePlayer == null) return;
+            if (!listenersEnabled || activePlayer == null) return;
             
             int value = swingDial.getValue();
             logger.info("Updating player swing to: " + value);
@@ -533,20 +551,114 @@ public class SessionPanel extends StatusProviderPanel {
             
             // Save the change and notify UI
             PlayerManager.getInstance().updatePlayerSwing(activePlayer, value);
+            
+            // Request row refresh
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
         });
         
         // For probability dial
         probabilityDial.addChangeListener(e -> {
-            if (activePlayer == null) return;
+            if (!listenersEnabled || activePlayer == null) return;
             
             int value = probabilityDial.getValue();
             logger.info("Updating player probability to: " + value);
             
             // Update player and save
             PlayerManager.getInstance().updatePlayerProbability(activePlayer, value);
+            
+            // Request row refresh
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
         });
         
-        // Add similar listeners for other dials...
+        // Add velocityMinDial listener
+        velocityMinDial.addChangeListener(e -> {
+            if (!listenersEnabled || activePlayer == null) return;
+            
+            int value = velocityMinDial.getValue();
+            logger.info("Updating player min velocity to: " + value);
+            
+            // Update player and save
+            activePlayer.setMinVelocity((long)value);
+            PlayerManager.getInstance().updatePlayerVelocityMin(activePlayer, value);
+            
+            // Request row refresh
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+        });
+        
+        // Add velocityMaxDial listener
+        velocityMaxDial.addChangeListener(e -> {
+            if (!listenersEnabled || activePlayer == null) return;
+            
+            int value = velocityMaxDial.getValue();
+            logger.info("Updating player max velocity to: " + value);
+            
+            // Update player and save
+            activePlayer.setMaxVelocity((long)value);
+            PlayerManager.getInstance().updatePlayerVelocityMax(activePlayer, value);
+            
+            // Request row refresh
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+        });
+        
+        // Add panDial listener
+        panDial.addChangeListener(e -> {
+            if (!listenersEnabled || activePlayer == null) return;
+            
+            int value = panDial.getValue();
+            logger.info("Updating player pan to: " + value);
+            
+            // Update player and save
+            activePlayer.setPanPosition((long)value);
+            PlayerManager.getInstance().updatePlayerPan(activePlayer, value);
+            
+            // Request row refresh
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+        });
+        
+        // Add randomDial listener
+        randomDial.addChangeListener(e -> {
+            if (!listenersEnabled || activePlayer == null) return;
+            
+            int value = randomDial.getValue();
+            logger.info("Updating player random to: " + value);
+            
+            // Update player and save
+            activePlayer.setRandomDegree((long)value);
+            PlayerManager.getInstance().updatePlayerRandom(activePlayer, value);
+            
+            // Request row refresh
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+        });
+        
+        // Add sparseDial listener
+        sparseDial.addChangeListener(e -> {
+            if (!listenersEnabled || activePlayer == null) return;
+            
+            int value = sparseDial.getValue();
+            logger.info("Updating player sparse to: " + value);
+            
+            // Update player and save
+            activePlayer.setSparse(value / 100.0); // Convert to 0-1.0 range
+            PlayerManager.getInstance().updatePlayerSparse(activePlayer, value);
+            
+            // Request row refresh
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+        });
+        
+        // Add note dial listener
+        noteDial.addChangeListener(e -> {
+            if (!listenersEnabled || activePlayer == null) return;
+            
+            int value = noteDial.getValue();
+            logger.info("Updating player note to: " + value);
+            
+            // Update player and save
+            activePlayer.setNote((long)value);
+            PlayerManager.getInstance().updatePlayerNote(activePlayer, value);
+            
+            // Request row refresh
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+        });
     }
 
     private void enableControls(boolean enabled) {
@@ -561,6 +673,86 @@ public class SessionPanel extends StatusProviderPanel {
         disableDials();
         // Disable all buttons
         updateVerticalAdjustButtons(false);
+    }
+
+    /**
+     * Update all dials based on player values
+     */
+    private void updateDialsFromPlayer(Player player) {
+        if (player == null) {
+            logger.warning("Attempted to update dials with null player");
+            return;
+        }
+
+        try {
+            logger.info("Setting dial values for player: " + player.getName());
+            
+            // Get player values, handle potential nulls
+            int level = player.getLevel() != null ? player.getLevel().intValue() : 64;
+            int note = player.getNote() != null ? player.getNote().intValue() : 60;
+            int swing = player.getSwing() != null ? player.getSwing().intValue() : 0;
+            int minVelocity = player.getMinVelocity() != null ? player.getMinVelocity().intValue() : 64;
+            int maxVelocity = player.getMaxVelocity() != null ? player.getMaxVelocity().intValue() : 127;
+            int probability = player.getProbability() != null ? player.getProbability().intValue() : 100;
+            int randomDegree = player.getRandomDegree() != null ? player.getRandomDegree().intValue() : 0;
+            int sparse = 0; //layer.getSparse() != null ? player.getSparse().intValue() : 0;
+            int panPosition = player.getPanPosition() != null ? player.getPanPosition().intValue() : 64;
+            
+            // Debug output
+            logger.info("Player values - level: " + level + 
+                      ", note: " + note + 
+                      ", swing: " + swing + 
+                      ", velocity min/max: " + minVelocity + "/" + maxVelocity);
+            
+            // Update dials without triggering notifications (false parameter)
+            levelDial.setValue(level, false);
+            swingDial.setValue(swing, false);
+            velocityMinDial.setValue(minVelocity, false);
+            velocityMaxDial.setValue(maxVelocity, false);
+            probabilityDial.setValue(probability, false);
+            randomDial.setValue(randomDegree, false);
+            sparseDial.setValue(sparse, false);
+            panDial.setValue(panPosition, false);
+            
+            // Note dial might be custom
+            if (noteDial != null) {
+                noteDial.setValue(note, false);
+            }
+            
+            // Enable dials now that they're updated
+            enableDials();
+            updateVerticalAdjustButtons(true);
+            
+            logger.info("Successfully updated all dials for player: " + player.getName());
+        } catch (Exception e) {
+            logger.severe("Error updating dials: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Add this to the SessionPanel constructor or init method
+    private void setupSessionPanel() {
+        // Existing setup code...
+        
+        // Debug that CommandBus is registered
+        CommandBus.getInstance().register(new CommandListener() {
+            @Override
+            public void onAction(Command action) {
+                if (action.getCommand() != null && action.getCommand().equals("TEST_COMMAND")) {
+                    logger.info("SessionPanel received test command - CommandBus is working!");
+                }
+            }
+        });
+        
+        // Publish a test command after a short delay
+        SwingUtilities.invokeLater(() -> {
+            try {
+                Thread.sleep(1000);
+                CommandBus.getInstance().publish("TEST_COMMAND", this, "test");
+            } catch (Exception ex) {
+                // Ignore
+            }
+        });
     }
 
 }
