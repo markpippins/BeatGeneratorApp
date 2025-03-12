@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.midi.Instrument;
@@ -40,7 +40,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public abstract class Player implements Callable<Boolean>, Serializable, BusListener {
+public abstract class Player implements Callable<Boolean>, Serializable, IBusListener {
 
     static final Random rand = new Random();
 

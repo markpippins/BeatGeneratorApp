@@ -16,7 +16,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 
@@ -120,7 +120,7 @@ public class MenuBar extends JMenuBar {
         optionsMenu.add(themeManager.createThemeMenu());
 
         // Register visualization listener
-        commandBus.register(new BusListener() {
+        commandBus.register(new IBusListener() {
             final boolean[] visualizationsEnabled = { false };
             JMenu visualizationMenu = new JMenu("Visualization");
             final JMenuItem startVisualizationItem = new JMenuItem("Start Visualization");

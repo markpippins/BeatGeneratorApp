@@ -35,7 +35,7 @@ import javax.swing.table.DefaultTableModel;
 import com.angrysurfer.beats.service.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
@@ -68,7 +68,7 @@ public class PlayersPanel extends JPanel {
     private static final String COL_CHANNEL = "Channel";
     private static final String COL_SWING = "Swing";
     private static final String COL_LEVEL = "Level";
-    // private static final String COL_MUTE = "Mute"; // Add this column name
+    private static final String COL_MUTE = "Mute"; // Add this column name
     private static final String COL_NOTE = "Note";
     private static final String COL_MIN_VEL = "Min Vel";
     private static final String COL_MAX_VEL = "Max Vel";
@@ -85,7 +85,7 @@ public class PlayersPanel extends JPanel {
     private static final String COL_SPARSE = "Sparse";
 
     private static final Set<String> COLUMNS = new LinkedHashSet<>(Arrays.asList(
-            COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_PRESET, COL_NOTE, COL_LEVEL, // COL_MUTE,
+            COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_PRESET, COL_NOTE, COL_LEVEL, COL_MUTE,
             COL_PAN, COL_MIN_VEL, COL_MAX_VEL, COL_SWING,
             COL_PROBABILITY, COL_RANDOM, COL_SPARSE,
             COL_RATCHET_COUNT, COL_RATCHET_INTERVAL, COL_INT_BEATS,
@@ -102,7 +102,7 @@ public class PlayersPanel extends JPanel {
 
     // Define boolean column names using constants
     private static final Set<String> BOOLEAN_COLUMN_NAMES = Set.of(
-            // COL_MUTE,
+            COL_MUTE,
             COL_STICKY,
             COL_INT_BEATS,
             COL_INT_BARS,
@@ -214,25 +214,40 @@ public class PlayersPanel extends JPanel {
         buttonWrapper.add(rightButtonPanel, BorderLayout.EAST);
 
         // Add to setupLayout method
-        JButton debugButton = new JButton("Force Selection Event");
-        debugButton.addActionListener(e -> {
+        JButton muteButton = new JButton("Mute Selected");
+        muteButton.addActionListener(e -> {
             Player player = getSelectedPlayer();
             if (player != null) {
                 logger.info("Forcing PLAYER_SELECTED event for: " + player.getName());
-
-                // First set the active player in PlayerManager
-                PlayerManager.getInstance().setActivePlayer(player);
-
-                // Then publish the selection event
-                CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
-
+            
                 // Update button states
-                updateButtonStates();
+                player.setMuted(!player.isMuted());
+                updatePlayerRow(player);
             } else {
                 logger.warning("No player selected to force event");
             }
         });
-        rightButtonPanel.add(debugButton);
+        rightButtonPanel.add(muteButton);
+
+        // JButton debugButton = new JButton("Force Selection Event");
+        // debugButton.addActionListener(e -> {
+        //     Player player = getSelectedPlayer();
+        //     if (player != null) {
+        //         logger.info("Forcing PLAYER_SELECTED event for: " + player.getName());
+
+        //         // First set the active player in PlayerManager
+        //         PlayerManager.getInstance().setActivePlayer(player);
+
+        //         // Then publish the selection event
+        //         CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
+
+        //         // Update button states
+        //         updateButtonStates();
+        //     } else {
+        //         logger.warning("No player selected to force event");
+        //     }
+        // });
+        // rightButtonPanel.add(debugButton);
 
         topPanel.add(buttonWrapper, BorderLayout.NORTH);
 
@@ -470,7 +485,7 @@ public class PlayersPanel extends JPanel {
     }
 
     private void setupCommandBusListener() {
-        CommandBus.getInstance().register(new BusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() == null)
@@ -854,7 +869,7 @@ public class PlayersPanel extends JPanel {
                 newRowData[getColumnIndex(COL_CHANNEL)] = player.getChannel();
                 newRowData[getColumnIndex(COL_SWING)] = player.getSwing();
                 newRowData[getColumnIndex(COL_LEVEL)] = player.getLevel();
-                // newRowData[getColumnIndex(COL_MUTE)] = player.isMuted();
+                newRowData[getColumnIndex(COL_MUTE)] = player.isMuted();
                 newRowData[getColumnIndex(COL_NOTE)] = player.getNote();
                 newRowData[getColumnIndex(COL_MIN_VEL)] = player.getMinVelocity();
                 newRowData[getColumnIndex(COL_MAX_VEL)] = player.getMaxVelocity();
@@ -902,7 +917,7 @@ public class PlayersPanel extends JPanel {
             model.setValueAt(player.getName(), modelRow, getColumnIndex(COL_NAME));
             model.setValueAt(player.getNote(), modelRow, getColumnIndex(COL_NOTE));
             model.setValueAt(player.getLevel(), modelRow, getColumnIndex(COL_LEVEL));
-            // model.setValueAt(player.isMuted(), modelRow, getColumnIndex(COL_MUTE));
+            model.setValueAt(player.isMuted(), modelRow, getColumnIndex(COL_MUTE));
             model.setValueAt(player.getProbability(), modelRow, getColumnIndex(COL_PROBABILITY));
             model.setValueAt(player.getSparse(), modelRow, getColumnIndex(COL_SPARSE));
             model.setValueAt(player.getSwing(), modelRow, getColumnIndex(COL_SWING));

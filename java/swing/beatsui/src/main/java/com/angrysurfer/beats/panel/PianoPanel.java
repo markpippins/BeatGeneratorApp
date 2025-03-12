@@ -28,7 +28,7 @@ import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.beats.animation.ColorAnimator;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
@@ -155,7 +155,7 @@ public class PianoPanel extends StatusProviderPanel {
     }
 
     private void setupActionBusListener() {
-        commandBus.register(new BusListener() {
+        commandBus.register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getData() instanceof Integer note) {
@@ -517,7 +517,7 @@ public class PianoPanel extends StatusProviderPanel {
         add(playerStatusIndicator);
         
         // Update the indicator when player selection changes
-        commandBus.register(new BusListener() {
+        commandBus.register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {

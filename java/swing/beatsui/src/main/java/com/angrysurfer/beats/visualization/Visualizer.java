@@ -12,7 +12,7 @@ import com.angrysurfer.beats.visualization.handler.music.ScrollingSequencerVisua
 import com.angrysurfer.beats.widget.GridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 
@@ -21,7 +21,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Visualizer implements BusListener {
+public class Visualizer implements IBusListener {
 
     private final JComponent parent;
 

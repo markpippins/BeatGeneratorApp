@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -85,7 +85,7 @@ public class SessionManager {
 
         songEngine = new SongEngine();
 
-        commandBus.register(new BusListener() {
+        commandBus.register(new IBusListener() {
             public void onAction(Command action) {
                 if (action == null || action.getCommand() == null)
                     return;

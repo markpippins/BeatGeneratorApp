@@ -21,7 +21,7 @@ import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
@@ -243,7 +243,7 @@ class RulesPanel extends JPanel {
     }
 
     private void setupCommandBusListener() {
-        CommandBus.getInstance().register(new BusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() == null) return;

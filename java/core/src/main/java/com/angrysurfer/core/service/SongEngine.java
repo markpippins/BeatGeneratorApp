@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Song;
@@ -132,7 +132,7 @@ public class SongEngine {
     }
 
     private void setupCommandBusListener() {
-        commandBus.register(new BusListener() {
+        commandBus.register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {

@@ -16,7 +16,7 @@ import com.angrysurfer.beats.panel.PlayerEditPanel;
 import com.angrysurfer.beats.panel.RuleEditPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.config.UserConfigConverter;
@@ -28,7 +28,7 @@ import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
-public class DialogManager implements BusListener {
+public class DialogManager implements IBusListener {
 
     private static final Logger logger = Logger.getLogger(DialogManager.class.getName());
 
@@ -163,12 +163,16 @@ public class DialogManager implements BusListener {
 
                 if (dialog.showDialog()) {
                     Rule updatedRule = panel.getUpdatedRule();
-                    Player player = redisService.findPlayerForRule(rule);
+                    Player player = PlayerManager.getInstance().getActivePlayer(); // redisService.findPlayerForRule(rule);
                     if (player != null) {
                         redisService.saveRule(updatedRule);
+                        redisService.savePlayer(player);
                         // Get fresh state and re-select player
-                        Player refreshedPlayer = redisService.findPlayerById(player.getId());
-                        commandBus.publish(Commands.PLAYER_SELECTED, this, refreshedPlayer);
+                        // Player refreshedPlayer = redisService.findPlayerById(player.getId());
+                        commandBus.publish(Commands.RULE_EDITED, this, updatedRule);
+                        // commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                        // commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+                        // commandBus.publish(Commands.RULE_SELECTED, this, updatedRule);
                     }
                 }
             });

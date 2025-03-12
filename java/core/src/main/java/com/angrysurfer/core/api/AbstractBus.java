@@ -5,9 +5,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.angrysurfer.core.util.LogManager;
 
-public class AbstractBus implements BusListener {
+public class AbstractBus implements IBusListener {
 
-    private final List<BusListener> listeners = new CopyOnWriteArrayList<>();
+    private final List<IBusListener> listeners = new CopyOnWriteArrayList<>();
     private final LogManager logManager = LogManager.getInstance();
 
     public AbstractBus() {
@@ -15,13 +15,13 @@ public class AbstractBus implements BusListener {
         register(this);
     }
 
-    public void register(BusListener listener) {
+    public void register(IBusListener listener) {
         if (!listeners.contains(listener)) {
             listeners.add(listener);
         }
     }
 
-    public void unregister(BusListener listener) {
+    public void unregister(IBusListener listener) {
         listeners.remove(listener);
     }
 
@@ -54,13 +54,14 @@ public class AbstractBus implements BusListener {
 
         listeners.forEach(listener -> {
             try {
-                listener.onAction(action);
+                if (listener != action.getSender())
+                    listener.onAction(action);
             } catch (Exception e) {
-                // logManager.error("CommandBus",
-                //         String.format("Error in listener %s handling command %s: %s",
-                //                 listener.getClass().getSimpleName(),
-                //                 action.getCommand(),
-                //                 e.getMessage()));
+                logManager.error("CommandBus",
+                        String.format("Error in listener %s handling command %s: %s",
+                                listener.getClass().getSimpleName(),
+                                action.getCommand(),
+                                e.getMessage()));
             }
         });
     }

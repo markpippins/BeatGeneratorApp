@@ -33,7 +33,7 @@ import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.ToggleSwitch;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -147,7 +147,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
                 : "Player is null");
 
         // Register for rule-related commands
-        CommandBus.getInstance().register(new BusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() == null)
@@ -534,7 +534,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         });
 
         // Listen for rule updates
-        CommandBus.getInstance().register(new BusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() == null)
@@ -728,7 +728,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
     }
 
     private void registerForInstrumentUpdates() {
-        CommandBus.getInstance().register(new BusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 if (action.getCommand() == null)

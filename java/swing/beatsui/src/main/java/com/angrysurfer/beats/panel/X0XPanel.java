@@ -24,13 +24,13 @@ import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
 
-class X0XPanel extends StatusProviderPanel implements BusListener {
+class X0XPanel extends StatusProviderPanel implements IBusListener {
     private final List<TriggerButton> triggerButtons = new ArrayList<>();
 
     private boolean isPlaying = false;

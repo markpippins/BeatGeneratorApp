@@ -38,7 +38,7 @@ import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ToggleSwitch;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.midi.ControlCode;
 import com.angrysurfer.core.model.midi.ControlCodeCaption;
@@ -50,7 +50,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ControlsPanel extends JPanel implements BusListener {
+public class ControlsPanel extends JPanel implements IBusListener {
     private static final Logger logger = Logger.getLogger(ControlsPanel.class.getName());
     private JComboBox<Instrument> instrumentSelector;
     private final RedisService redisService;

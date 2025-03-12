@@ -20,7 +20,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.widget.LedIndicator;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -35,7 +35,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class StatusBar extends JPanel implements BusListener, StatusConsumer {
+public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
 
     private JLabel sessionIdLabel;
     private JLabel playerCountLabel;

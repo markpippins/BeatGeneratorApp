@@ -6,7 +6,7 @@ import java.util.logging.Logger;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
@@ -28,7 +28,7 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
 @Getter
-public class RedisService implements BusListener {
+public class RedisService implements IBusListener {
     private static final Logger logger = Logger.getLogger(RedisService.class.getName());
     private static RedisService instance;
     private final JedisPool jedisPool;

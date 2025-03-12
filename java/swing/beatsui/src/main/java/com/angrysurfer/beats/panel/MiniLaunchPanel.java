@@ -25,14 +25,14 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.BusListener;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.service.PlayerManager;
 
-public class MiniLaunchPanel extends StatusProviderPanel implements BusListener {
+public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(MiniLaunchPanel.class);
 
