@@ -1,9 +1,11 @@
 package com.angrysurfer.beats.visualization.handler.music;
 
 import java.awt.Color;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
 
@@ -14,10 +16,14 @@ import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.GridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SequencerManager;
+import com.angrysurfer.core.service.SessionManager;
 
 public class ScrollingSequencerVisualization extends LockHandler implements IVisualizationHandler, IBusListener {
     // Frame rate for visual updates (60fps for smoother animation)
@@ -28,6 +34,22 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
     private static final Color BAR_MARKER_COLOR =  Color.BLUE; //ColorUtils.coolBlue; // new Color(0, 0, 220);   // Blue for bars
     private static final Color POSITION_INDICATOR = Color.WHITE; // ColorUtils.deepNavy;// Color.WHITE;
     private static final Color BACKGROUND_COLOR = Color.BLACK; // ColorUtils.warmOffWhite; // new Color(20, 20, 20);
+    
+    // Add new colors for player visualization
+    private static final Color[] PLAYER_COLORS = {
+        new Color(220, 0, 0),      // Red
+        new Color(0, 220, 0),      // Green
+        new Color(0, 0, 220),      // Blue
+        new Color(220, 220, 0),    // Yellow
+        new Color(220, 0, 220),    // Magenta
+        new Color(0, 220, 220),    // Cyan
+        new Color(255, 128, 0),    // Orange
+        new Color(128, 0, 255),    // Purple
+        new Color(0, 255, 128),    // Mint
+        new Color(255, 128, 128),  // Pink
+        new Color(128, 255, 128),  // Light green
+        new Color(128, 128, 255)   // Light blue
+    };
     
     // Volatile fields for thread safety
     private volatile int currentTick = 0;
@@ -46,6 +68,14 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
     
     // Store original colors to fix trailing issue
     private Color[][] originalColors;
+    
+    // Store player activation data
+    private boolean[][] playerActivations;
+    private Player[] activePlayers;
+    private int numPlayers = 0;
+    
+    // Refresh visualization on rule changes
+    private boolean needsRefresh = true;
     
     // Scheduled executor for consistent frame rate
     private ScheduledExecutorService renderTimer;
@@ -183,9 +213,10 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
         // Store reference to buttons
         this.currentButtons = buttons;
         
-        // If this is first call or reset, initialize the grid
-        if (lastPlayheadCol == -1) {
+        // If this is first call or refresh needed, initialize the grid
+        if (lastPlayheadCol == -1 || needsRefresh) {
             initializeGrid(buttons);
+            needsRefresh = false;
         }
         
         // Update display now
@@ -235,16 +266,122 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
                 }
             }
             
-            // Add initial status text
-            if (rows > 2 && cols > 10) {
-                buttons[0][0].setText("Beat: -");
-                buttons[1][0].setText("Bar: -");
-                buttons[2][0].setText("Tick: -");
+            // Add labels row at the top
+            if (rows > 1 && cols > 10) {
+                buttons[0][0].setText("Players:");
             }
+            
+            // Get active players and evaluate when they will sound
+            updateActivePlayers(rows, cols);
             
             // Reset playhead position tracker
             lastPlayheadCol = -1;
         });
+    }
+    
+    private void updateActivePlayers(int rows, int cols) {
+        Session session = SessionManager.getInstance().getActiveSession();
+        if (session == null || session.getPlayers() == null || session.getPlayers().isEmpty()) {
+            numPlayers = 0;
+            activePlayers = null;
+            return;
+        }
+        
+        // Get active players (up to maximum rows - 1 for header)
+        Set<Player> players = session.getPlayers();
+        numPlayers = Math.min(players.size(), rows - 1);
+        activePlayers = players.stream()
+            .filter(p -> p.getRules() != null && !p.getRules().isEmpty())
+            .limit(numPlayers)
+            .toArray(Player[]::new);
+        
+        // Update player labels in first column
+        for (int i = 0; i < numPlayers && i < rows - 1; i++) {
+            if (currentButtons != null && currentButtons[i+1] != null && currentButtons[i+1][0] != null) {
+                currentButtons[i+1][0].setText(activePlayers[i].getName());
+            }
+        }
+        
+        // Pre-compute player activations for the visible portion
+        evaluatePlayerActivations(cols);
+    }
+    
+    private void evaluatePlayerActivations(int cols) {
+        if (activePlayers == null || activePlayers.length == 0) return;
+        
+        System.out.println("Evaluating activations for " + activePlayers.length + " players across " + totalTicks + " ticks");
+        
+        // Initialize activation map
+        playerActivations = new boolean[activePlayers.length][cols];
+        
+        // For each player
+        for (int playerIndex = 0; playerIndex < activePlayers.length; playerIndex++) {
+            Player player = activePlayers[playerIndex];
+            Set<Rule> rules = player.getRules();
+            
+            if (rules == null || rules.isEmpty()) {
+                System.out.println("Player " + player.getName() + " has no rules, skipping");
+                continue;
+            }
+            
+            System.out.println("Evaluating player: " + player.getName() + " with " + rules.size() + " rules");
+            
+            // Count how many hits we find
+            int hitCount = 0;
+            
+            // For each column in our grid
+            for (int col = 0; col < cols; col++) {
+                // Calculate musical position based on grid column
+                int absoluteTick = (col * totalTicks) / cols;
+                
+                // Convert to musical units (1-based)
+                int ticksPerBeat = ppq;
+                int tickPosition = (absoluteTick % ticksPerBeat) + 1;
+                int beatPosition = ((absoluteTick / ticksPerBeat) % beatsPerBar) + 1;
+                int barPosition = ((absoluteTick / (ticksPerBeat * beatsPerBar)) % totalBars) + 1;
+                
+                // Use our new method
+                boolean willPlay = player.shouldPlayAt(rules, 
+                                                   tickPosition,         // tick (1-based)
+                                                   beatPosition,         // beat (1-based)
+                                                   barPosition,          // bar (1-based)
+                                                   1);                   // part (1-based, default to 1)
+                
+                if (willPlay) {
+                    hitCount++;
+                    
+                    // Ensure we have space in our array
+                    if (col < playerActivations[playerIndex].length) {
+                        playerActivations[playerIndex][col] = true;
+                        
+                        // Apply bright color to the grid
+                        if (currentButtons != null && 
+                            playerIndex + 1 < currentButtons.length && 
+                            col < currentButtons[0].length) {
+                            
+                            // Get player color
+                            Color baseColor = PLAYER_COLORS[playerIndex % PLAYER_COLORS.length];
+                            Color brightColor = new Color(
+                                Math.min(255, baseColor.getRed() + 80),
+                                Math.min(255, baseColor.getGreen() + 80),
+                                Math.min(255, baseColor.getBlue() + 80)
+                            );
+                            
+                            // Apply to button and store
+                            currentButtons[playerIndex + 1][col].setBackground(brightColor);
+                            originalColors[playerIndex + 1][col] = brightColor;
+                            
+                            // Also label with player name in first column
+                            if (col == 0) {
+                                currentButtons[playerIndex + 1][col].setText(player.getName());
+                            }
+                        }
+                    }
+                }
+            }
+            
+            System.out.println("Player " + player.getName() + " has " + hitCount + " activations");
+        }
     }
     
     @Override
@@ -299,6 +436,16 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
             case Commands.UPDATE_TEMPO, Commands.UPDATE_TIME_SIGNATURE -> {
                 updateTimingParameters(SequencerManager.getInstance());
                 // Re-initialize grid with new parameters
+                if (currentButtons != null) {
+                    initializeGrid(currentButtons);
+                }
+            }
+            
+            // Add more cases to handle player/rule changes
+            case Commands.PLAYER_ADDED, Commands.PLAYER_DELETED, 
+                 Commands.RULE_ADDED, Commands.RULE_EDITED, Commands.RULE_DELETED,
+                 Commands.SESSION_UPDATED, Commands.PLAYER_UPDATED -> {
+                needsRefresh = true;
                 if (currentButtons != null) {
                     initializeGrid(currentButtons);
                 }

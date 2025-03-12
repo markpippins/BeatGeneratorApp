@@ -4,10 +4,13 @@ import java.awt.BorderLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -21,8 +24,8 @@ import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -152,6 +155,7 @@ class RulesPanel extends JPanel {
         });
     }
 
+    // Fix the RULE_DELETE_REQUEST handler in the button listener
     private void setupButtonListeners() {
         buttonPanel.addActionListener(e -> {
             String command = e.getActionCommand();
@@ -178,10 +182,19 @@ class RulesPanel extends JPanel {
                 case Commands.RULE_DELETE_REQUEST -> {
                     Rule[] selectedRules = getSelectedRules();
                     if (selectedRules.length > 0) {
-                        logger.info("Publishing RULE_DELETE_REQUEST for " + selectedRules.length + " rules");
+                        // Remember row for reselection
+                        lastSelectedRow = table.getSelectedRow();
+                        
+                        // Remember player for refreshing
+                        Player player = currentPlayer;
+                        
+                        // Publish the delete request with the rules to delete
                         CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, selectedRules);
+                        
+                        // Log deletion request
+                        logger.info("Published rule delete request for " + selectedRules.length + " rules");
                     } else {
-                        logger.warning("Cannot delete rules - no rules selected");
+                        status.setMessage("No rules selected to delete");
                     }
                 }
             }
@@ -242,6 +255,7 @@ class RulesPanel extends JPanel {
         });
     }
 
+    // Fix the RULE_DELETED handler in the command listener
     private void setupCommandBusListener() {
         CommandBus.getInstance().register(new IBusListener() {
             @Override
@@ -280,17 +294,59 @@ class RulesPanel extends JPanel {
                         
                         case Commands.RULE_ADDED -> {
                             logger.info("Rule added, refreshing table");
-                            Player player = PlayerManager.getInstance().getActivePlayer();
+                            
+                            // Get added rule from command data
+                            Rule addedRule = null;
+                            if (action.getData() instanceof Rule rule) {
+                                addedRule = rule;
+                                logger.info("Added rule ID: " + rule.getId());
+                            }
+                            
+                            // Get a fresh copy of the player to avoid duplicate rules
+                            Player player = null;
+                            
+                            // Try to get the active player from PlayerManager
+                            player = PlayerManager.getInstance().getActivePlayer();
                             if (player != null) {
+                                // Always get a fresh copy to avoid stale data
+                                Player freshPlayer = getFreshPlayer(player.getId());
+                                if (freshPlayer != null) {
+                                    player = freshPlayer;
+                                    logger.info("Using fresh player with " + 
+                                              (player.getRules() != null ? player.getRules().size() : 0) + " rules");
+                                    
+                                    // If we have the player's rules, check for duplicates by ID
+                                    if (player.getRules() != null && addedRule != null) {
+                                        // Log all rule IDs to help debug
+                                        logger.info("Player rule IDs:");
+                                        Set<Long> ruleIds = new HashSet<>();
+                                        for (Rule rule : player.getRules()) {
+                                            logger.info("  Rule ID: " + rule.getId());
+                                            ruleIds.add(rule.getId());
+                                        }
+                                        
+                                        // Check if we found multiple copies of the same rule
+                                        if (Collections.frequency(player.getRules().stream()
+                                                                     .map(Rule::getId).collect(Collectors.toList()),
+                                                                     addedRule.getId()) > 1) {
+                                            logger.warning("Duplicate rule detected! ID: " + addedRule.getId());
+                                        }
+                                    }
+                                }
+                                    
+                                // Update current player and refresh the table
+                                currentPlayer = player;
+                                clearRules(); // Explicitly clear the table first
                                 refreshRules(player.getRules());
                                 
-                                // Select the newly added rule if available
-                                if (action.getData() instanceof Rule rule) {
-                                    selectRuleById(rule.getId());
+                                // After refresh, select the newly added rule or the last one
+                                if (addedRule != null) {
+                                    selectRuleById(addedRule.getId());
                                 } else {
-                                    // If no specific rule, select the last one
                                     selectLastRule();
                                 }
+                            } else {
+                                logger.warning("No active player available after adding rule");
                             }
                         }
                         
@@ -339,49 +395,59 @@ class RulesPanel extends JPanel {
                         case Commands.RULE_DELETED -> {
                             logger.info("Rule(s) deleted, refreshing table");
                             
-                            // Get a fresh copy of the player to ensure we have the most up-to-date rules
-                            Player player = null;
+                            // Get the freshest possible player data
+                            Player updatedPlayer = null;
                             
-                            // First check if the data is a Player object
-                            if (action.getData() instanceof Player updatedPlayer) {
-                                player = updatedPlayer;
+                            // Try to get player from command data first
+                            if (action.getData() instanceof Player player) {
+                                updatedPlayer = player;
                                 logger.info("Using player from command data");
-                            } else {
-                                // Fall back to active player
-                                player = PlayerManager.getInstance().getActivePlayer();
-                                logger.info("Using active player from PlayerManager");
+                            }
+                            // Then try active player from PlayerManager
+                            else {
+                                updatedPlayer = PlayerManager.getInstance().getActivePlayer();
+                                logger.info("Using active player from manager");
                             }
                             
-                            if (player != null) {
-                                // Get a fresh copy to ensure we have current data
-                                Player freshPlayer = getFreshPlayer(player.getId());
+                            // As a last resort, use our current player
+                            if (updatedPlayer == null) {
+                                updatedPlayer = currentPlayer;
+                                logger.info("Falling back to current player reference");
+                            }
+                            
+                            // Always try to get a fresh copy
+                            if (updatedPlayer != null) {
+                                Player freshPlayer = getFreshPlayer(updatedPlayer.getId());
                                 if (freshPlayer != null) {
-                                    player = freshPlayer;
-                                    logger.info("Using fresh copy of player with " + 
-                                              (player.getRules() != null ? player.getRules().size() : 0) + " rules");
+                                    updatedPlayer = freshPlayer;
+                                    logger.info("Using fresh player copy with " + 
+                                             (freshPlayer.getRules() != null ? freshPlayer.getRules().size() : 0) + 
+                                             " rules");
                                 }
                                 
-                                // Update current player and refresh display
-                                currentPlayer = player;
-                                refreshRules(player.getRules());
+                                // Update our reference and refresh the table
+                                currentPlayer = updatedPlayer;
                                 
-                                // Select closest available rule or clear selection
+                                // Use the player's rules for display
+                                Set<Rule> rulesToDisplay = updatedPlayer.getRules();
+                                refreshRules(rulesToDisplay);
+                                
+                                // Select an appropriate row if there are any rules left
                                 if (table.getRowCount() > 0) {
-                                    // Try to select same row index if possible
                                     int rowToSelect = Math.min(lastSelectedRow, table.getRowCount() - 1);
                                     if (rowToSelect >= 0) {
                                         table.setRowSelectionInterval(rowToSelect, rowToSelect);
                                         handleRuleSelection(rowToSelect);
-                                        logger.info("Selected rule at row " + rowToSelect);
+                                        logger.info("Selected rule at row " + rowToSelect + " after deletion");
                                     }
                                 } else {
-                                    // No rules left
+                                    logger.info("No rules left after deletion");
+                                    // Publish rule unselected event since no rules remain
                                     CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this);
-                                    logger.info("No rules left, published RULE_UNSELECTED");
                                 }
                             } else {
-                                logger.warning("No player available after rule deletion");
                                 clearRules();
+                                logger.warning("No player available after rule deletion");
                             }
                         }
 
@@ -580,20 +646,32 @@ class RulesPanel extends JPanel {
      * @param playerId The ID of the player to fetch
      * @return A fresh Player instance or null if not found
      */
+    // Improve the getFreshPlayer method for reliability
     private Player getFreshPlayer(Long playerId) {
+        if (playerId == null) {
+            logger.warning("Cannot get fresh player: null ID");
+            return null;
+        }
+        
         try {
+            // First try from active session
             Session session = SessionManager.getInstance().getActiveSession();
             if (session != null && session.getPlayers() != null) {
                 for (Player player : session.getPlayers()) {
-                    if (player.getId().equals(playerId)) {
+                    if (playerId.equals(player.getId())) {
+                        logger.info("Found player " + playerId + " in active session");
                         return player;
                     }
                 }
             }
+            
+            logger.warning("Player " + playerId + " not found in active session");
+            return null;
         } catch (Exception e) {
             logger.severe("Error getting fresh player: " + e.getMessage());
+            e.printStackTrace();
+            return null;
         }
-        return null;
     }
    
     // Add a field to track the last selected rule row
@@ -668,21 +746,10 @@ class RulesPanel extends JPanel {
      * Refresh the rules table with a new set of rules
      * @param rules The rules to display
      */
+    // Fix the refreshRules method to properly use fresh player data
     private void refreshRules(Set<Rule> rules) {
         try {
             logger.info("Refreshing rules table with " + (rules != null ? rules.size() : 0) + " rules");
-            
-            // Always get a fresh copy of the player's rules
-            if (currentPlayer != null) {
-                Player freshPlayer = PlayerManager.getInstance().getActivePlayer(); //, getFreshPlayer(currentPlayer.getId());
-                if (freshPlayer != null) {
-                    // Use the fresh player's rules instead
-                    rules = freshPlayer.getRules();
-                    currentPlayer = freshPlayer; // Update current player reference
-                    logger.info("Using fresh player with " + 
-                               (rules != null ? rules.size() : 0) + " rules");
-                }
-            }
             
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             model.setRowCount(0);  // Clear existing content
@@ -741,5 +808,20 @@ class RulesPanel extends JPanel {
             }
         }
         return -1; // Column not found
+    }
+
+    // Add a consistent way to delete rules that works regardless of calling context
+    private void deleteSelectedRules() {
+        Rule[] selectedRules = getSelectedRules();
+        if (selectedRules.length > 0) {
+            // Remember row for reselection
+            lastSelectedRow = table.getSelectedRow();
+            
+            // Publish the delete request
+            CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, selectedRules);
+            logger.info("Published rule delete request for " + selectedRules.length + " rules");
+        } else {
+            status.setMessage("No rules selected to delete");
+        }
     }
 }

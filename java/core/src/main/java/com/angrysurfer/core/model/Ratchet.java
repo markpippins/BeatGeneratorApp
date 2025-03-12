@@ -26,6 +26,8 @@ public class Ratchet extends Strike {
         setSession(getParent().getSession());
         setNote(getParent().getNote());
         setInstrument(getParent().getInstrument());
+        setChannel(getParent().getChannel());
+        setSubDivisions(getParent().getSubDivisions());
         setAllowedControlMessages(getParent().getAllowedControlMessages());
         setPads(getParent().getPads());
         setLevel(getParent().getLevel());
