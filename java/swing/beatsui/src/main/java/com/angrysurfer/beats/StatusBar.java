@@ -19,11 +19,10 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.widget.LedIndicator;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Player;
@@ -57,12 +56,12 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
 
     private CommandBus commandBus = CommandBus.getInstance();
 
-    private final LedIndicator tickLed;
-    private final LedIndicator beatLed;
-    private final LedIndicator barLed;
-    private boolean litTick = false;
-    private boolean litBeat = false;
-    private boolean litBar = false;
+    // private final LedIndicator tickLed;
+    // private final LedIndicator beatLed;
+    // private final LedIndicator barLed;
+    // private boolean litTick = false;
+    // private boolean litBeat = false;
+    // private boolean litBar = false;
 
     // Add timing counters
     private int tickCount = 0;
@@ -76,9 +75,9 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         super();
 
         // Create LEDs
-        tickLed = new LedIndicator(new Color(255, 50, 50)); // Red
-        beatLed = new LedIndicator(new Color(50, 255, 50)); // Green
-        barLed = new LedIndicator(new Color(50, 50, 255)); // Blue
+        // tickLed = new LedIndicator(new Color(255, 50, 50)); // Red
+        // beatLed = new LedIndicator(new Color(50, 255, 50)); // Green
+        // barLed = new LedIndicator(new Color(50, 50, 255)); // Blue
 
         // Setup panels
         setup();
@@ -102,26 +101,26 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
         
         // 1. LED INDICATORS - Now first on the left
-        JPanel ledPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        ledPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-        ledPanel.setAlignmentY(CENTER_ALIGNMENT);
+        // JPanel ledPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        // ledPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+        // ledPanel.setAlignmentY(CENTER_ALIGNMENT);
         
         // Use more descriptive labels for LEDs
-        ledPanel.add(new JLabel("Tick"));
-        ledPanel.add(tickLed);
-        ledPanel.add(new JLabel("Beat"));
-        ledPanel.add(beatLed);
-        ledPanel.add(new JLabel("Bar"));
-        ledPanel.add(barLed);
+        // ledPanel.add(new JLabel("Tick"));
+        // ledPanel.add(tickLed);
+        // ledPanel.add(new JLabel("Beat"));
+        // ledPanel.add(beatLed);
+        // ledPanel.add(new JLabel("Bar"));
+        // ledPanel.add(barLed);
         
-        add(ledPanel);
+        // add(ledPanel);
         
         // Add small spacer
-        add(Box.createRigidArea(new Dimension(5, 0)));
+        // add(Box.createRigidArea(new Dimension(5, 0)));
         
         // 2. SESSION INFO GROUP
         JPanel sessionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        sessionPanel.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 1, Color.LIGHT_GRAY));
+        // sessionPanel.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 1, Color.LIGHT_GRAY));
         sessionPanel.setAlignmentY(CENTER_ALIGNMENT);
         
         sessionIdLabel = new JLabel("Session:");
@@ -137,11 +136,11 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         add(sessionPanel);
         
         // Add small spacer
-        add(Box.createRigidArea(new Dimension(5, 0)));
+        // add(Box.createRigidArea(new Dimension(5, 0)));
         
         // 3. PLAYER INFO GROUP
         JPanel playerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        playerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.LIGHT_GRAY));
+        // playerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.LIGHT_GRAY));
         playerPanel.setAlignmentY(CENTER_ALIGNMENT);
         
         playerIdLabel = new JLabel("Player:");
@@ -157,7 +156,7 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         add(playerPanel);
         
         // Add small spacer
-        add(Box.createRigidArea(new Dimension(5, 0)));
+        // add(Box.createRigidArea(new Dimension(5, 0)));
         
         // 4. SITE INFO
         JPanel sitePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
@@ -195,7 +194,7 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         // 7. TIME - always on the far right
         JPanel timePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 0));
         timePanel.setAlignmentY(CENTER_ALIGNMENT);
-        timePanel.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY));
+        // timePanel.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY));
         // timeLabel = new JLabel("T:B:M"); // Changed from "Time:"
         // timePanel.add(timeLabel);
         timeField = createTextField(4); // Increased to fit 00:00:00
@@ -216,28 +215,19 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         return field;
     }
 
-    // Add this method to StatusBar class
-    private JTextField createTextField(String initialValue) {
-        JTextField field = new JTextField(initialValue);
-        field.setEditable(false);
-        field.setMaximumSize(field.getPreferredSize());
-        field.setAlignmentY(CENTER_ALIGNMENT);
-        return field;
-    }
-
     // Update LED indicators appearance
     private void setupLedIndicators() {
         int ledSize = 14; // Slightly larger for better visibility
         
         // Initialize LEDs with consistent size
-        tickLed.setPreferredSize(new Dimension(ledSize, ledSize));
-        beatLed.setPreferredSize(new Dimension(ledSize, ledSize));
-        barLed.setPreferredSize(new Dimension(ledSize, ledSize));
+        // tickLed.setPreferredSize(new Dimension(ledSize, ledSize));
+        // beatLed.setPreferredSize(new Dimension(ledSize, ledSize));
+        // barLed.setPreferredSize(new Dimension(ledSize, ledSize));
         
         // Ensure vertical alignment
-        tickLed.setAlignmentY(CENTER_ALIGNMENT);
-        beatLed.setAlignmentY(CENTER_ALIGNMENT);
-        barLed.setAlignmentY(CENTER_ALIGNMENT);
+        // tickLed.setAlignmentY(CENTER_ALIGNMENT);
+        // beatLed.setAlignmentY(CENTER_ALIGNMENT);
+        // barLed.setAlignmentY(CENTER_ALIGNMENT);
     }
 
     @Override
@@ -297,14 +287,14 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
                     clearPlayerInfo();
                 }
                 case Commands.BASIC_TIMING_TICK -> {
-                    flashTickLed();
+                    // flashTickLed();
                     
                     // Increment tick count
                     tickCount++;
                     updateTimeDisplay();
                 }
                 case Commands.BASIC_TIMING_BEAT -> {
-                    flashBeatLed();
+                    // flashBeatLed();
                     
                     // Increment beat count and reset ticks
                     beatCount++;
@@ -312,7 +302,7 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
                     updateTimeDisplay();
                 }
                 case Commands.BASIC_TIMING_BAR -> {
-                    flashBarLed();
+                    // flashBarLed();
                     
                     // Increment bar count and reset beats
                     barCount++;
@@ -359,21 +349,6 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         ruleCountField.setText("");
     }
 
-    private void flashTickLed() {
-        litTick = !litTick;
-        tickLed.setLit(litTick);
-    }
-
-    private void flashBeatLed() {
-        litBeat = !litBeat;
-        beatLed.setLit(litBeat);
-    }
-
-    private void flashBarLed() {
-        litBar = !litBar;
-        barLed.setLit(litBar);
-    }
-
     /**
      * Reset all timing counters and update display
      */
@@ -396,55 +371,6 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         SwingUtilities.invokeLater(() -> {
             timeField.setText(formattedTime);
         });
-    }
-
-    private JPanel createBottomRightStatusPanel() {
-        // Use BorderLayout instead of GridLayout to have more control over component widths
-        JPanel rightStatusPanel = new JPanel();
-        rightStatusPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-        // Create field panels with different widths
-        JPanel rootPanel = createFieldPanel("Root", createRootNoteCombo(), 50); // Smaller width
-        JPanel scalePanel = createFieldPanel("Scale", createScaleCombo(), 180); // Larger width
-        JPanel sessionPanel = createFieldPanel("Session", createTextField("1"), 70);
-        JPanel lengthPanel = createFieldPanel("Length", createTextField("0"), 70);
-        JPanel offsetPanel = createFieldPanel("Offset", createTextField("0"), 70);
-
-        // Add all panels
-        rightStatusPanel.add(rootPanel);
-        rightStatusPanel.add(scalePanel);
-        rightStatusPanel.add(sessionPanel);
-        rightStatusPanel.add(lengthPanel);
-        rightStatusPanel.add(offsetPanel);
-
-        return rightStatusPanel;
-    }
-
-    // Helper method to create a panel with specified width
-    private JPanel createFieldPanel(String labelText, JComponent component, int width) {
-        JPanel fieldPanel = new JPanel(new BorderLayout(0, 2));
-        fieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        fieldPanel.setPreferredSize(new Dimension(width, 50)); // Fixed height, variable width
-        
-        JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        JLabel nameLabel = new JLabel(labelText);
-        nameLabel.setForeground(Color.GRAY);
-        labelPanel.add(nameLabel);
-        
-        // Adjust component size to match panel width
-        if (component instanceof JComboBox) {
-            component.setPreferredSize(new Dimension(width - 5, 25));
-            component.setMaximumSize(new Dimension(width - 5, 25));
-        }
-        
-        // Store component in rightFields map
-        rightFields.put(labelText, component);
-        
-        fieldPanel.add(labelPanel, BorderLayout.NORTH);
-        fieldPanel.add(component, BorderLayout.CENTER);
-        
-        return fieldPanel;
     }
 
     private JComboBox<String> createRootNoteCombo() {

@@ -38,6 +38,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.Strike;
@@ -219,7 +220,7 @@ public class PlayersPanel extends JPanel {
             Player player = getSelectedPlayer();
             if (player != null) {
                 logger.info("Forcing PLAYER_SELECTED event for: " + player.getName());
-            
+
                 // Update button states
                 player.setMuted(!player.isMuted());
                 updatePlayerRow(player);
@@ -231,21 +232,21 @@ public class PlayersPanel extends JPanel {
 
         // JButton debugButton = new JButton("Force Selection Event");
         // debugButton.addActionListener(e -> {
-        //     Player player = getSelectedPlayer();
-        //     if (player != null) {
-        //         logger.info("Forcing PLAYER_SELECTED event for: " + player.getName());
+        // Player player = getSelectedPlayer();
+        // if (player != null) {
+        // logger.info("Forcing PLAYER_SELECTED event for: " + player.getName());
 
-        //         // First set the active player in PlayerManager
-        //         PlayerManager.getInstance().setActivePlayer(player);
+        // // First set the active player in PlayerManager
+        // PlayerManager.getInstance().setActivePlayer(player);
 
-        //         // Then publish the selection event
-        //         CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
+        // // Then publish the selection event
+        // CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
 
-        //         // Update button states
-        //         updateButtonStates();
-        //     } else {
-        //         logger.warning("No player selected to force event");
-        //     }
+        // // Update button states
+        // updateButtonStates();
+        // } else {
+        // logger.warning("No player selected to force event");
+        // }
         // });
         // rightButtonPanel.add(debugButton);
 
@@ -485,6 +486,29 @@ public class PlayersPanel extends JPanel {
     }
 
     private void setupCommandBusListener() {
+
+        TimingBus.getInstance().register(new IBusListener() {
+            @Override
+            public void onAction(Command action) {
+                if (action.getCommand() == null)
+                    return;
+
+                String cmd = action.getCommand();
+                try {
+                    switch (cmd) {
+                        case Commands.BASIC_TIMING_TICK -> {
+                            SwingUtilities.invokeLater(() -> {
+                                refreshPlayers(SessionManager.getInstance().getActiveSession().getPlayers());
+                            });
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.severe("Error processing command: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        });
+
         CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
@@ -529,7 +553,7 @@ public class PlayersPanel extends JPanel {
                             Session session = SessionManager.getInstance().getActiveSession();
                             if (session != null) {
                                 refreshPlayers(session.getPlayers());
-                                
+
                                 // Select the newly added player if available in data
                                 if (action.getData() instanceof Player player) {
                                     selectPlayerByName(player.getName());
@@ -539,26 +563,26 @@ public class PlayersPanel extends JPanel {
                                 }
                             }
                         }
-                        
+
                         case Commands.SHOW_PLAYER_EDITOR_OK -> {
                             logger.info("Player edited, refreshing table");
                             Session session = SessionManager.getInstance().getActiveSession();
                             if (session != null) {
                                 refreshPlayers(session.getPlayers());
-                                
+
                                 // Reselect the edited player
                                 if (action.getData() instanceof Player player) {
                                     selectPlayerByName(player.getName());
                                 }
                             }
                         }
-                        
+
                         case Commands.PLAYER_DELETED -> {
                             logger.info("Player(s) deleted, refreshing table");
                             Session session = SessionManager.getInstance().getActiveSession();
                             if (session != null) {
                                 refreshPlayers(session.getPlayers());
-                                
+
                                 // Select closest available player or clear selection
                                 if (table.getRowCount() > 0) {
                                     // Try to select same row index if possible
@@ -589,11 +613,12 @@ public class PlayersPanel extends JPanel {
 
     // Add a helper method to select a player by name
     private void selectPlayerByName(String playerName) {
-        if (playerName == null) return;
-        
+        if (playerName == null)
+            return;
+
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         int nameColIndex = getColumnIndex(COL_NAME);
-        
+
         for (int i = 0; i < model.getRowCount(); i++) {
             String name = (String) model.getValueAt(i, nameColIndex);
             if (playerName.equals(name)) {
@@ -944,7 +969,7 @@ public class PlayersPanel extends JPanel {
         if (row >= 0) {
             lastSelectedRow = row;
         }
-        
+
         try {
             Player player = null;
 
