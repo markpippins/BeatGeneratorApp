@@ -11,10 +11,12 @@ import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.redis.UserConfigHelper;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 public class UserConfigManager {
-    
+
     private static final Logger logger = Logger.getLogger(UserConfigManager.class.getName());
     private static UserConfigManager instance;
     private final UserConfigHelper configHelper;
@@ -29,7 +31,7 @@ public class UserConfigManager {
         loadConfiguration();
         initializeInstruments();
     }
-    
+
     // Static method to get singleton instance
     public static synchronized UserConfigManager getInstance() {
         if (instance == null) {
@@ -40,12 +42,13 @@ public class UserConfigManager {
 
     public void loadConfiguration() {
         logger.info("Loading user configuration from Redis");
-        currentConfig = configHelper.loadConfigFromRedis();
-        initialized = true;
-        if (currentConfig != null) {
+        this.currentConfig = configHelper.loadConfigFromRedis();
+        initialized = this.currentConfig != null;
+        if (initialized) {
             logger.info("User configuration loaded successfully");
-            commandBus.publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+            commandBus.publish(Commands.USER_CONFIG_LOADED, this, this.currentConfig);
         } else {
+            this.currentConfig = new UserConfig();
             logger.warning("No user configuration found in Redis");
         }
     }
@@ -73,13 +76,13 @@ public class UserConfigManager {
     }
 
     private void initializeInstruments() {
-        if (currentConfig.getInstruments() == null || currentConfig.getInstruments().isEmpty()) {
+        if (this.currentConfig.getInstruments() == null || getCurrentConfig().getInstruments().isEmpty()) {
             // Load instruments from Redis if config doesn't have them
             try {
                 List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
                 if (instruments != null && !instruments.isEmpty()) {
-                    currentConfig.setInstruments(instruments);
-                    saveConfiguration(currentConfig);
+                    getCurrentConfig().setInstruments(instruments);
+                    saveConfiguration(getCurrentConfig());
                     logger.info("Loaded " + instruments.size() + " instruments from Redis");
                 }
             } catch (Exception e) {
@@ -87,11 +90,11 @@ public class UserConfigManager {
             }
         }
     }
-    
+
     // Add a method to update an instrument in the config
     public void updateInstrument(Instrument instrument) {
         List<Instrument> instruments = currentConfig.getInstruments();
-        
+
         // Find and replace the existing instrument or add if not found
         boolean updated = false;
         if (instruments != null) {
@@ -102,24 +105,24 @@ public class UserConfigManager {
                     break;
                 }
             }
-            
+
             if (!updated) {
                 instruments.add(instrument);
             }
-            
+
             // Save the updated config
             saveConfiguration(currentConfig);
             logger.info("Instrument updated: " + instrument.getName());
         }
     }
-    
+
     // Add a method to remove an instrument from the config
     public void removeInstrument(Long instrumentId) {
         List<Instrument> instruments = currentConfig.getInstruments();
-        
+
         if (instruments != null) {
             boolean removed = instruments.removeIf(i -> i.getId().equals(instrumentId));
-            
+
             if (removed) {
                 // Save the updated config
                 saveConfiguration(currentConfig);

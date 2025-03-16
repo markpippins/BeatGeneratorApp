@@ -41,8 +41,8 @@ public class RuleEditPanel extends StatusProviderPanel {
         operatorCombo = new JComboBox<>(Rule.COMPARISONS);
 
         // Set default value to 1.0 with no upper limit
-        double initialValue = (rule != null && rule.getValue() != null) ? rule.getValue() : 1.0;
-        valueSpinner = new JSpinner(new SpinnerNumberModel(initialValue, 1.0, null, 0.5));
+        double initialValue = (rule != null && rule.getValue() != null) ? rule.getValue() : 0.0;
+        valueSpinner = new JSpinner(new SpinnerNumberModel(initialValue, 0.0, null, 0.5));
 
         // Special SpinnerListModel for Part with "All" option
         String[] partValues = new String[17]; // 0-16 where 0 is "All"

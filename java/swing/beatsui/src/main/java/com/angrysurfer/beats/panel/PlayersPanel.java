@@ -496,7 +496,7 @@ public class PlayersPanel extends JPanel {
                 String cmd = action.getCommand();
                 try {
                     switch (cmd) {
-                        case Commands.BASIC_TIMING_TICK -> {
+                        case Commands.BASIC_TIMING_BEAT -> {
                             SwingUtilities.invokeLater(() -> {
                                 refreshPlayers(SessionManager.getInstance().getActiveSession().getPlayers());
                             });

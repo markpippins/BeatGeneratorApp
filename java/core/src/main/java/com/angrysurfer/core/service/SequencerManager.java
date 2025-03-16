@@ -17,8 +17,8 @@ import javax.sound.midi.Transmitter;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Session;
 
@@ -205,7 +205,12 @@ public class SequencerManager implements IBusListener {
                 currentBar = 0;
 
                 // Start sequencer
-                sequencer.start();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        sequencer.start();
+                    }
+                }).start();
 
                 // Notify about transport state change
                 commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);

@@ -176,4 +176,27 @@ public class Rule implements Serializable {
         return String.format("Rule[id=%d, %s %s %s, Part=%s]", 
                 getId(), compStr, opStr, String.valueOf(getValue()), partStr);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Rule rule = (Rule) o;
+        return Objects.equals(id, rule.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    public boolean functionallyEquals(Rule other) {
+        if (this == other) return true;
+        if (other == null) return false;
+        
+        return this.operator == other.operator &&
+               this.comparison == other.comparison &&
+               this.part == other.part &&
+               Math.abs(this.value - other.value) < 0.00001;
+    }
 }

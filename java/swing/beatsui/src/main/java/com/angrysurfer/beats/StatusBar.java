@@ -267,7 +267,7 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
             return;
 
         // Debug all commands received
-        System.out.println("StatusBar received: " + action.getCommand());
+        // System.out.println("StatusBar received: " + action.getCommand());
 
         try {
             switch (action.getCommand()) {
@@ -365,7 +365,7 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
     private void updateTimeDisplay() {
         // Format as 00:00:00 (ticks:beats:bars)
         String formattedTime = String.format("%02d:%02d:%02d", 
-                               tickCount, beatCount + 1, barCount);
+                               tickCount, beatCount, barCount);
                                
         // Update the time field on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
