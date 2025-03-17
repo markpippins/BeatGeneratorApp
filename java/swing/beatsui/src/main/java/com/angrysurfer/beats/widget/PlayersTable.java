@@ -30,29 +30,29 @@ import com.angrysurfer.core.util.Constants;
 
 public class PlayersTable extends JTable {
     private static final Logger logger = Logger.getLogger(PlayersTable.class.getName());
-    
+
     private final PlayersTableModel tableModel;
     private final Set<String> flashingPlayerNames = new HashSet<>();
     private Timer flashTimer;
-    private final Color FLASH_COLOR = new Color(255, 255, 200); // Light yellow flash
+    private final Color FLASH_COLOR = ColorUtils.coolBlue; // new Color(255, 255, 200); // Light yellow flash
     private final int FLASH_DURATION_MS = 500; // Flash duration in milliseconds
     private int lastSelectedRow = -1;
-    
+
     private static final int[] BOOLEAN_COLUMNS = PlayersTableModel.getBooleanColumns();
     private static final int[] NUMERIC_COLUMNS = PlayersTableModel.getNumericColumns();
-    
+
     public PlayersTable() {
         this.tableModel = new PlayersTableModel();
         setModel(tableModel);
-        
+
         setupTable();
         setupSelectionListener();
     }
-    
+
     public PlayersTableModel getPlayersTableModel() {
         return tableModel;
     }
-    
+
     private void setupTable() {
         // Set minimum and preferred widths for Name and Instrument columns
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setMinWidth(100);
@@ -98,7 +98,7 @@ public class PlayersTable extends JTable {
         // Set custom renderer for all rows
         setupCustomRowRenderer();
     }
-    
+
     private void setupBooleanColumnRenderers() {
         for (int booleanColumn : BOOLEAN_COLUMNS) {
             getColumnModel().getColumn(booleanColumn).setCellRenderer(
@@ -113,19 +113,19 @@ public class PlayersTable extends JTable {
                                 boolean isSelected, boolean hasFocus, int row, int column) {
                             if (value instanceof Boolean) {
                                 checkbox.setSelected((Boolean) value);
-                                
+
                                 // Determine background color
                                 Color bgColor = table.getBackground();
                                 Player player = getPlayerAtRow(row);
-                                
+
                                 if (isPlayerFlashing(player)) {
                                     bgColor = isSelected ? FLASH_COLOR.darker() : FLASH_COLOR;
                                 } else if (player != null && player.isPlaying()) {
-                                    bgColor = isSelected ? ColorUtils.dustyAmber.darker() : ColorUtils.dustyAmber;
+                                    bgColor = isSelected ? ColorUtils.charcoalGray.darker() : ColorUtils.charcoalGray;
                                 } else if (isSelected) {
                                     bgColor = table.getSelectionBackground();
                                 }
-                                
+
                                 checkbox.setBackground(bgColor);
                                 return checkbox;
                             }
@@ -135,7 +135,7 @@ public class PlayersTable extends JTable {
                     });
         }
     }
-    
+
     private void setupHeaderRenderers() {
         DefaultTableCellRenderer leftHeaderRenderer = new DefaultTableCellRenderer();
         leftHeaderRenderer.setHorizontalAlignment(JLabel.LEFT);
@@ -145,7 +145,7 @@ public class PlayersTable extends JTable {
         getTableHeader().getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT))
                 .setHeaderRenderer(leftHeaderRenderer);
     }
-    
+
     private void setupColumnReorderingListener() {
         getColumnModel().addColumnModelListener(new TableColumnModelListener() {
             @Override
@@ -158,13 +158,20 @@ public class PlayersTable extends JTable {
                 }
             }
 
-            public void columnAdded(TableColumnModelEvent e) {}
-            public void columnRemoved(TableColumnModelEvent e) {}
-            public void columnMarginChanged(ChangeEvent e) {}
-            public void columnSelectionChanged(ListSelectionEvent e) {}
+            public void columnAdded(TableColumnModelEvent e) {
+            }
+
+            public void columnRemoved(TableColumnModelEvent e) {
+            }
+
+            public void columnMarginChanged(ChangeEvent e) {
+            }
+
+            public void columnSelectionChanged(ListSelectionEvent e) {
+            }
         });
     }
-    
+
     private void setupCustomRowRenderer() {
         PlayerRowRenderer rowRenderer = new PlayerRowRenderer(this);
         for (int i = 0; i < getColumnCount(); i++) {
@@ -173,7 +180,7 @@ public class PlayersTable extends JTable {
             }
         }
     }
-    
+
     private void setupSelectionListener() {
         getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) { // Only handle when selection is complete
@@ -182,7 +189,7 @@ public class PlayersTable extends JTable {
             }
         });
     }
-    
+
     public void handlePlayerSelection(int row) {
         if (row >= 0) {
             lastSelectedRow = row;
@@ -215,7 +222,7 @@ public class PlayersTable extends JTable {
             ex.printStackTrace();
         }
     }
-    
+
     public Player getPlayerAtRow(int row) {
         if (row < 0 || tableModel.getRowCount() <= row) {
             return null;
@@ -245,7 +252,7 @@ public class PlayersTable extends JTable {
 
         return null;
     }
-    
+
     public void flashPlayerRow(Player player) {
         if (player == null || player.getName() == null) {
             return;
@@ -253,41 +260,41 @@ public class PlayersTable extends JTable {
 
         // Add player to flashing set
         flashingPlayerNames.add(player.getName());
-        
+
         // Cancel existing timer if one is running
         if (flashTimer != null && flashTimer.isRunning()) {
             flashTimer.stop();
         }
-        
+
         // Create new timer to end the flash effect
         flashTimer = new Timer(FLASH_DURATION_MS, e -> {
             // Clear flashing players
             flashingPlayerNames.clear();
-            
+
             // Repaint the table
             repaint();
-            
+
             // Stop the timer
-            ((Timer)e.getSource()).stop();
+            ((Timer) e.getSource()).stop();
         });
-        
+
         // Start the timer
         flashTimer.setRepeats(false);
         flashTimer.start();
-        
+
         // Immediately repaint to show flash
         repaint();
     }
-    
+
     public boolean isPlayerFlashing(Player player) {
-        return player != null && player.getName() != null && 
-               flashingPlayerNames.contains(player.getName());
+        return player != null && player.getName() != null &&
+                flashingPlayerNames.contains(player.getName());
     }
-    
+
     public boolean isPlayerFlashing(String playerName) {
         return flashingPlayerNames.contains(playerName);
     }
-    
+
     private boolean isInArray(int[] array, int value) {
         for (int i : array) {
             if (i == value)
@@ -295,7 +302,7 @@ public class PlayersTable extends JTable {
         }
         return false;
     }
-    
+
     public void updatePlayerRow(Player player) {
         if (player == null)
             return;
@@ -318,7 +325,8 @@ public class PlayersTable extends JTable {
             tableModel.setValueAt(player.isMuted(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_MUTE));
             tableModel.setValueAt(player.getProbability(), modelRow,
                     tableModel.getColumnIndex(PlayersTableModel.COL_PROBABILITY));
-            tableModel.setValueAt(player.getSparse(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_SPARSE));
+            tableModel.setValueAt(player.getSparse(), modelRow,
+                    tableModel.getColumnIndex(PlayersTableModel.COL_SPARSE));
             tableModel.setValueAt(player.getSwing(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_SWING));
             tableModel.setValueAt(player.getRandomDegree(), modelRow,
                     tableModel.getColumnIndex(PlayersTableModel.COL_RANDOM));
@@ -326,8 +334,10 @@ public class PlayersTable extends JTable {
                     tableModel.getColumnIndex(PlayersTableModel.COL_MIN_VEL));
             tableModel.setValueAt(player.getMaxVelocity(), modelRow,
                     tableModel.getColumnIndex(PlayersTableModel.COL_MAX_VEL));
-            tableModel.setValueAt(player.getPreset(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_PRESET));
-            tableModel.setValueAt(player.getPanPosition(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_PAN));
+            tableModel.setValueAt(player.getPreset(), modelRow,
+                    tableModel.getColumnIndex(PlayersTableModel.COL_PRESET));
+            tableModel.setValueAt(player.getPanPosition(), modelRow,
+                    tableModel.getColumnIndex(PlayersTableModel.COL_PAN));
 
             // Special handling for instrument column
             tableModel.updateInstrumentCell(tableModel.getDataVector().get(modelRow),
@@ -345,7 +355,7 @@ public class PlayersTable extends JTable {
             e.printStackTrace();
         }
     }
-    
+
     private int findPlayerRowIndex(Player player) {
         if (player == null)
             return -1;
@@ -362,11 +372,11 @@ public class PlayersTable extends JTable {
 
         return -1; // Not found
     }
-    
+
     public int getLastSelectedRow() {
         return lastSelectedRow;
     }
-    
+
     public void setLastSelectedRow(int row) {
         this.lastSelectedRow = row;
     }
@@ -377,7 +387,7 @@ public class PlayersTable extends JTable {
     public int getColumnIndex(String columnName) {
         return getPlayersTableModel().getColumnIndex(columnName);
     }
-    
+
     /**
      * Get the flash color for use by renderers
      */

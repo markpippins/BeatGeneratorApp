@@ -50,8 +50,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ControlsPanel extends JPanel implements IBusListener {
-    private static final Logger logger = Logger.getLogger(ControlsPanel.class.getName());
+public class CustomControlsPanel extends JPanel implements IBusListener {
+    private static final Logger logger = Logger.getLogger(CustomControlsPanel.class.getName());
     private JComboBox<Instrument> instrumentSelector;
     private final RedisService redisService;
     private final JPanel controlsContainer;
@@ -59,7 +59,7 @@ public class ControlsPanel extends JPanel implements IBusListener {
 
     private boolean showToolbar = true;
 
-    public ControlsPanel() {
+    public CustomControlsPanel() {
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(800, 600));
         this.redisService = RedisService.getInstance();
@@ -166,7 +166,7 @@ public class ControlsPanel extends JPanel implements IBusListener {
         CommandBus.getInstance().register(this);
     }
 
-    public ControlsPanel(boolean showToolbar) {
+    public CustomControlsPanel(boolean showToolbar) {
         this();
         showToolbar(showToolbar);
     }

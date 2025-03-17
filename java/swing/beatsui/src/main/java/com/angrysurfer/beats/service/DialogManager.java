@@ -11,7 +11,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.beats.Frame;
-import com.angrysurfer.beats.panel.ControlsPanel;
+import com.angrysurfer.beats.panel.CustomControlsPanel;
 import com.angrysurfer.beats.panel.PlayerEditPanel;
 import com.angrysurfer.beats.panel.RuleEditPanel;
 import com.angrysurfer.core.api.Command;
@@ -238,7 +238,7 @@ public class DialogManager implements IBusListener {
             SwingUtilities.invokeLater(() -> {
                 try {
                     // Create controls panel with instrument context
-                    ControlsPanel controlsPanel = new ControlsPanel(false);
+                    CustomControlsPanel controlsPanel = new CustomControlsPanel(false);
 
                     // Pre-select the player's instrument
                     controlsPanel.selectInstrument(player.getInstrument());
