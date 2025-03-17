@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -46,6 +47,7 @@ public class PianoPanel extends StatusProviderPanel {
     private final ColorAnimator colorAnimator;
     private JButton activeButton = null; // Add this field to track active button
     private int currentOctave = 5; // Default octave (C5 = MIDI note 60)
+    private static final Logger logger = Logger.getLogger(PianoPanel.class.getName());
 
     public PianoPanel() {
         this(null);
@@ -166,41 +168,51 @@ public class PianoPanel extends StatusProviderPanel {
                 switch (action.getCommand()) {
                     // Existing cases
                     case Commands.KEY_PRESSED -> {
-                        if (action.getData() instanceof Integer note) 
+                        if (action.getData() instanceof Integer note) {
+                            logger.info("Piano panel received KEY_PRESSED: " + note);
                             handleKeyPress(note);
+                        }
                     }
                     case Commands.KEY_HELD -> {
-                        if (action.getData() instanceof Integer note)
+                        if (action.getData() instanceof Integer note) {
+                            logger.info("Piano panel received KEY_HELD: " + note);
                             handleKeyHold(note);
+                        }
                     }
                     case Commands.KEY_RELEASED -> {
-                        if (action.getData() instanceof Integer note)
+                        if (action.getData() instanceof Integer note) {
+                            logger.info("Piano panel received KEY_RELEASED: " + note);
                             handleKeyRelease(note);
+                        }
                     }
                     
                     // Add these new cases
                     case Commands.PLAYER_SELECTED -> {
                         if (action.getData() instanceof Player player && player.getNote() != null) {
-                            // Update piano octave based on selected player's note
-                            updateOctave(player.getNote().intValue());
+                            int note = player.getNote().intValue();
+                            logger.info("Piano panel: Player selected with note " + note);
+                            updateOctave(note);
                         }
                     }
                     case Commands.NEW_VALUE_NOTE -> {
                         // When a player's note changes, update the piano if it came from octave buttons
                         if (action.getSender() instanceof SessionPanel && 
                                 action.getData() instanceof Integer note) {
+                            logger.info("Piano panel: Note value changed to " + note);
                             updateOctave(note);
                         }
                     }
                     case Commands.SCALE_SELECTED -> {
                         if (activeButton == followScaleBtn && action.getData() instanceof String scaleName) {
                             currentScale = scaleName;
+                            logger.info("Piano panel: Applying scale " + scaleName + " in octave " + currentOctave);
                             applyCurrentScale(); // This will use currentRoot and currentOctave
                         }
                     }
                     case Commands.ROOT_NOTE_SELECTED -> {
                         if (action.getData() instanceof String rootNote) {
                             currentRoot = rootNote;
+                            logger.info("Piano panel: Root note changed to " + rootNote);
                             applyCurrentScale(); // Reapply scale with new root
                         }
                     }
@@ -490,11 +502,18 @@ public class PianoPanel extends StatusProviderPanel {
         // Collect the MIDI notes that are part of the scale
         List<Integer> scaleNotesList = new ArrayList<>();
         
-        // Map scale positions to MIDI notes (starting from middle C = 60)
+        // Calculate base note for the current octave and root
+        int rootOffset = Scale.getRootOffset(currentRoot);
+        int baseNote = currentOctave * 12 + rootOffset;
+        
+        logger.info("Applying scale in octave: " + currentOctave + ", base note: " + baseNote);
+        
+        // Map scale positions to MIDI notes
         for (int i = 0; i < scaleNotes.length; i++) {
             if (scaleNotes[i]) {
-                int midiNote = 60 + i; // Middle C (60) plus scale position
-                if (noteToKeyMap.containsKey(midiNote)) {
+                int midiNote = baseNote + i;
+                JButton key = noteToKeyMap.get(midiNote);
+                if (key != null) {
                     // Mark as held and highlight
                     heldNotes.add(midiNote);
                     highlightKey(midiNote);
@@ -507,7 +526,8 @@ public class PianoPanel extends StatusProviderPanel {
         if (activeButton == followScaleBtn && !scaleNotesList.isEmpty()) {
             // Update status to show what's being played
             if (Objects.nonNull(statusConsumer)) {
-                statusConsumer.setStatus(String.format("Playing %s %s", currentRoot, currentScale));
+                statusConsumer.setStatus(String.format("Playing %s %s (Octave %d)", 
+                                       currentRoot, currentScale, currentOctave));
             }
             
             // Play each note in the scale with slight delay for arpeggio effect
@@ -519,7 +539,6 @@ public class PianoPanel extends StatusProviderPanel {
                     playNote(noteToPlay);
                     delayMs[0]++;
                 } else {
-                    // Stop the timer once all notes have been played
                     ((Timer)e.getSource()).stop();
                 }
             });
@@ -576,13 +595,17 @@ public class PianoPanel extends StatusProviderPanel {
 
     // Add this method to update the octave and piano key mappings
     public void updateOctave(int midiNote) {
-        // MIDI note 60 is middle C (C5)
         // Calculate octave (0-10) based on MIDI note (0-127)
         int newOctave = midiNote / 12;
         
+        // Ensure octave is in valid range
+        newOctave = Math.max(0, Math.min(9, newOctave));
+        
+        logger.info("Piano panel: Updating octave based on note " + midiNote + 
+                    " (current octave: " + currentOctave + ", new octave: " + newOctave + ")");
+        
         // Only update if octave actually changed
         if (newOctave != currentOctave) {
-            // logger.info("Updating piano octave from " + currentOctave + " to " + newOctave);
             currentOctave = newOctave;
             
             // Update note to key mapping
@@ -603,47 +626,70 @@ public class PianoPanel extends StatusProviderPanel {
         // Base note for C in the current octave
         int baseNote = currentOctave * 12;
         
-        // Re-map white keys (C through B)
-        int[] whiteKeyOffsets = {0, 2, 4, 5, 7, 9, 11};
-        Component[] components = getComponents();
-        int whiteKeyIndex = 0;
+        logger.info("Updating note to key map for octave " + currentOctave + ", base note: " + baseNote);
         
-        for (Component c : components) {
-            if (c instanceof JButton) {
-                JButton key = (JButton) c;
-                // Check if it's a white key by examining bounds
-                if (key.getHeight() > 40 && whiteKeyIndex < whiteKeyOffsets.length) { 
-                    // It's a white key
-                    int noteValue = baseNote + whiteKeyOffsets[whiteKeyIndex];
-                    noteToKeyMap.put(noteValue, key);
-                    
-                    // Update tooltip to show actual MIDI note
-                    key.setToolTipText(Scale.getNoteNameWithOctave(noteValue));
-                    
-                    whiteKeyIndex++;
+        // Get all white and black keys
+        List<JButton> whiteKeys = new ArrayList<>();
+        List<JButton> blackKeys = new ArrayList<>();
+        
+        for (Component c : getComponents()) {
+            if (c instanceof JButton button) {
+                // Skip the command buttons on the right side
+                if (button == followScaleBtn || 
+                    (button.getY() < 20 && button.getX() > getWidth() - 50)) {
+                    continue;
+                }
+                
+                // Check if it's a white or black key by examining height
+                if (button.getHeight() > 40) {
+                    whiteKeys.add(button);
+                } else if (button.getHeight() <= 40) {
+                    blackKeys.add(button);
                 }
             }
         }
         
-        // Re-map black keys (C# through A#)
-        int[] blackKeyOffsets = {1, 3, -1, 6, 8, 10, -1}; // -1 means no black key
-        int blackKeyIndex = 0;
+        // Sort white keys by X position (left to right)
+        whiteKeys.sort((a, b) -> Integer.compare(a.getX(), b.getX()));
         
-        for (Component c : components) {
-            if (c instanceof JButton) {
-                JButton key = (JButton) c;
-                // Check if it's a black key by examining bounds
-                if (key.getHeight() <= 40 && blackKeyIndex < blackKeyOffsets.length) {
-                    if (blackKeyOffsets[blackKeyIndex] != -1) {
-                        // It's a black key
-                        int noteValue = baseNote + blackKeyOffsets[blackKeyIndex];
-                        noteToKeyMap.put(noteValue, key);
-                        
-                        // Update tooltip
-                        key.setToolTipText(Scale.getNoteNameWithOctave(noteValue));
-                    }
-                    blackKeyIndex++;
-                }
+        // Map white keys (C through B)
+        int[] whiteKeyOffsets = {0, 2, 4, 5, 7, 9, 11};
+        for (int i = 0; i < whiteKeys.size() && i < whiteKeyOffsets.length; i++) {
+            JButton key = whiteKeys.get(i);
+            int noteValue = baseNote + whiteKeyOffsets[i];
+            noteToKeyMap.put(noteValue, key);
+            
+            // Update tooltip to show actual MIDI note
+            String noteName = Scale.getNoteNameWithOctave(noteValue);
+            key.setToolTipText(noteName + " (" + noteValue + ")");
+            logger.info("Mapped white key " + i + " to note " + noteValue + " (" + noteName + ")");
+        }
+        
+        // Sort black keys by X position (left to right)
+        blackKeys.sort((a, b) -> Integer.compare(a.getX(), b.getX()));
+        
+        // Map black keys (C# through A#)
+        int[] blackKeyOffsets = {1, 3, -1, 6, 8, 10, -1}; // -1 means no black key
+        int blackKeyIdx = 0;
+        for (int i = 0; i < blackKeys.size(); i++) {
+            if (blackKeyIdx >= blackKeyOffsets.length) break;
+            
+            // Skip positions with no black keys
+            while (blackKeyIdx < blackKeyOffsets.length && blackKeyOffsets[blackKeyIdx] == -1) {
+                blackKeyIdx++;
+            }
+            
+            if (blackKeyIdx < blackKeyOffsets.length) {
+                JButton key = blackKeys.get(i);
+                int noteValue = baseNote + blackKeyOffsets[blackKeyIdx];
+                noteToKeyMap.put(noteValue, key);
+                
+                // Update tooltip
+                String noteName = Scale.getNoteNameWithOctave(noteValue);
+                key.setToolTipText(noteName + " (" + noteValue + ")");
+                logger.info("Mapped black key " + i + " to note " + noteValue + " (" + noteName + ")");
+                
+                blackKeyIdx++;
             }
         }
         

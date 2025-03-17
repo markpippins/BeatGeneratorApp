@@ -8,6 +8,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -21,6 +22,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
@@ -61,13 +63,18 @@ public class PlayersPanel extends JPanel {
 
     // Use the model's column arrays instead of redefining them
     private static final int[] BOOLEAN_COLUMNS = PlayersTableModel.getBooleanColumns();
-    private static final int[] STRING_COLUMNS = PlayersTableModel.getStringColumns();
     private static final int[] NUMERIC_COLUMNS = PlayersTableModel.getNumericColumns();
 
     private boolean hasActiveSession = false; 
     private JButton controlButton;
     private JButton saveButton;
     private JButton refreshButton;
+
+    // Add to the class fields section
+    private final Set<String> flashingPlayerNames = new HashSet<>();
+    private Timer flashTimer;
+    private final Color FLASH_COLOR = new Color(255, 255, 200); // Light yellow flash
+    private final int FLASH_DURATION_MS = 500; // Flash duration in milliseconds
 
     public PlayersPanel(StatusConsumer status) {
         super(new BorderLayout());
@@ -738,8 +745,8 @@ public class PlayersPanel extends JPanel {
             // Notify the model that data has changed
             model.fireTableRowsUpdated(modelRow, modelRow);
 
-            // Force the table to repaint the row
-            table.repaint();
+            // Flash the row to indicate update
+            flashPlayerRow(player);
 
             logger.info("Updated row " + rowIndex + " for player: " + player.getName());
         } catch (Exception e) {
@@ -837,5 +844,53 @@ public class PlayersPanel extends JPanel {
         }
 
         return null;
+    }
+
+    /**
+     * Flash the row for the given player
+     * 
+     * @param player The player whose row should flash
+     */
+    private void flashPlayerRow(Player player) {
+        if (player == null || player.getName() == null) {
+            return;
+        }
+
+        // Add player to flashing set
+        flashingPlayerNames.add(player.getName());
+        
+        // Cancel existing timer if one is running
+        if (flashTimer != null && flashTimer.isRunning()) {
+            flashTimer.stop();
+        }
+        
+        // Create new timer to end the flash effect
+        flashTimer = new Timer(FLASH_DURATION_MS, e -> {
+            // Clear flashing players
+            flashingPlayerNames.clear();
+            
+            // Repaint the table
+            table.repaint();
+            
+            // Stop the timer
+            ((Timer)e.getSource()).stop();
+        });
+        
+        // Start the timer
+        flashTimer.setRepeats(false);
+        flashTimer.start();
+        
+        // Immediately repaint to show flash
+        table.repaint();
+    }
+
+    /**
+     * Check if a player is currently flashing
+     * 
+     * @param playerName The player name to check
+     * @return True if the player's row is flashing
+     */
+    public boolean isPlayerFlashing(String playerName) {
+        return flashingPlayerNames.contains(playerName);
     }
 }

@@ -19,7 +19,9 @@ import com.angrysurfer.beats.service.DialogManager;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.util.Constants;
 
 public class Frame extends JFrame implements AutoCloseable {
@@ -180,16 +182,34 @@ public class Frame extends JFrame implements AutoCloseable {
                     char keyChar = Character.toLowerCase(e.getKeyChar());
 
                     if (keyNoteMap.containsKey(keyChar)) {
-                        int note = keyNoteMap.get(keyChar);
+                        // Get base note (for octave 5)
+                        int baseNote = keyNoteMap.get(keyChar);
+                        
+                        // Adjust for active player's octave
+                        Player activePlayer = PlayerManager.getInstance().getActivePlayer();
+                        int noteToPlay = baseNote;
+                        
+                        if (activePlayer != null && activePlayer.getNote() != null) {
+                            int playerOctave = activePlayer.getNote().intValue() / 12;
+                            int baseOctave = 5; // Default keyboard mapping is in octave 5
+                            
+                            // Adjust the note by the octave difference
+                            noteToPlay = baseNote + ((playerOctave - baseOctave) * 12);
+                            
+                            // Ensure within valid MIDI range
+                            noteToPlay = Math.max(0, Math.min(127, noteToPlay));
+                            logger.info("Key " + keyChar + " mapped to note " + noteToPlay + 
+                                       " (player octave: " + playerOctave + ")");
+                        }
 
                         switch (e.getID()) {
                             case KeyEvent.KEY_PRESSED -> {
                                 String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
-                                CommandBus.getInstance().publish(command, this, note);
+                                CommandBus.getInstance().publish(command, this, noteToPlay);
                             }
                             case KeyEvent.KEY_RELEASED -> {
                                 if (!e.isShiftDown()) {
-                                    CommandBus.getInstance().publish(Commands.KEY_RELEASED, this, note);
+                                    CommandBus.getInstance().publish(Commands.KEY_RELEASED, this, noteToPlay);
                                 }
                             }
                         }
