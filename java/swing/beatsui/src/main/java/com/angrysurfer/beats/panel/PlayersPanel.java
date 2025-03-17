@@ -80,6 +80,9 @@ public class PlayersPanel extends JPanel {
             hasActiveSession = true;
             enableControls(true);
             refreshPlayers(currentSession.getPlayers());
+            
+            // Auto-select first player if available
+            SwingUtilities.invokeLater(this::selectFirstPlayerIfNoneSelected);
         }
     }
 
@@ -262,6 +265,9 @@ public class PlayersPanel extends JPanel {
                         case Commands.SESSION_SELECTED, Commands.SESSION_LOADED -> {
                             if (action.getData() instanceof Session session) {
                                 refreshPlayers(session.getPlayers());
+                                
+                                // After the players are refreshed, auto-select the first one if needed
+                                SwingUtilities.invokeLater(() -> PlayersPanel.this.selectFirstPlayerIfNoneSelected());
                             }
                         }
 
@@ -340,6 +346,15 @@ public class PlayersPanel extends JPanel {
                         }
 
                         // Other cases...
+                        case Commands.SYSTEM_READY -> {
+                            // Let the UI settle first
+                            SwingUtilities.invokeLater(() -> {
+                                Session session = SessionManager.getInstance().getActiveSession();
+                                if (session != null && session.getPlayers() != null && !session.getPlayers().isEmpty()) {
+                                    PlayersPanel.this.selectFirstPlayerIfNoneSelected();
+                                }
+                            });
+                        }
                     }
                 } catch (Exception e) {
                     logger.severe("Error processing command: " + e.getMessage());
@@ -577,5 +592,15 @@ public class PlayersPanel extends JPanel {
                 updateButtonStates();
             }
         });
+    }
+
+    // Add this method to PlayersPanel class
+    private void selectFirstPlayerIfNoneSelected() {
+        // Only select if we have players but no selection yet
+        if (table.getRowCount() > 0 && table.getSelectedRow() < 0) {
+            logger.info("Auto-selecting first player");
+            table.setRowSelectionInterval(0, 0);
+            table.handlePlayerSelection(0);
+        }
     }
 }

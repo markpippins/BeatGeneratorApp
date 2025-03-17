@@ -39,7 +39,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-class RulesPanel extends JPanel {
+public class RulesPanel extends JPanel {
     private static final Logger logger = Logger.getLogger(RulesPanel.class.getName());
     private Player currentPlayer;
 

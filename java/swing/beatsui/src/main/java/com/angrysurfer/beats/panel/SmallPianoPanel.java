@@ -1,5 +1,4 @@
 package com.angrysurfer.beats.panel;
-
 import java.awt.Component;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -38,7 +37,7 @@ import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Scale;
 
-public class PianoPanel extends StatusProviderPanel {
+public class SmallPianoPanel extends StatusProviderPanel {
     private static final String DEFAULT_ROOT = "C";
     private String currentRoot = DEFAULT_ROOT; // Add root note tracking
     private String currentScale = "Chromatic"; // Default scale
@@ -50,7 +49,7 @@ public class PianoPanel extends StatusProviderPanel {
     private int currentOctave = 5; // Default octave (C5 = MIDI note 60)
     private static final Logger logger = Logger.getLogger(PianoPanel.class.getName());
 
-    public PianoPanel() {
+    public SmallPianoPanel() {
         this(null);
         setupActionBusListener();
     }
@@ -59,13 +58,12 @@ public class PianoPanel extends StatusProviderPanel {
 
     // private JButton followChordBtn;
 
-    public PianoPanel(StatusConsumer statusConsumer) {
+    public SmallPianoPanel(StatusConsumer statusConsumer) {
         super(null, statusConsumer);
         // Increase width from 230 to 265 to accommodate the extra buttons
-        setPreferredSize(new Dimension(255, 80));
+        setPreferredSize(new Dimension(265, 80));
         setMinimumSize(new Dimension(265, 80));
-        // setBorder(BorderFactory.createLineBorder(Color.lightGray, 1));
-        setBorder(BorderFactory.createEmptyBorder(20,2,20,2));
+        setBorder(BorderFactory.createLineBorder(Color.lightGray, 1));
         setOpaque(true);
         setBackground(ColorUtils.fadedOrange);
 
@@ -165,9 +163,8 @@ public class PianoPanel extends StatusProviderPanel {
         commandBus.register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null)
-                    return;
-
+                if (action.getCommand() == null) return;
+                
                 switch (action.getCommand()) {
                     // Existing cases
                     case Commands.KEY_PRESSED -> {
@@ -188,7 +185,7 @@ public class PianoPanel extends StatusProviderPanel {
                             handleKeyRelease(note);
                         }
                     }
-
+                    
                     // Add these new cases
                     case Commands.PLAYER_SELECTED -> {
                         if (action.getData() instanceof Player player && player.getNote() != null) {
@@ -199,7 +196,7 @@ public class PianoPanel extends StatusProviderPanel {
                     }
                     case Commands.NEW_VALUE_NOTE -> {
                         // When a player's note changes, update the piano if it came from octave buttons
-                        if (action.getSender() instanceof SessionPanel &&
+                        if (action.getSender() instanceof SessionPanel && 
                                 action.getData() instanceof Integer note) {
                             logger.info("Piano panel: Note value changed to " + note);
                             updateOctave(note);
@@ -253,14 +250,16 @@ public class PianoPanel extends StatusProviderPanel {
             // Add to held notes and play
             if (Objects.nonNull(statusConsumer)) {
                 Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-                String playerInfo = activePlayer != null ? " through " + activePlayer.getName() : " (no active player)";
+                String playerInfo = activePlayer != null ? 
+                                " through " + activePlayer.getName() : 
+                                " (no active player)";
                 statusConsumer.setStatus("Holding note " + note + playerInfo);
             }
             heldNotes.add(note);
             highlightKey(note);
             playNote(note);
-
-            // For held notes, we want them to continue playing, so we don't
+            
+            // For held notes, we want them to continue playing, so we don't 
             // schedule a release
         }
     }
@@ -300,19 +299,21 @@ public class PianoPanel extends StatusProviderPanel {
         System.out.println("Playing note: " + note);
         if (Objects.nonNull(statusConsumer)) {
             Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-            String playerInfo = activePlayer != null ? " through " + activePlayer.getName() : " (no active player)";
+            String playerInfo = activePlayer != null ? 
+                                " through " + activePlayer.getName() : 
+                                " (no active player)";
             statusConsumer.setStatus("Playing note " + note + playerInfo);
         }
-
+        
+        
         if (SessionManager.getInstance().isRecording()) {
             CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, note);
-            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this,
-                    PlayerManager.getInstance().getActivePlayer());
-        }
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, PlayerManager.getInstance().getActivePlayer());
+        }   
 
         // Send MIDI note to active player
         boolean notePlayed = PlayerManager.getInstance().sendNoteToActivePlayer(note);
-
+        
         // Visual feedback based on success
         if (!notePlayed) {
             // Flash the key briefly with red to indicate failure
@@ -320,7 +321,7 @@ public class PianoPanel extends StatusProviderPanel {
             if (key != null) {
                 Color originalBackground = key.getBackground();
                 key.setBackground(new Color(255, 100, 100));
-
+                
                 // Reset after brief delay
                 new Timer(150, e -> {
                     key.setBackground(originalBackground);
@@ -335,7 +336,7 @@ public class PianoPanel extends StatusProviderPanel {
         if (Objects.nonNull(statusConsumer)) {
             statusConsumer.setStatus("");
         }
-
+        
         // For held notes we don't want to send MIDI note-off since the PlayerManager
         // already schedules note-off. If we implement longer held notes, we'd need
         // to modify PlayerManager to support this.
@@ -423,7 +424,7 @@ public class PianoPanel extends StatusProviderPanel {
         key.setBorderPainted(false);
         key.setFocusPainted(false);
         key.setToolTipText(note);
-
+        
         // Add mouse listeners to handle mouse clicks on piano keys
         key.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -439,7 +440,7 @@ public class PianoPanel extends StatusProviderPanel {
                     }
                 }
             }
-
+            
             @Override
             public void mouseReleased(java.awt.event.MouseEvent e) {
                 Integer noteValue = getNoteForKey(key);
@@ -494,19 +495,19 @@ public class PianoPanel extends StatusProviderPanel {
     private void applyCurrentScale() {
         // First release any previously held notes
         releaseAllNotes();
-
+        
         // Get the new scale pattern based on current root and scale type
         Boolean[] scaleNotes = Scale.getScale(currentRoot, currentScale);
-
+        
         // Collect the MIDI notes that are part of the scale
         List<Integer> scaleNotesList = new ArrayList<>();
-
+        
         // Calculate base note for the current octave and root
         int rootOffset = Scale.getRootOffset(currentRoot);
         int baseNote = currentOctave * 12 + rootOffset;
-
+        
         logger.info("Applying scale in octave: " + currentOctave + ", base note: " + baseNote);
-
+        
         // Map scale positions to MIDI notes
         for (int i = 0; i < scaleNotes.length; i++) {
             if (scaleNotes[i]) {
@@ -520,17 +521,17 @@ public class PianoPanel extends StatusProviderPanel {
                 }
             }
         }
-
+        
         // Play the notes as a chord if the scale button is active
         if (activeButton == followScaleBtn && !scaleNotesList.isEmpty()) {
             // Update status to show what's being played
             if (Objects.nonNull(statusConsumer)) {
-                statusConsumer.setStatus(String.format("Playing %s %s (Octave %d)",
-                        currentRoot, currentScale, currentOctave));
+                statusConsumer.setStatus(String.format("Playing %s %s (Octave %d)", 
+                                       currentRoot, currentScale, currentOctave));
             }
-
+            
             // Play each note in the scale with slight delay for arpeggio effect
-            final int[] delayMs = { 0 };
+            final int[] delayMs = {0};
             Timer chordTimer = new Timer(30, null);
             chordTimer.addActionListener(e -> {
                 if (delayMs[0] < scaleNotesList.size()) {
@@ -538,7 +539,7 @@ public class PianoPanel extends StatusProviderPanel {
                     playNote(noteToPlay);
                     delayMs[0]++;
                 } else {
-                    ((Timer) e.getSource()).stop();
+                    ((Timer)e.getSource()).stop();
                 }
             });
             chordTimer.start();
@@ -563,7 +564,7 @@ public class PianoPanel extends StatusProviderPanel {
         playerStatusIndicator.setBounds(getWidth() - 15, getHeight() - 15, 10, 10);
         playerStatusIndicator.setToolTipText("No active player selected");
         add(playerStatusIndicator);
-
+        
         // Update the indicator when player selection changes
         commandBus.register(new IBusListener() {
             @Override
@@ -576,7 +577,7 @@ public class PianoPanel extends StatusProviderPanel {
                 }
             }
         });
-
+        
         // Set initial state
         updatePlayerStatusIndicator();
     }
@@ -586,8 +587,9 @@ public class PianoPanel extends StatusProviderPanel {
             Player activePlayer = PlayerManager.getInstance().getActivePlayer();
             boolean hasActivePlayer = activePlayer != null;
             playerStatusIndicator.setForeground(hasActivePlayer ? Color.GREEN : Color.RED);
-            playerStatusIndicator.setToolTipText(
-                    hasActivePlayer ? "Active player: " + activePlayer.getName() : "No active player selected");
+            playerStatusIndicator.setToolTipText(hasActivePlayer ? 
+                    "Active player: " + activePlayer.getName() :
+                    "No active player selected");
         });
     }
 
@@ -595,20 +597,20 @@ public class PianoPanel extends StatusProviderPanel {
     public void updateOctave(int midiNote) {
         // Calculate octave (0-10) based on MIDI note (0-127)
         int newOctave = midiNote / 12;
-
+        
         // Ensure octave is in valid range
         newOctave = Math.max(0, Math.min(9, newOctave));
-
-        logger.info("Piano panel: Updating octave based on note " + midiNote +
-                " (current octave: " + currentOctave + ", new octave: " + newOctave + ")");
-
+        
+        logger.info("Piano panel: Updating octave based on note " + midiNote + 
+                    " (current octave: " + currentOctave + ", new octave: " + newOctave + ")");
+        
         // Only update if octave actually changed
         if (newOctave != currentOctave) {
             currentOctave = newOctave;
-
+            
             // Update note to key mapping
             updateNoteToKeyMap();
-
+            
             // If scale is active, reapply it with new octave
             if (activeButton == followScaleBtn) {
                 applyCurrentScale();
@@ -620,24 +622,24 @@ public class PianoPanel extends StatusProviderPanel {
     private void updateNoteToKeyMap() {
         // Clear existing mapping
         noteToKeyMap.clear();
-
+        
         // Base note for C in the current octave
         int baseNote = currentOctave * 12;
-
+        
         logger.info("Updating note to key map for octave " + currentOctave + ", base note: " + baseNote);
-
+        
         // Get all white and black keys
         List<JButton> whiteKeys = new ArrayList<>();
         List<JButton> blackKeys = new ArrayList<>();
-
+        
         for (Component c : getComponents()) {
             if (c instanceof JButton button) {
                 // Skip the command buttons on the right side
-                if (button == followScaleBtn ||
-                        (button.getY() < 20 && button.getX() > getWidth() - 50)) {
+                if (button == followScaleBtn || 
+                    (button.getY() < 20 && button.getX() > getWidth() - 50)) {
                     continue;
                 }
-
+                
                 // Check if it's a white or black key by examining height
                 if (button.getHeight() > 40) {
                     whiteKeys.add(button);
@@ -646,52 +648,51 @@ public class PianoPanel extends StatusProviderPanel {
                 }
             }
         }
-
+        
         // Sort white keys by X position (left to right)
         whiteKeys.sort((a, b) -> Integer.compare(a.getX(), b.getX()));
-
+        
         // Map white keys (C through B)
-        int[] whiteKeyOffsets = { 0, 2, 4, 5, 7, 9, 11 };
+        int[] whiteKeyOffsets = {0, 2, 4, 5, 7, 9, 11};
         for (int i = 0; i < whiteKeys.size() && i < whiteKeyOffsets.length; i++) {
             JButton key = whiteKeys.get(i);
             int noteValue = baseNote + whiteKeyOffsets[i];
             noteToKeyMap.put(noteValue, key);
-
+            
             // Update tooltip to show actual MIDI note
             String noteName = Scale.getNoteNameWithOctave(noteValue);
             key.setToolTipText(noteName + " (" + noteValue + ")");
             logger.info("Mapped white key " + i + " to note " + noteValue + " (" + noteName + ")");
         }
-
+        
         // Sort black keys by X position (left to right)
         blackKeys.sort((a, b) -> Integer.compare(a.getX(), b.getX()));
-
+        
         // Map black keys (C# through A#)
-        int[] blackKeyOffsets = { 1, 3, -1, 6, 8, 10, -1 }; // -1 means no black key
+        int[] blackKeyOffsets = {1, 3, -1, 6, 8, 10, -1}; // -1 means no black key
         int blackKeyIdx = 0;
         for (int i = 0; i < blackKeys.size(); i++) {
-            if (blackKeyIdx >= blackKeyOffsets.length)
-                break;
-
+            if (blackKeyIdx >= blackKeyOffsets.length) break;
+            
             // Skip positions with no black keys
             while (blackKeyIdx < blackKeyOffsets.length && blackKeyOffsets[blackKeyIdx] == -1) {
                 blackKeyIdx++;
             }
-
+            
             if (blackKeyIdx < blackKeyOffsets.length) {
                 JButton key = blackKeys.get(i);
                 int noteValue = baseNote + blackKeyOffsets[blackKeyIdx];
                 noteToKeyMap.put(noteValue, key);
-
+                
                 // Update tooltip
                 String noteName = Scale.getNoteNameWithOctave(noteValue);
                 key.setToolTipText(noteName + " (" + noteValue + ")");
                 logger.info("Mapped black key " + i + " to note " + noteValue + " (" + noteName + ")");
-
+                
                 blackKeyIdx++;
             }
         }
-
+        
         // Force repaint to reflect changes
         repaint();
     }

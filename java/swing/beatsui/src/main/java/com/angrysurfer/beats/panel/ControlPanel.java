@@ -68,9 +68,6 @@ public class ControlPanel extends JPanel {
         setMinimumSize(new Dimension(getMinimumSize().width, 100));
         setPreferredSize(new Dimension(getPreferredSize().width, 100));
 
-        // Add MiniLaunchPanel
-        add(new MiniLaunchPanel(null), FlowLayout.LEFT);
-
         // Add vertical adjust panels
         add(createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP, Commands.PRESET_DOWN));
         add(createVerticalAdjustPanel("Spread", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
@@ -86,9 +83,8 @@ public class ControlPanel extends JPanel {
         // Initially disable dials
         disableDials();
 
-        // Add PianoPanel
-        // PianoPanel pianoPanel = new PianoPanel(statusConsumer);
-        // add(pianoPanel);
+        // Add MiniLaunchPanel
+        add(new MiniLaunchPanel(null));
 
         // Set up control change listeners
         setupControlChangeListeners();

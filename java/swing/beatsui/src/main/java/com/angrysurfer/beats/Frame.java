@@ -1,9 +1,11 @@
 package com.angrysurfer.beats;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +16,10 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 
 import com.angrysurfer.beats.panel.MainPanel;
+import com.angrysurfer.beats.panel.PlayersPanel;
 import com.angrysurfer.beats.panel.SessionPanel;
 import com.angrysurfer.beats.service.DialogManager;
+import com.angrysurfer.beats.widget.PlayersTable;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
@@ -178,9 +182,16 @@ public class Frame extends JFrame implements AutoCloseable {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
+                // Only process KEY_PRESSED events to avoid duplicate handling
+                if (e.getID() != KeyEvent.KEY_PRESSED) {
+                    return false;
+                }
+                
+                // Handle MIDI key mapping for piano
                 if (mainPanel != null && mainPanel.getSelectedComponent() instanceof SessionPanel) {
                     char keyChar = Character.toLowerCase(e.getKeyChar());
 
+                    // MIDI piano key handling (existing code)
                     if (keyNoteMap.containsKey(keyChar)) {
                         // Get base note (for octave 5)
                         int baseNote = keyNoteMap.get(keyChar);
@@ -199,7 +210,7 @@ public class Frame extends JFrame implements AutoCloseable {
                             // Ensure within valid MIDI range
                             noteToPlay = Math.max(0, Math.min(127, noteToPlay));
                             logger.info("Key " + keyChar + " mapped to note " + noteToPlay + 
-                                       " (player octave: " + playerOctave + ")");
+                                      " (player octave: " + playerOctave + ")");
                         }
 
                         switch (e.getID()) {
@@ -214,10 +225,70 @@ public class Frame extends JFrame implements AutoCloseable {
                             }
                         }
                     }
+                    
+                    // Handle arrow key navigation for PlayersTable
+                    int keyCode = e.getKeyCode();
+                    if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN) {
+                        // Find the session panel
+                        SessionPanel sessionPanel = (SessionPanel) mainPanel.getSelectedComponent();
+                        PlayersPanel playersPanel = sessionPanel.getPlayerTablePanel();
+                        PlayersTable playersTable = playersPanel.getTable();
+                        
+                        // Don't intercept if any of these conditions are true:
+                        // 1. Dialog is active (check if any dialog is showing)
+                        // 2. Rules table has focus
+                        // 3. Text field or similar component has focus
+                        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                        boolean isRulesTableFocused = focusOwner != null && 
+                                                     (focusOwner == sessionPanel.getRuleTablePanel().getTable() || 
+                                                      focusOwner.getParent() == sessionPanel.getRuleTablePanel().getTable());
+                        boolean isTextComponentFocused = focusOwner instanceof javax.swing.text.JTextComponent;
+                        
+                        // If none of these conditions are true, handle arrow key navigation
+                        if (!isModalDialogShowing() && !isRulesTableFocused && !isTextComponentFocused) {
+                            int currentRow = playersTable.getSelectedRow();
+                            int rowCount = playersTable.getRowCount();
+                            
+                            if (rowCount > 0) {
+                                if (currentRow < 0) {
+                                    // No row selected, select first row
+                                    playersTable.setRowSelectionInterval(0, 0);
+                                    playersTable.handlePlayerSelection(0);
+                                    playersTable.scrollRectToVisible(playersTable.getCellRect(0, 0, true));
+                                } else {
+                                    // Calculate new row based on key
+                                    int newRow = (keyCode == KeyEvent.VK_UP) ? 
+                                        Math.max(0, currentRow - 1) : 
+                                        Math.min(rowCount - 1, currentRow + 1);
+                                    
+                                    if (newRow != currentRow) {
+                                        playersTable.setRowSelectionInterval(newRow, newRow);
+                                        playersTable.handlePlayerSelection(newRow);
+                                        playersTable.scrollRectToVisible(playersTable.getCellRect(newRow, 0, true));
+                                    }
+                                }
+                                
+                                // Consume the event so it isn't processed elsewhere
+                                e.consume();
+                                return true;
+                            }
+                        }
+                    }
                 }
                 return false;
             }
         });
+    }
+
+    // Helper method to check if any modal dialog is showing
+    private boolean isModalDialogShowing() {
+        // Check if any modal dialogs are active
+        for (Window window : Window.getWindows()) {
+            if (window.isShowing() && window instanceof Dialog && ((Dialog) window).isModal()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void setupMainContent() {
