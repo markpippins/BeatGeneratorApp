@@ -300,9 +300,10 @@ public class Session implements Serializable, IBusListener {
     public void beforeStart() {
         logger.info("beforeStart() - initializing cycler lengths");
         getTickCycler().setLength((long) getTicksPerBeat());
-        getBarCycler().setLength((long) getBars());
         getBeatCycler().setLength((long) getBeatsPerBar());
-        getPartCycler().setLength((long) getPartLength());
+        getBarCycler().setLength((long) getBars());
+        getPartCycler().setLength((long) getParts());
+     
         getPlayers().forEach(p -> p.getSkipCycler().setLength(p.getSkips()));
     }
 

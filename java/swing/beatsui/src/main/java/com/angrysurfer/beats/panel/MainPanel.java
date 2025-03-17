@@ -57,7 +57,7 @@ public class MainPanel extends JPanel implements AutoCloseable {
         JPanel buttonPanel = new JPanel(new BorderLayout());
         buttonPanel.setOpaque(false);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
-        buttonPanel.add(createMetronomeToggleButton(), BorderLayout.CENTER);
+        buttonPanel.add(createMetronomeToggleButton(), BorderLayout.EAST);
         
         tabToolbar.add(buttonPanel);
         tabToolbar.add(Box.createVerticalGlue());

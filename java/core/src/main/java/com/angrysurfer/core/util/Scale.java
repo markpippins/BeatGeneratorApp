@@ -298,4 +298,29 @@ public class Scale {
         System.out.println("\nScale for key " + key + " in " + scaleName + ":");
         printScale(scale);
     }
+
+    public static String getNoteNameWithOctave(int midiNote) {
+        String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        int octave = midiNote / 12 - 1; // MIDI octaves start at -1
+        int noteIndex = midiNote % 12;
+        return noteNames[noteIndex] + octave;
+    }
+
+    public static int getRootOffset(String rootNote) {
+        switch (rootNote) {
+            case "C": return 0;
+            case "C#": case "Db": return 1;
+            case "D": return 2;
+            case "D#": case "Eb": return 3;
+            case "E": return 4;
+            case "F": return 5;
+            case "F#": case "Gb": return 6;
+            case "G": return 7;
+            case "G#": case "Ab": return 8;
+            case "A": return 9;
+            case "A#": case "Bb": return 10;
+            case "B": return 11;
+            default: return 0;
+        }
+    }
 }

@@ -31,7 +31,7 @@ public class SequencerManager implements IBusListener {
 
     private static SequencerManager instance;
 
-    private boolean metronomeAudible = true;
+    private boolean metronomeAudible = false;
 
     // Add timing state tracking
     private int currentTick = 0;
@@ -92,6 +92,7 @@ public class SequencerManager implements IBusListener {
     private void setupSynthesizer() throws MidiUnavailableException {
         synthesizer = MidiSystem.getSynthesizer();
         synthesizer.open();
+        synthesizer.getChannels()[metronomeChannel].setMute(!metronomeAudible);        
     }
 
     // Modified createSequence to support dynamic parameters

@@ -31,6 +31,7 @@ import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.SessionManager;
 
 public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener {
 
@@ -203,6 +204,12 @@ public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener
             // logger.debug("No active player to receive MIDI note: {}", midiNote);
             return false;
         }
+
+        if (SessionManager.getInstance().isRecording()) {
+            CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, midiNote);
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+        }   
+
 
         try {
             // Use the player's instrument, channel, and a reasonable velocity

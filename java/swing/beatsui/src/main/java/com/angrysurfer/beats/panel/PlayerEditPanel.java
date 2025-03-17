@@ -408,6 +408,8 @@ public class PlayerEditPanel extends StatusProviderPanel {
         player.setRandomDegree((long) randomSlider.getValue());
         player.setPanPosition((long) panSlider.getValue());
         player.setSparse(((double) sparseSlider.getValue()) / 100.0);
+        player.setRatchetCount((long) ratchetCountSlider.getValue());
+        player.setRatchetInterval((long) ratchetIntervalSlider.getValue());
         player.setName(nameField.getText());
 
         // Set toggle switch values

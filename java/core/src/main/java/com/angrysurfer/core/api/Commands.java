@@ -227,4 +227,10 @@ public class Commands {
     public static final String PRESET_UP = "PRESET_UP";
     public static final String PRESET_SELECTED = "PRESET_SELECTED";
     public static final String PRESET_CHANGED = "PRESET_CHANGED";
+    public static final String TRANSPORT_RECORD_START = "TRANSPORT_RECORD_START";
+    public static final String TRANSPORT_RECORD_STOP = "TRANSPORT_RECORD_STOP";
+    public static final String SAVE_SESSION = "SAVE_SESSION";
+    public static final String PLAYERS_REFRESH_REQUEST = "PLAYERS_REFRESH_REQUEST";
+    public static final String RECORDING_STOPPED = "RECORDING_STOPPED";
+    public static final String RECORDING_STARTED = "RECORDING_STARTED";
 }

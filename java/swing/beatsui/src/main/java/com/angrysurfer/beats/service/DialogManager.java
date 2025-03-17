@@ -75,7 +75,10 @@ public class DialogManager implements IBusListener {
                 if (currentSession != null) {
                     // Initialize player
                     Player newPlayer = PlayerManager.getInstance().initializeNewPlayer();
+                    newPlayer.setName(newPlayer.getClass().getSimpleName() + " " + (currentSession.getPlayers().size() + 1));
                     logger.info(String.format("Created new player with ID: %d", newPlayer.getId()));
+
+                    setNewPlayerInstrument(newPlayer);
 
                     // Create panel and dialog
                     PlayerEditPanel panel = new PlayerEditPanel(newPlayer);
@@ -97,6 +100,57 @@ public class DialogManager implements IBusListener {
                 e.printStackTrace();
             }
         });
+    }
+
+    private void setNewPlayerInstrument(Player newPlayer) {
+        try {
+            // Get all instruments from the InstrumentManager
+            List<Instrument> instruments = com.angrysurfer.core.service.InstrumentManager.getInstance()
+                    .getCachedInstruments();
+
+            // Get list of available device names
+            List<String> availableDeviceNames = com.angrysurfer.core.service.DeviceManager.getInstance()
+                    .getAvailableOutputDeviceNames();
+
+            logger.info("Setting instrument for new player. Available devices: " + availableDeviceNames);
+
+            // Find the first instrument that has an available device
+            Instrument selectedInstrument = null;
+
+            for (Instrument instrument : instruments) {
+                // Check if this instrument's device is available
+                if (instrument != null &&
+                        instrument.getDeviceName() != null &&
+                        availableDeviceNames.contains(instrument.getDeviceName())) {
+
+                    selectedInstrument = instrument;
+                    logger.info("Found valid instrument: " + instrument.getName() + " with device: "
+                            + instrument.getDeviceName());
+                    break;
+                }
+            }
+
+            // If no instrument with matching device was found, try to use the first
+            // instrument
+            if (selectedInstrument == null && !instruments.isEmpty()) {
+                selectedInstrument = instruments.get(0);
+                logger.warning("No instrument with available device found. Using first instrument: " +
+                        selectedInstrument.getName());
+            }
+
+            // Set the selected instrument
+            if (selectedInstrument != null) {
+                newPlayer.setInstrument(selectedInstrument);
+                // Set default channel (usually channel 1, which is represented as 0 in MIDI)
+                newPlayer.setChannel(0);
+                logger.info("Set instrument for new player: " + selectedInstrument.getName());
+            } else {
+                logger.severe("No instruments available. New player will have no instrument.");
+            }
+        } catch (Exception e) {
+            logger.severe("Error setting new player instrument: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void handleEditPlayer(Player player) {
@@ -194,13 +248,13 @@ public class DialogManager implements IBusListener {
 
                     // Show dialog
                     dialog.setResizable(true);
-                    
+
                     // Delay the refresh until after dialog is visible
                     SwingUtilities.invokeLater(() -> {
                         controlsPanel.refreshControlsPanel();
                     });
                     dialog.showDialog();
-                    
+
                     logger.info("Showing controls dialog for player: " + player.getName() +
                             " with instrument: " + player.getInstrument().getName());
                 } catch (Exception e) {

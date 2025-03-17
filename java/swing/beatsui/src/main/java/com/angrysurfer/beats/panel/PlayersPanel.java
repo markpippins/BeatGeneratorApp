@@ -1,20 +1,16 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.Vector;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -32,19 +28,18 @@ import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import com.angrysurfer.beats.ColorUtils;
+import com.angrysurfer.beats.model.PlayersTableModel;
+import com.angrysurfer.beats.renderer.PlayerRowRenderer;
 import com.angrysurfer.beats.service.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Constants;
@@ -62,97 +57,23 @@ public class PlayersPanel extends JPanel {
     private final StatusConsumer status;
     private final ButtonPanel buttonPanel;
     private final ContextMenuHelper contextMenu;
+    private final PlayersTableModel tableModel;
 
-    // Column name constants
-    private static final String COL_NAME = "Name";
-    private static final String COL_INSTRUMENT = "Instrument";
-    private static final String COL_CHANNEL = "Channel";
-    private static final String COL_SWING = "Swing";
-    private static final String COL_LEVEL = "Level";
-    private static final String COL_MUTE = "Mute"; // Add this column name
-    private static final String COL_NOTE = "Note";
-    private static final String COL_MIN_VEL = "Min Vel";
-    private static final String COL_MAX_VEL = "Max Vel";
-    private static final String COL_PRESET = "Preset";
-    private static final String COL_STICKY = "Sticky";
-    private static final String COL_PROBABILITY = "Prob";
-    private static final String COL_RANDOM = "Random";
-    private static final String COL_RATCHET_COUNT = "Ratchet #";
-    private static final String COL_RATCHET_INTERVAL = "Ratchet Int";
-    private static final String COL_INT_BEATS = "Int Beats";
-    private static final String COL_INT_BARS = "Int Bars";
-    private static final String COL_PAN = "Pan";
-    private static final String COL_PRESERVE = "Preserve";
-    private static final String COL_SPARSE = "Sparse";
+    // Use the model's column arrays instead of redefining them
+    private static final int[] BOOLEAN_COLUMNS = PlayersTableModel.getBooleanColumns();
+    private static final int[] STRING_COLUMNS = PlayersTableModel.getStringColumns();
+    private static final int[] NUMERIC_COLUMNS = PlayersTableModel.getNumericColumns();
 
-    private static final Set<String> COLUMNS = new LinkedHashSet<>(Arrays.asList(
-            COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_PRESET, COL_NOTE, COL_LEVEL, COL_MUTE,
-            COL_PAN, COL_MIN_VEL, COL_MAX_VEL, COL_SWING,
-            COL_PROBABILITY, COL_RANDOM, COL_SPARSE,
-            COL_RATCHET_COUNT, COL_RATCHET_INTERVAL, COL_INT_BEATS,
-            COL_INT_BARS, COL_STICKY, COL_PRESERVE));
-
-    // Replace array with LinkedHashSet using constants
-    // private static final Set<String> COLUMNS = new LinkedHashSet<>(Arrays.asList(
-    // COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_SWING, COL_LEVEL, COL_NOTE,
-    // COL_MIN_VEL, COL_MAX_VEL, COL_PRESET, COL_STICKY, COL_PROBABILITY,
-    // COL_RANDOM, COL_RATCHET_COUNT, COL_RATCHET_INTERVAL, COL_INT_BEATS,
-    // COL_INT_BARS, COL_PAN, COL_PRESERVE, COL_SPARSE));
-
-    private static final Set<String> STRING_COLUMN_NAMES = Set.of(COL_NAME, COL_INSTRUMENT);
-
-    // Define boolean column names using constants
-    private static final Set<String> BOOLEAN_COLUMN_NAMES = Set.of(
-            COL_MUTE,
-            COL_STICKY,
-            COL_INT_BEATS,
-            COL_INT_BARS,
-            COL_PRESERVE);
-
-    // Convert boolean column names to indices
-    private static final int[] BOOLEAN_COLUMNS = BOOLEAN_COLUMN_NAMES.stream()
-            .mapToInt(name -> new ArrayList<>(COLUMNS).indexOf(name))
-            .toArray();
-
-    private static final int[] STRING_COLUMNS = STRING_COLUMN_NAMES.stream()
-            .mapToInt(name -> new ArrayList<>(COLUMNS).indexOf(name))
-            .toArray();
-
-    // Helper method to get columns as array when needed
-    private static String[] getColumnNames() {
-        return COLUMNS.toArray(new String[0]);
-    }
-
-    // Rest of column indices remain the same
-
-    private static final int[] NUMERIC_COLUMNS = initNumericColumns();
-
-    private static int[] initNumericColumns() {
-        // Create a set of boolean column indices for quick lookup
-        Set<Integer> booleanCols = Arrays.stream(BOOLEAN_COLUMNS).boxed().collect(Collectors.toSet());
-        Set<Integer> stringCols = Arrays.stream(STRING_COLUMNS).boxed().collect(Collectors.toSet());
-
-        // Create list to hold numeric column indices
-        List<Integer> numericCols = new ArrayList<>();
-
-        // Check each column except Name(0) and Instrument(1) which are strings
-        for (int i = 0; i < getColumnNames().length; i++) {
-            // If it's not a boolean column, it's numeric
-            if (!booleanCols.contains(i) && !stringCols.contains(i)) {
-                numericCols.add(i);
-            }
-        }
-
-        return numericCols.stream().mapToInt(Integer::intValue).toArray();
-    }
-
-    private boolean hasActiveSession = false; // Add this field
-    private JButton controlButton; // Add this field
+    private boolean hasActiveSession = false; 
+    private JButton controlButton;
+    private JButton saveButton;
+    private JButton refreshButton;
 
     public PlayersPanel(StatusConsumer status) {
         super(new BorderLayout());
         this.status = status;
-        this.table = new JTable();
+        this.tableModel = new PlayersTableModel();
+        this.table = new JTable(tableModel);
         this.buttonPanel = new ButtonPanel(
                 Commands.PLAYER_ADD_REQUEST,
                 Commands.PLAYER_EDIT_REQUEST,
@@ -168,11 +89,11 @@ public class PlayersPanel extends JPanel {
 
         setupTable();
         setupLayout();
-        setupKeyboardShortcuts(); // Add this line
+        setupKeyboardShortcuts();
         setupCommandBusListener();
         setupButtonListeners();
         setupContextMenu();
-        setupTableSelectionListener(); // Add this line
+        setupTableSelectionListener();
 
         // Check for active session and enable controls immediately
         Session currentSession = SessionManager.getInstance().getActiveSession();
@@ -198,6 +119,31 @@ public class PlayersPanel extends JPanel {
         JPanel buttonWrapper = new JPanel(new BorderLayout());
         buttonWrapper.add(buttonPanel, BorderLayout.CENTER);
 
+        // Create save button
+        saveButton = new JButton("Save");
+        saveButton.setEnabled(true);
+        saveButton.addActionListener(e -> {
+            if (SessionManager.getInstance().getActiveSession() != null) {
+                CommandBus.getInstance().publish(Commands.SAVE_SESSION, this);
+            }
+        });
+
+        
+        // Create refresh button
+        refreshButton = new JButton("Refresh");
+        refreshButton.setEnabled(true);
+        refreshButton.addActionListener(e -> {
+            if (SessionManager.getInstance().getActiveSession() != null) {
+                CommandBus.getInstance().publish(Commands.PLAYERS_REFRESH_REQUEST, this);
+            }
+        });
+
+        // Add control button to the right of the button panel
+        JPanel leftButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        leftButtonPanel.add(refreshButton);
+        leftButtonPanel.add(saveButton);
+        buttonWrapper.add(leftButtonPanel, BorderLayout.WEST);
+
         // Create control button
         controlButton = new JButton("Control");
         controlButton.setEnabled(false);
@@ -215,7 +161,7 @@ public class PlayersPanel extends JPanel {
         buttonWrapper.add(rightButtonPanel, BorderLayout.EAST);
 
         // Add to setupLayout method
-        JButton muteButton = new JButton("Mute Selected");
+        JButton muteButton = new JButton("Mute");
         muteButton.addActionListener(e -> {
             Player player = getSelectedPlayer();
             if (player != null) {
@@ -230,26 +176,6 @@ public class PlayersPanel extends JPanel {
         });
         rightButtonPanel.add(muteButton);
 
-        // JButton debugButton = new JButton("Force Selection Event");
-        // debugButton.addActionListener(e -> {
-        // Player player = getSelectedPlayer();
-        // if (player != null) {
-        // logger.info("Forcing PLAYER_SELECTED event for: " + player.getName());
-
-        // // First set the active player in PlayerManager
-        // PlayerManager.getInstance().setActivePlayer(player);
-
-        // // Then publish the selection event
-        // CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
-
-        // // Update button states
-        // updateButtonStates();
-        // } else {
-        // logger.warning("No player selected to force event");
-        // }
-        // });
-        // rightButtonPanel.add(debugButton);
-
         topPanel.add(buttonWrapper, BorderLayout.NORTH);
 
         add(topPanel, BorderLayout.NORTH);
@@ -257,34 +183,13 @@ public class PlayersPanel extends JPanel {
     }
 
     private void setupTable() {
-
-        DefaultTableModel model = new DefaultTableModel(getColumnNames(), 0) {
-            @Override
-            public Class<?> getColumnClass(int column) {
-                // Return Boolean.class for boolean columns
-                for (int booleanColumn : BOOLEAN_COLUMNS) {
-                    if (column == booleanColumn) {
-                        return Boolean.class;
-                    }
-                }
-                return Object.class; // Changed from super.getColumnClass(column)
-            }
-
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Make all cells non-editable
-            }
-        };
-
-        table.setModel(model);
-
         // Set minimum and preferred widths for Name and Instrument columns
-        table.getColumnModel().getColumn(0).setMinWidth(100); // Name column min
-        table.getColumnModel().getColumn(1).setMinWidth(100); // Instrument column min
+        table.getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setMinWidth(100);
+        table.getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT)).setMinWidth(100);
 
         // Set relative widths for columns to control resize behavior
-        table.getColumnModel().getColumn(0).setPreferredWidth(200); // Name gets more space
-        table.getColumnModel().getColumn(1).setPreferredWidth(150); // Instrument gets less space
+        table.getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setPreferredWidth(200);
+        table.getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT)).setPreferredWidth(150);
 
         // Set fixed widths for other columns to prevent them from growing
         for (int i = 2; i < table.getColumnCount(); i++) {
@@ -294,7 +199,7 @@ public class PlayersPanel extends JPanel {
 
         // Configure table appearance
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); // Changed from default
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.setAutoCreateRowSorter(true);
 
         // Center-align numeric columns
@@ -332,9 +237,9 @@ public class PlayersPanel extends JPanel {
         DefaultTableCellRenderer leftHeaderRenderer = new DefaultTableCellRenderer();
         leftHeaderRenderer.setHorizontalAlignment(JLabel.LEFT);
 
-        table.getTableHeader().getColumnModel().getColumn(getColumnIndex(COL_NAME))
+        table.getTableHeader().getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME))
                 .setHeaderRenderer(leftHeaderRenderer);
-        table.getTableHeader().getColumnModel().getColumn(getColumnIndex(COL_INSTRUMENT))
+        table.getTableHeader().getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT))
                 .setHeaderRenderer(leftHeaderRenderer);
 
         // Add double-click listener
@@ -355,13 +260,12 @@ public class PlayersPanel extends JPanel {
             public void columnMoved(TableColumnModelEvent e) {
                 if (e.getFromIndex() != e.getToIndex()) {
                     logger.info("Column moved from " + e.getFromIndex() + " to " + e.getToIndex());
-                    // Add slight delay to ensure column move is complete
                     SwingUtilities.invokeLater(
-                            () -> UIHelper.getInstance().saveColumnOrder(table, Constants.PLAYER, COLUMNS));
+                            () -> UIHelper.getInstance().saveColumnOrder(table, Constants.PLAYER,
+                                    PlayersTableModel.COLUMNS));
                 }
             }
 
-            // Implement other required methods with empty bodies
             public void columnAdded(TableColumnModelEvent e) {
             }
 
@@ -375,47 +279,62 @@ public class PlayersPanel extends JPanel {
             }
         });
 
-        // Save initial column order
-        SwingUtilities.invokeLater(() -> UIHelper.getInstance().saveColumnOrder(table, Constants.PLAYER, COLUMNS));
+        // Save initial column order and restore it
+        SwingUtilities.invokeLater(
+                () -> UIHelper.getInstance().saveColumnOrder(table, Constants.PLAYER, PlayersTableModel.COLUMNS));
+        SwingUtilities.invokeLater(
+                () -> UIHelper.getInstance().restoreColumnOrder(table, Constants.PLAYER, PlayersTableModel.COLUMNS));
 
-        // Restore column order after table is fully set up
-        SwingUtilities.invokeLater(() -> UIHelper.getInstance().restoreColumnOrder(table, Constants.PLAYER, COLUMNS));
+        // Set custom renderer for player rows
+        PlayerRowRenderer rowRenderer = new PlayerRowRenderer(this);
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            final int colIndex = i;
+            if (isInArray(BOOLEAN_COLUMNS, colIndex)) {
+                table.getColumnModel().getColumn(i).setCellRenderer(
+                        new DefaultTableCellRenderer() {
+                            private final JCheckBox checkbox = new JCheckBox();
+                            {
+                                checkbox.setHorizontalAlignment(JCheckBox.CENTER);
+                            }
 
-        // Replace both selection listeners with this single implementation in
-        // setupTable()
-        table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int selectedRow = table.getSelectedRow();
-                boolean hasSelection = selectedRow >= 0;
+                            @Override
+                            public Component getTableCellRendererComponent(JTable table, Object value,
+                                    boolean isSelected, boolean hasFocus, int row, int column) {
 
-                // Update button states
-                updateButtonStates();
+                                Player player = getPlayerAtRow(row);
+                                Color bgColor = table.getBackground();
 
-                // Handle player selection with a single approach
-                if (hasSelection) {
-                    Player selectedPlayer = getSelectedPlayer();
-                    if (selectedPlayer != null) {
-                        logger.info("PlayersPanel: Selected player " + selectedPlayer.getName() +
-                                " (ID: " + selectedPlayer.getId() + ")");
+                                if (player != null && player.isPlaying()) {
+                                    bgColor = ColorUtils.dustyAmber;
+                                    if (isSelected) {
+                                        bgColor = bgColor.darker();
+                                    }
+                                } else if (isSelected) {
+                                    bgColor = table.getSelectionBackground();
+                                }
 
-                        // 1. Update PlayerManager first (source of truth)
-                        PlayerManager.getInstance().setActivePlayer(selectedPlayer);
+                                if (value instanceof Boolean) {
+                                    checkbox.setSelected((Boolean) value);
+                                    checkbox.setBackground(bgColor);
+                                    return checkbox;
+                                }
 
-                        // 2. Then publish the event for other components
-                        CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, selectedPlayer);
-                    }
-                } else {
-                    logger.info("PlayersPanel: No player selected");
-
-                    // Clear active player in PlayerManager
-                    PlayerManager.getInstance().setActivePlayer(null);
-
-                    // Notify other components
-                    CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
-                }
+                                return rowRenderer.getTableCellRendererComponent(
+                                        table, value, isSelected, hasFocus, row, column);
+                            }
+                        });
+            } else {
+                table.getColumnModel().getColumn(i).setCellRenderer(rowRenderer);
             }
-        });
+        }
+    }
 
+    private boolean isInArray(int[] array, int value) {
+        for (int i : array) {
+            if (i == value)
+                return true;
+        }
+        return false;
     }
 
     private void setupButtonListeners() {
@@ -486,7 +405,6 @@ public class PlayersPanel extends JPanel {
     }
 
     private void setupCommandBusListener() {
-
         TimingBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
@@ -496,7 +414,7 @@ public class PlayersPanel extends JPanel {
                 String cmd = action.getCommand();
                 try {
                     switch (cmd) {
-                        case Commands.BASIC_TIMING_BEAT -> {
+                        case Commands.BASIC_TIMING_TICK, Commands.PLAYERS_REFRESH_REQUEST -> {
                             SwingUtilities.invokeLater(() -> {
                                 refreshPlayers(SessionManager.getInstance().getActiveSession().getPlayers());
                             });
@@ -617,7 +535,7 @@ public class PlayersPanel extends JPanel {
             return;
 
         DefaultTableModel model = (DefaultTableModel) table.getModel();
-        int nameColIndex = getColumnIndex(COL_NAME);
+        int nameColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_NAME);
 
         for (int i = 0; i < model.getRowCount(); i++) {
             String name = (String) model.getValueAt(i, nameColIndex);
@@ -685,12 +603,11 @@ public class PlayersPanel extends JPanel {
         if (player == null)
             return -1;
 
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        int nameColIndex = getColumnIndex(COL_NAME);
+        int nameColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_NAME);
 
         // Search by name and then verify by ID
-        for (int i = 0; i < model.getRowCount(); i++) {
-            String playerName = (String) model.getValueAt(i, nameColIndex);
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String playerName = (String) tableModel.getValueAt(i, nameColIndex);
             if (player.getName().equals(playerName)) {
                 return i;
             }
@@ -711,7 +628,8 @@ public class PlayersPanel extends JPanel {
             int modelRow = table.convertRowIndexToModel(selectedRow);
 
             // Get the player name from the Name column
-            String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
+            String playerName = (String) tableModel.getValueAt(modelRow,
+                    tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
             logger.info("Selected player name from table: " + playerName);
 
             // Get the current session
@@ -746,171 +664,28 @@ public class PlayersPanel extends JPanel {
         if (currentSession != null) {
             for (int row : selectedRows) {
                 int modelRow = table.convertRowIndexToModel(row);
-                String playerName = (String) table.getModel().getValueAt(modelRow, 0);
+                String playerName = (String) tableModel.getValueAt(modelRow,
+                        tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
                 currentSession.getPlayers().stream()
                         .filter(p -> p.getName().equals(playerName))
                         .findFirst()
                         .ifPresent(p -> players.add(p));
             }
         }
-        return players.toArray(new Strike[0]);
-    }
-
-    // Column indices for reference:
-    // 0 - Name
-    // 1 - Instrument
-    // 2 - Channel
-    // 3 - Swing
-    // 4 - Level
-    // 5 - Note
-    // 6 - Min Vel
-    // 7 - Max Vel
-    // 8 - Preset
-    // 9 - Sticky (Boolean)
-    // 10 - Prob
-    // 11 - Random
-    // 12 - Ratchet #
-    // 13 - Ratchet Int
-    // 14 - Int Beats (Boolean)
-    // 15 - Int Bars (Boolean)
-    // 16 - Pan
-    // 17 - Preserve (Boolean)
-    // 18 - Sparse
-
-    // Add this new method
-    private int getColumnIndex(String columnName) {
-        return new ArrayList<>(COLUMNS).indexOf(columnName);
-    }
-
-    // Update the method signature to accept a Vector instead of Object[]
-    private void updateInstrumentCell(Vector rowData, int columnIndex, Player player) {
-        String instrumentName = "";
-
-        try {
-            if (player.getInstrumentId() != null) {
-                Instrument instrument = InstrumentManager.getInstance()
-                        .getInstrumentFromCache(player.getInstrumentId());
-                if (instrument != null) {
-                    instrumentName = instrument.getName();
-
-                    // Initialize device if needed
-                    if (Objects.isNull(instrument.getDevice()) && Objects.nonNull(instrument.getDeviceName())) {
-                        try {
-                            // Get device from DeviceManager
-                            javax.sound.midi.MidiDevice device = DeviceManager
-                                    .getMidiDevice(instrument.getDeviceName());
-
-                            if (device != null) {
-                                // Set device on instrument
-                                instrument.setDevice(device);
-                                logger.info("Initialized device for instrument: " + instrument.getName() +
-                                        " with device: " + device.getDeviceInfo().getName());
-                            } else {
-                                logger.warning("Device not found: " + instrument.getDeviceName() +
-                                        " for instrument: " + instrument.getName());
-                            }
-                        } catch (Exception e) {
-                            logger.warning("Error initializing device for instrument " +
-                                    instrument.getName() + ": " + e.getMessage());
-                        }
-                    }
-
-                    // Set the instrument on the player
-                    player.setInstrument(instrument);
-                }
-            }
-            // Use Vector.set() instead of array assignment
-            rowData.set(columnIndex, instrumentName);
-        } catch (Exception e) {
-            logger.severe("Error updating instrument cell: " + e.getMessage());
-            // Use Vector.set() instead of array assignment
-            rowData.set(columnIndex, "Error");
-        }
-    }
-
-    // Add this new overloaded method for Object[] arrays
-    private void updateInstrumentCell(Object[] rowData, int columnIndex, Player player) {
-        String instrumentName = "";
-
-        try {
-            if (player.getInstrumentId() != null) {
-                Instrument instrument = InstrumentManager.getInstance()
-                        .getInstrumentFromCache(player.getInstrumentId());
-                if (instrument != null) {
-                    instrumentName = instrument.getName();
-
-                    // Initialize device if needed
-                    if (Objects.isNull(instrument.getDevice()) && Objects.nonNull(instrument.getDeviceName())) {
-                        try {
-                            // Get device from DeviceManager
-                            javax.sound.midi.MidiDevice device = DeviceManager
-                                    .getMidiDevice(instrument.getDeviceName());
-
-                            if (device != null) {
-                                // Set device on instrument
-                                instrument.setDevice(device);
-                                logger.info("Initialized device for instrument: " + instrument.getName() +
-                                        " with device: " + device.getDeviceInfo().getName());
-                            } else {
-                                logger.warning("Device not found: " + instrument.getDeviceName() +
-                                        " for instrument: " + instrument.getName());
-                            }
-                        } catch (Exception e) {
-                            logger.warning("Error initializing device for instrument " +
-                                    instrument.getName() + ": " + e.getMessage());
-                        }
-                    }
-
-                    // Set the instrument on the player
-                    player.setInstrument(instrument);
-                }
-            }
-            // Use array assignment for Object[] arrays
-            rowData[columnIndex] = instrumentName;
-        } catch (Exception e) {
-            logger.severe("Error updating instrument cell: " + e.getMessage());
-            rowData[columnIndex] = "Error";
-        }
+        return players.toArray(new Player[0]);
     }
 
     public void refreshPlayers(Set<Player> players) {
         logger.info("Refreshing players table with " + (players != null ? players.size() : 0) + " players");
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        model.setRowCount(0);
+        tableModel.setRowCount(0);
 
         if (players != null && !players.isEmpty()) {
             List<Player> sortedPlayers = new ArrayList<>(players);
             Collections.sort(sortedPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
-            for (Player p : sortedPlayers) {
-                Player player = p;
+            for (Player player : sortedPlayers) {
                 logger.info("Adding player to table: " + player.getName() + " (ID: " + player.getId() + ")");
-                Object[] newRowData = new Object[COLUMNS.size()];
-
-                // Map each property to its correct column position
-                newRowData[getColumnIndex(COL_NAME)] = player.getName();
-                updateInstrumentCell(newRowData, getColumnIndex(COL_INSTRUMENT), player);
-
-                newRowData[getColumnIndex(COL_CHANNEL)] = player.getChannel();
-                newRowData[getColumnIndex(COL_SWING)] = player.getSwing();
-                newRowData[getColumnIndex(COL_LEVEL)] = player.getLevel();
-                newRowData[getColumnIndex(COL_MUTE)] = player.isMuted();
-                newRowData[getColumnIndex(COL_NOTE)] = player.getNote();
-                newRowData[getColumnIndex(COL_MIN_VEL)] = player.getMinVelocity();
-                newRowData[getColumnIndex(COL_MAX_VEL)] = player.getMaxVelocity();
-                newRowData[getColumnIndex(COL_PRESET)] = player.getPreset();
-                newRowData[getColumnIndex(COL_STICKY)] = player.getStickyPreset();
-                newRowData[getColumnIndex(COL_PROBABILITY)] = player.getProbability();
-                newRowData[getColumnIndex(COL_RANDOM)] = player.getRandomDegree();
-                newRowData[getColumnIndex(COL_RATCHET_COUNT)] = player.getRatchetCount();
-                newRowData[getColumnIndex(COL_RATCHET_INTERVAL)] = player.getRatchetInterval();
-                newRowData[getColumnIndex(COL_INT_BEATS)] = player.getInternalBeats();
-                newRowData[getColumnIndex(COL_INT_BARS)] = player.getInternalBars();
-                newRowData[getColumnIndex(COL_PAN)] = player.getPanPosition();
-                newRowData[getColumnIndex(COL_PRESERVE)] = player.getPreserveOnPurge();
-                newRowData[getColumnIndex(COL_SPARSE)] = player.getSparse();
-
-                model.addRow(newRowData);
+                tableModel.addPlayerRow(player);
             }
         }
     }
@@ -933,30 +708,38 @@ public class PlayersPanel extends JPanel {
             }
 
             // Get the model
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            PlayersTableModel model = (PlayersTableModel) table.getModel();
 
             // Update all cells in the row
             int modelRow = table.convertRowIndexToModel(rowIndex);
 
             // Update each column with fresh data
-            model.setValueAt(player.getName(), modelRow, getColumnIndex(COL_NAME));
-            model.setValueAt(player.getNote(), modelRow, getColumnIndex(COL_NOTE));
-            model.setValueAt(player.getLevel(), modelRow, getColumnIndex(COL_LEVEL));
-            model.setValueAt(player.isMuted(), modelRow, getColumnIndex(COL_MUTE));
-            model.setValueAt(player.getProbability(), modelRow, getColumnIndex(COL_PROBABILITY));
-            model.setValueAt(player.getSparse(), modelRow, getColumnIndex(COL_SPARSE));
-            model.setValueAt(player.getSwing(), modelRow, getColumnIndex(COL_SWING));
-            model.setValueAt(player.getRandomDegree(), modelRow, getColumnIndex(COL_RANDOM));
-            model.setValueAt(player.getMinVelocity(), modelRow, getColumnIndex(COL_MIN_VEL));
-            model.setValueAt(player.getMaxVelocity(), modelRow, getColumnIndex(COL_MAX_VEL));
-            model.setValueAt(player.getPreset(), modelRow, getColumnIndex(COL_PRESET));
-            model.setValueAt(player.getPanPosition(), modelRow, getColumnIndex(COL_PAN));
+            model.setValueAt(player.getName(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
+            model.setValueAt(player.getNote(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NOTE));
+            model.setValueAt(player.getLevel(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_LEVEL));
+            model.setValueAt(player.isMuted(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_MUTE));
+            model.setValueAt(player.getProbability(), modelRow,
+                    tableModel.getColumnIndex(PlayersTableModel.COL_PROBABILITY));
+            model.setValueAt(player.getSparse(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_SPARSE));
+            model.setValueAt(player.getSwing(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_SWING));
+            model.setValueAt(player.getRandomDegree(), modelRow,
+                    tableModel.getColumnIndex(PlayersTableModel.COL_RANDOM));
+            model.setValueAt(player.getMinVelocity(), modelRow,
+                    tableModel.getColumnIndex(PlayersTableModel.COL_MIN_VEL));
+            model.setValueAt(player.getMaxVelocity(), modelRow,
+                    tableModel.getColumnIndex(PlayersTableModel.COL_MAX_VEL));
+            model.setValueAt(player.getPreset(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_PRESET));
+            model.setValueAt(player.getPanPosition(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_PAN));
 
             // Special handling for instrument column
-            updateInstrumentCell(model.getDataVector().get(modelRow), getColumnIndex(COL_INSTRUMENT), player);
+            model.updateInstrumentCell(model.getDataVector().get(modelRow),
+                    tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT), player);
 
             // Notify the model that data has changed
             model.fireTableRowsUpdated(modelRow, modelRow);
+
+            // Force the table to repaint the row
+            table.repaint();
 
             logger.info("Updated row " + rowIndex + " for player: " + player.getName());
         } catch (Exception e) {
@@ -977,7 +760,8 @@ public class PlayersPanel extends JPanel {
                 // Convert row index to model index if table is sorted
                 int modelRow = table.convertRowIndexToModel(row);
                 // Get player name from the first column
-                String playerName = (String) table.getModel().getValueAt(modelRow, getColumnIndex(COL_NAME));
+                String playerName = (String) tableModel.getValueAt(modelRow,
+                        tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
 
                 // Find player in the current session
                 Session session = SessionManager.getInstance().getActiveSession();
@@ -1022,5 +806,36 @@ public class PlayersPanel extends JPanel {
                 updateButtonStates();
             }
         });
+    }
+
+    // Helper method to get player at a specific row
+    public Player getPlayerAtRow(int row) {
+        if (row < 0 || tableModel.getRowCount() <= row) {
+            return null;
+        }
+
+        try {
+            // Convert view index to model index in case of sorting/filtering
+            int modelRow = table.convertRowIndexToModel(row);
+
+            // Get the player name from the Name column
+            String playerName = (String) tableModel.getValueAt(
+                    modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
+
+            // Get the current session
+            Session currentSession = SessionManager.getInstance().getActiveSession();
+
+            if (currentSession != null && currentSession.getPlayers() != null) {
+                // Find the player with the matching name
+                return currentSession.getPlayers().stream()
+                        .filter(p -> playerName.equals(p.getName()))
+                        .findFirst()
+                        .orElse(null);
+            }
+        } catch (Exception e) {
+            logger.severe("Error getting player at row: " + e.getMessage());
+        }
+
+        return null;
     }
 }

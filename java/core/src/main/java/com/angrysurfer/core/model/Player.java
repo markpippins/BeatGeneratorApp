@@ -224,6 +224,12 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         long fixedVelocity = velocity < 126 ? velocity : 126;
 
         try {
+            // Set playing state to true
+            setPlaying(true);
+            
+            // Notify UI about player state change
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
+            
             getInstrument().noteOn(getChannel(), note, fixedVelocity);
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
             logger.error("Error in noteOn: {}", e.getMessage(), e);
@@ -235,6 +241,12 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         logger.debug("noteOff() - note: {}, velocity: {}", note, velocity);
         try {
             getInstrument().noteOff(getChannel(), note, velocity);
+            
+            // Set playing state to false
+            setPlaying(false);
+            
+            // Notify UI about player state change
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
             logger.error("Error in noteOff: {}", e.getMessage(), e);
             throw new RuntimeException(e);
@@ -756,6 +768,20 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         commandBus.unregister(this);
 
         // Any other cleanup code...
+    }
+
+    // Add this property to the Player class
+    @JsonIgnore
+    @Transient
+    private boolean isPlaying = false;
+
+    // Add getter/setter
+    public boolean isPlaying() {
+        return isPlaying;
+    }
+
+    public void setPlaying(boolean playing) {
+        this.isPlaying = playing;
     }
 
 }

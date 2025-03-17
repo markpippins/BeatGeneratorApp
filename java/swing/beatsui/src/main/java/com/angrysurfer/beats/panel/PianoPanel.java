@@ -1,5 +1,5 @@
 package com.angrysurfer.beats.panel;
-
+import java.awt.Component;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -28,11 +28,12 @@ import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.beats.animation.ColorAnimator;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Scale;
 
 public class PianoPanel extends StatusProviderPanel {
@@ -44,6 +45,7 @@ public class PianoPanel extends StatusProviderPanel {
     private Map<Integer, JButton> noteToKeyMap = new HashMap<>();
     private final ColorAnimator colorAnimator;
     private JButton activeButton = null; // Add this field to track active button
+    private int currentOctave = 5; // Default octave (C5 = MIDI note 60)
 
     public PianoPanel() {
         this(null);
@@ -154,30 +156,52 @@ public class PianoPanel extends StatusProviderPanel {
                 Math.max((int) (color.getBlue() * factor), 0));
     }
 
+    // Modify the setupActionBusListener method to include these cases
     private void setupActionBusListener() {
         commandBus.register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getData() instanceof Integer note) {
-                    switch (action.getCommand()) {
-                        case Commands.KEY_PRESSED -> handleKeyPress(note);
-                        case Commands.KEY_HELD -> handleKeyHold(note);
-                        case Commands.KEY_RELEASED -> handleKeyRelease(note);
+                if (action.getCommand() == null) return;
+                
+                switch (action.getCommand()) {
+                    // Existing cases
+                    case Commands.KEY_PRESSED -> {
+                        if (action.getData() instanceof Integer note) 
+                            handleKeyPress(note);
                     }
-                } else {
-                    switch (action.getCommand()) {
-                        case Commands.SCALE_SELECTED -> {
-                            if (activeButton == followScaleBtn &&
-                                    action.getData() instanceof String scaleName) {
-                                currentScale = scaleName;
-                                applyCurrentScale(); // This will use currentRoot
-                            }
+                    case Commands.KEY_HELD -> {
+                        if (action.getData() instanceof Integer note)
+                            handleKeyHold(note);
+                    }
+                    case Commands.KEY_RELEASED -> {
+                        if (action.getData() instanceof Integer note)
+                            handleKeyRelease(note);
+                    }
+                    
+                    // Add these new cases
+                    case Commands.PLAYER_SELECTED -> {
+                        if (action.getData() instanceof Player player && player.getNote() != null) {
+                            // Update piano octave based on selected player's note
+                            updateOctave(player.getNote().intValue());
                         }
-                        case Commands.ROOT_NOTE_SELECTED -> {
-                            if (action.getData() instanceof String rootNote) {
-                                currentRoot = rootNote;
-                                applyCurrentScale(); // Reapply scale with new root
-                            }
+                    }
+                    case Commands.NEW_VALUE_NOTE -> {
+                        // When a player's note changes, update the piano if it came from octave buttons
+                        if (action.getSender() instanceof SessionPanel && 
+                                action.getData() instanceof Integer note) {
+                            updateOctave(note);
+                        }
+                    }
+                    case Commands.SCALE_SELECTED -> {
+                        if (activeButton == followScaleBtn && action.getData() instanceof String scaleName) {
+                            currentScale = scaleName;
+                            applyCurrentScale(); // This will use currentRoot and currentOctave
+                        }
+                    }
+                    case Commands.ROOT_NOTE_SELECTED -> {
+                        if (action.getData() instanceof String rootNote) {
+                            currentRoot = rootNote;
+                            applyCurrentScale(); // Reapply scale with new root
                         }
                     }
                 }
@@ -269,6 +293,12 @@ public class PianoPanel extends StatusProviderPanel {
             statusConsumer.setStatus("Playing note " + note + playerInfo);
         }
         
+        
+        if (SessionManager.getInstance().isRecording()) {
+            CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, note);
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, PlayerManager.getInstance().getActivePlayer());
+        }   
+
         // Send MIDI note to active player
         boolean notePlayed = PlayerManager.getInstance().sendNoteToActivePlayer(note);
         
@@ -542,5 +572,82 @@ public class PianoPanel extends StatusProviderPanel {
                     "Active player: " + activePlayer.getName() :
                     "No active player selected");
         });
+    }
+
+    // Add this method to update the octave and piano key mappings
+    public void updateOctave(int midiNote) {
+        // MIDI note 60 is middle C (C5)
+        // Calculate octave (0-10) based on MIDI note (0-127)
+        int newOctave = midiNote / 12;
+        
+        // Only update if octave actually changed
+        if (newOctave != currentOctave) {
+            // logger.info("Updating piano octave from " + currentOctave + " to " + newOctave);
+            currentOctave = newOctave;
+            
+            // Update note to key mapping
+            updateNoteToKeyMap();
+            
+            // If scale is active, reapply it with new octave
+            if (activeButton == followScaleBtn) {
+                applyCurrentScale();
+            }
+        }
+    }
+
+    // Method to recalculate the MIDI note values for each key based on octave
+    private void updateNoteToKeyMap() {
+        // Clear existing mapping
+        noteToKeyMap.clear();
+        
+        // Base note for C in the current octave
+        int baseNote = currentOctave * 12;
+        
+        // Re-map white keys (C through B)
+        int[] whiteKeyOffsets = {0, 2, 4, 5, 7, 9, 11};
+        Component[] components = getComponents();
+        int whiteKeyIndex = 0;
+        
+        for (Component c : components) {
+            if (c instanceof JButton) {
+                JButton key = (JButton) c;
+                // Check if it's a white key by examining bounds
+                if (key.getHeight() > 40 && whiteKeyIndex < whiteKeyOffsets.length) { 
+                    // It's a white key
+                    int noteValue = baseNote + whiteKeyOffsets[whiteKeyIndex];
+                    noteToKeyMap.put(noteValue, key);
+                    
+                    // Update tooltip to show actual MIDI note
+                    key.setToolTipText(Scale.getNoteNameWithOctave(noteValue));
+                    
+                    whiteKeyIndex++;
+                }
+            }
+        }
+        
+        // Re-map black keys (C# through A#)
+        int[] blackKeyOffsets = {1, 3, -1, 6, 8, 10, -1}; // -1 means no black key
+        int blackKeyIndex = 0;
+        
+        for (Component c : components) {
+            if (c instanceof JButton) {
+                JButton key = (JButton) c;
+                // Check if it's a black key by examining bounds
+                if (key.getHeight() <= 40 && blackKeyIndex < blackKeyOffsets.length) {
+                    if (blackKeyOffsets[blackKeyIndex] != -1) {
+                        // It's a black key
+                        int noteValue = baseNote + blackKeyOffsets[blackKeyIndex];
+                        noteToKeyMap.put(noteValue, key);
+                        
+                        // Update tooltip
+                        key.setToolTipText(Scale.getNoteNameWithOctave(noteValue));
+                    }
+                    blackKeyIndex++;
+                }
+            }
+        }
+        
+        // Force repaint to reflect changes
+        repaint();
     }
 }

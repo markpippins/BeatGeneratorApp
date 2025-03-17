@@ -8,8 +8,8 @@ import java.util.logging.Logger;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
@@ -39,6 +39,8 @@ public class SessionManager {
 
     private Player[] activePlayers[];
     private Rule[] selectedRules;
+
+    private boolean isRecording = false;
 
     public static SessionManager getInstance() {
         if (instance == null) {
@@ -86,42 +88,81 @@ public class SessionManager {
         songEngine = new SongEngine();
 
         commandBus.register(new IBusListener() {
+            @Override
             public void onAction(Command action) {
                 if (action == null || action.getCommand() == null)
                     return;
 
-                switch (action.getCommand()) {
-                    case Commands.SESSION_REQUEST -> handleSessionRequest();
-                    case Commands.TRANSPORT_REWIND -> moveBack();
-                    case Commands.TRANSPORT_FORWARD -> moveForward();
-                    case Commands.TRANSPORT_PLAY -> {
-                        // Direct control of transport
-                        if (activeSession != null) {
-                            // Make session.initializeDevices() public, not private!
-                            activeSession.initializeDevices(); // Call this first to ensure devices are ready
+                String cmd = action.getCommand();
 
-                            // Set this session as the active session in SequencerManager
-                            sequencerManager.setActiveSession(activeSession);
+                try {
+                    switch (cmd) {
 
-                            // Start the sequencer directly
-                            sequencerManager.start();
+                        case Commands.SAVE_SESSION -> handleSessionSaveRequest();
+                        case Commands.SESSION_REQUEST -> handleSessionRequest();
+                        case Commands.TRANSPORT_REWIND -> moveBack();
+                        case Commands.TRANSPORT_FORWARD -> moveForward();
+                        case Commands.TRANSPORT_PLAY -> {
+                            // Direct control of transport
+                            if (activeSession != null) {
+                                // Make session.initializeDevices() public, not private!
+                                activeSession.initializeDevices(); // Call this first to ensure devices are ready
+
+                                // Set this session as the active session in SequencerManager
+                                sequencerManager.setActiveSession(activeSession);
+
+                                // Start the sequencer directly
+                                sequencerManager.start();
+                            }
+                        }
+                        case Commands.TRANSPORT_STOP -> {
+                            // Direct control of transport
+                            if (activeSession != null) {
+                                sequencerManager.stop();
+                            }
+                            // Also stop recording when transport stops
+                            if (isRecording()) {
+                                setRecording(false);
+                                CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
+                            }
+                        }
+                        case Commands.TRANSPORT_RECORD -> {
+                            if (activeSession != null) {
+                                redisService.saveSession(activeSession);
+                            }
+                        }
+                        case Commands.SHOW_PLAYER_EDITOR_OK -> processPlayerEdit((Player) action.getData());
+                        case Commands.SHOW_RULE_EDITOR_OK -> processRuleEdit((Rule) action.getData());
+                        case Commands.PLAYER_DELETE_REQUEST -> processPlayerDelete((Player[]) action.getData());
+                        // Handle recording commands
+                        case Commands.TRANSPORT_RECORD_START -> {
+                            setRecording(true);
+                            // Optionally notify UI or start recording-specific behaviors
+                            CommandBus.getInstance().publish(Commands.RECORDING_STARTED, this);
+                        }
+                        case Commands.TRANSPORT_RECORD_STOP -> {
+                            setRecording(false);
+                            // Optionally finalize recording or perform cleanup
+                            CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
                         }
                     }
-                    case Commands.TRANSPORT_STOP -> {
-                        // Direct control of transport
-                        if (activeSession != null) {
-                            sequencerManager.stop();
-                        }
-                    }
-                    case Commands.TRANSPORT_RECORD -> {
-                        if (activeSession != null) {
-                            redisService.saveSession(activeSession);
-                        }
-                    }
-                    case Commands.SHOW_PLAYER_EDITOR_OK -> processPlayerEdit((Player) action.getData());
-                    case Commands.SHOW_RULE_EDITOR_OK -> processRuleEdit((Rule) action.getData());
-                    case Commands.PLAYER_DELETE_REQUEST -> processPlayerDelete((Player[]) action.getData());
+                } catch (Exception e) {
+                    // logger. error("Error processing command {}: {}", cmd, e.getMessage());
                 }
+            }
+
+            private Object handleSessionSaveRequest() {
+                if (activeSession != null) {
+
+                    getActiveSession().getPlayers().forEach(player -> {
+                        if (player != null) {
+                            redisService.savePlayer(player);
+                        }
+                    });
+                    redisService.saveSession(activeSession);
+                    logger.info("Session saved: " + activeSession.getId());
+                }
+                return null;
             }
 
             private void processPlayerDelete(Player[] data) {
@@ -330,5 +371,22 @@ public class SessionManager {
             commandBus.publish(Commands.PLAYER_UPDATED, this, player);
             commandBus.publish(Commands.SESSION_UPDATED, this, activeSession);
         }
+    }
+
+    /**
+     * Gets the current recording state
+     * @return true if recording is active, false otherwise
+     */
+    public boolean isRecording() {
+        return isRecording;
+    }
+
+    /**
+     * Sets the recording state
+     * @param recording the new recording state
+     */
+    public void setRecording(boolean recording) {
+        this.isRecording = recording;
+        // logger.debug("Recording state set to: {}", recording);
     }
 }

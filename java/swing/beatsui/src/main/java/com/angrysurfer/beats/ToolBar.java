@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -28,8 +27,8 @@ import javax.swing.UIManager;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Scale;
@@ -43,6 +42,8 @@ public class ToolBar extends JToolBar {
     private JPanel transportPanel;
     private JButton playButton;
     private JButton stopButton;
+    private JButton recordButton; // Store reference to record button
+    private boolean isRecording = false; // Track recording state
 
     public ToolBar() {
         super();
@@ -107,6 +108,20 @@ public class ToolBar extends JToolBar {
                                     stopButton.setEnabled(isPlaying);
                                 });
                             }
+                        }
+                        case Commands.TRANSPORT_RECORD_START -> {
+                            isRecording = true;
+                            updateRecordButtonAppearance();
+                        }
+                        case Commands.TRANSPORT_RECORD_STOP -> {
+                            isRecording = false;
+                            updateRecordButtonAppearance();
+                        }
+                        case Commands.TRANSPORT_STOP -> {
+                            // Also stop recording when transport is stopped
+                            isRecording = false;
+                            updateRecordButtonAppearance();
+                            // resetTimingCounters();
                         }
                     }
                 }
@@ -437,7 +452,43 @@ public class ToolBar extends JToolBar {
         // Create buttons with single tooltip since we don't need navigation text
         JButton rewindBtn = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Session");
         JButton pauseBtn = createToolbarButton(Commands.TRANSPORT_PAUSE, "⏸", "Pause");
-        JButton recordBtn = createToolbarButton(Commands.TRANSPORT_RECORD, "⏺", "Record");
+        
+        // Create record button with special handling - don't use the standard createToolbarButton
+        recordButton = new JButton("⏺");
+        recordButton.setToolTipText("Record");
+        recordButton.setEnabled(true);
+        recordButton.setActionCommand(Commands.TRANSPORT_RECORD);
+        
+        // Set same styling as other buttons
+        int size = 32;
+        recordButton.setPreferredSize(new Dimension(size, size));
+        recordButton.setMinimumSize(new Dimension(size, size));
+        recordButton.setMaximumSize(new Dimension(size, size));
+        recordButton.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
+        if (!recordButton.getFont().canDisplay('⏺')) {
+            recordButton.setFont(new Font("Dialog", Font.PLAIN, 18));
+        }
+        recordButton.setMargin(new Insets(0, 0, 0, 0));
+        recordButton.setFocusPainted(false);
+        recordButton.setVerticalAlignment(SwingConstants.CENTER);
+        recordButton.setBorderPainted(false);
+        recordButton.setContentAreaFilled(true);
+        recordButton.setOpaque(true);
+        
+        // Custom action listener for record button
+        recordButton.addActionListener(e -> {
+            toggleRecordingState();
+            
+            // Send the appropriate command
+            if (isRecording) {
+                commandBus.publish(Commands.TRANSPORT_RECORD_START, this);
+            } else {
+                commandBus.publish(Commands.TRANSPORT_RECORD_STOP, this);
+            }
+        });
+        
+        // No hover effects for record button - we'll handle its color through updateRecordButtonAppearance
+        
         JButton stopBtn = createToolbarButton(Commands.TRANSPORT_STOP, "⏹", "Stop");
         JButton playBtn = createToolbarButton(Commands.TRANSPORT_PLAY, "▶", "Play");
         JButton forwardBtn = createToolbarButton(Commands.TRANSPORT_FORWARD, "⏭", "Next Session");
@@ -445,12 +496,36 @@ public class ToolBar extends JToolBar {
         transportPanel.add(rewindBtn);
         transportPanel.add(pauseBtn);
         transportPanel.add(stopBtn);
-        transportPanel.add(recordBtn);
+        transportPanel.add(recordButton);
         transportPanel.add(playBtn);
         transportPanel.add(forwardBtn);
 
         this.playButton = playBtn;
         this.stopButton = stopBtn;
+        
+        // Initial update to ensure correct color
+        updateRecordButtonAppearance();
+    }
+
+    /**
+     * Toggle recording state and update button appearance
+     */
+    private void toggleRecordingState() {
+        isRecording = !isRecording;
+        updateRecordButtonAppearance();
+    }
+
+    /**
+     * Update record button appearance based on recording state
+     */
+    private void updateRecordButtonAppearance() {
+        if (isRecording) {
+            recordButton.setBackground(Color.RED);
+            recordButton.setForeground(Color.WHITE);
+        } else {
+            recordButton.setBackground(UIManager.getColor("Button.background"));
+            recordButton.setForeground(UIManager.getColor("Button.foreground"));
+        }
     }
 
     private void updateToolbarState(Session session) {

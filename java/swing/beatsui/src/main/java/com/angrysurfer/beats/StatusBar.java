@@ -67,6 +67,7 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
     private int tickCount = 0;
     private int beatCount = 0;
     private int barCount = 0;
+    private int partCount = 0;
 
     // Add this field to your class if it doesn't exist
     private Map<String, JComponent> rightFields = new HashMap<>();
@@ -197,7 +198,7 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         // timePanel.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY));
         // timeLabel = new JLabel("T:B:M"); // Changed from "Time:"
         // timePanel.add(timeLabel);
-        timeField = createTextField(4); // Increased to fit 00:00:00
+        timeField = createTextField(7); // Increased to fit 00:00:00
         updateTimeDisplay(); // Initialize with zeros
         timePanel.add(timeField);
         
@@ -356,6 +357,7 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         tickCount = 0;
         beatCount = 0;
         barCount = 0;
+        partCount = 0;
         updateTimeDisplay();
     }
     
@@ -364,8 +366,8 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
      */
     private void updateTimeDisplay() {
         // Format as 00:00:00 (ticks:beats:bars)
-        String formattedTime = String.format("%02d:%02d:%02d", 
-                               tickCount, beatCount, barCount);
+        String formattedTime = String.format("%02d:%02d:%02d:%02d", 
+                               tickCount, beatCount + 1, barCount + 1, partCount + 1);
                                
         // Update the time field on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {

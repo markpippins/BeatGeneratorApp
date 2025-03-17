@@ -45,7 +45,7 @@ public class Ratchet extends Strike {
                 .count();
         setId(-1 - ratchets);
         setName(getParent().getName()
-                + String.format("s", ((Session) getParent().getSession()).getPlayers().size()));
+                + String.format(getParent().getPlayerClassName(), ((Session) getParent().getSession()).getPlayers().size()));
         double tick = getSession().getTickCount() + offset;
         logger.debug("Adding rule - tick: {}, part: {}", tick, part);
         getRules().add(new Rule(Comparison.TICK_COUNT, Operator.EQUALS, tick, part));
