@@ -2,6 +2,8 @@ package com.angrysurfer.beats.widget;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -47,6 +49,7 @@ public class PlayersTable extends JTable {
 
         setupTable();
         setupSelectionListener();
+        setupMouseListener(); // Add this line
     }
 
     public PlayersTableModel getPlayersTableModel() {
@@ -186,6 +189,25 @@ public class PlayersTable extends JTable {
             if (!e.getValueIsAdjusting()) { // Only handle when selection is complete
                 int selectedRow = getSelectedRow();
                 handlePlayerSelection(selectedRow);
+            }
+        });
+    }
+
+    private void setupMouseListener() {
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = rowAtPoint(e.getPoint());
+                    if (row >= 0) {
+                        Player player = getPlayerAtRow(row);
+                        if (player != null) {
+                            // Edit the player on double-click
+                            logger.info("Double-clicked player: " + player.getName());
+                            CommandBus.getInstance().publish(Commands.PLAYER_EDIT_REQUEST, this, player);
+                        }
+                    }
+                }
             }
         });
     }
