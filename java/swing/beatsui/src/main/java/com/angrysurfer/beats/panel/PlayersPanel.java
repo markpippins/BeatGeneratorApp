@@ -15,7 +15,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableModel;
 
 import com.angrysurfer.beats.widget.PlayersTable;
 import com.angrysurfer.beats.widget.PlayersTableModel;
@@ -47,7 +46,9 @@ public class PlayersPanel extends JPanel {
     private boolean hasActiveSession = false; 
     private JButton controlButton;
     private JButton saveButton;
+    private JButton copyButton;
     private JButton refreshButton;
+    private JButton muteButton;
 
     public PlayersPanel(StatusConsumer status) {
         super(new BorderLayout());
@@ -115,14 +116,26 @@ public class PlayersPanel extends JPanel {
         refreshButton.setEnabled(true);
         refreshButton.addActionListener(e -> {
             if (SessionManager.getInstance().getActiveSession() != null) {
-                CommandBus.getInstance().publish(Commands.PLAYERS_REFRESH_REQUEST, this);
+                CommandBus.getInstance().publish(Commands.PLAYER_TABLE_REFRESH_REQUEST, this);
             }
         });
+
+
+        // Create copy button
+        copyButton = new JButton("Copy...");
+        copyButton.setEnabled(true);
+        copyButton.addActionListener(e -> {
+            if (SessionManager.getInstance().getActiveSession() != null) {
+                CommandBus.getInstance().publish(Commands.PLAYER_COPY_EDIT_REQUEST, this);
+            }
+        });
+
 
         // Add control button to the right of the button panel
         JPanel leftButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         leftButtonPanel.add(refreshButton);
         leftButtonPanel.add(saveButton);
+        leftButtonPanel.add(copyButton);
         buttonWrapper.add(leftButtonPanel, BorderLayout.WEST);
 
         // Create control button
@@ -142,7 +155,7 @@ public class PlayersPanel extends JPanel {
         buttonWrapper.add(rightButtonPanel, BorderLayout.EAST);
 
         // Add to setupLayout method
-        JButton muteButton = new JButton("Mute");
+        muteButton = new JButton("Mute");
         muteButton.addActionListener(e -> {
             Player player = getSelectedPlayer();
             if (player != null) {
@@ -227,7 +240,14 @@ public class PlayersPanel extends JPanel {
         contextMenu.setDeleteEnabled(hasSelection);
 
         // Update control button state
-        controlButton.setEnabled(hasSelection);
+        controlButton.setEnabled(hasSelection && getSelectedPlayer() != null
+                && getSelectedPlayer().getInstrument() != null
+                && !getSelectedPlayer().getInstrument().getControlCodes().isEmpty());
+
+        copyButton.setEnabled(hasSelection);
+        muteButton.setEnabled(hasSelection);
+
+        saveButton.setEnabled(hasActiveSession);
     }
 
     private void setupCommandBusListener() {
@@ -240,7 +260,7 @@ public class PlayersPanel extends JPanel {
                 String cmd = action.getCommand();
                 try {
                     switch (cmd) {
-                        case Commands.BASIC_TIMING_TICK, Commands.PLAYERS_REFRESH_REQUEST -> {
+                        case Commands.BASIC_TIMING_TICK, Commands.PLAYER_TABLE_REFRESH_REQUEST -> {
                             SwingUtilities.invokeLater(() -> {
                                 refreshPlayers(SessionManager.getInstance().getActiveSession().getPlayers());
                             });

@@ -57,7 +57,7 @@ public class PlayersTable extends JTable {
     }
 
     private void setupTable() {
-        // Set minimum and preferred widths for Name and Instrument columns
+        // Set minimum and preferred widths for Name and Instrument columns  
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setMinWidth(100);
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT)).setMinWidth(100);
 
@@ -76,13 +76,6 @@ public class PlayersTable extends JTable {
         setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         setAutoCreateRowSorter(true);
 
-        // Center-align numeric columns
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        for (int numericColumn : NUMERIC_COLUMNS) {
-            getColumnModel().getColumn(numericColumn).setCellRenderer(centerRenderer);
-        }
-
         // Set default checkbox renderer for Boolean columns
         setupBooleanColumnRenderers();
 
@@ -98,7 +91,7 @@ public class PlayersTable extends JTable {
         SwingUtilities.invokeLater(
                 () -> UIHelper.getInstance().restoreColumnOrder(this, Constants.PLAYER, PlayersTableModel.COLUMNS));
 
-        // Set custom renderer for all rows
+        // Set custom renderer for all rows - this handles centering numeric values internally
         setupCustomRowRenderer();
     }
 

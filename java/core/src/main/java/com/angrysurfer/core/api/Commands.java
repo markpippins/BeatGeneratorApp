@@ -51,6 +51,7 @@ public class Commands {
     public static final String PLAYER_DELETE_REQUEST = "PLAYER_DELETE_REQUEST";
     public static final String PLAYER_EDIT_CANCELLED = "PLAYER_EDIT_CANCELLED";
     public static final String EDIT_PLAYER_PARAMETERS = "EDIT_PLAYER_PARAMETERS"; // Add this line
+    public static final String PLAYER_COPY_EDIT_REQUEST = "PLAYER_COPY_EDIT_REQUEST"; // Add this constant with the other player commands
 
     // Player navigation commands
     public static final String PLAYER_ROW_INDEX_REQUEST = "PLAYER_ROW_INDEX_REQUEST";
@@ -230,7 +231,7 @@ public class Commands {
     public static final String TRANSPORT_RECORD_START = "TRANSPORT_RECORD_START";
     public static final String TRANSPORT_RECORD_STOP = "TRANSPORT_RECORD_STOP";
     public static final String SAVE_SESSION = "SAVE_SESSION";
-    public static final String PLAYERS_REFRESH_REQUEST = "PLAYERS_REFRESH_REQUEST";
+    public static final String PLAYER_TABLE_REFRESH_REQUEST = "PLAYER_TABLE_REFRESH_REQUEST";
     public static final String RECORDING_STOPPED = "RECORDING_STOPPED";
     public static final String RECORDING_STARTED = "RECORDING_STARTED";
 }
