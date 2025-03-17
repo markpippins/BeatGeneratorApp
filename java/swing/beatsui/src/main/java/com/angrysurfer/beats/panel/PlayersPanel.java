@@ -1,39 +1,24 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.TableColumnModelEvent;
-import javax.swing.event.TableColumnModelListener;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import com.angrysurfer.beats.ColorUtils;
-import com.angrysurfer.beats.model.PlayersTableModel;
-import com.angrysurfer.beats.renderer.PlayerRowRenderer;
-import com.angrysurfer.beats.service.UIHelper;
+import com.angrysurfer.beats.widget.PlayersTable;
+import com.angrysurfer.beats.widget.PlayersTableModel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -44,7 +29,6 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.core.util.Constants;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -55,32 +39,20 @@ public class PlayersPanel extends JPanel {
 
     private static final Logger logger = Logger.getLogger(PlayersPanel.class.getName());
 
-    private final JTable table;
+    private final PlayersTable table;
     private final StatusConsumer status;
     private final ButtonPanel buttonPanel;
     private final ContextMenuHelper contextMenu;
-    private final PlayersTableModel tableModel;
-
-    // Use the model's column arrays instead of redefining them
-    private static final int[] BOOLEAN_COLUMNS = PlayersTableModel.getBooleanColumns();
-    private static final int[] NUMERIC_COLUMNS = PlayersTableModel.getNumericColumns();
 
     private boolean hasActiveSession = false; 
     private JButton controlButton;
     private JButton saveButton;
     private JButton refreshButton;
 
-    // Add to the class fields section
-    private final Set<String> flashingPlayerNames = new HashSet<>();
-    private Timer flashTimer;
-    private final Color FLASH_COLOR = new Color(255, 255, 200); // Light yellow flash
-    private final int FLASH_DURATION_MS = 500; // Flash duration in milliseconds
-
     public PlayersPanel(StatusConsumer status) {
         super(new BorderLayout());
         this.status = status;
-        this.tableModel = new PlayersTableModel();
-        this.table = new JTable(tableModel);
+        this.table = new PlayersTable();  // Use our new PlayersTable class
         this.buttonPanel = new ButtonPanel(
                 Commands.PLAYER_ADD_REQUEST,
                 Commands.PLAYER_EDIT_REQUEST,
@@ -94,14 +66,13 @@ public class PlayersPanel extends JPanel {
         buttonPanel.setAddEnabled(true);
         contextMenu.setAddEnabled(true);
 
-        setupTable();
         setupLayout();
         setupKeyboardShortcuts();
         setupCommandBusListener();
         setupButtonListeners();
         setupContextMenu();
-        setupTableSelectionListener();
-
+        setupSelectionListener(); // Add this line
+        
         // Check for active session and enable controls immediately
         Session currentSession = SessionManager.getInstance().getActiveSession();
         if (currentSession != null) {
@@ -187,161 +158,6 @@ public class PlayersPanel extends JPanel {
 
         add(topPanel, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
-    }
-
-    private void setupTable() {
-        // Set minimum and preferred widths for Name and Instrument columns
-        table.getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setMinWidth(100);
-        table.getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT)).setMinWidth(100);
-
-        // Set relative widths for columns to control resize behavior
-        table.getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setPreferredWidth(200);
-        table.getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT)).setPreferredWidth(150);
-
-        // Set fixed widths for other columns to prevent them from growing
-        for (int i = 2; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setMaxWidth(80);
-            table.getColumnModel().getColumn(i).setPreferredWidth(60);
-        }
-
-        // Configure table appearance
-        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-        table.setAutoCreateRowSorter(true);
-
-        // Center-align numeric columns
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        for (int numericColumn : NUMERIC_COLUMNS) {
-            table.getColumnModel().getColumn(numericColumn).setCellRenderer(centerRenderer);
-        }
-
-        // Set default checkbox renderer for Boolean columns
-        for (int booleanColumn : BOOLEAN_COLUMNS) {
-            table.getColumnModel().getColumn(booleanColumn).setCellRenderer(
-                    new DefaultTableCellRenderer() {
-                        private final JCheckBox checkbox = new JCheckBox();
-                        {
-                            checkbox.setHorizontalAlignment(JCheckBox.CENTER);
-                        }
-
-                        @Override
-                        public Component getTableCellRendererComponent(JTable table, Object value,
-                                boolean isSelected, boolean hasFocus, int row, int column) {
-                            if (value instanceof Boolean) {
-                                checkbox.setSelected((Boolean) value);
-                                checkbox.setBackground(isSelected ? table.getSelectionBackground()
-                                        : table.getBackground());
-                                return checkbox;
-                            }
-                            return super.getTableCellRendererComponent(table, value, isSelected,
-                                    hasFocus, row, column);
-                        }
-                    });
-        }
-
-        // Add left alignment for Name and Instrument column headers
-        DefaultTableCellRenderer leftHeaderRenderer = new DefaultTableCellRenderer();
-        leftHeaderRenderer.setHorizontalAlignment(JLabel.LEFT);
-
-        table.getTableHeader().getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME))
-                .setHeaderRenderer(leftHeaderRenderer);
-        table.getTableHeader().getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT))
-                .setHeaderRenderer(leftHeaderRenderer);
-
-        // Add double-click listener
-        table.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (evt.getClickCount() == 2) {
-                    Player selectedPlayer = getSelectedPlayer();
-                    if (selectedPlayer != null) {
-                        CommandBus.getInstance().publish(Commands.PLAYER_EDIT_REQUEST, this, selectedPlayer);
-                    }
-                }
-            }
-        });
-
-        // Add column reordering listener
-        table.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-            @Override
-            public void columnMoved(TableColumnModelEvent e) {
-                if (e.getFromIndex() != e.getToIndex()) {
-                    logger.info("Column moved from " + e.getFromIndex() + " to " + e.getToIndex());
-                    SwingUtilities.invokeLater(
-                            () -> UIHelper.getInstance().saveColumnOrder(table, Constants.PLAYER,
-                                    PlayersTableModel.COLUMNS));
-                }
-            }
-
-            public void columnAdded(TableColumnModelEvent e) {
-            }
-
-            public void columnRemoved(TableColumnModelEvent e) {
-            }
-
-            public void columnMarginChanged(ChangeEvent e) {
-            }
-
-            public void columnSelectionChanged(ListSelectionEvent e) {
-            }
-        });
-
-        // Save initial column order and restore it
-        SwingUtilities.invokeLater(
-                () -> UIHelper.getInstance().saveColumnOrder(table, Constants.PLAYER, PlayersTableModel.COLUMNS));
-        SwingUtilities.invokeLater(
-                () -> UIHelper.getInstance().restoreColumnOrder(table, Constants.PLAYER, PlayersTableModel.COLUMNS));
-
-        // Set custom renderer for player rows
-        PlayerRowRenderer rowRenderer = new PlayerRowRenderer(this);
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            final int colIndex = i;
-            if (isInArray(BOOLEAN_COLUMNS, colIndex)) {
-                table.getColumnModel().getColumn(i).setCellRenderer(
-                        new DefaultTableCellRenderer() {
-                            private final JCheckBox checkbox = new JCheckBox();
-                            {
-                                checkbox.setHorizontalAlignment(JCheckBox.CENTER);
-                            }
-
-                            @Override
-                            public Component getTableCellRendererComponent(JTable table, Object value,
-                                    boolean isSelected, boolean hasFocus, int row, int column) {
-
-                                Player player = getPlayerAtRow(row);
-                                Color bgColor = table.getBackground();
-
-                                if (player != null && player.isPlaying()) {
-                                    bgColor = ColorUtils.dustyAmber;
-                                    if (isSelected) {
-                                        bgColor = bgColor.darker();
-                                    }
-                                } else if (isSelected) {
-                                    bgColor = table.getSelectionBackground();
-                                }
-
-                                if (value instanceof Boolean) {
-                                    checkbox.setSelected((Boolean) value);
-                                    checkbox.setBackground(bgColor);
-                                    return checkbox;
-                                }
-
-                                return rowRenderer.getTableCellRendererComponent(
-                                        table, value, isSelected, hasFocus, row, column);
-                            }
-                        });
-            } else {
-                table.getColumnModel().getColumn(i).setCellRenderer(rowRenderer);
-            }
-        }
-    }
-
-    private boolean isInArray(int[] array, int value) {
-        for (int i : array) {
-            if (i == value)
-                return true;
-        }
-        return false;
     }
 
     private void setupButtonListeners() {
@@ -536,26 +352,28 @@ public class PlayersPanel extends JPanel {
     // Add a field to track the last selected row
     private int lastSelectedRow = -1;
 
-    // Add a helper method to select a player by name
+    // Update the problematic methods
+
     private void selectPlayerByName(String playerName) {
         if (playerName == null)
             return;
 
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        int nameColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_NAME);
+        PlayersTableModel model = table.getPlayersTableModel();
+        int nameColIndex = model.getColumnIndex(PlayersTableModel.COL_NAME);
 
         for (int i = 0; i < model.getRowCount(); i++) {
             String name = (String) model.getValueAt(i, nameColIndex);
             if (playerName.equals(name)) {
                 table.setRowSelectionInterval(i, i);
-                lastSelectedRow = i;
-                handlePlayerSelection(i);
+                table.setLastSelectedRow(i);
+                table.handlePlayerSelection(i);
                 // Ensure the row is visible
                 table.scrollRectToVisible(table.getCellRect(i, 0, true));
                 return;
             }
         }
     }
+
 
     private void setupKeyboardShortcuts() {
         // Make the table focusable
@@ -610,11 +428,11 @@ public class PlayersPanel extends JPanel {
         if (player == null)
             return -1;
 
-        int nameColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_NAME);
+        int nameColIndex = table.getColumnIndex(PlayersTableModel.COL_NAME);
 
         // Search by name and then verify by ID
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            String playerName = (String) tableModel.getValueAt(i, nameColIndex);
+        for (int i = 0; i < table.getRowCount(); i++) {
+            String playerName = (String) table.getValueAt(i, nameColIndex);
             if (player.getName().equals(playerName)) {
                 return i;
             }
@@ -629,61 +447,27 @@ public class PlayersPanel extends JPanel {
             logger.info("No row selected in players table");
             return null;
         }
-
-        try {
-            // Convert view index to model index in case of sorting/filtering
-            int modelRow = table.convertRowIndexToModel(selectedRow);
-
-            // Get the player name from the Name column
-            String playerName = (String) tableModel.getValueAt(modelRow,
-                    tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
-            logger.info("Selected player name from table: " + playerName);
-
-            // Get the current session
-            Session currentSession = SessionManager.getInstance().getActiveSession();
-
-            if (currentSession != null && currentSession.getPlayers() != null) {
-                // Find the player with the matching name
-                for (Player player : currentSession.getPlayers()) {
-                    if (playerName.equals(player.getName())) {
-                        logger.info("Found matching player in session: " + player.getName() +
-                                " (ID: " + player.getId() + ")");
-                        return player;
-                    }
-                }
-                logger.warning("No player found with name: " + playerName);
-            } else {
-                logger.warning("No active session or no players in session");
-            }
-        } catch (Exception e) {
-            logger.severe("Error getting selected player: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        return null;
+        
+        return table.getPlayerAtRow(selectedRow);
     }
 
     private Player[] getSelectedPlayers() {
         int[] selectedRows = table.getSelectedRows();
         List<Player> players = new ArrayList<>();
-        Session currentSession = SessionManager.getInstance().getActiveSession();
-
-        if (currentSession != null) {
-            for (int row : selectedRows) {
-                int modelRow = table.convertRowIndexToModel(row);
-                String playerName = (String) tableModel.getValueAt(modelRow,
-                        tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
-                currentSession.getPlayers().stream()
-                        .filter(p -> p.getName().equals(playerName))
-                        .findFirst()
-                        .ifPresent(p -> players.add(p));
+        
+        for (int row : selectedRows) {
+            Player player = table.getPlayerAtRow(row);
+            if (player != null) {
+                players.add(player);
             }
         }
+        
         return players.toArray(new Player[0]);
     }
 
     public void refreshPlayers(Set<Player> players) {
         logger.info("Refreshing players table with " + (players != null ? players.size() : 0) + " players");
+        PlayersTableModel tableModel = table.getPlayersTableModel();
         tableModel.setRowCount(0);
 
         if (players != null && !players.isEmpty()) {
@@ -703,56 +487,7 @@ public class PlayersPanel extends JPanel {
      * @param player The player to update
      */
     private void updatePlayerRow(Player player) {
-        if (player == null)
-            return;
-
-        try {
-            // Find row index for this player
-            int rowIndex = findPlayerRowIndex(player);
-            if (rowIndex == -1) {
-                logger.warning("Player not found in table: " + player.getName());
-                return;
-            }
-
-            // Get the model
-            PlayersTableModel model = (PlayersTableModel) table.getModel();
-
-            // Update all cells in the row
-            int modelRow = table.convertRowIndexToModel(rowIndex);
-
-            // Update each column with fresh data
-            model.setValueAt(player.getName(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
-            model.setValueAt(player.getNote(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NOTE));
-            model.setValueAt(player.getLevel(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_LEVEL));
-            model.setValueAt(player.isMuted(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_MUTE));
-            model.setValueAt(player.getProbability(), modelRow,
-                    tableModel.getColumnIndex(PlayersTableModel.COL_PROBABILITY));
-            model.setValueAt(player.getSparse(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_SPARSE));
-            model.setValueAt(player.getSwing(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_SWING));
-            model.setValueAt(player.getRandomDegree(), modelRow,
-                    tableModel.getColumnIndex(PlayersTableModel.COL_RANDOM));
-            model.setValueAt(player.getMinVelocity(), modelRow,
-                    tableModel.getColumnIndex(PlayersTableModel.COL_MIN_VEL));
-            model.setValueAt(player.getMaxVelocity(), modelRow,
-                    tableModel.getColumnIndex(PlayersTableModel.COL_MAX_VEL));
-            model.setValueAt(player.getPreset(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_PRESET));
-            model.setValueAt(player.getPanPosition(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_PAN));
-
-            // Special handling for instrument column
-            model.updateInstrumentCell(model.getDataVector().get(modelRow),
-                    tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT), player);
-
-            // Notify the model that data has changed
-            model.fireTableRowsUpdated(modelRow, modelRow);
-
-            // Flash the row to indicate update
-            flashPlayerRow(player);
-
-            logger.info("Updated row " + rowIndex + " for player: " + player.getName());
-        } catch (Exception e) {
-            logger.severe("Error updating player row: " + e.getMessage());
-            e.printStackTrace();
-        }
+        table.updatePlayerRow(player);
     }
 
     private void handlePlayerSelection(int row) {
@@ -767,8 +502,8 @@ public class PlayersPanel extends JPanel {
                 // Convert row index to model index if table is sorted
                 int modelRow = table.convertRowIndexToModel(row);
                 // Get player name from the first column
-                String playerName = (String) tableModel.getValueAt(modelRow,
-                        tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
+                String playerName = (String) table.getValueAt(modelRow,
+                        table.getColumnIndex(PlayersTableModel.COL_NAME));
 
                 // Find player in the current session
                 Session session = SessionManager.getInstance().getActiveSession();
@@ -803,21 +538,9 @@ public class PlayersPanel extends JPanel {
         }
     }
 
-    // In PlayersPanel, find the table selection listener method (likely called
-    // setupTableSelectionListener)
-    private void setupTableSelectionListener() {
-        table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) { // Only handle when selection is complete
-                int selectedRow = table.getSelectedRow();
-                handlePlayerSelection(selectedRow);
-                updateButtonStates();
-            }
-        });
-    }
-
     // Helper method to get player at a specific row
     public Player getPlayerAtRow(int row) {
-        if (row < 0 || tableModel.getRowCount() <= row) {
+        if (row < 0 || table.getRowCount() <= row) {
             return null;
         }
 
@@ -826,8 +549,8 @@ public class PlayersPanel extends JPanel {
             int modelRow = table.convertRowIndexToModel(row);
 
             // Get the player name from the Name column
-            String playerName = (String) tableModel.getValueAt(
-                    modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
+            String playerName = (String) table.getValueAt(
+                    modelRow, table.getColumnIndex(PlayersTableModel.COL_NAME));
 
             // Get the current session
             Session currentSession = SessionManager.getInstance().getActiveSession();
@@ -846,51 +569,13 @@ public class PlayersPanel extends JPanel {
         return null;
     }
 
-    /**
-     * Flash the row for the given player
-     * 
-     * @param player The player whose row should flash
-     */
-    private void flashPlayerRow(Player player) {
-        if (player == null || player.getName() == null) {
-            return;
-        }
-
-        // Add player to flashing set
-        flashingPlayerNames.add(player.getName());
-        
-        // Cancel existing timer if one is running
-        if (flashTimer != null && flashTimer.isRunning()) {
-            flashTimer.stop();
-        }
-        
-        // Create new timer to end the flash effect
-        flashTimer = new Timer(FLASH_DURATION_MS, e -> {
-            // Clear flashing players
-            flashingPlayerNames.clear();
-            
-            // Repaint the table
-            table.repaint();
-            
-            // Stop the timer
-            ((Timer)e.getSource()).stop();
+    // Add this method to PlayersPanel class to setup selection listener
+    private void setupSelectionListener() {
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) { // Only handle when selection is complete
+                // Update button states when selection changes
+                updateButtonStates();
+            }
         });
-        
-        // Start the timer
-        flashTimer.setRepeats(false);
-        flashTimer.start();
-        
-        // Immediately repaint to show flash
-        table.repaint();
-    }
-
-    /**
-     * Check if a player is currently flashing
-     * 
-     * @param playerName The player name to check
-     * @return True if the player's row is flashing
-     */
-    public boolean isPlayerFlashing(String playerName) {
-        return flashingPlayerNames.contains(playerName);
     }
 }

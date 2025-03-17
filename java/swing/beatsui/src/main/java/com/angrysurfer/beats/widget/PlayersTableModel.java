@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.model;
+package com.angrysurfer.beats.widget;
 
 import java.util.ArrayList;
 import java.util.Arrays;
