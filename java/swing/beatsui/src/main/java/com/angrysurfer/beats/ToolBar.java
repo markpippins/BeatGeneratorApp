@@ -302,7 +302,7 @@ public class ToolBar extends JToolBar {
         if (currentSession != null) {
             try {
                 switch (field) {
-                    case "Ticks" -> currentSession.setTicksPerBeat(value);
+                    case "PPQ" -> currentSession.setTicksPerBeat(value);
                     case "BPM" -> currentSession.setTempoInBPM((float) value); // Cast to float
                     case "B/Bar" -> currentSession.setBeatsPerBar(value);
                     case "Bars" -> currentSession.setBars(value);
@@ -340,7 +340,7 @@ public class ToolBar extends JToolBar {
 
                 // Update right fields - keep this part unchanged
                 ((JTextField) rightFields.get("Session")).setText(session.getId().toString());
-                ((JComboBox<?>) rightFields.get("Ticks")).setSelectedItem(session.getTicksPerBeat());
+                ((JComboBox<?>) rightFields.get("PPQ")).setSelectedItem(session.getTicksPerBeat());
                 ((JComboBox<?>) rightFields.get("BPM")).setSelectedItem(session.getTempoInBPM().intValue());
                 ((JComboBox<?>) rightFields.get("B/Bar")).setSelectedItem(session.getBeatsPerBar());
                 ((JComboBox<?>) rightFields.get("Bars")).setSelectedItem(session.getBars());
@@ -530,7 +530,7 @@ public class ToolBar extends JToolBar {
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         Object[][] rightFieldsArray = {
-                { "Ticks", createSessionCombo("Ticks", 1, 384, 24) },
+                { "PPQ", createSessionCombo("PPQ", 1, 384, 24) },
                 { "BPM", createSessionCombo("BPM", 1, 960, 120) },
                 { "B/Bar", createSessionCombo("B/Bar", 1, 16, 4) },
                 { "Bars", createSessionCombo("Bars", 1, 128, 4) },
