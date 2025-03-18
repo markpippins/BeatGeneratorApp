@@ -77,15 +77,28 @@ public class SessionManager {
     }
 
     public void initialize() {
+        System.out.println("SessionManager: Initializing...");
         logger.info("Initializing session manager");
 
         List<Instrument> instruments = UserConfigManager.getInstance().getCurrentConfig().getInstruments();
+        System.out.println("SessionManager: Got " + instruments.size() + " instruments from config");
 
         // Instead of creating SessionManager, directly load session
         loadActiveSession();
+        System.out.println("SessionManager: Active session loaded: " + (activeSession != null ? activeSession.getId() : "null"));
+        
+        if (activeSession != null) {
+            System.out.println("SessionManager: Session details:");
+            System.out.println("  - ID: " + activeSession.getId());
+            System.out.println("  - Players: " + (activeSession.getPlayers() != null ? activeSession.getPlayers().size() : 0));
+            System.out.println("  - BPM: " + activeSession.getTempoInBPM());
+            System.out.println("  - PPQ: " + activeSession.getTicksPerBeat());
+        }
+        
         logSessionState(getActiveSession());
 
         songEngine = new SongEngine();
+        System.out.println("SessionManager: SongEngine created");
 
         commandBus.register(new IBusListener() {
             @Override
@@ -104,15 +117,22 @@ public class SessionManager {
                         case Commands.TRANSPORT_FORWARD -> moveForward();
                         case Commands.TRANSPORT_PLAY -> {
                             // Direct control of transport
+                            System.out.println("SessionManager: Received TRANSPORT_PLAY command");
                             if (activeSession != null) {
+                                System.out.println("SessionManager: Active session found: " + activeSession.getId());
                                 // Make session.initializeDevices() public, not private!
                                 activeSession.initializeDevices(); // Call this first to ensure devices are ready
+                                System.out.println("SessionManager: Devices initialized");
 
                                 // Set this session as the active session in SequencerManager
                                 sequencerManager.setActiveSession(activeSession);
+                                System.out.println("SessionManager: Set active session in SequencerManager");
 
                                 // Start the sequencer directly
                                 sequencerManager.start();
+                                System.out.println("SessionManager: Called sequencerManager.start()");
+                            } else {
+                                System.out.println("SessionManager: No active session found!");
                             }
                         }
                         case Commands.TRANSPORT_STOP -> {

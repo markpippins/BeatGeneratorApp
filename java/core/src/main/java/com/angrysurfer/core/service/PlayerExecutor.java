@@ -22,7 +22,16 @@ public class PlayerExecutor {
     }
     
     public void submit(Runnable task) {
-        executor.submit(task);
+        logger.debug("Submitting task to player executor");
+        executor.submit(() -> {
+            try {
+                logger.debug("Executing player task");
+                task.run();
+                logger.debug("Player task completed");
+            } catch (Exception e) {
+                logger.error("Error executing player task: {}", e.getMessage(), e);
+            }
+        });
     }
     
     public void shutdown() {

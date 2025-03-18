@@ -21,6 +21,13 @@ public class Commands {
     public static final String TRANSPORT_STATE_CHANGED = "TRANSPORT_STATE_CHANGED";
     public static final String TRANSPORT_RECORD_STATE_CHANGED = "TRANSPORT_RECORD_STATE_CHANGED";
 
+    // Timing commands - consolidated
+    public static final String TIMING_TICK = "TIMING_TICK";
+    public static final String TIMING_BEAT = "TIMING_BEAT";
+    public static final String TIMING_BAR = "TIMING_BAR";
+    public static final String TIMING_PART = "TIMING_PART";
+    public static final String TIMING_RESET = "TIMING_RESET";
+
     // File Commands
     public static final String NEW_FILE = "NEW_FILE";
     public static final String OPEN_FILE = "OPEN_FILE";
@@ -186,18 +193,18 @@ public class Commands {
     public static final String INSTRUMENTS_REFRESHED = "INSTRUMENTS_REFRESHED";
 
     // Add timing-specific commands
-    public static final String BASIC_TIMING_TICK = "BASIC_TIMING_TICK";
-    public static final String BASIC_TIMING_BEAT = "BASIC_TIMING_BEAT";
-    public static final String BASIC_TIMING_BAR = "BASIC_TIMING_BAR";
-    public static final String BEFORE_TICK = "BEFORE_TICK";
-    public static final String AFTER_TICK = "AFTER_TICK";
-    public static final String BEFORE_BEAT = "BEFORE_BEAT";
-    public static final String AFTER_BEAT = "AFTER_BEAT";
-    public static final String BEFORE_BAR = "BEFORE_BAR";
-    public static final String AFTER_BAR = "AFTER_BAR";
-    public static final String BEFORE_PART = "BEFORE_PART";
-    public static final String AFTER_PART = "AFTER_PART";
-    public static final String BASIC_TIMING_PART = "BASIC_TIMING_PART";
+    // public static final String BASIC_TIMING_TICK = "BASIC_TIMING_TICK";
+    // public static final String BASIC_TIMING_BEAT = "BASIC_TIMING_BEAT";
+    // public static final String BASIC_TIMING_BAR = "BASIC_TIMING_BAR";
+    // public static final String BASIC_TIMING_PART = "BASIC_TIMING_PART";
+    // public static final String BEFORE_TICK = "BEFORE_TICK";
+    // public static final String AFTER_TICK = "AFTER_TICK";
+    // public static final String BEFORE_BEAT = "BEFORE_BEAT";
+    // public static final String AFTER_BEAT = "AFTER_BEAT";
+    // public static final String BEFORE_BAR = "BEFORE_BAR";
+    // public static final String AFTER_BAR = "AFTER_BAR";
+    // public static final String BEFORE_PART = "BEFORE_PART";
+    // public static final String AFTER_PART = "AFTER_PART";
 
     public static final String TRANSPORT_STATE = "TRANSPORT_STATE";
 

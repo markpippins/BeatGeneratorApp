@@ -414,19 +414,19 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
             }
             
             // Timing events
-            case Commands.BASIC_TIMING_TICK -> {
+            case Commands.TIMING_TICK -> {
                 if (action.getData() instanceof Number tick) {
                     currentTick = tick.intValue();
                 }
             }
             
-            case Commands.BASIC_TIMING_BEAT -> {
+            case Commands.TIMING_BEAT -> {
                 if (action.getData() instanceof Number beat) {
                     currentBeat = beat.intValue();
                 }
             }
             
-            case Commands.BASIC_TIMING_BAR -> {
+            case Commands.TIMING_BAR -> {
                 if (action.getData() instanceof Number bar) {
                     currentBar = bar.intValue();
                 }

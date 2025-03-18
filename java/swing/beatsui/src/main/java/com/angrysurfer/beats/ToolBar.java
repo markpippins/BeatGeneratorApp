@@ -6,6 +6,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
@@ -87,33 +89,35 @@ public class ToolBar extends JToolBar {
                     JComboBox<String> scaleCombo = (JComboBox<String>) rightFields.get("Scale");
 
                     switch (action.getCommand()) {
-                        case Commands.NEXT_SCALE_SELECTED -> {
+                        case Commands.NEXT_SCALE_SELECTED:
                             int nextIndex = scaleCombo.getSelectedIndex() + 1;
                             if (nextIndex < scaleCombo.getItemCount()) {
                                 scaleCombo.setSelectedIndex(nextIndex);
                             }
-                        }
-                        case Commands.PREV_SCALE_SELECTED -> {
+                            break;
+                        case Commands.PREV_SCALE_SELECTED:
                             int prevIndex = scaleCombo.getSelectedIndex() - 1;
                             if (prevIndex >= 0) {
                                 scaleCombo.setSelectedIndex(prevIndex);
                             }
-                        }
-                        case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED -> {
+                            break;
+                        case Commands.SESSION_SELECTED:
+                        case Commands.SESSION_UPDATED:
                             if (action.getData() instanceof Session) {
                                 Session session = (Session) action.getData();
                                 updateSessionDisplay(session);
                                 updateToolbarState(session);
                             }
-                        }
-                        case Commands.RULE_ADDED -> {
+                            break;
+                        case Commands.RULE_ADDED:
                             // Re-evaluate forward button state when a rule is added
                             if (currentSession != null) {
                                 updateToolbarState(currentSession);
                             }
-                        }
-                        case Commands.SESSION_CREATED -> {
-                            if (action.getData() instanceof Session session) {
+                            break;
+                        case Commands.SESSION_CREATED:
+                            if (action.getData() instanceof Session) {
+                                Session session = (Session) action.getData();
                                 updateSessionDisplay(session);
                                 // Force disable forward button for new session
                                 for (Component comp : transportPanel.getComponents()) {
@@ -124,29 +128,30 @@ public class ToolBar extends JToolBar {
                                     }
                                 }
                             }
-                        }
-                        case Commands.TRANSPORT_STATE_CHANGED -> {
-                            if (action.getData() instanceof Boolean isPlaying) {
+                            break;
+                        case Commands.TRANSPORT_STATE_CHANGED:
+                            if (action.getData() instanceof Boolean) {
+                                Boolean isPlaying = (Boolean) action.getData();
                                 SwingUtilities.invokeLater(() -> {
                                     playButton.setEnabled(!isPlaying);
                                     stopButton.setEnabled(isPlaying);
                                 });
                             }
-                        }
-                        case Commands.TRANSPORT_RECORD_START -> {
+                            break;
+                        case Commands.TRANSPORT_RECORD_START:
                             isRecording = true;
                             updateRecordButtonAppearance();
-                        }
-                        case Commands.TRANSPORT_RECORD_STOP -> {
+                            break;
+                        case Commands.TRANSPORT_RECORD_STOP:
                             isRecording = false;
                             updateRecordButtonAppearance();
-                        }
-                        case Commands.TRANSPORT_STOP -> {
+                            break;
+                        case Commands.TRANSPORT_STOP:
                             // Also stop recording when transport is stopped
                             isRecording = false;
                             updateRecordButtonAppearance();
                             // resetTimingCounters();
-                        }
+                            break;
                     }
                 }
             }
@@ -190,7 +195,7 @@ public class ToolBar extends JToolBar {
                     System.out.println("ToolBar received timing event: " + cmd);
                     
                     switch (cmd) {
-                        case Commands.BASIC_TIMING_TICK -> {
+                        case Commands.TIMING_TICK -> {
                             // Use SwingUtilities.invokeLater for thread safety when updating UI
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
@@ -199,7 +204,7 @@ public class ToolBar extends JToolBar {
                                 }
                             });
                         }
-                        case Commands.BASIC_TIMING_BEAT -> {
+                        case Commands.TIMING_BEAT -> {
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
                                     updateBeatFields(currentSession);
@@ -207,7 +212,7 @@ public class ToolBar extends JToolBar {
                                 }
                             });
                         }
-                        case Commands.BASIC_TIMING_BAR -> {
+                        case Commands.TIMING_BAR -> {
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
                                     updateBarFields(currentSession);
@@ -215,7 +220,7 @@ public class ToolBar extends JToolBar {
                                 }
                             });
                         }
-                        case Commands.BASIC_TIMING_PART -> {
+                        case Commands.TIMING_PART -> {
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
                                     updatePartFields(currentSession);
@@ -348,6 +353,14 @@ public class ToolBar extends JToolBar {
                 ((JTextField) rightFields.get("Length")).setText(String.valueOf(session.getPartLength()));
                 ((JTextField) rightFields.get("Offset")).setText(String.valueOf(session.getNoteOffset()));
 
+                // Update the combo boxes with current session values
+                if (rightFields.get("Offset") instanceof JComboBox<?> offsetCombo) {
+                    offsetCombo.setSelectedItem(session.getNoteOffset().intValue());
+                }
+                if (rightFields.get("Length") instanceof JComboBox<?> lengthCombo) {
+                    lengthCombo.setSelectedItem(session.getPartLength().intValue());
+                }
+
             } catch (Exception e) {
                 System.err.println("ToolBar: Error updating display: " + e.getMessage());
                 e.printStackTrace();
@@ -418,22 +431,22 @@ public class ToolBar extends JToolBar {
 
                 SwingUtilities.invokeLater(() -> {
                     switch (action.getCommand()) {
-                        case Commands.BASIC_TIMING_TICK -> {
+                        case Commands.TIMING_TICK -> {
                             currentTick = (currentTick + 1) % (currentSession != null ? currentSession.getTicksPerBeat() : 24);
                             totalTicks++;
                             updateTimingDisplays();
                         }
-                        case Commands.BASIC_TIMING_BEAT -> {
+                        case Commands.TIMING_BEAT -> {
                             currentBeat = (currentBeat + 1) % (currentSession != null ? currentSession.getBeatsPerBar() : 4);
                             totalBeats++;
                             updateTimingDisplays();
                         }
-                        case Commands.BASIC_TIMING_BAR -> {
+                        case Commands.TIMING_BAR -> {
                             currentBar = (currentBar + 1) % (currentSession != null ? currentSession.getBars() : 4);
                             totalBars++;
                             updateTimingDisplays();
                         }
-                        case Commands.BASIC_TIMING_PART -> {
+                        case Commands.TIMING_PART -> {
                             currentPart = (currentPart + 1);
                             updateTimingDisplays();
                         }
@@ -559,34 +572,78 @@ public class ToolBar extends JToolBar {
     }
 
     private JPanel createBottomRightStatusPanel() {
-        JPanel rightStatusPanel = new JPanel(new GridLayout(0, 5, 4, 0)); // 5 columns, variable rows, 10px horizontal
-                                                                          // gap
+        JPanel rightStatusPanel = new JPanel(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        
+        // Create fields for bottom right panel
+        JComboBox<String> rootNoteCombo = createRootNoteCombo();
+        rightFields.put("Root", rootNoteCombo);
 
-        Object[][] rightFieldsArray = {
-                { "Root", createRootNoteCombo() },
-                { "Scale", createScaleCombo() },
-                { "Session", createTextField("1") },
-                { "Length", createTextField("0") },
-                { "Offset", createTextField("0") }
-        };
+        JComboBox<String> scaleCombo = createScaleCombo();
+        scaleCombo.setPreferredSize(new Dimension(180, 25)); // Make scale combo wider
+        rightFields.put("Scale", scaleCombo);
 
-        for (Object[] field : rightFieldsArray) {
+        // Create offset combo box (values from -12 to +12)
+        JComboBox<Integer> offsetCombo = new JComboBox<>();
+        for (int i = -12; i <= 12; i++) {
+            offsetCombo.addItem(i);
+        }
+        offsetCombo.setSelectedItem(0);
+        offsetCombo.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED && currentSession != null) {
+                currentSession.setNoteOffset(Double.valueOf(((Integer) offsetCombo.getSelectedItem())));
+                commandBus.publish(Commands.SESSION_UPDATED, this, currentSession);
+            }
+        });
+        rightFields.put("Offset", offsetCombo);
+
+        // Create length combo box (values from 1 to 32)
+        JComboBox<Integer> lengthCombo = new JComboBox<>();
+        for (int i = 1; i <= 32; i++) {
+            lengthCombo.addItem(i);
+        }
+        lengthCombo.setSelectedItem(4);
+        lengthCombo.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED && currentSession != null) {
+                currentSession.setPartLength((Integer) lengthCombo.getSelectedItem());
+                commandBus.publish(Commands.SESSION_UPDATED, this, currentSession);
+            }
+        });
+        rightFields.put("Length", lengthCombo);
+
+        // Create field panels with labels and add them with GridBagConstraints
+        String[] rightLabels = { "Root", "Scale", "Offset", "Length" }; // Swapped Offset and Length
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(0, 2, 0, 2);
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.gridy = 0;
+
+        for (int i = 0; i < rightLabels.length; i++) {
+            String label = rightLabels[i];
             JPanel fieldPanel = new JPanel(new BorderLayout(0, 2));
             fieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
             JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-            JLabel nameLabel = new JLabel((String) field[0]);
+            JLabel nameLabel = new JLabel(label);
             nameLabel.setForeground(Color.GRAY);
             labelPanel.add(nameLabel);
 
-            JComponent component = (JComponent) field[1];
-            rightFields.put((String) field[0], component);
-
             fieldPanel.add(labelPanel, BorderLayout.NORTH);
-            fieldPanel.add(component, BorderLayout.CENTER);
+            fieldPanel.add((JComponent) rightFields.get(label), BorderLayout.CENTER);
 
-            rightStatusPanel.add(fieldPanel);
+            // Special handling for Scale to span 2 columns
+            if (label.equals("Scale")) {
+                gbc.gridwidth = 2;
+            } else {
+                gbc.gridwidth = 1;
+            }
+
+            gbc.gridx = (label.equals("Offset") || label.equals("Length")) ? 
+                        i + 1 : i; // Adjust position for Offset and Length due to Scale's double width
+
+            rightStatusPanel.add(fieldPanel, gbc);
         }
 
         return rightStatusPanel;

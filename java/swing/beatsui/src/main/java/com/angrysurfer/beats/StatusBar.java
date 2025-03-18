@@ -287,28 +287,23 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
                     System.out.println("StatusBar clearing player info");
                     clearPlayerInfo();
                 }
-                case Commands.BASIC_TIMING_TICK -> {
-                    // flashTickLed();
-                    
-                    // Increment tick count
-                    tickCount++;
-                    updateTimeDisplay();
+                case Commands.TIMING_TICK -> {
+                    if (action.getData() instanceof Number tick) {
+                        tickCount = tick.intValue();
+                        updateTimeDisplay();
+                    }
                 }
-                case Commands.BASIC_TIMING_BEAT -> {
-                    // flashBeatLed();
-                    
-                    // Increment beat count and reset ticks
-                    beatCount++;
-                    tickCount = 0;
-                    updateTimeDisplay();
+                case Commands.TIMING_BEAT -> {
+                    if (action.getData() instanceof Number beat) {
+                        beatCount = beat.intValue();
+                        updateTimeDisplay();
+                    }
                 }
-                case Commands.BASIC_TIMING_BAR -> {
-                    // flashBarLed();
-                    
-                    // Increment bar count and reset beats
-                    barCount++;
-                    beatCount = 0;
-                    updateTimeDisplay();
+                case Commands.TIMING_BAR -> {
+                    if (action.getData() instanceof Number bar) {
+                        barCount = bar.intValue();
+                        updateTimeDisplay();
+                    }
                 }
                 case Commands.TRANSPORT_PLAY, Commands.TRANSPORT_STOP -> {
                     resetTimingCounters();

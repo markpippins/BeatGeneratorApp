@@ -16,13 +16,11 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.exception.MidiDeviceException;
 import com.angrysurfer.core.model.midi.Instrument;
-
-import lombok.Getter;
 
 public class DeviceManager implements IBusListener {
     

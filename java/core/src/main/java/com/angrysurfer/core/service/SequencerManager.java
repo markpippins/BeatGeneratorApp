@@ -72,21 +72,33 @@ public class SequencerManager implements IBusListener {
 
     private void initialize() {
         try {
+            System.out.println("SequencerManager: Initializing...");
             setupSequencer();
+            System.out.println("SequencerManager: Sequencer setup complete");
             setupSynthesizer();
+            System.out.println("SequencerManager: Synthesizer setup complete");
             createSequence();
+            System.out.println("SequencerManager: Sequence created");
             connectDevices();
-            // logManager.info("SequencerManager initialized successfully");
+            System.out.println("SequencerManager: Devices connected");
         } catch (Exception e) {
-            // logManager.error("Error initializing MIDI: " + e.getMessage());
+            System.err.println("SequencerManager: Error initializing MIDI: " + e.getMessage());
+            e.printStackTrace();
         }
 
         CommandBus.getInstance().register(this);
+        System.out.println("SequencerManager: Initialization complete");
     }
 
     private void setupSequencer() throws MidiUnavailableException {
+        System.out.println("SequencerManager: Setting up sequencer...");
         sequencer = MidiSystem.getSequencer(false);
+        if (sequencer == null) {
+            throw new MidiUnavailableException("Could not obtain MIDI sequencer");
+        }
+        System.out.println("SequencerManager: Got sequencer: " + sequencer.getDeviceInfo().getName());
         sequencer.open();
+        System.out.println("SequencerManager: Sequencer opened successfully");
     }
 
     private void setupSynthesizer() throws MidiUnavailableException {
@@ -160,21 +172,21 @@ public class SequencerManager implements IBusListener {
         currentTick = (currentTick + 1) % getPpq();
         
         // Publish tick event
-        timingBus.publish(Commands.BASIC_TIMING_TICK, this, currentTick);
+        timingBus.publish(Commands.TIMING_TICK, this, currentTick);
         
         // Check for beat boundary
         if (currentTick % getPpq() == 0) {
             currentBeat = (currentBeat + 1) % getBeatsPerBar();
-            timingBus.publish(Commands.BASIC_TIMING_BEAT, this, currentBeat);
+            timingBus.publish(Commands.TIMING_BEAT, this, currentBeat);
             
             // Check for bar boundary
             if (currentBeat == 0) {
                 currentBar = (currentBar + 1) % (activeSession != null ? activeSession.getBars() : 4);
-                timingBus.publish(Commands.BASIC_TIMING_BAR, this, currentBar);
+                timingBus.publish(Commands.TIMING_BAR, this, currentBar);
                 
                 // Check for part boundary
                 if (currentBar == 0) {
-                    timingBus.publish(Commands.BASIC_TIMING_PART, this, null);
+                    timingBus.publish(Commands.TIMING_PART, this, null);
                 }
             }
         }
@@ -182,7 +194,10 @@ public class SequencerManager implements IBusListener {
 
     public void start() {
         try {
+            System.out.println("SequencerManager: Attempting to start sequencer");
             if (sequencer != null && !sequencer.isRunning()) {
+                System.out.println("SequencerManager: Sequencer exists and is not running");
+                
                 // Reset counters
                 currentTick = 0;
                 currentBeat = 0;
@@ -190,18 +205,31 @@ public class SequencerManager implements IBusListener {
                 
                 // Important: Make sure any active session is properly initialized
                 if (activeSession != null) {
+                    System.out.println("SequencerManager: Active session found: " + activeSession.getId());
                     activeSession.beforeStart();
+                    System.out.println("SequencerManager: Called session.beforeStart()");
+                } else {
+                    System.out.println("SequencerManager: No active session found!");
                 }
 
                 // Start sequencer
                 sequencer.start();
+                System.out.println("SequencerManager: Sequencer started");
                 
                 // Publish state change - CRITICAL for UI updates
                 commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
-                System.out.println("SequencerManager: Started sequencer, publishing state change event");
+                System.out.println("SequencerManager: Published TRANSPORT_STATE_CHANGED event");
+            } else {
+                System.out.println("SequencerManager: Cannot start - sequencer is null or already running");
+                if (sequencer == null) {
+                    System.out.println("SequencerManager: Sequencer is null!");
+                } else {
+                    System.out.println("SequencerManager: Sequencer is already running!");
+                }
             }
         } catch (Exception e) {
-            // logger.error("Error starting sequencer: {}", e.getMessage(), e);
+            System.err.println("SequencerManager: Error starting sequencer: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -226,6 +254,11 @@ public class SequencerManager implements IBusListener {
 
     public void cleanup() {
         try {
+            // Unregister from timing bus
+            timingBus.unregister(this);
+            
+            // Clean up sequencer
+            SequencerManager.getInstance().cleanup();
             if (sequencer != null) {
                 sequencer.stop();
                 sequencer.close();

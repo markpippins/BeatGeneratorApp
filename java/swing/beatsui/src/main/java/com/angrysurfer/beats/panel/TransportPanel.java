@@ -200,28 +200,36 @@ class TransportPanel extends JPanel implements IBusListener {
         if (action.getCommand() == null) return;
         
         switch (action.getCommand()) {
-            case Commands.BASIC_TIMING_TICK -> {
+            case Commands.TIMING_TICK -> {
                 // Flash tick LED
                 flashTickLed(tickLed);
             }
-            case Commands.BASIC_TIMING_BEAT -> {
+            case Commands.TIMING_BEAT -> {
                 // Flash beat LED
                 flashBeatLed(beatLed);
             }
             case Commands.TRANSPORT_STATE_CHANGED -> {
-                boolean isPlaying = (boolean)action.getData();
-                playButton.setEnabled(!isPlaying);
-                stopButton.setEnabled(isPlaying);
-                // Other transport UI updates
+                if (action.getData() instanceof Boolean) {
+                    boolean isPlaying = (Boolean) action.getData();
+                    playButton.setEnabled(!isPlaying);
+                    stopButton.setEnabled(isPlaying);
+                    log("Transport state changed: " + (isPlaying ? "Playing" : "Stopped"));
+                }
             }
             // Other cases...
         }
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        SequencerManager.getInstance().cleanup();
-        super.finalize();
+    public void cleanup() {
+        try {
+            // Unregister from timing bus
+            timeBus.unregister(this);
+            
+            // Clean up sequencer
+            SequencerManager.getInstance().cleanup();
+        } catch (Exception e) {
+            System.err.println("Error during cleanup: " + e.getMessage());
+        }
     }
 
     private JButton createTransportButton(String symbol, String command, String tooltip) {

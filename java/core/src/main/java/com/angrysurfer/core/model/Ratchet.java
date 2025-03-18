@@ -1,19 +1,15 @@
 package com.angrysurfer.core.model;
 
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.util.Operator;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.service.PlayerExecutor;
 import com.angrysurfer.core.service.SequencerManager;
-import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Comparison;
+import com.angrysurfer.core.util.Operator;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -28,16 +24,19 @@ public class Ratchet extends Strike {
     private double targetTick;
 
     public Ratchet(Player parent, double offset, long interval, int part) {
-
-        logger.info("Creating new Ratchet - parent: %s, offset: %d, interval: %d, part: %d",
+        logger.info("Creating new Ratchet - parent: {}, offset: {}, interval: {}, part: {}",
                 parent.getName(), offset, interval, part);
 
-        Long ratchets = ((Session) getSession()).getPlayers().stream().filter(p -> p instanceof Ratchet)
+        // Set parent and session first
+        setParent(parent);
+        setSession(parent.getSession());
+
+        // Now we can safely use the session
+        Long ratchets = getSession().getPlayers().stream()
+                .filter(p -> p instanceof Ratchet)
                 .count() + 1;
                 
         setId(9000 + ratchets);
-        setParent(parent);
-        setSession(getParent().getSession());
         setNote(getParent().getNote());
         setInstrument(getParent().getInstrument());
         setChannel(getParent().getChannel());
@@ -58,16 +57,14 @@ public class Ratchet extends Strike {
 
         setName(getParent().getName()
                 + String.format(getParent().getPlayerClassName(),
-                        ((Session) getParent().getSession()).getPlayers().size()));
+                        getSession().getPlayers().size()));
         targetTick = getSession().getTickCount() + offset;
         logger.debug("Adding rule - tick: {}, part: {}", targetTick, part);
         getRules().add(new Rule(Comparison.TICK_COUNT, Operator.EQUALS, targetTick, part));
 
-        synchronized (((Session) getSession()).getPlayers()) {
-            synchronized (((Session) getSession()).getPlayers()) {
-                ((Session) getSession()).getPlayers().add(this);
-                ((Session) getSession()).getRemoveList().add(this);
-            }
+        synchronized (getSession().getPlayers()) {
+            getSession().getPlayers().add(this);
+            getSession().getRemoveList().add(this);
         }
 
         CommandBus.getInstance().register(this);
@@ -84,7 +81,7 @@ public class Ratchet extends Strike {
 
         if (tick > targetTick + 1) {
             // Remove this ratchet after it has been played
-            ((Session) getSession()).getPlayers().remove(this);
+            getSession().getPlayers().remove(this);
             CommandBus.getInstance().unregister(this);
             TimingBus.getInstance().unregister(this);
         }
@@ -93,5 +90,14 @@ public class Ratchet extends Strike {
     public boolean shouldPlay() {
         double tick = SequencerManager.getInstance().getCurrentTick();
         return tick >= targetTick && tick < targetTick + 1;
+    }
+
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == Commands.TIMING_TICK) {
+            if (shouldPlay()) {
+                onTick(getSession().getTick(), getSession().getBar());
+            }
+        }
     }
 }

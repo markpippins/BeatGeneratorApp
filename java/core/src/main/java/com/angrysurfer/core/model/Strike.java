@@ -54,11 +54,15 @@ public class Strike extends Player {
     public void onTick(long tick, long bar) {
         // logger.info(String.format("Tick: %s", tick));
         if (tick == 1 && getSubDivisions() > 1 && getBeatFraction() > 1) {
-            double numberOfTicksToWait = getBeatFraction() * (getSession().getTicksPerBeat() / getSubDivisions());
-            new Ratchet(this, numberOfTicksToWait, getRatchetInterval(), 0);
-            handleRachets();
+            try {
+                double numberOfTicksToWait = getBeatFraction() * (getSession().getTicksPerBeat() / getSubDivisions());
+                logger.debug("Creating Ratchet with wait ticks: {}", numberOfTicksToWait);
+                new Ratchet(this, numberOfTicksToWait, getRatchetInterval(), 0);
+                handleRachets();
+            } catch (Exception e) {
+                logger.error("Error creating Ratchet: {}", e.getMessage(), e);
+            }
         }
-
         else if (getSkipCycler().getLength() == 0 || getSkipCycler().atEnd()) {
             if (getSwing() > 0)
                 handleSwing();
@@ -70,22 +74,35 @@ public class Strike extends Player {
     }
 
     private void handleSwing() {
-        double offset = getSession().getBeatDuration() * rand.nextLong(getSwing()) * .01;
         try {
-            Thread.sleep((long) offset);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            double offset = getSession().getBeatDuration() * rand.nextLong(getSwing()) * .01;
+            try {
+                Thread.sleep((long) offset);
+            } catch (InterruptedException e) {
+                logger.error("Sleep interrupted in handleSwing: {}", e.getMessage());
+            }
+            logger.debug("Creating swing Ratchet with offset: {}", offset);
+            new Ratchet(this, getSession().getTick() + (long) offset, 1, 0);
+        } catch (Exception e) {
+            logger.error("Error in handleSwing: {}", e.getMessage(), e);
         }
-        new Ratchet(this, getSession().getTick() + (long) offset, 1, 0);
     }
 
     private void handleRachets() {
-        double numberOfTicksToWait = getRatchetInterval() * (getSession().getTicksPerBeat() / getSubDivisions());
-
-        LongStream.range(1, getRatchetCount() + 1).forEach(i -> {
-            new Ratchet(this, i * numberOfTicksToWait, getRatchetInterval(), 0);
-        });
+        try {
+            double numberOfTicksToWait = getRatchetInterval() * (getSession().getTicksPerBeat() / getSubDivisions());
+            logger.debug("Creating {} ratchets with interval: {}", getRatchetCount(), numberOfTicksToWait);
+            
+            LongStream.range(1, getRatchetCount() + 1).forEach(i -> {
+                try {
+                    new Ratchet(this, i * numberOfTicksToWait, getRatchetInterval(), 0);
+                } catch (Exception e) {
+                    logger.error("Error creating Ratchet {}: {}", i, e.getMessage(), e);
+                }
+            });
+        } catch (Exception e) {
+            logger.error("Error in handleRachets: {}", e.getMessage(), e);
+        }
     }
 
     public Object[] toRow() {
