@@ -34,7 +34,7 @@ public class PlayersTable extends JTable {
     private static final Logger logger = Logger.getLogger(PlayersTable.class.getName());
 
     private final PlayersTableModel tableModel;
-    private final Set<String> flashingPlayerNames = new HashSet<>();
+    private final Set<Long> flashingPlayerIds = new HashSet<>();
     private Timer flashTimer;
     private final Color FLASH_COLOR = ColorUtils.coolBlue; // new Color(255, 255, 200); // Light yellow flash
     private final int FLASH_DURATION_MS = 500; // Flash duration in milliseconds
@@ -57,6 +57,12 @@ public class PlayersTable extends JTable {
     }
 
     private void setupTable() {
+        // Hide the ID column
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setMinWidth(30);
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setMaxWidth(30);
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setWidth(0);
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setPreferredWidth(30);
+        
         // Set minimum and preferred widths for Name and Instrument columns  
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setMinWidth(100);
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT)).setMinWidth(100);
@@ -247,17 +253,17 @@ public class PlayersTable extends JTable {
             // Convert view index to model index in case of sorting/filtering
             int modelRow = convertRowIndexToModel(row);
 
-            // Get the player name from the Name column
-            String playerName = (String) tableModel.getValueAt(
-                    modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
+            // Get the player ID from the ID column
+            Long playerId = (Long) tableModel.getValueAt(
+                    modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_ID));
 
             // Get the current session
             Session currentSession = SessionManager.getInstance().getActiveSession();
 
             if (currentSession != null && currentSession.getPlayers() != null) {
-                // Find the player with the matching name
+                // Find the player with the matching ID
                 return currentSession.getPlayers().stream()
-                        .filter(p -> playerName.equals(p.getName()))
+                        .filter(p -> playerId.equals(p.getId()))
                         .findFirst()
                         .orElse(null);
             }
@@ -269,12 +275,12 @@ public class PlayersTable extends JTable {
     }
 
     public void flashPlayerRow(Player player) {
-        if (player == null || player.getName() == null) {
+        if (player == null || player.getId() == null) {
             return;
         }
 
         // Add player to flashing set
-        flashingPlayerNames.add(player.getName());
+        flashingPlayerIds.add(player.getId());
 
         // Cancel existing timer if one is running
         if (flashTimer != null && flashTimer.isRunning()) {
@@ -284,7 +290,7 @@ public class PlayersTable extends JTable {
         // Create new timer to end the flash effect
         flashTimer = new Timer(FLASH_DURATION_MS, e -> {
             // Clear flashing players
-            flashingPlayerNames.clear();
+            flashingPlayerIds.clear();
 
             // Repaint the table
             repaint();
@@ -302,12 +308,12 @@ public class PlayersTable extends JTable {
     }
 
     public boolean isPlayerFlashing(Player player) {
-        return player != null && player.getName() != null &&
-                flashingPlayerNames.contains(player.getName());
+        return player != null && player.getId() != null &&
+                flashingPlayerIds.contains(player.getId());
     }
 
-    public boolean isPlayerFlashing(String playerName) {
-        return flashingPlayerNames.contains(playerName);
+    public boolean isPlayerFlashing(Long playerId) {
+        return flashingPlayerIds.contains(playerId);
     }
 
     private boolean isInArray(int[] array, int value) {
@@ -372,15 +378,15 @@ public class PlayersTable extends JTable {
     }
 
     private int findPlayerRowIndex(Player player) {
-        if (player == null)
+        if (player == null || player.getId() == null)
             return -1;
 
-        int nameColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_NAME);
+        int idColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_ID);
 
-        // Search by name and then verify by ID
+        // Search by ID
         for (int i = 0; i < tableModel.getRowCount(); i++) {
-            String playerName = (String) tableModel.getValueAt(i, nameColIndex);
-            if (player.getName().equals(playerName)) {
+            Long playerId = (Long) tableModel.getValueAt(i, idColIndex);
+            if (player.getId().equals(playerId)) {
                 return i;
             }
         }

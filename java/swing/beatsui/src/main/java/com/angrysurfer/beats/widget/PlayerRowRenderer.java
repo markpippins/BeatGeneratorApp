@@ -61,7 +61,7 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer {
         
         if (player != null) {
             // First check if this player is flashing (priority over other states)
-            if (table.isPlayerFlashing(player.getName())) {
+            if (table.isPlayerFlashing(player)) {
                 c.setBackground(isSelected ? table.getFlashColor().darker() : table.getFlashColor());
             }
             // Then check if playing

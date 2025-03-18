@@ -227,8 +227,10 @@ public class PianoPanel extends StatusProviderPanel {
     private void handleKeyPress(int note) {
         if (!heldNotes.contains(note)) {
             // Visual feedback
-            if (Objects.nonNull(statusConsumer))
-                statusConsumer.setStatus("Playing note " + note);
+            if (Objects.nonNull(statusConsumer)) {
+                statusConsumer.setSite(getClass().getSimpleName());
+                statusConsumer.setMessage("Playing note " + note);
+            }
             highlightKey(note);
             // MIDI note on
             playNote(note);

@@ -156,43 +156,26 @@ public class SequencerManager implements IBusListener {
 
     // In SequencerManager.java - fix handleMidiClock() method
     private void handleMidiClock() {
-        // First publish before-tick event
-        timingBus.publish(Commands.BEFORE_TICK, this, currentTick);
-
         // Increment tick counter
         currentTick = (currentTick + 1) % getPpq();
-
-        // Publish standard tick event (for Players and Visualizations)
+        
+        // Publish tick event
         timingBus.publish(Commands.BASIC_TIMING_TICK, this, currentTick);
-
-        // Publish after-tick event
-        timingBus.publish(Commands.AFTER_TICK, this, currentTick);
-
-        // Handle beat change
-        if (currentTick == 0) {
-            // Before beat event
-            timingBus.publish(Commands.BEFORE_BEAT, this, currentBeat);
-
+        
+        // Check for beat boundary
+        if (currentTick % getPpq() == 0) {
             currentBeat = (currentBeat + 1) % getBeatsPerBar();
-
-            // Standard beat event
             timingBus.publish(Commands.BASIC_TIMING_BEAT, this, currentBeat);
-
-            // After beat event
-            timingBus.publish(Commands.AFTER_BEAT, this, currentBeat);
-
-            // Handle bar change
+            
+            // Check for bar boundary
             if (currentBeat == 0) {
-                // Before bar event
-                timingBus.publish(Commands.BEFORE_BAR, this, currentBar);
-
-                currentBar++;
-
-                // Standard bar event
+                currentBar = (currentBar + 1) % (activeSession != null ? activeSession.getBars() : 4);
                 timingBus.publish(Commands.BASIC_TIMING_BAR, this, currentBar);
-
-                // After bar event
-                timingBus.publish(Commands.AFTER_BAR, this, currentBar);
+                
+                // Check for part boundary
+                if (currentBar == 0) {
+                    timingBus.publish(Commands.BASIC_TIMING_PART, this, null);
+                }
             }
         }
     }
@@ -204,33 +187,40 @@ public class SequencerManager implements IBusListener {
                 currentTick = 0;
                 currentBeat = 0;
                 currentBar = 0;
+                
+                // Important: Make sure any active session is properly initialized
+                if (activeSession != null) {
+                    activeSession.beforeStart();
+                }
 
                 // Start sequencer
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        sequencer.start();
-                    }
-                }).start();
-
-                // Notify about transport state change
+                sequencer.start();
+                
+                // Publish state change - CRITICAL for UI updates
                 commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
+                System.out.println("SequencerManager: Started sequencer, publishing state change event");
             }
         } catch (Exception e) {
-            // Error handling
+            // logger.error("Error starting sequencer: {}", e.getMessage(), e);
         }
     }
 
     public void stop() {
         try {
-            if (sequencer != null && sequencer.isRunning()) {
+            if (sequencer != null) {
                 sequencer.stop();
                 sequencer.setMicrosecondPosition(0);
+                
+                // Publish state change - CRITICAL for UI updates
                 commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
-                // logManager.info("Sequencer stopped");
+                System.out.println("SequencerManager: Stopped sequencer, publishing state change event");
+                
+                if (activeSession != null) {
+                    activeSession.onStop();
+                }
             }
         } catch (Exception e) {
-            // logManager.error("Error stopping sequencer: " + e.getMessage());
+            // logger.error("Error stopping sequencer: {}", e.getMessage(), e);
         }
     }
 

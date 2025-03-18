@@ -32,6 +32,10 @@ public class Ratchet extends Strike {
         logger.info("Creating new Ratchet - parent: %s, offset: %d, interval: %d, part: %d",
                 parent.getName(), offset, interval, part);
 
+        Long ratchets = ((Session) getSession()).getPlayers().stream().filter(p -> p instanceof Ratchet)
+                .count() + 1;
+                
+        setId(9000 + ratchets);
         setParent(parent);
         setSession(getParent().getSession());
         setNote(getParent().getNote());
@@ -52,9 +56,6 @@ public class Ratchet extends Strike {
         setPreset(getParent().getPreset());
         setEnabled(true);
 
-        Long ratchets = ((Session) getSession()).getPlayers().stream().filter(p -> p instanceof Ratchet)
-                .count();
-        setId(-1 - ratchets);
         setName(getParent().getName()
                 + String.format(getParent().getPlayerClassName(),
                         ((Session) getParent().getSession()).getPlayers().size()));
@@ -78,20 +79,19 @@ public class Ratchet extends Strike {
     @Override
     public void onTick(long tick, long bar) {
         logger.debug("onTick() - tick: {}, bar: {}", tick, bar);
-        if (isProbable())
-            drumNoteOn((long) (getNote() + getSession().getNoteOffset()));
+        // if (isProbable())
+        drumNoteOn((long) (getNote() + getSession().getNoteOffset()));
+
+        if (tick > targetTick + 1) {
+            // Remove this ratchet after it has been played
+            ((Session) getSession()).getPlayers().remove(this);
+            CommandBus.getInstance().unregister(this);
+            TimingBus.getInstance().unregister(this);
+        }
     }
 
     public boolean shouldPlay() {
         double tick = SequencerManager.getInstance().getCurrentTick();
-        boolean result = tick >= targetTick;
-        if (result) {
-            // Remove this ratchet from the session
-            // SessionManager.getInstance().getCurrentSession().getPlayers().remove(this);
-            // setEnabled(false);
-            // TimingBus.getInstance().unregister(this);
-            // CommandBus.getInstance().unregister(this);
-        }
-        return result;
+        return tick >= targetTick && tick < targetTick + 1;
     }
 }

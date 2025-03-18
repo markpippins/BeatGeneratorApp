@@ -73,7 +73,7 @@ public class PlayersPanel extends JPanel {
         setupButtonListeners();
         setupContextMenu();
         setupSelectionListener(); // Add this line
-        
+
         // Check for active session and enable controls immediately
         Session currentSession = SessionManager.getInstance().getActiveSession();
         if (currentSession != null) {
@@ -323,7 +323,7 @@ public class PlayersPanel extends JPanel {
 
                                 // Select the newly added player if available in data
                                 if (action.getData() instanceof Player player) {
-                                    selectPlayerByName(player.getName());
+                                    selectPlayerById(player.getId());
                                 } else {
                                     // If no specific player, select the last one
                                     selectLastPlayer();
@@ -339,7 +339,7 @@ public class PlayersPanel extends JPanel {
 
                                 // Reselect the edited player
                                 if (action.getData() instanceof Player player) {
-                                    selectPlayerByName(player.getName());
+                                    selectPlayerById(player.getId());
                                 }
                             }
                         }
@@ -389,16 +389,16 @@ public class PlayersPanel extends JPanel {
 
     // Update the problematic methods
 
-    private void selectPlayerByName(String playerName) {
-        if (playerName == null)
+    private void selectPlayerById(Long playerId) {
+        if (playerId == null)
             return;
 
         PlayersTableModel model = table.getPlayersTableModel();
-        int nameColIndex = model.getColumnIndex(PlayersTableModel.COL_NAME);
+        int idColIndex = model.getColumnIndex(PlayersTableModel.COL_ID);
 
         for (int i = 0; i < model.getRowCount(); i++) {
-            String name = (String) model.getValueAt(i, nameColIndex);
-            if (playerName.equals(name)) {
+            Long id = (Long) model.getValueAt(i, idColIndex);
+            if (playerId.equals(id)) {
                 table.setRowSelectionInterval(i, i);
                 table.setLastSelectedRow(i);
                 table.handlePlayerSelection(i);
@@ -408,7 +408,6 @@ public class PlayersPanel extends JPanel {
             }
         }
     }
-
 
     private void setupKeyboardShortcuts() {
         // Make the table focusable
@@ -429,15 +428,27 @@ public class PlayersPanel extends JPanel {
         if (selectedPlayers.length > 0) {
             int confirm = JOptionPane.showConfirmDialog(
                     PlayersPanel.this,
-                    "Are you sure you want to delete the selected player(s)?",
+                    "Are you sure you want to delete the selected player" + 
+                    (selectedPlayers.length > 1 ? "s" : "") + "?",
                     "Confirm Delete",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.WARNING_MESSAGE);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                // Send just the selected players array
-                CommandBus.getInstance().publish(Commands.PLAYER_DELETE_REQUEST, this, selectedPlayers);
-                logger.info("Sent delete request for " + selectedPlayers.length + " players");
+                // Create a list of player IDs instead of player objects
+                List<Long> playerIds = new ArrayList<>();
+                for (Player player : selectedPlayers) {
+                    if (player != null && player.getId() != null) {
+                        playerIds.add(player.getId());
+                        logger.info("Adding player to delete list: " + player.getName() + 
+                                " (ID: " + player.getId() + ")");
+                    }
+                }
+                
+                // Send the IDs instead of player objects
+                CommandBus.getInstance().publish(Commands.PLAYER_DELETE_REQUEST, this, 
+                        playerIds.toArray(Long[]::new));
+                logger.info("Sent delete request for " + playerIds.size() + " players");
             }
         }
     }
@@ -482,15 +493,15 @@ public class PlayersPanel extends JPanel {
             logger.info("No row selected in players table");
             return null;
         }
-        
+
         return table.getPlayerAtRow(selectedRow);
     }
 
     private Player[] getSelectedPlayers() {
         int[] selectedRows = table.getSelectedRows();
         List<Player> players = new ArrayList<>();
-        
-        for (int row : selectedRows) {
+
+            for (int row : selectedRows) {
             Player player = table.getPlayerAtRow(row);
             if (player != null) {
                 players.add(player);
@@ -534,22 +545,8 @@ public class PlayersPanel extends JPanel {
             Player player = null;
 
             if (row >= 0) {
-                // Convert row index to model index if table is sorted
-                int modelRow = table.convertRowIndexToModel(row);
-                // Get player name from the first column
-                String playerName = (String) table.getValueAt(modelRow,
-                        table.getColumnIndex(PlayersTableModel.COL_NAME));
-
-                // Find player in the current session
-                Session session = SessionManager.getInstance().getActiveSession();
-                if (session != null && session.getPlayers() != null) {
-                    for (Player p : session.getPlayers()) {
-                        if (p.getName().equals(playerName)) {
-                            player = p;
-                            break;
-                        }
-                    }
-                }
+                // Get player directly from table helper method (which now uses ID)
+                player = table.getPlayerAtRow(row);
             }
 
             // Log selection for debugging
@@ -578,18 +575,18 @@ public class PlayersPanel extends JPanel {
         if (row < 0 || table.getRowCount() <= row) {
             return null;
         }
-
+        
         try {
             // Convert view index to model index in case of sorting/filtering
             int modelRow = table.convertRowIndexToModel(row);
-
+            
             // Get the player name from the Name column
             String playerName = (String) table.getValueAt(
                     modelRow, table.getColumnIndex(PlayersTableModel.COL_NAME));
-
+            
             // Get the current session
             Session currentSession = SessionManager.getInstance().getActiveSession();
-
+            
             if (currentSession != null && currentSession.getPlayers() != null) {
                 // Find the player with the matching name
                 return currentSession.getPlayers().stream()
@@ -600,7 +597,7 @@ public class PlayersPanel extends JPanel {
         } catch (Exception e) {
             logger.severe("Error getting player at row: " + e.getMessage());
         }
-
+        
         return null;
     }
 

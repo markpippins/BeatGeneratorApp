@@ -133,7 +133,14 @@ public class SessionManager {
                         }
                         case Commands.SHOW_PLAYER_EDITOR_OK -> processPlayerEdit((Player) action.getData());
                         case Commands.SHOW_RULE_EDITOR_OK -> processRuleEdit((Rule) action.getData());
-                        case Commands.PLAYER_DELETE_REQUEST -> processPlayerDelete((Player[]) action.getData());
+                        case Commands.PLAYER_DELETE_REQUEST -> {
+                            if (action.getData() instanceof Long[] playerIds) {
+                                processPlayerDeleteByIds(playerIds);
+                            } else if (action.getData() instanceof Player[] players) {
+                                // Support legacy code that sends Player[] instead of Long[]
+                                processPlayerDelete(players);
+                            }
+                        }
                         // Handle recording commands
                         case Commands.TRANSPORT_RECORD_START -> {
                             setRecording(true);
@@ -388,5 +395,55 @@ public class SessionManager {
     public void setRecording(boolean recording) {
         this.isRecording = recording;
         // logger.debug("Recording state set to: {}", recording);
+    }
+
+    private void processPlayerDeleteByIds(Long[] playerIds) {
+        if (playerIds == null || playerIds.length == 0 || activeSession == null) {
+            return;
+        }
+        
+        logger.info("Processing deletion of " + playerIds.length + " players by ID");
+        
+        // Track players we find and successfully delete
+        int deletedCount = 0;
+        
+        for (Long playerId : playerIds) {
+            // Find player by ID
+            Player playerToDelete = null;
+            for (Player p : activeSession.getPlayers()) {
+                if (p.getId().equals(playerId)) {
+                    playerToDelete = p;
+                    break;
+                }
+            }
+            
+            if (playerToDelete != null) {
+                // Mark as disabled
+                playerToDelete.setEnabled(false);
+                logger.info("Deleting player: " + playerId);
+                
+                // Remove from session's collection
+                if (activeSession.getPlayers().remove(playerToDelete)) {
+                    // Delete from Redis
+                    redisService.deletePlayer(playerToDelete);
+                    logger.info("Player deleted: " + playerId);
+                    deletedCount++;
+                } else {
+                    logger.warning("Failed to remove player " + playerId + " from session");
+                }
+            } else {
+                logger.warning("Player not found for deletion: " + playerId);
+            }
+        }
+        
+        // Only publish event if we actually deleted players
+        if (deletedCount > 0) {
+            // Save the session to persist changes
+            redisService.saveSession(activeSession);
+            
+            // Notify listeners about the deletions
+            commandBus.publish(Commands.PLAYER_DELETED, this);
+            logger.info("Successfully deleted " + deletedCount + " players");
+        }
     }
 }

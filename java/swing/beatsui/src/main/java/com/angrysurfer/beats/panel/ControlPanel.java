@@ -2,6 +2,7 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -403,12 +404,23 @@ public class ControlPanel extends JPanel {
     private void updateVerticalAdjustButtons(boolean enabled) {
         // Find and update all buttons in vertical adjust panels
         for (Component comp : getComponents()) {
-            if (comp instanceof JPanel) {
-                for (Component inner : ((JPanel) comp).getComponents()) {
-                    if (inner instanceof JButton) {
-                        inner.setEnabled(enabled && Objects.nonNull(PlayerManager.getInstance().getActivePlayer()));
-                    }
-                }
+            if (comp instanceof JPanel panel) {
+                // Improved traversal to handle nested panels
+                traverseAndEnableButtons(panel, enabled);
+            }
+        }
+    }
+
+    // New helper method to properly traverse component hierarchy
+    private void traverseAndEnableButtons(Container container, boolean enabled) {
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof JButton button) {
+                // Enable button if we have an active player
+                button.setEnabled(enabled);
+                logger.fine("Button " + button.getText() + " enabled: " + enabled);
+            } else if (comp instanceof Container innerContainer) {
+                // Recursively search nested containers
+                traverseAndEnableButtons(innerContainer, enabled);
             }
         }
     }
@@ -434,6 +446,8 @@ public class ControlPanel extends JPanel {
                             // Update controls on EDT to avoid concurrency issues
                             SwingUtilities.invokeLater(() -> {
                                 updateDialsFromPlayer(player);
+                                // Explicitly enable vertical adjust buttons
+                                updateVerticalAdjustButtons(true);
                             });
                         }
                     } else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {

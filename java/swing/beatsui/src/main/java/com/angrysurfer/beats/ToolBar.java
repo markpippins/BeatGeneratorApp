@@ -29,6 +29,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Scale;
@@ -37,6 +38,7 @@ public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();
     private final Map<String, JComponent> rightFields = new HashMap<>(); // Changed to JComponent
     private final CommandBus commandBus = CommandBus.getInstance();
+    private final TimingBus timingBus = TimingBus.getInstance(); // Add TimingBus reference
     private Session currentSession; // Add field to track current session
 
     private JPanel transportPanel;
@@ -44,6 +46,28 @@ public class ToolBar extends JToolBar {
     private JButton stopButton;
     private JButton recordButton; // Store reference to record button
     private boolean isRecording = false; // Track recording state
+
+    // Add timing-related fields
+    private JTextField tickField;
+    private JTextField beatField;
+    private JTextField barField;
+    private JTextField partField;
+    private JTextField ticksField;
+    private JTextField beatsField;
+    private JTextField barsField;
+
+    // Add counters
+    private int currentTick = 0;
+    private int currentBeat = 0;
+    private int currentBar = 0;
+    private int currentPart = 0;
+    private int totalTicks = 0;
+    private int totalBeats = 0;
+    private int totalBars = 0;
+
+    // Add field declarations at the top of the class
+    private JTextField sessionField;
+    private JTextField lengthField;
 
     public ToolBar() {
         super();
@@ -128,6 +152,9 @@ public class ToolBar extends JToolBar {
             }
         });
 
+        // Add new TimingBus listener
+        setupTimingBusListener();
+
         // Then request the initial session state after a short delay
         SwingUtilities.invokeLater(() -> {
             // First ensure SessionManager has an active session
@@ -144,15 +171,114 @@ public class ToolBar extends JToolBar {
         stopButton.setEnabled(false);
     }
 
-    // TODO: Investigate custom UI for combo boxes
-    // FlatComboBoxUI comboBoxUI = new FlatComboBoxUI() {
-    // @Override
-    // protected JButton createArrowButton() {
-    // JButton button = super.createArrowButton();
-    // button.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    // return button;
-    // }
-    // };
+    /**
+     * Set up listener for timing events to update counter fields
+     */
+    private void setupTimingBusListener() {
+        timingBus.register(new IBusListener() {
+            @Override
+            public void onAction(Command action) {
+                if (action.getCommand() == null) {
+                    return;
+                }
+
+                // Get the action from the command
+                String cmd = action.getCommand();
+                
+                try {
+                    // Log every event for debugging
+                    System.out.println("ToolBar received timing event: " + cmd);
+                    
+                    switch (cmd) {
+                        case Commands.BASIC_TIMING_TICK -> {
+                            // Use SwingUtilities.invokeLater for thread safety when updating UI
+                            SwingUtilities.invokeLater(() -> {
+                                if (currentSession != null) {
+                                    updateTickFields(currentSession);
+                                    System.out.println("Updated tick fields: " + currentSession.getTick());
+                                }
+                            });
+                        }
+                        case Commands.BASIC_TIMING_BEAT -> {
+                            SwingUtilities.invokeLater(() -> {
+                                if (currentSession != null) {
+                                    updateBeatFields(currentSession);
+                                    System.out.println("Updated beat fields: " + currentSession.getBeat());
+                                }
+                            });
+                        }
+                        case Commands.BASIC_TIMING_BAR -> {
+                            SwingUtilities.invokeLater(() -> {
+                                if (currentSession != null) {
+                                    updateBarFields(currentSession);
+                                    System.out.println("Updated bar fields: " + currentSession.getBar());
+                                }
+                            });
+                        }
+                        case Commands.BASIC_TIMING_PART -> {
+                            SwingUtilities.invokeLater(() -> {
+                                if (currentSession != null) {
+                                    updatePartFields(currentSession);
+                                    System.out.println("Updated part fields: " + currentSession.getPart());
+                                }
+                            });
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("ToolBar: Error handling timing event: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+    
+    /**
+     * Update tick-related fields
+     */
+    private void updateTickFields(Session session) {
+        try {
+            leftFields.get("Tick").setText(String.valueOf(session.getTick()));
+            leftFields.get("Ticks").setText(String.valueOf(session.getTickCount()));
+        } catch (Exception e) {
+            System.err.println("Error updating tick fields: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Update beat-related fields
+     */
+    private void updateBeatFields(Session session) {
+        try {
+            leftFields.get("Beat").setText(String.valueOf(session.getBeat()));
+            leftFields.get("Beats").setText(String.valueOf(session.getBeatCount()));
+        } catch (Exception e) {
+            System.err.println("Error updating beat fields: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Update bar-related fields
+     */
+    private void updateBarFields(Session session) {
+        try {
+            leftFields.get("Bar").setText(String.valueOf(session.getBar()));
+            leftFields.get("Bars").setText(String.valueOf(session.getBarCount()));
+        } catch (Exception e) {
+            System.err.println("Error updating bar fields: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Update part-related fields
+     */
+    private void updatePartFields(Session session) {
+        try {
+            leftFields.get("Part").setText(String.valueOf(session.getPart()));
+            // There's no "Parts" counter field, but we could add one if desired
+        } catch (Exception e) {
+            System.err.println("Error updating part fields: " + e.getMessage());
+        }
+    }
 
     private JComboBox<Integer> createSessionCombo(String field, int min, int max, int current) {
 
@@ -203,23 +329,16 @@ public class ToolBar extends JToolBar {
         // Update fields with synchronized block to prevent concurrent modification
         synchronized (this) {
             try {
-                // Update left fields
-                for (Map.Entry<String, JTextField> entry : leftFields.entrySet()) {
-                    String value = switch (entry.getKey()) {
-                        case "Tick" -> String.valueOf(session.getTick());
-                        case "Beat" -> String.valueOf(session.getBeat());
-                        case "Bar" -> String.valueOf(session.getBar());
-                        case "Part" -> String.valueOf(session.getPart());
-                        case "Players" -> String.valueOf(session.getPlayers().size());
-                        case "Ticks" -> String.valueOf(session.getTickCount());
-                        case "Beats" -> String.valueOf(session.getBeatCount());
-                        case "Bars" -> String.valueOf(session.getBarCount());
-                        default -> "0";
-                    };
-                    entry.getValue().setText(value);
-                }
+                // Update left timing fields using our helper methods
+                updateTickFields(session);
+                updateBeatFields(session);
+                updateBarFields(session);
+                updatePartFields(session);
+                
+                // Update Players field separately
+                leftFields.get("Players").setText(String.valueOf(session.getPlayers().size()));
 
-                // Update right fields
+                // Update right fields - keep this part unchanged
                 ((JTextField) rightFields.get("Session")).setText(session.getId().toString());
                 ((JComboBox<?>) rightFields.get("Ticks")).setSelectedItem(session.getTicksPerBeat());
                 ((JComboBox<?>) rightFields.get("BPM")).setSelectedItem(session.getTempoInBPM().intValue());
@@ -237,10 +356,10 @@ public class ToolBar extends JToolBar {
     }
 
     private JPanel createTopLeftStatusPanel() {
-        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 4, 0)); // 4 columns, variable rows, 10px gap
+        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 5, 4, 0)); // Changed to 5 columns
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        String[] leftLabels = { "Tick", "Beat", "Bar", "Part" };
+        String[] leftLabels = { "Session", "Tick", "Beat", "Bar", "Part" }; // Added "Session" at start
         for (String label : leftLabels) {
             JPanel fieldPanel = new JPanel(new BorderLayout(0, 2));
             fieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
@@ -252,20 +371,131 @@ public class ToolBar extends JToolBar {
 
             JTextField field = createTextField("0");
             leftFields.put(label, field);
+
+            // Store references to timing fields
+            switch (label) {
+                case "Session" -> sessionField = field;
+                case "Tick" -> tickField = field;
+                case "Beat" -> beatField = field;
+                case "Bar" -> barField = field;
+                case "Part" -> partField = field;
+            }
 
             fieldPanel.add(labelPanel, BorderLayout.NORTH);
             fieldPanel.add(field, BorderLayout.CENTER);
 
             leftStatusPanel.add(fieldPanel);
         }
+
+        // Set up timing bus listener
+        setupTimingListener();
+
         return leftStatusPanel;
     }
 
+    private JTextField createTimingField(String name) {
+        JTextField field = new JTextField(3);
+        field.setEditable(false);
+        field.setHorizontalAlignment(JTextField.CENTER);
+        field.setText("0");
+        field.setName(name);
+        return field;
+    }
+
+    private JPanel createLabeledField(String labelText, JTextField field) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        panel.add(new JLabel(labelText));
+        panel.add(field);
+        return panel;
+    }
+
+    private void setupTimingListener() {
+        // Listen for timing events
+        timingBus.register(new IBusListener() {
+            @Override
+            public void onAction(Command action) {
+                if (action.getCommand() == null) return;
+
+                SwingUtilities.invokeLater(() -> {
+                    switch (action.getCommand()) {
+                        case Commands.BASIC_TIMING_TICK -> {
+                            currentTick = (currentTick + 1) % (currentSession != null ? currentSession.getTicksPerBeat() : 24);
+                            totalTicks++;
+                            updateTimingDisplays();
+                        }
+                        case Commands.BASIC_TIMING_BEAT -> {
+                            currentBeat = (currentBeat + 1) % (currentSession != null ? currentSession.getBeatsPerBar() : 4);
+                            totalBeats++;
+                            updateTimingDisplays();
+                        }
+                        case Commands.BASIC_TIMING_BAR -> {
+                            currentBar = (currentBar + 1) % (currentSession != null ? currentSession.getBars() : 4);
+                            totalBars++;
+                            updateTimingDisplays();
+                        }
+                        case Commands.BASIC_TIMING_PART -> {
+                            currentPart = (currentPart + 1);
+                            updateTimingDisplays();
+                        }
+                        case Commands.TRANSPORT_STOP, Commands.TRANSPORT_PLAY -> {
+                            resetTimingCounters();
+                        }
+                    }
+                });
+            }
+        });
+
+        // Listen for session events
+        commandBus.register(new IBusListener() {
+            @Override
+            public void onAction(Command action) {
+                if (action.getCommand() == null) return;
+
+                SwingUtilities.invokeLater(() -> {
+                    switch (action.getCommand()) {
+                        case Commands.SESSION_SELECTED, Commands.SESSION_LOADED, Commands.SESSION_UPDATED -> {
+                            if (action.getData() instanceof Session session) {
+                                currentSession = session;
+                                sessionField.setText(String.valueOf(session.getId()));
+                                // Update length field if needed
+                                lengthField.setText(String.valueOf(session.getPartLength()));
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    private void resetTimingCounters() {
+        currentTick = 0;
+        currentBeat = 0;
+        currentBar = 0;
+        currentPart = 0;
+        totalTicks = 0;
+        totalBeats = 0;
+        totalBars = 0;
+        updateTimingDisplays();
+    }
+
+    private void updateTimingDisplays() {
+        // Update current position displays (1-based)
+        tickField.setText(String.format("%d", currentTick + 1));
+        beatField.setText(String.format("%d", currentBeat + 1));
+        barField.setText(String.format("%d", currentBar + 1));
+        partField.setText(String.format("%d", currentPart + 1));
+
+        // Update total counts
+        ticksField.setText(String.format("%d", totalTicks));
+        beatsField.setText(String.format("%d", totalBeats));
+        barsField.setText(String.format("%d", totalBars));
+    }
+
     private JPanel createBottomLeftStatusPanel() {
-        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 4, 4, 0)); // 4 columns, variable rows, 10px gap
+        JPanel leftStatusPanel = new JPanel(new GridLayout(0, 5, 4, 0)); // Changed to 5 columns
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        String[] leftLabels = { "Players", "Ticks", "Beats", "Bars" };
+        String[] leftLabels = { "Players", "Ticks", "Beats", "Bars", "Length" }; // Added "Length" at end
         for (String label : leftLabels) {
             JPanel fieldPanel = new JPanel(new BorderLayout(0, 2));
             fieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
@@ -277,6 +507,14 @@ public class ToolBar extends JToolBar {
 
             JTextField field = createTextField("0");
             leftFields.put(label, field);
+
+            // Store references to total count fields
+            switch (label) {
+                case "Ticks" -> ticksField = field;
+                case "Beats" -> beatsField = field;
+                case "Bars" -> barsField = field;
+                case "Length" -> lengthField = field;
+            }
 
             fieldPanel.add(labelPanel, BorderLayout.NORTH);
             fieldPanel.add(field, BorderLayout.CENTER);

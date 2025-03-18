@@ -21,6 +21,7 @@ public class PlayersTableModel extends DefaultTableModel {
     private static final Logger logger = Logger.getLogger(PlayersTableModel.class.getName());
 
     // Column name constants
+    public static final String COL_ID = "ID";
     public static final String COL_NAME = "Name";
     public static final String COL_INSTRUMENT = "Instrument";
     public static final String COL_CHANNEL = "Channel";
@@ -43,13 +44,16 @@ public class PlayersTableModel extends DefaultTableModel {
     public static final String COL_SPARSE = "Sparse";
 
     public static final Set<String> COLUMNS = new LinkedHashSet<>(Arrays.asList(
-            COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_PRESET, COL_NOTE, COL_LEVEL, COL_MUTE,
+            COL_ID, COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_PRESET, COL_NOTE, COL_LEVEL, COL_MUTE,
             COL_PAN, COL_MIN_VEL, COL_MAX_VEL, COL_SWING,
             COL_PROBABILITY, COL_RANDOM, COL_SPARSE,
             COL_RATCHET_COUNT, COL_RATCHET_INTERVAL, COL_INT_BEATS,
             COL_INT_BARS, COL_STICKY, COL_PRESERVE));
 
-    private static final Set<String> STRING_COLUMN_NAMES = Set.of(COL_NAME, COL_INSTRUMENT);
+    // IMPORTANT: Make the ID column hidden
+    private static final Set<String> HIDDEN_COLUMN_NAMES = Set.of(COL_ID);
+
+    private static final Set<String> STRING_COLUMN_NAMES = Set.of(COL_ID, COL_NAME, COL_INSTRUMENT);
     private static final Set<String> BOOLEAN_COLUMN_NAMES = Set.of(
             COL_MUTE, COL_STICKY, COL_INT_BEATS, COL_INT_BARS, COL_PRESERVE);
 
@@ -175,6 +179,7 @@ public class PlayersTableModel extends DefaultTableModel {
     public void addPlayerRow(Player player) {
         Object[] rowData = new Object[COLUMNS.size()];
 
+        rowData[getColumnIndex(COL_ID)] = player.getId();  // Store player ID
         rowData[getColumnIndex(COL_NAME)] = player.getName();
         rowData[getColumnIndex(COL_CHANNEL)] = player.getChannel();
         rowData[getColumnIndex(COL_SWING)] = player.getSwing();
@@ -212,4 +217,9 @@ public class PlayersTableModel extends DefaultTableModel {
     public static int[] getStringColumns() {
         return STRING_COLUMNS;
     }
-} 
+
+    // Add method to get hidden columns
+    public static Set<String> getHiddenColumns() {
+        return HIDDEN_COLUMN_NAMES;
+    }
+}

@@ -9,6 +9,7 @@ import javax.swing.JComponent;
 import javax.swing.Timer;
 
 import com.angrysurfer.beats.visualization.handler.music.ScrollingSequencerVisualization;
+import com.angrysurfer.beats.visualization.handler.music.StrikeVisualizationHandler;
 import com.angrysurfer.beats.widget.GridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -96,19 +97,32 @@ public class Visualizer implements IBusListener {
             case Commands.TRANSPORT_PLAY:
             case Commands.TRANSPORT_STATE_CHANGED: // <-- Add this case
                 // For state changed, check if it's true (playing)
-                if (Commands.TRANSPORT_STATE_CHANGED.equals(action.getCommand()) && 
-                    !(action.getData() instanceof Boolean && (Boolean)action.getData())) {
+                if (Commands.TRANSPORT_STATE_CHANGED.equals(action.getCommand()) &&
+                        !(action.getData() instanceof Boolean && (Boolean) action.getData())) {
                     break; // Only proceed if transport is starting
                 }
-                
+
+                stopVisualizer();
                 // Find and start the ScrollingSequencerVisualization
-                for (IVisualizationHandler vis : visualizations) {
-                    if (vis instanceof ScrollingSequencerVisualization) {
-                        startVisualizer(vis);
-                        isLocked = true; // Lock to prevent auto-switching during sequencer mode
-                        break;
-                    }
-                }
+                // for (IVisualizationHandler vis : visualizations) {
+                //     if (vis instanceof ScrollingSequencerVisualization) {
+                //         startVisualizer(vis);
+                //         isLocked = true; // Lock to prevent auto-switching during sequencer mode
+                //         break;
+                //     }
+                // }
+                break;
+
+            case Commands.PLAYER_SELECTED:
+                stopVisualizer();
+                // Find and start the StrikeVisualizationHandler
+                // for (IVisualizationHandler vis : visualizations) {
+                //     if (vis instanceof StrikeVisualizationHandler) {
+                //         startVisualizer(vis);
+                //         isLocked = true; // Lock to prevent auto-switching during sequencer mode
+                //         break;
+                //     }
+                // }
                 break;
 
             case Commands.TRANSPORT_STOP:
@@ -290,7 +304,7 @@ public class Visualizer implements IBusListener {
             return;
 
         if (statusConsumer != null) {
-            statusConsumer.setMessage(currentVisualization.getName());
+            statusConsumer.setSite(currentVisualization.getName());
         }
         try {
             currentVisualization.update(buttons);

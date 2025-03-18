@@ -195,6 +195,9 @@ public class Commands {
     public static final String AFTER_BEAT = "AFTER_BEAT";
     public static final String BEFORE_BAR = "BEFORE_BAR";
     public static final String AFTER_BAR = "AFTER_BAR";
+    public static final String BEFORE_PART = "BEFORE_PART";
+    public static final String AFTER_PART = "AFTER_PART";
+    public static final String BASIC_TIMING_PART = "BASIC_TIMING_PART";
 
     public static final String TRANSPORT_STATE = "TRANSPORT_STATE";
 
@@ -234,4 +237,5 @@ public class Commands {
     public static final String PLAYER_TABLE_REFRESH_REQUEST = "PLAYER_TABLE_REFRESH_REQUEST";
     public static final String RECORDING_STOPPED = "RECORDING_STOPPED";
     public static final String RECORDING_STARTED = "RECORDING_STARTED";
+    public static final String SESSION_STARTING = "SESSION_STARTING";
 }
