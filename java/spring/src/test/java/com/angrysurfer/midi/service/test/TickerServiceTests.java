@@ -17,14 +17,14 @@
 // import org.springframework.test.context.junit4.SpringRunner;
 
 // import com.angrysurfer.core.model.Rule;
-// import com.angrysurfer.core.model.Ticker;
-// import com.angrysurfer.core.model.player.IPlayer;
+// import com.angrysurfer.core.model.Session;
+// import com.angrysurfer.core.model.player.AbstractPlayer;
 // import com.angrysurfer.core.repo.Strikes;
-// import com.angrysurfer.core.repo.Tickers;
-// import com.angrysurfer.core.util.update.TickerUpdateType;
+// import com.angrysurfer.core.repo.Sessions;
+// import com.angrysurfer.core.util.update.SessionUpdateType;
 // import com.angrysurfer.spring.Application;
 // import com.angrysurfer.spring.service.PlayerService;
-// import com.angrysurfer.spring.service.TickerService;
+// import com.angrysurfer.spring.service.SessionService;
 
 
 // @RunWith(SpringRunner.class)
@@ -35,17 +35,17 @@
 // @TestPropertySource(
 //   locations = "classpath:application-test.properties")
 
-// public class TickerServiceTests {
-//     static Logger logger = org.slf4j.LoggerFactory.getLogger(TickerServiceTests.class.getCanonicalName());
+// public class SessionServiceTests {
+//     static Logger logger = org.slf4j.LoggerFactory.getLogger(SessionServiceTests.class.getCanonicalName());
 
 //     @Autowired
 //     Strikes playerRepo;
 
 //     @Autowired
-//     Tickers tickerRepo;
+//     Sessions sessionRepo;
 
 //     @Autowired
-//     TickerService tickerService;
+//     SessionService sessionService;
 
 //     @Autowired
 //     PlayerService playerService;
@@ -56,171 +56,171 @@
 //     // @Before
 //     // public void setUp() {
 //     //     playerRepo.deleteAll();
-//     //     tickerRepo.deleteAll();
+//     //     sessionRepo.deleteAll();
 //     // }
     
 //     // @After
 //     // public void tearDown() {
 //     //     playerRepo.deleteAll();
-//     //     tickerRepo.deleteAll();
+//     //     sessionRepo.deleteAll();
 //     // }
     
 //     @Test
-//     public void whenTickerRetrieved_thenItHasBeenSaved() {
-//         assertNotNull(tickerService.getTicker());
+//     public void whenSessionRetrieved_thenItHasBeenSaved() {
+//         assertNotNull(sessionService.getSession());
 //     }
 
 //     @Test
-//     public void whenNewTickerCalled_thenGetTickerWithNewId() {
-//         Long id = tickerService.getTicker().getId();
-//         tickerService.newTicker();
-//         assertTrue(tickerService.getTicker().getId() > id); 
+//     public void whenNewSessionCalled_thenGetSessionWithNewId() {
+//         Long id = sessionService.getSession().getId();
+//         sessionService.newSession();
+//         assertTrue(sessionService.getSession().getId() > id); 
 //     }
 
 //     @Test
-//     public void whenLoadTickerCalled_thenGetRequestedTicker() {
-//         Long id = tickerService.getTicker().getId();
-//         tickerService.newTicker();
-//         assertTrue(tickerService.getTicker().getId() > id);
+//     public void whenLoadSessionCalled_thenGetRequestedSession() {
+//         Long id = sessionService.getSession().getId();
+//         sessionService.newSession();
+//         assertTrue(sessionService.getSession().getId() > id);
         
-//         tickerService.loadTicker(id);
-//         assertTrue(tickerService.getTicker().getId().equals(id));
+//         sessionService.loadSession(id);
+//         assertTrue(sessionService.getSession().getId().equals(id));
 //     }
 
     
 //     @Test
-//     public void whenNextTickerRequestedWithNoPlayers_thenSameTickerReturned() {
+//     public void whenNextSessionRequestedWithNoPlayers_thenSameSessionReturned() {
 
-//         Long id = tickerService.getTicker().getId();
-//         tickerService.getTicker().getPlayers().clear();
-//         Ticker nextTicker = tickerService.next(id);
-//         assertSame(nextTicker.getId(), id);
+//         Long id = sessionService.getSession().getId();
+//         sessionService.getSession().getPlayers().clear();
+//         Session nextSession = sessionService.next(id);
+//         assertSame(nextSession.getId(), id);
 //     }
 
 //     @Test
-//     public void whenNextTickerRequestedWithPlayers_thenNewTickerReturned() {
+//     public void whenNextSessionRequestedWithPlayers_thenNewSessionReturned() {
 //         playerService.addPlayer(RAZ, 36L);
-//         Long id = tickerService.getTicker().getId();
-//         Ticker nextTicker = tickerService.next(id);
-//         assertTrue(nextTicker.getId() > id); 
+//         Long id = sessionService.getSession().getId();
+//         Session nextSession = sessionService.next(id);
+//         assertTrue(nextSession.getId() > id); 
 //     }
 
 //     @Test
-//     public void whenNextTickerRequestedWithPlayers_thenNextTickerCanBeRequested() {
+//     public void whenNextSessionRequestedWithPlayers_thenNextSessionCanBeRequested() {
 //         IntStream.range(0, 99).forEach(i -> {
 //             playerService.addPlayer(RAZ, 36L);
-//             Long id = tickerService.getTicker().getId();
-//             Ticker nextTicker = tickerService.next(id);
-//             assertTrue(nextTicker.getId() > id); 
+//             Long id = sessionService.getSession().getId();
+//             Session nextSession = sessionService.next(id);
+//             assertTrue(nextSession.getId() > id); 
 //         });
 //     }
 
 //     @Test
-//     public void whenPreviousTickerRequestedWith_thenTickerWithLowerIdReturned() {
+//     public void whenPreviousSessionRequestedWith_thenSessionWithLowerIdReturned() {
 //         playerService.addPlayer(RAZ, 36L);
-//         Long id = tickerService.getTicker().getId();
-//         Ticker nextTicker = tickerService.next(id);
-//         assertTrue(nextTicker.getId() > id); 
+//         Long id = sessionService.getSession().getId();
+//         Session nextSession = sessionService.next(id);
+//         assertTrue(nextSession.getId() > id); 
 
-//         Ticker prevTicker = tickerService.previous(nextTicker.getId());
-//         assertTrue(prevTicker.getId() < nextTicker.getId()); 
+//         Session prevSession = sessionService.previous(nextSession.getId());
+//         assertTrue(prevSession.getId() < nextSession.getId()); 
 //     }
 
 //     @Test
-//     public void whenPreviousTickerRequestedForTickWithPlayers_thenPlayersContainAddedRule() {
-//         Long startingTickerId = tickerService.getTicker().getId();
-//         IPlayer player = playerService.addPlayer(RAZ, 36L);
+//     public void whenPreviousSessionRequestedForTickWithPlayers_thenPlayersContainAddedRule() {
+//         Long startingSessionId = sessionService.getSession().getId();
+//         AbstractPlayer player = playerService.addPlayer(RAZ, 36L);
 //         Rule rule = playerService.addRule(player.getId());
 
-//         // move to next ticker, add player and rule
-//         tickerService.next(startingTickerId);
-//         Long nextTickerId = tickerService.getTicker().getId();
+//         // move to next session, add player and rule
+//         sessionService.next(startingSessionId);
+//         Long nextSessionId = sessionService.getSession().getId();
 //         playerService.addRule(playerService.addPlayer(RAZ, 36L).getId());
 
-//         // return to starting ticker
-//         tickerService.previous(nextTickerId);
-//         player = tickerService.getTicker().getPlayer(player.getId());
+//         // return to starting session
+//         sessionService.previous(nextSessionId);
+//         player = sessionService.getSession().getPlayer(player.getId());
 //         assertTrue(player.getRules().stream().anyMatch(r -> r.isEqualTo(rule))); 
 //     }
 
 //     @Test
-//     public void whenNextTickerRequestedForTickerWithPlayers_thenPlayersContainAddedRule() {
-//         // tickerService.newTicker();
-//         // add data to current Ticker
-//         Long startingTickerId = tickerService.getTicker().getId();
-//         IPlayer player = playerService.addPlayer(RAZ, 36L);
+//     public void whenNextSessionRequestedForSessionWithPlayers_thenPlayersContainAddedRule() {
+//         // sessionService.newSession();
+//         // add data to current Session
+//         Long startingSessionId = sessionService.getSession().getId();
+//         AbstractPlayer player = playerService.addPlayer(RAZ, 36L);
 //         playerService.addRule(player.getId());
 
-//         // move to next ticker, add player and rule
-//         Ticker ticker2 = tickerService.next(startingTickerId);
-//         IPlayer player2 = playerService.addPlayer(RAZ, 36L);
+//         // move to next session, add player and rule
+//         Session session2 = sessionService.next(startingSessionId);
+//         AbstractPlayer player2 = playerService.addPlayer(RAZ, 36L);
 //         Rule rule = playerService.addRule(player2.getId());
 
-//         // return to starting ticker
-//         Ticker previous = tickerService.previous(ticker2.getId());
+//         // return to starting session
+//         Session previous = sessionService.previous(session2.getId());
 //         Long prevId = previous.getId();
 
-//         assertEquals(startingTickerId, prevId);
+//         assertEquals(startingSessionId, prevId);
 
 //         // advance again
-//         tickerService.next(tickerService.getTicker().getId());
+//         sessionService.next(sessionService.getSession().getId());
 
-//         IPlayer player3 = tickerService.getTicker().getPlayer(player2.getId());
+//         AbstractPlayer player3 = sessionService.getSession().getPlayer(player2.getId());
 //         Rule rule2 = player3.getRule(rule.getId());
 //         assertTrue(rule.isEqualTo(rule2)); 
 //     }
 
 //     @Test
-//     public void whenNextTickerRequestedForTickerWithPlayers_thenPlayerDoesNotContainRemovedRule() {
-//         // tickerService.newTicker();
-//         // add data to current Ticker
-//         Long startingTickerId = tickerService.getTicker().getId();
-//         IPlayer player = playerService.addPlayer(RAZ, 36L);
+//     public void whenNextSessionRequestedForSessionWithPlayers_thenPlayerDoesNotContainRemovedRule() {
+//         // sessionService.newSession();
+//         // add data to current Session
+//         Long startingSessionId = sessionService.getSession().getId();
+//         AbstractPlayer player = playerService.addPlayer(RAZ, 36L);
 //         playerService.addRule(player.getId());
 
-//         // move to next ticker, add player and rule
-//         Ticker ticker2 = tickerService.next(startingTickerId);
-//         IPlayer player2 = playerService.addPlayer(RAZ, 36L);
+//         // move to next session, add player and rule
+//         Session session2 = sessionService.next(startingSessionId);
+//         AbstractPlayer player2 = playerService.addPlayer(RAZ, 36L);
 //         Rule rule = playerService.addRule(player2.getId());
 
 //         //remove rule
 //         playerService.removeRule(player2.getId(), rule.getId());
-//         // return to starting ticker
-//         assertEquals(startingTickerId, tickerService.previous(ticker2.getId()).getId());
+//         // return to starting session
+//         assertEquals(startingSessionId, sessionService.previous(session2.getId()).getId());
 
 //         // advance again
-//         tickerService.next(tickerService.getTicker().getId());
+//         sessionService.next(sessionService.getSession().getId());
 
-//         IPlayer player3 = tickerService.getTicker().getPlayer(player2.getId());
+//         AbstractPlayer player3 = sessionService.getSession().getPlayer(player2.getId());
 //         // Rule rule2 = player3.getRule(rule.getId());
 //         assertTrue(player3.getRules().size() == 0); 
 //     }
 
 //     @Test
-//     public void whenTickerBeatsPerBarUpdated_thenChangeReflectedInTicker() {
-//         tickerService.updateTicker(tickerService.getTicker().getId(), TickerUpdateType.BEATS_PER_BAR, 16);
-//         assertTrue(16 == tickerService.getTicker().getBeatsPerBar()); 
+//     public void whenSessionBeatsPerBarUpdated_thenChangeReflectedInSession() {
+//         sessionService.updateSession(sessionService.getSession().getId(), SessionUpdateType.BEATS_PER_BAR, 16);
+//         assertTrue(16 == sessionService.getSession().getBeatsPerBar()); 
 //     }
 
 //     @Test
-//     public void whenTickerBPMUpdated_thenChangeReflectedInTicker() {
-//         tickerService.updateTicker(tickerService.getTicker().getId(), TickerUpdateType.BPM, 16);
-//         assertTrue(16 == tickerService.getTicker().getTempoInBPM()); 
+//     public void whenSessionBPMUpdated_thenChangeReflectedInSession() {
+//         sessionService.updateSession(sessionService.getSession().getId(), SessionUpdateType.BPM, 16);
+//         assertTrue(16 == sessionService.getSession().getTempoInBPM()); 
 //     }
 //     @Test
-//     public void whenTickerMaxTracksUpdated_thenChangeReflectedInTicker() {
-//         tickerService.updateTicker(tickerService.getTicker().getId(), TickerUpdateType.MAX_TRACKS, 16);
-//         assertTrue(16 == tickerService.getTicker().getMaxTracks()); 
+//     public void whenSessionMaxTracksUpdated_thenChangeReflectedInSession() {
+//         sessionService.updateSession(sessionService.getSession().getId(), SessionUpdateType.MAX_TRACKS, 16);
+//         assertTrue(16 == sessionService.getSession().getMaxTracks()); 
 //     }
 //     @Test
-//     public void whenTickePartLengthUpdated_thenChangeReflectedInTicker() {
-//         tickerService.updateTicker(tickerService.getTicker().getId(), TickerUpdateType.PART_LENGTH, 25);
-//         assertTrue(25 == tickerService.getTicker().getPartLength()); 
+//     public void whenTickePartLengthUpdated_thenChangeReflectedInSession() {
+//         sessionService.updateSession(sessionService.getSession().getId(), SessionUpdateType.PART_LENGTH, 25);
+//         assertTrue(25 == sessionService.getSession().getPartLength()); 
 //     }
 //     @Test
-//     public void whenTickerPPQUpdated_thenChangeReflectedInTicker() {
-//         tickerService.updateTicker(tickerService.getTicker().getId(), TickerUpdateType.PPQ, 16);
-//         assertTrue(16 == tickerService.getTicker().getTicksPerBeat()); 
+//     public void whenSessionPPQUpdated_thenChangeReflectedInSession() {
+//         sessionService.updateSession(sessionService.getSession().getId(), SessionUpdateType.PPQ, 16);
+//         assertTrue(16 == sessionService.getSession().getTicksPerBeat()); 
 //     }
 
 // }

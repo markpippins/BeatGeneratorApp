@@ -1,23 +1,29 @@
 package com.angrysurfer.spring.controller;
 
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.PlayerService;
 
-import java.util.Set;
-
 @CrossOrigin("*")
 @RestController
 @RequestMapping("/api")
 public class RuleController {
-    static Logger logger = LoggerFactory.getLogger(RuleController.class.getCanonicalName());
-
+    static Logger logger = LoggerFactory.getLogger(RuleController.class);
     private final PlayerService service;
 
     public RuleController(PlayerService service) {
@@ -25,37 +31,52 @@ public class RuleController {
     }
 
     @GetMapping(Constants.RULES_FOR_PLAYER)
-    public Set<Rule> getRules(@RequestParam Long playerId) {
-        logger.info(Constants.RULES_FOR_PLAYER);
-        return service.getRules(playerId);
+    public ResponseEntity<Set<Rule>> getRules(@RequestParam Long playerId) {
+        logger.info("GET {}", Constants.RULES_FOR_PLAYER);
+        return ResponseEntity.ok(service.getRules(playerId));
     }
 
-    @GetMapping(Constants.ADD_RULE)
-    public Rule addRule(@RequestParam Long playerId) {
-        logger.info(Constants.ADD_RULE);
-        return service.addRule(playerId);
+    @PostMapping(Constants.ADD_RULE)
+    public ResponseEntity<Rule> addRule(@RequestParam Long playerId) {
+        logger.info("POST {}", Constants.ADD_RULE);
+        Rule rule = service.addRule(playerId);
+        return rule != null ? 
+            ResponseEntity.status(HttpStatus.CREATED).body(rule) : 
+            ResponseEntity.badRequest().build();
     }
 
-    @GetMapping(Constants.REMOVE_RULE)
-    public void removeCondition(@RequestParam Long playerId, @RequestParam Long ruleId) {
-        logger.info(Constants.REMOVE_RULE);
+    @DeleteMapping(Constants.REMOVE_RULE)
+    public ResponseEntity<Void> removeRule(@RequestParam Long playerId, @RequestParam Long ruleId) {
+        logger.info("DELETE {}", Constants.REMOVE_RULE);
         service.removeRule(playerId, ruleId);
+        return ResponseEntity.noContent().build();
     }
 
-    @GetMapping(Constants.SPECIFY_RULE)
-    public void updateRule(@RequestParam Long playerId,
-                           @RequestParam int operator,
-                           @RequestParam int comparison,
-                           @RequestParam String value,
-                           @RequestParam int part) {
-        logger.info(Constants.UPDATE_RULE);
-        service.addRule(playerId, operator, comparison, Double.parseDouble(value), part);
+    @PutMapping(Constants.SPECIFY_RULE)
+    public ResponseEntity<Rule> specifyRule(
+            @RequestParam Long playerId,
+            @RequestParam int operator,
+            @RequestParam int comparison,
+            @RequestParam String value,
+            @RequestParam int part) {
+        logger.info("PUT {}", Constants.SPECIFY_RULE);
+        Rule rule = service.addRule(playerId, operator, comparison, 
+            Double.parseDouble(value), part);
+        return rule != null ? 
+            ResponseEntity.ok(rule) : 
+            ResponseEntity.badRequest().build();
     }
 
-    @GetMapping(Constants.UPDATE_RULE)
-    public ResponseEntity<Rule> updateRule(@RequestParam Long ruleId, @RequestParam int updateType, @RequestParam int updateValue) {
-        logger.info(Constants.UPDATE_RULE);
-        return new ResponseEntity<Rule>(service.updateRule(ruleId, updateType, updateValue), HttpStatus.OK);
+    @PutMapping(Constants.UPDATE_RULE)
+    public ResponseEntity<Rule> updateRule(
+            @RequestParam Long ruleId, 
+            @RequestParam int updateType, 
+            @RequestParam int updateValue) {
+        logger.info("PUT {}", Constants.UPDATE_RULE);
+        Rule rule = service.updateRule(ruleId, updateType, updateValue);
+        return rule != null ? 
+            ResponseEntity.ok(rule) : 
+            ResponseEntity.notFound().build();
     }
 }
 

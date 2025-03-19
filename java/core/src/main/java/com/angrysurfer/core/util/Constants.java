@@ -55,19 +55,19 @@ public class Constants {
     public static final String NEW_SONG = "/song/new";
     public static final String REMOVE_SONG = "/song/remove";
 
-    public static final String ADD_TICKER = "/ticker/new";
-    public static final String DELETE_TICKER = "/rules/remove";
-    public static final String PREV_TICKER = "/ticker/previous";
-    public static final String NEXT_TICKER = "/ticker/next";
-    public static final String UPDATE_TICKER = "/ticker/update";
+    public static final String ADD_SESSION = "/session/new";
+    public static final String DELETE_SESSION = "/rules/remove";
+    public static final String PREV_SESSION = "/session/previous";
+    public static final String NEXT_SESSION = "/session/next";
+    public static final String UPDATE_SESSION = "/session/update";
 
-    public static final String START_TICKER = "/ticker/start";
-    public static final String STOP_TICKER = "/ticker/stop";
-    public static final String PAUSE_TICKER = "/ticker/pause";
-    public static final String LOAD_TICKER = "/ticker/load";
-    public static final String TICKER_STATUS = "/ticker/status";
-    public static final String TICKER_INFO = "/ticker/info";
-    public static final String TICKER_LOG = "/ticker/log";
+    public static final String START_SESSION = "/session/start";
+    public static final String STOP_SESSION = "/session/stop";
+    public static final String PAUSE_SESSION = "/session/pause";
+    public static final String LOAD_SESSION = "/session/load";
+    public static final String SESSION_STATUS = "/session/status";
+    public static final String SESSION_INFO = "/session/info";
+    public static final String SESSION_LOG = "/session/log";
 
     public static final String ADD_RULE = "/rules/add";
     public static final String REMOVE_RULE = "/rules/remove";
@@ -76,7 +76,7 @@ public class Constants {
     public static final String GET_INSTRUMENT_BY_ID = "/instrument";
 
     public static final String SEND_MESSAGE = "/messages/send";
-    public static final String SAVE_BEAT = "/ticker/save";
+    public static final String SAVE_BEAT = "/session/save";
     public static final String SPECIFY_RULE = "/rules/specify";
 
     public static final String PLAY_DRUM_NOTE = "/drums/note";
@@ -87,6 +87,9 @@ public class Constants {
     public static final float DEFAULT_TEMPO = 130.0F;
     public static final float DEFAULT_TEMPO_FACTOR = 1.0F;
     public static final float DEFAULT_TEMPO_IN_MPQ = 0;
+
+    public static final String APPLICATION_FRAME = "APPLICATION_FRAME";
+    public static final String PLAYER = "PLAYER";
 }
 
 // package com.angrysurfer.midi.model;
@@ -98,7 +101,7 @@ public class Constants {
 
 // @Getter
 // @Setter
-// public class BeatGenerator extends Ticker {
+// public class BeatGenerator extends Session {
 
 // public BeatGenerator() {
 // super();
@@ -182,36 +185,36 @@ public class Constants {
 // }
 
 // if (rand.nextBoolean())
-// result.add(new DrumPad(ticker, raz, CLOSED_HAT, closedHatParams, 100, 125)
+// result.add(new DrumPad(session, raz, CLOSED_HAT, closedHatParams, 100, 125)
 // .addRule(TICK, MODULO, nextValue(4)));
 //
 // if (rand.nextBoolean())
-// result.add(new DrumPad(ticker, raz, CLOSED_HAT, closedHatParams, 100, 125)
+// result.add(new DrumPad(session, raz, CLOSED_HAT, closedHatParams, 100, 125)
 // .addRule(TICK, MODULO, nextValue(4))
 // .addRule(BAR, EQUALS, nextValue(4)));
 //
 // if (rand.nextBoolean())
-// result.add(new DrumPad(ticker, raz, SNARE, snarePrams, 100, 125)
+// result.add(new DrumPad(session, raz, SNARE, snarePrams, 100, 125)
 // .addRule(TICK, MODULO, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, fireball, 51,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, fireball, 51,
 // fireballParams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, microfreak, 39,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, microfreak, 39,
 // microFreakParams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, microfreak, 53,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, microfreak, 53,
 // microFreakParams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
 // if (rand.nextBoolean())
-// result.add(new DrumPad(ticker, zero, 49, Collections.emptyList(), 100, 125)
+// result.add(new DrumPad(session, zero, 49, Collections.emptyList(), 100, 125)
 // .addRule(TICK, MODULO, nextValue(4))
 // .addRule(BEAT, LESS_THAN, nextValue(4)));
 
-// result.add(new DrumPad(ticker, raz, CLOSED_HAT, kickParams, 100, 125)
+// result.add(new DrumPad(session, raz, CLOSED_HAT, kickParams, 100, 125)
 // .addRule(TICK, MODULO, 2.0));
 //
 
@@ -219,7 +222,7 @@ public class Constants {
 // IntStream.range(EQUALS, MODULO + 1).forEach(op -> {
 // IntStream.range(TICK, BAR + 1).forEach(div -> {
 // while (rand.nextBoolean()) {
-// DrumPad pad = new DrumPad(ticker, raz, drum, Collections.emptyList(), 100,
+// DrumPad pad = new DrumPad(session, raz, drum, Collections.emptyList(), 100,
 // 125);
 // pad.addRule(rand.nextInt(MODULO + 1), rand.nextInt(BAR + 1), nextValue(4));
 // result.add(pad);
@@ -229,82 +232,82 @@ public class Constants {
 // });
 // if (rand.nextBoolean())
 // if (rand.nextBoolean())
-// result.add(new DrumPad(ticker, Blackbox, KICK, kickParams, 100, 125)
+// result.add(new DrumPad(session, Blackbox, KICK, kickParams, 100, 125)
 // .addRule(BEAT, GREATER_THAN, nextValue(4))
 // .addRule(BEAT, LESS_THAN, nextValue(4))
 // .addRule(BAR, MODULO, nextValue(4))
 // .addRule(TICK, MODULO, nextValue(4)));
 ////
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, KICK, kickParams,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, raz, KICK, kickParams,
 // 100, 125)
 // .addRule(BAR, LESS_THAN, nextValue(4))
 // .addRule(BAR, GREATER_THAN, nextValue(4))
 // .addRule(TICK, MODULO, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, Blackbox, KICK,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, Blackbox, KICK,
 // kickParams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, SNARE,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, raz, SNARE,
 // snarePrams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, SNARE,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, raz, SNARE,
 // snarePrams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, Blackbox, SNARE,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, Blackbox, SNARE,
 // snarePrams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, CLOSED_HAT,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, raz, CLOSED_HAT,
 // closedHatParams, 100, 125)
 // .addRule(TICK, MODULO, nextValue(4)));
 
 // if (rand.nextBoolean())
-// result.add(new DrumPad(ticker, raz, OPEN_HAT, List.of(24, 25, 26, 27, 28, 29,
+// result.add(new DrumPad(session, raz, OPEN_HAT, List.of(24, 25, 26, 27, 28, 29,
 // 30, 31), 100, 125)
 // .addRule(TICK, MODULO, nextValue(4)));
 //
 // if (rand.nextBoolean())
-// result.add(new DrumPad(ticker, raz, OPEN_HAT, List.of(32, 33, 34, 35, 36, 37,
+// result.add(new DrumPad(session, raz, OPEN_HAT, List.of(32, 33, 34, 35, 36, 37,
 // 38, 39), 100, 125)
 // .addRule(TICK, MODULO, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, 41, razParams,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, raz, 41, razParams,
 // 100, 125)
 // .addRule(TICK, MODULO, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, raz, CLOSED_HAT,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, raz, CLOSED_HAT,
 // razParams, 100, 125)
 // .addRule(TICK, MODULO, nextValue(4)));
 //
 // if (rand.nextBoolean())
-// result.add(new DrumPad(ticker, raz, OPEN_HAT, razParams, 100,
+// result.add(new DrumPad(session, raz, OPEN_HAT, razParams, 100,
 // 125).addRule(TICK, MODULO, nextValue(4)));
 
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, fireball, 51,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, fireball, 51,
 // fireballParams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, microfreak, 39,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, microfreak, 39,
 // microFreakParams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, microfreak, 53,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, microfreak, 53,
 // microFreakParams, 100, 125)
 // .addRule(BEAT, EQUALS, nextValue(4)));
 //
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, zero, 49,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, zero, 49,
 // Collections.emptyList(), 100, 125)
 // .addRule(TICK, MODULO, nextValue(4))
 // .addRule(BEAT, LESS_THAN, nextValue(4)));
 
-// if (rand.nextBoolean()) result.add(new DrumPad(ticker, zero, 51,
+// if (rand.nextBoolean()) result.add(new DrumPad(session, zero, 51,
 // Collections.emptyList(), 100, 125)
 // .addRule(TICK, MODULO, nextValue(4)));
 
-// new DrumPad(ticker, raz, 37, List.of(16, 17, 18, 19, 20, 21, 22, 23)) {
+// new DrumPad(session, raz, 37, List.of(16, 17, 18, 19, 20, 21, 22, 23)) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (rand.nextBoolean() && tick % 8 == 0 && bar % 2 == 0)
@@ -317,7 +320,7 @@ public class Constants {
 // }
 // },
 // open hi-hat
-// new DrumPad(ticker, raz, 38, List.of(24, 25, 26, 27, 28, 29, 30, 31)) {
+// new DrumPad(session, raz, 38, List.of(24, 25, 26, 27, 28, 29, 30, 31)) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (rand.nextBoolean() && tick % 8 == 0 && bar % 2 == 0)
@@ -328,7 +331,7 @@ public class Constants {
 // }
 // },
 // // closed hi-hat
-// new DrumPad(ticker, raz, 39, List.of(32, 33, 34, 35, 36, 37, 38, 39)) {
+// new DrumPad(session, raz, 39, List.of(32, 33, 34, 35, 36, 37, 38, 39)) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (rand.nextBoolean() && tick % 8 == 0 && bar % 2 == 0)
@@ -339,9 +342,9 @@ public class Constants {
 // }
 // },
 //
-// new SamplePlayer(ticker, Blackbox, 40, 52),
+// new SamplePlayer(session, Blackbox, 40, 52),
 //
-// new NotePlayer(ticker, new MidiInstrument("Zero", device, 4)) {
+// new NotePlayer(session, new MidiInstrument("Zero", device, 4)) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (getPosition() == notes.length)
@@ -355,7 +358,7 @@ public class Constants {
 // }
 // },
 //
-// new NotePlayer(ticker, new MidiInstrument("West Pest", device, 5)) {
+// new NotePlayer(session, new MidiInstrument("West Pest", device, 5)) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (getPosition() == notes.length)
@@ -368,7 +371,7 @@ public class Constants {
 // }
 // },
 //
-// new NotePlayer(ticker, new MicroFreak(device, 2)) {
+// new NotePlayer(session, new MicroFreak(device, 2)) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (getPosition() == notes.length)
@@ -392,7 +395,7 @@ public class Constants {
 // },
 //
 // // fireball
-// new NotePlayer(ticker, new Fireball(device, 3)) {
+// new NotePlayer(session, new Fireball(device, 3)) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (rand.nextBoolean() && tick % 8 == 0 && bar % 2 == 0)
@@ -403,7 +406,7 @@ public class Constants {
 // }
 // },
 //
-// new DrumPad(ticker, Blackbox, 36, List.of()) {
+// new DrumPad(session, Blackbox, 36, List.of()) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (tick % 8 == 0 || (rand.nextBoolean() && (tick % 6 == 0 || tick % 14 ==
@@ -412,7 +415,7 @@ public class Constants {
 // }
 // },
 //
-// new DrumPad(ticker, Blackbox, 37, List.of()) {
+// new DrumPad(session, Blackbox, 37, List.of()) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (bar < 8 || (bar > 24 && bar < 32) || bar > 48)
@@ -422,7 +425,7 @@ public class Constants {
 // }
 // },
 //
-// new DrumPad(ticker, Blackbox, 39, List.of()) {
+// new DrumPad(session, Blackbox, 39, List.of()) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (bar > 8 && bar < 17 || bar > 32 && bar < 48 && tick % 16 == 0 &&
@@ -431,7 +434,7 @@ public class Constants {
 // }
 // },
 //
-// new DrumPad(ticker, Blackbox, 38, List.of()) {
+// new DrumPad(session, Blackbox, 38, List.of()) {
 // @Override
 // public void onTick(int tick, int bar) {
 // if (tick % 4 == 0 || (rand.nextBoolean() && tick % 3 == 0))
@@ -462,13 +465,13 @@ public class Constants {
 // @Getter
 // @Setter
 // @Entity
-// public class TickerInfo {
+// public class SessionInfo {
 // static Logger logger =
-// LoggerFactory.getLogger(TickerInfo.class.getCanonicalName());
+// LoggerFactory.getLogger(SessionInfo.class.getCanonicalName());
 // public boolean done;
 // // @OneToMany(fetch = FetchType.EAGER)
-// // @JoinTable(name = "ticker_player", joinColumns = {@JoinColumn(name =
-// "ticker_id")}, inverseJoinColumns = {
+// // @JoinTable(name = "session_player", joinColumns = {@JoinColumn(name =
+// "session_id")}, inverseJoinColumns = {
 // // @JoinColumn(name = "player_id")})
 // @Transient
 // private List<PlayerInfo> players = new ArrayList<>();
@@ -492,7 +495,7 @@ public class Constants {
 // @Transient
 // private MuteGroupList muteGroups;
 
-// public TickerInfo() {
+// public SessionInfo() {
 // setBeat(1);
 // setBar(1);
 // setTick(1);
@@ -511,46 +514,46 @@ public class Constants {
 // // setMuteGroups();
 // }
 
-// public static void copyToTicker(TickerInfo info, Ticker ticker) {
-// ticker.setId(info.getId());
-// ticker.setBar(info.getBar());
-// ticker.setBeat(info.getBeat());
-// ticker.setDone(info.isDone());
-// ticker.setBeatDivider(info.getBeatDivider());
-// ticker.setMaxTracks(info.getMaxTracks());
-// ticker.setSwing(info.getSwing());
-// ticker.setSongLength(info.getSongLength());
-// ticker.setPartLength(info.getPartLength());
-// ticker.setTicksPerBeat(info.getTicksPerBeat());
-// ticker.setPartLength(info.getPartLength());
-// ticker.setBeatsPerBar(info.getBeatsPerBar());
+// public static void copyToSession(SessionInfo info, Session session) {
+// session.setId(info.getId());
+// session.setBar(info.getBar());
+// session.setBeat(info.getBeat());
+// session.setDone(info.isDone());
+// session.setBeatDivider(info.getBeatDivider());
+// session.setMaxTracks(info.getMaxTracks());
+// session.setSwing(info.getSwing());
+// session.setSongLength(info.getSongLength());
+// session.setPartLength(info.getPartLength());
+// session.setTicksPerBeat(info.getTicksPerBeat());
+// session.setPartLength(info.getPartLength());
+// session.setBeatsPerBar(info.getBeatsPerBar());
 // }
 
-// public static void copyFromTicker(Ticker ticker, TickerInfo info,
+// public static void copyFromSession(Session session, SessionInfo info,
 // List<PlayerInfo> players) {
-// info.setId(ticker.getId());
-// info.setTick(ticker.getTick());
-// info.setBeat((int) ticker.getBeat());
-// info.setBar(ticker.getBar());
-// info.setDone(ticker.isDone());
-// info.setTempoInBPM(ticker.getTempoInBPM());
-// info.setBeatDivider(ticker.getBeatDivider());
-// info.setMaxTracks(ticker.getMaxTracks());
-// info.setPlaying(ticker.isPlaying());
-// info.setSwing(ticker.getSwing());
-// info.setStopped(ticker.isStopped());
-// info.setSongLength(ticker.getSongLength());
-// info.setPartLength(ticker.getPartLength());
-// info.setTicksPerBeat(ticker.getTicksPerBeat());
-// info.setPartLength(ticker.getPartLength());
-// info.setBeatsPerBar(ticker.getBeatsPerBar());
+// info.setId(session.getId());
+// info.setTick(session.getTick());
+// info.setBeat((int) session.getBeat());
+// info.setBar(session.getBar());
+// info.setDone(session.isDone());
+// info.setTempoInBPM(session.getTempoInBPM());
+// info.setBeatDivider(session.getBeatDivider());
+// info.setMaxTracks(session.getMaxTracks());
+// info.setPlaying(session.isPlaying());
+// info.setSwing(session.getSwing());
+// info.setStopped(session.isStopped());
+// info.setSongLength(session.getSongLength());
+// info.setPartLength(session.getPartLength());
+// info.setTicksPerBeat(session.getTicksPerBeat());
+// info.setPartLength(session.getPartLength());
+// info.setBeatsPerBar(session.getBeatsPerBar());
 // info.setPlayers(players);
 // }
 
-// public static TickerInfo fromTicker(Ticker ticker, List<PlayerInfo> players)
+// public static SessionInfo fromSession(Session session, List<PlayerInfo> players)
 // {
-// TickerInfo info = new TickerInfo();
-// copyFromTicker(ticker, info, players);
+// SessionInfo info = new SessionInfo();
+// copyFromSession(session, info, players);
 // return info;
 // }
 // }

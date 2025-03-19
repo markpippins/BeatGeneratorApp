@@ -1,21 +1,18 @@
 package com.angrysurfer.spring.service;
 
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.angrysurfer.core.api.Database;
-import com.angrysurfer.core.engine.SongEngine;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
-import com.angrysurfer.core.util.CyclerListener;
+import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.service.SongEngine;
 import com.angrysurfer.core.util.TickCyclerListener;
 import com.angrysurfer.spring.dao.SongStatus;
 
@@ -34,36 +31,34 @@ public class SongService implements NoteProvider {
 
     static Logger logger = LoggerFactory.getLogger(SongService.class.getCanonicalName());
 
-    private Database dbUtils;
     private InstrumentService instrumentService;
+    private RedisService redisService = RedisService.getInstance();
 
-    private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
+    private TickCyclerListener tickListener;
 
-    private CyclerListener tickListener;
-    // private CyclerListener beatListener = new BeatCyclerListener();
-    // private CyclerListener barListener = new BarCyclerListener();
+    private SongEngine songEngine = SessionManager.getInstance().getSongEngine();
 
-    private SongEngine songEngine;
+    public SongService(InstrumentService instrumentService) {
 
-    public SongService(Database dbUtils, InstrumentService instrumentService) {
-        this.dbUtils = dbUtils;
         this.instrumentService = instrumentService;
-        this.songEngine = new SongEngine(instrumentService.getInstrumentEngine());
         this.tickListener = new TickCyclerListener(songEngine);
 
-        Long songId = dbUtils.getMinimumSongId();
+        // Initialize with first song if available
+        Long songId = redisService.getMinimumSongId();
         if (Objects.nonNull(songId) && songId > 0) {
-            Optional<Song> opt = dbUtils.getSongFindOne().find(songId);
-            if (opt.isPresent())
-                loadSong(opt.get());
+            Song song = redisService.findSongById(songId);
+            if (song != null) {
+                loadSong(song);
+            }
         }
 
-        if (Objects.isNull(songEngine.getSong()))
-            songEngine.setSong(newSong());
+        if (Objects.isNull(songEngine.getActiveSong()))
+            songEngine.songSelected(newSong());
     }
 
+    @Override
     public int getNoteForStep(Step step, Pattern pattern, long tick) {
-        return this.songEngine.getNoteForStep(step, pattern, tick);
+        return songEngine.getNoteForStep(step, pattern, tick);
     }
 
     public SongStatus getSongStatus() {
@@ -73,106 +68,109 @@ public class SongService implements NoteProvider {
     public Pattern updatePattern(Long patternId, int updateType, int updateValue) {
         logger.info("updatePattern() - patternId: {}, updateType: {}, updateValue: {}",
                 patternId, updateType, updateValue);
-        return dbUtils.savePattern(this.songEngine.updatePattern(patternId, updateType, updateValue));
+        Pattern pattern = getSong().getPattern(patternId);
+        if (pattern != null) {
+            pattern = songEngine.updatePattern(pattern, updateType, updateValue);
+            return redisService.savePattern(pattern);
+        }
+        return null;
     }
 
     public Step updateStep(Long stepId, int updateType, int updateValue) {
         logger.info("updateStep() - stepId: {}, updateType: {}, updateValue: {}",
                 stepId, updateType, updateValue);
-        return dbUtils.saveStep(this.songEngine.updateStep(stepId, updateType, updateValue));
+        Step step = findStep(stepId);
+        if (step != null) {
+            step = songEngine.updateStep(step, updateType, updateValue);
+            return redisService.saveStep(step);
+        }
+        return null;
     }
 
     public Song loadSong(Song song) {
 
         logger.info("loadSong() - songId: {}", song.getId());
-        setSong(song);
-        getSong().setPatterns(dbUtils.findPatternBySongId(song.getId()));
-        getSong().getPatterns().forEach(pattern -> {
-            pattern.setSong(getSong());
-            pattern.setSteps(dbUtils.findStepsByPatternId(pattern.getId()));
+        song.setPatterns(redisService.findPatternsBySongId(song.getId()));
+        song.getPatterns().forEach(pattern -> {
+            pattern.setSong(song);
+            pattern.setSteps(redisService.findStepsByPatternId(pattern.getId()));
             pattern.getSteps().forEach(s -> s.setPattern(pattern));
         });
-
+        songEngine.songSelected(song);
         return song;
     }
 
     public Song newSong() {
         logger.info("newSong()");
-        return this.songEngine.newSong(dbUtils.getInstrumentSaver(), dbUtils.getSongSaver(), dbUtils.getPatternSaver(),
-                dbUtils.getStepSaver());
-
+        Song song = new Song();// songEngine.createNewSong(instrumentService.getInstrumentList());
+        return redisService.saveSong(song);
     }
 
     public synchronized Song next(long currentSongId) {
         logger.info("next() - currentSongId: {}", currentSongId);
         if (currentSongId == 0 || getSong().getPatterns().size() > 0) {
-            Long maxSongId = dbUtils.getMaximumSongId();
-            Song song = Objects.nonNull(maxSongId) && currentSongId < maxSongId
-                    ? dbUtils.getNextSong(currentSongId)
-                    : null;
-            if (Objects.nonNull(song))
-                loadSong(song);
-            else
-                songEngine.setSong(newSong());
+            Long maxSongId = redisService.getMaximumSongId();
+            Long nextId = redisService.getNextSongId(currentSongId);
+            if (Objects.nonNull(maxSongId) && currentSongId < maxSongId && nextId != null) {
+                Song nextSong = redisService.findSongById(nextId);
+                if (nextSong != null) {
+                    loadSong(nextSong);
+                }
+            } else {
+                songEngine.songSelected(newSong());
+            }
         }
-
-        return songEngine.getSong();
+        return getSong();
     }
 
     public synchronized Song previous(long currentSongId) {
         logger.info("previous() - currentSongId: {}", currentSongId);
-        // songRepo.flush();
-        if (currentSongId > (dbUtils.getMinimumSongId()))
-            loadSong(dbUtils.getPreviousSong(currentSongId));
-
-        return songEngine.getSong();
-    }
-
-    public synchronized void setSong(Song song) {
-        songEngine.setSong(song);
-    }
-
-    public synchronized Song getSong() {
-        return songEngine.getSong();
-    }
-
-    public Pattern addPattern() {
-        // getSongRepo().flush();
-        return this.songEngine.addPattern(dbUtils.getPatternSaver());
-    }
-
-    public Set<Pattern> removePattern(Long patternId) {
-        Pattern pattern = getSong().getPatterns().stream().filter(s -> s.getId().equals(patternId)).findAny()
-                .orElseThrow();
-        getSong().getPatterns().remove(pattern);
-        dbUtils.deletePattern(pattern);
-        return getSong().getPatterns();
-    }
-
-    public Song getSongInfo() {
-        if (Objects.isNull(songEngine.getSong()))
-            next(0);
+        Long minId = redisService.getMinimumSongId();
+        if (currentSongId > minId) {
+            Long prevId = redisService.getPreviousSongId(currentSongId);
+            if (prevId != null) {
+                loadSong(redisService.findSongById(prevId));
+            }
+        }
         return getSong();
     }
 
-    // public Pattern addStep(int page) {
-    // getSongRepo().flush();
+    public synchronized void setSong(Song song) {
+        songEngine.songSelected(song);
+    }
 
-    // Pattern step = new Pattern();
-    // step.setPosition(getSong().getPatterns().size());
-    // step.setPage(page);
-    // step.setSong(getSong());
-    // step = getStepRepo().save(step);
-    // getSong().getPatterns().add(step);
-    // return step;
-    // }
+    public synchronized Song getSong() {
+        return songEngine.getActiveSong();
+    }
 
-    // public Set<Pattern> removeStep(Long stepId) {
-    // Pattern step = getSong().getPatterns().stream().filter(s ->
-    // s.getId().equals(stepId)).findAny().orElseThrow();
-    // getSong().getPatterns().remove(step);
-    // getStepRepo().delete(step);
-    // return getSong().getPatterns();
-    // }
+    public Pattern addPattern() {
+        Pattern pattern = new Pattern();
+        pattern = songEngine.addPattern(pattern);
+        return redisService.savePattern(pattern);
+    }
+
+    public Set<Pattern> removePattern(Long patternId) {
+        Pattern pattern = getSong().getPattern(patternId);
+        if (pattern != null) {
+            Set<Pattern> patterns = songEngine.removePattern(pattern);
+            redisService.deletePattern(pattern);
+            return patterns;
+        }
+        return getSong().getPatterns();
+    }
+
+    private Step findStep(Long stepId) {
+        return getSong().getPatterns().stream()
+                .flatMap(p -> p.getSteps().stream())
+                .filter(s -> s.getId().equals(stepId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public Song getSongInfo() {
+        if (Objects.isNull(getSong()))
+            next(0);
+        return getSong();
+    }
 
 }

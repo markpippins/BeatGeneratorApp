@@ -28,7 +28,7 @@ public class Song {
     private Long id;
 
     private String name;
-    
+
     @Transient
     private Float beatDuration;
 
@@ -38,10 +38,25 @@ public class Song {
     @Transient
     private Set<Pattern> patterns = new HashSet<>();
 
+    public Pattern getPattern(Long patternId) {
+        logger.debug("getPattern() - looking for patternId: {}", patternId);
+        Pattern[] result = { null };
+
+        Optional<Pattern> opt = getPatterns().stream().filter(p -> p.getId().equals(patternId)).findAny();
+        if (opt.isPresent()) {
+            logger.debug("Found pattern {}", patternId);
+            result[0] = opt.get();
+        }
+
+        // if (result[0] == null)
+            logger.debug("Pattern {} not found", patternId);
+
+        return result[0];
+    }
 
     public Step getStep(Long stepId) {
         logger.debug("getStep() - looking for stepId: {}", stepId);
-        Step[] result = {null};
+        Step[] result = { null };
         getPatterns().forEach(pattern -> {
             Optional<Step> step = pattern.getSteps().stream().filter(s -> s.getId().equals(stepId)).findAny();
             if (step.isPresent()) {
@@ -49,7 +64,7 @@ public class Song {
                 result[0] = step.get();
             }
         });
-        
+
         if (result[0] == null) {
             logger.debug("Step {} not found", stepId);
         }

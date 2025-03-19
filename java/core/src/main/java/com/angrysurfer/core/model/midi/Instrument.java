@@ -22,30 +22,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Pad;
-import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.converter.IntegerArrayConverter;
+import com.angrysurfer.core.service.DeviceManager;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@Entity
-@Table(name = "instrument")
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Instrument implements Serializable {
 
     static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
@@ -58,19 +51,9 @@ public class Instrument implements Serializable {
 
     public static final Integer[] ALL_CHANNELS = new Integer[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "instrument_control_code", joinColumns = {
-            @JoinColumn(name = "instrument_id") }, inverseJoinColumns = {
-                    @JoinColumn(name = "control_code_id") })
     private List<ControlCode> controlCodes = new ArrayList<>();
-
-    @ManyToMany
-    @JoinTable(name = "instrument_pad", joinColumns = @JoinColumn(name = "pad_id"), inverseJoinColumns = @JoinColumn(name = "instrument_id"))
 
     private Set<Pad> pads = new HashSet<>();
 
@@ -80,8 +63,8 @@ public class Instrument implements Serializable {
     @Transient
     private Map<Integer, Integer[]> boundaries = new HashMap<>();
 
-    @Transient
-    private Map<Integer, Map<Long, String>> captions = new HashMap<>();
+    // @Transient
+    // private Map<Integer, Map<Long, String>> captions = new HashMap<>();
 
     @JsonIgnore
     @Transient
@@ -97,7 +80,6 @@ public class Instrument implements Serializable {
     private String deviceName;
 
     @Convert(converter = IntegerArrayConverter.class)
-    @Column(name = "channels")
     private Integer[] channels;
 
     private Integer lowestNote = 0;
@@ -114,8 +96,7 @@ public class Instrument implements Serializable {
 
     private Boolean available = false;
 
-    @OneToMany(mappedBy = "instrument")
-    private Set<Pattern> patterns;
+    // private Set<Pattern> patterns;
 
     public Instrument() {
 
@@ -228,11 +209,11 @@ public class Instrument implements Serializable {
             Receiver currentReceiver = getOrCreateReceiver();
             if (Objects.nonNull(currentReceiver)) {
                 currentReceiver.send(message, -1);
-                logger.debug("Sent message: {} to device: {}",
+                logger.debug("Sent message: %s to device: %s",
                         MidiMessage.lookupCommand(message.getCommand()),
                         getName());
             } else
-                logger.error("Failed message to {}", getName());
+                logger.error("Failed message to %s", getName());
         } catch (Exception e) {
             logger.error("Send failed: {} - will attempt recovery", e.getMessage());
             cleanup();
@@ -241,7 +222,7 @@ public class Instrument implements Serializable {
             if (Objects.nonNull(receiver))
                 receiver.send(message, -1);
             else
-                logger.error("Failed retry message to {}", getName());
+                logger.error("Failed retry message to %s", getName());
         }
     }
 
@@ -277,12 +258,47 @@ public class Instrument implements Serializable {
         initialized = true;
     }
 
-    // Add finalizer to ensure cleanup
-    @Override
-    protected void finalize() throws Throwable {
-        cleanup();
-        super.finalize();
+    /**
+     * Initializes the connection to the MIDI device for this instrument
+     * 
+     * @param deviceName The name of the device to connect to
+     * @return true if successfully connected, false otherwise
+     */
+    public boolean initializeDevice(String deviceName) {
+        try {
+            if (deviceName == null || deviceName.isEmpty()) {
+                logger.warn("Cannot initialize device with null or empty name");
+                return false;
+            }
+            
+            // Get the device by name
+            MidiDevice device = DeviceManager.getMidiDevice(deviceName);
+            if (device == null) {
+                logger.warn("Device not found: {}", deviceName);
+                return false;
+            }
+            
+            // Set the device and clean up previous connections
+            setDevice(device);
+            
+            // Now the device is properly set up with receiver initialized through setDevice method
+            setInitialized(true);
+            setAvailable(true);
+            
+            logger.info("Successfully initialized device: {}", deviceName);
+            return true;
+        } catch (Exception e) {
+            logger.error("Failed to initialize device {}: {}", deviceName, e.getMessage());
+            return false;
+        }
     }
+
+    // Add finalizer to ensure cleanup
+    // @Override
+    // protected void finalize() throws Throwable {
+    // cleanup();
+    // super.finalize();
+    // }
 
     public void assign(int cc, String control) {
         getAssignments().put(cc, control);
@@ -298,5 +314,10 @@ public class Instrument implements Serializable {
 
     private String lookupTarget(int key) {
         return assignments.getOrDefault(key, Integer.toString(key));
+    }
+
+    @Override
+    public String toString() {
+        return getName(); // This will be displayed in the combo box
     }
 }

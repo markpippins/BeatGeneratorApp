@@ -17,7 +17,7 @@
 // import org.springframework.test.context.junit4.SpringRunner;
 
 // import com.angrysurfer.core.model.Rule;
-// import com.angrysurfer.core.model.player.IPlayer;
+// import com.angrysurfer.core.model.player.AbstractPlayer;
 // import com.angrysurfer.core.repo.ControlCodes;
 // import com.angrysurfer.core.repo.Instruments;
 // import com.angrysurfer.core.repo.Pads;
@@ -25,14 +25,14 @@
 // import com.angrysurfer.core.repo.Songs;
 // import com.angrysurfer.core.repo.Steps;
 // import com.angrysurfer.core.repo.Strikes;
-// import com.angrysurfer.core.repo.Tickers;
+// import com.angrysurfer.core.repo.Sessions;
 // import com.angrysurfer.core.util.Comparison;
 // import com.angrysurfer.core.util.update.PlayerUpdateType;
 // import com.angrysurfer.core.util.update.RuleUpdateType;
 // import com.angrysurfer.spring.Application;
 // import com.angrysurfer.spring.service.MIDIService;
 // import com.angrysurfer.spring.service.PlayerService;
-// import com.angrysurfer.spring.service.TickerService;
+// import com.angrysurfer.spring.service.SessionService;
 
 // @RunWith(SpringRunner.class)
 // @SpringBootTest(
@@ -49,7 +49,7 @@
 //     PlayerService playerService;
 
 //     @Autowired
-//     TickerService tickerService;
+//     SessionService sessionService;
 
 //     @Autowired
 //     MIDIService midiService;
@@ -61,7 +61,7 @@
 //     Rules ruleRepo;
 
 //     @Autowired
-//     Tickers tickerRepo;
+//     Sessions sessionRepo;
 
 //     @Autowired
 //     Instruments instrumentRepo;
@@ -94,14 +94,14 @@
 //     }
 
 //     @Test
-//     public void whenPlayerAdded_thenTickerShouldNotBeNull() {
-//         IPlayer player = playerService.addPlayer(RAZ);
-//         assertNotNull(player.getTicker());
+//     public void whenPlayerAdded_thenSessionShouldNotBeNull() {
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
+//         assertNotNull(player.getSession());
 //     }
     
 //     @Test
 //     public void whenMultipleRulesAdded_thenPlayerShouldContainThem() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         Rule r1 = playerService.addRule(player.getId());
 //         r1.setComparison(Comparison.EQUALS);
 
@@ -111,13 +111,13 @@
 //         Rule r3 = playerService.addRule(player.getId());
 //         r3.setComparison(Comparison.LESS_THAN);
         
-//         IPlayer tickerPlayer = tickerService.getTicker().getPlayer(player.getId());
-//         assertEquals(3, tickerPlayer.getRules().size());
+//         AbstractPlayer sessionPlayer = sessionService.getSession().getPlayer(player.getId());
+//         assertEquals(3, sessionPlayer.getRules().size());
 //     }
 
 //     @Test
 //     public void whenRuleAddTried_thenEnsureThatExistingRulesHaveBeenInitialized() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.addRule(player.getId());
 //         playerService.addRule(player.getId());
 //         playerService.addRule(player.getId());
@@ -129,14 +129,14 @@
 
 //     @Test
 //     public void whenRuleAdded_thenPlayerShouldContainIt() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.addRule(player.getId());
 //         assertEquals(1, player.getRules().size());
 //     }
 
 //     @Test
 //     public void whenRuleRemoved_thenPlayerShouldNotContainIt() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         Rule rule = playerService.addRule(player.getId());
 //         assertEquals(1, player.getRules().size());
 
@@ -146,7 +146,7 @@
 
 //     @Test
 //     public void whenRuleValueUpdated_thenRuleShouldReflectIt() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.addRule(player.getId());
 
 //         assertTrue(player.getRules().size() > 0);
@@ -160,7 +160,7 @@
 
 //     @Test
 //     public void whenRuleOperatorUpdated_thenRuleShouldReflectIt() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.addRule(player.getId());
 
 //         assertTrue(player.getRules().size() > 0);
@@ -174,7 +174,7 @@
 
 //     @Test
 //     public void whenRulePartUpdated_thenRuleShouldReflectIt() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.addRule(player.getId());
 
 //         assertTrue(player.getRules().size() > 0);
@@ -187,7 +187,7 @@
 
 //     @Test
 //     public void whenRuleComparisonUpdated_thenRuleShouldReflectIt() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.addRule(player.getId());
 
 //         assertTrue(player.getRules().size() > 0);
@@ -200,7 +200,7 @@
 
 //     @Test
 //     public void whenPlayerMuted_thenMutedPlayer() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         boolean muted = player.isMuted();
 //         playerService.mutePlayer(player.getId());
 //         assertTrue(player.isMuted() != muted); 
@@ -208,131 +208,131 @@
 
 //     @Test
 //     public void whenPlayerMinVelUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.MIN_VELOCITY, 50);
 //         assertTrue(player.getMinVelocity() == 50); 
 //     }
 
 //     @Test
 //     public void whenPlayerMaxVelUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.MAX_VELOCITY, 50);
 //         assertTrue(player.getMaxVelocity() == 50); 
 //     }
 
 //     @Test
 //     public void whenPlayerPresetUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.PRESET, 50);
 //         assertTrue(player.getPreset() == 50); 
 //     }
 
 //     @Test
 //     public void whenPlayerFadeInUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.FADE_IN, 50);
 //         assertTrue(player.getFadeIn() == 50); 
 //     }
 
 //     @Test
 //     public void whenPlayerFadeOutUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.FADE_OUT, 50);
 //         assertTrue(player.getFadeOut() == 50); 
 //     }
 
 //     @Test
 //     public void whenPlayerBeatFractionUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.BEAT_FRACTION, 50);
 //         assertTrue(player.getBeatFraction() == 50); 
 //     }
 
 //     @Test
 //     public void whenRandomDegreeUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.RANDOM_DEGREE, 50);
 //         assertTrue(player.getRandomDegree() == 50); 
 //     }
 
 //     @Test
 //     public void whenPlayerRatchetCountUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.RATCHET_COUNT, 50);
 //         assertTrue(player.getRatchetCount() == 50); 
 //     }
 
 //     @Test
 //     public void whenPlayerRatchetIntervalUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.RATCHET_INTERVAL, 50);
 //         assertTrue(player.getRatchetInterval() == 50); 
 //     }
 
 //     @Test
 //     public void whenPlayerNoteUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.NOTE, 50L);
 //         assertTrue(50L == player.getNote()); 
 //     }
 
 //     @Test
 //     public void whenPlayerMuted_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.MUTE, 1);
 //         assertTrue(player.isMuted()); 
 //     }
     
 //     @Test
 //     public void whenPlayerUnmuted_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.MUTE, 0);
 //         assertFalse(player.isMuted()); 
 //     }
 
 //     @Test
 //     public void whenPlayerProbabilityUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.PROBABILITY, 50);
 //         assertTrue(player.getProbability() == 50); 
 //     }
 
 //     @Test
 //     public void whenPlayerLevelUpdated_thenPlayerUpdatedWithNewValues() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.updatePlayer(player.getId(), PlayerUpdateType.LEVEL, 50);
 //         assertTrue(player.getLevel() == 50); 
 //     }
 
 //     @Test
-//     public void whenPlayerAdded_thenTickerContainsPlayer() {
-//         IPlayer player = playerService.addPlayer(RAZ);
-//         assertTrue(tickerService.getTicker().getPlayers().contains(player)); 
+//     public void whenPlayerAdded_thenSessionContainsPlayer() {
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
+//         assertTrue(sessionService.getSession().getPlayers().contains(player)); 
 //     }
 
 //     @Test
-//     public void whenPlayerRemoved_thenTickerNoLongerContainsPlayer() {
-//         IPlayer player = playerService.addPlayer(RAZ);
+//     public void whenPlayerRemoved_thenSessionNoLongerContainsPlayer() {
+//         AbstractPlayer player = playerService.addPlayer(RAZ);
 //         playerService.removePlayer(player.getId());
-//         assertTrue(!tickerService.getTicker().getPlayers().contains(player)); 
+//         assertTrue(!sessionService.getSession().getPlayers().contains(player)); 
 //     }
 
 //     @Test
-//     public void whenPlayersAdded_thenTickerContainsPlayers() {
-//         tickerService.getTicker().getPlayers().clear();
+//     public void whenPlayersAdded_thenSessionContainsPlayers() {
+//         sessionService.getSession().getPlayers().clear();
 //         playerService.addPlayer(RAZ);
 //         playerService.addPlayer(RAZ);
 //         playerService.addPlayer(RAZ);
-//         assertTrue(tickerService.getTicker().getPlayers().size() > 0); 
+//         assertTrue(sessionService.getSession().getPlayers().size() > 0); 
 //     }
 
 //     // @Test
-//     // public void whenPlayersCleared_thenTickerNoLongerContainsPlayers() {
+//     // public void whenPlayersCleared_thenSessionNoLongerContainsPlayers() {
 //     //     playerService.addPlayer(RAZ);
 //     //     playerService.addPlayer(RAZ);
 //     //     playerService.addPlayer(RAZ);
 //     //     playerService.clearPlayers();
-//     //     assertTrue(tickerService.getTicker().getPlayers().size() == 0); 
+//     //     assertTrue(sessionService.getSession().getPlayers().size() == 0); 
 //     // }
 
 // }

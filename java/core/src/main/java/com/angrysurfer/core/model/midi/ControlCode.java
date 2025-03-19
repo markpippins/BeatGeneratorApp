@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.angrysurfer.core.model.ui.Caption;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -36,9 +34,13 @@ public class ControlCode implements Serializable {
     private Boolean binary;
 
     @ManyToMany
-    @JoinTable(
-            name = "control_code_caption",
-            joinColumns = @JoinColumn(name = "caption_id"),
-            inverseJoinColumns = @JoinColumn(name = "control_code_id"))
-    private Set<Caption> captions = new HashSet<>();
+    @JoinTable(name = "control_code_caption", joinColumns = @JoinColumn(name = "caption_id"), inverseJoinColumns = @JoinColumn(name = "control_code_id"))
+    private Set<ControlCodeCaption> captions = new HashSet<>();
+
+    @Override
+    public String toString() {
+        return String.format("ControlCode{id=%d, name='%s', code=%d, bounds=[%d,%d], pad=%d, binary=%b, captions=%s}",
+                id, name, code, lowerBound, upperBound, pad, binary, 
+                captions.stream().map(ControlCodeCaption::toString).toList());
+    }
 }

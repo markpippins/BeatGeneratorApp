@@ -1,25 +1,28 @@
-// package com.angrysurfer.core.config;
+package com.angrysurfer.core.config;
 
-// import org.springframework.context.annotation.Bean;
-// import org.springframework.context.annotation.Configuration;
-// import org.springframework.data.redis.connection.RedisConnectionFactory;
-// import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-// import org.springframework.data.redis.core.RedisTemplate;
-// import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
+import com.angrysurfer.core.util.LogManager;
 
-// @Configuration
-// @EnableRedisRepositories(basePackages = "com.angrysurfer.core.repo")
-// public class RedisConfig {
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 
-//     @Bean
-//     public RedisConnectionFactory connectionFactory() {
-//         return new JedisConnectionFactory();
-//     }
-
-//     @Bean
-//     public RedisTemplate<?, ?> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
-//         RedisTemplate<?, ?> template = new RedisTemplate<>();
-//         template.setConnectionFactory(redisConnectionFactory);
-//         return template;
-//     }
-// }
+public class RedisConfig {
+    private static final LogManager logger = LogManager.getInstance();
+    
+    public static JedisPool createJedisPool() {
+        JedisPoolConfig poolConfig = new JedisPoolConfig();
+        poolConfig.setMaxTotal(10);
+        poolConfig.setMaxIdle(5);
+        poolConfig.setMinIdle(1);
+        poolConfig.setTestOnBorrow(true);
+        poolConfig.setTestOnReturn(true);
+        
+        try {
+            JedisPool pool = new JedisPool(poolConfig, "localhost", 6379);
+            logger.info("RedisConfig", "Successfully created Redis connection pool");
+            return pool;
+        } catch (Exception e) {
+            logger.error("RedisConfig", "Failed to create Redis connection pool", e);
+            throw new RuntimeException("Could not initialize Redis connection", e);
+        }
+    }
+}
