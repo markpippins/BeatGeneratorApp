@@ -245,4 +245,7 @@ public class Commands {
     public static final String RECORDING_STOPPED = "RECORDING_STOPPED";
     public static final String RECORDING_STARTED = "RECORDING_STARTED";
     public static final String SESSION_STARTING = "SESSION_STARTING";
+    public static final String TIMING_PARAMETERS_CHANGED = "TIMING_PARAMETERS_CHANGED";
+    public static final String SESSION_STOPPED = "SESSION_STOPPED";
+    public static final String SESSION_SAVED = "SESSION_SAVED";
 }

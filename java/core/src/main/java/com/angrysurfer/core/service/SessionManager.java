@@ -71,6 +71,11 @@ public class SessionManager {
     public void setActiveSession(Session session) {
         if (session != null && !session.equals(this.activeSession)) {
             this.activeSession = session;
+            
+            // Make sure the SequencerManager knows about the session
+            System.out.println("SessionManager: Setting active session on SequencerManager");
+            sequencerManager.setActiveSession(session);
+            
             commandBus.publish(Commands.SESSION_SELECTED, this, session);
             logger.info("Session selected: " + session.getId());
         }
@@ -116,23 +121,10 @@ public class SessionManager {
                         case Commands.TRANSPORT_REWIND -> moveBack();
                         case Commands.TRANSPORT_FORWARD -> moveForward();
                         case Commands.TRANSPORT_PLAY -> {
-                            // Direct control of transport
                             System.out.println("SessionManager: Received TRANSPORT_PLAY command");
                             if (activeSession != null) {
-                                System.out.println("SessionManager: Active session found: " + activeSession.getId());
-                                // Make session.initializeDevices() public, not private!
-                                activeSession.initializeDevices(); // Call this first to ensure devices are ready
-                                System.out.println("SessionManager: Devices initialized");
-
-                                // Set this session as the active session in SequencerManager
-                                sequencerManager.setActiveSession(activeSession);
-                                System.out.println("SessionManager: Set active session in SequencerManager");
-
-                                // Start the sequencer directly
-                                sequencerManager.start();
-                                System.out.println("SessionManager: Called sequencerManager.start()");
-                            } else {
-                                System.out.println("SessionManager: No active session found!");
+                                System.out.println("Starting session: " + activeSession.getId());
+                                activeSession.play();
                             }
                         }
                         case Commands.TRANSPORT_STOP -> {
@@ -188,6 +180,7 @@ public class SessionManager {
                     });
                     redisService.saveSession(activeSession);
                     logger.info("Session saved: " + activeSession.getId());
+                    
                 }
                 return null;
             }

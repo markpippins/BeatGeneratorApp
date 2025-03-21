@@ -45,7 +45,7 @@ public class SessionController {
         // if (Objects.isNull(sessionService.getSession()))
         //     return Flux.empty();
 
-        // logger.info("GET /api/tick");
+        logger.info("GET /api/tick");
         // Timer timer = sessionService.getClockSource().getTimer();
         // // Calculate interval based on actual timer settings
         // long intervalMillis = (long) ((60.0 / timer.getBpm() / timer.getPpq()) * 1000);
@@ -158,63 +158,4 @@ public class SessionController {
             logger.info(Constants.UPDATE_SESSION);
         return sessionService.updateSession(sessionId, updateType, updateValue);
     }
-
-    // @GetMapping(value = "/greetings/{name}", produces =
-    // MediaType.TEXT_EVENT_STREAM_VALUE)
-    // Flux<Greeting> greetings(@PathVariable String name) {
-    // return Flux
-    // .fromStream(Stream.generate(() -> new Greeting("Hello, " + name + "!")))
-    // .take(1000)
-    // .delayElements(Duration.ofSeconds(1));
-    // }
-
-    // @GetMapping(value = "/tick", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    // Flux<SessionStatus> sessionStatus() {
-    // return Flux.from(sessionStatusPublisher);
-    // }
-    // } return Flux
-    // .from(new Publisher<SessionStatus>() {
-
-    // @Override
-    // public void subscribe(Subscriber<? super SessionStatus> subscriber) {
-    // IntStream.range(0, 100).forEach(i -> {
-    // logger.info("onTick");
-    // try {
-    // Thread.sleep(100);
-    // } catch (InterruptedException e) {
-    // // TODO Auto-generated catch block
-    // e.printStackTrace();
-    // }
-    // subscriber.onNext(new SessionStatus());
-    // });
-    // }
-    // });
-    // }
-
-    // @GetMapping(value = "/tick", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    // Flux<SessionStatus> sessionStatus() {
-
-    // return Flux.from(sessionService.getSessionStatusPublisher());
-
-    // return Flux.from(new Publisher<SessionStatus>() {
-    // @Override
-    // public void subscribe(Subscriber<? super SessionStatus> subscriber) {
-
-    // sessionService.getSequenceRunner().getListeners().add(new TickListener() {
-    // @Override
-    // public void onTick() {
-    // logger.info("onTick");
-    // subscriber.onNext(SessionStatus.from(sessionService.getSession(),
-    // sessionService.getSequenceRunner().isPlaying()));
-    // }
-
-    // // send a final tick with cycled session status
-
-    // @Override
-    // public void onEnd() {
-    // subscriber.onNext(SessionStatus.from(sessionService.getSession(),
-    // sessionService.getSequenceRunner().isPlaying()));
-    // }
-    // });
-
 }

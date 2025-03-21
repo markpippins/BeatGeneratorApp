@@ -416,7 +416,7 @@ public class PlayerManager {
             player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
             player.getInstrument().programChange(player.getChannel(), updateValue, 0);
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
-            // logger.error(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
         }
     }
 

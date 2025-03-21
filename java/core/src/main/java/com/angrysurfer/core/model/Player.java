@@ -11,19 +11,15 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.service.PlayerExecutor;
 import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
@@ -142,8 +138,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private final CommandBus commandBus = CommandBus.getInstance();
 
     public Player() {
+        // Register with command and timing buses
         commandBus.register(this);
-        timingBus.register(this); // Register for timing events
+        timingBus.register(this);
+        System.out.println("Player constructor: Registered with buses");
     }
 
     public Player(String name, Session session, Instrument instrument) {
@@ -153,8 +151,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         setSession(session);
     }
 
-    public Player(String name, Session session, Instrument instrument,
-            List<Integer> allowedControlMessages) {
+    public Player(String name, Session session, Instrument instrument, List<Integer> allowedControlMessages) {
         this(name, session, instrument);
         setAllowedControlMessages(allowedControlMessages);
     }
@@ -173,6 +170,11 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     }
 
     public abstract void onTick(long tick, long bar);
+    // {
+    // System.out.println("CRITICAL DEBUG - Player: " + getName()
+    // + " - BYPASSING ALL RULE CHECKS AND PLAYING UNCONDITIONALLY");
+    // // ... rest of the method ...
+    // }
 
     // public Long getInstrumentId() {
     // return (Objects.nonNull(getInstrument()) ? getInstrument().getId() : null);
@@ -191,30 +193,26 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         long velocity = getMaxVelocity();
         // Send note on message
 
-        java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
-                () -> {
-                    try {
-                        noteOn(note, velocity);
-                    } catch (Exception e) {
-                        logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
-                    }
-                },
-                0, // Shorter note duration (100ms instead of 2500ms)
+        java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+            try {
+                noteOn(note, velocity);
+            } catch (Exception e) {
+                logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
+            }
+        }, 0, // Shorter note duration (100ms instead of 2500ms)
                 java.util.concurrent.TimeUnit.MILLISECONDS);
 
         // Schedule note off instead of blocking with Thread.sleep
         final long finalVelocity = velocity;
 
         // Use ScheduledExecutorService for note-off scheduling
-        java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
-                () -> {
-                    try {
-                        noteOff(note, finalVelocity);
-                    } catch (Exception e) {
-                        logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
-                    }
-                },
-                200, // Shorter note duration (100ms instead of 2500ms)
+        java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+            try {
+                noteOff(note, finalVelocity);
+            } catch (Exception e) {
+                logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
+            }
+        }, 200, // Shorter note duration (100ms instead of 2500ms)
                 java.util.concurrent.TimeUnit.MILLISECONDS);
     }
 
@@ -226,12 +224,14 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         try {
             // Set playing state to true
             setPlaying(true);
-            
-            // Notify UI about player state change
-            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
-            
+
+            // Schedule UI refresh after a short delay
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
+                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), 50, // 50ms delay
+                    java.util.concurrent.TimeUnit.MILLISECONDS);
+
             getInstrument().noteOn(getChannel(), note, fixedVelocity);
-        } catch (InvalidMidiDataException | MidiUnavailableException e) {
+        } catch (Exception e) {
             logger.error("Error in noteOn: {}", e.getMessage(), e);
             throw new RuntimeException(e);
         }
@@ -241,13 +241,15 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         logger.debug("noteOff() - note: {}, velocity: {}", note, velocity);
         try {
             getInstrument().noteOff(getChannel(), note, velocity);
-            
+
             // Set playing state to false
             setPlaying(false);
-            
-            // Notify UI about player state change
-            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
-        } catch (InvalidMidiDataException | MidiUnavailableException e) {
+
+            // Schedule UI refresh after a short delay
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
+                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), 50, // 50ms delay
+                    java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
             logger.error("Error in noteOff: {}", e.getMessage(), e);
             throw new RuntimeException(e);
         }
@@ -273,8 +275,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private Set<Rule> filterByPart(Set<Rule> rules, boolean includeNoPart) {
         return rules.stream()
-                .filter(r -> r.getPart() == 0
-                        || (includeNoPart && ((long) r.getPart()) == getSession().getPart()))
+                .filter(r -> r.getPart() == 0 || (includeNoPart && ((long) r.getPart()) == getSession().getPart()))
                 .collect(Collectors.toSet());
     }
 
@@ -288,195 +289,180 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         long beatCount = getSession().getBeatCount();
         long barCount = getSession().getBarCount();
         long partCount = getSession().getPartCount();
-        
-        logger.debug("Player {} checking shouldPlay - tick: {}, beat: {}, bar: {}, part: {}", 
-            getName(), tick, beat, bar, part);
-        
+
+        logger.debug("Player {} checking shouldPlay - tick: {}, beat: {}, bar: {}, part: {}", getName(), tick, beat,
+                bar, part);
+
         // Get applicable rules
         Set<Rule> applicable = getRules();
         if (applicable == null || applicable.isEmpty()) {
             logger.debug("Player {} has no rules", getName());
             return false;
         }
-        
+
         logger.debug("Player {} has {} rules to evaluate", getName(), applicable.size());
 
         // Use the overloaded method that considers all session values
-        return shouldPlay(applicable, tick, beat, bar, part, 
-                          tickCount, beatCount, barCount, partCount);
+        return shouldPlay(applicable, tick, beat, bar, part, tickCount, beatCount, barCount, partCount);
     }
 
     public boolean shouldPlay(Set<Rule> applicable, Long sessionTick, Double sessionBeat, Long sessionBar,
             Long sessionPart, Long sessionTickCount, Long sessionBeatCount, Long sessionBarCount,
             Long sessionPartCount) {
 
-        long tick = getSession().getTick();
-        long bar = getSession().getBar();
-        double beat = getSession().getBeat();
-
-        // Group rules by operator type
-        Map<Integer, List<Rule>> rulesByType = applicable.stream()
-                .collect(Collectors.groupingBy(Rule::getOperator));
-
-        // Check position rules (TICK, BEAT, BAR) - ALL matching types must have at
-        // least one match
-        boolean hasTickRules = rulesByType.containsKey(Comparison.TICK) && !rulesByType.get(Comparison.TICK).isEmpty();
-        boolean hasBeatRules = rulesByType.containsKey(Comparison.BEAT) && !rulesByType.get(Comparison.BEAT).isEmpty();
-        boolean hasBarRules = rulesByType.containsKey(Comparison.BAR) && !rulesByType.get(Comparison.BAR).isEmpty();
-        boolean hasPartRules = rulesByType.containsKey(Comparison.PART) && !rulesByType.get(Comparison.PART).isEmpty();
-
-        // Keep track of which rule types matched
-        boolean tickRulesMatched = false;
-        boolean beatRulesMatched = false;
-        boolean barRulesMatched = false;
-        boolean partRulesMatched = false;
-
-        // Check TICK rules
-        if (hasTickRules) {
-            for (Rule rule : rulesByType.get(Comparison.TICK)) {
-                if (Operator.evaluate(rule.getComparison(), tick, rule.getValue())) {
-                    logger.debug("TICK rule matched: {} {} {}",
-                            rule.getOperatorText(), rule.getComparisonText(), rule.getValue());
-                    tickRulesMatched = true;
-                    break; // One matching rule is enough for this type
-                }
-            }
-
-            if (!tickRulesMatched) {
-                logger.debug("TICK rules present but none matched");
-                return false; // If we have tick rules but none matched, don't play
-            }
-        } else {
-            // NEW CONDITION: If no tick rules are specified, only play when tick = 1
-            if (tick != 1) {
-                logger.debug("No TICK rules present and current tick is not 1 (current tick: {})", tick);
-                return false;
-            } else {
-                logger.debug("No TICK rules present but current tick is 1, continuing evaluation");
-                // Mark as matched since we're on tick 1
-                tickRulesMatched = true;
-            }
-        }
-
-        // Check BEAT rules
-        if (hasBeatRules) {
-            for (Rule rule : rulesByType.get(Comparison.BEAT)) {
-                if (Operator.evaluate(rule.getComparison(), beat, rule.getValue())) {
-                    logger.debug("BEAT rule matched: {} {} {}",
-                            rule.getOperatorText(), rule.getComparisonText(), rule.getValue());
-                    beatRulesMatched = true;
-                    break; // One matching rule is enough for this type
-                }
-            }
-
-            if (!beatRulesMatched) {
-                logger.debug("BEAT rules present but none matched");
-                return false; // If we have beat rules but none matched, don't play
-            }
-        }
-
-        // Check BAR rules
-        if (hasBarRules) {
-            for (Rule rule : rulesByType.get(Comparison.BAR)) {
-                if (Operator.evaluate(rule.getComparison(), bar, rule.getValue())) {
-                    logger.debug("BAR rule matched: {} {} {}",
-                            rule.getOperatorText(), rule.getComparisonText(), rule.getValue());
-                    barRulesMatched = true;
-                    break; // One matching rule is enough for this type
-                }
-            }
-
-            if (!barRulesMatched) {
-                logger.debug("BAR rules present but none matched");
-                return false; // If we have bar rules but none matched, don't play
-            }
-        }
-
-        // Check PART rules
-        if (hasPartRules) {
-            for (Rule rule : rulesByType.get(Comparison.PART)) {
-                // Special case for Part=0 (All parts) - always matches
-                if (rule.getValue() == 0 ||
-                        Operator.evaluate(rule.getComparison(), sessionPart, rule.getValue())) {
-                    logger.debug("PART rule matched: {} {} {}",
-                            rule.getOperatorText(), rule.getComparisonText(), rule.getValue());
-                    partRulesMatched = true;
-                    break; // One matching rule is enough for this type
-                }
-            }
-
-            if (!partRulesMatched) {
-                logger.debug("PART rules present but none matched");
-                return false; // If we have part rules but none matched, don't play
-            }
-        }
-
-        // If we have no position rules at all, don't play
-        if (!hasTickRules && !hasBeatRules && !hasBarRules && !hasPartRules) {
-            logger.debug("No position rules defined");
+        if (applicable == null || applicable.isEmpty()) {
+            logger.debug("Player {} has no rules", getName());
             return false;
         }
 
-        // Check "constraint rules" (can only prevent playing)
-        // Check BEAT_DURATION rules
-        for (Rule rule : rulesByType.getOrDefault(Comparison.BEAT_DURATION, List.of())) {
-            if (!Operator.evaluate(rule.getComparison(), beat, rule.getValue())) {
-                logger.debug("BEAT_DURATION constraint not met: {} {} {}",
-                        rule.getOperatorText(), rule.getComparisonText(), rule.getValue());
+        System.out.println("Player " + getName() + " - Evaluating rules - tick: " + sessionTick + ", beat: "
+                + sessionBeat + ", bar: " + sessionBar + ", part: " + sessionPart);
+
+        // Key fix: Convert long to int for correct comparison
+        int currentPartInt = sessionPart.intValue();
+
+        // First, separate rules by part
+        Map<Integer, List<Rule>> rulesByPart = applicable.stream().collect(Collectors.groupingBy(r -> r.getPart()));
+
+        System.out.println("Player " + getName() + " - Rules by part: " + rulesByPart.keySet());
+
+        // Get rules for current part and part 0 (all parts)
+        List<Rule> currentPartRules = rulesByPart.getOrDefault(currentPartInt, new ArrayList<>());
+        List<Rule> allPartRules = rulesByPart.getOrDefault(0, new ArrayList<>()); // Use 0, not 0L
+
+        System.out.println("Player " + getName() + " - Current part rules: " + currentPartRules.size()
+                + ", Part 0 rules: " + allPartRules.size());
+
+        // Combine rules from current part and part 0
+        List<Rule> effectiveRules = new ArrayList<>();
+        effectiveRules.addAll(currentPartRules);
+        effectiveRules.addAll(allPartRules);
+
+        if (effectiveRules.isEmpty()) {
+            System.out.println("Player " + getName() + " - No effective rules found for part " + sessionPart);
+            return false;
+        }
+
+        // Group effective rules by type
+        Map<Integer, List<Rule>> rulesByType = effectiveRules.stream()
+                .collect(Collectors.groupingBy(r -> r.getOperator()));
+
+        // Get rules for each timing type
+        List<Rule> tickRules = rulesByType.getOrDefault(Comparison.TICK, new ArrayList<>());
+        List<Rule> beatRules = rulesByType.getOrDefault(Comparison.BEAT, new ArrayList<>());
+        List<Rule> barRules = rulesByType.getOrDefault(Comparison.BAR, new ArrayList<>());
+
+        // Calculate timing values
+        int ticksPerBeat = getSession().getTicksPerBeat();
+        int beatsPerBar = getSession().getBeatsPerBar();
+
+        // Calculate absolute position within the bar
+        long tickInBar = ((sessionTick - 1) % (ticksPerBeat * beatsPerBar)) + 1;
+
+        // Calculate which beat we're in (1-based)
+        long currentBeat = ((tickInBar - 1) / ticksPerBeat) + 1;
+
+        // Calculate position within current beat (1-based)
+        long tickInBeat = ((tickInBar - 1) % ticksPerBeat) + 1;
+
+        logger.debug("Player {} timing calcs - tickInBar: {}, currentBeat: {}, tickInBeat: {}", getName(), tickInBar,
+                currentBeat, tickInBeat);
+
+        // First check beat rules since they're more restrictive
+        boolean beatMatched = false;
+        if (!beatRules.isEmpty()) {
+            beatMatched = beatRules.stream()
+                    .anyMatch(rule -> Operator.evaluate(rule.getComparison(), currentBeat, rule.getValue()));
+
+            if (!beatMatched) {
+                logger.debug("Player {} - beat rules exist but none matched for beat {}", getName(), currentBeat);
                 return false;
             }
         }
 
-        // Updated to use the sessionTickCount parameter for TICK_COUNT rules
-        for (Rule rule : rulesByType.getOrDefault(Comparison.TICK_COUNT, List.of())) {
-            if (!Operator.evaluate(rule.getComparison(), sessionTickCount, rule.getValue())) {
-                logger.debug("TICK_COUNT constraint not met");
+        // Then check tick rules
+        boolean tickMatched = false;
+        if (!tickRules.isEmpty()) {
+            tickMatched = tickRules.stream()
+                    .anyMatch(rule -> Operator.evaluate(rule.getComparison(), tickInBeat, rule.getValue()));
+
+            if (!tickMatched) {
+                logger.debug("Player {} - tick rules exist but none matched for tick {} in beat", getName(),
+                        tickInBeat);
                 return false;
             }
+        } else if (beatMatched) {
+            // If we have beat rules but no tick rules, only play on first tick of matching
+            // beats
+            if (tickInBeat != 1) {
+                logger.debug("Player {} - has beat rules but no tick rules, and not on first tick of beat", getName());
+                return false;
+            }
+            tickMatched = true;
         }
 
-        // Updated to use the sessionBeatCount parameter for BEAT_COUNT rules
-        for (Rule rule : rulesByType.getOrDefault(Comparison.BEAT_COUNT, List.of())) {
-            if (!Operator.evaluate(rule.getComparison(), sessionBeatCount, rule.getValue())) {
-                logger.debug("BEAT_COUNT constraint not met");
-                return false;
-            }
+        // Must have at least one triggering rule match
+        if (!tickMatched && !beatMatched) {
+            logger.debug("Player {} - no tick or beat triggers matched", getName());
+            return false;
         }
 
-        // Updated to use the sessionBarCount parameter for BAR_COUNT rules
-        for (Rule rule : rulesByType.getOrDefault(Comparison.BAR_COUNT, List.of())) {
-            if (!Operator.evaluate(rule.getComparison(), sessionBarCount, rule.getValue())) {
-                logger.debug("BAR_COUNT constraint not met");
-                return false;
-            }
+        // Now check constraining rules (bar, count rules, etc.)
+
+        // Check bar rules (constraints)
+        if (!barRules.isEmpty() && !barRules.stream()
+                .anyMatch(rule -> Operator.evaluate(rule.getComparison(), sessionBar, rule.getValue()))) {
+            logger.debug("Player {} - bar constraints not met for bar {}", getName(), sessionBar);
+            return false;
         }
 
-        // Updated to use the sessionPartCount parameter for PART_COUNT rules
-        for (Rule rule : rulesByType.getOrDefault(Comparison.PART_COUNT, List.of())) {
-            if (!Operator.evaluate(rule.getComparison(), sessionPartCount, rule.getValue())) {
-                logger.debug("PART_COUNT constraint not met");
-                return false;
-            }
+        // Check count-based constraints
+        // TICK_COUNT
+        List<Rule> tickCountRules = rulesByType.getOrDefault(Comparison.TICK_COUNT, new ArrayList<>());
+        if (!tickCountRules.isEmpty() && !tickCountRules.stream()
+                .anyMatch(rule -> Operator.evaluate(rule.getComparison(), sessionTickCount, rule.getValue()))) {
+            logger.debug("Player {} - tick count constraints not met", getName());
+            return false;
+        }
+
+        // BEAT_COUNT
+        List<Rule> beatCountRules = rulesByType.getOrDefault(Comparison.BEAT_COUNT, new ArrayList<>());
+        if (!beatCountRules.isEmpty() && !beatCountRules.stream()
+                .anyMatch(rule -> Operator.evaluate(rule.getComparison(), sessionBeatCount, rule.getValue()))) {
+            logger.debug("Player {} - beat count constraints not met", getName());
+            return false;
+        }
+
+        // BAR_COUNT
+        List<Rule> barCountRules = rulesByType.getOrDefault(Comparison.BAR_COUNT, new ArrayList<>());
+        if (!barCountRules.isEmpty() && !barCountRules.stream()
+                .anyMatch(rule -> Operator.evaluate(rule.getComparison(), sessionBarCount, rule.getValue()))) {
+            logger.debug("Player {} - bar count constraints not met", getName());
+            return false;
+        }
+
+        // PART_COUNT
+        List<Rule> partCountRules = rulesByType.getOrDefault(Comparison.PART_COUNT, new ArrayList<>());
+        if (!partCountRules.isEmpty() && !partCountRules.stream()
+                .anyMatch(rule -> Operator.evaluate(rule.getComparison(), sessionPartCount, rule.getValue()))) {
+            logger.debug("Player {} - part count constraints not met", getName());
+            return false;
         }
 
         // Consider sparse value for randomization
         if (getSparse() > 0 && rand.nextDouble() < getSparse()) {
-            logger.debug("Note skipped due to sparse value: {}", getSparse());
+            logger.debug("Player {} - note skipped due to sparse value: {}", getName(), getSparse());
             return false;
         }
 
-        // Advance cyclers for next time
-        getSkipCycler().advance();
-        getSubCycler().advance();
-
-        // All position rules matched, and no constraint rules prevented playing
-        logger.debug("All rules matched - player will play");
+        // All rules passed
+        logger.debug("Player {} - all rules passed, will play", getName());
         return true;
     }
 
     /**
-     * Simplified rule evaluation that properly handles the first-tick-only case
-     * for players that have beat/bar rules but no tick rules
+     * Simplified rule evaluation that properly handles the first-tick-only case for
+     * players that have beat/bar rules but no tick rules
      */
     public boolean shouldPlayAt(Set<Rule> applicable, long tick, double beat, long bar, long part) {
         if (applicable == null || applicable.isEmpty()) {
@@ -484,8 +470,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         }
 
         // Group rules by operator type for easier processing
-        Map<Integer, List<Rule>> rulesByType = applicable.stream()
-                .collect(Collectors.groupingBy(Rule::getOperator));
+        Map<Integer, List<Rule>> rulesByType = applicable.stream().collect(Collectors.groupingBy(Rule::getOperator));
 
         // Check if we have rules for each timing type
         boolean hasTickRules = rulesByType.containsKey(Comparison.TICK) && !rulesByType.get(Comparison.TICK).isEmpty();
@@ -546,56 +531,59 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     @Override
     public void onAction(Command action) {
+        if (action == null || action.getCommand() == null)
+            return;
+
+        String cmd = action.getCommand();
+
+        System.out.println("Player " + getName() + " received command: " + cmd);
+
         if (getSession() != null && getEnabled()) {
-            logger.debug("Player {} received command: {}, session running: {}, enabled: {}, muted: {}, solo: {}", 
-                getName(), action.getCommand(), getSession().isRunning(), getEnabled(), isMuted(), isSolo());
-            
-            switch (action.getCommand()) {
-                case Commands.TIMING_TICK -> {
-                    // Only process if our session is running
-                    // Check if we should play this tick
-                    boolean shouldPlay = shouldPlay();
-                    logger.debug("Player {} shouldPlay evaluation: {}", getName(), shouldPlay);
-                    
-                    if (((!getSession().hasSolos() && !isMuted()) ||
-                            (isSolo())) && shouldPlay) {
-
-                        // Capture variables for use in lambda
-                        final long tick = getSession().getTick();
-                        final long bar = getSession().getBar();
-                        final double beat = getSession().getBeat();
-
-                        logger.debug("Player {} scheduling note at tick: {}, beat: {}, bar: {}", 
-                            getName(), tick, beat, bar);
-
-                        // Submit to thread pool instead of executing directly
-                        PlayerExecutor.getInstance().submit(() -> {
-                            logger.debug("Player {} executing note at tick: {}", getName(), tick);
-                            getSession().getActivePlayerIds().add(getId());
-                            setLastPlayedBar(bar);
-                            setLastPlayedBeat(beat);
-                            setLastPlayedTick(tick);
-                            onTick(tick, lastPlayedBar);
-                            setLastTick(tick);
-                        });
-                    }
-                }
-                case Commands.TRANSPORT_STOP -> {
-                    // Disable self when transport stops
-                    setEnabled(false);
-                    logger.debug("Player {} disabled due to transport stop", getName());
+            switch (cmd) {
+            case Commands.TIMING_TICK -> {
+                if (!isRunning()) {
+                    System.out.println("Player " + getName() + " - Skipping tick (not running)");
+                    return;
                 }
 
-                case Commands.TRANSPORT_PLAY -> {
-                    // Optionally re-enable self on transport start/play
-                    setEnabled(true);
-                    logger.debug("Player {} enabled due to transport play", getName());
-                }
+                System.out.println("Player " + getName() + " processing tick");
+
+                // FIXED: Get current timing values directly from session
+                // instead of from the event data
+                Session session = getSession();
+                long tick = session.getTick();
+                double beat = session.getBeat();
+                long bar = session.getBar();
+                long part = session.getPart();
+
+                // Debug the actual values from the cyclers
+                System.out.println("Player " + getName() + " - TIMING VALUES FROM SESSION CYCLERS:");
+                System.out.println("  - Tick: " + tick + " (cycler position: " + session.getTickCycler().get() + ")");
+                System.out.println("  - Beat: " + beat + " (cycler position: " + session.getBeatCycler().get() + ")");
+                System.out.println("  - Bar: " + bar + " (cycler position: " + session.getBarCycler().get() + ")");
+                System.out.println("  - Part: " + part + " (cycler position: " + session.getPartCycler().get() + ")");
+
+                // Call the specific player implementation with values from session
+                if (!isMuted())
+                    onTick(tick, bar);
             }
-        } else {
-            logger.debug("Player {} skipping command {} - session null: {}, enabled: {}", 
-                getName(), action.getCommand(), (getSession() == null), getEnabled());
+            case Commands.TRANSPORT_STOP -> {
+                // Disable self when transport stops
+                setEnabled(false);
+            }
+            case Commands.TRANSPORT_PLAY -> {
+                // Re-enable self on transport start/play
+                setEnabled(true);
+            }
+            }
         }
+    }
+
+    /**
+     * Determines if the player should be processing timing events
+     */
+    public boolean isRunning() {
+        return enabled && session != null && session.isRunning();
     }
 
     /**

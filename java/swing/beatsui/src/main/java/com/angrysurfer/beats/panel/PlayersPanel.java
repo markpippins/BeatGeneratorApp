@@ -6,7 +6,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -511,19 +514,76 @@ public class PlayersPanel extends JPanel {
         return players.toArray(new Player[0]);
     }
 
+    /**
+     * Refreshes the players table, preserving existing rows when possible
+     * and only adding/removing players as needed
+     */
     public void refreshPlayers(Set<Player> players) {
         logger.info("Refreshing players table with " + (players != null ? players.size() : 0) + " players");
         PlayersTableModel tableModel = table.getPlayersTableModel();
-        tableModel.setRowCount(0);
-
-        if (players != null && !players.isEmpty()) {
-            List<Player> sortedPlayers = new ArrayList<>(players);
-            Collections.sort(sortedPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-
-            for (Player player : sortedPlayers) {
-                logger.info("Adding player to table: " + player.getName() + " (ID: " + player.getId() + ")");
-                tableModel.addPlayerRow(player);
+        
+        if (players == null || players.isEmpty()) {
+            // If no players, just clear the table
+            tableModel.setRowCount(0);
+            return;
+        }
+        
+        // Create a map of player IDs to players for the new set
+        Map<Long, Player> newPlayerMap = new HashMap<>();
+        for (Player player : players) {
+            if (player != null && player.getId() != null) {
+                newPlayerMap.put(player.getId(), player);
             }
+        }
+        
+        // Get existing players in the table
+        Set<Long> existingPlayerIds = new HashSet<>();
+        int idColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_ID);
+        
+        // First update existing rows and mark for deletion
+        List<Integer> rowsToRemove = new ArrayList<>();
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Long playerId = (Long) tableModel.getValueAt(i, idColIndex);
+            
+            if (playerId != null) {
+                existingPlayerIds.add(playerId);
+                
+                if (newPlayerMap.containsKey(playerId)) {
+                    // Player still exists - update this row
+                    Player updatedPlayer = newPlayerMap.get(playerId);
+                    updatePlayerRow(updatedPlayer);
+                    // Remove from map since we've handled it
+                    newPlayerMap.remove(playerId);
+                } else {
+                    // Player no longer exists - mark row for removal
+                    rowsToRemove.add(i);
+                }
+            }
+        }
+        
+        // Remove rows for deleted players (in reverse order to maintain indices)
+        Collections.sort(rowsToRemove, Collections.reverseOrder());
+        for (int rowIndex : rowsToRemove) {
+            tableModel.removeRow(rowIndex);
+        }
+        
+        // Add rows for new players
+        if (!newPlayerMap.isEmpty()) {
+            List<Player> newPlayers = new ArrayList<>(newPlayerMap.values());
+            Collections.sort(newPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+            
+            for (Player newPlayer : newPlayers) {
+                logger.info("Adding new player to table: " + newPlayer.getName() + " (ID: " + newPlayer.getId() + ")");
+                tableModel.addPlayerRow(newPlayer);
+            }
+            
+            // Re-sort the entire table
+            table.sortTable();
+        }
+        
+        // If removing players removed the selection, select another player if available
+        if (!rowsToRemove.isEmpty() && table.getSelectedRow() < 0 && table.getRowCount() > 0) {
+            selectFirstPlayerIfNoneSelected();
         }
     }
 

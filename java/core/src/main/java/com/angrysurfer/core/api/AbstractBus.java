@@ -52,12 +52,12 @@ public class AbstractBus implements IBusListener {
     }
 
     public void register(IBusListener listener) {
-        if (!listeners.contains(listener)) {
-            listeners.add(listener);
-        }
+        System.out.println("AbstractBus: Registering listener " + listener.getClass().getName());
+        listeners.add(listener);
     }
 
     public void unregister(IBusListener listener) {
+        System.out.println("AbstractBus: Unregistering listener " + listener.getClass().getName());
         listeners.remove(listener);
     }
 
@@ -71,8 +71,12 @@ public class AbstractBus implements IBusListener {
     }
 
     public void publish(String command, Object sender, Object data) {
+        System.out.println("AbstractBus: Publishing command " + command + " to " + listeners.size() + " listeners");
         Command cmd = new Command(command, sender, data);
-        publish(cmd);
+        for (IBusListener listener : listeners) {
+            System.out.println("AbstractBus: Sending " + command + " to " + listener.getClass().getName());
+            listener.onAction(cmd);
+        }
     }
     
     /**

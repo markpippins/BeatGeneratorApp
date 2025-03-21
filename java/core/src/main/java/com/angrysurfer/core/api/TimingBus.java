@@ -14,4 +14,10 @@ public class TimingBus extends AbstractBus {
         return instance;
     }
 
+    @Override
+    public void publish(String command, Object source, Object data) {
+        System.out.println("TimingBus: Publishing " + command);
+        super.publish(command, source, data);
+    }
+
 }

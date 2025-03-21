@@ -14,6 +14,8 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Strike;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -30,6 +32,7 @@ public class SessionPanel extends StatusProviderPanel implements IBusListener {
     private final ControlPanel controlPanel;
     private final PianoPanel pianoPanel;
     private final GridPanel gridPanel;
+    private final PlayerTimelinePanel playerDetailPanel;
 
     public SessionPanel(StatusConsumer status) {
         super(new BorderLayout(), status);
@@ -40,7 +43,7 @@ public class SessionPanel extends StatusProviderPanel implements IBusListener {
         this.controlPanel = new ControlPanel(status);
         this.pianoPanel = new PianoPanel(status);
         this.gridPanel = new GridPanel(statusConsumer);
-
+        this.playerDetailPanel = new PlayerTimelinePanel(statusConsumer);
         setupComponents();
 
         CommandBus.getInstance().register(this);
@@ -65,7 +68,9 @@ public class SessionPanel extends StatusProviderPanel implements IBusListener {
         bottomPanel.add(containerPanel, BorderLayout.NORTH);
 
         bottomPanel.add(new JScrollPane(gridPanel), BorderLayout.CENTER);
+        bottomPanel.add(new JScrollPane(playerDetailPanel), BorderLayout.CENTER);
 
+        this.playerDetailPanel.setVisible(false);
         // Add all components
         add(splitPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
@@ -78,24 +83,32 @@ public class SessionPanel extends StatusProviderPanel implements IBusListener {
         }
 
         switch (action.getCommand()) {
-            case Commands.PLAYER_SELECTED:
-                handlePlayerSelected();
-                break;
-            case Commands.PLAYER_UNSELECTED:
-                handlePlayerUnselected();
-                break;
-            default:
-                break;
+        case Commands.PLAYER_SELECTED:
+            handlePlayerSelected((Player) action.getData());
+            break;
+        case Commands.PLAYER_UNSELECTED:
+            handlePlayerUnselected();
+            break;
+        default:
+            break;
         }
     }
 
     private void handlePlayerUnselected() {
         if (Objects.nonNull(this.gridPanel))
             this.gridPanel.setVisible(true);
+
+        if (Objects.nonNull(this.playerDetailPanel)) {
+            this.playerDetailPanel.setVisible(false);
+        }
     }
 
-    private void handlePlayerSelected() {
+    private void handlePlayerSelected(Player player) {
         if (Objects.nonNull(this.gridPanel))
             this.gridPanel.setVisible(false);
+        if (Objects.nonNull(this.playerDetailPanel)) {
+            this.playerDetailPanel.setVisible(true);
+            this.playerDetailPanel.setPlayer(player);
+        }
     }
 }

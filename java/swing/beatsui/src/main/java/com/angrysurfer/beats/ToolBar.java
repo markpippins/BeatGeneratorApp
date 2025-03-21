@@ -334,7 +334,7 @@ public class ToolBar extends JToolBar {
         // Update fields with synchronized block to prevent concurrent modification
         synchronized (this) {
             try {
-                // Update left timing fields using our helper methods
+                // Update left timing fields
                 updateTickFields(session);
                 updateBeatFields(session);
                 updateBarFields(session);
@@ -343,23 +343,55 @@ public class ToolBar extends JToolBar {
                 // Update Players field separately
                 leftFields.get("Players").setText(String.valueOf(session.getPlayers().size()));
 
-                // Update right fields - keep this part unchanged
-                ((JTextField) rightFields.get("Session")).setText(session.getId().toString());
-                ((JComboBox<?>) rightFields.get("PPQ")).setSelectedItem(session.getTicksPerBeat());
-                ((JComboBox<?>) rightFields.get("BPM")).setSelectedItem(session.getTempoInBPM().intValue());
-                ((JComboBox<?>) rightFields.get("B/Bar")).setSelectedItem(session.getBeatsPerBar());
-                ((JComboBox<?>) rightFields.get("Bars")).setSelectedItem(session.getBars());
-                ((JComboBox<?>) rightFields.get("Parts")).setSelectedItem(session.getParts());
-                ((JTextField) rightFields.get("Length")).setText(String.valueOf(session.getPartLength()));
-                ((JTextField) rightFields.get("Offset")).setText(String.valueOf(session.getNoteOffset()));
+                // Update Session field
+                if (leftFields.containsKey("Session")) {
+                    leftFields.get("Session").setText(session.getId().toString());
+                }
 
-                // Update the combo boxes with current session values
-                if (rightFields.get("Offset") instanceof JComboBox<?> offsetCombo) {
-                    offsetCombo.setSelectedItem(session.getNoteOffset().intValue());
+                // Update right fields dropdown boxes
+                if (rightFields.get("PPQ") instanceof JComboBox<?> ppqCombo) {
+                    ppqCombo.setSelectedItem(session.getTicksPerBeat());
                 }
+                
+                if (rightFields.get("BPM") instanceof JComboBox<?> bpmCombo) {
+                    bpmCombo.setSelectedItem(session.getTempoInBPM().intValue());
+                }
+                
+                if (rightFields.get("B/Bar") instanceof JComboBox<?> beatPerBarCombo) {
+                    beatPerBarCombo.setSelectedItem(session.getBeatsPerBar());
+                }
+                
+                if (rightFields.get("Bars") instanceof JComboBox<?> barsCombo) {
+                    barsCombo.setSelectedItem(session.getBars());
+                }
+                
+                if (rightFields.get("Parts") instanceof JComboBox<?> partsCombo) {
+                    partsCombo.setSelectedItem(session.getParts());
+                }
+                
+                // Update the Length and Offset combo boxes
                 if (rightFields.get("Length") instanceof JComboBox<?> lengthCombo) {
-                    lengthCombo.setSelectedItem(session.getPartLength().intValue());
+                    int length = session.getPartLength().intValue();
+                    
+                    // Make sure the value is within the combo box range
+                    if (length > 0 && length <= 32) {
+                        lengthCombo.setSelectedItem(length);
+                    }
+                    System.out.println("Updated Length combobox to: " + length);
                 }
+                
+                if (rightFields.get("Offset") instanceof JComboBox<?> offsetCombo) {
+                    int offset = session.getNoteOffset().intValue();
+                    
+                    // Make sure the value is within the combo box range (-12 to 12)
+                    if (offset >= -12 && offset <= 12) {
+                        offsetCombo.setSelectedItem(offset);
+                    }
+                    System.out.println("Updated Offset combobox to: " + offset);
+                }
+
+                // Update transport button states
+                updateToolbarState(session);
 
             } catch (Exception e) {
                 System.err.println("ToolBar: Error updating display: " + e.getMessage());

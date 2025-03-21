@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
 
@@ -52,15 +51,15 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
     };
     
     // Volatile fields for thread safety
-    private volatile int currentTick = 0;
-    private volatile int currentBeat = 0;
-    private volatile int currentBar = 0;
+    private volatile long currentTick = 0;
+    private volatile double currentBeat = 0.0;
+    private volatile long currentBar = 0;
     private volatile boolean isPlaying = false;
     
     // Previous state to avoid unnecessary updates
-    private int lastDisplayedTick = -1;
-    private int lastDisplayedBeat = -1;
-    private int lastDisplayedBar = -1;
+    private long lastDisplayedTick = -1;
+    private double lastDisplayedBeat = -1.0;
+    private long lastDisplayedBar = -1;
     
     // UI state
     private GridButton[][] currentButtons = null;
@@ -169,10 +168,10 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
                 int rows = currentButtons.length;
                 
                 // Calculate new playhead position
-                int currentPosition = (currentBar % totalBars) * ticksPerBar + 
+                double currentPosition = (currentBar % totalBars) * ticksPerBar + 
                                     (currentBeat % beatsPerBar) * ppq +
                                     currentTick;
-                int playheadCol = (currentPosition * cols) / totalTicks;
+                int playheadCol = (int) (currentPosition * cols) / totalTicks;
                 
                 // Only update if the playhead has moved
                 if (playheadCol != lastPlayheadCol || lastPlayheadCol == -1) {

@@ -52,25 +52,51 @@ public class Strike extends Player {
 
     @Override
     public void onTick(long tick, long bar) {
-        // logger.info(String.format("Tick: %s", tick));
-        if (tick == 1 && getSubDivisions() > 1 && getBeatFraction() > 1) {
+        // Get additional timing values from the session
+        Session session = getSession();
+        if (session == null) {
+            System.err.println("Strike.onTick: No session available");
+            return;
+        }
+        
+        // TEMPORARY DEBUG CODE: Print the actual cycler values
+        debugTimingValues(session);
+        
+        double beat = session.getBeat();
+        long part = session.getPart();
+        long subPosition = getSubPosition();
+        
+        System.out.println("Strike.onTick: DETAILED TIMING - tick=" + tick + 
+                          ", beat=" + beat + 
+                          ", bar=" + bar + 
+                          ", part=" + part +
+                          ", subPos=" + subPosition);
+        
+        // Output all rule details for debugging
+        if (getRules() != null && !getRules().isEmpty()) {
+            System.out.println("Strike rules for player " + getName() + ":");
+            getRules().forEach(rule -> {
+                System.out.println("  Rule " + rule.getId() + ": operator=" + rule.getOperator() +
+                                  ", comparison=" + rule.getComparison() + 
+                                  ", value=" + rule.getValue() +
+                                  ", part=" + rule.getPart());
+            });
+        }
+        
+        // Check if we should play based on the current timing
+        boolean shouldPlayResult = shouldPlay();
+        System.out.println("Strike.shouldPlay result: " + shouldPlayResult);
+        
+        if (shouldPlayResult) {
             try {
-                double numberOfTicksToWait = getBeatFraction() * (getSession().getTicksPerBeat() / getSubDivisions());
-                logger.debug("Creating Ratchet with wait ticks: {}", numberOfTicksToWait);
-                new Ratchet(this, numberOfTicksToWait, getRatchetInterval(), 0);
-                handleRachets();
-            } catch (Exception e) {
-                logger.error("Error creating Ratchet: {}", e.getMessage(), e);
+                long noteToPlay = getNote();
+                System.out.println("Strike.onTick playing note: " + noteToPlay);
+                drumNoteOn(noteToPlay);
+            } catch(Exception e) {
+                System.err.println("Error in Strike.onTick: " + e.getMessage());
+                e.printStackTrace();
             }
         }
-        else if (getSkipCycler().getLength() == 0 || getSkipCycler().atEnd()) {
-            if (getSwing() > 0)
-                handleSwing();
-            if (getProbability().equals(100L) || rand.nextInt(100) > getProbability())
-                drumNoteOn((long) (getNote() + getSession().getNoteOffset()));
-        }
-
-        getSkipCycler().advance();
     }
 
     private void handleSwing() {
@@ -134,5 +160,43 @@ public class Strike extends Player {
         strike.setName((String) row[0]);
         // ... existing fromRow code ...
         return strike;
+    }
+
+    // Add this debug method
+    private void debugTimingValues(Session session) {
+        try {
+            System.out.println("RAW CYCLER VALUES FOR: " + getName());
+            System.out.println("  tickCycler: " + session.getTickCycler().get());
+            System.out.println("  beatCycler: " + session.getBeatCycler().get());
+            System.out.println("  barCycler: " + session.getBarCycler().get());
+            System.out.println("  partCycler: " + session.getPartCycler().get());
+        } catch (Exception e) {
+            System.err.println("Error debugging cycler values: " + e.getMessage());
+        }
+    }
+
+    // TEMPORARY TEST METHOD
+    @Override
+    public boolean shouldPlay() {
+        Session session = getSession();
+        if (session == null) return false;
+        
+        // Get raw timing values
+        long tick = session.getTick();
+        double beat = session.getBeat();
+        long ticksPerBeat = session.getTicksPerBeat();
+        
+        // Calculate position within the beat (1 to ticksPerBeat)
+        long tickInBeat = ((tick - 1) % ticksPerBeat) + 1;
+        
+        System.out.println("SIMPLIFIED TEST - Player " + getName() + ": tickInBeat=" + tickInBeat);
+        
+        // Play on the first tick of each beat
+        boolean shouldPlayNow = (tickInBeat == 1);
+        if (shouldPlayNow) {
+            System.out.println("SIMPLIFIED TEST - Will play note for player: " + getName());
+        }
+        
+        return shouldPlayNow;
     }
 }

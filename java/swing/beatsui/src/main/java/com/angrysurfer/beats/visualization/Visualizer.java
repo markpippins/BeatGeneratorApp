@@ -9,12 +9,11 @@ import javax.swing.JComponent;
 import javax.swing.Timer;
 
 import com.angrysurfer.beats.visualization.handler.music.ScrollingSequencerVisualization;
-import com.angrysurfer.beats.visualization.handler.music.StrikeVisualizationHandler;
 import com.angrysurfer.beats.widget.GridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusConsumer;
 
 import lombok.Getter;

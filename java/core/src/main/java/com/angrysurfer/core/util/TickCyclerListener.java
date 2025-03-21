@@ -40,10 +40,10 @@ public class TickCyclerListener implements CyclerListener {
     }
 
     private void handleTick(long tick) {
-        // logger.info(String.format("Tick %s", tick));
+        logger.info(String.format("Tick %s", tick));
         songEngine.getActiveSong().getPatterns().forEach(pattern -> {
 
-            // logger.info(String.format("Pattern %s", pattern.getPosition()));
+            logger.info(String.format("Pattern %s", pattern.getPosition()));
 
             while (pattern.getStepCycler().get() < pattern.getFirstStep())
                 pattern.getStepCycler().advance();

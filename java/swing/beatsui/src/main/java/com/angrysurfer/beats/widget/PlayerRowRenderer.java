@@ -2,11 +2,11 @@ package com.angrysurfer.beats.widget;
 
 import java.awt.Color;
 import java.awt.Component;
+
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.core.model.Player;
 
 /**
@@ -16,7 +16,7 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer {
     private static final long serialVersionUID = 1L;
     
     private final PlayersTable table;
-    private static final Color PLAYING_COLOR = ColorUtils.dustyAmber;
+    private static final Color PLAYING_COLOR = new Color(255, 165, 0); // Bright orange for better visibility
     
     public PlayerRowRenderer(PlayersTable table) {
         this.table = table;
@@ -63,14 +63,17 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer {
             // First check if this player is flashing (priority over other states)
             if (table.isPlayerFlashing(player)) {
                 c.setBackground(isSelected ? table.getFlashColor().darker() : table.getFlashColor());
+                c.setForeground(Color.BLACK);
             }
             // Then check if playing
             else if (player.isPlaying()) {
                 c.setBackground(isSelected ? PLAYING_COLOR.darker() : PLAYING_COLOR);
+                c.setForeground(Color.BLACK);
             }
             // Default colors
             else {
                 c.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+                c.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
             }
         }
         

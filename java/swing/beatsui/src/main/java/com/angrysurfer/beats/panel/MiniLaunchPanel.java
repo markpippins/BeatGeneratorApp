@@ -201,7 +201,7 @@ public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener
         Player activePlayer = PlayerManager.getInstance().getActivePlayer();
 
         if (activePlayer == null) {
-            // logger.debug("No active player to receive MIDI note: {}", midiNote);
+            logger.debug("No active player to receive MIDI note: {}", midiNote);
             return false;
         }
 

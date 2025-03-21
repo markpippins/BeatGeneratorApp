@@ -7,6 +7,8 @@ import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.List;
+import java.util.ArrayList;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -19,6 +21,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableRowSorter;
+import javax.swing.RowSorter.SortKey;
+import javax.swing.SortOrder;
 
 import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.beats.service.UIHelper;
@@ -421,5 +426,19 @@ public class PlayersTable extends JTable {
      */
     public int getFlashDurationMs() {
         return FLASH_DURATION_MS;
+    }
+
+    /**
+     * Sorts the table by player name
+     */
+    public void sortTable() {
+        TableRowSorter<PlayersTableModel> sorter = (TableRowSorter<PlayersTableModel>) getRowSorter();
+        if (sorter != null) {
+            int nameColumnIndex = getColumnIndex(PlayersTableModel.COL_NAME);
+            List<SortKey> sortKeys = new ArrayList<>();
+            sortKeys.add(new SortKey(nameColumnIndex, SortOrder.ASCENDING));
+            sorter.setSortKeys(sortKeys);
+            sorter.sort();
+        }
     }
 }

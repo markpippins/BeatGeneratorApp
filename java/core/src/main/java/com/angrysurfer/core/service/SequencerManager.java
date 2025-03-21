@@ -1,6 +1,7 @@
 package com.angrysurfer.core.service;
 
 import java.util.Objects;
+import java.util.logging.Logger;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
@@ -29,14 +30,16 @@ import lombok.Setter;
 @Setter
 public class SequencerManager implements IBusListener {
 
+    private static final Logger logger = Logger.getLogger(SequencerManager.class.getName());
+
     private static SequencerManager instance;
 
     private boolean metronomeAudible = false;
 
     // Add timing state tracking
-    private int currentTick = 0;
-    private int currentBeat = 0;
-    private int currentBar = 0;
+    private long currentTick = 0;
+    private double currentBeat = 0.0;
+    private long currentBar = 0;
 
     // Reference to current active session instead of duplicating parameters
     private Session activeSession = null;
@@ -104,7 +107,7 @@ public class SequencerManager implements IBusListener {
     private void setupSynthesizer() throws MidiUnavailableException {
         synthesizer = MidiSystem.getSynthesizer();
         synthesizer.open();
-        synthesizer.getChannels()[metronomeChannel].setMute(!metronomeAudible);        
+        synthesizer.getChannels()[metronomeChannel].setMute(!metronomeAudible);
     }
 
     // Modified createSequence to support dynamic parameters
@@ -120,17 +123,14 @@ public class SequencerManager implements IBusListener {
         for (int beat = 0; beat < beatsPerBar; beat++) {
             // Add timing clocks
             for (int clock = 0; clock < getPpq(); clock++) {
-                track.add(new MidiEvent(
-                        new ShortMessage(0xF8),
-                        beat * getPpq() + clock));
+                track.add(new MidiEvent(new ShortMessage(0xF8), beat * getPpq() + clock));
             }
 
             // Add metronome notes
             track.add(new MidiEvent(
                     new ShortMessage(ShortMessage.NOTE_ON, metronomeChannel, metronomeNote, metronomeVelocity),
                     beat * getPpq()));
-            track.add(new MidiEvent(
-                    new ShortMessage(ShortMessage.NOTE_OFF, metronomeChannel, metronomeNote, 0),
+            track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, metronomeChannel, metronomeNote, 0),
                     beat * getPpq() + getPpq() / 2));
         }
 
@@ -168,26 +168,62 @@ public class SequencerManager implements IBusListener {
 
     // In SequencerManager.java - fix handleMidiClock() method
     private void handleMidiClock() {
-        // Increment tick counter
-        currentTick = (currentTick + 1) % getPpq();
-        
-        // Publish tick event
-        timingBus.publish(Commands.TIMING_TICK, this, currentTick);
-        
-        // Check for beat boundary
-        if (currentTick % getPpq() == 0) {
-            currentBeat = (currentBeat + 1) % getBeatsPerBar();
-            timingBus.publish(Commands.TIMING_BEAT, this, currentBeat);
-            
-            // Check for bar boundary
-            if (currentBeat == 0) {
-                currentBar = (currentBar + 1) % (activeSession != null ? activeSession.getBars() : 4);
-                timingBus.publish(Commands.TIMING_BAR, this, currentBar);
-                
-                // Check for part boundary
-                if (currentBar == 0) {
-                    timingBus.publish(Commands.TIMING_PART, this, null);
+        // Increment tick counter for this clock pulse
+        currentTick++;
+
+        // Calculate beat position based on PPQ
+        int ppq = getPpq();
+        double beat = (double) currentTick / ppq;
+
+        // Output consolidated timing info
+        System.out.println("TIMING: tick=" + currentTick + ", beat=" + beat + ", bar=" + currentBar + ", ppq=" + ppq);
+
+        // Update our active session's cycler values if available
+        if (activeSession != null) {
+            try {
+                // CRITICAL FIX: Advance the session's cyclers
+                // This is what was missing in your code
+                activeSession.getTickCycler().advance();
+
+                // Check if we need to advance the beat cycler (every PPQ ticks)
+                if (currentTick % ppq == 0) {
+                    activeSession.getBeatCycler().advance();
+
+                    // Check if we need to advance the bar cycler (every beatsPerBar beats)
+                    int beatsPerBar = getBeatsPerBar();
+                    if (currentBeat % beatsPerBar == 0 && currentBeat > 0) {
+                        activeSession.getBarCycler().advance();
+
+                        // Optionally advance part cycler if appropriate
+                        // (implement your part advancement logic here)
+                    }
                 }
+
+                System.out
+                        .println("Session cyclers updated: " + "tick=" + activeSession.getTickCycler().get() + ", beat="
+                                + activeSession.getBeatCycler().get() + ", bar=" + activeSession.getBarCycler().get());
+
+            } catch (Exception e) {
+                System.err.println("Error updating session cyclers: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        // After updating cyclers, publish timing events
+        timingBus.publish(Commands.TIMING_TICK, this, currentTick);
+
+        // On beat boundaries
+        if (currentTick % ppq == 0) {
+            currentBeat++;
+            // Also publish TIMING_BEAT events
+            timingBus.publish(Commands.TIMING_BEAT, this, currentBeat);
+
+            // On bar boundaries
+            int beatsPerBar = getBeatsPerBar();
+            if (currentBeat % beatsPerBar == 0) {
+                currentBar++;
+                // Also publish TIMING_BAR events
+                timingBus.publish(Commands.TIMING_BAR, this, currentBar);
             }
         }
     }
@@ -197,12 +233,12 @@ public class SequencerManager implements IBusListener {
             System.out.println("SequencerManager: Attempting to start sequencer");
             if (sequencer != null && !sequencer.isRunning()) {
                 System.out.println("SequencerManager: Sequencer exists and is not running");
-                
+
                 // Reset counters
                 currentTick = 0;
                 currentBeat = 0;
                 currentBar = 0;
-                
+
                 // Important: Make sure any active session is properly initialized
                 if (activeSession != null) {
                     System.out.println("SequencerManager: Active session found: " + activeSession.getId());
@@ -215,7 +251,7 @@ public class SequencerManager implements IBusListener {
                 // Start sequencer
                 sequencer.start();
                 System.out.println("SequencerManager: Sequencer started");
-                
+
                 // Publish state change - CRITICAL for UI updates
                 commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
                 System.out.println("SequencerManager: Published TRANSPORT_STATE_CHANGED event");
@@ -238,17 +274,17 @@ public class SequencerManager implements IBusListener {
             if (sequencer != null) {
                 sequencer.stop();
                 sequencer.setMicrosecondPosition(0);
-                
+
                 // Publish state change - CRITICAL for UI updates
                 commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
                 System.out.println("SequencerManager: Stopped sequencer, publishing state change event");
-                
+
                 if (activeSession != null) {
                     activeSession.onStop();
                 }
             }
         } catch (Exception e) {
-            // logger.error("Error stopping sequencer: {}", e.getMessage(), e);
+            // logger.warning(String.format"Error stopping sequencer: {}", e.getMessage(), e);
         }
     }
 
@@ -256,7 +292,7 @@ public class SequencerManager implements IBusListener {
         try {
             // Unregister from timing bus
             timingBus.unregister(this);
-            
+
             // Clean up sequencer
             SequencerManager.getInstance().cleanup();
             if (sequencer != null) {
@@ -277,15 +313,15 @@ public class SequencerManager implements IBusListener {
         return sequencer != null && sequencer.isRunning();
     }
 
-    public int getCurrentTick() {
+    public long getCurrentTick() {
         return currentTick;
     }
 
-    public int getCurrentBeat() {
+    public double getCurrentBeat() {
         return currentBeat;
     }
 
-    public int getCurrentBar() {
+    public long getCurrentBar() {
         return currentBar;
     }
 
