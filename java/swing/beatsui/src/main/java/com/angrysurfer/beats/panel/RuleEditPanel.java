@@ -6,7 +6,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.HashSet;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
@@ -17,13 +16,15 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerListModel;
 import javax.swing.SpinnerNumberModel;
 
-import com.angrysurfer.beats.widget.PlayersTable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 
 public class RuleEditPanel extends StatusProviderPanel {
-    private static final Logger logger = Logger.getLogger(RuleEditPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(RuleEditPanel.class.getName());
 
     private final Rule rule;
     private final JComboBox<String> comparisonCombo;

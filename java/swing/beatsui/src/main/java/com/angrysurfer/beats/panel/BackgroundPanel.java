@@ -1,14 +1,20 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.*;
-import javax.swing.*;
+import java.awt.AlphaComposite;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
 import java.io.InputStream;
-import java.util.logging.Logger;
+
+import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class BackgroundPanel extends JPanel {
-    private static final Logger logger = Logger.getLogger(BackgroundPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(BackgroundPanel.class.getName());
     private BufferedImage backgroundImage;
     private float opacity = 0.15f; // Reduced opacity to make it more subtle
 
@@ -24,10 +30,10 @@ class BackgroundPanel extends JPanel {
                 backgroundImage = ImageIO.read(is);
                 logger.info("Background image loaded successfully");
             } else {
-                logger.warning("Could not find space cobra.jpg in resources");
+                logger.error("Could not find space cobra.jpg in resources");
             }
         } catch (Exception e) {
-            logger.severe("Error loading background image: " + e.getMessage());
+            logger.error("Error loading background image: " + e.getMessage());
         }
     }
 

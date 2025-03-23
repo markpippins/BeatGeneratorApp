@@ -10,7 +10,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -28,6 +27,9 @@ import javax.swing.SortOrder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.core.api.CommandBus;
@@ -61,7 +63,7 @@ class InstrumentsPanel extends StatusProviderPanel {
     private JButton editInstrumentButton;
     private JButton deleteInstrumentButton;
     private JButton enableInstrumentButton;
-    private static final Logger logger = Logger.getLogger(InstrumentsPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(InstrumentsPanel.class.getName());
     private ContextMenuHelper instrumentsContextMenu;
     private ContextMenuHelper controlCodesContextMenu;
     private ContextMenuHelper captionsContextMenu;
@@ -494,7 +496,7 @@ class InstrumentsPanel extends StatusProviderPanel {
                 logger.info("Added control code to table: " + cc.getName());
             }
         } else {
-            logger.warning("No control codes to display - instrument: " +
+            logger.error("No control codes to display - instrument: " +
                     (selectedInstrument == null ? "null" : selectedInstrument.getName()));
         }
     }
@@ -515,7 +517,7 @@ class InstrumentsPanel extends StatusProviderPanel {
                 logger.info("Added caption to table: " + caption.getDescription());
             }
         } else {
-            logger.warning("No captions to display - control code: " +
+            logger.error("No captions to display - control code: " +
                     (selectedControlCode == null ? "null" : selectedControlCode.getName()));
         }
     }
@@ -881,7 +883,7 @@ class InstrumentsPanel extends StatusProviderPanel {
                 if (getStatusConsumer() != null) {
                     getStatusConsumer().setStatus("Failed to find instrument: " + name);
                 }
-                logger.warning("Failed to find instrument: " + name);
+                logger.error("Failed to find instrument: " + name);
             }
         }
     }
@@ -942,7 +944,7 @@ class InstrumentsPanel extends StatusProviderPanel {
                 getStatusConsumer().setStatus("Saved instrument: " + instrument.getName());
             }
         } catch (Exception e) {
-            logger.severe("Error saving instrument: " + e.getMessage());
+            logger.error("Error saving instrument: " + e.getMessage());
             if (getStatusConsumer() != null) {
                 getStatusConsumer().setStatus("Error saving instrument: " + e.getMessage());
             }

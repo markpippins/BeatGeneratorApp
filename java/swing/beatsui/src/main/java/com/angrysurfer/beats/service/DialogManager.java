@@ -2,12 +2,14 @@ package com.angrysurfer.beats.service;
 
 import java.io.File;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.beats.Frame;
@@ -16,8 +18,8 @@ import com.angrysurfer.beats.panel.PlayerEditPanel;
 import com.angrysurfer.beats.panel.RuleEditPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.config.UserConfigConverter;
 import com.angrysurfer.core.model.Player;
@@ -30,7 +32,7 @@ import com.angrysurfer.core.service.SessionManager;
 
 public class DialogManager implements IBusListener {
 
-    private static final Logger logger = Logger.getLogger(DialogManager.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(DialogManager.class.getName());
 
     private static DialogManager instance;
     private final CommandBus commandBus = CommandBus.getInstance();
@@ -96,7 +98,7 @@ public class DialogManager implements IBusListener {
                     }
                 }
             } catch (Exception e) {
-                logger.severe("Error in handleAddPlayer: " + e.getMessage());
+                logger.error("Error in handleAddPlayer: " + e.getMessage());
                 e.printStackTrace();
             }
         });
@@ -134,7 +136,7 @@ public class DialogManager implements IBusListener {
             // instrument
             if (selectedInstrument == null && !instruments.isEmpty()) {
                 selectedInstrument = instruments.get(0);
-                logger.warning("No instrument with available device found. Using first instrument: " +
+                logger.error("No instrument with available device found. Using first instrument: " +
                         selectedInstrument.getName());
             }
 
@@ -145,10 +147,10 @@ public class DialogManager implements IBusListener {
                 newPlayer.setChannel(0);
                 logger.info("Set instrument for new player: " + selectedInstrument.getName());
             } else {
-                logger.severe("No instruments available. New player will have no instrument.");
+                logger.error("No instruments available. New player will have no instrument.");
             }
         } catch (Exception e) {
-            logger.severe("Error setting new player instrument: " + e.getMessage());
+            logger.error("Error setting new player instrument: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -169,7 +171,7 @@ public class DialogManager implements IBusListener {
                         commandBus.publish(Commands.SHOW_PLAYER_EDITOR_OK, this, panel.getUpdatedPlayer());
 
                 } catch (Exception e) {
-                    logger.severe("Error in handleEditPlayer: " + e);
+                    logger.error("Error in handleEditPlayer: " + e);
                     e.printStackTrace();
                 }
             });
@@ -258,7 +260,7 @@ public class DialogManager implements IBusListener {
                     logger.info("Showing controls dialog for player: " + player.getName() +
                             " with instrument: " + player.getInstrument().getName());
                 } catch (Exception e) {
-                    logger.severe("Error showing controls dialog: " + e.getMessage());
+                    logger.error("Error showing controls dialog: " + e.getMessage());
                     JOptionPane.showMessageDialog(frame,
                             "Could not show controls: " + e.getMessage(),
                             "Error",
@@ -312,7 +314,7 @@ public class DialogManager implements IBusListener {
                 // refreshInstrumentsTable();
                 // setStatus("Database updated successfully from " + filePath);
             } catch (Exception e) {
-                logger.severe("Error loading and saving database: " + e.getMessage());
+                logger.error("Error loading and saving database: " + e.getMessage());
                 // setStatus("Error updating database: " + e.getMessage());
             }
         }
@@ -371,7 +373,7 @@ public class DialogManager implements IBusListener {
                         JOptionPane.INFORMATION_MESSAGE);
 
             } catch (Exception e) {
-                logger.severe("Error saving configuration: " + e.getMessage());
+                logger.error("Error saving configuration: " + e.getMessage());
                 JOptionPane.showMessageDialog(frame,
                         "Error saving configuration: " + e.getMessage(),
                         "Save Error",

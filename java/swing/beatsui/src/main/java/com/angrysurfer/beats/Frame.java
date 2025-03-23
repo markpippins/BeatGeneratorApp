@@ -9,11 +9,13 @@ import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.PlayersPanel;
@@ -30,7 +32,7 @@ import com.angrysurfer.core.util.Constants;
 
 public class Frame extends JFrame implements AutoCloseable {
 
-    private static final Logger logger = Logger.getLogger(Frame.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(Frame.class.getName());
 
     private StatusBar statusBar = new StatusBar();
 
@@ -123,7 +125,7 @@ public class Frame extends JFrame implements AutoCloseable {
 
             RedisService.getInstance().saveFrameState(currentState, Constants.APPLICATION_FRAME);
         } catch (Exception e) {
-            logger.severe("Error saving frame state: " + e.getMessage());
+            logger.error("Error saving frame state: " + e.getMessage());
         }
     }
 
@@ -329,7 +331,7 @@ public class Frame extends JFrame implements AutoCloseable {
             try {
                 mainPanel.close();
             } catch (Exception e) {
-                logger.warning("Error closing main panel: " + e.getMessage());
+                logger.error("Error closing main panel: " + e.getMessage());
             }
         }
         dispose();

@@ -5,16 +5,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import javax.swing.JTable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.redis.RedisService;
 
 public class UIHelper {
     
-    private static final Logger logger = Logger.getLogger(UIHelper.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(UIHelper.class.getName());
 
     private static UIHelper instance;
 
@@ -47,11 +49,11 @@ public class UIHelper {
                     state.setColumnOrder(columnOrder);
                     RedisService.getInstance().saveTableState(state, tableName);
                 } else {
-                    logger.warning("Column order incomplete, not saving");
+                    logger.error("Column order incomplete, not saving");
                 }
             }
         } catch (Exception e) {
-            logger.severe("Error saving column order: " + e.getMessage());
+            logger.error("Error saving column order: " + e.getMessage());
         }
     }
 
@@ -89,7 +91,7 @@ public class UIHelper {
                 logger.info("No valid column order found to restore");
             }
         } catch (Exception e) {
-            logger.severe("Error restoring column order: " + e.getMessage());
+            logger.error("Error restoring column order: " + e.getMessage());
         }
     }
 }

@@ -1,11 +1,13 @@
 package com.angrysurfer.beats;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -21,7 +23,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 
 public class App implements IBusListener {
 
-    private static final Logger logger = Logger.getLogger(App.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(App.class.getName());
 
     private static final CommandBus commandBus = CommandBus.getInstance();
     private static final RedisService redisService = RedisService.getInstance();
@@ -78,7 +80,7 @@ public class App implements IBusListener {
                     frame.loadFrameState();
                     frame.setVisible(true);
                 } catch (Exception e) {
-                    logger.severe("Error handling theme change: " + e.getMessage());
+                    logger.error("Error handling theme change: " + e.getMessage());
                 }
             });
         }
@@ -99,11 +101,11 @@ public class App implements IBusListener {
                 logger.info("Set default Look and Feel: FlatLightLaf");
             }
         } catch (Exception e) {
-            logger.warning("Error setting look and feel: " + e.getMessage());
+            logger.error("Error setting look and feel: " + e.getMessage());
             try {
                 UIManager.setLookAndFeel(new FlatLightLaf());
             } catch (Exception ex) {
-                logger.severe("Error setting default look and feel: " + ex.getMessage());
+                logger.error("Error setting default look and feel: " + ex.getMessage());
             }
         }
     }
@@ -117,7 +119,7 @@ public class App implements IBusListener {
             // Initialize managers in correct order
             // UserConfigurationEngine.getInstance();
             // if (UserConfigurationEngine.getInstance().getCurrentConfig() == null) {
-            logger.warning("No user configuration found, creating default configuration");
+            logger.error("No user configuration found, creating default configuration");
             // UserConfigurationEngine.getInstance().setCurrentConfig(new UserConfig());
             // }
             logger.info("User configuration manager initialized");
@@ -150,8 +152,8 @@ public class App implements IBusListener {
     }
 
     private static void handleInitializationFailure(String errorMessage, Exception e) {
-        logger.severe("Critical initialization error: " + errorMessage);
-        logger.severe("Exception: " + e.getMessage());
+        logger.error("Critical initialization error: " + errorMessage);
+        logger.error("Exception: " + e.getMessage());
         e.printStackTrace();
 
         SwingUtilities.invokeLater(() -> {

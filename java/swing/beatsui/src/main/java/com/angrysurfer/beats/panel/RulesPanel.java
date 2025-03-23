@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
@@ -21,6 +20,9 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.RuleTableModel;
 import com.angrysurfer.core.api.Command;
@@ -40,7 +42,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RulesPanel extends JPanel {
-    private static final Logger logger = Logger.getLogger(RulesPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(RulesPanel.class.getName());
     private Player currentPlayer;
 
     private final JTable table;
@@ -159,7 +161,7 @@ public class RulesPanel extends JPanel {
                         logger.info("Publishing RULE_ADD_REQUEST for player: " + currentPlayer.getName());
                         CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, currentPlayer);
                     } else {
-                        logger.warning("Cannot add rule - no player selected");
+                        logger.error("Cannot add rule - no player selected");
                     }
                 }
                 case Commands.RULE_EDIT_REQUEST -> {
@@ -168,7 +170,7 @@ public class RulesPanel extends JPanel {
                         logger.info("Publishing RULE_EDIT_REQUEST for rule: " + selectedRule.getId());
                         CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
                     } else {
-                        logger.warning("Cannot edit rule - no rule selected");
+                        logger.error("Cannot edit rule - no rule selected");
                     }
                 }
                 case Commands.RULE_DELETE_REQUEST -> {
@@ -267,7 +269,7 @@ public class RulesPanel extends JPanel {
                             // Get a fresh copy of the player from SessionManager
                             currentPlayer = selectedPlayer;
                             loadRules(selectedPlayer);
-                            logger.warning("Using provided player - could not get fresh copy");
+                            logger.error("Using provided player - could not get fresh copy");
 
                             updateButtonStates();
                         }
@@ -313,7 +315,7 @@ public class RulesPanel extends JPanel {
                                         if (Collections.frequency(player.getRules().stream()
                                                 .map(Rule::getId).collect(Collectors.toList()),
                                                 addedRule.getId()) > 1) {
-                                            logger.warning("Duplicate rule detected! ID: " + addedRule.getId());
+                                            logger.error("Duplicate rule detected! ID: " + addedRule.getId());
                                         }
                                     }
                                 }
@@ -330,7 +332,7 @@ public class RulesPanel extends JPanel {
                                     selectLastRule();
                                 }
                             } else {
-                                logger.warning("No active player available after adding rule");
+                                logger.error("No active player available after adding rule");
                             }
                         }
 
@@ -372,7 +374,7 @@ public class RulesPanel extends JPanel {
                                     selectRuleById(editedRuleId);
                                 }
                             } else {
-                                logger.warning("No player available after rule edit");
+                                logger.error("No player available after rule edit");
                             }
                         }
 
@@ -431,14 +433,14 @@ public class RulesPanel extends JPanel {
                                 }
                             } else {
                                 clearRules();
-                                logger.warning("No player available after rule deletion");
+                                logger.error("No player available after rule deletion");
                             }
                         }
 
                         // Other cases...
                     }
                 } catch (Exception e) {
-                    logger.severe("Error processing command: " + e.getMessage());
+                    logger.error("Error processing command: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -543,13 +545,13 @@ public class RulesPanel extends JPanel {
                 tableModel.setRules(player.getRules()); // Use model's method
             } else {
                 tableModel.setRules(null);
-                logger.warning("No rules to display for player");
+                logger.error("No rules to display for player");
             }
             
             table.revalidate();
             table.repaint();
         } catch (Exception e) {
-            logger.severe("Error loading rules: " + e.getMessage());
+            logger.error("Error loading rules: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -563,7 +565,7 @@ public class RulesPanel extends JPanel {
     // Improve the getFreshPlayer method for reliability
     private Player getFreshPlayer(Long playerId) {
         if (playerId == null) {
-            logger.warning("Cannot get fresh player: null ID");
+            logger.error("Cannot get fresh player: null ID");
             return null;
         }
 
@@ -579,10 +581,10 @@ public class RulesPanel extends JPanel {
                 }
             }
 
-            logger.warning("Player " + playerId + " not found in active session");
+            logger.error("Player " + playerId + " not found in active session");
             return null;
         } catch (Exception e) {
-            logger.severe("Error getting fresh player: " + e.getMessage());
+            logger.error("Error getting fresh player: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -599,7 +601,7 @@ public class RulesPanel extends JPanel {
             lastSelectedRow = row;
             table.scrollRectToVisible(table.getCellRect(row, 0, true));
         } else {
-            logger.warning("Could not find rule with ID: " + ruleId);
+            logger.error("Could not find rule with ID: " + ruleId);
         }
     }
 
@@ -669,14 +671,14 @@ public class RulesPanel extends JPanel {
                     });
                 }
             } else {
-                logger.warning("No rules to display");
+                logger.error("No rules to display");
             }
 
             table.revalidate();
             table.repaint();
             updateButtonStates();
         } catch (Exception e) {
-            logger.severe("Error refreshing rules: " + e.getMessage());
+            logger.error("Error refreshing rules: " + e.getMessage());
             e.printStackTrace();
         }
     }

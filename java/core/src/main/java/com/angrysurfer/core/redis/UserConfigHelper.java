@@ -1,7 +1,9 @@
 package com.angrysurfer.core.redis;
 
 import java.io.File;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.config.UserConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +14,7 @@ import redis.clients.jedis.JedisPool;
 
 @Getter
 public class UserConfigHelper {
-    private static final Logger logger = Logger.getLogger(UserConfigHelper.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(UserConfigHelper.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
 
@@ -28,7 +30,7 @@ public class UserConfigHelper {
                 return objectMapper.readValue(json, UserConfig.class);
             }
         } catch (Exception e) {
-            logger.severe("Error loading config from Redis: " + e.getMessage());
+            logger.error("Error loading config from Redis: " + e.getMessage());
         }
         return null;
     }
@@ -38,7 +40,7 @@ public class UserConfigHelper {
             logger.info("Loading UserConfig from: " + configPath);
             return objectMapper.readValue(new File(configPath), UserConfig.class);
         } catch (Exception e) {
-            logger.severe("Error loading config from JSON: " + e.getMessage());
+            logger.error("Error loading config from JSON: " + e.getMessage());
             throw new RuntimeException("Failed to load config from JSON", e);
         }
     }
@@ -49,7 +51,7 @@ public class UserConfigHelper {
             jedis.set("userconfig", json);
             logger.info("Saved UserConfig to Redis");
         } catch (Exception e) {
-            logger.severe("Error saving config to Redis: " + e.getMessage());
+            logger.error("Error saving config to Redis: " + e.getMessage());
             throw new RuntimeException("Failed to save config", e);
         }
     }

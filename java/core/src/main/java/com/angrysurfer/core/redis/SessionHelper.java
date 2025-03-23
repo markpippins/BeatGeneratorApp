@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -20,7 +22,7 @@ import redis.clients.jedis.JedisPool;
 @Getter
 @Setter
 class SessionHelper {
-    private static final Logger logger = Logger.getLogger(SessionHelper.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(SessionHelper.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
     private final PlayerHelper playerHelper;
@@ -60,7 +62,7 @@ class SessionHelper {
             }
             return null;
         } catch (Exception e) {
-            logger.severe("Error finding session: " + e.getMessage());
+            logger.error("Error finding session: " + e.getMessage());
             throw new RuntimeException("Failed to find session", e);
         }
     }
@@ -96,7 +98,7 @@ class SessionHelper {
                     session.getId(),
                     players != null ? players.size() : 0));
         } catch (Exception e) {
-            logger.severe("Error saving session: " + e.getMessage());
+            logger.error("Error saving session: " + e.getMessage());
             throw new RuntimeException("Failed to save session", e);
         }
     }
@@ -109,7 +111,7 @@ class SessionHelper {
                 try {
                     ids.add(Long.parseLong(key.split(":")[1]));
                 } catch (NumberFormatException e) {
-                    logger.warning("Invalid session key: " + key);
+                    logger.error("Invalid session key: " + key);
                 }
             }
             return ids;
@@ -154,7 +156,7 @@ class SessionHelper {
             commandBus.publish(Commands.SESSION_DELETED, this, sessionId);
             logger.info("Successfully deleted session " + sessionId + " and all related entities");
         } catch (Exception e) {
-            logger.severe("Error deleting session " + sessionId + ": " + e.getMessage());
+            logger.error("Error deleting session " + sessionId + ": " + e.getMessage());
             throw new RuntimeException("Failed to delete session", e);
         }
     }
@@ -180,7 +182,7 @@ class SessionHelper {
             logger.info("Created new session with ID: " + session.getId());
             return session;
         } catch (Exception e) {
-            logger.severe("Error creating new session: " + e.getMessage());
+            logger.error("Error creating new session: " + e.getMessage());
             throw new RuntimeException("Failed to create new session", e);
         }
     }
@@ -258,7 +260,7 @@ class SessionHelper {
                 }
             }
         } catch (Exception e) {
-            logger.severe("Error finding session for player: " + e.getMessage());
+            logger.error("Error finding session for player: " + e.getMessage());
         }
         return null;
     }

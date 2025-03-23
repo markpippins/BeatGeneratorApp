@@ -5,7 +5,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -17,14 +16,17 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 
 public class MainPanel extends JPanel implements AutoCloseable {
-    private static final Logger logger = Logger.getLogger(MainPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(MainPanel.class.getName());
     private JTabbedPane tabbedPane;
 
     public MainPanel(StatusBar statusBar) {
@@ -150,7 +152,7 @@ public class MainPanel extends JPanel implements AutoCloseable {
                     try {
                         ((AutoCloseable) comp).close();
                     } catch (Exception e) {
-                        logger.warning("Error closing component: " + e.getMessage());
+                        logger.error("Error closing component: " + e.getMessage());
                     }
                 }
             }

@@ -2,7 +2,9 @@ package com.angrysurfer.core.redis;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Song;
@@ -17,7 +19,7 @@ import redis.clients.jedis.JedisPool;
 @Getter
 @Setter
 public class PatternHelper {
-    private static final Logger logger = Logger.getLogger(PatternHelper.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PatternHelper.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
     private final StepHelper stepHelper;
@@ -40,7 +42,7 @@ public class PatternHelper {
             }
             return null;
         } catch (Exception e) {
-            logger.severe("Error finding pattern: " + e.getMessage());
+            logger.error("Error finding pattern: " + e.getMessage());
             return null;
         }
     }
@@ -92,7 +94,7 @@ public class PatternHelper {
             pattern.setSteps(steps);
             pattern.setSong(song);
         } catch (Exception e) {
-            logger.severe("Error saving pattern: " + e.getMessage());
+            logger.error("Error saving pattern: " + e.getMessage());
             throw new RuntimeException("Failed to save pattern", e);
         }
     }
@@ -115,7 +117,7 @@ public class PatternHelper {
                 jedis.del("pattern:" + patternId);
             }
         } catch (Exception e) {
-            logger.severe("Error deleting pattern: " + e.getMessage());
+            logger.error("Error deleting pattern: " + e.getMessage());
             throw new RuntimeException("Failed to delete pattern", e);
         }
     }

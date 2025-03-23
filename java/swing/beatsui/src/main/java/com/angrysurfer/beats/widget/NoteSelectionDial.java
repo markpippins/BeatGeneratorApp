@@ -10,14 +10,15 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.geom.Point2D;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.ColorUtils;
-import com.angrysurfer.beats.panel.RuleEditPanel;
 
 public class NoteSelectionDial extends Dial {
 
-    private static final Logger logger = Logger.getLogger(NoteSelectionDial.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(NoteSelectionDial.class.getName());
 
     private static final String[] NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
     private static final int DETENT_COUNT = 12;

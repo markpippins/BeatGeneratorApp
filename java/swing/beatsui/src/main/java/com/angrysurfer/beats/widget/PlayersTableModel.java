@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Vector;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.swing.table.DefaultTableModel;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.midi.Instrument;
@@ -18,7 +20,7 @@ import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 
 public class PlayersTableModel extends DefaultTableModel {
-    private static final Logger logger = Logger.getLogger(PlayersTableModel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PlayersTableModel.class.getName());
 
     // Column name constants
     public static final String COL_ID = "ID";
@@ -130,11 +132,11 @@ public class PlayersTableModel extends DefaultTableModel {
                                 logger.info("Initialized device for instrument: " + instrument.getName() +
                                         " with device: " + device.getDeviceInfo().getName());
                             } else {
-                                logger.warning("Device not found: " + instrument.getDeviceName() +
+                                logger.error("Device not found: " + instrument.getDeviceName() +
                                         " for instrument: " + instrument.getName());
                             }
                         } catch (Exception e) {
-                            logger.warning("Error initializing device for instrument " +
+                            logger.error("Error initializing device for instrument " +
                                     instrument.getName() + ": " + e.getMessage());
                         }
                     }
@@ -144,7 +146,7 @@ public class PlayersTableModel extends DefaultTableModel {
             }
             rowData.set(columnIndex, instrumentName);
         } catch (Exception e) {
-            logger.severe("Error updating instrument cell: " + e.getMessage());
+            logger.error("Error updating instrument cell: " + e.getMessage());
             rowData.set(columnIndex, "Error");
         }
     }
@@ -171,7 +173,7 @@ public class PlayersTableModel extends DefaultTableModel {
 
             fireTableRowsUpdated(modelRow, modelRow);
         } catch (Exception e) {
-            logger.severe("Error updating player row: " + e.getMessage());
+            logger.error("Error updating player row: " + e.getMessage());
             e.printStackTrace();
         }
     }

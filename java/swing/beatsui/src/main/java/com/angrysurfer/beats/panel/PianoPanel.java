@@ -1,7 +1,7 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.Component;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -25,6 +24,9 @@ import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.plaf.basic.BasicButtonUI;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.beats.animation.ColorAnimator;
@@ -48,7 +50,7 @@ public class PianoPanel extends StatusProviderPanel {
     private final ColorAnimator colorAnimator;
     private JButton activeButton = null; // Add this field to track active button
     private int currentOctave = 5; // Default octave (C5 = MIDI note 60)
-    private static final Logger logger = Logger.getLogger(PianoPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PianoPanel.class.getName());
 
     public PianoPanel() {
         this(null);

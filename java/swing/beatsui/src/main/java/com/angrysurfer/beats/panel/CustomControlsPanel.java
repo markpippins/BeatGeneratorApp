@@ -16,7 +16,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -34,12 +33,15 @@ import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ToggleSwitch;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.midi.ControlCode;
 import com.angrysurfer.core.model.midi.ControlCodeCaption;
 import com.angrysurfer.core.model.midi.Instrument;
@@ -51,7 +53,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CustomControlsPanel extends JPanel implements IBusListener {
-    private static final Logger logger = Logger.getLogger(CustomControlsPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(CustomControlsPanel.class.getName());
     private JComboBox<Instrument> instrumentSelector;
     private final RedisService redisService;
     private final JPanel controlsContainer;

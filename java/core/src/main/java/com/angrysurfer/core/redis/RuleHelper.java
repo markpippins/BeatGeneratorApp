@@ -2,7 +2,9 @@ package com.angrysurfer.core.redis;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -16,7 +18,7 @@ import redis.clients.jedis.JedisPool;
 @Getter
 @Setter
 public class RuleHelper {
-    private static final Logger logger = Logger.getLogger(RuleHelper.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(RuleHelper.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
 
@@ -30,7 +32,7 @@ public class RuleHelper {
             String json = jedis.get("rule:" + id);
             return json != null ? objectMapper.readValue(json, Rule.class) : null;
         } catch (Exception e) {
-            logger.severe("Error finding rule: " + e.getMessage());
+            logger.error("Error finding rule: " + e.getMessage());
             return null;
         }
     }
@@ -74,7 +76,7 @@ public class RuleHelper {
             // Restore references
             rule.setPlayer(player);
         } catch (Exception e) {
-            logger.severe("Error saving rule: " + e.getMessage());
+            logger.error("Error saving rule: " + e.getMessage());
             throw new RuntimeException("Failed to save rule", e);
         }
     }
@@ -92,7 +94,7 @@ public class RuleHelper {
     //         logger.info("Rule deletion result: " + (success ? "SUCCESS" : "FAILED"));
     //         return success;
     //     } catch (Exception e) {
-    //         logger.severe("Error deleting rule: " + e.getMessage());
+    //         logger.error("Error deleting rule: " + e.getMessage());
     //         e.printStackTrace();
     //         return false;
     //     }
@@ -107,7 +109,7 @@ public class RuleHelper {
             }
             jedis.del("rule:" + ruleId);
         } catch (Exception e) {
-            logger.severe("Error deleting rule: " + e.getMessage());
+            logger.error("Error deleting rule: " + e.getMessage());
             throw new RuntimeException("Failed to delete rule", e);
         }
     }
@@ -117,7 +119,7 @@ public class RuleHelper {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.incr("seq:rule");
         } catch (Exception e) {
-            logger.severe("Error getting next rule ID: " + e.getMessage());
+            logger.error("Error getting next rule ID: " + e.getMessage());
             throw new RuntimeException("Failed to get next rule ID", e);
         }
     }

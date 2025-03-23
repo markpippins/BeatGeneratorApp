@@ -4,16 +4,17 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.logging.Logger;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter.SortKey;
+import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
@@ -22,8 +23,9 @@ import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableRowSorter;
-import javax.swing.RowSorter.SortKey;
-import javax.swing.SortOrder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.beats.service.UIHelper;
@@ -36,7 +38,7 @@ import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.Constants;
 
 public class PlayersTable extends JTable {
-    private static final Logger logger = Logger.getLogger(PlayersTable.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PlayersTable.class.getName());
 
     private final PlayersTableModel tableModel;
     private final Set<Long> flashingPlayerIds = new HashSet<>();
@@ -244,7 +246,7 @@ public class PlayersTable extends JTable {
                 CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
             }
         } catch (Exception ex) {
-            logger.severe("Error in player selection: " + ex.getMessage());
+            logger.error("Error in player selection: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
@@ -273,7 +275,7 @@ public class PlayersTable extends JTable {
                         .orElse(null);
             }
         } catch (Exception e) {
-            logger.severe("Error getting player at row: " + e.getMessage());
+            logger.error("Error getting player at row: " + e.getMessage());
         }
 
         return null;
@@ -337,7 +339,7 @@ public class PlayersTable extends JTable {
             // Find row index for this player
             int rowIndex = findPlayerRowIndex(player);
             if (rowIndex == -1) {
-                logger.warning("Player not found in table: " + player.getName());
+                logger.error("Player not found in table: " + player.getName());
                 return;
             }
 
@@ -377,7 +379,7 @@ public class PlayersTable extends JTable {
 
             logger.info("Updated row " + rowIndex + " for player: " + player.getName());
         } catch (Exception e) {
-            logger.severe("Error updating player row: " + e.getMessage());
+            logger.error("Error updating player row: " + e.getMessage());
             e.printStackTrace();
         }
     }

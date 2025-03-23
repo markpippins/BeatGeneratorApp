@@ -2,7 +2,9 @@ package com.angrysurfer.core.redis;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Step;
@@ -16,7 +18,7 @@ import redis.clients.jedis.JedisPool;
 @Getter
 @Setter
 public class StepHelper {
-    private static final Logger logger = Logger.getLogger(StepHelper.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(StepHelper.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
 
@@ -30,7 +32,7 @@ public class StepHelper {
             String json = jedis.get("step:" + id);
             return json != null ? objectMapper.readValue(json, Step.class) : null;
         } catch (Exception e) {
-            logger.severe("Error finding step: " + e.getMessage());
+            logger.error("Error finding step: " + e.getMessage());
             return null;
         }
     }
@@ -75,7 +77,7 @@ public class StepHelper {
             step.setPattern(pattern);
             return step;
         } catch (Exception e) {
-            logger.severe("Error saving step: " + e.getMessage());
+            logger.error("Error saving step: " + e.getMessage());
             throw new RuntimeException("Failed to save step", e);
         }
     }
@@ -93,7 +95,7 @@ public class StepHelper {
                 jedis.del("step:" + stepId);
             }
         } catch (Exception e) {
-            logger.severe("Error deleting step: " + e.getMessage());
+            logger.error("Error deleting step: " + e.getMessage());
             throw new RuntimeException("Failed to delete step", e);
         }
     }

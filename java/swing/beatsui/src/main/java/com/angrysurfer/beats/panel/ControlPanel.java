@@ -6,8 +6,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.util.Objects;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -18,6 +16,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.core.api.Command;
@@ -26,11 +27,12 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.util.Scale;
 
 public class ControlPanel extends JPanel {
-    private static final Logger logger = Logger.getLogger(ControlPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(ControlPanel.class.getName());
     private static final int BUTTON_SIZE = 30;
 
     private final StatusConsumer statusConsumer;
@@ -417,7 +419,7 @@ public class ControlPanel extends JPanel {
             if (comp instanceof JButton button) {
                 // Enable button if we have an active player
                 button.setEnabled(enabled);
-                logger.fine("Button " + button.getText() + " enabled: " + enabled);
+                logger.debug("Button " + button.getText() + " enabled: " + enabled);
             } else if (comp instanceof Container innerContainer) {
                 // Recursively search nested containers
                 traverseAndEnableButtons(innerContainer, enabled);
@@ -457,7 +459,7 @@ public class ControlPanel extends JPanel {
                         updateVerticalAdjustButtons(false);
                     }
                 } catch (Exception e) {
-                    logger.severe("Error in command handler: " + e.getMessage());
+                    logger.error("Error in command handler: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -633,7 +635,7 @@ public class ControlPanel extends JPanel {
 
     public void updateDialsFromPlayer(Player player) {
         if (player == null) {
-            logger.warning("Attempted to update dials with null player");
+            logger.error("Attempted to update dials with null player");
             return;
         }
 
@@ -685,7 +687,7 @@ public class ControlPanel extends JPanel {
 
             logger.info("Successfully updated all dials for player: " + player.getName());
         } catch (Exception e) {
-            logger.severe("Error updating dials: " + e.getMessage());
+            logger.error("Error updating dials: " + e.getMessage());
             e.printStackTrace();
 
             // Make sure listeners are re-enabled even if there's an error

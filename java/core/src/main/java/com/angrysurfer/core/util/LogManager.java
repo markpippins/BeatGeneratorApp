@@ -1,11 +1,11 @@
 package com.angrysurfer.core.util;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LogManager {
     private static final LogManager INSTANCE = new LogManager();
-    private static final Logger logger = Logger.getLogger("BeatGenerator");
+    private static final Logger logger = LoggerFactory.getLogger("BeatGenerator");
 
     private LogManager() {
         // Private constructor to enforce singleton
@@ -16,22 +16,22 @@ public class LogManager {
     }
 
     public void debug(String source, String message) {
-        logger.log(Level.FINE, "[" + source + "] " + message);
+        logger.debug("[{}] {}", source, message);
     }
 
     public void info(String source, String message) {
-        logger.log(Level.INFO, "[" + source + "] " + message);
+        logger.info("[{}] {}", source, message);
     }
 
     public void warn(String source, String message) {
-        logger.log(Level.WARNING, "[" + source + "] " + message);
+        logger.warn("[{}] {}", source, message);
     }
 
     public void error(String source, String message, Throwable e) {
-        logger.log(Level.SEVERE, "[" + source + "] " + message, e);
+        logger.error("[{}] {}", source, message, e);
     }
 
     public void error(String source, String message) {
-        logger.log(Level.SEVERE, "[" + source + "] " + message);
+        logger.error("[{}] {}", source, message);
     }
 }

@@ -3,7 +3,8 @@ package com.angrysurfer.beats.widget;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -13,7 +14,7 @@ import com.angrysurfer.core.model.Rule;
  * Dedicated table model for handling Rule objects in a JTable
  */
 public class RuleTableModel extends AbstractTableModel {
-    private static final Logger logger = Logger.getLogger(RuleTableModel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(RuleTableModel.class.getName());
     
     private final String[] columnNames = { "Comparison", "Operator", "Value", "Part" };
     private final List<Rule> rules = new ArrayList<>();
