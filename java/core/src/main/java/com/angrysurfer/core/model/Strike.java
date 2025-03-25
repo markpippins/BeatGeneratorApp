@@ -62,7 +62,7 @@ public class Strike extends Player {
         
         // long subPosition = getSubPosition();
         
-        // System.out.println("Strike.onTick: DETAILED TIMING - tick=" + tick + 
+        // // System.out.println("Strike.onTick: DETAILED TIMING - tick=" + tick + 
         //                   ", beat=" + beat + 
         //                   ", bar=" + bar + 
         //                   ", part=" + part +
@@ -70,23 +70,20 @@ public class Strike extends Player {
         
         // Output all rule details for debugging
         if (getRules() != null && !getRules().isEmpty()) {
-            System.out.println("Strike rules for player " + getName() + ":");
+            // System.out.println("Strike rules for player " + getName() + ":");
             getRules().forEach(rule -> {
-                System.out.println("  Rule " + rule.getId() + ": operator=" + rule.getOperator() +
-                                  ", comparison=" + rule.getComparison() + 
-                                  ", value=" + rule.getValue() +
-                                  ", part=" + rule.getPart());
+                // System.out.println("  Rule " + rule.getId() + ": operator=" + rule.getOperator() + ", comparison=" + rule.getComparison() + ", value=" + rule.getValue() + ", part=" + rule.getPart());
             });
         }
         
         // Check if we should play based on the current timing
         boolean shouldPlayResult = shouldPlay();
-        System.out.println("Strike.shouldPlay result: " + shouldPlayResult);
+        // System.out.println("Strike.shouldPlay result: " + shouldPlayResult);
         
         if (shouldPlayResult) {
             try {
                 long noteToPlay = getNote();
-                System.out.println("Strike.onTick playing note: " + noteToPlay);
+                // System.out.println("Strike.onTick playing note: " + noteToPlay);
                 drumNoteOn(noteToPlay);
             } catch(Exception e) {
                 System.err.println("Error in Strike.onTick: " + e.getMessage());
@@ -161,11 +158,11 @@ public class Strike extends Player {
     // Add this debug method
     private void debugTimingValues(Session session) {
         try {
-            System.out.println("RAW CYCLER VALUES FOR: " + getName());
-            System.out.println("  tickCycler: " + session.getTick());
-            System.out.println("  beatCycler: " + session.getBeat());
-            System.out.println("  barCycler: " + session.getBar());
-            System.out.println("  partCycler: " + session.getPart());
+            // System.out.println("RAW CYCLER VALUES FOR: " + getName());
+            // System.out.println("  tickCycler: " + session.getTick());
+            // System.out.println("  beatCycler: " + session.getBeat());
+            // System.out.println("  barCycler: " + session.getBar());
+            // System.out.println("  partCycler: " + session.getPart());
         } catch (Exception e) {
             System.err.println("Error debugging cycler values: " + e.getMessage());
         }
@@ -185,12 +182,12 @@ public class Strike extends Player {
     //     // Calculate position within the beat (1 to ticksPerBeat)
     //     long tickInBeat = ((tick - 1) % ticksPerBeat) + 1;
         
-    //     System.out.println("SIMPLIFIED TEST - Player " + getName() + ": tickInBeat=" + tickInBeat);
+    //     // System.out.println("SIMPLIFIED TEST - Player " + getName() + ": tickInBeat=" + tickInBeat);
         
     //     // Play on the first tick of each beat
     //     boolean shouldPlayNow = (tickInBeat == 1);
     //     if (shouldPlayNow) {
-    //         System.out.println("SIMPLIFIED TEST - Will play note for player: " + getName());
+    //         // System.out.println("SIMPLIFIED TEST - Will play note for player: " + getName());
     //     }
         
     //     return shouldPlayNow;

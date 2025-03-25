@@ -204,11 +204,11 @@ public class Dialog<T> extends JDialog {
     // dialog.setTitle("Edit Player: " + samplePlayer.getName());
     // boolean result = dialog.showDialog();
 
-    // System.out.println("Dialog result: " + result);
+    // // System.out.println("Dialog result: " + result);
     // if (result) {
     // ProxyStrike updatedPlayer = ((PlayerEditorPanel)
     // testPanel).getUpdatedPlayer();
-    // System.out.println("Updated player name: " + updatedPlayer.getName());
+    // // System.out.println("Updated player name: " + updatedPlayer.getName());
     // }
     // }
 }

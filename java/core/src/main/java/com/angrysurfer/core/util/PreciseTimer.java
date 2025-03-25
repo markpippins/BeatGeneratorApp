@@ -134,12 +134,12 @@ public class PreciseTimer implements Timer {
 
         // Add a tick listener that prints the current tick count
         timer.addTickCallback(() -> {
-            System.out.println("Tick: " + timer.getCurrentTick());
+            // System.out.println("Tick: " + timer.getCurrentTick());
         });
 
         // Add a beat listener that prints when a beat occurs
         timer.addBeatCallback(() -> {
-            System.out.println("Beat! Current BPM: " + timer.getBpm());
+            // System.out.println("Beat! Current BPM: " + timer.getBpm());
         });
 
         // Start the timer in a separate thread
@@ -149,11 +149,11 @@ public class PreciseTimer implements Timer {
         // Demonstrate BPM changes after a few seconds
         try {
             Thread.sleep(2000);  // Run for 2 seconds
-            System.out.println("Changing BPM to 140...");
+            // System.out.println("Changing BPM to 140...");
             timer.setBpm(140);
             
             Thread.sleep(2000);  // Run for 2 more seconds
-            System.out.println("Changing BPM to 100...");
+            // System.out.println("Changing BPM to 100...");
             timer.setBpm(100);
             
             Thread.sleep(2000);  // Run for 2 final seconds

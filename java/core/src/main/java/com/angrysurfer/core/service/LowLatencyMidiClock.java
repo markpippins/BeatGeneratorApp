@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.util.Constants;
 
 public class LowLatencyMidiClock {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(
@@ -29,8 +30,10 @@ public class LowLatencyMidiClock {
     public void start() {
         if (running.compareAndSet(false, true)) {
             // Calculate tick interval in nanoseconds for more precision
+            // long intervalNanos = (long)(60_000_000_000L / 
+            //     (session.getTempoInBPM() * session.getTicksPerBeat()));
             long intervalNanos = (long)(60_000_000_000L / 
-                (session.getTempoInBPM() * session.getTicksPerBeat()));
+                (session.getTempoInBPM() * Constants.DEFAULT_PPQ));
             
             clockTask = scheduler.scheduleAtFixedRate(
                 this::tick, 

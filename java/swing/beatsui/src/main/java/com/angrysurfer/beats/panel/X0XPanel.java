@@ -59,7 +59,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         stepTimer = new javax.swing.Timer(initialMsPerStep, e -> {
             if (isPlaying) {
                 int nextStep = (currentStep + 1) % 16;
-                // System.out.println("Timer firing: current=" + currentStep + ", next=" + nextStep);
+                // // System.out.println("Timer firing: current=" + currentStep + ", next=" + nextStep);
                 updateStep(currentStep, nextStep);
                 currentStep = nextStep;
             }
@@ -104,7 +104,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                     if (!triggerButtons.isEmpty()) {
                         triggerButtons.get(0).setHighlighted(true);
                     }
-                    System.out.println("X0X: Transport Play - reset to step 0, step timer started");
+                    // System.out.println("X0X: Transport Play - reset to step 0, step timer started");
                 });
             }
             
@@ -113,7 +113,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                 // Stop the timer
                 stepTimer.stop();
                 resetSequence();
-                System.out.println("X0X: Transport Stop - sequence reset, step timer stopped");
+                // System.out.println("X0X: Transport Stop - sequence reset, step timer stopped");
             }
             
             // COMPLETELY DISABLE the tick-based approach
@@ -124,7 +124,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             case Commands.TIME_BEAT -> {
                 // Just use for tempo synchronization
                 if (isPlaying && action.getData() instanceof Number beatNum) {
-                    System.out.println("X0X: Beat " + beatNum.intValue() + " (purely informational)");
+                    // System.out.println("X0X: Beat " + beatNum.intValue() + " (purely informational)");
                 }
             }
             
@@ -135,7 +135,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                     int msPerBeat = 60000 / bpm;
                     int msPerStep = msPerBeat / 4;
                     stepTimer.setDelay(msPerStep);
-                    System.out.println("X0X: Session updated - tempo=" + bpm + ", msPerStep=" + msPerStep);
+                    // System.out.println("X0X: Session updated - tempo=" + bpm + ", msPerStep=" + msPerStep);
                 }
             }
 
@@ -146,7 +146,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             //         int msPerBeat = 60000 / bpm;
             //         int msPerStep = msPerBeat / 4;
             //         stepTimer.setDelay(msPerStep);
-            //         System.out.println("X0X: Tempo changed to " + bpm + " BPM, step timer=" + msPerStep + "ms");
+            //         // System.out.println("X0X: Tempo changed to " + bpm + " BPM, step timer=" + msPerStep + "ms");
             //     }
             // }
         }
@@ -186,9 +186,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     private void updateTriggerButtons() {
         try {
             // Debug output to help diagnose issues
-            System.out.println("Updating trigger buttons: step=" + currentStep + 
-                               ", isPlaying=" + isPlaying + 
-                               ", triggerButtons.size=" + triggerButtons.size());
+            // System.out.println("Updating trigger buttons: step=" + currentStep + ", isPlaying=" + isPlaying + ", triggerButtons.size=" + triggerButtons.size());
             
             // First clear all button highlights
             for (TriggerButton button : triggerButtons) {
@@ -241,7 +239,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                 if (counter[0] < triggerButtons.size()) {
                     triggerButtons.get(counter[0]).setHighlighted(true);
                     stepLabel.setText("Test Step: " + (counter[0] + 1) + "/16");
-                    System.out.println("Test highlighting step " + counter[0]);
+                    // System.out.println("Test highlighting step " + counter[0]);
                     counter[0]++;
                 } else {
                     // Stop when we've gone through all steps
@@ -262,16 +260,15 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         // Button to verify the trigger buttons collection
         JButton verifyButton = new JButton("Verify Buttons");
         verifyButton.addActionListener(e -> {
-            System.out.println("==== TRIGGER BUTTON VERIFICATION ====");
-            System.out.println("Number of trigger buttons: " + triggerButtons.size());
+            // System.out.println("==== TRIGGER BUTTON VERIFICATION ====");
+            // System.out.println("Number of trigger buttons: " + triggerButtons.size());
             if (triggerButtons.size() != 16) {
-                System.out.println("ERROR: Expected 16 buttons but found " + triggerButtons.size());
+                // System.out.println("ERROR: Expected 16 buttons but found " + triggerButtons.size());
             }
             
             for (int i = 0; i < triggerButtons.size(); i++) {
                 // Don't try to access isHighlighted() as it doesn't exist
-                System.out.println("Button " + i + ": " + 
-                    triggerButtons.get(i).getName());
+                // System.out.println("Button " + i + ": " +  triggerButtons.get(i).getName());
                     
                 // Visual test - temporarily highlight each button in sequence
                 final int buttonIndex = i;
@@ -307,7 +304,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         add(debugPanel, BorderLayout.SOUTH);
         
         // Verify setup
-        System.out.println("X0XPanel setup complete: " + triggerButtons.size() + " trigger buttons created");
+        // System.out.println("X0XPanel setup complete: " + triggerButtons.size() + " trigger buttons created");
     }
 
     private JPanel createX0XPanel() {

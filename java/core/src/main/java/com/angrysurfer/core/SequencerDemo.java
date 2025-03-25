@@ -91,13 +91,13 @@
 //             }
 
 //             // List all MIDI devices
-//             System.out.println("\nAvailable MIDI Devices:");
-//             MIDIService.getMidiOutDevices().forEach(device -> System.out.println(device.getDeviceInfo().getName()));
+//             // System.out.println("\nAvailable MIDI Devices:");
+//             MIDIService.getMidiOutDevices().forEach(device -> // System.out.println(device.getDeviceInfo().getName()));
 
 //             // Get the Tracker device using the new method
 //             MidiDevice outputDevice = MIDIService.getMidiDevice("Tracker");
 //             if (outputDevice == null) {
-//                 System.out.println("Tracker MIDI device not found!");
+//                 // System.out.println("Tracker MIDI device not found!");
 //                 return;
 //             }
 

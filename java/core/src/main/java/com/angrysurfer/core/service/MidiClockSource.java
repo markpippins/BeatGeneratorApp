@@ -51,28 +51,28 @@ public class MidiClockSource implements IBusListener {
     private synchronized void initialize() {
         // if (!isInitialized)
             try {
-                System.out.println("SequencerManager: Initializing...");
+                // System.out.println("SequencerManager: Initializing...");
                 setupSequencer();
-                System.out.println("SequencerManager: Sequencer setup complete");
+                // System.out.println("SequencerManager: Sequencer setup complete");
                 setupSynthesizer();
-                System.out.println("SequencerManager: Synthesizer setup complete");
+                // System.out.println("SequencerManager: Synthesizer setup complete");
                 createSequence();
-                System.out.println("SequencerManager: Sequence created");
+                // System.out.println("SequencerManager: Sequence created");
                 connectDevices();
-                System.out.println("SequencerManager: Devices connected");
+                // System.out.println("SequencerManager: Devices connected");
             } catch (Exception e) {
                 System.err.println("SequencerManager: Error initializing MIDI: " + e.getMessage());
                 e.printStackTrace();
             }
 
         CommandBus.getInstance().register(this);
-        System.out.println("SequencerManager: Initialization complete");
+        // System.out.println("SequencerManager: Initialization complete");
         // isInitialized = true;
     }
 
     // Optimize buffer size and latency settings
     private void setupSequencer() throws MidiUnavailableException {
-        System.out.println("SequencerManager: Setting up sequencer...");
+        // System.out.println("SequencerManager: Setting up sequencer...");
         sequencer = MidiSystem.getSequencer(false);
         if (sequencer == null) {
             throw new MidiUnavailableException("Could not obtain MIDI sequencer");
@@ -93,7 +93,7 @@ public class MidiClockSource implements IBusListener {
         try {
             // These are general properties that might work across implementations
             // if (sequencer instanceof javax.sound.midi.RealTimeSequencer) {
-            //     System.out.println("Using real-time sequencer");
+            //     // System.out.println("Using real-time sequencer");
             // }
             
             // Additional sequencer tuning
@@ -103,7 +103,7 @@ public class MidiClockSource implements IBusListener {
             System.err.println("Warning: Could not optimize sequencer: " + e.getMessage());
         }
         
-        System.out.println("SequencerManager: Sequencer opened successfully");
+        // System.out.println("SequencerManager: Sequencer opened successfully");
     }
 
     private void setupSynthesizer() throws MidiUnavailableException {
@@ -178,31 +178,31 @@ public class MidiClockSource implements IBusListener {
         initialize();
 
         try {
-            System.out.println("SequencerManager: Attempting to start sequencer");
+            // System.out.println("SequencerManager: Attempting to start sequencer");
             if (sequencer != null && !sequencer.isRunning()) {
-                System.out.println("SequencerManager: Sequencer exists and is not running");
+                // System.out.println("SequencerManager: Sequencer exists and is not running");
                 // Important: Make sure any active session is properly initialized
                 if (getActiveSession() != null) {
-                    System.out.println("SequencerManager: Active session found: " + getActiveSession().getId());
+                    // System.out.println("SequencerManager: Active session found: " + getActiveSession().getId());
                     getActiveSession().beforeStart();
-                    System.out.println("SequencerManager: Called session.beforeStart()");
+                    // System.out.println("SequencerManager: Called session.beforeStart()");
                 } else {
-                    System.out.println("SequencerManager: No active session found!");
+                    // System.out.println("SequencerManager: No active session found!");
                 }
 
                 // Start sequencer
                 sequencer.start();
-                System.out.println("SequencerManager: Sequencer started");
+                // System.out.println("SequencerManager: Sequencer started");
 
                 // Publish state change - CRITICAL for UI updates
                 commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
-                System.out.println("SequencerManager: Published TRANSPORT_STATE_CHANGED event");
+                // System.out.println("SequencerManager: Published TRANSPORT_STATE_CHANGED event");
             } else {
-                System.out.println("SequencerManager: Cannot start - sequencer is null or already running");
+                // System.out.println("SequencerManager: Cannot start - sequencer is null or already running");
                 if (sequencer == null) {
-                    System.out.println("SequencerManager: Sequencer is null!");
+                    // System.out.println("SequencerManager: Sequencer is null!");
                 } else {
-                    System.out.println("SequencerManager: Sequencer is already running!");
+                    // System.out.println("SequencerManager: Sequencer is already running!");
                 }
             }
         } catch (Exception e) {
@@ -220,7 +220,7 @@ public class MidiClockSource implements IBusListener {
 
                 // Publish state change - CRITICAL for UI updates
                 commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
-                System.out.println("SequencerManager: Stopped sequencer, publishing state change event");
+                // System.out.println("SequencerManager: Stopped sequencer, publishing state change event");
             }
         } catch (Exception e) {
             logger.warning("Error stopping sequencer: " + e.getMessage());

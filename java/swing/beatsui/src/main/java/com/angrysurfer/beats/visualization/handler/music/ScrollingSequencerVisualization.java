@@ -314,7 +314,7 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
     private void evaluatePlayerActivations(int cols) {
         if (activePlayers == null || activePlayers.length == 0) return;
         
-        System.out.println("Evaluating activations for " + activePlayers.length + " players across " + totalTicks + " ticks");
+        // System.out.println("Evaluating activations for " + activePlayers.length + " players across " + totalTicks + " ticks");
         
         // Initialize activation map
         playerActivations = new boolean[activePlayers.length][cols];
@@ -325,11 +325,11 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
             Set<Rule> rules = player.getRules();
             
             if (rules == null || rules.isEmpty()) {
-                System.out.println("Player " + player.getName() + " has no rules, skipping");
+                // System.out.println("Player " + player.getName() + " has no rules, skipping");
                 continue;
             }
             
-            System.out.println("Evaluating player: " + player.getName() + " with " + rules.size() + " rules");
+            // System.out.println("Evaluating player: " + player.getName() + " with " + rules.size() + " rules");
             
             // Count how many hits we find
             int hitCount = 0;
@@ -385,7 +385,7 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
                 }
             }
             
-            System.out.println("Player " + player.getName() + " has " + hitCount + " activations");
+            // System.out.println("Player " + player.getName() + " has " + hitCount + " activations");
         }
     }
     

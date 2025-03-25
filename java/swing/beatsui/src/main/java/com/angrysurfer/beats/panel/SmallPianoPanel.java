@@ -281,7 +281,7 @@ public class SmallPianoPanel extends StatusProviderPanel {
             if (key != null) {
                 key.getModel().setPressed(true);
                 key.getModel().setArmed(true);
-                System.out.println("Highlighting key for note: " + note); // Debug
+                // System.out.println("Highlighting key for note: " + note); // Debug
             }
         });
     }
@@ -292,13 +292,13 @@ public class SmallPianoPanel extends StatusProviderPanel {
             if (key != null) {
                 key.getModel().setPressed(false);
                 key.getModel().setArmed(false);
-                System.out.println("Unhighlighting key for note: " + note); // Debug
+                // System.out.println("Unhighlighting key for note: " + note); // Debug
             }
         });
     }
 
     private void playNote(int note) {
-        System.out.println("Playing note: " + note);
+        // System.out.println("Playing note: " + note);
         if (Objects.nonNull(statusConsumer)) {
             Player activePlayer = PlayerManager.getInstance().getActivePlayer();
             String playerInfo = activePlayer != null ? 
@@ -334,7 +334,7 @@ public class SmallPianoPanel extends StatusProviderPanel {
     }
 
     private void stopNote(int note) {
-        System.out.println("Stopping note: " + note);
+        // System.out.println("Stopping note: " + note);
         if (Objects.nonNull(statusConsumer)) {
             statusConsumer.setStatus("");
         }

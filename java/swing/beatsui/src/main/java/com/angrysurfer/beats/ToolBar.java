@@ -192,7 +192,7 @@ public class ToolBar extends JToolBar {
                 
                 try {
                     // Log every event for debugging
-                    System.out.println("ToolBar received timing event: " + cmd);
+                    // System.out.println("ToolBar received timing event: " + cmd);
                     
                     switch (cmd) {
                         case Commands.TIME_TICK -> {
@@ -200,7 +200,7 @@ public class ToolBar extends JToolBar {
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
                                     updateTickFields(currentSession);
-                                    System.out.println("Updated tick fields: " + currentSession.getTick());
+                                    // // System.out.println("Updated tick fields: " + currentSession.getTick());
                                 }
                             });
                         }
@@ -208,7 +208,7 @@ public class ToolBar extends JToolBar {
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
                                     updateBeatFields(currentSession);
-                                    System.out.println("Updated beat fields: " + currentSession.getBeat());
+                                    // // System.out.println("Updated beat fields: " + currentSession.getBeat());
                                 }
                             });
                         }
@@ -216,7 +216,7 @@ public class ToolBar extends JToolBar {
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
                                     updateBarFields(currentSession);
-                                    System.out.println("Updated bar fields: " + currentSession.getBar());
+                                    // // System.out.println("Updated bar fields: " + currentSession.getBar());
                                 }
                             });
                         }
@@ -224,7 +224,7 @@ public class ToolBar extends JToolBar {
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
                                     updatePartFields(currentSession);
-                                    System.out.println("Updated part fields: " + currentSession.getPart());
+                                    // // System.out.println("Updated part fields: " + currentSession.getPart());
                                 }
                             });
                         }
@@ -322,12 +322,11 @@ public class ToolBar extends JToolBar {
 
     private void updateSessionDisplay(Session session) {
         if (Objects.isNull(session) || Objects.isNull(session.getId())) {
-            System.out.println("ToolBar: Received null session or session ID");
+            // System.out.println("ToolBar: Received null session or session ID");
             return;
         }
 
-        System.out.println("ToolBar: Updating display for session " + session.getId() +
-                " with " + session.getPlayers().size() + " players");
+        // System.out.println("ToolBar: Updating display for session " + session.getId() + " with " + session.getPlayers().size() + " players");
 
         this.currentSession = session;
 
@@ -377,7 +376,7 @@ public class ToolBar extends JToolBar {
                     if (length > 0 && length <= 32) {
                         lengthCombo.setSelectedItem(length);
                     }
-                    System.out.println("Updated Length combobox to: " + length);
+                    // System.out.println("Updated Length combobox to: " + length);
                 }
                 
                 if (rightFields.get("Offset") instanceof JComboBox<?> offsetCombo) {
@@ -387,7 +386,7 @@ public class ToolBar extends JToolBar {
                     if (offset >= -12 && offset <= 12) {
                         offsetCombo.setSelectedItem(offset);
                     }
-                    System.out.println("Updated Offset combobox to: " + offset);
+                    // System.out.println("Updated Offset combobox to: " + offset);
                 }
 
                 // Update transport button states

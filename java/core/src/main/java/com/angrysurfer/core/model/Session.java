@@ -23,6 +23,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.LowLatencyMidiClock;
 import com.angrysurfer.core.service.MidiClockSource;
 import com.angrysurfer.core.util.Constants;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -157,6 +158,8 @@ public class Session implements Serializable, IBusListener {
 
     // FindAll<ControlCodeCaption> getCaptionFindAll();
 
+    private LowLatencyMidiClock lowLatencyMidiClock;
+
     public Session() {
         setSongLength(Long.MAX_VALUE);
         commandBus.register(this);
@@ -276,7 +279,7 @@ public class Session implements Serializable, IBusListener {
      * Make this a complete reset of all state
      */
     public void reset() {
-        System.out.println("Session: Resetting session state");
+        // System.out.println("Session: Resetting session state");
 
         // Reset all position variables to 1 instead of 0
         tick = 1;
@@ -289,41 +292,41 @@ public class Session implements Serializable, IBusListener {
         beatCount = 0;
         barCount = 0;
         partCount = 0;
-        System.out.println("Session: All counters reset");
+        // System.out.println("Session: All counters reset");
 
         // Reset player state
         if (getPlayers() != null) {
-            System.out.println("Session: Resetting " + getPlayers().size() + " players");
+            // System.out.println("Session: Resetting " + getPlayers().size() + " players");
             getPlayers().forEach(p -> {
                 if (p.getSkipCycler() != null) {
                     p.getSkipCycler().reset();
                 }
                 p.setEnabled(false);
-                System.out.println("Session: Reset player " + p.getId());
+                // System.out.println("Session: Reset player " + p.getId());
             });
         }
 
         // Clear lists
         if (addList != null) {
             addList.clear();
-            System.out.println("Session: Add list cleared");
+            // System.out.println("Session: Add list cleared");
         }
         if (removeList != null) {
             removeList.clear();
-            System.out.println("Session: Remove list cleared");
+            // System.out.println("Session: Remove list cleared");
         }
 
         // Reset state flags
         done = false;
         isActive = false;
         paused = false;
-        System.out.println("Session: State flags reset");
+        // System.out.println("Session: State flags reset");
 
         // Clear mute groups
         clearMuteGroups();
-        System.out.println("Session: Mute groups cleared");
+        // System.out.println("Session: Mute groups cleared");
 
-        System.out.println("Session: Reset complete");
+        // System.out.println("Session: Reset complete");
     }
 
     private void clearMuteGroups() {
@@ -368,49 +371,49 @@ public class Session implements Serializable, IBusListener {
      * Initialize all timing variables before session playback starts
      */
     public void beforeStart() {
-        System.out.println("Session: Preparing to start session " + getId());
+        // System.out.println("Session: Preparing to start session " + getId());
 
         // Reset state
         reset();
-        System.out.println("Session: State reset");
+        // System.out.println("Session: State reset");
 
         // Initialize lengths
         tickLength = ticksPerBeat;
         barLength = bars;
-        System.out.println("Session: Timing variables initialized:");
-        System.out.println("  - Ticks per beat: " + ticksPerBeat);
-        System.out.println("  - Beats per bar: " + beatsPerBar);
-        System.out.println("  - Bars: " + bars);
-        System.out.println("  - Part length: " + partLength);
+        // System.out.println("Session: Timing variables initialized:");
+        // System.out.println("  - Ticks per beat: " + ticksPerBeat);
+        // System.out.println("  - Beats per bar: " + beatsPerBar);
+        // System.out.println("  - Bars: " + bars);
+        // System.out.println("  - Part length: " + partLength);
 
         // Add tick listener
         setupTickListener();
 
         // Set up players
         if (getPlayers() != null && !getPlayers().isEmpty()) {
-            System.out.println("Session: Setting up " + getPlayers().size() + " players");
+            // System.out.println("Session: Setting up " + getPlayers().size() + " players");
             getPlayers().forEach(p -> {
-                System.out.println("Session: Setting up player " + p.getId() + " (" + p.getName() + ")");
+                // System.out.println("Session: Setting up player " + p.getId() + " (" + p.getName() + ")");
                 p.setEnabled(true);
                 if (p.getRules() != null) {
-                    System.out.println("  - Player has " + p.getRules().size() + " rules");
+                    // System.out.println("  - Player has " + p.getRules().size() + " rules");
                 }
             });
         } else {
-            System.out.println("Session: No players to set up");
+            // System.out.println("Session: No players to set up");
         }
 
         // Register with timing bus
         timingBus.register(this);
-        System.out.println("Session: Registered with timing bus");
+        // System.out.println("Session: Registered with timing bus");
 
         // Set active state
         isActive = true;
-        System.out.println("Session: Session marked as active");
+        // System.out.println("Session: Session marked as active");
 
         // Publish session starting event
         commandBus.publish(Commands.SESSION_STARTING, this);
-        System.out.println("Session: Published SESSION_STARTING event");
+        // System.out.println("Session: Published SESSION_STARTING event");
     }
 
     /**
@@ -470,7 +473,7 @@ public class Session implements Serializable, IBusListener {
 
     public boolean isRunning() {
         boolean running = sequencerManager != null && sequencerManager.isRunning();
-        System.out.println("Session.isRunning returning: " + running);
+        // System.out.println("Session.isRunning returning: " + running);
         return running;
     }
 
@@ -488,7 +491,7 @@ public class Session implements Serializable, IBusListener {
     }
 
     public void play() {
-        System.out.println("Session: Starting play sequence for session " + getId());
+        // System.out.println("Session: Starting play sequence for session " + getId());
 
         reset();
         
@@ -501,45 +504,43 @@ public class Session implements Serializable, IBusListener {
         // Add all enabled players to tickListeners
         syncPlayersWithTickListeners();
         
-        System.out.println("Session: " + players.size() + " players, " + 
-                           tickListeners.size() + " tick listeners");
+        // System.out.println("Session: " + players.size() + " players, " + tickListeners.size() + " tick listeners");
 
         sequencerManager.startSequence();
     }
 
     public void initializeDevices() {
-        System.out.println("Session: Initializing devices for session " + getId());
+        // System.out.println("Session: Initializing devices for session " + getId());
         List<MidiDevice> devices = DeviceManager.getMidiOutDevices();
-        System.out.println("Session: Found " + devices.size() + " MIDI output devices");
+        // System.out.println("Session: Found " + devices.size() + " MIDI output devices");
 
         if (getPlayers() == null || getPlayers().isEmpty()) {
-            System.out.println("Session: No players to initialize!");
+            // System.out.println("Session: No players to initialize!");
             return;
         }
 
-        System.out.println("Session: Initializing " + getPlayers().size() + " players");
+        // System.out.println("Session: Initializing " + getPlayers().size() + " players");
         getPlayers().forEach(p -> {
-            System.out.println("Session: Initializing player " + p.getId() + " (" + p.getName() + ")");
+            // System.out.println("Session: Initializing player " + p.getId() + " (" + p.getName() + ")");
             initializePlayerDevice(p, devices);
             initializePlayerPreset(p);
             p.setSession(this);
             p.setEnabled(true);
-            System.out.println("Session: Player " + p.getId() + " initialized and enabled");
+            // System.out.println("Session: Player " + p.getId() + " initialized and enabled");
         });
-        System.out.println("Session: Device initialization complete");
+        // System.out.println("Session: Device initialization complete");
     }
 
     private void initializePlayerDevice(Player p, List<MidiDevice> devices) {
-        System.out.println("Session: Initializing device for player " + p.getName());
+        // System.out.println("Session: Initializing device for player " + p.getName());
 
         if (p.getInstrument() == null) {
-            System.out.println("WARNING: Player " + p.getName() + " has no instrument!");
+            // System.out.println("WARNING: Player " + p.getName() + " has no instrument!");
             return;
         }
 
         try {
-            System.out.println(
-                    "Session: Player " + p.getName() + " initialized with instrument " + p.getInstrument().getName());
+            // System.out.println("Session: Player " + p.getName() + " initialized with instrument " + p.getInstrument().getName());
         } catch (Exception e) {
             System.err.println("Error initializing player device: " + e.getMessage());
             e.printStackTrace();
@@ -547,15 +548,14 @@ public class Session implements Serializable, IBusListener {
     }
 
     private void initializePlayerPreset(Player player) {
-        System.out.println("Session: Setting preset for player " + player.getId());
+        // System.out.println("Session: Setting preset for player " + player.getId());
         try {
             if (player.getPreset() > -1) {
-                System.out.println(
-                        "Session: Setting preset " + player.getPreset() + " on channel " + player.getChannel());
+                // System.out.println( "Session: Setting preset " + player.getPreset() + " on channel " + player.getChannel());
                 player.getInstrument().programChange(player.getChannel(), player.getPreset(), 0);
-                System.out.println("Session: Preset set successfully");
+                // System.out.println("Session: Preset set successfully");
             } else {
-                System.out.println("Session: No preset configured for player");
+                // System.out.println("Session: No preset configured for player");
             }
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
             System.err.println("Session: Failed to set preset: " + e.getMessage());
@@ -592,7 +592,7 @@ public class Session implements Serializable, IBusListener {
     @Override
     public void onAction(Command action) {
         if (action.getCommand() != null) {
-            System.out.println("Session received action: " + action.getCommand());
+            // // System.out.println("Session received action: " + action.getCommand());
             switch (action.getCommand()) {
             case Commands.TIMING_PARAMETERS_CHANGED -> sequencerManager.updateTimingParameters(getTempoInBPM(),
                     getTicksPerBeat(), getBeatsPerBar());
@@ -604,7 +604,7 @@ public class Session implements Serializable, IBusListener {
     public void onTick() {
         // For tick=1 issues, add special logging
         if (tick == 1) {
-            System.out.println("⚠️ TIMING CRITICAL: New cycle starting. tick=1, beat=" + beat + ", bar=" + bar);
+            // System.out.println("⚠️ TIMING CRITICAL: New cycle starting. tick=1, beat=" + beat + ", bar=" + bar);
         }
         
         // Reset all processing flags at the start of a new cycle
@@ -789,5 +789,21 @@ public class Session implements Serializable, IBusListener {
                 }
             }
         }
+    }
+
+    public void startSession() {
+        // Initialize and start the low latency clock if not already done
+        if (lowLatencyMidiClock == null) {
+            lowLatencyMidiClock = new LowLatencyMidiClock(this);
+        }
+        lowLatencyMidiClock.start();
+        // ...other start initialization code...
+    }
+
+    public void stopSession() {
+        if (lowLatencyMidiClock != null) {
+            lowLatencyMidiClock.stop();
+        }
+        // ...other stop cleanup code...
     }
 }

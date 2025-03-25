@@ -265,7 +265,7 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
             return;
 
         // Debug all commands received
-        // System.out.println("StatusBar received: " + action.getCommand());
+        // // System.out.println("StatusBar received: " + action.getCommand());
 
         try {
             switch (action.getCommand()) {
@@ -276,12 +276,12 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
                 }
                 case Commands.PLAYER_SELECTED -> {
                     if (action.getData() instanceof Player player) {
-                        System.out.println("StatusBar updating player info: " + player.getName());
+                        // System.out.println("StatusBar updating player info: " + player.getName());
                         updatePlayerInfo(player);
                     }
                 }
                 case Commands.PLAYER_UNSELECTED -> {
-                    System.out.println("StatusBar clearing player info");
+                    // System.out.println("StatusBar clearing player info");
                     clearPlayerInfo();
                 }
                 case Commands.TIME_TICK -> {

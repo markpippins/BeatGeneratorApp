@@ -278,7 +278,7 @@ public class Scale {
                 notes.add(SCALE_NOTES[i]);
             }
         }
-        System.out.println(notes);
+        // System.out.println(notes);
     }
 
     public static void main(String[] args) {
@@ -287,7 +287,7 @@ public class Scale {
         String scaleName = "Major";
 
         Boolean[] scale = getScale(key, scaleName);
-        System.out.println("Scale for key " + key + " in " + scaleName + ":");
+        // System.out.println("Scale for key " + key + " in " + scaleName + ":");
         printScale(scale);
 
         // Try another scale
@@ -295,7 +295,7 @@ public class Scale {
         scaleName = "Natural Minor";
 
         scale = getScale(key, scaleName);
-        System.out.println("\nScale for key " + key + " in " + scaleName + ":");
+        // System.out.println("\nScale for key " + key + " in " + scaleName + ":");
         printScale(scale);
     }
 

@@ -52,8 +52,7 @@ public class TimingBus extends AbstractBus {
             
             if (!timingListeners.contains(listener)) {
                 timingListeners.add(listener);
-                System.out.println("TimingBus: Registered listener: " + 
-                    (listener.getClass() != null ? listener.getClass().getSimpleName() : "null"));
+                // System.out.println("TimingBus: Registered listener: " +  (listener.getClass() != null ? listener.getClass().getSimpleName() : "null"));
             }
         }
     }
@@ -62,8 +61,7 @@ public class TimingBus extends AbstractBus {
     public void unregister(IBusListener listener) {
         if (listener != null && timingListeners != null) {
             timingListeners.remove(listener);
-            System.out.println("TimingBus: Unregistered listener: " + 
-                (listener.getClass() != null ? listener.getClass().getSimpleName() : "null"));
+            // System.out.println("TimingBus: Unregistered listener: " +  (listener.getClass() != null ? listener.getClass().getSimpleName() : "null"));
         }
     }
 }

@@ -146,7 +146,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         // Register with command and timing buses
         commandBus.register(this);
         timingBus.register(this);
-        System.out.println("Player constructor: Registered with buses");
+        // System.out.println("Player constructor: Registered with buses");
     }
 
     public Player(String name, Session session, Instrument instrument) {
@@ -176,7 +176,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     public abstract void onTick(long tick, long bar);
     // {
-    // System.out.println("CRITICAL DEBUG - Player: " + getName()
+    // // System.out.println("CRITICAL DEBUG - Player: " + getName()
     // + " - BYPASSING ALL RULE CHECKS AND PLAYING UNCONDITIONALLY");
     // // ... rest of the method ...
     // }
@@ -545,13 +545,13 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
         String cmd = action.getCommand();
 
-        // System.out.println("Player " + getName() + " received command: " + cmd);
+        // // System.out.println("Player " + getName() + " received command: " + cmd);
 
         if (getSession() != null && getEnabled()) {
             switch (cmd) {
             case Commands.TIME_TICK -> {
                 if (!isRunning()) {
-                    System.out.println("Player " + getName() + " - Skipping tick (not running)");
+                    // System.out.println("Player " + getName() + " - Skipping tick (not running)");
                     return;
                 }
 
@@ -561,11 +561,11 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
                 long bar = session.getBar();
                 long part = session.getPart();
 
-                System.out.println("Player " + getName() + " processing tick, current tick: " + tick);
+                // System.out.println("Player " + getName() + " processing tick, current tick: " + tick);
 
                 // Only trigger if we haven't already triggered for this tick
                 if (tick == lastTriggeredTick) {
-                    System.out.println("Player " + getName() + " - Already triggered for tick " + tick);
+                    // System.out.println("Player " + getName() + " - Already triggered for tick " + tick);
                     return;
                 }
                 lastTriggeredTick = tick;

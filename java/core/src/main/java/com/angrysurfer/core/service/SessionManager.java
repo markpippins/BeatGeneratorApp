@@ -72,7 +72,7 @@ public class SessionManager implements IBusListener {
             this.activeSession = session;
             
             // Make sure the SequencerManager knows about the session
-            // System.out.println("SessionManager: Setting active session on SequencerManager");
+            // // System.out.println("SessionManager: Setting active session on SequencerManager");
             // sequencerManager.setActiveSession(session);
             
             commandBus.publish(Commands.SESSION_SELECTED, this, session);
@@ -81,28 +81,28 @@ public class SessionManager implements IBusListener {
     }
 
     public void initialize() {
-        System.out.println("SessionManager: Initializing...");
+        // System.out.println("SessionManager: Initializing...");
         logger.info("Initializing session manager");
 
         List<Instrument> instruments = UserConfigManager.getInstance().getCurrentConfig().getInstruments();
-        System.out.println("SessionManager: Got " + instruments.size() + " instruments from config");
+        // System.out.println("SessionManager: Got " + instruments.size() + " instruments from config");
 
         // Instead of creating SessionManager, directly load session
         loadActiveSession();
-        System.out.println("SessionManager: Active session loaded: " + (activeSession != null ? activeSession.getId() : "null"));
+        // System.out.println("SessionManager: Active session loaded: " + (activeSession != null ? activeSession.getId() : "null"));
         
         if (activeSession != null) {
-            System.out.println("SessionManager: Session details:");
-            System.out.println("  - ID: " + activeSession.getId());
-            System.out.println("  - Players: " + (activeSession.getPlayers() != null ? activeSession.getPlayers().size() : 0));
-            System.out.println("  - BPM: " + activeSession.getTempoInBPM());
-            System.out.println("  - PPQ: " + activeSession.getTicksPerBeat());
+            // System.out.println("SessionManager: Session details:");
+            // System.out.println("  - ID: " + activeSession.getId());
+            // System.out.println("  - Players: " + (activeSession.getPlayers() != null ? activeSession.getPlayers().size() : 0));
+            // System.out.println("  - BPM: " + activeSession.getTempoInBPM());
+            // System.out.println("  - PPQ: " + activeSession.getTicksPerBeat());
         }
         
         logSessionState(getActiveSession());
 
         songEngine = new SongEngine();
-        System.out.println("SessionManager: SongEngine created");
+        // System.out.println("SessionManager: SongEngine created");
 
         commandBus.register(new IBusListener() {
             @Override
@@ -120,9 +120,9 @@ public class SessionManager implements IBusListener {
                         case Commands.TRANSPORT_REWIND -> moveBack();
                         case Commands.TRANSPORT_FORWARD -> moveForward();
                         case Commands.TRANSPORT_PLAY -> {
-                            System.out.println("SessionManager: Received TRANSPORT_PLAY command");
+                            // System.out.println("SessionManager: Received TRANSPORT_PLAY command");
                             if (activeSession != null) {
-                                System.out.println("Starting session: " + activeSession.getId());
+                                // System.out.println("Starting session: " + activeSession.getId());
                                 activeSession.play();
                             }
                         }
