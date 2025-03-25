@@ -390,6 +390,70 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             }
         }
 
+        // Use global count values from the session rather than current (cyclical) ones.
+        double globalTickCount = (double) getSession().getTickCount();
+        double globalBeatCount = getSession().getBeatCount();
+        double globalBarCount = getSession().getBarCount();
+        double globalPartCount = getSession().getPartCount();
+
+        // Evaluate tick count rules: default to true if none exists.
+        boolean tickCountMatched = tickCountRuleCache.isEmpty();
+        if (!tickCountMatched) {
+            for (Rule rule : tickCountRuleCache) {
+                boolean match = Operator.evaluate(rule.getComparison(), globalTickCount, rule.getValue().doubleValue());
+                logger.info("Tick Count rule: comp={}, globalTickCount={}, ruleVal={}, result={}", rule.getComparison(), globalTickCount, rule.getValue(), match);
+                if (match) {
+                    tickCountMatched = true;
+                    break;
+                }
+            }
+        }
+
+        // Evaluate beat count rules: default to true if none exists.
+        boolean beatCountMatched = beatCountRuleCache.isEmpty();
+        if (!beatCountMatched) {
+            for (Rule rule : beatCountRuleCache) {
+                boolean match = Operator.evaluate(rule.getComparison(), globalBeatCount, rule.getValue().doubleValue());
+                logger.info("Beat Count rule: comp={}, globalBeatCount={}, ruleVal={}, result={}", rule.getComparison(), globalBeatCount, rule.getValue(), match);
+                if (match) {
+                    beatCountMatched = true;
+                    break;
+                }
+            }
+        }
+
+        // Evaluate bar count rules: default to true if none exists.
+        boolean barCountMatched = barCountRuleCache.isEmpty();
+        if (!barCountMatched) {
+            for (Rule rule : barCountRuleCache) {
+                boolean match = Operator.evaluate(rule.getComparison(), globalBarCount, rule.getValue().doubleValue());
+                logger.info("Bar Count rule: comp={}, globalBarCount={}, ruleVal={}, result={}", rule.getComparison(), globalBarCount, rule.getValue(), match);
+                if (match) {
+                    barCountMatched = true;
+                    break;
+                }
+            }
+        }
+
+        // Evaluate part count rules: default to true if none exists.
+        boolean partCountMatched = partCountRuleCache.isEmpty();
+        if (!partCountMatched) {
+            for (Rule rule : partCountRuleCache) {
+                boolean match = Operator.evaluate(rule.getComparison(), globalPartCount, rule.getValue().doubleValue());
+                logger.info("Part Count rule: comp={}, globalPartCount={}, ruleVal={}, result={}", rule.getComparison(), globalPartCount, rule.getValue(), match);
+                if (match) {
+                    partCountMatched = true;
+                    break;
+                }
+            }
+        }
+
+        // All count constraints must match if present
+        if (!tickCountMatched || !beatCountMatched || !barCountMatched || !partCountMatched) {
+            logger.info("Player {}: Count constraints not met: tickCountMatched={}, beatCountMatched={}, barCountMatched={}, partCountMatched={}", getName(), tickCountMatched, beatCountMatched, barCountMatched, partCountMatched);
+            return false;
+        }
+
         // Lastly, check probability (or other conditions)
         if (!isProbable()) {
             if (debug) {
@@ -431,13 +495,23 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
                 case Comparison.BAR:
                     barRuleCache.add(rule);
                     break;
+                case Comparison.PART:
+                    partRuleCache.computeIfAbsent(Long.valueOf(rule.getPart()), k -> new HashSet<>())
+                                 .add(rule);
+                    break;
+                case Comparison.TICK_COUNT:
+                    tickCountRuleCache.add(rule);
+                    break;
+                case Comparison.BEAT_COUNT:
+                    beatCountRuleCache.add(rule);
+                    break;
+                case Comparison.BAR_COUNT:
+                    barCountRuleCache.add(rule);
+                    break;
+                case Comparison.PART_COUNT:
+                    partCountRuleCache.add(rule);
+                    break;
             }
-            
-            // Group by part - FIX: convert int to Long
-            int partInt = rule.getPart();
-            Long partKey = Long.valueOf(partInt); // Convert int to Long for Map key
-            Set<Rule> partRules = partRuleCache.computeIfAbsent(partKey, k -> new HashSet<>());
-            partRules.add(rule);
         }
     }
 
@@ -639,6 +713,22 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     @JsonIgnore
     @Transient
     private final Map<Long, Set<Rule>> partRuleCache = new HashMap<>();
+
+    @JsonIgnore
+    @Transient
+    private final Set<Rule> tickCountRuleCache = new HashSet<>();
+
+    @JsonIgnore
+    @Transient
+    private final Set<Rule> beatCountRuleCache = new HashSet<>();
+
+    @JsonIgnore
+    @Transient
+    private final Set<Rule> barCountRuleCache = new HashSet<>();
+
+    @JsonIgnore
+    @Transient
+    private final Set<Rule> partCountRuleCache = new HashSet<>();
 
     // Add this method to Player class
     public void invalidateRuleCache() {
