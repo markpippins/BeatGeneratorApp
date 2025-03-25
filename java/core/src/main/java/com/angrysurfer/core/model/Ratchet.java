@@ -7,7 +7,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.service.SequencerManager;
+import com.angrysurfer.core.service.MidiClockSource;
 import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.Operator;
 
@@ -88,13 +88,13 @@ public class Ratchet extends Strike {
     }
 
     public boolean shouldPlay() {
-        double tick = SequencerManager.getInstance().getCurrentTick();
+        double tick = getSession().getTick();
         return tick >= targetTick && tick < targetTick + 1;
     }
 
     @Override
     public void onAction(Command action) {
-        if (action.getCommand() == Commands.TIMING_TICK) {
+        if (action.getCommand() == Commands.TIME_TICK) {
             if (shouldPlay()) {
                 onTick(getSession().getTick(), getSession().getBar());
             }

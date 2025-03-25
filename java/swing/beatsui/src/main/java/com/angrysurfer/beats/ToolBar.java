@@ -195,7 +195,7 @@ public class ToolBar extends JToolBar {
                     System.out.println("ToolBar received timing event: " + cmd);
                     
                     switch (cmd) {
-                        case Commands.TIMING_TICK -> {
+                        case Commands.TIME_TICK -> {
                             // Use SwingUtilities.invokeLater for thread safety when updating UI
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
@@ -204,7 +204,7 @@ public class ToolBar extends JToolBar {
                                 }
                             });
                         }
-                        case Commands.TIMING_BEAT -> {
+                        case Commands.TIME_BEAT -> {
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
                                     updateBeatFields(currentSession);
@@ -212,7 +212,7 @@ public class ToolBar extends JToolBar {
                                 }
                             });
                         }
-                        case Commands.TIMING_BAR -> {
+                        case Commands.TIME_BAR -> {
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
                                     updateBarFields(currentSession);
@@ -220,7 +220,7 @@ public class ToolBar extends JToolBar {
                                 }
                             });
                         }
-                        case Commands.TIMING_PART -> {
+                        case Commands.TIME_PART -> {
                             SwingUtilities.invokeLater(() -> {
                                 if (currentSession != null) {
                                     updatePartFields(currentSession);
@@ -463,22 +463,22 @@ public class ToolBar extends JToolBar {
 
                 SwingUtilities.invokeLater(() -> {
                     switch (action.getCommand()) {
-                        case Commands.TIMING_TICK -> {
+                        case Commands.TIME_TICK -> {
                             currentTick = (currentTick + 1) % (currentSession != null ? currentSession.getTicksPerBeat() : 24);
                             totalTicks++;
                             updateTimingDisplays();
                         }
-                        case Commands.TIMING_BEAT -> {
+                        case Commands.TIME_BEAT -> {
                             currentBeat = (currentBeat + 1) % (currentSession != null ? currentSession.getBeatsPerBar() : 4);
                             totalBeats++;
                             updateTimingDisplays();
                         }
-                        case Commands.TIMING_BAR -> {
+                        case Commands.TIME_BAR -> {
                             currentBar = (currentBar + 1) % (currentSession != null ? currentSession.getBars() : 4);
                             totalBars++;
                             updateTimingDisplays();
                         }
-                        case Commands.TIMING_PART -> {
+                        case Commands.TIME_PART -> {
                             currentPart = (currentPart + 1);
                             updateTimingDisplays();
                         }

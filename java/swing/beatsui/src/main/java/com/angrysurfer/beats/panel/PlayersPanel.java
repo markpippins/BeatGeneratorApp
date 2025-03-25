@@ -11,13 +11,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.PlayersTable;
 import com.angrysurfer.beats.widget.PlayersTableModel;
@@ -39,7 +41,7 @@ import lombok.Setter;
 @Setter
 public class PlayersPanel extends JPanel {
 
-    private static final Logger logger = Logger.getLogger(PlayersPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PlayersPanel.class.getName());
 
     private final PlayersTable table;
     private final StatusConsumer status;
@@ -168,7 +170,7 @@ public class PlayersPanel extends JPanel {
                 player.setMuted(!player.isMuted());
                 updatePlayerRow(player);
             } else {
-                logger.warning("No player selected to force event");
+                logger.error("No player selected to force event");
             }
         });
         rightButtonPanel.add(muteButton);
@@ -263,14 +265,14 @@ public class PlayersPanel extends JPanel {
                 String cmd = action.getCommand();
                 try {
                     switch (cmd) {
-                        case Commands.TIMING_TICK, Commands.PLAYER_TABLE_REFRESH_REQUEST -> {
+                        case Commands.TIME_TICK, Commands.PLAYER_TABLE_REFRESH_REQUEST -> {
                             SwingUtilities.invokeLater(() -> {
                                 refreshPlayers(SessionManager.getInstance().getActiveSession().getPlayers());
                             });
                         }
                     }
                 } catch (Exception e) {
-                    logger.severe("Error processing command: " + e.getMessage());
+                    logger.error("Error processing command: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -279,18 +281,70 @@ public class PlayersPanel extends JPanel {
         CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null)
+                if (action.getCommand() == null || action.getSender() == PlayersPanel.this)
                     return;
 
                 String cmd = action.getCommand();
                 try {
                     switch (cmd) {
+                        // Add explicit handler for SESSION_CHANGED
+                        case Commands.SESSION_CHANGED -> {
+                            logger.info("PlayersPanel: Received SESSION_CHANGED");
+                            if (action.getData() instanceof Session session) {
+                                // Prevent processing duplicate session events
+                                long now = System.currentTimeMillis();
+                                if (session.getId() != null && 
+                                    session.getId().equals(lastProcessedSessionId) && 
+                                    (now - lastSessionEventTime) < EVENT_THROTTLE_MS) {
+                                    logger.debug("PlayersPanel: Ignoring duplicate session event: {}", session.getId());
+                                    return;
+                                }
+                                                
+                                // Update tracking state
+                                lastProcessedSessionId = session.getId();
+                                lastSessionEventTime = now;
+                                                
+                                logger.info("PlayersPanel: Updating with new session: {}", session.getId());
+                                hasActiveSession = true;
+                                enableControls(true);
+                                
+                                // Use SwingUtilities.invokeLater to break potential call stack loops
+                                final Session finalSession = session;
+                                SwingUtilities.invokeLater(() -> {
+                                    refreshPlayers(finalSession.getPlayers());
+                                    // After the players are refreshed, auto-select the first one if needed
+                                    selectFirstPlayerIfNoneSelected();
+                                });
+                            }
+                        }
+                        
+                        // Keep existing handlers
                         case Commands.SESSION_SELECTED, Commands.SESSION_LOADED -> {
                             if (action.getData() instanceof Session session) {
-                                refreshPlayers(session.getPlayers());
+                                // Prevent processing duplicate session events
+                                long now = System.currentTimeMillis();
+                                if (session.getId() != null && 
+                                    session.getId().equals(lastProcessedSessionId) && 
+                                    (now - lastSessionEventTime) < EVENT_THROTTLE_MS) {
+                                    logger.debug("PlayersPanel: Ignoring duplicate session event: {}", session.getId());
+                                    return;
+                                }
+                                                
+                                // Update tracking state
+                                lastProcessedSessionId = session.getId();
+                                lastSessionEventTime = now;
+                                                
+                                logger.info("PlayersPanel: Updating with new session: {}", session.getId());
+                                hasActiveSession = true;
+                                enableControls(true);
                                 
-                                // After the players are refreshed, auto-select the first one if needed
-                                SwingUtilities.invokeLater(() -> PlayersPanel.this.selectFirstPlayerIfNoneSelected());
+                                // Use SwingUtilities.invokeLater to break potential call stack loops
+                                final Session finalSession = session;
+                                SwingUtilities.invokeLater(() -> {
+                                    refreshPlayers(finalSession.getPlayers());
+                                    // After the players are refreshed, auto-select the first one if needed
+                                    selectFirstPlayerIfNoneSelected();
+                                });
                             }
                         }
 
@@ -380,7 +434,7 @@ public class PlayersPanel extends JPanel {
                         }
                     }
                 } catch (Exception e) {
-                    logger.severe("Error processing command: " + e.getMessage());
+                    logger.error("Error processing command: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -519,71 +573,82 @@ public class PlayersPanel extends JPanel {
      * and only adding/removing players as needed
      */
     public void refreshPlayers(Set<Player> players) {
-        logger.info("Refreshing players table with " + (players != null ? players.size() : 0) + " players");
-        PlayersTableModel tableModel = table.getPlayersTableModel();
-        
-        if (players == null || players.isEmpty()) {
-            // If no players, just clear the table
-            tableModel.setRowCount(0);
+        // Add check to prevent recursion
+        if (isRefreshing) {
+            logger.debug("Already refreshing players, skipping");
             return;
         }
         
-        // Create a map of player IDs to players for the new set
-        Map<Long, Player> newPlayerMap = new HashMap<>();
-        for (Player player : players) {
-            if (player != null && player.getId() != null) {
-                newPlayerMap.put(player.getId(), player);
-            }
-        }
-        
-        // Get existing players in the table
-        Set<Long> existingPlayerIds = new HashSet<>();
-        int idColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_ID);
-        
-        // First update existing rows and mark for deletion
-        List<Integer> rowsToRemove = new ArrayList<>();
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            Long playerId = (Long) tableModel.getValueAt(i, idColIndex);
+        isRefreshing = true;
+        try {
+            logger.info("Refreshing players table with " + (players != null ? players.size() : 0) + " players");
+            PlayersTableModel tableModel = table.getPlayersTableModel();
             
-            if (playerId != null) {
-                existingPlayerIds.add(playerId);
-                
-                if (newPlayerMap.containsKey(playerId)) {
-                    // Player still exists - update this row
-                    Player updatedPlayer = newPlayerMap.get(playerId);
-                    updatePlayerRow(updatedPlayer);
-                    // Remove from map since we've handled it
-                    newPlayerMap.remove(playerId);
-                } else {
-                    // Player no longer exists - mark row for removal
-                    rowsToRemove.add(i);
+            if (players == null || players.isEmpty()) {
+                // If no players, just clear the table
+                tableModel.setRowCount(0);
+                return;
+            }
+            
+            // Create a map of player IDs to players for the new set
+            Map<Long, Player> newPlayerMap = new HashMap<>();
+            for (Player player : players) {
+                if (player != null && player.getId() != null) {
+                    newPlayerMap.put(player.getId(), player);
                 }
             }
-        }
-        
-        // Remove rows for deleted players (in reverse order to maintain indices)
-        Collections.sort(rowsToRemove, Collections.reverseOrder());
-        for (int rowIndex : rowsToRemove) {
-            tableModel.removeRow(rowIndex);
-        }
-        
-        // Add rows for new players
-        if (!newPlayerMap.isEmpty()) {
-            List<Player> newPlayers = new ArrayList<>(newPlayerMap.values());
-            Collections.sort(newPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
             
-            for (Player newPlayer : newPlayers) {
-                logger.info("Adding new player to table: " + newPlayer.getName() + " (ID: " + newPlayer.getId() + ")");
-                tableModel.addPlayerRow(newPlayer);
+            // Get existing players in the table
+            Set<Long> existingPlayerIds = new HashSet<>();
+            int idColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_ID);
+            
+            // First update existing rows and mark for deletion
+            List<Integer> rowsToRemove = new ArrayList<>();
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                Long playerId = (Long) tableModel.getValueAt(i, idColIndex);
+                
+                if (playerId != null) {
+                    existingPlayerIds.add(playerId);
+                    
+                    if (newPlayerMap.containsKey(playerId)) {
+                        // Player still exists - update this row
+                        Player updatedPlayer = newPlayerMap.get(playerId);
+                        updatePlayerRow(updatedPlayer);
+                        // Remove from map since we've handled it
+                        newPlayerMap.remove(playerId);
+                    } else {
+                        // Player no longer exists - mark row for removal
+                        rowsToRemove.add(i);
+                    }
+                }
             }
             
-            // Re-sort the entire table
-            table.sortTable();
-        }
-        
-        // If removing players removed the selection, select another player if available
-        if (!rowsToRemove.isEmpty() && table.getSelectedRow() < 0 && table.getRowCount() > 0) {
-            selectFirstPlayerIfNoneSelected();
+            // Remove rows for deleted players (in reverse order to maintain indices)
+            Collections.sort(rowsToRemove, Collections.reverseOrder());
+            for (int rowIndex : rowsToRemove) {
+                tableModel.removeRow(rowIndex);
+            }
+            
+            // Add rows for new players
+            if (!newPlayerMap.isEmpty()) {
+                List<Player> newPlayers = new ArrayList<>(newPlayerMap.values());
+                Collections.sort(newPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                
+                for (Player newPlayer : newPlayers) {
+                    logger.info("Adding new player to table: " + newPlayer.getName() + " (ID: " + newPlayer.getId() + ")");
+                    tableModel.addPlayerRow(newPlayer);
+                }
+                
+                // Re-sort the entire table
+                table.sortTable();
+            }
+            
+            // If removing players removed the selection, select another player if available
+            if (!rowsToRemove.isEmpty() && table.getSelectedRow() < 0 && table.getRowCount() > 0) {
+                selectFirstPlayerIfNoneSelected();
+            }
+        } finally {
+            isRefreshing = false;
         }
     }
 
@@ -625,7 +690,7 @@ public class PlayersPanel extends JPanel {
                 CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
             }
         } catch (Exception ex) {
-            logger.severe("Error in player selection: " + ex.getMessage());
+            logger.error("Error in player selection: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
@@ -655,7 +720,7 @@ public class PlayersPanel extends JPanel {
                         .orElse(null);
             }
         } catch (Exception e) {
-            logger.severe("Error getting player at row: " + e.getMessage());
+            logger.error("Error getting player at row: " + e.getMessage());
         }
         
         return null;
@@ -680,4 +745,12 @@ public class PlayersPanel extends JPanel {
             table.handlePlayerSelection(0);
         }
     }
+
+    // Add this field to the class
+    private boolean isRefreshing = false;
+
+    // Add this field to PlayersPanel
+    private Long lastProcessedSessionId = null;
+    private long lastSessionEventTime = 0;
+    private static final long EVENT_THROTTLE_MS = 100;
 }

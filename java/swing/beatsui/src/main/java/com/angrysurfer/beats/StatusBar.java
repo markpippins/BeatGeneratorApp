@@ -284,19 +284,19 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
                     System.out.println("StatusBar clearing player info");
                     clearPlayerInfo();
                 }
-                case Commands.TIMING_TICK -> {
+                case Commands.TIME_TICK -> {
                     if (action.getData() instanceof Number tick) {
                         tickCount = tick.intValue();
                         updateTimeDisplay();
                     }
                 }
-                case Commands.TIMING_BEAT -> {
+                case Commands.TIME_BEAT -> {
                     if (action.getData() instanceof Number beat) {
                         beatCount = beat.intValue();
                         updateTimeDisplay();
                     }
                 }
-                case Commands.TIMING_BAR -> {
+                case Commands.TIME_BAR -> {
                     if (action.getData() instanceof Number bar) {
                         barCount = bar.intValue();
                         updateTimeDisplay();
@@ -359,7 +359,7 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
     private void updateTimeDisplay() {
         // Format as 00:00:00 (ticks:beats:bars)
         String formattedTime = String.format("%02d:%02d:%02d:%02d", 
-                               tickCount, beatCount + 1, barCount + 1, partCount + 1);
+                               tickCount, beatCount, barCount, partCount);
                                
         // Update the time field on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {

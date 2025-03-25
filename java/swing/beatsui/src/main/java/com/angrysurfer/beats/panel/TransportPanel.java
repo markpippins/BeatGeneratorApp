@@ -25,7 +25,8 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.service.SequencerManager;
+import com.angrysurfer.core.service.MidiClockSource;
+import com.angrysurfer.core.service.SessionManager;
 
 class TransportPanel extends JPanel implements IBusListener {
 
@@ -137,14 +138,12 @@ class TransportPanel extends JPanel implements IBusListener {
         String command = e.getActionCommand();
         switch (command) {
             case Commands.TRANSPORT_PLAY -> {
-                // Delegate to SequencerManager
-                SequencerManager.getInstance().start();
+                SessionManager.getInstance().getActiveSession().play();
                 // UI updates will happen through command listeners
             }
             case Commands.TRANSPORT_STOP -> {
-                // Delegate to SequencerManager
-                SequencerManager.getInstance().stop();
                 // UI updates will happen through command listeners
+                SessionManager.getInstance().getActiveSession().stop();
             }
             // Other cases...
         }
@@ -200,11 +199,11 @@ class TransportPanel extends JPanel implements IBusListener {
         if (action.getCommand() == null) return;
         
         switch (action.getCommand()) {
-            case Commands.TIMING_TICK -> {
+            case Commands.TIME_TICK -> {
                 // Flash tick LED
                 flashTickLed(tickLed);
             }
-            case Commands.TIMING_BEAT -> {
+            case Commands.TIME_BEAT -> {
                 // Flash beat LED
                 flashBeatLed(beatLed);
             }
@@ -226,7 +225,7 @@ class TransportPanel extends JPanel implements IBusListener {
             timeBus.unregister(this);
             
             // Clean up sequencer
-            SequencerManager.getInstance().cleanup();
+            SessionManager.getInstance().getActiveSession().getSequencerManager().cleanup();
         } catch (Exception e) {
             System.err.println("Error during cleanup: " + e.getMessage());
         }

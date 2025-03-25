@@ -59,7 +59,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         stepTimer = new javax.swing.Timer(initialMsPerStep, e -> {
             if (isPlaying) {
                 int nextStep = (currentStep + 1) % 16;
-                System.out.println("Timer firing: current=" + currentStep + ", next=" + nextStep);
+                // System.out.println("Timer firing: current=" + currentStep + ", next=" + nextStep);
                 updateStep(currentStep, nextStep);
                 currentStep = nextStep;
             }
@@ -121,7 +121,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             //    // Removed to avoid conflicts
             // }
             
-            case Commands.TIMING_BEAT -> {
+            case Commands.TIME_BEAT -> {
                 // Just use for tempo synchronization
                 if (isPlaying && action.getData() instanceof Number beatNum) {
                     System.out.println("X0X: Beat " + beatNum.intValue() + " (purely informational)");

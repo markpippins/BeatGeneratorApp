@@ -21,14 +21,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SessionManager {
+public class SessionManager implements IBusListener {
 
     private static final Logger logger = Logger.getLogger(SessionManager.class.getName());
     private static SessionManager instance;
 
     private final CommandBus commandBus = CommandBus.getInstance();
     private final RedisService redisService = RedisService.getInstance();
-    private final SequencerManager sequencerManager = SequencerManager.getInstance();
 
     private final Map<Long, Instrument> instrumentCache = new HashMap<>();
 
@@ -73,8 +72,8 @@ public class SessionManager {
             this.activeSession = session;
             
             // Make sure the SequencerManager knows about the session
-            System.out.println("SessionManager: Setting active session on SequencerManager");
-            sequencerManager.setActiveSession(session);
+            // System.out.println("SessionManager: Setting active session on SequencerManager");
+            // sequencerManager.setActiveSession(session);
             
             commandBus.publish(Commands.SESSION_SELECTED, this, session);
             logger.info("Session selected: " + session.getId());
@@ -130,7 +129,7 @@ public class SessionManager {
                         case Commands.TRANSPORT_STOP -> {
                             // Direct control of transport
                             if (activeSession != null) {
-                                sequencerManager.stop();
+                               getActiveSession().stop();
                             }
                             // Also stop recording when transport stops
                             if (isRecording()) {
@@ -458,5 +457,11 @@ public class SessionManager {
             commandBus.publish(Commands.PLAYER_DELETED, this);
             logger.info("Successfully deleted " + deletedCount + " players");
         }
+    }
+
+    @Override
+    public void onAction(Command action) {
+        // TODO Auto-generated method stub
+        // throw new UnsupportedOperationException("Unimplemented method 'onAction'");
     }
 }

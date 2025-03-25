@@ -10,7 +10,6 @@ import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.IllegalFormatConversionException;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -29,6 +28,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.ToggleSwitch;
 import com.angrysurfer.core.api.Command;
@@ -42,7 +44,7 @@ import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.service.UserConfigManager;
 
 public class PlayerEditPanel extends StatusProviderPanel {
-    private static final Logger logger = Logger.getLogger(PlayerEditPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PlayerEditPanel.class.getName());
     private final Player player;
 
     // Basic properties
@@ -142,9 +144,11 @@ public class PlayerEditPanel extends StatusProviderPanel {
         // ...existing command listener code...
 
         // Add debugging to verify player and rules
-        logger.info(player != null ? "PlayerEditPanel initialized for player: " + player.getName() +
-                " with " + (player.getRules() != null ? player.getRules().size() : 0) + " rules"
-                : "Player is null");
+        logger.info(
+                player != null
+                        ? "PlayerEditPanel initialized for player: " + player.getName() + " with "
+                                + (player.getRules() != null ? player.getRules().size() : 0) + " rules"
+                        : "Player is null");
 
         // Register for rule-related commands
         CommandBus.getInstance().register(new IBusListener() {
@@ -156,15 +160,13 @@ public class PlayerEditPanel extends StatusProviderPanel {
                 String cmd = action.getCommand();
 
                 // Use traditional if/else instead of pattern matching
-                if (Commands.RULE_ADDED.equals(cmd) ||
-                        Commands.RULE_EDITED.equals(cmd) ||
-                        Commands.RULE_DELETED.equals(cmd)) {
+                if (Commands.RULE_ADDED.equals(cmd) || Commands.RULE_EDITED.equals(cmd)
+                        || Commands.RULE_DELETED.equals(cmd)) {
 
                     // If a rule was added/edited/deleted for any player
                     if (player != null) {
                         // Refresh player from session to get latest rules
-                        Player updatedPlayer = SessionManager.getInstance()
-                                .getActiveSession()
+                        Player updatedPlayer = SessionManager.getInstance().getActiveSession()
                                 .getPlayer(player.getId());
                         if (updatedPlayer != null) {
                             // Update our player reference with latest rules
@@ -186,8 +188,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
 
         // Top panel for basic controls - now using GridBagLayout for two rows
         JPanel topPanel = new JPanel(new GridBagLayout());
-        topPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Basic Properties"),
+        topPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Basic Properties"),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -342,8 +343,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         setupRulesPanel();
 
         // Combine parameters and rules with split pane
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                mainContent, createRulesPanel());
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainContent, createRulesPanel());
         splitPane.setResizeWeight(0.7);
         add(splitPane, BorderLayout.CENTER);
     }
@@ -387,11 +387,11 @@ public class PlayerEditPanel extends StatusProviderPanel {
         if (selectedInstrument != null) {
             player.setInstrument(selectedInstrument);
             player.setInstrumentId(selectedInstrument.getId());
-            logger.fine("Selected instrument: " + selectedInstrument.getName() +
-                    " (ID: " + selectedInstrument.getId() + ")");
+            logger.debug("Selected instrument: " + selectedInstrument.getName() + " (ID: " + selectedInstrument.getId()
+                    + ")");
         } else {
             // Log warning and keep existing instrument (if any)
-            logger.warning("No instrument selected in combo box");
+            logger.error("No instrument selected in combo box");
         }
 
         // These operations are safe as spinners always have values
@@ -429,7 +429,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
 
         if (instruments == null || instruments.isEmpty()) {
-            logger.warning("No instruments found in UserConfigManager");
+            logger.error("No instruments found in UserConfigManager");
             // Add a default instrument to prevent null selections
             Instrument defaultInstrument = new Instrument();
             defaultInstrument.setId(0L);
@@ -440,7 +440,8 @@ public class PlayerEditPanel extends StatusProviderPanel {
             instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
             for (Instrument inst : instruments) {
-                instrumentCombo.addItem(inst);
+                if (inst.getAvailable())
+                    instrumentCombo.addItem(inst);
             }
         }
 
@@ -462,7 +463,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         // Handle null values safely
         int safeValue;
         if (value == null) {
-            logger.warning(name + " value is null, using default: " + min);
+            logger.error(name + " value is null, using default: " + min);
             safeValue = min;
         } else {
             // Clamp to valid range
@@ -470,8 +471,8 @@ public class PlayerEditPanel extends StatusProviderPanel {
 
             // Debug logging
             if (safeValue != value) {
-                logger.warning(String.format("%s value %d out of range [%d-%d], clamped to %d",
-                        name, value, min, max, safeValue));
+                logger.error(String.format("%s value %d out of range [%d-%d], clamped to %d", name, value, min, max,
+                        safeValue));
             }
         }
 
@@ -530,8 +531,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         deleteRuleButton.addActionListener(e -> {
             Rule selectedRule = getSelectedRule();
             if (selectedRule != null) {
-                CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this,
-                        new Rule[] { selectedRule });
+                CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, new Rule[] { selectedRule });
             }
         });
 
@@ -567,11 +567,10 @@ public class PlayerEditPanel extends StatusProviderPanel {
                 if (row < rulesList.size()) {
                     return rulesList.get(row);
                 } else {
-                    logger.warning("Selected row " + row + " is out of bounds (rules size: " +
-                            rulesList.size() + ")");
+                    logger.error("Selected row " + row + " is out of bounds (rules size: " + rulesList.size() + ")");
                 }
             } catch (Exception e) {
-                logger.severe("Error accessing rule at row " + row + ": " + e.getMessage());
+                logger.error("Error accessing rule at row " + row + ": " + e.getMessage());
             }
         }
         return null;
@@ -581,14 +580,12 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private void updateRulesTable() {
         try {
             // Debug output
-            logger.info("Updating rules table for player: " +
-                    (player != null ? player.getName() : "null"));
+            logger.info("Updating rules table for player: " + (player != null ? player.getName() : "null"));
 
             // Basic validation
             if (rulesTable == null || player == null || player.getRules() == null) {
-                logger.warning("Cannot update rules table - " +
-                        (rulesTable == null ? "table is null"
-                                : player == null ? "player is null" : "player rules is null"));
+                logger.error("Cannot update rules table - " + (rulesTable == null ? "table is null"
+                        : player == null ? "player is null" : "player rules is null"));
                 return;
             }
 
@@ -597,8 +594,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
             model.setRowCount(0); // Clear existing rows
 
             // Log rule count
-            logger.info("Player " + player.getName() + " has " +
-                    player.getRules().size() + " rules");
+            logger.info("Player " + player.getName() + " has " + player.getRules().size() + " rules");
 
             // Add each rule to the table
             for (Rule rule : player.getRules()) {
@@ -608,35 +604,37 @@ public class PlayerEditPanel extends StatusProviderPanel {
                 try {
                     // Get display text for rule properties with CORRECT VARIABLE NAMES
                     // Rule.OPERATORS = {"Beat", "Tick", "Bar", ...} - what we're comparing
-                    String operatorText = rule.getOperator() >= 0 &&
-                            rule.getOperator() < Rule.OPERATORS.length ? Rule.OPERATORS[rule.getOperator()] : "Unknown";
+                    String operatorText = rule.getOperator() >= 0 && rule.getOperator() < Rule.OPERATORS.length
+                            ? Rule.OPERATORS[rule.getOperator()]
+                            : "Unknown";
 
                     // Rule.COMPARISONS = {"==", "<", ">", ...} - how we're comparing
-                    String comparisonText = rule.getComparison() >= 0 &&
-                            rule.getComparison() < Rule.COMPARISONS.length ? Rule.COMPARISONS[rule.getComparison()]
-                                    : "Unknown";
+                    String comparisonText = rule.getComparison() >= 0 && rule.getComparison() < Rule.COMPARISONS.length
+                            ? Rule.COMPARISONS[rule.getComparison()]
+                            : "Unknown";
 
                     String partText = rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart());
 
                     // SWAP the order to match column headers
-                    model.addRow(new Object[] {
-                            operatorText, // Column 0: "Comparison" (Beat, Tick, etc)
+                    model.addRow(new Object[] { operatorText, // Column 0: "Comparison" (Beat, Tick, etc)
                             comparisonText, // Column 1: "Operator" (==, <, >, etc)
                             rule.getValue(), // Column 2: Value
                             partText // Column 3: Part
                     });
                 } catch (IllegalFormatConversionException e) {
-                    logger.severe("Format conversion error: " + e.getMessage());
+                    logger.error("Format conversion error: " + e.getMessage());
 
                     // Use safer string conversion with SWAPPED order
-                    model.addRow(new Object[] {
-                            rule.getOperator() >= 0 ? Rule.OPERATORS[rule.getOperator()] : "Unknown", // Column 0:
-                                                                                                      // "Comparison"
-                            rule.getComparison() >= 0 ? Rule.COMPARISONS[rule.getComparison()] : "Unknown", // Column 1:
-                                                                                                            // "Operator"
-                            String.valueOf(rule.getValue()), // Column 2: Value
-                            rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart()) // Column 3: Part
-                    });
+                    model.addRow(
+                            new Object[] { rule.getOperator() >= 0 ? Rule.OPERATORS[rule.getOperator()] : "Unknown", // Column
+                                                                                                                     // 0:
+                                                                                                                     // "Comparison"
+                                    rule.getComparison() >= 0 ? Rule.COMPARISONS[rule.getComparison()] : "Unknown", // Column
+                                                                                                                    // 1:
+                                                                                                                    // "Operator"
+                                    String.valueOf(rule.getValue()), // Column 2: Value
+                                    rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart()) // Column 3: Part
+                            });
                 }
             }
 
@@ -644,7 +642,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
             rulesTable.revalidate();
             rulesTable.repaint();
         } catch (Exception e) {
-            logger.severe("Error updating rules table: " + e.getMessage());
+            logger.error("Error updating rules table: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -652,7 +650,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
     // Add a debug method to check player state
     private void debugPlayerState() {
         if (player == null) {
-            logger.warning("Player is null");
+            logger.error("Player is null");
             return;
         }
 
@@ -737,8 +735,8 @@ public class PlayerEditPanel extends StatusProviderPanel {
                     return;
 
                 // Listen for instrument changes
-                if (Commands.INSTRUMENT_UPDATED.equals(action.getCommand()) ||
-                        Commands.USER_CONFIG_LOADED.equals(action.getCommand())) {
+                if (Commands.INSTRUMENT_UPDATED.equals(action.getCommand())
+                        || Commands.USER_CONFIG_LOADED.equals(action.getCommand())) {
 
                     // Refresh the instrument combo
                     SwingUtilities.invokeLater(() -> {

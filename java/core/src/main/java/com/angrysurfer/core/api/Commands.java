@@ -22,11 +22,11 @@ public class Commands {
     public static final String TRANSPORT_RECORD_STATE_CHANGED = "TRANSPORT_RECORD_STATE_CHANGED";
 
     // Timing commands - consolidated
-    public static final String TIMING_TICK = "TIMING_TICK";
-    public static final String TIMING_BEAT = "TIMING_BEAT";
-    public static final String TIMING_BAR = "TIMING_BAR";
-    public static final String TIMING_PART = "TIMING_PART";
-    public static final String TIMING_RESET = "TIMING_RESET";
+    public static final String TIME_TICK = "TIMING_TICK";
+    public static final String TIME_BEAT = "TIMING_BEAT";
+    public static final String TIME_BAR = "TIMING_BAR";
+    public static final String TIME_PART = "TIMING_PART";
+    public static final String TIME_RESET = "TIMING_RESET";
 
     // File Commands
     public static final String NEW_FILE = "NEW_FILE";
@@ -58,7 +58,8 @@ public class Commands {
     public static final String PLAYER_DELETE_REQUEST = "PLAYER_DELETE_REQUEST";
     public static final String PLAYER_EDIT_CANCELLED = "PLAYER_EDIT_CANCELLED";
     public static final String EDIT_PLAYER_PARAMETERS = "EDIT_PLAYER_PARAMETERS"; // Add this line
-    public static final String PLAYER_COPY_EDIT_REQUEST = "PLAYER_COPY_EDIT_REQUEST"; // Add this constant with the other player commands
+    public static final String PLAYER_COPY_EDIT_REQUEST = "PLAYER_COPY_EDIT_REQUEST"; // Add this constant with the
+                                                                                      // other player commands
 
     // Player navigation commands
     public static final String PLAYER_ROW_INDEX_REQUEST = "PLAYER_ROW_INDEX_REQUEST";

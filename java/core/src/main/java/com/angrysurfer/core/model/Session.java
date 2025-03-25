@@ -21,9 +21,8 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.SequencerManager;
+import com.angrysurfer.core.service.MidiClockSource;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
 import com.angrysurfer.core.util.CyclerListener;
@@ -119,8 +118,19 @@ public class Session implements Serializable, IBusListener {
     @JsonIgnore
     private Set<MuteGroup> muteGroups = new HashSet<>();
 
+    @JsonIgnore
+    @Transient
     private CommandBus commandBus = CommandBus.getInstance();
+
+    @JsonIgnore
+    @Transient
     private TimingBus timingBus = TimingBus.getInstance(); // Add this
+
+    @JsonIgnore
+    @Transient
+    private final MidiClockSource sequencerManager = new MidiClockSource();
+
+    // FindAll<ControlCodeCaption> getCaptionFindAll();
 
     public Session() {
         setSongLength(Long.MAX_VALUE);
@@ -382,10 +392,6 @@ public class Session implements Serializable, IBusListener {
         reset();
         System.out.println("Session: State reset");
 
-        // Setup cyclers
-        setupCyclerListeners();
-        System.out.println("Session: Cycler listeners set up");
-
         // Initialize cycler lengths
         tickCycler.setLength(Long.valueOf(ticksPerBeat));
         beatCycler.setLength(Long.valueOf(beatsPerBar));
@@ -403,6 +409,9 @@ public class Session implements Serializable, IBusListener {
         barCounter.setLength(0L);
         partCounter.setLength(0L);
         System.out.println("Session: Counters reset");
+
+        // add tick listener
+        addTickListener();
 
         // Set up players
         if (getPlayers() != null && !getPlayers().isEmpty()) {
@@ -429,60 +438,6 @@ public class Session implements Serializable, IBusListener {
         // Publish session starting event
         commandBus.publish(Commands.SESSION_STARTING, this);
         System.out.println("Session: Published SESSION_STARTING event");
-    }
-
-    /**
-     * Set up listeners for cyclers to publish events
-     */
-    private void setupCyclerListeners() {
-        // Clear any existing listeners to avoid duplicates
-        getTickCycler().getListeners().clear();
-        getBeatCycler().getListeners().clear();
-        getBarCycler().getListeners().clear();
-        getPartCycler().getListeners().clear();
-
-        // Add tick cycler listener
-        getTickCycler().addListener(new CyclerListener() {
-            @Override
-            public void advanced(long position) {
-                // This is handled via onTick() already
-            }
-
-            @Override
-            public void cycleComplete() {
-                // This is handled via onBeatChange() already
-            }
-
-            @Override
-            public void starting() {
-                // No action needed
-            }
-        });
-
-        // Similar patterns for other cyclers...
-    }
-
-    /**
-     * Reset all cyclers to default state when stopping
-     */
-    public void onStop() {
-        logger.info("onStop() - resetting all cyclers and counters");
-
-        // Reset all primary cyclers
-        getTickCycler().reset();
-        getBeatCycler().reset();
-        getBarCycler().reset();
-        getPartCycler().reset();
-
-        // Also reset counter cyclers
-        // Comment if you want to keep count across stop/start
-        getTickCounter().reset();
-        getBeatCounter().reset();
-        getBarCounter().reset();
-        getPartCounter().reset();
-
-        // Reset granular beat tracking
-        setGranularBeat(0.0);
     }
 
     /**
@@ -542,7 +497,7 @@ public class Session implements Serializable, IBusListener {
 
     public boolean isRunning() {
         // Delegate to the SequencerManager since it knows the real state
-        SequencerManager sequencerManager = SequencerManager.getInstance();
+        // SequencerManager sequencerManager = SequencerManager.getInstance();
         boolean running = sequencerManager != null && sequencerManager.isRunning();
         System.out.println("Session.isRunning returning: " + running);
         return running;
@@ -575,9 +530,6 @@ public class Session implements Serializable, IBusListener {
         // Reset state
         reset();
 
-        // Make sure we have set up cycler listeners
-        setupCyclerListeners();
-
         // Initialize players
         initializeDevices();
 
@@ -589,7 +541,7 @@ public class Session implements Serializable, IBusListener {
         }
 
         // Start sequencer
-        SequencerManager.getInstance().start();
+        sequencerManager.startSequence();
 
         System.out.println("Session: Play sequence completed");
     }
@@ -652,45 +604,52 @@ public class Session implements Serializable, IBusListener {
     }
 
     public void stop() {
-        // Reset state
-        setPaused(false);
-        getBeatCycler().reset();
+
+        sequencerManager.stop();
 
         // Disable all players when stopping
         getPlayers().forEach(p -> p.setEnabled(false));
 
-        // Delegate stop command to SequencerManager
-        commandBus.publish(Commands.TRANSPORT_STOP, this);
+        logger.info("onStop() - resetting all cyclers and counters");
+
+        getTickCycler().getListeners().clear();
+
+        // Reset all primary cyclers
+        getTickCycler().reset();
+        getBeatCycler().reset();
+        getBarCycler().reset();
+        getPartCycler().reset();
+
+        // Also reset counter cyclers
+        // Comment if you want to keep count across stop/start
+        getTickCounter().reset();
+        getBeatCounter().reset();
+        getBarCounter().reset();
+        getPartCounter().reset();
+
+        // Reset granular beat tracking
+        setGranularBeat(0.0);
+
+        sequencerManager.cleanup();
     }
 
     @Override
     public void onAction(Command action) {
-        // Original Session implementation should go here
-        // For example:
-        if (action.getCommand() == null) {
-            return;
-        }
-
-        String cmd = action.getCommand();
-        switch (cmd) {
-        case Commands.TRANSPORT_STOP -> {
-            onStop();
-        }
-        case Commands.TRANSPORT_PLAY -> {
-            // Handle play command
-        }
-        case Commands.TIMING_PARAMETERS_CHANGED -> {
-            if (action.getData() instanceof Map) {
-                // Update parameters
+        if (action.getCommand() != null)
+            switch (action.getCommand()) {
+            case Commands.TIME_TICK -> onTick();
+            case Commands.TIMING_PARAMETERS_CHANGED -> sequencerManager.updateTimingParameters(getTempoInBPM(),
+                    getTicksPerBeat(), getBeatsPerBar());
             }
-        }
-        // Add other Session-specific command handling
-        }
+    }
+
+    private void onTick() {
+        getTickCycler().advance();
     }
 
     // Add a method to sync Session parameters to SequencerManager
     public void syncToSequencer() {
-        SequencerManager sequencerManager = SequencerManager.getInstance();
+        // SequencerManager sequencerManager = SequencerManager.getInstance();
         sequencerManager.updateTimingParameters(getTempoInBPM(), getTicksPerBeat(), getBeatsPerBar());
     }
 
@@ -751,44 +710,22 @@ public class Session implements Serializable, IBusListener {
     }
 
     /**
-     * Called before a tick is processed
-     */
-    private void beforeTick(Long tick) {
-        // Publish an event that we're about to process a tick
-        TimingBus.getInstance().publish(Commands.TIMING_TICK, this, tick);
-    }
-
-    /**
-     * Called after a tick is processed
-     */
-    public void afterTick() {
-        // Any cleanup or notifications after a tick
-        TimingBus.getInstance().publish(Commands.TIMING_TICK, this, getTickCycler().get());
-    }
-
-    /**
      * Handle beat changes - occurs every ticksPerBeat ticks
      */
     private void onBeatChange() {
         logger.debug("onBeatChange() - current beat: {}", getBeatCycler().get());
-
-        // First publish before beat event
-        TimingBus.getInstance().publish(Commands.TIMING_BEAT, this, getBeatCycler().get());
 
         // Advance the beat cycler - THIS IS CRITICAL
         getBeatCycler().advance();
         getBeatCounter().advance();
 
         // Publish standard beat event
-        TimingBus.getInstance().publish(Commands.TIMING_BEAT, this, getBeatCycler().get());
+        TimingBus.getInstance().publish(Commands.TIME_BEAT, this, getBeatCycler().get());
 
         // Check if we've completed a bar
-        if (getBeatCycler().atStart()) {
+        if (getBeat() % getBeatsPerBar() == 0)
             onBarChange();
-        }
 
-        // After processing
-        TimingBus.getInstance().publish(Commands.TIMING_BEAT, this, getBeatCycler().get());
     }
 
     /**
@@ -797,23 +734,16 @@ public class Session implements Serializable, IBusListener {
     private void onBarChange() {
         logger.debug("onBarChange() - current bar: {}", getBarCycler().get());
 
-        // First publish before bar event
-        TimingBus.getInstance().publish(Commands.TIMING_BAR, this, getBarCycler().get());
-
         // Advance the bar cycler - ALSO CRITICAL
         getBarCycler().advance();
         getBarCounter().advance();
 
         // Publish standard bar event
-        TimingBus.getInstance().publish(Commands.TIMING_BAR, this, getBarCycler().get());
+        TimingBus.getInstance().publish(Commands.TIME_BAR, this, getBarCycler().get());
 
         // Check if we've completed a part
-        if (getBarCycler().atStart()) {
+        if (getBar() % getPartLength() == 0)
             onPartChange();
-        }
-
-        // After processing
-        TimingBus.getInstance().publish(Commands.TIMING_BAR, this, getBarCycler().get());
     }
 
     /**
@@ -822,17 +752,43 @@ public class Session implements Serializable, IBusListener {
     public void onPartChange() {
         logger.debug("onPartChange() - current part: {}", getPartCycler().get());
 
-        // First publish before part event
-        TimingBus.getInstance().publish(Commands.TIMING_PART, this, getPartCycler().get());
-
         // Advance the part cycler - CRITICAL TOO
         getPartCycler().advance();
         getPartCounter().advance();
 
         // Publish standard part event
-        TimingBus.getInstance().publish(Commands.TIMING_PART, this, getPartCycler().get());
+        TimingBus.getInstance().publish(Commands.TIME_PART, this, getPartCycler().get());
+    }
 
-        // After processing
-        TimingBus.getInstance().publish(Commands.TIMING_PART, this, getPartCycler().get());
+    private void addTickListener() {
+        // Add tick listener
+        getTickCycler().addListener(new CyclerListener() {
+            @Override
+            public void advanced(long position) {
+                if (getTick() % getTicksPerBeat() == 0)
+                    onBeatChange();
+
+                // if (getBeat() % getBeatsPerBar() == 0)
+                //     onBarChange();
+
+                // if (getBar() % getPartLength() == 0)
+                //     onPartChange();
+            }
+
+            @Override
+            public void cycleComplete() {
+
+            }
+
+            @Override
+            public void starting() {
+                // No action needed
+            }
+        });
+    }
+
+    private void removeTickListener() {
+        // Remove tick listener
+        getTickCycler().getListeners().clear();
     }
 }

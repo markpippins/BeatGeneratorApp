@@ -22,23 +22,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Pad;
+import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.converter.IntegerArrayConverter;
-import com.angrysurfer.core.service.DeviceManager;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@Entity
+@Table(name = "instrument")
 public class Instrument implements Serializable {
 
     static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
@@ -63,8 +70,8 @@ public class Instrument implements Serializable {
     @Transient
     private Map<Integer, Integer[]> boundaries = new HashMap<>();
 
-    // @Transient
-    // private Map<Integer, Map<Long, String>> captions = new HashMap<>();
+    @Transient
+    private Map<Integer, Map<Long, String>> captions = new HashMap<>();
 
     @JsonIgnore
     @Transient
@@ -80,6 +87,7 @@ public class Instrument implements Serializable {
     private String deviceName;
 
     @Convert(converter = IntegerArrayConverter.class)
+    @Column(name = "channels")
     private Integer[] channels;
 
     private Integer lowestNote = 0;
@@ -96,7 +104,8 @@ public class Instrument implements Serializable {
 
     private Boolean available = false;
 
-    // private Set<Pattern> patterns;
+    @OneToMany(mappedBy = "instrument")
+    private Set<Pattern> patterns;
 
     public Instrument() {
 
@@ -209,11 +218,10 @@ public class Instrument implements Serializable {
             Receiver currentReceiver = getOrCreateReceiver();
             if (Objects.nonNull(currentReceiver)) {
                 currentReceiver.send(message, -1);
-                logger.debug("Sent message: %s to device: %s",
-                        MidiMessage.lookupCommand(message.getCommand()),
+                logger.debug("Sent message: {} to device: {}", MidiMessage.lookupCommand(message.getCommand()),
                         getName());
             } else
-                logger.error("Failed message to %s", getName());
+                logger.error("Failed message to {}", getName());
         } catch (Exception e) {
             logger.error("Send failed: {} - will attempt recovery", e.getMessage());
             cleanup();
@@ -222,7 +230,7 @@ public class Instrument implements Serializable {
             if (Objects.nonNull(receiver))
                 receiver.send(message, -1);
             else
-                logger.error("Failed retry message to %s", getName());
+                logger.error("Failed retry message to {}", getName());
         }
     }
 
@@ -246,6 +254,7 @@ public class Instrument implements Serializable {
         this.device = device;
         try {
             if (device != null) {
+                setDeviceName(device.getDeviceInfo().getName());
                 if (!device.isOpen()) {
                     device.open();
                 }
@@ -258,47 +267,12 @@ public class Instrument implements Serializable {
         initialized = true;
     }
 
-    /**
-     * Initializes the connection to the MIDI device for this instrument
-     * 
-     * @param deviceName The name of the device to connect to
-     * @return true if successfully connected, false otherwise
-     */
-    public boolean initializeDevice(String deviceName) {
-        try {
-            if (deviceName == null || deviceName.isEmpty()) {
-                logger.warn("Cannot initialize device with null or empty name");
-                return false;
-            }
-            
-            // Get the device by name
-            MidiDevice device = DeviceManager.getMidiDevice(deviceName);
-            if (device == null) {
-                logger.warn("Device not found: {}", deviceName);
-                return false;
-            }
-            
-            // Set the device and clean up previous connections
-            setDevice(device);
-            
-            // Now the device is properly set up with receiver initialized through setDevice method
-            setInitialized(true);
-            setAvailable(true);
-            
-            logger.info("Successfully initialized device: {}", deviceName);
-            return true;
-        } catch (Exception e) {
-            logger.error("Failed to initialize device {}: {}", deviceName, e.getMessage());
-            return false;
-        }
-    }
-
     // Add finalizer to ensure cleanup
-    // @Override
-    // protected void finalize() throws Throwable {
-    // cleanup();
-    // super.finalize();
-    // }
+    @Override
+    protected void finalize() throws Throwable {
+        cleanup();
+        super.finalize();
+    }
 
     public void assign(int cc, String control) {
         getAssignments().put(cc, control);
@@ -314,10 +288,5 @@ public class Instrument implements Serializable {
 
     private String lookupTarget(int key) {
         return assignments.getOrDefault(key, Integer.toString(key));
-    }
-
-    @Override
-    public String toString() {
-        return getName(); // This will be displayed in the combo box
     }
 }

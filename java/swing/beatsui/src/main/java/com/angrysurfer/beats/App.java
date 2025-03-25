@@ -116,14 +116,7 @@ public class App implements IBusListener {
             RedisService redisService = RedisService.getInstance();
             logger.info("Redis service initialized");
 
-            // Initialize managers in correct order
-            // UserConfigurationEngine.getInstance();
-            // if (UserConfigurationEngine.getInstance().getCurrentConfig() == null) {
-            logger.error("No user configuration found, creating default configuration");
-            // UserConfigurationEngine.getInstance().setCurrentConfig(new UserConfig());
-            // }
-            logger.info("User configuration manager initialized");
-
+            
             SessionManager.getInstance().initialize();
             logger.info("Session manager initialized");
 

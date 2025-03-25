@@ -21,7 +21,6 @@ import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.service.SequencerManager;
 import com.angrysurfer.core.service.SessionManager;
 
 public class ScrollingSequencerVisualization extends LockHandler implements IVisualizationHandler, IBusListener {
@@ -29,10 +28,10 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
     private static final int FRAMES_PER_SECOND = 60;
     
     // Updated colors as requested
-    private static final Color BEAT_MARKER_COLOR =  ColorUtils.charcoalGray; // new Color(220, 0, 0);  // Red for beats
-    private static final Color BAR_MARKER_COLOR =  Color.BLUE; //ColorUtils.coolBlue; // new Color(0, 0, 220);   // Blue for bars
-    private static final Color POSITION_INDICATOR = Color.WHITE; // ColorUtils.deepNavy;// Color.WHITE;
-    private static final Color BACKGROUND_COLOR = Color.BLACK; // ColorUtils.warmOffWhite; // new Color(20, 20, 20);
+    private static final Color BEAT_MARKER_COLOR =  ColorUtils.charcoalGray;
+    private static final Color BAR_MARKER_COLOR =  Color.BLUE;
+    private static final Color POSITION_INDICATOR = Color.WHITE;
+    private static final Color BACKGROUND_COLOR = Color.BLACK;
     
     // Add new colors for player visualization
     private static final Color[] PLAYER_COLORS = {
@@ -82,7 +81,7 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
     // Pre-calculated values
     private int ppq = 24;
     private int beatsPerBar = 4;
-    private int totalBars = 16;  // Changed to 16 bars as requested
+    private int totalBars = 16;
     private int ticksPerBar;
     private int totalTicks;
     private int columnsPerBeat;
@@ -93,26 +92,30 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
         CommandBus.getInstance().register(this);
         
         // Initialize with current state
-        SequencerManager sequencer = SequencerManager.getInstance();
-        isPlaying = sequencer.isRunning();
-        currentTick = sequencer.getCurrentTick();
-        currentBeat = sequencer.getCurrentBeat();
-        currentBar = sequencer.getCurrentBar();
-        
-        // Pre-calculate timing values
-        updateTimingParameters(sequencer);
-        
-        // Start the render timer if playing
-        if (isPlaying) {
-            startRenderTimer();
+        Session activeSession = SessionManager.getInstance().getActiveSession();
+        if (activeSession != null) {
+            isPlaying = activeSession.isRunning();
+            currentTick = activeSession.getTick();
+            currentBeat = activeSession.getBeat();
+            currentBar = activeSession.getBar();
+            
+            // Pre-calculate timing values
+            updateTimingParameters(activeSession);
+            
+            // Start the render timer if playing
+            if (isPlaying) {
+                startRenderTimer();
+            }
         }
     }
     
-    private void updateTimingParameters(SequencerManager sequencer) {
-        ppq = sequencer.getPpq();
-        beatsPerBar = sequencer.getBeatsPerBar();
-        ticksPerBar = ppq * beatsPerBar;
-        totalTicks = ticksPerBar * totalBars;
+    private void updateTimingParameters(Session session) {
+        if (session != null) {
+            ppq = session.getTicksPerBeat();
+            beatsPerBar = session.getBeatsPerBar();
+            ticksPerBar = ppq * beatsPerBar;
+            totalTicks = ticksPerBar * totalBars;
+        }
     }
     
     private void startRenderTimer() {
@@ -241,8 +244,11 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
                 }
             }
             
-            // Get latest timing parameters
-            updateTimingParameters(SequencerManager.getInstance());
+            // Get latest timing parameters from active session
+            Session activeSession = SessionManager.getInstance().getActiveSession();
+            if (activeSession != null) {
+                updateTimingParameters(activeSession);
+            }
             
             // Calculate grid dimensions
             int beatsTotal = beatsPerBar * totalBars;
@@ -413,30 +419,38 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
             }
             
             // Timing events
-            case Commands.TIMING_TICK -> {
-                if (action.getData() instanceof Number tick) {
+            case Commands.TIME_TICK -> {
+                if (action.getData() instanceof Session) {
+                    Session activeSession = (Session) action.getData();
+                    currentTick = activeSession.getTick();
+                    currentBeat = activeSession.getBeat();
+                    currentBar = activeSession.getBar();
+                } else if (action.getData() instanceof Number tick) {
                     currentTick = tick.intValue();
                 }
             }
             
-            case Commands.TIMING_BEAT -> {
+            case Commands.TIME_BEAT -> {
                 if (action.getData() instanceof Number beat) {
                     currentBeat = beat.intValue();
                 }
             }
             
-            case Commands.TIMING_BAR -> {
+            case Commands.TIME_BAR -> {
                 if (action.getData() instanceof Number bar) {
                     currentBar = bar.intValue();
                 }
             }
             
             // Listen for timing parameter changes
-            case Commands.UPDATE_TEMPO, Commands.UPDATE_TIME_SIGNATURE -> {
-                updateTimingParameters(SequencerManager.getInstance());
-                // Re-initialize grid with new parameters
-                if (currentButtons != null) {
-                    initializeGrid(currentButtons);
+            case Commands.UPDATE_TEMPO, Commands.UPDATE_TIME_SIGNATURE, Commands.SESSION_CHANGED -> {
+                Session activeSession = SessionManager.getInstance().getActiveSession();
+                if (activeSession != null) {
+                    updateTimingParameters(activeSession);
+                    // Re-initialize grid with new parameters
+                    if (currentButtons != null) {
+                        initializeGrid(currentButtons);
+                    }
                 }
             }
             

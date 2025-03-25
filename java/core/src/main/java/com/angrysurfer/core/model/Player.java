@@ -540,7 +540,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
         if (getSession() != null && getEnabled()) {
             switch (cmd) {
-            case Commands.TIMING_TICK -> {
+            case Commands.TIME_TICK -> {
                 if (!isRunning()) {
                     System.out.println("Player " + getName() + " - Skipping tick (not running)");
                     return;
@@ -557,7 +557,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
                 long part = session.getPart();
 
                 // Debug the actual values from the cyclers
-                System.out.println("Player " + getName() + " - TIMING VALUES FROM SESSION CYCLERS:");
+                System.out.println("Player " + getName() + " - TIME VALUES FROM SESSION CYCLERS:");
                 System.out.println("  - Tick: " + tick + " (cycler position: " + session.getTickCycler().get() + ")");
                 System.out.println("  - Beat: " + beat + " (cycler position: " + session.getBeatCycler().get() + ")");
                 System.out.println("  - Bar: " + bar + " (cycler position: " + session.getBarCycler().get() + ")");

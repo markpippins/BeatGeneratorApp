@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import javax.sound.midi.MidiDevice;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -221,9 +222,7 @@ class InstrumentsPanel extends StatusProviderPanel {
     }
 
     private JTable createInstrumentsTable() {
-        String[] columns = {
-                "Name", "Device Name", "Available", "Low", "High", "Initialized"
-        };
+        String[] columns = { "Name", "Device Name", "Available", "Low", "High", "Initialized" };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -234,14 +233,14 @@ class InstrumentsPanel extends StatusProviderPanel {
             @Override
             public Class<?> getColumnClass(int column) {
                 switch (column) {
-                    case 2: // Available
-                    case 5: // Initialized
-                        return Boolean.class;
-                    case 3: // Lowest Note
-                    case 4: // Highest Note
-                        return Integer.class;
-                    default:
-                        return String.class;
+                case 2: // Available
+                case 5: // Initialized
+                    return Boolean.class;
+                case 3: // Lowest Note
+                case 4: // Highest Note
+                    return Integer.class;
+                default:
+                    return String.class;
                 }
             }
         };
@@ -249,14 +248,8 @@ class InstrumentsPanel extends StatusProviderPanel {
         // Load data from Redis
         List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
         for (Instrument instrument : instruments) {
-            model.addRow(new Object[] {
-                    instrument.getName(),
-                    instrument.getDeviceName(),
-                    instrument.getAvailable(),
-                    instrument.getLowestNote(),
-                    instrument.getHighestNote(),
-                    instrument.isInitialized()
-            });
+            model.addRow(new Object[] { instrument.getName(), instrument.getDeviceName(), instrument.getAvailable(),
+                    instrument.getLowestNote(), instrument.getHighestNote(), instrument.isInitialized() });
         }
 
         JTable table = new JTable(model);
@@ -336,9 +329,7 @@ class InstrumentsPanel extends StatusProviderPanel {
     }
 
     private JTable createControlCodesTable() {
-        String[] columns = {
-                "Name", "Code", "Min", "Max"
-        };
+        String[] columns = { "Name", "Code", "Min", "Max" };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -418,9 +409,7 @@ class InstrumentsPanel extends StatusProviderPanel {
     }
 
     private JTable createCaptionsTable() {
-        String[] columns = {
-                "Code", "Description"
-        };
+        String[] columns = { "Code", "Description" };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -483,21 +472,16 @@ class InstrumentsPanel extends StatusProviderPanel {
         model.setRowCount(0);
 
         if (selectedInstrument != null && selectedInstrument.getControlCodes() != null) {
-            logger.info("Updating control codes table for instrument: " + selectedInstrument.getName() +
-                    " with " + selectedInstrument.getControlCodes().size() + " codes");
+            logger.info("Updating control codes table for instrument: " + selectedInstrument.getName() + " with "
+                    + selectedInstrument.getControlCodes().size() + " codes");
 
             for (ControlCode cc : selectedInstrument.getControlCodes()) {
-                model.addRow(new Object[] {
-                        cc.getName(),
-                        cc.getCode(),
-                        cc.getLowerBound(),
-                        cc.getUpperBound()
-                });
+                model.addRow(new Object[] { cc.getName(), cc.getCode(), cc.getLowerBound(), cc.getUpperBound() });
                 logger.info("Added control code to table: " + cc.getName());
             }
         } else {
-            logger.error("No control codes to display - instrument: " +
-                    (selectedInstrument == null ? "null" : selectedInstrument.getName()));
+            logger.error("No control codes to display - instrument: "
+                    + (selectedInstrument == null ? "null" : selectedInstrument.getName()));
         }
     }
 
@@ -506,35 +490,28 @@ class InstrumentsPanel extends StatusProviderPanel {
         model.setRowCount(0);
 
         if (selectedControlCode != null && selectedControlCode.getCaptions() != null) {
-            logger.info("Updating captions table for control code: " + selectedControlCode.getName() +
-                    " with " + selectedControlCode.getCaptions().size() + " captions");
+            logger.info("Updating captions table for control code: " + selectedControlCode.getName() + " with "
+                    + selectedControlCode.getCaptions().size() + " captions");
 
             for (ControlCodeCaption caption : selectedControlCode.getCaptions()) {
-                model.addRow(new Object[] {
-                        caption.getCode(),
-                        caption.getDescription()
-                });
+                model.addRow(new Object[] { caption.getCode(), caption.getDescription() });
                 logger.info("Added caption to table: " + caption.getDescription());
             }
         } else {
-            logger.error("No captions to display - control code: " +
-                    (selectedControlCode == null ? "null" : selectedControlCode.getName()));
+            logger.error("No captions to display - control code: "
+                    + (selectedControlCode == null ? "null" : selectedControlCode.getName()));
         }
     }
 
     private Instrument findInstrumentByName(String name) {
         // Convert view index to model index when getting data
-        return RedisService.getInstance().findAllInstruments().stream()
-                .filter(i -> i.getName().equals(name))
-                .findFirst()
-                .orElse(null);
+        return RedisService.getInstance().findAllInstruments().stream().filter(i -> i.getName().equals(name))
+                .findFirst().orElse(null);
     }
 
     private ControlCode findControlCodeByName(String name) {
         if (selectedInstrument != null && selectedInstrument.getControlCodes() != null) {
-            return selectedInstrument.getControlCodes().stream()
-                    .filter(cc -> cc.getName().equals(name))
-                    .findFirst()
+            return selectedInstrument.getControlCodes().stream().filter(cc -> cc.getName().equals(name)).findFirst()
                     .orElse(null);
         }
         return null;
@@ -619,7 +596,8 @@ class InstrumentsPanel extends StatusProviderPanel {
             // Get caption from selected row, not just first caption
             ControlCodeCaption caption = getCaptionFromRow(selectedRow);
             if (caption != null) {
-                logger.info("Editing caption: " + caption.getDescription() + " for control code: " + selectedControlCode.getName());
+                logger.info("Editing caption: " + caption.getDescription() + " for control code: "
+                        + selectedControlCode.getName());
                 showCaptionDialog(caption);
             }
         }
@@ -639,17 +617,15 @@ class InstrumentsPanel extends StatusProviderPanel {
         if (selectedControlCode != null && selectedControlCode.getCaptions() != null) {
             // Convert view index to model index if table is sorted
             int modelRow = captionsTable.convertRowIndexToModel(row);
-            
+
             // Get values from table model
             Long code = (Long) captionsTable.getModel().getValueAt(modelRow, 0);
             String description = (String) captionsTable.getModel().getValueAt(modelRow, 1);
-            
+
             // Find matching caption in control code's captions
             return selectedControlCode.getCaptions().stream()
-                .filter(c -> c.getCode().equals(code) && 
-                            c.getDescription().equals(description))
-                .findFirst()
-                .orElse(null);
+                    .filter(c -> c.getCode().equals(code) && c.getDescription().equals(description)).findFirst()
+                    .orElse(null);
         }
         return null;
     }
@@ -678,47 +654,42 @@ class InstrumentsPanel extends StatusProviderPanel {
 
     private void deleteSelectedInstrument() {
         int[] selectedRows = instrumentsTable.getSelectedRows();
-        if (selectedRows.length == 0) return;
-        
+        if (selectedRows.length == 0)
+            return;
+
         // Ask for confirmation if deleting multiple instruments
-        String message = selectedRows.length == 1 
-            ? "Delete the selected instrument?"
-            : "Delete " + selectedRows.length + " instruments?";
-            
-        int choice = JOptionPane.showConfirmDialog(
-            this,
-            message,
-            "Delete Instrument",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE
-        );
-        
+        String message = selectedRows.length == 1 ? "Delete the selected instrument?"
+                : "Delete " + selectedRows.length + " instruments?";
+
+        int choice = JOptionPane.showConfirmDialog(this, message, "Delete Instrument", JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
         if (choice == JOptionPane.YES_OPTION) {
             // Process each selected row
             for (int viewRow : selectedRows) {
                 // Convert view index to model index when sorting is enabled
                 int modelRow = instrumentsTable.convertRowIndexToModel(viewRow);
                 String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
-                
+
                 Instrument instrument = findInstrumentByName(name);
                 if (instrument != null) {
                     // Delete from Redis
                     RedisService.getInstance().deleteInstrument(instrument);
-                    
+
                     if (getStatusConsumer() != null) {
                         getStatusConsumer().setStatus("Deleted instrument: " + name);
                     }
                     logger.info("Deleted instrument: " + name);
                 }
             }
-            
+
             // Refresh the table after deletions
             refreshInstrumentsTable();
-            
+
             // Clear selection state
             selectedInstrument = null;
             updateControlCodesTable();
-            
+
             // Update button states
             editInstrumentButton.setEnabled(false);
             deleteInstrumentButton.setEnabled(false);
@@ -736,14 +707,8 @@ class InstrumentsPanel extends StatusProviderPanel {
         // Add each instrument to the table
         for (Instrument instrument : instruments) {
             logger.info("Adding instrument to table: " + instrument.getName());
-            model.addRow(new Object[] {
-                    instrument.getName(),
-                    instrument.getDeviceName(),
-                    instrument.getAvailable(),
-                    instrument.getLowestNote(),
-                    instrument.getHighestNote(),
-                    instrument.isInitialized()
-            });
+            model.addRow(new Object[] { instrument.getName(), instrument.getDeviceName(), instrument.getAvailable(),
+                    instrument.getLowestNote(), instrument.getHighestNote(), instrument.isInitialized() });
         }
 
         // Notify the table that the model has changed
@@ -762,20 +727,11 @@ class InstrumentsPanel extends StatusProviderPanel {
 
     private void setupContextMenus() {
         // Create context menus
-        instrumentsContextMenu = new ContextMenuHelper(
-                "ADD_INSTRUMENT",
-                "EDIT_INSTRUMENT",
-                "DELETE_INSTRUMENT");
+        instrumentsContextMenu = new ContextMenuHelper("ADD_INSTRUMENT", "EDIT_INSTRUMENT", "DELETE_INSTRUMENT");
 
-        controlCodesContextMenu = new ContextMenuHelper(
-                "ADD_CONTROL_CODE",
-                "EDIT_CONTROL_CODE",
-                "DELETE_CONTROL_CODE");
+        controlCodesContextMenu = new ContextMenuHelper("ADD_CONTROL_CODE", "EDIT_CONTROL_CODE", "DELETE_CONTROL_CODE");
 
-        captionsContextMenu = new ContextMenuHelper(
-                "ADD_CAPTION",
-                "EDIT_CAPTION",
-                "DELETE_CAPTION");
+        captionsContextMenu = new ContextMenuHelper("ADD_CAPTION", "EDIT_CAPTION", "DELETE_CAPTION");
 
         // Now safe to install on existing tables
         instrumentsContextMenu.install(instrumentsTable);
@@ -789,25 +745,25 @@ class InstrumentsPanel extends StatusProviderPanel {
     private void setupContextMenuListeners() {
         instrumentsContextMenu.addActionListener(e -> {
             switch (e.getActionCommand()) {
-                case "ADD_INSTRUMENT" -> showInstrumentDialog(null);
-                case "EDIT_INSTRUMENT" -> editSelectedInstrument();
-                case "DELETE_INSTRUMENT" -> deleteSelectedInstrument();
+            case "ADD_INSTRUMENT" -> showInstrumentDialog(null);
+            case "EDIT_INSTRUMENT" -> editSelectedInstrument();
+            case "DELETE_INSTRUMENT" -> deleteSelectedInstrument();
             }
         });
 
         controlCodesContextMenu.addActionListener(e -> {
             switch (e.getActionCommand()) {
-                case "ADD_CONTROL_CODE" -> showControlCodeDialog(null);
-                case "EDIT_CONTROL_CODE" -> editSelectedControlCode();
-                case "DELETE_CONTROL_CODE" -> deleteSelectedControlCode();
+            case "ADD_CONTROL_CODE" -> showControlCodeDialog(null);
+            case "EDIT_CONTROL_CODE" -> editSelectedControlCode();
+            case "DELETE_CONTROL_CODE" -> deleteSelectedControlCode();
             }
         });
 
         captionsContextMenu.addActionListener(e -> {
             switch (e.getActionCommand()) {
-                case "ADD_CAPTION" -> showCaptionDialog(null);
-                case "EDIT_CAPTION" -> editSelectedCaption();
-                case "DELETE_CAPTION" -> deleteSelectedCaption();
+            case "ADD_CAPTION" -> showCaptionDialog(null);
+            case "EDIT_CAPTION" -> editSelectedCaption();
+            case "DELETE_CAPTION" -> deleteSelectedCaption();
             }
         });
     }
@@ -820,13 +776,13 @@ class InstrumentsPanel extends StatusProviderPanel {
                 boolean hasSelection = instrumentsTable.getSelectedRow() >= 0;
                 editInstrumentButton.setEnabled(hasSelection);
                 deleteInstrumentButton.setEnabled(hasSelection);
-                
+
                 // Update Enable button state based on selected instrument
                 if (hasSelection) {
                     int modelRow = instrumentsTable.convertRowIndexToModel(instrumentsTable.getSelectedRow());
                     String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
                     Instrument instrument = findInstrumentByName(name);
-                    
+
                     // Enable button is active only when instrument is initialized but not available
                     if (instrument != null) {
                         boolean enableButtonState = instrument.isInitialized() && !instrument.getAvailable();
@@ -837,7 +793,7 @@ class InstrumentsPanel extends StatusProviderPanel {
                 } else {
                     enableInstrumentButton.setEnabled(false);
                 }
-                
+
                 instrumentsContextMenu.setEditEnabled(hasSelection);
                 instrumentsContextMenu.setDeleteEnabled(hasSelection);
             }
@@ -874,7 +830,7 @@ class InstrumentsPanel extends StatusProviderPanel {
             // Convert view row to model row if table is sorted
             int modelRow = instrumentsTable.convertRowIndexToModel(row);
             String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
-            
+
             // Find the instrument by name
             Instrument instrument = findInstrumentByName(name);
             if (instrument != null) {
@@ -900,7 +856,7 @@ class InstrumentsPanel extends StatusProviderPanel {
                 }
             }
         });
-        
+
         // For control codes table
         controlCodesTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "deleteControlCode");
@@ -912,7 +868,7 @@ class InstrumentsPanel extends StatusProviderPanel {
                 }
             }
         });
-        
+
         // For captions table
         captionsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "deleteCaption");
@@ -930,16 +886,16 @@ class InstrumentsPanel extends StatusProviderPanel {
         try {
             // Save to Redis
             RedisService.getInstance().saveInstrument(instrument);
-            
+
             // Also update in UserConfigManager
             updateInstrumentInUserConfig(instrument);
-            
+
             // Publish event for all listeners
             CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, instrument);
-            
+
             // Refresh the table
             refreshInstrumentsTable();
-            
+
             if (getStatusConsumer() != null) {
                 getStatusConsumer().setStatus("Saved instrument: " + instrument.getName());
             }
@@ -954,7 +910,7 @@ class InstrumentsPanel extends StatusProviderPanel {
     private void updateInstrumentInUserConfig(Instrument instrument) {
         UserConfigManager configManager = UserConfigManager.getInstance();
         UserConfig config = configManager.getCurrentConfig();
-        
+
         // Update existing or add new
         boolean found = false;
         if (config.getInstruments() != null) {
@@ -966,23 +922,24 @@ class InstrumentsPanel extends StatusProviderPanel {
                 }
             }
         }
-        
+
         if (!found && config.getInstruments() != null) {
             config.getInstruments().add(instrument);
         }
-        
+
         // Save updated config
         configManager.saveConfiguration(config);
     }
 
     private void enableSelectedInstrument() {
         int row = instrumentsTable.getSelectedRow();
-        if (row < 0) return;
-        
+        if (row < 0)
+            return;
+
         // Convert view index to model index if table is sorted
         int modelRow = instrumentsTable.convertRowIndexToModel(row);
         String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
-        
+
         Instrument instrument = findInstrumentByName(name);
         if (instrument == null) {
             if (getStatusConsumer() != null) {
@@ -1005,13 +962,19 @@ class InstrumentsPanel extends StatusProviderPanel {
                 }
 
                 // Try to reinitialize the device connection
-                boolean connected = instrument.initializeDevice(deviceName);
-                
+                MidiDevice device = DeviceManager.getMidiDevice(deviceName);
+                if (device != null && !device.isOpen()) {
+                    device.open();
+                }
+
+                boolean connected = device != null && device.isOpen();
+
                 if (connected) {
+                    instrument.setDevice(device);
                     instrument.setAvailable(true);
                     // Update in cache/config
                     InstrumentManager.getInstance().updateInstrument(instrument);
-                    
+
                     // Update UI and show success message
                     refreshInstrumentsTable();
                     if (getStatusConsumer() != null) {
@@ -1019,7 +982,8 @@ class InstrumentsPanel extends StatusProviderPanel {
                     }
                 } else {
                     if (getStatusConsumer() != null) {
-                        getStatusConsumer().setStatus("Failed to connect instrument " + name + " to device " + deviceName);
+                        getStatusConsumer()
+                                .setStatus("Failed to connect instrument " + name + " to device " + deviceName);
                     }
                 }
             } else {

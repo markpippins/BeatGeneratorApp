@@ -5,14 +5,11 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.JoinColumn;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,14 +23,12 @@ public class Step {
     private static final Logger logger = LoggerFactory.getLogger(Step.class);
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Column(name = "id", nullable = false)
     private Long id;
 
     private Integer position;
 
     private Boolean active = false;
-
+    
     private Integer pitch = 0;
 
     private Integer velocity = 100;
