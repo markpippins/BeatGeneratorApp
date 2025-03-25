@@ -22,8 +22,8 @@ import javax.swing.table.DefaultTableModel;
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.midi.ControlCodeCaption;
-import com.angrysurfer.core.model.midi.ControlCode;
+import com.angrysurfer.core.model.ControlCode;
+import com.angrysurfer.core.model.ControlCodeCaption;
 
 import lombok.Getter;
 import lombok.Setter;

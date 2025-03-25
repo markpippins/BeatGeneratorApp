@@ -1,11 +1,11 @@
-package com.angrysurfer.core.model;
+package com.angrysurfer.core.model.feature;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.Instrument;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

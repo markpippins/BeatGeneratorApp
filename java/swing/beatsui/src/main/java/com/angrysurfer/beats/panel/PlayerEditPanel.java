@@ -37,9 +37,9 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.service.UserConfigManager;
 

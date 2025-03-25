@@ -14,8 +14,8 @@ import javax.swing.table.DefaultTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 
@@ -57,7 +57,7 @@ public class PlayersTableModel extends DefaultTableModel {
 
     private static final Set<String> STRING_COLUMN_NAMES = Set.of(COL_ID, COL_NAME, COL_INSTRUMENT);
     private static final Set<String> BOOLEAN_COLUMN_NAMES = Set.of(
-            COL_MUTE, COL_STICKY, COL_INT_BEATS, COL_INT_BARS, COL_PRESERVE);
+            COL_MUTE, COL_STICKY, COL_PRESERVE);
 
     private static final int[] BOOLEAN_COLUMNS = BOOLEAN_COLUMN_NAMES.stream()
             .mapToInt(name -> new ArrayList<>(COLUMNS).indexOf(name))

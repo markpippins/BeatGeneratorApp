@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model.midi;
+package com.angrysurfer.core.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,9 +21,9 @@ import javax.sound.midi.ShortMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.Pad;
-import com.angrysurfer.core.model.Pattern;
-import com.angrysurfer.core.model.converter.IntegerArrayConverter;
+import com.angrysurfer.core.model.feature.MidiMessage;
+import com.angrysurfer.core.model.feature.Pad;
+import com.angrysurfer.core.util.IntegerArrayConverter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;

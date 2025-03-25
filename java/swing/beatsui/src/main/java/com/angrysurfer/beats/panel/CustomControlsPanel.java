@@ -42,9 +42,9 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.midi.ControlCode;
-import com.angrysurfer.core.model.midi.ControlCodeCaption;
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.ControlCode;
+import com.angrysurfer.core.model.ControlCodeCaption;
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 
 import lombok.Getter;

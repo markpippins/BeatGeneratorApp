@@ -20,7 +20,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.exception.MidiDeviceException;
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.Instrument;
 
 public class DeviceManager implements IBusListener {
     

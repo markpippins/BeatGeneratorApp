@@ -32,9 +32,9 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.model.Scale;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.core.util.Scale;
 
 public class ToolBar extends JToolBar {
     private final Map<String, JTextField> leftFields = new HashMap<>();

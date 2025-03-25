@@ -633,8 +633,9 @@ public class RulesPanel extends JPanel {
         try {
             logger.info("Refreshing rules table with " + (rules != null ? rules.size() : 0) + " rules");
 
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
-            model.setRowCount(0); // Clear existing content
+            RuleTableModel model = (RuleTableModel) table.getModel();
+            // model.setRowCount(0); // Clear existing content
+            model.setRules(Collections.emptySet());
 
             // Reset selection tracking
             lastSelectedRow = -1;
@@ -658,18 +659,19 @@ public class RulesPanel extends JPanel {
                 });
 
                 // Add sorted rules to table
-                for (Rule rule : sortedRules) {
-                    if (rule == null)
-                        continue;
+                // for (Rule rule : sortedRules) {
+                //     if (rule == null)
+                //         continue;
 
-                    // Add row with correct column order
-                    model.addRow(new Object[] {
-                            rule.getOperatorText(), // Property column - "Beat", "Tick", etc.
-                            rule.getComparisonText(), // Operator column - "==", "<", etc.
-                            rule.getValue(), // Value column
-                            rule.getPartText() // Part column
-                    });
-                }
+                //     // Add row with correct column order
+                //     model. addRow(new Object[] {
+                //             rule.getOperatorText(), // Property column - "Beat", "Tick", etc.
+                //             rule.getComparisonText(), // Operator column - "==", "<", etc.
+                //             rule.getValue(), // Value column
+                //             rule.getPartText() // Part column
+                //     });
+                // }
+                model.setRules(rules);
             } else {
                 logger.error("No rules to display");
             }

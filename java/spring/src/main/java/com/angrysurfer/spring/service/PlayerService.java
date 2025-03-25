@@ -8,14 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.angrysurfer.core.model.Comparison;
+import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.Operator;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.util.Operator;
-import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.update.RuleUpdateType;
 
 import lombok.Getter;

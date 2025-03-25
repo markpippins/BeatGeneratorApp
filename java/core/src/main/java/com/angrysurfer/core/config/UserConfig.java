@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Data;

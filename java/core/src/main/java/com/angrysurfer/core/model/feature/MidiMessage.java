@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model.midi;
+package com.angrysurfer.core.model.feature;
 
 import javax.sound.midi.ShortMessage;
 import java.util.HashMap;

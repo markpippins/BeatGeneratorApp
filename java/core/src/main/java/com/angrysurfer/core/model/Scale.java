@@ -1,4 +1,4 @@
-package com.angrysurfer.core.util;
+package com.angrysurfer.core.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;

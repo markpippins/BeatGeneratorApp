@@ -1,8 +1,10 @@
-package com.angrysurfer.core.model;
+package com.angrysurfer.core.model.feature;
 
 import java.util.ArrayList;
 
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.model.Strike;
 
 import lombok.Getter;
 import lombok.Setter;

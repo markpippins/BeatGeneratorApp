@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model.converter;
+package com.angrysurfer.core.util;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

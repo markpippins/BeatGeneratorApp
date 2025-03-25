@@ -1,4 +1,4 @@
-package com.angrysurfer.core.service;
+package com.angrysurfer.core.util;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

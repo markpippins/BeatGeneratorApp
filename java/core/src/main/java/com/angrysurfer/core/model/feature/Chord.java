@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model.midi;
+package com.angrysurfer.core.model.feature;
 // package com.angrysurfer.midi.model;
 
 // import jakarta.persistence.*;
@@ -8,7 +8,7 @@ package com.angrysurfer.core.model.midi;
 // @Entity
 // @Getter
 // @Setter
-// public class RangedParamTweaker extends Player {
+// public class Chord extends Player {
 //     // @Id
 //     // @GeneratedValue(strategy = GenerationType.SEQUENCE)
 //     // @Column(name = "id", nullable = false)

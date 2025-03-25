@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model;
+package com.angrysurfer.core.model.feature;
 // package com.angrysurfer.midi.model;
 
 // import java.util.ArrayList;

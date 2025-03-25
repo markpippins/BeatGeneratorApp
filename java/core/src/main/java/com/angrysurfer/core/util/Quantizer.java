@@ -3,6 +3,8 @@ package com.angrysurfer.core.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.model.Scale;
+
 public class Quantizer {
     private Boolean[] scale;
 

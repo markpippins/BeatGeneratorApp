@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -138,6 +139,22 @@ public class Session implements Serializable, IBusListener {
     @Transient
     private Consumer<Long> tickListener;
 
+    // Add these fields to Session class for single-pass timing updates
+    private boolean tickProcessed = false;
+    private boolean beatProcessed = false;
+    private boolean barProcessed = false;
+    private boolean partProcessed = false;
+
+    // Add these fields to the class
+    @JsonIgnore
+    @Transient
+    private Set<IBusListener> tickListeners = new HashSet<>();
+
+    // For better performance, track active players separately
+    @JsonIgnore
+    @Transient
+    private Set<Player> activePlayers = new HashSet<>();
+
     // FindAll<ControlCodeCaption> getCaptionFindAll();
 
     public Session() {
@@ -166,6 +183,11 @@ public class Session implements Serializable, IBusListener {
 
         player.setSession(this);
         commandBus.publish(Commands.PLAYER_ADDED, this, player);
+        
+        // Auto-register as tick listener if session is running
+        if (isRunning() && player.getEnabled()) {
+            registerTickListener(player);
+        }
     }
 
     public void removePlayer(Player player) {
@@ -179,6 +201,9 @@ public class Session implements Serializable, IBusListener {
 
         player.setSession(null);
         commandBus.publish(Commands.PLAYER_ADDED, this, player);
+        
+        // Unregister from tick listeners
+        unregisterTickListener(player);
     }
 
     public Player getPlayer(Long playerId) {
@@ -465,25 +490,21 @@ public class Session implements Serializable, IBusListener {
     public void play() {
         System.out.println("Session: Starting play sequence for session " + getId());
 
-        System.out.println("Session cyclers before play:");
-        System.out.println("  - Tick cycler: " + tick + " (length: " + tickLength + ")");
-        System.out.println("  - Beat cycler: " + beat + " (length: " + beatsPerBar + ")");
-        System.out.println("  - Bar cycler: " + bar + " (length: " + barLength + ")");
-        System.out.println("  - Part cycler: " + part + " (length: " + partLength + ")");
-
         reset();
-
+        
+        // Pre-calculate timing values for better performance
+        tickLength = ticksPerBeat * beatsPerBar;
+        barLength = bars;
+        
         initializeDevices();
-
-        System.out.println("Session: Registering " + players.size() + " players with timing bus");
-        for (Player player : players) {
-            timingBus.register(player);
-            System.out.println("  - Registered player: " + player.getName());
-        }
+        
+        // Add all enabled players to tickListeners
+        syncPlayersWithTickListeners();
+        
+        System.out.println("Session: " + players.size() + " players, " + 
+                           tickListeners.size() + " tick listeners");
 
         sequencerManager.startSequence();
-
-        System.out.println("Session: Play sequence completed");
     }
 
     public void initializeDevices() {
@@ -579,56 +600,75 @@ public class Session implements Serializable, IBusListener {
         }
     }
 
+    // Refactored onTick method with fixed references
     public void onTick() {
-
-        timingBus.publish(Commands.TIME_TICK, this, tick);
-
-        System.out.println("Session.onTick() - tick: " + tick + "/" + tickLength);
-
-        if (tickListener != null) {
-            tickListener.accept(tick);
-        }
-
-        if (tick % ticksPerBeat == 0) {  // Changed from 0 to 1
-            onBeatChange();
+        // For tick=1 issues, add special logging
+        if (tick == 1) {
+            System.out.println("⚠️ TIMING CRITICAL: New cycle starting. tick=1, beat=" + beat + ", bar=" + bar);
         }
         
-        // Cycle from 1 to tickLength
+        // Reset all processing flags at the start of a new cycle
+        if (tick == 1) {
+            tickProcessed = false;
+            beatProcessed = false;
+            barProcessed = false;
+            partProcessed = false;
+            
+            // Update active players list once per cycle for better performance
+            activePlayers = players.stream()
+                .filter(Player::getEnabled)
+                .collect(Collectors.toSet());
+        }
+
+        // Don't publish events for every tick - too much overhead
+        // Only listeners who absolutely need every tick should get it
+        if (tickListeners != null && !tickListeners.isEmpty()) {
+            timingBus.publish(Commands.TIME_TICK, this, tick);
+        }
+        
+        // Update player states without events - use direct calls
+        for (Player player : players) {
+            if (player.getEnabled()) {
+                try {
+                    // Call player's onTick directly instead of going through events
+                    player.onTick(tick, bar);
+                } catch (Exception e) {
+                    logger.error("Error in player tick processing: {}", e.getMessage(), e);
+                }
+            }
+        }
+        
+        // Beat change logic - only call once per beat
+        if (!beatProcessed && tick % ticksPerBeat == 0) {
+            beat = beat % beatsPerBar + 1.0;
+            beatCount++;
+            beatProcessed = true;
+            
+            // Only send beat events to listeners who need them
+            timingBus.publish(Commands.TIME_BEAT, this, beat);
+            
+            // Bar change logic - only call once per bar
+            if (!barProcessed && beat == 1.0) {
+                bar = bar % barLength + 1;
+                barCount++;
+                barProcessed = true;
+                
+                timingBus.publish(Commands.TIME_BAR, this, bar);
+                
+                // Part change logic - only call once per part change
+                if (!partProcessed && bar % partLength == 0) {
+                    part = part % parts + 1;
+                    partCount++;
+                    partProcessed = true;
+                    
+                    timingBus.publish(Commands.TIME_PART, this, part);
+                }
+            }
+        }
+        
+        // Update tick counter last to avoid race conditions
         tick = tick % tickLength + 1;
         tickCount++;
-
-    }
-
-    private void onBeatChange() {
-        // Cycle from 1 to beatsPerBar
-        beat = beat % beatsPerBar + 1.0;
-        beatCount++;
-
-        TimingBus.getInstance().publish(Commands.TIME_BEAT, this, beat);
-
-        if (beat == 1.0) {  // Changed from 0.0 to 1.0
-            onBarChange();
-        }
-    }
-
-    private void onBarChange() {
-        // Cycle from 1 to barLength
-        bar = bar % barLength + 1;
-        barCount++;
-
-        TimingBus.getInstance().publish(Commands.TIME_BAR, this, bar);
-
-        if (bar % partLength == 0) {  // Changed from 0 to 1
-            onPartChange();
-        }
-    }
-
-    public void onPartChange() {
-        // Cycle from 1 to parts
-        part = part % parts + 1;
-        partCount++;
-
-        TimingBus.getInstance().publish(Commands.TIME_PART, this, part);
     }
 
     private void setupTickListener() {
@@ -704,5 +744,50 @@ public class Session implements Serializable, IBusListener {
 
         updatedPlayer.setSession(this);
         players.add(updatedPlayer);
+        
+        // Update tick listener registration based on enabled state
+        if (updatedPlayer.getEnabled()) {
+            registerTickListener(updatedPlayer);
+        } else {
+            unregisterTickListener(updatedPlayer);
+        }
+    }
+
+    /**
+     * Register a timing listener that needs every tick event
+     */
+    public void registerTickListener(IBusListener listener) {
+        if (listener != null) {
+            if (tickListeners == null) {
+                tickListeners = new HashSet<>();
+            }
+            tickListeners.add(listener);
+        }
+    }
+
+    /**
+     * Remove a timing listener
+     */
+    public void unregisterTickListener(IBusListener listener) {
+        if (listener != null && tickListeners != null) {
+            tickListeners.remove(listener);
+        }
+    }
+    
+    // Add this method to Session class to sync players with tickListeners
+    private void syncPlayersWithTickListeners() {
+        if (tickListeners == null) {
+            tickListeners = new HashSet<>();
+        }
+        
+        // Add all players to tickListeners
+        if (players != null) {
+            for (Player player : players) {
+                if (player.getEnabled()) {
+                    // Register player as a tick listener if not already registered
+                    registerTickListener(player);
+                }
+            }
+        }
     }
 }

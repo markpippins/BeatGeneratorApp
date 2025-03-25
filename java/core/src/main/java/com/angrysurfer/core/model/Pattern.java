@@ -7,11 +7,9 @@ import java.util.Stack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.core.util.Cycler;
 import com.angrysurfer.core.util.Quantizer;
-import com.angrysurfer.core.util.Scale;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;

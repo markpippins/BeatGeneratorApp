@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model.midi;
+package com.angrysurfer.core.model.feature;
 
 public class MidiLowFrequencyOscillator {
 

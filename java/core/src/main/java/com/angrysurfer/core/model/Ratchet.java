@@ -8,8 +8,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.service.MidiClockSource;
-import com.angrysurfer.core.util.Comparison;
-import com.angrysurfer.core.util.Operator;
 
 import lombok.Getter;
 import lombok.Setter;

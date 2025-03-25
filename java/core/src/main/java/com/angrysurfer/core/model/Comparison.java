@@ -1,4 +1,4 @@
-package com.angrysurfer.core.util;
+package com.angrysurfer.core.model;
 
 public interface Comparison {
     static int TICK = 0;

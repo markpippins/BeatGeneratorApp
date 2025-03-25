@@ -22,10 +22,10 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.config.UserConfigConverter;
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -196,8 +196,9 @@ public class DialogManager implements IBusListener {
                             // Session session = redisService.findSessionForPlayer(refreshedPlayer);
 
                             // Re-select the player to update rules display
-                            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
                             commandBus.publish(Commands.RULE_ADDED, this, player);
+                            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+                            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
                             // commandBus.publish(Commands.SESSION_UPDATED, this, session);
                         } else {
                             // ... existing error handling ...
@@ -227,8 +228,9 @@ public class DialogManager implements IBusListener {
                         // Player refreshedPlayer = redisService.findPlayerById(player.getId());
                         commandBus.publish(Commands.RULE_EDITED, this, updatedRule);
                         // commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-                        // commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+                        commandBus.publish(Commands.PLAYER_SELECTED, this, player);
                         // commandBus.publish(Commands.RULE_SELECTED, this, updatedRule);
+                        CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
                     }
                 }
             });

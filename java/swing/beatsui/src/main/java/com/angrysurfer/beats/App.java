@@ -14,7 +14,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.FrameState;
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.SessionManager;

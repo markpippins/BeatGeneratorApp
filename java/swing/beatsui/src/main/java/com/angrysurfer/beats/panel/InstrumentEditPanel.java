@@ -13,7 +13,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.Instrument;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
