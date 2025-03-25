@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -713,8 +712,6 @@ public class Session implements Serializable, IBusListener {
      * Handle beat changes - occurs every ticksPerBeat ticks
      */
     private void onBeatChange() {
-        logger.debug("onBeatChange() - current beat: {}", getBeatCycler().get());
-
         // Advance the beat cycler - THIS IS CRITICAL
         getBeatCycler().advance();
         getBeatCounter().advance();
@@ -722,10 +719,10 @@ public class Session implements Serializable, IBusListener {
         // Publish standard beat event
         TimingBus.getInstance().publish(Commands.TIME_BEAT, this, getBeatCycler().get());
 
-        // Check if we've completed a bar
-        if (getBeat() % getBeatsPerBar() == 0)
+        // Direct calculation instead of modulo
+        if (getBeatCycler().get() == 0) {
             onBarChange();
-
+        }
     }
 
     /**
@@ -761,23 +758,19 @@ public class Session implements Serializable, IBusListener {
     }
 
     private void addTickListener() {
-        // Add tick listener
+        // Remove debug logging from this critical path
         getTickCycler().addListener(new CyclerListener() {
             @Override
             public void advanced(long position) {
-                if (getTick() % getTicksPerBeat() == 0)
+                // Direct calculation without conditionals when possible
+                if (position % getTicksPerBeat() == 0) {
                     onBeatChange();
-
-                // if (getBeat() % getBeatsPerBar() == 0)
-                //     onBarChange();
-
-                // if (getBar() % getPartLength() == 0)
-                //     onPartChange();
+                }
             }
 
             @Override
             public void cycleComplete() {
-
+                // No action needed
             }
 
             @Override

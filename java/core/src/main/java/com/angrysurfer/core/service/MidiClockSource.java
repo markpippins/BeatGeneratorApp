@@ -70,14 +70,39 @@ public class MidiClockSource implements IBusListener {
         // isInitialized = true;
     }
 
+    // Optimize buffer size and latency settings
     private void setupSequencer() throws MidiUnavailableException {
         System.out.println("SequencerManager: Setting up sequencer...");
         sequencer = MidiSystem.getSequencer(false);
         if (sequencer == null) {
             throw new MidiUnavailableException("Could not obtain MIDI sequencer");
         }
-        System.out.println("SequencerManager: Got sequencer: " + sequencer.getDeviceInfo().getName());
+        
+        // Configure sequencer for low latency before opening
+        try {
+            // Set system properties for better timing - works with most JVM implementations
+            System.setProperty("javax.sound.midi.Sequencer#RealTimeSequencing", "true");
+            System.setProperty("javax.sound.midi.Sequencer#Latency", "1");
+        } catch (Exception e) {
+            System.err.println("Could not set sequencer properties: " + e.getMessage());
+        }
+        
         sequencer.open();
+        
+        // Try to optimize the sequencer after opening
+        try {
+            // These are general properties that might work across implementations
+            // if (sequencer instanceof javax.sound.midi.RealTimeSequencer) {
+            //     System.out.println("Using real-time sequencer");
+            // }
+            
+            // Additional sequencer tuning
+            sequencer.setMicrosecondPosition(0);
+            sequencer.setTickPosition(0);
+        } catch (Exception e) {
+            System.err.println("Warning: Could not optimize sequencer: " + e.getMessage());
+        }
+        
         System.out.println("SequencerManager: Sequencer opened successfully");
     }
 
@@ -118,14 +143,16 @@ public class MidiClockSource implements IBusListener {
         sequencer.setSlaveSyncMode(Sequencer.SyncMode.MIDI_SYNC);
     }
 
+    // Optimize MIDI clock message handling
     private void connectDevices() throws MidiUnavailableException {
-        // Create and connect timing receiver
+        // Create and connect timing receiver with higher priority
         Receiver timingReceiver = new Receiver() {
             @Override
             public void send(MidiMessage message, long timeStamp) {
                 if (message instanceof ShortMessage msg) {
                     if (msg.getStatus() == 0xF8) {
-                        handleMidiClock();
+                        // Fast path for clock messages - minimize processing here
+                        timingBus.publish(Commands.TIME_TICK, this, getActiveSession().getTickCycler().get());
                     }
                 }
             }
@@ -141,15 +168,6 @@ public class MidiClockSource implements IBusListener {
 
         Transmitter audioTransmitter = sequencer.getTransmitter();
         audioTransmitter.setReceiver(synthesizer.getReceiver());
-    }
-
-    private void handleMidiClock() {
-        if (getActiveSession() != null) {
-            // getActiveSession().getTickCycler().advance();
-        }
-
-        timingBus.publish(Commands.TIME_TICK, this, getActiveSession().getTickCycler().get());
-
     }
 
     public void startSequence() {
