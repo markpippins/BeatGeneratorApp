@@ -151,8 +151,11 @@ public class MidiClockSource implements IBusListener {
             public void send(MidiMessage message, long timeStamp) {
                 if (message instanceof ShortMessage msg) {
                     if (msg.getStatus() == 0xF8) {
-                        // Fast path for clock messages - minimize processing here
-                        timingBus.publish(Commands.TIME_TICK, this, getActiveSession().getTickCycler().get());
+                        Session activeSession = getActiveSession();
+                        // Directly call onTick first to update the tick counter
+                        if (activeSession != null) {
+                            activeSession.onTick();
+                        }
                     }
                 }
             }

@@ -364,10 +364,10 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
             int tickInBeat = tickIndex % TICKS_PER_BEAT;
             int beatIndex = bar * beatsPerBar + beatInBar;
 
-            // Convert to session values
-            long sessionTick = tickInBeat;
-            double sessionBeat = beatInBar + (tickInBeat / (double) TICKS_PER_BEAT);
-            long sessionBar = bar;
+            // Convert to session values - IMPORTANT: +1 to match 1-based counting in Session
+            long sessionTick = tickInBeat + 1; // Add 1 for 1-based counting
+            double sessionBeat = beatInBar + 1; // Add 1 for 1-based counting
+            long sessionBar = bar + 1; // Add 1 for 1-based counting
 
             // Check for tick-specific rules (part 0 and part 1)
             for (Rule rule : allRules) {
@@ -448,9 +448,9 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         // Account for label panel width
         int labelWidth = 80;
 
-        // Add bar numbers
+        // Add bar numbers - show 1-based values to match Session's 1-based counting
         for (int bar = 0; bar < bars; bar++) {
-            JLabel barLabel = new JLabel(String.valueOf(bar + 1));
+            JLabel barLabel = new JLabel(String.valueOf(bar + 1)); // Display 1-based bar numbers
             barLabel.setForeground(Color.WHITE);
             barLabel.setFont(new Font("Arial", Font.BOLD, 12));
 
@@ -462,10 +462,10 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
             timeLabelsPanel.add(barLabel);
         }
 
-        // Add beat numbers for each bar
+        // Add beat numbers for each bar - show 1-based values to match Session
         for (int bar = 0; bar < bars; bar++) {
             for (int beat = 0; beat < beatsPerBar; beat++) {
-                JLabel beatLabel = new JLabel(String.valueOf(beat + 1));
+                JLabel beatLabel = new JLabel(String.valueOf(beat + 1)); // Display 1-based beat numbers
                 beatLabel.setForeground(Color.LIGHT_GRAY);
                 beatLabel.setFont(new Font("Arial", Font.PLAIN, 10));
 

@@ -165,9 +165,9 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         return getClass().getSimpleName().toLowerCase();
     }
 
-    public Long getSubPosition() {
-        return getSubCycler().get();
-    }
+    // public Long getSubPosition() {
+    //     return getSub();
+    // }
 
     public abstract void onTick(long tick, long bar);
     // {
@@ -558,10 +558,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
                 // Debug the actual values from the cyclers
                 System.out.println("Player " + getName() + " - TIME VALUES FROM SESSION CYCLERS:");
-                System.out.println("  - Tick: " + tick + " (cycler position: " + session.getTickCycler().get() + ")");
-                System.out.println("  - Beat: " + beat + " (cycler position: " + session.getBeatCycler().get() + ")");
-                System.out.println("  - Bar: " + bar + " (cycler position: " + session.getBarCycler().get() + ")");
-                System.out.println("  - Part: " + part + " (cycler position: " + session.getPartCycler().get() + ")");
+                System.out.println("  - Tick: " + tick + " (cycler position: " + session.getTick() + ")");
+                System.out.println("  - Beat: " + beat + " (cycler position: " + session.getBeat() + ")");
+                System.out.println("  - Bar: " + bar + " (cycler position: " + session.getBar() + ")");
+                System.out.println("  - Part: " + part + " (cycler position: " + session.getPart() + ")");
 
                 // Call the specific player implementation with values from session
                 if (!isMuted())

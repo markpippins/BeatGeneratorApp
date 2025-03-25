@@ -64,13 +64,13 @@ public class Strike extends Player {
         
         double beat = session.getBeat();
         long part = session.getPart();
-        long subPosition = getSubPosition();
+        // long subPosition = getSubPosition();
         
-        System.out.println("Strike.onTick: DETAILED TIMING - tick=" + tick + 
-                          ", beat=" + beat + 
-                          ", bar=" + bar + 
-                          ", part=" + part +
-                          ", subPos=" + subPosition);
+        // System.out.println("Strike.onTick: DETAILED TIMING - tick=" + tick + 
+        //                   ", beat=" + beat + 
+        //                   ", bar=" + bar + 
+        //                   ", part=" + part +
+        //                   ", subPos=" + subPosition);
         
         // Output all rule details for debugging
         if (getRules() != null && !getRules().isEmpty()) {
@@ -166,10 +166,10 @@ public class Strike extends Player {
     private void debugTimingValues(Session session) {
         try {
             System.out.println("RAW CYCLER VALUES FOR: " + getName());
-            System.out.println("  tickCycler: " + session.getTickCycler().get());
-            System.out.println("  beatCycler: " + session.getBeatCycler().get());
-            System.out.println("  barCycler: " + session.getBarCycler().get());
-            System.out.println("  partCycler: " + session.getPartCycler().get());
+            System.out.println("  tickCycler: " + session.getTick());
+            System.out.println("  beatCycler: " + session.getBeat());
+            System.out.println("  barCycler: " + session.getBar());
+            System.out.println("  partCycler: " + session.getPart());
         } catch (Exception e) {
             System.err.println("Error debugging cycler values: " + e.getMessage());
         }
