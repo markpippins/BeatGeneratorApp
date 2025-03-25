@@ -580,9 +580,8 @@ public class Session implements Serializable, IBusListener {
     }
 
     public void onTick() {
-        // Cycle from 1 to tickLength
-        tick = tick % tickLength + 1;
-        tickCount++;
+
+        timingBus.publish(Commands.TIME_TICK, this, tick);
 
         System.out.println("Session.onTick() - tick: " + tick + "/" + tickLength);
 
@@ -590,11 +589,14 @@ public class Session implements Serializable, IBusListener {
             tickListener.accept(tick);
         }
 
-        if (tick % ticksPerBeat == 1) {  // Changed from 0 to 1
+        if (tick % ticksPerBeat == 0) {  // Changed from 0 to 1
             onBeatChange();
         }
         
-        timingBus.publish(Commands.TIME_TICK, this, tick);
+        // Cycle from 1 to tickLength
+        tick = tick % tickLength + 1;
+        tickCount++;
+
     }
 
     private void onBeatChange() {
@@ -616,7 +618,7 @@ public class Session implements Serializable, IBusListener {
 
         TimingBus.getInstance().publish(Commands.TIME_BAR, this, bar);
 
-        if (bar % partLength == 1) {  // Changed from 0 to 1
+        if (bar % partLength == 0) {  // Changed from 0 to 1
             onPartChange();
         }
     }

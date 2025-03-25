@@ -2,6 +2,7 @@ package com.angrysurfer.core.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,12 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
+
+import javax.management.OperationsException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -166,7 +172,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     }
 
     // public Long getSubPosition() {
-    //     return getSub();
+    // return getSub();
     // }
 
     public abstract void onTick(long tick, long bar);
@@ -265,6 +271,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     public boolean isProbable() {
         long test = rand.nextLong(101);
         long probable = getProbability();
+
         boolean result = test < probable;
         return result;
     }
@@ -273,6 +280,145 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         return true;
     }
 
+    // private Set<Rule> filterByPart(Set<Rule> rules, boolean includeNoPart) {
+    // if (rules == null || session == null) return new HashSet<>();
+
+    // long currentPart = session.getPart();
+
+    // return rules.stream()
+    // .filter(r -> {
+    // int rulePart = r.getPart();
+    // return rulePart == 0 || (includeNoPart && rulePart == currentPart);
+    // })
+    // .collect(Collectors.toSet());
+    // }
+
+    // public boolean shouldPlay() {
+    // // Skip processing if there are no rules or no session
+    // if (rules == null || rules.isEmpty() || session == null) {
+    // return false;
+    // }
+
+    // // Get current timing values from session
+    // long tick = session.getTick();
+    // long bar = session.getBar();
+    // double beat = session.getBeat();
+    // long part = session.getPart();
+
+    // // Filter rules to only those applicable to the current part
+    // Set<Rule> applicable = filterByPart(rules, true);
+    // if (applicable.isEmpty()) {
+    // return false;
+    // }
+
+    // logger.debug("Player {} evaluating rules at tick={}, beat={}, bar={},
+    // part={}",
+    // getName(), tick, beat, bar, part);
+
+    // // Categorize rules by operator type
+    // Map<Integer, List<Rule>> rulesByType = applicable.stream()
+    // .collect(Collectors.groupingBy(Rule::getOperator));
+
+    // // Check if we have rules for each timing type
+    // boolean hasTickRules = rulesByType.containsKey(Comparison.TICK) &&
+    // !rulesByType.get(Comparison.TICK).isEmpty();
+    // boolean hasBeatRules = rulesByType.containsKey(Comparison.BEAT) &&
+    // !rulesByType.get(Comparison.BEAT).isEmpty();
+    // boolean hasBarRules = rulesByType.containsKey(Comparison.BAR) &&
+    // !rulesByType.get(Comparison.BAR).isEmpty();
+    // boolean hasPartRules = rulesByType.containsKey(Comparison.PART) &&
+    // !rulesByType.get(Comparison.PART).isEmpty();
+
+    // // If we only have constraint rules (bar/part) without triggering rules
+    // (beat/tick), don't play
+    // if ((hasBarRules || hasPartRules) && !hasBeatRules && !hasTickRules) {
+    // logger.debug("Player {} has only constraint rules, no trigger rules - won't
+    // play", getName());
+    // return false;
+    // }
+
+    // // CRITICAL FIX: If we have beat rules but no tick rules, only play on first
+    // tick of beat
+    // if (!hasTickRules && hasBeatRules && (tick % session.getTicksPerBeat()) != 1)
+    // {
+    // logger.debug("Player {} has beat rules but this isn't first tick of beat -
+    // won't play", getName());
+    // return false;
+    // }
+
+    // // Evaluate triggering rules (tick and beat)
+    // boolean tickMatched = !hasTickRules; // Default to true if no tick rules
+    // boolean beatMatched = !hasBeatRules; // Default to true if no beat rules
+
+    // // Check tick rules
+    // if (hasTickRules) {
+    // for (Rule rule : rulesByType.get(Comparison.TICK)) {
+    // if (Operator.evaluate(rule.getComparison(), tick, rule.getValue())) {
+    // tickMatched = true;
+    // logger.debug("Player {} matched tick rule: {}", getName(), rule);
+    // break;
+    // }
+    // }
+    // }
+
+    // // Check beat rules
+    // if (hasBeatRules) {
+    // for (Rule rule : rulesByType.get(Comparison.BEAT)) {
+    // if (Operator.evaluate(rule.getComparison(), beat, rule.getValue())) {
+    // beatMatched = true;
+    // logger.debug("Player {} matched beat rule: {}", getName(), rule);
+    // break;
+    // }
+    // }
+    // }
+
+    // // If either required trigger rule type didn't match, don't play
+    // if (!tickMatched || !beatMatched) {
+    // logger.debug("Player {} trigger rules didn't match - won't play", getName());
+    // return false;
+    // }
+
+    // // Now check constraint rules (bar and part)
+    // boolean barMatched = !hasBarRules; // Default to true if no bar rules
+    // boolean partMatched = !hasPartRules; // Default to true if no part rules
+
+    // // Check bar rules
+    // if (hasBarRules) {
+    // for (Rule rule : rulesByType.get(Comparison.BAR)) {
+    // if (Operator.evaluate(rule.getComparison(), bar, rule.getValue())) {
+    // barMatched = true;
+    // logger.debug("Player {} matched bar rule: {}", getName(), rule);
+    // break;
+    // }
+    // }
+    // }
+
+    // // Check part rules
+    // if (hasPartRules) {
+    // for (Rule rule : rulesByType.get(Comparison.PART)) {
+    // if (Operator.evaluate(rule.getComparison(), part, rule.getValue())) {
+    // partMatched = true;
+    // logger.debug("Player {} matched part rule: {}", getName(), rule);
+    // break;
+    // }
+    // }
+    // }
+
+    // // Both constraints must match if present
+    // if (!barMatched || !partMatched) {
+    // logger.debug("Player {} constraint rules didn't match - won't play",
+    // getName());
+    // return false;
+    // }
+
+    // // Update player state for next evaluation
+    // getSkipCycler().advance();
+    // getSubCycler().advance();
+
+    // logger.debug("Player {} - ALL RULES PASSED - will play", getName());
+    // return true;
+    // }
+
     private Set<Rule> filterByPart(Set<Rule> rules, boolean includeNoPart) {
         return rules.stream()
                 .filter(r -> r.getPart() == 0 || (includeNoPart && ((long) r.getPart()) == getSession().getPart()))
@@ -280,253 +426,186 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     }
 
     public boolean shouldPlay() {
-        // Get all the values from the session
+
+        Set<Rule> applicable = filterByPart(getRules(), true);
+
+        AtomicBoolean play = new AtomicBoolean(true);
+        AtomicBoolean hasTick = new AtomicBoolean(false);
+        AtomicBoolean hasBeat = new AtomicBoolean(false);
+        AtomicBoolean hasBar = new AtomicBoolean(false);
+
         long tick = getSession().getTick();
         double beat = getSession().getBeat();
         long bar = getSession().getBar();
-        long part = getSession().getPart();
-        long tickCount = getSession().getTickCount();
-        long beatCount = getSession().getBeatCount();
-        long barCount = getSession().getBarCount();
-        long partCount = getSession().getPartCount();
 
-        logger.debug("Player {} checking shouldPlay - tick: {}, beat: {}, bar: {}, part: {}", getName(), tick, beat,
-                bar, part);
+        // long fractionLength = getTicker().getTicksPerBeat() / getSubDivisions();
+        // AtomicLong beatFraction = new AtomicLong(0L);
+        // if (getBeatFraction() > 1)
+        // LongStream.range(1L, getBeatFraction()).forEach(f ->
+        // beatFraction.addAndGet(fractionLength));
 
-        // Get applicable rules
-        Set<Rule> applicable = getRules();
-        if (applicable == null || applicable.isEmpty()) {
-            logger.debug("Player {} has no rules", getName());
-            return false;
-        }
-
-        logger.debug("Player {} has {} rules to evaluate", getName(), applicable.size());
-
-        // Use the overloaded method that considers all session values
-        return shouldPlay(applicable, tick, beat, bar, part, tickCount, beatCount, barCount, partCount);
-    }
-
-    public boolean shouldPlay(Set<Rule> applicable, Long sessionTick, Double sessionBeat, Long sessionBar,
-            Long sessionPart, Long sessionTickCount, Long sessionBeatCount, Long sessionBarCount,
-            Long sessionPartCount) {
-
-        if (applicable == null || applicable.isEmpty()) {
-            logger.debug("Player {} has no rules", getName());
-            return false;
-        }
-
-        System.out.println("Player " + getName() + " - Evaluating rules - tick: " + sessionTick + ", beat: "
-                + sessionBeat + ", bar: " + sessionBar + ", part: " + sessionPart);
-
-        // Key fix: Convert long to int for correct comparison
-        int currentPartInt = sessionPart.intValue();
-
-        // First, separate rules by part
-        Map<Integer, List<Rule>> rulesByPart = applicable.stream().collect(Collectors.groupingBy(r -> r.getPart()));
-
-        System.out.println("Player " + getName() + " - Rules by part: " + rulesByPart.keySet());
-
-        // Get rules for current part and part 0 (all parts)
-        List<Rule> currentPartRules = rulesByPart.getOrDefault(currentPartInt, new ArrayList<>());
-        List<Rule> allPartRules = rulesByPart.getOrDefault(0, new ArrayList<>()); // Use 0, not 0L
-
-        System.out.println("Player " + getName() + " - Current part rules: " + currentPartRules.size()
-                + ", Part 0 rules: " + allPartRules.size());
-
-        // Combine rules from current part and part 0
-        List<Rule> effectiveRules = new ArrayList<>();
-        effectiveRules.addAll(currentPartRules);
-        effectiveRules.addAll(allPartRules);
-
-        if (effectiveRules.isEmpty()) {
-            System.out.println("Player " + getName() + " - No effective rules found for part " + sessionPart);
-            return false;
-        }
-
-        // Group effective rules by type
-        Map<Integer, List<Rule>> rulesByType = effectiveRules.stream()
-                .collect(Collectors.groupingBy(r -> r.getOperator()));
-
-        // Get rules for each timing type
-        List<Rule> tickRules = rulesByType.getOrDefault(Comparison.TICK, new ArrayList<>());
-        List<Rule> beatRules = rulesByType.getOrDefault(Comparison.BEAT, new ArrayList<>());
-        List<Rule> barRules = rulesByType.getOrDefault(Comparison.BAR, new ArrayList<>());
-
-        // Calculate timing values
-        int ticksPerBeat = getSession().getTicksPerBeat();
-        int beatsPerBar = getSession().getBeatsPerBar();
-
-        // Calculate absolute position within the bar
-        long tickInBar = ((sessionTick - 1) % (ticksPerBeat * beatsPerBar)) + 1;
-
-        // Calculate which beat we're in (1-based)
-        long currentBeat = ((tickInBar - 1) / ticksPerBeat) + 1;
-
-        // Calculate position within current beat (1-based)
-        long tickInBeat = ((tickInBar - 1) % ticksPerBeat) + 1;
-
-        logger.debug("Player {} timing calcs - tickInBar: {}, currentBeat: {}, tickInBeat: {}", getName(), tickInBar,
-                currentBeat, tickInBeat);
-
-        // First check beat rules since they're more restrictive
-        boolean beatMatched = false;
-        if (!beatRules.isEmpty()) {
-            beatMatched = beatRules.stream()
-                    .anyMatch(rule -> Operator.evaluate(rule.getComparison(), currentBeat, rule.getValue()));
-
-            if (!beatMatched) {
-                logger.debug("Player {} - beat rules exist but none matched for beat {}", getName(), currentBeat);
-                return false;
+        applicable.forEach(rule -> {
+            switch (rule.getComparison()) {
+            case Comparison.TICK -> {
+                if (Operator.evaluate(rule.getComparison(), tick, rule.getValue()))
+                    hasTick.set(true);
+                // logger.info(String.format("HasTick: %s", hasTick.get()));
+                break;
             }
-        }
 
-        // Then check tick rules
-        boolean tickMatched = false;
-        if (!tickRules.isEmpty()) {
-            tickMatched = tickRules.stream()
-                    .anyMatch(rule -> Operator.evaluate(rule.getComparison(), tickInBeat, rule.getValue()));
-
-            if (!tickMatched) {
-                logger.debug("Player {} - tick rules exist but none matched for tick {} in beat", getName(),
-                        tickInBeat);
-                return false;
+            case Comparison.BEAT -> {
+                if (Operator.evaluate(rule.getComparison(), beat, rule.getValue()))
+                    hasBeat.set(true);
+                // logger.info(String.format("HasBeat: %s", hasBeat.get()));
+                break;
             }
-        } else if (beatMatched) {
-            // If we have beat rules but no tick rules, only play on first tick of matching
-            // beats
-            if (tickInBeat != 1) {
-                logger.debug("Player {} - has beat rules but no tick rules, and not on first tick of beat", getName());
-                return false;
+
+            case Comparison.BAR -> {
+                if (Operator.evaluate(rule.getComparison(), bar, rule.getValue()))
+                    hasBar.set(true);
+                // logger.info(String.format("HasBar: %s", hasBar.get()));
+                // play.set(false);
+                break;
             }
-            tickMatched = true;
-        }
 
-        // Must have at least one triggering rule match
-        if (!tickMatched && !beatMatched) {
-            logger.debug("Player {} - no tick or beat triggers matched", getName());
-            return false;
-        }
+            // case Operator.PART -> {
+            // if (!Comparison.evaluate(rule.getComparison(), getTicker().getPart(),
+            // rule.getValue()))
+            // play.set(false);
+            // }
 
-        // Now check constraining rules (bar, count rules, etc.)
+            case Comparison.BEAT_DURATION -> {
+                if (!Operator.evaluate(rule.getComparison(), beat, rule.getValue()))
+                    play.set(false);
+                break;
+            }
 
-        // Check bar rules (constraints)
-        if (!barRules.isEmpty() && !barRules.stream()
-                .anyMatch(rule -> Operator.evaluate(rule.getComparison(), sessionBar, rule.getValue()))) {
-            logger.debug("Player {} - bar constraints not met for bar {}", getName(), sessionBar);
-            return false;
-        }
+            case Comparison.TICK_COUNT -> {
+                if (!Operator.evaluate(rule.getComparison(), getSession().getTickCount(), rule.getValue()))
+                    play.set(false);
+            }
 
-        // Check count-based constraints
-        // TICK_COUNT
-        List<Rule> tickCountRules = rulesByType.getOrDefault(Comparison.TICK_COUNT, new ArrayList<>());
-        if (!tickCountRules.isEmpty() && !tickCountRules.stream()
-                .anyMatch(rule -> Operator.evaluate(rule.getComparison(), sessionTickCount, rule.getValue()))) {
-            logger.debug("Player {} - tick count constraints not met", getName());
-            return false;
-        }
+            case Comparison.BEAT_COUNT -> {
+                if (!Operator.evaluate(rule.getComparison(), getSession().getBeatCount(), rule.getValue()))
+                    play.set(false);
+            }
 
-        // BEAT_COUNT
-        List<Rule> beatCountRules = rulesByType.getOrDefault(Comparison.BEAT_COUNT, new ArrayList<>());
-        if (!beatCountRules.isEmpty() && !beatCountRules.stream()
-                .anyMatch(rule -> Operator.evaluate(rule.getComparison(), sessionBeatCount, rule.getValue()))) {
-            logger.debug("Player {} - beat count constraints not met", getName());
-            return false;
-        }
+            case Comparison.BAR_COUNT -> {
+                if (!Operator.evaluate(rule.getComparison(), getSession().getBarCount(), rule.getValue()))
+                    play.set(false);
+            }
 
-        // BAR_COUNT
-        List<Rule> barCountRules = rulesByType.getOrDefault(Comparison.BAR_COUNT, new ArrayList<>());
-        if (!barCountRules.isEmpty() && !barCountRules.stream()
-                .anyMatch(rule -> Operator.evaluate(rule.getComparison(), sessionBarCount, rule.getValue()))) {
-            logger.debug("Player {} - bar count constraints not met", getName());
-            return false;
-        }
+            case Comparison.PART_COUNT -> {
+                if (!Operator.evaluate(rule.getComparison(), getSession().getPartCount(), rule.getValue()))
+                    play.set(false);
+            }
+            }
+        });
 
-        // PART_COUNT
-        List<Rule> partCountRules = rulesByType.getOrDefault(Comparison.PART_COUNT, new ArrayList<>());
-        if (!partCountRules.isEmpty() && !partCountRules.stream()
-                .anyMatch(rule -> Operator.evaluate(rule.getComparison(), sessionPartCount, rule.getValue()))) {
-            logger.debug("Player {} - part count constraints not met", getName());
-            return false;
-        }
+        getSkipCycler().advance();
+        getSubCycler().advance();
+        boolean result = (hasTick.get() && hasBeat.get() && hasBar.get() && play.get())
+                || (tick == 1 && (hasTick.get() || hasBeat.get()));
+        // logger.info(String.format("Returning: %s", result));
 
-        // Consider sparse value for randomization
-        if (getSparse() > 0 && rand.nextDouble() < getSparse()) {
-            logger.debug("Player {} - note skipped due to sparse value: {}", getName(), getSparse());
-            return false;
-        }
-
-        // All rules passed
-        logger.debug("Player {} - all rules passed, will play", getName());
-        return true;
+        return result;
     }
 
     /**
-     * Simplified rule evaluation that properly handles the first-tick-only case for
-     * players that have beat/bar rules but no tick rules
+     * Determines whether this player would play at the specified position based on
+     * its rules. This method is used by visualizations to predict when players will
+     * trigger.
+     * 
+     * @param rules The set of rules to evaluate
+     * @param tick  The tick position
+     * @param beat  The beat position
+     * @param bar   The bar position
+     * @param part  The part position
+     * @return true if player would play at this position, false otherwise
      */
-    public boolean shouldPlayAt(Set<Rule> applicable, long tick, double beat, long bar, long part) {
-        if (applicable == null || applicable.isEmpty()) {
+    public boolean shouldPlayAt(Set<Rule> rules, int tick, int beat, int bar, int part) {
+        // Skip processing if there are no rules
+        if (rules == null || rules.isEmpty()) {
             return false;
         }
 
-        // Group rules by operator type for easier processing
+        // Filter rules to only those applicable to the given part
+        Set<Rule> applicable = rules.stream().filter(r -> r.getPart() == 0 || r.getPart() == part)
+                .collect(Collectors.toSet());
+
+        if (applicable.isEmpty()) {
+            return false;
+        }
+
+        // Categorize rules by operator type
         Map<Integer, List<Rule>> rulesByType = applicable.stream().collect(Collectors.groupingBy(Rule::getOperator));
 
         // Check if we have rules for each timing type
         boolean hasTickRules = rulesByType.containsKey(Comparison.TICK) && !rulesByType.get(Comparison.TICK).isEmpty();
         boolean hasBeatRules = rulesByType.containsKey(Comparison.BEAT) && !rulesByType.get(Comparison.BEAT).isEmpty();
         boolean hasBarRules = rulesByType.containsKey(Comparison.BAR) && !rulesByType.get(Comparison.BAR).isEmpty();
+        boolean hasPartRules = rulesByType.containsKey(Comparison.PART) && !rulesByType.get(Comparison.PART).isEmpty();
 
-        // CRITICAL FIX: If no tick rules but we have beat or bar rules,
-        // then ONLY play on the first tick of the beat (tick == 1)
-        if (!hasTickRules && (hasBeatRules || hasBarRules) && tick != 1) {
+        // If we have no trigger rules, don't play
+        if (!hasBeatRules && !hasTickRules) {
             return false;
         }
 
-        // Process tick rules (if any)
+        // Evaluate triggering rules (tick and beat)
+        boolean tickMatched = !hasTickRules; // Default to true if no tick rules
+        boolean beatMatched = !hasBeatRules; // Default to true if no beat rules
+
+        // Check tick rules
         if (hasTickRules) {
-            boolean tickMatched = false;
             for (Rule rule : rulesByType.get(Comparison.TICK)) {
                 if (Operator.evaluate(rule.getComparison(), tick, rule.getValue())) {
                     tickMatched = true;
                     break;
                 }
             }
-
-            if (!tickMatched)
-                return false; // No tick rule matched
         }
 
-        // Process beat rules (if any)
+        // Check beat rules
         if (hasBeatRules) {
-            boolean beatMatched = false;
             for (Rule rule : rulesByType.get(Comparison.BEAT)) {
                 if (Operator.evaluate(rule.getComparison(), beat, rule.getValue())) {
                     beatMatched = true;
                     break;
                 }
             }
-
-            if (!beatMatched)
-                return false; // No beat rule matched
         }
 
-        // Process bar rules (if any)
+        // If either required trigger rule type didn't match, don't play
+        if (!tickMatched || !beatMatched) {
+            return false;
+        }
+
+        // Now check constraint rules (bar and part)
+        boolean barMatched = !hasBarRules; // Default to true if no bar rules
+        boolean partMatched = !hasPartRules; // Default to true if no part rules
+
+        // Check bar rules
         if (hasBarRules) {
-            boolean barMatched = false;
             for (Rule rule : rulesByType.get(Comparison.BAR)) {
                 if (Operator.evaluate(rule.getComparison(), bar, rule.getValue())) {
                     barMatched = true;
                     break;
                 }
             }
-
-            if (!barMatched)
-                return false; // No bar rule matched
         }
 
-        // If we got this far, all rule types matched (or weren't present)
-        return true;
+        // Check part rules
+        if (hasPartRules) {
+            for (Rule rule : rulesByType.get(Comparison.PART)) {
+                if (Operator.evaluate(rule.getComparison(), part, rule.getValue())) {
+                    partMatched = true;
+                    break;
+                }
+            }
+        }
+
+        // Both constraints must match if present
+        return barMatched && partMatched;
     }
 
     @Override

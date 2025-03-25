@@ -85,7 +85,7 @@ public class SessionService implements IBusListener {
                 }
                 case SessionUpdateType.PARTS -> {
                     session.setParts((int) updateValue);
-                    session.getPartCycler().reset();
+                    // session.getPartCycler().reset();
                 }
                 case SessionUpdateType.BASE_NOTE_OFFSET ->
                     session.setNoteOffset(session.getNoteOffset() + updateValue);

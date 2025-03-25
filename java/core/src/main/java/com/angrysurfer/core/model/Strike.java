@@ -62,8 +62,6 @@ public class Strike extends Player {
         // TEMPORARY DEBUG CODE: Print the actual cycler values
         debugTimingValues(session);
         
-        double beat = session.getBeat();
-        long part = session.getPart();
         // long subPosition = getSubPosition();
         
         // System.out.println("Strike.onTick: DETAILED TIMING - tick=" + tick + 
@@ -176,27 +174,27 @@ public class Strike extends Player {
     }
 
     // TEMPORARY TEST METHOD
-    @Override
-    public boolean shouldPlay() {
-        Session session = getSession();
-        if (session == null) return false;
+    // @Override
+    // public boolean shouldPlay() {
+    //     Session session = getSession();
+    //     if (session == null) return false;
         
-        // Get raw timing values
-        long tick = session.getTick();
-        double beat = session.getBeat();
-        long ticksPerBeat = session.getTicksPerBeat();
+    //     // Get raw timing values
+    //     long tick = session.getTick();
+    //     double beat = session.getBeat();
+    //     long ticksPerBeat = session.getTicksPerBeat();
         
-        // Calculate position within the beat (1 to ticksPerBeat)
-        long tickInBeat = ((tick - 1) % ticksPerBeat) + 1;
+    //     // Calculate position within the beat (1 to ticksPerBeat)
+    //     long tickInBeat = ((tick - 1) % ticksPerBeat) + 1;
         
-        System.out.println("SIMPLIFIED TEST - Player " + getName() + ": tickInBeat=" + tickInBeat);
+    //     System.out.println("SIMPLIFIED TEST - Player " + getName() + ": tickInBeat=" + tickInBeat);
         
-        // Play on the first tick of each beat
-        boolean shouldPlayNow = (tickInBeat == 1);
-        if (shouldPlayNow) {
-            System.out.println("SIMPLIFIED TEST - Will play note for player: " + getName());
-        }
+    //     // Play on the first tick of each beat
+    //     boolean shouldPlayNow = (tickInBeat == 1);
+    //     if (shouldPlayNow) {
+    //         System.out.println("SIMPLIFIED TEST - Will play note for player: " + getName());
+    //     }
         
-        return shouldPlayNow;
-    }
+    //     return shouldPlayNow;
+    // }
 }
