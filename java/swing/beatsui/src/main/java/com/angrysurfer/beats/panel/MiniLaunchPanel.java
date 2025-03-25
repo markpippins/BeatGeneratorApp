@@ -45,7 +45,7 @@ public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener
 
     // Add label mapping array
     private static final int[] PAD_LABELS = {
-            43, 44, 45, 46, // top row
+            40, 41, 42, 43, // top row
             36, 37, 38, 39 // bottom row
     };
 
