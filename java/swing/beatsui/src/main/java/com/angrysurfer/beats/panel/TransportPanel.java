@@ -112,12 +112,6 @@ public class TransportPanel extends JPanel {
         
         recordButton.addActionListener(e -> {
             toggleRecordingState();
-            
-            if (isRecording) {
-                commandBus.publish(Commands.TRANSPORT_RECORD_START, this);
-            } else {
-                commandBus.publish(Commands.TRANSPORT_RECORD_STOP, this);
-            }
         });
         
         stopButton = createToolbarButton(Commands.TRANSPORT_STOP, "⏹", "Stop");
@@ -178,6 +172,13 @@ public class TransportPanel extends JPanel {
     private void toggleRecordingState() {
         isRecording = !isRecording;
         updateRecordButtonAppearance();
+        
+        // Publish the appropriate command
+        if (isRecording) {
+            commandBus.publish(Commands.TRANSPORT_RECORD_START, this);
+        } else {
+            commandBus.publish(Commands.TRANSPORT_RECORD_STOP, this);
+        }
     }
 
     private void updateRecordButtonAppearance() {
@@ -228,14 +229,27 @@ public class TransportPanel extends JPanel {
                 }
 
                 if (Objects.nonNull(action.getCommand())) {
-                    switch (action.getCommand()) {
+                    String cmd = action.getCommand();
+                    
+                    // Check for commands that should trigger recording mode
+                    if (shouldEnableRecordingFor(cmd)) {
+                        if (!isRecording) {
+                            isRecording = true;
+                            updateRecordButtonAppearance();
+                            // Publish recording start event
+                            commandBus.publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
+                        }
+                    }
+                    
+                    // Handle other specific commands
+                    switch (cmd) {
                         case Commands.TRANSPORT_STATE_CHANGED:
                             if (action.getData() instanceof Boolean) {
                                 Boolean isPlaying = (Boolean) action.getData();
                                 SwingUtilities.invokeLater(() -> {
                                     playButton.setEnabled(!isPlaying);
                                     stopButton.setEnabled(isPlaying);
-                                    pauseButton.setEnabled(isPlaying); // Enable pause when playing
+                                    pauseButton.setEnabled(isPlaying);
                                 });
                             }
                             break;
@@ -243,10 +257,7 @@ public class TransportPanel extends JPanel {
                             SwingUtilities.invokeLater(() -> pauseButton.setEnabled(true));
                             break;
                         case Commands.TRANSPORT_STOP:
-                            // Disable pause button when stopped
                             SwingUtilities.invokeLater(() -> pauseButton.setEnabled(false));
-                            
-                            // Also stop recording when transport is stopped
                             isRecording = false;
                             updateRecordButtonAppearance();
                             break;
@@ -262,7 +273,6 @@ public class TransportPanel extends JPanel {
                             if (action.getData() instanceof Session) {
                                 Session session = (Session) action.getData();
                                 updateTransportState(session);
-                                // Force disable forward button for new session
                                 forwardButton.setEnabled(false);
                             }
                             break;
@@ -270,5 +280,56 @@ public class TransportPanel extends JPanel {
                 }
             }
         });
+    }
+
+    /**
+     * Determine if a command should enable recording mode
+     */
+    private boolean shouldEnableRecordingFor(String command) {
+        // Player modification commands
+        if (command.equals(Commands.PLAYER_ADDED) ||
+            command.equals(Commands.PLAYER_UPDATED) ||
+            command.equals(Commands.PLAYER_DELETED)) {
+            return true;
+        }
+        
+        // Rule modification commands
+        if (command.equals(Commands.RULE_ADDED) ||
+            command.equals(Commands.RULE_UPDATED) ||
+            command.equals(Commands.RULE_DELETED) ||
+            command.equals(Commands.RULE_ADDED_TO_PLAYER) ||
+            command.equals(Commands.RULE_REMOVED_FROM_PLAYER)) {
+            return true;
+        }
+        
+        // Value change commands
+        if (command.equals(Commands.NEW_VALUE_LEVEL) ||
+            command.equals(Commands.NEW_VALUE_NOTE) ||
+            command.equals(Commands.NEW_VALUE_SWING) ||
+            command.equals(Commands.NEW_VALUE_PROBABILITY) ||
+            command.equals(Commands.NEW_VALUE_VELOCITY_MIN) ||
+            command.equals(Commands.NEW_VALUE_VELOCITY_MAX) ||
+            command.equals(Commands.NEW_VALUE_RANDOM) ||
+            command.equals(Commands.NEW_VALUE_PAN) ||
+            command.equals(Commands.NEW_VALUE_SPARSE)) {
+            return true;
+        }
+        
+        // Session-related commands
+        if (command.equals(Commands.SESSION_UPDATED)) {
+            return true;
+        }
+        
+        // Other parameter changes
+        if (command.equals(Commands.PRESET_CHANGED) ||
+            command.equals(Commands.UPDATE_TEMPO) ||
+            command.equals(Commands.UPDATE_TIME_SIGNATURE) || 
+            command.equals(Commands.TIMING_PARAMETERS_CHANGED) ||
+            command.equals(Commands.TRANSPOSE_UP) ||
+            command.equals(Commands.TRANSPOSE_DOWN)) {
+            return true;
+        }
+        
+        return false;
     }
 }
