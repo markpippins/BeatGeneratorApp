@@ -238,11 +238,7 @@ public class SessionDisplayPanel extends JPanel {
         beatsField.setText(String.format("%d", totalBeats));
         barsField.setText(String.format("%d", totalBars));
         
-        // Show total parts from the session
-        if (currentSession != null) {
-            lengthField.setText(String.format("%d", currentSession.getParts()));
-        } else {
-            lengthField.setText(String.format("%d", totalParts));
-        }
+        // Show the cumulative part count
+        lengthField.setText(String.format("%d", totalParts));
     }
 }

@@ -172,7 +172,14 @@ public class Session implements Serializable, IBusListener {
         this.beatsPerBar = beatsPerBar;
         this.ticksPerBeat = ticksPerBeat;
         this.parts = parts;
-        this.partLength = partLength;
+        this.partLength = partLength > 0 ? partLength : 1; // Ensure partLength is at least 1
+        
+        // Initialize counters
+        tick = 1;
+        beat = 1.0;
+        bar = 1;
+        part = 1;
+        // ... other initialization
     }
 
     public int getMetronomChannel() {
@@ -629,10 +636,10 @@ public class Session implements Serializable, IBusListener {
     // Refactored onTick method with fixed references
     public void onTick() {
         try {
-            // Increment tick counter
+            // Increment tick counter each time
             tickCount++;
             
-            // State tracking flags
+            // Used for state tracking to prevent multiple events in the same tick
             boolean isBeatChange = false;
             boolean isBarChange = false;
             boolean isPartChange = false;
@@ -651,26 +658,32 @@ public class Session implements Serializable, IBusListener {
                 barCount = newBar;
                 barProcessed = false;
                 isBarChange = true;
-                
-                // Part calculations happen when bar changes
-                // Only change part when we've completed partLength bars
-                if (barCount > 0 && barCount % partLength == 0) {
-                    if (!partProcessed) {
-                        // Increment part but cycle back to 1 when we reach parts
-                        part = (part % parts) + 1;  
-                        partCount++;
-                        partProcessed = true;
-                        isPartChange = true;
-                        
-                        logger.debug("Part changed to {} (partCount={}) at bar {}", part, partCount, barCount);
-                    }
-                } else {
-                    // Reset part processed flag for non-part-boundary bars
-                    partProcessed = false;
-                }
             }
 
-            // Dispatch events
+            // Part calculations on bar change - fix to only increment at partLength boundaries
+            if (isBarChange && barCount > 0 && barCount % partLength == 0) {
+                if (!partProcessed) {
+                    // Increment part but cycle back to 1 when we reach max
+                    part = (part % parts) + 1;  // This cycles from 1 to parts
+                    partCount++;
+                    partProcessed = true;
+                    isPartChange = true;
+                    
+                    logger.debug("Part changed to {} (partCount={}) at bar {}", part, partCount, barCount);
+                }
+            } else if (isBarChange) {
+                // Reset the partProcessed flag when we get to a new bar 
+                // that isn't a part boundary
+                partProcessed = false;
+            }
+
+            // CRITICAL: Process the current tick for all enabled players
+            // This is what generates the sound!
+            getPlayers().stream()
+                        .filter(Player::getEnabled)
+                        .forEach(p -> p.onTick(tickCount, beatCount, barCount, part));
+
+            // Dispatch events for timing display
             if (!tickProcessed) {
                 timingBus.publish(Commands.TIME_TICK, this, tickCount);
                 tickProcessed = true;
@@ -687,7 +700,6 @@ public class Session implements Serializable, IBusListener {
             }
             
             if (isPartChange) {
-                // Pass the CURRENT part number to the event (1-based)
                 timingBus.publish(Commands.TIME_PART, this, part);
             }
         } catch (Exception e) {

@@ -20,8 +20,4 @@ public class Sample extends Strike {
         // setHighNote(high);
     }
 
-    @Override
-    public void onTick(long tick, long bar) {
-
-    }
 }

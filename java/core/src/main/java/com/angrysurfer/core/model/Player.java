@@ -170,20 +170,25 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         return getClass().getSimpleName().toLowerCase();
     }
 
+    public void setMinVelocity(Long minVelocity) {
+        this.minVelocity = minVelocity;
+        if (minVelocity > maxVelocity) {
+            setMaxVelocity(minVelocity);
+        }
+    }
+
+    public void setMaxVelocity(Long maxVelocity) {
+        this.maxVelocity = maxVelocity;
+        if (minVelocity > maxVelocity) {
+            setMinVelocity(maxVelocity);
+        }
+    }
+    
     // public Long getSubPosition() {
     // return getSub();
-    // }
+    // }s
 
-    public abstract void onTick(long tick, long bar);
-    // {
-    // // System.out.println("CRITICAL DEBUG - Player: " + getName()
-    // + " - BYPASSING ALL RULE CHECKS AND PLAYING UNCONDITIONALLY");
-    // // ... rest of the method ...
-    // }
-
-    // public Long getInstrumentId() {
-    // return (Objects.nonNull(getInstrument()) ? getInstrument().getId() : null);
-    // }
+    public abstract void onTick(long tickCount, long beatCount, long barCount, long part);
 
     public Rule getRule(Long ruleId) {
         return getRules().stream().filter(r -> r.getId().equals(ruleId)).findAny().orElseThrow();
@@ -191,11 +196,11 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     public void drumNoteOn(long note) {
         logger.debug("drumNoteOn() - note: {}", note);
-        // long velocity = (long) ((getLevel() * 0.01)
-        // * rand.nextLong(getMinVelocity() > 0 ? getMinVelocity() : 100,
-        // getMaxVelocity() > getMinVelocity() ? getMaxVelocity() : 126));
 
-        long velocity = getMaxVelocity();
+
+        int difference = getMaxVelocity().intValue() - getMinVelocity().intValue();
+
+        long velocity = getMinVelocity() + rand.nextInt(difference + 1);
         // Send note on message
 
         java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
@@ -290,18 +295,13 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             return rulePart == 0 || (includeNoPart && rulePart == currentPart);
         }).collect(Collectors.toSet());
     }
-
-    public boolean shouldPlay() {
+    
+    public boolean shouldPlay(long currentTick, long currentBeat, long currentBar, long currentPart) {
         // Early out if no applicable rules or player not enabled
         if (rules == null || rules.isEmpty() || !getEnabled()) {
             return false;
         }
 
-        // Read current session timing values
-        final long currentTick = session.getTick();
-        final double currentBeat = session.getBeat();
-        final long currentBar = session.getBar();
-        final long currentPart = session.getPart();
 
         boolean debug = true;
         if (debug) {
@@ -630,24 +630,24 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
                 }
 
                 Session session = getSession();
-                long tick = session.getTick();
-                double beat = session.getBeat();
-                long bar = session.getBar();
+                long tickCount = session.getTickCount();
+                long beatCount = session.getBeatCount();
+                long barCount = session.getBarCount();
                 long part = session.getPart();
 
                 // System.out.println("Player " + getName() + " processing tick, current tick: " + tick);
 
                 // Only trigger if we haven't already triggered for this tick
-                if (tick == lastTriggeredTick) {
+                if (tickCount == lastTriggeredTick) {
                     // System.out.println("Player " + getName() + " - Already triggered for tick " + tick);
                     return;
                 }
-                lastTriggeredTick = tick;
+                lastTriggeredTick = tickCount;
 
                 // Optionally, check shouldPlay() here (which evaluates tick/beat rules)
-                if (shouldPlay()) {
-                    if (!isMuted())
-                        onTick(tick, bar);
+                if (shouldPlay(tickCount, beatCount, barCount, part)) {
+                    if (getEnabled() && !isMuted())
+                        onTick(tickCount, session.getBeatCount(), session.getBarCount(), part);
                 }
             }
             case Commands.TRANSPORT_STOP -> {

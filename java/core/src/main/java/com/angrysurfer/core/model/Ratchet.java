@@ -22,18 +22,16 @@ public class Ratchet extends Strike {
     private double targetTick;
 
     public Ratchet(Player parent, double offset, long interval, int part) {
-        logger.info("Creating new Ratchet - parent: {}, offset: {}, interval: {}, part: {}",
-                parent.getName(), offset, interval, part);
+        logger.info("Creating new Ratchet - parent: {}, offset: {}, interval: {}, part: {}", parent.getName(), offset,
+                interval, part);
 
         // Set parent and session first
         setParent(parent);
         setSession(parent.getSession());
 
         // Now we can safely use the session
-        Long ratchets = getSession().getPlayers().stream()
-                .filter(p -> p instanceof Ratchet)
-                .count() + 1;
-                
+        Long ratchets = getSession().getPlayers().stream().filter(p -> p instanceof Ratchet).count() + 1;
+
         setId(9000 + ratchets);
         setNote(getParent().getNote());
         setInstrument(getParent().getInstrument());
@@ -54,8 +52,7 @@ public class Ratchet extends Strike {
         setEnabled(true);
 
         setName(getParent().getName()
-                + String.format(getParent().getPlayerClassName(),
-                        getSession().getPlayers().size()));
+                + String.format(getParent().getPlayerClassName(), getSession().getPlayers().size()));
         targetTick = getSession().getTickCount() + offset;
         logger.debug("Adding rule - tick: {}, part: {}", targetTick, part);
         getRules().add(new Rule(Comparison.TICK_COUNT, Operator.EQUALS, targetTick, part));
@@ -72,12 +69,12 @@ public class Ratchet extends Strike {
     }
 
     @Override
-    public void onTick(long tick, long bar) {
-        logger.debug("onTick() - tick: {}, bar: {}", tick, bar);
-        // if (isProbable())
-        drumNoteOn((long) (getNote() + getSession().getNoteOffset()));
+    public void onTick(long tickCount, long beatCount, long barCount, long part) {
 
-        if (tick > targetTick + 1) {
+        if (isProbable())
+            drumNoteOn((long) (getNote() + getSession().getNoteOffset()));
+
+        if (tickCount > targetTick + 1) {
             // Remove this ratchet after it has been played
             getSession().getPlayers().remove(this);
             CommandBus.getInstance().unregister(this);
@@ -94,7 +91,8 @@ public class Ratchet extends Strike {
     public void onAction(Command action) {
         if (action.getCommand() == Commands.TIME_TICK) {
             if (shouldPlay()) {
-                onTick(getSession().getTick(), getSession().getBar());
+                onTick(getSession().getTickCount(), getSession().getBeatCount(), getSession().getBarCount(),
+                        getSession().getPart());
             }
         }
     }

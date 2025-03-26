@@ -49,36 +49,16 @@ public class Strike extends Player {
     }
 
     @Override
-    public void onTick(long tick, long bar) {
+    public void onTick(long tickCount, long beatCount, long barCount, long part) {
         // Get additional timing values from the session
         Session session = getSession();
         if (session == null) {
             System.err.println("Strike.onTick: No session available");
             return;
         }
-        
-        // TEMPORARY DEBUG CODE: Print the actual cycler values
-        debugTimingValues(session);
-        
-        // long subPosition = getSubPosition();
-        
-        // // System.out.println("Strike.onTick: DETAILED TIMING - tick=" + tick + 
-        //                   ", beat=" + beat + 
-        //                   ", bar=" + bar + 
-        //                   ", part=" + part +
-        //                   ", subPos=" + subPosition);
-        
-        // Output all rule details for debugging
-        if (getRules() != null && !getRules().isEmpty()) {
-            // System.out.println("Strike rules for player " + getName() + ":");
-            getRules().forEach(rule -> {
-                // System.out.println("  Rule " + rule.getId() + ": operator=" + rule.getOperator() + ", comparison=" + rule.getComparison() + ", value=" + rule.getValue() + ", part=" + rule.getPart());
-            });
-        }
-        
+      
         // Check if we should play based on the current timing
-        boolean shouldPlayResult = shouldPlay();
-        // System.out.println("Strike.shouldPlay result: " + shouldPlayResult);
+        boolean shouldPlayResult = shouldPlay(tickCount, beatCount, barCount, part);
         
         if (shouldPlayResult) {
             try {
