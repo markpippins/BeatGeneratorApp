@@ -1,6 +1,7 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -12,9 +13,11 @@ import java.util.IllegalFormatConversionException;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -424,6 +427,21 @@ public class PlayerEditPanel extends StatusProviderPanel {
     // Helper methods for creating components
     private void setupInstrumentCombo() {
         instrumentCombo = new JComboBox<>();
+        
+        // Add custom renderer to display instrument names
+        instrumentCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, 
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                
+                if (value instanceof Instrument) {
+                    Instrument instrument = (Instrument) value;
+                    setText(instrument.getName());
+                }
+                return this;
+            }
+        });
 
         // CHANGE: Use UserConfigManager instead of SessionManager.getInstrumentEngine()
         List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
