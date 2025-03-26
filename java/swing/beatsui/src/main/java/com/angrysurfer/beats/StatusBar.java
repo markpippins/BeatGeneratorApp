@@ -264,9 +264,6 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         if (action == null || action.getCommand() == null)
             return;
 
-        // Debug all commands received
-        // // System.out.println("StatusBar received: " + action.getCommand());
-
         try {
             switch (action.getCommand()) {
                 case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED, Commands.SESSION_LOADED -> {
@@ -276,12 +273,10 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
                 }
                 case Commands.PLAYER_SELECTED -> {
                     if (action.getData() instanceof Player player) {
-                        // System.out.println("StatusBar updating player info: " + player.getName());
                         updatePlayerInfo(player);
                     }
                 }
                 case Commands.PLAYER_UNSELECTED -> {
-                    // System.out.println("StatusBar clearing player info");
                     clearPlayerInfo();
                 }
                 case Commands.TIME_TICK -> {
@@ -302,10 +297,28 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
                         updateTimeDisplay();
                     }
                 }
-                case Commands.TRANSPORT_PLAY, Commands.TRANSPORT_STOP -> {
+                // Add case for part timing event
+                case Commands.TIME_PART -> {
+                    if (action.getData() instanceof Number partVal) {
+                        // Get the part value directly from the session event
+                        // This is already 1-based from the Session class
+                        partCount = partVal.intValue();
+                        updateTimeDisplay();
+                    }
+                }
+                case Commands.TRANSPORT_PLAY -> {
                     resetTimingCounters();
+                    setStatus("Playing");
+                }
+                case Commands.TRANSPORT_STOP -> {
+                    resetTimingCounters();
+                    setStatus("Stopped");
+                }
+                case Commands.TRANSPORT_RECORD -> {
+                    setStatus("Recording");
                 }
                 default -> {
+                    // No action needed for other commands
                 }
             }
         } catch (Exception e) {
@@ -354,12 +367,13 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
     }
     
     /**
-     * Format the time display in ticks:beats:bars format
+     * Format the time display in tick:beat:bar:part format
      */
     private void updateTimeDisplay() {
-        // Format as 00:00:00 (ticks:beats:bars)
+        // Format as 00:00:00:00 (tick:beat:bar:part)
+        // Display in 1-based format for user-friendliness
         String formattedTime = String.format("%02d:%02d:%02d:%02d", 
-                               tickCount, beatCount, barCount, partCount);
+                              tickCount + 1, beatCount + 1, barCount + 1, partCount + 1);
                                
         // Update the time field on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
@@ -367,49 +381,49 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         });
     }
 
-    private JComboBox<String> createRootNoteCombo() {
-        String[] keys = {
-                "C", "D", "E", "F", "G", "A", "B"
-        };
+    // private JComboBox<String> createRootNoteCombo() {
+    //     String[] keys = {
+    //             "C", "D", "E", "F", "G", "A", "B"
+    //     };
 
-        JComboBox<String> combo = new JComboBox<>(keys);
-        combo.setSelectedItem("C");
-        combo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        combo.setEnabled(true);
+    //     JComboBox<String> combo = new JComboBox<>(keys);
+    //     combo.setSelectedItem("C");
+    //     combo.setAlignmentX(Component.CENTER_ALIGNMENT);
+    //     combo.setEnabled(true);
 
-        combo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED)
-                commandBus.publish(Commands.ROOT_NOTE_SELECTED, this, (String) combo.getSelectedItem());
-        });
+    //     combo.addItemListener(e -> {
+    //         if (e.getStateChange() == ItemEvent.SELECTED)
+    //             commandBus.publish(Commands.ROOT_NOTE_SELECTED, this, (String) combo.getSelectedItem());
+    //     });
 
-        return combo;
-    }
+    //     return combo;
+    // }
 
-    private JComboBox<String> createScaleCombo() {
-        String[] scaleNames = Scale.SCALE_PATTERNS.keySet()
-                .stream()
-                .sorted()
-                .toArray(String[]::new);
+    // private JComboBox<String> createScaleCombo() {
+    //     String[] scaleNames = Scale.SCALE_PATTERNS.keySet()
+    //             .stream()
+    //             .sorted()
+    //             .toArray(String[]::new);
 
-        JComboBox<String> combo = new JComboBox<>(scaleNames);
-        combo.setSelectedItem("Chromatic");
-        combo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        combo.setEnabled(true);
+    //     JComboBox<String> combo = new JComboBox<>(scaleNames);
+    //     combo.setSelectedItem("Chromatic");
+    //     combo.setAlignmentX(Component.CENTER_ALIGNMENT);
+    //     combo.setEnabled(true);
 
-        combo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                String selectedScale = (String) combo.getSelectedItem();
-                int selectedIndex = combo.getSelectedIndex();
-                commandBus.publish(Commands.SCALE_SELECTED, this, selectedScale);
+    //     combo.addItemListener(e -> {
+    //         if (e.getStateChange() == ItemEvent.SELECTED) {
+    //             String selectedScale = (String) combo.getSelectedItem();
+    //             int selectedIndex = combo.getSelectedIndex();
+    //             commandBus.publish(Commands.SCALE_SELECTED, this, selectedScale);
                 
-                if (selectedIndex == 0) {
-                    commandBus.publish(Commands.FIRST_SCALE_SELECTED, this, selectedScale);
-                } else if (selectedIndex == combo.getItemCount() - 1) {
-                    commandBus.publish(Commands.LAST_SCALE_SELECTED, this, selectedScale);
-                }
-            }
-        });
+    //             if (selectedIndex == 0) {
+    //                 commandBus.publish(Commands.FIRST_SCALE_SELECTED, this, selectedScale);
+    //             } else if (selectedIndex == combo.getItemCount() - 1) {
+    //                 commandBus.publish(Commands.LAST_SCALE_SELECTED, this, selectedScale);
+    //             }
+    //         }
+    //     });
 
-        return combo;
-    }
+    //     return combo;
+    // }
 }
