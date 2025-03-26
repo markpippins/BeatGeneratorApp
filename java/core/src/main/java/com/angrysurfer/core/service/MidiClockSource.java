@@ -33,7 +33,7 @@ public class MidiClockSource implements IBusListener {
     private static final Logger logger = Logger.getLogger(MidiClockSource.class.getName());
 
     private boolean metronomeAudible = false;
-    private int metronomeChannel = 9;
+    public int metronomeChannel = 9;
     private int metronomeNote = 60;
     private int metronomeVelocity = 100;
 

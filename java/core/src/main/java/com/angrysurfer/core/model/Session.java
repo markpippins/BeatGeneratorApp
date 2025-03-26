@@ -175,6 +175,11 @@ public class Session implements Serializable, IBusListener {
         this.partLength = partLength;
     }
 
+    public int getMetronomChannel() {
+        return 9;
+    }
+
+
     public void addPlayer(Player player) {
         logger.info("addPlayer() - adding player: {}", player);
         if (isRunning())

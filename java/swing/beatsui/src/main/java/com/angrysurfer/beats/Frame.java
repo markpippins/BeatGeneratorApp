@@ -193,8 +193,25 @@ public class Frame extends JFrame implements AutoCloseable {
                 if (mainPanel != null && mainPanel.getSelectedComponent() instanceof SessionPanel) {
                     char keyChar = Character.toLowerCase(e.getKeyChar());
 
-                    // MIDI piano key handling (existing code)
-                    if (keyNoteMap.containsKey(keyChar)) {
+                    // Special case for 'a' key - play active player's current note
+                    if (keyChar == 'a') {
+                        Player activePlayer = PlayerManager.getInstance().getActivePlayer();
+                        if (activePlayer != null && activePlayer.getNote() != null) {
+                            int playerNote = activePlayer.getNote().intValue();
+                            logger.info("A key pressed - Playing active player's note: " + playerNote);
+                            
+                            // Determine command based on shift key
+                            String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
+                            CommandBus.getInstance().publish(command, this, playerNote);
+                            
+                            // Consume the event
+                            e.consume();
+                            return true;
+                        }
+                    }
+                    
+                    // Regular MIDI piano key handling (existing code)
+                    else if (keyNoteMap.containsKey(keyChar)) {
                         // Get base note (for octave 5)
                         int baseNote = keyNoteMap.get(keyChar);
                         
@@ -215,17 +232,12 @@ public class Frame extends JFrame implements AutoCloseable {
                                       " (player octave: " + playerOctave + ")");
                         }
 
-                        switch (e.getID()) {
-                            case KeyEvent.KEY_PRESSED -> {
-                                String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
-                                CommandBus.getInstance().publish(command, this, noteToPlay);
-                            }
-                            case KeyEvent.KEY_RELEASED -> {
-                                if (!e.isShiftDown()) {
-                                    CommandBus.getInstance().publish(Commands.KEY_RELEASED, this, noteToPlay);
-                                }
-                            }
-                        }
+                        String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
+                        CommandBus.getInstance().publish(command, this, noteToPlay);
+                        
+                        // Consume the event
+                        e.consume();
+                        return true;
                     }
                     
                     // Handle arrow key navigation for PlayersTable

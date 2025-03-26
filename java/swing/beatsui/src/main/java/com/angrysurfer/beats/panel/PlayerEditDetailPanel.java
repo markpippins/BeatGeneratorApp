@@ -1,0 +1,319 @@
+package com.angrysurfer.beats.panel;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.SwingConstants;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.angrysurfer.beats.widget.NoteSelectionDial;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.model.Player;
+
+/**
+ * Panel containing detailed player controls for performance, modulation, and ratcheting.
+ * This panel is used inside PlayerEditPanel to manage the middle section of controls.
+ */
+public class PlayerEditDetailPanel extends JPanel {
+    private static final Logger logger = LoggerFactory.getLogger(PlayerEditDetailPanel.class);
+    private static final int SLIDER_HEIGHT = 80;
+    
+    // Reference to player being edited
+    private final Player player;
+    
+    // Performance controls
+    private final JSlider levelSlider;
+    private final JSlider noteSlider;
+    private final JSlider velocityMinSlider;
+    private final JSlider velocityMaxSlider;
+    private final JSlider panSlider;
+    private final JButton prevButton;
+    private final JButton nextButton;
+    private final NoteSelectionDial noteDial;
+    
+    // Modulation controls
+    private final JSlider swingSlider;
+    private final JSlider probabilitySlider;
+    private final JSlider randomSlider;
+    private final JSlider sparseSlider;
+    
+    // Ratchet controls
+    private final JSlider ratchetCountSlider;
+    private final JSlider ratchetIntervalSlider;
+    
+    /**
+     * Creates a new PlayerEditDetailPanel for the given player
+     * 
+     * @param player The player being edited
+     */
+    public PlayerEditDetailPanel(Player player) {
+        super(new BorderLayout());
+        this.player = player;
+        
+        // Initialize performance controls
+        levelSlider = createSlider("Level", player.getLevel(), 0, 100);
+        noteSlider = createSlider("Note", player.getNote(), 0, 127);
+        velocityMinSlider = createSlider("Min Velocity", player.getMinVelocity(), 0, 127);
+        velocityMaxSlider = createSlider("Max Velocity", player.getMaxVelocity(), 0, 127);
+        panSlider = createSlider("Pan", player.getPanPosition(), -64, 63);
+        prevButton = new JButton("▲");
+        nextButton = new JButton("▼");
+        noteDial = new NoteSelectionDial();
+        
+        // Initialize modulation controls
+        swingSlider = createSlider("Swing", player.getSwing(), 0, 100);
+        probabilitySlider = createSlider("Probability", player.getProbability(), 0, 100);
+        randomSlider = createSlider("Random", player.getRandomDegree(), 0, 100);
+        sparseSlider = createSlider("Sparse", (long) (player.getSparse() * 100), 0, 100);
+        
+        // Initialize ratchet controls with tick spacing
+        ratchetCountSlider = createSlider("Count", player.getRatchetCount(), 0, 6, true);
+        ratchetIntervalSlider = createSlider("Interval", player.getRatchetInterval(), 1, 16, true);
+        
+        // Set up the UI components
+        setupLayout();
+        setupActionListeners();
+    }
+    
+    /**
+     * Sets up the overall panel layout
+     */
+    private void setupLayout() {
+        // Create container with GridLayout (2 rows: performance/modulation on top, ratchet on bottom)
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        
+        // Create and add performance panel
+        JPanel performancePanel = createPerformancePanel();
+        mainPanel.add(performancePanel);
+        
+        // Create and add modulation panel
+        JPanel modulationPanel = createModulationPanel();
+        mainPanel.add(modulationPanel);
+        
+        // Create and add ratchet panel
+        JPanel ratchetPanel = createRatchetPanel();
+        mainPanel.add(ratchetPanel);
+        
+        add(mainPanel, BorderLayout.CENTER);
+    }
+    
+    /**
+     * Creates the performance panel with level, note, and octave controls
+     */
+    private JPanel createPerformancePanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Performance"));
+        
+        // Setup note selection dial
+        Dimension dialSize = new Dimension(85, 85);
+        noteDial.setPreferredSize(dialSize);
+        noteDial.setMinimumSize(dialSize);
+        noteDial.setMaximumSize(dialSize);
+        noteDial.setCommand(Commands.NEW_VALUE_NOTE);
+        noteDial.setValue(player.getNote().intValue());
+        
+        // Add components
+        panel.add(noteDial);
+        panel.add(createLabeledSlider("Level", levelSlider));
+        panel.add(createLabeledSlider("Note", noteSlider));
+        
+        // Add navigation buttons panel with label
+        JPanel navPanel = new JPanel(new BorderLayout(0, 2));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+        JLabel octaveLabel = new JLabel("Octave", JLabel.CENTER);
+        
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 2));
+        prevButton.setPreferredSize(new Dimension(35, 35));
+        nextButton.setPreferredSize(new Dimension(35, 35));
+        buttonPanel.add(prevButton);
+        buttonPanel.add(nextButton);
+        
+        navPanel.add(octaveLabel, BorderLayout.NORTH);
+        navPanel.add(buttonPanel, BorderLayout.CENTER);
+        panel.add(navPanel);
+        
+        // Add velocity and pan sliders
+        panel.add(createLabeledSlider("Min Vel", velocityMinSlider));
+        panel.add(createLabeledSlider("Max Vel", velocityMaxSlider));
+        panel.add(createLabeledSlider("Pan", panSlider));
+        
+        return panel;
+    }
+    
+    /**
+     * Creates the modulation panel with swing, probability, random, and sparse controls
+     */
+    private JPanel createModulationPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Modulation"));
+        
+        panel.add(createLabeledSlider("Swing", swingSlider));
+        panel.add(createLabeledSlider("Probability", probabilitySlider));
+        panel.add(createLabeledSlider("Random", randomSlider));
+        panel.add(createLabeledSlider("Sparse", sparseSlider));
+        
+        return panel;
+    }
+    
+    /**
+     * Creates the ratchet panel with count and interval controls
+     */
+    private JPanel createRatchetPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Ratchet"));
+        
+        // Create panel for sliders with horizontal layout
+        JPanel slidersPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        
+        // Add count slider with label
+        JPanel countPanel = new JPanel(new BorderLayout(2, 2));
+        JLabel countLabel = new JLabel("Count", JLabel.CENTER);
+        countPanel.add(countLabel, BorderLayout.NORTH);
+        countPanel.add(ratchetCountSlider, BorderLayout.CENTER);
+        slidersPanel.add(countPanel);
+        
+        // Add interval slider with label
+        JPanel intervalPanel = new JPanel(new BorderLayout(2, 2));
+        JLabel intervalLabel = new JLabel("Interval", JLabel.CENTER);
+        intervalPanel.add(intervalLabel, BorderLayout.NORTH);
+        intervalPanel.add(ratchetIntervalSlider, BorderLayout.CENTER);
+        slidersPanel.add(intervalPanel);
+        
+        panel.add(slidersPanel, BorderLayout.CENTER);
+        
+        return panel;
+    }
+    
+    /**
+     * Sets up action listeners for buttons and sliders
+     */
+    private void setupActionListeners() {
+        // Octave navigation
+        prevButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Move note up an octave (12 semitones)
+                int currentNote = noteSlider.getValue();
+                int newNote = Math.min(127, currentNote + 12);
+                noteSlider.setValue(newNote);
+                noteDial.setValue(newNote);
+            }
+        });
+        
+        nextButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Move note down an octave (12 semitones)
+                int currentNote = noteSlider.getValue();
+                int newNote = Math.max(0, currentNote - 12);
+                noteSlider.setValue(newNote);
+                noteDial.setValue(newNote);
+            }
+        });
+        
+        // Note dial changes should update the slider
+        noteDial.addChangeListener(e -> {
+            int value = noteDial.getValue();
+            noteSlider.setValue(value);
+            // Publish the new note value
+            CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, (long)value);
+        });
+        
+        // Note slider changes should update the dial
+        noteSlider.addChangeListener(e -> {
+            int value = noteSlider.getValue();
+            noteDial.setValue(value);
+        });
+    }
+    
+    /**
+     * Updates the player object with current control values
+     */
+    public void updatePlayer() {
+        player.setLevel((long) levelSlider.getValue());
+        player.setNote((long) noteSlider.getValue());
+        player.setMinVelocity((long) velocityMinSlider.getValue());
+        player.setMaxVelocity((long) velocityMaxSlider.getValue());
+        player.setPanPosition((long) panSlider.getValue());
+        
+        player.setSwing((long) swingSlider.getValue());
+        player.setProbability((long) probabilitySlider.getValue());
+        player.setRandomDegree((long) randomSlider.getValue());
+        player.setSparse(((double) sparseSlider.getValue()) / 100.0);
+        
+        player.setRatchetCount((long) ratchetCountSlider.getValue());
+        player.setRatchetInterval((long) ratchetIntervalSlider.getValue());
+        
+        logger.debug("Updated player parameters: level={}, note={}, swing={}", 
+                player.getLevel(), player.getNote(), player.getSwing());
+    }
+    
+    /**
+     * Creates a vertical slider with the given parameters
+     */
+    private JSlider createSlider(String name, Long value, int min, int max) {
+        // Handle null values safely
+        int safeValue;
+        if (value == null) {
+            logger.error(name + " value is null, using default: " + min);
+            safeValue = min;
+        } else {
+            // Clamp to valid range
+            safeValue = (int) Math.max(min, Math.min(max, value));
+            
+            // Debug logging
+            if (safeValue != value) {
+                logger.error(String.format("%s value %d out of range [%d-%d], clamped to %d", 
+                        name, value, min, max, safeValue));
+            }
+        }
+        
+        JSlider slider = new JSlider(SwingConstants.VERTICAL, min, max, safeValue);
+        slider.setPreferredSize(new Dimension(20, SLIDER_HEIGHT));
+        slider.setMinimumSize(new Dimension(20, SLIDER_HEIGHT));
+        slider.setMaximumSize(new Dimension(20, SLIDER_HEIGHT));
+        
+        return slider;
+    }
+    
+    /**
+     * Creates a vertical slider with major tick marks
+     */
+    private JSlider createSlider(String name, long value, int min, int max, boolean setMajorTickSpacing) {
+        JSlider slider = createSlider(name, value, min, max);
+        if (setMajorTickSpacing) {
+            slider.setMajorTickSpacing((max - min) / 4);
+            slider.setPaintTicks(true);
+            slider.setPaintLabels(true);
+            slider.setSnapToTicks(true);
+        }
+        return slider;
+    }
+    
+    /**
+     * Creates a panel containing a labeled slider
+     */
+    private JPanel createLabeledSlider(String label, JSlider slider) {
+        JPanel panel = new JPanel(new BorderLayout(5, 2));
+        JLabel labelComponent = new JLabel(label, JLabel.CENTER);
+        labelComponent.setFont(new Font(labelComponent.getFont().getName(), Font.PLAIN, 11));
+        panel.add(labelComponent, BorderLayout.NORTH);
+        panel.add(slider, BorderLayout.CENTER);
+        return panel;
+    }
+}

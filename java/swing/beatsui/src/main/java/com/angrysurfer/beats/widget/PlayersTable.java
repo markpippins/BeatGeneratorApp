@@ -70,18 +70,33 @@ public class PlayersTable extends JTable {
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setWidth(0);
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setPreferredWidth(30);
         
-        // Set minimum and preferred widths for Name and Instrument columns  
+        // Set column widths for Name column
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setMinWidth(100);
-        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT)).setMinWidth(100);
-
-        // Set relative widths for columns
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setPreferredWidth(200);
-        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT)).setPreferredWidth(150);
+        
+        // Double the width of the Instrument column
+        int instrumentColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT);
+        getColumnModel().getColumn(instrumentColumnIndex).setMinWidth(150); // Increased from 100
+        getColumnModel().getColumn(instrumentColumnIndex).setPreferredWidth(300); // Doubled from 150
+        
+        // Reduce the Note column back to normal size - no longer showing drum names here
+        int noteColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_NOTE);
+        getColumnModel().getColumn(noteColumnIndex).setMinWidth(40); // Reduced from 60
+        getColumnModel().getColumn(noteColumnIndex).setPreferredWidth(60); // Reduced from 100
+        getColumnModel().getColumn(noteColumnIndex).setMaxWidth(80); // Reduced from 160
+        
+        // Keep the wider Preset column to fit preset names and drum names
+        int presetColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_PRESET);
+        getColumnModel().getColumn(presetColumnIndex).setMinWidth(80);
+        getColumnModel().getColumn(presetColumnIndex).setPreferredWidth(120);
+        getColumnModel().getColumn(presetColumnIndex).setMaxWidth(180);
 
-        // Set fixed widths for other columns
+        // Set fixed widths for other columns - skip Preset and Instrument columns
         for (int i = 2; i < getColumnCount(); i++) {
-            getColumnModel().getColumn(i).setMaxWidth(80);
-            getColumnModel().getColumn(i).setPreferredWidth(60);
+            if (i != presetColumnIndex && i != instrumentColumnIndex && i != noteColumnIndex) { 
+                getColumnModel().getColumn(i).setMaxWidth(80);
+                getColumnModel().getColumn(i).setPreferredWidth(60);
+            }
         }
 
         // Configure table appearance

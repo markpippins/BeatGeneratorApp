@@ -28,24 +28,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@Entity
-@Table(name = "instrument")
 public class Instrument implements Serializable {
 
     static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
@@ -60,25 +47,25 @@ public class Instrument implements Serializable {
 
     private Long id;
 
+    private Boolean internal;
+
     private List<ControlCode> controlCodes = new ArrayList<>();
 
     private Set<Pad> pads = new HashSet<>();
 
-    @Transient
-    private Map<Integer, String> assignments = new HashMap<>();
+    @JsonIgnore
+    private transient Map<Integer, String> assignments = new HashMap<>();
 
-    @Transient
+    @JsonIgnore
     private Map<Integer, Integer[]> boundaries = new HashMap<>();
 
-    @Transient
+    @JsonIgnore
     private Map<Integer, Map<Long, String>> captions = new HashMap<>();
 
     @JsonIgnore
-    @Transient
     private MidiDevice device;
 
     @JsonIgnore
-    @Transient
     private AtomicReference<Receiver> receiver = new AtomicReference<>();
 
     @Column(name = "name", unique = true)
@@ -104,7 +91,6 @@ public class Instrument implements Serializable {
 
     private Boolean available = false;
 
-    @OneToMany(mappedBy = "instrument")
     private Set<Pattern> patterns;
 
     public Instrument() {
