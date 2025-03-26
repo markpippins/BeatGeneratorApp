@@ -585,9 +585,13 @@ public class Session implements Serializable, IBusListener {
     }
 
     public void stop() {
-
+        // First stop the sequencer
         sequencerManager.stop();
 
+        // Turn off all notes before disabling players
+        stopAllNotes();
+
+        // Now disable all players
         getPlayers().forEach(p -> p.setEnabled(false));
 
         logger.info("onStop() - resetting all cyclers and counters");

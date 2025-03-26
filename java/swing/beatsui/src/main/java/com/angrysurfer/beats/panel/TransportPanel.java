@@ -1,7 +1,6 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -52,14 +51,51 @@ public class TransportPanel extends JPanel {
     
     private void setupTransportButtons() {
         rewindButton = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Session");
-        pauseButton = createToolbarButton(Commands.TRANSPORT_PAUSE, "⏸", "Pause");
         
+        // Create pause button with special handling
+        pauseButton = new JButton("⏸");
+        pauseButton.setToolTipText("Pause (All Notes Off)");
+        pauseButton.setEnabled(false); // Initially disabled
+        pauseButton.setActionCommand(Commands.TRANSPORT_PAUSE);
+        
+        // Style the pause button
+        int size = 32;
+        pauseButton.setPreferredSize(new Dimension(size, size));
+        pauseButton.setMinimumSize(new Dimension(size, size));
+        pauseButton.setMaximumSize(new Dimension(size, size));
+        pauseButton.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
+        if (!pauseButton.getFont().canDisplay('⏸')) {
+            pauseButton.setFont(new Font("Dialog", Font.PLAIN, 18));
+        }
+        pauseButton.setMargin(new Insets(0, 0, 0, 0));
+        pauseButton.setFocusPainted(false);
+        pauseButton.setVerticalAlignment(SwingConstants.CENTER);
+        pauseButton.setBorderPainted(false);
+        pauseButton.setContentAreaFilled(true);
+        pauseButton.setOpaque(true);
+        
+        // Special action for pause button - send ALL_NOTES_OFF
+        pauseButton.addActionListener(e -> {
+            commandBus.publish(Commands.ALL_NOTES_OFF, this);
+        });
+        
+        // Add hover effects
+        pauseButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                pauseButton.setBackground(pauseButton.getBackground().brighter());
+            }
+            
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                pauseButton.setBackground(UIManager.getColor("Button.background"));
+            }
+        });
+        
+        // Rest of the button setup code...
         recordButton = new JButton("⏺");
         recordButton.setToolTipText("Record");
         recordButton.setEnabled(true);
         recordButton.setActionCommand(Commands.TRANSPORT_RECORD);
         
-        int size = 32;
         recordButton.setPreferredSize(new Dimension(size, size));
         recordButton.setMinimumSize(new Dimension(size, size));
         recordButton.setMaximumSize(new Dimension(size, size));
@@ -173,7 +209,10 @@ public class TransportPanel extends JPanel {
         // Update states for all buttons
         rewindButton.setEnabled(hasActiveSession && SessionManager.getInstance().canMoveBack());
         forwardButton.setEnabled(SessionManager.getInstance().canMoveForward());
-        pauseButton.setEnabled(false); // Pause currently not implemented
+        
+        // Enable pause button when the session is running
+        pauseButton.setEnabled(hasActiveSession && session.isRunning());
+        
         playButton.setEnabled(hasActiveSession && !session.isRunning());
         stopButton.setEnabled(hasActiveSession && session.isRunning());
         recordButton.setEnabled(hasActiveSession);
@@ -196,19 +235,26 @@ public class TransportPanel extends JPanel {
                                 SwingUtilities.invokeLater(() -> {
                                     playButton.setEnabled(!isPlaying);
                                     stopButton.setEnabled(isPlaying);
+                                    pauseButton.setEnabled(isPlaying); // Enable pause when playing
                                 });
                             }
+                            break;
+                        case Commands.TRANSPORT_PLAY:
+                            SwingUtilities.invokeLater(() -> pauseButton.setEnabled(true));
+                            break;
+                        case Commands.TRANSPORT_STOP:
+                            // Disable pause button when stopped
+                            SwingUtilities.invokeLater(() -> pauseButton.setEnabled(false));
+                            
+                            // Also stop recording when transport is stopped
+                            isRecording = false;
+                            updateRecordButtonAppearance();
                             break;
                         case Commands.TRANSPORT_RECORD_START:
                             isRecording = true;
                             updateRecordButtonAppearance();
                             break;
                         case Commands.TRANSPORT_RECORD_STOP:
-                            isRecording = false;
-                            updateRecordButtonAppearance();
-                            break;
-                        case Commands.TRANSPORT_STOP:
-                            // Also stop recording when transport is stopped
                             isRecording = false;
                             updateRecordButtonAppearance();
                             break;
