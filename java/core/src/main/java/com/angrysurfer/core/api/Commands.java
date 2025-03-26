@@ -16,6 +16,7 @@ public class Commands {
     public static final String TRANSPORT_STOP = "TRANSPORT_STOP";
     public static final String TRANSPORT_PLAY = "TRANSPORT_PLAY";
     public static final String TRANSPORT_FORWARD = "TRANSPORT_FORWARD";
+    public static final String ALL_NOTES_OFF = "ALL_NOTES_OFF";
 
     // Transport state commands
     public static final String TRANSPORT_STATE_CHANGED = "TRANSPORT_STATE_CHANGED";
@@ -57,9 +58,8 @@ public class Commands {
     public static final String PLAYER_EDIT_REQUEST = "PLAYER_EDIT_REQUEST";
     public static final String PLAYER_DELETE_REQUEST = "PLAYER_DELETE_REQUEST";
     public static final String PLAYER_EDIT_CANCELLED = "PLAYER_EDIT_CANCELLED";
-    public static final String EDIT_PLAYER_PARAMETERS = "EDIT_PLAYER_PARAMETERS"; // Add this line
-    public static final String PLAYER_COPY_EDIT_REQUEST = "PLAYER_COPY_EDIT_REQUEST"; // Add this constant with the
-                                                                                      // other player commands
+    public static final String EDIT_PLAYER_PARAMETERS = "EDIT_PLAYER_PARAMETERS";
+    public static final String PLAYER_COPY_EDIT_REQUEST = "PLAYER_COPY_EDIT_REQUEST";
 
     // Player navigation commands
     public static final String PLAYER_ROW_INDEX_REQUEST = "PLAYER_ROW_INDEX_REQUEST";
@@ -100,7 +100,7 @@ public class Commands {
 
     // Control sending commands
     public static final String SEND_ALL_CONTROLS = "SEND_ALL_CONTROLS";
-    public static final String SAVE_CONFIG = "SAVE_INSTRUMENT_CONFIG"; // Add this line
+    public static final String SAVE_CONFIG = "SAVE_INSTRUMENT_CONFIG";
 
     // Session selection commands
     public static final String SESSION = "SESSION";
@@ -110,17 +110,13 @@ public class Commands {
     // Session state commands
     public static final String SESSION_UNSELECTED = "SESSION_UNSELECTED";
     public static final String SESSION_DELETED = "SESSION_DELETED";
-    public static final String SESSION_CREATED = "SESSION_CREATED"; // Add this line
+    public static final String SESSION_CREATED = "SESSION_CREATED";
 
     // Session-Player-Rule relationship commands
     public static final String SESSION_REQUEST = "SESSION_REQUEST";
     public static final String SESSION_LOADED = "SESSION_LOADED";
     public static final String SESSION_CHANGED = "SESSION_CHANGED";
 
-    // public static final String PLAYER_ADDED_TO_SESSION =
-    // "PLAYER_ADDED_TO_SESSION";
-    // public static final String PLAYER_REMOVED_FROM_SESSION =
-    // "PLAYER_REMOVED_FROM_SESSION";
     public static final String RULE_ADDED_TO_PLAYER = "RULE_ADDED_TO_PLAYER";
     public static final String RULE_REMOVED_FROM_PLAYER = "RULE_REMOVED_FROM_PLAYER";
 
@@ -192,20 +188,6 @@ public class Commands {
 
     public static final String INSTRUMENT_UPDATED = "INSTRUMENT_UPDATED";
     public static final String INSTRUMENTS_REFRESHED = "INSTRUMENTS_REFRESHED";
-
-    // Add timing-specific commands
-    // public static final String BASIC_TIMING_TICK = "BASIC_TIMING_TICK";
-    // public static final String BASIC_TIMING_BEAT = "BASIC_TIMING_BEAT";
-    // public static final String BASIC_TIMING_BAR = "BASIC_TIMING_BAR";
-    // public static final String BASIC_TIMING_PART = "BASIC_TIMING_PART";
-    // public static final String BEFORE_TICK = "BEFORE_TICK";
-    // public static final String AFTER_TICK = "AFTER_TICK";
-    // public static final String BEFORE_BEAT = "BEFORE_BEAT";
-    // public static final String AFTER_BEAT = "AFTER_BEAT";
-    // public static final String BEFORE_BAR = "BEFORE_BAR";
-    // public static final String AFTER_BAR = "AFTER_BAR";
-    // public static final String BEFORE_PART = "BEFORE_PART";
-    // public static final String AFTER_PART = "AFTER_PART";
 
     public static final String TRANSPORT_STATE = "TRANSPORT_STATE";
 

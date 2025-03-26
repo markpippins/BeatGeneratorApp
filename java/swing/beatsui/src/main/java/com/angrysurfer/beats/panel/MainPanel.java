@@ -5,10 +5,12 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.FlowLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
@@ -45,21 +47,23 @@ public class MainPanel extends JPanel implements AutoCloseable {
         tabbedPane.addTab("Instruments", new InstrumentsPanel());
         tabbedPane.addTab("Launch", new LaunchPanel());
         tabbedPane.addTab("System", new SystemsPanel(statusBar));
-        // tabbedPane.addTab("Sorting", new SortingVisualizerPanel());
         
         // Create a panel for the trailing component with proper vertical alignment
         JPanel tabToolbar = new JPanel();
         tabToolbar.setLayout(new BoxLayout(tabToolbar, BoxLayout.X_AXIS));
         tabToolbar.setOpaque(false);
         
-        // Add vertical glue to center the button vertically
+        // Add vertical glue to center the buttons vertically
         tabToolbar.add(Box.createVerticalGlue());
         
-        // Create a panel for the button with margins
-        JPanel buttonPanel = new JPanel(new BorderLayout());
+        // Create a panel for the buttons with margins
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
         buttonPanel.setOpaque(false);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
-        buttonPanel.add(createMetronomeToggleButton(), BorderLayout.EAST);
+        
+        // Add both buttons - notes off first, then metronome
+        buttonPanel.add(createAllNotesOffButton());
+        buttonPanel.add(createMetronomeToggleButton());
         
         tabToolbar.add(buttonPanel);
         tabToolbar.add(Box.createVerticalGlue());
@@ -130,6 +134,46 @@ public class MainPanel extends JPanel implements AutoCloseable {
         });
         
         return metronomeButton;
+    }
+
+    private JButton createAllNotesOffButton() {
+        // Create a regular button (not a toggle)
+        JButton notesOffButton = new JButton();
+        
+        // Set a stop/mute symbol - using Unicode stop symbol
+        notesOffButton.setText("■");
+        
+        // Make it square with 38px size to match metronome button
+        notesOffButton.setPreferredSize(new Dimension(38, 38));
+        notesOffButton.setMinimumSize(new Dimension(38, 38));
+        notesOffButton.setMaximumSize(new Dimension(38, 38));
+        
+        // Use FlatLaf styling - roundRect gives nice rounded corners
+        notesOffButton.putClientProperty("JButton.buttonType", "roundRect");
+        notesOffButton.putClientProperty("JButton.squareSize", true);
+        
+        // Set font to be proportional to the button size
+        notesOffButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 18));
+        
+        // Center the text/icon
+        notesOffButton.setHorizontalAlignment(SwingConstants.CENTER);
+        notesOffButton.setVerticalAlignment(SwingConstants.CENTER);
+        
+        // Remove content margin to utilize full button space
+        notesOffButton.setMargin(new Insets(0, 0, 0, 0));
+        
+        // Set tooltip
+        notesOffButton.setToolTipText("All Notes Off - Silence All Sounds");
+        
+        // Add action listener
+        notesOffButton.addActionListener(e -> {
+            logger.info("All Notes Off button pressed");
+            
+            // Publish the command to stop all notes
+            CommandBus.getInstance().publish(Commands.ALL_NOTES_OFF, this);
+        });
+        
+        return notesOffButton;
     }
 
     public int getSelectedTab() {

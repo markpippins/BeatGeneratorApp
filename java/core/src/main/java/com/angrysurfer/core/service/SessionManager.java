@@ -185,6 +185,14 @@ public class SessionManager implements IBusListener {
                                 }
                             }
                         }
+                        // Add this case to the existing switch statement in the command bus listener
+                        case Commands.ALL_NOTES_OFF -> {
+                            if (getActiveSession() != null) {
+                                logger.info("Stopping all notes for all players");
+                                // Call the stopAllNotes method on the session
+                                getActiveSession().stopAllNotes();
+                            }
+                        }
                     }
                 } catch (Exception e) {
                     // logger. error("Error processing command {}: {}", cmd, e.getMessage());

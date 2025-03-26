@@ -186,7 +186,7 @@ public class Session implements Serializable, IBusListener {
 
         player.setSession(this);
         commandBus.publish(Commands.PLAYER_ADDED, this, player);
-        
+
         // Auto-register as tick listener if session is running
         if (isRunning() && player.getEnabled()) {
             registerTickListener(player);
@@ -204,7 +204,7 @@ public class Session implements Serializable, IBusListener {
 
         player.setSession(null);
         commandBus.publish(Commands.PLAYER_ADDED, this, player);
-        
+
         // Unregister from tick listeners
         unregisterTickListener(player);
     }
@@ -286,7 +286,7 @@ public class Session implements Serializable, IBusListener {
         beat = 1.0;
         bar = 1;
         part = 1;
-        
+
         // Counters still start at 0
         tickCount = 0;
         beatCount = 0;
@@ -353,7 +353,7 @@ public class Session implements Serializable, IBusListener {
         beat = 1.0;
         bar = 1;
         part = 1;
-        
+
         // Reset counters to 0
         tickCount = 0;
         beatCount = 0;
@@ -381,22 +381,24 @@ public class Session implements Serializable, IBusListener {
         tickLength = ticksPerBeat;
         barLength = bars;
         // System.out.println("Session: Timing variables initialized:");
-        // System.out.println("  - Ticks per beat: " + ticksPerBeat);
-        // System.out.println("  - Beats per bar: " + beatsPerBar);
-        // System.out.println("  - Bars: " + bars);
-        // System.out.println("  - Part length: " + partLength);
+        // System.out.println(" - Ticks per beat: " + ticksPerBeat);
+        // System.out.println(" - Beats per bar: " + beatsPerBar);
+        // System.out.println(" - Bars: " + bars);
+        // System.out.println(" - Part length: " + partLength);
 
         // Add tick listener
         setupTickListener();
 
         // Set up players
         if (getPlayers() != null && !getPlayers().isEmpty()) {
-            // System.out.println("Session: Setting up " + getPlayers().size() + " players");
+            // System.out.println("Session: Setting up " + getPlayers().size() + "
+            // players");
             getPlayers().forEach(p -> {
-                // System.out.println("Session: Setting up player " + p.getId() + " (" + p.getName() + ")");
+                // System.out.println("Session: Setting up player " + p.getId() + " (" +
+                // p.getName() + ")");
                 p.setEnabled(true);
                 if (p.getRules() != null) {
-                    // System.out.println("  - Player has " + p.getRules().size() + " rules");
+                    // System.out.println(" - Player has " + p.getRules().size() + " rules");
                 }
             });
         } else {
@@ -419,8 +421,8 @@ public class Session implements Serializable, IBusListener {
     /**
      * Helper method to stop all active notes
      */
-    private void stopAllNotes() {
-        IntStream.range(0, 127).forEach(note -> {
+    public void stopAllNotes() {
+        IntStream.range(0, 128).forEach(note -> {
             getPlayers().forEach(p -> {
                 try {
                     if (p.getInstrument() != null) {
@@ -494,17 +496,18 @@ public class Session implements Serializable, IBusListener {
         // System.out.println("Session: Starting play sequence for session " + getId());
 
         reset();
-        
+
         // Pre-calculate timing values for better performance
         tickLength = ticksPerBeat * beatsPerBar;
         barLength = bars;
-        
+
         initializeDevices();
-        
+
         // Add all enabled players to tickListeners
         syncPlayersWithTickListeners();
-        
-        // System.out.println("Session: " + players.size() + " players, " + tickListeners.size() + " tick listeners");
+
+        // System.out.println("Session: " + players.size() + " players, " +
+        // tickListeners.size() + " tick listeners");
 
         sequencerManager.startSequence();
     }
@@ -512,21 +515,25 @@ public class Session implements Serializable, IBusListener {
     public void initializeDevices() {
         // System.out.println("Session: Initializing devices for session " + getId());
         List<MidiDevice> devices = DeviceManager.getMidiOutDevices();
-        // System.out.println("Session: Found " + devices.size() + " MIDI output devices");
+        // System.out.println("Session: Found " + devices.size() + " MIDI output
+        // devices");
 
         if (getPlayers() == null || getPlayers().isEmpty()) {
             // System.out.println("Session: No players to initialize!");
             return;
         }
 
-        // System.out.println("Session: Initializing " + getPlayers().size() + " players");
+        // System.out.println("Session: Initializing " + getPlayers().size() + "
+        // players");
         getPlayers().forEach(p -> {
-            // System.out.println("Session: Initializing player " + p.getId() + " (" + p.getName() + ")");
+            // System.out.println("Session: Initializing player " + p.getId() + " (" +
+            // p.getName() + ")");
             initializePlayerDevice(p, devices);
             initializePlayerPreset(p);
             p.setSession(this);
             p.setEnabled(true);
-            // System.out.println("Session: Player " + p.getId() + " initialized and enabled");
+            // System.out.println("Session: Player " + p.getId() + " initialized and
+            // enabled");
         });
         // System.out.println("Session: Device initialization complete");
     }
@@ -540,7 +547,8 @@ public class Session implements Serializable, IBusListener {
         }
 
         try {
-            // System.out.println("Session: Player " + p.getName() + " initialized with instrument " + p.getInstrument().getName());
+            // System.out.println("Session: Player " + p.getName() + " initialized with
+            // instrument " + p.getInstrument().getName());
         } catch (Exception e) {
             System.err.println("Error initializing player device: " + e.getMessage());
             e.printStackTrace();
@@ -551,7 +559,8 @@ public class Session implements Serializable, IBusListener {
         // System.out.println("Session: Setting preset for player " + player.getId());
         try {
             if (player.getPreset() > -1) {
-                // System.out.println( "Session: Setting preset " + player.getPreset() + " on channel " + player.getChannel());
+                // System.out.println( "Session: Setting preset " + player.getPreset() + " on
+                // channel " + player.getChannel());
                 player.getInstrument().programChange(player.getChannel(), player.getPreset(), 0);
                 // System.out.println("Session: Preset set successfully");
             } else {
@@ -577,7 +586,7 @@ public class Session implements Serializable, IBusListener {
         beat = 1.0;
         bar = 1;
         part = 1;
-        
+
         // Reset counters to 0
         tickCount = 0;
         beatCount = 0;
@@ -604,20 +613,19 @@ public class Session implements Serializable, IBusListener {
     public void onTick() {
         // For tick=1 issues, add special logging
         if (tick == 1) {
-            // System.out.println("⚠️ TIMING CRITICAL: New cycle starting. tick=1, beat=" + beat + ", bar=" + bar);
+            // System.out.println("⚠️ TIMING CRITICAL: New cycle starting. tick=1, beat=" +
+            // beat + ", bar=" + bar);
         }
-        
+
         // Reset all processing flags at the start of a new cycle
         if (tick == 1) {
             tickProcessed = false;
             beatProcessed = false;
             barProcessed = false;
             partProcessed = false;
-            
+
             // Update active players list once per cycle for better performance
-            activePlayers = players.stream()
-                .filter(Player::getEnabled)
-                .collect(Collectors.toSet());
+            activePlayers = players.stream().filter(Player::getEnabled).collect(Collectors.toSet());
         }
 
         // Don't publish events for every tick - too much overhead
@@ -625,7 +633,7 @@ public class Session implements Serializable, IBusListener {
         if (tickListeners != null && !tickListeners.isEmpty()) {
             timingBus.publish(Commands.TIME_TICK, this, tick);
         }
-        
+
         // Update player states without events - use direct calls
         for (Player player : players) {
             if (player.getEnabled()) {
@@ -637,35 +645,35 @@ public class Session implements Serializable, IBusListener {
                 }
             }
         }
-        
+
         // Beat change logic - only call once per beat
         if (!beatProcessed && tick % ticksPerBeat == 0) {
             beat = beat % beatsPerBar + 1.0;
             beatCount++;
             beatProcessed = true;
-            
+
             // Only send beat events to listeners who need them
             timingBus.publish(Commands.TIME_BEAT, this, beat);
-            
+
             // Bar change logic - only call once per bar
             if (!barProcessed && beat == 1.0) {
                 bar = bar % barLength + 1;
                 barCount++;
                 barProcessed = true;
-                
+
                 timingBus.publish(Commands.TIME_BAR, this, bar);
-                
+
                 // Part change logic - only call once per part change
                 if (!partProcessed && bar % partLength == 0) {
                     part = part % parts + 1;
                     partCount++;
                     partProcessed = true;
-                    
+
                     timingBus.publish(Commands.TIME_PART, this, part);
                 }
             }
         }
-        
+
         // Update tick counter last to avoid race conditions
         tick = tick % tickLength + 1;
         tickCount++;
@@ -744,7 +752,7 @@ public class Session implements Serializable, IBusListener {
 
         updatedPlayer.setSession(this);
         players.add(updatedPlayer);
-        
+
         // Update tick listener registration based on enabled state
         if (updatedPlayer.getEnabled()) {
             registerTickListener(updatedPlayer);
@@ -773,13 +781,13 @@ public class Session implements Serializable, IBusListener {
             tickListeners.remove(listener);
         }
     }
-    
+
     // Add this method to Session class to sync players with tickListeners
     private void syncPlayersWithTickListeners() {
         if (tickListeners == null) {
             tickListeners = new HashSet<>();
         }
-        
+
         // Add all players to tickListeners
         if (players != null) {
             for (Player player : players) {
