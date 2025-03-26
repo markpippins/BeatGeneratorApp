@@ -74,7 +74,7 @@ public class PlayersPanel extends JPanel {
 
         setupLayout();
         setupKeyboardShortcuts();
-        setupCommandBusListener();
+        setupConsolidatedBusListener();
         setupButtonListeners();
         setupContextMenu();
         setupSelectionListener(); // Add this line
@@ -255,190 +255,130 @@ public class PlayersPanel extends JPanel {
         saveButton.setEnabled(hasActiveSession);
     }
 
-    private void setupCommandBusListener() {
-        TimingBus.getInstance().register(new IBusListener() {
+    private void setupConsolidatedBusListener() {
+        IBusListener consolidatedListener = new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null)
+                // Ignore null commands or events sent by this panel
+                if (action.getCommand() == null || action.getSender() == PlayersPanel.this) {
                     return;
-
-                String cmd = action.getCommand();
-                try {
-                    switch (cmd) {
-                        case Commands.TIME_TICK, Commands.PLAYER_TABLE_REFRESH_REQUEST -> {
-                            SwingUtilities.invokeLater(() -> {
-                                refreshPlayers(SessionManager.getInstance().getActiveSession().getPlayers());
-                            });
-                        }
-                    }
-                } catch (Exception e) {
-                    logger.error("Error processing command: " + e.getMessage());
-                    e.printStackTrace();
                 }
-            }
-        });
-
-        CommandBus.getInstance().register(new IBusListener() {
-            @Override
-            public void onAction(Command action) {
-                if (action.getCommand() == null || action.getSender() == PlayersPanel.this)
-                    return;
 
                 String cmd = action.getCommand();
                 try {
                     switch (cmd) {
-                        // Add explicit handler for SESSION_CHANGED
-                        case Commands.SESSION_CHANGED -> {
-                            logger.info("PlayersPanel: Received SESSION_CHANGED");
-                            if (action.getData() instanceof Session session) {
-                                // Prevent processing duplicate session events
-                                long now = System.currentTimeMillis();
-                                if (session.getId() != null && 
-                                    session.getId().equals(lastProcessedSessionId) && 
-                                    (now - lastSessionEventTime) < EVENT_THROTTLE_MS) {
-                                    logger.debug("PlayersPanel: Ignoring duplicate session event: {}", session.getId());
-                                    return;
-                                }
-                                                
-                                // Update tracking state
-                                lastProcessedSessionId = session.getId();
-                                lastSessionEventTime = now;
-                                                
-                                logger.info("PlayersPanel: Updating with new session: {}", session.getId());
-                                hasActiveSession = true;
-                                enableControls(true);
-                                
-                                // Use SwingUtilities.invokeLater to break potential call stack loops
-                                final Session finalSession = session;
-                                SwingUtilities.invokeLater(() -> {
-                                    refreshPlayers(finalSession.getPlayers());
-                                    // After the players are refreshed, auto-select the first one if needed
-                                    selectFirstPlayerIfNoneSelected();
-                                });
-                            }
+                        case Commands.TIME_TICK:
+                        case Commands.PLAYER_TABLE_REFRESH_REQUEST:
+                        case Commands.SESSION_SELECTED:
+                        case Commands.SESSION_CHANGED:
+                        case Commands.SESSION_LOADED: {
+                            SwingUtilities.invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (action.getData() instanceof Session) {
+                                        final Session session = (Session) action.getData();
+                                        long now = System.currentTimeMillis();
+                                        if (session.getId() != null &&
+                                                session.getId().equals(lastProcessedSessionId) &&
+                                                (now - lastSessionEventTime) < EVENT_THROTTLE_MS) {
+                                            logger.debug("PlayersPanel: Ignoring duplicate session event: " + session.getId());
+                                            return;
+                                        }
+                                        lastProcessedSessionId = session.getId();
+                                        lastSessionEventTime = now;
+        
+                                        logger.info("PlayersPanel: Updating with new session: " + session.getId());
+                                        SwingUtilities.invokeLater(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                enableControls(true);
+                                                refreshPlayers(session.getPlayers());
+                                                selectFirstPlayerIfNoneSelected();
+                                            }
+                                        });
+                                    }
+                                        }
+                            });
+                            break;
                         }
-                        
-                        // Keep existing handlers
-                        case Commands.SESSION_SELECTED, Commands.SESSION_LOADED -> {
-                            if (action.getData() instanceof Session session) {
-                                // Prevent processing duplicate session events
-                                long now = System.currentTimeMillis();
-                                if (session.getId() != null && 
-                                    session.getId().equals(lastProcessedSessionId) && 
-                                    (now - lastSessionEventTime) < EVENT_THROTTLE_MS) {
-                                    logger.debug("PlayersPanel: Ignoring duplicate session event: {}", session.getId());
-                                    return;
-                                }
-                                                
-                                // Update tracking state
-                                lastProcessedSessionId = session.getId();
-                                lastSessionEventTime = now;
-                                                
-                                logger.info("PlayersPanel: Updating with new session: {}", session.getId());
-                                hasActiveSession = true;
-                                enableControls(true);
-                                
-                                // Use SwingUtilities.invokeLater to break potential call stack loops
-                                final Session finalSession = session;
-                                SwingUtilities.invokeLater(() -> {
-                                    refreshPlayers(finalSession.getPlayers());
-                                    // After the players are refreshed, auto-select the first one if needed
-                                    selectFirstPlayerIfNoneSelected();
-                                });
-                            }
-                        }
-
-                        // Handle player row refresh requests
-                        case Commands.PLAYER_ROW_REFRESH -> {
-                            if (action.getData() instanceof Player player) {
-                                logger.info("Refreshing player row: " + player.getName());
+                        case Commands.PLAYER_ROW_REFRESH: {
+                            if (action.getData() instanceof Player) {
+                                Player player = (Player) action.getData();
+                                logger.info("Refreshing player row for: " + player.getName());
                                 updatePlayerRow(player);
                             }
+                            break;
                         }
-
-                        // Handle individual property changes
-                        case Commands.NEW_VALUE_LEVEL, Commands.NEW_VALUE_NOTE,
-                                Commands.NEW_VALUE_SWING, Commands.NEW_VALUE_PROBABILITY,
-                                Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
-                                Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN,
-                                Commands.NEW_VALUE_SPARSE, Commands.PLAYER_UPDATED -> {
-
-                            // For these commands, the sender is the player that was updated
-                            if (action.getSender() instanceof Player player) {
-                                logger.info("Updating player row from " + cmd + ": " + player.getName());
-                                updatePlayerRow(player);
-                            }
-                        }
-
-                        // Handle player operations completed
-                        case Commands.PLAYER_ADDED -> {
+                        case Commands.PLAYER_ADDED: {
                             logger.info("Player added, refreshing table");
-                            // Refresh table with current session players
-                            Session session = SessionManager.getInstance().getActiveSession();
-                            if (session != null) {
-                                refreshPlayers(session.getPlayers());
-
-                                // Select the newly added player if available in data
-                                if (action.getData() instanceof Player player) {
+                            Session activeSession = SessionManager.getInstance().getActiveSession();
+                            if (activeSession != null) {
+                                refreshPlayers(activeSession.getPlayers());
+                                if (action.getData() instanceof Player) {
+                                    Player player = (Player) action.getData();
                                     selectPlayerById(player.getId());
                                 } else {
-                                    // If no specific player, select the last one
                                     selectLastPlayer();
                                 }
                             }
+                            break;
                         }
-
-                        case Commands.SHOW_PLAYER_EDITOR_OK -> {
+                        case Commands.SHOW_PLAYER_EDITOR_OK: {
                             logger.info("Player edited, refreshing table");
-                            Session session = SessionManager.getInstance().getActiveSession();
-                            if (session != null) {
-                                refreshPlayers(session.getPlayers());
-
-                                // Reselect the edited player
-                                if (action.getData() instanceof Player player) {
-                                    selectPlayerById(player.getId());
-                                }
+                            Session activeSession = SessionManager.getInstance().getActiveSession();
+                            if (activeSession != null && action.getData() instanceof Player) {
+                                Player player = (Player) action.getData();
+                                refreshPlayers(activeSession.getPlayers());
+                                selectPlayerById(player.getId());
                             }
+                            break;
                         }
-
-                        case Commands.PLAYER_DELETED -> {
+                        case Commands.PLAYER_DELETED: {
                             logger.info("Player(s) deleted, refreshing table");
-                            Session session = SessionManager.getInstance().getActiveSession();
-                            if (session != null) {
-                                refreshPlayers(session.getPlayers());
-
-                                // Select closest available player or clear selection
+                            Session activeSession = SessionManager.getInstance().getActiveSession();
+                            if (activeSession != null) {
+                                refreshPlayers(activeSession.getPlayers());
                                 if (table.getRowCount() > 0) {
-                                    // Try to select same row index if possible
                                     int rowToSelect = Math.min(lastSelectedRow, table.getRowCount() - 1);
-                                    if (rowToSelect >= 0) {
-                                        table.setRowSelectionInterval(rowToSelect, rowToSelect);
-                                        handlePlayerSelection(rowToSelect);
-                                    }
+                                    table.setRowSelectionInterval(rowToSelect, rowToSelect);
+                                    handlePlayerSelection(rowToSelect);
                                 } else {
-                                    // No players left
-                                    CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
+                                    CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, PlayersPanel.this, null);
                                 }
                             }
+                            break;
                         }
-
-                        // Other cases...
-                        case Commands.SYSTEM_READY -> {
-                            // Let the UI settle first
-                            SwingUtilities.invokeLater(() -> {
-                                Session session = SessionManager.getInstance().getActiveSession();
-                                if (session != null && session.getPlayers() != null && !session.getPlayers().isEmpty()) {
-                                    PlayersPanel.this.selectFirstPlayerIfNoneSelected();
-                                }
-                            });
+                        case Commands.NEW_VALUE_LEVEL:
+                        case Commands.NEW_VALUE_NOTE:
+                        case Commands.NEW_VALUE_SWING:
+                        case Commands.NEW_VALUE_PROBABILITY:
+                        case Commands.NEW_VALUE_VELOCITY_MIN:
+                        case Commands.NEW_VALUE_VELOCITY_MAX:
+                        case Commands.NEW_VALUE_RANDOM:
+                        case Commands.NEW_VALUE_PAN:
+                        case Commands.NEW_VALUE_SPARSE:
+                        case Commands.PLAYER_UPDATED: {
+                            if (action.getSender() instanceof Player) {
+                                Player player = (Player) action.getSender();
+                                logger.info("Updating player row due to " + cmd + " for: " + player.getName());
+                                updatePlayerRow(player);
+                            }
+                            break;
                         }
-                    }
+                        default: {
+                            // Optionally log or ignore other commands
+                            break;
+                        }
+                    } // end switch
                 } catch (Exception e) {
-                    logger.error("Error processing command: " + e.getMessage());
-                    e.printStackTrace();
+                    logger.error("Error processing command: " + e.getMessage(), e);
                 }
             }
-        });
+        };
+
+        // Register the single listener on both buses
+        TimingBus.getInstance().register(consolidatedListener);
+        CommandBus.getInstance().register(consolidatedListener);
     }
 
     // Add a field to track the last selected row

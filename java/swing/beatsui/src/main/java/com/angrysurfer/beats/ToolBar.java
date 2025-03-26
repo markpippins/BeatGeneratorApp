@@ -321,82 +321,63 @@ public class ToolBar extends JToolBar {
     }
 
     private void updateSessionDisplay(Session session) {
-        if (Objects.isNull(session) || Objects.isNull(session.getId())) {
-            // System.out.println("ToolBar: Received null session or session ID");
+        if (session == null || session.getId() == null) {
+            // Optionally clear fields if no session is active
             return;
         }
-
-        // System.out.println("ToolBar: Updating display for session " + session.getId() + " with " + session.getPlayers().size() + " players");
-
+        
         this.currentSession = session;
-
-        // Update fields with synchronized block to prevent concurrent modification
-        synchronized (this) {
-            try {
-                // Update left timing fields
-                updateTickFields(session);
-                updateBeatFields(session);
-                updateBarFields(session);
-                updatePartFields(session);
-                
-                // Update Players field separately
-                leftFields.get("Players").setText(String.valueOf(session.getPlayers().size()));
-
-                // Update Session field
-                if (leftFields.containsKey("Session")) {
-                    leftFields.get("Session").setText(session.getId().toString());
-                }
-
-                // Update right fields dropdown boxes
-                if (rightFields.get("PPQ") instanceof JComboBox<?> ppqCombo) {
-                    ppqCombo.setSelectedItem(session.getTicksPerBeat());
-                }
-                
-                if (rightFields.get("BPM") instanceof JComboBox<?> bpmCombo) {
-                    bpmCombo.setSelectedItem(session.getTempoInBPM().intValue());
-                }
-                
-                if (rightFields.get("B/Bar") instanceof JComboBox<?> beatPerBarCombo) {
-                    beatPerBarCombo.setSelectedItem(session.getBeatsPerBar());
-                }
-                
-                if (rightFields.get("Bars") instanceof JComboBox<?> barsCombo) {
-                    barsCombo.setSelectedItem(session.getBars());
-                }
-                
-                if (rightFields.get("Parts") instanceof JComboBox<?> partsCombo) {
-                    partsCombo.setSelectedItem(session.getParts());
-                }
-                
-                // Update the Length and Offset combo boxes
-                if (rightFields.get("Length") instanceof JComboBox<?> lengthCombo) {
-                    int length = session.getPartLength().intValue();
-                    
-                    // Make sure the value is within the combo box range
-                    if (length > 0 && length <= 32) {
-                        lengthCombo.setSelectedItem(length);
-                    }
-                    // System.out.println("Updated Length combobox to: " + length);
-                }
-                
-                if (rightFields.get("Offset") instanceof JComboBox<?> offsetCombo) {
-                    int offset = session.getNoteOffset().intValue();
-                    
-                    // Make sure the value is within the combo box range (-12 to 12)
-                    if (offset >= -12 && offset <= 12) {
-                        offsetCombo.setSelectedItem(offset);
-                    }
-                    // System.out.println("Updated Offset combobox to: " + offset);
-                }
-
-                // Update transport button states
-                updateToolbarState(session);
-
-            } catch (Exception e) {
-                System.err.println("ToolBar: Error updating display: " + e.getMessage());
-                e.printStackTrace();
+        
+        // Update left status fields (tick, beat, bar, part, and players count)
+        updateTickFields(session);
+        updateBeatFields(session);
+        updateBarFields(session);
+        updatePartFields(session);
+        if (leftFields.containsKey("Players")) {
+            leftFields.get("Players").setText(String.valueOf(session.getPlayers().size()));
+        }
+        if (leftFields.containsKey("Session")) {
+            leftFields.get("Session").setText(String.valueOf(session.getId()));
+        }
+        
+        // Update right-side controls with session values:
+        if (rightFields.get("PPQ") instanceof JComboBox<?> ppqCombo) {
+            ppqCombo.setSelectedItem(session.getTicksPerBeat());
+        }
+        
+        if (rightFields.get("BPM") instanceof JComboBox<?> bpmCombo) {
+            // Even though BPM is a float, the combo box uses an integer representation
+            bpmCombo.setSelectedItem(Math.round(session.getTempoInBPM()));
+        }
+        
+        if (rightFields.get("B/Bar") instanceof JComboBox<?> beatPerBarCombo) {
+            beatPerBarCombo.setSelectedItem(session.getBeatsPerBar());
+        }
+        
+        if (rightFields.get("Bars") instanceof JComboBox<?> barsCombo) {
+            barsCombo.setSelectedItem(session.getBars());
+        }
+        
+        if (rightFields.get("Parts") instanceof JComboBox<?> partsCombo) {
+            partsCombo.setSelectedItem(session.getParts());
+        }
+        
+        if (rightFields.get("Length") instanceof JComboBox<?> lengthCombo) {
+            int length = session.getPartLength().intValue();
+            if (length > 0 && length <= 32) {
+                lengthCombo.setSelectedItem(length);
             }
         }
+        
+        if (rightFields.get("Offset") instanceof JComboBox<?> offsetCombo) {
+            int offset = session.getNoteOffset().intValue();
+            if (offset >= -12 && offset <= 12) {
+                offsetCombo.setSelectedItem(offset);
+            }
+        }
+        
+        // Update toolbar transport state based on session
+        updateToolbarState(session);
     }
 
     private JPanel createTopLeftStatusPanel() {
@@ -622,7 +603,7 @@ public class ToolBar extends JToolBar {
         offsetCombo.setSelectedItem(0);
         offsetCombo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && currentSession != null) {
-                currentSession.setNoteOffset(Double.valueOf(((Integer) offsetCombo.getSelectedItem())));
+                currentSession.setNoteOffset(Double.valueOf((Integer) offsetCombo.getSelectedItem()));
                 commandBus.publish(Commands.SESSION_UPDATED, this, currentSession);
             }
         });
@@ -861,17 +842,17 @@ public class ToolBar extends JToolBar {
                 JButton button = (JButton) comp;
 
                 switch (button.getActionCommand()) {
-                    case Commands.TRANSPORT_REWIND ->
+                    case Commands.TRANSPORT_REWIND -> 
                         button.setEnabled(hasActiveSession && SessionManager.getInstance().canMoveBack());
-                    case Commands.TRANSPORT_FORWARD ->
+                    case Commands.TRANSPORT_FORWARD -> 
                         button.setEnabled(SessionManager.getInstance().canMoveForward());
-                    case Commands.TRANSPORT_PAUSE ->
+                    case Commands.TRANSPORT_PAUSE -> 
                         button.setEnabled(false);
-                    case Commands.TRANSPORT_PLAY ->
+                    case Commands.TRANSPORT_PLAY -> 
                         button.setEnabled(hasActiveSession && !session.isRunning());
-                    case Commands.TRANSPORT_STOP ->
+                    case Commands.TRANSPORT_STOP -> 
                         button.setEnabled(hasActiveSession && session.isRunning());
-                    case Commands.TRANSPORT_RECORD ->
+                    case Commands.TRANSPORT_RECORD -> 
                         button.setEnabled(hasActiveSession); // Enable if we have an active session
                 }
             }

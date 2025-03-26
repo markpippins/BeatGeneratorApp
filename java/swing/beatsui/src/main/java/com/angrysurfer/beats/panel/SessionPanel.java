@@ -77,7 +77,7 @@ public class SessionPanel extends StatusProviderPanel implements IBusListener {
         bottomPanel.add(new JScrollPane(gridPanel), BorderLayout.CENTER);
         bottomPanel.add(new JScrollPane(playerDetailPanel), BorderLayout.CENTER);
 
-        this.playerDetailPanel.setVisible(false);
+        this.playerDetailPanel.setVisible(true);
         // Add all components
         add(splitPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
@@ -130,19 +130,20 @@ public class SessionPanel extends StatusProviderPanel implements IBusListener {
     }
 
     private void handlePlayerUnselected() {
-        if (Objects.nonNull(this.gridPanel))
-            this.gridPanel.setVisible(true);
+        // if (Objects.nonNull(this.gridPanel))
+        //     this.gridPanel.setVisible(true);
 
         if (Objects.nonNull(this.playerDetailPanel)) {
-            this.playerDetailPanel.setVisible(false);
+            // this.playerDetailPanel.setVisible(false);
+            this.playerDetailPanel.setPlayer(null);
         }
     }
 
     private void handlePlayerSelected(Player player) {
-        if (Objects.nonNull(this.gridPanel))
-            this.gridPanel.setVisible(false);
+        // if (Objects.nonNull(this.gridPanel))
+        //     this.gridPanel.setVisible(false);
         if (Objects.nonNull(this.playerDetailPanel)) {
-            this.playerDetailPanel.setVisible(true);
+            // this.playerDetailPanel.setVisible(true);
             this.playerDetailPanel.setPlayer(player);
         }
     }
