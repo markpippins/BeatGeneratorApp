@@ -42,7 +42,7 @@ public class RuleHelper {
             Set<Rule> rules = new HashSet<>();
             String rulesKey = "player:" + playerId + ":rules";
             Set<String> ruleIds = jedis.smembers(rulesKey);
-            
+
             for (String id : ruleIds) {
                 Rule rule = findRuleById(Long.valueOf(id));
                 if (rule != null) {
@@ -81,23 +81,22 @@ public class RuleHelper {
         }
     }
 
-    
     // public static boolean deleteRule(Long ruleId) {
-    //     try {
-    //         logger.info("Deleting rule with ID: " + ruleId);
-    //         RedisService redis = RedisService.getInstance();
-            
-    //         // Delete rule from Redis
-    //         long result = redis.deleteKey("rule:" + ruleId);
-    //         boolean success = result > 0;
-            
-    //         logger.info("Rule deletion result: " + (success ? "SUCCESS" : "FAILED"));
-    //         return success;
-    //     } catch (Exception e) {
-    //         logger.error("Error deleting rule: " + e.getMessage());
-    //         e.printStackTrace();
-    //         return false;
-    //     }
+    // try {
+    // logger.info("Deleting rule with ID: " + ruleId);
+    // RedisService redis = RedisService.getInstance();
+
+    // // Delete rule from Redis
+    // long result = redis.deleteKey("rule:" + ruleId);
+    // boolean success = result > 0;
+
+    // logger.info("Rule deletion result: " + (success ? "SUCCESS" : "FAILED"));
+    // return success;
+    // } catch (Exception e) {
+    // logger.error("Error deleting rule: " + e.getMessage());
+    // e.printStackTrace();
+    // return false;
+    // }
     // }
 
     public void deleteRule(Long ruleId) {
@@ -113,7 +112,6 @@ public class RuleHelper {
             throw new RuntimeException("Failed to delete rule", e);
         }
     }
-
 
     public Long getNextRuleId() {
         try (Jedis jedis = jedisPool.getResource()) {
@@ -131,15 +129,15 @@ public class RuleHelper {
 
         // Check if there's already a rule with the same operator and part
         return player.getRules().stream()
-                .noneMatch(existingRule -> existingRule.getOperator() == newRule.getOperator() &&
-                        existingRule.getPart() == newRule.getPart());
+                .noneMatch(existingRule -> existingRule.getComparison() == newRule.getComparison()
+                        && existingRule.getOperator() == newRule.getOperator()
+                        && existingRule.getPart() == newRule.getPart());
     }
 
     public void addRuleToPlayer(Player player, Rule rule) {
         if (!isValidNewRule(player, rule)) {
-            throw new IllegalArgumentException(
-                    "A rule with this operator already exists for part " +
-                            (rule.getPart() == 0 ? "All" : rule.getPart()));
+            throw new IllegalArgumentException("A rule with this operator already exists for part "
+                    + (rule.getPart() == 0 ? "All" : rule.getPart()));
         }
 
         try (Jedis jedis = jedisPool.getResource()) {

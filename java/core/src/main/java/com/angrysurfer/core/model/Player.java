@@ -183,7 +183,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             setMinVelocity(maxVelocity);
         }
     }
-    
+
     // public Long getSubPosition() {
     // return getSub();
     // }s
@@ -198,14 +198,15 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         logger.debug("drumNoteOn() - note: {}", note);
 
 
-        int difference = getMaxVelocity().intValue() - getMinVelocity().intValue();
+        int velWeight = getMaxVelocity().intValue() - getMinVelocity().intValue();
 
-        long velocity = getMinVelocity() + rand.nextInt(difference + 1);
+        long velocity = getMinVelocity() + rand.nextInt(velWeight + 1);
         // Send note on message
+        int randWeight = randomDegree.intValue() > 0 ? rand.nextInt(randomDegree.intValue()) : 0;
 
         java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
             try {
-                noteOn(note + getSession().getNoteOffset(), velocity);
+                noteOn(note + randWeight + getSession().getNoteOffset(), velocity);
             } catch (Exception e) {
                 logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
             }
