@@ -199,4 +199,8 @@ public class Rule implements Serializable {
                this.part == other.part &&
                Math.abs(this.value - other.value) < 0.00001;
     }
+
+    public boolean matches(double tickValue) {
+        return Operator.evaluate(getComparison(), tickValue, getValue().doubleValue());
+    }
 }

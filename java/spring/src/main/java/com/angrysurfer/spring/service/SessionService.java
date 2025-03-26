@@ -88,7 +88,7 @@ public class SessionService implements IBusListener {
                     // session.getPartCycler().reset();
                 }
                 case SessionUpdateType.BASE_NOTE_OFFSET ->
-                    session.setNoteOffset(session.getNoteOffset() + updateValue);
+                    session.setNoteOffset((int) (session.getNoteOffset() + updateValue));
                 case SessionUpdateType.BARS -> session.setBars((int) updateValue);
                 case SessionUpdateType.PART_LENGTH -> session.setPartLength(updateValue);
                 case SessionUpdateType.MAX_TRACKS -> session.setMaxTracks((int) updateValue);

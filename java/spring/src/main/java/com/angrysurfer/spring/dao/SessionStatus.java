@@ -40,7 +40,7 @@ public class SessionStatus implements Serializable {
     private Float tempoInBPM;
     private Integer loopCount;
     private Integer parts;
-    private Double noteOffset;
+    private Integer noteOffset;
     private Boolean playing;
     private Boolean hasSolos;
 

@@ -7,7 +7,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
@@ -29,6 +28,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.model.Comparison;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
@@ -40,20 +40,25 @@ import lombok.Setter;
 @Setter
 public class PlayerTimelinePanel extends StatusProviderPanel implements IBusListener {
 
-    private static final Color GRID_BACKGROUND = new Color(25, 25, 30);
-    private static final Color BAR_LINE_COLOR = new Color(80, 80, 90);
-    private static final Color BEAT_LINE_COLOR = new Color(60, 60, 70);
-    private static final Color ACTIVE_CELL_COLOR = new Color(0, 180, 120);
-    private static final Color MUTED_CELL_COLOR = new Color(180, 60, 60);
+    private static final Color GRID_BACKGROUND = Color.WHITE;
+    private static final Color BAR_LINE_COLOR = new Color(100, 100, 120);
+    private static final Color BEAT_LINE_COLOR = new Color(160, 160, 180);
+    private static final Color ACTIVE_CELL_COLOR = new Color(41, 128, 185); // Cool blue color
+    private static final Color COUNT_CELL_COLOR = Color.YELLOW; // Yellow for count rules
+    private static final Color LABEL_PANEL_BACKGROUND = new Color(20, 20, 25); // Keep left panel dark
     private static final Font HEADER_FONT = new Font("Arial", Font.BOLD, 14);
     private static final int TICKS_PER_BEAT = 4; // Each beat shows 4 ticks
 
     // Add constants for the rule rows
-    private static final int ROW_TICKS = 0;
-    private static final int ROW_BEATS = 1;
-    private static final int ROW_BARS = 2;
-    private static final int ROW_PARTS = 3;
-    private static final int TOTAL_ROWS = 4;
+    private static final int ROW_TICK = 0;
+    private static final int ROW_TICK_COUNT = 1;
+    private static final int ROW_BEAT = 2;
+    private static final int ROW_BEAT_COUNT = 3;
+    private static final int ROW_BAR = 4;
+    private static final int ROW_BAR_COUNT = 5;
+    private static final int ROW_PART = 6;
+    private static final int ROW_PART_COUNT = 7;
+    private static final int TOTAL_ROWS = 8;
 
     // Add labels for the rows
     private JLabel ticksRowLabel;
@@ -168,17 +173,16 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         Session session = player.getSession();
         int beatsPerBar = session.getBeatsPerBar();
         int bars = session.getBars();
+        int ticksPerBeat = session.getTicksPerBeat(); // Use actual ticksPerBeat from session
         int totalBeats = beatsPerBar * bars;
-        int totalTicks = totalBeats * TICKS_PER_BEAT;
+        int totalTicks = totalBeats * ticksPerBeat; // Calculate total ticks based on session value
 
         // Calculate cell size to fit the visible area
-        // Use scrollPane's viewport width
         JViewport scrollPane = (JViewport) gridPanel.getParent().getParent();
         int viewportWidth = scrollPane.getWidth();
 
-        // Allow horizontal scrolling if too many ticks
-        int minCellSize = 5; // Don't let cells get too small
-        cellSize = Math.max(minCellSize, viewportWidth / totalTicks);
+        // Ensure at least 1 pixel per tick for accuracy
+        cellSize = Math.max(1, viewportWidth / totalTicks); // Minimum 1px instead of 5px
 
         // Update the grid with new cell size
         updatePlayerGrid();
@@ -195,8 +199,9 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         Session session = player.getSession();
         int beatsPerBar = session.getBeatsPerBar();
         int bars = session.getBars();
+        int ticksPerBeat = session.getTicksPerBeat(); // Get from session
         int totalBeats = beatsPerBar * bars;
-        int totalTicks = totalBeats * TICKS_PER_BEAT;
+        int totalTicks = totalBeats * ticksPerBeat; // Use session value
 
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -218,13 +223,13 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
             int x = labelWidth + tick * cellSize;
 
             // Draw bar lines (thickest)
-            if (tick % (beatsPerBar * TICKS_PER_BEAT) == 0) {
+            if (tick % (beatsPerBar * ticksPerBeat) == 0) {
                 g2d.setColor(BAR_LINE_COLOR);
                 g2d.setStroke(new BasicStroke(2.0f));
                 g2d.drawLine(x, 0, x, TOTAL_ROWS * rowHeight);
             }
             // Draw beat lines (medium thickness)
-            else if (tick % TICKS_PER_BEAT == 0) {
+            else if (tick % ticksPerBeat == 0) {
                 g2d.setColor(BEAT_LINE_COLOR);
                 g2d.setStroke(new BasicStroke(1.0f));
                 g2d.drawLine(x, 0, x, TOTAL_ROWS * rowHeight);
@@ -254,8 +259,9 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         Session session = player.getSession();
         int beatsPerBar = session.getBeatsPerBar();
         int bars = session.getBars();
+        int ticksPerBeat = session.getTicksPerBeat(); // Get from session
         int totalBeats = beatsPerBar * bars;
-        int totalTicks = totalBeats * TICKS_PER_BEAT;
+        int totalTicks = totalBeats * ticksPerBeat; // Use session value
 
         // Clear existing grid
         clearGrid();
@@ -275,23 +281,29 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         // Add cell indicators for each type
         for (int tick = 0; tick < totalTicks; tick++) {
             // Add tick rule cell (row 0)
-            addRuleCell(tick, ROW_TICKS, activeRules[ROW_TICKS][tick], rowHeight);
+            addRuleCell(tick, ROW_TICK, activeRules[ROW_TICK][tick], rowHeight);
+            
+            // Add tick count rule cell (row 1)
+            addRuleCell(tick, ROW_TICK_COUNT, activeRules[ROW_TICK_COUNT][tick], rowHeight);
 
-            // Add beat cell only at beat boundaries (row 1)
-            if (tick % TICKS_PER_BEAT == 0) {
-                int beatIndex = tick / TICKS_PER_BEAT;
-                addRuleCell(tick, ROW_BEATS, activeRules[ROW_BEATS][beatIndex], rowHeight);
+            // Add beat cell only at beat boundaries (row 2)
+            if (tick % ticksPerBeat == 0) {
+                int beatIndex = tick / ticksPerBeat;
+                addRuleCell(tick, ROW_BEAT, activeRules[ROW_BEAT][beatIndex], rowHeight);
+                addRuleCell(tick, ROW_BEAT_COUNT, activeRules[ROW_BEAT_COUNT][beatIndex], rowHeight);
             }
 
-            // Add bar cell only at bar boundaries (row 2)
-            if (tick % (beatsPerBar * TICKS_PER_BEAT) == 0) {
-                int barIndex = tick / (beatsPerBar * TICKS_PER_BEAT);
-                addRuleCell(tick, ROW_BARS, activeRules[ROW_BARS][barIndex], rowHeight);
+            // Add bar cell only at bar boundaries (row 4)
+            if (tick % (beatsPerBar * ticksPerBeat) == 0) {
+                int barIndex = tick / (beatsPerBar * ticksPerBeat);
+                addRuleCell(tick, ROW_BAR, activeRules[ROW_BAR][barIndex], rowHeight);
+                addRuleCell(tick, ROW_BAR_COUNT, activeRules[ROW_BAR_COUNT][barIndex], rowHeight);
             }
 
-            // Add part cell at part boundaries (row 3)
+            // Add part cell at part boundaries (row 6)
             if (tick == 0) {
-                addRuleCell(tick, ROW_PARTS, activeRules[ROW_PARTS][0], rowHeight);
+                addRuleCell(tick, ROW_PART, activeRules[ROW_PART][0], rowHeight);
+                addRuleCell(tick, ROW_PART_COUNT, activeRules[ROW_PART_COUNT][0], rowHeight);
             }
         }
 
@@ -307,9 +319,9 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
      * Add labels for each row
      */
     private void addRowLabels(int rowHeight) {
-        // Create label panel on the left
-        JPanel labelPanel = new JPanel(new GridLayout(TOTAL_ROWS, 1));
-        labelPanel.setBackground(GRID_BACKGROUND);
+        // Create label panel on the left - keep it dark
+        JPanel labelPanel = new JPanel(null); // Use null layout for precise positioning
+        labelPanel.setBackground(LABEL_PANEL_BACKGROUND);
         labelPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BAR_LINE_COLOR));
         labelPanel.setPreferredSize(new Dimension(80, rowHeight * TOTAL_ROWS));
 
@@ -317,16 +329,35 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         gridPanel.add(labelPanel);
         labelPanel.setBounds(0, 0, 80, rowHeight * TOTAL_ROWS);
 
-        // Create and add labels
-        ticksRowLabel = createRowLabel("Ticks");
-        beatsRowLabel = createRowLabel("Beats");
-        barsRowLabel = createRowLabel("Bars");
-        partsRowLabel = createRowLabel("Parts");
+        // Create labels for each group (one label per two rows)
+        JLabel tickLabel = createRowLabel("Tick");
+        JLabel ticksLabel = createRowLabel("Ticks");
+        JLabel beatLabel = createRowLabel("Beat");
+        JLabel beatsLabel = createRowLabel("Beats");
+        JLabel barLabel = createRowLabel("Bar");
+        JLabel barsLabel = createRowLabel("Bars");
+        JLabel partLabel = createRowLabel("Part");
+        JLabel partsLabel = createRowLabel("Parts");
 
-        labelPanel.add(ticksRowLabel);
-        labelPanel.add(beatsRowLabel);
-        labelPanel.add(barsRowLabel);
-        labelPanel.add(partsRowLabel);
+        // Position the labels in the middle of their respective two-row groups
+        tickLabel.setBounds(0, rowHeight * ROW_TICK, 80, rowHeight);
+        ticksLabel.setBounds(0, rowHeight * ROW_TICK_COUNT, 80, rowHeight);
+        beatLabel.setBounds(0, rowHeight * ROW_BEAT, 80, rowHeight);
+        beatsLabel.setBounds(0, rowHeight * ROW_BEAT_COUNT, 80, rowHeight);
+        barLabel.setBounds(0, rowHeight * ROW_BAR, 80, rowHeight);
+        barsLabel.setBounds(0, rowHeight * ROW_BAR_COUNT, 80, rowHeight);
+        partLabel.setBounds(0, rowHeight * ROW_PART, 80, rowHeight);
+        partsLabel.setBounds(0, rowHeight * ROW_PART_COUNT, 80, rowHeight);
+
+        // Add labels to panel
+        labelPanel.add(tickLabel);
+        labelPanel.add(ticksLabel);
+        labelPanel.add(beatLabel);
+        labelPanel.add(beatsLabel);
+        labelPanel.add(barLabel);
+        labelPanel.add(barsLabel);
+        labelPanel.add(partLabel);
+        labelPanel.add(partsLabel);
     }
 
     private JLabel createRowLabel(String text) {
@@ -338,69 +369,114 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
     }
 
     /**
-     * Calculate which ticks/beats/bars have active rules Returns a 2D array: [row
-     * type][index] -> active?
+     * Calculate which ticks/beats/bars have active rules
+     * Returns a 2D array: [row type][index] -> active?
      */
     private boolean[][] calculateActiveRules(Player player, Session session) {
         int beatsPerBar = session.getBeatsPerBar();
         int bars = session.getBars();
+        int ticksPerBeat = session.getTicksPerBeat(); 
         int totalBeats = beatsPerBar * bars;
-        int totalTicks = totalBeats * TICKS_PER_BEAT;
+        int totalTicks = totalBeats * ticksPerBeat;
 
-        // Create arrays for each row type
-        boolean[] activeTicks = new boolean[totalTicks];
-        boolean[] activeBeats = new boolean[totalBeats];
-        boolean[] activeBars = new boolean[bars];
-        boolean[] activeParts = new boolean[1]; // Just part 0 and part 1
+        // Create arrays for ALL row types (standard AND count)
+        boolean[][] results = new boolean[TOTAL_ROWS][];
+        results[ROW_TICK] = new boolean[totalTicks];
+        results[ROW_TICK_COUNT] = new boolean[totalTicks];
+        results[ROW_BEAT] = new boolean[totalBeats];
+        results[ROW_BEAT_COUNT] = new boolean[totalBeats];
+        results[ROW_BAR] = new boolean[bars];
+        results[ROW_BAR_COUNT] = new boolean[bars];
+        results[ROW_PART] = new boolean[1];
+        results[ROW_PART_COUNT] = new boolean[1];
 
-        // Get rules for part 0 and part 1
+        // Get all player rules
         Set<Rule> allRules = player.getRules();
 
-        // For each tick, check if the player's rules would make it play
+        // Process standard position rules
         for (int tickIndex = 0; tickIndex < totalTicks; tickIndex++) {
             // Calculate position within the session
-            int bar = tickIndex / (beatsPerBar * TICKS_PER_BEAT);
-            int beatInBar = (tickIndex % (beatsPerBar * TICKS_PER_BEAT)) / TICKS_PER_BEAT;
-            int tickInBeat = tickIndex % TICKS_PER_BEAT;
+            int bar = tickIndex / (beatsPerBar * ticksPerBeat);
+            int beatInBar = (tickIndex % (beatsPerBar * ticksPerBeat)) / ticksPerBeat;
+            int tickInBeat = tickIndex % ticksPerBeat;
             int beatIndex = bar * beatsPerBar + beatInBar;
 
-            // Convert to session values - IMPORTANT: +1 to match 1-based counting in Session
-            long sessionTick = tickInBeat + 1; // Add 1 for 1-based counting
-            double sessionBeat = beatInBar + 1; // Add 1 for 1-based counting
-            long sessionBar = bar + 1; // Add 1 for 1-based counting
+            // Convert to session values (1-based)
+            long sessionTick = tickInBeat + 1;
+            double sessionBeat = beatInBar + 1;
+            long sessionBar = bar + 1;
 
-            // Check for tick-specific rules (part 0 and part 1)
+            // Check for tick/beat/bar/part rules
             for (Rule rule : allRules) {
-                if ((rule.getPart() == 0 || rule.getPart() == 1) && rule.getOperator() == RULE_TYPE_TICK
-                        && rule.getValue() == sessionTick) {
-                    activeTicks[tickIndex] = true;
-                }
-
-                // Check for beat-specific rules
-                if ((rule.getPart() == 0 || rule.getPart() == 1) && rule.getOperator() == RULE_TYPE_BEAT
-                        && rule.getValue() == Math.floor(sessionBeat)) {
-                    activeBeats[beatIndex] = true;
-                }
-
-                // Check for bar-specific rules
-                if ((rule.getPart() == 0 || rule.getPart() == 1) && rule.getOperator() == RULE_TYPE_BAR
-                        && rule.getValue() == sessionBar) {
-                    activeBars[bar] = true;
-                }
-
-                // Check for part-specific rules (part 0 or part 1)
-                if ((rule.getPart() == 0 || rule.getPart() == 1) && rule.getOperator() == RULE_TYPE_PART) {
-                    activeParts[0] = true;
+                if (rule.getPart() != 0 && rule.getPart() != 1) continue;
+                
+                // Use integer constants from Comparison class instead of strings
+                switch (rule.getComparison()) {
+                    // Standard position rules
+                    case Comparison.TICK: // Use constant instead of "TICK"
+                        if (rule.getValue().doubleValue() == sessionTick) {
+                            results[ROW_TICK][tickIndex] = true;
+                        }
+                        break;
+                    case Comparison.BEAT: // Use constant instead of "BEAT"
+                        if (rule.getValue().doubleValue() == sessionBeat) {
+                            results[ROW_BEAT][beatIndex] = true;
+                        }
+                        break;
+                    case Comparison.BAR: // Use constant instead of "BAR"
+                        if (rule.getValue().doubleValue() == sessionBar) {
+                            results[ROW_BAR][bar] = true;
+                        }
+                        break;
+                    case Comparison.PART: // Use constant instead of "PART"
+                        results[ROW_PART][0] = true;
+                        break;
                 }
             }
         }
-
-        // Combine all results in a 2D array
-        boolean[][] results = new boolean[TOTAL_ROWS][];
-        results[ROW_TICKS] = activeTicks;
-        results[ROW_BEATS] = activeBeats;
-        results[ROW_BARS] = activeBars;
-        results[ROW_PARTS] = activeParts;
+        
+        // Process COUNT rules separately
+        for (Rule rule : allRules) {
+            if (rule.getPart() != 0 && rule.getPart() != 1) continue;
+            
+            // Use integer constants instead of strings
+            switch (rule.getComparison()) {
+                case Comparison.TICK_COUNT: // Use constant instead of "TICK_COUNT"
+                    // For tick count rules, mark where they would match
+                    for (int i = 0; i < totalTicks; i++) {
+                        int tickValue = i + 1; // 1-based counting
+                        if (rule.matches(tickValue)) {
+                            results[ROW_TICK_COUNT][i] = true;
+                        }
+                    }
+                    break;
+                    
+                case Comparison.BEAT_COUNT: // Use constant instead of "BEAT_COUNT"
+                    // For beat count rules
+                    for (int i = 0; i < totalBeats; i++) {
+                        int beatValue = i + 1; // 1-based counting
+                        if (rule.matches(beatValue)) {
+                            results[ROW_BEAT_COUNT][i] = true;
+                        }
+                    }
+                    break;
+                    
+                case Comparison.BAR_COUNT: // Use constant instead of "BAR_COUNT"
+                    // For bar count rules
+                    for (int i = 0; i < bars; i++) {
+                        int barValue = i + 1; // 1-based counting
+                        if (rule.matches(barValue)) {
+                            results[ROW_BAR_COUNT][i] = true;
+                        }
+                    }
+                    break;
+                    
+                case Comparison.PART_COUNT: // Use constant instead of "PART_COUNT"
+                    // Part count rules generally apply to the whole part
+                    results[ROW_PART_COUNT][0] = true;
+                    break;
+            }
+        }
 
         return results;
     }
@@ -409,6 +485,8 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
      * Add a cell to represent a rule in the grid
      */
     private void addRuleCell(int tickIndex, int rowType, boolean isActive, int rowHeight) {
+        if (!isActive) return; // Only add cells for active rules
+        
         // Account for label panel width
         int labelWidth = 80;
 
@@ -416,20 +494,25 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         int y = rowType * rowHeight + rowHeight / 4; // Position in correct row with some margin
 
         JPanel cell = new JPanel();
-        cell.setBackground(isActive ? ACTIVE_CELL_COLOR : GRID_BACKGROUND);
+        
+        // Use yellow for count rules, blue for standard rules
+        boolean isCountRule = (rowType == ROW_TICK_COUNT || rowType == ROW_BEAT_COUNT || 
+                               rowType == ROW_BAR_COUNT || rowType == ROW_PART_COUNT);
+        cell.setBackground(isActive ? (isCountRule ? COUNT_CELL_COLOR : ACTIVE_CELL_COLOR) : GRID_BACKGROUND);
 
         // Adjust width based on type
         int width;
-        if (rowType == ROW_TICKS) {
+        if (rowType == ROW_TICK) {
             width = cellSize - 2;
-        } else if (rowType == ROW_BEATS) {
-            width = TICKS_PER_BEAT * cellSize - 2;
-        } else if (rowType == ROW_BARS) {
+        } else if (rowType == ROW_BEAT) {
+            int ticksPerBeat = player.getSession().getTicksPerBeat();
+            width = ticksPerBeat * cellSize - 2;
+        } else if (rowType == ROW_BAR) {
             Session session = player.getSession();
-            width = session.getBeatsPerBar() * TICKS_PER_BEAT * cellSize - 2;
+            int ticksPerBeat = session.getTicksPerBeat();
+            width = session.getBeatsPerBar() * ticksPerBeat * cellSize - 2;
         } else { // PARTS
-            width = player.getSession().getBars() * player.getSession().getBeatsPerBar() * TICKS_PER_BEAT * cellSize
-                    - 2;
+            width = player.getSession().getBars() * player.getSession().getBeatsPerBar() * player.getSession().getTicksPerBeat() * cellSize - 2;
         }
 
         cell.setBounds(x, y, width, rowHeight / 2);
@@ -454,7 +537,7 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
             barLabel.setForeground(Color.WHITE);
             barLabel.setFont(new Font("Arial", Font.BOLD, 12));
 
-            int barWidth = beatsPerBar * TICKS_PER_BEAT * cellSize;
+            int barWidth = beatsPerBar * player.getSession().getTicksPerBeat() * cellSize;
             // Add labelWidth to x position to account for left panel
             int x = labelWidth + bar * barWidth + barWidth / 2 - 5; // Center in bar
             barLabel.setBounds(x, 0, 20, 20);
@@ -470,8 +553,7 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
                 beatLabel.setFont(new Font("Arial", Font.PLAIN, 10));
 
                 // Add labelWidth to x position to account for left panel
-                int x = labelWidth + (bar * beatsPerBar * TICKS_PER_BEAT + beat * TICKS_PER_BEAT) * cellSize
-                        + (TICKS_PER_BEAT * cellSize / 2) - 3; // Center in beat
+                int x = labelWidth + (bar * beatsPerBar * player.getSession().getTicksPerBeat() + beat * player.getSession().getTicksPerBeat()) * cellSize + (player.getSession().getTicksPerBeat() * cellSize / 2) - 3; // Center in beat
                 beatLabel.setBounds(x, 10, 10, 10);
 
                 timeLabelsPanel.add(beatLabel);
