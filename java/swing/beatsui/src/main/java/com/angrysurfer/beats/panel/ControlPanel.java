@@ -73,7 +73,7 @@ public class ControlPanel extends JPanel {
 
         // Add vertical adjust panels
         add(createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP, Commands.PRESET_DOWN));
-        add(createVerticalAdjustPanel("Spread", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
+        add(createVerticalAdjustPanel("Offset", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
         add(createScaleAdjustPanel());
 
         // Add octave panel
@@ -244,17 +244,24 @@ public class ControlPanel extends JPanel {
         // Create up and down buttons
         JButton prevButton = new JButton(upLabel);
         prevButton.setActionCommand(upCommand);
-        prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
-                PlayerManager.getInstance().getActivePlayer()));
-        prevButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-        prevButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        // If it's a transpose command, publish without player data
+        if (upCommand.equals(Commands.TRANSPOSE_UP) || upCommand.equals(Commands.TRANSPOSE_DOWN)) {
+            prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this, null));
+        } else {
+            // Original code path for other commands
+            prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
+                    PlayerManager.getInstance().getActivePlayer()));
+        }
 
+        // Similar change for the down button
         JButton nextButton = new JButton(downLabel);
         nextButton.setActionCommand(downCommand);
-        nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
-                PlayerManager.getInstance().getActivePlayer()));
-        nextButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-        nextButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        if (downCommand.equals(Commands.TRANSPOSE_UP) || downCommand.equals(Commands.TRANSPOSE_DOWN)) {
+            nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this, null));
+        } else {
+            nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
+                    PlayerManager.getInstance().getActivePlayer()));
+        }
 
         // Enable/disable buttons based on player selection
         prevButton.setEnabled(false);

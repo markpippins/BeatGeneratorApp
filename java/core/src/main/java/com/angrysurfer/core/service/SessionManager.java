@@ -163,6 +163,28 @@ public class SessionManager implements IBusListener {
                             // Optionally finalize recording or perform cleanup
                             CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
                         }
+                        case Commands.TRANSPOSE_UP -> {
+                            if (getActiveSession() != null) {
+                                Integer currentOffset = getActiveSession().getNoteOffset();
+                                // Limit to reasonable range (-12 to 12)
+                                if (currentOffset < 12) {
+                                    getActiveSession().setNoteOffset(currentOffset + 1);
+                                    logger.info("Transposed up: new offset = " + getActiveSession().getNoteOffset());
+                                    commandBus.publish(Commands.SESSION_UPDATED, this, getActiveSession());
+                                }
+                            }
+                        }
+                        case Commands.TRANSPOSE_DOWN -> {
+                            if (getActiveSession() != null) {
+                                Integer currentOffset = getActiveSession().getNoteOffset();
+                                // Limit to reasonable range (-12 to 12)
+                                if (currentOffset > -12) {
+                                    getActiveSession().setNoteOffset(currentOffset - 1);
+                                    logger.info("Transposed down: new offset = " + getActiveSession().getNoteOffset());
+                                    commandBus.publish(Commands.SESSION_UPDATED, this, getActiveSession());
+                                }
+                            }
+                        }
                     }
                 } catch (Exception e) {
                     // logger. error("Error processing command {}: {}", cmd, e.getMessage());

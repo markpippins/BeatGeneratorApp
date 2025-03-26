@@ -200,7 +200,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
         java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
             try {
-                noteOn(note, velocity);
+                noteOn(note + getSession().getNoteOffset(), velocity);
             } catch (Exception e) {
                 logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
             }

@@ -603,7 +603,7 @@ public class ToolBar extends JToolBar {
         offsetCombo.setSelectedItem(0);
         offsetCombo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && currentSession != null) {
-                currentSession.setNoteOffset(Double.valueOf((Integer) offsetCombo.getSelectedItem()));
+                currentSession.setNoteOffset((Integer) offsetCombo.getSelectedItem());
                 commandBus.publish(Commands.SESSION_UPDATED, this, currentSession);
             }
         });
