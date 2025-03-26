@@ -195,20 +195,15 @@ public class SessionDisplayPanel extends JPanel {
                             updateTimingDisplays();
                         }
                         case Commands.TIME_PART -> {
-                            // Use the part value from the event directly
+                            // Use the part value from the event directly (1-based)
                             if (action.getData() instanceof Number partVal) {
                                 // Store as 0-based but received as 1-based
                                 currentPart = partVal.intValue() - 1;
-                            } else {
-                                // Increment part but cycle back based on session's parts count
-                                if (currentSession != null) {
-                                    currentPart = (currentPart + 1) % currentSession.getParts();
-                                } else {
-                                    currentPart = (currentPart + 1);
-                                }
+                                
+                                // Increment total parts played count
+                                totalParts++;
+                                updateTimingDisplays();
                             }
-                            totalParts++;
-                            updateTimingDisplays();
                         }
                         case Commands.TRANSPORT_STOP, Commands.TRANSPORT_PLAY -> {
                             resetTimingCounters();

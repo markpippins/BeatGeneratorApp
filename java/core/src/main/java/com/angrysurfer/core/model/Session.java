@@ -277,7 +277,7 @@ public class Session implements Serializable, IBusListener {
 
     public void setPartLength(long partLength) {
         this.partLength = partLength;
-        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, this);
     }
 
     /**
@@ -628,77 +628,71 @@ public class Session implements Serializable, IBusListener {
 
     // Refactored onTick method with fixed references
     public void onTick() {
-        // For tick=1 issues, add special logging
-        if (tick == 1) {
-            // System.out.println("⚠️ TIMING CRITICAL: New cycle starting. tick=1, beat=" +
-            // beat + ", bar=" + bar);
-        }
+        try {
+            // Increment tick counter
+            tickCount++;
+            
+            // State tracking flags
+            boolean isBeatChange = false;
+            boolean isBarChange = false;
+            boolean isPartChange = false;
 
-        // Reset all processing flags at the start of a new cycle
-        if (tick == 1) {
-            tickProcessed = false;
-            beatProcessed = false;
-            barProcessed = false;
-            partProcessed = false;
+            // Calculate beat from tick
+            long newBeat = tickCount / ticksPerBeat;
+            if (newBeat > beatCount) {
+                beatCount = newBeat;
+                beatProcessed = false;
+                isBeatChange = true;
+            }
 
-            // Update active players list once per cycle for better performance
-            activePlayers = players.stream().filter(Player::getEnabled).collect(Collectors.toSet());
-        }
-
-        // Don't publish events for every tick - too much overhead
-        // Only listeners who absolutely need every tick should get it
-        if (tickListeners != null && !tickListeners.isEmpty()) {
-            timingBus.publish(Commands.TIME_TICK, this, tick);
-        }
-
-        // Update player states without events - use direct calls
-        for (Player player : players) {
-            if (player.getEnabled()) {
-                try {
-                    // Call player's onTick directly instead of going through events
-                    player.onTick(tick, bar);
-                } catch (Exception e) {
-                    logger.error("Error in player tick processing: {}", e.getMessage(), e);
+            // Calculate bar from beat
+            long newBar = beatCount / beatsPerBar;
+            if (newBar > barCount) {
+                barCount = newBar;
+                barProcessed = false;
+                isBarChange = true;
+                
+                // Part calculations happen when bar changes
+                // Only change part when we've completed partLength bars
+                if (barCount > 0 && barCount % partLength == 0) {
+                    if (!partProcessed) {
+                        // Increment part but cycle back to 1 when we reach parts
+                        part = (part % parts) + 1;  
+                        partCount++;
+                        partProcessed = true;
+                        isPartChange = true;
+                        
+                        logger.debug("Part changed to {} (partCount={}) at bar {}", part, partCount, barCount);
+                    }
+                } else {
+                    // Reset part processed flag for non-part-boundary bars
+                    partProcessed = false;
                 }
             }
-        }
 
-        // Beat change logic - only call once per beat
-        if (!beatProcessed && tick % ticksPerBeat == 0) {
-            beat = beat % beatsPerBar + 1.0;
-            beatCount++;
-            beatProcessed = true;
-
-            // Only send beat events to listeners who need them
-            timingBus.publish(Commands.TIME_BEAT, this, beat);
-
-            // Bar change logic - only call once per bar
-            if (!barProcessed && beat == 1.0) {
-                bar = bar % barLength + 1;
-                barCount++;
+            // Dispatch events
+            if (!tickProcessed) {
+                timingBus.publish(Commands.TIME_TICK, this, tickCount);
+                tickProcessed = true;
+            }
+            
+            if (isBeatChange && !beatProcessed) {
+                timingBus.publish(Commands.TIME_BEAT, this, beatCount);
+                beatProcessed = true;
+            }
+            
+            if (isBarChange && !barProcessed) {
+                timingBus.publish(Commands.TIME_BAR, this, barCount);
                 barProcessed = true;
-
-                timingBus.publish(Commands.TIME_BAR, this, bar);
-
-                // Part change logic - only call once per part change
-                if (!partProcessed && bar % partLength == 0) {
-                    // Fix the part cycling logic to work consistently
-                    part = (part % parts) + 1;  // This correctly cycles from 1 to parts
-                    partCount++;
-                    partProcessed = true;
-                    
-                    // Use the actual part value in the TIME_PART event
-                    timingBus.publish(Commands.TIME_PART, this, part);
-                    
-                    // Debug the part change
-                    logger.debug("Part changed to {} (partCount={})", part, partCount);
-                }
             }
+            
+            if (isPartChange) {
+                // Pass the CURRENT part number to the event (1-based)
+                timingBus.publish(Commands.TIME_PART, this, part);
+            }
+        } catch (Exception e) {
+            logger.error("Error in onTick", e);
         }
-
-        // Update tick counter last to avoid race conditions
-        tick = tick % tickLength + 1;
-        tickCount++;
     }
 
     private void setupTickListener() {
@@ -781,6 +775,8 @@ public class Session implements Serializable, IBusListener {
         } else {
             unregisterTickListener(updatedPlayer);
         }
+
+        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
     }
 
     /**

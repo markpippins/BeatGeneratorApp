@@ -96,7 +96,9 @@ public class SessionControlPanel extends JPanel {
         lengthCombo.setSelectedItem(4);
         lengthCombo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && currentSession != null) {
-                currentSession.setPartLength((Integer) lengthCombo.getSelectedItem());
+                // Explicitly convert Integer to Long
+                int selectedValue = (Integer) lengthCombo.getSelectedItem();
+                currentSession.setPartLength(selectedValue); // Will be auto-boxed to Long
                 commandBus.publish(Commands.SESSION_UPDATED, this, currentSession);
             }
         });
@@ -244,7 +246,7 @@ public class SessionControlPanel extends JPanel {
         
         if (session == null) return;
         
-        // Update BPM field
+        // Update BPM field - cast float to int for combo box
         JComboBox<Integer> bpmCombo = (JComboBox<Integer>) fields.get("BPM");
         bpmCombo.setSelectedItem(session.getTempoInBPM());
         
@@ -253,7 +255,11 @@ public class SessionControlPanel extends JPanel {
         ((JComboBox<Integer>) fields.get("B/Bar")).setSelectedItem(session.getBeatsPerBar());
         ((JComboBox<Integer>) fields.get("Bars")).setSelectedItem(session.getBars());
         ((JComboBox<Integer>) fields.get("Parts")).setSelectedItem(session.getParts());
-        ((JComboBox<Integer>) fields.get("Length")).setSelectedItem(session.getPartLength());
+        
+        // Ensure proper conversion from Long to Integer for partLength
+        Long partLength = session.getPartLength();
+        ((JComboBox<Integer>) fields.get("Length")).setSelectedItem(partLength.intValue());
+        
         ((JComboBox<Integer>) fields.get("Offset")).setSelectedItem(session.getNoteOffset());
     }
 }

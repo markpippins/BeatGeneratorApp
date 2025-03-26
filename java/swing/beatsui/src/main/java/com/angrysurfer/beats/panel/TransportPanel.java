@@ -194,8 +194,29 @@ public class TransportPanel extends JPanel {
     }
 
     private void toggleRecordingState() {
+        boolean wasRecording = isRecording;
         isRecording = !isRecording;
         updateRecordButtonAppearance();
+        
+        if (wasRecording && !isRecording) {
+            // We're turning recording off - save the session
+            try {
+                // Get the current session from SessionManager
+                Session currentSession = SessionManager.getInstance().getActiveSession();
+                if (currentSession != null) {
+                    // Save the session (which includes players and rules)
+                    SessionManager.getInstance().saveSession(currentSession);
+                    
+                    // Show save confirmation
+                    // commandBus.publish(Commands.SHOW_STATUS, this, "Session saved");
+                }
+            } catch (Exception ex) {
+                // Log and show any errors during save
+                System.err.println("Error saving session: " + ex.getMessage());
+                ex.printStackTrace();
+                // commandBus.publish(Commands.SHOW_ERROR, this, "Error saving session: " + ex.getMessage());
+            }
+        }
         
         // Publish the appropriate command
         if (isRecording) {
