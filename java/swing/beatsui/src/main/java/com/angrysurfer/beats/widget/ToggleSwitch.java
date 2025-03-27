@@ -14,8 +14,6 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
-import com.angrysurfer.beats.ColorUtils;
-
 public class ToggleSwitch extends JComponent {
     private boolean selected = false;
     private final int width = 60;

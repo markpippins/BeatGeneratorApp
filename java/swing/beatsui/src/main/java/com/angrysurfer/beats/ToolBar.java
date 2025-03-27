@@ -7,9 +7,9 @@ import java.util.Objects;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.panel.SessionControlPanel;
-import com.angrysurfer.beats.panel.SessionDisplayPanel;
-import com.angrysurfer.beats.panel.TransportPanel;
+import com.angrysurfer.beats.widget.panel.SessionControlPanel;
+import com.angrysurfer.beats.widget.panel.SessionDisplayPanel;
+import com.angrysurfer.beats.widget.panel.TransportPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;

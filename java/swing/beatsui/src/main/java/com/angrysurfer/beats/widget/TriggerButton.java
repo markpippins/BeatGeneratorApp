@@ -3,8 +3,6 @@ package com.angrysurfer.beats.widget;
 import java.awt.*;
 import javax.swing.JButton;
 
-import com.angrysurfer.beats.ColorUtils;
-
 public class TriggerButton extends JButton {
     private Color baseColor;
     private Color activeColor;

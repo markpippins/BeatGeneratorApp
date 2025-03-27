@@ -8,10 +8,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.GridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;

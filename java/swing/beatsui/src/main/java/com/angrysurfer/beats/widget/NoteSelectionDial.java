@@ -14,7 +14,6 @@ import java.awt.geom.Point2D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.core.model.Scale;
 
 public class NoteSelectionDial extends Dial {
