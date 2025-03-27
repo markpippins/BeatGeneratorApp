@@ -51,8 +51,7 @@ public class Ratchet extends Strike {
         setPreset(getParent().getPreset());
         setEnabled(true);
 
-        setName(getParent().getName()
-                + String.format(getParent().getPlayerClassName(), getSession().getPlayers().size()));
+        setName(getParent().getName() + " [R]");
         targetTick = getSession().getTickCount() + offset;
         logger.debug("Adding rule - tick: {}, part: {}", targetTick, part);
         getRules().add(new Rule(Comparison.TICK_COUNT, Operator.EQUALS, targetTick, part));
@@ -60,22 +59,33 @@ public class Ratchet extends Strike {
         synchronized (getSession().getPlayers()) {
             getSession().getPlayers().add(this);
             getSession().getRemoveList().add(this);
+            
+            // Explicitly publish that this player was added
+            CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, this);
+            logger.info("Published PLAYER_ADDED for Ratchet: {}", getName());
         }
 
         CommandBus.getInstance().register(this);
         logger.info("New Ratchet created: {}", this);
         TimingBus.getInstance().register(this);
         logger.info("New Ratchet registered with TimingBus: {}", this);
+        
+        // Publish a command that a new player was added
+        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, this);
     }
 
     @Override
-    public void onTick(long tickCount, long beatCount, long barCount, long part) {
+    public void onTick(long tickCount, long beatCount, long barCount, long partCount) {
 
         if (isProbable())
             drumNoteOn((long) (getNote() + getSession().getNoteOffset()));
 
         if (tickCount > targetTick + 1) {
-            // Remove this ratchet after it has been played
+            // First publish that this player is being deleted
+            CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this, this);
+            logger.info("Published PLAYER_DELETED for Ratchet: {}", getName());
+            
+            // Then remove from session
             getSession().getPlayers().remove(this);
             CommandBus.getInstance().unregister(this);
             TimingBus.getInstance().unregister(this);

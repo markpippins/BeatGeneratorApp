@@ -681,7 +681,7 @@ public class Session implements Serializable, IBusListener {
             // This is what generates the sound!
             getPlayers().stream()
                         .filter(Player::getEnabled)
-                        .forEach(p -> p.onTick(tickCount, beatCount, barCount, part));
+                        .forEach(p -> p.onTick(tickCount, beatCount, barCount, partCount));
 
             // Dispatch events for timing display
             if (!tickProcessed) {

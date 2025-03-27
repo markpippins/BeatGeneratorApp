@@ -32,6 +32,7 @@ import com.angrysurfer.core.model.Comparison;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.service.InternalSynthManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -253,15 +254,53 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
             return;
         }
 
-        // Update player name in header
-        nameLabel.setText(player.getName() + " - " + player.getPlayerClassName());
+        // Build a detailed description of the player
+        StringBuilder playerInfo = new StringBuilder();
 
+        // Start with player name and class
+        playerInfo.append(player.getName());
+
+        // Add instrument information if available
+        if (player.getInstrument() != null) {
+            playerInfo.append(" - ").append(player.getInstrument().getName());
+
+            // Add device name if it's different from instrument name
+            String deviceName = player.getInstrument().getDeviceName();
+            if (deviceName != null && !deviceName.isEmpty() && !deviceName.equals(player.getInstrument().getName())) {
+                playerInfo.append(" (").append(deviceName).append(")");
+            }
+
+            // Get preset name if available
+            if (player.getPreset() != null) {
+                Long instrumentId = player.getInstrument().getId();
+                Long presetNumber = player.getPreset().longValue();
+
+                // For channel 9 (MIDI channel 10), show drum name instead of preset
+                if (player.getChannel() == 9) {
+                    // Get drum name for the note
+                    String drumName = InternalSynthManager.getInstance().getDrumName(player.getNote().intValue());
+                    playerInfo.append(" - ").append(drumName);
+                } else {
+                    // For other channels, show preset name
+                    String presetName = InternalSynthManager.getInstance().getPresetName(instrumentId, presetNumber);
+
+                    if (presetName != null && !presetName.isEmpty()) {
+                        playerInfo.append(" - ").append(presetName);
+                    }
+                }
+            }
+        }
+
+        // Update the name label with all the information
+        nameLabel.setText(playerInfo.toString());
+
+        // Rest of the existing updatePlayerGrid method...
         Session session = player.getSession();
         int beatsPerBar = session.getBeatsPerBar();
         int bars = session.getBars();
-        int ticksPerBeat = session.getTicksPerBeat(); // Get from session
+        int ticksPerBeat = session.getTicksPerBeat();
         int totalBeats = beatsPerBar * bars;
-        int totalTicks = totalBeats * ticksPerBeat; // Use session value
+        int totalTicks = totalBeats * ticksPerBeat;
 
         // Clear existing grid
         clearGrid();
@@ -282,7 +321,7 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         for (int tick = 0; tick < totalTicks; tick++) {
             // Add tick rule cell (row 0)
             addRuleCell(tick, ROW_TICK, activeRules[ROW_TICK][tick], rowHeight);
-            
+
             // Add tick count rule cell (row 1)
             addRuleCell(tick, ROW_TICK_COUNT, activeRules[ROW_TICK_COUNT][tick], rowHeight);
 
@@ -369,13 +408,13 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
     }
 
     /**
-     * Calculate which ticks/beats/bars have active rules
-     * Returns a 2D array: [row type][index] -> active?
+     * Calculate which ticks/beats/bars have active rules Returns a 2D array: [row
+     * type][index] -> active?
      */
     private boolean[][] calculateActiveRules(Player player, Session session) {
         int beatsPerBar = session.getBeatsPerBar();
         int bars = session.getBars();
-        int ticksPerBeat = session.getTicksPerBeat(); 
+        int ticksPerBeat = session.getTicksPerBeat();
         int totalBeats = beatsPerBar * bars;
         int totalTicks = totalBeats * ticksPerBeat;
 
@@ -408,73 +447,75 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
 
             // Check for tick/beat/bar/part rules
             for (Rule rule : allRules) {
-                if (rule.getPart() != 0 && rule.getPart() != 1) continue;
-                
+                if (rule.getPart() != 0 && rule.getPart() != 1)
+                    continue;
+
                 // Use integer constants from Comparison class instead of strings
                 switch (rule.getComparison()) {
-                    // Standard position rules
-                    case Comparison.TICK: // Use constant instead of "TICK"
-                        if (rule.getValue().doubleValue() == sessionTick) {
-                            results[ROW_TICK][tickIndex] = true;
-                        }
-                        break;
-                    case Comparison.BEAT: // Use constant instead of "BEAT"
-                        if (rule.getValue().doubleValue() == sessionBeat) {
-                            results[ROW_BEAT][beatIndex] = true;
-                        }
-                        break;
-                    case Comparison.BAR: // Use constant instead of "BAR"
-                        if (rule.getValue().doubleValue() == sessionBar) {
-                            results[ROW_BAR][bar] = true;
-                        }
-                        break;
-                    case Comparison.PART: // Use constant instead of "PART"
-                        results[ROW_PART][0] = true;
-                        break;
+                // Standard position rules
+                case Comparison.TICK: // Use constant instead of "TICK"
+                    if (rule.getValue().doubleValue() == sessionTick) {
+                        results[ROW_TICK][tickIndex] = true;
+                    }
+                    break;
+                case Comparison.BEAT: // Use constant instead of "BEAT"
+                    if (rule.getValue().doubleValue() == sessionBeat) {
+                        results[ROW_BEAT][beatIndex] = true;
+                    }
+                    break;
+                case Comparison.BAR: // Use constant instead of "BAR"
+                    if (rule.getValue().doubleValue() == sessionBar) {
+                        results[ROW_BAR][bar] = true;
+                    }
+                    break;
+                case Comparison.PART: // Use constant instead of "PART"
+                    results[ROW_PART][0] = true;
+                    break;
                 }
             }
         }
-        
+
         // Process COUNT rules separately
         for (Rule rule : allRules) {
-            if (rule.getPart() != 0 && rule.getPart() != 1) continue;
-            
+            if (rule.getPart() != 0 && rule.getPart() != 1)
+                continue;
+
             // Use integer constants instead of strings
             switch (rule.getComparison()) {
-                case Comparison.TICK_COUNT: // Use constant instead of "TICK_COUNT"
-                    // For tick count rules, mark where they would match
-                    for (int i = 0; i < totalTicks; i++) {
-                        int tickValue = i + 1; // 1-based counting
-                        if (rule.matches(tickValue)) {
-                            results[ROW_TICK_COUNT][i] = true;
-                        }
+            case Comparison.TICK_COUNT: // Use constant instead of "TICK_COUNT"
+                // For tick count rules, mark where they would match
+                for (int i = 0; i < totalTicks; i++) {
+                    int tickValue = i + 1; // 1-based counting
+                    if (rule.matches(tickValue)) {
+                        results[ROW_TICK_COUNT][i] = true;
                     }
-                    break;
-                    
-                case Comparison.BEAT_COUNT: // Use constant instead of "BEAT_COUNT"
-                    // For beat count rules
-                    for (int i = 0; i < totalBeats; i++) {
-                        int beatValue = i + 1; // 1-based counting
-                        if (rule.matches(beatValue)) {
-                            results[ROW_BEAT_COUNT][i] = true;
-                        }
+                }
+                break;
+
+            case Comparison.BEAT_COUNT: // Use constant instead of "BEAT_COUNT"
+                // For beat count rules
+                for (int i = 0; i < totalBeats; i++) {
+                    int beatValue = i + 1; // 1-based counting
+                    if (rule.matches(beatValue)) {
+                        results[ROW_BEAT_COUNT][i] = true;
                     }
-                    break;
-                    
-                case Comparison.BAR_COUNT: // Use constant instead of "BAR_COUNT"
-                    // For bar count rules
-                    for (int i = 0; i < bars; i++) {
-                        int barValue = i + 1; // 1-based counting
-                        if (rule.matches(barValue)) {
-                            results[ROW_BAR_COUNT][i] = true;
-                        }
+                }
+                break;
+
+            case Comparison.BAR_COUNT: // Use constant instead of "BAR_COUNT"
+                // For bar count rules
+                for (int i = 0; i < bars; i++) {
+                    int barValue = i + 1; // 1-based counting
+                    if (rule.matches(barValue)) {
+                        results[ROW_BAR_COUNT][i] = true;
                     }
-                    break;
-                    
-                case Comparison.PART_COUNT: // Use constant instead of "PART_COUNT"
-                    // Part count rules generally apply to the whole part
-                    results[ROW_PART_COUNT][0] = true;
-                    break;
+                }
+                break;
+
+            case Comparison.PART_COUNT: // Use constant instead of "PART_COUNT"
+                // Part count rules generally apply to the whole part
+                results[ROW_PART_COUNT][0] = true;
+                break;
             }
         }
 
@@ -485,8 +526,9 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
      * Add a cell to represent a rule in the grid
      */
     private void addRuleCell(int tickIndex, int rowType, boolean isActive, int rowHeight) {
-        if (!isActive) return; // Only add cells for active rules
-        
+        if (!isActive)
+            return; // Only add cells for active rules
+
         // Account for label panel width
         int labelWidth = 80;
 
@@ -494,10 +536,10 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         int y = rowType * rowHeight + rowHeight / 4; // Position in correct row with some margin
 
         JPanel cell = new JPanel();
-        
+
         // Use yellow for count rules, blue for standard rules
-        boolean isCountRule = (rowType == ROW_TICK_COUNT || rowType == ROW_BEAT_COUNT || 
-                               rowType == ROW_BAR_COUNT || rowType == ROW_PART_COUNT);
+        boolean isCountRule = (rowType == ROW_TICK_COUNT || rowType == ROW_BEAT_COUNT || rowType == ROW_BAR_COUNT
+                || rowType == ROW_PART_COUNT);
         cell.setBackground(isActive ? (isCountRule ? COUNT_CELL_COLOR : ACTIVE_CELL_COLOR) : GRID_BACKGROUND);
 
         // Adjust width based on type
@@ -512,7 +554,8 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
             int ticksPerBeat = session.getTicksPerBeat();
             width = session.getBeatsPerBar() * ticksPerBeat * cellSize - 2;
         } else { // PARTS
-            width = player.getSession().getBars() * player.getSession().getBeatsPerBar() * player.getSession().getTicksPerBeat() * cellSize - 2;
+            width = player.getSession().getBars() * player.getSession().getBeatsPerBar()
+                    * player.getSession().getTicksPerBeat() * cellSize - 2;
         }
 
         cell.setBounds(x, y, width, rowHeight / 2);
@@ -553,7 +596,10 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
                 beatLabel.setFont(new Font("Arial", Font.PLAIN, 10));
 
                 // Add labelWidth to x position to account for left panel
-                int x = labelWidth + (bar * beatsPerBar * player.getSession().getTicksPerBeat() + beat * player.getSession().getTicksPerBeat()) * cellSize + (player.getSession().getTicksPerBeat() * cellSize / 2) - 3; // Center in beat
+                int x = labelWidth
+                        + (bar * beatsPerBar * player.getSession().getTicksPerBeat()
+                                + beat * player.getSession().getTicksPerBeat()) * cellSize
+                        + (player.getSession().getTicksPerBeat() * cellSize / 2) - 3; // Center in beat
                 beatLabel.setBounds(x, 10, 10, 10);
 
                 timeLabelsPanel.add(beatLabel);
@@ -592,7 +638,16 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
                     updatePlayerGrid();
                 }
             }
-
+            // Add handler for note changes
+            case Commands.NEW_VALUE_NOTE, Commands.PRESET_UP, Commands.PRESET_DOWN, Commands.PLAYER_ROW_REFRESH -> {
+                // if (player != null && action.getData() instanceof Object[] data && data.length >= 2) {
+                    // Check if this update is for the currently displayed player
+                    // if (data[0] instanceof Long playerId && playerId.equals(player.getId())) {
+                        // Just update the name label, which contains note information for drum players
+                        updateNameLabel();
+                    // }
+                // }
+            }
             case Commands.SESSION_CHANGED -> {
                 if (player != null) {
                     updatePlayerGrid();
@@ -600,5 +655,59 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
             }
             }
         });
+    }
+
+    /**
+     * Updates just the player name label without redrawing the entire grid
+     */
+    private void updateNameLabel() {
+        if (player == null) {
+            nameLabel.setText("No Player Selected");
+            return;
+        }
+
+        StringBuilder playerInfo = new StringBuilder();
+        
+        // Start with player name
+        playerInfo.append(player.getName());
+        
+        // Add instrument information if available
+        if (player.getInstrument() != null) {
+            playerInfo.append(" - ").append(player.getInstrument().getName());
+            
+            // Add device name if it's different from instrument name
+            String deviceName = player.getInstrument().getDeviceName();
+            if (deviceName != null && !deviceName.isEmpty() && 
+                !deviceName.equals(player.getInstrument().getName())) {
+                playerInfo.append(" (").append(deviceName).append(")");
+            }
+            
+            // Get preset name if available
+            if (player.getPreset() != null) {
+                Long instrumentId = player.getInstrument().getId();
+                Long presetNumber = player.getPreset().longValue();
+                
+                // For channel 9 (MIDI channel 10), show drum name instead of preset
+                if (player.getChannel() == 9) {
+                    // Get drum name for the note
+                    String drumName = InternalSynthManager.getInstance().getDrumName(player.getNote().intValue());
+                    playerInfo.append(" - ").append(drumName);
+                } else {
+                    // For other channels, show preset name
+                    String presetName = InternalSynthManager.getInstance().getPresetName(
+                        instrumentId, presetNumber);
+                        
+                    if (presetName != null && !presetName.isEmpty()) {
+                        playerInfo.append(" - ").append(presetName);
+                    }
+                }
+            }
+        }
+        
+        // Update the name label with all the information
+        nameLabel.setText(playerInfo.toString());
+        
+        // Request focus to ensure the UI updates
+        nameLabel.repaint();
     }
 }

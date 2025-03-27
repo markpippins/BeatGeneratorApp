@@ -224,4 +224,12 @@ public class PlayersTableModel extends DefaultTableModel {
     public static Set<String> getHiddenColumns() {
         return HIDDEN_COLUMN_NAMES;
     }
+
+    public void removeRow(int modelRowIndex) {
+        if (modelRowIndex >= 0 && modelRowIndex < getRowCount()) {
+            // Remove the row
+            dataVector.remove(modelRowIndex);
+            fireTableRowsDeleted(modelRowIndex, modelRowIndex);
+        }
+    }
 }

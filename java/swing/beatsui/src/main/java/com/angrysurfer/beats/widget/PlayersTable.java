@@ -29,9 +29,12 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.beats.service.UIHelper;
+import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Ratchet;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -56,7 +59,8 @@ public class PlayersTable extends JTable {
 
         setupTable();
         setupSelectionListener();
-        setupMouseListener(); // Add this line
+        setupMouseListener();
+        setupCommandBusListener(); // Add this line
     }
 
     public PlayersTableModel getPlayersTableModel() {
@@ -72,12 +76,12 @@ public class PlayersTable extends JTable {
         
         // Set column widths for Name column
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setMinWidth(100);
-        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setPreferredWidth(200);
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setPreferredWidth(150);
         
         // Double the width of the Instrument column
         int instrumentColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT);
-        getColumnModel().getColumn(instrumentColumnIndex).setMinWidth(150); // Increased from 100
-        getColumnModel().getColumn(instrumentColumnIndex).setPreferredWidth(300); // Doubled from 150
+        getColumnModel().getColumn(instrumentColumnIndex).setMinWidth(120); // Increased from 100
+        getColumnModel().getColumn(instrumentColumnIndex).setPreferredWidth(120); // Doubled from 150
         
         // Reduce the Note column back to normal size - no longer showing drum names here
         int noteColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_NOTE);
@@ -88,8 +92,8 @@ public class PlayersTable extends JTable {
         // Keep the wider Preset column to fit preset names and drum names
         int presetColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_PRESET);
         getColumnModel().getColumn(presetColumnIndex).setMinWidth(80);
-        getColumnModel().getColumn(presetColumnIndex).setPreferredWidth(120);
-        getColumnModel().getColumn(presetColumnIndex).setMaxWidth(180);
+        getColumnModel().getColumn(presetColumnIndex).setPreferredWidth(100);
+        getColumnModel().getColumn(presetColumnIndex).setMaxWidth(140);
 
         // Set fixed widths for other columns - skip Preset and Instrument columns
         for (int i = 2; i < getColumnCount(); i++) {
@@ -231,6 +235,83 @@ public class PlayersTable extends JTable {
                 }
             }
         });
+    }
+
+    private void setupCommandBusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
+            @Override
+            public void onAction(Command action) {
+                if (action.getCommand() == null) return;
+                
+                switch (action.getCommand()) {
+                    case Commands.PLAYER_ADDED:
+                        if (action.getData() instanceof Player player) {
+                            System.out.println("PlayersTable received PLAYER_ADDED: " + player.getName());
+                            
+                            SwingUtilities.invokeLater(() -> {
+                                // Only add if not already in table
+                                if (findPlayerRowIndex(player) == -1) {
+                                    getPlayersTableModel().addPlayerRow(player);
+                                    System.out.println("Added player to table model: " + player.getName());
+                                    repaint();
+                                }
+                            });
+                        }
+                        break;
+                        
+                    case Commands.PLAYER_DELETED:
+                        if (action.getData() instanceof Player player) {
+                            System.out.println("PlayersTable received PLAYER_DELETED: " + player.getName());
+                            
+                            SwingUtilities.invokeLater(() -> {
+                                int rowIndex = findPlayerRowIndex(player);
+                                if (rowIndex >= 0) {
+                                    System.out.println("Removing player from table row " + rowIndex + ": " + player.getName());
+                                    getPlayersTableModel().removeRow(convertRowIndexToModel(rowIndex));
+                                    repaint();
+                                }
+                            });
+                        }
+                        break;
+                    
+                    case Commands.PLAYER_ROW_REFRESH:
+                        if (action.getData() instanceof Player player) {
+                            SwingUtilities.invokeLater(() -> {
+                                updatePlayerRow(player);
+                            });
+                        }
+                        break;
+                        
+                    case Commands.SESSION_UPDATED:
+                    case Commands.SESSION_SELECTED:
+                    case Commands.SESSION_LOADED:
+                        if (action.getData() instanceof Session session) {
+                            SwingUtilities.invokeLater(() -> {
+                                updateTableFromSession(session);
+                            });
+                        }
+                        break;
+                }
+            }
+        });
+    }
+
+    private void updateTableFromSession(Session session) {
+        // Clear existing rows
+        while (tableModel.getRowCount() > 0) {
+            tableModel.removeRow(0);
+        }
+        
+        // Add all players from the session
+        if (session != null && session.getPlayers() != null) {
+            for (Player player : session.getPlayers()) {
+                tableModel.addPlayerRow(player);
+            }
+        }
+        
+        // Sort and repaint
+        sortTable();
+        repaint();
     }
 
     public void handlePlayerSelection(int row) {
@@ -399,21 +480,17 @@ public class PlayersTable extends JTable {
         }
     }
 
-    private int findPlayerRowIndex(Player player) {
-        if (player == null || player.getId() == null)
-            return -1;
-
-        int idColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_ID);
-
-        // Search by ID
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            Long playerId = (Long) tableModel.getValueAt(i, idColIndex);
-            if (player.getId().equals(playerId)) {
-                return i;
+    public int findPlayerRowIndex(Player player) {
+        PlayersTableModel model = getPlayersTableModel();
+        if (player == null || model == null) return -1;
+        
+        for (int i = 0; i < model.getRowCount(); i++) {
+            Long rowPlayerId = (Long) model.getValueAt(i, 0);
+            if (rowPlayerId != null && rowPlayerId.equals(player.getId())) {
+                return convertRowIndexFromModel(i);
             }
         }
-
-        return -1; // Not found
+        return -1;
     }
 
     public int getLastSelectedRow() {
@@ -457,5 +534,26 @@ public class PlayersTable extends JTable {
             sorter.setSortKeys(sortKeys);
             sorter.sort();
         }
+    }
+
+    /**
+     * Converts a row index from the model's coordinate space to the view's coordinate space
+     * @param modelRow The row index in model coordinates
+     * @return The row index in view coordinates, or -1 if not found/visible
+     */
+    public int convertRowIndexFromModel(int modelRow) {
+        if (modelRow < 0) {
+            return -1;
+        }
+        
+        // Search through all rows in the view to find the one that maps to this model row
+        for (int i = 0; i < getRowCount(); i++) {
+            if (convertRowIndexToModel(i) == modelRow) {
+                return i;
+            }
+        }
+        
+        // Row might not be visible due to filtering
+        return -1;
     }
 }

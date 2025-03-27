@@ -67,8 +67,8 @@ public class SessionPanel extends StatusProviderPanel implements IBusListener {
 
         JPanel containerPanel = new JPanel(new BorderLayout());
         containerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        containerPanel.add(pianoPanel, BorderLayout.WEST);
         containerPanel.add(controlPanel, BorderLayout.CENTER);
-        containerPanel.add(pianoPanel, BorderLayout.EAST);
 
         // Add piano and grid panels
         JPanel bottomPanel = new JPanel(new BorderLayout());
