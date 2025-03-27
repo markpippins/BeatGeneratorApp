@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -96,26 +97,30 @@ public class PlayerEditDetailPanel extends JPanel {
     }
     
     /**
-     * Sets up the overall panel layout
+     * Sets up the overall panel layout with Ratchet panel on the right side
      */
     private void setupLayout() {
-        // Create container with GridLayout (2 rows: performance/modulation on top, ratchet on bottom)
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        // Use BorderLayout for the main container to have left and right sections
+        setLayout(new BorderLayout(10, 5));
         
-        // Create and add performance panel
+        // Create left panel to stack Performance and Modulation panels vertically
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        
+        // Create and add performance panel to left stack
         JPanel performancePanel = createPerformancePanel();
-        mainPanel.add(performancePanel);
+        leftPanel.add(performancePanel);
         
-        // Create and add modulation panel
+        // Create and add modulation panel to left stack
         JPanel modulationPanel = createModulationPanel();
-        mainPanel.add(modulationPanel);
+        leftPanel.add(modulationPanel);
         
-        // Create and add ratchet panel
+        // Create ratchet panel for right side
         JPanel ratchetPanel = createRatchetPanel();
-        mainPanel.add(ratchetPanel);
         
-        add(mainPanel, BorderLayout.CENTER);
+        // Add panels to main layout
+        add(leftPanel, BorderLayout.CENTER);
+        add(ratchetPanel, BorderLayout.EAST);
     }
     
     /**
@@ -194,28 +199,47 @@ public class PlayerEditDetailPanel extends JPanel {
     
     /**
      * Creates the ratchet panel with count and interval controls
+     * Redesigned to be vertically oriented
      */
     private JPanel createRatchetPanel() {
-        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel panel = new JPanel(new BorderLayout(5, 10));
         panel.setBorder(BorderFactory.createTitledBorder("Ratchet"));
         
-        // Create panel for sliders with horizontal layout
-        JPanel slidersPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        // Create panel for sliders with vertical layout
+        JPanel slidersPanel = new JPanel();
+        slidersPanel.setLayout(new BoxLayout(slidersPanel, BoxLayout.Y_AXIS));
+        
+        // Set preferred width for ratchet panel
+        panel.setPreferredSize(new Dimension(120, 400));
         
         // Add count slider with label
-        JPanel countPanel = new JPanel(new BorderLayout(2, 2));
+        JPanel countPanel = new JPanel(new BorderLayout(2, 5));
         JLabel countLabel = new JLabel("Count", JLabel.CENTER);
         countPanel.add(countLabel, BorderLayout.NORTH);
+        
+        // Make slider horizontal for this layout
+        ratchetCountSlider.setOrientation(SwingConstants.HORIZONTAL);
+        ratchetCountSlider.setPreferredSize(new Dimension(100, 50));
         countPanel.add(ratchetCountSlider, BorderLayout.CENTER);
-        slidersPanel.add(countPanel);
         
         // Add interval slider with label
-        JPanel intervalPanel = new JPanel(new BorderLayout(2, 2));
+        JPanel intervalPanel = new JPanel(new BorderLayout(2, 5));
         JLabel intervalLabel = new JLabel("Interval", JLabel.CENTER);
         intervalPanel.add(intervalLabel, BorderLayout.NORTH);
-        intervalPanel.add(ratchetIntervalSlider, BorderLayout.CENTER);
-        slidersPanel.add(intervalPanel);
         
+        // Make slider horizontal for this layout
+        ratchetIntervalSlider.setOrientation(SwingConstants.HORIZONTAL);
+        ratchetIntervalSlider.setPreferredSize(new Dimension(100, 50));
+        intervalPanel.add(ratchetIntervalSlider, BorderLayout.CENTER);
+        
+        // Add spacing between components
+        slidersPanel.add(Box.createVerticalStrut(20));
+        slidersPanel.add(countPanel);
+        slidersPanel.add(Box.createVerticalStrut(30));
+        slidersPanel.add(intervalPanel);
+        slidersPanel.add(Box.createVerticalStrut(20));
+        
+        // Center the sliders panel
         panel.add(slidersPanel, BorderLayout.CENTER);
         
         return panel;
@@ -270,6 +294,72 @@ public class PlayerEditDetailPanel extends JPanel {
                 new Object[] { player.getId(), (long)value });
             
             logger.debug("Pan changed: {}", value);
+        });
+        
+        // Add velocity min slider change listener
+        velocityMinSlider.addChangeListener(e -> {
+            if (!velocityMinSlider.getValueIsAdjusting()) {
+                int minVelocity = velocityMinSlider.getValue();
+                int maxVelocity = velocityMaxSlider.getValue();
+                
+                // Ensure min value is never greater than max value
+                if (minVelocity > maxVelocity) {
+                    // Set max value equal to min value
+                    velocityMaxSlider.setValue(minVelocity);
+                    maxVelocity = minVelocity;
+                }
+                
+                // Publish the new min velocity with player ID
+                CommandBus.getInstance().publish(Commands.NEW_VALUE_VELOCITY_MIN, this, 
+                    new Object[] { player.getId(), (long)minVelocity });
+                
+                logger.debug("Min velocity changed: {} (max: {})", minVelocity, maxVelocity);
+            }
+        });
+
+        // Add velocity max slider change listener
+        velocityMaxSlider.addChangeListener(e -> {
+            if (!velocityMaxSlider.getValueIsAdjusting()) {
+                int minVelocity = velocityMinSlider.getValue();
+                int maxVelocity = velocityMaxSlider.getValue();
+                
+                // Ensure max value is never less than min value
+                if (maxVelocity < minVelocity) {
+                    // Set min value equal to max value
+                    velocityMinSlider.setValue(maxVelocity);
+                    minVelocity = maxVelocity;
+                }
+                
+                // Publish the new max velocity with player ID
+                CommandBus.getInstance().publish(Commands.NEW_VALUE_VELOCITY_MAX, this, 
+                    new Object[] { player.getId(), (long)maxVelocity });
+                
+                logger.debug("Max velocity changed: {} (min: {})", maxVelocity, minVelocity);
+            }
+        });
+        
+        // Add ratchet count slider change listener
+        ratchetCountSlider.addChangeListener(e -> {
+            if (!ratchetCountSlider.getValueIsAdjusting()) {
+                int value = ratchetCountSlider.getValue();
+                // Publish the new ratchet count with player ID
+                CommandBus.getInstance().publish(Commands.NEW_VALUE_RATCHET_COUNT, this, 
+                    new Object[] { player.getId(), (long)value });
+                
+                logger.debug("Ratchet count changed: {}", value);
+            }
+        });
+        
+        // Add ratchet interval slider change listener
+        ratchetIntervalSlider.addChangeListener(e -> {
+            if (!ratchetIntervalSlider.getValueIsAdjusting()) {
+                int value = ratchetIntervalSlider.getValue();
+                // Publish the new ratchet interval with player ID
+                CommandBus.getInstance().publish(Commands.NEW_VALUE_RATCHET_INTERVAL, this, 
+                    new Object[] { player.getId(), (long)value });
+                
+                logger.debug("Ratchet interval changed: {}", value);
+            }
         });
     }
     

@@ -515,44 +515,60 @@ public class ControlPanel extends JPanel {
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
         });
 
-        // Add velocityMinDial listener
+        // Replace the velocityMinDial listener with this:
         velocityMinDial.addChangeListener(e -> {
             if (!listenersEnabled || activePlayer == null)
                 return;
 
-            int value = velocityMinDial.getValue();
-            logger.info("Updating player min velocity to: " + value);
-
-            // Update player and save
-            activePlayer.setMinVelocity((long) value);
-            if (activePlayer.getMaxVelocity() <= value) {
-                activePlayer.setMaxVelocity((long) value + 1);
-                updateDialsFromPlayer(activePlayer);
+            int minValue = velocityMinDial.getValue();
+            int maxValue = velocityMaxDial.getValue();
+            
+            logger.info("Updating player min velocity to: " + minValue);
+            
+            // Ensure min velocity doesn't exceed max velocity
+            if (minValue > maxValue) {
+                // Update max velocity to match min velocity
+                listenersEnabled = false;  // Prevent feedback loop
+                velocityMaxDial.setValue(minValue);
+                activePlayer.setMaxVelocity((long) minValue);
+                listenersEnabled = true;
             }
-
-            PlayerManager.getInstance().updatePlayerVelocityMin(activePlayer, value);
-
+            
+            // Update player
+            activePlayer.setMinVelocity((long) minValue);
+            
+            // Save the changes and notify UI
+            PlayerManager.getInstance().updatePlayerVelocityMin(activePlayer, minValue);
+            
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
         });
 
-        // Add velocityMaxDial listener
+        // Replace the velocityMaxDial listener with this:
         velocityMaxDial.addChangeListener(e -> {
             if (!listenersEnabled || activePlayer == null)
                 return;
 
-            int value = velocityMaxDial.getValue();
-            logger.info("Updating player max velocity to: " + value);
-
-            // Update player and save
-            activePlayer.setMaxVelocity((long) value);
-            if (activePlayer.getMinVelocity() >= value) {
-                activePlayer.setMinVelocity((long) value - 1);
-                updateDialsFromPlayer(activePlayer);
+            int maxValue = velocityMaxDial.getValue();
+            int minValue = velocityMinDial.getValue();
+            
+            logger.info("Updating player max velocity to: " + maxValue);
+            
+            // Ensure max velocity is not less than min velocity
+            if (maxValue < minValue) {
+                // Update min velocity to match max velocity
+                listenersEnabled = false;  // Prevent feedback loop
+                velocityMinDial.setValue(maxValue);
+                activePlayer.setMinVelocity((long) maxValue);
+                listenersEnabled = true;
             }
-
-            PlayerManager.getInstance().updatePlayerVelocityMax(activePlayer, value);
-
+            
+            // Update player
+            activePlayer.setMaxVelocity((long) maxValue);
+            
+            // Save the changes and notify UI
+            PlayerManager.getInstance().updatePlayerVelocityMax(activePlayer, maxValue);
+            
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
         });

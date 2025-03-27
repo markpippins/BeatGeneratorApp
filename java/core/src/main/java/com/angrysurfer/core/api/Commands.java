@@ -168,6 +168,8 @@ public class Commands {
     public static final String NEW_VALUE_RANDOM = "NEW_VALUE_RANDOM";
     public static final String NEW_VALUE_PAN = "NEW_VALUE_PAN";
     public static final String NEW_VALUE_SPARSE = "NEW_VALUE_SPARSE";
+    public static final String NEW_VALUE_RATCHET_COUNT = "NEW_VALUE_RATCHET_COUNT";
+    public static final String NEW_VALUE_RATCHET_INTERVAL = "NEW_VALUE_RATCHET_INTERVAL";
 
     public static final String TRANSPOSE_UP = "TRANSPOSE_UP";
     public static final String TRANSPOSE_DOWN = "TRANSPOSE_DOWN";

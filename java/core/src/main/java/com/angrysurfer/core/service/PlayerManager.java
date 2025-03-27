@@ -218,6 +218,60 @@ public class PlayerManager {
                             }
                         }
                     }
+
+                    case Commands.NEW_VALUE_VELOCITY_MIN -> {
+                        if (action.getData() instanceof Object[] data && data.length >= 2) {
+                            if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
+                                Session currentSession = SessionManager.getInstance().getActiveSession();
+                                if (currentSession != null) {
+                                    Player player = currentSession.getPlayer(playerId);
+                                    if (player != null) {
+                                        // Set new min velocity
+                                        player.setMinVelocity(value);
+                                        
+                                        // Ensure max velocity is at least min velocity
+                                        if (player.getMaxVelocity() < value) {
+                                            player.setMaxVelocity(value);
+                                        }
+                                        
+                                        // Save player
+                                        savePlayerProperties(player);
+                                        
+                                        // Publish player update
+                                        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                                        commandBus.publish(Commands.PLAYER_ROW_REFRESH, this, player);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    case Commands.NEW_VALUE_VELOCITY_MAX -> {
+                        if (action.getData() instanceof Object[] data && data.length >= 2) {
+                            if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
+                                Session currentSession = SessionManager.getInstance().getActiveSession();
+                                if (currentSession != null) {
+                                    Player player = currentSession.getPlayer(playerId);
+                                    if (player != null) {
+                                        // Set new max velocity
+                                        player.setMaxVelocity(value);
+                                        
+                                        // Ensure min velocity doesn't exceed max velocity
+                                        if (player.getMinVelocity() > value) {
+                                            player.setMinVelocity(value);
+                                        }
+                                        
+                                        // Save player
+                                        savePlayerProperties(player);
+                                        
+                                        // Publish player update
+                                        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                                        commandBus.publish(Commands.PLAYER_ROW_REFRESH, this, player);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });

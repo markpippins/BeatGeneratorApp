@@ -9,11 +9,13 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.DeviceManager;
@@ -178,6 +180,44 @@ public class PlayersTableModel extends DefaultTableModel {
         }
     }
 
+    /**
+     * Updates a player row given just a Player object
+     * Automatically finds the correct row for the player
+     * 
+     * @param player The player to update in the table
+     */
+    public void updatePlayerRow(Player player) {
+        if (player == null) return;
+        
+        // Find the row for this player by ID
+        int modelRow = findPlayerRowIndexById(player.getId());
+        if (modelRow >= 0) {
+            // Found the row, use the existing method
+            updatePlayerRow(player, modelRow);
+        } else {
+            logger.warn("Could not find row for player: {} (ID: {})", player.getName(), player.getId());
+        }
+    }
+
+    /**
+     * Find the row index for a player by ID
+     * @param playerId The player ID to search for
+     * @return The model row index, or -1 if not found
+     */
+    private int findPlayerRowIndexById(Long playerId) {
+        if (playerId == null) return -1;
+        
+        // Search through all rows
+        for (int i = 0; i < getRowCount(); i++) {
+            Object idValue = getValueAt(i, getColumnIndex(COL_ID));
+            if (idValue != null && playerId.equals(idValue)) {
+                return i;
+            }
+        }
+        
+        return -1;
+    }
+
     public void addPlayerRow(Player player) {
         Object[] rowData = new Object[COLUMNS.size()];
 
@@ -231,5 +271,34 @@ public class PlayersTableModel extends DefaultTableModel {
             dataVector.remove(modelRowIndex);
             fireTableRowsDeleted(modelRowIndex, modelRowIndex);
         }
+    }
+
+    // In PlayersTable setupCommandBusListener()
+    public void handleCommandBusAction(String command, Object actionData) {
+        switch (command) {
+            case Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX -> {
+                if (actionData instanceof Object[] data && data.length >= 2) {
+                    if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
+                        SwingUtilities.invokeLater(() -> {
+                            // Find player in table
+                            int rowIndex = findPlayerRowIndexById(playerId);
+                            if (rowIndex >= 0) {
+                                // Get player
+                                Player player = getPlayerAtRow(rowIndex);
+                                if (player != null) {
+                                    // Update table row
+                                    updatePlayerRow(player);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    private Player getPlayerAtRow(int rowIndex) {
+        // Assuming Player objects are stored in the table model
+        return (Player) getValueAt(rowIndex, getColumnIndex(COL_ID));
     }
 }

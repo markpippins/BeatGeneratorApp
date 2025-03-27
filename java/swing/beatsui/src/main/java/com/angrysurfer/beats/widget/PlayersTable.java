@@ -290,6 +290,26 @@ public class PlayersTable extends JTable {
                             });
                         }
                         break;
+
+                    case Commands.NEW_VALUE_VELOCITY_MIN:
+                    case Commands.NEW_VALUE_VELOCITY_MAX:
+                        if (action.getData() instanceof Object[] data && data.length >= 2) {
+                            if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
+                                SwingUtilities.invokeLater(() -> {
+                                    // Find player in table
+                                    int rowIndex = findPlayerRowIndexById(playerId);
+                                    if (rowIndex >= 0) {
+                                        // Get player
+                                        Player player = getPlayerAtRow(rowIndex);
+                                        if (player != null) {
+                                            // Update table row
+                                            updatePlayerRow(player);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        break;
                 }
             }
         });
@@ -492,6 +512,27 @@ public class PlayersTable extends JTable {
         return -1;
     }
 
+    /**
+     * Find the view row index of a player by ID
+     * @param playerId ID of the player to find
+     * @return Row index in view coordinates, or -1 if not found
+     */
+    public int findPlayerRowIndexById(Long playerId) {
+        PlayersTableModel model = getPlayersTableModel();
+        if (playerId == null || model == null) return -1;
+        
+        // Search through model rows
+        for (int i = 0; i < model.getRowCount(); i++) {
+            Long rowPlayerId = (Long) model.getValueAt(i, model.getColumnIndex(PlayersTableModel.COL_ID));
+            if (rowPlayerId != null && rowPlayerId.equals(playerId)) {
+                // Convert to view coordinates
+                return convertRowIndexFromModel(i);
+            }
+        }
+        
+        return -1;
+    }
+
     public int getLastSelectedRow() {
         return lastSelectedRow;
     }
@@ -525,8 +566,8 @@ public class PlayersTable extends JTable {
      * Sorts the table by player name
      */
     public void sortTable() {
-        TableRowSorter<PlayersTableModel> sorter = (TableRowSorter<PlayersTableModel>) getRowSorter();
-        if (sorter != null) {
+        // Fix the unchecked cast warning
+        if (getRowSorter() instanceof TableRowSorter<?> sorter) {
             int nameColumnIndex = getColumnIndex(PlayersTableModel.COL_NAME);
             List<SortKey> sortKeys = new ArrayList<>();
             sortKeys.add(new SortKey(nameColumnIndex, SortOrder.ASCENDING));
