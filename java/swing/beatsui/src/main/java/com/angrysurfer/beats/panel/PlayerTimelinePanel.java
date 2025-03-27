@@ -639,15 +639,8 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
                 }
             }
             // Add handler for note changes
-            case Commands.NEW_VALUE_NOTE, Commands.PRESET_UP, Commands.PRESET_DOWN, Commands.PLAYER_ROW_REFRESH -> {
-                // if (player != null && action.getData() instanceof Object[] data && data.length >= 2) {
-                    // Check if this update is for the currently displayed player
-                    // if (data[0] instanceof Long playerId && playerId.equals(player.getId())) {
-                        // Just update the name label, which contains note information for drum players
-                        updateNameLabel();
-                    // }
-                // }
-            }
+            case Commands.NEW_VALUE_NOTE, Commands.PRESET_UP, Commands.PRESET_DOWN, Commands.PLAYER_ROW_REFRESH -> updateNameLabel();
+
             case Commands.SESSION_CHANGED -> {
                 if (player != null) {
                     updatePlayerGrid();
@@ -667,26 +660,25 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         }
 
         StringBuilder playerInfo = new StringBuilder();
-        
+
         // Start with player name
         playerInfo.append(player.getName());
-        
+
         // Add instrument information if available
         if (player.getInstrument() != null) {
             playerInfo.append(" - ").append(player.getInstrument().getName());
-            
+
             // Add device name if it's different from instrument name
             String deviceName = player.getInstrument().getDeviceName();
-            if (deviceName != null && !deviceName.isEmpty() && 
-                !deviceName.equals(player.getInstrument().getName())) {
+            if (deviceName != null && !deviceName.isEmpty() && !deviceName.equals(player.getInstrument().getName())) {
                 playerInfo.append(" (").append(deviceName).append(")");
             }
-            
+
             // Get preset name if available
             if (player.getPreset() != null) {
                 Long instrumentId = player.getInstrument().getId();
                 Long presetNumber = player.getPreset().longValue();
-                
+
                 // For channel 9 (MIDI channel 10), show drum name instead of preset
                 if (player.getChannel() == 9) {
                     // Get drum name for the note
@@ -694,19 +686,18 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
                     playerInfo.append(" - ").append(drumName);
                 } else {
                     // For other channels, show preset name
-                    String presetName = InternalSynthManager.getInstance().getPresetName(
-                        instrumentId, presetNumber);
-                        
+                    String presetName = InternalSynthManager.getInstance().getPresetName(instrumentId, presetNumber);
+
                     if (presetName != null && !presetName.isEmpty()) {
                         playerInfo.append(" - ").append(presetName);
                     }
                 }
             }
         }
-        
+
         // Update the name label with all the information
         nameLabel.setText(playerInfo.toString());
-        
+
         // Request focus to ensure the UI updates
         nameLabel.repaint();
     }
