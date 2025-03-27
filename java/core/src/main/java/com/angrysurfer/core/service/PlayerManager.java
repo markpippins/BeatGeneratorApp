@@ -236,7 +236,7 @@ public class PlayerManager {
     public void playerUpdated(Player player) {
         if (Objects.equals(activePlayer.getId(), player.getId())) {
             this.activePlayer = player;
-            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
         }
     }
 

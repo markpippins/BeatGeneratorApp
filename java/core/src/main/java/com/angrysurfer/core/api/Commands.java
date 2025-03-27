@@ -23,12 +23,13 @@ public class Commands {
     public static final String TRANSPORT_RECORD_STATE_CHANGED = "TRANSPORT_RECORD_STATE_CHANGED";
 
     // Timing commands - consolidated
-    public static final String TIME_TICK = "TIMING_TICK";
-    public static final String TIME_BEAT = "TIMING_BEAT";
-    public static final String TIME_BAR = "TIMING_BAR";
-    public static final String TIME_PART = "TIMING_PART";
-    public static final String TIME_RESET = "TIMING_RESET";
-
+    public static final String TIMING_TICK = "TIMING_TICK";
+    public static final String TIMING_BEAT = "TIMING_BEAT";
+    public static final String TIMING_BAR = "TIMING_BAR";
+    public static final String TIMING_PART = "TIMING_PART";
+    public static final String TIMING_RESET = "TIMING_RESET";
+    public static final String TIMING_PARAMETERS_CHANGED = "TIMING_PARAMETERS_CHANGED";
+    
     // File Commands
     public static final String NEW_FILE = "NEW_FILE";
     public static final String OPEN_FILE = "OPEN_FILE";
@@ -228,7 +229,6 @@ public class Commands {
     public static final String RECORDING_STOPPED = "RECORDING_STOPPED";
     public static final String RECORDING_STARTED = "RECORDING_STARTED";
     public static final String SESSION_STARTING = "SESSION_STARTING";
-    public static final String TIMING_PARAMETERS_CHANGED = "TIMING_PARAMETERS_CHANGED";
     public static final String SESSION_STOPPED = "SESSION_STOPPED";
     public static final String SESSION_SAVED = "SESSION_SAVED";
 }

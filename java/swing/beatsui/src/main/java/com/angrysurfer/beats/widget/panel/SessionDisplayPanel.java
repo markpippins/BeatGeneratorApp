@@ -15,19 +15,28 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.beats.widget.UIHelper;
 
 /**
  * Panel that displays session timing information (left side of toolbar)
  */
 public class SessionDisplayPanel extends JPanel {
+    private static final Logger logger = LoggerFactory.getLogger(SessionDisplayPanel.class);
+
     private final Map<String, JTextField> fields = new HashMap<>();
     private final TimingBus timingBus = TimingBus.getInstance();
+    private final CommandBus commandBus = CommandBus.getInstance();
+
     private Session currentSession;
 
     // Timing fields
@@ -40,24 +49,17 @@ public class SessionDisplayPanel extends JPanel {
     private JTextField tickCountField;
     private JTextField beatCountField;
     private JTextField barCountField;
-    private JTextField partCountField; // For parts count
+    private JTextField partCountField;
 
-    // Counter state
-    private int currentTick = 0;
-    private int currentBeat = 0;
-    private int currentBar = 0;
-    private int currentPart = 0;
-    private int totalTicks = 0;
-    private int totalBeats = 0;
-    private int totalBars = 0;
-    private int totalParts = 0;
+    private UIHelper uiHelper = UIHelper.getInstance();
 
     public SessionDisplayPanel() {
         super(new BorderLayout());
         setup();
         setupTimingListener();
+        setupCommandListener();
     }
-    
+
     private void setup() {
         // Create top and bottom panels
         add(createTopPanel(), BorderLayout.NORTH);
@@ -65,29 +67,29 @@ public class SessionDisplayPanel extends JPanel {
     }
 
     private JPanel createTopPanel() {
-        JPanel panel = new JPanel(new GridLayout(0, 5, 4, 0)); 
+        JPanel panel = new JPanel(new GridLayout(0, 5, 4, 0));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         String[] labels = { "Session", "Tick", "Beat", "Bar", "Part" };
         for (String label : labels) {
             JPanel fieldPanel = createFieldPanel(label);
             JTextField field = (JTextField) fieldPanel.getComponent(1);
-            
+
             // Store field references
             switch (label) {
-                case "Session" -> sessionField = field;
-                case "Tick" -> tickField = field;
-                case "Beat" -> beatField = field;
-                case "Bar" -> barField = field;
-                case "Part" -> partField = field;
+            case "Session" -> sessionField = field;
+            case "Tick" -> tickField = field;
+            case "Beat" -> beatField = field;
+            case "Bar" -> barField = field;
+            case "Part" -> partField = field;
             }
-            
+
             panel.add(fieldPanel);
         }
-        
+
         return panel;
     }
-    
+
     private JPanel createBottomPanel() {
         JPanel panel = new JPanel(new GridLayout(0, 5, 4, 0));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -96,173 +98,235 @@ public class SessionDisplayPanel extends JPanel {
         for (String label : labels) {
             JPanel fieldPanel = createFieldPanel(label);
             JTextField field = (JTextField) fieldPanel.getComponent(1);
-            
+
             // Store field references
             switch (label) {
-                case "Ticks" -> tickCountField = field;
-                case "Beats" -> beatCountField = field;
-                case "Bars" -> barCountField = field;
-                case "Parts" -> partCountField = field;
+            case "Ticks" -> tickCountField = field;
+            case "Beats" -> beatCountField = field;
+            case "Bars" -> barCountField = field;
+            case "Parts" -> partCountField = field;
             }
-            
+
             panel.add(fieldPanel);
         }
-        
+
         return panel;
     }
-    
+
     private JPanel createFieldPanel(String label) {
         JPanel fieldPanel = new JPanel(new BorderLayout(0, 2));
         fieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-        // Create labeluuuuuuuuuuuuuu
+        // Create label
         JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         JLabel nameLabel = new JLabel(label);
         nameLabel.setForeground(Color.GRAY);
         labelPanel.add(nameLabel);
-        
+
         // Create text field
-        JTextField field = createTextField("0");
+        JTextField field = uiHelper.createDisplayField("0");
         fields.put(label, field);
-        
+
         fieldPanel.add(labelPanel, BorderLayout.NORTH);
         fieldPanel.add(field, BorderLayout.CENTER);
-        
+
         return fieldPanel;
     }
-    
-    private JTextField createTextField(String initialValue) {
-        JTextField field = new JTextField(initialValue);
-        field.setColumns(4);
-        field.setEditable(false);
-        field.setEnabled(false);
-        field.setHorizontalAlignment(JTextField.CENTER);
-        field.setBackground(new Color(240, 240, 240));
-        field.setMaximumSize(new Dimension(50, 25));
-        field.setAlignmentX(Component.CENTER_ALIGNMENT);
-        return field;
-    }
-    
+
     public void setSession(Session session) {
         this.currentSession = session;
-        
+
         if (session == null) {
-            resetTimingCounters();
+            resetDisplayCounters();
             return;
         }
-        
+
         // Update session ID
         sessionField.setText(String.valueOf(session.getId()));
-        
+
         // Update player count
         fields.get("Players").setText(String.valueOf(session.getPlayers().size()));
-        
-        // Update current position to match the session's position
-        currentTick = (int)(session.getTick() - 1);
-        currentBeat = (int)Math.floor(session.getBeat() - 1);
-        currentBar = (int)(session.getBar() - 1);
-        currentPart = (int)(session.getPart() - 1);
-        
-        // Update totals
-        totalTicks = session.getTicksPerBeat() * session.getBeatsPerBar();
-        totalBeats = session.getBeatsPerBar();
-        totalBars = session.getBars();
-        totalParts = session.getParts();
-        
-        // Update displays
-        updateTimingDisplays();
+
+        // Always sync with the session's current values
+        syncWithSession();
     }
-    
+
+    /**
+     * Sync display fields with current session state
+     */
+    private void syncWithSession() {
+        if (currentSession == null) {
+            resetDisplayCounters();
+            return;
+        }
+
+        // Get current position values directly from session (0-based internally)
+        tickField.setText(String.valueOf(currentSession.getTick()));
+        beatField.setText(String.valueOf(currentSession.getBeat()));
+        barField.setText(String.valueOf(currentSession.getBar()));
+        partField.setText(String.valueOf(currentSession.getPart()));
+
+        tickCountField.setText(String.valueOf(currentSession.getTickCount()));
+        beatCountField.setText(String.valueOf(currentSession.getBeatCount()));
+        barCountField.setText(String.valueOf(currentSession.getBarCount()));
+        partCountField.setText(String.valueOf(currentSession.getPartCount()));
+
+        // Update player count
+        fields.get("Players").setText(String.valueOf(currentSession.getPlayers().size()));
+
+        repaint();
+    }
+
+    /**
+     * Listen for timing events to update display in real-time
+     */
     private void setupTimingListener() {
         timingBus.register(new IBusListener() {
             @Override
             public void onAction(Command action) {
+                if (action.getCommand() == null)
+                    return;
+
                 SwingUtilities.invokeLater(() -> {
                     switch (action.getCommand()) {
-                        // Existing cases for TIME_TICK, TIME_BEAT, TIME_BAR...
-                        
-                        case Commands.TIME_PART -> {
-                            // Use the part value from the event directly (1-based)
-                            if (action.getData() instanceof Number partVal) {
-                                // Store as 0-based but received as 1-based
-                                currentPart = partVal.intValue() - 1;
-                                
-                                // Increment total parts played count
-                                totalParts++;
-                                updateTimingDisplays();
+                    case Commands.TIMING_TICK -> {
+                        if (action.getData() instanceof Number tickVal) {
+                            // Update current tick position
+                            tickField.setText(String.valueOf(tickVal));
+
+                            // Also update counter field if needed
+                            if (currentSession != null) {
+                                tickField.setText(String.valueOf(currentSession.getTick()));
                             }
                         }
-                        case Commands.TRANSPORT_STOP -> {
-                            // Clear all timing counters
-                            resetTimingCounters();
+                    }
+                    case Commands.TIMING_BEAT -> {
+                        if (action.getData() instanceof Number beatVal) {
+                            // Update current beat position
+                            beatField.setText(String.valueOf(currentSession.getBeat()));
+
+                            // Also update counter field if needed
+                            if (currentSession != null) {
+                                beatCountField.setText(String.valueOf(currentSession.getBeatCount()));
+                            }
                         }
-                        case Commands.TRANSPORT_PLAY -> {
-                            // Reset counters before starting playback
-                            resetTimingCounters();
+                    }
+                    case Commands.TIMING_BAR -> {
+                        if (action.getData() instanceof Number barVal) {
+                            // Update current bar position
+                            barField.setText(String.valueOf(currentSession.getBar()));
+
+                            // Also update counter field if needed
+                            if (currentSession != null) {
+                                barCountField.setText(String.valueOf(currentSession.getBarCount()));
+                            }
                         }
-                        case Commands.TIME_RESET -> {
-                            // Reset everything when timing is reset
-                            resetTimingCounters();
+                    }
+                    case Commands.TIMING_PART -> {
+                        if (action.getData() instanceof Number partVal) {
+                            // Update current part position
+                            partField.setText(String.valueOf(currentSession.getPart()));
+
+                            // Update part count from session to ensure consistency
+                            if (currentSession != null) {
+                                partCountField.setText(String.valueOf(currentSession.getPartCount()));
+                            }
                         }
+                    }
+                    case Commands.TIMING_RESET -> {
+                        resetDisplayCounters();
+                    }
                     }
                 });
             }
         });
-        
-        // Also listen to command bus for transport states
-        CommandBus.getInstance().register(new IBusListener() {
+    }
+
+    /**
+     * Listen for session and transport commands
+     */
+    private void setupCommandListener() {
+        commandBus.register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() != null) {
-                    // Make extra sure we catch transport stop from command bus too
-                    if (action.getCommand().equals(Commands.TRANSPORT_STOP)) {
-                        SwingUtilities.invokeLater(() -> resetTimingCounters());
+                if (action.getCommand() == null)
+                    return;
+
+                SwingUtilities.invokeLater(() -> {
+                    switch (action.getCommand()) {
+                    // Session state changes - full reset and sync
+                    case Commands.SESSION_CREATED, Commands.SESSION_SELECTED, Commands.SESSION_LOADED -> {
+                        if (action.getData() instanceof Session session) {
+                            // Complete reset and sync with new session
+                            currentSession = session;
+                            resetDisplayCounters();
+                            syncWithSession();
+                        }
                     }
-                }
+
+                    // Session updates - just sync values
+                    case Commands.SESSION_UPDATED -> {
+                        if (action.getData() instanceof Session session) {
+                            currentSession = session;
+                            syncWithSession();
+                        }
+                    }
+
+                    // Transport state changes
+                    case Commands.TRANSPORT_STOP -> {
+                        // Commands.TRANSPORT_RESET -> {
+                        // Reset counters and sync with stopped session
+                        resetDisplayCounters();
+                        if (currentSession != null) {
+                            syncWithSession();
+                        }
+                    }
+
+                    case Commands.TRANSPORT_PLAY -> {
+                        // Get active session and sync before playing
+                        currentSession = SessionManager.getInstance().getActiveSession();
+                        if (currentSession != null) {
+                            resetDisplayCounters(); // Start from zero
+                            syncWithSession();
+                        }
+                    }
+
+                    // Make sure we catch session stopping
+                    case Commands.SESSION_STOPPED -> {
+                        resetDisplayCounters();
+                        if (currentSession != null) {
+                            syncWithSession();
+                        }
+                    }
+                    }
+                });
             }
         });
     }
-    
-    private void resetTimingCounters() {
-        // Reset all counters to 0
-        currentTick = 0;
-        currentBeat = 0;
-        currentBar = 0;
-        currentPart = 0;
-        totalTicks = 0;
-        totalBeats = 0;
-        totalBars = 0;
-        totalParts = 0;
-        
-        // Reset the players field if it exists
-        JTextField playersField = fields.get("Players");
-        if (playersField != null) {
-            playersField.setText("0");
-        }
-        
-        // Make sure to update all displays
-        updateTimingDisplays();
-        
-        // Force an extra UI refresh
-        SwingUtilities.invokeLater(this::repaint);
-    }
-    
-    private void updateTimingDisplays() {
-        // Update current position displays (1-based)
-        tickField.setText(String.format("%d", currentTick + 1));
-        beatField.setText(String.format("%d", currentBeat + 1));
-        barField.setText(String.format("%d", currentBar + 1));
-        partField.setText(String.format("%d", currentPart + 1));
 
-        // Update total counts
-        tickCountField.setText(String.format("%d", totalTicks));
-        beatCountField.setText(String.format("%d", totalBeats));
-        barCountField.setText(String.format("%d", totalBars));
-        
-        // Show the cumulative part count
-        partCountField.setText(String.format("%d", totalParts));
-        
-        // Request a UI refresh to ensure all changes are visible
-        this.repaint();
+    /**
+     * Reset the display counters (for when session stops/resets)
+     */
+    private void resetDisplayCounters() {
+        // Reset position displays to 0 (not 1)
+        tickField.setText("0");
+        beatField.setText("0");
+        barField.setText("0");
+        partField.setText("0");
+
+        // Reset counters too if no session
+        if (currentSession == null) {
+            tickCountField.setText("0");
+            beatCountField.setText("0");
+            barCountField.setText("0");
+            partCountField.setText("0");
+            fields.get("Players").setText("0");
+            sessionField.setText("0");
+        } else {
+            // Otherwise show session's configuration
+            syncWithSession();
+        }
+
+        repaint();
     }
 }

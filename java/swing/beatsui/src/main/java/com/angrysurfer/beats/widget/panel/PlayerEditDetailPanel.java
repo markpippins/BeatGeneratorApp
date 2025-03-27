@@ -19,6 +19,7 @@ import javax.swing.SwingConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -37,10 +38,9 @@ public class PlayerEditDetailPanel extends JPanel {
     
     // Performance controls
     private final JSlider levelSlider;
-    private final JSlider noteSlider;
     private final JSlider velocityMinSlider;
     private final JSlider velocityMaxSlider;
-    private final JSlider panSlider;
+    private final Dial panDial;  // Changed from JSlider to Dial
     private final JButton prevButton;
     private final JButton nextButton;
     private final NoteSelectionDial noteDial;
@@ -66,10 +66,16 @@ public class PlayerEditDetailPanel extends JPanel {
         
         // Initialize performance controls
         levelSlider = createSlider("Level", player.getLevel(), 0, 100);
-        noteSlider = createSlider("Note", player.getNote(), 0, 127);
         velocityMinSlider = createSlider("Min Velocity", player.getMinVelocity(), 0, 127);
         velocityMaxSlider = createSlider("Max Velocity", player.getMaxVelocity(), 0, 127);
-        panSlider = createSlider("Pan", player.getPanPosition(), -64, 63);
+        panDial = new Dial();
+        panDial.setMinimum(0);
+        panDial.setMaximum(127);
+        panDial.setValue(player.getPanPosition().intValue(), false);
+        panDial.setPreferredSize(new Dimension(50, 50));
+        panDial.setMinimumSize(new Dimension(50, 50));
+        panDial.setMaximumSize(new Dimension(50, 50));
+
         prevButton = new JButton("▲");
         nextButton = new JButton("▼");
         noteDial = new NoteSelectionDial();
@@ -113,26 +119,13 @@ public class PlayerEditDetailPanel extends JPanel {
     }
     
     /**
-     * Creates the performance panel with level, note, and octave controls
+     * Creates the performance panel with reordered controls: Octave, Note, Level, Pan
      */
     private JPanel createPerformancePanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Performance"));
         
-        // Setup note selection dial
-        Dimension dialSize = new Dimension(85, 85);
-        noteDial.setPreferredSize(dialSize);
-        noteDial.setMinimumSize(dialSize);
-        noteDial.setMaximumSize(dialSize);
-        noteDial.setCommand(Commands.NEW_VALUE_NOTE);
-        noteDial.setValue(player.getNote().intValue());
-        
-        // Add components
-        panel.add(noteDial);
-        panel.add(createLabeledSlider("Level", levelSlider));
-        panel.add(createLabeledSlider("Note", noteSlider));
-        
-        // Add navigation buttons panel with label
+        // 1. OCTAVE CONTROLS
         JPanel navPanel = new JPanel(new BorderLayout(0, 2));
         navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
         JLabel octaveLabel = new JLabel("Octave", JLabel.CENTER);
@@ -147,21 +140,50 @@ public class PlayerEditDetailPanel extends JPanel {
         navPanel.add(buttonPanel, BorderLayout.CENTER);
         panel.add(navPanel);
         
-        // Add velocity and pan sliders
-        panel.add(createLabeledSlider("Min Vel", velocityMinSlider));
-        panel.add(createLabeledSlider("Max Vel", velocityMaxSlider));
-        panel.add(createLabeledSlider("Pan", panSlider));
+        // 2. NOTE DIAL
+        Dimension dialSize = new Dimension(100, 100);
+        noteDial.setPreferredSize(dialSize);
+        noteDial.setMinimumSize(dialSize);
+        noteDial.setMaximumSize(dialSize);
+        noteDial.setCommand(Commands.NEW_VALUE_NOTE);
+        noteDial.setValue(player.getNote().intValue());
+        
+        JPanel notePanel = new JPanel(new BorderLayout(5, 2));
+        JLabel noteLabel = new JLabel("Note", JLabel.CENTER);
+        notePanel.add(noteLabel, BorderLayout.NORTH);
+        notePanel.add(noteDial, BorderLayout.CENTER);
+        panel.add(notePanel);
+        
+        // 3. LEVEL SLIDER
+        panel.add(createLabeledSlider("Level", levelSlider));
+        
+        // 4. PAN DIAL
+        Dimension panDialSize = new Dimension(60, 60);
+        panDial.setPreferredSize(panDialSize);
+        panDial.setMinimumSize(panDialSize);
+        panDial.setMaximumSize(panDialSize);
+        
+        JPanel panPanel = new JPanel(new BorderLayout(5, 2));
+        JLabel panLabel = new JLabel("Pan", JLabel.CENTER);
+        panPanel.add(panLabel, BorderLayout.NORTH);
+        panPanel.add(panDial, BorderLayout.CENTER);
+        panel.add(panPanel);
         
         return panel;
     }
     
     /**
-     * Creates the modulation panel with swing, probability, random, and sparse controls
+     * Creates the modulation panel with velocity controls first, then swing, probability, etc.
      */
     private JPanel createModulationPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Modulation"));
         
+        // 1. VELOCITY CONTROLS (added first)
+        panel.add(createLabeledSlider("Min Vel", velocityMinSlider));
+        panel.add(createLabeledSlider("Max Vel", velocityMaxSlider));
+        
+        // 2. OTHER MODULATION CONTROLS
         panel.add(createLabeledSlider("Swing", swingSlider));
         panel.add(createLabeledSlider("Probability", probabilitySlider));
         panel.add(createLabeledSlider("Random", randomSlider));
@@ -203,41 +225,51 @@ public class PlayerEditDetailPanel extends JPanel {
      * Sets up action listeners for buttons and sliders
      */
     private void setupActionListeners() {
-        // Octave navigation
+        // Octave navigation - updated to use NoteSelectionDial directly
         prevButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Move note up an octave (12 semitones)
-                int currentNote = noteSlider.getValue();
-                int newNote = Math.min(127, currentNote + 12);
-                noteSlider.setValue(newNote);
-                noteDial.setValue(newNote);
+                // Move note up an octave
+                int currentOctave = noteDial.getOctave();
+                noteDial.setOctaveOnly(currentOctave + 1, true);
+                
+                // Log the change
+                logger.debug("Octave up: {}", noteDial.getNoteWithOctave());
             }
         });
         
         nextButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Move note down an octave (12 semitones)
-                int currentNote = noteSlider.getValue();
-                int newNote = Math.max(0, currentNote - 12);
-                noteSlider.setValue(newNote);
-                noteDial.setValue(newNote);
+                // Move note down an octave
+                int currentOctave = noteDial.getOctave();
+                noteDial.setOctaveOnly(currentOctave - 1, true);
+                
+                // Log the change
+                logger.debug("Octave down: {}", noteDial.getNoteWithOctave());
             }
         });
         
-        // Note dial changes should update the slider
+        // Note dial changes should publish the new note value
         noteDial.addChangeListener(e -> {
             int value = noteDial.getValue();
-            noteSlider.setValue(value);
-            // Publish the new note value
-            CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, (long)value);
+            // Publish the new note value with player ID
+            CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, 
+                new Object[] { player.getId(), (long)value });
+            
+            // Show the note name in logs
+            logger.debug("Note changed: {} (MIDI: {})", 
+                noteDial.getNoteWithOctave(), value);
         });
         
-        // Note slider changes should update the dial
-        noteSlider.addChangeListener(e -> {
-            int value = noteSlider.getValue();
-            noteDial.setValue(value);
+        // Add pan dial change listener
+        panDial.addChangeListener(e -> {
+            int value = panDial.getValue();
+            // Publish the new pan value with player ID
+            CommandBus.getInstance().publish(Commands.NEW_VALUE_PAN, this, 
+                new Object[] { player.getId(), (long)value });
+            
+            logger.debug("Pan changed: {}", value);
         });
     }
     
@@ -246,10 +278,10 @@ public class PlayerEditDetailPanel extends JPanel {
      */
     public void updatePlayer() {
         player.setLevel((long) levelSlider.getValue());
-        player.setNote((long) noteSlider.getValue());
+        player.setNote((long) noteDial.getValue());
         player.setMinVelocity((long) velocityMinSlider.getValue());
         player.setMaxVelocity((long) velocityMaxSlider.getValue());
-        player.setPanPosition((long) panSlider.getValue());
+        player.setPanPosition((long) panDial.getValue());  // Changed from panSlider to panDial
         
         player.setSwing((long) swingSlider.getValue());
         player.setProbability((long) probabilitySlider.getValue());

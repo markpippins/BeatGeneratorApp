@@ -623,7 +623,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
         if (getSession() != null && getEnabled()) {
             switch (cmd) {
-            case Commands.TIME_TICK -> {
+            case Commands.TIMING_TICK -> {
                 if (!isRunning())
                     return;
 

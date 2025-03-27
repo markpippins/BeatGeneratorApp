@@ -97,6 +97,7 @@ public class SessionPanel extends StatusProviderPanel implements IBusListener {
             handlePlayerUnselected();
             break;
         // Add handlers for session changes
+        case Commands.SESSION_UPDATED:
         case Commands.SESSION_CHANGED:
         case Commands.SESSION_SELECTED:
             if (action.getData() instanceof Session session) {

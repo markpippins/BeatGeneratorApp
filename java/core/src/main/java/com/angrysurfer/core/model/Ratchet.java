@@ -99,7 +99,7 @@ public class Ratchet extends Strike {
 
     @Override
     public void onAction(Command action) {
-        if (action.getCommand() == Commands.TIME_TICK) {
+        if (action.getCommand() == Commands.TIMING_TICK) {
             if (shouldPlay()) {
                 onTick(getSession().getTickCount(), getSession().getBeatCount(), getSession().getBarCount(),
                         getSession().getPart());

@@ -267,7 +267,7 @@ public class PlayersPanel extends JPanel {
                 String cmd = action.getCommand();
                 try {
                     switch (cmd) {
-                        case Commands.TIME_TICK:
+                        case Commands.TIMING_TICK:
                         case Commands.PLAYER_TABLE_REFRESH_REQUEST:
                         case Commands.SESSION_SELECTED:
                         case Commands.SESSION_CHANGED:

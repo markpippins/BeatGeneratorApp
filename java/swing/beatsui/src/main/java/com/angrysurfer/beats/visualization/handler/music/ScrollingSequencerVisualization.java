@@ -419,7 +419,7 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
             }
             
             // Timing events
-            case Commands.TIME_TICK -> {
+            case Commands.TIMING_TICK -> {
                 if (action.getData() instanceof Session) {
                     Session activeSession = (Session) action.getData();
                     currentTick = activeSession.getTick();
@@ -430,20 +430,20 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
                 }
             }
             
-            case Commands.TIME_BEAT -> {
+            case Commands.TIMING_BEAT -> {
                 if (action.getData() instanceof Number beat) {
                     currentBeat = beat.intValue();
                 }
             }
             
-            case Commands.TIME_BAR -> {
+            case Commands.TIMING_BAR -> {
                 if (action.getData() instanceof Number bar) {
                     currentBar = bar.intValue();
                 }
             }
             
             // Listen for timing parameter changes
-            case Commands.UPDATE_TEMPO, Commands.UPDATE_TIME_SIGNATURE, Commands.SESSION_CHANGED -> {
+            case Commands.UPDATE_TEMPO, Commands.TIMING_PARAMETERS_CHANGED, Commands.SESSION_CHANGED -> {
                 Session activeSession = SessionManager.getInstance().getActiveSession();
                 if (activeSession != null) {
                     updateTimingParameters(activeSession);

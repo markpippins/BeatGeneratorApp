@@ -685,22 +685,22 @@ public class Session implements Serializable, IBusListener {
 
             // Dispatch events for timing display
             if (!tickProcessed) {
-                timingBus.publish(Commands.TIME_TICK, this, tickCount);
+                timingBus.publish(Commands.TIMING_TICK, this, tickCount);
                 tickProcessed = true;
             }
             
             if (isBeatChange && !beatProcessed) {
-                timingBus.publish(Commands.TIME_BEAT, this, beatCount);
+                timingBus.publish(Commands.TIMING_BEAT, this, beatCount);
                 beatProcessed = true;
             }
             
             if (isBarChange && !barProcessed) {
-                timingBus.publish(Commands.TIME_BAR, this, barCount);
+                timingBus.publish(Commands.TIMING_BAR, this, barCount);
                 barProcessed = true;
             }
             
             if (isPartChange) {
-                timingBus.publish(Commands.TIME_PART, this, part);
+                timingBus.publish(Commands.TIMING_PART, this, part);
             }
         } catch (Exception e) {
             logger.error("Error in onTick", e);
