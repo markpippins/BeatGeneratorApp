@@ -86,6 +86,32 @@ public class Dial extends JComponent {
                 }
             }
         });
+
+        // Add mouse wheel support
+        addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(java.awt.event.MouseWheelEvent e) {
+                if (!isEnabled())
+                    return;
+                    
+                // Get the wheel rotation (negative for up, positive for down)
+                int wheelRotation = e.getWheelRotation();
+                
+                // Calculate value change - make it proportional to the value range
+                // A smaller range means finer control
+                int range = maximum - minimum;
+                int changeAmount = Math.max(1, range / 100);
+                
+                // Invert the direction: scroll up to increase, down to decrease
+                int delta = -wheelRotation * changeAmount;
+                
+                // Calculate new value with bounds checking
+                int newValue = Math.min(maximum, Math.max(minimum, value + delta));
+                
+                // Update the value
+                setValue(newValue, true);
+            }
+        });
     }
 
     public Dial(String command) {
