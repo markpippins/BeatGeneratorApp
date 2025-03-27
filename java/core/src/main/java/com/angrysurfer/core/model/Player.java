@@ -176,20 +176,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         return getClass().getSimpleName().toLowerCase();
     }
 
-    public void setMinVelocity(Long minVelocity) {
-        this.minVelocity = minVelocity;
-        if (minVelocity > maxVelocity) {
-            setMaxVelocity(minVelocity);
-        }
-    }
-
-    public void setMaxVelocity(Long maxVelocity) {
-        this.maxVelocity = maxVelocity;
-        if (minVelocity > maxVelocity) {
-            setMinVelocity(maxVelocity);
-        }
-    }
-
     // public Long getSubPosition() {
     // return getSub();
     // }s

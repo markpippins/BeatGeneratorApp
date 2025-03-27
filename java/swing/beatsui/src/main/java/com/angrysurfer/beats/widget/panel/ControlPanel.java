@@ -37,7 +37,6 @@ public class ControlPanel extends JPanel {
     private final StatusConsumer statusConsumer;
 
     // Dials
-    private Dial noteDial;
     private Dial levelDial;
     private NoteSelectionDial noteSelectionDial;
     private Dial swingDial;
@@ -100,9 +99,6 @@ public class ControlPanel extends JPanel {
         noteSelectionDial.setMaximumSize(dialSize);
         noteSelectionDial.setCommand(Commands.NEW_VALUE_NOTE);
 
-        noteDial = createDial("note", 60, 0, 127, 1);
-        noteDial.setCommand(Commands.NEW_VALUE_NOTE);
-
         levelDial = createDial("level", 100, 0, 127, 1);
         levelDial.setCommand(Commands.NEW_VALUE_LEVEL);
 
@@ -129,7 +125,6 @@ public class ControlPanel extends JPanel {
 
         // Add dials to panel with labels
         add(createLabeledControl(null, noteSelectionDial));
-        add(createLabeledControl("Note", noteDial));
         add(createLabeledControl("Level", levelDial));
         add(createLabeledControl("Pan", panDial));
         add(createLabeledControl("Min Vel", velocityMinDial));
@@ -165,7 +160,6 @@ public class ControlPanel extends JPanel {
                     activePlayer.setNote((long) newNote);
 
                     // Update the dials (without triggering listeners)
-                    noteDial.setValue(newNote, false);
                     noteSelectionDial.setValue(newNote, false);
 
                     // Save the change and notify UI
@@ -193,7 +187,6 @@ public class ControlPanel extends JPanel {
                     activePlayer.setNote((long) newNote);
 
                     // Update the dials (without triggering listeners)
-                    noteDial.setValue(newNote, false);
                     noteSelectionDial.setValue(newNote, false);
 
                     // Save the change and notify UI
@@ -234,8 +227,8 @@ public class ControlPanel extends JPanel {
         downButton.setEnabled(note >= 12);
     }
 
-    private JPanel createVerticalAdjustPanel(String label, String upLabel, String downLabel,
-            String upCommand, String downCommand) {
+    private JPanel createVerticalAdjustPanel(String label, String upLabel, String downLabel, String upCommand,
+            String downCommand) {
         JPanel navPanel = new JPanel(new BorderLayout(0, 2));
         navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5)); // Add margins
         JLabel octaveLabel = new JLabel(label, JLabel.CENTER);
@@ -310,12 +303,12 @@ public class ControlPanel extends JPanel {
                     return;
                 }
                 switch (action.getCommand()) {
-                    case Commands.FIRST_SCALE_SELECTED -> prevButton.setEnabled(false);
-                    case Commands.LAST_SCALE_SELECTED -> nextButton.setEnabled(false);
-                    case Commands.SCALE_SELECTED -> {
-                        prevButton.setEnabled(true);
-                        nextButton.setEnabled(true);
-                    }
+                case Commands.FIRST_SCALE_SELECTED -> prevButton.setEnabled(false);
+                case Commands.LAST_SCALE_SELECTED -> nextButton.setEnabled(false);
+                case Commands.SCALE_SELECTED -> {
+                    prevButton.setEnabled(true);
+                    nextButton.setEnabled(true);
+                }
                 }
             }
         });
@@ -361,8 +354,8 @@ public class ControlPanel extends JPanel {
                     return;
 
                 switch (action.getCommand()) {
-                    case Commands.PLAYER_SELECTED -> dial.setEnabled(true);
-                    case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
+                case Commands.PLAYER_SELECTED -> dial.setEnabled(true);
+                case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
                 }
             }
         });
@@ -385,7 +378,6 @@ public class ControlPanel extends JPanel {
 
     private void enableDials() {
         levelDial.setEnabled(true);
-        noteDial.setEnabled(true);
         noteSelectionDial.setEnabled(true);
         swingDial.setEnabled(true);
         probabilityDial.setEnabled(true);
@@ -398,7 +390,6 @@ public class ControlPanel extends JPanel {
 
     private void disableDials() {
         levelDial.setEnabled(false);
-        noteDial.setEnabled(false);
         noteSelectionDial.setEnabled(false);
         swingDial.setEnabled(false);
         probabilityDial.setEnabled(false);
@@ -445,8 +436,8 @@ public class ControlPanel extends JPanel {
                 try {
                     if (Commands.PLAYER_SELECTED.equals(cmd)) {
                         if (action.getData() instanceof Player player) {
-                            logger.info("ControlPanel updating controls for player: " +
-                                    player.getName() + " (ID: " + player.getId() + ")");
+                            logger.info("ControlPanel updating controls for player: " + player.getName() + " (ID: "
+                                    + player.getId() + ")");
 
                             // Store reference to current player
                             activePlayer = player;
@@ -473,24 +464,6 @@ public class ControlPanel extends JPanel {
     }
 
     private void setupControlChangeListeners() {
-        // For note dial
-        noteDial.addChangeListener(e -> {
-            if (!listenersEnabled || activePlayer == null)
-                return;
-
-            int value = noteDial.getValue();
-            logger.info("Updating player note to: " + value);
-
-            // Update player
-            activePlayer.setNote((long) value);
-
-            // Save the change and notify UI
-            PlayerManager.getInstance().updatePlayerNote(activePlayer, value);
-
-            // Request row refresh in players panel (important!)
-            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
-        });
-
         // For level dial
         levelDial.addChangeListener(e -> {
             if (!listenersEnabled || activePlayer == null)
@@ -552,6 +525,11 @@ public class ControlPanel extends JPanel {
 
             // Update player and save
             activePlayer.setMinVelocity((long) value);
+            if (activePlayer.getMaxVelocity() <= value) {
+                activePlayer.setMaxVelocity((long) value + 1);
+                updateDialsFromPlayer(activePlayer);
+            }
+
             PlayerManager.getInstance().updatePlayerVelocityMin(activePlayer, value);
 
             // Request row refresh
@@ -568,6 +546,11 @@ public class ControlPanel extends JPanel {
 
             // Update player and save
             activePlayer.setMaxVelocity((long) value);
+            if (activePlayer.getMinVelocity() >= value) {
+                activePlayer.setMinVelocity((long) value - 1);
+                updateDialsFromPlayer(activePlayer);
+            }
+
             PlayerManager.getInstance().updatePlayerVelocityMax(activePlayer, value);
 
             // Request row refresh
@@ -664,7 +647,6 @@ public class ControlPanel extends JPanel {
             int panPosition = player.getPanPosition() != null ? player.getPanPosition().intValue() : 64;
 
             // Update dials without triggering notifications (false parameter)
-            noteDial.setValue(note, false);
             levelDial.setValue(level, false);
             swingDial.setValue(swing, false);
             velocityMinDial.setValue(minVelocity, false);

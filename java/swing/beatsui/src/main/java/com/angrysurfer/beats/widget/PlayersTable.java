@@ -58,7 +58,8 @@ public class PlayersTable extends JTable {
         setupTable();
         setupSelectionListener();
         setupMouseListener();
-        setupCommandBusListener(); // Add this line
+        setupMouseWheel();     // Add this line
+        setupCommandBusListener();
     }
 
     public PlayersTableModel getPlayersTableModel() {
@@ -553,5 +554,41 @@ public class PlayersTable extends JTable {
         
         // Row might not be visible due to filtering
         return -1;
+    }
+
+    private void setupMouseWheel() {
+        addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(java.awt.event.MouseWheelEvent e) {
+                // Get the parent scroll pane if available
+                java.awt.Container parent = getParent();
+                while (parent != null && !(parent instanceof javax.swing.JScrollPane)) {
+                    parent = parent.getParent();
+                }
+                
+                if (parent != null) {
+                    // We have a scroll pane, let's scroll it
+                    javax.swing.JScrollPane scrollPane = (javax.swing.JScrollPane) parent;
+                    
+                    // Get the current scroll position
+                    int currentPosition = scrollPane.getVerticalScrollBar().getValue();
+                    
+                    // Calculate scroll amount - faster when modifier keys are pressed
+                    int scrollAmount = e.getUnitsToScroll() * getRowHeight();
+                    if (e.isShiftDown()) {
+                        scrollAmount *= 3; // Scroll 3x faster with shift
+                    }
+                    if (e.isControlDown()) {
+                        scrollAmount *= 5; // Scroll 5x faster with control
+                    }
+                    
+                    // Apply the new scroll position
+                    scrollPane.getVerticalScrollBar().setValue(currentPosition + scrollAmount);
+                    
+                    // Consume the event so it doesn't propagate
+                    e.consume();
+                }
+            }
+        });
     }
 }
