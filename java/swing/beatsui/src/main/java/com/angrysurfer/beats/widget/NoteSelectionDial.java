@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.ColorUtils;
+import com.angrysurfer.core.model.Scale;
 
 public class NoteSelectionDial extends Dial {
 
@@ -22,91 +23,89 @@ public class NoteSelectionDial extends Dial {
 
     private static final String[] NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
     private static final int DETENT_COUNT = 12;
-    private static final double SNAP_THRESHOLD = 0.2; // Radians
+    private static final double SNAP_THRESHOLD = 0.2;
     private static final double START_ANGLE = -90; // Start at top (-90 degrees)
-    private static final double TOTAL_ARC = 300; // Degrees
+    private static final double TOTAL_ARC = 360; // Full circle
     private static final int NOTES_PER_OCTAVE = 12;
-    private static final double DEGREES_PER_DETENT = 360.0 / DETENT_COUNT; // 30 degrees per note
+    private static final double DEGREES_PER_DETENT = 360.0 / DETENT_COUNT;
 
-    private int currentDetent = 0;
-    private boolean snapping = false;
-    private int baseOctave = 0; // Store the octave
-    private boolean infiniteTurn = true; // Allow wrapping around
-
-    // Add drag starting position
-    private double startAngle = 0;
+    // Store both the note position (0-11) and the full MIDI note value
+    private int currentDetent = 0;  // Note within octave (0-11)
+    private int midiNote = 60;      // Full MIDI note (0-127)
+    private int octave = 4;         // Current octave (default to middle C = C4)
+    
     private boolean isDragging = false;
+    private double startAngle = 0;
+    private boolean infiniteTurn = true;
 
     public NoteSelectionDial() {
         super();
         setMinimum(0);
-        setMaximum(11);
-        setValue(0, false);
+        setMaximum(127); // Full MIDI range
+        setValue(60, false); // Default to middle C (MIDI note 60)
 
-        // Set preferred size to ensure room for labels
         setPreferredSize(new Dimension(120, 120));
         setMinimumSize(new Dimension(100, 100));
 
-        // Add mouse pressed listener to capture start position
         addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent e) {
-                if (!isEnabled())
-                    return;
+                if (!isEnabled()) return;
                 isDragging = true;
                 Point center = new Point(getWidth() / 2, getHeight() / 2);
                 startAngle = Math.atan2(e.getY() - center.y, e.getX() - center.x);
             }
-
+            
             public void mouseReleased(java.awt.event.MouseEvent e) {
                 isDragging = false;
             }
         });
 
-        // Modified mouse motion listener
         addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             public void mouseDragged(java.awt.event.MouseEvent e) {
-                if (!isEnabled() || !isDragging)
-                    return;
+                if (!isEnabled() || !isDragging) return;
 
                 Point center = new Point(getWidth() / 2, getHeight() / 2);
                 double currentAngle = Math.atan2(e.getY() - center.y, e.getX() - center.x);
 
-                // Calculate angle change
                 double angleDelta = currentAngle - startAngle;
-                if (angleDelta > Math.PI)
-                    angleDelta -= 2 * Math.PI;
-                if (angleDelta < -Math.PI)
-                    angleDelta += 2 * Math.PI;
+                if (angleDelta > Math.PI) angleDelta -= 2 * Math.PI;
+                if (angleDelta < -Math.PI) angleDelta += 2 * Math.PI;
 
-                // Convert to degrees and calculate detent position
                 double angleDegrees = Math.toDegrees(angleDelta);
                 int detentDelta = (int) Math.round(angleDegrees / DEGREES_PER_DETENT);
 
-                // Calculate new detent position
-                int newDetent = currentDetent + detentDelta;
-
-                if (infiniteTurn) {
-                    // Wrap around within octave
-                    newDetent = ((newDetent % DETENT_COUNT) + DETENT_COUNT) % DETENT_COUNT;
-                } else {
-                    // Constrain to range
-                    newDetent = Math.min(Math.max(newDetent, 0), DETENT_COUNT - 1);
-                }
-
-                if (newDetent != currentDetent) {
-                    int oldValue = getValue();
-                    currentDetent = newDetent;
-
-                    // Calculate new MIDI note while preserving octave
-                    int newNote = (baseOctave * NOTES_PER_OCTAVE) + currentDetent;
-
-                    // Use fireStateChanged() instead of directly accessing changeListener
-                    if (oldValue != newNote) {
-                        fireStateChanged();
+                if (detentDelta != 0) {
+                    // Calculate new note position (0-11) within the octave
+                    int newDetent = (currentDetent + detentDelta) % NOTES_PER_OCTAVE;
+                    if (newDetent < 0) newDetent += NOTES_PER_OCTAVE;
+                    
+                    // Only update if the note changes
+                    if (newDetent != currentDetent) {
+                        currentDetent = newDetent;
+                        
+                        // Calculate new MIDI note preserving octave
+                        int newMidiNote = Scale.getMidiNote(NOTE_NAMES[currentDetent], octave);
+                        
+                        // Store old value for change detection
+                        int oldValue = midiNote;
+                        midiNote = newMidiNote;
+                        
+                        // Update the visual representation
+                        startAngle = currentAngle;
+                        repaint();
+                        
+                        // Fire change events if value changed
+                        if (oldValue != newMidiNote) {
+                            // Change this line:
+                            // super.setValue(newMidiNote, true);
+                            
+                            // To this:
+                            NoteSelectionDial.this.setValue(newMidiNote, true);
+                            
+                            logger.debug("Note changed: {} (MIDI {})", 
+                                        NOTE_NAMES[currentDetent] + octave, newMidiNote);
+                        }
                     }
-
-                    startAngle = currentAngle; // Update start angle for next movement
-                    repaint();
                 }
             }
         });
@@ -119,14 +118,17 @@ public class NoteSelectionDial extends Dial {
 
         int w = getWidth();
         int h = getHeight();
-        int size = Math.min(w, h) - 20; // Add padding for labels
+        int size = Math.min(w, h) - 20;
         int margin = size / 8;
 
-        // Center the dial
+        // Center coordinates
         int x = (w - size) / 2;
         int y = (h - size) / 2;
+        double centerX = w / 2.0;
+        double centerY = h / 2.0;
+        double radius = (size - 2 * margin) / 2.0;
 
-        // Draw base dial
+        // Draw dial background
         g2d.setColor(ColorUtils.warmMustard);
         g2d.fillOval(x + margin, y + margin, size - 2 * margin, size - 2 * margin);
 
@@ -136,24 +138,23 @@ public class NoteSelectionDial extends Dial {
         g2d.drawOval(x + margin, y + margin, size - 2 * margin, size - 2 * margin);
 
         // Draw detent markers and labels
-        g2d.setColor(Color.LIGHT_GRAY);
         Font font = new Font("SansSerif", Font.PLAIN, size / 10);
         g2d.setFont(font);
 
-        double centerX = w / 2.0;
-        double centerY = h / 2.0;
-        double radius = (size - 2 * margin) / 2.0;
-
-        for (int i = 0; i < DETENT_COUNT; i++) {
-            // Calculate evenly spaced angles
+        for (int i = 0; i < NOTES_PER_OCTAVE; i++) {
             double angle = Math.toRadians(START_ANGLE + (i * DEGREES_PER_DETENT));
+            
+            // Calculate marker points
+            Point2D p1 = new Point2D.Double(
+                centerX + Math.cos(angle) * (radius - margin),
+                centerY + Math.sin(angle) * (radius - margin)
+            );
+            Point2D p2 = new Point2D.Double(
+                centerX + Math.cos(angle) * radius,
+                centerY + Math.sin(angle) * radius
+            );
 
-            // Draw detent marker
-            Point2D p1 = new Point2D.Double(centerX + Math.cos(angle) * (radius - margin),
-                    centerY + Math.sin(angle) * (radius - margin));
-            Point2D p2 = new Point2D.Double(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
-
-            // Highlight current detent
+            // Highlight current note
             if (i == currentDetent) {
                 g2d.setColor(Color.YELLOW);
                 g2d.setStroke(new BasicStroke(2f));
@@ -162,64 +163,125 @@ public class NoteSelectionDial extends Dial {
                 g2d.setStroke(new BasicStroke(1f));
             }
 
-            // Fix: Add missing Y coordinate for p2
-            g2d.drawLine((int) p1.getX(), (int) p1.getY(), (int) p2.getX(), (int) p2.getY());
+            // Draw marker line
+            g2d.drawLine((int)p1.getX(), (int)p1.getY(), (int)p2.getX(), (int)p2.getY());
 
-            // Draw note label
-            Point2D labelPos = new Point2D.Double(centerX + Math.cos(angle) * (radius + margin * 1.2),
-                    centerY + Math.sin(angle) * (radius + margin * 1.2));
+            // Draw note name
+            Point2D labelPos = new Point2D.Double(
+                centerX + Math.cos(angle) * (radius + margin * 1.2),
+                centerY + Math.sin(angle) * (radius + margin * 1.2)
+            );
 
             FontMetrics fm = g2d.getFontMetrics();
             String label = NOTE_NAMES[i];
             int labelW = fm.stringWidth(label);
             int labelH = fm.getHeight();
 
-            g2d.drawString(label, (int) (labelPos.getX() - labelW / 2), (int) (labelPos.getY() + labelH / 4));
+            g2d.drawString(label, 
+                (int)(labelPos.getX() - labelW / 2), 
+                (int)(labelPos.getY() + labelH / 4)
+            );
         }
 
-        // Update pointer angle calculation
+        // Draw pointer
         double pointerAngle = Math.toRadians(START_ANGLE + (currentDetent * DEGREES_PER_DETENT));
         g2d.setStroke(new BasicStroke(2.5f));
         g2d.setColor(isEnabled() ? Color.RED : Color.GRAY);
-        g2d.drawLine((int) centerX, (int) centerY, (int) (centerX + Math.cos(pointerAngle) * (radius - margin / 2)),
-                (int) (centerY + Math.sin(pointerAngle) * (radius - margin / 2)));
+        g2d.drawLine(
+            (int)centerX, 
+            (int)centerY,
+            (int)(centerX + Math.cos(pointerAngle) * (radius - margin/2)),
+            (int)(centerY + Math.sin(pointerAngle) * (radius - margin/2))
+        );
+
+        // Draw octave indicator in center
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("SansSerif", Font.BOLD, size / 6));
+        String octaveText = String.valueOf(octave);
+        FontMetrics fm = g2d.getFontMetrics();
+        g2d.drawString(octaveText, 
+            (int)(centerX - fm.stringWidth(octaveText)/2),
+            (int)(centerY + fm.getHeight()/4)
+        );
 
         g2d.dispose();
     }
 
     @Override
     public int getValue() {
-        // Return the absolute MIDI note number
-        return (baseOctave * NOTES_PER_OCTAVE) + super.getValue();
+        return midiNote; // Return the full MIDI note value
     }
 
-    // Add method to get just the note within the octave
     public int getNoteInOctave() {
-        return super.getValue();
+        return currentDetent;
     }
 
-    // Add method to get current octave
     public int getOctave() {
-        return baseOctave;
-    }
-
-    // Helper method to get note name with octave
-    public String getFullNoteName() {
-        return String.format("%s%d", NOTE_NAMES[getNoteInOctave()], baseOctave);
+        return octave;
     }
 
     @Override
-    public void setValue(int absoluteNote, boolean notify) {
-        // Calculate octave and note within octave
-        baseOctave = absoluteNote / NOTES_PER_OCTAVE;
-        int noteInOctave = absoluteNote % NOTES_PER_OCTAVE;
-
-        // Set the dial position to the note within the octave
-        super.setValue(noteInOctave, notify);
-
-        logger.info(String.format("Set note %d (octave %d, note %d)", absoluteNote, baseOctave, noteInOctave));
+    public void setValue(int midiNoteValue, boolean notify) {
+        // Ensure value is within MIDI range
+        midiNoteValue = Math.max(0, Math.min(127, midiNoteValue));
+        
+        // Extract octave and note information
+        octave = Scale.getOctave(midiNoteValue);
+        currentDetent = midiNoteValue % NOTES_PER_OCTAVE;
+        midiNote = midiNoteValue;
+        
+        // Set the base class value
+        super.setValue(midiNoteValue, notify);
+        
+        logger.debug("Set note: {} (MIDI {}, octave {}, position {})", 
+                    NOTE_NAMES[currentDetent] + octave, 
+                    midiNote, octave, currentDetent);
+                    
+        repaint();
     }
-
+    
+    /**
+     * Changes just the note without changing the octave
+     */
+    public void setNoteOnly(String noteName, boolean notify) {
+        // Find the index of the note name
+        int noteIndex = -1;
+        for (int i = 0; i < NOTE_NAMES.length; i++) {
+            if (NOTE_NAMES[i].equals(noteName)) {
+                noteIndex = i;
+                break;
+            }
+        }
+        
+        if (noteIndex != -1) {
+            // Calculate new MIDI note preserving octave
+            int newMidiNote = Scale.getMidiNote(noteName, octave);
+            setValue(newMidiNote, notify);
+        }
+    }
+    
+    /**
+     * Changes just the octave without changing the note
+     */
+    public void setOctaveOnly(int newOctave, boolean notify) {
+        // Ensure octave is in valid range (typically -1 to 9 for MIDI)
+        newOctave = Math.max(-1, Math.min(9, newOctave));
+        
+        // Calculate new MIDI note with same note but new octave
+        int newMidiNote = Scale.getMidiNote(NOTE_NAMES[currentDetent], newOctave);
+        setValue(newMidiNote, notify);
+    }
+    
+    /**
+     * Gets the note name with octave (e.g., "C4")
+     */
+    public String getNoteWithOctave() {
+        return NOTE_NAMES[currentDetent] + octave;
+    }
+    
+    /**
+     * Gets the current note name without octave (e.g., "C#")
+     */
     public String getCurrentNoteName() {
         return NOTE_NAMES[currentDetent];
     }
