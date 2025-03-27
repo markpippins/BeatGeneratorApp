@@ -111,6 +111,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private Boolean accent = false;
 
+    private String scale = "Chromatic";
+
     @JsonIgnore
     private Boolean enabled = false;
 

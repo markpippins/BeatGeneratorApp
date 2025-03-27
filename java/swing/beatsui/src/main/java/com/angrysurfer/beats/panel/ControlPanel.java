@@ -28,7 +28,6 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Scale;
-import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.PlayerManager;
 
 public class ControlPanel extends JPanel {

@@ -323,4 +323,30 @@ public class Scale {
             default: return 0;
         }
     }
+
+    /**
+     * Returns the octave for a given MIDI note number.
+     * 
+     * @param midiNote The MIDI note number (0-127)
+     * @return The octave number (e.g., 4 for middle C)
+     */
+    public static int getOctave(int midiNote) {
+        // MIDI octaves follow the convention where middle C (MIDI note 60) is C4
+        return (midiNote / 12) - 1;
+    }
+
+    /**
+     * Returns the MIDI note number for a given note name and octave.
+     * 
+     * @param noteName The name of the note (e.g., "C", "C#", "Db", etc.)
+     * @param octave The octave number
+     * @return The corresponding MIDI note number
+     */
+    public static int getMidiNote(String noteName, int octave) {
+        int noteOffset = getRootOffset(noteName);
+        
+        // Calculate the MIDI note number
+        // The formula is: (octave + 1) * 12 + noteOffset
+        return (octave + 1) * 12 + noteOffset;
+    }
 }
