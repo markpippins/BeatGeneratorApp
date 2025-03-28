@@ -21,6 +21,8 @@ import javax.swing.JPanel;
 
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Scale;
 import com.angrysurfer.core.model.Session;
 
@@ -41,6 +43,58 @@ public class SessionControlPanel extends JPanel {
         // Create top and bottom panels
         add(createTopPanel(), BorderLayout.NORTH);
         add(createBottomPanel(), BorderLayout.SOUTH);
+        
+        // Add command bus listener for scale navigation
+        setupCommandBusListener();
+    }
+    
+    /**
+     * Sets up command bus listeners for scale navigation
+     */
+    private void setupCommandBusListener() {
+        commandBus.register(new IBusListener() {
+            @Override
+            public void onAction(Command action) {
+                if (action.getCommand() == null) return;
+                
+                // Skip processing commands from ourselves to avoid feedback loops
+                if (action.getSender() == SessionControlPanel.this) return;
+                
+                // Get the scale combo box
+                JComboBox<String> scaleCombo = (JComboBox<String>) fields.get("Scale");
+                if (scaleCombo == null) return;
+                
+                switch (action.getCommand()) {
+                    case Commands.PREV_SCALE_SELECTED:
+                        if (scaleCombo.getSelectedIndex() > 0) {
+                            // Move to previous scale
+                            int newIndex = scaleCombo.getSelectedIndex() - 1;
+                            scaleCombo.setSelectedIndex(newIndex);
+                            
+                            // Check if we reached the first scale
+                            if (newIndex == 0) {
+                                commandBus.publish(Commands.FIRST_SCALE_SELECTED, this, 
+                                    scaleCombo.getItemAt(newIndex));
+                            }
+                        }
+                        break;
+                        
+                    case Commands.NEXT_SCALE_SELECTED:
+                        if (scaleCombo.getSelectedIndex() < scaleCombo.getItemCount() - 1) {
+                            // Move to next scale
+                            int newIndex = scaleCombo.getSelectedIndex() + 1;
+                            scaleCombo.setSelectedIndex(newIndex);
+                            
+                            // Check if we reached the last scale
+                            if (newIndex == scaleCombo.getItemCount() - 1) {
+                                commandBus.publish(Commands.LAST_SCALE_SELECTED, this, 
+                                    scaleCombo.getItemAt(newIndex));
+                            }
+                        }
+                        break;
+                }
+            }
+        });
     }
     
     private JPanel createTopPanel() {

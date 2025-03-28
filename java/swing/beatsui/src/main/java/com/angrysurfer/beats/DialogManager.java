@@ -161,13 +161,23 @@ public class DialogManager implements IBusListener {
                     Dialog<Player> dialog = frame.createDialog(player, panel);
                     dialog.setTitle("Edit Player: " + player.getName());
 
-                    logger.info("Showing edit player dialog");
                     boolean result = dialog.showDialog();
-                    logger.info("Dialog result: " + result);
-
-                    if (result)
-                        commandBus.publish(Commands.SHOW_PLAYER_EDITOR_OK, this, panel.getUpdatedPlayer());
-
+                    
+                    if (result) {
+                        Player updatedPlayer = panel.getUpdatedPlayer();
+                        
+                        // First ensure player is still selected in PlayerManager
+                        PlayerManager.getInstance().setActivePlayer(updatedPlayer);
+                        
+                        // Then publish events in correct order
+                        commandBus.publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);
+                        
+                        // Important: This needs to come AFTER other updates
+                        SwingUtilities.invokeLater(() -> {
+                            // Delay selection event slightly to ensure other updates complete
+                            commandBus.publish(Commands.PLAYER_SELECTED, this, updatedPlayer);
+                        });
+                    }
                 } catch (Exception e) {
                     logger.error("Error in handleEditPlayer: " + e);
                     e.printStackTrace();

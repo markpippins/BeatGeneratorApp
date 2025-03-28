@@ -19,6 +19,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -32,7 +33,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Ratchet;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -47,6 +47,7 @@ public class PlayersTable extends JTable {
     private final Color FLASH_COLOR = ColorUtils.coolBlue; // new Color(255, 255, 200); // Light yellow flash
     private final int FLASH_DURATION_MS = 500; // Flash duration in milliseconds
     private int lastSelectedRow = -1;
+    private ListSelectionListener selectionListener;
 
     private static final int[] BOOLEAN_COLUMNS = PlayersTableModel.getBooleanColumns();
     private static final int[] NUMERIC_COLUMNS = PlayersTableModel.getNumericColumns();
@@ -148,7 +149,7 @@ public class PlayersTable extends JTable {
                                 if (isPlayerFlashing(player)) {
                                     bgColor = isSelected ? FLASH_COLOR.darker() : FLASH_COLOR;
                                 } else if (player != null && player.isPlaying()) {
-                                    bgColor = isSelected ? ColorUtils.charcoalGray.darker() : ColorUtils.charcoalGray;
+                                    bgColor = isSelected ? ColorUtils.mutedRed.darker() : ColorUtils.fadedLime;
                                 } else if (isSelected) {
                                     bgColor = table.getSelectionBackground();
                                 }
@@ -209,12 +210,13 @@ public class PlayersTable extends JTable {
     }
 
     private void setupSelectionListener() {
-        getSelectionModel().addListSelectionListener(e -> {
+        selectionListener = e -> {
             if (!e.getValueIsAdjusting()) { // Only handle when selection is complete
                 int selectedRow = getSelectedRow();
                 handlePlayerSelection(selectedRow);
             }
-        });
+        };
+        getSelectionModel().addListSelectionListener(selectionListener);
     }
 
     private void setupMouseListener() {
@@ -308,6 +310,37 @@ public class PlayersTable extends JTable {
                                     }
                                 });
                             }
+                        }
+                        break;
+
+                    case Commands.PLAYER_SELECTED:
+                        if (action.getData() instanceof Player player) {
+                            SwingUtilities.invokeLater(() -> {
+                                // Find the row for this player
+                                int rowIndex = findPlayerRowIndex(player);
+                                if (rowIndex >= 0) {
+                                    // Select the row without triggering additional selection events
+                                    getSelectionModel().removeListSelectionListener(selectionListener);
+                                    
+                                    // Clear current selection and select the player's row
+                                    clearSelection();
+                                    setRowSelectionInterval(rowIndex, rowIndex);
+                                    
+                                    // Make sure the row is visible
+                                    scrollRectToVisible(getCellRect(rowIndex, 0, true));
+                                    
+                                    // Store as last selected row
+                                    lastSelectedRow = rowIndex;
+                                    
+                                    // Restore the selection listener
+                                    getSelectionModel().addListSelectionListener(selectionListener);
+                                    
+                                    // Request focus so keyboard navigation works
+                                    requestFocus();
+                                    
+                                    logger.info("Selected row " + rowIndex + " for player: " + player.getName());
+                                }
+                            });
                         }
                         break;
                 }

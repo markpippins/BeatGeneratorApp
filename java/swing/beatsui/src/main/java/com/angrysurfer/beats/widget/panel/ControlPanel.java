@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
+import com.angrysurfer.beats.widget.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -47,6 +48,8 @@ public class ControlPanel extends JPanel {
     private Dial panDial;
     private Dial sparseDial;
 
+    private JButton nextScaleButton;
+    private JButton prevScaleButton;
     // Current active player
     private Player activePlayer;
 
@@ -57,6 +60,8 @@ public class ControlPanel extends JPanel {
     // Helper flag to prevent feedback when programmatically updating controls
     private boolean listenersEnabled = true;
 
+    private UIHelper uiHelper = UIHelper.getInstance();
+
     public ControlPanel(StatusConsumer statusConsumer) {
         super(new FlowLayout(FlowLayout.LEFT));
         this.statusConsumer = statusConsumer;
@@ -65,18 +70,30 @@ public class ControlPanel extends JPanel {
         setupCommandBusListener();
     }
 
+    private static final String PLAYER_PANEL = "PLAYER_PANEL";
+    private static final String SESSION_PANEL = "SESSION_PANEL";
+
     private void initComponents() {
         setMinimumSize(new Dimension(getMinimumSize().width, 100));
         setPreferredSize(new Dimension(getPreferredSize().width, 100));
 
         // Add vertical adjust panels
-        add(createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP, Commands.PRESET_DOWN));
-        add(createVerticalAdjustPanel("Offset", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
+        JPanel presetPanel = uiHelper.createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP,
+                Commands.PRESET_DOWN);
+        presetPanel.setName(PLAYER_PANEL + "_PRESET"); // Set
+        add(presetPanel);
+
+        JPanel offsetPanel = uiHelper.createVerticalAdjustPanel("Offset", "↑", "↓", Commands.TRANSPOSE_UP,
+                Commands.TRANSPOSE_DOWN);
+        offsetPanel.setName(SESSION_PANEL + "_OFFSET"); // Set
+        add(offsetPanel);
+
         add(createScaleAdjustPanel());
 
         // Add octave panel
-        JPanel navPanel = createOctavePanel();
-        add(navPanel);
+        JPanel octavePanel = createOctavePanel();
+        octavePanel.setName(PLAYER_PANEL + "_OCTAVE");
+        add(octavePanel);
 
         // Create all dials
         createAndAddDials();
@@ -227,73 +244,33 @@ public class ControlPanel extends JPanel {
         downButton.setEnabled(note >= 12);
     }
 
-    private JPanel createVerticalAdjustPanel(String label, String upLabel, String downLabel, String upCommand,
-            String downCommand) {
-        JPanel navPanel = new JPanel(new BorderLayout(0, 2));
-        navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5)); // Add margins
-        JLabel octaveLabel = new JLabel(label, JLabel.CENTER);
-
-        // Create up and down buttons
-        JButton prevButton = new JButton(upLabel);
-        prevButton.setActionCommand(upCommand);
-        // If it's a transpose command, publish without player data
-        if (upCommand.equals(Commands.TRANSPOSE_UP) || upCommand.equals(Commands.TRANSPOSE_DOWN)) {
-            prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this, null));
-        } else {
-            // Original code path for other commands
-            prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
-                    PlayerManager.getInstance().getActivePlayer()));
-        }
-
-        // Similar change for the down button
-        JButton nextButton = new JButton(downLabel);
-        nextButton.setActionCommand(downCommand);
-        if (downCommand.equals(Commands.TRANSPOSE_UP) || downCommand.equals(Commands.TRANSPOSE_DOWN)) {
-            nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this, null));
-        } else {
-            nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
-                    PlayerManager.getInstance().getActivePlayer()));
-        }
-
-        // Enable/disable buttons based on player selection
-        prevButton.setEnabled(false);
-        nextButton.setEnabled(false);
-
-        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 2));
-        buttonPanel.add(prevButton);
-        buttonPanel.add(nextButton);
-
-        navPanel.add(octaveLabel, BorderLayout.NORTH);
-        navPanel.add(buttonPanel, BorderLayout.CENTER);
-
-        return navPanel;
-    }
-
     private JPanel createScaleAdjustPanel() {
-        JPanel navPanel = new JPanel(new BorderLayout(0, 2));
-        navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+        JPanel scalePanel = new JPanel(new BorderLayout(0, 2));
+        scalePanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+        scalePanel.setName(SESSION_PANEL + "_SCALE");
+
         JLabel scaleLabel = new JLabel("Scale", JLabel.CENTER);
 
         // Create scale navigation buttons
-        JButton prevButton = new JButton("↑");
-        prevButton.setActionCommand(Commands.PREV_SCALE_SELECTED);
-        prevButton.addActionListener(e -> {
+        prevScaleButton = new JButton("↑");
+        prevScaleButton.setActionCommand(Commands.PREV_SCALE_SELECTED);
+        prevScaleButton.addActionListener(e -> {
             CommandBus.getInstance().publish(Commands.PREV_SCALE_SELECTED, this, Scale.SCALE_PATTERNS.keySet());
         });
-        prevButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-        prevButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        prevScaleButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        prevScaleButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
 
-        JButton nextButton = new JButton("↓");
-        nextButton.setActionCommand(Commands.NEXT_SCALE_SELECTED);
-        nextButton.addActionListener(e -> {
+        nextScaleButton = new JButton("↓");
+        nextScaleButton.setActionCommand(Commands.NEXT_SCALE_SELECTED);
+        nextScaleButton.addActionListener(e -> {
             CommandBus.getInstance().publish(Commands.NEXT_SCALE_SELECTED, this, Scale.SCALE_PATTERNS.keySet());
         });
-        nextButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-        nextButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        nextScaleButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        nextScaleButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
 
         // Enable buttons by default
-        prevButton.setEnabled(true);
-        nextButton.setEnabled(true);
+        prevScaleButton.setEnabled(true);
+        nextScaleButton.setEnabled(true);
 
         // Add command bus listener for scale events
         CommandBus.getInstance().register(new IBusListener() {
@@ -303,11 +280,11 @@ public class ControlPanel extends JPanel {
                     return;
                 }
                 switch (action.getCommand()) {
-                case Commands.FIRST_SCALE_SELECTED -> prevButton.setEnabled(false);
-                case Commands.LAST_SCALE_SELECTED -> nextButton.setEnabled(false);
+                case Commands.FIRST_SCALE_SELECTED -> prevScaleButton.setEnabled(false);
+                case Commands.LAST_SCALE_SELECTED -> nextScaleButton.setEnabled(false);
                 case Commands.SCALE_SELECTED -> {
-                    prevButton.setEnabled(true);
-                    nextButton.setEnabled(true);
+                    prevScaleButton.setEnabled(true);
+                    nextScaleButton.setEnabled(true);
                 }
                 }
             }
@@ -315,13 +292,13 @@ public class ControlPanel extends JPanel {
 
         // Layout buttons vertically
         JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 2));
-        buttonPanel.add(prevButton);
-        buttonPanel.add(nextButton);
+        buttonPanel.add(prevScaleButton);
+        buttonPanel.add(nextScaleButton);
 
-        navPanel.add(scaleLabel, BorderLayout.NORTH);
-        navPanel.add(buttonPanel, BorderLayout.CENTER);
+        scalePanel.add(scaleLabel, BorderLayout.NORTH);
+        scalePanel.add(buttonPanel, BorderLayout.CENTER);
 
-        return navPanel;
+        return scalePanel;
     }
 
     private Dial createDial(String propertyName, long value, int min, int max, int majorTick) {
@@ -403,7 +380,7 @@ public class ControlPanel extends JPanel {
     private void updateVerticalAdjustButtons(boolean enabled) {
         // Find and update all buttons in vertical adjust panels
         for (Component comp : getComponents()) {
-            if (comp instanceof JPanel panel) {
+            if (comp instanceof JPanel panel && (panel.getName() != null && panel.getName().contains("PLAYER_PANEL"))) {
                 // Improved traversal to handle nested panels
                 traverseAndEnableButtons(panel, enabled);
             }
@@ -522,24 +499,24 @@ public class ControlPanel extends JPanel {
 
             int minValue = velocityMinDial.getValue();
             int maxValue = velocityMaxDial.getValue();
-            
+
             logger.info("Updating player min velocity to: " + minValue);
-            
+
             // Ensure min velocity doesn't exceed max velocity
             if (minValue > maxValue) {
                 // Update max velocity to match min velocity
-                listenersEnabled = false;  // Prevent feedback loop
+                listenersEnabled = false; // Prevent feedback loop
                 velocityMaxDial.setValue(minValue);
                 activePlayer.setMaxVelocity((long) minValue);
                 listenersEnabled = true;
             }
-            
+
             // Update player
             activePlayer.setMinVelocity((long) minValue);
-            
+
             // Save the changes and notify UI
             PlayerManager.getInstance().updatePlayerVelocityMin(activePlayer, minValue);
-            
+
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
         });
@@ -551,24 +528,24 @@ public class ControlPanel extends JPanel {
 
             int maxValue = velocityMaxDial.getValue();
             int minValue = velocityMinDial.getValue();
-            
+
             logger.info("Updating player max velocity to: " + maxValue);
-            
+
             // Ensure max velocity is not less than min velocity
             if (maxValue < minValue) {
                 // Update min velocity to match max velocity
-                listenersEnabled = false;  // Prevent feedback loop
+                listenersEnabled = false; // Prevent feedback loop
                 velocityMinDial.setValue(maxValue);
                 activePlayer.setMinVelocity((long) maxValue);
                 listenersEnabled = true;
             }
-            
+
             // Update player
             activePlayer.setMaxVelocity((long) maxValue);
-            
+
             // Save the changes and notify UI
             PlayerManager.getInstance().updatePlayerVelocityMax(activePlayer, maxValue);
-            
+
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
         });
