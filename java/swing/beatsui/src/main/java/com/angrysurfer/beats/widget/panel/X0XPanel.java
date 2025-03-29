@@ -40,15 +40,17 @@ import com.angrysurfer.core.service.SessionManager;
 class X0XPanel extends StatusProviderPanel implements IBusListener {
     private final List<TriggerButton> triggerButtons = new ArrayList<>();
     private final List<NoteSelectionDial> noteDials = new ArrayList<>();
+    private final List<Dial> velocityDials = new ArrayList<>();
+    private final List<Dial> gateDials = new ArrayList<>();
 
     private boolean isPlaying = false;
     private int currentStep = 0;
 
     // Add these fields for tick-based timing
-    private int stepCounter = 0;       // Current step in X0X pattern (0-15)
-    private int tickCounter = 0;       // Count ticks within current step
-    private int ticksPerStep = 6;      // How many ticks make one X0X step
-    private int nextStepTick = 0;      // When to trigger the next step
+    private int stepCounter = 0; // Current step in X0X pattern (0-15)
+    private int tickCounter = 0; // Count ticks within current step
+    private int ticksPerStep = 6; // How many ticks make one X0X step
+    private int nextStepTick = 0; // When to trigger the next step
 
     private Synthesizer synthesizer = null;
 
@@ -74,7 +76,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         TimingBus.getInstance().register(this);
         CommandBus.getInstance().register(this);
         setup();
-        
+
         // Calculate initial timing
         updateTimingParameters();
     }
@@ -86,12 +88,12 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             if (session != null) {
                 // Calculate ticks per step based on session settings
                 int ppq = session.getTicksPerBeat(); // Pulses per quarter note
-                int stepsPerBeat = 4;       // Standard X0X uses 4 steps per beat
-                
+                int stepsPerBeat = 4; // Standard X0X uses 4 steps per beat
+
                 // Calculate timing parameters
                 ticksPerStep = ppq / stepsPerBeat;
                 nextStepTick = ticksPerStep; // Reset next step counter
-                
+
                 System.out.println("X0X timing: " + ticksPerStep + " ticks per step");
             }
         } catch (Exception ex) {
@@ -105,49 +107,49 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         try {
             // Get information about all available MIDI devices
             MidiSystem.getMidiDeviceInfo();
-            
+
             // Look for Gervill specifically
             MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
             MidiDevice.Info gervillInfo = null;
-            
+
             for (MidiDevice.Info info : infos) {
                 if (info.getName().contains("Gervill")) {
                     gervillInfo = info;
                     break;
                 }
             }
-            
+
             // If we found Gervill, use it
             if (gervillInfo != null) {
                 MidiDevice device = MidiSystem.getMidiDevice(gervillInfo);
                 if (device instanceof Synthesizer) {
-                    synthesizer = (Synthesizer)device;
+                    synthesizer = (Synthesizer) device;
                 }
             }
-            
+
             // If we didn't find Gervill specifically, just get the default synthesizer
             if (synthesizer == null) {
                 synthesizer = MidiSystem.getSynthesizer();
             }
-            
+
             // Open the synthesizer
             if (synthesizer != null && !synthesizer.isOpen()) {
                 synthesizer.open();
                 System.out.println("Opened synthesizer: " + synthesizer.getDeviceInfo().getName());
             }
-            
+
             // Configure to use channel 16 (index 15)
             if (synthesizer != null && synthesizer.isOpen()) {
                 // Get channel 16 (index 15)
                 MidiChannel channel = synthesizer.getChannels()[15];
-                
+
                 // Basic configuration - ensure it's not muted
                 if (channel != null) {
                     channel.controlChange(7, 100); // Set volume to 100
                     channel.controlChange(10, 64); // Pan center
-                    channel.programChange(0);      // Default program (Grand Piano)
+                    channel.programChange(0); // Default program (Grand Piano)
                     System.out.println("Configured channel 16 (index 15) on synthesizer");
-                    
+
                     // Get name of the current program
                     String presetName = InternalSynthManager.getInstance().getPresetName(1L, 0);
                     System.out.println("Initial preset: " + presetName);
@@ -163,19 +165,19 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     public void onAction(Command action) {
         if (action.getCommand() == null)
             return;
-            
+
         switch (action.getCommand()) {
         case Commands.TRANSPORT_PLAY -> {
             isPlaying = true;
-            
+
             // Reset all counters
             stepCounter = 0;
             tickCounter = 0;
             nextStepTick = ticksPerStep;
-            
+
             // Update timing parameters in case they changed
             updateTimingParameters();
-            
+
             // Reset and highlight the first step
             SwingUtilities.invokeLater(() -> {
                 // Reset all buttons
@@ -193,21 +195,21 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             isPlaying = false;
             resetSequence();
         }
-        
+
         case Commands.TIMING_TICK -> {
             // Process timing ticks for sequencing
             if (isPlaying && action.getData() instanceof Number) {
                 tickCounter++;
-                
+
                 // Check if it's time for the next step
                 if (tickCounter >= nextStepTick) {
                     // Calculate the next step
                     int oldStep = stepCounter;
                     stepCounter = (stepCounter + 1) % 16;
-                    
+
                     // Play the step and update UI
                     updateStepAndPlayNote(oldStep, stepCounter);
-                    
+
                     // Reset tick counter and calculate next step time
                     tickCounter = 0;
                     nextStepTick = ticksPerStep;
@@ -225,22 +227,23 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     }
 
     private void updateStepAndPlayNote(int oldStep, int newStep) {
-        // First check if we need to play a note, and do that immediately with minimum latency
+        // First check if we need to play a note, and do that immediately with minimum
+        // latency
         if (isPlaying && newStep >= 0 && newStep < triggerButtons.size() && newStep < noteDials.size()) {
             TriggerButton newButton = triggerButtons.get(newStep);
             if (newButton.isActive()) {
                 NoteSelectionDial noteDial = noteDials.get(newStep);
                 int noteValue = noteDial.getValue();
-                
+
                 // Get velocity and gate time from other dials if available
                 int velocity = 100;
                 int gateTime = 100;
-                
+
                 // Play note immediately - don't wait for UI updates
                 playNote(noteValue, velocity, gateTime);
             }
         }
-        
+
         // Then update UI (less time-critical)
         SwingUtilities.invokeLater(() -> {
             // Clear previous step highlight
@@ -253,7 +256,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             if (newStep >= 0 && newStep < triggerButtons.size()) {
                 TriggerButton newButton = triggerButtons.get(newStep);
                 newButton.setHighlighted(true);
-                
+
                 if (getStatusConsumer() != null) {
                     getStatusConsumer().setStatus("Step: " + (newStep + 1) + " of 16");
                 }
@@ -297,38 +300,38 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         // Create a container panel with BorderLayout
         JPanel containerPanel = new JPanel(new BorderLayout(10, 10));
         containerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         // Create synth preset panel at the top
         JPanel presetPanel = createPresetPanel();
         containerPanel.add(presetPanel, BorderLayout.NORTH);
-        
+
         // Create X0X sequencer panel in center
         JPanel x0xPanel = createX0XPanel();
         containerPanel.add(new JScrollPane(x0xPanel), BorderLayout.CENTER);
-        
+
         // Create control buttons at the bottom
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        
+
         JButton resetButton = new JButton("Reset");
         resetButton.addActionListener(e -> resetSequence());
-        
+
         JButton playButton = new JButton("Play");
         playButton.addActionListener(e -> {
             isPlaying = !isPlaying;
             playButton.setText(isPlaying ? "Stop" : "Play");
-            
+
             if (isPlaying) {
                 // Start playing
             } else {
                 resetSequence();
             }
         });
-        
+
         controlPanel.add(resetButton);
         controlPanel.add(playButton);
-        
+
         containerPanel.add(controlPanel, BorderLayout.SOUTH);
-        
+
         add(containerPanel);
     }
 
@@ -375,41 +378,47 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             }
 
             // Create dial - first one is always a NoteSelectionDial
-            Dial dial;
-            if (i == 0) {
-                NoteSelectionDial noteDial = new NoteSelectionDial();
-                noteDials.add(noteDial); // Store the note dial for this column
-                dial = noteDial;
-            } else {
-                dial = new Dial();
+            Dial dial = i == 0 ? new NoteSelectionDial() : new Dial();
+
+            switch (i) {
+            case 0:
+                noteDials.add((NoteSelectionDial) dial); // Store the note dial for this column
+            case 1:
+                velocityDials.add(dial); // Store the velocity dial for this column
+                break;
+
+            case 2:
+                gateDials.add(dial); // Store the velocity dial for this column
+                break;
+
+            default:
+                break;
             }
-            
+
             dial.setUpdateOnResize(false);
-            dial.setToolTipText(String.format("Step %d Knob %d", index + 1, i + 1));
+            dial.setToolTipText(String.format("Step %d %s", index + 1, getKnobLabel(i)));
             dial.setName("JDial-" + index + "-" + i);
 
             // Center the dial horizontally
             JPanel dialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
             dialPanel.add(dial);
             column.add(dialPanel);
-
-            // Add small spacing between knobs
-            column.add(Box.createRigidArea(new Dimension(0, 5)));
         }
-        
+        // Add small spacing between knobs
+        column.add(Box.createRigidArea(new Dimension(0, 5)));
+
         // Add the trigger button - make it a toggle button
         TriggerButton triggerButton = new TriggerButton("");
         triggerButton.setName("TriggerButton-" + index);
         triggerButton.setToolTipText("Step " + (index + 1));
-        
+
         // Make it toggleable
         triggerButton.setToggleable(true);
 
         // Add a clean action listener that doesn't interfere with toggle behavior
         triggerButton.addActionListener(e -> {
             // No need to manually toggle - JToggleButton handles it automatically
-            System.out.println("Trigger " + index + " is now " + 
-                               (triggerButton.isSelected() ? "ON" : "OFF"));
+            System.out.println("Trigger " + index + " is now " + (triggerButton.isSelected() ? "ON" : "OFF"));
         });
 
         triggerButtons.add(triggerButton);
@@ -441,20 +450,20 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     private static class PresetItem {
         private final int number;
         private final String name;
-        
+
         public PresetItem(int number, String name) {
             this.number = number;
             this.name = name;
         }
-        
+
         public int getNumber() {
             return number;
         }
-        
+
         public String getName() {
             return name;
         }
-        
+
         @Override
         public String toString() {
             return name;
@@ -467,11 +476,11 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     private JPanel createPresetPanel() {
         JPanel presetPanel = new JPanel(new BorderLayout(5, 5));
         presetPanel.setBorder(BorderFactory.createTitledBorder("Synth Presets"));
-        
+
         // Create preset combo box
         presetCombo = new JComboBox<>();
         populatePresetCombo();
-        
+
         // Add listener to change synth preset when selected
         presetCombo.addActionListener(e -> {
             if (presetCombo.getSelectedItem() instanceof PresetItem) {
@@ -480,14 +489,14 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                 System.out.println("Selected preset: " + item.getName() + " (#" + item.getNumber() + ")");
             }
         });
-        
+
         // Add a label and the combo box to the panel
         JPanel innerPanel = new JPanel(new BorderLayout(5, 0));
         innerPanel.add(new JLabel("Preset:"), BorderLayout.WEST);
         innerPanel.add(presetCombo, BorderLayout.CENTER);
-        
+
         presetPanel.add(innerPanel, BorderLayout.NORTH);
-        
+
         return presetPanel;
     }
 
@@ -496,22 +505,24 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
      */
     private void populatePresetCombo() {
         presetCombo.removeAllItems();
-        
+
         // Get preset names from InternalSynthManager - use GM synth ID (1)
         List<String> presetNames = InternalSynthManager.getInstance().getPresetNames(1L);
-        
-        // If no presets found, use generic names
-        if (presetNames.isEmpty()) {
-            for (int i = 0; i < 128; i++) {
-                presetCombo.addItem(new PresetItem(i, "Program " + i));
+
+        // Always add all 128 GM presets
+        for (int i = 0; i < 128; i++) {
+            // Get name from the list if available, otherwise use generic name
+            String presetName;
+            if (i < presetNames.size() && presetNames.get(i) != null && !presetNames.get(i).isEmpty()) {
+                presetName = presetNames.get(i);
+            } else {
+                presetName = "Program " + i;
             }
-        } else {
-            // Add all named presets
-            for (int i = 0; i < presetNames.size(); i++) {
-                presetCombo.addItem(new PresetItem(i, presetNames.get(i)));
-            }
+
+            // Add the preset to the combo box
+            presetCombo.addItem(new PresetItem(i, i + ": " + presetName));
         }
-        
+
         // Select the first preset by default
         if (presetCombo.getItemCount() > 0) {
             presetCombo.setSelectedIndex(0);
@@ -526,7 +537,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             try {
                 // Use channel 16 (index 15)
                 MidiChannel channel = synthesizer.getChannels()[15];
-                
+
                 if (channel != null) {
                     channel.programChange(program);
                     System.out.println("Changed synth program to " + program);
@@ -540,8 +551,8 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     /**
      * Play a note on the synthesizer
      * 
-     * @param note MIDI note number (0-127)
-     * @param velocity Velocity value (0-127)
+     * @param note       MIDI note number (0-127)
+     * @param velocity   Velocity value (0-127)
      * @param durationMs Duration in milliseconds
      */
     private void playNote(int note, int velocity, int durationMs) {
@@ -549,7 +560,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             try {
                 // Play on channel 16 (index 15)
                 final MidiChannel channel = synthesizer.getChannels()[15];
-                
+
                 if (channel != null) {
                     if (useAheadScheduling) {
                         // Schedule note in advance to compensate for latency
@@ -559,23 +570,23 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                                 Thread.sleep(1);
                                 // Set this thread to max priority
                                 Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-                                
+
                                 // Calculate when to play the note (slightly in the future)
                                 long currentTime = System.currentTimeMillis();
                                 long targetTime = currentTime + lookAheadMs;
                                 long waitTime = targetTime - System.currentTimeMillis();
-                                
+
                                 // Wait until precise time to play the note
                                 if (waitTime > 0) {
                                     Thread.sleep(waitTime);
                                 }
-                                
+
                                 // Play the note exactly when needed
                                 channel.noteOn(note, velocity);
-                                
+
                                 // Sleep for note duration
                                 Thread.sleep(durationMs);
-                                
+
                                 // Turn off the note
                                 channel.noteOff(note);
                             } catch (InterruptedException e) {
@@ -585,7 +596,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                     } else {
                         // Original direct playback code
                         channel.noteOn(note, velocity);
-                        
+
                         // Schedule note off with our gate time
                         java.util.Timer timer = new java.util.Timer(true);
                         timer.schedule(new java.util.TimerTask() {
