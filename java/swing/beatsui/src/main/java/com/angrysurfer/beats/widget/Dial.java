@@ -121,7 +121,7 @@ public class Dial extends JComponent {
 
     private boolean updateOnResize = false;
 
-    private void updateSize() {
+    protected void updateSize() {
         Window window = SwingUtilities.getWindowAncestor(this);
         if (window != null) {
             // Calculate size based on window dimensions

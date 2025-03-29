@@ -1,13 +1,14 @@
 package com.angrysurfer.beats.widget;
 
 import java.awt.*;
-import javax.swing.JButton;
+import javax.swing.JToggleButton;
+import java.awt.event.ActionListener;
 
-public class TriggerButton extends JButton {
+public class TriggerButton extends JToggleButton {
     private Color baseColor;
     private Color activeColor;
-    private boolean isActive = false;
-    private boolean isHighlighted = false;
+    private boolean highlighted = false;
+    private boolean toggleable = false;
     private static final Dimension BUTTON_SIZE = new Dimension(30, 20);
 
     public TriggerButton(String text) {
@@ -28,17 +29,29 @@ public class TriggerButton extends JButton {
         setPreferredSize(BUTTON_SIZE);
         setMinimumSize(BUTTON_SIZE);
 
-        addActionListener(e -> toggle());
+        // Only try to remove listeners if they exist
+        ActionListener[] listeners = getActionListeners();
+        if (listeners != null && listeners.length > 0) {
+            removeActionListener(listeners[0]);
+        }
     }
 
-    public void toggle() {
-        isActive = !isActive;
-        repaint();
+    public void setToggleable(boolean toggleable) {
+        this.toggleable = toggleable;
+        setEnabled(toggleable); // Only enable the button if it's toggleable
+    }
+
+    public boolean isToggleable() {
+        return toggleable;
+    }
+
+    public boolean isActive() {
+        return isSelected();
     }
 
     public void setHighlighted(boolean highlighted) {
-        if (this.isHighlighted != highlighted) {
-            this.isHighlighted = highlighted;
+        if (this.highlighted != highlighted) {
+            this.highlighted = highlighted;
             repaint();
         }
     }
@@ -52,8 +65,8 @@ public class TriggerButton extends JButton {
         int height = getHeight();
         
         // Use highlight color if step is active
-        Color currentColor = isHighlighted ? Color.WHITE : 
-                           isActive ? activeColor : baseColor;
+        Color currentColor = highlighted ? Color.WHITE : 
+                           isSelected() ? activeColor : baseColor;
 
         // Draw main button body
         g2d.setPaint(new GradientPaint(
@@ -74,7 +87,7 @@ public class TriggerButton extends JButton {
         g2d.fillRoundRect(0, 0, width, height, 10, 10);
 
         // Draw border
-        g2d.setColor(isActive ? activeColor.darker() : baseColor.darker());
+        g2d.setColor(isSelected() ? activeColor.darker() : baseColor.darker());
         g2d.setStroke(new BasicStroke(1.5f));
         g2d.drawRoundRect(0, 0, width - 1, height - 1, 10, 10);
 
@@ -85,15 +98,15 @@ public class TriggerButton extends JButton {
         int y = ((height - metrics.getHeight()) / 2) + metrics.getAscent();
 
         // Draw text shadow
-        g2d.setColor(isActive ? activeColor.darker().darker() : baseColor.darker().darker());
+        g2d.setColor(isSelected() ? activeColor.darker().darker() : baseColor.darker().darker());
         g2d.drawString(text, x + 1, y + 1);
 
         // Draw main text
-        g2d.setColor(isActive ? baseColor : activeColor);
+        g2d.setColor(isSelected() ? baseColor : activeColor);
         g2d.drawString(text, x, y);
 
         // Add pressed effect when active
-        if (isActive) {
+        if (toggleable && isSelected()) {
             g2d.setPaint(new Color(0, 0, 0, 30));
             g2d.fillRoundRect(0, 0, width, height, 10, 10);
         }
@@ -104,16 +117,5 @@ public class TriggerButton extends JButton {
     @Override
     public Dimension getPreferredSize() {
         return BUTTON_SIZE;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        if (this.isActive != active) {
-            this.isActive = active;
-            repaint();
-        }
     }
 }
