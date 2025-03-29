@@ -44,14 +44,25 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     private boolean isPlaying = false;
     private int currentStep = 0;
 
-    // Add a class member for timer-based stepping
-    private javax.swing.Timer stepTimer;
+    // Add these fields for tick-based timing
+    private int stepCounter = 0;       // Current step in X0X pattern (0-15)
+    private int tickCounter = 0;       // Count ticks within current step
+    private int ticksPerStep = 6;      // How many ticks make one X0X step
+    private int nextStepTick = 0;      // When to trigger the next step
 
     private Synthesizer synthesizer = null;
 
     // Add this field to X0XPanel
     private JComboBox<PresetItem> presetCombo;
 
+    // Add these fields to X0XPanel
+    private int latencyCompensation = 20; // milliseconds to compensate for system latency
+
+    // Add these fields to X0XPanel
+    private int lookAheadMs = 40; // How far ahead to schedule notes
+    private boolean useAheadScheduling = true; // Enable/disable look-ahead
+
+    // Constructor - remove the stepTimer initialization
     public X0XPanel() {
         super(new BorderLayout());
         setStatusConsumer(statusConsumer);
@@ -63,24 +74,31 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         TimingBus.getInstance().register(this);
         CommandBus.getInstance().register(this);
         setup();
-
-        // Initialize the step timer
-        setupStepTimer();
+        
+        // Calculate initial timing
+        updateTimingParameters();
     }
 
-    // Add this method to set up the timer
-    private void setupStepTimer() {
-        // Start with 120 BPM = 500ms per beat = 125ms per step (for 4 steps per beat)
-        int initialMsPerStep = 125;
-
-        stepTimer = new javax.swing.Timer(initialMsPerStep, e -> {
-            if (isPlaying) {
-                int nextStep = (currentStep + 1) % 16;
-                updateStep(currentStep, nextStep);
-                currentStep = nextStep;
+    // Add a method to calculate timing parameters
+    private void updateTimingParameters() {
+        try {
+            Session session = SessionManager.getInstance().getActiveSession();
+            if (session != null) {
+                // Calculate ticks per step based on session settings
+                int ppq = session.getTicksPerBeat(); // Pulses per quarter note
+                int stepsPerBeat = 4;       // Standard X0X uses 4 steps per beat
+                
+                // Calculate timing parameters
+                ticksPerStep = ppq / stepsPerBeat;
+                nextStepTick = ticksPerStep; // Reset next step counter
+                
+                System.out.println("X0X timing: " + ticksPerStep + " ticks per step");
             }
-        });
-        stepTimer.setRepeats(true);
+        } catch (Exception ex) {
+            // Use default values if something goes wrong
+            ticksPerStep = 6;
+            nextStepTick = ticksPerStep;
+        }
     }
 
     private void initializeSynthesizer() {
@@ -146,38 +164,21 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         if (action.getCommand() == null)
             return;
             
-        // Ensure timer is initialized before using it
-        if (stepTimer == null) {
-            setupStepTimer();
-        }
-
         switch (action.getCommand()) {
         case Commands.TRANSPORT_PLAY -> {
             isPlaying = true;
-            currentStep = 0;
-
-            // Reset the step timer whenever tempo changes
-            int currentBPM = 120; // Default
-            try {
-                Session session = SessionManager.getInstance().getActiveSession();
-                if (session != null) {
-                    currentBPM = Math.round(session.getTempoInBPM());
-                }
-            } catch (Exception ex) {
-                // Use default if can't get session
-            }
-
-            // Calculate ms per step: 60000ms/min ÷ BPM = ms/beat, then divide by 4
-            // steps/beat
-            int msPerBeat = 60000 / currentBPM;
-            int msPerStep = msPerBeat / 4;
-            stepTimer.setDelay(msPerStep);
-
-            // Start the timer
-            stepTimer.start();
-
+            
+            // Reset all counters
+            stepCounter = 0;
+            tickCounter = 0;
+            nextStepTick = ticksPerStep;
+            
+            // Update timing parameters in case they changed
+            updateTimingParameters();
+            
+            // Reset and highlight the first step
             SwingUtilities.invokeLater(() -> {
-                // Reset all buttons first
+                // Reset all buttons
                 for (TriggerButton button : triggerButtons) {
                     button.setHighlighted(false);
                 }
@@ -190,70 +191,72 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
 
         case Commands.TRANSPORT_STOP -> {
             isPlaying = false;
-            // Stop the timer
-            if (stepTimer != null) {
-                stepTimer.stop();
-            }
             resetSequence();
         }
-
-        case Commands.TIMING_BEAT -> {
-            // Just use for tempo synchronization
-            if (isPlaying && action.getData() instanceof Number beatNum) {
-                // Processing if needed
+        
+        case Commands.TIMING_TICK -> {
+            // Process timing ticks for sequencing
+            if (isPlaying && action.getData() instanceof Number) {
+                tickCounter++;
+                
+                // Check if it's time for the next step
+                if (tickCounter >= nextStepTick) {
+                    // Calculate the next step
+                    int oldStep = stepCounter;
+                    stepCounter = (stepCounter + 1) % 16;
+                    
+                    // Play the step and update UI
+                    updateStepAndPlayNote(oldStep, stepCounter);
+                    
+                    // Reset tick counter and calculate next step time
+                    tickCounter = 0;
+                    nextStepTick = ticksPerStep;
+                }
             }
         }
 
         case Commands.SESSION_UPDATED -> {
-            // Update tempo when session changes
-            if (action.getData() instanceof Session session) {
-                int bpm = Math.round(session.getTempoInBPM());
-                int msPerBeat = 60000 / bpm;
-                int msPerStep = msPerBeat / 4;
-                
-                // Ensure timer exists before setting delay
-                if (stepTimer != null) {
-                    stepTimer.setDelay(msPerStep);
-                }
+            // Update timing parameters when session changes
+            if (action.getData() instanceof Session) {
+                updateTimingParameters();
             }
         }
         }
     }
 
-    private void updateStep(int oldStep, int newStep) {
+    private void updateStepAndPlayNote(int oldStep, int newStep) {
+        // First check if we need to play a note, and do that immediately with minimum latency
+        if (isPlaying && newStep >= 0 && newStep < triggerButtons.size() && newStep < noteDials.size()) {
+            TriggerButton newButton = triggerButtons.get(newStep);
+            if (newButton.isActive()) {
+                NoteSelectionDial noteDial = noteDials.get(newStep);
+                int noteValue = noteDial.getValue();
+                
+                // Get velocity and gate time from other dials if available
+                int velocity = 100;
+                int gateTime = 100;
+                
+                // Play note immediately - don't wait for UI updates
+                playNote(noteValue, velocity, gateTime);
+            }
+        }
+        
+        // Then update UI (less time-critical)
         SwingUtilities.invokeLater(() -> {
-            try {
-                // Clear previous step highlight
-                if (oldStep >= 0 && oldStep < triggerButtons.size()) {
-                    TriggerButton oldButton = triggerButtons.get(oldStep);
-                    oldButton.setHighlighted(false);
-                }
+            // Clear previous step highlight
+            if (oldStep >= 0 && oldStep < triggerButtons.size()) {
+                TriggerButton oldButton = triggerButtons.get(oldStep);
+                oldButton.setHighlighted(false);
+            }
 
-                // Highlight current step
-                if (newStep >= 0 && newStep < triggerButtons.size()) {
-                    TriggerButton newButton = triggerButtons.get(newStep);
-                    newButton.setHighlighted(true);
-                    
-                    if (getStatusConsumer() != null) {
-                        getStatusConsumer().setStatus("Step: " + (newStep + 1) + " of 16");
-                    }
-                    
-                    // Play note for current step if we're playing AND the trigger is active
-                    if (isPlaying && newStep < noteDials.size() && newButton.isActive()) {
-                        NoteSelectionDial noteDial = noteDials.get(newStep);
-                        int noteValue = noteDial.getValue();
-                        
-                        // Get velocity from second dial if available (default 100)
-                        int velocity = 100;
-                        // Get gate time from third dial if available (default 100ms)
-                        int gateTime = 100;
-                        
-                        // Play the note
-                        playNote(noteValue, velocity, gateTime);
-                    }
+            // Highlight current step
+            if (newStep >= 0 && newStep < triggerButtons.size()) {
+                TriggerButton newButton = triggerButtons.get(newStep);
+                newButton.setHighlighted(true);
+                
+                if (getStatusConsumer() != null) {
+                    getStatusConsumer().setStatus("Step: " + (newStep + 1) + " of 16");
                 }
-            } catch (Exception e) {
-                System.err.println("Error updating X0X step: " + e.getMessage());
             }
         });
     }
@@ -315,9 +318,8 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             playButton.setText(isPlaying ? "Stop" : "Play");
             
             if (isPlaying) {
-                stepTimer.start();
+                // Start playing
             } else {
-                stepTimer.stop();
                 resetSequence();
             }
         });
@@ -546,25 +548,54 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         if (synthesizer != null && synthesizer.isOpen()) {
             try {
                 // Play on channel 16 (index 15)
-                MidiChannel channel = synthesizer.getChannels()[15];
+                final MidiChannel channel = synthesizer.getChannels()[15];
                 
                 if (channel != null) {
-                    // Start the note
-                    channel.noteOn(note, velocity);
-                    
-                    // Log the note being played
-                    System.out.println("Playing note: " + note + " with velocity: " + velocity + 
-                                       " for " + durationMs + "ms");
-                    
-                    // Schedule note off
-                    java.util.Timer timer = new java.util.Timer();
-                    timer.schedule(new java.util.TimerTask() {
-                        @Override
-                        public void run() {
-                            channel.noteOff(note);
-                            timer.cancel();
-                        }
-                    }, durationMs);
+                    if (useAheadScheduling) {
+                        // Schedule note in advance to compensate for latency
+                        new Thread(() -> {
+                            try {
+                                // Sleep for a very short time to allow thread to get high priority
+                                Thread.sleep(1);
+                                // Set this thread to max priority
+                                Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+                                
+                                // Calculate when to play the note (slightly in the future)
+                                long currentTime = System.currentTimeMillis();
+                                long targetTime = currentTime + lookAheadMs;
+                                long waitTime = targetTime - System.currentTimeMillis();
+                                
+                                // Wait until precise time to play the note
+                                if (waitTime > 0) {
+                                    Thread.sleep(waitTime);
+                                }
+                                
+                                // Play the note exactly when needed
+                                channel.noteOn(note, velocity);
+                                
+                                // Sleep for note duration
+                                Thread.sleep(durationMs);
+                                
+                                // Turn off the note
+                                channel.noteOff(note);
+                            } catch (InterruptedException e) {
+                                // Ignore interruptions
+                            }
+                        }).start();
+                    } else {
+                        // Original direct playback code
+                        channel.noteOn(note, velocity);
+                        
+                        // Schedule note off with our gate time
+                        java.util.Timer timer = new java.util.Timer(true);
+                        timer.schedule(new java.util.TimerTask() {
+                            @Override
+                            public void run() {
+                                channel.noteOff(note);
+                                timer.cancel();
+                            }
+                        }, durationMs);
+                    }
                 }
             } catch (Exception e) {
                 System.err.println("Error playing note: " + e.getMessage());
