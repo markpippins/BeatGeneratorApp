@@ -47,27 +47,22 @@ public class PlayersTableModel extends DefaultTableModel {
     public static final String COL_PRESERVE = "Preserve";
     public static final String COL_SPARSE = "Sparse";
 
-    public static final Set<String> COLUMNS = new LinkedHashSet<>(Arrays.asList(
-            COL_ID, COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_PRESET, COL_NOTE, COL_LEVEL, COL_MUTE,
-            COL_PAN, COL_MIN_VEL, COL_MAX_VEL, COL_SWING,
-            COL_PROBABILITY, COL_RANDOM, COL_SPARSE,
-            COL_RATCHET_COUNT, COL_RATCHET_INTERVAL, COL_INT_BEATS,
-            COL_INT_BARS, COL_STICKY, COL_PRESERVE));
+    public static final Set<String> COLUMNS = new LinkedHashSet<>(
+            Arrays.asList(COL_ID, COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_PRESET, COL_NOTE, COL_LEVEL, COL_PAN,
+                    COL_MIN_VEL, COL_MAX_VEL, COL_SWING, COL_PROBABILITY, COL_RANDOM, COL_SPARSE, COL_RATCHET_COUNT,
+                    COL_RATCHET_INTERVAL, COL_INT_BEATS, COL_INT_BARS, COL_MUTE, COL_STICKY, COL_PRESERVE));
 
     // IMPORTANT: Make the ID column hidden
     private static final Set<String> HIDDEN_COLUMN_NAMES = Set.of(COL_ID);
 
     private static final Set<String> STRING_COLUMN_NAMES = Set.of(COL_ID, COL_NAME, COL_INSTRUMENT);
-    private static final Set<String> BOOLEAN_COLUMN_NAMES = Set.of(
-            COL_MUTE, COL_STICKY, COL_PRESERVE);
+    private static final Set<String> BOOLEAN_COLUMN_NAMES = Set.of(COL_MUTE, COL_STICKY, COL_PRESERVE);
 
     private static final int[] BOOLEAN_COLUMNS = BOOLEAN_COLUMN_NAMES.stream()
-            .mapToInt(name -> new ArrayList<>(COLUMNS).indexOf(name))
-            .toArray();
+            .mapToInt(name -> new ArrayList<>(COLUMNS).indexOf(name)).toArray();
 
     private static final int[] STRING_COLUMNS = STRING_COLUMN_NAMES.stream()
-            .mapToInt(name -> new ArrayList<>(COLUMNS).indexOf(name))
-            .toArray();
+            .mapToInt(name -> new ArrayList<>(COLUMNS).indexOf(name)).toArray();
 
     private static final int[] NUMERIC_COLUMNS = initNumericColumns();
 
@@ -75,13 +70,13 @@ public class PlayersTableModel extends DefaultTableModel {
         Set<Integer> booleanCols = Arrays.stream(BOOLEAN_COLUMNS).boxed().collect(Collectors.toSet());
         Set<Integer> stringCols = Arrays.stream(STRING_COLUMNS).boxed().collect(Collectors.toSet());
         List<Integer> numericCols = new ArrayList<>();
-        
+
         for (int i = 0; i < getColumnNames().length; i++) {
             if (!booleanCols.contains(i) && !stringCols.contains(i)) {
                 numericCols.add(i);
             }
         }
-        
+
         return numericCols.stream().mapToInt(Integer::intValue).toArray();
     }
 
@@ -131,15 +126,15 @@ public class PlayersTableModel extends DefaultTableModel {
 
                             if (device != null) {
                                 instrument.setDevice(device);
-                                logger.info("Initialized device for instrument: " + instrument.getName() +
-                                        " with device: " + device.getDeviceInfo().getName());
+                                logger.info("Initialized device for instrument: " + instrument.getName()
+                                        + " with device: " + device.getDeviceInfo().getName());
                             } else {
-                                logger.error("Device not found: " + instrument.getDeviceName() +
-                                        " for instrument: " + instrument.getName());
+                                logger.error("Device not found: " + instrument.getDeviceName() + " for instrument: "
+                                        + instrument.getName());
                             }
                         } catch (Exception e) {
-                            logger.error("Error initializing device for instrument " +
-                                    instrument.getName() + ": " + e.getMessage());
+                            logger.error("Error initializing device for instrument " + instrument.getName() + ": "
+                                    + e.getMessage());
                         }
                     }
 
@@ -154,7 +149,8 @@ public class PlayersTableModel extends DefaultTableModel {
     }
 
     public void updatePlayerRow(Player player, int modelRow) {
-        if (player == null) return;
+        if (player == null)
+            return;
 
         try {
             setValueAt(player.getName(), modelRow, getColumnIndex(COL_NAME));
@@ -181,14 +177,15 @@ public class PlayersTableModel extends DefaultTableModel {
     }
 
     /**
-     * Updates a player row given just a Player object
-     * Automatically finds the correct row for the player
+     * Updates a player row given just a Player object Automatically finds the
+     * correct row for the player
      * 
      * @param player The player to update in the table
      */
     public void updatePlayerRow(Player player) {
-        if (player == null) return;
-        
+        if (player == null)
+            return;
+
         // Find the row for this player by ID
         int modelRow = findPlayerRowIndexById(player.getId());
         if (modelRow >= 0) {
@@ -201,12 +198,14 @@ public class PlayersTableModel extends DefaultTableModel {
 
     /**
      * Find the row index for a player by ID
+     * 
      * @param playerId The player ID to search for
      * @return The model row index, or -1 if not found
      */
     private int findPlayerRowIndexById(Long playerId) {
-        if (playerId == null) return -1;
-        
+        if (playerId == null)
+            return -1;
+
         // Search through all rows
         for (int i = 0; i < getRowCount(); i++) {
             Object idValue = getValueAt(i, getColumnIndex(COL_ID));
@@ -214,14 +213,14 @@ public class PlayersTableModel extends DefaultTableModel {
                 return i;
             }
         }
-        
+
         return -1;
     }
 
     public void addPlayerRow(Player player) {
         Object[] rowData = new Object[COLUMNS.size()];
 
-        rowData[getColumnIndex(COL_ID)] = player.getId();  // Store player ID
+        rowData[getColumnIndex(COL_ID)] = player.getId(); // Store player ID
         rowData[getColumnIndex(COL_NAME)] = player.getName();
         rowData[getColumnIndex(COL_CHANNEL)] = player.getChannel();
         rowData[getColumnIndex(COL_SWING)] = player.getSwing();
@@ -276,24 +275,24 @@ public class PlayersTableModel extends DefaultTableModel {
     // In PlayersTable setupCommandBusListener()
     public void handleCommandBusAction(String command, Object actionData) {
         switch (command) {
-            case Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX -> {
-                if (actionData instanceof Object[] data && data.length >= 2) {
-                    if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
-                        SwingUtilities.invokeLater(() -> {
-                            // Find player in table
-                            int rowIndex = findPlayerRowIndexById(playerId);
-                            if (rowIndex >= 0) {
-                                // Get player
-                                Player player = getPlayerAtRow(rowIndex);
-                                if (player != null) {
-                                    // Update table row
-                                    updatePlayerRow(player);
-                                }
+        case Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX -> {
+            if (actionData instanceof Object[] data && data.length >= 2) {
+                if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
+                    SwingUtilities.invokeLater(() -> {
+                        // Find player in table
+                        int rowIndex = findPlayerRowIndexById(playerId);
+                        if (rowIndex >= 0) {
+                            // Get player
+                            Player player = getPlayerAtRow(rowIndex);
+                            if (player != null) {
+                                // Update table row
+                                updatePlayerRow(player);
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             }
+        }
         }
     }
 

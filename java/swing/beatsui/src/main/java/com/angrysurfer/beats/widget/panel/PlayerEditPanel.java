@@ -54,356 +54,429 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private JComboBox<Instrument> instrumentCombo;
     private final JSpinner channelSpinner; // Changed from Dial to JSpinner
     private JSpinner presetSpinner; // Changed from Dial to JSpinner
-    
-        // Replace all these slider and button fields with just the detail panel
-        private final PlayerEditDetailPanel detailPanel;
-    
-        // Toggle switches
-        private final ToggleSwitch stickyPresetSwitch;
-        private final ToggleSwitch useInternalBeatsSwitch;
-        private final ToggleSwitch useInternalBarsSwitch;
-        private final ToggleSwitch preserveOnPurgeSwitch;
-    
-        // Rules table
-        private JTable rulesTable;
-        private final JButton addRuleButton;
-        private final JButton editRuleButton;
-        private final JButton deleteRuleButton;
-    
-        // Add these fields near the top with other UI components
-        private final JButton prevButton;
-        private final JButton nextButton;
-    
-        // First, add a new field for the preset combo box
-        private JComboBox<PresetItem> presetCombo;
-        private JPanel presetControlPanel; // Panel to swap between spinner and combo
-        private boolean usingInternalSynth = false;
-    
-        // Helper class to represent presets in the combo box
-        private static class PresetItem {
-            private final int number;
-            private final String name;
-    
-            public PresetItem(int number, String name) {
-                this.number = number;
-                this.name = name;
-            }
-    
-            public int getNumber() {
-                return number;
-            }
-    
-            public String getName() {
-                return name;
-            }
-    
+
+    // Replace all these slider and button fields with just the detail panel
+    private final PlayerEditDetailPanel detailPanel;
+
+    // Toggle switches
+    private final ToggleSwitch stickyPresetSwitch;
+    private final ToggleSwitch useInternalBeatsSwitch;
+    private final ToggleSwitch useInternalBarsSwitch;
+    private final ToggleSwitch preserveOnPurgeSwitch;
+
+    // Rules table
+    private JTable rulesTable;
+    private final JButton addRuleButton;
+    private final JButton editRuleButton;
+    private final JButton deleteRuleButton;
+
+    // Add these fields near the top with other UI components
+    private final JButton prevButton;
+    private final JButton nextButton;
+
+    // First, add a new field for the preset combo box
+    private JComboBox<PresetItem> presetCombo;
+    private JPanel presetControlPanel; // Panel to swap between spinner and combo
+    private boolean usingInternalSynth = false;
+
+    // Add these fields to PlayerEditPanel class
+    private JSpinner internalBarsSpinner;
+    private JSpinner internalBeatsSpinner;
+
+    // Helper class to represent presets in the combo box
+    private static class PresetItem {
+        private final int number;
+        private final String name;
+
+        public PresetItem(int number, String name) {
+            this.number = number;
+            this.name = name;
+        }
+
+        public int getNumber() {
+            return number;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    // Modify the constructor to fix initialization sequence
+    public PlayerEditPanel(Player player) {
+        super(new BorderLayout());
+        this.player = player; // Store player reference immediately
+
+        // Initialize UI components
+        nameField = new JTextField(player.getName());
+        channelSpinner = new JSpinner(createLongSpinnerModel(player.getChannel(), 0, 15, 1));
+        presetSpinner = new JSpinner(createLongSpinnerModel(player.getPreset(), 0, 127, 1));
+
+        // Initialize toggle switches
+        stickyPresetSwitch = createToggleSwitch("Sticky Preset", player.getStickyPreset());
+        useInternalBeatsSwitch = createToggleSwitch("Internal Beats", player.getUseInternalBeats());
+        useInternalBarsSwitch = createToggleSwitch("Internal Bars", player.getUseInternalBars());
+        preserveOnPurgeSwitch = createToggleSwitch("Preserve", player.getPreserveOnPurge());
+
+        // Initialize table and buttons
+        rulesTable = new JTable();
+        addRuleButton = new JButton("Add");
+        editRuleButton = new JButton("Edit");
+        deleteRuleButton = new JButton("Delete");
+        prevButton = new JButton("▲");
+        nextButton = new JButton("▼");
+
+        // Create the detail panel that contains all the sliders
+        detailPanel = new PlayerEditDetailPanel(player);
+
+        // Setup instrument combo
+        setupInstrumentCombo();
+
+        // Now setup preset controls based on the selected instrument
+        setupPresetControls();
+
+        // Layout all components
+        layoutComponents();
+
+        // Now setup the rules table AFTER all components are initialized
+        setupRulesTable();
+
+        // Debug player rules
+        debugPlayerState();
+
+        // The rest of your constructor...
+
+        // Rest of initialization
+        setPreferredSize(new Dimension(800, 500));
+
+        // Register command listeners
+        // ...existing command listener code...
+
+        // Add debugging to verify player and rules
+        logger.info(
+                player != null
+                        ? "PlayerEditPanel initialized for player: " + player.getName() + " with "
+                                + (player.getRules() != null ? player.getRules().size() : 0) + " rules"
+                        : "Player is null");
+
+        // Register for rule-related commands
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
-            public String toString() {
-                return name;
-            }
-        }
-    
-        // Modify the constructor to fix initialization sequence
-        public PlayerEditPanel(Player player) {
-            super(new BorderLayout());
-            this.player = player; // Store player reference immediately
-    
-            // Initialize UI components
-            nameField = new JTextField(player.getName());
-            channelSpinner = new JSpinner(createLongSpinnerModel(player.getChannel(), 0, 15, 1));
-            presetSpinner = new JSpinner(createLongSpinnerModel(player.getPreset(), 0, 127, 1));
-    
-            // Initialize toggle switches
-            stickyPresetSwitch = createToggleSwitch("Sticky Preset", player.getStickyPreset());
-            useInternalBeatsSwitch = createToggleSwitch("Internal Beats", player.getUseInternalBeats());
-            useInternalBarsSwitch = createToggleSwitch("Internal Bars", player.getUseInternalBars());
-            preserveOnPurgeSwitch = createToggleSwitch("Preserve", player.getPreserveOnPurge());
-    
-            // Initialize table and buttons
-            rulesTable = new JTable();
-            addRuleButton = new JButton("Add");
-            editRuleButton = new JButton("Edit");
-            deleteRuleButton = new JButton("Delete");
-            prevButton = new JButton("▲");
-            nextButton = new JButton("▼");
-    
-            // Create the detail panel that contains all the sliders
-            detailPanel = new PlayerEditDetailPanel(player);
-    
-            // Setup instrument combo
-            setupInstrumentCombo();
-    
-            // Now setup preset controls based on the selected instrument
-            setupPresetControls();
-    
-            // Layout all components
-            layoutComponents();
-    
-            // Now setup the rules table AFTER all components are initialized
-            setupRulesTable();
-    
-            // Debug player rules
-            debugPlayerState();
-    
-            // The rest of your constructor...
-    
-            // Rest of initialization
-            setPreferredSize(new Dimension(800, 500));
-    
-            // Register command listeners
-            // ...existing command listener code...
-    
-            // Add debugging to verify player and rules
-            logger.info(
-                    player != null
-                            ? "PlayerEditPanel initialized for player: " + player.getName() + " with "
-                                    + (player.getRules() != null ? player.getRules().size() : 0) + " rules"
-                            : "Player is null");
-    
-            // Register for rule-related commands
-            CommandBus.getInstance().register(new IBusListener() {
-                @Override
-                public void onAction(Command action) {
-                    if (action.getCommand() == null)
-                        return;
-    
-                    String cmd = action.getCommand();
-    
-                    // Use traditional if/else instead of pattern matching
-                    if (Commands.RULE_ADDED.equals(cmd) || Commands.RULE_EDITED.equals(cmd)
-                            || Commands.RULE_DELETED.equals(cmd)) {
-    
-                        // If a rule was added/edited/deleted for any player
-                        if (player != null) {
-                            // Refresh player from session to get latest rules
-                            Player updatedPlayer = SessionManager.getInstance().getActiveSession()
-                                    .getPlayer(player.getId());
-                            if (updatedPlayer != null) {
-                                // Update our player reference with latest rules
-                                player.setRules(updatedPlayer.getRules());
-                                updateRulesTable();
-                            }
+            public void onAction(Command action) {
+                if (action.getCommand() == null)
+                    return;
+
+                String cmd = action.getCommand();
+
+                // Use traditional if/else instead of pattern matching
+                if (Commands.RULE_ADDED.equals(cmd) || Commands.RULE_EDITED.equals(cmd)
+                        || Commands.RULE_DELETED.equals(cmd)) {
+
+                    // If a rule was added/edited/deleted for any player
+                    if (player != null) {
+                        // Refresh player from session to get latest rules
+                        Player updatedPlayer = SessionManager.getInstance().getActiveSession()
+                                .getPlayer(player.getId());
+                        if (updatedPlayer != null) {
+                            // Update our player reference with latest rules
+                            player.setRules(updatedPlayer.getRules());
+                            updateRulesTable();
                         }
                     }
                 }
-            });
-    
-            // Add this in the constructor after other initializations
-            registerForInstrumentUpdates();
-        }
-    
-        private void layoutComponents() {
-            setLayout(new BorderLayout(10, 10));
-            setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    
-            // Top panel for basic controls - now using GridBagLayout for two rows
-            JPanel topPanel = new JPanel(new GridBagLayout());
-            topPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Basic Properties"),
-                    BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-    
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(2, 5, 2, 5);
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-    
-            // First row
-            gbc.gridy = 0;
-            gbc.gridx = 0;
-            topPanel.add(new JLabel("Name:"), gbc);
-            gbc.gridx = 1;
-            gbc.weightx = 1.0;
-            topPanel.add(nameField, gbc);
-            gbc.gridx = 2;
-            gbc.weightx = 0.0;
-            topPanel.add(new JLabel("Instrument:"), gbc);
-            gbc.gridx = 3;
-            gbc.weightx = 1.0;
-            topPanel.add(instrumentCombo, gbc);
-    
-            // Second row
-            gbc.gridy = 1;
-            gbc.gridx = 0;
-            gbc.weightx = 0.0;
-            topPanel.add(new JLabel("Channel:"), gbc);
-            gbc.gridx = 1;
-            gbc.weightx = 1.0;
-            topPanel.add(channelSpinner, gbc);
-            gbc.gridx = 2;
-            gbc.weightx = 0.0;
-            topPanel.add(new JLabel("Preset:"), gbc);
-            gbc.gridx = 3;
-            gbc.weightx = 1.0;
-            topPanel.add(presetControlPanel, gbc);
-    
-            add(topPanel, BorderLayout.NORTH);
-    
-            // Main content with parameters and rules
-            JPanel mainContent = new JPanel(new BorderLayout());
-    
-            // Add the detail panel instead of creating performance/modulation/ratchet panels
-            mainContent.add(detailPanel, BorderLayout.CENTER);
-    
-            // Options panel with improved toggle switch layout
-            JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 5));
-            optionsPanel.setBorder(BorderFactory.createTitledBorder("Options"));
-    
-            // Add switches with labels in vertical panels
-            optionsPanel.add(createLabeledSwitch("Sticky Preset", stickyPresetSwitch));
-            optionsPanel.add(createLabeledSwitch("Internal Beats", useInternalBeatsSwitch));
-            optionsPanel.add(createLabeledSwitch("Internal Bars", useInternalBarsSwitch));
-            optionsPanel.add(createLabeledSwitch("Preserve", preserveOnPurgeSwitch));
-    
-            mainContent.add(optionsPanel, BorderLayout.SOUTH);
-    
-            // Rules panel
-            setupRulesPanel();
-    
-            // Combine parameters and rules with split pane
-            JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainContent, createRulesPanel());
-            splitPane.setResizeWeight(0.7);
-            add(splitPane, BorderLayout.CENTER);
-        }
-    
-        // Fix the getUpdatedPlayer() method with proper null checking
-        public Player getUpdatedPlayer() {
-            // Get currently selected instrument from combo box
-            Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
-    
-            // Ensure the device setting is preserved when returning the updated player
-            if (selectedInstrument != null) {
-                player.setInstrument(selectedInstrument);
             }
-    
-            // Only set instrument and ID if an instrument is actually selected
-            if (selectedInstrument != null) {
-                player.setInstrument(selectedInstrument);
-                player.setInstrumentId(selectedInstrument.getId());
-                logger.debug("Selected instrument: " + selectedInstrument.getName() + " (ID: " + selectedInstrument.getId()
-                        + ")");
-            } else {
-                // Log warning and keep existing instrument (if any)
-                logger.error("No instrument selected in combo box");
-            }
-    
-            // These operations are safe as spinners always have values
-            player.setChannel(((Number) channelSpinner.getValue()).intValue());
-            
-            // Get preset from either the spinner or combo depending on which is active
-            if (usingInternalSynth && presetCombo.getSelectedItem() != null) {
-                player.setPreset((long) ((PresetItem)presetCombo.getSelectedItem()).getNumber());
-            } else {
-                player.setPreset(((Number) presetSpinner.getValue()).longValue());
-            }
-    
-            // Use detailPanel to update all the slider values
-            detailPanel.updatePlayer();
-    
-            // Set name and toggle switch values
-            player.setName(nameField.getText());
-            player.setStickyPreset(stickyPresetSwitch.isSelected());
-            player.setUseInternalBeats(useInternalBeatsSwitch.isSelected());
-            player.setUseInternalBars(useInternalBarsSwitch.isSelected());
-            player.setPreserveOnPurge(preserveOnPurgeSwitch.isSelected());
-    
-            return player;
-        }
-    
-        // Helper methods for creating components
-        private void setupInstrumentCombo() {
-            instrumentCombo = new JComboBox<>();
-            
-            // Add custom renderer to display instrument names
-            instrumentCombo.setRenderer(new DefaultListCellRenderer() {
-                @Override
-                public Component getListCellRendererComponent(JList<?> list, Object value, 
-                        int index, boolean isSelected, boolean cellHasFocus) {
-                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    
-                    if (value instanceof Instrument) {
-                        Instrument instrument = (Instrument) value;
-                        setText(instrument.getName());
-                    }
-                    return this;
-                }
-            });
-    
-            // Get instruments from UserConfigManager
-            List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
-            
-            // Add internal synths from InternalSynthManager
-            instruments.addAll(InternalSynthManager.getInstance().getInternalSynths());
-    
-            if (instruments == null || instruments.isEmpty()) {
-                logger.error("No instruments found");
-                // Add a default instrument to prevent null selections
-                Instrument defaultInstrument = new Instrument();
-                defaultInstrument.setId(0L);
-                defaultInstrument.setName("Default Instrument");
-                instrumentCombo.addItem(defaultInstrument);
-            } else {
-                // Sort instruments by name
-                instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-    
-                for (Instrument inst : instruments) {
-                    if (inst.getAvailable())
-                        instrumentCombo.addItem(inst);
-                }
-            }
-    
-            // Select the player's instrument if it exists
-            if (player.getInstrument() != null) {
-                for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
-                    Instrument item = instrumentCombo.getItemAt(i);
-                    if (item.getId().equals(player.getInstrument().getId())) {
-                        instrumentCombo.setSelectedIndex(i);
-                        
-                        // Check if it's an internal synth
-                        usingInternalSynth = InternalSynthManager.getInstance().isInternalSynth(item);
-                        break;
-                    }
-                }
-            }
-            
-            // Add listener to update preset controls when instrument changes
-            instrumentCombo.addActionListener(e -> {
-                if (e.getActionCommand().equals("comboBoxChanged")) {
-                    Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
-                    if (selectedInstrument != null) {
-                        boolean isInternal = InternalSynthManager.getInstance().isInternalSynth(selectedInstrument);
-                        if (isInternal != usingInternalSynth) {
-                            usingInternalSynth = isInternal;
-                            updatePresetControls();
-                        }
-                    }
-                }
-            });
-        }
-    
-        // Create a new method to initialize the preset controls
-        private void setupPresetControls() {
-            // Create both the spinner and combo
-            presetSpinner = new JSpinner(createLongSpinnerModel(player.getPreset(), 0, 127, 1));
+        });
+
+        // Add this in the constructor after other initializations
+        registerForInstrumentUpdates();
+    }
+
+    private void layoutComponents() {
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Top panel for basic controls - now using GridBagLayout for two rows
+        JPanel topPanel = new JPanel(new GridBagLayout());
+        topPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Basic Properties"),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(2, 5, 2, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // First row
+        gbc.gridy = 0;
+        gbc.gridx = 0;
+        topPanel.add(new JLabel("Name:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        topPanel.add(nameField, gbc);
+        gbc.gridx = 2;
+        gbc.weightx = 0.0;
+        topPanel.add(new JLabel("Instrument:"), gbc);
+        gbc.gridx = 3;
+        gbc.weightx = 1.0;
+        topPanel.add(instrumentCombo, gbc);
+
+        // Second row
+        gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.weightx = 0.0;
+        topPanel.add(new JLabel("Channel:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        topPanel.add(channelSpinner, gbc);
+        gbc.gridx = 2;
+        gbc.weightx = 0.0;
+        topPanel.add(new JLabel("Preset:"), gbc);
+        gbc.gridx = 3;
+        gbc.weightx = 1.0;
+        topPanel.add(presetControlPanel, gbc);
+
+        add(topPanel, BorderLayout.NORTH);
+
+        // Main content with parameters and rules
+        JPanel mainContent = new JPanel(new BorderLayout());
+
+        // Add the detail panel instead of creating performance/modulation/ratchet
+        // panels
+        mainContent.add(detailPanel, BorderLayout.CENTER);
+
+        // Replace the original options panel with our new one
+        JPanel optionsPanel = createOptionsPanel();
+
+        mainContent.add(optionsPanel, BorderLayout.SOUTH);
+
+        // Rules panel
+        setupRulesPanel();
+
+        // Combine parameters and rules with split pane
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainContent, createRulesPanel());
+        splitPane.setResizeWeight(1.0);
+        add(splitPane, BorderLayout.CENTER);
+    }
+
+    private JPanel createOptionsPanel() {
+        // Main options panel using FlowLayout with reduced gap spacing
+        JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 3));
+        optionsPanel.setBorder(BorderFactory.createTitledBorder("Options"));
+
+        // Initialize spinners with player values
+        internalBeatsSpinner = new JSpinner(
+                createLongSpinnerModel(player.getInternalBeats() != null ? player.getInternalBeats()
+                        : SessionManager.getInstance().getActiveSession().getBeatsPerBar(), 1, 256, 1));
+        internalBarsSpinner = new JSpinner(
+                createLongSpinnerModel(player.getInternalBars() != null ? player.getInternalBars()
+                        : SessionManager.getInstance().getActiveSession().getPartLength(), 1, 256, 1));
         
+        // Make spinners smaller
+        Dimension spinnerSize = new Dimension(50, 25);
+        internalBeatsSpinner.setPreferredSize(spinnerSize);
+        internalBarsSpinner.setPreferredSize(spinnerSize);
+        
+        // Create individual toggle switch panels
+        JPanel preservePanel = createLabeledSwitch("Preserve", preserveOnPurgeSwitch);
+        JPanel stickyPresetPanel = createLabeledSwitch("Sticky Preset", stickyPresetSwitch);
+
+        // Internal Beats section - more compact FlowLayout 
+        JPanel internalBeatsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 1));
+        internalBeatsPanel.setBorder(BorderFactory.createTitledBorder("Internal Beats"));
+
+        // Add components directly to the FlowLayout panel
+        internalBeatsPanel.add(useInternalBeatsSwitch);
+        // JLabel beatsLabel = new JLabel("Beats:");
+        // beatsLabel.setFont(beatsLabel.getFont().deriveFont(11f)); // Smaller font
+        // internalBeatsPanel.add(beatsLabel);
+        internalBeatsPanel.add(internalBeatsSpinner);
+
+        // Internal Bars section - more compact FlowLayout
+        JPanel internalBarsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 1));
+        internalBarsPanel.setBorder(BorderFactory.createTitledBorder("Internal Bars"));
+
+        // Add components directly to the FlowLayout panel
+        internalBarsPanel.add(useInternalBarsSwitch);
+        // JLabel barsLabel = new JLabel("Bars:");
+        // barsLabel.setFont(barsLabel.getFont().deriveFont(11f)); // Smaller font
+        // internalBarsPanel.add(barsLabel);
+        internalBarsPanel.add(internalBarsSpinner);
+
+        // Add all components to the options panel in one row
+        optionsPanel.add(preservePanel);
+        optionsPanel.add(stickyPresetPanel);
+        optionsPanel.add(internalBeatsPanel);
+        optionsPanel.add(internalBarsPanel);
+
+        // Add state change listeners to enable/disable controls based on toggle state
+        useInternalBeatsSwitch.addActionListener(e -> updateInternalBeatsControls());
+        useInternalBarsSwitch.addActionListener(e -> updateInternalBarsControls());
+
+        // Initialize control states
+        updateInternalBeatsControls();
+        updateInternalBarsControls();
+
+        return optionsPanel;
+    }
+
+    private void updateInternalBeatsControls() {
+        boolean enabled = useInternalBeatsSwitch.isSelected();
+        internalBeatsSpinner.setEnabled(enabled);
+    }
+
+    private void updateInternalBarsControls() {
+        boolean enabled = useInternalBarsSwitch.isSelected();
+        internalBarsSpinner.setEnabled(enabled);
+    }
+
+    // Fix the getUpdatedPlayer() method with proper null checking
+    public Player getUpdatedPlayer() {
+        // Get currently selected instrument from combo box
+        Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
+
+        // Ensure the device setting is preserved when returning the updated player
+        if (selectedInstrument != null) {
+            player.setInstrument(selectedInstrument);
+        }
+
+        // Only set instrument and ID if an instrument is actually selected
+        if (selectedInstrument != null) {
+            player.setInstrument(selectedInstrument);
+            player.setInstrumentId(selectedInstrument.getId());
+            logger.debug("Selected instrument: " + selectedInstrument.getName() + " (ID: " + selectedInstrument.getId()
+                    + ")");
+        } else {
+            // Log warning and keep existing instrument (if any)
+            logger.error("No instrument selected in combo box");
+        }
+
+        // These operations are safe as spinners always have values
+        player.setChannel(((Number) channelSpinner.getValue()).intValue());
+
+        // Get preset from either the spinner or combo depending on which is active
+        if (usingInternalSynth && presetCombo.getSelectedItem() != null) {
+            player.setPreset((long) ((PresetItem) presetCombo.getSelectedItem()).getNumber());
+        } else {
+            player.setPreset(((Number) presetSpinner.getValue()).longValue());
+        }
+
+        // Use detailPanel to update all the slider values
+        detailPanel.updatePlayer();
+
+        // Set name and toggle switch values
+        player.setName(nameField.getText());
+        player.setStickyPreset(stickyPresetSwitch.isSelected());
+        player.setUseInternalBeats(useInternalBeatsSwitch.isSelected());
+        player.setUseInternalBars(useInternalBarsSwitch.isSelected());
+        player.setPreserveOnPurge(preserveOnPurgeSwitch.isSelected());
+
+        // Also set the internal timing values
+        player.setInternalBars(((Double) internalBarsSpinner.getValue()).intValue());
+        player.setInternalBeats(((Double) internalBeatsSpinner.getValue()).intValue());
+
+        return player;
+    }
+
+    // Helper methods for creating components
+    private void setupInstrumentCombo() {
+        instrumentCombo = new JComboBox<>();
+
+        // Add custom renderer to display instrument names
+        instrumentCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+                    boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+                if (value instanceof Instrument) {
+                    Instrument instrument = (Instrument) value;
+                    setText(instrument.getName());
+                }
+                return this;
+            }
+        });
+
+        // Get instruments from UserConfigManager
+        List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
+
+        // Add internal synths from InternalSynthManager
+        instruments.addAll(InternalSynthManager.getInstance().getInternalSynths());
+
+        if (instruments == null || instruments.isEmpty()) {
+            logger.error("No instruments found");
+            // Add a default instrument to prevent null selections
+            Instrument defaultInstrument = new Instrument();
+            defaultInstrument.setId(0L);
+            defaultInstrument.setName("Default Instrument");
+            instrumentCombo.addItem(defaultInstrument);
+        } else {
+            // Sort instruments by name
+            instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
+            for (Instrument inst : instruments) {
+                if (inst.getAvailable())
+                    instrumentCombo.addItem(inst);
+            }
+        }
+
+        // Select the player's instrument if it exists
+        if (player.getInstrument() != null) {
+            for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
+                Instrument item = instrumentCombo.getItemAt(i);
+                if (item.getId().equals(player.getInstrument().getId())) {
+                    instrumentCombo.setSelectedIndex(i);
+
+                    // Check if it's an internal synth
+                    usingInternalSynth = InternalSynthManager.getInstance().isInternalSynth(item);
+                    break;
+                }
+            }
+        }
+
+        // Add listener to update preset controls when instrument changes
+        instrumentCombo.addActionListener(e -> {
+            if (e.getActionCommand().equals("comboBoxChanged")) {
+                Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
+                if (selectedInstrument != null) {
+                    boolean isInternal = InternalSynthManager.getInstance().isInternalSynth(selectedInstrument);
+                    if (isInternal != usingInternalSynth) {
+                        usingInternalSynth = isInternal;
+                        updatePresetControls();
+                    }
+                }
+            }
+        });
+    }
+
+    // Create a new method to initialize the preset controls
+    private void setupPresetControls() {
+        // Create both the spinner and combo
+        presetSpinner = new JSpinner(createLongSpinnerModel(player.getPreset(), 0, 127, 1));
+
         presetCombo = new JComboBox<>();
         presetCombo.setPreferredSize(presetSpinner.getPreferredSize());
-        
+
         // Create container panel with CardLayout
         presetControlPanel = new JPanel(new CardLayout());
         presetControlPanel.add(presetSpinner, "spinner");
         presetControlPanel.add(presetCombo, "combo");
-        
+
         // Initial state based on the instrument
         if (player.getInstrument() != null) {
             usingInternalSynth = InternalSynthManager.getInstance().isInternalSynth(player.getInstrument());
         }
-        
+
         // Populate the appropriate control
         updatePresetControls();
     }
-    
+
     // Add method to update preset controls based on instrument type
     private void updatePresetControls() {
         CardLayout cl = (CardLayout) presetControlPanel.getLayout();
-        
+
         if (usingInternalSynth) {
             // Switch to combo box and populate with named presets
             populatePresetCombo();
@@ -415,22 +488,22 @@ public class PlayerEditPanel extends StatusProviderPanel {
             cl.show(presetControlPanel, "spinner");
         }
     }
-    
+
     // Add method to populate the preset combo
     private void populatePresetCombo() {
         Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
-        if (selectedInstrument == null) return;
-        
+        if (selectedInstrument == null)
+            return;
+
         // Remember current preset
         long currentPreset = player.getPreset() != null ? player.getPreset() : 0;
-        
+
         // Clear the combo
         presetCombo.removeAllItems();
-        
+
         // Get preset names from InternalSynthManager
-        List<String> presetNames = InternalSynthManager.getInstance()
-                                    .getPresetNames(selectedInstrument.getId());
-                                    
+        List<String> presetNames = InternalSynthManager.getInstance().getPresetNames(selectedInstrument.getId());
+
         // If no presets found, use generic names
         if (presetNames.isEmpty()) {
             for (int i = 0; i < 128; i++) {
@@ -441,13 +514,13 @@ public class PlayerEditPanel extends StatusProviderPanel {
             for (int i = 0; i < presetNames.size(); i++) {
                 presetCombo.addItem(new PresetItem(i, presetNames.get(i)));
             }
-            
+
             // Add remaining numbered presets if needed
             for (int i = presetNames.size(); i < 128; i++) {
                 presetCombo.addItem(new PresetItem(i, "Program " + i));
             }
         }
-        
+
         // Select the current preset
         for (int i = 0; i < presetCombo.getItemCount(); i++) {
             PresetItem item = presetCombo.getItemAt(i);
@@ -736,24 +809,23 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private JPanel createRulesPanel() {
         // Create main panel
         JPanel rulesPanel = new JPanel(new BorderLayout(5, 5));
-        rulesPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Rules"),
+        rulesPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Rules"),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
         // Add table in a scroll pane
         JScrollPane scrollPane = new JScrollPane(rulesTable);
         scrollPane.setPreferredSize(new Dimension(300, 200));
         rulesPanel.add(scrollPane, BorderLayout.CENTER);
-        
+
         // Create button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         buttonPanel.add(addRuleButton);
         buttonPanel.add(editRuleButton);
         buttonPanel.add(deleteRuleButton);
-        
+
         // Add button panel to bottom of rules panel
         rulesPanel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         return rulesPanel;
     }
 }

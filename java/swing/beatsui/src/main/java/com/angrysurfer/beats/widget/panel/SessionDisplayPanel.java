@@ -2,8 +2,6 @@ package com.angrysurfer.beats.widget.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.HashMap;
@@ -18,6 +16,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -25,7 +24,6 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.beats.widget.UIHelper;
 
 /**
  * Panel that displays session timing information (left side of toolbar)
@@ -184,53 +182,69 @@ public class SessionDisplayPanel extends JPanel {
         timingBus.register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null)
+                if (action.getCommand() == null || currentSession == null)
                     return;
 
                 SwingUtilities.invokeLater(() -> {
                     switch (action.getCommand()) {
                     case Commands.TIMING_TICK -> {
                         if (action.getData() instanceof Number tickVal) {
+                            System.out.format("Tick event: %d\n", action.getData());
+
                             // Update current tick position
                             tickField.setText(String.valueOf(tickVal));
+                            tickCountField.setText(String.valueOf(currentSession.getTickCount()));
 
-                            // Also update counter field if needed
-                            if (currentSession != null) {
-                                tickField.setText(String.valueOf(currentSession.getTick()));
-                            }
+                            tickField.invalidate();
+                            tickField.repaint(); 
+
+                            tickCountField.invalidate();
+                            tickCountField.repaint(); 
                         }
                     }
                     case Commands.TIMING_BEAT -> {
                         if (action.getData() instanceof Number beatVal) {
-                            // Update current beat position
-                            beatField.setText(String.valueOf(currentSession.getBeat()));
+                            System.out.format("Beat event: %s\n", ((Number) action.getData()).toString());   
 
-                            // Also update counter field if needed
-                            if (currentSession != null) {
-                                beatCountField.setText(String.valueOf(currentSession.getBeatCount()));
-                            }
+                            // Update current beat position
+                            beatField.setText(String.valueOf(beatVal));
+                            beatCountField.setText(String.valueOf(currentSession.getBeatCount()));
+
+                            beatField.invalidate();
+                            beatField.repaint(); 
+
+                            beatCountField.invalidate();
+                            beatCountField.repaint(); 
                         }
                     }
                     case Commands.TIMING_BAR -> {
                         if (action.getData() instanceof Number barVal) {
+                            System.out.format("Bar event: %d\n", action.getData());
+                            
                             // Update current bar position
-                            barField.setText(String.valueOf(currentSession.getBar()));
+                            barField.setText(String.valueOf(barVal));
+                            barCountField.setText(String.valueOf(currentSession.getBarCount()));
 
-                            // Also update counter field if needed
-                            if (currentSession != null) {
-                                barCountField.setText(String.valueOf(currentSession.getBarCount()));
-                            }
+                            barField.invalidate();
+                            barField.repaint(); 
+
+                            barCountField.invalidate();
+                            barCountField.repaint(); 
                         }
                     }
                     case Commands.TIMING_PART -> {
                         if (action.getData() instanceof Number partVal) {
-                            // Update current part position
-                            partField.setText(String.valueOf(currentSession.getPart()));
+                            System.out.format("Part event: %d\n", action.getData());
 
-                            // Update part count from session to ensure consistency
-                            if (currentSession != null) {
-                                partCountField.setText(String.valueOf(currentSession.getPartCount()));
-                            }
+                            // Update current part position
+                            partField.setText(String.valueOf(partVal));
+                            partCountField.setText(String.valueOf(currentSession.getPartCount()));
+
+                            partField.invalidate();
+                            partField.repaint(); 
+
+                            partCountField.invalidate();
+                            partCountField.repaint(); 
                         }
                     }
                     case Commands.TIMING_RESET -> {
