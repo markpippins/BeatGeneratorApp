@@ -17,6 +17,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -47,6 +48,9 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     private javax.swing.Timer stepTimer;
 
     private Synthesizer synthesizer = null;
+
+    // Add this field to X0XPanel
+    private JComboBox<PresetItem> presetCombo;
 
     public X0XPanel() {
         super(new BorderLayout());
@@ -429,19 +433,106 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         return i == 0 ? "Note" : i == 1 ? "Vel." : i == 2 ? "Gate" : "Prob.";
     }
 
+    /**
+     * Inner class to represent preset items in the combo box
+     */
+    private static class PresetItem {
+        private final int number;
+        private final String name;
+        
+        public PresetItem(int number, String name) {
+            this.number = number;
+            this.name = name;
+        }
+        
+        public int getNumber() {
+            return number;
+        }
+        
+        public String getName() {
+            return name;
+        }
+        
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    /**
+     * Create a panel with a preset selector combo box
+     */
     private JPanel createPresetPanel() {
-        JPanel presetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JPanel presetPanel = new JPanel(new BorderLayout(5, 5));
         presetPanel.setBorder(BorderFactory.createTitledBorder("Synth Presets"));
         
-        JButton presetButton1 = new JButton("Preset 1");
-        JButton presetButton2 = new JButton("Preset 2");
-        JButton presetButton3 = new JButton("Preset 3");
+        // Create preset combo box
+        presetCombo = new JComboBox<>();
+        populatePresetCombo();
         
-        presetPanel.add(presetButton1);
-        presetPanel.add(presetButton2);
-        presetPanel.add(presetButton3);
+        // Add listener to change synth preset when selected
+        presetCombo.addActionListener(e -> {
+            if (presetCombo.getSelectedItem() instanceof PresetItem) {
+                PresetItem item = (PresetItem) presetCombo.getSelectedItem();
+                setProgramChange(item.getNumber());
+                System.out.println("Selected preset: " + item.getName() + " (#" + item.getNumber() + ")");
+            }
+        });
+        
+        // Add a label and the combo box to the panel
+        JPanel innerPanel = new JPanel(new BorderLayout(5, 0));
+        innerPanel.add(new JLabel("Preset:"), BorderLayout.WEST);
+        innerPanel.add(presetCombo, BorderLayout.CENTER);
+        
+        presetPanel.add(innerPanel, BorderLayout.NORTH);
         
         return presetPanel;
+    }
+
+    /**
+     * Load presets for the current instrument into the combo box
+     */
+    private void populatePresetCombo() {
+        presetCombo.removeAllItems();
+        
+        // Get preset names from InternalSynthManager - use GM synth ID (1)
+        List<String> presetNames = InternalSynthManager.getInstance().getPresetNames(1L);
+        
+        // If no presets found, use generic names
+        if (presetNames.isEmpty()) {
+            for (int i = 0; i < 128; i++) {
+                presetCombo.addItem(new PresetItem(i, "Program " + i));
+            }
+        } else {
+            // Add all named presets
+            for (int i = 0; i < presetNames.size(); i++) {
+                presetCombo.addItem(new PresetItem(i, presetNames.get(i)));
+            }
+        }
+        
+        // Select the first preset by default
+        if (presetCombo.getItemCount() > 0) {
+            presetCombo.setSelectedIndex(0);
+        }
+    }
+
+    /**
+     * Send program change to the synthesizer
+     */
+    private void setProgramChange(int program) {
+        if (synthesizer != null && synthesizer.isOpen()) {
+            try {
+                // Use channel 16 (index 15)
+                MidiChannel channel = synthesizer.getChannels()[15];
+                
+                if (channel != null) {
+                    channel.programChange(program);
+                    System.out.println("Changed synth program to " + program);
+                }
+            } catch (Exception e) {
+                System.err.println("Error changing program: " + e.getMessage());
+            }
+        }
     }
 
     /**
