@@ -166,7 +166,7 @@ public class ControlPanel extends JPanel {
         // Add action listeners
         upButton.addActionListener(e -> {
             if (activePlayer != null) {
-                int currentNote = activePlayer.getNote().intValue();
+                int currentNote = activePlayer.getRootNote().intValue();
                 int newNote = Math.min(127, currentNote + 12); // Don't exceed 127 (max MIDI note)
 
                 // Only update if it actually changed
@@ -174,7 +174,7 @@ public class ControlPanel extends JPanel {
                     logger.info("Octave UP: Changing note from " + currentNote + " to " + newNote);
 
                     // Update player's note
-                    activePlayer.setNote((long) newNote);
+                    activePlayer.setRootNote((long) newNote);
 
                     // Update the dials (without triggering listeners)
                     noteSelectionDial.setValue(newNote, false);
@@ -193,7 +193,7 @@ public class ControlPanel extends JPanel {
 
         downButton.addActionListener(e -> {
             if (activePlayer != null) {
-                int currentNote = activePlayer.getNote().intValue();
+                int currentNote = activePlayer.getRootNote().intValue();
                 int newNote = Math.max(0, currentNote - 12); // Don't go below 0 (min MIDI note)
 
                 // Only update if it actually changed
@@ -201,7 +201,7 @@ public class ControlPanel extends JPanel {
                     logger.info("Octave DOWN: Changing note from " + currentNote + " to " + newNote);
 
                     // Update player's note
-                    activePlayer.setNote((long) newNote);
+                    activePlayer.setRootNote((long) newNote);
 
                     // Update the dials (without triggering listeners)
                     noteSelectionDial.setValue(newNote, false);
@@ -607,7 +607,7 @@ public class ControlPanel extends JPanel {
             logger.info("Updating player note to: " + value);
 
             // Update player and save
-            activePlayer.setNote((long) value);
+            activePlayer.setRootNote((long) value);
             PlayerManager.getInstance().updatePlayerNote(activePlayer, value);
 
             // Request row refresh
@@ -629,7 +629,7 @@ public class ControlPanel extends JPanel {
 
             // Get player values, handle potential nulls
             int level = player.getLevel() != null ? player.getLevel().intValue() : 64;
-            int note = player.getNote() != null ? player.getNote().intValue() : 60;
+            int note = player.getRootNote() != null ? player.getRootNote().intValue() : 60;
             int swing = player.getSwing() != null ? player.getSwing().intValue() : 0;
             int minVelocity = player.getMinVelocity() != null ? player.getMinVelocity().intValue() : 64;
             int maxVelocity = player.getMaxVelocity() != null ? player.getMaxVelocity().intValue() : 127;

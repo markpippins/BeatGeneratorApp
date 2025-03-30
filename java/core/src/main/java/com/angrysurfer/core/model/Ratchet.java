@@ -7,7 +7,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.service.MidiClockSource;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -33,7 +32,7 @@ public class Ratchet extends Strike {
         Long ratchets = getSession().getPlayers().stream().filter(p -> p instanceof Ratchet).count() + 1;
 
         setId(9000 + ratchets);
-        setNote(getParent().getNote());
+        setRootNote(getParent().getRootNote());
         setInstrument(getParent().getInstrument());
         setChannel(getParent().getChannel());
         setSubDivisions(getParent().getSubDivisions());
@@ -78,7 +77,7 @@ public class Ratchet extends Strike {
     public void onTick(long tickCount, long beatCount, long barCount, long partCount) {
 
         if (isProbable())
-            drumNoteOn((long) (getNote() + getSession().getNoteOffset()));
+            drumNoteOn((long) (getRootNote() + getSession().getNoteOffset()));
 
         if (tickCount > targetTick + 1) {
             // First publish that this player is being deleted

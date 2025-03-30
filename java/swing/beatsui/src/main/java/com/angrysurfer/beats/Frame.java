@@ -205,8 +205,8 @@ public class Frame extends JFrame implements AutoCloseable {
                     if (keyChar == 'a') {
                         // Special case for 'a' key handling...
                         Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-                        if (activePlayer != null && activePlayer.getNote() != null) {
-                            int playerNote = activePlayer.getNote().intValue();
+                        if (activePlayer != null && activePlayer.getRootNote() != null) {
+                            int playerNote = activePlayer.getRootNote().intValue();
                             logger.info("A key pressed - Playing active player's note: " + playerNote);
                             
                             // Determine command based on shift key
@@ -226,8 +226,8 @@ public class Frame extends JFrame implements AutoCloseable {
                         Player activePlayer = PlayerManager.getInstance().getActivePlayer();
                         int noteToPlay = baseNote;
                         
-                        if (activePlayer != null && activePlayer.getNote() != null) {
-                            int playerOctave = activePlayer.getNote().intValue() / 12;
+                        if (activePlayer != null && activePlayer.getRootNote() != null) {
+                            int playerOctave = activePlayer.getRootNote().intValue() / 12;
                             int baseOctave = 5; // Default keyboard mapping is in octave 5
                             
                             // Adjust the note by the octave difference

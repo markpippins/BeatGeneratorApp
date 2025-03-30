@@ -278,7 +278,7 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
                 // For channel 9 (MIDI channel 10), show drum name instead of preset
                 if (player.getChannel() == 9) {
                     // Get drum name for the note
-                    String drumName = InternalSynthManager.getInstance().getDrumName(player.getNote().intValue());
+                    String drumName = InternalSynthManager.getInstance().getDrumName(player.getRootNote().intValue());
                     playerInfo.append(" - ").append(drumName);
                 } else {
                     // For other channels, show preset name
@@ -682,7 +682,7 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
                 // For channel 9 (MIDI channel 10), show drum name instead of preset
                 if (player.getChannel() == 9) {
                     // Get drum name for the note
-                    String drumName = InternalSynthManager.getInstance().getDrumName(player.getNote().intValue());
+                    String drumName = InternalSynthManager.getInstance().getDrumName(player.getRootNote().intValue());
                     playerInfo.append(" - ").append(drumName);
                 } else {
                     // For other channels, show preset name

@@ -496,7 +496,7 @@ public class PlayersTable extends JTable {
 
             // Update each column with fresh data
             tableModel.setValueAt(player.getName(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
-            tableModel.setValueAt(player.getNote(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NOTE));
+            tableModel.setValueAt(player.getRootNote(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NOTE));
             tableModel.setValueAt(player.getLevel(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_LEVEL));
             tableModel.setValueAt(player.isMuted(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_MUTE));
             tableModel.setValueAt(player.getProbability(), modelRow,

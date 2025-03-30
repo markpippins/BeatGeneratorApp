@@ -30,20 +30,20 @@ public class Strike extends Player {
     public static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
 
     public Strike() {
-        setNote(KICK);
+        setRootNote(KICK);
         setRules(new HashSet<>()); // Initialize rules set
     }
 
     public Strike(String name, Session session, Instrument instrument, long note,
             List<Integer> allowedControlMessages) {
         super(name, session, instrument, allowedControlMessages);
-        setNote(note);
+        setRootNote(note);
     }
 
     public Strike(String name, Session session, Instrument instrument, long note,
             List<Integer> allowableControlMessages, long minVelocity, long maxVelocity) {
         super(name, session, instrument, allowableControlMessages);
-        setNote(note);
+        setRootNote(note);
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
     }
@@ -62,7 +62,7 @@ public class Strike extends Player {
         
         if (shouldPlayResult) {
             try {
-                long noteToPlay = getNote();
+                long noteToPlay = getRootNote();
                 // System.out.println("Strike.onTick playing note: " + noteToPlay);
                 drumNoteOn(noteToPlay);
             } catch(Exception e) {
@@ -111,7 +111,7 @@ public class Strike extends Player {
                 getChannel(),
                 getSwing(),
                 getLevel(),
-                getNote(),
+                getRootNote(),
                 getMinVelocity(),
                 getMaxVelocity(),
                 getPreset(),

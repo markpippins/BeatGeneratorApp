@@ -245,7 +245,7 @@ public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener
             int velocity = (int) Math.round((activePlayer.getMinVelocity() + activePlayer.getMaxVelocity()) / 2.0);
 
             // Just update the note in memory temporarily - don't save to Redis
-            activePlayer.setNote((long) midiNote);
+            activePlayer.setRootNote((long) midiNote);
 
             // Send the note to the device
             logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);

@@ -433,7 +433,7 @@ public class PlayerManager {
                 player.noteOff(0, 0);
                 player.setChannel((int) updateValue);
             }
-            case NOTE -> player.setNote(updateValue);
+            case NOTE -> player.setRootNote(updateValue);
             case PRESET -> handlePresetChange(player, updateValue);
             case PROBABILITY -> player.setProbability(updateValue);
             case MIN_VELOCITY -> player.setMinVelocity(updateValue);
@@ -525,7 +525,7 @@ public class PlayerManager {
     }
 
     public void updatePlayerNote(Player player, int note) {
-        player.setNote((long) note);
+        player.setRootNote((long) note);
     }
 
     /**
@@ -663,7 +663,7 @@ public class PlayerManager {
             int velocity = (int) Math.round((activePlayer.getMinVelocity() + activePlayer.getMaxVelocity()) / 2.0);
             
             // Just update the note in memory temporarily - don't save to Redis
-            activePlayer.setNote((long) midiNote);
+            activePlayer.setRootNote((long) midiNote);
             
             // Send the note to the device
             logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);

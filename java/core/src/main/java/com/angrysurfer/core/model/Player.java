@@ -53,7 +53,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private Long level = 100L;
 
-    private Long note = 60L;
+    private Long rootNote = 60L;
 
     private Long minVelocity = 100L;
 
@@ -174,6 +174,14 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     public String getPlayerClassName() {
         return getClass().getSimpleName().toLowerCase();
+    }
+
+    public Long getNote() {
+        return getRootNote();
+    }
+
+    public void setNote(Long note) {
+        setRootNote(note);
     }
 
     // public Long getSubPosition() {

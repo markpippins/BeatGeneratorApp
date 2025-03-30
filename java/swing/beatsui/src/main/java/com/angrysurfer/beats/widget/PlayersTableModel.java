@@ -154,7 +154,7 @@ public class PlayersTableModel extends DefaultTableModel {
 
         try {
             setValueAt(player.getName(), modelRow, getColumnIndex(COL_NAME));
-            setValueAt(player.getNote(), modelRow, getColumnIndex(COL_NOTE));
+            setValueAt(player.getRootNote(), modelRow, getColumnIndex(COL_NOTE));
             setValueAt(player.getLevel(), modelRow, getColumnIndex(COL_LEVEL));
             setValueAt(player.isMuted(), modelRow, getColumnIndex(COL_MUTE));
             setValueAt(player.getProbability(), modelRow, getColumnIndex(COL_PROBABILITY));
@@ -226,7 +226,7 @@ public class PlayersTableModel extends DefaultTableModel {
         rowData[getColumnIndex(COL_SWING)] = player.getSwing();
         rowData[getColumnIndex(COL_LEVEL)] = player.getLevel();
         rowData[getColumnIndex(COL_MUTE)] = player.isMuted();
-        rowData[getColumnIndex(COL_NOTE)] = player.getNote();
+        rowData[getColumnIndex(COL_NOTE)] = player.getRootNote();
         rowData[getColumnIndex(COL_MIN_VEL)] = player.getMinVelocity();
         rowData[getColumnIndex(COL_MAX_VEL)] = player.getMaxVelocity();
         rowData[getColumnIndex(COL_PRESET)] = player.getPreset();

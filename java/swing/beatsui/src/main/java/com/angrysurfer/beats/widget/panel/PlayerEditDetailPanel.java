@@ -151,7 +151,7 @@ public class PlayerEditDetailPanel extends JPanel {
         noteDial.setMinimumSize(dialSize);
         noteDial.setMaximumSize(dialSize);
         noteDial.setCommand(Commands.NEW_VALUE_NOTE);
-        noteDial.setValue(player.getNote().intValue());
+        noteDial.setValue(player.getRootNote().intValue());
         
         JPanel notePanel = new JPanel(new BorderLayout(5, 2));
         JLabel noteLabel = new JLabel("Note", JLabel.CENTER);
@@ -368,7 +368,7 @@ public class PlayerEditDetailPanel extends JPanel {
      */
     public void updatePlayer() {
         player.setLevel((long) levelSlider.getValue());
-        player.setNote((long) noteDial.getValue());
+        player.setRootNote((long) noteDial.getValue());
         player.setMinVelocity((long) velocityMinSlider.getValue());
         player.setMaxVelocity((long) velocityMaxSlider.getValue());
         player.setPanPosition((long) panDial.getValue());  // Changed from panSlider to panDial
@@ -382,7 +382,7 @@ public class PlayerEditDetailPanel extends JPanel {
         player.setRatchetInterval((long) ratchetIntervalSlider.getValue());
         
         logger.debug("Updated player parameters: level={}, note={}, swing={}", 
-                player.getLevel(), player.getNote(), player.getSwing());
+                player.getLevel(), player.getRootNote(), player.getSwing());
     }
     
     /**

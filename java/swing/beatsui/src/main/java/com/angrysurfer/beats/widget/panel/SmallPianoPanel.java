@@ -190,8 +190,8 @@ public class SmallPianoPanel extends StatusProviderPanel {
                     
                     // Add these new cases
                     case Commands.PLAYER_SELECTED -> {
-                        if (action.getData() instanceof Player player && player.getNote() != null) {
-                            int note = player.getNote().intValue();
+                        if (action.getData() instanceof Player player && player.getRootNote() != null) {
+                            int note = player.getRootNote().intValue();
                             logger.info("Piano panel: Player selected with note " + note);
                             updateOctave(note);
                         }
