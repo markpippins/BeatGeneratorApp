@@ -39,8 +39,8 @@ public class PlayersTableModel extends DefaultTableModel {
     public static final String COL_STICKY = "Sticky";
     public static final String COL_PROBABILITY = "Prob";
     public static final String COL_RANDOM = "Random";
-    public static final String COL_RATCHET_COUNT = "Ratchet #";
-    public static final String COL_RATCHET_INTERVAL = "Ratchet Int";
+    public static final String COL_RATCHET_COUNT = "Ratchets";
+    public static final String COL_RATCHET_INTERVAL = "Interval";
     public static final String COL_INT_BEATS = "Int Beats";
     public static final String COL_INT_BARS = "Int Bars";
     public static final String COL_PAN = "Pan";
