@@ -63,7 +63,7 @@ public class SynthControlPanel extends JPanel {
         paramTabs.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
         
         // Add tabs for different parameter groups
-        paramTabs.addTab("Oscillator", createOscillatorPanel());
+        paramTabs.addTab("Parameters", createParamsPanel());
         paramTabs.addTab("Envelope", createEnvelopePanel());
         paramTabs.addTab("Filter", createFilterPanel());
         paramTabs.addTab("Modulation", createModulationPanel());
@@ -227,7 +227,7 @@ public class SynthControlPanel extends JPanel {
         }
     }
     
-    private JPanel createOscillatorPanel() {
+    private JPanel createParamsPanel() {
         // Main panel with vertical layout for oscillator rows
         JPanel mainPanel = new JPanel(new BorderLayout());
         
