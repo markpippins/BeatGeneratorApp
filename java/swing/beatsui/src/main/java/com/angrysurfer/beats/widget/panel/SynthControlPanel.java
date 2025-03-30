@@ -5,9 +5,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.GridLayout;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -18,7 +16,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -58,15 +55,12 @@ public class SynthControlPanel extends JPanel {
         JPanel presetPanel = createPresetPanel();
         add(presetPanel, BorderLayout.NORTH);
         
-        // Main panel with tabs
+        // Main panel with tabs - simplified to just one tab
         JTabbedPane paramTabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
         paramTabs.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
         
-        // Add tabs for different parameter groups
+        // Add a single comprehensive Parameters tab
         paramTabs.addTab("Parameters", createParamsPanel());
-        paramTabs.addTab("Envelope", createEnvelopePanel());
-        paramTabs.addTab("Filter", createFilterPanel());
-        paramTabs.addTab("Modulation", createModulationPanel());
         
         // Add the tabs to the main panel
         add(paramTabs, BorderLayout.CENTER);
@@ -228,13 +222,14 @@ public class SynthControlPanel extends JPanel {
     }
     
     private JPanel createParamsPanel() {
-        // Main panel with vertical layout for oscillator rows
-        JPanel mainPanel = new JPanel(new BorderLayout());
+        // Main panel with vertical layout
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
         // Create a container for the oscillator rows
         JPanel oscillatorsPanel = new JPanel();
         oscillatorsPanel.setLayout(new BoxLayout(oscillatorsPanel, BoxLayout.Y_AXIS));
-        oscillatorsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
         // Create three oscillators
         oscillatorsPanel.add(createOscillatorRow("Oscillator 1", 0));
@@ -248,11 +243,38 @@ public class SynthControlPanel extends JPanel {
         oscillatorsPanel.add(Box.createVerticalStrut(15));
         oscillatorsPanel.add(globalControls);
         
-        // Add oscillators panel to main panel with glue at bottom
-        mainPanel.add(oscillatorsPanel, BorderLayout.NORTH);
-        mainPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
+        // Add oscillators section to main panel
+        mainPanel.add(oscillatorsPanel);
+        mainPanel.add(Box.createVerticalStrut(20)); // Spacer between sections
         
-        // Add a scroll pane in case the panel gets too wide
+        // Create bottom row with Envelope, Filter, and Modulation panels
+        JPanel bottomRow = new JPanel(new GridLayout(1, 3, 10, 0));
+        
+        // 1. Add Envelope panel (extracted from createEnvelopePanel)
+        JPanel envelopePanel = createCompactEnvelopePanel();
+        bottomRow.add(envelopePanel);
+        
+        // 2. Add vertical Filter panel container
+        JPanel filterContainer = new JPanel();
+        filterContainer.setLayout(new BoxLayout(filterContainer, BoxLayout.Y_AXIS));
+        
+        // Extract filter components from createFilterPanel method
+        JPanel filterTypePanel = createFilterTypePanel();
+        JPanel filterParamsPanel = createFilterParamsPanel();
+        
+        filterContainer.add(filterTypePanel);
+        filterContainer.add(Box.createVerticalStrut(5));
+        filterContainer.add(filterParamsPanel);
+        bottomRow.add(filterContainer);
+        
+        // 3. Add Modulation panel (extracted from createModulationPanel)
+        JPanel modulationPanel = createCompactLfoPanel();
+        bottomRow.add(modulationPanel);
+        
+        // Add bottom row to main panel
+        mainPanel.add(bottomRow);
+        
+        // Add scrolling for the entire panel
         JScrollPane scrollPane = new JScrollPane(mainPanel);
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -422,14 +444,10 @@ public class SynthControlPanel extends JPanel {
         return panel;
     }
     
-    private JPanel createEnvelopePanel() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        
-        // Inner panel with a more compact layout for sliders
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        
-        // Create ADSR panel
+    /**
+     * Create a more compact envelope panel for use in the Parameters tab
+     */
+    private JPanel createCompactEnvelopePanel() {
         JPanel adsrPanel = new JPanel();
         adsrPanel.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createEtchedBorder(),
@@ -440,7 +458,7 @@ public class SynthControlPanel extends JPanel {
         ));
         
         // Use FlowLayout for sliders in a row
-        adsrPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 5));
+        adsrPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
         
         // Create ADSR sliders
         JSlider attackSlider = createVerticalSlider("Attack Time", 10);
@@ -485,13 +503,144 @@ public class SynthControlPanel extends JPanel {
             }
         });
         
-        panel.add(adsrPanel, BorderLayout.CENTER);
+        return adsrPanel;
+    }
+
+    /**
+     * Create just the filter type panel
+     */
+    private JPanel createFilterTypePanel() {
+        JPanel typePanel = new JPanel(new BorderLayout());
+        typePanel.setBorder(BorderFactory.createTitledBorder("Filter Type"));
         
-        // Additional panels can go here
+        JComboBox<String> filterTypeCombo = new JComboBox<>(
+                new String[]{"Low Pass", "High Pass", "Band Pass", "Notch"});
+        typePanel.add(filterTypeCombo, BorderLayout.CENTER);
         
-        mainPanel.add(panel, BorderLayout.CENTER);
+        // Add event listener
+        filterTypeCombo.addActionListener(e -> {
+            int filterType = filterTypeCombo.getSelectedIndex();
+            setControlChange(102, filterType * 32); // Custom CC for filter type
+        });
         
-        return mainPanel;
+        return typePanel;
+    }
+
+    /**
+     * Create just the filter parameters panel
+     */
+    private JPanel createFilterParamsPanel() {
+        JPanel filterParamsPanel = new JPanel();
+        filterParamsPanel.setBorder(BorderFactory.createTitledBorder("Filter Parameters"));
+        filterParamsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        
+        // Create sliders
+        JSlider cutoffSlider = createVerticalSlider("Filter Cutoff Frequency", 100);
+        JSlider resonanceSlider = createVerticalSlider("Resonance/Q", 10);
+        JSlider envAmountSlider = createVerticalSlider("Envelope Amount", 0);
+        
+        // Create slider groups
+        JPanel cutoffGroup = createSliderGroup("Cutoff", cutoffSlider);
+        JPanel resonanceGroup = createSliderGroup("Resonance", resonanceSlider);
+        JPanel envAmtGroup = createSliderGroup("Env Amount", envAmountSlider);
+        
+        // Add to filter params panel
+        filterParamsPanel.add(cutoffGroup);
+        filterParamsPanel.add(resonanceGroup);
+        filterParamsPanel.add(envAmtGroup);
+        
+        // Add event listeners
+        cutoffSlider.addChangeListener(e -> {
+            if (!cutoffSlider.getValueIsAdjusting()) {
+                setControlChange(74, cutoffSlider.getValue());
+            }
+        });
+        
+        resonanceSlider.addChangeListener(e -> {
+            if (!resonanceSlider.getValueIsAdjusting()) {
+                setControlChange(71, resonanceSlider.getValue());
+            }
+        });
+        
+        envAmountSlider.addChangeListener(e -> {
+            if (!envAmountSlider.getValueIsAdjusting()) {
+                setControlChange(110, envAmountSlider.getValue());
+            }
+        });
+        
+        return filterParamsPanel;
+    }
+
+    /**
+     * Create a more compact LFO panel for use in the Parameters tab
+     */
+    private JPanel createCompactLfoPanel() {
+        JPanel lfoPanel = new JPanel();
+        lfoPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
+            "LFO Controls",
+            TitledBorder.LEFT,
+            TitledBorder.TOP,
+            new Font("Dialog", Font.BOLD, 11)
+        ));
+        
+        // Use FlowLayout for sliders in a row
+        lfoPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        
+        // Create vertical sliders with labeled ticks
+        JSlider waveformSlider = createLabeledVerticalSlider(
+            "LFO Waveform", 0, 3, 0, 
+            new String[]{"Sine", "Triangle", "Square", "S&H"}
+        );
+        
+        JSlider destinationSlider = createLabeledVerticalSlider(
+            "LFO Destination", 0, 3, 0,
+            new String[]{"Off", "Pitch", "Filter", "Amp"}
+        );
+        
+        JSlider rateSlider = createVerticalSlider("LFO Rate", 50);
+        JSlider amountSlider = createVerticalSlider("LFO Amount", 0);
+        
+        // Create slider groups with labels
+        JPanel waveGroup = createSliderGroup("Waveform", waveformSlider);
+        JPanel destGroup = createSliderGroup("Destination", destinationSlider);
+        JPanel rateGroup = createSliderGroup("Rate", rateSlider);
+        JPanel amountGroup = createSliderGroup("Amount", amountSlider);
+        
+        // Add slider groups to panel
+        lfoPanel.add(waveGroup);
+        lfoPanel.add(destGroup);
+        lfoPanel.add(rateGroup);
+        lfoPanel.add(amountGroup);
+        
+        // Add event listeners
+        waveformSlider.addChangeListener(e -> {
+            if (!waveformSlider.getValueIsAdjusting()) {
+                int value = waveformSlider.getValue();
+                setControlChange(12, value * 42); // Scale to 0-127 range
+            }
+        });
+        
+        destinationSlider.addChangeListener(e -> {
+            if (!destinationSlider.getValueIsAdjusting()) {
+                int value = destinationSlider.getValue();
+                setControlChange(13, value * 42); // Scale to 0-127 range
+            }
+        });
+        
+        rateSlider.addChangeListener(e -> {
+            if (!rateSlider.getValueIsAdjusting()) {
+                setControlChange(76, rateSlider.getValue());
+            }
+        });
+        
+        amountSlider.addChangeListener(e -> {
+            if (!amountSlider.getValueIsAdjusting()) {
+                setControlChange(77, amountSlider.getValue());
+            }
+        });
+        
+        return lfoPanel;
     }
 
     /**
@@ -551,155 +700,6 @@ public class SynthControlPanel extends JPanel {
         
         return slider;
     }
-    
-    private JPanel createFilterPanel() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        
-        // Control panels
-        JPanel controlsPanel = new JPanel(new BorderLayout());
-        controlsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        
-        // Type selector at top
-        JPanel typePanel = new JPanel(new BorderLayout());
-        typePanel.setBorder(BorderFactory.createTitledBorder("Filter Type"));
-        
-        JComboBox<String> filterTypeCombo = new JComboBox<>(
-                new String[]{"Low Pass", "High Pass", "Band Pass", "Notch"});
-        typePanel.add(filterTypeCombo, BorderLayout.CENTER);
-        
-        // Filter parameters with sliders in center section
-        JPanel filterParamsPanel = new JPanel();
-        filterParamsPanel.setBorder(BorderFactory.createTitledBorder("Filter Parameters"));
-        filterParamsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 25, 5));
-        
-        // Create sliders
-        JSlider cutoffSlider = createVerticalSlider("Filter Cutoff Frequency", 100);
-        JSlider resonanceSlider = createVerticalSlider("Resonance/Q", 10);
-        JSlider envAmountSlider = createVerticalSlider("Envelope Amount", 0);
-        
-        // Create slider groups
-        JPanel cutoffGroup = createSliderGroup("Cutoff", cutoffSlider);
-        JPanel resonanceGroup = createSliderGroup("Resonance", resonanceSlider);
-        JPanel envAmtGroup = createSliderGroup("Env Amount", envAmountSlider);
-        
-        // Add to filter params panel
-        filterParamsPanel.add(cutoffGroup);
-        filterParamsPanel.add(resonanceGroup);
-        filterParamsPanel.add(envAmtGroup);
-        
-        // Add event listeners
-        filterTypeCombo.addActionListener(e -> {
-            int filterType = filterTypeCombo.getSelectedIndex();
-            setControlChange(102, filterType * 32); // Custom CC for filter type
-        });
-        
-        cutoffSlider.addChangeListener(e -> {
-            if (!cutoffSlider.getValueIsAdjusting()) {
-                setControlChange(74, cutoffSlider.getValue());
-            }
-        });
-        
-        resonanceSlider.addChangeListener(e -> {
-            if (!resonanceSlider.getValueIsAdjusting()) {
-                setControlChange(71, resonanceSlider.getValue());
-            }
-        });
-        
-        envAmountSlider.addChangeListener(e -> {
-            if (!envAmountSlider.getValueIsAdjusting()) {
-                setControlChange(110, envAmountSlider.getValue());
-            }
-        });
-        
-        // Add panels to control panel
-        controlsPanel.add(typePanel, BorderLayout.NORTH);
-        controlsPanel.add(filterParamsPanel, BorderLayout.CENTER);
-        
-        // Add control panel to main panel
-        mainPanel.add(controlsPanel, BorderLayout.CENTER);
-        
-        return mainPanel;
-    }
-    
-    private JPanel createModulationPanel() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        
-        // Main content panel
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        
-        // Create LFO controls panel
-        JPanel lfoPanel = new JPanel();
-        lfoPanel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createEtchedBorder(),
-            "LFO Controls",
-            TitledBorder.LEFT,
-            TitledBorder.TOP,
-            new Font("Dialog", Font.BOLD, 11)
-        ));
-        
-        // Use FlowLayout for sliders in a row
-        lfoPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 5));
-        
-        // Create vertical sliders with labeled ticks
-        JSlider waveformSlider = createLabeledVerticalSlider(
-            "LFO Waveform", 0, 3, 0, 
-            new String[]{"Sine", "Triangle", "Square", "S&H"}
-        );
-        
-        JSlider destinationSlider = createLabeledVerticalSlider(
-            "LFO Destination", 0, 3, 0,
-            new String[]{"Off", "Pitch", "Filter", "Amp"}
-        );
-        
-        JSlider rateSlider = createVerticalSlider("LFO Rate", 50);
-        JSlider amountSlider = createVerticalSlider("LFO Amount", 0);
-        
-        // Create slider groups with labels
-        JPanel waveGroup = createSliderGroup("Waveform", waveformSlider);
-        JPanel destGroup = createSliderGroup("Destination", destinationSlider);
-        JPanel rateGroup = createSliderGroup("Rate", rateSlider);
-        JPanel amountGroup = createSliderGroup("Amount", amountSlider);
-        
-        // Add slider groups to panel
-        lfoPanel.add(waveGroup);
-        lfoPanel.add(destGroup);
-        lfoPanel.add(rateGroup);
-        lfoPanel.add(amountGroup);
-        
-        // Add event listeners
-        waveformSlider.addChangeListener(e -> {
-            if (!waveformSlider.getValueIsAdjusting()) {
-                int value = waveformSlider.getValue();
-                setControlChange(12, value * 42); // Scale to 0-127 range
-            }
-        });
-        
-        destinationSlider.addChangeListener(e -> {
-            if (!destinationSlider.getValueIsAdjusting()) {
-                int value = destinationSlider.getValue();
-                setControlChange(13, value * 42); // Scale to 0-127 range
-            }
-        });
-        
-        rateSlider.addChangeListener(e -> {
-            if (!rateSlider.getValueIsAdjusting()) {
-                setControlChange(76, rateSlider.getValue());
-            }
-        });
-        
-        amountSlider.addChangeListener(e -> {
-            if (!amountSlider.getValueIsAdjusting()) {
-                setControlChange(77, amountSlider.getValue());
-            }
-        });
-        
-        // Add all to main panel
-        contentPanel.add(lfoPanel, BorderLayout.NORTH);
-        mainPanel.add(contentPanel, BorderLayout.CENTER);
-        
-        return mainPanel;
-    }
 
     /**
      * Create a vertical slider with labeled tick marks
@@ -749,41 +749,5 @@ public class SynthControlPanel extends JPanel {
         dial.setMaximumSize(new Dimension(40, 40));
         dial.setPreferredSize(new Dimension(40, 40));
         return dial;
-    }
-    
-    // Modify the group panel to expand horizontally
-    private JPanel createGroupPanel(String title) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout());
-        
-        JPanel innerPanel = new JPanel();
-        innerPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 2));
-        panel.add(innerPanel, BorderLayout.CENTER);
-        
-        panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createEtchedBorder(), 
-            title, 
-            TitledBorder.LEFT,
-            TitledBorder.TOP,
-            new Font("Dialog", Font.PLAIN, 11)
-        ));
-        
-        return panel;
-    }
-    
-    // Modify addControlsToGroupPanel to add to the inner panel
-    private void addControlsToGroupPanel(JPanel group, Component... controls) {
-        JPanel innerPanel = (JPanel)group.getComponent(0);
-        for (Component control : controls) {
-            innerPanel.add(control);
-        }
-    }
-    
-    // Helper method to create a labeled control panel
-    private JPanel createLabeledControl(String labelText, JComponent component) {
-        JPanel panel = new JPanel(new BorderLayout(5, 0));
-        panel.add(new JLabel(labelText), BorderLayout.NORTH);
-        panel.add(component, BorderLayout.CENTER);
-        return panel;
     }
 }
