@@ -52,10 +52,48 @@ public class SequencerPanel extends JPanel {
     private Direction currentDirection = Direction.FORWARD;
     private boolean bounceForward = true; // Used for bounce direction to track current direction
     private JComboBox<String> directionCombo;
-    
+
+    // Timing parameters
+    public enum TimingDivision {
+        NORMAL("Normal", 4),           // Standard 4 steps per beat
+        DOUBLE("Double Time", 8),      // Twice as fast (8 steps per beat)
+        HALF("Half Time", 2),          // Half as fast (2 steps per beat) 
+        TRIPLET("Triplets", 3),        // Triplet timing (3 steps per beat)
+        EIGHTH_TRIPLET("1/8 Triplets", 6),  // Eighth note triplets (6 steps per beat)
+        SIXTEENTH("1/16 Notes", 16),        // Sixteenth notes (16 steps per beat)
+        SIXTEENTH_TRIPLET("1/16 Triplets", 12); // Sixteenth note triplets (12 steps per beat)
+        
+        private final String displayName;
+        private final int stepsPerBeat;
+        
+        TimingDivision(String displayName, int stepsPerBeat) {
+            this.displayName = displayName;
+            this.stepsPerBeat = stepsPerBeat;
+        }
+        
+        public String getDisplayName() {
+            return displayName;
+        }
+        
+        public int getStepsPerBeat() {
+            return stepsPerBeat;
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
+
+    private TimingDivision timingDivision = TimingDivision.NORMAL;
+    private JComboBox<TimingDivision> timingCombo;
+
     // Callback for playing notes
     private Consumer<NoteEvent> noteEventConsumer;
-    
+
+    // Callback support for timing changes
+    private Consumer<TimingDivision> timingChangeListener;
+
     /**
      * Create a new SequencerPanel
      * 
@@ -140,6 +178,24 @@ public class SequencerPanel extends JPanel {
         });
         directionPanel.add(directionCombo);
         
+        // Timing division combo
+        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        timingPanel.add(new JLabel("Timing:"));
+        
+        timingCombo = new JComboBox<>(TimingDivision.values());
+        timingCombo.setPreferredSize(new Dimension(110, 25));
+        timingCombo.addActionListener(e -> {
+            TimingDivision selected = (TimingDivision) timingCombo.getSelectedItem();
+            timingDivision = selected;
+            System.out.println("Timing set to: " + selected + " (" + selected.getStepsPerBeat() + " steps per beat)");
+            
+            // Notify listeners that timing has changed
+            if (timingChangeListener != null) {
+                timingChangeListener.accept(selected);
+            }
+        });
+        timingPanel.add(timingCombo);
+        
         // Loop checkbox
         loopCheckbox = new JCheckBox("Loop", true); // Default to looping enabled
         loopCheckbox.addActionListener(e -> {
@@ -150,13 +206,19 @@ public class SequencerPanel extends JPanel {
             isLooping = looping;
         });
         
-        // Add components to panel
-        panel.add(lastStepPanel);
-        panel.add(directionPanel);
-        panel.add(loopCheckbox);
+        // Add components to panel - reorganize for better fit
+        JPanel topRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        topRow.add(lastStepPanel);
+        topRow.add(directionPanel);
+        topRow.add(loopCheckbox);
         
-        // Add spacer to push everything to the left
-        panel.add(Box.createHorizontalGlue());
+        JPanel bottomRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        bottomRow.add(timingPanel);
+        
+        // Use box layout for the main panel to stack rows
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(topRow);
+        panel.add(bottomRow);
         
         return panel;
     }
@@ -399,5 +461,13 @@ public class SequencerPanel extends JPanel {
         public int getDurationMs() {
             return durationMs;
         }
+    }
+
+    public void setTimingChangeListener(Consumer<TimingDivision> listener) {
+        this.timingChangeListener = listener;
+    }
+
+    public TimingDivision getTimingDivision() {
+        return timingDivision;
     }
 }

@@ -70,16 +70,31 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             Session session = SessionManager.getInstance().getActiveSession();
             if (session != null) {
                 int ppq = session.getTicksPerBeat(); // Pulses per quarter note
-                int stepsPerBeat = 4; // Standard X0X uses 4 steps per beat
+                
+                // Get the steps per beat from the timing division
+                int stepsPerBeat = 4; // Default
+                if (sequencerPanel != null) {
+                    SequencerPanel.TimingDivision timingDivision = sequencerPanel.getTimingDivision();
+                    stepsPerBeat = timingDivision.getStepsPerBeat();
+                }
 
                 ticksPerStep = ppq / stepsPerBeat;
                 nextStepTick = ticksPerStep; // Reset next step counter
 
-                System.out.println("X0X timing: " + ticksPerStep + " ticks per step");
+                System.out.println("X0X timing updated: " + ticksPerStep + " ticks per step, " + 
+                                  stepsPerBeat + " steps per beat");
+                
+                // For triplet timing, adjust ticksPerStep to be 2/3 of normal step length
+                if (stepsPerBeat == 3 || stepsPerBeat == 6 || stepsPerBeat == 12) {
+                    // For triplets, we need to multiply by 2/3 to get the correct timing
+                    ticksPerStep = (int) Math.round(ticksPerStep * (4.0 / stepsPerBeat) * (2.0 / 3.0));
+                    System.out.println("Triplet timing: adjusted to " + ticksPerStep + " ticks per step");
+                }
             }
         } catch (Exception ex) {
             ticksPerStep = 6;
             nextStepTick = ticksPerStep;
+            System.err.println("Error updating timing parameters: " + ex.getMessage());
         }
     }
 
@@ -353,6 +368,11 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     private Component createSequencerPanel() {
         sequencerPanel = new SequencerPanel(noteEvent -> {
             playNote(noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
+        });
+        
+        // Listen for timing division changes
+        sequencerPanel.setTimingChangeListener(timingDivision -> {
+            updateTimingParameters();
         });
 
         return sequencerPanel;
