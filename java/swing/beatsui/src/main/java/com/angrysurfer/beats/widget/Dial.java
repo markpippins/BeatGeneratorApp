@@ -39,6 +39,7 @@ public class Dial extends JComponent {
     private int minimum = 0;
     private int maximum = 127;
     private String command;
+    private String label;
     private List<ChangeListener> changeListeners = new ArrayList<>();
 
     public Dial() {
@@ -223,5 +224,14 @@ public class Dial extends JComponent {
         for (ChangeListener listener : changeListeners) {
             listener.stateChanged(event);
         }
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+        repaint();
+    }
+
+    public String getLabel() {
+        return this.label;
     }
 }

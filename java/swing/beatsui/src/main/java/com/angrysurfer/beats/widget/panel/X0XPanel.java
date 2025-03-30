@@ -18,10 +18,12 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
@@ -354,8 +356,8 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
 
         tabbedPane.addTab("Sequence", createSequencerPanel());
         tabbedPane.addTab("Instrument", createInstrumentPanel());
-        tabbedPane.addTab("Settings", createSoundBankPanel());
-        tabbedPane.addTab("About", createEffectsPanel());
+        tabbedPane.addTab("Effects", createEffectsPanel());
+        tabbedPane.addTab("Performance", createPerformancePanel());
 
         return tabbedPane;
 
@@ -387,12 +389,327 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         return null;
     }
 
-    private Component createSoundBankPanel() {
+    private Component createPerformancePanel() {
         return null;
     }
 
     private Component createInstrumentPanel() {
-        return null;
+        JPanel instrumentPanel = new JPanel(new BorderLayout(10, 10));
+        instrumentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Create the main layout using a tabbed approach for parameter groups
+        JTabbedPane paramTabs = new JTabbedPane();
+        
+        // Add tabs for different parameter groups
+        paramTabs.addTab("Oscillator", createOscillatorPanel());
+        paramTabs.addTab("Envelope", createEnvelopePanel());
+        paramTabs.addTab("Filter", createFilterPanel());
+        paramTabs.addTab("Modulation", createModulationPanel());
+        
+        // Add the tabs to the main panel
+        instrumentPanel.add(paramTabs, BorderLayout.CENTER);
+        
+        return instrumentPanel;
+    }
+
+    private JPanel createOscillatorPanel() {
+        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 5));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Oscillator type selector
+        JComboBox<String> waveformCombo = new JComboBox<>(
+                new String[]{"Sine", "Square", "Saw", "Triangle", "Pulse"});
+        
+        // Create parameter dials
+        Dial oscMixDial = new Dial();
+        oscMixDial.setLabel("Mix");
+        oscMixDial.setToolTipText("Oscillator Mix");
+        oscMixDial.setValue(50); // Start at midpoint
+        oscMixDial.setMaximumSize(new Dimension(50,50));
+        oscMixDial.setPreferredSize(new Dimension(50,50));
+
+        Dial detuneDial = new Dial();
+        detuneDial.setLabel("Detune");
+        detuneDial.setToolTipText("Detune Amount");
+        detuneDial.setValue(0); // Start at no detune
+        detuneDial.setMaximumSize(new Dimension(50,50));
+        detuneDial.setPreferredSize(new Dimension(50,50));
+        
+        Dial pulseDial = new Dial();
+        pulseDial.setLabel("Width");
+        pulseDial.setToolTipText("Pulse Width");
+        pulseDial.setValue(50); // Start at midpoint
+        pulseDial.setMaximumSize(new Dimension(50,50));
+        pulseDial.setPreferredSize(new Dimension(50,50));
+        
+        // Add controls with labels
+        panel.add(createLabeledControl("Waveform", waveformCombo));
+        panel.add(createDialPanel(oscMixDial));
+        panel.add(createLabeledControl("Octave", new JComboBox<>(new String[]{"-2", "-1", "0", "+1", "+2"})));
+        panel.add(createDialPanel(detuneDial));
+        panel.add(createLabeledControl("Sync", new JToggleButton("Off")));
+        panel.add(createDialPanel(pulseDial));
+        
+        // Add control change listeners using different approach
+        waveformCombo.addActionListener(e -> {
+            if (synthesizer != null && synthesizer.isOpen()) {
+                try {
+                    MidiChannel channel = synthesizer.getChannels()[15];
+                    int waveformType = waveformCombo.getSelectedIndex();
+                    
+                    // Try multiple approaches to set waveform
+                    
+                    // 1. Standard MIDI CC
+                    channel.controlChange(70, waveformType * 25);
+                    
+                    // 2. Try other CCs that might affect timbre
+                    channel.controlChange(71, waveformType * 25); // Resonance
+                    channel.controlChange(74, waveformType * 25); // Brightness
+                    
+                    // 3. Use NRPN (Non-Registered Parameter Numbers) which some synths use
+                    sendNRPN(channel, 1, waveformType);
+                    
+                    System.out.println("Set waveform to: " + waveformCombo.getSelectedItem() + " using multiple methods");
+                } catch (Exception ex) {
+                    System.err.println("Error setting waveform: " + ex.getMessage());
+                }
+            }
+        });
+        
+        // Try multiple control parameters for each dial
+        oscMixDial.addChangeListener(e -> applyMultipleParams(oscMixDial, new int[] {7, 74, 1}));
+        detuneDial.addChangeListener(e -> applyMultipleParams(detuneDial, new int[] {94, 1, 5}));
+        pulseDial.addChangeListener(e -> applyMultipleParams(pulseDial, new int[] {70, 74, 1}));
+        
+        // Add a special reset button to ensure controllers can be changed
+        JButton resetButton = new JButton("Reset Controllers");
+        resetButton.addActionListener(e -> {
+            if (synthesizer != null && synthesizer.isOpen()) {
+                MidiChannel channel = synthesizer.getChannels()[15];
+                // Send controller reset
+                channel.resetAllControllers();
+                // Reapply the current dials
+                applyMultipleParams(oscMixDial, new int[] {7, 74, 1});
+                applyMultipleParams(detuneDial, new int[] {94, 1, 5});
+                applyMultipleParams(pulseDial, new int[] {70, 74, 1});
+                System.out.println("Reset all controllers and reapplied settings");
+            }
+        });
+        
+        panel.add(createLabeledControl("Reset", resetButton));
+        
+        return panel;
+    }
+
+    // Helper method to apply multiple CC parameters for each dial
+    private void applyMultipleParams(Dial dial, int[] ccNumbers) {
+        if (synthesizer != null && synthesizer.isOpen()) {
+            try {
+                MidiChannel channel = synthesizer.getChannels()[15];
+                int value = dial.getValue();
+                
+                // Try multiple CC messages to find the one that works
+                for (int cc : ccNumbers) {
+                    channel.controlChange(cc, value);
+                }
+                
+                System.out.println("Applied " + dial.getLabel() + " value: " + value + " to multiple CCs");
+            } catch (Exception ex) {
+                System.err.println("Error applying parameter: " + ex.getMessage());
+            }
+        }
+    }
+
+    // Helper method to send NRPN messages (some synths use these instead of CCs)
+    private void sendNRPN(MidiChannel channel, int parameter, int value) {
+        // NRPN Parameter MSB
+        channel.controlChange(99, (parameter >> 7) & 0x7F);
+        // NRPN Parameter LSB
+        channel.controlChange(98, parameter & 0x7F);
+        // Data Entry MSB
+        channel.controlChange(6, (value >> 7) & 0x7F);
+        // Data Entry LSB
+        channel.controlChange(38, value & 0x7F);
+    }
+
+    private JPanel createEnvelopePanel() {
+        JPanel panel = new JPanel(new GridLayout(2, 4, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Create ADSR dials
+        Dial attackDial = new Dial();
+        attackDial.setLabel("Attack");
+        attackDial.setToolTipText("Attack Time");
+        attackDial.setMaximumSize(new Dimension(50,50));
+        attackDial.setPreferredSize(new Dimension(50,50));
+
+        Dial decayDial = new Dial();
+        decayDial.setLabel("Decay");
+        decayDial.setToolTipText("Decay Time");
+        decayDial.setMaximumSize(new Dimension(50,50));
+        decayDial.setPreferredSize(new Dimension(50,50));
+        
+        Dial sustainDial = new Dial();
+        sustainDial.setLabel("Sustain");
+        sustainDial.setToolTipText("Sustain Level");
+        sustainDial.setMaximumSize(new Dimension(50,50));
+        sustainDial.setPreferredSize(new Dimension(50,50));
+        
+        Dial releaseDial = new Dial();
+        releaseDial.setLabel("Release");
+        releaseDial.setToolTipText("Release Time");
+        releaseDial.setMaximumSize(new Dimension(50,50));
+        releaseDial.setPreferredSize(new Dimension(50,50));
+        
+        // Add dials to panel
+        panel.add(createDialPanel(attackDial));
+        panel.add(createDialPanel(decayDial));
+        panel.add(createDialPanel(sustainDial));
+        panel.add(createDialPanel(releaseDial));
+        
+        // Add control change listeners
+        attackDial.addChangeListener(e -> {
+            if (synthesizer != null && synthesizer.isOpen()) {
+                MidiChannel channel = synthesizer.getChannels()[15];
+                int value = attackDial.getValue();
+                // CC 73 is typically used for Attack Time
+                channel.controlChange(73, value);
+            }
+        });
+        
+        decayDial.addChangeListener(e -> {
+            if (synthesizer != null && synthesizer.isOpen()) {
+                MidiChannel channel = synthesizer.getChannels()[15];
+                int value = decayDial.getValue();
+                // CC 75 is often used for Decay Time
+                channel.controlChange(75, value);
+            }
+        });
+        
+        sustainDial.addChangeListener(e -> {
+            if (synthesizer != null && synthesizer.isOpen()) {
+                MidiChannel channel = synthesizer.getChannels()[15];
+                int value = sustainDial.getValue();
+                // CC 79 is sometimes used for Sustain Level
+                channel.controlChange(79, value);
+            }
+        });
+        
+        releaseDial.addChangeListener(e -> {
+            if (synthesizer != null && synthesizer.isOpen()) {
+                MidiChannel channel = synthesizer.getChannels()[15];
+                int value = releaseDial.getValue();
+                // CC 72 is often used for Release Time
+                channel.controlChange(72, value);
+            }
+        });
+        
+        return panel;
+    }
+
+    private JPanel createFilterPanel() {
+        JPanel panel = new JPanel(new GridLayout(2, 3, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Filter controls
+        JComboBox<String> filterTypeCombo = new JComboBox<>(
+                new String[]{"Low Pass", "High Pass", "Band Pass", "Notch"});
+        
+        Dial cutoffDial = new Dial();
+        cutoffDial.setLabel("Cutoff");
+        cutoffDial.setToolTipText("Filter Cutoff Frequency");
+        cutoffDial.setMaximumSize(new Dimension(50,50));
+        cutoffDial.setPreferredSize(new Dimension(50,50));
+
+        Dial resonanceDial = new Dial();
+        resonanceDial.setLabel("Resonance");
+        resonanceDial.setToolTipText("Filter Resonance");
+        resonanceDial.setMaximumSize(new Dimension(50,50));
+        resonanceDial.setPreferredSize(new Dimension(50,50));
+        
+        Dial envAmountDial = new Dial();
+        envAmountDial.setLabel("Env Amt");
+        envAmountDial.setToolTipText("Envelope Modulation Amount");
+        envAmountDial.setMaximumSize(new Dimension(50,50));
+        envAmountDial.setPreferredSize(new Dimension(50,50));
+        
+        // Add controls to panel
+        panel.add(createLabeledControl("Type", filterTypeCombo));
+        panel.add(createDialPanel(cutoffDial));
+        panel.add(createDialPanel(resonanceDial));
+        panel.add(new JLabel()); // Empty cell for spacing
+        panel.add(createDialPanel(envAmountDial));
+        
+        // Add control change listeners
+        cutoffDial.addChangeListener(e -> {
+            if (synthesizer != null && synthesizer.isOpen()) {
+                MidiChannel channel = synthesizer.getChannels()[15];
+                int value = cutoffDial.getValue();
+                // CC 74 is typically used for filter cutoff
+                channel.controlChange(74, value);
+            }
+        });
+        
+        resonanceDial.addChangeListener(e -> {
+            if (synthesizer != null && synthesizer.isOpen()) {
+                MidiChannel channel = synthesizer.getChannels()[15];
+                int value = resonanceDial.getValue();
+                // CC 71 is typically used for resonance
+                channel.controlChange(71, value);
+            }
+        });
+        
+        return panel;
+    }
+
+    private JPanel createModulationPanel() {
+        JPanel panel = new JPanel(new GridLayout(2, 3, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // LFO controls
+        JComboBox<String> lfoWaveformCombo = new JComboBox<>(
+                new String[]{"Sine", "Triangle", "Square", "Sample & Hold"});
+        
+        Dial lfoRateDial = new Dial();
+        lfoRateDial.setLabel("Rate");
+        lfoRateDial.setToolTipText("LFO Speed");
+        lfoRateDial.setMaximumSize(new Dimension(50,50));
+        lfoRateDial.setPreferredSize(new Dimension(50,50));        
+
+        Dial lfoAmountDial = new Dial();
+        lfoAmountDial.setLabel("Amount");
+        lfoAmountDial.setToolTipText("LFO Amount");
+        lfoAmountDial.setMaximumSize(new Dimension(50,50));
+        lfoAmountDial.setPreferredSize(new Dimension(50,50));
+
+        JComboBox<String> lfoDestCombo = new JComboBox<>(
+                new String[]{"Off", "Pitch", "Filter", "Amp"});
+        
+        // Add controls to panel
+        panel.add(createLabeledControl("LFO Wave", lfoWaveformCombo));
+        panel.add(createDialPanel(lfoRateDial));
+        panel.add(createDialPanel(lfoAmountDial));
+        panel.add(createLabeledControl("LFO Dest", lfoDestCombo));
+        
+        return panel;
+    }
+
+    // Helper method to create a labeled control panel
+    private JPanel createLabeledControl(String labelText, JComponent component) {
+        JPanel panel = new JPanel(new BorderLayout(5, 0));
+        panel.add(new JLabel(labelText), BorderLayout.NORTH);
+        panel.add(component, BorderLayout.CENTER);
+        return panel;
+    }
+
+    // Helper method to create a panel containing a dial with label
+    private JPanel createDialPanel(Dial dial) {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.add(dial, BorderLayout.CENTER);
+        if (dial.getLabel() != null) {
+            panel.add(new JLabel(dial.getLabel(), JLabel.CENTER), BorderLayout.SOUTH);
+        }
+        return panel;
     }
 
     private JPanel createSequenceColumn(int index) {
@@ -604,13 +921,46 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             try {
                 // Use channel 16 (index 15)
                 MidiChannel channel = synthesizer.getChannels()[15];
-
+                
                 if (channel != null) {
                     channel.programChange(program);
                     System.out.println("Changed synth program to " + program);
+                    
+                    // Reset and reinitialize controllers after program change
+                    reinitializeControllers();
                 }
             } catch (Exception e) {
                 System.err.println("Error changing program: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Reset controllers and synchronize controls after preset change
+     */
+    private void reinitializeControllers() {
+        if (synthesizer != null && synthesizer.isOpen()) {
+            try {
+                MidiChannel channel = synthesizer.getChannels()[15];
+                
+                // First reset all controllers
+                channel.resetAllControllers();
+                
+                // Wait a tiny bit
+                try {
+                    Thread.sleep(5);
+                } catch (InterruptedException e) {}
+                
+                // Set basic channel parameters
+                channel.controlChange(7, 100); // Volume
+                channel.controlChange(10, 64); // Pan center
+                
+                // Enable expression
+                channel.controlChange(11, 127);
+                
+                System.out.println("Reinitialized controllers after preset change");
+            } catch (Exception e) {
+                System.err.println("Error reinitializing controllers: " + e.getMessage());
             }
         }
     }
