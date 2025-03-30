@@ -47,6 +47,8 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
 
     private SequencerPanel sequencerPanel;
 
+    private boolean patternCompleted = false; // Flag for when pattern has completed but transport continues
+
     public X0XPanel() {
         super(new BorderLayout());
         setStatusConsumer(statusConsumer);
@@ -138,6 +140,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         switch (action.getCommand()) {
         case Commands.TRANSPORT_PLAY -> {
             isPlaying = true;
+            patternCompleted = false;
 
             stepCounter = 0;
             tickCounter = 0;
@@ -146,52 +149,96 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             updateTimingParameters();
 
             SwingUtilities.invokeLater(() -> {
-                for (TriggerButton button : triggerButtons) {
-                    button.setHighlighted(false);
-                }
-                if (!triggerButtons.isEmpty()) {
-                    triggerButtons.get(0).setHighlighted(true);
+                if (sequencerPanel != null) {
+                    sequencerPanel.reset();
+                    // Highlight first step
+                    sequencerPanel.updateStep(-1, 0);
                 }
             });
         }
 
         case Commands.TRANSPORT_STOP -> {
             isPlaying = false;
+            patternCompleted = false;
             resetSequence();
+        }
+        
+        case Commands.TIMING_BEAT -> {
+            // If pattern has completed and we're looping, restart on beat
+            if (isPlaying && patternCompleted && sequencerPanel != null && sequencerPanel.isLooping()) {
+                stepCounter = 0;
+                patternCompleted = false;
+                tickCounter = 0;
+                nextStepTick = ticksPerStep;
+                
+                // Update UI to show first step is active
+                int oldStep = -1; // No previous step to unhighlight
+                sequencerPanel.updateStep(oldStep, stepCounter);
+                
+                // Update status display
+                if (getStatusConsumer() != null) {
+                    getStatusConsumer().setStatus("Step: " + (stepCounter + 1) + " of " + sequencerPanel.getPatternLength());
+                }
+            }
         }
 
         case Commands.TIMING_TICK -> {
-            if (isPlaying && action.getData() instanceof Number) {
+            if (isPlaying && !patternCompleted && action.getData() instanceof Number) {
                 tickCounter++;
 
                 if (tickCounter >= nextStepTick) {
                     int oldStep = stepCounter;
-
-                    stepCounter = (stepCounter + 1);
-
-                    if (stepCounter >= sequencerPanel.getPatternLength()) {
-                        if (sequencerPanel.isLooping()) {
-                            stepCounter = 0;
-                        } else {
-                            isPlaying = false;
-                            resetSequence();
-
-                            CommandBus.getInstance().publish(Commands.TRANSPORT_STOP);
-                            return;
+                    int patternLength = sequencerPanel.getPatternLength();
+                    
+                    // Check if we're at the last step of the pattern
+                    boolean isLastStep = stepCounter == patternLength - 1;
+                    
+                    if (isLastStep) {
+                        // Mark pattern as completed - will restart on next TIMING_BEAT if looping
+                        patternCompleted = true;
+                        
+                        // If not looping, we'll keep patternCompleted = true indefinitely
+                        // and stop updating steps until a transport command resets it
+                        
+                        // Reset tick counter for next step timing
+                        tickCounter = 0;
+                        nextStepTick = ticksPerStep;
+                        
+                        // Update UI for this last step
+                        SequencerPanel.NoteEvent noteEvent = sequencerPanel.updateStep(oldStep, stepCounter);
+                        
+                        // If there's a note to play, play it (last step still plays its note)
+                        if (noteEvent != null) {
+                            playNote(noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
                         }
+                        
+                        // Update status display
+                        if (getStatusConsumer() != null) {
+                            getStatusConsumer().setStatus("Step: " + (stepCounter + 1) + " of " + patternLength + 
+                                                         (sequencerPanel.isLooping() ? " (waiting for beat)" : " (end)"));
+                        }
+                        
+                        // We're done with this tick - wait for TIMING_BEAT to restart if looping
+                        return;
                     }
-
+                    
+                    // Normal case - not at last step yet
+                    stepCounter++;
+                    
+                    // Update UI and get note event if needed
                     SequencerPanel.NoteEvent noteEvent = sequencerPanel.updateStep(oldStep, stepCounter);
-
+                    
+                    // If there's a note to play, play it
                     if (noteEvent != null) {
                         playNote(noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
                     }
-
+                    
+                    // Update status display
                     if (getStatusConsumer() != null) {
-                        getStatusConsumer()
-                                .setStatus("Step: " + (stepCounter + 1) + " of " + sequencerPanel.getPatternLength());
+                        getStatusConsumer().setStatus("Step: " + (stepCounter + 1) + " of " + patternLength);
                     }
 
+                    // Reset tick counter and calculate next step time
                     tickCounter = 0;
                     nextStepTick = ticksPerStep;
                 }
