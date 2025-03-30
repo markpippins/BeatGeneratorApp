@@ -189,25 +189,26 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                 if (tickCounter >= nextStepTick) {
                     int oldStep = stepCounter;
                     int patternLength = sequencerPanel.getPatternLength();
+                    SequencerPanel.Direction direction = sequencerPanel.getCurrentDirection();
                     
-                    // Check if we're at the last step of the pattern
-                    boolean isLastStep = stepCounter == patternLength - 1;
+                    // Calculate the next step based on direction
+                    int nextStep = calculateNextStep(stepCounter, patternLength, direction);
                     
-                    if (isLastStep) {
+                    // Check if we've completed a full pattern
+                    boolean patternEnded = hasPatternEnded(stepCounter, nextStep, patternLength, direction);
+                    
+                    if (patternEnded) {
                         // Mark pattern as completed - will restart on next TIMING_BEAT if looping
                         patternCompleted = true;
-                        
-                        // If not looping, we'll keep patternCompleted = true indefinitely
-                        // and stop updating steps until a transport command resets it
                         
                         // Reset tick counter for next step timing
                         tickCounter = 0;
                         nextStepTick = ticksPerStep;
                         
-                        // Update UI for this last step
+                        // Update UI for current step before stopping
                         SequencerPanel.NoteEvent noteEvent = sequencerPanel.updateStep(oldStep, stepCounter);
                         
-                        // If there's a note to play, play it (last step still plays its note)
+                        // If there's a note to play, play it (final step still plays its note)
                         if (noteEvent != null) {
                             playNote(noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
                         }
@@ -222,8 +223,8 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                         return;
                     }
                     
-                    // Normal case - not at last step yet
-                    stepCounter++;
+                    // Normal case - continue pattern
+                    stepCounter = nextStep;
                     
                     // Update UI and get note event if needed
                     SequencerPanel.NoteEvent noteEvent = sequencerPanel.updateStep(oldStep, stepCounter);
@@ -251,6 +252,74 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             }
         }
         }
+    }
+
+    private int calculateNextStep(int currentStep, int patternLength, SequencerPanel.Direction direction) {
+        switch (direction) {
+            case FORWARD:
+                return (currentStep + 1) % patternLength;
+                
+            case BACKWARD:
+                return (currentStep - 1 + patternLength) % patternLength;
+                
+            case BOUNCE:
+                boolean forward = sequencerPanel.isBounceForward();
+                int nextStep;
+                
+                if (forward) {
+                    nextStep = currentStep + 1;
+                    // If we hit the end, change direction
+                    if (nextStep >= patternLength - 1) {
+                        sequencerPanel.setBounceForward(false);
+                    }
+                } else {
+                    nextStep = currentStep - 1;
+                    // If we hit the beginning, change direction
+                    if (nextStep <= 0) {
+                        sequencerPanel.setBounceForward(true);
+                        nextStep = 0; // Ensure we don't go below 0
+                    }
+                }
+                return nextStep;
+                
+            case RANDOM:
+                // Generate a random step that's different from current
+                int next;
+                do {
+                    next = (int)(Math.random() * patternLength);
+                } while (patternLength > 1 && next == currentStep);
+                return next;
+                
+            default:
+                return (currentStep + 1) % patternLength; // Default to forward
+        }
+    }
+
+    private boolean hasPatternEnded(int currentStep, int nextStep, int patternLength, SequencerPanel.Direction direction) {
+        if (!sequencerPanel.isLooping()) {
+            // In non-looping mode, check for ending conditions based on direction
+            switch (direction) {
+                case FORWARD:
+                    return currentStep == patternLength - 1;
+                    
+                case BACKWARD:
+                    return currentStep == 0;
+                    
+                case BOUNCE:
+                    // For bounce, we end at either extreme if not looping
+                    return (currentStep == 0 && !sequencerPanel.isBounceForward()) || 
+                           (currentStep == patternLength - 1 && sequencerPanel.isBounceForward());
+                    
+                case RANDOM:
+                    // For random, we play exactly patternLength steps before ending
+                    // This would require a step counter that we don't have
+                    // So for simplicity, we'll end after visiting the last step in the pattern
+                    return currentStep == patternLength - 1;
+            }
+        }
+        
+        // In looping mode, pattern never ends
+        return false;
     }
 
     private void resetSequence() {

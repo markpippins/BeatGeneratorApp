@@ -15,6 +15,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -43,6 +44,14 @@ public class SequencerPanel extends JPanel {
     private JCheckBox loopCheckbox;
     private int patternLength = 16;
     private boolean isLooping = true;
+    
+    // Direction parameters
+    public enum Direction {
+        FORWARD, BACKWARD, BOUNCE, RANDOM
+    }
+    private Direction currentDirection = Direction.FORWARD;
+    private boolean bounceForward = true; // Used for bounce direction to track current direction
+    private JComboBox<String> directionCombo;
     
     // Callback for playing notes
     private Consumer<NoteEvent> noteEventConsumer;
@@ -110,6 +119,27 @@ public class SequencerPanel extends JPanel {
         });
         lastStepPanel.add(lastStepSpinner);
         
+        // Direction combo
+        JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        directionPanel.add(new JLabel("Direction:"));
+        
+        directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
+        directionCombo.setPreferredSize(new Dimension(100, 25));
+        directionCombo.addActionListener(e -> {
+            int selectedIndex = directionCombo.getSelectedIndex();
+            switch (selectedIndex) {
+                case 0: currentDirection = Direction.FORWARD; break;
+                case 1: currentDirection = Direction.BACKWARD; break;
+                case 2: 
+                    currentDirection = Direction.BOUNCE; 
+                    bounceForward = true; // Reset bounce direction when selected
+                    break;
+                case 3: currentDirection = Direction.RANDOM; break;
+            }
+            System.out.println("Direction set to: " + currentDirection);
+        });
+        directionPanel.add(directionCombo);
+        
         // Loop checkbox
         loopCheckbox = new JCheckBox("Loop", true); // Default to looping enabled
         loopCheckbox.addActionListener(e -> {
@@ -122,6 +152,7 @@ public class SequencerPanel extends JPanel {
         
         // Add components to panel
         panel.add(lastStepPanel);
+        panel.add(directionPanel);
         panel.add(loopCheckbox);
         
         // Add spacer to push everything to the left
@@ -313,6 +344,27 @@ public class SequencerPanel extends JPanel {
      */
     public boolean isLooping() {
         return isLooping;
+    }
+    
+    /**
+     * Get the current direction
+     */
+    public Direction getCurrentDirection() {
+        return currentDirection;
+    }
+    
+    /**
+     * Check if bounce is forward
+     */
+    public boolean isBounceForward() {
+        return bounceForward;
+    }
+    
+    /**
+     * Set bounce direction
+     */
+    public void setBounceForward(boolean forward) {
+        this.bounceForward = forward;
     }
     
     /**
