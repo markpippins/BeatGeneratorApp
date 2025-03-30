@@ -109,6 +109,10 @@ public class SequencerPanel extends JPanel {
     private JCheckBox quantizeCheckbox;
     private JComboBox<String> rootNoteCombo;
 
+    // Octave shift parameters
+    private int octaveShift = 0;  // Current octave shift (can be negative)
+    private JLabel octaveLabel;   // Label to show current octave
+
     /**
      * Create a new SequencerPanel
      * 
@@ -211,6 +215,41 @@ public class SequencerPanel extends JPanel {
         });
         timingPanel.add(timingCombo);
         
+        // Octave shift controls
+        JPanel octavePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        octavePanel.add(new JLabel("Oct:"));
+        
+        // Down button
+        JButton octaveDownBtn = new JButton("-");
+        octaveDownBtn.setMargin(new java.awt.Insets(1, 5, 1, 5));
+        octaveDownBtn.setFocusable(false);
+        octaveDownBtn.addActionListener(e -> {
+            if (octaveShift > -3) {  // Limit to -3 octaves
+                octaveShift--;
+                updateOctaveLabel();
+            }
+        });
+        
+        // Up button
+        JButton octaveUpBtn = new JButton("+");
+        octaveUpBtn.setMargin(new java.awt.Insets(1, 5, 1, 5));
+        octaveUpBtn.setFocusable(false);
+        octaveUpBtn.addActionListener(e -> {
+            if (octaveShift < 3) {  // Limit to +3 octaves
+                octaveShift++;
+                updateOctaveLabel();
+            }
+        });
+        
+        // Label showing current octave
+        octaveLabel = new JLabel("0");
+        octaveLabel.setPreferredSize(new Dimension(20, 20));
+        octaveLabel.setHorizontalAlignment(JLabel.CENTER);
+        
+        octavePanel.add(octaveDownBtn);
+        octavePanel.add(octaveLabel);
+        octavePanel.add(octaveUpBtn);
+        
         // Root Note combo
         JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         rootNotePanel.add(new JLabel("Root:"));
@@ -250,6 +289,7 @@ public class SequencerPanel extends JPanel {
         panel.add(lastStepPanel);
         panel.add(directionPanel);
         panel.add(timingPanel);
+        panel.add(octavePanel);     // Add the octave panel
         panel.add(rootNotePanel);
         panel.add(scalePanel);
         panel.add(quantizeCheckbox);
@@ -259,6 +299,15 @@ public class SequencerPanel extends JPanel {
         updateQuantizer();
         
         return panel;
+    }
+
+    /**
+     * Updates the octave label to show current octave shift
+     */
+    private void updateOctaveLabel() {
+        String prefix = octaveShift > 0 ? "+" : "";
+        octaveLabel.setText(prefix + octaveShift);
+        System.out.println("Octave shift: " + octaveShift);
     }
 
     /**
@@ -359,6 +408,20 @@ public class SequencerPanel extends JPanel {
         }
         return note; // Return original note if quantizer not available or quantization disabled
     }
+
+    /**
+     * Apply octave shift to a note after quantization
+     * 
+     * @param note The note to apply octave shift to
+     * @return The shifted note
+     */
+    private int applyOctaveShift(int note) {
+        // Add 12 semitones per octave
+        int shiftedNote = note + (octaveShift * 12);
+        
+        // Ensure the note is within valid MIDI range (0-127)
+        return Math.max(0, Math.min(127, shiftedNote));
+    }
     
     /**
      * Create a column for the sequencer
@@ -449,6 +512,9 @@ public class SequencerPanel extends JPanel {
                 // Apply quantization if enabled
                 int quantizedNote = quantizeNote(noteValue);
 
+                // Apply octave shift
+                int shiftedNote = applyOctaveShift(quantizedNote);
+
                 // Get velocity
                 int velocity = 127; // Full velocity for manual triggers
                 if (index < velocityDials.size()) {
@@ -464,7 +530,7 @@ public class SequencerPanel extends JPanel {
 
                 // Trigger the note through the callback
                 if (noteEventConsumer != null) {
-                    noteEventConsumer.accept(new NoteEvent(quantizedNote, velocity, gateTime));
+                    noteEventConsumer.accept(new NoteEvent(shiftedNote, velocity, gateTime));
                 }
             }
         });
@@ -504,6 +570,9 @@ public class SequencerPanel extends JPanel {
                 // Apply quantization if enabled
                 int quantizedNote = quantizeNote(noteValue);
 
+                // Apply octave shift
+                int shiftedNote = applyOctaveShift(quantizedNote);
+
                 // Get velocity from velocity dial
                 int velocity = 100; // Default
                 if (newStep < velocityDials.size()) {
@@ -520,7 +589,7 @@ public class SequencerPanel extends JPanel {
                     gateTime = (int) Math.round(10 + gateDials.get(newStep).getValue() * 4.9);
                 }
                 
-                return new NoteEvent(quantizedNote, velocity, gateTime);
+                return new NoteEvent(shiftedNote, velocity, gateTime);
             }
         }
         

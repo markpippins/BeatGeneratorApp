@@ -50,8 +50,8 @@ public class NoteSelectionDial extends Dial {
         setMaximum(127); // Full MIDI range
         setValue(60, false); // Default to middle C (MIDI note 60)
 
-        setPreferredSize(new Dimension(80, 80));
-        setMinimumSize(new Dimension(80, 80));
+        setPreferredSize(new Dimension(90, 90));
+        setMinimumSize(new Dimension(90, 90));
 
         addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent e) {
