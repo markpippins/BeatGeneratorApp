@@ -26,8 +26,10 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -358,7 +360,6 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         tabbedPane.addTab("Performance", createPerformancePanel());
 
         return tabbedPane;
-
     }
 
     private Component createSequencerPanel() {
@@ -573,6 +574,26 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                 }
             } catch (Exception e) {
                 System.err.println("Error playing note: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Send MIDI Control Change message to the synthesizer
+     * 
+     * @param ccNumber The CC number to set (0-127)
+     * @param value The value to set (0-127)
+     */
+    private void setControlChange(int ccNumber, int value) {
+        if (synthesizer != null && synthesizer.isOpen()) {
+            try {
+                MidiChannel channel = synthesizer.getChannels()[15]; // Use channel 16 (index 15)
+                if (channel != null) {
+                    channel.controlChange(ccNumber, value);
+                    System.out.println("Set CC " + ccNumber + " = " + value);
+                }
+            } catch (Exception e) {
+                System.err.println("Error setting CC " + ccNumber + ": " + e.getMessage());
             }
         }
     }

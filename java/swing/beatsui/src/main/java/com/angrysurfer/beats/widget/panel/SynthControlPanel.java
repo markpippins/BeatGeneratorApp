@@ -8,6 +8,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.Hashtable;
 import java.util.List;
 
 import javax.sound.midi.MidiChannel;
@@ -524,14 +525,29 @@ public class SynthControlPanel extends JPanel {
     private JSlider createVerticalSlider(String tooltip, int initialValue) {
         JSlider slider = new JSlider(SwingConstants.VERTICAL, 0, 127, initialValue);
         slider.setToolTipText(tooltip);
+        
+        // Set up tick marks
         slider.setMajorTickSpacing(32);
+        slider.setMinorTickSpacing(16);
         slider.setPaintTicks(true);
+        slider.setPaintLabels(true);
         slider.setSnapToTicks(false);
-        slider.putClientProperty("JSlider.isFilled", Boolean.TRUE); // FlatLaf property
-        slider.putClientProperty("JSlider.paintThumbArrowShape", Boolean.TRUE); // FlatLaf property
+        
+        // Create tick labels - just show a few key values
+        Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
+        labelTable.put(0, new JLabel("0"));
+        labelTable.put(32, new JLabel("32"));
+        labelTable.put(64, new JLabel("64"));
+        labelTable.put(96, new JLabel("96"));
+        labelTable.put(127, new JLabel("127"));
+        slider.setLabelTable(labelTable);
+        
+        // FlatLaf properties
+        slider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
+        slider.putClientProperty("JSlider.paintThumbArrowShape", Boolean.TRUE);
         
         // Set reasonable size for a vertical slider
-        slider.setPreferredSize(new Dimension(30, 100));
+        slider.setPreferredSize(new Dimension(60, 120));
         
         return slider;
     }
@@ -606,85 +622,122 @@ public class SynthControlPanel extends JPanel {
     }
     
     private JPanel createModulationPanel() {
-        // Use a BorderLayout as the main container to expand to full width
         JPanel mainPanel = new JPanel(new BorderLayout());
         
-        // Inner panel with GridBagLayout for control placement
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // Main content panel
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 4, 4, 4);
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
+        // Create LFO controls panel
+        JPanel lfoPanel = new JPanel();
+        lfoPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
+            "LFO Controls",
+            TitledBorder.LEFT,
+            TitledBorder.TOP,
+            new Font("Dialog", Font.BOLD, 11)
+        ));
         
-        // Create LFO control groups
-        JPanel waveGroup = createGroupPanel("LFO Waveform");
-        JPanel rateGroup = createGroupPanel("Rate");
-        JPanel amountGroup = createGroupPanel("Amount");
-        JPanel destGroup = createGroupPanel("Destination");
+        // Use FlowLayout for sliders in a row
+        lfoPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 5));
         
-        // Create controls
-        JComboBox<String> lfoWaveformCombo = new JComboBox<>(
-                new String[]{"Sine", "Triangle", "Square", "Sample & Hold"});
-        Dial lfoRateDial = createCompactDial("", "LFO Speed", 50);
-        Dial lfoAmountDial = createCompactDial("", "LFO Amount", 0);
-        JComboBox<String> lfoDestCombo = new JComboBox<>(
-                new String[]{"Off", "Pitch", "Filter", "Amp"});
+        // Create vertical sliders with labeled ticks
+        JSlider waveformSlider = createLabeledVerticalSlider(
+            "LFO Waveform", 0, 3, 0, 
+            new String[]{"Sine", "Triangle", "Square", "S&H"}
+        );
         
-        // Add controls to their groups
-        JPanel wavePanel = new JPanel(new BorderLayout());
-        wavePanel.add(lfoWaveformCombo, BorderLayout.CENTER);
-        waveGroup.add(wavePanel);
+        JSlider destinationSlider = createLabeledVerticalSlider(
+            "LFO Destination", 0, 3, 0,
+            new String[]{"Off", "Pitch", "Filter", "Amp"}
+        );
         
-        addControlsToGroupPanel(rateGroup, lfoRateDial);
-        addControlsToGroupPanel(amountGroup, lfoAmountDial);
+        JSlider rateSlider = createVerticalSlider("LFO Rate", 50);
+        JSlider amountSlider = createVerticalSlider("LFO Amount", 0);
         
-        JPanel destPanel = new JPanel(new BorderLayout());
-        destPanel.add(lfoDestCombo, BorderLayout.CENTER);
-        destGroup.add(destPanel);
+        // Create slider groups with labels
+        JPanel waveGroup = createSliderGroup("Waveform", waveformSlider);
+        JPanel destGroup = createSliderGroup("Destination", destinationSlider);
+        JPanel rateGroup = createSliderGroup("Rate", rateSlider);
+        JPanel amountGroup = createSliderGroup("Amount", amountSlider);
         
-        // First row: Waveform selector
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        panel.add(waveGroup, gbc);
+        // Add slider groups to panel
+        lfoPanel.add(waveGroup);
+        lfoPanel.add(destGroup);
+        lfoPanel.add(rateGroup);
+        lfoPanel.add(amountGroup);
         
-        // Second row: Rate and Amount
-        gbc.gridwidth = 1;
-        gbc.gridy = 1;
-        gbc.gridx = 0;
-        panel.add(rateGroup, gbc);
-        
-        gbc.gridx = 1;
-        panel.add(amountGroup, gbc);
-        
-        // Third row: Destination
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        panel.add(destGroup, gbc);
-        
-        // Add control change listeners
-        lfoWaveformCombo.addActionListener(e -> {
-            int waveform = lfoWaveformCombo.getSelectedIndex();
-            setControlChange(12, waveform * 32);
+        // Add event listeners
+        waveformSlider.addChangeListener(e -> {
+            if (!waveformSlider.getValueIsAdjusting()) {
+                int value = waveformSlider.getValue();
+                setControlChange(12, value * 42); // Scale to 0-127 range
+            }
         });
         
-        lfoRateDial.addChangeListener(e -> setControlChange(76, lfoRateDial.getValue()));
-        lfoAmountDial.addChangeListener(e -> setControlChange(77, lfoAmountDial.getValue()));
-        
-        lfoDestCombo.addActionListener(e -> {
-            int dest = lfoDestCombo.getSelectedIndex();
-            setControlChange(13, dest * 32);
+        destinationSlider.addChangeListener(e -> {
+            if (!destinationSlider.getValueIsAdjusting()) {
+                int value = destinationSlider.getValue();
+                setControlChange(13, value * 42); // Scale to 0-127 range
+            }
         });
         
-        // Add the panel to the main container with some glue at bottom
-        mainPanel.add(panel, BorderLayout.NORTH);
-        mainPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
+        rateSlider.addChangeListener(e -> {
+            if (!rateSlider.getValueIsAdjusting()) {
+                setControlChange(76, rateSlider.getValue());
+            }
+        });
+        
+        amountSlider.addChangeListener(e -> {
+            if (!amountSlider.getValueIsAdjusting()) {
+                setControlChange(77, amountSlider.getValue());
+            }
+        });
+        
+        // Add all to main panel
+        contentPanel.add(lfoPanel, BorderLayout.NORTH);
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
         
         return mainPanel;
+    }
+
+    /**
+     * Create a vertical slider with labeled tick marks
+     * 
+     * @param tooltip Tooltip text
+     * @param min Minimum value
+     * @param max Maximum value 
+     * @param initialValue Initial value
+     * @param labels Array of labels for tick marks
+     * @return Configured JSlider with labels
+     */
+    private JSlider createLabeledVerticalSlider(String tooltip, int min, int max, int initialValue, String[] labels) {
+        JSlider slider = new JSlider(SwingConstants.VERTICAL, min, max, initialValue);
+        slider.setToolTipText(tooltip);
+        
+        // Set up tick marks and labels
+        slider.setMajorTickSpacing(1);
+        slider.setPaintTicks(true);
+        slider.setPaintLabels(true);
+        slider.setSnapToTicks(true);
+        
+        // Create tick labels
+        Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
+        for (int i = min; i <= max; i++) {
+            JLabel label = new JLabel(labels[i]);
+            label.setFont(new Font("Dialog", Font.PLAIN, 9));
+            labelTable.put(i, label);
+        }
+        slider.setLabelTable(labelTable);
+        
+        // Add FlatLaf styling
+        slider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
+        slider.putClientProperty("JSlider.paintThumbArrowShape", Boolean.TRUE);
+        
+        // Set reasonable size for a vertical slider
+        slider.setPreferredSize(new Dimension(60, 120));
+        
+        return slider;
     }
     
     // Helper method to create compact dials with consistent style
