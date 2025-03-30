@@ -107,6 +107,7 @@ public class SequencerPanel extends JPanel {
     private Boolean[] currentScaleNotes;
     private boolean quantizeEnabled = true;
     private JCheckBox quantizeCheckbox;
+    private JComboBox<String> rootNoteCombo;
 
     /**
      * Create a new SequencerPanel
@@ -210,6 +211,15 @@ public class SequencerPanel extends JPanel {
         });
         timingPanel.add(timingCombo);
         
+        // Root Note combo
+        JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        rootNotePanel.add(new JLabel("Root:"));
+        
+        // Create root note selector
+        rootNoteCombo = createRootNoteCombo();
+        rootNoteCombo.setPreferredSize(new Dimension(50, 25));
+        rootNotePanel.add(rootNoteCombo);
+        
         // Scale selection panel
         JPanel scalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         scalePanel.add(new JLabel("Scale:"));
@@ -240,6 +250,7 @@ public class SequencerPanel extends JPanel {
         panel.add(lastStepPanel);
         panel.add(directionPanel);
         panel.add(timingPanel);
+        panel.add(rootNotePanel);
         panel.add(scalePanel);
         panel.add(quantizeCheckbox);
         panel.add(loopCheckbox);
@@ -274,6 +285,26 @@ public class SequencerPanel extends JPanel {
     }
 
     /**
+     * Create a combo box with all available root notes
+     */
+    private JComboBox<String> createRootNoteCombo() {
+        String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        
+        JComboBox<String> combo = new JComboBox<>(noteNames);
+        combo.setSelectedItem("C"); // Default to C
+        
+        combo.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                selectedRootNote = (String) combo.getSelectedItem();
+                updateQuantizer();
+                System.out.println("Root note set to: " + selectedRootNote);
+            }
+        });
+        
+        return combo;
+    }
+
+    /**
      * Update the quantizer based on selected root note and scale
      */
     private void updateQuantizer() {
@@ -298,7 +329,12 @@ public class SequencerPanel extends JPanel {
      */
     public void setRootNote(String rootNote) {
         this.selectedRootNote = rootNote;
-        updateQuantizer();
+        if (rootNoteCombo != null) {
+            rootNoteCombo.setSelectedItem(rootNote);
+        } else {
+            // If UI not created yet, just update the internal state
+            updateQuantizer();
+        }
     }
 
     /**
