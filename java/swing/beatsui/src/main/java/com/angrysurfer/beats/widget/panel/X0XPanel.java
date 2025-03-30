@@ -326,27 +326,27 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         containerPanel.add(new JScrollPane(x0xPanel), BorderLayout.CENTER);
 
         // Create control buttons at the bottom
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        // JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
-        JButton resetButton = new JButton("Reset");
-        resetButton.addActionListener(e -> resetSequence());
+        // JButton resetButton = new JButton("Reset");
+        // resetButton.addActionListener(e -> resetSequence());
 
-        JButton playButton = new JButton("Play");
-        playButton.addActionListener(e -> {
-            isPlaying = !isPlaying;
-            playButton.setText(isPlaying ? "Stop" : "Play");
+        // JButton playButton = new JButton("Play");
+        // playButton.addActionListener(e -> {
+        //     isPlaying = !isPlaying;
+        //     playButton.setText(isPlaying ? "Stop" : "Play");
 
-            if (isPlaying) {
-                // Start playing
-            } else {
-                resetSequence();
-            }
-        });
+        //     if (isPlaying) {
+        //         // Start playing
+        //     } else {
+        //         resetSequence();
+        //     }
+        // });
 
-        controlPanel.add(resetButton);
-        controlPanel.add(playButton);
+        // controlPanel.add(resetButton);
+        // controlPanel.add(playButton);
 
-        containerPanel.add(controlPanel, BorderLayout.SOUTH);
+        // containerPanel.add(controlPanel, BorderLayout.SOUTH);
 
         add(containerPanel);
     }

@@ -247,10 +247,10 @@ public class SynthControlPanel extends JPanel {
         mainPanel.add(oscillatorsPanel);
         mainPanel.add(Box.createVerticalStrut(20)); // Spacer between sections
         
-        // Create bottom row with Envelope, Filter, and Modulation panels
-        JPanel bottomRow = new JPanel(new GridLayout(1, 3, 10, 0));
+        // Create bottom row with Envelope, Filter, Modulation, and Effects panels
+        JPanel bottomRow = new JPanel(new GridLayout(1, 4, 10, 0));
         
-        // 1. Add Envelope panel (extracted from createEnvelopePanel)
+        // 1. Add Envelope panel
         JPanel envelopePanel = createCompactEnvelopePanel();
         bottomRow.add(envelopePanel);
         
@@ -267,9 +267,13 @@ public class SynthControlPanel extends JPanel {
         filterContainer.add(filterParamsPanel);
         bottomRow.add(filterContainer);
         
-        // 3. Add Modulation panel (extracted from createModulationPanel)
+        // 3. Add Modulation panel
         JPanel modulationPanel = createCompactLfoPanel();
         bottomRow.add(modulationPanel);
+        
+        // 4. Add Effects panel
+        JPanel effectsPanel = createEffectsPanel();
+        bottomRow.add(effectsPanel);
         
         // Add bottom row to main panel
         mainPanel.add(bottomRow);
@@ -284,6 +288,94 @@ public class SynthControlPanel extends JPanel {
         containerPanel.add(scrollPane, BorderLayout.CENTER);
         
         return containerPanel;
+    }
+
+    /**
+     * Create effects panel with vertical sliders for various effects parameters
+     */
+    private JPanel createEffectsPanel() {
+        JPanel effectsPanel = new JPanel();
+        effectsPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
+            "Effects",
+            TitledBorder.LEFT,
+            TitledBorder.TOP,
+            new Font("Dialog", Font.BOLD, 11)
+        ));
+        
+        // Use FlowLayout for sliders in a row with good spacing
+        effectsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 12, 5));
+        
+        // Create effect type selector with labeled vertical slider
+        JSlider effectTypeSlider = createLabeledVerticalSlider(
+            "Effect Type", 0, 3, 0,
+            new String[]{"Reverb", "Delay", "Chorus", "Drive"}
+        );
+        
+        // Create parameter sliders
+        JSlider param1Slider = createVerticalSlider("Parameter 1", 0);
+        JSlider param2Slider = createVerticalSlider("Parameter 2", 0);
+        JSlider mixSlider = createVerticalSlider("Mix", 0);
+        
+        // Create slider groups with labels
+        JPanel typeGroup = createSliderGroup("Type", effectTypeSlider);
+        JPanel param1Group = createSliderGroup("Size/Time", param1Slider);
+        JPanel param2Group = createSliderGroup("Decay/Fdbk", param2Slider);
+        JPanel mixGroup = createSliderGroup("Mix", mixSlider);
+        
+        // Add slider groups to panel
+        effectsPanel.add(typeGroup);
+        effectsPanel.add(param1Group);
+        effectsPanel.add(param2Group);
+        effectsPanel.add(mixGroup);
+        
+        // Add event listeners
+        effectTypeSlider.addChangeListener(e -> {
+            if (!effectTypeSlider.getValueIsAdjusting()) {
+                int effectType = effectTypeSlider.getValue();
+                setControlChange(91, effectType * 32); // CC 91 for effect type
+                
+                // Update labels based on effect type
+                switch(effectType) {
+                    case 0: // Reverb
+                        param1Group.setBorder(BorderFactory.createTitledBorder("Size"));
+                        param2Group.setBorder(BorderFactory.createTitledBorder("Decay"));
+                        break;
+                    case 1: // Delay
+                        param1Group.setBorder(BorderFactory.createTitledBorder("Time"));
+                        param2Group.setBorder(BorderFactory.createTitledBorder("Feedback"));
+                        break;
+                    case 2: // Chorus
+                        param1Group.setBorder(BorderFactory.createTitledBorder("Depth"));
+                        param2Group.setBorder(BorderFactory.createTitledBorder("Rate"));
+                        break;
+                    case 3: // Drive
+                        param1Group.setBorder(BorderFactory.createTitledBorder("Amount"));
+                        param2Group.setBorder(BorderFactory.createTitledBorder("Tone"));
+                        break;
+                }
+            }
+        });
+        
+        param1Slider.addChangeListener(e -> {
+            if (!param1Slider.getValueIsAdjusting()) {
+                setControlChange(92, param1Slider.getValue()); // CC 92 for param 1
+            }
+        });
+        
+        param2Slider.addChangeListener(e -> {
+            if (!param2Slider.getValueIsAdjusting()) {
+                setControlChange(93, param2Slider.getValue()); // CC 93 for param 2
+            }
+        });
+        
+        mixSlider.addChangeListener(e -> {
+            if (!mixSlider.getValueIsAdjusting()) {
+                setControlChange(94, mixSlider.getValue()); // CC 94 for mix level
+            }
+        });
+        
+        return effectsPanel;
     }
 
     /**
