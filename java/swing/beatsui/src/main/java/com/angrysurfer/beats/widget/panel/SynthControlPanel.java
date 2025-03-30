@@ -21,7 +21,9 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
 import com.angrysurfer.beats.widget.Dial;
@@ -420,135 +422,185 @@ public class SynthControlPanel extends JPanel {
     }
     
     private JPanel createEnvelopePanel() {
-        // Use a BorderLayout as the main container to expand to full width
         JPanel mainPanel = new JPanel(new BorderLayout());
         
-        // Inner panel with GridBagLayout for control placement
-        JPanel panel = new JPanel(new GridBagLayout());
+        // Inner panel with a more compact layout for sliders
+        JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 4, 4, 4);
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
+        // Create ADSR panel
+        JPanel adsrPanel = new JPanel();
+        adsrPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
+            "Envelope",
+            TitledBorder.LEFT,
+            TitledBorder.TOP,
+            new Font("Dialog", Font.BOLD, 11)
+        ));
         
-        // Create ADSR groups
-        JPanel attackGroup = createGroupPanel("Attack");
-        JPanel decayGroup = createGroupPanel("Decay");
-        JPanel sustainGroup = createGroupPanel("Sustain");
-        JPanel releaseGroup = createGroupPanel("Release");
+        // Use FlowLayout for sliders in a row
+        adsrPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 5));
         
-        // Create parameter dials - smaller and more consistent size
-        Dial attackDial = createCompactDial("", "Attack Time", 0);
-        Dial decayDial = createCompactDial("", "Decay Time", 50);
-        Dial sustainDial = createCompactDial("", "Sustain Level", 80);
-        Dial releaseDial = createCompactDial("", "Release Time", 20);
+        // Create ADSR sliders
+        JSlider attackSlider = createVerticalSlider("Attack Time", 10);
+        JSlider decaySlider = createVerticalSlider("Decay Time", 50);
+        JSlider sustainSlider = createVerticalSlider("Sustain Level", 80);
+        JSlider releaseSlider = createVerticalSlider("Release Time", 20);
         
-        // Add dials to their groups
-        addControlsToGroupPanel(attackGroup, attackDial);
-        addControlsToGroupPanel(decayGroup, decayDial);
-        addControlsToGroupPanel(sustainGroup, sustainDial);
-        addControlsToGroupPanel(releaseGroup, releaseDial);
+        // Create slider groups with labels
+        JPanel attackGroup = createSliderGroup("Attack", attackSlider);
+        JPanel decayGroup = createSliderGroup("Decay", decaySlider);
+        JPanel sustainGroup = createSliderGroup("Sustain", sustainSlider);
+        JPanel releaseGroup = createSliderGroup("Release", releaseSlider);
         
-        // First row: Attack and Decay
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(attackGroup, gbc);
-        
-        gbc.gridx = 1;
-        panel.add(decayGroup, gbc);
-        
-        // Second row: Sustain and Release
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(sustainGroup, gbc);
-        
-        gbc.gridx = 1;
-        panel.add(releaseGroup, gbc);
+        // Add labeled sliders to envelope panel
+        adsrPanel.add(attackGroup);
+        adsrPanel.add(decayGroup);
+        adsrPanel.add(sustainGroup);
+        adsrPanel.add(releaseGroup);
         
         // Add control change listeners
-        attackDial.addChangeListener(e -> setControlChange(73, attackDial.getValue()));
-        decayDial.addChangeListener(e -> setControlChange(75, decayDial.getValue()));
-        sustainDial.addChangeListener(e -> setControlChange(79, sustainDial.getValue()));
-        releaseDial.addChangeListener(e -> setControlChange(72, releaseDial.getValue()));
+        attackSlider.addChangeListener(e -> {
+            if (!attackSlider.getValueIsAdjusting()) {
+                setControlChange(73, attackSlider.getValue());
+            }
+        });
         
-        // Add the panel to the main container with some glue at bottom
-        mainPanel.add(panel, BorderLayout.NORTH);
-        mainPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
+        decaySlider.addChangeListener(e -> {
+            if (!decaySlider.getValueIsAdjusting()) {
+                setControlChange(75, decaySlider.getValue());
+            }
+        });
+        
+        sustainSlider.addChangeListener(e -> {
+            if (!sustainSlider.getValueIsAdjusting()) {
+                setControlChange(79, sustainSlider.getValue());
+            }
+        });
+        
+        releaseSlider.addChangeListener(e -> {
+            if (!releaseSlider.getValueIsAdjusting()) {
+                setControlChange(72, releaseSlider.getValue());
+            }
+        });
+        
+        panel.add(adsrPanel, BorderLayout.CENTER);
+        
+        // Additional panels can go here
+        
+        mainPanel.add(panel, BorderLayout.CENTER);
         
         return mainPanel;
     }
+
+    /**
+     * Create a slider with a label underneath
+     */
+    private JPanel createSliderGroup(String title, JSlider slider) {
+        JPanel group = new JPanel();
+        group.setLayout(new BoxLayout(group, BoxLayout.Y_AXIS));
+        
+        // Center the slider
+        JPanel sliderPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        sliderPanel.add(slider);
+        
+        // Add label at bottom
+        JLabel label = new JLabel(title);
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        group.add(sliderPanel);
+        group.add(label);
+        
+        return group;
+    }
+
+    /**
+     * Create a vertical slider with consistent styling
+     * 
+     * @param tooltip Tooltip text
+     * @param initialValue Initial value (0-127)
+     * @return Configured JSlider
+     */
+    private JSlider createVerticalSlider(String tooltip, int initialValue) {
+        JSlider slider = new JSlider(SwingConstants.VERTICAL, 0, 127, initialValue);
+        slider.setToolTipText(tooltip);
+        slider.setMajorTickSpacing(32);
+        slider.setPaintTicks(true);
+        slider.setSnapToTicks(false);
+        slider.putClientProperty("JSlider.isFilled", Boolean.TRUE); // FlatLaf property
+        slider.putClientProperty("JSlider.paintThumbArrowShape", Boolean.TRUE); // FlatLaf property
+        
+        // Set reasonable size for a vertical slider
+        slider.setPreferredSize(new Dimension(30, 100));
+        
+        return slider;
+    }
     
     private JPanel createFilterPanel() {
-        // Use a BorderLayout as the main container to expand to full width
         JPanel mainPanel = new JPanel(new BorderLayout());
         
-        // Inner panel with GridBagLayout for control placement
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // Control panels
+        JPanel controlsPanel = new JPanel(new BorderLayout());
+        controlsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 4, 4, 4);
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
+        // Type selector at top
+        JPanel typePanel = new JPanel(new BorderLayout());
+        typePanel.setBorder(BorderFactory.createTitledBorder("Filter Type"));
         
-        // Create filter control groups
-        JPanel typeGroup = createGroupPanel("Type");
-        JPanel cutoffGroup = createGroupPanel("Cutoff");
-        JPanel resonanceGroup = createGroupPanel("Resonance");
-        JPanel envAmtGroup = createGroupPanel("Env Amount");
-        
-        // Create controls
         JComboBox<String> filterTypeCombo = new JComboBox<>(
                 new String[]{"Low Pass", "High Pass", "Band Pass", "Notch"});
-        Dial cutoffDial = createCompactDial("", "Filter Cutoff Frequency", 100);
-        Dial resonanceDial = createCompactDial("", "Filter Resonance", 0);
-        Dial envAmountDial = createCompactDial("", "Envelope Modulation Amount", 0);
-        
-        // Add controls to their groups
-        JPanel typePanel = new JPanel(new BorderLayout());
         typePanel.add(filterTypeCombo, BorderLayout.CENTER);
-        typeGroup.add(typePanel);
         
-        addControlsToGroupPanel(cutoffGroup, cutoffDial);
-        addControlsToGroupPanel(resonanceGroup, resonanceDial);
-        addControlsToGroupPanel(envAmtGroup, envAmountDial);
+        // Filter parameters with sliders in center section
+        JPanel filterParamsPanel = new JPanel();
+        filterParamsPanel.setBorder(BorderFactory.createTitledBorder("Filter Parameters"));
+        filterParamsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 25, 5));
         
-        // First row: Type and Cutoff
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        panel.add(typeGroup, gbc);
+        // Create sliders
+        JSlider cutoffSlider = createVerticalSlider("Filter Cutoff Frequency", 100);
+        JSlider resonanceSlider = createVerticalSlider("Resonance/Q", 10);
+        JSlider envAmountSlider = createVerticalSlider("Envelope Amount", 0);
         
-        // Second row: Cutoff and Resonance
-        gbc.gridwidth = 1;
-        gbc.gridy = 1;
-        gbc.gridx = 0;
-        panel.add(cutoffGroup, gbc);
+        // Create slider groups
+        JPanel cutoffGroup = createSliderGroup("Cutoff", cutoffSlider);
+        JPanel resonanceGroup = createSliderGroup("Resonance", resonanceSlider);
+        JPanel envAmtGroup = createSliderGroup("Env Amount", envAmountSlider);
         
-        gbc.gridx = 1;
-        panel.add(resonanceGroup, gbc);
+        // Add to filter params panel
+        filterParamsPanel.add(cutoffGroup);
+        filterParamsPanel.add(resonanceGroup);
+        filterParamsPanel.add(envAmtGroup);
         
-        // Third row: Env Amount
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(envAmtGroup, gbc);
-        
-        // Add control change listeners
+        // Add event listeners
         filterTypeCombo.addActionListener(e -> {
             int filterType = filterTypeCombo.getSelectedIndex();
             setControlChange(102, filterType * 32); // Custom CC for filter type
         });
         
-        cutoffDial.addChangeListener(e -> setControlChange(74, cutoffDial.getValue()));
-        resonanceDial.addChangeListener(e -> setControlChange(71, resonanceDial.getValue()));
-        envAmountDial.addChangeListener(e -> setControlChange(110, envAmountDial.getValue()));
+        cutoffSlider.addChangeListener(e -> {
+            if (!cutoffSlider.getValueIsAdjusting()) {
+                setControlChange(74, cutoffSlider.getValue());
+            }
+        });
         
-        // Add the panel to the main container with some glue at bottom
-        mainPanel.add(panel, BorderLayout.NORTH);
-        mainPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
+        resonanceSlider.addChangeListener(e -> {
+            if (!resonanceSlider.getValueIsAdjusting()) {
+                setControlChange(71, resonanceSlider.getValue());
+            }
+        });
+        
+        envAmountSlider.addChangeListener(e -> {
+            if (!envAmountSlider.getValueIsAdjusting()) {
+                setControlChange(110, envAmountSlider.getValue());
+            }
+        });
+        
+        // Add panels to control panel
+        controlsPanel.add(typePanel, BorderLayout.NORTH);
+        controlsPanel.add(filterParamsPanel, BorderLayout.CENTER);
+        
+        // Add control panel to main panel
+        mainPanel.add(controlsPanel, BorderLayout.CENTER);
         
         return mainPanel;
     }
