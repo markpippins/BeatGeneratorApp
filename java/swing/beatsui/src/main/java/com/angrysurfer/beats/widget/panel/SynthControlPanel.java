@@ -7,7 +7,6 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.List;
 
@@ -15,12 +14,14 @@ import javax.sound.midi.MidiChannel;
 import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JToggleButton;
 import javax.swing.border.TitledBorder;
 
 import com.angrysurfer.beats.widget.Dial;
@@ -224,96 +225,198 @@ public class SynthControlPanel extends JPanel {
     }
     
     private JPanel createOscillatorPanel() {
-        // Use a BorderLayout as the main container to expand to full width
+        // Main panel with vertical layout for oscillator rows
         JPanel mainPanel = new JPanel(new BorderLayout());
         
-        // Inner panel with GridBagLayout for control placement
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // Create a container for the oscillator rows
+        JPanel oscillatorsPanel = new JPanel();
+        oscillatorsPanel.setLayout(new BoxLayout(oscillatorsPanel, BoxLayout.Y_AXIS));
+        oscillatorsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 4, 4, 4);
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0; // Take up all horizontal space
+        // Create three oscillators
+        oscillatorsPanel.add(createOscillatorRow("Oscillator 1", 0));
+        oscillatorsPanel.add(Box.createVerticalStrut(10)); // Spacer
+        oscillatorsPanel.add(createOscillatorRow("Oscillator 2", 1));
+        oscillatorsPanel.add(Box.createVerticalStrut(10)); // Spacer
+        oscillatorsPanel.add(createOscillatorRow("Oscillator 3", 2));
         
-        // Create control groups - now they'll stretch to fill available width
-        JPanel waveGroup = createGroupPanel("Waveform");
-        JPanel mixGroup = createGroupPanel("Mix");
-        JPanel detuneGroup = createGroupPanel("Detune");
-        JPanel widthGroup = createGroupPanel("Width");
-        JPanel octaveGroup = createGroupPanel("Octave");
+        // Global controls for oscillators
+        JPanel globalControls = createOscillatorMixingPanel();
+        oscillatorsPanel.add(Box.createVerticalStrut(15));
+        oscillatorsPanel.add(globalControls);
         
-        // Create controls with smaller sizes
+        // Add oscillators panel to main panel with glue at bottom
+        mainPanel.add(oscillatorsPanel, BorderLayout.NORTH);
+        mainPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
+        
+        // Add a scroll pane in case the panel gets too wide
+        JScrollPane scrollPane = new JScrollPane(mainPanel);
+        scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        
+        JPanel containerPanel = new JPanel(new BorderLayout());
+        containerPanel.add(scrollPane, BorderLayout.CENTER);
+        
+        return containerPanel;
+    }
+
+    /**
+     * Create a single row of oscillator controls
+     * 
+     * @param title The oscillator's title
+     * @param index Oscillator index (0-2) for CC mapping
+     * @return A panel containing a row of controls for one oscillator
+     */
+    private JPanel createOscillatorRow(String title, int index) {
+        // Base CC offsets for different oscillators
+        int ccOffset = index * 20; // Each osc uses CCs in its own range
+        
+        // Create panel for the oscillator with titled border
+        JPanel oscPanel = new JPanel();
+        oscPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
+            title,
+            TitledBorder.LEFT,
+            TitledBorder.TOP,
+            new Font("Dialog", Font.BOLD, 11)
+        ));
+        
+        // Use horizontal box layout for oscillator controls
+        oscPanel.setLayout(new BoxLayout(oscPanel, BoxLayout.X_AXIS));
+        oscPanel.add(Box.createHorizontalStrut(5));
+        
+        // Waveform selector
+        JPanel waveGroup = createCompactGroup("Waveform");
         JComboBox<String> waveformCombo = new JComboBox<>(
                 new String[]{"Sine", "Square", "Saw", "Triangle", "Pulse"});
+        waveGroup.add(waveformCombo);
         
-        // Create parameter dials - smaller and more consistent size
-        Dial oscMixDial = createCompactDial("", "Oscillator Mix", 50);
+        // Octave selector
+        JPanel octaveGroup = createCompactGroup("Octave");
+        JComboBox<String> octaveCombo = new JComboBox<>(
+                new String[]{"-2", "-1", "0", "+1", "+2"});
+        octaveGroup.add(octaveCombo);
+        
+        // Create parameter dials
         Dial detuneDial = createCompactDial("", "Detune Amount", 0);
         Dial pulseDial = createCompactDial("", "Pulse Width", 50);
+        Dial levelDial = createCompactDial("", "Level", 75);
         
-        // Create octave selector
-        JComboBox<String> octaveCombo = new JComboBox<>(new String[]{"-2", "-1", "0", "+1", "+2"});
+        // Create groups for each dial
+        JPanel detuneGroup = createCompactGroup("Detune");
+        detuneGroup.add(detuneDial);
         
-        // Add waveform selector to its group - make it fill width
-        waveformCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, waveformCombo.getPreferredSize().height));
-        JPanel wavePanel = new JPanel(new BorderLayout());
-        wavePanel.add(waveformCombo, BorderLayout.CENTER);
-        waveGroup.add(wavePanel);
+        JPanel pulseGroup = createCompactGroup("Width");
+        pulseGroup.add(pulseDial);
         
-        // Add each dial to its own dedicated group
-        addControlsToGroupPanel(mixGroup, oscMixDial);
-        addControlsToGroupPanel(detuneGroup, detuneDial);
-        addControlsToGroupPanel(widthGroup, pulseDial);
+        JPanel levelGroup = createCompactGroup("Level");
+        levelGroup.add(levelDial);
         
-        // Add octave selector to its group
-        JPanel octavePanel = new JPanel(new BorderLayout());
-        octavePanel.add(octaveCombo, BorderLayout.CENTER);
-        octaveGroup.add(octavePanel);
+        // Add toggle switch for oscillator on/off
+        JPanel toggleGroup = createCompactGroup("On/Off");
+        JCheckBox enabledToggle = new JCheckBox();
+        enabledToggle.setSelected(index == 0); // First oscillator on by default
+        toggleGroup.add(enabledToggle);
         
-        // First row: Waveform selector
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        panel.add(waveGroup, gbc);
+        // Add components to the oscillator panel
+        oscPanel.add(toggleGroup);
+        oscPanel.add(Box.createHorizontalStrut(5));
+        oscPanel.add(waveGroup);
+        oscPanel.add(Box.createHorizontalStrut(5));
+        oscPanel.add(octaveGroup);
+        oscPanel.add(Box.createHorizontalStrut(5));
+        oscPanel.add(detuneGroup);
+        oscPanel.add(Box.createHorizontalStrut(5));
+        oscPanel.add(pulseGroup);
+        oscPanel.add(Box.createHorizontalStrut(5));
+        oscPanel.add(levelGroup);
+        oscPanel.add(Box.createHorizontalGlue()); // Push everything to the left
         
-        // Second row: Mix and Detune controls side by side
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        panel.add(mixGroup, gbc);
-        
-        gbc.gridx = 1;
-        panel.add(detuneGroup, gbc);
-        
-        // Third row: Width and Octave controls side by side
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(widthGroup, gbc);
-        
-        gbc.gridx = 1;
-        panel.add(octaveGroup, gbc);
-        
-        // Add event handlers
+        // Add event handlers with oscillator-specific CC numbers
         waveformCombo.addActionListener(e -> {
             int waveformType = waveformCombo.getSelectedIndex();
-            setControlChange(70, waveformType * 25);
+            setControlChange(70 + ccOffset, waveformType * 25);
         });
-        
-        oscMixDial.addChangeListener(e -> setControlChange(7, oscMixDial.getValue()));
-        detuneDial.addChangeListener(e -> setControlChange(94, detuneDial.getValue()));
-        pulseDial.addChangeListener(e -> setControlChange(70, pulseDial.getValue()));
         
         octaveCombo.addActionListener(e -> {
             int octave = octaveCombo.getSelectedIndex() - 2; // -2 to +2 range
-            setControlChange(18, (octave + 2) * 25); // Scale to 0-127 range
+            setControlChange(18 + ccOffset, (octave + 2) * 25);
         });
         
-        // Add the panel to the main container with some glue at bottom
-        mainPanel.add(panel, BorderLayout.NORTH);
-        mainPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
+        detuneDial.addChangeListener(e -> setControlChange(94 + ccOffset, detuneDial.getValue()));
+        pulseDial.addChangeListener(e -> setControlChange(70 + ccOffset, pulseDial.getValue()));
+        levelDial.addChangeListener(e -> setControlChange(7 + ccOffset, levelDial.getValue()));
         
-        return mainPanel;
+        enabledToggle.addActionListener(e -> {
+            int value = enabledToggle.isSelected() ? 127 : 0;
+            setControlChange(12 + ccOffset, value);
+        });
+        
+        return oscPanel;
+    }
+
+    /**
+     * Create global mixer panel for oscillator balance
+     */
+    private JPanel createOscillatorMixingPanel() {
+        JPanel mixerPanel = new JPanel();
+        mixerPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
+            "Oscillator Mix",
+            TitledBorder.LEFT,
+            TitledBorder.TOP,
+            new Font("Dialog", Font.BOLD, 11)
+        ));
+        mixerPanel.setLayout(new BoxLayout(mixerPanel, BoxLayout.X_AXIS));
+        
+        // Balance between osc 1 & 2
+        JPanel balance12Group = createCompactGroup("Osc 1-2");
+        Dial balance12Dial = createCompactDial("", "Balance Osc 1-2", 64);
+        balance12Group.add(balance12Dial);
+        
+        // Balance between result and osc 3
+        JPanel balance3Group = createCompactGroup("Osc 3 Mix");
+        Dial balance3Dial = createCompactDial("", "Mix in Osc 3", 32);
+        balance3Group.add(balance3Dial);
+        
+        // Master level
+        JPanel masterGroup = createCompactGroup("Master");
+        Dial masterDial = createCompactDial("", "Master Level", 100);
+        masterGroup.add(masterDial);
+        
+        // Add components
+        mixerPanel.add(Box.createHorizontalStrut(5));
+        mixerPanel.add(balance12Group);
+        mixerPanel.add(Box.createHorizontalStrut(10));
+        mixerPanel.add(balance3Group);
+        mixerPanel.add(Box.createHorizontalStrut(10));
+        mixerPanel.add(masterGroup);
+        mixerPanel.add(Box.createHorizontalGlue());
+        
+        // Add event handlers
+        balance12Dial.addChangeListener(e -> setControlChange(8, balance12Dial.getValue()));
+        balance3Dial.addChangeListener(e -> setControlChange(9, balance3Dial.getValue()));
+        masterDial.addChangeListener(e -> setControlChange(7, masterDial.getValue()));
+        
+        return mixerPanel;
+    }
+
+    /**
+     * Create a compact group panel for oscillator controls
+     */
+    private JPanel createCompactGroup(String title) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        
+        // Add title label
+        JLabel titleLabel = new JLabel(title, JLabel.CENTER);
+        titleLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(2));
+        
+        return panel;
     }
     
     private JPanel createEnvelopePanel() {
