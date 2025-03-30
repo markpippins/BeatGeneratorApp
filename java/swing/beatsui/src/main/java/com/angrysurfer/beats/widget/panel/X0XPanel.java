@@ -26,7 +26,7 @@ import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
 
-class X0XPanel extends StatusProviderPanel implements IBusListener {
+public class X0XPanel extends StatusProviderPanel implements IBusListener {
     private final List<TriggerButton> triggerButtons = new ArrayList<>();
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
@@ -48,6 +48,8 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     private SequencerPanel sequencerPanel;
 
     private boolean patternCompleted = false; // Flag for when pattern has completed but transport continues
+
+    private int activeMidiChannel = 15;  // Use channel 16 (15-based index) consistently
 
     public X0XPanel() {
         super(new BorderLayout());
@@ -129,7 +131,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             }
 
             if (synthesizer != null && synthesizer.isOpen()) {
-                MidiChannel channel = synthesizer.getChannels()[15];
+                MidiChannel channel = synthesizer.getChannels()[activeMidiChannel];
 
                 if (channel != null) {
                     channel.controlChange(7, 100); // Set volume to 100
@@ -398,10 +400,11 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         return new InternalSynthControlPanel(synthesizer);
     }
 
-    private void playNote(int note, int velocity, int durationMs) {
+    public void playNote(int note, int velocity, int durationMs) {
         if (synthesizer != null && synthesizer.isOpen()) {
             try {
-                final MidiChannel channel = synthesizer.getChannels()[15];
+                // Use the same channel consistently - very important!
+                final MidiChannel channel = synthesizer.getChannels()[activeMidiChannel];
 
                 if (channel != null) {
                     if (useAheadScheduling) {
@@ -419,11 +422,10 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                                 }
 
                                 channel.noteOn(note, velocity);
-
                                 Thread.sleep(durationMs);
-
                                 channel.noteOff(note);
                             } catch (InterruptedException e) {
+                                // Ignore interruptions
                             }
                         }).start();
                     } else {
@@ -440,7 +442,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Error playing note: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
