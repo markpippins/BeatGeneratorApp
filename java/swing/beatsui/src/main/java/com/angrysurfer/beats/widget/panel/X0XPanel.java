@@ -375,10 +375,8 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     private JTabbedPane createX0XPanel() {
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        tabbedPane.addTab("Sequence", createSequencerPanel());
-        tabbedPane.addTab("Instrument", createInstrumentPanel());
-        tabbedPane.addTab("Effects", createEffectsPanel());
-        tabbedPane.addTab("Performance", createPerformancePanel());
+        tabbedPane.addTab("Sequencer", createSequencerPanel());
+        tabbedPane.addTab("Synth", createInstrumentPanel());
 
         return tabbedPane;
     }
@@ -394,14 +392,6 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         });
 
         return sequencerPanel;
-    }
-
-    private Component createEffectsPanel() {
-        return null;
-    }
-
-    private Component createPerformancePanel() {
-        return null;
     }
 
     private Component createInstrumentPanel() {
