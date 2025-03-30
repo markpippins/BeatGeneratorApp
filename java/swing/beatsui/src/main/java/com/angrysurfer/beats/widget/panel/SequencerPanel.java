@@ -9,6 +9,8 @@ import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.Hashtable;
+import java.util.function.BiConsumer;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -22,11 +24,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
+import java.awt.event.ItemEvent;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.TriggerButton;
+import com.angrysurfer.core.model.Scale;
+import com.angrysurfer.core.util.Quantizer;
 
 /**
  * A sequencer panel with X0X-style step sequencing capabilities
@@ -94,6 +99,15 @@ public class SequencerPanel extends JPanel {
     // Callback support for timing changes
     private Consumer<TimingDivision> timingChangeListener;
 
+    // Scale and quantization parameters
+    private String selectedRootNote = "C";
+    private String selectedScale = "Chromatic";
+    private JComboBox<String> scaleCombo;
+    private Quantizer quantizer;
+    private Boolean[] currentScaleNotes;
+    private boolean quantizeEnabled = true;
+    private JCheckBox quantizeCheckbox;
+
     /**
      * Create a new SequencerPanel
      * 
@@ -138,16 +152,16 @@ public class SequencerPanel extends JPanel {
     private JPanel createSequenceParametersPanel() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 5));
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
         
         // Last Step spinner
         JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        lastStepPanel.add(new JLabel("Last Step:"));
+        lastStepPanel.add(new JLabel("Last:"));
         
         // Create spinner model with range 1-16, default 16
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 16, 1);
         lastStepSpinner = new JSpinner(lastStepModel);
-        lastStepSpinner.setPreferredSize(new Dimension(60, 25));
+        lastStepSpinner.setPreferredSize(new Dimension(50, 25));
         lastStepSpinner.addChangeListener(e -> {
             int lastStep = (Integer) lastStepSpinner.getValue();
             System.out.println("Last step set to: " + lastStep);
@@ -159,10 +173,10 @@ public class SequencerPanel extends JPanel {
         
         // Direction combo
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        directionPanel.add(new JLabel("Direction:"));
+        directionPanel.add(new JLabel("Dir:"));
         
         directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
-        directionCombo.setPreferredSize(new Dimension(100, 25));
+        directionCombo.setPreferredSize(new Dimension(90, 25));
         directionCombo.addActionListener(e -> {
             int selectedIndex = directionCombo.getSelectedIndex();
             switch (selectedIndex) {
@@ -183,7 +197,7 @@ public class SequencerPanel extends JPanel {
         timingPanel.add(new JLabel("Timing:"));
         
         timingCombo = new JComboBox<>(TimingDivision.values());
-        timingCombo.setPreferredSize(new Dimension(110, 25));
+        timingCombo.setPreferredSize(new Dimension(90, 25));
         timingCombo.addActionListener(e -> {
             TimingDivision selected = (TimingDivision) timingCombo.getSelectedItem();
             timingDivision = selected;
@@ -196,6 +210,22 @@ public class SequencerPanel extends JPanel {
         });
         timingPanel.add(timingCombo);
         
+        // Scale selection panel
+        JPanel scalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        scalePanel.add(new JLabel("Scale:"));
+        
+        // Add scale selector (similar to SessionControlPanel)
+        scaleCombo = createScaleCombo();
+        scaleCombo.setPreferredSize(new Dimension(120, 25));
+        scalePanel.add(scaleCombo);
+        
+        // Quantize checkbox
+        quantizeCheckbox = new JCheckBox("Quantize", true);
+        quantizeCheckbox.addActionListener(e -> {
+            quantizeEnabled = quantizeCheckbox.isSelected();
+            System.out.println("Quantize set to: " + quantizeEnabled);
+        });
+        
         // Loop checkbox
         loopCheckbox = new JCheckBox("Loop", true); // Default to looping enabled
         loopCheckbox.addActionListener(e -> {
@@ -206,21 +236,92 @@ public class SequencerPanel extends JPanel {
             isLooping = looping;
         });
         
-        // Add components to panel - reorganize for better fit
-        JPanel topRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        topRow.add(lastStepPanel);
-        topRow.add(directionPanel);
-        topRow.add(loopCheckbox);
+        // Add all components to panel in a single row
+        panel.add(lastStepPanel);
+        panel.add(directionPanel);
+        panel.add(timingPanel);
+        panel.add(scalePanel);
+        panel.add(quantizeCheckbox);
+        panel.add(loopCheckbox);
         
-        JPanel bottomRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        bottomRow.add(timingPanel);
-        
-        // Use box layout for the main panel to stack rows
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.add(topRow);
-        panel.add(bottomRow);
+        // Initialize quantizer with chromatic scale
+        updateQuantizer();
         
         return panel;
+    }
+
+    /**
+     * Create a combo box with all available scales
+     */
+    private JComboBox<String> createScaleCombo() {
+        String[] scaleNames = Scale.SCALE_PATTERNS.keySet()
+                .stream()
+                .sorted()
+                .toArray(String[]::new);
+
+        JComboBox<String> combo = new JComboBox<>(scaleNames);
+        combo.setSelectedItem("Chromatic");
+        
+        combo.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                selectedScale = (String) combo.getSelectedItem();
+                updateQuantizer();
+                System.out.println("Scale set to: " + selectedScale);
+            }
+        });
+
+        return combo;
+    }
+
+    /**
+     * Update the quantizer based on selected root note and scale
+     */
+    private void updateQuantizer() {
+        try {
+            currentScaleNotes = Scale.getScale(selectedRootNote, selectedScale);
+            quantizer = new Quantizer(currentScaleNotes);
+            System.out.println("Quantizer updated for " + selectedRootNote + " " + selectedScale);
+        } catch (Exception e) {
+            System.err.println("Error creating quantizer: " + e.getMessage());
+            // Default to chromatic scale if there's an error
+            Boolean[] chromaticScale = new Boolean[12];
+            for (int i = 0; i < 12; i++) {
+                chromaticScale[i] = true;
+            }
+            currentScaleNotes = chromaticScale;
+            quantizer = new Quantizer(currentScaleNotes);
+        }
+    }
+
+    /**
+     * Set the root note for scale quantization
+     */
+    public void setRootNote(String rootNote) {
+        this.selectedRootNote = rootNote;
+        updateQuantizer();
+    }
+
+    /**
+     * Sets the selected scale in the scale combo box
+     * @param scaleName The name of the scale to select
+     */
+    public void setSelectedScale(String scaleName) {
+        if (scaleCombo != null) {
+            scaleCombo.setSelectedItem(scaleName);
+        }
+    }
+
+    /**
+     * Quantize a note to the current scale
+     * 
+     * @param note The MIDI note number to quantize
+     * @return The quantized MIDI note number
+     */
+    private int quantizeNote(int note) {
+        if (quantizer != null && quantizeEnabled) {
+            return quantizer.quantizeNote(note);
+        }
+        return note; // Return original note if quantizer not available or quantization disabled
     }
     
     /**
@@ -308,6 +409,9 @@ public class SequencerPanel extends JPanel {
                 // Get note from dial
                 NoteSelectionDial noteDial = noteDials.get(index);
                 int noteValue = noteDial.getValue();
+                
+                // Apply quantization if enabled
+                int quantizedNote = quantizeNote(noteValue);
 
                 // Get velocity
                 int velocity = 127; // Full velocity for manual triggers
@@ -324,7 +428,7 @@ public class SequencerPanel extends JPanel {
 
                 // Trigger the note through the callback
                 if (noteEventConsumer != null) {
-                    noteEventConsumer.accept(new NoteEvent(noteValue, velocity, gateTime));
+                    noteEventConsumer.accept(new NoteEvent(quantizedNote, velocity, gateTime));
                 }
             }
         });
@@ -360,6 +464,9 @@ public class SequencerPanel extends JPanel {
                 // Get note value
                 NoteSelectionDial noteDial = noteDials.get(newStep);
                 int noteValue = noteDial.getValue();
+                
+                // Apply quantization if enabled
+                int quantizedNote = quantizeNote(noteValue);
 
                 // Get velocity from velocity dial
                 int velocity = 100; // Default
@@ -377,7 +484,7 @@ public class SequencerPanel extends JPanel {
                     gateTime = (int) Math.round(10 + gateDials.get(newStep).getValue() * 4.9);
                 }
                 
-                return new NoteEvent(noteValue, velocity, gateTime);
+                return new NoteEvent(quantizedNote, velocity, gateTime);
             }
         }
         

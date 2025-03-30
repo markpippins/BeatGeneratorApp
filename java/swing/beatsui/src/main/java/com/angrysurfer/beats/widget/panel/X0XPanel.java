@@ -266,6 +266,24 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                 updateTimingParameters();
             }
         }
+
+        case Commands.ROOT_NOTE_SELECTED -> {
+            if (action.getData() instanceof String) {
+                String rootNote = (String) action.getData();
+                if (sequencerPanel != null) {
+                    sequencerPanel.setRootNote(rootNote);
+                }
+            }
+        }
+
+        case Commands.SCALE_SELECTED -> {
+            if (action.getData() instanceof String) {
+                String scaleName = (String) action.getData();
+                if (sequencerPanel != null) {
+                    sequencerPanel.setSelectedScale(scaleName);
+                }
+            }
+        }
         }
     }
 
