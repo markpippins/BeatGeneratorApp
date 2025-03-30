@@ -6,11 +6,10 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.Hashtable;
-import java.util.function.BiConsumer;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -24,7 +23,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
-import java.awt.event.ItemEvent;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
@@ -128,6 +126,9 @@ public class SequencerPanel extends JPanel {
      * Initialize the panel
      */
     private void initialize() {
+        
+        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
         // Add sequence parameters panel at the top
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
         add(sequenceParamsPanel, BorderLayout.NORTH);

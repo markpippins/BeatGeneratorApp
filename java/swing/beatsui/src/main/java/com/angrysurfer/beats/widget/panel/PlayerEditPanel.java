@@ -75,13 +75,16 @@ public class PlayerEditPanel extends StatusProviderPanel {
     private final JButton nextButton;
 
     // First, add a new field for the preset combo box
-    private JComboBox<PresetItem> presetCombo;
+    private JComboBox presetCombo; // Changed type to more flexible JComboBox
     private JPanel presetControlPanel; // Panel to swap between spinner and combo
     private boolean usingInternalSynth = false;
 
     // Add these fields to PlayerEditPanel class
     private JSpinner internalBarsSpinner;
     private JSpinner internalBeatsSpinner;
+
+    // Add a new flag to track drum channel mode
+    private boolean isDrumChannel = false;
 
     // Helper class to represent presets in the combo box
     private static class PresetItem {
@@ -104,6 +107,30 @@ public class PlayerEditPanel extends StatusProviderPanel {
         @Override
         public String toString() {
             return name;
+        }
+    }
+
+    // Add a helper class for drum items
+    private static class DrumItem {
+        private final int noteNumber;
+        private final String name;
+
+        public DrumItem(int noteNumber, String name) {
+            this.noteNumber = noteNumber;
+            this.name = name;
+        }
+
+        public int getNoteNumber() {
+            return noteNumber;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String toString() {
+            return name + " [" + noteNumber + "]";
         }
     }
 
@@ -289,9 +316,6 @@ public class PlayerEditPanel extends StatusProviderPanel {
 
         // Add components directly to the FlowLayout panel
         internalBeatsPanel.add(useInternalBeatsSwitch);
-        // JLabel beatsLabel = new JLabel("Beats:");
-        // beatsLabel.setFont(beatsLabel.getFont().deriveFont(11f)); // Smaller font
-        // internalBeatsPanel.add(beatsLabel);
         internalBeatsPanel.add(internalBeatsSpinner);
 
         // Internal Bars section - more compact FlowLayout
@@ -300,9 +324,6 @@ public class PlayerEditPanel extends StatusProviderPanel {
 
         // Add components directly to the FlowLayout panel
         internalBarsPanel.add(useInternalBarsSwitch);
-        // JLabel barsLabel = new JLabel("Bars:");
-        // barsLabel.setFont(barsLabel.getFont().deriveFont(11f)); // Smaller font
-        // internalBarsPanel.add(barsLabel);
         internalBarsPanel.add(internalBarsSpinner);
 
         // Add all components to the options panel in one row
@@ -346,36 +367,49 @@ public class PlayerEditPanel extends StatusProviderPanel {
         if (selectedInstrument != null) {
             player.setInstrument(selectedInstrument);
             player.setInstrumentId(selectedInstrument.getId());
-            logger.debug("Selected instrument: " + selectedInstrument.getName() + " (ID: " + selectedInstrument.getId()
-                    + ")");
         } else {
             // Log warning and keep existing instrument (if any)
             logger.error("No instrument selected in combo box");
         }
 
-        // These operations are safe as spinners always have values
-        player.setChannel(((Number) channelSpinner.getValue()).intValue());
+        // Get channel from spinner
+        int channelValue = ((Number) channelSpinner.getValue()).intValue();
+        player.setChannel(channelValue);
+        
+        // Update isDrumChannel flag based on current channel
+        isDrumChannel = (player.getChannel() == 9);
 
-        // Get preset from either the spinner or combo depending on which is active
-        if (usingInternalSynth && presetCombo.getSelectedItem() != null) {
-            player.setPreset((long) ((PresetItem) presetCombo.getSelectedItem()).getNumber());
-        } else {
+        // Get preset or note value based on active mode
+        if (usingInternalSynth) {
+            if (isDrumChannel && presetCombo.getSelectedItem() instanceof DrumItem) {
+                // For drum channel, update the note value but keep preset at 0 (standard GM drums)
+                DrumItem selectedDrum = (DrumItem) presetCombo.getSelectedItem();
+                player.setNote((long) selectedDrum.getNoteNumber());
+                player.setPreset(0L); // Standard GM drum set
+            } 
+            else if (presetCombo.getSelectedItem() instanceof PresetItem) {
+                // For normal internal synth channels, update preset
+                player.setPreset((long) ((PresetItem) presetCombo.getSelectedItem()).getNumber());
+                
+                // Don't clear note value here - it might be needed for other purposes
+            }
+        } 
+        else {
+            // For external instruments, use spinner value
             player.setPreset(((Number) presetSpinner.getValue()).longValue());
         }
 
         // Use detailPanel to update all the slider values
         detailPanel.updatePlayer();
 
-        // Set name and toggle switch values
+        // Set other properties (name, toggle switches, etc.)
         player.setName(nameField.getText());
         player.setStickyPreset(stickyPresetSwitch.isSelected());
         player.setUseInternalBeats(useInternalBeatsSwitch.isSelected());
         player.setUseInternalBars(useInternalBarsSwitch.isSelected());
         player.setPreserveOnPurge(preserveOnPurgeSwitch.isSelected());
-
-        // Also set the internal timing values
-        player.setInternalBars(((Double) internalBarsSpinner.getValue()).intValue());
-        player.setInternalBeats(((Double) internalBeatsSpinner.getValue()).intValue());
+        player.setInternalBars(((Number) internalBarsSpinner.getValue()).intValue());
+        player.setInternalBeats(((Number) internalBeatsSpinner.getValue()).intValue());
 
         return player;
     }
@@ -467,7 +501,22 @@ public class PlayerEditPanel extends StatusProviderPanel {
         // Initial state based on the instrument
         if (player.getInstrument() != null) {
             usingInternalSynth = InternalSynthManager.getInstance().isInternalSynth(player.getInstrument());
+            
+            // Check for drum channel condition (channel 9)
+            isDrumChannel = (player.getChannel() == 9);
         }
+
+        // Add change listener for channel spinner to detect drum channel changes
+        channelSpinner.addChangeListener(e -> {
+            int channelValue = ((Number) channelSpinner.getValue()).intValue();
+            boolean isDrumChannelNew = (channelValue == 9);
+            
+            // If drum channel status changed and using internal synth, update the UI
+            if (isDrumChannelNew != isDrumChannel && usingInternalSynth) {
+                isDrumChannel = isDrumChannelNew;
+                updatePresetControls();
+            }
+        });
 
         // Populate the appropriate control
         updatePresetControls();
@@ -478,8 +527,14 @@ public class PlayerEditPanel extends StatusProviderPanel {
         CardLayout cl = (CardLayout) presetControlPanel.getLayout();
 
         if (usingInternalSynth) {
-            // Switch to combo box and populate with named presets
-            populatePresetCombo();
+            // Check if we're on the drum channel
+            if (isDrumChannel) {
+                // Populate with drum names instead of presets
+                populateDrumCombo();
+            } else {
+                // Normal preset population
+                populatePresetCombo();
+            }
             cl.show(presetControlPanel, "combo");
         } else {
             // Switch to spinner with numeric values
@@ -523,8 +578,35 @@ public class PlayerEditPanel extends StatusProviderPanel {
 
         // Select the current preset
         for (int i = 0; i < presetCombo.getItemCount(); i++) {
-            PresetItem item = presetCombo.getItemAt(i);
+            PresetItem item = (PresetItem) presetCombo.getItemAt(i);
             if (item.getNumber() == currentPreset) {
+                presetCombo.setSelectedIndex(i);
+                break;
+            }
+        }
+    }
+
+    // Add new method to populate drum names
+    private void populateDrumCombo() {
+        // Clear the combo
+        presetCombo.removeAllItems();
+        
+        // Get current note from player, defaulting to 36 (Bass Drum) if not set
+        int currentNote = player.getNote() != null ? player.getNote().intValue() : 36;
+        
+        // Get drum names from InternalSynthManager
+        for (int i = 27; i < 88; i++) {  // Standard GM drum range
+            String drumName = InternalSynthManager.getInstance().getDrumName(i);
+            if (drumName == null || drumName.isEmpty()) {
+                drumName = "Drum " + i;
+            }
+            presetCombo.addItem(new DrumItem(i, drumName));
+        }
+        
+        // Select the current drum
+        for (int i = 0; i < presetCombo.getItemCount(); i++) {
+            DrumItem item = (DrumItem) presetCombo.getItemAt(i);
+            if (item.getNoteNumber() == currentNote) {
                 presetCombo.setSelectedIndex(i);
                 break;
             }
