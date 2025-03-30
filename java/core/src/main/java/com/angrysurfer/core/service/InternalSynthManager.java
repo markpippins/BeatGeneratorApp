@@ -1,10 +1,15 @@
 package com.angrysurfer.core.service;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Soundbank;
+import javax.sound.midi.Synthesizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +27,10 @@ public class InternalSynthManager {
     // Map of synth IDs to preset information
     private final Map<Long, SynthData> synthDataMap = new HashMap<>();
     
+    private List<Soundbank> loadedSoundbanks = new ArrayList<>();
+    private List<String> soundbankNames = new ArrayList<>();
+    private Synthesizer currentSynthesizer;
+
     /**
      * Get the singleton instance
      */
@@ -213,6 +222,179 @@ public class InternalSynthManager {
             case 81: return "Open Triangle";
             default: return "Percussion " + noteNumber;
         }
+    }
+    
+    /**
+     * Set the current synthesizer instance for soundbank operations
+     * @param synthesizer The synthesizer to use
+     */
+    public void setCurrentSynthesizer(Synthesizer synthesizer) {
+        this.currentSynthesizer = synthesizer;
+    }
+
+    /**
+     * Initialize available soundbanks
+     */
+    public void initializeSoundbanks() {
+        try {
+            // Clear previous data
+            loadedSoundbanks.clear();
+            soundbankNames.clear();
+            
+            // Add the default Java soundbank
+            loadedSoundbanks.add(null); // Placeholder for default soundbank
+            soundbankNames.add("Java Internal Soundbank");
+            
+            // If synthesizer is using a soundbank already, add it
+            if (currentSynthesizer != null && currentSynthesizer.getDefaultSoundbank() != null) {
+                Soundbank defaultSoundbank = currentSynthesizer.getDefaultSoundbank();
+                String name = defaultSoundbank.getName();
+                if (name != null && !name.isEmpty() && !name.equals("Unknown")) {
+                    loadedSoundbanks.add(defaultSoundbank);
+                    soundbankNames.add(name);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error initializing soundbanks: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Load a soundbank file and add it to the available soundbanks
+     * @param file The soundbank file to load
+     * @return The loaded soundbank or null if loading failed
+     */
+    public Soundbank loadSoundbankFile(File file) {
+        try {
+            if (file != null && file.exists()) {
+                System.out.println("Loading soundbank file: " + file.getAbsolutePath());
+                
+                // Load the soundbank
+                Soundbank soundbank = MidiSystem.getSoundbank(file);
+                
+                if (soundbank != null) {
+                    // Add to our list
+                    String name = soundbank.getName();
+                    if (name == null || name.isEmpty()) {
+                        name = file.getName();
+                    }
+                    
+                    loadedSoundbanks.add(soundbank);
+                    soundbankNames.add(name);
+                    
+                    System.out.println("Loaded soundbank: " + name);
+                    return soundbank;
+                } else {
+                    System.err.println("Failed to load soundbank from file");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading soundbank: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Select and load a soundbank into the synthesizer
+     * @param index Index of the soundbank to load
+     * @return true if successful
+     */
+    public boolean selectSoundbank(int index) {
+        try {
+            if (index < 0 || index >= loadedSoundbanks.size() || currentSynthesizer == null) {
+                return false;
+            }
+            
+            Soundbank soundbank = loadedSoundbanks.get(index);
+            
+            // Load the soundbank into the synthesizer if it's not the default
+            if (soundbank != null) {
+                // First unload any current instruments
+                currentSynthesizer.unloadAllInstruments(currentSynthesizer.getDefaultSoundbank());
+                
+                // Then load the new soundbank
+                boolean loaded = currentSynthesizer.loadAllInstruments(soundbank);
+                if (loaded) {
+                    System.out.println("Loaded soundbank: " + soundbank.getName());
+                    return true;
+                } else {
+                    System.err.println("Failed to load soundbank: " + soundbank.getName());
+                }
+            } else {
+                // Default Java soundbank selected
+                return true;
+            }
+        } catch (Exception e) {
+            System.err.println("Error selecting soundbank: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Get available bank numbers for the current soundbank at given index
+     * @param soundbankIndex Index of the soundbank
+     * @return List of available bank numbers
+     */
+    public List<Integer> getAvailableBanks(int soundbankIndex) {
+        List<Integer> banks = new ArrayList<>();
+        
+        // Always add bank 0 (GM sounds)
+        banks.add(0);
+        
+        // Try to get the soundbank
+        if (soundbankIndex >= 0 && soundbankIndex < loadedSoundbanks.size()) {
+            Soundbank soundbank = loadedSoundbanks.get(soundbankIndex);
+            
+            if (soundbank != null) {
+                // Check if this is a multi-bank soundfont
+                boolean hasMultipleBanks = false;
+                
+                for (javax.sound.midi.Instrument instrument : soundbank.getInstruments()) {
+                    javax.sound.midi.Patch patch = instrument.getPatch();
+                    if (patch.getBank() > 0) {
+                        hasMultipleBanks = true;
+                        break;
+                    }
+                }
+                
+                if (hasMultipleBanks) {
+                    // Add standard banks
+                    for (int i = 1; i <= 15; i++) {
+                        banks.add(i);
+                    }
+                }
+            }
+        }
+        
+        return banks;
+    }
+
+    /**
+     * Get all loaded soundbank names
+     * @return List of soundbank names
+     */
+    public List<String> getSoundbankNames() {
+        return new ArrayList<>(soundbankNames);
+    }
+
+    /**
+     * Get the number of loaded soundbanks
+     * @return Count of available soundbanks
+     */
+    public int getSoundbankCount() {
+        return loadedSoundbanks.size();
+    }
+
+    /**
+     * Get a soundbank by index
+     * @param index Index of the soundbank
+     * @return The soundbank or null if index is invalid
+     */
+    public Soundbank getSoundbank(int index) {
+        if (index >= 0 && index < loadedSoundbanks.size()) {
+            return loadedSoundbanks.get(index);
+        }
+        return null;
     }
     
     /**

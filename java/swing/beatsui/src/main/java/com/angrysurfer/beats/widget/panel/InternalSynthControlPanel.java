@@ -164,7 +164,7 @@ public class InternalSynthControlPanel extends JPanel {
 
         // 2. Bank selector section
         JPanel bankSection = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        bankSection.add(new JLabel("Bank:"));
+        bankSection.add(new JLabel("Soundbank:"));
         bankCombo = new JComboBox<>();
         bankCombo.setPreferredSize(new Dimension(60, 25));
         bankSection.add(bankCombo);
