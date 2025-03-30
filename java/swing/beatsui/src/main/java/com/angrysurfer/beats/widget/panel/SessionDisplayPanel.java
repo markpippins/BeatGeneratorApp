@@ -189,7 +189,7 @@ public class SessionDisplayPanel extends JPanel {
                     switch (action.getCommand()) {
                     case Commands.TIMING_TICK -> {
                         if (action.getData() instanceof Number tickVal) {
-                            System.out.format("Tick event: %d\n", action.getData());
+                            // System.out.format("Tick event: %d\n", action.getData());
 
                             // Update current tick position
                             tickField.setText(String.valueOf(tickVal));

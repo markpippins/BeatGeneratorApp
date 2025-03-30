@@ -21,6 +21,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
@@ -231,15 +232,28 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         // latency
         if (isPlaying && newStep >= 0 && newStep < triggerButtons.size() && newStep < noteDials.size()) {
             TriggerButton newButton = triggerButtons.get(newStep);
-            if (newButton.isActive()) {
+            if (newButton.isSelected()) { // Check if the trigger is active (selected)
+                // Get note value
                 NoteSelectionDial noteDial = noteDials.get(newStep);
                 int noteValue = noteDial.getValue();
 
-                // Get velocity and gate time from other dials if available
-                int velocity = 100;
-                int gateTime = 100;
+                // Get velocity from velocity dial
+                int velocity = 100; // Default
+                if (newStep < velocityDials.size()) {
+                    // Scale dial value (0-100) to MIDI velocity range (0-127)
+                    velocity = (int) Math.round(velocityDials.get(newStep).getValue() * 1.27);
+                    // Ensure it's within valid MIDI range
+                    velocity = Math.max(1, Math.min(127, velocity));
+                }
 
-                // Play note immediately - don't wait for UI updates
+                // Get gate time from gate dial
+                int gateTime = 100; // Default (ms)
+                if (newStep < gateDials.size()) {
+                    // Scale dial value (0-100) to reasonable gate times (10-500ms)
+                    gateTime = (int) Math.round(10 + gateDials.get(newStep).getValue() * 4.9);
+                }
+
+                // Play note with the parameters from all three dials
                 playNote(noteValue, velocity, gateTime);
             }
         }
@@ -306,7 +320,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         containerPanel.add(presetPanel, BorderLayout.NORTH);
 
         // Create X0X sequencer panel in center
-        JPanel x0xPanel = createX0XPanel();
+        JTabbedPane x0xPanel = createX0XPanel();
         containerPanel.add(new JScrollPane(x0xPanel), BorderLayout.CENTER);
 
         // Create control buttons at the bottom
@@ -335,9 +349,20 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         add(containerPanel);
     }
 
-    private JPanel createX0XPanel() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
+    private JTabbedPane createX0XPanel() {
+        JTabbedPane tabbedPane = new JTabbedPane();
 
+        tabbedPane.addTab("Sequence", createSequencerPanel());
+        tabbedPane.addTab("Instrument", createInstrumentPanel());
+        tabbedPane.addTab("Settings", createSoundBankPanel());
+        tabbedPane.addTab("About", createEffectsPanel());
+
+        return tabbedPane;
+
+    }
+
+    private Component createSequencerPanel() {
+        JPanel mainPanel = new JPanel(new BorderLayout());
         // Create panel for the 16 columns
         JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 5, 0));
         sequencePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -354,7 +379,20 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
         mainPanel.add(scrollPane, BorderLayout.CENTER);
+
         return mainPanel;
+    }
+
+    private Component createEffectsPanel() {
+        return null;
+    }
+
+    private Component createSoundBankPanel() {
+        return null;
+    }
+
+    private Component createInstrumentPanel() {
+        return null;
     }
 
     private JPanel createSequenceColumn(int index) {
@@ -364,7 +402,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
 
         // Add 4 knobs
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 3; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
             label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
             label.setForeground(Color.GRAY);
@@ -380,18 +418,22 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
             // Create dial - first one is always a NoteSelectionDial
             Dial dial = i == 0 ? new NoteSelectionDial() : new Dial();
 
+            // Store the dial in the appropriate collection based on its type
             switch (i) {
             case 0:
                 noteDials.add((NoteSelectionDial) dial); // Store the note dial for this column
+                break; // <-- Missing break statement causing case 1 to execute too!
+
             case 1:
-                velocityDials.add(dial); // Store the velocity dial for this column
+                velocityDials.add(dial); // Store the velocity dial
                 break;
 
             case 2:
-                gateDials.add(dial); // Store the velocity dial for this column
+                gateDials.add(dial); // Store the gate dial
                 break;
 
             default:
+                // Probability dial - could be stored in a separate collection if needed
                 break;
             }
 
@@ -428,10 +470,35 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         column.add(buttonPanel1);
 
         // Add the pad button
-        JButton padButton = new DrumButton(); // createPadButton(index);
+        JButton padButton = new DrumButton();
         padButton.setName("PadButton-" + index);
         padButton.setToolTipText("Pad " + (index + 1));
         padButton.setText(Integer.toString(index + 1));
+
+        // Add action to manually trigger the note when pad button is clicked
+        padButton.addActionListener(e -> {
+            if (index < noteDials.size()) {
+                // Get note from dial
+                NoteSelectionDial noteDial = noteDials.get(index);
+                int noteValue = noteDial.getValue();
+
+                // Get velocity
+                int velocity = 127; // Full velocity for manual triggers
+                if (index < velocityDials.size()) {
+                    velocity = (int) Math.round(velocityDials.get(index).getValue() * 1.27);
+                    velocity = Math.max(1, Math.min(127, velocity));
+                }
+
+                // Get gate time
+                int gateTime = 250; // Longer gate time for manual triggers
+                if (index < gateDials.size()) {
+                    gateTime = (int) Math.round(50 + gateDials.get(index).getValue() * 4.5);
+                }
+
+                // Play the note with velocity and gate time from dials
+                playNote(noteValue, velocity, gateTime);
+            }
+        });
 
         JPanel buttonPanel2 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         buttonPanel2.add(padButton);
