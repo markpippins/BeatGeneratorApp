@@ -31,7 +31,7 @@ import com.angrysurfer.core.service.InternalSynthManager;
  * Panel for controlling a MIDI synthesizer with tabs for oscillator, envelope,
  * filter and modulation parameters.
  */
-public class SynthControlPanel extends JPanel {
+public class InternalSynthControlPanel extends JPanel {
     
     private final Synthesizer synthesizer;
     private JComboBox<PresetItem> presetCombo;
@@ -42,7 +42,7 @@ public class SynthControlPanel extends JPanel {
      * 
      * @param synthesizer The MIDI synthesizer to control
      */
-    public SynthControlPanel(Synthesizer synthesizer) {
+    public InternalSynthControlPanel(Synthesizer synthesizer) {
         super(new BorderLayout(5, 5));
         this.synthesizer = synthesizer;
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
