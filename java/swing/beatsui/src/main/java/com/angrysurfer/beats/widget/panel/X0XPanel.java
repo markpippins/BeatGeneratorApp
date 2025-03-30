@@ -5,11 +5,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,18 +17,15 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
+import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
-import javax.swing.JToggleButton;
-import javax.swing.SwingConstants;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
@@ -70,6 +63,12 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
     // Add these fields to X0XPanel
     private int lookAheadMs = 40; // How far ahead to schedule notes
     private boolean useAheadScheduling = true; // Enable/disable look-ahead
+
+    // Add these fields for sequence parameters
+    private JSpinner lastStepSpinner;
+    private JCheckBox loopCheckbox;
+    private int patternLength = 16; // Default pattern length
+    private boolean isLooping = true; // Default looping state
 
     // Constructor - remove the stepTimer initialization
     public X0XPanel() {
@@ -212,7 +211,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                 if (tickCounter >= nextStepTick) {
                     // Calculate the next step
                     int oldStep = stepCounter;
-                    stepCounter = (stepCounter + 1) % 16;
+                    stepCounter = (stepCounter + 1) % patternLength;
 
                     // Play the step and update UI
                     updateStepAndPlayNote(oldStep, stepCounter);
@@ -278,7 +277,7 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                 newButton.setHighlighted(true);
 
                 if (getStatusConsumer() != null) {
-                    getStatusConsumer().setStatus("Step: " + (newStep + 1) + " of 16");
+                    getStatusConsumer().setStatus("Step: " + (newStep + 1) + " of " + patternLength);
                 }
             }
         });
@@ -294,28 +293,6 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         });
     }
 
-    private void updateTriggerButtons() {
-        try {
-            // First clear all button highlights
-            for (TriggerButton button : triggerButtons) {
-                button.setHighlighted(false);
-            }
-
-            // Then highlight only the current step
-            if (isPlaying && currentStep >= 0 && currentStep < triggerButtons.size()) {
-                triggerButtons.get(currentStep).setHighlighted(true);
-
-                // Update status
-                if (getStatusConsumer() != null) {
-                    getStatusConsumer().setStatus("Step: " + (currentStep + 1));
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error updating trigger buttons: " + e.getMessage());
-            e.printStackTrace(); // Print stack trace for better debugging
-        }
-    }
-
     private void setup() {
         // Create a container panel with BorderLayout
         JPanel containerPanel = new JPanel(new BorderLayout(10, 10));
@@ -325,28 +302,6 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         JTabbedPane x0xPanel = createX0XPanel();
         containerPanel.add(new JScrollPane(x0xPanel), BorderLayout.CENTER);
 
-        // Create control buttons at the bottom
-        // JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-
-        // JButton resetButton = new JButton("Reset");
-        // resetButton.addActionListener(e -> resetSequence());
-
-        // JButton playButton = new JButton("Play");
-        // playButton.addActionListener(e -> {
-        //     isPlaying = !isPlaying;
-        //     playButton.setText(isPlaying ? "Stop" : "Play");
-
-        //     if (isPlaying) {
-        //         // Start playing
-        //     } else {
-        //         resetSequence();
-        //     }
-        // });
-
-        // controlPanel.add(resetButton);
-        // controlPanel.add(playButton);
-
-        // containerPanel.add(controlPanel, BorderLayout.SOUTH);
 
         add(containerPanel);
     }
@@ -364,6 +319,11 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
 
     private Component createSequencerPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout());
+        
+        // Add sequence parameters panel at the top
+        JPanel sequenceParamsPanel = createSequenceParametersPanel();
+        mainPanel.add(sequenceParamsPanel, BorderLayout.NORTH);
+        
         // Create panel for the 16 columns
         JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 5, 0));
         sequencePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -382,6 +342,51 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         return mainPanel;
+    }
+
+    /**
+     * Create panel for sequence parameters (last step, loop, etc.)
+     */
+    private JPanel createSequenceParametersPanel() {
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 5));
+        
+        // Last Step spinner
+        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        lastStepPanel.add(new JLabel("Last Step:"));
+        
+        // Create spinner model with range 1-16, default 16
+        SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 16, 1);
+        lastStepSpinner = new JSpinner(lastStepModel);
+        lastStepSpinner.setPreferredSize(new Dimension(60, 25));
+        lastStepSpinner.addChangeListener(e -> {
+            int lastStep = (Integer) lastStepSpinner.getValue();
+            System.out.println("Last step set to: " + lastStep);
+            
+            // Update pattern length
+            patternLength = lastStep;
+        });
+        lastStepPanel.add(lastStepSpinner);
+        
+        // Loop checkbox
+        loopCheckbox = new JCheckBox("Loop", true); // Default to looping enabled
+        loopCheckbox.addActionListener(e -> {
+            boolean looping = loopCheckbox.isSelected();
+            System.out.println("Loop set to: " + looping);
+            
+            // Update looping state
+            isLooping = looping;
+        });
+        
+        // Add components to panel
+        panel.add(lastStepPanel);
+        panel.add(loopCheckbox);
+        
+        // Add spacer to push everything to the left
+        panel.add(Box.createHorizontalGlue());
+        
+        return panel;
     }
 
     private Component createEffectsPanel() {
@@ -574,26 +579,6 @@ class X0XPanel extends StatusProviderPanel implements IBusListener {
                 }
             } catch (Exception e) {
                 System.err.println("Error playing note: " + e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Send MIDI Control Change message to the synthesizer
-     * 
-     * @param ccNumber The CC number to set (0-127)
-     * @param value The value to set (0-127)
-     */
-    private void setControlChange(int ccNumber, int value) {
-        if (synthesizer != null && synthesizer.isOpen()) {
-            try {
-                MidiChannel channel = synthesizer.getChannels()[15]; // Use channel 16 (index 15)
-                if (channel != null) {
-                    channel.controlChange(ccNumber, value);
-                    System.out.println("Set CC " + ccNumber + " = " + value);
-                }
-            } catch (Exception e) {
-                System.err.println("Error setting CC " + ccNumber + ": " + e.getMessage());
             }
         }
     }
