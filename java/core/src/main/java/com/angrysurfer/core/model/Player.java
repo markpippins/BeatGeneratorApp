@@ -176,13 +176,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         return getClass().getSimpleName().toLowerCase();
     }
 
-    public Long getNote() {
-        return getRootNote();
-    }
-
-    public void setNote(Long note) {
-        setRootNote(note);
-    }
 
     // public Long getSubPosition() {
     // return getSub();
