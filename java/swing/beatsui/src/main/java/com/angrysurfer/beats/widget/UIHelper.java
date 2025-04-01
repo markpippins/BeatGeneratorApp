@@ -3,6 +3,7 @@ package com.angrysurfer.beats.widget;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -220,5 +222,86 @@ public class UIHelper {
         navPanel.add(buttonPanel, BorderLayout.CENTER);
 
         return navPanel;
+    }
+
+    /**
+     * Helper method to find components by type in a container hierarchy and apply an action
+     * 
+     * @param <T> The type of component to find
+     * @param container The container to search in
+     * @param componentClass The class of the component type to find
+     * @param action The action to perform on each found component
+     */
+    public <T extends Component> void findComponentsByType(Container container,
+            Class<T> componentClass, Consumer<Component> action) {
+
+        // Check all components in the container
+        for (Component component : container.getComponents()) {
+            // If component matches the requested class, apply the action
+            if (componentClass.isAssignableFrom(component.getClass())) {
+                action.accept(component);
+            }
+
+            // If component is itself a container, recursively search it
+            if (component instanceof Container) {
+                findComponentsByType((Container) component, componentClass, action);
+            }
+        }
+    }
+
+    /**
+     * Check if a component is a child (direct or indirect) of a container
+     * 
+     * @param child The component to check
+     * @param parent The potential parent container
+     * @return true if child is contained within parent's hierarchy
+     */
+    public boolean isChildOf(Component child, Container parent) {
+        // Check if the component's parent is the target container
+        Container current = child.getParent();
+        while (current != null) {
+            if (current == parent) {
+                return true;
+            }
+            current = current.getParent();
+        }
+        return false;
+    }
+
+    /**
+     * Get the first parent of a specific type
+     * 
+     * @param <T> The type of parent to find
+     * @param component The component to start from
+     * @param parentClass The class of the parent to find
+     * @return The first parent of the specified type, or null if not found
+     */
+    public <T extends Container> T getParentOfType(Component component, Class<T> parentClass) {
+        Container current = component.getParent();
+        while (current != null) {
+            if (parentClass.isAssignableFrom(current.getClass())) {
+                return parentClass.cast(current);
+            }
+            current = current.getParent();
+        }
+        return null;
+    }
+
+    /**
+     * Find all components of a specific type in a container
+     * 
+     * @param <T> The type of component to find
+     * @param container The container to search in
+     * @param componentClass The class of components to find
+     * @return List of components matching the specified type
+     */
+    public <T extends Component> List<T> findAllComponentsOfType(Container container, Class<T> componentClass) {
+        List<T> result = new ArrayList<>();
+        
+        findComponentsByType(container, componentClass, component -> {
+            result.add(componentClass.cast(component));
+        });
+        
+        return result;
     }
 }
