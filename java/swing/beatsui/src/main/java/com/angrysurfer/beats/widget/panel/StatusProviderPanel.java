@@ -58,18 +58,6 @@ class StatusProviderPanel extends JPanel {
         }
     }
 
-    // public void setSender(String sender) {
-    //     if (Objects.nonNull(statusConsumer)) {
-    //         statusConsumer.setSender(sender);
-    //     }
-    // }
-
-    // public void clearSender() {
-    //     if (Objects.nonNull(statusConsumer)) {
-    //         statusConsumer.clearSender();
-    //     }
-    // }
-
     public void setStatus(String status) {
         if (Objects.nonNull(statusConsumer)) {
             statusConsumer.setStatus(status);

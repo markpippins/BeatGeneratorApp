@@ -233,4 +233,5 @@ public class Commands {
     public static final String SESSION_STARTING = "SESSION_STARTING";
     public static final String SESSION_STOPPED = "SESSION_STOPPED";
     public static final String SESSION_SAVED = "SESSION_SAVED";
+    public static final String STATUS_UPDATE = "STATUS_UPDATE";
 }

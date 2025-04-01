@@ -1,11 +1,12 @@
 package com.angrysurfer.beats;
 
+import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -19,6 +20,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
@@ -50,20 +52,11 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
 
     private CommandBus commandBus = CommandBus.getInstance();
 
-    // private final LedIndicator tickLed;
-    // private final LedIndicator beatLed;
-    // private final LedIndicator barLed;
-    // private boolean litTick = false;
-    // private boolean litBeat = false;
-    // private boolean litBar = false;
-
-    // Add timing counters
     private int tickCount = 0;
     private int beatCount = 0;
     private int barCount = 0;
     private int partCount = 0;
 
-    // Add this field to your class if it doesn't exist
     private Map<String, JComponent> rightFields = new HashMap<>();
 
     private UIHelper uiHelper = UIHelper.getInstance();
@@ -71,156 +64,108 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
     public StatusBar() {
         super();
 
-        // Create LEDs
-        // tickLed = new LedIndicator(new Color(255, 50, 50)); // Red
-        // beatLed = new LedIndicator(new Color(50, 255, 50)); // Green
-        // barLed = new LedIndicator(new Color(50, 50, 255)); // Blue
-
-        // Setup panels
         setup();
-        setupLedIndicators();
 
-        // Register for timing events
         TimingBus.getInstance().register(this);
 
-        // Reset timing display
         resetTimingCounters();
 
-        // Request initial session state through CommandBus
         SwingUtilities.invokeLater(() -> {
             CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
         });
     }
 
     private void setup() {
-        // Use a single horizontal box layout
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        // Use BorderLayout for the main container
+        setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
-
-        // 1. LED INDICATORS - Now first on the left
-        // JPanel ledPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        // ledPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-        // ledPanel.setAlignmentY(CENTER_ALIGNMENT);
-
-        // Use more descriptive labels for LEDs
-        // ledPanel.add(new JLabel("Tick"));
-        // ledPanel.add(tickLed);
-        // ledPanel.add(new JLabel("Beat"));
-        // ledPanel.add(beatLed);
-        // ledPanel.add(new JLabel("Bar"));
-        // ledPanel.add(barLed);
-
-        // add(ledPanel);
-
-        // Add small spacer
-        // add(Box.createRigidArea(new Dimension(5, 0)));
-
-        // 2. SESSION INFO GROUP
+        
+        // Create a main panel with GridBagLayout for more precise control
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        
+        // Left panel - combines session and player info with no spacing
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.X_AXIS));
+        
+        // 1. SESSION INFO GROUP - no right margin to eliminate space
         JPanel sessionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        // sessionPanel.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 1,
-        // Color.LIGHT_GRAY));
-        sessionPanel.setAlignmentY(CENTER_ALIGNMENT);
-
+        sessionPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        
         sessionIdLabel = new JLabel("Session:");
         sessionPanel.add(sessionIdLabel);
         sessionIdField = uiHelper.createTextField("", 2);
         sessionPanel.add(sessionIdField);
-
+        
         playerCountLabel = new JLabel("Players:");
         sessionPanel.add(playerCountLabel);
         playerCountField = uiHelper.createStatusField("", 2);
         sessionPanel.add(playerCountField);
-
-        add(sessionPanel);
-
-        // Add small spacer
-        // add(Box.createRigidArea(new Dimension(5, 0)));
-
-        // 3. PLAYER INFO GROUP
+        
+        leftPanel.add(sessionPanel);
+        
+        // 2. PLAYER INFO GROUP - no left margin to eliminate space
         JPanel playerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        // playerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1,
-        // Color.LIGHT_GRAY));
-        playerPanel.setAlignmentY(CENTER_ALIGNMENT);
-
+        playerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        
         playerIdLabel = new JLabel("Player:");
         playerPanel.add(playerIdLabel);
         playerIdField = uiHelper.createTextField("", 2);
         playerPanel.add(playerIdField);
-
+        
         ruleCountLabel = new JLabel("Rules:");
         playerPanel.add(ruleCountLabel);
         ruleCountField = uiHelper.createTextField("", 2);
         playerPanel.add(ruleCountField);
-
-        add(playerPanel);
-
-        // Add small spacer
-        // add(Box.createRigidArea(new Dimension(5, 0)));
-
-        // 4. SITE INFO
-        JPanel sitePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        sitePanel.setAlignmentY(CENTER_ALIGNMENT);
+        
+        leftPanel.add(playerPanel);
+        
+        // Add the left panel to the main panel
+        mainPanel.add(leftPanel, BorderLayout.WEST);
+        
+        // 3. MIDDLE PANEL for Site, Status, and Message - left aligned and filling available space
+        JPanel middlePanel = new JPanel(new GridLayout(1, 3, 10, 0));
+        
+        // 3a. SITE INFO (left-aligned)
+        JPanel sitePanel = new JPanel(new BorderLayout(3, 0));
         siteLabel = new JLabel("Site:");
-        sitePanel.add(siteLabel);
-        siteField = uiHelper.createTextField("", 8);
-        sitePanel.add(siteField);
-
-        add(sitePanel);
-
-        // 5. STATUS
-        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        statusPanel.setAlignmentY(CENTER_ALIGNMENT);
+        sitePanel.add(siteLabel, BorderLayout.WEST);
+        siteField = uiHelper.createTextField("", 1);
+        sitePanel.add(siteField, BorderLayout.CENTER);
+        middlePanel.add(sitePanel);
+        
+        // 3b. STATUS (left-aligned)
+        JPanel statusPanel = new JPanel(new BorderLayout(3, 0));
         statusLabel = new JLabel("Status:");
-        statusPanel.add(statusLabel);
-        statusField = uiHelper.createTextField("", 15);
-        statusPanel.add(statusField);
-
-        add(statusPanel);
-
-        // 6. MESSAGE - takes more space
-        JPanel messagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        messagePanel.setAlignmentY(CENTER_ALIGNMENT);
+        statusPanel.add(statusLabel, BorderLayout.WEST);
+        statusField = uiHelper.createTextField("", 1);
+        statusPanel.add(statusField, BorderLayout.CENTER);
+        middlePanel.add(statusPanel);
+        
+        // 3c. MESSAGE (left-aligned)
+        JPanel messagePanel = new JPanel(new BorderLayout(3, 0));
         messageLabel = new JLabel("Message:");
-        messagePanel.add(messageLabel);
-        messageField = uiHelper.createTextField("", 20);
-        messagePanel.add(messageField);
-
-        add(messagePanel);
-
-        // Add a glue component to push the time to the right
-        add(Box.createHorizontalGlue());
-
-        // 7. TIME - always on the far right
+        messagePanel.add(messageLabel, BorderLayout.WEST);
+        messageField = uiHelper.createTextField("", 1);
+        messagePanel.add(messageField, BorderLayout.CENTER);
+        middlePanel.add(messagePanel);
+        
+        // Add the middle panel to the main panel (it will fill available space)
+        mainPanel.add(middlePanel, BorderLayout.CENTER);
+        
+        // 4. TIME panel on the far right
         JPanel timePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 0));
-        timePanel.setAlignmentY(CENTER_ALIGNMENT);
-        // timePanel.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0,
-        // Color.LIGHT_GRAY));
-        // timeLabel = new JLabel("T:B:M"); // Changed from "Time:"
-        // timePanel.add(timeLabel);
-        timeField = uiHelper.createTextField("", 7); // Increased to fit
-                                                                   // 00:00:00
+        timeField = uiHelper.createTextField("", 8);
         updateTimeDisplay(); // Initialize with zeros
         timePanel.add(timeField);
-
-        add(timePanel);
-
+        
+        // Add the time panel to the main panel
+        mainPanel.add(timePanel, BorderLayout.EAST);
+        
+        // Add the main panel to the status bar
+        add(mainPanel, BorderLayout.CENTER);
+        
         // Register with CommandBus
         getCommandBus().register(this);
-    }
-
-    // Update LED indicators appearance
-    private void setupLedIndicators() {
-        int ledSize = 14; // Slightly larger for better visibility
-
-        // Initialize LEDs with consistent size
-        // tickLed.setPreferredSize(new Dimension(ledSize, ledSize));
-        // beatLed.setPreferredSize(new Dimension(ledSize, ledSize));
-        // barLed.setPreferredSize(new Dimension(ledSize, ledSize));
-
-        // Ensure vertical alignment
-        // tickLed.setAlignmentY(CENTER_ALIGNMENT);
-        // beatLed.setAlignmentY(CENTER_ALIGNMENT);
-        // barLed.setAlignmentY(CENTER_ALIGNMENT);
     }
 
     @Override
@@ -261,6 +206,20 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
 
         try {
             switch (action.getCommand()) {
+            case Commands.STATUS_UPDATE -> {
+                if (action.getData() instanceof StatusUpdate update) {
+                    // Update only the fields that are provided (non-null)
+                    if (update.site() != null) {
+                        setSite(update.site());
+                    }
+                    if (update.status() != null) {
+                        setStatus(update.status());
+                    }
+                    if (update.message() != null) {
+                        setMessage(update.message());
+                    }
+                }
+            }
             case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED, Commands.SESSION_LOADED -> {
                 if (action.getData() instanceof Session session) {
                     updateSessionInfo(session);
@@ -292,11 +251,8 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
                     updateTimeDisplay();
                 }
             }
-            // Add case for part timing event
             case Commands.TIMING_PART -> {
                 if (action.getData() instanceof Number partVal) {
-                    // Get the part value directly from the session event
-                    // This is already 1-based from the Session class
                     partCount = partVal.intValue();
                     updateTimeDisplay();
                 }
@@ -350,9 +306,6 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         ruleCountField.setText("");
     }
 
-    /**
-     * Reset all timing counters and update display
-     */
     private void resetTimingCounters() {
         tickCount = 0;
         beatCount = 0;
@@ -361,19 +314,12 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         updateTimeDisplay();
     }
 
-    /**
-     * Format the time display in tick:beat:bar:part format
-     */
     private void updateTimeDisplay() {
-        // Format as 00:00:00:00 (tick:beat:bar:part)
-        // Display in 1-based format for user-friendliness
         String formattedTime = String.format("%02d:%02d:%02d:%02d", tickCount + 1, beatCount + 1, barCount + 1,
                 partCount + 1);
 
-        // Update the time field on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
             timeField.setText(formattedTime);
         });
     }
-    
 }

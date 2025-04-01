@@ -365,8 +365,8 @@ public class X0XPanel extends StatusProviderPanel implements IBusListener {
     }
 
     private void setup() {
-        JPanel containerPanel = new JPanel(new BorderLayout(10, 10));
-        containerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel containerPanel = new JPanel(new BorderLayout());
+        containerPanel.setBorder(BorderFactory.createEmptyBorder());
 
         JTabbedPane x0xPanel = createX0XPanel();
         containerPanel.add(new JScrollPane(x0xPanel), BorderLayout.CENTER);

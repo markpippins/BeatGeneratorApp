@@ -25,8 +25,8 @@ import lombok.Setter;
 @Setter
 public class Dial extends JComponent {
 
-    private static final int MIN_SIZE = 60;
-    private static final int MAX_SIZE = 75;
+    private static final int MIN_SIZE = 50;
+    private static final int MAX_SIZE = 60;
     private static final Color KNOB_COLOR = new Color(30, 100, 255);
     private static final Color KNOB_GRADIENT_START = new Color(60, 130, 255);
     private static final Color KNOB_GRADIENT_END = new Color(20, 80, 200);
