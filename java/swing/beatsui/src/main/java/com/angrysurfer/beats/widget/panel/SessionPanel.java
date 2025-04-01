@@ -75,28 +75,31 @@ public class SessionPanel extends JPanel implements IBusListener {
         // Create the bottom panel with proper constraints
         JPanel bottomPanel = new JPanel(new BorderLayout());
         
-        // Piano and control panel at the top of bottom section
+        // Piano and control panel - create with FIXED height
         JPanel controlContainerPanel = new JPanel(new BorderLayout());
         controlContainerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         controlContainerPanel.add(pianoPanel, BorderLayout.WEST);
         controlContainerPanel.add(controlPanel, BorderLayout.CENTER);
         
-        // Create a split pane for the control panel and timeline
-        JSplitPane bottomSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        bottomSplitPane.setResizeWeight(0.3); // Give more space to the timeline
-        bottomSplitPane.setTopComponent(controlContainerPanel);
+        // Set fixed height for control panel to make it non-resizable
+        int controlHeight = 150;  // Fixed height in pixels
+        controlContainerPanel.setPreferredSize(new Dimension(800, controlHeight));
+        controlContainerPanel.setMinimumSize(new Dimension(200, controlHeight));
+        controlContainerPanel.setMaximumSize(new Dimension(Short.MAX_VALUE, controlHeight));
         
-        // Create a proper scroll pane with minimum size for the timeline
+        // Create timeline scroll pane 
         JScrollPane timelineScrollPane = new JScrollPane(playerTimelinePanel);
-        timelineScrollPane.setMinimumSize(new Dimension(200, 200)); // Ensure minimum size
-        timelineScrollPane.setPreferredSize(new Dimension(800, 300)); // Set a good default size
+        timelineScrollPane.setMinimumSize(new Dimension(200, 200));
+        timelineScrollPane.setPreferredSize(new Dimension(800, 300));
         timelineScrollPane.setBorder(BorderFactory.createTitledBorder("Player Timeline"));
         
-        // Add timeline to bottom of the split pane
-        bottomSplitPane.setBottomComponent(timelineScrollPane);
+        // Use BorderLayout instead of split pane for fixed control panel height
+        JPanel combinedPanel = new JPanel(new BorderLayout());
+        combinedPanel.add(timelineScrollPane, BorderLayout.CENTER);
+        combinedPanel.add(controlContainerPanel, BorderLayout.SOUTH);
         
-        // Add bottom split pane to the bottom panel
-        bottomPanel.add(bottomSplitPane, BorderLayout.CENTER);
+        // Add combined panel to the bottom panel
+        bottomPanel.add(combinedPanel, BorderLayout.CENTER);
         
         // Add bottom panel to the bottom of the main split pane
         mainSplitPane.setBottomComponent(bottomPanel);
@@ -106,9 +109,8 @@ public class SessionPanel extends JPanel implements IBusListener {
         
         // Set divider locations (will be applied after components are visible)
         SwingUtilities.invokeLater(() -> {
-            mainSplitPane.setDividerLocation(0.6); // 60% for tables, 40% for timeline
+            mainSplitPane.setDividerLocation(0.6); // 60% for tables, 40% for bottom section
             tableSplitPane.setDividerLocation(0.7); // 70% for player table
-            bottomSplitPane.setDividerLocation(120); // Fixed height for control panel
         });
     }
 
