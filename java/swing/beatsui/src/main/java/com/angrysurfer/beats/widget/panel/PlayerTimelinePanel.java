@@ -123,11 +123,11 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
      * Initialize empty components with placeholders
      */
     private void initEmptyComponents() {
-        // Create header with player name - reduce height from 30px to 20px
+        // Create header with player name - keep minimal
         nameLabel = new JLabel("Select a player to view timeline");
-        nameLabel.setFont(HEADER_FONT);
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 11)); // Smaller font
         nameLabel.setForeground(Color.WHITE);
-        nameLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10)); // Reduced vertical padding
+        nameLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10)); // Minimal padding
         
         JPanel infoPanel = new JPanel(new BorderLayout());
         infoPanel.setBackground(ColorUtils.coolBlue);
@@ -136,7 +136,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         add(infoPanel, BorderLayout.NORTH);
         
         // Create main grid panel with fixed cell size
-        cellSize = 20; // Use a consistent fixed cell size
+        cellSize = 20; // Keep consistent cell size
         
         gridPanel = new JPanel() {
             @Override
@@ -154,23 +154,24 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBackground(GRID_BACKGROUND);
         
-        // Calculate initial grid height based on row height - reduce from 20px to 15px per row
-        int rowHeight = 15; // Reduced from 20px to 15px
-        int initialGridHeight = rowHeight * TOTAL_ROWS;
+        // Calculate initial grid height based on row height
+        // IMPORTANT: Use exact row count to eliminate extra space
+        int rowHeight = 15;
+        int initialGridHeight = rowHeight * TOTAL_ROWS; // This should be exactly 8 rows (120px)
         gridPanel.setPreferredSize(new Dimension(800, initialGridHeight));
         
-        // Create time labels panel with reduced height from 30px to 20px
+        // Time labels panel with minimal height
         timeLabelsPanel = new JPanel();
         timeLabelsPanel.setLayout(null);
         timeLabelsPanel.setBackground(ColorUtils.coolBlue);
-        timeLabelsPanel.setPreferredSize(new Dimension(800, 20)); // Reduced from 30px to 20px
+        timeLabelsPanel.setPreferredSize(new Dimension(800, 20)); // Keep minimal
         timeLabelsPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
         
-        // Add components to content panel
+        // Add components to content panel with no gaps
         contentPanel.add(gridPanel, BorderLayout.CENTER);
         contentPanel.add(timeLabelsPanel, BorderLayout.SOUTH);
         
-        // Add scroll pane - only for horizontal scrolling
+        // No gaps or extra spaces in the scroll pane
         JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
@@ -178,11 +179,6 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         scrollPane.setBorder(null);
         
         add(scrollPane, BorderLayout.CENTER);
-        
-        // Fixed height for entire timeline panel - reduced from 300px to 200px
-        setPreferredSize(new Dimension(800, 200));
-        setMinimumSize(new Dimension(200, 200));
-        setMaximumSize(new Dimension(Short.MAX_VALUE, 200));
     }
 
     // Override this method to enforce the fixed size
