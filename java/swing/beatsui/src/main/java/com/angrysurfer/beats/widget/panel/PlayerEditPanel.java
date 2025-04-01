@@ -384,7 +384,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
             if (isDrumChannel && presetCombo.getSelectedItem() instanceof DrumItem) {
                 // For drum channel, update the note value but keep preset at 0 (standard GM drums)
                 DrumItem selectedDrum = (DrumItem) presetCombo.getSelectedItem();
-                player.setNote((long) selectedDrum.getNoteNumber());
+                player.setRootNote((long) selectedDrum.getNoteNumber());
                 player.setPreset(0L); // Standard GM drum set
             } 
             else if (presetCombo.getSelectedItem() instanceof PresetItem) {
@@ -592,7 +592,7 @@ public class PlayerEditPanel extends StatusProviderPanel {
         presetCombo.removeAllItems();
         
         // Get current note from player, defaulting to 36 (Bass Drum) if not set
-        int currentNote = player.getNote() != null ? player.getNote().intValue() : 36;
+        int currentNote = player.getRootNote() != null ? player.getRootNote().intValue() : 36;
         
         // Get drum names from InternalSynthManager
         for (int i = 27; i < 88; i++) {  // Standard GM drum range

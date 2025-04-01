@@ -274,15 +274,14 @@ public class SessionControlPanel extends JPanel {
     }
     
     private JComboBox<String> createRootNoteCombo() {
-        String[] keys = { "C", "D", "E", "F", "G", "A", "B" };
-
-        JComboBox<String> combo = new JComboBox<>(keys);
+        String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        JComboBox<String> combo = new JComboBox<>(noteNames);
         combo.setSelectedItem("C");
         
         // Reduce width
-        combo.setMaximumSize(new Dimension(35, 25));
-        combo.setPreferredSize(new Dimension(35, 25));
-        combo.setMinimumSize(new Dimension(35, 25));
+        combo.setMaximumSize(new Dimension(45, 25));
+        combo.setPreferredSize(new Dimension(45, 25));
+        combo.setMinimumSize(new Dimension(45, 25));
         
         combo.setAlignmentX(Component.CENTER_ALIGNMENT);
         combo.setEnabled(true);
