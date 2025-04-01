@@ -574,7 +574,10 @@ public class InternalSynthControlPanel extends JPanel {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // Create a container for the oscillator rows
+        // Create a container for the oscillator section with BorderLayout
+        JPanel oscillatorSection = new JPanel(new BorderLayout(10, 0));
+
+        // Create a container for the three oscillator rows
         JPanel oscillatorsPanel = new JPanel();
         oscillatorsPanel.setLayout(new BoxLayout(oscillatorsPanel, BoxLayout.Y_AXIS));
 
@@ -585,15 +588,18 @@ public class InternalSynthControlPanel extends JPanel {
         oscillatorsPanel.add(Box.createVerticalStrut(10)); // Spacer
         oscillatorsPanel.add(createOscillatorRow("Oscillator 3", 2));
 
-        // Global controls for oscillators
-        JPanel globalControls = createOscillatorMixingPanel();
-        oscillatorsPanel.add(Box.createVerticalStrut(15));
-        oscillatorsPanel.add(globalControls);
+        // Add oscillators to the left side of the oscillator section
+        oscillatorSection.add(oscillatorsPanel, BorderLayout.CENTER);
 
-        // Add oscillators section to main panel
-        mainPanel.add(oscillatorsPanel);
+        // Global controls for oscillators - now on the right side
+        JPanel globalControls = createOscillatorMixingPanel();
+        oscillatorSection.add(globalControls, BorderLayout.EAST);
+
+        // Add oscillator section to main panel
+        mainPanel.add(oscillatorSection);
         mainPanel.add(Box.createVerticalStrut(20)); // Spacer between sections
 
+        // Rest of the method remains the same
         // Create bottom row with Envelope, Filter, Modulation, and Effects panels
         JPanel bottomRow = new JPanel(new GridLayout(1, 4, 10, 0));
 
@@ -606,11 +612,8 @@ public class InternalSynthControlPanel extends JPanel {
         filterContainer.setLayout(new BoxLayout(filterContainer, BoxLayout.Y_AXIS));
 
         // Extract filter components from createFilterPanel method
-        JPanel filterTypePanel = createFilterTypePanel();
         JPanel filterParamsPanel = createFilterParamsPanel();
 
-        filterContainer.add(filterTypePanel);
-        filterContainer.add(Box.createVerticalStrut(5));
         filterContainer.add(filterParamsPanel);
         bottomRow.add(filterContainer);
 
@@ -723,6 +726,67 @@ public class InternalSynthControlPanel extends JPanel {
         });
 
         return effectsPanel;
+    }
+
+    /**
+     * Create just the filter parameters panel with filter type slider as first control
+     */
+    private JPanel createFilterParamsPanel() {
+        JPanel filterParamsPanel = new JPanel();
+        filterParamsPanel.setBorder(BorderFactory.createTitledBorder("Filter"));
+        filterParamsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
+
+        // Create filter type slider with labels
+        JSlider filterTypeSlider = createLabeledVerticalSlider(
+                "Filter Type", 0, 3, 0,
+                new String[]{"Low Pass", "High Pass", "Band Pass", "Notch"}
+        );
+        
+        // Create other sliders
+        JSlider cutoffSlider = createVerticalSlider("Filter Cutoff Frequency", 100);
+        JSlider resonanceSlider = createVerticalSlider("Resonance/Q", 10);
+        JSlider envAmountSlider = createVerticalSlider("Envelope Amount", 0);
+
+        // Create slider groups - filter type first
+        JPanel typeGroup = createSliderGroup("Type", filterTypeSlider);
+        JPanel cutoffGroup = createSliderGroup("Cutoff", cutoffSlider);
+        JPanel resonanceGroup = createSliderGroup("Resonance", resonanceSlider);
+        JPanel envAmtGroup = createSliderGroup("Env Amount", envAmountSlider);
+
+        // Add to filter params panel - filter type first
+        filterParamsPanel.add(typeGroup);
+        filterParamsPanel.add(cutoffGroup);
+        filterParamsPanel.add(resonanceGroup);
+        filterParamsPanel.add(envAmtGroup);
+
+        // Add event listeners
+        filterTypeSlider.addChangeListener(e -> {
+            if (!filterTypeSlider.getValueIsAdjusting()) {
+                int filterType = filterTypeSlider.getValue();
+                setControlChange(102, filterType * 32); // Custom CC for filter type
+                System.out.println("Filter type: " + filterType + " (CC102=" + (filterType * 32) + ")");
+            }
+        });
+
+        cutoffSlider.addChangeListener(e -> {
+            if (!cutoffSlider.getValueIsAdjusting()) {
+                setControlChange(74, cutoffSlider.getValue());
+            }
+        });
+
+        resonanceSlider.addChangeListener(e -> {
+            if (!resonanceSlider.getValueIsAdjusting()) {
+                setControlChange(71, resonanceSlider.getValue());
+            }
+        });
+
+        envAmountSlider.addChangeListener(e -> {
+            if (!envAmountSlider.getValueIsAdjusting()) {
+                setControlChange(110, envAmountSlider.getValue());
+            }
+        });
+
+        return filterParamsPanel;
     }
 
     /**
@@ -948,7 +1012,7 @@ public class InternalSynthControlPanel extends JPanel {
     }
 
     /**
-     * Create global mixer panel for oscillator balance
+     * Create global mixer panel for oscillator balance with vertical orientation
      */
     private JPanel createOscillatorMixingPanel() {
         JPanel mixerPanel = new JPanel();
@@ -959,31 +1023,36 @@ public class InternalSynthControlPanel extends JPanel {
                 TitledBorder.TOP,
                 new Font("Dialog", Font.BOLD, 11)
         ));
-        mixerPanel.setLayout(new BoxLayout(mixerPanel, BoxLayout.X_AXIS));
+        
+        // Use vertical BoxLayout instead of horizontal
+        mixerPanel.setLayout(new BoxLayout(mixerPanel, BoxLayout.Y_AXIS));
+        
+        // Set preferred width for consistent size
+        mixerPanel.setPreferredSize(new Dimension(120, 200));
 
         // Balance between osc 1 & 2
-        JPanel balance12Group = createCompactGroup("Osc 1-2");
+        JPanel balance12Group = createVerticalDialGroup("Osc 1-2");
         Dial balance12Dial = createCompactDial("", "Balance Osc 1-2", 64);
         balance12Group.add(balance12Dial);
 
         // Balance between result and osc 3
-        JPanel balance3Group = createCompactGroup("Osc 3 Mix");
+        JPanel balance3Group = createVerticalDialGroup("Osc 3 Mix");
         Dial balance3Dial = createCompactDial("", "Mix in Osc 3", 32);
         balance3Group.add(balance3Dial);
 
         // Master level
-        JPanel masterGroup = createCompactGroup("Master");
+        JPanel masterGroup = createVerticalDialGroup("Master");
         Dial masterDial = createCompactDial("", "Master Level", 100);
         masterGroup.add(masterDial);
 
-        // Add components
-        mixerPanel.add(Box.createHorizontalStrut(5));
+        // Add vertical spacing between components
+        mixerPanel.add(Box.createVerticalStrut(5));
         mixerPanel.add(balance12Group);
-        mixerPanel.add(Box.createHorizontalStrut(10));
+        mixerPanel.add(Box.createVerticalStrut(10));
         mixerPanel.add(balance3Group);
-        mixerPanel.add(Box.createHorizontalStrut(10));
+        mixerPanel.add(Box.createVerticalStrut(10));
         mixerPanel.add(masterGroup);
-        mixerPanel.add(Box.createHorizontalGlue());
+        mixerPanel.add(Box.createVerticalGlue());
 
         // Add event handlers
         balance12Dial.addChangeListener(e -> setControlChange(8, balance12Dial.getValue()));
@@ -991,6 +1060,24 @@ public class InternalSynthControlPanel extends JPanel {
         masterDial.addChangeListener(e -> setControlChange(7, masterDial.getValue()));
 
         return mixerPanel;
+    }
+
+    /**
+     * Create a vertical dial group for oscillator mix controls
+     */
+    private JPanel createVerticalDialGroup(String title) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Add title label
+        JLabel titleLabel = new JLabel(title, JLabel.CENTER);
+        titleLabel.setFont(new Font("Dialog", Font.PLAIN, 11));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(5));
+        
+        return panel;
     }
 
     /**
@@ -1070,71 +1157,6 @@ public class InternalSynthControlPanel extends JPanel {
         });
 
         return adsrPanel;
-    }
-
-    /**
-     * Create just the filter type panel
-     */
-    private JPanel createFilterTypePanel() {
-        JPanel typePanel = new JPanel(new BorderLayout());
-        typePanel.setBorder(BorderFactory.createTitledBorder("Filter Type"));
-
-        JComboBox<String> filterTypeCombo = new JComboBox<>(
-                new String[]{"Low Pass", "High Pass", "Band Pass", "Notch"});
-        typePanel.add(filterTypeCombo, BorderLayout.CENTER);
-
-        // Add event listener
-        filterTypeCombo.addActionListener(e -> {
-            int filterType = filterTypeCombo.getSelectedIndex();
-            setControlChange(102, filterType * 32); // Custom CC for filter type
-        });
-
-        return typePanel;
-    }
-
-    /**
-     * Create just the filter parameters panel
-     */
-    private JPanel createFilterParamsPanel() {
-        JPanel filterParamsPanel = new JPanel();
-        filterParamsPanel.setBorder(BorderFactory.createTitledBorder("Filter Parameters"));
-        filterParamsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
-
-        // Create sliders
-        JSlider cutoffSlider = createVerticalSlider("Filter Cutoff Frequency", 100);
-        JSlider resonanceSlider = createVerticalSlider("Resonance/Q", 10);
-        JSlider envAmountSlider = createVerticalSlider("Envelope Amount", 0);
-
-        // Create slider groups
-        JPanel cutoffGroup = createSliderGroup("Cutoff", cutoffSlider);
-        JPanel resonanceGroup = createSliderGroup("Resonance", resonanceSlider);
-        JPanel envAmtGroup = createSliderGroup("Env Amount", envAmountSlider);
-
-        // Add to filter params panel
-        filterParamsPanel.add(cutoffGroup);
-        filterParamsPanel.add(resonanceGroup);
-        filterParamsPanel.add(envAmtGroup);
-
-        // Add event listeners
-        cutoffSlider.addChangeListener(e -> {
-            if (!cutoffSlider.getValueIsAdjusting()) {
-                setControlChange(74, cutoffSlider.getValue());
-            }
-        });
-
-        resonanceSlider.addChangeListener(e -> {
-            if (!resonanceSlider.getValueIsAdjusting()) {
-                setControlChange(71, resonanceSlider.getValue());
-            }
-        });
-
-        envAmountSlider.addChangeListener(e -> {
-            if (!envAmountSlider.getValueIsAdjusting()) {
-                setControlChange(110, envAmountSlider.getValue());
-            }
-        });
-
-        return filterParamsPanel;
     }
 
     /**
