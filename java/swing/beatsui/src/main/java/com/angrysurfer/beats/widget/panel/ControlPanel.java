@@ -34,7 +34,7 @@ import com.angrysurfer.core.service.PlayerManager;
 public class ControlPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(ControlPanel.class.getName());
     private static final int BUTTON_SIZE = 30;
-    private static final int PANEL_HEIGHT = 90; // Match panel height in SessionPanel
+    private static final int PANEL_HEIGHT = 100; // Increased from 90 to 100px
 
     // Dials
     private Dial levelDial;
@@ -63,7 +63,7 @@ public class ControlPanel extends JPanel {
         // Use BorderLayout as the main layout for better component positioning
         super(new BorderLayout());
 
-        // Set fixed height
+        // Set fixed height - updated to match new PANEL_HEIGHT
         setMinimumSize(new Dimension(getMinimumSize().width, PANEL_HEIGHT));
         setPreferredSize(new Dimension(getPreferredSize().width, PANEL_HEIGHT));
         setMaximumSize(new Dimension(Short.MAX_VALUE, PANEL_HEIGHT));
@@ -90,14 +90,16 @@ public class ControlPanel extends JPanel {
         // Add vertical glue at bottom for centering
         centeringPanel.add(Box.createVerticalGlue());
 
-        // Create a right panel with centered MiniLaunchPanel
+        // Create a right panel with centered MiniLaunchPanel - ensure vertical centering
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
         rightPanel.setOpaque(false);
+        
+        // Add equal glue above and below to ensure perfect vertical centering
         rightPanel.add(Box.createVerticalGlue());
         
-        // Center the launch panel horizontally in its container
-        JPanel launchCenterPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        // Center the launch panel horizontally within its container
+        JPanel launchCenterPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         launchCenterPanel.setOpaque(false);
         launchCenterPanel.add(launchPanel);
         

@@ -71,8 +71,8 @@ public class SessionPanel extends JPanel implements IBusListener {
         JPanel controlContainerPanel = new JPanel(new BorderLayout());
         controlContainerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); // Minimal padding
         
-        // Set fixed height for control panel
-        int controlHeight = 90;
+        // Set fixed height for control panel - increased from 90 to 100px
+        int controlHeight = 100;
         controlContainerPanel.setPreferredSize(new Dimension(800, controlHeight));
         controlContainerPanel.setMinimumSize(new Dimension(200, controlHeight));
         controlContainerPanel.setMaximumSize(new Dimension(Short.MAX_VALUE, controlHeight));
