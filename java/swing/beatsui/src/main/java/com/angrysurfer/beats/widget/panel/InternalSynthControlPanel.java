@@ -591,31 +591,42 @@ public class InternalSynthControlPanel extends JPanel {
         // Add oscillators to the left side of the oscillator section
         oscillatorSection.add(oscillatorsPanel, BorderLayout.CENTER);
 
-        // Global controls for oscillators - now on the right side
+        // Create right side panel that contains oscillator mix, envelope and filter
+        JPanel rightSidePanel = new JPanel(new BorderLayout(0, 10));
+        
+        // Global controls for oscillators
         JPanel globalControls = createOscillatorMixingPanel();
-        oscillatorSection.add(globalControls, BorderLayout.EAST);
-
+        rightSidePanel.add(globalControls, BorderLayout.NORTH);
+        
+        // Create vertical panel for envelope and filter
+        JPanel envFilterPanel = new JPanel();
+        envFilterPanel.setLayout(new BoxLayout(envFilterPanel, BoxLayout.Y_AXIS));
+        
+        // 1. Add Envelope panel
+        JPanel envelopePanel = createCompactEnvelopePanel();
+        envelopePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        envFilterPanel.add(envelopePanel);
+        
+        // Add spacer between envelope and filter
+        envFilterPanel.add(Box.createVerticalStrut(10));
+        
+        // 2. Add Filter panel
+        JPanel filterParamsPanel = createFilterParamsPanel();
+        filterParamsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        envFilterPanel.add(filterParamsPanel);
+        
+        // Add env/filter panel to right side
+        rightSidePanel.add(envFilterPanel, BorderLayout.CENTER);
+        
+        // Add right side panel to oscillator section
+        oscillatorSection.add(rightSidePanel, BorderLayout.EAST);
+        
         // Add oscillator section to main panel
         mainPanel.add(oscillatorSection);
         mainPanel.add(Box.createVerticalStrut(20)); // Spacer between sections
 
-        // Rest of the method remains the same
-        // Create bottom row with Envelope, Filter, Modulation, and Effects panels
-        JPanel bottomRow = new JPanel(new GridLayout(1, 4, 10, 0));
-
-        // 1. Add Envelope panel
-        JPanel envelopePanel = createCompactEnvelopePanel();
-        bottomRow.add(envelopePanel);
-
-        // 2. Add vertical Filter panel container
-        JPanel filterContainer = new JPanel();
-        filterContainer.setLayout(new BoxLayout(filterContainer, BoxLayout.Y_AXIS));
-
-        // Extract filter components from createFilterPanel method
-        JPanel filterParamsPanel = createFilterParamsPanel();
-
-        filterContainer.add(filterParamsPanel);
-        bottomRow.add(filterContainer);
+        // Create bottom row with just Modulation and Effects panels (2 columns)
+        JPanel bottomRow = new JPanel(new GridLayout(1, 2, 10, 0));
 
         // 3. Add Modulation panel
         JPanel modulationPanel = createCompactLfoPanel();
@@ -1012,7 +1023,7 @@ public class InternalSynthControlPanel extends JPanel {
     }
 
     /**
-     * Create global mixer panel for oscillator balance with vertical orientation
+     * Create global mixer panel for oscillator balance with horizontal orientation
      */
     private JPanel createOscillatorMixingPanel() {
         JPanel mixerPanel = new JPanel();
@@ -1024,35 +1035,35 @@ public class InternalSynthControlPanel extends JPanel {
                 new Font("Dialog", Font.BOLD, 11)
         ));
         
-        // Use vertical BoxLayout instead of horizontal
-        mixerPanel.setLayout(new BoxLayout(mixerPanel, BoxLayout.Y_AXIS));
+        // Use horizontal BoxLayout instead of vertical
+        mixerPanel.setLayout(new BoxLayout(mixerPanel, BoxLayout.X_AXIS));
         
-        // Set preferred width for consistent size
-        mixerPanel.setPreferredSize(new Dimension(120, 200));
+        // Set preferred size for consistent dimensions - wider, less tall
+        mixerPanel.setPreferredSize(new Dimension(300, 100));
 
         // Balance between osc 1 & 2
-        JPanel balance12Group = createVerticalDialGroup("Osc 1-2");
+        JPanel balance12Group = createHorizontalDialGroup("Osc 1-2");
         Dial balance12Dial = createCompactDial("", "Balance Osc 1-2", 64);
         balance12Group.add(balance12Dial);
 
         // Balance between result and osc 3
-        JPanel balance3Group = createVerticalDialGroup("Osc 3 Mix");
+        JPanel balance3Group = createHorizontalDialGroup("Osc 3 Mix");
         Dial balance3Dial = createCompactDial("", "Mix in Osc 3", 32);
         balance3Group.add(balance3Dial);
 
         // Master level
-        JPanel masterGroup = createVerticalDialGroup("Master");
+        JPanel masterGroup = createHorizontalDialGroup("Master");
         Dial masterDial = createCompactDial("", "Master Level", 100);
         masterGroup.add(masterDial);
 
-        // Add vertical spacing between components
-        mixerPanel.add(Box.createVerticalStrut(5));
+        // Add horizontal spacing between components
+        mixerPanel.add(Box.createHorizontalStrut(10));
         mixerPanel.add(balance12Group);
-        mixerPanel.add(Box.createVerticalStrut(10));
+        mixerPanel.add(Box.createHorizontalStrut(15));
         mixerPanel.add(balance3Group);
-        mixerPanel.add(Box.createVerticalStrut(10));
+        mixerPanel.add(Box.createHorizontalStrut(15));
         mixerPanel.add(masterGroup);
-        mixerPanel.add(Box.createVerticalGlue());
+        mixerPanel.add(Box.createHorizontalGlue());
 
         // Add event handlers
         balance12Dial.addChangeListener(e -> setControlChange(8, balance12Dial.getValue()));
@@ -1063,12 +1074,12 @@ public class InternalSynthControlPanel extends JPanel {
     }
 
     /**
-     * Create a vertical dial group for oscillator mix controls
+     * Create a horizontal dial group for oscillator mix controls
      */
-    private JPanel createVerticalDialGroup(String title) {
+    private JPanel createHorizontalDialGroup(String title) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.setAlignmentY(Component.CENTER_ALIGNMENT);
         
         // Add title label
         JLabel titleLabel = new JLabel(title, JLabel.CENTER);
