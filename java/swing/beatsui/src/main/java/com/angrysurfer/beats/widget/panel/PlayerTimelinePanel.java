@@ -107,16 +107,168 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         this.player = player;
         
         if (player == null) {
-            // Show empty placeholder
+            // Show empty placeholder but still draw grid
             nameLabel.setText("Select a player to view timeline");
+            
+            // Clear any existing cells but still show the grid structure
             clearGrid();
+            
+            // Draw empty grid with default values
+            drawEmptyTimelineGrid();
         } else {
             // Show timeline with fixed row heights
             updateTimelineWithFixedRowHeights();
         }
         
-        // NOTE: Don't call revalidate() here to avoid size changes
+        // Repaint after changes
         repaint();
+    }
+
+    /**
+     * Draw an empty grid structure when no player is selected
+     */
+    private void drawEmptyTimelineGrid() {
+        // Clear existing content
+        gridCells.clear();
+        
+        // Add row labels with fixed height
+        int rowHeight = 15;
+        addRowLabelsWithFixedHeight(rowHeight);
+        
+        // Set grid dimensions - use default values
+        int defaultTicks = 16 * 6; // Assume 16 beats at 6 ticks per beat
+        int gridWidth = defaultTicks * cellSize + 85;
+        int gridHeight = rowHeight * TOTAL_ROWS;
+        gridPanel.setPreferredSize(new Dimension(gridWidth, gridHeight));
+        
+        // Add empty time labels with default values
+        addEmptyTimeLabels(4, 4); // Assume 4 beats per bar, 4 bars
+        
+        // Revalidate to apply changes
+        gridPanel.revalidate();
+        timeLabelsPanel.revalidate();
+    }
+
+    /**
+     * Add time labels with default values when no player is selected
+     */
+    private void addEmptyTimeLabels(int beatsPerBar, int bars) {
+        timeLabelsPanel.removeAll();
+        
+        int ticksPerBeat = 6; // Default value
+        int totalBeats = beatsPerBar * bars;
+        int totalTicks = totalBeats * ticksPerBeat;
+        int labelWidth = 80;
+        int totalWidth = labelWidth + totalTicks * cellSize;
+        
+        // Set size for time labels panel
+        timeLabelsPanel.setPreferredSize(new Dimension(totalWidth, 20));
+        timeLabelsPanel.setSize(totalWidth, 20);
+        
+        // Calculate vertical centering position
+        int panelHeight = 20;
+        int fontSize = 12;
+        int yCenter = (panelHeight - fontSize) / 2;
+        
+        // Add bar numbers
+        for (int bar = 0; bar < bars; bar++) {
+            JLabel barLabel = new JLabel(String.valueOf(bar + 1));
+            barLabel.setForeground(Color.WHITE);
+            barLabel.setFont(new Font("Arial", Font.BOLD, 12));
+            
+            int barWidth = beatsPerBar * ticksPerBeat * cellSize;
+            int x = labelWidth + bar * barWidth + barWidth / 2 - 5;
+            barLabel.setBounds(x, yCenter, 20, fontSize);
+            
+            timeLabelsPanel.add(barLabel);
+        }
+        
+        // Add beat numbers
+        for (int bar = 0; bar < bars; bar++) {
+            for (int beat = 0; beat < beatsPerBar; beat++) {
+                JLabel beatLabel = new JLabel(String.valueOf(beat + 1));
+                beatLabel.setForeground(Color.LIGHT_GRAY);
+                beatLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+                
+                int x = labelWidth + (bar * beatsPerBar * ticksPerBeat + beat * ticksPerBeat) * cellSize 
+                        + (ticksPerBeat * cellSize / 2) - 3;
+                beatLabel.setBounds(x, yCenter + 1, 10, fontSize - 2);
+                
+                timeLabelsPanel.add(beatLabel);
+            }
+        }
+        
+        // Ensure panel is visible
+        timeLabelsPanel.setVisible(true);
+    }
+
+    /**
+     * Override paintComponent to draw grid lines even when no player is selected
+     */
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        
+        // Draw grid lines even if no player is selected
+        if (player == null) {
+            // Draw empty grid lines with default values
+            drawEmptyGridLines(g);
+        }
+    }
+
+    /**
+     * Draw grid lines with default values when no player is selected
+     */
+    private void drawEmptyGridLines(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Use default values
+        int beatsPerBar = 4;
+        int bars = 4;
+        int ticksPerBeat = 6;
+        int totalBeats = beatsPerBar * bars;
+        int totalTicks = totalBeats * ticksPerBeat;
+        
+        // Account for label panel width
+        int labelWidth = 80;
+        int rowHeight = 15; 
+        
+        // Draw horizontal row dividers
+        g2d.setColor(Color.LIGHT_GRAY);
+        g2d.setStroke(new BasicStroke(1));
+        for (int i = 1; i < TOTAL_ROWS; i++) {
+            int y = i * rowHeight;
+            g2d.drawLine(labelWidth, y, labelWidth + totalTicks * cellSize, y);
+        }
+        
+        // Draw vertical beat lines
+        for (int beat = 0; beat <= totalBeats; beat++) {
+            int x = labelWidth + beat * ticksPerBeat * cellSize;
+            
+            if (beat % beatsPerBar == 0) {
+                // Draw bar lines with thicker stroke
+                g2d.setColor(BAR_LINE_COLOR);
+                g2d.setStroke(new BasicStroke(2));
+            } else {
+                // Draw beat lines with thinner stroke
+                g2d.setColor(BEAT_LINE_COLOR);
+                g2d.setStroke(new BasicStroke(1));
+            }
+            
+            g2d.drawLine(x, 0, x, rowHeight * TOTAL_ROWS);
+        }
+        
+        // Draw vertical tick lines (thinner)
+        g2d.setColor(new Color(220, 220, 220)); // Very light gray
+        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[]{1, 2}, 0));
+        for (int tick = 0; tick <= totalTicks; tick++) {
+            // Skip lines that are already drawn as beat or bar lines
+            if (tick % ticksPerBeat != 0) {
+                int x = labelWidth + tick * cellSize;
+                g2d.drawLine(x, 0, x, rowHeight * TOTAL_ROWS);
+            }
+        }
     }
 
     /**
