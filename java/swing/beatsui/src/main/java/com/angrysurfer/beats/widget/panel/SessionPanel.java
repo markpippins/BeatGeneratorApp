@@ -77,10 +77,11 @@ public class SessionPanel extends JPanel implements IBusListener {
         
         // Piano and control panel - create with FIXED height
         JPanel controlContainerPanel = new JPanel(new BorderLayout());
-        controlContainerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); // Reduce top/bottom padding from 10 to 5
+        controlContainerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); // Minimal padding
         
         // Set fixed height for control panel to make it non-resizable
-        int controlHeight = 110;  // Fixed height in pixels (reduced from 150 to 110)
+        // REDUCED: From 110px to 90px (20px reduction)
+        int controlHeight = 100;
         controlContainerPanel.setPreferredSize(new Dimension(800, controlHeight));
         controlContainerPanel.setMinimumSize(new Dimension(200, controlHeight));
         controlContainerPanel.setMaximumSize(new Dimension(Short.MAX_VALUE, controlHeight));
@@ -89,13 +90,13 @@ public class SessionPanel extends JPanel implements IBusListener {
         controlContainerPanel.add(pianoPanel, BorderLayout.WEST);
         controlContainerPanel.add(controlPanel, BorderLayout.CENTER);
         
-        // Create timeline scroll pane 
+        // Create timeline scroll pane with fixed size
         JScrollPane timelineScrollPane = new JScrollPane(playerTimelinePanel);
         timelineScrollPane.setMinimumSize(new Dimension(200, 200));
         timelineScrollPane.setPreferredSize(new Dimension(800, 300));
         timelineScrollPane.setBorder(BorderFactory.createTitledBorder("Player Timeline"));
         
-        // Use BorderLayout instead of split pane for fixed control panel height
+        // Use BorderLayout instead of split pane for fixed heights
         JPanel combinedPanel = new JPanel(new BorderLayout());
         combinedPanel.add(timelineScrollPane, BorderLayout.CENTER);
         combinedPanel.add(controlContainerPanel, BorderLayout.SOUTH);

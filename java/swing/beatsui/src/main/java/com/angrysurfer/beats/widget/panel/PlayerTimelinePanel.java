@@ -87,14 +87,36 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         
         setBackground(ColorUtils.coolBlue);
 
-        // Set a fixed preferred size for stable initial layout
-        setPreferredSize(new Dimension(800, 400));
+        // Set a fixed size that won't change
+        int fixedHeight = 230; // 8 rows * 20px + 30px header + 30px time labels + a bit of margin
+        setPreferredSize(new Dimension(800, fixedHeight));
+        setMinimumSize(new Dimension(400, fixedHeight));
+        setMaximumSize(new Dimension(Short.MAX_VALUE, fixedHeight));
         
         // Create the empty grid with initial placeholders
         initEmptyComponents();
         
         // Register for player selection events
         CommandBus.getInstance().register(this);
+    }
+
+    /**
+     * Set the player and update the timeline display
+     */
+    public void setPlayer(Player player) {
+        this.player = player;
+        
+        if (player == null) {
+            // Show empty placeholder
+            nameLabel.setText("Select a player to view timeline");
+            clearGrid();
+        } else {
+            // Show timeline with fixed row heights
+            updateTimelineWithFixedRowHeights();
+        }
+        
+        // NOTE: Don't call revalidate() here to avoid size changes
+        repaint();
     }
 
     /**
@@ -128,20 +150,27 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         gridPanel.setLayout(null);
         gridPanel.setBackground(GRID_BACKGROUND);
         
-        // Create a content panel with fixed row height
+        // Create a content panel with proper size constraints
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBackground(GRID_BACKGROUND);
-        contentPanel.add(gridPanel, BorderLayout.CENTER);
         
-        // Create empty time labels panel
+        // Calculate initial grid height based on row height
+        int rowHeight = 20; // Same as used in updateTimelineWithFixedRowHeights
+        int initialGridHeight = rowHeight * TOTAL_ROWS;
+        gridPanel.setPreferredSize(new Dimension(800, initialGridHeight));
+        
+        // Create time labels panel with fixed height
         timeLabelsPanel = new JPanel();
         timeLabelsPanel.setLayout(null);
         timeLabelsPanel.setBackground(ColorUtils.coolBlue);
         timeLabelsPanel.setPreferredSize(new Dimension(800, 30));
+        timeLabelsPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
         
+        // Add components to content panel
+        contentPanel.add(gridPanel, BorderLayout.CENTER);
         contentPanel.add(timeLabelsPanel, BorderLayout.SOUTH);
         
-        // Add scroll pane
+        // Add scroll pane - this allows grid content to scroll while panel maintains fixed size
         JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(16);
@@ -150,23 +179,11 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    /**
-     * Set the player and update the timeline display
-     */
-    public void setPlayer(Player player) {
-        this.player = player;
-        
-        if (player == null) {
-            // Show empty placeholder
-            nameLabel.setText("Select a player to view timeline");
-            clearGrid();
-        } else {
-            // Show timeline with fixed row heights
-            updateTimelineWithFixedRowHeights();
-        }
-        
-        revalidate();
-        repaint();
+    // Override this method to enforce the fixed size
+    @Override
+    public Dimension getPreferredSize() {
+        // Always return our fixed size to prevent layout changes
+        return new Dimension(800, 230);
     }
 
     /**

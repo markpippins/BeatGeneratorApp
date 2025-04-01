@@ -9,6 +9,7 @@ import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,6 +34,7 @@ import com.angrysurfer.core.service.PlayerManager;
 public class ControlPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(ControlPanel.class.getName());
     private static final int BUTTON_SIZE = 30;
+    private static final int PANEL_HEIGHT = 90; // Match panel height in SessionPanel
 
     // Dials
     private Dial levelDial;
@@ -58,58 +60,88 @@ public class ControlPanel extends JPanel {
     private boolean listenersEnabled = true;
 
     public ControlPanel() {
-        super(new FlowLayout(FlowLayout.LEFT));
+        // Use BorderLayout as the main layout for better centering control
+        super(new BorderLayout());
 
-        initComponents();
+        // Set fixed height
+        setMinimumSize(new Dimension(getMinimumSize().width, PANEL_HEIGHT));
+        setPreferredSize(new Dimension(getPreferredSize().width, PANEL_HEIGHT));
+        setMaximumSize(new Dimension(Short.MAX_VALUE, PANEL_HEIGHT));
+
+        // Create a wrapper panel for all controls using FlowLayout
+        JPanel controlsWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        controlsWrapper.setOpaque(false); // Make transparent to show parent background
+
+        // Add all components
+        initComponents(controlsWrapper);
+
+        // Create a vertical centering panel with BoxLayout
+        JPanel centeringPanel = new JPanel();
+        centeringPanel.setLayout(new BoxLayout(centeringPanel, BoxLayout.Y_AXIS));
+        centeringPanel.setOpaque(false);
+
+        // Add vertical glue at top for centering
+        centeringPanel.add(Box.createVerticalGlue());
+        // Add the controls wrapper
+        centeringPanel.add(controlsWrapper);
+        // Add vertical glue at bottom for centering
+        centeringPanel.add(Box.createVerticalGlue());
+
+        // Add the centering panel to this panel
+        add(centeringPanel, BorderLayout.CENTER);
+
         setupCommandBusListener();
     }
 
     private static final String PLAYER_PANEL = "PLAYER_PANEL";
     private static final String SESSION_PANEL = "SESSION_PANEL";
 
-    private void initComponents() {
-        setMinimumSize(new Dimension(getMinimumSize().width, 100));
-        setPreferredSize(new Dimension(getPreferredSize().width, 100));
-
+    private void initComponents(JPanel controlsWrapper) {
         // Add vertical adjust panels
         JPanel presetPanel = UIHelper.createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP,
                 Commands.PRESET_DOWN);
-        presetPanel.setName(PLAYER_PANEL + "_PRESET"); // Set
-        add(presetPanel);
+        presetPanel.setName(PLAYER_PANEL + "_PRESET");
+        controlsWrapper.add(presetPanel);
 
         JPanel offsetPanel = UIHelper.createVerticalAdjustPanel("Offset", "↑", "↓", Commands.TRANSPOSE_UP,
                 Commands.TRANSPOSE_DOWN);
-        offsetPanel.setName(SESSION_PANEL + "_OFFSET"); // Set
-        add(offsetPanel);
+        offsetPanel.setName(SESSION_PANEL + "_OFFSET");
+        controlsWrapper.add(offsetPanel);
 
-        add(createScaleAdjustPanel());
+        controlsWrapper.add(createScaleAdjustPanel());
 
         // Add octave panel
         JPanel octavePanel = createOctavePanel();
         octavePanel.setName(PLAYER_PANEL + "_OCTAVE");
-        add(octavePanel);
+        controlsWrapper.add(octavePanel);
 
-        // Create all dials
-        createAndAddDials();
+        // Create and add dials
+        createAndAddDials(controlsWrapper);
 
         // Initially disable dials
         disableDials();
 
         // Add MiniLaunchPanel
-        add(new MiniLaunchPanel());
+        controlsWrapper.add(new MiniLaunchPanel());
 
         // Set up control change listeners
         setupControlChangeListeners();
     }
 
-    private void createAndAddDials() {
-        var dialSize = new Dimension(90, 90);
+    /**
+     * Create and add dials to the control panel
+     */
+    private void createAndAddDials(JPanel controlsWrapper) {
+        // Create note selection dial with special sizing
         noteSelectionDial = new NoteSelectionDial();
-        noteSelectionDial.setPreferredSize(dialSize);
-        noteSelectionDial.setMinimumSize(dialSize);
-        noteSelectionDial.setMaximumSize(dialSize);
+        // Make slightly smaller to fit better in the panel - from 90x90 to 70x70
+        var noteDialSize = new Dimension(90, 90);
+        noteSelectionDial.setPreferredSize(noteDialSize);
+        noteSelectionDial.setMinimumSize(noteDialSize);
+        noteSelectionDial.setMaximumSize(noteDialSize);
         noteSelectionDial.setCommand(Commands.NEW_VALUE_NOTE);
 
+        // Regular dials
         levelDial = createDial("level", 100, 0, 127, 1);
         levelDial.setCommand(Commands.NEW_VALUE_LEVEL);
 
@@ -134,16 +166,67 @@ public class ControlPanel extends JPanel {
         sparseDial = createDial("sparse", 0, 0, 100, 1);
         sparseDial.setCommand(Commands.NEW_VALUE_SPARSE);
 
-        // Add dials to panel with labels
-        add(createLabeledControl(null, noteSelectionDial));
-        add(createLabeledControl("Level", levelDial));
-        add(createLabeledControl("Pan", panDial));
-        add(createLabeledControl("Min Vel", velocityMinDial));
-        add(createLabeledControl("Max Vel", velocityMaxDial));
-        add(createLabeledControl("Swing", swingDial));
-        add(createLabeledControl("Probability", probabilityDial));
-        add(createLabeledControl("Random", randomDial));
-        add(createLabeledControl("Sparse", sparseDial));
+        // Add note selection dial with special panel width (80px vs 60px)
+        controlsWrapper.add(noteSelectionDial);
+        
+        // Add regular dials with standard panel width (60px)
+        controlsWrapper.add(createLabeledControl("Level", levelDial));
+        controlsWrapper.add(createLabeledControl("Pan", panDial));
+        controlsWrapper.add(createLabeledControl("Min Vel", velocityMinDial));
+        controlsWrapper.add(createLabeledControl("Max Vel", velocityMaxDial));
+        controlsWrapper.add(createLabeledControl("Swing", swingDial));
+        controlsWrapper.add(createLabeledControl("Probability", probabilityDial));
+        controlsWrapper.add(createLabeledControl("Random", randomDial));
+        controlsWrapper.add(createLabeledControl("Sparse", sparseDial));
+    }
+
+    /**
+     * Create a labeled control panel with standard 60px width
+     */
+    private JPanel createLabeledControl(String label, Dial dial) {
+        return createLabeledControl(label, dial, 60);
+    }
+
+    /**
+     * Create a labeled control panel with custom width
+     */
+    private JPanel createLabeledControl(String label, Dial dial, int panelWidth) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setOpaque(false);
+
+        // Set consistent panel height but allow custom width
+        panel.setPreferredSize(new Dimension(panelWidth, PANEL_HEIGHT - 10));
+        panel.setMinimumSize(new Dimension(panelWidth, PANEL_HEIGHT - 10));
+        panel.setMaximumSize(new Dimension(panelWidth, PANEL_HEIGHT - 10));
+
+        // Add spacer at top if there's a label
+        if (label != null) {
+            JLabel l = new JLabel(label);
+            l.setHorizontalAlignment(JLabel.CENTER);
+            l.setAlignmentX(Component.CENTER_ALIGNMENT);
+            panel.add(l);
+        } else {
+            // Add empty space if no label
+            panel.add(Box.createVerticalStrut(15));
+        }
+
+        // Add flexible space
+        panel.add(Box.createVerticalGlue());
+
+        // Center the dial
+        JPanel dialWrapper = new JPanel();
+        dialWrapper.setOpaque(false);
+        dialWrapper.setLayout(new BoxLayout(dialWrapper, BoxLayout.X_AXIS));
+        dialWrapper.add(Box.createHorizontalGlue());
+        dialWrapper.add(dial);
+        dialWrapper.add(Box.createHorizontalGlue());
+        dialWrapper.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        panel.add(dialWrapper);
+        panel.add(Box.createVerticalGlue());
+
+        return panel;
     }
 
     private JPanel createOctavePanel() {
@@ -331,20 +414,6 @@ public class ControlPanel extends JPanel {
             }
         });
         return dial;
-    }
-
-    private JPanel createLabeledControl(String label, Dial dial) {
-        JPanel panel = new JPanel(new BorderLayout(5, 2));
-        if (label != null) {
-            JLabel l = new JLabel(label);
-            l.setHorizontalAlignment(JLabel.CENTER);
-            panel.add(l, BorderLayout.NORTH);
-        }
-        panel.add(Box.createVerticalStrut(8), BorderLayout.CENTER); // Add vertical space
-        panel.add(dial, BorderLayout.SOUTH);
-        panel.setMinimumSize(new Dimension(60, 80)); // Set minimum size
-        panel.setMaximumSize(new Dimension(60, 80)); // Set maximum size
-        return panel;
     }
 
     private void enableDials() {
