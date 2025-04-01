@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -27,7 +28,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Comparison;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -39,7 +39,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PlayerTimelinePanel extends StatusProviderPanel implements IBusListener {
+public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
     private static final Color GRID_BACKGROUND = Color.WHITE;
     private static final Color BAR_LINE_COLOR = new Color(100, 100, 120);
@@ -66,8 +66,6 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
     private JLabel beatsRowLabel;
     private JLabel barsRowLabel;
     private JLabel partsRowLabel;
-
-    private StatusConsumer statusConsumer;
     private Player player;
     private JPanel gridPanel;
     private JLabel nameLabel;
@@ -83,9 +81,9 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
     private static final int RULE_TYPE_BAR = 2;
     private static final int RULE_TYPE_PART = 3;
 
-    public PlayerTimelinePanel(StatusConsumer statusConsumer) {
-        super(new BorderLayout(), statusConsumer);
-        this.statusConsumer = statusConsumer;
+    public PlayerTimelinePanel() {
+        super(new BorderLayout());
+        
         setBackground(ColorUtils.coolBlue);
 
         // Set minimum height of 300px while allowing width to be flexible
@@ -98,13 +96,29 @@ public class PlayerTimelinePanel extends StatusProviderPanel implements IBusList
         CommandBus.getInstance().register(this);
     }
 
+    private void refresh() {
+        this.invalidate();
+    }
+
     private void initComponents() {
+
+        // JButton refreshButton = new JButton("Refresh");
+        // refreshButton.addActionListener(e -> refresh());
+        // add(refreshButton, BorderLayout.SOUTH);
+
         // Create header with player name (keep existing code)
         nameLabel = new JLabel("No Player Selected");
         nameLabel.setFont(HEADER_FONT);
         nameLabel.setForeground(Color.WHITE);
         nameLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        add(nameLabel, BorderLayout.NORTH);
+        
+        JPanel infoPanel = new JPanel(new BorderLayout());        
+        // infoPanel.add(refreshButton, BorderLayout.WEST);
+        infoPanel.add(nameLabel, BorderLayout.CENTER);
+
+        add(infoPanel, BorderLayout.NORTH);
+
+
 
         // Create scrollable grid panel (modified approach)
         gridPanel = new JPanel() {

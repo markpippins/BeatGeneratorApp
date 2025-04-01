@@ -45,7 +45,7 @@ import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.service.UserConfigManager;
 
-public class PlayerEditPanel extends StatusProviderPanel {
+public class PlayerEditPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(PlayerEditPanel.class.getName());
     private final Player player;
 

@@ -27,7 +27,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
@@ -44,7 +43,6 @@ public class PlayersPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(PlayersPanel.class.getName());
 
     private final PlayersTable table;
-    private final StatusConsumer status;
     private final ButtonPanel buttonPanel;
     private final ContextMenuHelper contextMenu;
 
@@ -55,9 +53,8 @@ public class PlayersPanel extends JPanel {
     private JButton refreshButton;
     private JButton muteButton;
 
-    public PlayersPanel(StatusConsumer status) {
+    public PlayersPanel() {
         super(new BorderLayout());
-        this.status = status;
         this.table = new PlayersTable();  // Use our new PlayersTable class
         this.buttonPanel = new ButtonPanel(
                 Commands.PLAYER_ADD_REQUEST,

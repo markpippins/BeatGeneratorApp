@@ -19,7 +19,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Player;
@@ -30,7 +29,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
+public class StatusBar extends JPanel implements IBusListener {
 
     private JLabel sessionIdLabel;
     private JLabel playerCountLabel;
@@ -168,33 +167,27 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         getCommandBus().register(this);
     }
 
-    @Override
     public void clearSite() {
         siteField.setText(" ");
     }
 
-    @Override
     public void setSite(String text) {
         siteField.setText(text);
     }
 
-    @Override
     public void clearMessage() {
         messageField.setText(" ");
     }
 
-    @Override
     public void setMessage(String text) {
         messageField.setText(text);
     }
 
-    @Override
     public void setStatus(String text) {
         statusField.setText(text);
         repaint();
     }
 
-    @Override
     public void clearStatus() {
         statusField.setText(" ");
     }

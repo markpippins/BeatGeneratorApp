@@ -26,7 +26,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Scale;
 import com.angrysurfer.core.service.PlayerManager;
@@ -34,8 +33,6 @@ import com.angrysurfer.core.service.PlayerManager;
 public class ControlPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(ControlPanel.class.getName());
     private static final int BUTTON_SIZE = 30;
-
-    private final StatusConsumer statusConsumer;
 
     // Dials
     private Dial levelDial;
@@ -62,9 +59,8 @@ public class ControlPanel extends JPanel {
 
     private UIHelper uiHelper = UIHelper.getInstance();
 
-    public ControlPanel(StatusConsumer statusConsumer) {
+    public ControlPanel() {
         super(new FlowLayout(FlowLayout.LEFT));
-        this.statusConsumer = statusConsumer;
 
         initComponents();
         setupCommandBusListener();
@@ -102,7 +98,7 @@ public class ControlPanel extends JPanel {
         disableDials();
 
         // Add MiniLaunchPanel
-        add(new MiniLaunchPanel(null));
+        add(new MiniLaunchPanel());
 
         // Set up control change listeners
         setupControlChangeListeners();

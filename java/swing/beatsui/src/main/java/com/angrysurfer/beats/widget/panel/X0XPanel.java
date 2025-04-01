@@ -21,12 +21,13 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
 
-public class X0XPanel extends StatusProviderPanel implements IBusListener {
+public class X0XPanel extends JPanel implements IBusListener {
     private final List<TriggerButton> triggerButtons = new ArrayList<>();
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
@@ -53,7 +54,6 @@ public class X0XPanel extends StatusProviderPanel implements IBusListener {
 
     public X0XPanel() {
         super(new BorderLayout());
-        setStatusConsumer(statusConsumer);
 
         // Initialize the synthesizer
         initializeSynthesizer();
@@ -193,9 +193,9 @@ public class X0XPanel extends StatusProviderPanel implements IBusListener {
                 sequencerPanel.updateStep(oldStep, stepCounter);
                 
                 // Update status display
-                if (getStatusConsumer() != null) {
-                    getStatusConsumer().setStatus("Step: " + (stepCounter + 1) + " of " + sequencerPanel.getPatternLength());
-                }
+                CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this, 
+                        new StatusUpdate("Step: " + (stepCounter + 1) + " of " + sequencerPanel.getPatternLength() +
+                                         " (looping)"));
             }
         }
 
@@ -231,10 +231,9 @@ public class X0XPanel extends StatusProviderPanel implements IBusListener {
                         }
                         
                         // Update status display
-                        if (getStatusConsumer() != null) {
-                            getStatusConsumer().setStatus("Step: " + (stepCounter + 1) + " of " + patternLength + 
-                                                         (sequencerPanel.isLooping() ? " (waiting for beat)" : " (end)"));
-                        }
+                        CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this, 
+                                new StatusUpdate("Step: " + (stepCounter + 1) + " of " + patternLength +
+                                                 " (end)"));
                         
                         // We're done with this tick - wait for TIMING_BEAT to restart if looping
                         return;
@@ -252,9 +251,8 @@ public class X0XPanel extends StatusProviderPanel implements IBusListener {
                     }
                     
                     // Update status display
-                    if (getStatusConsumer() != null) {
-                        getStatusConsumer().setStatus("Step: " + (stepCounter + 1) + " of " + patternLength);
-                    }
+                    CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this, 
+                            new StatusUpdate("Step: " + (stepCounter + 1) + " of " + patternLength));
 
                     // Reset tick counter and calculate next step time
                     tickCounter = 0;

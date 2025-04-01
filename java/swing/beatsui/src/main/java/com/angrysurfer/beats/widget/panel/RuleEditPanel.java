@@ -19,11 +19,11 @@ import javax.swing.SpinnerNumberModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.StatusConsumer;
+
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 
-public class RuleEditPanel extends StatusProviderPanel {
+public class RuleEditPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(RuleEditPanel.class.getName());
 
     private final Rule rule;
@@ -33,11 +33,7 @@ public class RuleEditPanel extends StatusProviderPanel {
     private final JSpinner partSpinner;
 
     public RuleEditPanel(Rule rule) {
-        this(rule, null);
-    }
-
-    public RuleEditPanel(Rule rule, StatusConsumer statusConsumer) {
-        super(new GridBagLayout(), statusConsumer);
+        super(new GridBagLayout());
         this.rule = rule;
         setLayout(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));

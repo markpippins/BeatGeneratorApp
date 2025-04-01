@@ -159,7 +159,7 @@ public class Frame extends JFrame implements AutoCloseable {
         // backgroundPanel.setBackground(new Color(245, 245, 245, 200)); // Light
         // background with some transparency
 
-        setJMenuBar(new MenuBar(this, statusBar));
+        setJMenuBar(new MenuBar(this));
         add(new ToolBar(), BorderLayout.NORTH);
         add(statusBar, BorderLayout.SOUTH);
     }

@@ -17,19 +17,18 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.StatusConsumer;
+
 
 public class MenuBar extends JMenuBar {
 
     private final JFrame parentFrame;
     private final ThemeManager themeManager;
-    private final StatusConsumer statusConsumer;
     private final CommandBus commandBus = CommandBus.getInstance();
 
-    public MenuBar(JFrame parentFrame, StatusConsumer statusConsumer) {
+    public MenuBar(JFrame parentFrame) {
         super();
         this.parentFrame = parentFrame;
-        this.statusConsumer = statusConsumer;
+        
         this.themeManager = ThemeManager.getInstance(parentFrame);
         setup();
     }
@@ -315,9 +314,6 @@ public class MenuBar extends JMenuBar {
 
     private void addMenuItem(JMenu menu, JMenuItem item, String command, Object data, ActionListener extraAction) {
         item.addActionListener(e -> {
-            if (statusConsumer != null) {
-                statusConsumer.setStatus("Menu: " + item.getName());
-            }
             commandBus.publish(command, this, data);
             if (extraAction != null) {
                 extraAction.actionPerformed(e);
@@ -329,9 +325,6 @@ public class MenuBar extends JMenuBar {
     private void addMenuItem(JMenu menu, String name, String command, ActionListener extraAction) {
         JMenuItem item = new JMenuItem(name);
         item.addActionListener(e -> {
-            if (statusConsumer != null) {
-                statusConsumer.setStatus("Menu: " + name);
-            }
             commandBus.publish(command, this);
             if (extraAction != null) {
                 extraAction.actionPerformed(e);

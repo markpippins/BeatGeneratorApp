@@ -16,7 +16,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 
@@ -26,7 +25,7 @@ import lombok.Setter;
 // Update the SessionPanel class to use the new ControlPanel
 @Getter
 @Setter
-public class SessionPanel extends StatusProviderPanel implements IBusListener {
+public class SessionPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(SessionPanel.class.getName());
 
@@ -41,16 +40,16 @@ public class SessionPanel extends StatusProviderPanel implements IBusListener {
     private long lastSessionEventTime = 0;
     private static final long EVENT_THROTTLE_MS = 100;
 
-    public SessionPanel(StatusConsumer status) {
-        super(new BorderLayout(), status);
+    public SessionPanel() {
+        super(new BorderLayout());
 
         // Initialize panels and pass this reference for callbacks
-        this.ruleTablePanel = new RulesPanel(status);
-        this.playerTablePanel = new PlayersPanel(status);
-        this.controlPanel = new ControlPanel(status);
-        this.pianoPanel = new PianoPanel(status);
-        this.gridPanel = new GridPanel(statusConsumer);
-        this.playerDetailPanel = new PlayerTimelinePanel(statusConsumer);
+        this.ruleTablePanel = new RulesPanel();
+        this.playerTablePanel = new PlayersPanel();
+        this.controlPanel = new ControlPanel();
+        this.pianoPanel = new PianoPanel();
+        this.gridPanel = new GridPanel();
+        this.playerDetailPanel = new PlayerTimelinePanel();
         setupComponents();
 
         CommandBus.getInstance().register(this);

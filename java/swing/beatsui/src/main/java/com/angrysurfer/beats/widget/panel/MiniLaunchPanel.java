@@ -25,15 +25,14 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Instrument;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
-public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener {
+public class MiniLaunchPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(MiniLaunchPanel.class);
 
@@ -72,8 +71,8 @@ public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener
         }
     }
 
-    public MiniLaunchPanel(StatusConsumer statusConsumer) {
-        super(new BorderLayout(), statusConsumer);
+    public MiniLaunchPanel() {
+        super(new BorderLayout());
         commandBus.register(this);
         setup();
     }
