@@ -1,6 +1,7 @@
 package com.angrysurfer.beats.widget.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
@@ -33,8 +34,8 @@ public class SessionPanel extends JPanel implements IBusListener {
     private final RulesPanel ruleTablePanel;
     private final ControlPanel controlPanel;
     private final PianoPanel pianoPanel;
-    private final GridPanel gridPanel;
-    private final PlayerTimelinePanel playerDetailPanel;
+    // private final GridPanel gridPanel;
+    private final PlayerTimelinePanel playerTimelinePanel;
 
     private static Long lastProcessedSessionId = null;
     private long lastSessionEventTime = 0;
@@ -48,8 +49,8 @@ public class SessionPanel extends JPanel implements IBusListener {
         this.playerTablePanel = new PlayersPanel();
         this.controlPanel = new ControlPanel();
         this.pianoPanel = new PianoPanel();
-        this.gridPanel = new GridPanel();
-        this.playerDetailPanel = new PlayerTimelinePanel();
+        // this.gridPanel = new GridPanel();
+        this.playerTimelinePanel = new PlayerTimelinePanel();
         setupComponents();
 
         CommandBus.getInstance().register(this);
@@ -58,28 +59,57 @@ public class SessionPanel extends JPanel implements IBusListener {
     private void setupComponents() {
         setLayout(new BorderLayout());
 
-        // Create and configure split pane
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setResizeWeight(1);
-        splitPane.setLeftComponent(playerTablePanel);
-        splitPane.setRightComponent(ruleTablePanel);
-
-        JPanel containerPanel = new JPanel(new BorderLayout());
-        containerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        containerPanel.add(pianoPanel, BorderLayout.WEST);
-        containerPanel.add(controlPanel, BorderLayout.CENTER);
-
-        // Add piano and grid panels
+        // Create main split pane between players/rules and the bottom section
+        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        mainSplitPane.setResizeWeight(1.0); // Give equal weight to both sections
+        
+        // Create horizontal split for player and rule tables
+        JSplitPane tableSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        tableSplitPane.setResizeWeight(0.7); // Give more space to player table
+        tableSplitPane.setLeftComponent(playerTablePanel);
+        tableSplitPane.setRightComponent(ruleTablePanel);
+        
+        // Add the table split pane to the top of the main split pane
+        mainSplitPane.setTopComponent(tableSplitPane);
+        
+        // Create the bottom panel with proper constraints
         JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.add(containerPanel, BorderLayout.NORTH);
-
-        bottomPanel.add(new JScrollPane(gridPanel), BorderLayout.CENTER);
-        bottomPanel.add(new JScrollPane(playerDetailPanel), BorderLayout.CENTER);
-
-        this.playerDetailPanel.setVisible(true);
-        // Add all components
-        add(splitPane, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        
+        // Piano and control panel at the top of bottom section
+        JPanel controlContainerPanel = new JPanel(new BorderLayout());
+        controlContainerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        controlContainerPanel.add(pianoPanel, BorderLayout.WEST);
+        controlContainerPanel.add(controlPanel, BorderLayout.CENTER);
+        
+        // Create a split pane for the control panel and timeline
+        JSplitPane bottomSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        bottomSplitPane.setResizeWeight(0.3); // Give more space to the timeline
+        bottomSplitPane.setTopComponent(controlContainerPanel);
+        
+        // Create a proper scroll pane with minimum size for the timeline
+        JScrollPane timelineScrollPane = new JScrollPane(playerTimelinePanel);
+        timelineScrollPane.setMinimumSize(new Dimension(200, 200)); // Ensure minimum size
+        timelineScrollPane.setPreferredSize(new Dimension(800, 300)); // Set a good default size
+        timelineScrollPane.setBorder(BorderFactory.createTitledBorder("Player Timeline"));
+        
+        // Add timeline to bottom of the split pane
+        bottomSplitPane.setBottomComponent(timelineScrollPane);
+        
+        // Add bottom split pane to the bottom panel
+        bottomPanel.add(bottomSplitPane, BorderLayout.CENTER);
+        
+        // Add bottom panel to the bottom of the main split pane
+        mainSplitPane.setBottomComponent(bottomPanel);
+        
+        // Add the main split pane to this panel
+        add(mainSplitPane, BorderLayout.CENTER);
+        
+        // Set divider locations (will be applied after components are visible)
+        SwingUtilities.invokeLater(() -> {
+            mainSplitPane.setDividerLocation(0.6); // 60% for tables, 40% for timeline
+            tableSplitPane.setDividerLocation(0.7); // 70% for player table
+            bottomSplitPane.setDividerLocation(120); // Fixed height for control panel
+        });
     }
 
     @Override
@@ -133,18 +163,29 @@ public class SessionPanel extends JPanel implements IBusListener {
         // if (Objects.nonNull(this.gridPanel))
         //     this.gridPanel.setVisible(true);
 
-        if (Objects.nonNull(this.playerDetailPanel)) {
+        if (Objects.nonNull(this.playerTimelinePanel)) {
             // this.playerDetailPanel.setVisible(false);
-            this.playerDetailPanel.setPlayer(null);
+            this.playerTimelinePanel.setPlayer(null);
         }
     }
 
     private void handlePlayerSelected(Player player) {
-        // if (Objects.nonNull(this.gridPanel))
-        //     this.gridPanel.setVisible(false);
-        if (Objects.nonNull(this.playerDetailPanel)) {
-            // this.playerDetailPanel.setVisible(true);
-            this.playerDetailPanel.setPlayer(player);
+        if (Objects.nonNull(this.playerTimelinePanel)) {
+            // Set the player data
+            this.playerTimelinePanel.setPlayer(player);
+            
+            // Force recalculation of the scroll pane's viewport size
+            SwingUtilities.invokeLater(() -> {
+                JScrollPane scrollPane = (JScrollPane) playerTimelinePanel.getParent().getParent();
+                if (scrollPane instanceof JScrollPane) {
+                    // Ensure proper sizing is maintained
+                    scrollPane.setMinimumSize(new Dimension(200, 200));
+                    scrollPane.revalidate();
+                    
+                    // Make sure the timeline is visible
+                    playerTimelinePanel.scrollToCurrentPosition();
+                }
+            });
         }
     }
 

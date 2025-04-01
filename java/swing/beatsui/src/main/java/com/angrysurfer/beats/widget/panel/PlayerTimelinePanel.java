@@ -3,11 +3,14 @@ package com.angrysurfer.beats.widget.panel;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -16,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -81,336 +83,183 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
     private static final int RULE_TYPE_BAR = 2;
     private static final int RULE_TYPE_PART = 3;
 
+    /**
+     * Create an empty placeholder timeline that will be filled in when a player is selected
+     */
     public PlayerTimelinePanel() {
         super(new BorderLayout());
         
         setBackground(ColorUtils.coolBlue);
 
-        // Set minimum height of 300px while allowing width to be flexible
-        setMinimumSize(new Dimension(200, 300));
-
-        // Initialize the panel components
-        initComponents();
-
+        // Set a fixed preferred size for stable initial layout
+        setPreferredSize(new Dimension(800, 400));
+        
+        // Create the empty grid with initial placeholders
+        initEmptyComponents();
+        
         // Register for player selection events
         CommandBus.getInstance().register(this);
     }
 
-    private void refresh() {
-        this.invalidate();
-    }
-
-    private void initComponents() {
-
-        // JButton refreshButton = new JButton("Refresh");
-        // refreshButton.addActionListener(e -> refresh());
-        // add(refreshButton, BorderLayout.SOUTH);
-
-        // Create header with player name (keep existing code)
-        nameLabel = new JLabel("No Player Selected");
+    /**
+     * Initialize empty components with placeholders
+     */
+    private void initEmptyComponents() {
+        // Create header with player name
+        nameLabel = new JLabel("Select a player to view timeline");
         nameLabel.setFont(HEADER_FONT);
         nameLabel.setForeground(Color.WHITE);
         nameLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
-        JPanel infoPanel = new JPanel(new BorderLayout());        
-        // infoPanel.add(refreshButton, BorderLayout.WEST);
+        JPanel infoPanel = new JPanel(new BorderLayout());
+        infoPanel.setBackground(ColorUtils.coolBlue);
         infoPanel.add(nameLabel, BorderLayout.CENTER);
-
+        
         add(infoPanel, BorderLayout.NORTH);
-
-
-
-        // Create scrollable grid panel (modified approach)
+        
+        // Create main grid panel with fixed cell size
+        cellSize = 20; // Use a consistent fixed cell size
+        
         gridPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                drawGridLines(g);
+                if (player != null) {
+                    drawGridLines(g);
+                }
             }
         };
         gridPanel.setLayout(null);
         gridPanel.setBackground(GRID_BACKGROUND);
-
-        // Create a panel to hold both the grid and the time labels
+        
+        // Create a content panel with fixed row height
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBackground(GRID_BACKGROUND);
-
-        // Add the grid panel to the content panel
         contentPanel.add(gridPanel, BorderLayout.CENTER);
-
-        // Create time labels panel at the bottom with fixed height
-        timeLabelsPanel = new JPanel() {
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(gridPanel.getPreferredSize().width, 30);
-            }
-        };
+        
+        // Create empty time labels panel
+        timeLabelsPanel = new JPanel();
         timeLabelsPanel.setLayout(null);
         timeLabelsPanel.setBackground(ColorUtils.coolBlue);
-
-        // Add time labels below the grid but inside the scrollable area
+        timeLabelsPanel.setPreferredSize(new Dimension(800, 30));
+        
         contentPanel.add(timeLabelsPanel, BorderLayout.SOUTH);
-
-        // Create the scroll pane with the content panel
+        
+        // Add scroll pane
         JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(null);
-
-        // Make sure there's always room for the time labels
-        scrollPane.setColumnHeaderView(new JPanel() {
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(10, 35); // Reserve space for the labels
-            }
-        });
-
+        
         add(scrollPane, BorderLayout.CENTER);
-
-        // Add resize listener to adjust cell size
-        resizeListener = new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                updateGridSize();
-            }
-        };
-        addComponentListener(resizeListener);
     }
 
     /**
-     * Calculate cell size based on available width and update the grid
+     * Set the player and update the timeline display
      */
-    private void updateGridSize() {
-        if (player == null || player.getSession() == null) {
-            return;
-        }
-
-        Session session = player.getSession();
-        int beatsPerBar = session.getBeatsPerBar();
-        int bars = session.getBars();
-        int ticksPerBeat = session.getTicksPerBeat(); // Use actual ticksPerBeat from session
-        int totalBeats = beatsPerBar * bars;
-        int totalTicks = totalBeats * ticksPerBeat; // Calculate total ticks based on session value
-
-        // Calculate cell size to fit the visible area
-        JViewport scrollPane = (JViewport) gridPanel.getParent().getParent();
-        int viewportWidth = scrollPane.getWidth();
-
-        // Ensure at least 1 pixel per tick for accuracy
-        cellSize = Math.max(1, viewportWidth / totalTicks); // Minimum 1px instead of 5px
-
-        // Update the grid with new cell size
-        updatePlayerGrid();
-    }
-
-    /**
-     * Draw vertical lines for bars, beats, and ticks
-     */
-    private void drawGridLines(Graphics g) {
-        if (player == null || player.getSession() == null) {
-            return;
-        }
-
-        Session session = player.getSession();
-        int beatsPerBar = session.getBeatsPerBar();
-        int bars = session.getBars();
-        int ticksPerBeat = session.getTicksPerBeat(); // Get from session
-        int totalBeats = beatsPerBar * bars;
-        int totalTicks = totalBeats * ticksPerBeat; // Use session value
-
-        Graphics2D g2d = (Graphics2D) g;
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Account for label panel width
-        int labelWidth = 80;
-
-        // Draw horizontal row dividers
-        int rowHeight = cellSize * 2;
-        for (int i = 0; i <= TOTAL_ROWS; i++) {
-            int y = i * rowHeight;
-            g2d.setColor(BAR_LINE_COLOR);
-            g2d.setStroke(new BasicStroke(1.0f));
-            g2d.drawLine(0, y, getWidth(), y);
-        }
-
-        // Draw vertical tick, beat, and bar lines
-        for (int tick = 1; tick <= totalTicks; tick++) {
-            int x = labelWidth + tick * cellSize;
-
-            // Draw bar lines (thickest)
-            if (tick % (beatsPerBar * ticksPerBeat) == 0) {
-                g2d.setColor(BAR_LINE_COLOR);
-                g2d.setStroke(new BasicStroke(2.0f));
-                g2d.drawLine(x, 0, x, TOTAL_ROWS * rowHeight);
-            }
-            // Draw beat lines (medium thickness)
-            else if (tick % ticksPerBeat == 0) {
-                g2d.setColor(BEAT_LINE_COLOR);
-                g2d.setStroke(new BasicStroke(1.0f));
-                g2d.drawLine(x, 0, x, TOTAL_ROWS * rowHeight);
-            }
-            // Draw tick lines (thinnest)
-            else {
-                g2d.setColor(new Color(40, 40, 45));
-                g2d.setStroke(new BasicStroke(0.5f));
-                g2d.drawLine(x, 0, x, rowHeight); // Only in
-            }
-        }
-    }
-
-    /**
-     * Update the grid display for the current player
-     */
-    public void updatePlayerGrid() {
-        if (player == null || player.getSession() == null) {
-            nameLabel.setText("No Player Selected");
+    public void setPlayer(Player player) {
+        this.player = player;
+        
+        if (player == null) {
+            // Show empty placeholder
+            nameLabel.setText("Select a player to view timeline");
             clearGrid();
+        } else {
+            // Show timeline with fixed row heights
+            updateTimelineWithFixedRowHeights();
+        }
+        
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Update the timeline with fixed row heights for consistency
+     */
+    private void updateTimelineWithFixedRowHeights() {
+        if (player == null || player.getSession() == null) {
             return;
         }
-
-        // Build a detailed description of the player
-        StringBuilder playerInfo = new StringBuilder();
-
-        // Start with player name and class
-        playerInfo.append(player.getName());
-
-        // Add instrument information if available
-        if (player.getInstrument() != null) {
-            playerInfo.append(" - ").append(player.getInstrument().getName());
-
-            // Add device name if it's different from instrument name
-            String deviceName = player.getInstrument().getDeviceName();
-            if (deviceName != null && !deviceName.isEmpty() && !deviceName.equals(player.getInstrument().getName())) {
-                playerInfo.append(" (").append(deviceName).append(")");
-            }
-
-            // Get preset name if available
-            if (player.getPreset() != null) {
-                Long instrumentId = player.getInstrument().getId();
-                Long presetNumber = player.getPreset().longValue();
-
-                // For channel 9 (MIDI channel 10), show drum name instead of preset
-                if (player.getChannel() == 9) {
-                    // Get drum name for the note
-                    String drumName = InternalSynthManager.getInstance().getDrumName(player.getRootNote().intValue());
-                    playerInfo.append(" - ").append(drumName);
-                } else {
-                    // For other channels, show preset name
-                    String presetName = InternalSynthManager.getInstance().getPresetName(instrumentId, presetNumber);
-
-                    if (presetName != null && !presetName.isEmpty()) {
-                        playerInfo.append(" - ").append(presetName);
-                    }
-                }
-            }
-        }
-
-        // Update the name label with all the information
-        nameLabel.setText(playerInfo.toString());
-
-        // Rest of the existing updatePlayerGrid method...
+        
+        // Clear existing content
+        clearGrid();
+        
+        // Update player name
+        updateNameLabel();
+        
         Session session = player.getSession();
         int beatsPerBar = session.getBeatsPerBar();
         int bars = session.getBars();
         int ticksPerBeat = session.getTicksPerBeat();
         int totalBeats = beatsPerBar * bars;
         int totalTicks = totalBeats * ticksPerBeat;
-
-        // Clear existing grid
-        clearGrid();
-
-        // Set grid panel size - use multiple rows for different rule types
-        int rowHeight = cellSize * 2; // Space for each rule type row
-        int gridHeight = rowHeight * TOTAL_ROWS + 40; // Add some padding
-
-        gridPanel.setPreferredSize(new Dimension(totalTicks * cellSize, gridHeight));
-
-        // Add row labels on the left side
-        addRowLabels(rowHeight);
-
-        // Calculate which ticks/beats/bars have active rules
+        
+        // Use fixed row height for consistency
+        int rowHeight = 40;
+        
+        // Set grid size
+        int gridWidth = totalTicks * cellSize + 85;
+        int gridHeight = rowHeight * TOTAL_ROWS;
+        gridPanel.setPreferredSize(new Dimension(gridWidth, gridHeight));
+        
+        // Add row labels with fixed height
+        addRowLabelsWithFixedHeight(rowHeight);
+        
+        // Calculate active rules
         boolean[][] activeRules = calculateActiveRules(player, session);
-
-        // Add cell indicators for each type
+        
+        // Add rule cells with fixed height
         for (int tick = 0; tick < totalTicks; tick++) {
-            // Add tick rule cell (row 0)
+            // Tick rules
             addRuleCell(tick, ROW_TICK, activeRules[ROW_TICK][tick], rowHeight);
-
-            // Add tick count rule cell (row 1)
             addRuleCell(tick, ROW_TICK_COUNT, activeRules[ROW_TICK_COUNT][tick], rowHeight);
-
-            // Add beat cell only at beat boundaries (row 2)
+            
+            // Beat rules at beat boundaries
             if (tick % ticksPerBeat == 0) {
                 int beatIndex = tick / ticksPerBeat;
                 addRuleCell(tick, ROW_BEAT, activeRules[ROW_BEAT][beatIndex], rowHeight);
                 addRuleCell(tick, ROW_BEAT_COUNT, activeRules[ROW_BEAT_COUNT][beatIndex], rowHeight);
             }
-
-            // Add bar cell only at bar boundaries (row 4)
+            
+            // Bar rules at bar boundaries
             if (tick % (beatsPerBar * ticksPerBeat) == 0) {
                 int barIndex = tick / (beatsPerBar * ticksPerBeat);
                 addRuleCell(tick, ROW_BAR, activeRules[ROW_BAR][barIndex], rowHeight);
                 addRuleCell(tick, ROW_BAR_COUNT, activeRules[ROW_BAR_COUNT][barIndex], rowHeight);
             }
-
-            // Add part cell at part boundaries (row 6)
+            
+            // Part rules at beginning
             if (tick == 0) {
                 addRuleCell(tick, ROW_PART, activeRules[ROW_PART][0], rowHeight);
                 addRuleCell(tick, ROW_PART_COUNT, activeRules[ROW_PART_COUNT][0], rowHeight);
             }
         }
-
-        // Create time indicators
+        
+        // Update time labels
         updateTimeLabels(beatsPerBar, bars);
-
-        // Repaint everything
-        revalidate();
-        repaint();
     }
 
     /**
-     * Add labels for each row
+     * Add row labels with fixed height
      */
-    private void addRowLabels(int rowHeight) {
-        // Create label panel on the left - keep it dark
-        JPanel labelPanel = new JPanel(null); // Use null layout for precise positioning
+    private void addRowLabelsWithFixedHeight(int rowHeight) {
+        // Create label panel on the left
+        JPanel labelPanel = new JPanel(null);
         labelPanel.setBackground(LABEL_PANEL_BACKGROUND);
         labelPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BAR_LINE_COLOR));
         labelPanel.setPreferredSize(new Dimension(80, rowHeight * TOTAL_ROWS));
-
-        // Add to the left side of the grid panel
+        
+        // Add to grid
         gridPanel.add(labelPanel);
         labelPanel.setBounds(0, 0, 80, rowHeight * TOTAL_ROWS);
-
-        // Create labels for each group (one label per two rows)
-        JLabel tickLabel = createRowLabel("Tick");
-        JLabel ticksLabel = createRowLabel("Ticks");
-        JLabel beatLabel = createRowLabel("Beat");
-        JLabel beatsLabel = createRowLabel("Beats");
-        JLabel barLabel = createRowLabel("Bar");
-        JLabel barsLabel = createRowLabel("Bars");
-        JLabel partLabel = createRowLabel("Part");
-        JLabel partsLabel = createRowLabel("Parts");
-
-        // Position the labels in the middle of their respective two-row groups
-        tickLabel.setBounds(0, rowHeight * ROW_TICK, 80, rowHeight);
-        ticksLabel.setBounds(0, rowHeight * ROW_TICK_COUNT, 80, rowHeight);
-        beatLabel.setBounds(0, rowHeight * ROW_BEAT, 80, rowHeight);
-        beatsLabel.setBounds(0, rowHeight * ROW_BEAT_COUNT, 80, rowHeight);
-        barLabel.setBounds(0, rowHeight * ROW_BAR, 80, rowHeight);
-        barsLabel.setBounds(0, rowHeight * ROW_BAR_COUNT, 80, rowHeight);
-        partLabel.setBounds(0, rowHeight * ROW_PART, 80, rowHeight);
-        partsLabel.setBounds(0, rowHeight * ROW_PART_COUNT, 80, rowHeight);
-
-        // Add labels to panel
-        labelPanel.add(tickLabel);
-        labelPanel.add(ticksLabel);
-        labelPanel.add(beatLabel);
-        labelPanel.add(beatsLabel);
-        labelPanel.add(barLabel);
-        labelPanel.add(barsLabel);
-        labelPanel.add(partLabel);
-        labelPanel.add(partsLabel);
+        
+        // Create labels
+        String[] labelTexts = {"Tick", "Ticks", "Beat", "Beats", "Bar", "Bars", "Part", "Parts"};
+        for (int i = 0; i < TOTAL_ROWS; i++) {
+            JLabel label = createRowLabel(labelTexts[i]);
+            label.setBounds(0, i * rowHeight, 80, rowHeight);
+            labelPanel.add(label);
+        }
     }
 
     private JLabel createRowLabel(String text) {
@@ -639,17 +488,18 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
             case Commands.PLAYER_SELECTED -> {
                 if (action.getData() instanceof Player p) {
                     player = p;
-                    updatePlayerGrid();
+                    updateTimelineWithFixedRowHeights();
                 }
             }
             case Commands.PLAYER_UNSELECTED -> {
                 player = null;
-                updatePlayerGrid();
+                clearGrid();
+                nameLabel.setText("Select a player to view timeline");
             }
             case Commands.PLAYER_UPDATED -> {
                 if (player != null && action.getData() instanceof Player p && p.getId().equals(player.getId())) {
                     player = p;
-                    updatePlayerGrid();
+                    updateTimelineWithFixedRowHeights();
                 }
             }
             // Add handler for note changes
@@ -657,7 +507,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
             case Commands.SESSION_CHANGED -> {
                 if (player != null) {
-                    updatePlayerGrid();
+                    updateTimelineWithFixedRowHeights();
                 }
             }
             }
@@ -669,7 +519,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
      */
     private void updateNameLabel() {
         if (player == null) {
-            nameLabel.setText("No Player Selected");
+            nameLabel.setText("Select a player to view timeline");
             return;
         }
 
@@ -714,5 +564,71 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
         // Request focus to ensure the UI updates
         nameLabel.repaint();
+    }
+
+    public void scrollToCurrentPosition() {
+        // Scroll to make the current position visible
+        // This is particularly useful after resizing
+        Rectangle visibleRect = new Rectangle(0, 0, 10, 10);
+        scrollRectToVisible(visibleRect);
+    }
+
+    /**
+     * Draw the grid lines (vertical for beats/bars, horizontal for rows)
+     */
+    private void drawGridLines(Graphics g) {
+        if (player == null || player.getSession() == null) {
+            return;
+        }
+
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        Session session = player.getSession();
+        int beatsPerBar = session.getBeatsPerBar();
+        int bars = session.getBars();
+        int ticksPerBeat = session.getTicksPerBeat();
+        int totalBeats = beatsPerBar * bars;
+        int totalTicks = totalBeats * ticksPerBeat;
+
+        // Account for label panel width
+        int labelWidth = 80;
+        int rowHeight = 40; // Match the fixed row height we use elsewhere
+        
+        // Draw horizontal row dividers
+        g2d.setColor(Color.LIGHT_GRAY);
+        g2d.setStroke(new BasicStroke(1));
+        for (int i = 1; i < TOTAL_ROWS; i++) {
+            int y = i * rowHeight;
+            g2d.drawLine(labelWidth, y, labelWidth + totalTicks * cellSize, y);
+        }
+        
+        // Draw vertical beat lines
+        for (int beat = 0; beat <= totalBeats; beat++) {
+            int x = labelWidth + beat * ticksPerBeat * cellSize;
+            
+            if (beat % beatsPerBar == 0) {
+                // Draw bar lines with thicker stroke
+                g2d.setColor(BAR_LINE_COLOR);
+                g2d.setStroke(new BasicStroke(2));
+            } else {
+                // Draw beat lines with thinner stroke
+                g2d.setColor(BEAT_LINE_COLOR);
+                g2d.setStroke(new BasicStroke(1));
+            }
+            
+            g2d.drawLine(x, 0, x, rowHeight * TOTAL_ROWS);
+        }
+        
+        // Draw vertical tick lines (thinner)
+        g2d.setColor(new Color(220, 220, 220)); // Very light gray
+        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[]{1, 2}, 0));
+        for (int tick = 0; tick <= totalTicks; tick++) {
+            // Skip lines that are already drawn as beat or bar lines
+            if (tick % ticksPerBeat != 0) {
+                int x = labelWidth + tick * cellSize;
+                g2d.drawLine(x, 0, x, rowHeight * TOTAL_ROWS);
+            }
+        }
     }
 }
