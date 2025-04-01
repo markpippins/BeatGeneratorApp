@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -111,6 +110,9 @@ public class Session implements Serializable, IBusListener {
     private Integer loopCount = Constants.DEFAULT_LOOP_COUNT;
     private Integer parts = Constants.DEFAULT_PART_COUNT;
     private Integer noteOffset = 0;
+
+    private String name = "Session";
+    private String notes = "Session Notes";
 
     @Transient
     private boolean paused = false;

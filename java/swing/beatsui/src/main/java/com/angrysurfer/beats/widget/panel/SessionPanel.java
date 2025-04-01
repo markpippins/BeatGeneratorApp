@@ -2,11 +2,12 @@ package com.angrysurfer.beats.widget.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
@@ -34,7 +35,6 @@ public class SessionPanel extends JPanel implements IBusListener {
     private final RulesPanel ruleTablePanel;
     private final ControlPanel controlPanel;
     private final PianoPanel pianoPanel;
-    // private final GridPanel gridPanel;
     private final PlayerTimelinePanel playerTimelinePanel;
 
     private static Long lastProcessedSessionId = null;
@@ -49,7 +49,6 @@ public class SessionPanel extends JPanel implements IBusListener {
         this.playerTablePanel = new PlayersPanel();
         this.controlPanel = new ControlPanel();
         this.pianoPanel = new PianoPanel();
-        // this.gridPanel = new GridPanel();
         this.playerTimelinePanel = new PlayerTimelinePanel();
         setupComponents();
 
@@ -59,18 +58,11 @@ public class SessionPanel extends JPanel implements IBusListener {
     private void setupComponents() {
         setLayout(new BorderLayout());
 
-        // Create main split pane between players/rules and the bottom section
-        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        mainSplitPane.setResizeWeight(1.0); // Give equal weight to both sections
-        
         // Create horizontal split for player and rule tables
         JSplitPane tableSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        tableSplitPane.setResizeWeight(0.7); // Give more space to player table
+        tableSplitPane.setResizeWeight(1.0); // Give more space to player table
         tableSplitPane.setLeftComponent(playerTablePanel);
         tableSplitPane.setRightComponent(ruleTablePanel);
-        
-        // Add the table split pane to the top of the main split pane
-        mainSplitPane.setTopComponent(tableSplitPane);
         
         // Create the bottom panel with proper constraints
         JPanel bottomPanel = new JPanel(new BorderLayout());
@@ -79,9 +71,8 @@ public class SessionPanel extends JPanel implements IBusListener {
         JPanel controlContainerPanel = new JPanel(new BorderLayout());
         controlContainerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); // Minimal padding
         
-        // Set fixed height for control panel to make it non-resizable
-        // REDUCED: From 110px to 90px (20px reduction)
-        int controlHeight = 100;
+        // Set fixed height for control panel
+        int controlHeight = 90;
         controlContainerPanel.setPreferredSize(new Dimension(800, controlHeight));
         controlContainerPanel.setMinimumSize(new Dimension(200, controlHeight));
         controlContainerPanel.setMaximumSize(new Dimension(Short.MAX_VALUE, controlHeight));
@@ -90,29 +81,44 @@ public class SessionPanel extends JPanel implements IBusListener {
         controlContainerPanel.add(pianoPanel, BorderLayout.WEST);
         controlContainerPanel.add(controlPanel, BorderLayout.CENTER);
         
-        // Create timeline scroll pane with fixed size
-        JScrollPane timelineScrollPane = new JScrollPane(playerTimelinePanel);
-        timelineScrollPane.setMinimumSize(new Dimension(200, 200));
-        timelineScrollPane.setPreferredSize(new Dimension(800, 300));
-        timelineScrollPane.setBorder(BorderFactory.createTitledBorder("Player Timeline"));
+        // Create timeline container with fixed height - REPLACE SCROLLPANE WITH PANEL
+        JPanel timelineContainer = new JPanel(new BorderLayout());
+        timelineContainer.setBorder(BorderFactory.createTitledBorder("Player Timeline"));
         
-        // Use BorderLayout instead of split pane for fixed heights
+        // Set fixed height for timeline panel - REDUCED from 200px to 100px
+        int timelineHeight = 160; // Reduced by another 100px
+        playerTimelinePanel.setPreferredSize(new Dimension(800, timelineHeight));
+        playerTimelinePanel.setMinimumSize(new Dimension(200, timelineHeight));
+        playerTimelinePanel.setMaximumSize(new Dimension(Short.MAX_VALUE, timelineHeight));
+        
+        // Add timeline to container
+        timelineContainer.add(playerTimelinePanel, BorderLayout.CENTER);
+        
+        // Use BorderLayout for fixed heights
         JPanel combinedPanel = new JPanel(new BorderLayout());
-        combinedPanel.add(timelineScrollPane, BorderLayout.CENTER);
+        combinedPanel.add(timelineContainer, BorderLayout.CENTER);
         combinedPanel.add(controlContainerPanel, BorderLayout.SOUTH);
         
         // Add combined panel to the bottom panel
         bottomPanel.add(combinedPanel, BorderLayout.CENTER);
         
-        // Add bottom panel to the bottom of the main split pane
-        mainSplitPane.setBottomComponent(bottomPanel);
+        // Use BorderLayout for main panel instead of JSplitPane to remove resize option
+        add(tableSplitPane, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
         
-        // Add the main split pane to this panel
-        add(mainSplitPane, BorderLayout.CENTER);
+        // Calculate appropriate sizes - no resizing needed since we're using BorderLayout
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                // Set the bottom panel height to exactly what's needed for timeline + control
+                int requiredHeight = timelineHeight + controlHeight + 50; // adding extra for borders/insets
+                bottomPanel.setPreferredSize(new Dimension(getWidth(), requiredHeight));
+                revalidate();
+            }
+        });
         
-        // Set divider locations (will be applied after components are visible)
+        // Set divider location for table split pane
         SwingUtilities.invokeLater(() -> {
-            mainSplitPane.setDividerLocation(0.6); // 60% for tables, 40% for bottom section
             tableSplitPane.setDividerLocation(0.7); // 70% for player table
         });
     }
@@ -165,11 +171,7 @@ public class SessionPanel extends JPanel implements IBusListener {
     }
 
     private void handlePlayerUnselected() {
-        // if (Objects.nonNull(this.gridPanel))
-        //     this.gridPanel.setVisible(true);
-
         if (Objects.nonNull(this.playerTimelinePanel)) {
-            // this.playerDetailPanel.setVisible(false);
             this.playerTimelinePanel.setPlayer(null);
         }
     }
@@ -179,17 +181,11 @@ public class SessionPanel extends JPanel implements IBusListener {
             // Set the player data
             this.playerTimelinePanel.setPlayer(player);
             
-            // Force recalculation of the scroll pane's viewport size
+            // Simply refresh the panel - no JScrollPane manipulation needed
             SwingUtilities.invokeLater(() -> {
-                JScrollPane scrollPane = (JScrollPane) playerTimelinePanel.getParent().getParent();
-                if (scrollPane instanceof JScrollPane) {
-                    // Ensure proper sizing is maintained
-                    scrollPane.setMinimumSize(new Dimension(200, 200));
-                    scrollPane.revalidate();
-                    
-                    // Make sure the timeline is visible
-                    playerTimelinePanel.scrollToCurrentPosition();
-                }
+                // We've removed the JScrollPane, so just update the panel directly
+                playerTimelinePanel.revalidate();
+                playerTimelinePanel.repaint();
             });
         }
     }

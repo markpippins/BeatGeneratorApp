@@ -88,9 +88,9 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         setBackground(ColorUtils.coolBlue);
 
         // Set a fixed size that won't change
-        int fixedHeight = 230; // 8 rows * 20px + 30px header + 30px time labels + a bit of margin
+        int fixedHeight = 200; // Reduced height
         setPreferredSize(new Dimension(800, fixedHeight));
-        setMinimumSize(new Dimension(400, fixedHeight));
+        setMinimumSize(new Dimension(200, fixedHeight));
         setMaximumSize(new Dimension(Short.MAX_VALUE, fixedHeight));
         
         // Create the empty grid with initial placeholders
@@ -123,11 +123,11 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
      * Initialize empty components with placeholders
      */
     private void initEmptyComponents() {
-        // Create header with player name
+        // Create header with player name - reduce height from 30px to 20px
         nameLabel = new JLabel("Select a player to view timeline");
         nameLabel.setFont(HEADER_FONT);
         nameLabel.setForeground(Color.WHITE);
-        nameLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        nameLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10)); // Reduced vertical padding
         
         JPanel infoPanel = new JPanel(new BorderLayout());
         infoPanel.setBackground(ColorUtils.coolBlue);
@@ -154,36 +154,42 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBackground(GRID_BACKGROUND);
         
-        // Calculate initial grid height based on row height
-        int rowHeight = 20; // Same as used in updateTimelineWithFixedRowHeights
+        // Calculate initial grid height based on row height - reduce from 20px to 15px per row
+        int rowHeight = 15; // Reduced from 20px to 15px
         int initialGridHeight = rowHeight * TOTAL_ROWS;
         gridPanel.setPreferredSize(new Dimension(800, initialGridHeight));
         
-        // Create time labels panel with fixed height
+        // Create time labels panel with reduced height from 30px to 20px
         timeLabelsPanel = new JPanel();
         timeLabelsPanel.setLayout(null);
         timeLabelsPanel.setBackground(ColorUtils.coolBlue);
-        timeLabelsPanel.setPreferredSize(new Dimension(800, 30));
+        timeLabelsPanel.setPreferredSize(new Dimension(800, 20)); // Reduced from 30px to 20px
         timeLabelsPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
         
         // Add components to content panel
         contentPanel.add(gridPanel, BorderLayout.CENTER);
         contentPanel.add(timeLabelsPanel, BorderLayout.SOUTH);
         
-        // Add scroll pane - this allows grid content to scroll while panel maintains fixed size
+        // Add scroll pane - only for horizontal scrolling
         JScrollPane scrollPane = new JScrollPane(contentPanel);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(null);
         
         add(scrollPane, BorderLayout.CENTER);
+        
+        // Fixed height for entire timeline panel - reduced from 300px to 200px
+        setPreferredSize(new Dimension(800, 200));
+        setMinimumSize(new Dimension(200, 200));
+        setMaximumSize(new Dimension(Short.MAX_VALUE, 200));
     }
 
     // Override this method to enforce the fixed size
     @Override
     public Dimension getPreferredSize() {
         // Always return our fixed size to prevent layout changes
-        return new Dimension(800, 230);
+        return new Dimension(800, 200); // Reduced from 230px to 200px
     }
 
     /**
@@ -207,8 +213,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         int totalBeats = beatsPerBar * bars;
         int totalTicks = totalBeats * ticksPerBeat;
         
-        // Use halved row height for consistency - changed from 40 to 20
-        int rowHeight = 20;
+        // Use reduced row height for consistency - changed from 20px to 15px
+        int rowHeight = 15;
         
         // Set grid size
         int gridWidth = totalTicks * cellSize + 85;
@@ -609,7 +615,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
         // Account for label panel width
         int labelWidth = 80;
-        int rowHeight = 20; // Match the fixed row height we use elsewhere
+        int rowHeight = 15; // Match the reduced row height we use elsewhere
         
         // Draw horizontal row dividers
         g2d.setColor(Color.LIGHT_GRAY);
