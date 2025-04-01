@@ -36,7 +36,7 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(MiniLaunchPanel.class);
 
-    private static final int BUTTON_SIZE = 40;
+    private static final int BUTTON_SIZE = 38;
     private static final int GRID_ROWS = 2;
     private static final int GRID_COLS = 4;
     private static final int GRID_GAP = 5;

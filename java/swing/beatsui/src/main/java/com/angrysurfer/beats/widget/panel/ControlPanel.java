@@ -60,7 +60,7 @@ public class ControlPanel extends JPanel {
     private boolean listenersEnabled = true;
 
     public ControlPanel() {
-        // Use BorderLayout as the main layout for better centering control
+        // Use BorderLayout as the main layout for better component positioning
         super(new BorderLayout());
 
         // Set fixed height
@@ -68,14 +68,17 @@ public class ControlPanel extends JPanel {
         setPreferredSize(new Dimension(getPreferredSize().width, PANEL_HEIGHT));
         setMaximumSize(new Dimension(Short.MAX_VALUE, PANEL_HEIGHT));
 
-        // Create a wrapper panel for all controls using FlowLayout
-        JPanel controlsWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        controlsWrapper.setOpaque(false); // Make transparent to show parent background
+        // Create a wrapper panel for the left-side controls using FlowLayout
+        JPanel leftControlsWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        leftControlsWrapper.setOpaque(false); // Make transparent to show parent background
 
-        // Add all components
-        initComponents(controlsWrapper);
+        // Create the MiniLaunchPanel that will be positioned on the right
+        MiniLaunchPanel launchPanel = new MiniLaunchPanel();
+        
+        // Add all standard components to the left wrapper
+        initComponents(leftControlsWrapper);
 
-        // Create a vertical centering panel with BoxLayout
+        // Create a vertical centering panel with BoxLayout for left controls
         JPanel centeringPanel = new JPanel();
         centeringPanel.setLayout(new BoxLayout(centeringPanel, BoxLayout.Y_AXIS));
         centeringPanel.setOpaque(false);
@@ -83,12 +86,27 @@ public class ControlPanel extends JPanel {
         // Add vertical glue at top for centering
         centeringPanel.add(Box.createVerticalGlue());
         // Add the controls wrapper
-        centeringPanel.add(controlsWrapper);
+        centeringPanel.add(leftControlsWrapper);
         // Add vertical glue at bottom for centering
         centeringPanel.add(Box.createVerticalGlue());
 
-        // Add the centering panel to this panel
+        // Create a right panel with centered MiniLaunchPanel
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setOpaque(false);
+        rightPanel.add(Box.createVerticalGlue());
+        
+        // Center the launch panel horizontally in its container
+        JPanel launchCenterPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        launchCenterPanel.setOpaque(false);
+        launchCenterPanel.add(launchPanel);
+        
+        rightPanel.add(launchCenterPanel);
+        rightPanel.add(Box.createVerticalGlue());
+        
+        // Add both panels to the main panel
         add(centeringPanel, BorderLayout.CENTER);
+        add(rightPanel, BorderLayout.EAST);
 
         setupCommandBusListener();
     }
@@ -120,9 +138,6 @@ public class ControlPanel extends JPanel {
 
         // Initially disable dials
         disableDials();
-
-        // Add MiniLaunchPanel
-        controlsWrapper.add(new MiniLaunchPanel());
 
         // Set up control change listeners
         setupControlChangeListeners();
