@@ -190,8 +190,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         int totalBeats = beatsPerBar * bars;
         int totalTicks = totalBeats * ticksPerBeat;
         
-        // Use fixed row height for consistency
-        int rowHeight = 40;
+        // Use halved row height for consistency - changed from 40 to 20
+        int rowHeight = 20;
         
         // Set grid size
         int gridWidth = totalTicks * cellSize + 85;
@@ -261,7 +261,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
     private JLabel createRowLabel(String text) {
         JLabel label = new JLabel(text);
         label.setForeground(Color.WHITE);
-        label.setFont(new Font("Arial", Font.BOLD, 12));
+        // Use a smaller font for the reduced row height
+        label.setFont(new Font("Arial", Font.BOLD, 10));
         label.setHorizontalAlignment(JLabel.CENTER);
         return label;
     }
@@ -391,8 +392,9 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         // Account for label panel width
         int labelWidth = 80;
 
-        int x = labelWidth + tickIndex * cellSize + 1; // Add label width
-        int y = rowType * rowHeight + rowHeight / 4; // Position in correct row with some margin
+        // UPDATED: Position cell exactly at the row with no margin
+        int x = labelWidth + tickIndex * cellSize + 1; // Add label width with 1px offset
+        int y = rowType * rowHeight; // No margin, align to row top
 
         JPanel cell = new JPanel();
 
@@ -417,7 +419,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                     * player.getSession().getTicksPerBeat() * cellSize - 2;
         }
 
-        cell.setBounds(x, y, width, rowHeight / 2);
+        // UPDATED: Set height to full row height
+        cell.setBounds(x, y, width, rowHeight);
         cell.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
 
         gridPanel.add(cell);
