@@ -20,7 +20,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.exception.MidiDeviceException;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 
 public class DeviceManager implements IBusListener {
     
@@ -201,7 +201,7 @@ public class DeviceManager implements IBusListener {
 
     // Improved message sending with validation
     @SuppressWarnings("unused")
-    public static void sendMessage(Instrument instrument, int channel, int messageType, int data1, int data2) {
+    public static void sendMessage(InstrumentWrapper instrument, int channel, int messageType, int data1, int data2) {
         logger.info("sendMessage() - instrument: {}, channel: {}, messageType: {}, data1: {}, data2: {}",
                 instrument.getName(), channel, messageType, data1, data2);
 

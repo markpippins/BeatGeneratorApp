@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
@@ -113,7 +113,7 @@ public class PlayersTableModel extends DefaultTableModel {
 
         try {
             if (player.getInstrumentId() != null) {
-                Instrument instrument = InstrumentManager.getInstance()
+                InstrumentWrapper instrument = InstrumentManager.getInstance()
                         .getInstrumentFromCache(player.getInstrumentId());
                 if (instrument != null) {
                     instrumentName = instrument.getName();

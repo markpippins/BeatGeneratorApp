@@ -14,7 +14,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.FrameState;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.SessionManager;
@@ -131,7 +131,7 @@ public class App implements IBusListener {
             // // InstrumentEngine.getInstance(instrumentHelper);
 
             // // Verify instrument cache initialization
-            List<Instrument> instruments = instrumentHelper.findAllInstruments();
+            List<InstrumentWrapper> instruments = instrumentHelper.findAllInstruments();
             logger.info("Found " + instruments.size() + " instruments in Redis");
             // // instrumentManager.refreshCache(); // Ensure cache is populated
 

@@ -27,7 +27,7 @@ import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -212,7 +212,7 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
 
         try {
             // Use the player's instrument, channel, and a reasonable velocity
-            Instrument instrument = activePlayer.getInstrument();
+            InstrumentWrapper instrument = activePlayer.getInstrument();
             if (instrument == null) {
                 logger.debug("Active player has no instrument");
                 return false;

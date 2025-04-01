@@ -38,7 +38,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.service.InternalSynthManager;
@@ -51,7 +51,7 @@ public class PlayerEditPanel extends JPanel {
 
     // Basic properties
     private final JTextField nameField;
-    private JComboBox<Instrument> instrumentCombo;
+    private JComboBox<InstrumentWrapper> instrumentCombo;
     private final JSpinner channelSpinner; // Changed from Dial to JSpinner
     private JSpinner presetSpinner; // Changed from Dial to JSpinner
 
@@ -356,7 +356,7 @@ public class PlayerEditPanel extends JPanel {
     // Fix the getUpdatedPlayer() method with proper null checking
     public Player getUpdatedPlayer() {
         // Get currently selected instrument from combo box
-        Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
+        InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
 
         // Ensure the device setting is preserved when returning the updated player
         if (selectedInstrument != null) {
@@ -425,8 +425,8 @@ public class PlayerEditPanel extends JPanel {
                     boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-                if (value instanceof Instrument) {
-                    Instrument instrument = (Instrument) value;
+                if (value instanceof InstrumentWrapper) {
+                    InstrumentWrapper instrument = (InstrumentWrapper) value;
                     setText(instrument.getName());
                 }
                 return this;
@@ -434,7 +434,7 @@ public class PlayerEditPanel extends JPanel {
         });
 
         // Get instruments from UserConfigManager
-        List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
+        List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
 
         // Add internal synths from InternalSynthManager
         instruments.addAll(InternalSynthManager.getInstance().getInternalSynths());
@@ -442,7 +442,7 @@ public class PlayerEditPanel extends JPanel {
         if (instruments == null || instruments.isEmpty()) {
             logger.error("No instruments found");
             // Add a default instrument to prevent null selections
-            Instrument defaultInstrument = new Instrument();
+            InstrumentWrapper defaultInstrument = new InstrumentWrapper();
             defaultInstrument.setId(0L);
             defaultInstrument.setName("Default Instrument");
             instrumentCombo.addItem(defaultInstrument);
@@ -450,7 +450,7 @@ public class PlayerEditPanel extends JPanel {
             // Sort instruments by name
             instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
-            for (Instrument inst : instruments) {
+            for (InstrumentWrapper inst : instruments) {
                 if (inst.getAvailable())
                     instrumentCombo.addItem(inst);
             }
@@ -459,7 +459,7 @@ public class PlayerEditPanel extends JPanel {
         // Select the player's instrument if it exists
         if (player.getInstrument() != null) {
             for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
-                Instrument item = instrumentCombo.getItemAt(i);
+                InstrumentWrapper item = instrumentCombo.getItemAt(i);
                 if (item.getId().equals(player.getInstrument().getId())) {
                     instrumentCombo.setSelectedIndex(i);
 
@@ -473,7 +473,7 @@ public class PlayerEditPanel extends JPanel {
         // Add listener to update preset controls when instrument changes
         instrumentCombo.addActionListener(e -> {
             if (e.getActionCommand().equals("comboBoxChanged")) {
-                Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
+                InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
                 if (selectedInstrument != null) {
                     boolean isInternal = InternalSynthManager.getInstance().isInternalSynth(selectedInstrument);
                     if (isInternal != usingInternalSynth) {
@@ -546,7 +546,7 @@ public class PlayerEditPanel extends JPanel {
 
     // Add method to populate the preset combo
     private void populatePresetCombo() {
-        Instrument selectedInstrument = (Instrument) instrumentCombo.getSelectedItem();
+        InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
         if (selectedInstrument == null)
             return;
 
@@ -855,23 +855,23 @@ public class PlayerEditPanel extends JPanel {
                     // Refresh the instrument combo
                     SwingUtilities.invokeLater(() -> {
                         // Remember selected instrument
-                        Instrument selected = (Instrument) instrumentCombo.getSelectedItem();
+                        InstrumentWrapper selected = (InstrumentWrapper) instrumentCombo.getSelectedItem();
 
                         // Update combo with fresh instruments
                         instrumentCombo.removeAllItems();
-                        List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
+                        List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
 
                         if (instruments != null && !instruments.isEmpty()) {
                             instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
-                            for (Instrument inst : instruments) {
+                            for (InstrumentWrapper inst : instruments) {
                                 instrumentCombo.addItem(inst);
                             }
 
                             // Restore selection if possible
                             if (selected != null) {
                                 for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
-                                    Instrument item = instrumentCombo.getItemAt(i);
+                                    InstrumentWrapper item = instrumentCombo.getItemAt(i);
                                     if (item.getId().equals(selected.getId())) {
                                         instrumentCombo.setSelectedIndex(i);
                                         break;

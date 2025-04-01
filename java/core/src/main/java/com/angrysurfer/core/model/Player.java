@@ -139,7 +139,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private List<Integer> allowedControlMessages = new ArrayList<>();
 
     @JsonIgnore
-    private Instrument instrument;
+    private InstrumentWrapper instrument;
 
     @JsonIgnore
     private Session session;
@@ -155,19 +155,19 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         // System.out.println("Player constructor: Registered with buses");
     }
 
-    public Player(String name, Session session, Instrument instrument) {
+    public Player(String name, Session session, InstrumentWrapper instrument) {
         this(); // Call default constructor to ensure registration
         setName(name);
         setInstrument(instrument);
         setSession(session);
     }
 
-    public Player(String name, Session session, Instrument instrument, List<Integer> allowedControlMessages) {
+    public Player(String name, Session session, InstrumentWrapper instrument, List<Integer> allowedControlMessages) {
         this(name, session, instrument);
         setAllowedControlMessages(allowedControlMessages);
     }
 
-    public void setInstrument(Instrument instrument) {
+    public void setInstrument(InstrumentWrapper instrument) {
         this.instrument = instrument;
         this.instrumentId = Objects.nonNull(instrument) ? instrument.getId() : null;
     }

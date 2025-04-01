@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
@@ -28,7 +28,7 @@ public class InstrumentManager implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(InstrumentManager.class);
     private static InstrumentManager instance;
     private final InstrumentHelper instrumentHelper;
-    private final Map<Long, Instrument> instrumentCache = new HashMap<>();
+    private final Map<Long, InstrumentWrapper> instrumentCache = new HashMap<>();
     private List<MidiDevice> midiDevices = new ArrayList<>();
     private List<String> devices = new ArrayList<>();
     private boolean needsRefresh = true;
@@ -63,7 +63,7 @@ public class InstrumentManager implements IBusListener {
             }
             case Commands.INSTRUMENT_UPDATED -> {
                 // Update single instrument in cache
-                if (action.getData() instanceof Instrument instrument) {
+                if (action.getData() instanceof InstrumentWrapper instrument) {
                     instrumentCache.put(instrument.getId(), instrument);
                     logger.info("Updated instrument in cache: {}", instrument.getName());
                 }
@@ -78,11 +78,11 @@ public class InstrumentManager implements IBusListener {
     public void initializeCache() {
         logger.info("Initializing instrument cache");
         // Get instruments from UserConfigManager which is the source of truth
-        List<Instrument> instruments = UserConfigManager.getInstance().getInstruments();
+        List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
         instrumentCache.clear();
 
         if (instruments != null) {
-            for (Instrument instrument : instruments) {
+            for (InstrumentWrapper instrument : instruments) {
                 instrumentCache.put(instrument.getId(), instrument);
             }
             logger.info("Cached {} instruments", instrumentCache.size());
@@ -99,7 +99,7 @@ public class InstrumentManager implements IBusListener {
         needsRefresh = false;
     }
 
-    public List<Instrument> getInstrumentByChannel(int channel) {
+    public List<InstrumentWrapper> getInstrumentByChannel(int channel) {
         if (needsRefresh) {
             refreshInstruments();
         }
@@ -109,7 +109,7 @@ public class InstrumentManager implements IBusListener {
                 .collect(Collectors.toList());
     }
 
-    public Instrument getInstrumentById(Long id) {
+    public InstrumentWrapper getInstrumentById(Long id) {
         if (needsRefresh) {
             refreshInstruments();
         }
@@ -121,11 +121,11 @@ public class InstrumentManager implements IBusListener {
             refreshInstruments();
         }
         return instrumentCache.values().stream()
-                .map(Instrument::getName)
+                .map(InstrumentWrapper::getName)
                 .collect(Collectors.toList());
     }
 
-    public Instrument findByName(String name) {
+    public InstrumentWrapper findByName(String name) {
         if (needsRefresh) {
             refreshInstruments();
         }
@@ -135,12 +135,12 @@ public class InstrumentManager implements IBusListener {
                 .orElse(null);
     }
 
-    public Instrument getInstrumentFromCache(Long instrumentId) {
+    public InstrumentWrapper getInstrumentFromCache(Long instrumentId) {
         if (needsRefresh) {
             refreshInstruments();
         }
 
-        Instrument instrument = instrumentCache.get(instrumentId);
+        InstrumentWrapper instrument = instrumentCache.get(instrumentId);
         if (instrument == null) {
             logger.warn("Cache miss for instrument ID: {}, refreshing cache", instrumentId);
             refreshInstruments();
@@ -149,7 +149,7 @@ public class InstrumentManager implements IBusListener {
         return instrument;
     }
 
-    public List<Instrument> getCachedInstruments() {
+    public List<InstrumentWrapper> getCachedInstruments() {
         if (instrumentCache.isEmpty()) {
             logger.info("Cache is empty, initializing...");
             initializeCache();
@@ -173,7 +173,7 @@ public class InstrumentManager implements IBusListener {
      * 
      * @param instrument The instrument to update
      */
-    public void updateInstrument(Instrument instrument) {
+    public void updateInstrument(InstrumentWrapper instrument) {
         if (instrument == null) {
             logger.warn("Attempt to update null instrument");
             return;
@@ -203,7 +203,7 @@ public class InstrumentManager implements IBusListener {
         }
         
         // Get instrument for logging before removal
-        Instrument instrument = instrumentCache.get(instrumentId);
+        InstrumentWrapper instrument = instrumentCache.get(instrumentId);
         String name = instrument != null ? instrument.getName() : "Unknown";
         
         // Remove from cache

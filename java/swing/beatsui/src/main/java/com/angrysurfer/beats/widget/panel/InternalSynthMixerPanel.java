@@ -3,6 +3,7 @@ package com.angrysurfer.beats.widget.panel;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FlowLayout;
 
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.Synthesizer;
@@ -60,11 +61,11 @@ public class InternalSynthMixerPanel extends JPanel {
                 new Font("Dialog", Font.BOLD, 11)
         ));
         
-        // Use vertical BoxLayout for column of dials
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        // Use horizontal FlowLayout with left alignment and minimal vertical gap
+        setLayout(new FlowLayout(FlowLayout.LEFT, 15, 0));
         
-        // Set preferred dimensions - taller, less wide for vertical layout
-        setPreferredSize(new Dimension(80, 300));
+        // Set preferred dimensions - wider, less tall for horizontal layout
+        setPreferredSize(new Dimension(350, 100));
 
         // Balance between osc 1 & 2
         JPanel balance12Group = createDialGroup("Osc 1-2");
@@ -81,14 +82,10 @@ public class InternalSynthMixerPanel extends JPanel {
         masterDial = createStandardDial("Master Volume Level", 100);
         masterGroup.add(masterDial);
 
-        // Add vertical spacing and dials
-        add(Box.createVerticalStrut(10));
+        // Add components in horizontal layout
         add(balance12Group);
-        add(Box.createVerticalStrut(10));
         add(balance3Group);
-        add(Box.createVerticalStrut(10));
         add(masterGroup);
-        add(Box.createVerticalGlue());
     }
     
     /**
@@ -152,12 +149,14 @@ public class InternalSynthMixerPanel extends JPanel {
     private JPanel createDialGroup(String title) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         // Add title label
         JLabel titleLabel = new JLabel(title, JLabel.CENTER);
         titleLabel.setFont(new Font("Dialog", Font.PLAIN, 11));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Add components vertically
+        panel.add(Box.createVerticalStrut(5));
         panel.add(titleLabel);
         panel.add(Box.createVerticalStrut(5));
         

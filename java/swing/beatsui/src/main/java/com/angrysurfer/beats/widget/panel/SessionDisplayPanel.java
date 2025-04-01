@@ -12,6 +12,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +49,10 @@ public class SessionDisplayPanel extends JPanel {
     private JTextField beatCountField;
     private JTextField barCountField;
     private JTextField partCountField;
+
+    private boolean inverseDisplay = true;
+    private Color inverseFontColor = Color.GREEN;
+    private Color inverseBackgroundColor = Color.BLACK;
 
     public SessionDisplayPanel() {
         super(new BorderLayout());
@@ -121,12 +126,67 @@ public class SessionDisplayPanel extends JPanel {
 
         // Create text field
         JTextField field = UIHelper.createDisplayField("0");
+        
+        // Apply inverse display mode if enabled
+        if (inverseDisplay) {
+            applyInverseDisplay(field);
+        }
+        
         fields.put(label, field);
 
         fieldPanel.add(labelPanel, BorderLayout.NORTH);
         fieldPanel.add(field, BorderLayout.CENTER);
 
         return fieldPanel;
+    }
+
+    /**
+     * Apply inverse display mode (green text on black background) to a text field
+     * 
+     * @param field The text field to modify
+     */
+    private void applyInverseDisplay(JTextField field) {
+        field.setForeground(inverseFontColor);
+        field.setBackground(inverseBackgroundColor);
+        field.setCaretColor(inverseFontColor);
+    }
+
+    /**
+     * Apply inverse display mode to all fields
+     * 
+     * @param inverse Whether to use inverse mode (true) or normal mode (false)
+     */
+    public void setInverseDisplay(boolean inverse) {
+        this.inverseDisplay = inverse;
+        
+        // Update all fields in the map
+        for (JTextField field : fields.values()) {
+            if (inverse) {
+                applyInverseDisplay(field);
+            } else {
+                // Reset to default look and feel
+                field.setForeground(UIManager.getColor("TextField.foreground"));
+                field.setBackground(UIManager.getColor("TextField.background"));
+                field.setCaretColor(UIManager.getColor("TextField.caretForeground"));
+            }
+        }
+        repaint();
+    }
+
+    /**
+     * Set the color scheme for inverse display
+     * 
+     * @param fontColor The text color
+     * @param backgroundColor The background color
+     */
+    public void setInverseColors(Color fontColor, Color backgroundColor) {
+        this.inverseFontColor = fontColor;
+        this.inverseBackgroundColor = backgroundColor;
+        
+        // Update colors if inverse display is active
+        if (inverseDisplay) {
+            setInverseDisplay(true);
+        }
     }
 
     public void setSession(Session session) {

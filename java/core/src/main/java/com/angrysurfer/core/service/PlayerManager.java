@@ -34,7 +34,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
@@ -294,7 +294,7 @@ public class PlayerManager {
         }
     }
 
-    public Player addPlayer(Session session, Instrument instrument, long note) {
+    public Player addPlayer(Session session, InstrumentWrapper instrument, long note) {
         String name = instrument.getName() + session.getPlayers().size();
         Player player = new Strike(name, session, instrument, note,
                 instrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
@@ -639,7 +639,7 @@ public class PlayerManager {
         
         try {
             // Use the player's instrument, channel, and a reasonable velocity
-            Instrument instrument = activePlayer.getInstrument();
+            InstrumentWrapper instrument = activePlayer.getInstrument();
             if (instrument == null) {
                 logger.debug("Active player has no instrument");
                 return false;

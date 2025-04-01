@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
@@ -26,7 +26,7 @@ public class InstrumentHelper {
         this.objectMapper = objectMapper;
     }
 
-    public List<Instrument> findAllInstruments() {
+    public List<InstrumentWrapper> findAllInstruments() {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.keys("instrument:*").stream()
                 .map(key -> findInstrumentById(Long.parseLong(key.split(":")[1])))
@@ -35,17 +35,17 @@ public class InstrumentHelper {
         }
     }
 
-    public Instrument findInstrumentById(Long id) {
+    public InstrumentWrapper findInstrumentById(Long id) {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = jedis.get("instrument:" + id);
-            return json != null ? objectMapper.readValue(json, Instrument.class) : null;
+            return json != null ? objectMapper.readValue(json, InstrumentWrapper.class) : null;
         } catch (Exception e) {
             logger.error("Error finding instrument: " + e.getMessage());
             return null;
         }
     }
 
-    public void saveInstrument(Instrument instrument) {
+    public void saveInstrument(InstrumentWrapper instrument) {
         try (Jedis jedis = jedisPool.getResource()) {
             if (instrument.getId() == null) {
                 instrument.setId(jedis.incr("seq:instrument"));

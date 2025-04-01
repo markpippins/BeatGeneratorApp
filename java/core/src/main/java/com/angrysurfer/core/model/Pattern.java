@@ -106,7 +106,7 @@ public class Pattern {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instrument_id")
-    private Instrument instrument;
+    private InstrumentWrapper instrument;
 
     @JsonIgnore
     @Column(name = "step_cycler")

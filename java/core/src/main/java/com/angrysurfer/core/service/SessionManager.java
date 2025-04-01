@@ -11,7 +11,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
@@ -30,7 +30,7 @@ public class SessionManager implements IBusListener {
     private final CommandBus commandBus = CommandBus.getInstance();
     private final RedisService redisService = RedisService.getInstance();
 
-    private final Map<Long, Instrument> instrumentCache = new HashMap<>();
+    private final Map<Long, InstrumentWrapper> instrumentCache = new HashMap<>();
 
     // Directly store activeSession instead of using SessionManager
     private Session activeSession;
@@ -86,7 +86,7 @@ public class SessionManager implements IBusListener {
         // System.out.println("SessionManager: Initializing...");
         logger.info("Initializing session manager");
 
-        List<Instrument> instruments = UserConfigManager.getInstance().getCurrentConfig().getInstruments();
+        List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getCurrentConfig().getInstruments();
         // System.out.println("SessionManager: Got " + instruments.size() + "
         // instruments from config");
 

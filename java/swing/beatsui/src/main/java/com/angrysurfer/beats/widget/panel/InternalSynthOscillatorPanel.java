@@ -1,5 +1,7 @@
 package com.angrysurfer.beats.widget.panel;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -8,6 +10,7 @@ import javax.sound.midi.MidiChannel;
 import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -42,7 +45,8 @@ public class InternalSynthOscillatorPanel extends JPanel {
      * @param oscillatorIndex Index of this oscillator (0-2)
      */
     public InternalSynthOscillatorPanel(Synthesizer synthesizer, int midiChannel, int oscillatorIndex) {
-        super(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // Use BorderLayout instead of FlowLayout to arrange rows vertically
+        super(new BorderLayout(0, 5));
         
         this.synthesizer = synthesizer;
         this.midiChannel = midiChannel;
@@ -53,7 +57,7 @@ public class InternalSynthOscillatorPanel extends JPanel {
     }
     
     private void setupUI() {
-        // Create panel with titled border
+        // Create panel with titled border - reduce padding
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(),
                 "Oscillator " + (oscillatorIndex + 1),
@@ -61,6 +65,9 @@ public class InternalSynthOscillatorPanel extends JPanel {
                 TitledBorder.TOP,
                 new Font("Dialog", Font.BOLD, 11)
         ));
+        
+        // Create top row for basic controls
+        JPanel topRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         
         // Create the toggle switch for oscillator on/off
         JLabel toggleLabel = new JLabel("On/Off:");
@@ -86,45 +93,63 @@ public class InternalSynthOscillatorPanel extends JPanel {
         octaveCombo.setSelectedIndex(2); // Default to "0"
         octaveCombo.setPreferredSize(new Dimension(50, 25));
 
-        // Create parameter dials with inline labels
-        JLabel tuneLabel = new JLabel("Tune:");
+        // Add controls to top row
+        topRow.add(toggleLabel);
+        topRow.add(enabledToggle);
+        topRow.add(Box.createHorizontalStrut(5));
+        
+        topRow.add(waveLabel);
+        topRow.add(waveformCombo);
+        topRow.add(Box.createHorizontalStrut(5));
+        
+        topRow.add(octaveLabel);
+        topRow.add(octaveCombo);
+        
+        // Create bottom row for dials
+        JPanel bottomRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        
+        // Create parameter dials with labels
+        JPanel tunePanel = new JPanel();
+        tunePanel.setLayout(new BoxLayout(tunePanel, BoxLayout.Y_AXIS));
+        JLabel tuneLabel = new JLabel("Tune", JLabel.CENTER);
         tuneLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
+        tuneLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         detuneDial = createCompactDial("", "Tuning", 64);
         detuneDial.setName("detuneDial" + oscillatorIndex);
+        detuneDial.setAlignmentX(Component.CENTER_ALIGNMENT);
+        tunePanel.add(detuneDial);
+        tunePanel.add(tuneLabel);
 
-        JLabel brightLabel = new JLabel("Bright:");
+        JPanel brightnessPanel = new JPanel();
+        brightnessPanel.setLayout(new BoxLayout(brightnessPanel, BoxLayout.Y_AXIS));
+        JLabel brightLabel = new JLabel("Bright", JLabel.CENTER);
         brightLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
+        brightLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         brightnessDialDial = createCompactDial("", "Brightness", 64);
         brightnessDialDial.setName("brightnessDial" + oscillatorIndex);
+        brightnessDialDial.setAlignmentX(Component.CENTER_ALIGNMENT);
+        brightnessPanel.add(brightnessDialDial);
+        brightnessPanel.add(brightLabel);
 
-        JLabel volumeLabel = new JLabel("Volume:");
+        JPanel volumePanel = new JPanel();
+        volumePanel.setLayout(new BoxLayout(volumePanel, BoxLayout.Y_AXIS));
+        JLabel volumeLabel = new JLabel("Volume", JLabel.CENTER);
         volumeLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
+        volumeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         volumeDial = createCompactDial("", "Volume", oscillatorIndex == 0 ? 100 : 0);
         volumeDial.setName("volumeDial" + oscillatorIndex);
+        volumeDial.setAlignmentX(Component.CENTER_ALIGNMENT);
+        volumePanel.add(volumeDial);
+        volumePanel.add(volumeLabel);
 
-        // Add all components to the oscillator panel in a single row
-        add(toggleLabel);
-        add(enabledToggle);
-        add(Box.createHorizontalStrut(10));
+        // Add dial groups to bottom row
+        bottomRow.add(tunePanel);
+        bottomRow.add(brightnessPanel);
+        bottomRow.add(volumePanel);
         
-        add(waveLabel);
-        add(waveformCombo);
-        add(Box.createHorizontalStrut(10));
-        
-        add(octaveLabel);
-        add(octaveCombo);
-        add(Box.createHorizontalStrut(10));
-        
-        add(tuneLabel);
-        add(detuneDial);
-        add(Box.createHorizontalStrut(10));
-        
-        add(brightLabel);
-        add(brightnessDialDial);
-        add(Box.createHorizontalStrut(10));
-        
-        add(volumeLabel);
-        add(volumeDial);
+        // Add rows to the main panel
+        add(topRow, BorderLayout.NORTH);
+        add(bottomRow, BorderLayout.CENTER);
 
         // Add event handlers
         setupEventHandlers();

@@ -33,9 +33,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Instrument implements Serializable {
+public class InstrumentWrapper implements Serializable {
 
-    static Logger logger = LoggerFactory.getLogger(Instrument.class.getCanonicalName());
+    static Logger logger = LoggerFactory.getLogger(InstrumentWrapper.class.getCanonicalName());
 
     static final Random rand = new Random();
 
@@ -93,19 +93,19 @@ public class Instrument implements Serializable {
 
     private Set<Pattern> patterns;
 
-    public Instrument() {
+    public InstrumentWrapper() {
 
     }
 
-    public Instrument(String name, MidiDevice device) {
+    public InstrumentWrapper(String name, MidiDevice device) {
         this(name, device, DEFAULT_CHANNELS);
     }
 
-    public Instrument(String name, MidiDevice device, int channel) {
+    public InstrumentWrapper(String name, MidiDevice device, int channel) {
         this(name, device, new Integer[] { channel });
     }
 
-    public Instrument(String name, MidiDevice device, Integer[] channels) {
+    public InstrumentWrapper(String name, MidiDevice device, Integer[] channels) {
         setName(Objects.isNull(name) ? device.getDeviceInfo().getName() : name);
         setDevice(device);
         setDeviceName(device.getDeviceInfo().getName());

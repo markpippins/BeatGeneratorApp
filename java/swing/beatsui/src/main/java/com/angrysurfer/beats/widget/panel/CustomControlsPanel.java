@@ -44,7 +44,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.ControlCode;
 import com.angrysurfer.core.model.ControlCodeCaption;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.RedisService;
 
 import lombok.Getter;
@@ -54,7 +54,7 @@ import lombok.Setter;
 @Setter
 public class CustomControlsPanel extends JPanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(CustomControlsPanel.class.getName());
-    private JComboBox<Instrument> instrumentSelector;
+    private JComboBox<InstrumentWrapper> instrumentSelector;
     private final RedisService redisService;
     private final JPanel controlsContainer;
     private JToolBar toolBar;
@@ -82,7 +82,7 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
         JPopupMenu popupMenu = new JPopupMenu();
         JMenuItem saveConfigItem = new JMenuItem("Save Config...");
         saveConfigItem.addActionListener(e -> {
-            Instrument currentInstrument = (Instrument) instrumentSelector.getSelectedItem();
+            InstrumentWrapper currentInstrument = (InstrumentWrapper) instrumentSelector.getSelectedItem();
             if (currentInstrument != null) {
                 CommandBus.getInstance().publish(Commands.SAVE_CONFIG, this, currentInstrument);
             }
@@ -104,8 +104,8 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
                     JList<?> list, Object value, int index,
                     boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Instrument) {
-                    setText(((Instrument) value).getName());
+                if (value instanceof InstrumentWrapper) {
+                    setText(((InstrumentWrapper) value).getName());
                 }
                 return this;
             }
@@ -120,7 +120,7 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
         JButton sendButton = new JButton("\u2192"); // Unicode right arrow
         sendButton.setToolTipText("Send All Controls");
         sendButton.addActionListener(e -> {
-            Instrument current = (Instrument) instrumentSelector.getSelectedItem();
+            InstrumentWrapper current = (InstrumentWrapper) instrumentSelector.getSelectedItem();
             if (current != null) {
                 CommandBus.getInstance().publish(Commands.SEND_ALL_CONTROLS, this, current);
             }
@@ -157,7 +157,7 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
 
         // Add selection listener
         instrumentSelector.addActionListener(e -> {
-            Instrument selected = (Instrument) instrumentSelector.getSelectedItem();
+            InstrumentWrapper selected = (InstrumentWrapper) instrumentSelector.getSelectedItem();
             if (selected != null) {
                 logger.info("Selected instrument: " + selected.getName());
                 updateControlsDisplay(selected);
@@ -176,7 +176,7 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
     @Override
     public void onAction(Command action) {
         if (Commands.WINDOW_RESIZED.equals(action.getCommand())) {
-            Instrument currentInstrument = (Instrument) instrumentSelector.getSelectedItem();
+            InstrumentWrapper currentInstrument = (InstrumentWrapper) instrumentSelector.getSelectedItem();
             if (currentInstrument != null) {
                 SwingUtilities.invokeLater(() -> updateControlsDisplay(currentInstrument));
             }
@@ -194,13 +194,13 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
     }
 
     public void updateControlsDisplay() {
-        Instrument selected = (Instrument) instrumentSelector.getSelectedItem();
+        InstrumentWrapper selected = (InstrumentWrapper) instrumentSelector.getSelectedItem();
         if (selected != null) {
             updateControlsDisplay(selected);
         }
     }
 
-    private void updateControlsDisplay(Instrument instrument) {
+    private void updateControlsDisplay(InstrumentWrapper instrument) {
         controlsContainer.removeAll();
 
         if (instrument == null || instrument.getControlCodes() == null || instrument.getControlCodes().isEmpty()) {
@@ -493,12 +493,12 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
 
     public void refreshInstruments() {
         instrumentSelector.removeAllItems();
-        List<Instrument> instruments = redisService.findAllInstruments();
+        List<InstrumentWrapper> instruments = redisService.findAllInstruments();
 
         // Sort instruments by name
         instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
-        for (Instrument instrument : instruments) {
+        for (InstrumentWrapper instrument : instruments) {
             instrumentSelector.addItem(instrument);
         }
 
@@ -507,7 +507,7 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
 
     public void refreshControlsPanel() {
         // Store currently selected instrument
-        Instrument currentInstrument = (Instrument) instrumentSelector.getSelectedItem();
+        InstrumentWrapper currentInstrument = (InstrumentWrapper) instrumentSelector.getSelectedItem();
 
         // Clear and reload instruments from database
         refreshInstruments();
@@ -515,7 +515,7 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
         // If there was a previously selected instrument, try to reselect it
         if (currentInstrument != null) {
             for (int i = 0; i < instrumentSelector.getItemCount(); i++) {
-                Instrument item = instrumentSelector.getItemAt(i);
+                InstrumentWrapper item = instrumentSelector.getItemAt(i);
                 if (item.getId().equals(currentInstrument.getId())) {
                     instrumentSelector.setSelectedIndex(i);
                     break;
@@ -524,7 +524,7 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
         }
 
         // Force update of controls display
-        Instrument selected = (Instrument) instrumentSelector.getSelectedItem();
+        InstrumentWrapper selected = (InstrumentWrapper) instrumentSelector.getSelectedItem();
         if (selected != null) {
             updateControlsDisplay(selected);
         }
@@ -536,10 +536,10 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
         toolBar.setVisible(show);
     }
 
-    public void selectInstrument(Instrument instrument) {
+    public void selectInstrument(InstrumentWrapper instrument) {
         if (instrument != null) {
             for (int i = 0; i < instrumentSelector.getItemCount(); i++) {
-                Instrument item = instrumentSelector.getItemAt(i);
+                InstrumentWrapper item = instrumentSelector.getItemAt(i);
                 if (item.getId().equals(instrument.getId())) {
                     instrumentSelector.setSelectedIndex(i);
                     break;

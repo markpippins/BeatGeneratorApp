@@ -39,7 +39,7 @@ import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.ControlCode;
 import com.angrysurfer.core.model.ControlCodeCaption;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
@@ -56,7 +56,7 @@ class InstrumentsPanel extends JPanel {
     private JTable instrumentsTable;
     private JTable controlCodesTable;
     private JTable captionsTable;
-    private Instrument selectedInstrument;
+    private InstrumentWrapper selectedInstrument;
     private ControlCode selectedControlCode;
     private JButton addCaptionButton;
     private JButton editCaptionButton;
@@ -243,8 +243,8 @@ class InstrumentsPanel extends JPanel {
         };
 
         // Load data from Redis
-        List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
-        for (Instrument instrument : instruments) {
+        List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
+        for (InstrumentWrapper instrument : instruments) {
             model.addRow(new Object[]{instrument.getName(), instrument.getDeviceName(), instrument.getAvailable(),
                 instrument.getLowestNote(), instrument.getHighestNote(), instrument.isInitialized()});
         }
@@ -500,7 +500,7 @@ class InstrumentsPanel extends JPanel {
         }
     }
 
-    private Instrument findInstrumentByName(String name) {
+    private InstrumentWrapper findInstrumentByName(String name) {
         // Convert view index to model index when getting data
         return RedisService.getInstance().findAllInstruments().stream().filter(i -> i.getName().equals(name))
                 .findFirst().orElse(null);
@@ -631,18 +631,18 @@ class InstrumentsPanel extends JPanel {
         return null;
     }
 
-    private void showInstrumentDialog(Instrument instrument) {
+    private void showInstrumentDialog(InstrumentWrapper instrument) {
         boolean isNew = (instrument == null);
         if (isNew) {
-            instrument = new Instrument();
+            instrument = new InstrumentWrapper();
         }
 
         InstrumentEditPanel editorPanel = new InstrumentEditPanel(instrument);
-        Dialog<Instrument> dialog = new Dialog<>(instrument, editorPanel);
+        Dialog<InstrumentWrapper> dialog = new Dialog<>(instrument, editorPanel);
         dialog.setTitle(isNew ? "Add Instrument" : "Edit Instrument");
 
         if (dialog.showDialog()) {
-            Instrument updatedInstrument = editorPanel.getUpdatedInstrument();
+            InstrumentWrapper updatedInstrument = editorPanel.getUpdatedInstrument();
             if (isNew) {
                 // Let Redis assign an ID
                 RedisService.getInstance().saveInstrument(updatedInstrument);
@@ -673,7 +673,7 @@ class InstrumentsPanel extends JPanel {
                 int modelRow = instrumentsTable.convertRowIndexToModel(viewRow);
                 String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
 
-                Instrument instrument = findInstrumentByName(name);
+                InstrumentWrapper instrument = findInstrumentByName(name);
                 if (instrument != null) {
                     // Delete from Redis
                     RedisService.getInstance().deleteInstrument(instrument);
@@ -705,11 +705,11 @@ class InstrumentsPanel extends JPanel {
         model.setRowCount(0);
 
         // Get fresh data from Redis
-        List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
+        List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
         logger.info("Refreshing instruments table with " + instruments.size() + " instruments");
 
         // Add each instrument to the table
-        for (Instrument instrument : instruments) {
+        for (InstrumentWrapper instrument : instruments) {
             logger.info("Adding instrument to table: " + instrument.getName());
             model.addRow(new Object[]{instrument.getName(), instrument.getDeviceName(), instrument.getAvailable(),
                 instrument.getLowestNote(), instrument.getHighestNote(), instrument.isInitialized()});
@@ -793,7 +793,7 @@ class InstrumentsPanel extends JPanel {
                 if (hasSelection) {
                     int modelRow = instrumentsTable.convertRowIndexToModel(instrumentsTable.getSelectedRow());
                     String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
-                    Instrument instrument = findInstrumentByName(name);
+                    InstrumentWrapper instrument = findInstrumentByName(name);
 
                     // Enable button is active only when instrument is initialized but not available
                     if (instrument != null) {
@@ -844,7 +844,7 @@ class InstrumentsPanel extends JPanel {
             String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
 
             // Find the instrument by name
-            Instrument instrument = findInstrumentByName(name);
+            InstrumentWrapper instrument = findInstrumentByName(name);
             if (instrument != null) {
                 showInstrumentDialog(instrument);
             } else {
@@ -897,7 +897,7 @@ class InstrumentsPanel extends JPanel {
         });
     }
 
-    private void saveInstrument(Instrument instrument) {
+    private void saveInstrument(InstrumentWrapper instrument) {
         try {
             // Save to Redis
             RedisService.getInstance().saveInstrument(instrument);
@@ -925,7 +925,7 @@ class InstrumentsPanel extends JPanel {
         }
     }
 
-    private void updateInstrumentInUserConfig(Instrument instrument) {
+    private void updateInstrumentInUserConfig(InstrumentWrapper instrument) {
         UserConfigManager configManager = UserConfigManager.getInstance();
         UserConfig config = configManager.getCurrentConfig();
 
@@ -959,7 +959,7 @@ class InstrumentsPanel extends JPanel {
         int modelRow = instrumentsTable.convertRowIndexToModel(row);
         String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
 
-        Instrument instrument = findInstrumentByName(name);
+        InstrumentWrapper instrument = findInstrumentByName(name);
         if (instrument == null) {
             CommandBus.getInstance().publish(
                     Commands.STATUS_UPDATE,

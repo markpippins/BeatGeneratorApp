@@ -166,10 +166,28 @@ public class UIHelper {
 
     /**
      * Creates a disabled status field with consistent sizing
+     * 
+     * @param initialValue Initial text value
+     * @return Configured text field
      */
     public static JTextField createDisplayField(String initialValue) {
         Color lightGray = new Color(240, 240, 240);
         JTextField field = createTextField(initialValue, 4, false, false, true, lightGray);
+        field.setMaximumSize(new Dimension(50, 25));
+        return field;
+    }
+
+    /**
+     * Creates a disabled status field with inverse display (custom colors)
+     * 
+     * @param initialValue Initial text value
+     * @param foreground Text color
+     * @param background Background color
+     * @return Configured text field with inverse colors
+     */
+    public static JTextField createInverseDisplayField(String initialValue, Color foreground, Color background) {
+        JTextField field = createTextField(initialValue, 4, false, false, true, background);
+        field.setForeground(foreground);
         field.setMaximumSize(new Dimension(50, 25));
         return field;
     }
@@ -286,6 +304,7 @@ public class UIHelper {
      */
     public static Dial createStandardDial(String tooltip, int initialValue) {
         Dial dial = new Dial();
+        dial.setUpdateOnResize(false);
         dial.setToolTipText(tooltip);
         dial.setValue(initialValue);
         dial.setMaximumSize(new Dimension(STANDARD_DIAL_SIZE, STANDARD_DIAL_SIZE));
@@ -298,6 +317,7 @@ public class UIHelper {
      */
     public static Dial createLabeledDial(String label, String tooltip, int initialValue) {
         Dial dial = createStandardDial(tooltip, initialValue);
+        dial.setUpdateOnResize(false);
         dial.setLabel(label);
         return dial;
     }

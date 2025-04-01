@@ -10,7 +10,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -315,19 +315,19 @@ public class RedisService implements IBusListener {
     }
 
     // Replace direct implementations with delegation to instrumentHelper
-    public List<Instrument> findAllInstruments() {
+    public List<InstrumentWrapper> findAllInstruments() {
         return instrumentHelper.findAllInstruments();
     }
 
-    public Instrument findInstrumentById(Long id) {
+    public InstrumentWrapper findInstrumentById(Long id) {
         return instrumentHelper.findInstrumentById(id);
     }
 
-    public void saveInstrument(Instrument instrument) {
+    public void saveInstrument(InstrumentWrapper instrument) {
         instrumentHelper.saveInstrument(instrument);
     }
 
-    public void deleteInstrument(Instrument instrument) {
+    public void deleteInstrument(InstrumentWrapper instrument) {
         if (instrument != null && instrument.getId() != null) {
             instrumentHelper.deleteInstrument(instrument.getId());
         }

@@ -20,7 +20,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.config.UserConfigConverter;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
@@ -105,7 +105,7 @@ public class DialogManager implements IBusListener {
     private void setNewPlayerInstrument(Player newPlayer) {
         try {
             // Get all instruments from the InstrumentManager
-            List<Instrument> instruments = com.angrysurfer.core.service.InstrumentManager.getInstance()
+            List<InstrumentWrapper> instruments = com.angrysurfer.core.service.InstrumentManager.getInstance()
                     .getCachedInstruments();
 
             // Get list of available device names
@@ -115,9 +115,9 @@ public class DialogManager implements IBusListener {
             logger.info("Setting instrument for new player. Available devices: " + availableDeviceNames);
 
             // Find the first instrument that has an available device
-            Instrument selectedInstrument = null;
+            InstrumentWrapper selectedInstrument = null;
 
-            for (Instrument instrument : instruments) {
+            for (InstrumentWrapper instrument : instruments) {
                 // Check if this instrument's device is available
                 if (instrument != null &&
                         instrument.getDeviceName() != null &&
@@ -308,7 +308,7 @@ public class DialogManager implements IBusListener {
                 logger.info("Loaded " + config.getInstruments().size() + " instruments from file");
 
                 // Save instruments to Redis
-                for (Instrument instrument : config.getInstruments()) {
+                for (InstrumentWrapper instrument : config.getInstruments()) {
                     logger.info("Saving instrument: " + instrument.getName());
                     redisService.saveInstrument(instrument);
                 }
@@ -317,7 +317,7 @@ public class DialogManager implements IBusListener {
                 redisService.saveConfig(config);
 
                 // Verify the save
-                List<Instrument> savedInstruments = redisService.findAllInstruments();
+                List<InstrumentWrapper> savedInstruments = redisService.findAllInstruments();
                 logger.info("Found " + savedInstruments.size() + " instruments in Redis after save");
 
                 // Refresh the UI
@@ -356,7 +356,7 @@ public class DialogManager implements IBusListener {
                 UserConfig config = new UserConfig();
 
                 // Get instruments from Redis
-                List<Instrument> instruments = redisService.findAllInstruments();
+                List<InstrumentWrapper> instruments = redisService.findAllInstruments();
                 config.setInstruments(instruments);
                 logger.info("Found " + instruments.size() + " instruments to save");
 

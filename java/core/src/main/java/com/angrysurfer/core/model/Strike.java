@@ -34,13 +34,13 @@ public class Strike extends Player {
         setRules(new HashSet<>()); // Initialize rules set
     }
 
-    public Strike(String name, Session session, Instrument instrument, long note,
+    public Strike(String name, Session session, InstrumentWrapper instrument, long note,
             List<Integer> allowedControlMessages) {
         super(name, session, instrument, allowedControlMessages);
         setRootNote(note);
     }
 
-    public Strike(String name, Session session, Instrument instrument, long note,
+    public Strike(String name, Session session, InstrumentWrapper instrument, long note,
             List<Integer> allowableControlMessages, long minVelocity, long maxVelocity) {
         super(name, session, instrument, allowableControlMessages);
         setRootNote(note);

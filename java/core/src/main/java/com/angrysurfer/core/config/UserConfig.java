@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Strike;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -14,7 +14,7 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserConfig {
-    private List<Instrument> instruments = new ArrayList<>();
+    private List<InstrumentWrapper> instruments = new ArrayList<>();
     private List<Strike> players = new ArrayList<>();
     private Set<InstrumentConfig> configs = new HashSet<>();
 

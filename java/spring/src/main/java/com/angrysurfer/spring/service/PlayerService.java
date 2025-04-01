@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.angrysurfer.core.model.Comparison;
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Operator;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -42,21 +42,21 @@ public class PlayerService {
     }
 
     public Player addPlayer(String instrumentName) {
-        Instrument instrument = instrumentService.findByName(instrumentName);
+        InstrumentWrapper instrument = instrumentService.findByName(instrumentName);
         return addPlayer(instrument, getNoteForMidiInstrument(instrument));
     }
 
     public Player addPlayer(String instrumentName, long note) {
-        Instrument instrument = instrumentService.findByName(instrumentName);
+        InstrumentWrapper instrument = instrumentService.findByName(instrumentName);
         return addPlayer(instrument, note);
     }
 
-    private long getNoteForMidiInstrument(Instrument instrument) {
+    private long getNoteForMidiInstrument(InstrumentWrapper instrument) {
         Long note = Objects.nonNull(instrument.getLowestNote()) ? instrument.getLowestNote() : 60L;
         return note + getSession().getPlayers().size();
     }
 
-    public Player addPlayer(Instrument instrument, long note) {
+    public Player addPlayer(InstrumentWrapper instrument, long note) {
         Player player = playerManager.addPlayer(getSession(), instrument, note);
         redisService.savePlayer(player);
         return player;

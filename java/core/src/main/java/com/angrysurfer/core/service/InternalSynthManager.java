@@ -7,14 +7,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.sound.midi.Instrument;
 import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Patch;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 
 /**
  * Manager for internal synthesizer instruments and presets.
@@ -30,6 +32,7 @@ public class InternalSynthManager {
     private List<Soundbank> loadedSoundbanks = new ArrayList<>();
     private List<String> soundbankNames = new ArrayList<>();
     private Synthesizer currentSynthesizer;
+    private Soundbank currentSoundbank;
 
     /**
      * Get the singleton instance
@@ -52,38 +55,15 @@ public class InternalSynthManager {
      * Initialize internal synthesizer data
      */
     private void initializeSynthData() {
-        // Add GM synth
+        // Add GM synth based on standardized preset names
         SynthData gmSynth = new SynthData(1L, "General MIDI");
-        gmSynth.addPresets(Arrays.asList(
-            new PresetData(0, "Grand Piano"),
-            new PresetData(1, "Bright Piano"),
-            new PresetData(2, "Electric Grand Piano"),
-            new PresetData(3, "Honky-tonk Piano"),
-            new PresetData(4, "Electric Piano 1"),
-            new PresetData(5, "Electric Piano 2"),
-            new PresetData(6, "Harpsichord"),
-            new PresetData(7, "Clavi"),
-            // Add more GM presets as needed...
-            new PresetData(8, "Celesta"),
-            new PresetData(9, "Glockenspiel"),
-            new PresetData(10, "Music Box"),
-            new PresetData(11, "Vibraphone"),
-            new PresetData(12, "Marimba"),
-            new PresetData(13, "Xylophone"),
-            new PresetData(14, "Tubular Bells"),
-            new PresetData(15, "Dulcimer"),
-            new PresetData(16, "Drawbar Organ"),
-            new PresetData(17, "Percussive Organ"),
-            new PresetData(18, "Rock Organ"),
-            new PresetData(19, "Church Organ"),
-            new PresetData(20, "Reed Organ"),
-            new PresetData(21, "Accordion"),
-            new PresetData(22, "Harmonica"),
-            new PresetData(23, "Tango Accordion"),
-            new PresetData(24, "Acoustic Guitar (nylon)"),
-            new PresetData(25, "Acoustic Guitar (steel)")
-            // Continue for all 128 GM presets
-        ));
+        List<String> gmPresetNames = getGeneralMIDIPresetNames();
+        
+        // Add each GM preset by number and name
+        for (int i = 0; i < gmPresetNames.size(); i++) {
+            gmSynth.addPreset(new PresetData(i, gmPresetNames.get(i)));
+        }
+        
         synthDataMap.put(gmSynth.getId(), gmSynth);
         
         // Add other internal synths (example)
@@ -103,7 +83,7 @@ public class InternalSynthManager {
     /**
      * Check if the given instrument is an internal synthesizer
      */
-    public boolean isInternalSynth(Instrument instrument) {
+    public boolean isInternalSynth(InstrumentWrapper instrument) {
         if (instrument == null) return false;
         return synthDataMap.containsKey(instrument.getId());
     }
@@ -111,11 +91,11 @@ public class InternalSynthManager {
     /**
      * Get a list of all internal synth instruments
      */
-    public List<Instrument> getInternalSynths() {
-        List<Instrument> result = new ArrayList<>();
+    public List<InstrumentWrapper> getInternalSynths() {
+        List<InstrumentWrapper> result = new ArrayList<>();
         
         for (SynthData synthData : synthDataMap.values()) {
-            Instrument instrument = new Instrument();
+            InstrumentWrapper instrument = new InstrumentWrapper();
             instrument.setId(synthData.getId());
             instrument.setName(synthData.getName());
             instrument.setAvailable(true);
@@ -315,6 +295,7 @@ public class InternalSynthManager {
                 // Then load the new soundbank
                 boolean loaded = currentSynthesizer.loadAllInstruments(soundbank);
                 if (loaded) {
+                    currentSoundbank = soundbank;
                     System.out.println("Loaded soundbank: " + soundbank.getName());
                     return true;
                 } else {
@@ -322,6 +303,7 @@ public class InternalSynthManager {
                 }
             } else {
                 // Default Java soundbank selected
+                currentSoundbank = null;
                 return true;
             }
         } catch (Exception e) {
@@ -395,6 +377,233 @@ public class InternalSynthManager {
             return loadedSoundbanks.get(index);
         }
         return null;
+    }
+    
+    /**
+     * Get preset names for the specified bank
+     * 
+     * @param bank The bank number
+     * @return List of preset names (up to 128)
+     */
+    public List<String> getPresetNames(int bank) {
+        List<String> presetNames = new ArrayList<>();
+        
+        try {
+            // For bank 0, use General MIDI names as the default fallback
+            List<String> fallbackNames = bank == 0 ? getGeneralMIDIPresetNames() : new ArrayList<>();
+            
+            // Initialize array with either GM names or empty strings
+            for (int i = 0; i < 128; i++) {
+                presetNames.add(i < fallbackNames.size() ? fallbackNames.get(i) : "");
+            }
+            
+            // Try to get actual instrument names from the current soundbank if available
+            if (currentSynthesizer != null && currentSynthesizer.isOpen() && currentSoundbank != null) {
+                // Get all instruments for this soundbank
+                Instrument[] instruments = currentSoundbank.getInstruments();
+                
+                if (instruments != null) {
+                    // Populate with instrument names that match the bank
+                    for (Instrument instrument : instruments) {
+                        Patch patch = instrument.getPatch();
+                        
+                        // Only include instruments from the requested bank
+                        if (patch != null && patch.getBank() == bank) {
+                            int program = patch.getProgram();
+                            
+                            // Make sure program is in valid range
+                            if (program >= 0 && program < 128) {
+                                presetNames.set(program, instrument.getName());
+                                System.out.println("Found instrument: " + instrument.getName() + 
+                                                  " (Bank " + patch.getBank() + 
+                                                  ", Program " + patch.getProgram() + ")");
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return presetNames;
+        } catch (Exception e) {
+            System.err.println("Error getting preset names: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Return General MIDI names for bank 0 as fallback
+            if (bank == 0) {
+                return getGeneralMIDIPresetNames();
+            }
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Get the standard General MIDI instrument names
+     * @return List of all 128 General MIDI instrument names
+     */
+    public List<String> getGeneralMIDIPresetNames() {
+        List<String> names = new ArrayList<>(128);
+        
+        // Piano (1-8)
+        names.add("Acoustic Grand Piano");
+        names.add("Bright Acoustic Piano");
+        names.add("Electric Grand Piano");
+        names.add("Honky-tonk Piano");
+        names.add("Electric Piano 1");
+        names.add("Electric Piano 2");
+        names.add("Harpsichord");
+        names.add("Clavinet");
+        
+        // Chromatic Percussion (9-16)
+        names.add("Celesta");
+        names.add("Glockenspiel");
+        names.add("Music Box");
+        names.add("Vibraphone");
+        names.add("Marimba");
+        names.add("Xylophone");
+        names.add("Tubular Bells");
+        names.add("Dulcimer");
+        
+        // Organ (17-24)
+        names.add("Drawbar Organ");
+        names.add("Percussive Organ");
+        names.add("Rock Organ");
+        names.add("Church Organ");
+        names.add("Reed Organ");
+        names.add("Accordion");
+        names.add("Harmonica");
+        names.add("Tango Accordion");
+        
+        // Guitar (25-32)
+        names.add("Acoustic Guitar (nylon)");
+        names.add("Acoustic Guitar (steel)");
+        names.add("Electric Guitar (jazz)");
+        names.add("Electric Guitar (clean)");
+        names.add("Electric Guitar (muted)");
+        names.add("Overdriven Guitar");
+        names.add("Distortion Guitar");
+        names.add("Guitar harmonics");
+        
+        // Bass (33-40)
+        names.add("Acoustic Bass");
+        names.add("Electric Bass (finger)");
+        names.add("Electric Bass (pick)");
+        names.add("Fretless Bass");
+        names.add("Slap Bass 1");
+        names.add("Slap Bass 2");
+        names.add("Synth Bass 1");
+        names.add("Synth Bass 2");
+        
+        // Strings (41-48)
+        names.add("Violin");
+        names.add("Viola");
+        names.add("Cello");
+        names.add("Contrabass");
+        names.add("Tremolo Strings");
+        names.add("Pizzicato Strings");
+        names.add("Orchestral Harp");
+        names.add("Timpani");
+        
+        // Ensemble (49-56)
+        names.add("String Ensemble 1");
+        names.add("String Ensemble 2");
+        names.add("Synth Strings 1");
+        names.add("Synth Strings 2");
+        names.add("Choir Aahs");
+        names.add("Voice Oohs");
+        names.add("Synth Voice");
+        names.add("Orchestra Hit");
+        
+        // Brass (57-64)
+        names.add("Trumpet");
+        names.add("Trombone");
+        names.add("Tuba");
+        names.add("Muted Trumpet");
+        names.add("French Horn");
+        names.add("Brass Section");
+        names.add("Synth Brass 1");
+        names.add("Synth Brass 2");
+        
+        // Reed (65-72)
+        names.add("Soprano Sax");
+        names.add("Alto Sax");
+        names.add("Tenor Sax");
+        names.add("Baritone Sax");
+        names.add("Oboe");
+        names.add("English Horn");
+        names.add("Bassoon");
+        names.add("Clarinet");
+        
+        // Pipe (73-80)
+        names.add("Piccolo");
+        names.add("Flute");
+        names.add("Recorder");
+        names.add("Pan Flute");
+        names.add("Blown Bottle");
+        names.add("Shakuhachi");
+        names.add("Whistle");
+        names.add("Ocarina");
+        
+        // Synth Lead (81-88)
+        names.add("Lead 1 (square)");
+        names.add("Lead 2 (sawtooth)");
+        names.add("Lead 3 (calliope)");
+        names.add("Lead 4 (chiff)");
+        names.add("Lead 5 (charang)");
+        names.add("Lead 6 (voice)");
+        names.add("Lead 7 (fifths)");
+        names.add("Lead 8 (bass + lead)");
+        
+        // Synth Pad (89-96)
+        names.add("Pad 1 (new age)");
+        names.add("Pad 2 (warm)");
+        names.add("Pad 3 (polysynth)");
+        names.add("Pad 4 (choir)");
+        names.add("Pad 5 (bowed)");
+        names.add("Pad 6 (metallic)");
+        names.add("Pad 7 (halo)");
+        names.add("Pad 8 (sweep)");
+        
+        // Synth Effects (97-104)
+        names.add("FX 1 (rain)");
+        names.add("FX 2 (soundtrack)");
+        names.add("FX 3 (crystal)");
+        names.add("FX 4 (atmosphere)");
+        names.add("FX 5 (brightness)");
+        names.add("FX 6 (goblins)");
+        names.add("FX 7 (echoes)");
+        names.add("FX 8 (sci-fi)");
+        
+        // Ethnic (105-112)
+        names.add("Sitar");
+        names.add("Banjo");
+        names.add("Shamisen");
+        names.add("Koto");
+        names.add("Kalimba");
+        names.add("Bag pipe");
+        names.add("Fiddle");
+        names.add("Shanai");
+        
+        // Percussive (113-120)
+        names.add("Tinkle Bell");
+        names.add("Agogo");
+        names.add("Steel Drums");
+        names.add("Woodblock");
+        names.add("Taiko Drum");
+        names.add("Melodic Tom");
+        names.add("Synth Drum");
+        names.add("Reverse Cymbal");
+        
+        // Sound effects (121-128)
+        names.add("Guitar Fret Noise");
+        names.add("Breath Noise");
+        names.add("Seashore");
+        names.add("Bird Tweet");
+        names.add("Telephone Ring");
+        names.add("Helicopter");
+        names.add("Applause");
+        names.add("Gunshot");
+        
+        return names;
     }
     
     /**

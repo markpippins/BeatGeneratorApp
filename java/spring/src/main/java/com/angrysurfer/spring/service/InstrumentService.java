@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.InstrumentManager;
@@ -26,11 +26,11 @@ public class InstrumentService {
         this.instrumentHelper = redisService.getInstrumentHelper();
     }
 
-    public List<Instrument> getAllInstruments() {
+    public List<InstrumentWrapper> getAllInstruments() {
         return InstrumentManager.getInstance().getCachedInstruments();
     }
 
-    public Instrument getInstrumentById(Long id) {
+    public InstrumentWrapper getInstrumentById(Long id) {
         return InstrumentManager.getInstance().getInstrumentById(id);
     }
 
@@ -38,21 +38,21 @@ public class InstrumentService {
         return InstrumentManager.getInstance().getInstrumentNames();
     }
 
-    public List<Instrument> getInstrumentByChannel(int channel) {
+    public List<InstrumentWrapper> getInstrumentByChannel(int channel) {
         return InstrumentManager.getInstance().getInstrumentByChannel(channel);
     }
 
-    public void saveInstrument(Instrument instrument) {
+    public void saveInstrument(InstrumentWrapper instrument) {
         instrumentHelper.saveInstrument(instrument);
         InstrumentManager.getInstance().setNeedsRefresh(true);
     }
 
-    public List<Instrument> getInstrumentList() {
+    public List<InstrumentWrapper> getInstrumentList() {
         logger.debug("Getting instrument list");
         return InstrumentManager.getInstance().getCachedInstruments();
     }
 
-    public Instrument findByName(String name) {
+    public InstrumentWrapper findByName(String name) {
         logger.debug("Finding instrument by name: {}", name);
         return InstrumentManager.getInstance().findByName(name);
     }

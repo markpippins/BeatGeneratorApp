@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.angrysurfer.core.model.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -42,7 +42,7 @@ public class Pad {
 
     @JsonIgnore  // Ignore this field during serialization
     @ManyToMany(mappedBy = "pads")
-    private Set<Instrument> instruments = new HashSet<>();
+    private Set<InstrumentWrapper> instruments = new HashSet<>();
 
     public Pad() {
 
