@@ -488,7 +488,7 @@ public class InternalSynthControlPanel extends JPanel {
      * Reset UI controls to default values after preset change
      */
     private void resetControlsToDefault() {
-     System.out.println("Resetting UI controls to default values...");
+        System.out.println("Resetting UI controls to default values...");
         
         // Process all checkboxes first - turn off oscillators 2 and 3
         findAndResetComponents(this, JCheckBox.class, component -> {
@@ -726,7 +726,7 @@ public class InternalSynthControlPanel extends JPanel {
     }
 
     /**
-     * Create a single row of oscillator controls
+     * Create a single row of oscillator controls with inline labels
      * 
      * @param title The oscillator's title
      * @param index Oscillator index (0-2) for CC mapping
@@ -734,7 +734,7 @@ public class InternalSynthControlPanel extends JPanel {
      */
     private JPanel createOscillatorRow(String title, int index) {
         // Create panel for the oscillator with titled border
-        JPanel oscPanel = new JPanel();
+        JPanel oscPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         oscPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(),
                 title,
@@ -743,71 +743,75 @@ public class InternalSynthControlPanel extends JPanel {
                 new Font("Dialog", Font.BOLD, 11)
         ));
 
-        // Use horizontal box layout for oscillator controls
-        oscPanel.setLayout(new BoxLayout(oscPanel, BoxLayout.X_AXIS));
-        oscPanel.add(Box.createHorizontalStrut(5));
-
         // Use a more direct CC approach instead of multiple channels
         // Map common synth parameters to standard GM CCs
         int baseCCForOsc = index * 20 + 20; // Space out CC numbers by oscillator 
 
-        // Waveform selector 
-        JPanel waveGroup = createCompactGroup("Waveform");
+        // Create the toggle switch for oscillator on/off
+        JLabel toggleLabel = new JLabel("On/Off:");
+        toggleLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
+        JCheckBox enabledToggle = new JCheckBox();
+        enabledToggle.setName("osc" + index + "Toggle");
+        enabledToggle.setSelected(index == 0); // First oscillator on by default
+        
+        // Waveform selector with inline label
+        JLabel waveLabel = new JLabel("Waveform:");
+        waveLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         JComboBox<String> waveformCombo = new JComboBox<>(
                 new String[]{"Sine", "Square", "Saw", "Triangle", "Pulse"});
         waveformCombo.setName("waveformCombo" + index);
-        waveGroup.add(waveformCombo);
-
-        // Octave selector
-        JPanel octaveGroup = createCompactGroup("Octave");
+        waveformCombo.setPreferredSize(new Dimension(80, 25));
+        
+        // Octave selector with inline label
+        JLabel octaveLabel = new JLabel("Octave:");
+        octaveLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         JComboBox<String> octaveCombo = new JComboBox<>(
                 new String[]{"-2", "-1", "0", "+1", "+2"});
         octaveCombo.setName("octaveCombo" + index);
         octaveCombo.setSelectedIndex(2); // Default to "0"
-        octaveGroup.add(octaveCombo);
+        octaveCombo.setPreferredSize(new Dimension(50, 25));
 
-        // Create parameter dials
+        // Create parameter dials with inline labels
+        JLabel tuneLabel = new JLabel("Tune:");
+        tuneLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         Dial detuneDial = createCompactDial("", "Tuning", 64);
         detuneDial.setName("detuneDial" + index);
 
+        JLabel brightLabel = new JLabel("Bright:");
+        brightLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         Dial brightnessDialDial = createCompactDial("", "Brightness", 64);
         brightnessDialDial.setName("brightnessDial" + index);
 
+        JLabel volumeLabel = new JLabel("Volume:");
+        volumeLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         Dial volumeDial = createCompactDial("", "Volume", index == 0 ? 100 : 0);
         volumeDial.setName("volumeDial" + index);
 
-        // Create groups for each dial
-        JPanel detuneGroup = createCompactGroup("Tune");
-        detuneGroup.add(detuneDial);
+        // Add all components to the oscillator panel in a single row
+        oscPanel.add(toggleLabel);
+        oscPanel.add(enabledToggle);
+        oscPanel.add(Box.createHorizontalStrut(10));
+        
+        oscPanel.add(waveLabel);
+        oscPanel.add(waveformCombo);
+        oscPanel.add(Box.createHorizontalStrut(10));
+        
+        oscPanel.add(octaveLabel);
+        oscPanel.add(octaveCombo);
+        oscPanel.add(Box.createHorizontalStrut(10));
+        
+        oscPanel.add(tuneLabel);
+        oscPanel.add(detuneDial);
+        oscPanel.add(Box.createHorizontalStrut(10));
+        
+        oscPanel.add(brightLabel);
+        oscPanel.add(brightnessDialDial);
+        oscPanel.add(Box.createHorizontalStrut(10));
+        
+        oscPanel.add(volumeLabel);
+        oscPanel.add(volumeDial);
 
-        JPanel brightnessGroup = createCompactGroup("Bright");
-        brightnessGroup.add(brightnessDialDial);
-
-        JPanel volumeGroup = createCompactGroup("Volume");
-        volumeGroup.add(volumeDial);
-
-        // Add toggle switch for oscillator on/off
-        JPanel toggleGroup = createCompactGroup("On/Off");
-        JCheckBox enabledToggle = new JCheckBox();
-        enabledToggle.setName("osc" + index + "Toggle");
-        enabledToggle.setSelected(index == 0); // First oscillator on by default
-        toggleGroup.add(enabledToggle);
-
-        // Add components to the oscillator panel
-        oscPanel.add(toggleGroup);
-        oscPanel.add(Box.createHorizontalStrut(5));
-        oscPanel.add(waveGroup);
-        oscPanel.add(Box.createHorizontalStrut(5));
-        oscPanel.add(octaveGroup);
-        oscPanel.add(Box.createHorizontalStrut(5));
-        oscPanel.add(detuneGroup);
-        oscPanel.add(Box.createHorizontalStrut(5));
-        oscPanel.add(brightnessGroup);
-        oscPanel.add(Box.createHorizontalStrut(5));
-        oscPanel.add(volumeGroup);
-        oscPanel.add(Box.createHorizontalGlue()); // Push everything to the left
-
-        // Add improved event handlers
+        // Add event handlers (unchanged from original)
         waveformCombo.addActionListener(e -> {
             int waveformType = waveformCombo.getSelectedIndex();
 
@@ -829,6 +833,7 @@ public class InternalSynthControlPanel extends JPanel {
             }
         });
 
+        // Rest of the event handlers unchanged
         octaveCombo.addActionListener(e -> {
             int octave = octaveCombo.getSelectedIndex() - 2; // -2 to +2 range
             int value = (octave + 2) * 25 + 14;
