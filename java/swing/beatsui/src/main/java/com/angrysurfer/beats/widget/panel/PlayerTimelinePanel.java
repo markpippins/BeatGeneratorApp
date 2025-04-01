@@ -665,6 +665,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 player = null;
                 clearGrid();
                 nameLabel.setText("Select a player to view timeline");
+                // Add this line to redraw the empty grid structure when player is unselected
+                drawEmptyTimelineGrid();
             }
             case Commands.PLAYER_UPDATED -> {
                 if (player != null && action.getData() instanceof Player p && p.getId().equals(player.getId())) {
@@ -678,6 +680,9 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
             case Commands.SESSION_CHANGED -> {
                 if (player != null) {
                     updateTimelineWithFixedRowHeights();
+                } else {
+                    // Also draw empty grid if no player is selected but session changes
+                    drawEmptyTimelineGrid();
                 }
             }
             }
