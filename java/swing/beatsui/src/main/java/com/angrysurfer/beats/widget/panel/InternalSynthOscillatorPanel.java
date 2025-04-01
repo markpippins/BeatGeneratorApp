@@ -3,6 +3,7 @@ package com.angrysurfer.beats.widget.panel;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
@@ -14,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
 import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.beats.widget.UIHelper;
 
 /**
  * Specialized panel for a single oscillator in the internal synthesizer
@@ -305,12 +307,6 @@ public class InternalSynthOscillatorPanel extends JPanel {
     }
     
     private Dial createCompactDial(String label, String tooltip, int initialValue) {
-        Dial dial = new Dial();
-        dial.setLabel(label);
-        dial.setToolTipText(tooltip);
-        dial.setValue(initialValue);
-        dial.setMaximumSize(new Dimension(40, 40));
-        dial.setPreferredSize(new Dimension(40, 40));
-        return dial;
+        return UIHelper.createLabeledDial(label, tooltip, initialValue);
     }
 }

@@ -57,8 +57,6 @@ public class ControlPanel extends JPanel {
     // Helper flag to prevent feedback when programmatically updating controls
     private boolean listenersEnabled = true;
 
-    private UIHelper uiHelper = UIHelper.getInstance();
-
     public ControlPanel() {
         super(new FlowLayout(FlowLayout.LEFT));
 
@@ -74,12 +72,12 @@ public class ControlPanel extends JPanel {
         setPreferredSize(new Dimension(getPreferredSize().width, 100));
 
         // Add vertical adjust panels
-        JPanel presetPanel = uiHelper.createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP,
+        JPanel presetPanel = UIHelper.createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP,
                 Commands.PRESET_DOWN);
         presetPanel.setName(PLAYER_PANEL + "_PRESET"); // Set
         add(presetPanel);
 
-        JPanel offsetPanel = uiHelper.createVerticalAdjustPanel("Offset", "↑", "↓", Commands.TRANSPOSE_UP,
+        JPanel offsetPanel = UIHelper.createVerticalAdjustPanel("Offset", "↑", "↓", Commands.TRANSPOSE_UP,
                 Commands.TRANSPOSE_DOWN);
         offsetPanel.setName(SESSION_PANEL + "_OFFSET"); // Set
         add(offsetPanel);

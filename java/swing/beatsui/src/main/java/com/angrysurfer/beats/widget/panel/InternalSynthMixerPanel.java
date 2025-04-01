@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
 import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.beats.widget.UIHelper;
 
 /**
  * Panel for controlling oscillator mixing parameters of a synthesizer
@@ -59,38 +60,35 @@ public class InternalSynthMixerPanel extends JPanel {
                 new Font("Dialog", Font.BOLD, 11)
         ));
         
-        // Use horizontal BoxLayout for row of dials
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        // Use vertical BoxLayout for column of dials
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
-        // Set preferred dimensions
-        setPreferredSize(new Dimension(300, 100));
+        // Set preferred dimensions - taller, less wide for vertical layout
+        setPreferredSize(new Dimension(80, 300));
 
         // Balance between osc 1 & 2
         JPanel balance12Group = createDialGroup("Osc 1-2");
-        balance12Dial = createDial("", "Balance between Oscillators 1 & 2", 64);
+        balance12Dial = createStandardDial("Balance between Oscillators 1 & 2", 64);
         balance12Group.add(balance12Dial);
 
         // Balance between result and osc 3
         JPanel balance3Group = createDialGroup("Osc 3 Mix");
-        balance3Dial = createDial("", "Mix in Oscillator 3", 32);
+        balance3Dial = createStandardDial("Mix in Oscillator 3", 32);
         balance3Group.add(balance3Dial);
 
         // Master level
         JPanel masterGroup = createDialGroup("Master");
-        masterDial = createDial("", "Master Volume Level", 100);
+        masterDial = createStandardDial("Master Volume Level", 100);
         masterGroup.add(masterDial);
 
-        // Add horizontal spacing and dials
-        add(Box.createHorizontalStrut(10));
+        // Add vertical spacing and dials
+        add(Box.createVerticalStrut(10));
         add(balance12Group);
-        add(Box.createHorizontalStrut(15));
+        add(Box.createVerticalStrut(10));
         add(balance3Group);
-        add(Box.createHorizontalStrut(15));
+        add(Box.createVerticalStrut(10));
         add(masterGroup);
-        add(Box.createHorizontalGlue());
-
-        // Add event listeners
-        setupEventHandlers();
+        add(Box.createVerticalGlue());
     }
     
     /**
@@ -154,7 +152,7 @@ public class InternalSynthMixerPanel extends JPanel {
     private JPanel createDialGroup(String title) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setAlignmentY(Component.CENTER_ALIGNMENT);
+        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         // Add title label
         JLabel titleLabel = new JLabel(title, JLabel.CENTER);
@@ -174,14 +172,8 @@ public class InternalSynthMixerPanel extends JPanel {
      * @param initialValue Initial value (0-127)
      * @return Configured dial
      */
-    private Dial createDial(String label, String tooltip, int initialValue) {
-        Dial dial = new Dial();
-        dial.setLabel(label);
-        dial.setToolTipText(tooltip);
-        dial.setValue(initialValue);
-        dial.setMaximumSize(new Dimension(40, 40));
-        dial.setPreferredSize(new Dimension(40, 40));
-        return dial;
+    private Dial createStandardDial(String tooltip, int initialValue) {
+        return UIHelper.createStandardDial(tooltip, initialValue); 
     }
     
     // Getters and setters for individual control values

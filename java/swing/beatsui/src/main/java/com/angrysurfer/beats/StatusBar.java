@@ -58,8 +58,6 @@ public class StatusBar extends JPanel implements IBusListener {
 
     private Map<String, JComponent> rightFields = new HashMap<>();
 
-    private UIHelper uiHelper = UIHelper.getInstance();
-
     public StatusBar() {
         super();
 
@@ -92,12 +90,12 @@ public class StatusBar extends JPanel implements IBusListener {
         
         sessionIdLabel = new JLabel("Session:");
         sessionPanel.add(sessionIdLabel);
-        sessionIdField = uiHelper.createTextField("", 2);
+        sessionIdField = UIHelper.createTextField("", 2);
         sessionPanel.add(sessionIdField);
         
         playerCountLabel = new JLabel("Players:");
         sessionPanel.add(playerCountLabel);
-        playerCountField = uiHelper.createStatusField("", 2);
+        playerCountField = UIHelper.createStatusField("", 2);
         sessionPanel.add(playerCountField);
         
         leftPanel.add(sessionPanel);
@@ -108,12 +106,12 @@ public class StatusBar extends JPanel implements IBusListener {
         
         playerIdLabel = new JLabel("Player:");
         playerPanel.add(playerIdLabel);
-        playerIdField = uiHelper.createTextField("", 2);
+        playerIdField = UIHelper.createTextField("", 2);
         playerPanel.add(playerIdField);
         
         ruleCountLabel = new JLabel("Rules:");
         playerPanel.add(ruleCountLabel);
-        ruleCountField = uiHelper.createTextField("", 2);
+        ruleCountField = UIHelper.createTextField("", 2);
         playerPanel.add(ruleCountField);
         
         leftPanel.add(playerPanel);
@@ -128,7 +126,7 @@ public class StatusBar extends JPanel implements IBusListener {
         JPanel sitePanel = new JPanel(new BorderLayout(3, 0));
         siteLabel = new JLabel("Site:");
         sitePanel.add(siteLabel, BorderLayout.WEST);
-        siteField = uiHelper.createTextField("", 1);
+        siteField = UIHelper.createTextField("", 1);
         sitePanel.add(siteField, BorderLayout.CENTER);
         middlePanel.add(sitePanel);
         
@@ -136,7 +134,7 @@ public class StatusBar extends JPanel implements IBusListener {
         JPanel statusPanel = new JPanel(new BorderLayout(3, 0));
         statusLabel = new JLabel("Status:");
         statusPanel.add(statusLabel, BorderLayout.WEST);
-        statusField = uiHelper.createTextField("", 1);
+        statusField = UIHelper.createTextField("", 1);
         statusPanel.add(statusField, BorderLayout.CENTER);
         middlePanel.add(statusPanel);
         
@@ -144,7 +142,7 @@ public class StatusBar extends JPanel implements IBusListener {
         JPanel messagePanel = new JPanel(new BorderLayout(3, 0));
         messageLabel = new JLabel("Message:");
         messagePanel.add(messageLabel, BorderLayout.WEST);
-        messageField = uiHelper.createTextField("", 1);
+        messageField = UIHelper.createTextField("", 1);
         messagePanel.add(messageField, BorderLayout.CENTER);
         middlePanel.add(messagePanel);
         
@@ -153,7 +151,7 @@ public class StatusBar extends JPanel implements IBusListener {
         
         // 4. TIME panel on the far right
         JPanel timePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 0));
-        timeField = uiHelper.createTextField("", 8);
+        timeField = UIHelper.createTextField("", 8);
         updateTimeDisplay(); // Initialize with zeros
         timePanel.add(timeField);
         

@@ -251,13 +251,6 @@ public class InternalSynthControlPanel extends JPanel {
     }
 
     /**
-     * Populate the bank combo box with available banks
-     */
-    private void populateBanksCombo() {
-        populateBanksCombo(soundbankCombo.getSelectedIndex());
-    }
-
-    /**
      * Populate the bank combo box with available banks for a specific soundbank
      */
     private void populateBanksCombo(int soundbankIndex) {
@@ -436,14 +429,14 @@ public class InternalSynthControlPanel extends JPanel {
         if (mixerPanel != null) mixerPanel.resetToDefaults();
         
         // Reset all sliders (except those in specialized panels)
-        UIHelper.getInstance().findComponentsByType(this, JSlider.class, component -> {
+        UIHelper.findComponentsByType(this, JSlider.class, component -> {
             JSlider slider = (JSlider) component;
             // Skip slider if it's owned by one of the specialized panels
             if (slider.getParent() != null && 
-                    (UIHelper.getInstance().isChildOf(slider, lfoPanel) || 
-                     UIHelper.getInstance().isChildOf(slider, filterPanel) ||
-                     UIHelper.getInstance().isChildOf(slider, envelopePanel) ||
-                     UIHelper.getInstance().isChildOf(slider, effectsPanel))) {
+                    (UIHelper.isChildOf(slider, lfoPanel) || 
+                     UIHelper.isChildOf(slider, filterPanel) ||
+                     UIHelper.isChildOf(slider, envelopePanel) ||
+                     UIHelper.isChildOf(slider, effectsPanel))) {
                 return;
             }
             
@@ -453,7 +446,7 @@ public class InternalSynthControlPanel extends JPanel {
         });
         
         // Reset all dials to appropriate values (using the utility method)
-        UIHelper.getInstance().findComponentsByType(this, Dial.class, component -> {
+        UIHelper.findComponentsByType(this, Dial.class, component -> {
             Dial dial = (Dial) component;
             String name = dial.getName();
             int value = 64; // Default to middle
@@ -543,32 +536,12 @@ public class InternalSynthControlPanel extends JPanel {
         // Add oscillators to the left side of the oscillator section
         oscillatorSection.add(oscillatorsPanel, BorderLayout.CENTER);
 
-        // Create right side panel that contains oscillator mix, envelope and filter
-        JPanel rightSidePanel = new JPanel(new BorderLayout(0, 10));
+        // Create right side panel that contains only the oscillator mix
+        JPanel rightSidePanel = new JPanel(new BorderLayout());
         
-        // Global controls for oscillators - now using the dedicated mixer panel
+        // Global controls for oscillators - mixer panel
         mixerPanel = new InternalSynthMixerPanel(synthesizer, midiChannel);
         rightSidePanel.add(mixerPanel, BorderLayout.NORTH);
-        
-        // Create vertical panel for envelope and filter
-        JPanel envFilterPanel = new JPanel();
-        envFilterPanel.setLayout(new BoxLayout(envFilterPanel, BoxLayout.Y_AXIS));
-        
-        // 1. Add Envelope panel (now using the dedicated envelope panel)
-        envelopePanel = new InternalSynthEnvelopePanel(synthesizer, midiChannel);
-        envelopePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        envFilterPanel.add(envelopePanel);
-        
-        // Add spacer between envelope and filter
-        envFilterPanel.add(Box.createVerticalStrut(10));
-        
-        // 2. Add Filter panel (using the dedicated filter panel)
-        filterPanel = new InternalSynthFilterPanel(synthesizer, midiChannel);
-        filterPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        envFilterPanel.add(filterPanel);
-        
-        // Add env/filter panel to right side
-        rightSidePanel.add(envFilterPanel, BorderLayout.CENTER);
         
         // Add right side panel to oscillator section
         oscillatorSection.add(rightSidePanel, BorderLayout.EAST);
@@ -577,14 +550,22 @@ public class InternalSynthControlPanel extends JPanel {
         mainPanel.add(oscillatorSection);
         mainPanel.add(Box.createVerticalStrut(20)); // Spacer between sections
 
-        // Create bottom row with just Modulation and Effects panels (2 columns)
-        JPanel bottomRow = new JPanel(new GridLayout(1, 2, 10, 0));
+        // Create bottom row with all 4 panels (now including envelope and filter)
+        JPanel bottomRow = new JPanel(new GridLayout(1, 4, 10, 0));
 
-        // 3. Add Modulation panel (now using the dedicated LFO panel)
+        // 1. Add Envelope panel first
+        envelopePanel = new InternalSynthEnvelopePanel(synthesizer, midiChannel);
+        bottomRow.add(envelopePanel);
+        
+        // 2. Add Filter panel second
+        filterPanel = new InternalSynthFilterPanel(synthesizer, midiChannel);
+        bottomRow.add(filterPanel);
+
+        // 3. Add Modulation panel third
         lfoPanel = new InternalSynthLFOPanel(synthesizer, midiChannel);
         bottomRow.add(lfoPanel);
 
-        // 4. Add Effects panel (now using the dedicated effects panel)
+        // 4. Add Effects panel fourth
         effectsPanel = new InternalSynthEffectsPanel(synthesizer, midiChannel);
         bottomRow.add(effectsPanel);
 
@@ -625,7 +606,7 @@ public class InternalSynthControlPanel extends JPanel {
                 channel.controlChange(11, 127); // Expression
 
                 // Set all oscillator volumes to match UI state
-                UIHelper.getInstance().findComponentsByType(this, JCheckBox.class, component -> {
+                UIHelper.findComponentsByType(this, JCheckBox.class, component -> {
                     JCheckBox checkBox = (JCheckBox) component;
                     if (checkBox.getName() != null && checkBox.getName().contains("Toggle")) {
                         int oscIndex = Integer.parseInt(checkBox.getName().substring(3, 4));
@@ -633,7 +614,7 @@ public class InternalSynthControlPanel extends JPanel {
                         boolean enabled = checkBox.isSelected();
 
                         // Find associated volume dial
-                        UIHelper.getInstance().findComponentsByType(this, Dial.class, dial -> {
+                        UIHelper.findComponentsByType(this, Dial.class, dial -> {
                             if (dial.getName() != null && dial.getName().equals("volumeDial" + oscIndex)) {
                                 int volume = enabled ? ((Dial) dial).getValue() : 0;
                                 setControlChange(midiChannel, baseCCForOsc + 4, volume);

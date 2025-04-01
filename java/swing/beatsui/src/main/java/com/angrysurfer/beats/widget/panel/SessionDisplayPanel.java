@@ -49,8 +49,6 @@ public class SessionDisplayPanel extends JPanel {
     private JTextField barCountField;
     private JTextField partCountField;
 
-    private UIHelper uiHelper = UIHelper.getInstance();
-
     public SessionDisplayPanel() {
         super(new BorderLayout());
         setup();
@@ -122,7 +120,7 @@ public class SessionDisplayPanel extends JPanel {
         labelPanel.add(nameLabel);
 
         // Create text field
-        JTextField field = uiHelper.createDisplayField("0");
+        JTextField field = UIHelper.createDisplayField("0");
         fields.put(label, field);
 
         fieldPanel.add(labelPanel, BorderLayout.NORTH);

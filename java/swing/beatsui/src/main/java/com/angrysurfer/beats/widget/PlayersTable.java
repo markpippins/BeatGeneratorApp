@@ -119,9 +119,9 @@ public class PlayersTable extends JTable {
 
         // Save and restore column order
         SwingUtilities.invokeLater(
-                () -> UIHelper.getInstance().saveColumnOrder(this, Constants.PLAYER, PlayersTableModel.COLUMNS));
+                () -> UIHelper.saveColumnOrder(this, Constants.PLAYER, PlayersTableModel.COLUMNS));
         SwingUtilities.invokeLater(
-                () -> UIHelper.getInstance().restoreColumnOrder(this, Constants.PLAYER, PlayersTableModel.COLUMNS));
+                () -> UIHelper.restoreColumnOrder(this, Constants.PLAYER, PlayersTableModel.COLUMNS));
 
         // Set custom renderer for all rows - this handles centering numeric values internally
         setupCustomRowRenderer();
@@ -181,7 +181,7 @@ public class PlayersTable extends JTable {
                 if (e.getFromIndex() != e.getToIndex()) {
                     logger.info("Column moved from " + e.getFromIndex() + " to " + e.getToIndex());
                     SwingUtilities.invokeLater(
-                            () -> UIHelper.getInstance().saveColumnOrder(PlayersTable.this, Constants.PLAYER,
+                            () -> UIHelper.saveColumnOrder(PlayersTable.this, Constants.PLAYER,
                                     PlayersTableModel.COLUMNS));
                 }
             }

@@ -29,23 +29,20 @@ import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
 
+/**
+ * Utility class providing static UI helper methods
+ */
 public class UIHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(UIHelper.class.getName());
+    
+    // Add standard dial size constants
+    public static final int STANDARD_DIAL_SIZE = 40;
 
-    private static UIHelper instance;
-
-    private UIHelper() {
-    }
-
-    public static UIHelper getInstance() {
-        if (instance == null) {
-            instance = new UIHelper();
-        }
-        return instance;
-    }
-
-    public void saveColumnOrder(JTable table, String tableName, Set<String> columns) {
+    /**
+     * Saves the column order of a table
+     */
+    public static void saveColumnOrder(JTable table, String tableName, Set<String> columns) {
         try {
             TableState state = RedisService.getInstance().loadTableState(tableName);
             if (state != null) {
@@ -71,7 +68,10 @@ public class UIHelper {
         }
     }
 
-    public void restoreColumnOrder(JTable table, String tableName, Set<String> columns) {
+    /**
+     * Restores the column order of a table
+     */
+    public static void restoreColumnOrder(JTable table, String tableName, Set<String> columns) {
         try {
             TableState state = RedisService.getInstance().loadTableState(tableName);
             List<String> savedOrder = state != null ? state.getColumnOrder() : null;
@@ -111,16 +111,8 @@ public class UIHelper {
 
     /**
      * Creates a standardized text field with customizable properties
-     * 
-     * @param initialValue    The initial text value (optional, can be null)
-     * @param columns         The number of columns (use -1 to keep default)
-     * @param editable        Whether the field is editable
-     * @param enabled         Whether the field is enabled
-     * @param centered        Whether text should be center-aligned
-     * @param backgroundColor Background color (null for default)
-     * @return The configured JTextField
      */
-    public JTextField createTextField(String initialValue, int columns, boolean editable, boolean enabled,
+    public static JTextField createTextField(String initialValue, int columns, boolean editable, boolean enabled,
             boolean centered, Color backgroundColor) {
         JTextField field;
 
@@ -158,14 +150,14 @@ public class UIHelper {
     /**
      * Overloaded method with fewer parameters for simpler cases
      */
-    public JTextField createTextField(String initialValue, int columns) {
+    public static JTextField createTextField(String initialValue, int columns) {
         return createTextField(initialValue, columns, false, true, true, null);
     }
 
     /**
      * Creates a status display field (non-editable, with initial value)
      */
-    public JTextField createStatusField(String initialValue, int columns) {
+    public static JTextField createStatusField(String initialValue, int columns) {
         Color lightGray = new Color(240, 240, 240);
         JTextField field = createTextField(initialValue, columns, false, false, true, lightGray);
         field.setMaximumSize(new Dimension(columns * 10, 25)); // Rough size approximation
@@ -175,14 +167,17 @@ public class UIHelper {
     /**
      * Creates a disabled status field with consistent sizing
      */
-    public JTextField createDisplayField(String initialValue) {
+    public static JTextField createDisplayField(String initialValue) {
         Color lightGray = new Color(240, 240, 240);
         JTextField field = createTextField(initialValue, 4, false, false, true, lightGray);
         field.setMaximumSize(new Dimension(50, 25));
         return field;
     }
 
-    public JPanel createVerticalAdjustPanel(String label, String upLabel, String downLabel, String upCommand,
+    /**
+     * Creates a panel with up/down buttons for adjustments
+     */
+    public static JPanel createVerticalAdjustPanel(String label, String upLabel, String downLabel, String upCommand,
             String downCommand) {
         JPanel navPanel = new JPanel(new BorderLayout(0, 2));
         navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5)); // Add margins
@@ -193,10 +188,10 @@ public class UIHelper {
         prevButton.setActionCommand(upCommand);
         // If it's a transpose command, publish without player data
         if (upCommand.equals(Commands.TRANSPOSE_UP) || upCommand.equals(Commands.TRANSPOSE_DOWN)) {
-            prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this, null));
+            prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), UIHelper.class, null));
         } else {
             // Original code path for other commands
-            prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
+            prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), UIHelper.class,
                     PlayerManager.getInstance().getActivePlayer()));
         }
 
@@ -204,9 +199,9 @@ public class UIHelper {
         JButton nextButton = new JButton(downLabel);
         nextButton.setActionCommand(downCommand);
         if (downCommand.equals(Commands.TRANSPOSE_UP) || downCommand.equals(Commands.TRANSPOSE_DOWN)) {
-            nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this, null));
+            nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), UIHelper.class, null));
         } else {
-            nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
+            nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), UIHelper.class,
                     PlayerManager.getInstance().getActivePlayer()));
         }
 
@@ -226,13 +221,8 @@ public class UIHelper {
 
     /**
      * Helper method to find components by type in a container hierarchy and apply an action
-     * 
-     * @param <T> The type of component to find
-     * @param container The container to search in
-     * @param componentClass The class of the component type to find
-     * @param action The action to perform on each found component
      */
-    public <T extends Component> void findComponentsByType(Container container,
+    public static <T extends Component> void findComponentsByType(Container container,
             Class<T> componentClass, Consumer<Component> action) {
 
         // Check all components in the container
@@ -251,12 +241,8 @@ public class UIHelper {
 
     /**
      * Check if a component is a child (direct or indirect) of a container
-     * 
-     * @param child The component to check
-     * @param parent The potential parent container
-     * @return true if child is contained within parent's hierarchy
      */
-    public boolean isChildOf(Component child, Container parent) {
+    public static boolean isChildOf(Component child, Container parent) {
         // Check if the component's parent is the target container
         Container current = child.getParent();
         while (current != null) {
@@ -270,13 +256,8 @@ public class UIHelper {
 
     /**
      * Get the first parent of a specific type
-     * 
-     * @param <T> The type of parent to find
-     * @param component The component to start from
-     * @param parentClass The class of the parent to find
-     * @return The first parent of the specified type, or null if not found
      */
-    public <T extends Container> T getParentOfType(Component component, Class<T> parentClass) {
+    public static <T extends Container> T getParentOfType(Component component, Class<T> parentClass) {
         Container current = component.getParent();
         while (current != null) {
             if (parentClass.isAssignableFrom(current.getClass())) {
@@ -289,13 +270,8 @@ public class UIHelper {
 
     /**
      * Find all components of a specific type in a container
-     * 
-     * @param <T> The type of component to find
-     * @param container The container to search in
-     * @param componentClass The class of components to find
-     * @return List of components matching the specified type
      */
-    public <T extends Component> List<T> findAllComponentsOfType(Container container, Class<T> componentClass) {
+    public static <T extends Component> List<T> findAllComponentsOfType(Container container, Class<T> componentClass) {
         List<T> result = new ArrayList<>();
         
         findComponentsByType(container, componentClass, component -> {
@@ -303,5 +279,26 @@ public class UIHelper {
         });
         
         return result;
+    }
+
+    /**
+     * Create a standard-sized dial with consistent styling
+     */
+    public static Dial createStandardDial(String tooltip, int initialValue) {
+        Dial dial = new Dial();
+        dial.setToolTipText(tooltip);
+        dial.setValue(initialValue);
+        dial.setMaximumSize(new Dimension(STANDARD_DIAL_SIZE, STANDARD_DIAL_SIZE));
+        dial.setPreferredSize(new Dimension(STANDARD_DIAL_SIZE, STANDARD_DIAL_SIZE));
+        return dial;
+    }
+
+    /**
+     * Create a standard-sized dial with a label
+     */
+    public static Dial createLabeledDial(String label, String tooltip, int initialValue) {
+        Dial dial = createStandardDial(tooltip, initialValue);
+        dial.setLabel(label);
+        return dial;
     }
 }
