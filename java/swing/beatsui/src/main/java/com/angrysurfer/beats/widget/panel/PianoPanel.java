@@ -56,8 +56,8 @@ public class PianoPanel extends JPanel {
 
     public PianoPanel() {
         super(null); // Remove statusConsumer parameter
-        setPreferredSize(new Dimension(255, 80));
-        setMinimumSize(new Dimension(265, 80));
+        setPreferredSize(new Dimension(255, 60));
+        setMinimumSize(new Dimension(265, 60));
         setBorder(BorderFactory.createEmptyBorder(20,2,20,2));
         setOpaque(true);
         setBackground(ColorUtils.fadedOrange);

@@ -77,15 +77,17 @@ public class SessionPanel extends JPanel implements IBusListener {
         
         // Piano and control panel - create with FIXED height
         JPanel controlContainerPanel = new JPanel(new BorderLayout());
-        controlContainerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        controlContainerPanel.add(pianoPanel, BorderLayout.WEST);
-        controlContainerPanel.add(controlPanel, BorderLayout.CENTER);
+        controlContainerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); // Reduce top/bottom padding from 10 to 5
         
         // Set fixed height for control panel to make it non-resizable
-        int controlHeight = 150;  // Fixed height in pixels
+        int controlHeight = 110;  // Fixed height in pixels (reduced from 150 to 110)
         controlContainerPanel.setPreferredSize(new Dimension(800, controlHeight));
         controlContainerPanel.setMinimumSize(new Dimension(200, controlHeight));
         controlContainerPanel.setMaximumSize(new Dimension(Short.MAX_VALUE, controlHeight));
+        
+        // Add components to control container
+        controlContainerPanel.add(pianoPanel, BorderLayout.WEST);
+        controlContainerPanel.add(controlPanel, BorderLayout.CENTER);
         
         // Create timeline scroll pane 
         JScrollPane timelineScrollPane = new JScrollPane(playerTimelinePanel);

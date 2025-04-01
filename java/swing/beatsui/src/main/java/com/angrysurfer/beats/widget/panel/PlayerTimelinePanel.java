@@ -589,7 +589,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
         // Account for label panel width
         int labelWidth = 80;
-        int rowHeight = 40; // Match the fixed row height we use elsewhere
+        int rowHeight = 20; // Match the fixed row height we use elsewhere
         
         // Draw horizontal row dividers
         g2d.setColor(Color.LIGHT_GRAY);
