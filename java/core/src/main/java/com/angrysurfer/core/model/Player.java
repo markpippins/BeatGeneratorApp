@@ -650,13 +650,14 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             switch (cmd) {
                 case Commands.TIMING_UPDATE -> {
 
-                    TimingUpdate timingUpdate = (TimingUpdate) action.getData();
-
-                    if (timingUpdate.tickCount() == lastTriggeredTick) {
+                    if (!(action.getData() instanceof TimingUpdate)) {
                         return;
                     }
 
-                    lastTriggeredTick = timingUpdate.tickCount();
+                    TimingUpdate timingUpdate = (TimingUpdate) action.getData();
+                    if (timingUpdate.tickCount() == lastTriggeredTick) {
+                        return;
+                    }
 
                     if (shouldPlay(timingUpdate.tick(), timingUpdate.beat(), timingUpdate.bar(),
                             timingUpdate.part(), timingUpdate.tickCount(), timingUpdate.beatCount(),
@@ -670,6 +671,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
                             setLastPlayedTick(timingUpdate.tick());
                         }
                     }
+
+                    lastTriggeredTick = timingUpdate.tickCount();
                 }
 
                 case Commands.TRANSPORT_STOP -> {

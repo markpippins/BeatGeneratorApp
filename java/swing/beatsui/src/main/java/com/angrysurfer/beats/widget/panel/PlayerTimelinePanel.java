@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -282,19 +284,56 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
     private void initEmptyComponents() {
         // Create header with player name - keep minimal
         nameLabel = new JLabel("Select a player to view timeline");
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 13)); // Smaller font
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 13));
         nameLabel.setForeground(Color.WHITE);
-        nameLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10)); // Minimal padding
+        nameLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10));
 
+        // Create zoom control panel
+        JPanel zoomControlPanel = new JPanel(new BorderLayout(5, 0));
+        zoomControlPanel.setOpaque(false);
+        
+        // Create zoom buttons with proper styling
+        JButton zoomOutButton = new JButton("-");
+        zoomOutButton.setFont(new Font("Arial", Font.BOLD, 14));
+        zoomOutButton.setFocusPainted(false);
+        zoomOutButton.setMargin(new Insets(0, 6, 0, 6));
+        
+        JButton zoomInButton = new JButton("+");
+        zoomInButton.setFont(new Font("Arial", Font.BOLD, 14));
+        zoomInButton.setFocusPainted(false);
+        zoomInButton.setMargin(new Insets(0, 6, 0, 6));
+        
+        // Add action listeners for zoom buttons
+        zoomOutButton.addActionListener(e -> {
+            // Decrease cell width but keep minimum of 4px
+            if (cellWidth > 4) {
+                cellWidth--;
+                updateGridAfterZoom();
+            }
+        });
+        
+        zoomInButton.addActionListener(e -> {
+            // Increase cell width (no practical upper limit needed)
+            cellWidth++;
+            updateGridAfterZoom();
+        });
+        
+        // Add buttons to zoom panel
+        zoomControlPanel.add(zoomOutButton, BorderLayout.WEST);
+        zoomControlPanel.add(zoomInButton, BorderLayout.EAST);
+        zoomControlPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+        
+        // Use BorderLayout for infoPanel to place buttons on the right
         JPanel infoPanel = new JPanel(new BorderLayout());
         // infoPanel.setBackground(ColorUtils.coolBlue);
         infoPanel.add(nameLabel, BorderLayout.CENTER);
-
+        infoPanel.add(zoomControlPanel, BorderLayout.EAST);
+        
         infoPanel.setMinimumSize(new Dimension(800, 30));
         infoPanel.setPreferredSize(new Dimension(800, 30));
-
+        
         add(infoPanel, BorderLayout.NORTH);
-
+        
         // Create main grid panel with fixed cell size
         gridPanel = new JPanel() {
             @Override
@@ -336,6 +375,28 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         scrollPane.setBorder(null);
 
         add(scrollPane, BorderLayout.CENTER);
+    }
+
+    /**
+     * Update the grid after zoom level changes
+     */
+    private void updateGridAfterZoom() {
+        SwingUtilities.invokeLater(() -> {
+            if (player != null) {
+                // Refresh with player data
+                updateTimelineWithFixedRowHeights();
+            } else {
+                // Refresh empty grid
+                drawEmptyTimelineGrid();
+            }
+            
+            // Make sure scrollbars update
+            revalidate();
+            repaint();
+            
+            // Ensure current position stays visible
+            scrollToCurrentPosition();
+        });
     }
 
     // Override this method to enforce the fixed size
@@ -439,7 +500,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         label.setForeground(Color.WHITE);
         // Use a smaller font for the reduced row height
         label.setFont(new Font("Arial", Font.BOLD, 10));
-        label.setHorizontalAlignment(JLabel.CENTER);
+        label.setHorizontalAlignment(JLabel.LEFT); 
         return label;
     }
 

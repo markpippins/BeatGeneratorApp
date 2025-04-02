@@ -623,7 +623,7 @@ public class Session implements Serializable, IBusListener {
     // Refactored onTick method with fixed references
     public void onTick() {
 
-        System.out.println("Session: onTick() - tick: " + tick + ", beat: " + beat + ", bar: " + bar + ", part: " + part + ", tickCount: " + tickCount);
+        System.out.println("Session: onTick() - tick: " + tick + ", beat: " + beat + ", bar: " + bar + ", part: " + part + ", tickCount: " + tickCount + ", beatCount: " + beatCount + ", barCount: " + barCount + ", partCount: " + partCount);
 
         timingBus.publish(Commands.TIMING_UPDATE, this, new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
         // getPlayers().parallelStream().filter(Player::getEnabled)
