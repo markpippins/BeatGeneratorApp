@@ -70,7 +70,11 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
     private JPanel timeLabelsPanel;
     private Map<Point, JPanel> gridCells = new HashMap<>();
     private boolean[] activeBeatMap;
-    private int cellSize = 20; // Default, but will be calculated based on width
+
+    // Replace cellSize with separate width and height
+    private int cellWidth = 6; // Default cell width
+    private int cellHeight = 15; // Default cell height (matches row height)
+
     private ComponentAdapter resizeListener;
 
     // Add these constants at the top of the class with the other constants
@@ -132,12 +136,12 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         gridCells.clear();
         
         // Add row labels with fixed height
-        int rowHeight = 15;
+        int rowHeight = cellHeight;
         addRowLabelsWithFixedHeight(rowHeight);
         
         // Set grid dimensions - use default values
         int defaultTicks = 16 * 6; // Assume 16 beats at 6 ticks per beat
-        int gridWidth = defaultTicks * cellSize + 85;
+        int gridWidth = defaultTicks * cellWidth + 85;
         int gridHeight = rowHeight * TOTAL_ROWS;
         gridPanel.setPreferredSize(new Dimension(gridWidth, gridHeight));
         
@@ -159,7 +163,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         int totalBeats = beatsPerBar * bars;
         int totalTicks = totalBeats * ticksPerBeat;
         int labelWidth = 80;
-        int totalWidth = labelWidth + totalTicks * cellSize;
+        int totalWidth = labelWidth + totalTicks * cellWidth;
         
         // Set size for time labels panel
         timeLabelsPanel.setPreferredSize(new Dimension(totalWidth, 20));
@@ -176,7 +180,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
             barLabel.setForeground(Color.WHITE);
             barLabel.setFont(new Font("Arial", Font.BOLD, 12));
             
-            int barWidth = beatsPerBar * ticksPerBeat * cellSize;
+            int barWidth = beatsPerBar * ticksPerBeat * cellWidth;
             int x = labelWidth + bar * barWidth + barWidth / 2 - 5;
             barLabel.setBounds(x, yCenter, 20, fontSize);
             
@@ -190,8 +194,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 beatLabel.setForeground(Color.LIGHT_GRAY);
                 beatLabel.setFont(new Font("Arial", Font.PLAIN, 10));
                 
-                int x = labelWidth + (bar * beatsPerBar * ticksPerBeat + beat * ticksPerBeat) * cellSize 
-                        + (ticksPerBeat * cellSize / 2) - 3;
+                int x = labelWidth + (bar * beatsPerBar * ticksPerBeat + beat * ticksPerBeat) * cellWidth 
+                        + (ticksPerBeat * cellWidth / 2) - 3;
                 beatLabel.setBounds(x, yCenter + 1, 10, fontSize - 2);
                 
                 timeLabelsPanel.add(beatLabel);
@@ -232,19 +236,19 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         
         // Account for label panel width
         int labelWidth = 80;
-        int rowHeight = 15; 
+        int rowHeight = cellHeight; 
         
         // Draw horizontal row dividers
         g2d.setColor(Color.LIGHT_GRAY);
         g2d.setStroke(new BasicStroke(1));
         for (int i = 1; i < TOTAL_ROWS; i++) {
             int y = i * rowHeight;
-            g2d.drawLine(labelWidth, y, labelWidth + totalTicks * cellSize, y);
+            g2d.drawLine(labelWidth, y, labelWidth + totalTicks * cellWidth, y);
         }
         
         // Draw vertical beat lines
         for (int beat = 0; beat <= totalBeats; beat++) {
-            int x = labelWidth + beat * ticksPerBeat * cellSize;
+            int x = labelWidth + beat * ticksPerBeat * cellWidth;
             
             if (beat % beatsPerBar == 0) {
                 // Draw bar lines with thicker stroke
@@ -265,7 +269,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         for (int tick = 0; tick <= totalTicks; tick++) {
             // Skip lines that are already drawn as beat or bar lines
             if (tick % ticksPerBeat != 0) {
-                int x = labelWidth + tick * cellSize;
+                int x = labelWidth + tick * cellWidth;
                 g2d.drawLine(x, 0, x, rowHeight * TOTAL_ROWS);
             }
         }
@@ -288,8 +292,6 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         add(infoPanel, BorderLayout.NORTH);
         
         // Create main grid panel with fixed cell size
-        cellSize = 20; // Keep consistent cell size
-        
         gridPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -308,8 +310,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         
         // Calculate initial grid height based on row height
         // IMPORTANT: Use exact row count to eliminate extra space
-        int rowHeight = 15;
-        int initialGridHeight = rowHeight * TOTAL_ROWS; // This should be exactly 8 rows (120px)
+        int initialGridHeight = cellHeight * TOTAL_ROWS; // This should be exactly 8 rows (120px)
         gridPanel.setPreferredSize(new Dimension(800, initialGridHeight));
         
         // Time labels panel with minimal height
@@ -361,11 +362,11 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         int totalBeats = beatsPerBar * bars;
         int totalTicks = totalBeats * ticksPerBeat;
         
-        // Use reduced row height for consistency - changed from 20px to 15px
-        int rowHeight = 15;
+        // Use reduced row height for consistency
+        int rowHeight = cellHeight;
         
         // Set grid size
-        int gridWidth = totalTicks * cellSize + 85;
+        int gridWidth = totalTicks * cellWidth + 85;
         int gridHeight = rowHeight * TOTAL_ROWS;
         gridPanel.setPreferredSize(new Dimension(gridWidth, gridHeight));
         
@@ -564,7 +565,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         int labelWidth = 80;
 
         // UPDATED: Position cell exactly at the row with no margin
-        int x = labelWidth + tickIndex * cellSize + 1; // Add label width with 1px offset
+        int x = labelWidth + tickIndex * cellWidth + 1; // Add label width with 1px offset
         int y = rowType * rowHeight; // No margin, align to row top
 
         JPanel cell = new JPanel();
@@ -577,17 +578,17 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         // Adjust width based on type
         int width;
         if (rowType == ROW_TICK) {
-            width = cellSize - 2;
+            width = cellWidth - 2;
         } else if (rowType == ROW_BEAT) {
             int ticksPerBeat = player.getSession().getTicksPerBeat();
-            width = ticksPerBeat * cellSize - 2;
+            width = ticksPerBeat * cellWidth - 2;
         } else if (rowType == ROW_BAR) {
             Session session = player.getSession();
             int ticksPerBeat = session.getTicksPerBeat();
-            width = session.getBeatsPerBar() * ticksPerBeat * cellSize - 2;
+            width = session.getBeatsPerBar() * ticksPerBeat * cellWidth - 2;
         } else { // PARTS
             width = player.getSession().getBars() * player.getSession().getBeatsPerBar()
-                    * player.getSession().getTicksPerBeat() * cellSize - 2;
+                    * player.getSession().getTicksPerBeat() * cellWidth - 2;
         }
 
         // UPDATED: Set height to full row height
@@ -613,7 +614,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
             barLabel.setForeground(Color.WHITE);
             barLabel.setFont(new Font("Arial", Font.BOLD, 12));
 
-            int barWidth = beatsPerBar * player.getSession().getTicksPerBeat() * cellSize;
+            int barWidth = beatsPerBar * player.getSession().getTicksPerBeat() * cellWidth;
             // Add labelWidth to x position to account for left panel
             int x = labelWidth + bar * barWidth + barWidth / 2 - 5; // Center in bar
             barLabel.setBounds(x, 0, 20, 20);
@@ -631,8 +632,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 // Add labelWidth to x position to account for left panel
                 int x = labelWidth
                         + (bar * beatsPerBar * player.getSession().getTicksPerBeat()
-                                + beat * player.getSession().getTicksPerBeat()) * cellSize
-                        + (player.getSession().getTicksPerBeat() * cellSize / 2) - 3; // Center in beat
+                                + beat * player.getSession().getTicksPerBeat()) * cellWidth
+                        + (player.getSession().getTicksPerBeat() * cellWidth / 2) - 3; // Center in beat
                 beatLabel.setBounds(x, 10, 10, 10);
 
                 timeLabelsPanel.add(beatLabel);
@@ -768,19 +769,19 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
         // Account for label panel width
         int labelWidth = 80;
-        int rowHeight = 15; // Match the reduced row height we use elsewhere
+        int rowHeight = cellHeight; // Match the reduced row height we use elsewhere
         
         // Draw horizontal row dividers
         g2d.setColor(Color.LIGHT_GRAY);
         g2d.setStroke(new BasicStroke(1));
         for (int i = 1; i < TOTAL_ROWS; i++) {
             int y = i * rowHeight;
-            g2d.drawLine(labelWidth, y, labelWidth + totalTicks * cellSize, y);
+            g2d.drawLine(labelWidth, y, labelWidth + totalTicks * cellWidth, y);
         }
         
         // Draw vertical beat lines
         for (int beat = 0; beat <= totalBeats; beat++) {
-            int x = labelWidth + beat * ticksPerBeat * cellSize;
+            int x = labelWidth + beat * ticksPerBeat * cellWidth;
             
             if (beat % beatsPerBar == 0) {
                 // Draw bar lines with thicker stroke
@@ -801,7 +802,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         for (int tick = 0; tick <= totalTicks; tick++) {
             // Skip lines that are already drawn as beat or bar lines
             if (tick % ticksPerBeat != 0) {
-                int x = labelWidth + tick * cellSize;
+                int x = labelWidth + tick * cellWidth;
                 g2d.drawLine(x, 0, x, rowHeight * TOTAL_ROWS);
             }
         }

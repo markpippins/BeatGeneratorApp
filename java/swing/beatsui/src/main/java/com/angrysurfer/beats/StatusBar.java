@@ -21,6 +21,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.TimingUpdate;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 
@@ -224,29 +225,28 @@ public class StatusBar extends JPanel implements IBusListener {
             case Commands.PLAYER_UNSELECTED -> {
                 clearPlayerInfo();
             }
-            case Commands.TIMING_TICK -> {
-                if (action.getData() instanceof Number tick) {
-                    tickCount = tick.intValue();
+            case Commands.TIMING_UPDATE -> {
+                if (action.getData() instanceof TimingUpdate update) {
+                    // Update timing values from the TimingUpdate record
+                    if (update.tick() != null) {
+                        tickCount = update.tick().intValue();
+                    }
+                    if (update.beat() != null) {
+                        beatCount = update.beat().intValue();
+                    }
+                    if (update.bar() != null) {
+                        barCount = update.bar().intValue();
+                    }
+                    if (update.part() != null) {
+                        partCount = update.part().intValue();
+                    }
+                    
+                    // Update the time display with all values
                     updateTimeDisplay();
                 }
             }
-            case Commands.TIMING_BEAT -> {
-                if (action.getData() instanceof Number beat) {
-                    beatCount = beat.intValue();
-                    updateTimeDisplay();
-                }
-            }
-            case Commands.TIMING_BAR -> {
-                if (action.getData() instanceof Number bar) {
-                    barCount = bar.intValue();
-                    updateTimeDisplay();
-                }
-            }
-            case Commands.TIMING_PART -> {
-                if (action.getData() instanceof Number partVal) {
-                    partCount = partVal.intValue();
-                    updateTimeDisplay();
-                }
+            case Commands.TIMING_RESET -> {
+                resetTimingCounters();
             }
             case Commands.TRANSPORT_PLAY -> {
                 resetTimingCounters();

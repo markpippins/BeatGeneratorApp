@@ -49,7 +49,7 @@ public class Strike extends Player {
     }
 
     @Override
-    public void onTick(long tickCount, long beatCount, long barCount, long partCount) {
+    public void onTick(long tick, double beat, long bar, long part, long tickCount, long beatCount, long barCount, long partCount) {
         // Get additional timing values from the session
         Session session = getSession();
         if (session == null) {
@@ -58,7 +58,7 @@ public class Strike extends Player {
         }
       
         // Check if we should play based on the current timing
-        boolean shouldPlayResult = shouldPlay(tickCount, beatCount, barCount, partCount);
+        boolean shouldPlayResult = shouldPlay(tick, beat, bar, part, tickCount, beatCount, barCount, partCount);
         
         if (shouldPlayResult) {
             try {

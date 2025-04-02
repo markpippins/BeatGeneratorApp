@@ -21,6 +21,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.TimingUpdate;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.LowLatencyMidiClock;
 import com.angrysurfer.core.service.MidiClockSource;
@@ -142,12 +143,6 @@ public class Session implements Serializable, IBusListener {
     @Transient
     private Consumer<Long> tickListener;
 
-    // Add these fields to Session class for single-pass timing updates
-    private boolean tickProcessed = false;
-    private boolean beatProcessed = false;
-    private boolean barProcessed = false;
-    private boolean partProcessed = false;
-
     // Add these fields to the class
     @JsonIgnore
     @Transient
@@ -159,7 +154,6 @@ public class Session implements Serializable, IBusListener {
     private Set<Player> activePlayers = new HashSet<>();
 
     // FindAll<ControlCodeCaption> getCaptionFindAll();
-
     private LowLatencyMidiClock lowLatencyMidiClock;
 
     public Session() {
@@ -192,10 +186,10 @@ public class Session implements Serializable, IBusListener {
         logger.info("addPlayer() - adding player: {}", player);
         if (isRunning())
             synchronized (getAddList()) {
-                getAddList().add(player);
-            }
-        else
+            getAddList().add(player);
+        } else {
             getPlayers().add(player);
+        }
 
         player.setSession(this);
         commandBus.publish(Commands.PLAYER_ADDED, this, player);
@@ -210,10 +204,10 @@ public class Session implements Serializable, IBusListener {
         logger.info("addPlayer() - removing player: {}", player);
         if (isRunning())
             synchronized (getRemoveList()) {
-                getRemoveList().add(player);
-            }
-        else
+            getRemoveList().add(player);
+        } else {
             getPlayers().remove(player);
+        }
 
         player.setSession(null);
         commandBus.publish(Commands.PLAYER_ADDED, this, player);
@@ -228,8 +222,9 @@ public class Session implements Serializable, IBusListener {
     }
 
     public Player getPlayerById(Long id) {
-        if (players == null || id == null)
+        if (players == null || id == null) {
             return null;
+        }
 
         for (Player player : players) {
             if (id.equals(player.getId())) {
@@ -306,15 +301,6 @@ public class Session implements Serializable, IBusListener {
         barCount = 0;
         partCount = 0;
         // System.out.println("Session: All counters reset");
-
-        // Reset processing flags
-        tickProcessed = false;
-        beatProcessed = false;
-        barProcessed = false;
-        partProcessed = false;
-
-        // Rest of the method stays the same...
-
         // Reset player state
         if (getPlayers() != null) {
             // System.out.println("Session: Resetting " + getPlayers().size() + " players");
@@ -529,7 +515,6 @@ public class Session implements Serializable, IBusListener {
 
         // System.out.println("Session: " + players.size() + " players, " +
         // tickListeners.size() + " tick listeners");
-
         sequencerManager.startSequence();
     }
 
@@ -628,85 +613,50 @@ public class Session implements Serializable, IBusListener {
         if (action.getCommand() != null) {
             // // System.out.println("Session received action: " + action.getCommand());
             switch (action.getCommand()) {
-            case Commands.TIMING_PARAMETERS_CHANGED -> sequencerManager.updateTimingParameters(getTempoInBPM(),
-                    getTicksPerBeat(), getBeatsPerBar());
+                case Commands.TIMING_PARAMETERS_CHANGED ->
+                    sequencerManager.updateTimingParameters(getTempoInBPM(),
+                            getTicksPerBeat(), getBeatsPerBar());
             }
         }
     }
 
     // Refactored onTick method with fixed references
     public void onTick() {
-        try {
-            // Increment tick counter each time
-            tickCount++;
 
-            // Used for state tracking to prevent multiple events in the same tick
-            boolean isBeatChange = false;
-            boolean isBarChange = false;
-            boolean isPartChange = false;
+        System.out.println("Session: onTick() - tick: " + tick + ", beat: " + beat + ", bar: " + bar + ", part: " + part + ", tickCount: " + tickCount);
+
+        timingBus.publish(Commands.TIMING_UPDATE, this, new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+        // getPlayers().parallelStream().filter(Player::getEnabled)
+        //         .forEach(p -> p.onTick(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+
+        try {
+            tick = tick % ticksPerBeat + 1;
+
+            tickCount++;
 
             // Calculate beat from tick
             long newBeat = tickCount / ticksPerBeat;
             if (newBeat > beatCount) {
+                beat = (beat % beatsPerBar) + 1; // This cycles from 1 to parts                
                 beatCount = newBeat;
-                beatProcessed = false;
-                isBeatChange = true;
             }
 
             // Calculate bar from beat
             long newBar = beatCount / beatsPerBar;
             if (newBar > barCount) {
+                bar = (bar % bars) + 1; // This cycles from 1 to parts
                 barCount = newBar;
-                barProcessed = false;
-                isBarChange = true;
             }
 
             // Part calculations on bar change - fix to only increment at partLength
             // boundaries
-            if (isBarChange && barCount > 0 && barCount % partLength == 0) {
-                if (!partProcessed) {
-                    // Increment part but cycle back to 1 when we reach max
-                    part = (part % parts) + 1; // This cycles from 1 to parts
-                    partCount++;
-                    partProcessed = true;
-                    isPartChange = true;
-
-                    logger.debug("Part changed to {} (partCount={}) at bar {}", part, partCount, barCount);
-                }
-            } else if (isBarChange) {
-                // Reset the partProcessed flag when we get to a new bar
-                // that isn't a part boundary
-                partProcessed = false;
+            long newPart = barCount / partLength;
+            if (newPart > partCount) {
+                part = (part % parts) + 1; // This cycles from 1 to parts
+                partCount++;
+                logger.debug("Part changed to {} (partCount={}) at bar {}", part, partCount, barCount);
             }
 
-            timingBus.publish(Commands.TIMING_TICK, this, tick);
-
-            // CRITICAL: Process the current tick for all enabled players
-            // This is what generates the sound!
-            getPlayers().stream().filter(Player::getEnabled)
-                    .forEach(p -> p.onTick(tickCount, beatCount, barCount, partCount));
-
- 
-            // Dispatch events for timing display
-            // if (!tickProcessed) {
-            //     timingBus.publish(Commands.TIMING_TICK, this, getTickCount());
-            //     tickProcessed = true;
-            // }
-
-            if (isBeatChange && !beatProcessed) {
-                timingBus.publish(Commands.TIMING_BEAT, this, getBeatCount());
-                beatProcessed = true;
-            }
-
-            if (isBarChange && !barProcessed) {
-                timingBus.publish(Commands.TIMING_BAR, this, getBarCount());
-                barProcessed = true;
-            }
-
-            if (isPartChange) {
-                timingBus.publish(Commands.TIMING_PART, this, getPartCount());
-                partProcessed = true;
-            }
         } catch (Exception e) {
             logger.error("Error in onTick", e);
         }

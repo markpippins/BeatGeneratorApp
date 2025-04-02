@@ -58,7 +58,7 @@ public class Ratchet extends Strike {
         synchronized (getSession().getPlayers()) {
             getSession().getPlayers().add(this);
             getSession().getRemoveList().add(this);
-            
+
             // Explicitly publish that this player was added
             CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, this);
             logger.info("Published PLAYER_ADDED for Ratchet: {}", getName());
@@ -68,22 +68,23 @@ public class Ratchet extends Strike {
         logger.info("New Ratchet created: {}", this);
         TimingBus.getInstance().register(this);
         logger.info("New Ratchet registered with TimingBus: {}", this);
-        
+
         // Publish a command that a new player was added
         CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, this);
     }
 
     @Override
-    public void onTick(long tickCount, long beatCount, long barCount, long partCount) {
+    public void onTick(long tick, double beat, long bar, long part, long tickCount, long beatCount, long barCount, long partCount) {
 
-        if (isProbable())
+        if (isProbable()) {
             drumNoteOn((long) (getRootNote() + getSession().getNoteOffset()));
+        }
 
         if (tickCount > targetTick + 1) {
             // First publish that this player is being deleted
             CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this, this);
             logger.info("Published PLAYER_DELETED for Ratchet: {}", getName());
-            
+
             // Then remove from session
             getSession().getPlayers().remove(this);
             CommandBus.getInstance().unregister(this);
@@ -96,13 +97,14 @@ public class Ratchet extends Strike {
         return tick >= targetTick && tick < targetTick + 1;
     }
 
-    @Override
-    public void onAction(Command action) {
-        if (action.getCommand() == Commands.TIMING_TICK) {
-            if (shouldPlay()) {
-                onTick(getSession().getTickCount(), getSession().getBeatCount(), getSession().getBarCount(),
-                        getSession().getPart());
-            }
-        }
-    }
+    // @Override
+    // public void onAction(Command action) {
+    //     if (action.getCommand() == Commands.TIMING_TICK) {
+    //         // if (shouldPlay()) {
+    //         //     onTick(getSession().getTick(), getSession().getBeat(), getSession().getBar(),
+    //         //             getSession().getPart(), getSession().getTickCount(), getSession().getBeatCount(), getSession().getBarCount(),
+    //         //             getSession().getPartCount());
+    //         // }
+    //     }
+    // }
 }

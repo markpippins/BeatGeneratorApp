@@ -23,6 +23,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.TimingUpdate;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
 
@@ -245,67 +246,70 @@ public class SessionDisplayPanel extends JPanel {
 
                 SwingUtilities.invokeLater(() -> {
                     switch (action.getCommand()) {
-                    case Commands.TIMING_TICK -> {
-                        if (action.getData() instanceof Number tickVal) {
-                            // System.out.format("Tick event: %d\n", action.getData());
-
-                            // Update current tick position
-                            tickField.setText(String.valueOf(tickVal));
-                            tickCountField.setText(String.valueOf(currentSession.getTickCount()));
-
-                            tickField.invalidate();
-                            tickField.repaint(); 
-
-                            tickCountField.invalidate();
-                            tickCountField.repaint(); 
-                        }
-                    }
-                    case Commands.TIMING_BEAT -> {
-                        if (action.getData() instanceof Number beatVal) {
-                            System.out.format("Beat event: %s\n", ((Number) action.getData()).toString());   
-
-                            // Update current beat position
-                            beatField.setText(String.valueOf(beatVal));
-                            beatCountField.setText(String.valueOf(currentSession.getBeatCount()));
-
-                            beatField.invalidate();
-                            beatField.repaint(); 
-
-                            beatCountField.invalidate();
-                            beatCountField.repaint(); 
-                        }
-                    }
-                    case Commands.TIMING_BAR -> {
-                        if (action.getData() instanceof Number barVal) {
-                            System.out.format("Bar event: %d\n", action.getData());
+                    case Commands.TIMING_UPDATE -> {
+                        if (action.getData() instanceof TimingUpdate update) {
+                            // Update all timing fields at once from the TimingUpdate record
                             
-                            // Update current bar position
-                            barField.setText(String.valueOf(barVal));
-                            barCountField.setText(String.valueOf(currentSession.getBarCount()));
-
-                            barField.invalidate();
-                            barField.repaint(); 
-
-                            barCountField.invalidate();
-                            barCountField.repaint(); 
+                            // Update position values if present
+                            if (update.tick() != null) {
+                                tickField.setText(String.valueOf(update.tick()));
+                                tickField.invalidate();
+                                tickField.repaint();
+                            }
+                            
+                            if (update.beat() != null) {
+                                beatField.setText(String.valueOf(update.beat()));
+                                beatField.invalidate();
+                                beatField.repaint();
+                            }
+                            
+                            if (update.bar() != null) {
+                                barField.setText(String.valueOf(update.bar()));
+                                barField.invalidate();
+                                barField.repaint();
+                            }
+                            
+                            if (update.part() != null) {
+                                partField.setText(String.valueOf(update.part()));
+                                partField.invalidate();
+                                partField.repaint();
+                            }
+                            
+                            // Update count values if present
+                            if (update.tickCount() != null) {
+                                tickCountField.setText(String.valueOf(update.tickCount()));
+                                tickCountField.invalidate();
+                                tickCountField.repaint();
+                            }
+                            
+                            if (update.beatCount() != null) {
+                                beatCountField.setText(String.valueOf(update.beatCount()));
+                                beatCountField.invalidate();
+                                beatCountField.repaint();
+                            }
+                            
+                            if (update.barCount() != null) {
+                                barCountField.setText(String.valueOf(update.barCount()));
+                                barCountField.invalidate();
+                                barCountField.repaint();
+                            }
+                            
+                            if (update.partCount() != null) {
+                                partCountField.setText(String.valueOf(update.partCount()));
+                                partCountField.invalidate();
+                                partCountField.repaint();
+                            }
                         }
                     }
-                    case Commands.TIMING_PART -> {
-                        if (action.getData() instanceof Number partVal) {
-                            System.out.format("Part event: %d\n", action.getData());
-
-                            // Update current part position
-                            partField.setText(String.valueOf(partVal));
-                            partCountField.setText(String.valueOf(currentSession.getPartCount()));
-
-                            partField.invalidate();
-                            partField.repaint(); 
-
-                            partCountField.invalidate();
-                            partCountField.repaint(); 
-                        }
-                    }
+                    
+                    // Handle reset separately
                     case Commands.TIMING_RESET -> {
+                        resetDisplayCounters();
+                    }
+                    
+                    case Commands.SESSION_STOPPED,
+                         Commands.TRANSPORT_STOP -> {
+                        // Session has stopped, reset all counters
                         resetDisplayCounters();
                     }
                     }

@@ -23,6 +23,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.TimingUpdate;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -180,27 +181,34 @@ public class X0XPanel extends JPanel implements IBusListener {
             resetSequence();
         }
         
-        case Commands.TIMING_BEAT -> {
-            // If pattern has completed and we're looping, restart on beat
-            if (isPlaying && patternCompleted && sequencerPanel != null && sequencerPanel.isLooping()) {
-                stepCounter = 0;
-                patternCompleted = false;
-                tickCounter = 0;
-                nextStepTick = ticksPerStep;
+        case Commands.TIMING_UPDATE -> {
+            if (!isPlaying || action.getData() == null || !(action.getData() instanceof TimingUpdate))
+                return;
                 
-                // Update UI to show first step is active
-                int oldStep = -1; // No previous step to unhighlight
-                sequencerPanel.updateStep(oldStep, stepCounter);
-                
-                // Update status display
-                CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this, 
-                        new StatusUpdate("Step: " + (stepCounter + 1) + " of " + sequencerPanel.getPatternLength() +
-                                         " (looping)"));
+            TimingUpdate update = (TimingUpdate) action.getData();
+            
+            // Handle beat change (previously TIMING_BEAT)
+            if (update.beat() != null) {
+                // If pattern has completed and we're looping, restart on beat
+                if (patternCompleted && sequencerPanel != null && sequencerPanel.isLooping()) {
+                    stepCounter = 0;
+                    patternCompleted = false;
+                    tickCounter = 0;
+                    nextStepTick = ticksPerStep;
+                    
+                    // Update UI to show first step is active
+                    int oldStep = -1; // No previous step to unhighlight
+                    sequencerPanel.updateStep(oldStep, stepCounter);
+                    
+                    // Update status display
+                    CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this, 
+                            new StatusUpdate("Step: " + (stepCounter + 1) + " of " + sequencerPanel.getPatternLength() +
+                                            " (looping)"));
+                }
             }
-        }
-
-        case Commands.TIMING_TICK -> {
-            if (isPlaying && !patternCompleted && action.getData() instanceof Number) {
+            
+            // Handle tick change (previously TIMING_TICK)
+            if (update.tick() != null && update.tickCount() != null && !patternCompleted) {
                 tickCounter++;
 
                 if (tickCounter >= nextStepTick) {
@@ -215,7 +223,7 @@ public class X0XPanel extends JPanel implements IBusListener {
                     boolean patternEnded = hasPatternEnded(stepCounter, nextStep, patternLength, direction);
                     
                     if (patternEnded) {
-                        // Mark pattern as completed - will restart on next TIMING_BEAT if looping
+                        // Mark pattern as completed - will restart on next beat if looping
                         patternCompleted = true;
                         
                         // Reset tick counter for next step timing
@@ -233,9 +241,9 @@ public class X0XPanel extends JPanel implements IBusListener {
                         // Update status display
                         CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this, 
                                 new StatusUpdate("Step: " + (stepCounter + 1) + " of " + patternLength +
-                                                 " (end)"));
+                                                " (end)"));
                         
-                        // We're done with this tick - wait for TIMING_BEAT to restart if looping
+                        // We're done with this tick - wait for next beat to restart if looping
                         return;
                     }
                     

@@ -18,6 +18,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.TimingUpdate;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
@@ -419,26 +420,11 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
             }
             
             // Timing events
-            case Commands.TIMING_TICK -> {
-                if (action.getData() instanceof Session) {
-                    Session activeSession = (Session) action.getData();
-                    currentTick = activeSession.getTick();
-                    currentBeat = activeSession.getBeat();
-                    currentBar = activeSession.getBar();
-                } else if (action.getData() instanceof Number tick) {
-                    currentTick = tick.intValue();
-                }
-            }
-            
-            case Commands.TIMING_BEAT -> {
-                if (action.getData() instanceof Number beat) {
-                    currentBeat = beat.intValue();
-                }
-            }
-            
-            case Commands.TIMING_BAR -> {
-                if (action.getData() instanceof Number bar) {
-                    currentBar = bar.intValue();
+            case Commands.TIMING_UPDATE -> {
+                if (action.getData() instanceof TimingUpdate timingUpdate) {
+                    currentTick = timingUpdate.tick() != null ? timingUpdate.tick() : currentTick;
+                    currentBeat = timingUpdate.beat() != null ? timingUpdate.beat() : currentBeat;
+                    currentBar = timingUpdate.bar() != null ? timingUpdate.bar() : currentBar;
                 }
             }
             
