@@ -83,8 +83,8 @@ public class SessionPanel extends JPanel implements IBusListener {
         
         // Create timeline container with fixed height - REPLACE SCROLLPANE WITH PANEL
         JPanel timelineContainer = new JPanel(new BorderLayout());
-        timelineContainer.setBorder(BorderFactory.createTitledBorder("Player Timeline"));
-        
+        // timelineContainer.setBorder(BorderFactory.createTitledBorder("Player Timeline"));
+        timelineContainer.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         // Set fixed height for timeline panel
         int timelineHeight = 140; // Reduced to exactly fit content (header + grid + time bar)
         playerTimelinePanel.setPreferredSize(new Dimension(800, timelineHeight));
