@@ -4,6 +4,11 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.Objects;
 
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
@@ -18,13 +23,16 @@ import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
 
 public class ToolBar extends JToolBar {
+
     private final CommandBus commandBus = CommandBus.getInstance();
     private Session currentSession;
-    
+
     // Main panels
     private SessionDisplayPanel displayPanel;
     private TransportPanel transportPanel;
     private SessionControlPanel controlPanel;
+
+    private JTextField sessionNameField;
 
     public ToolBar() {
         super();
@@ -50,6 +58,7 @@ public class ToolBar extends JToolBar {
                                 displayPanel.setSession(session);
                                 controlPanel.setSession(session);
                                 transportPanel.updateTransportState(session);
+                                sessionNameField.setText(session.getName());
                                 currentSession = session;
                             }
                             break;
@@ -90,6 +99,27 @@ public class ToolBar extends JToolBar {
         // Let the transport panel take the center space
         add(transportPanel, BorderLayout.CENTER);
 
+        JLabel sessionNameLabel = new JLabel("Session Name: ");
+        sessionNameLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        sessionNameField = new JTextField(40);
+
+        JButton sessionNameButton = new JButton("Set Session Name");
+        sessionNameButton.addActionListener(e -> {
+            String newName = sessionNameField.getText().trim();
+            if (currentSession != null && !newName.isEmpty()) {
+                currentSession.setName(newName);
+                commandBus.publish(Commands.SESSION_UPDATED, this, currentSession);
+            }
+        });
+
+        JPanel sessionNamePanel = new JPanel(new BorderLayout());
+        sessionNamePanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+
+        sessionNamePanel.add(sessionNameLabel, BorderLayout.WEST);
+        sessionNamePanel.add(sessionNameField);
+        sessionNamePanel.add(sessionNameButton, BorderLayout.EAST);
+        
+        add(sessionNamePanel, BorderLayout.SOUTH); // Spacer to center the transport panel
         // Session control panel
         controlPanel = new SessionControlPanel();
         // Set maximum width to PANEL_WIDTHpx

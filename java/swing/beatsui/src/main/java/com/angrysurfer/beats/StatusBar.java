@@ -306,8 +306,8 @@ public class StatusBar extends JPanel implements IBusListener {
     }
 
     private void updateTimeDisplay() {
-        String formattedTime = String.format("%02d:%02d:%02d:%02d", tickCount + 1, beatCount + 1, barCount + 1,
-                partCount + 1);
+        String formattedTime = String.format("%02d:%02d:%02d:%02d", tickCount, beatCount, barCount,
+                partCount);
 
         SwingUtilities.invokeLater(() -> {
             timeField.setText(formattedTime);

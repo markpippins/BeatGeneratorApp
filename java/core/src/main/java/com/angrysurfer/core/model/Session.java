@@ -6,7 +6,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -112,7 +111,7 @@ public class Session implements Serializable, IBusListener {
     private Integer parts = Constants.DEFAULT_PART_COUNT;
     private Integer noteOffset = 0;
 
-    private String name = "Session";
+    private String name;
     private String notes = "Session Notes";
 
     @Transient
@@ -134,15 +133,10 @@ public class Session implements Serializable, IBusListener {
     @Transient
     private final MidiClockSource sequencerManager = new MidiClockSource();
 
-    // Variables to store lengths (replacing Cycler lengths)
-    private long tickLength;
-    private long barLength;
-
     // Consumer for tick callbacks (replacing CyclerListener)
-    @JsonIgnore
-    @Transient
-    private Consumer<Long> tickListener;
-
+    // @JsonIgnore
+    // @Transient
+    // private Consumer<Long> tickListener;
     // Add these fields to the class
     @JsonIgnore
     @Transient
@@ -378,23 +372,9 @@ public class Session implements Serializable, IBusListener {
      * Initialize all timing variables before session playback starts
      */
     public void beforeStart() {
-        // System.out.println("Session: Preparing to start session " + getId());
-
-        // Reset state
         reset();
-        // System.out.println("Session: State reset");
-
-        // Initialize lengths
-        tickLength = ticksPerBeat;
-        barLength = bars;
-        // System.out.println("Session: Timing variables initialized:");
-        // System.out.println(" - Ticks per beat: " + ticksPerBeat);
-        // System.out.println(" - Beats per bar: " + beatsPerBar);
-        // System.out.println(" - Bars: " + bars);
-        // System.out.println(" - Part length: " + partLength);
-
         // Add tick listener
-        setupTickListener();
+        // setupTickListener();
 
         // Set up players
         if (getPlayers() != null && !getPlayers().isEmpty()) {
@@ -409,20 +389,20 @@ public class Session implements Serializable, IBusListener {
                 }
             });
         } else {
-            // System.out.println("Session: No players to set up");
+            System.out.println("Session: No players to set up");
         }
 
         // Register with timing bus
         timingBus.register(this);
-        // System.out.println("Session: Registered with timing bus");
+        System.out.println("Session: Registered with timing bus");
 
         // Set active state
         isActive = true;
-        // System.out.println("Session: Session marked as active");
+        System.out.println("Session: Session marked as active");
 
         // Publish session starting event
         commandBus.publish(Commands.SESSION_STARTING, this);
-        // System.out.println("Session: Published SESSION_STARTING event");
+        System.out.println("Session: Published SESSION_STARTING event");
     }
 
     /**
@@ -504,10 +484,6 @@ public class Session implements Serializable, IBusListener {
 
         reset();
 
-        // Pre-calculate timing values for better performance
-        tickLength = ticksPerBeat * beatsPerBar;
-        barLength = bars;
-
         initializeDevices();
 
         // Add all enabled players to tickListeners
@@ -578,18 +554,9 @@ public class Session implements Serializable, IBusListener {
     }
 
     public void stop() {
-        // First stop the sequencer
         sequencerManager.stop();
-
-        // Turn off all notes before disabling players
         stopAllNotes();
-
-        // Now disable all players
         getPlayers().forEach(p -> p.setEnabled(false));
-
-        logger.info("onStop() - resetting all cyclers and counters");
-
-        tickListener = null;
 
         // Reset to 1 instead of 0
         tick = 1;
@@ -623,11 +590,7 @@ public class Session implements Serializable, IBusListener {
     // Refactored onTick method with fixed references
     public void onTick() {
 
-        System.out.println("Session: onTick() - tick: " + tick + ", beat: " + beat + ", bar: " + bar + ", part: " + part + ", tickCount: " + tickCount + ", beatCount: " + beatCount + ", barCount: " + barCount + ", partCount: " + partCount);
-
         timingBus.publish(Commands.TIMING_UPDATE, this, new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
-        // getPlayers().parallelStream().filter(Player::getEnabled)
-        //         .forEach(p -> p.onTick(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
 
         try {
             tick = tick % ticksPerBeat + 1;
@@ -662,15 +625,6 @@ public class Session implements Serializable, IBusListener {
         }
     }
 
-    private void setupTickListener() {
-        tickListener = (tickPosition) -> {
-        };
-    }
-
-    private void removeTickListener() {
-        tickListener = null;
-    }
-
     public void syncToSequencer() {
         sequencerManager.updateTimingParameters(getTempoInBPM(), getTicksPerBeat(), getBeatsPerBar());
     }
@@ -686,7 +640,6 @@ public class Session implements Serializable, IBusListener {
 
     public void setTicksPerBeat(int ticksPerBeat) {
         this.ticksPerBeat = ticksPerBeat;
-        this.tickLength = ticksPerBeat;
 
         if (isRunning()) {
             syncToSequencer();
@@ -705,7 +658,6 @@ public class Session implements Serializable, IBusListener {
 
     public void setBars(int bars) {
         this.bars = bars;
-        this.barLength = bars;
 
         if (isRunning()) {
             syncToSequencer();
