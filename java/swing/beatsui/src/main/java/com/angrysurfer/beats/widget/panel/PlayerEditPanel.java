@@ -389,6 +389,7 @@ public class PlayerEditPanel extends JPanel {
                 DrumItem selectedDrum = (DrumItem) presetCombo.getSelectedItem();
                 player.setRootNote((long) selectedDrum.getNoteNumber());
                 player.setPreset(0L); // Standard GM drum set
+                CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, selectedDrum.getNoteNumber());
             } else if (presetCombo.getSelectedItem() instanceof PresetItem) {
                 // For normal internal synth channels, update preset
                 player.setPreset((long) ((PresetItem) presetCombo.getSelectedItem()).getNumber());
