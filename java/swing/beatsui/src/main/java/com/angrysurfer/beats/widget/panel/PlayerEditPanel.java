@@ -11,6 +11,7 @@ import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.IllegalFormatConversionException;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
@@ -46,6 +47,7 @@ import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.service.UserConfigManager;
 
 public class PlayerEditPanel extends JPanel {
+
     private static final Logger logger = LoggerFactory.getLogger(PlayerEditPanel.class.getName());
     private final Player player;
 
@@ -88,6 +90,7 @@ public class PlayerEditPanel extends JPanel {
 
     // Helper class to represent presets in the combo box
     private static class PresetItem {
+
         private final int number;
         private final String name;
 
@@ -112,6 +115,7 @@ public class PlayerEditPanel extends JPanel {
 
     // Add a helper class for drum items
     private static class DrumItem {
+
         private final int noteNumber;
         private final String name;
 
@@ -130,7 +134,7 @@ public class PlayerEditPanel extends JPanel {
 
         @Override
         public String toString() {
-            return name + " [" + noteNumber + "]";
+            return name;
         }
     }
 
@@ -177,26 +181,25 @@ public class PlayerEditPanel extends JPanel {
         debugPlayerState();
 
         // The rest of your constructor...
-
         // Rest of initialization
         setPreferredSize(new Dimension(800, 500));
 
         // Register command listeners
         // ...existing command listener code...
-
         // Add debugging to verify player and rules
         logger.info(
                 player != null
                         ? "PlayerEditPanel initialized for player: " + player.getName() + " with "
-                                + (player.getRules() != null ? player.getRules().size() : 0) + " rules"
+                        + (player.getRules() != null ? player.getRules().size() : 0) + " rules"
                         : "Player is null");
 
         // Register for rule-related commands
         CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null)
+                if (action.getCommand() == null) {
                     return;
+                }
 
                 String cmd = action.getCommand();
 
@@ -300,12 +303,12 @@ public class PlayerEditPanel extends JPanel {
         internalBarsSpinner = new JSpinner(
                 createLongSpinnerModel(player.getInternalBars() != null ? player.getInternalBars()
                         : SessionManager.getInstance().getActiveSession().getPartLength(), 1, 256, 1));
-        
+
         // Make spinners smaller
         Dimension spinnerSize = new Dimension(50, 25);
         internalBeatsSpinner.setPreferredSize(spinnerSize);
         internalBarsSpinner.setPreferredSize(spinnerSize);
-        
+
         // Create individual toggle switch panels
         JPanel preservePanel = createLabeledSwitch("Preserve", preserveOnPurgeSwitch);
         JPanel stickyPresetPanel = createLabeledSwitch("Sticky Preset", stickyPresetSwitch);
@@ -375,7 +378,7 @@ public class PlayerEditPanel extends JPanel {
         // Get channel from spinner
         int channelValue = ((Number) channelSpinner.getValue()).intValue();
         player.setChannel(channelValue);
-        
+
         // Update isDrumChannel flag based on current channel
         isDrumChannel = (player.getChannel() == 9);
 
@@ -386,15 +389,13 @@ public class PlayerEditPanel extends JPanel {
                 DrumItem selectedDrum = (DrumItem) presetCombo.getSelectedItem();
                 player.setRootNote((long) selectedDrum.getNoteNumber());
                 player.setPreset(0L); // Standard GM drum set
-            } 
-            else if (presetCombo.getSelectedItem() instanceof PresetItem) {
+            } else if (presetCombo.getSelectedItem() instanceof PresetItem) {
                 // For normal internal synth channels, update preset
                 player.setPreset((long) ((PresetItem) presetCombo.getSelectedItem()).getNumber());
-                
+
                 // Don't clear note value here - it might be needed for other purposes
             }
-        } 
-        else {
+        } else {
             // For external instruments, use spinner value
             player.setPreset(((Number) presetSpinner.getValue()).longValue());
         }
@@ -451,8 +452,9 @@ public class PlayerEditPanel extends JPanel {
             instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
             for (InstrumentWrapper inst : instruments) {
-                if (inst.getAvailable())
+                if (inst.getAvailable() && Objects.nonNull(inst.getDevice())) {
                     instrumentCombo.addItem(inst);
+                }
             }
         }
 
@@ -501,7 +503,7 @@ public class PlayerEditPanel extends JPanel {
         // Initial state based on the instrument
         if (player.getInstrument() != null) {
             usingInternalSynth = InternalSynthManager.getInstance().isInternalSynth(player.getInstrument());
-            
+
             // Check for drum channel condition (channel 9)
             isDrumChannel = (player.getChannel() == 9);
         }
@@ -510,7 +512,7 @@ public class PlayerEditPanel extends JPanel {
         channelSpinner.addChangeListener(e -> {
             int channelValue = ((Number) channelSpinner.getValue()).intValue();
             boolean isDrumChannelNew = (channelValue == 9);
-            
+
             // If drum channel status changed and using internal synth, update the UI
             if (isDrumChannelNew != isDrumChannel && usingInternalSynth) {
                 isDrumChannel = isDrumChannelNew;
@@ -547,8 +549,9 @@ public class PlayerEditPanel extends JPanel {
     // Add method to populate the preset combo
     private void populatePresetCombo() {
         InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
-        if (selectedInstrument == null)
+        if (selectedInstrument == null) {
             return;
+        }
 
         // Remember current preset
         long currentPreset = player.getPreset() != null ? player.getPreset() : 0;
@@ -590,10 +593,10 @@ public class PlayerEditPanel extends JPanel {
     private void populateDrumCombo() {
         // Clear the combo
         presetCombo.removeAllItems();
-        
+
         // Get current note from player, defaulting to 36 (Bass Drum) if not set
         int currentNote = player.getRootNote() != null ? player.getRootNote().intValue() : 36;
-        
+
         // Get drum names from InternalSynthManager
         for (int i = 27; i < 88; i++) {  // Standard GM drum range
             String drumName = InternalSynthManager.getInstance().getDrumName(i);
@@ -602,7 +605,7 @@ public class PlayerEditPanel extends JPanel {
             }
             presetCombo.addItem(new DrumItem(i, drumName));
         }
-        
+
         // Select the current drum
         for (int i = 0; i < presetCombo.getItemCount(); i++) {
             DrumItem item = (DrumItem) presetCombo.getItemAt(i);
@@ -645,7 +648,7 @@ public class PlayerEditPanel extends JPanel {
         deleteRuleButton.addActionListener(e -> {
             Rule selectedRule = getSelectedRule();
             if (selectedRule != null) {
-                CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, new Rule[] { selectedRule });
+                CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, new Rule[]{selectedRule});
             }
         });
 
@@ -653,8 +656,9 @@ public class PlayerEditPanel extends JPanel {
         CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null)
+                if (action.getCommand() == null) {
                     return;
+                }
 
                 if (Commands.PLAYER_UPDATED.equals(action.getCommand())) {
                     if (action.getData() instanceof Player) {
@@ -712,8 +716,9 @@ public class PlayerEditPanel extends JPanel {
 
             // Add each rule to the table
             for (Rule rule : player.getRules()) {
-                if (rule == null)
+                if (rule == null) {
                     continue;
+                }
 
                 try {
                     // Get display text for rule properties with CORRECT VARIABLE NAMES
@@ -730,25 +735,25 @@ public class PlayerEditPanel extends JPanel {
                     String partText = rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart());
 
                     // SWAP the order to match column headers
-                    model.addRow(new Object[] { operatorText, // Column 0: "Comparison" (Beat, Tick, etc)
-                            comparisonText, // Column 1: "Operator" (==, <, >, etc)
-                            rule.getValue(), // Column 2: Value
-                            partText // Column 3: Part
-                    });
+                    model.addRow(new Object[]{operatorText, // Column 0: "Comparison" (Beat, Tick, etc)
+                        comparisonText, // Column 1: "Operator" (==, <, >, etc)
+                        rule.getValue(), // Column 2: Value
+                        partText // Column 3: Part
+                });
                 } catch (IllegalFormatConversionException e) {
                     logger.error("Format conversion error: " + e.getMessage());
 
                     // Use safer string conversion with SWAPPED order
                     model.addRow(
-                            new Object[] { rule.getOperator() >= 0 ? Rule.OPERATORS[rule.getOperator()] : "Unknown", // Column
-                                                                                                                     // 0:
-                                                                                                                     // "Comparison"
-                                    rule.getComparison() >= 0 ? Rule.COMPARISONS[rule.getComparison()] : "Unknown", // Column
-                                                                                                                    // 1:
-                                                                                                                    // "Operator"
-                                    String.valueOf(rule.getValue()), // Column 2: Value
-                                    rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart()) // Column 3: Part
-                            });
+                            new Object[]{rule.getOperator() >= 0 ? Rule.OPERATORS[rule.getOperator()] : "Unknown", // Column
+                                // 0:
+                                // "Comparison"
+                                rule.getComparison() >= 0 ? Rule.COMPARISONS[rule.getComparison()] : "Unknown", // Column
+                                // 1:
+                                // "Operator"
+                                String.valueOf(rule.getValue()), // Column 2: Value
+                                rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart()) // Column 3: Part
+                        });
                 }
             }
 
@@ -786,7 +791,7 @@ public class PlayerEditPanel extends JPanel {
 
         // Define column names in the CORRECT order to match the data order used in
         // updateRulesTable
-        String[] columnNames = { "Comparison", "Operator", "Value", "Part" };
+        String[] columnNames = {"Comparison", "Operator", "Value", "Part"};
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
 
         // Apply model to table
@@ -845,8 +850,9 @@ public class PlayerEditPanel extends JPanel {
         CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null)
+                if (action.getCommand() == null) {
                     return;
+                }
 
                 // Listen for instrument changes
                 if (Commands.INSTRUMENT_UPDATED.equals(action.getCommand())
