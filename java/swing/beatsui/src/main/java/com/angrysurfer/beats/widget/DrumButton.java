@@ -11,23 +11,12 @@ import javax.swing.JComponent;
 import javax.swing.Timer;
 import javax.swing.plaf.basic.BasicButtonUI;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class DrumButton extends JButton {
-
-    // private int row;
-    // private int col;
-
-    // public DrumButton(int row, int col) {
-    // this.row = row;
-    // this.col = col;
-    // }
-
-    // public int getRow() {
-    // return row;
-    // }
-
-    // public int getCol() {
-    // return col;
-    // }
 
     public DrumButton() {
         super();
@@ -89,7 +78,7 @@ public class DrumButton extends JButton {
             }
         });
 
-        setPreferredSize(new Dimension(40, 40));
+        setPreferredSize(new Dimension(50, 50));
         setContentAreaFilled(false);
         setBorderPainted(false);
         setFocusPainted(false);

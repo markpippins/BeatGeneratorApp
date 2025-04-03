@@ -46,17 +46,17 @@ public class PlayerService {
         return addPlayer(instrument, getNoteForMidiInstrument(instrument));
     }
 
-    public Player addPlayer(String instrumentName, long note) {
+    public Player addPlayer(String instrumentName, int note) {
         InstrumentWrapper instrument = instrumentService.findByName(instrumentName);
         return addPlayer(instrument, note);
     }
 
-    private long getNoteForMidiInstrument(InstrumentWrapper instrument) {
-        Long note = Objects.nonNull(instrument.getLowestNote()) ? instrument.getLowestNote() : 60L;
+    private int getNoteForMidiInstrument(InstrumentWrapper instrument) {
+        Integer note = Objects.nonNull(instrument.getLowestNote()) ? instrument.getLowestNote() : 60;
         return note + getSession().getPlayers().size();
     }
 
-    public Player addPlayer(InstrumentWrapper instrument, long note) {
+    public Player addPlayer(InstrumentWrapper instrument, int note) {
         Player player = playerManager.addPlayer(getSession(), instrument, note);
         redisService.savePlayer(player);
         return player;

@@ -54,7 +54,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private Long level = 100L;
 
-    private Long rootNote = 60L;
+    private Integer rootNote = 60;
 
     private Long minVelocity = 100L;
 

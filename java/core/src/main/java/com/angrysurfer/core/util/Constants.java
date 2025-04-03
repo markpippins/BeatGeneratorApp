@@ -7,7 +7,7 @@ public class Constants {
     public static int DEFAULT_BEATS_PER_BAR = 4;
     public static int DEFAULT_BEAT_DIVIDER = 16;
     public static float DEFAULT_BPM = 88;
-    public static long DEFAULT_PART_LENGTH = 1L;
+    public static int DEFAULT_PART_LENGTH = 1;
     public static int DEFAULT_MAX_TRACKS = 16;
     public static long DEFAULT_SONG_LENGTH = Long.MAX_VALUE;
     public static long DEFAULT_SWING = 25L;

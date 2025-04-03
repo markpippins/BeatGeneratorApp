@@ -93,6 +93,11 @@ public class InstrumentWrapper implements Serializable {
 
     private Set<Pattern> patterns;
 
+    // Add fields for soundbank support
+    private String soundbankName;
+    private Integer bankIndex;
+    private Long currentPreset;
+
     public InstrumentWrapper() {
 
     }
@@ -274,5 +279,78 @@ public class InstrumentWrapper implements Serializable {
 
     private String lookupTarget(int key) {
         return assignments.getOrDefault(key, Integer.toString(key));
+    }
+
+    /**
+     * Get the name of the currently selected soundbank
+     * @return The soundbank name
+     */
+    public String getSoundbankName() {
+        return soundbankName;
+    }
+
+    /**
+     * Set the currently selected soundbank name
+     * @param soundbankName The soundbank name
+     */
+    public void setSoundbankName(String soundbankName) {
+        this.soundbankName = soundbankName;
+        logger.info("Set soundbank name to: {}", soundbankName);
+    }
+
+    /**
+     * Get the currently selected bank index
+     * @return The bank index
+     */
+    public Integer getBankIndex() {
+        return bankIndex;
+    }
+
+    /**
+     * Set the currently selected bank index
+     * @param bankIndex The bank index
+     */
+    public void setBankIndex(Integer bankIndex) {
+        this.bankIndex = bankIndex;
+        logger.info("Set bank index to: {}", bankIndex);
+    }
+
+    /**
+     * Get the currently selected preset
+     * @return The preset number
+     */
+    public Long getCurrentPreset() {
+        return currentPreset;
+    }
+
+    /**
+     * Set the currently selected preset
+     * @param preset The preset number
+     */
+    public void setCurrentPreset(Long preset) {
+        this.currentPreset = preset;
+        logger.info("Set current preset to: {}", preset);
+    }
+
+    /**
+     * Apply the current bank and program settings to the specified channel
+     * @param channel The MIDI channel to apply settings to
+     * @throws InvalidMidiDataException If the MIDI data is invalid
+     * @throws MidiUnavailableException If the MIDI device is unavailable
+     */
+    public void applyBankAndProgram(int channel) throws InvalidMidiDataException, MidiUnavailableException {
+        if (bankIndex != null) {
+            // Send bank select MSB (CC 0)
+            controlChange(channel, 0, 0);
+
+            // Send bank select LSB (CC 32)
+            controlChange(channel, 32, bankIndex);
+
+            // Send program change if we have a preset set
+            if (currentPreset != null) {
+                programChange(channel, currentPreset, 0);
+                logger.info("Applied bank={}, program={} to channel={}", bankIndex, currentPreset, channel);
+            }
+        }
     }
 }

@@ -20,11 +20,11 @@ import javax.swing.UIManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.panel.MainPanel;
+import com.angrysurfer.beats.panel.PlayersPanel;
+import com.angrysurfer.beats.panel.SessionPanel;
+import com.angrysurfer.beats.panel.X0XPanel;
 import com.angrysurfer.beats.widget.PlayersTable;
-import com.angrysurfer.beats.widget.panel.MainPanel;
-import com.angrysurfer.beats.widget.panel.PlayersPanel;
-import com.angrysurfer.beats.widget.panel.SessionPanel;
-import com.angrysurfer.beats.widget.panel.X0XPanel;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;

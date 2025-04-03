@@ -62,7 +62,7 @@ public class PlayerController {
     @PostMapping(Constants.ADD_PLAYER_FOR_NOTE)
     public ResponseEntity<Player> addPlayer(
             @RequestParam String instrument, 
-            @RequestParam Long note) {
+            @RequestParam Integer note) {
         logger.info("POST {} - instrument: {}, note: {}", 
             Constants.ADD_PLAYER_FOR_NOTE, instrument, note);
         Player player = service.addPlayer(instrument, note);

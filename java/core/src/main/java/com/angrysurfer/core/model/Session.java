@@ -101,7 +101,7 @@ public class Session implements Serializable, IBusListener {
     private Integer bars = Constants.DEFAULT_BAR_COUNT;
     private Integer beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
     private Integer beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
-    private Long partLength = Constants.DEFAULT_PART_LENGTH;
+    private Integer partLength = Constants.DEFAULT_PART_LENGTH;
     private Integer maxTracks = Constants.DEFAULT_MAX_TRACKS;
     private Long songLength = Constants.DEFAULT_SONG_LENGTH;
     private Long swing = Constants.DEFAULT_SWING;
@@ -156,7 +156,7 @@ public class Session implements Serializable, IBusListener {
         timingBus.register(this); // Add this registration
     }
 
-    public Session(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, long partLength) {
+    public Session(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, int partLength) {
         this.tempoInBPM = tempoInBPM;
         this.bars = bars;
         this.beatsPerBar = beatsPerBar;
@@ -272,7 +272,7 @@ public class Session implements Serializable, IBusListener {
         return partCount;
     }
 
-    public void setPartLength(long partLength) {
+    public void setPartLength(int partLength) {
         this.partLength = partLength;
         CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, this);
     }

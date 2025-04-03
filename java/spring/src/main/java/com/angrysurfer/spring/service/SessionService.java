@@ -90,7 +90,7 @@ public class SessionService implements IBusListener {
                 case SessionUpdateType.BASE_NOTE_OFFSET ->
                     session.setNoteOffset((int) (session.getNoteOffset() + updateValue));
                 case SessionUpdateType.BARS -> session.setBars((int) updateValue);
-                case SessionUpdateType.PART_LENGTH -> session.setPartLength(updateValue);
+                case SessionUpdateType.PART_LENGTH -> session.setPartLength((int) updateValue);
                 case SessionUpdateType.MAX_TRACKS -> session.setMaxTracks((int) updateValue);
             }
             redisService.saveSession(session);

@@ -121,7 +121,7 @@ public class RedisDemo {
         Player player = redis.newPlayer();
         player.setName(name);
         player.setChannel(10); // General MIDI drum channel
-        player.setRootNote((long) note);
+        player.setRootNote(note);
         // redis.addPlayerToSession(session, player);
         logger.info("Created " + name + " player (ID: " + player.getId() + ")");
         return player;

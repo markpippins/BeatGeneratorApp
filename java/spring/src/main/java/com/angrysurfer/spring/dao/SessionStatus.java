@@ -32,7 +32,7 @@ public class SessionStatus implements Serializable {
     private Integer bars;
     private Integer beatsPerBar;
     private Integer beatDivider;
-    private Long partLength;
+    private Integer partLength;
     private Integer maxTracks;
     private Long songLength;
     private Long swing;

@@ -19,10 +19,10 @@ public class Strike extends Player {
 
     static final Random rand = new Random();
 
-    public static long KICK = 36;
-    public static long SNARE = 37;
-    public static long CLOSED_HAT = 38;
-    public static long OPEN_HAT = 39;
+    public static int KICK = 36;
+    public static int SNARE = 37;
+    public static int CLOSED_HAT = 38;
+    public static int OPEN_HAT = 39;
 
     public static List<Integer> razParams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
     public static List<Integer> closedHatParams = List.of(24, 25, 26, 27, 28, 29, 30, 31);
@@ -34,13 +34,13 @@ public class Strike extends Player {
         setRules(new HashSet<>()); // Initialize rules set
     }
 
-    public Strike(String name, Session session, InstrumentWrapper instrument, long note,
+    public Strike(String name, Session session, InstrumentWrapper instrument, int note,
             List<Integer> allowedControlMessages) {
         super(name, session, instrument, allowedControlMessages);
         setRootNote(note);
     }
 
-    public Strike(String name, Session session, InstrumentWrapper instrument, long note,
+    public Strike(String name, Session session, InstrumentWrapper instrument, int note,
             List<Integer> allowableControlMessages, long minVelocity, long maxVelocity) {
         super(name, session, instrument, allowableControlMessages);
         setRootNote(note);

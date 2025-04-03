@@ -294,7 +294,7 @@ public class PlayerManager {
         }
     }
 
-    public Player addPlayer(Session session, InstrumentWrapper instrument, long note) {
+    public Player addPlayer(Session session, InstrumentWrapper instrument, int note) {
         String name = instrument.getName() + session.getPlayers().size();
         Player player = new Strike(name, session, instrument, note,
                 instrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
@@ -433,7 +433,7 @@ public class PlayerManager {
                 player.noteOff(0, 0);
                 player.setChannel((int) updateValue);
             }
-            case NOTE -> player.setRootNote(updateValue);
+            case NOTE -> player.setRootNote((int) updateValue);
             case PRESET -> handlePresetChange(player, updateValue);
             case PROBABILITY -> player.setProbability(updateValue);
             case MIN_VELOCITY -> player.setMinVelocity(updateValue);
@@ -525,7 +525,7 @@ public class PlayerManager {
     }
 
     public void updatePlayerNote(Player player, int note) {
-        player.setRootNote((long) note);
+        player.setRootNote(note);
     }
 
     /**
@@ -663,7 +663,7 @@ public class PlayerManager {
             int velocity = (int) Math.round((activePlayer.getMinVelocity() + activePlayer.getMaxVelocity()) / 2.0);
             
             // Just update the note in memory temporarily - don't save to Redis
-            activePlayer.setRootNote((long) midiNote);
+            activePlayer.setRootNote(midiNote);
             
             // Send the note to the device
             logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);

@@ -237,4 +237,6 @@ public class Commands {
     public static final String SESSION_SAVED = "SESSION_SAVED";
     public static final String STATUS_UPDATE = "STATUS_UPDATE";
     public static final String CLEAR_STATUS = "CLEAR_STATUS";
+    public static final String PLAY_TEST_NOTE = "PLAY_TEST_NOTE";
+    public static final String SOUNDBANK_LOADED = "SOUNDBANK_LOADED";
 }
