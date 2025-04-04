@@ -2,15 +2,13 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.FlowLayout;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
 import java.util.List;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
@@ -58,16 +56,17 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     private JPanel presetControlPanel;
 
     // Sound panel components
-    private JPanel soundPanel;
     private JComboBox<String> soundbankCombo;
     private JComboBox<Integer> bankCombo;
-    private JComboBox<PresetItem> presetCombo;
     private JSpinner presetSpinner;
     private JButton loadSoundbankButton;
     private JButton previewButton;
 
     // Special Components for Drum Channel
     private JComboBox<DrumItem> drumCombo;
+
+    // Preset combo for internal synths
+    private JComboBox<PresetItem> presetCombo;
 
     // State tracking
     private boolean isInternalSynth = false;
@@ -131,6 +130,9 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                 127, // max
                 1 // step
         ));
+
+        // Initialize preview button
+        previewButton = new JButton("Preview");
 
         // Preset combo for internal synths
         presetCombo = new JComboBox<>();
@@ -200,53 +202,15 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
      * Set up the soundbank panel components
      */
     private void setupSoundbankPanel() {
-        soundPanel = new JPanel(new BorderLayout());
-        soundPanel.setBorder(BorderFactory.createTitledBorder("Sound Selection"));
-
         // Create components
         soundbankCombo = new JComboBox<>();
         bankCombo = new JComboBox<>();
+        // Limit bank combo's width to simulate 4 columns wide
+        bankCombo.setPreferredSize(new java.awt.Dimension(60, bankCombo.getPreferredSize().height));
         loadSoundbankButton = new JButton("Load...");
-        previewButton = new JButton("Preview");
 
-        // Create layout for soundbank selection
-        JPanel soundbankRow = new JPanel(new BorderLayout(5, 0));
-        soundbankRow.add(new JLabel("Soundbank:"), BorderLayout.WEST);
-
-        JPanel soundbankSelectionPanel = new JPanel(new BorderLayout());
-        soundbankSelectionPanel.add(soundbankCombo, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        buttonPanel.add(loadSoundbankButton);
-        soundbankSelectionPanel.add(buttonPanel, BorderLayout.EAST);
-
-        soundbankRow.add(soundbankSelectionPanel, BorderLayout.CENTER);
-
-        // Create layout for bank selection
-        JPanel bankRow = new JPanel(new BorderLayout(5, 0));
-        bankRow.add(new JLabel("Bank:"), BorderLayout.WEST);
-        bankRow.add(bankCombo, BorderLayout.CENTER);
-
-        // Preview button panel
-        JPanel previewPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        previewPanel.add(previewButton);
-
-        // Add all rows to soundbank panel
-        JPanel controlsPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(2, 5, 2, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        controlsPanel.add(soundbankRow, gbc);
-
-        gbc.gridy = 1;
-        controlsPanel.add(bankRow, gbc);
-
-        soundPanel.add(controlsPanel, BorderLayout.CENTER);
-        soundPanel.add(previewPanel, BorderLayout.SOUTH);
+        // Note: We no longer add these components to the soundbankPanel here
+        // because they'll be added directly to the main layout in layoutComponents()
     }
 
     /**
@@ -303,16 +267,17 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             if (!initializing && soundbankCombo.getSelectedItem() != null) {
                 String soundbankName = (String) soundbankCombo.getSelectedItem();
 
-                List <String> names = InternalSynthManager.getInstance().getSoundbankNames();
+                List<String> names = InternalSynthManager.getInstance().getSoundbankNames();
                 // Update instrument with selected soundbank
                 if (player.getInstrument() != null) {
                     player.getInstrument().setSoundbankName(soundbankName);
                     applyPresetChange();
 
-                        Soundbank soundbank = InternalSynthManager.getInstance().getSoundbank(soundbankName);
+                    Soundbank soundbank = InternalSynthManager.getInstance().getSoundbank(soundbankName);
                     // if (soundbank != null)
-                    if (soundbank != null)
+                    if (soundbank != null) {
                         ((Synthesizer) player.getInstrument().getDevice()).loadAllInstruments(soundbank);
+                    }
                 }
 
                 // Populate banks for this soundbank
@@ -388,57 +353,129 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         gbc.insets = new Insets(2, 5, 2, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Player name row
+        // Row 0: Combined row with Name, Instrument and Channel
+        JPanel topRow = new JPanel(new GridBagLayout());
+        GridBagConstraints trGbc = new GridBagConstraints();
+        trGbc.insets = new Insets(2, 5, 2, 5);
+        trGbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Name label and field (shortened)
+        trGbc.gridx = 0;
+        trGbc.gridy = 0;
+        trGbc.weightx = 0.0;
+        topRow.add(new JLabel("Name:"), trGbc);
+
+        trGbc.gridx = 1;
+        trGbc.weightx = 0.3; // Shorter width for name field
+        // Set preferred size to make name field shorter
+        nameField.setPreferredSize(new Dimension(100, nameField.getPreferredSize().height));
+        topRow.add(nameField, trGbc);
+
+        // Instrument label and combo (shortened)
+        trGbc.gridx = 2;
+        trGbc.weightx = 0.0;
+        topRow.add(new JLabel("Instrument:"), trGbc);
+
+        trGbc.gridx = 3;
+        trGbc.weightx = 0.5; // More space for instrument, but still constrained
+        // Set preferred size to make instrument combo shorter
+        instrumentCombo.setPreferredSize(new Dimension(150, instrumentCombo.getPreferredSize().height));
+        topRow.add(instrumentCombo, trGbc);
+
+        // Channel label and spinner
+        trGbc.gridx = 4;
+        trGbc.weightx = 0.0;
+        topRow.add(new JLabel("Channel:"), trGbc);
+
+        trGbc.gridx = 5;
+        trGbc.weightx = 0.1;
+        // Set channel spinner preferred size (4 columns wide max)
+        channelSpinner.setPreferredSize(new Dimension(60, channelSpinner.getPreferredSize().height));
+        topRow.add(channelSpinner, trGbc);
+
+        // Add the combined top row to the main layout
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.weightx = 0.0;
-        add(new JLabel("Name:"), gbc);
-
-        gbc.gridx = 1;
+        gbc.gridwidth = 4;
         gbc.weightx = 1.0;
-        add(nameField, gbc);
+        add(topRow, gbc);
+        gbc.gridwidth = 1;
 
-        // Instrument row
+        // Row 1: Soundbank row (previously Row 2)
+        JPanel soundbankRow = new JPanel(new GridBagLayout());
+        GridBagConstraints sbGbc = new GridBagConstraints();
+        sbGbc.insets = new Insets(2, 5, 2, 5);
+        sbGbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Column 0: Soundbank label
+        sbGbc.gridx = 0;
+        sbGbc.gridy = 0;
+        sbGbc.weightx = 0.0;
+        soundbankRow.add(new JLabel("Soundbank:"), sbGbc);
+
+        // Column 1: Soundbank combo
+        sbGbc.gridx = 1;
+        sbGbc.weightx = 1.0;
+        soundbankRow.add(soundbankCombo, sbGbc);
+
+        // Column 2: Bank label
+        sbGbc.gridx = 2;
+        sbGbc.weightx = 0.0;
+        soundbankRow.add(new JLabel("Bank:"), sbGbc);
+
+        // Column 3: Bank combo
+        sbGbc.gridx = 3;
+        sbGbc.weightx = 0.0;
+        // Limit bank combo width to 4 columns
+        bankCombo.setPreferredSize(new Dimension(60, bankCombo.getPreferredSize().height));
+        soundbankRow.add(bankCombo, sbGbc);
+
+        // Column 4: Load button
+        sbGbc.gridx = 4;
+        sbGbc.weightx = 0.0;
+        soundbankRow.add(loadSoundbankButton, sbGbc);
+
+        // Add the soundbank row to the main panel (now at row 1)
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.weightx = 0.0;
-        add(new JLabel("Instrument:"), gbc);
+        gbc.gridwidth = 4;
+        add(soundbankRow, gbc);
+        gbc.gridwidth = 1;
 
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        add(instrumentCombo, gbc);
+        // Row 2: Preset row (now moved up)
+        JPanel presetPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints pGbc = new GridBagConstraints();
+        pGbc.insets = new Insets(2, 5, 2, 5);
+        pGbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Channel row
+        pGbc.gridx = 0;
+        pGbc.gridy = 0;
+        pGbc.weightx = 0.0;
+        presetPanel.add(new JLabel("Preset:"), pGbc);
+
+        pGbc.gridx = 1;
+        pGbc.weightx = 1.0;
+        presetPanel.add(presetControlPanel, pGbc);
+
+        pGbc.gridx = 2;
+        pGbc.weightx = 0.0;
+        presetPanel.add(previewButton, pGbc);
+
         gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.weightx = 0.0;
-        add(new JLabel("Channel:"), gbc);
+        gbc.gridy = 2;  // Now at row 2
+        gbc.gridwidth = 4;
+        add(presetPanel, gbc);
+        gbc.gridwidth = 1;
 
-        gbc.gridx = 1;
-        gbc.weightx = 0.2;
-        add(channelSpinner, gbc);
-
-        // Preset row
+        // Row 3: Sound panel row (mostly empty since we moved components)
         gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.weightx = 0.0;
-        add(new JLabel("Preset:"), gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        add(presetControlPanel, gbc);
-
-        // Sound panel row (only visible for internal synths)
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.gridwidth = 2;
+        gbc.gridy = 3;  // Now at row 3
+        gbc.gridwidth = 4;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
-        gbc.weighty = 1.0; // Allow vertical expansion
-        add(soundPanel, gbc);
-
-        // Initially hide sound panel
-        soundPanel.setVisible(isInternalSynth);
+        gbc.weighty = 1.0;
+        add(new JPanel(), gbc); // Placeholder for sound panel
+        gbc.gridwidth = 1;
     }
 
     /**
@@ -459,25 +496,16 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             // Populate with drum sounds
             populateDrumCombo();
 
-            // Show soundbank panel for internal synths
-            soundPanel.setVisible(isInternalSynth);
-
         } else {
             if (isInternalSynth) {
                 // For internal melodic instruments, use preset selector
                 presetControlPanel.add(presetCombo, BorderLayout.CENTER);
-
-                // Show soundbank panel
-                soundPanel.setVisible(true);
 
                 // Initialize soundbanks
                 initializeSoundbanks();
             } else {
                 // For external instruments, use preset spinner
                 presetControlPanel.add(presetSpinner, BorderLayout.CENTER);
-
-                // Hide soundbank panel
-                soundPanel.setVisible(false);
             }
         }
 

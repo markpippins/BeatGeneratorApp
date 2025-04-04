@@ -107,7 +107,7 @@ public class PlayerEditPanel extends JPanel {
         updateInternalBarsControls();
         
         // Set preferred size
-        setPreferredSize(new Dimension(800, 500));
+        setPreferredSize(new Dimension(800, 600));
 
         // Register command listeners
         CommandBus.getInstance().register(new IBusListener() {
