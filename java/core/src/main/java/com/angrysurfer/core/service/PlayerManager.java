@@ -34,11 +34,11 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 
 import lombok.Getter;
@@ -218,6 +218,60 @@ public class PlayerManager {
                             }
                         }
                     }
+
+                    case Commands.NEW_VALUE_VELOCITY_MIN -> {
+                        if (action.getData() instanceof Object[] data && data.length >= 2) {
+                            if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
+                                Session currentSession = SessionManager.getInstance().getActiveSession();
+                                if (currentSession != null) {
+                                    Player player = currentSession.getPlayer(playerId);
+                                    if (player != null) {
+                                        // Set new min velocity
+                                        player.setMinVelocity(value);
+                                        
+                                        // Ensure max velocity is at least min velocity
+                                        if (player.getMaxVelocity() < value) {
+                                            player.setMaxVelocity(value);
+                                        }
+                                        
+                                        // Save player
+                                        savePlayerProperties(player);
+                                        
+                                        // Publish player update
+                                        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                                        commandBus.publish(Commands.PLAYER_ROW_REFRESH, this, player);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    case Commands.NEW_VALUE_VELOCITY_MAX -> {
+                        if (action.getData() instanceof Object[] data && data.length >= 2) {
+                            if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
+                                Session currentSession = SessionManager.getInstance().getActiveSession();
+                                if (currentSession != null) {
+                                    Player player = currentSession.getPlayer(playerId);
+                                    if (player != null) {
+                                        // Set new max velocity
+                                        player.setMaxVelocity(value);
+                                        
+                                        // Ensure min velocity doesn't exceed max velocity
+                                        if (player.getMinVelocity() > value) {
+                                            player.setMinVelocity(value);
+                                        }
+                                        
+                                        // Save player
+                                        savePlayerProperties(player);
+                                        
+                                        // Publish player update
+                                        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                                        commandBus.publish(Commands.PLAYER_ROW_REFRESH, this, player);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -236,11 +290,11 @@ public class PlayerManager {
     public void playerUpdated(Player player) {
         if (Objects.equals(activePlayer.getId(), player.getId())) {
             this.activePlayer = player;
-            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
         }
     }
 
-    public Player addPlayer(Session session, Instrument instrument, long note) {
+    public Player addPlayer(Session session, InstrumentWrapper instrument, int note) {
         String name = instrument.getName() + session.getPlayers().size();
         Player player = new Strike(name, session, instrument, note,
                 instrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
@@ -379,7 +433,7 @@ public class PlayerManager {
                 player.noteOff(0, 0);
                 player.setChannel((int) updateValue);
             }
-            case NOTE -> player.setNote(updateValue);
+            case NOTE -> player.setRootNote((int) updateValue);
             case PRESET -> handlePresetChange(player, updateValue);
             case PROBABILITY -> player.setProbability(updateValue);
             case MIN_VELOCITY -> player.setMinVelocity(updateValue);
@@ -416,7 +470,7 @@ public class PlayerManager {
             player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
             player.getInstrument().programChange(player.getChannel(), updateValue, 0);
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
-            // logger.error(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
         }
     }
 
@@ -471,7 +525,7 @@ public class PlayerManager {
     }
 
     public void updatePlayerNote(Player player, int note) {
-        player.setNote((long) note);
+        player.setRootNote(note);
     }
 
     /**
@@ -585,7 +639,7 @@ public class PlayerManager {
         
         try {
             // Use the player's instrument, channel, and a reasonable velocity
-            Instrument instrument = activePlayer.getInstrument();
+            InstrumentWrapper instrument = activePlayer.getInstrument();
             if (instrument == null) {
                 logger.debug("Active player has no instrument");
                 return false;
@@ -609,7 +663,7 @@ public class PlayerManager {
             int velocity = (int) Math.round((activePlayer.getMinVelocity() + activePlayer.getMaxVelocity()) / 2.0);
             
             // Just update the note in memory temporarily - don't save to Redis
-            activePlayer.setNote((long) midiNote);
+            activePlayer.setRootNote(midiNote);
             
             // Send the note to the device
             logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);

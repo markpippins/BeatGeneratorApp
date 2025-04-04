@@ -1,10 +1,12 @@
 package com.angrysurfer.core.redis;
 
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import com.angrysurfer.core.model.midi.Instrument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
@@ -15,7 +17,7 @@ import redis.clients.jedis.JedisPool;
 @Getter
 @Setter
 public class InstrumentHelper {
-    private static final Logger logger = Logger.getLogger(InstrumentHelper.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(InstrumentHelper.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
 
@@ -24,7 +26,7 @@ public class InstrumentHelper {
         this.objectMapper = objectMapper;
     }
 
-    public List<Instrument> findAllInstruments() {
+    public List<InstrumentWrapper> findAllInstruments() {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.keys("instrument:*").stream()
                 .map(key -> findInstrumentById(Long.parseLong(key.split(":")[1])))
@@ -33,17 +35,17 @@ public class InstrumentHelper {
         }
     }
 
-    public Instrument findInstrumentById(Long id) {
+    public InstrumentWrapper findInstrumentById(Long id) {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = jedis.get("instrument:" + id);
-            return json != null ? objectMapper.readValue(json, Instrument.class) : null;
+            return json != null ? objectMapper.readValue(json, InstrumentWrapper.class) : null;
         } catch (Exception e) {
-            logger.severe("Error finding instrument: " + e.getMessage());
+            logger.error("Error finding instrument: " + e.getMessage());
             return null;
         }
     }
 
-    public void saveInstrument(Instrument instrument) {
+    public void saveInstrument(InstrumentWrapper instrument) {
         try (Jedis jedis = jedisPool.getResource()) {
             if (instrument.getId() == null) {
                 instrument.setId(jedis.incr("seq:instrument"));
@@ -51,7 +53,7 @@ public class InstrumentHelper {
             String json = objectMapper.writeValueAsString(instrument);
             jedis.set("instrument:" + instrument.getId(), json);
         } catch (Exception e) {
-            logger.severe("Error saving instrument: " + e.getMessage());
+            logger.error("Error saving instrument: " + e.getMessage());
             throw new RuntimeException("Failed to save instrument", e);
         }
     }
@@ -60,7 +62,7 @@ public class InstrumentHelper {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.del("instrument:" + id);
         } catch (Exception e) {
-            logger.severe("Error deleting instrument: " + e.getMessage());
+            logger.error("Error deleting instrument: " + e.getMessage());
             throw new RuntimeException("Failed to delete instrument", e);
         }
     }

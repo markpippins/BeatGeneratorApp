@@ -1,40 +1,36 @@
 package com.angrysurfer.beats;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ItemEvent;
+import java.awt.GridLayout;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.widget.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.util.Scale;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
+public class StatusBar extends JPanel implements IBusListener {
 
     private JLabel sessionIdLabel;
     private JLabel playerCountLabel;
@@ -56,208 +52,141 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
 
     private CommandBus commandBus = CommandBus.getInstance();
 
-    // private final LedIndicator tickLed;
-    // private final LedIndicator beatLed;
-    // private final LedIndicator barLed;
-    // private boolean litTick = false;
-    // private boolean litBeat = false;
-    // private boolean litBar = false;
-
-    // Add timing counters
     private int tickCount = 0;
     private int beatCount = 0;
     private int barCount = 0;
     private int partCount = 0;
 
-    // Add this field to your class if it doesn't exist
     private Map<String, JComponent> rightFields = new HashMap<>();
 
     public StatusBar() {
         super();
 
-        // Create LEDs
-        // tickLed = new LedIndicator(new Color(255, 50, 50)); // Red
-        // beatLed = new LedIndicator(new Color(50, 255, 50)); // Green
-        // barLed = new LedIndicator(new Color(50, 50, 255)); // Blue
-
-        // Setup panels
         setup();
-        setupLedIndicators();
 
-        // Register for timing events
         TimingBus.getInstance().register(this);
-        
-        // Reset timing display
+
         resetTimingCounters();
 
-        // Request initial session state through CommandBus
         SwingUtilities.invokeLater(() -> {
             CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
         });
     }
 
     private void setup() {
-        // Use a single horizontal box layout
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        // Use BorderLayout for the main container
+        setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
         
-        // 1. LED INDICATORS - Now first on the left
-        // JPanel ledPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        // ledPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-        // ledPanel.setAlignmentY(CENTER_ALIGNMENT);
+        // Create a main panel with GridBagLayout for more precise control
+        JPanel mainPanel = new JPanel(new BorderLayout());
         
-        // Use more descriptive labels for LEDs
-        // ledPanel.add(new JLabel("Tick"));
-        // ledPanel.add(tickLed);
-        // ledPanel.add(new JLabel("Beat"));
-        // ledPanel.add(beatLed);
-        // ledPanel.add(new JLabel("Bar"));
-        // ledPanel.add(barLed);
+        // Left panel - combines session and player info with no spacing
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.X_AXIS));
         
-        // add(ledPanel);
-        
-        // Add small spacer
-        // add(Box.createRigidArea(new Dimension(5, 0)));
-        
-        // 2. SESSION INFO GROUP
+        // 1. SESSION INFO GROUP - no right margin to eliminate space
         JPanel sessionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        // sessionPanel.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 1, Color.LIGHT_GRAY));
-        sessionPanel.setAlignmentY(CENTER_ALIGNMENT);
+        sessionPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         
         sessionIdLabel = new JLabel("Session:");
         sessionPanel.add(sessionIdLabel);
-        sessionIdField = createTextField(2);
+        sessionIdField = UIHelper.createTextField("", 2);
         sessionPanel.add(sessionIdField);
         
         playerCountLabel = new JLabel("Players:");
         sessionPanel.add(playerCountLabel);
-        playerCountField = createTextField(2);
+        playerCountField = UIHelper.createStatusField("", 2);
         sessionPanel.add(playerCountField);
         
-        add(sessionPanel);
+        leftPanel.add(sessionPanel);
         
-        // Add small spacer
-        // add(Box.createRigidArea(new Dimension(5, 0)));
-        
-        // 3. PLAYER INFO GROUP
+        // 2. PLAYER INFO GROUP - no left margin to eliminate space
         JPanel playerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        // playerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.LIGHT_GRAY));
-        playerPanel.setAlignmentY(CENTER_ALIGNMENT);
+        playerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         
         playerIdLabel = new JLabel("Player:");
         playerPanel.add(playerIdLabel);
-        playerIdField = createTextField(2);
+        playerIdField = UIHelper.createTextField("", 2);
         playerPanel.add(playerIdField);
         
         ruleCountLabel = new JLabel("Rules:");
         playerPanel.add(ruleCountLabel);
-        ruleCountField = createTextField(2);
+        ruleCountField = UIHelper.createTextField("", 2);
         playerPanel.add(ruleCountField);
         
-        add(playerPanel);
+        leftPanel.add(playerPanel);
         
-        // Add small spacer
-        // add(Box.createRigidArea(new Dimension(5, 0)));
+        // Add the left panel to the main panel
+        mainPanel.add(leftPanel, BorderLayout.WEST);
         
-        // 4. SITE INFO
-        JPanel sitePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        sitePanel.setAlignmentY(CENTER_ALIGNMENT);
+        // 3. MIDDLE PANEL for Site, Status, and Message - left aligned and filling available space
+        JPanel middlePanel = new JPanel(new GridLayout(1, 3, 10, 0));
+        
+        // 3a. SITE INFO (left-aligned)
+        JPanel sitePanel = new JPanel(new BorderLayout(3, 0));
         siteLabel = new JLabel("Site:");
-        sitePanel.add(siteLabel);
-        siteField = createTextField(8);
-        sitePanel.add(siteField);
+        sitePanel.add(siteLabel, BorderLayout.WEST);
+        siteField = UIHelper.createTextField("", 1);
+        sitePanel.add(siteField, BorderLayout.CENTER);
+        middlePanel.add(sitePanel);
         
-        add(sitePanel);
-        
-        // 5. STATUS
-        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        statusPanel.setAlignmentY(CENTER_ALIGNMENT);
+        // 3b. STATUS (left-aligned)
+        JPanel statusPanel = new JPanel(new BorderLayout(3, 0));
         statusLabel = new JLabel("Status:");
-        statusPanel.add(statusLabel);
-        statusField = createTextField(15);
-        statusPanel.add(statusField);
+        statusPanel.add(statusLabel, BorderLayout.WEST);
+        statusField = UIHelper.createTextField("", 1);
+        statusPanel.add(statusField, BorderLayout.CENTER);
+        middlePanel.add(statusPanel);
         
-        add(statusPanel);
-        
-        // 6. MESSAGE - takes more space
-        JPanel messagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        messagePanel.setAlignmentY(CENTER_ALIGNMENT);
+        // 3c. MESSAGE (left-aligned)
+        JPanel messagePanel = new JPanel(new BorderLayout(3, 0));
         messageLabel = new JLabel("Message:");
-        messagePanel.add(messageLabel);
-        messageField = createTextField(20);
-        messagePanel.add(messageField);
+        messagePanel.add(messageLabel, BorderLayout.WEST);
+        messageField = UIHelper.createTextField("", 1);
+        messagePanel.add(messageField, BorderLayout.CENTER);
+        middlePanel.add(messagePanel);
         
-        add(messagePanel);
+        // Add the middle panel to the main panel (it will fill available space)
+        mainPanel.add(middlePanel, BorderLayout.CENTER);
         
-        // Add a glue component to push the time to the right
-        add(Box.createHorizontalGlue());
-        
-        // 7. TIME - always on the far right
+        // 4. TIME panel on the far right
         JPanel timePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 0));
-        timePanel.setAlignmentY(CENTER_ALIGNMENT);
-        // timePanel.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.LIGHT_GRAY));
-        // timeLabel = new JLabel("T:B:M"); // Changed from "Time:"
-        // timePanel.add(timeLabel);
-        timeField = createTextField(7); // Increased to fit 00:00:00
+        timeField = UIHelper.createTextField("", 8);
         updateTimeDisplay(); // Initialize with zeros
         timePanel.add(timeField);
         
-        add(timePanel);
+        // Add the time panel to the main panel
+        mainPanel.add(timePanel, BorderLayout.EAST);
+        
+        // Add the main panel to the status bar
+        add(mainPanel, BorderLayout.CENTER);
         
         // Register with CommandBus
         getCommandBus().register(this);
     }
 
-    private JTextField createTextField(int columns) {
-        JTextField field = new JTextField(columns);
-        field.setEditable(false);
-        field.setMaximumSize(field.getPreferredSize());
-        field.setAlignmentY(CENTER_ALIGNMENT); // For BoxLayout vertical centering
-        return field;
-    }
-
-    // Update LED indicators appearance
-    private void setupLedIndicators() {
-        int ledSize = 14; // Slightly larger for better visibility
-        
-        // Initialize LEDs with consistent size
-        // tickLed.setPreferredSize(new Dimension(ledSize, ledSize));
-        // beatLed.setPreferredSize(new Dimension(ledSize, ledSize));
-        // barLed.setPreferredSize(new Dimension(ledSize, ledSize));
-        
-        // Ensure vertical alignment
-        // tickLed.setAlignmentY(CENTER_ALIGNMENT);
-        // beatLed.setAlignmentY(CENTER_ALIGNMENT);
-        // barLed.setAlignmentY(CENTER_ALIGNMENT);
-    }
-
-    @Override
     public void clearSite() {
         siteField.setText(" ");
     }
 
-    @Override
     public void setSite(String text) {
         siteField.setText(text);
     }
 
-    @Override
     public void clearMessage() {
         messageField.setText(" ");
     }
 
-    @Override
     public void setMessage(String text) {
         messageField.setText(text);
     }
 
-    @Override
     public void setStatus(String text) {
         statusField.setText(text);
         repaint();
     }
 
-    @Override
     public void clearStatus() {
         statusField.setText(" ");
     }
@@ -267,54 +196,72 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         if (action == null || action.getCommand() == null)
             return;
 
-        // Debug all commands received
-        // System.out.println("StatusBar received: " + action.getCommand());
-
         try {
             switch (action.getCommand()) {
-                case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED, Commands.SESSION_LOADED -> {
-                    if (action.getData() instanceof Session session) {
-                        updateSessionInfo(session);
+            case Commands.STATUS_UPDATE -> {
+                if (action.getData() instanceof StatusUpdate update) {
+                    // Update only the fields that are provided (non-null)
+                    if (update.site() != null) {
+                        setSite(update.site());
+                    }
+                    if (update.status() != null) {
+                        setStatus(update.status());
+                    }
+                    if (update.message() != null) {
+                        setMessage(update.message());
                     }
                 }
-                case Commands.PLAYER_SELECTED -> {
-                    if (action.getData() instanceof Player player) {
-                        System.out.println("StatusBar updating player info: " + player.getName());
-                        updatePlayerInfo(player);
+            }
+            case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED, Commands.SESSION_LOADED -> {
+                if (action.getData() instanceof Session session) {
+                    updateSessionInfo(session);
+                }
+            }
+            case Commands.PLAYER_SELECTED -> {
+                if (action.getData() instanceof Player player) {
+                    updatePlayerInfo(player);
+                }
+            }
+            case Commands.PLAYER_UNSELECTED -> {
+                clearPlayerInfo();
+            }
+            case Commands.TIMING_UPDATE -> {
+                if (action.getData() instanceof TimingUpdate update) {
+                    // Update timing values from the TimingUpdate record
+                    if (update.tick() != null) {
+                        tickCount = update.tick().intValue();
                     }
-                }
-                case Commands.PLAYER_UNSELECTED -> {
-                    System.out.println("StatusBar clearing player info");
-                    clearPlayerInfo();
-                }
-                case Commands.BASIC_TIMING_TICK -> {
-                    // flashTickLed();
+                    if (update.beat() != null) {
+                        beatCount = update.beat().intValue();
+                    }
+                    if (update.bar() != null) {
+                        barCount = update.bar().intValue();
+                    }
+                    if (update.part() != null) {
+                        partCount = update.part().intValue();
+                    }
                     
-                    // Increment tick count
-                    tickCount++;
+                    // Update the time display with all values
                     updateTimeDisplay();
                 }
-                case Commands.BASIC_TIMING_BEAT -> {
-                    // flashBeatLed();
-                    
-                    // Increment beat count and reset ticks
-                    beatCount++;
-                    tickCount = 0;
-                    updateTimeDisplay();
-                }
-                case Commands.BASIC_TIMING_BAR -> {
-                    // flashBarLed();
-                    
-                    // Increment bar count and reset beats
-                    barCount++;
-                    beatCount = 0;
-                    updateTimeDisplay();
-                }
-                case Commands.TRANSPORT_PLAY, Commands.TRANSPORT_STOP -> {
-                    resetTimingCounters();
-                }
-                default -> {
-                }
+            }
+            case Commands.TIMING_RESET -> {
+                resetTimingCounters();
+            }
+            case Commands.TRANSPORT_START -> {
+                resetTimingCounters();
+                setStatus("Playing");
+            }
+            case Commands.TRANSPORT_STOP -> {
+                resetTimingCounters();
+                setStatus("Stopped");
+            }
+            case Commands.TRANSPORT_RECORD -> {
+                setStatus("Recording");
+            }
+            default -> {
+                // No action needed for other commands
+            }
             }
         } catch (Exception e) {
             System.err.println("Error in StatusBar.onAction: " + e.getMessage());
@@ -350,9 +297,6 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         ruleCountField.setText("");
     }
 
-    /**
-     * Reset all timing counters and update display
-     */
     private void resetTimingCounters() {
         tickCount = 0;
         beatCount = 0;
@@ -360,64 +304,13 @@ public class StatusBar extends JPanel implements IBusListener, StatusConsumer {
         partCount = 0;
         updateTimeDisplay();
     }
-    
-    /**
-     * Format the time display in ticks:beats:bars format
-     */
+
     private void updateTimeDisplay() {
-        // Format as 00:00:00 (ticks:beats:bars)
-        String formattedTime = String.format("%02d:%02d:%02d:%02d", 
-                               tickCount, beatCount + 1, barCount + 1, partCount + 1);
-                               
-        // Update the time field on the Event Dispatch Thread
+        String formattedTime = String.format("%02d:%02d:%02d:%02d", tickCount, beatCount, barCount,
+                partCount);
+
         SwingUtilities.invokeLater(() -> {
             timeField.setText(formattedTime);
         });
-    }
-
-    private JComboBox<String> createRootNoteCombo() {
-        String[] keys = {
-                "C", "D", "E", "F", "G", "A", "B"
-        };
-
-        JComboBox<String> combo = new JComboBox<>(keys);
-        combo.setSelectedItem("C");
-        combo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        combo.setEnabled(true);
-
-        combo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED)
-                commandBus.publish(Commands.ROOT_NOTE_SELECTED, this, (String) combo.getSelectedItem());
-        });
-
-        return combo;
-    }
-
-    private JComboBox<String> createScaleCombo() {
-        String[] scaleNames = Scale.SCALE_PATTERNS.keySet()
-                .stream()
-                .sorted()
-                .toArray(String[]::new);
-
-        JComboBox<String> combo = new JComboBox<>(scaleNames);
-        combo.setSelectedItem("Chromatic");
-        combo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        combo.setEnabled(true);
-
-        combo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                String selectedScale = (String) combo.getSelectedItem();
-                int selectedIndex = combo.getSelectedIndex();
-                commandBus.publish(Commands.SCALE_SELECTED, this, selectedScale);
-                
-                if (selectedIndex == 0) {
-                    commandBus.publish(Commands.FIRST_SCALE_SELECTED, this, selectedScale);
-                } else if (selectedIndex == combo.getItemCount() - 1) {
-                    commandBus.publish(Commands.LAST_SCALE_SELECTED, this, selectedScale);
-                }
-            }
-        });
-
-        return combo;
     }
 }

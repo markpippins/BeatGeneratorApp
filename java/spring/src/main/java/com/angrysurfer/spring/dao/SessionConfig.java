@@ -21,7 +21,7 @@ public class SessionConfig implements Serializable {
     private Long swing;
     private Integer beatDivider;
     private Integer maxTracks;
-    private Long partLength;
+    private Integer partLength;
 
     public SessionConfig() {
     }

@@ -1,6 +1,6 @@
 package com.angrysurfer.core.config;
 
-import com.angrysurfer.core.util.LogManager;
+import com.angrysurfer.core.service.LogManager;
 
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;

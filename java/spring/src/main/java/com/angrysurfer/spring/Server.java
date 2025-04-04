@@ -28,14 +28,14 @@ public class Server {
     // return args -> {
     // // if (instruments.count() == 0)
     // File configFile = new File(configFilepath);
-    // System.out.println("Config file: " + configFile.getAbsolutePath());
+    // // System.out.println("Config file: " + configFile.getAbsolutePath());
     // if (configFile.exists()) {
     // try {
     // DeviceConfig.loadDefaults(configFilepath, dbUtils.getInstrumentFindAll(),
     // dbUtils.getInstrumentSaver(),
     // dbUtils.getCaptionSaver(), dbUtils.getControlCodeSaver(),
     // dbUtils.getPadSaver());
-    // System.out.println("Loaded default instruments");
+    // // System.out.println("Loaded default instruments");
     // // SystemConfig.saveCurrentStateToFile(configFilepath, instruments);
     // } catch (Exception e) {
     // e.printStackTrace();

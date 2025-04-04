@@ -6,9 +6,11 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -16,13 +18,15 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.angrysurfer.beats.widget.PlayersTable;
 import com.angrysurfer.beats.widget.PlayersTableModel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
@@ -36,10 +40,9 @@ import lombok.Setter;
 @Setter
 public class PlayersPanel extends JPanel {
 
-    private static final Logger logger = Logger.getLogger(PlayersPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PlayersPanel.class.getName());
 
     private final PlayersTable table;
-    private final StatusConsumer status;
     private final ButtonPanel buttonPanel;
     private final ContextMenuHelper contextMenu;
 
@@ -50,9 +53,8 @@ public class PlayersPanel extends JPanel {
     private JButton refreshButton;
     private JButton muteButton;
 
-    public PlayersPanel(StatusConsumer status) {
+    public PlayersPanel() {
         super(new BorderLayout());
-        this.status = status;
         this.table = new PlayersTable();  // Use our new PlayersTable class
         this.buttonPanel = new ButtonPanel(
                 Commands.PLAYER_ADD_REQUEST,
@@ -69,11 +71,11 @@ public class PlayersPanel extends JPanel {
 
         setupLayout();
         setupKeyboardShortcuts();
-        setupCommandBusListener();
+        setupConsolidatedBusListener();
         setupButtonListeners();
         setupContextMenu();
         setupSelectionListener(); // Add this line
-        
+
         // Check for active session and enable controls immediately
         Session currentSession = SessionManager.getInstance().getActiveSession();
         if (currentSession != null) {
@@ -165,7 +167,7 @@ public class PlayersPanel extends JPanel {
                 player.setMuted(!player.isMuted());
                 updatePlayerRow(player);
             } else {
-                logger.warning("No player selected to force event");
+                logger.error("No player selected to force event");
             }
         });
         rightButtonPanel.add(muteButton);
@@ -250,138 +252,127 @@ public class PlayersPanel extends JPanel {
         saveButton.setEnabled(hasActiveSession);
     }
 
-    private void setupCommandBusListener() {
-        TimingBus.getInstance().register(new IBusListener() {
+    private void setupConsolidatedBusListener() {
+        IBusListener consolidatedListener = new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null)
+                // Ignore null commands or events sent by this panel
+                if (action.getCommand() == null || action.getSender() == PlayersPanel.this) {
                     return;
-
-                String cmd = action.getCommand();
-                try {
-                    switch (cmd) {
-                        case Commands.BASIC_TIMING_TICK, Commands.PLAYER_TABLE_REFRESH_REQUEST -> {
-                            SwingUtilities.invokeLater(() -> {
-                                refreshPlayers(SessionManager.getInstance().getActiveSession().getPlayers());
-                            });
-                        }
-                    }
-                } catch (Exception e) {
-                    logger.severe("Error processing command: " + e.getMessage());
-                    e.printStackTrace();
                 }
-            }
-        });
-
-        CommandBus.getInstance().register(new IBusListener() {
-            @Override
-            public void onAction(Command action) {
-                if (action.getCommand() == null)
-                    return;
 
                 String cmd = action.getCommand();
                 try {
                     switch (cmd) {
-                        case Commands.SESSION_SELECTED, Commands.SESSION_LOADED -> {
-                            if (action.getData() instanceof Session session) {
-                                refreshPlayers(session.getPlayers());
-                                
-                                // After the players are refreshed, auto-select the first one if needed
-                                SwingUtilities.invokeLater(() -> PlayersPanel.this.selectFirstPlayerIfNoneSelected());
-                            }
+                        // case Commands.TIMING_TICK:
+                        case Commands.PLAYER_TABLE_REFRESH_REQUEST:
+                        case Commands.SESSION_SELECTED:
+                        case Commands.SESSION_CHANGED:
+                        case Commands.SESSION_LOADED: {
+                            SwingUtilities.invokeLater(() -> {
+                                if (action.getData() instanceof Session) {
+                                    final Session session = (Session) action.getData();
+                                    long now = System.currentTimeMillis();
+                                    if (session.getId() != null &&
+                                            session.getId().equals(lastProcessedSessionId) &&
+                                            (now - lastSessionEventTime) < EVENT_THROTTLE_MS) {
+                                        logger.debug("PlayersPanel: Ignoring duplicate session event: " + session.getId());
+                                        return;
+                                    }
+                                    lastProcessedSessionId = session.getId();
+                                    lastSessionEventTime = now;
+                                    
+                                    logger.info("PlayersPanel: Updating with new session: " + session.getId());
+                                    SwingUtilities.invokeLater(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            enableControls(true);
+                                            refreshPlayers(session.getPlayers());
+                                            selectFirstPlayerIfNoneSelected();
+                                        }
+                                    });
+                                }
+                            });
+                            break;
                         }
-
-                        // Handle player row refresh requests
-                        case Commands.PLAYER_ROW_REFRESH -> {
-                            if (action.getData() instanceof Player player) {
-                                logger.info("Refreshing player row: " + player.getName());
+                        case Commands.PLAYER_ROW_REFRESH: {
+                            if (action.getData() instanceof Player) {
+                                Player player = (Player) action.getData();
+                                logger.info("Refreshing player row for: " + player.getName());
                                 updatePlayerRow(player);
                             }
+                            break;
                         }
-
-                        // Handle individual property changes
-                        case Commands.NEW_VALUE_LEVEL, Commands.NEW_VALUE_NOTE,
-                                Commands.NEW_VALUE_SWING, Commands.NEW_VALUE_PROBABILITY,
-                                Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
-                                Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN,
-                                Commands.NEW_VALUE_SPARSE, Commands.PLAYER_UPDATED -> {
-
-                            // For these commands, the sender is the player that was updated
-                            if (action.getSender() instanceof Player player) {
-                                logger.info("Updating player row from " + cmd + ": " + player.getName());
-                                updatePlayerRow(player);
-                            }
-                        }
-
-                        // Handle player operations completed
-                        case Commands.PLAYER_ADDED -> {
+                        case Commands.PLAYER_ADDED: {
                             logger.info("Player added, refreshing table");
-                            // Refresh table with current session players
-                            Session session = SessionManager.getInstance().getActiveSession();
-                            if (session != null) {
-                                refreshPlayers(session.getPlayers());
-
-                                // Select the newly added player if available in data
-                                if (action.getData() instanceof Player player) {
-                                    selectPlayerByName(player.getName());
+                            Session activeSession = SessionManager.getInstance().getActiveSession();
+                            if (activeSession != null) {
+                                refreshPlayers(activeSession.getPlayers());
+                                if (action.getData() instanceof Player) {
+                                    Player player = (Player) action.getData();
+                                    selectPlayerById(player.getId());
                                 } else {
-                                    // If no specific player, select the last one
                                     selectLastPlayer();
                                 }
                             }
+                            break;
                         }
-
-                        case Commands.SHOW_PLAYER_EDITOR_OK -> {
+                        case Commands.SHOW_PLAYER_EDITOR_OK: {
                             logger.info("Player edited, refreshing table");
-                            Session session = SessionManager.getInstance().getActiveSession();
-                            if (session != null) {
-                                refreshPlayers(session.getPlayers());
-
-                                // Reselect the edited player
-                                if (action.getData() instanceof Player player) {
-                                    selectPlayerByName(player.getName());
-                                }
+                            Session activeSession = SessionManager.getInstance().getActiveSession();
+                            if (activeSession != null && action.getData() instanceof Player) {
+                                Player player = (Player) action.getData();
+                                refreshPlayers(activeSession.getPlayers());
+                                selectPlayerById(player.getId());
                             }
+                            break;
                         }
-
-                        case Commands.PLAYER_DELETED -> {
+                        case Commands.PLAYER_DELETED: {
                             logger.info("Player(s) deleted, refreshing table");
-                            Session session = SessionManager.getInstance().getActiveSession();
-                            if (session != null) {
-                                refreshPlayers(session.getPlayers());
-
-                                // Select closest available player or clear selection
+                            Session activeSession = SessionManager.getInstance().getActiveSession();
+                            if (activeSession != null) {
+                                refreshPlayers(activeSession.getPlayers());
                                 if (table.getRowCount() > 0) {
-                                    // Try to select same row index if possible
                                     int rowToSelect = Math.min(lastSelectedRow, table.getRowCount() - 1);
-                                    if (rowToSelect >= 0) {
-                                        table.setRowSelectionInterval(rowToSelect, rowToSelect);
-                                        handlePlayerSelection(rowToSelect);
-                                    }
+                                    table.setRowSelectionInterval(rowToSelect, rowToSelect);
+                                    handlePlayerSelection(rowToSelect);
                                 } else {
-                                    // No players left
-                                    CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this);
+                                    CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, PlayersPanel.this, null);
                                 }
                             }
+                            break;
                         }
-
-                        // Other cases...
-                        case Commands.SYSTEM_READY -> {
-                            // Let the UI settle first
-                            SwingUtilities.invokeLater(() -> {
-                                Session session = SessionManager.getInstance().getActiveSession();
-                                if (session != null && session.getPlayers() != null && !session.getPlayers().isEmpty()) {
-                                    PlayersPanel.this.selectFirstPlayerIfNoneSelected();
-                                }
-                            });
+                        case Commands.NEW_VALUE_LEVEL:
+                        case Commands.NEW_VALUE_NOTE:
+                        case Commands.NEW_VALUE_SWING:
+                        case Commands.NEW_VALUE_PROBABILITY:
+                        case Commands.NEW_VALUE_VELOCITY_MIN:
+                        case Commands.NEW_VALUE_VELOCITY_MAX:
+                        case Commands.NEW_VALUE_RANDOM:
+                        case Commands.NEW_VALUE_PAN:
+                        case Commands.NEW_VALUE_SPARSE:
+                        case Commands.PLAYER_UPDATED: {
+                            if (action.getSender() instanceof Player) {
+                                Player player = (Player) action.getSender();
+                                logger.info("Updating player row due to " + cmd + " for: " + player.getName());
+                                updatePlayerRow(player);
+                            }
+                            break;
                         }
-                    }
+                        default: {
+                            // Optionally log or ignore other commands
+                            break;
+                        }
+                    } // end switch
                 } catch (Exception e) {
-                    logger.severe("Error processing command: " + e.getMessage());
-                    e.printStackTrace();
+                    logger.error("Error processing command: " + e.getMessage(), e);
                 }
             }
-        });
+        };
+
+        // Register the single listener on both buses
+        TimingBus.getInstance().register(consolidatedListener);
+        CommandBus.getInstance().register(consolidatedListener);
     }
 
     // Add a field to track the last selected row
@@ -389,16 +380,16 @@ public class PlayersPanel extends JPanel {
 
     // Update the problematic methods
 
-    private void selectPlayerByName(String playerName) {
-        if (playerName == null)
+    private void selectPlayerById(Long playerId) {
+        if (playerId == null)
             return;
 
         PlayersTableModel model = table.getPlayersTableModel();
-        int nameColIndex = model.getColumnIndex(PlayersTableModel.COL_NAME);
+        int idColIndex = model.getColumnIndex(PlayersTableModel.COL_ID);
 
         for (int i = 0; i < model.getRowCount(); i++) {
-            String name = (String) model.getValueAt(i, nameColIndex);
-            if (playerName.equals(name)) {
+            Long id = (Long) model.getValueAt(i, idColIndex);
+            if (playerId.equals(id)) {
                 table.setRowSelectionInterval(i, i);
                 table.setLastSelectedRow(i);
                 table.handlePlayerSelection(i);
@@ -408,7 +399,6 @@ public class PlayersPanel extends JPanel {
             }
         }
     }
-
 
     private void setupKeyboardShortcuts() {
         // Make the table focusable
@@ -429,15 +419,27 @@ public class PlayersPanel extends JPanel {
         if (selectedPlayers.length > 0) {
             int confirm = JOptionPane.showConfirmDialog(
                     PlayersPanel.this,
-                    "Are you sure you want to delete the selected player(s)?",
+                    "Are you sure you want to delete the selected player" + 
+                    (selectedPlayers.length > 1 ? "s" : "") + "?",
                     "Confirm Delete",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.WARNING_MESSAGE);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                // Send just the selected players array
-                CommandBus.getInstance().publish(Commands.PLAYER_DELETE_REQUEST, this, selectedPlayers);
-                logger.info("Sent delete request for " + selectedPlayers.length + " players");
+                // Create a list of player IDs instead of player objects
+                List<Long> playerIds = new ArrayList<>();
+                for (Player player : selectedPlayers) {
+                    if (player != null && player.getId() != null) {
+                        playerIds.add(player.getId());
+                        logger.info("Adding player to delete list: " + player.getName() + 
+                                " (ID: " + player.getId() + ")");
+                    }
+                }
+                
+                // Send the IDs instead of player objects
+                CommandBus.getInstance().publish(Commands.PLAYER_DELETE_REQUEST, this, 
+                        playerIds.toArray(Long[]::new));
+                logger.info("Sent delete request for " + playerIds.size() + " players");
             }
         }
     }
@@ -482,15 +484,15 @@ public class PlayersPanel extends JPanel {
             logger.info("No row selected in players table");
             return null;
         }
-        
+
         return table.getPlayerAtRow(selectedRow);
     }
 
     private Player[] getSelectedPlayers() {
         int[] selectedRows = table.getSelectedRows();
         List<Player> players = new ArrayList<>();
-        
-        for (int row : selectedRows) {
+
+            for (int row : selectedRows) {
             Player player = table.getPlayerAtRow(row);
             if (player != null) {
                 players.add(player);
@@ -500,19 +502,87 @@ public class PlayersPanel extends JPanel {
         return players.toArray(new Player[0]);
     }
 
+    /**
+     * Refreshes the players table, preserving existing rows when possible
+     * and only adding/removing players as needed
+     */
     public void refreshPlayers(Set<Player> players) {
-        logger.info("Refreshing players table with " + (players != null ? players.size() : 0) + " players");
-        PlayersTableModel tableModel = table.getPlayersTableModel();
-        tableModel.setRowCount(0);
-
-        if (players != null && !players.isEmpty()) {
-            List<Player> sortedPlayers = new ArrayList<>(players);
-            Collections.sort(sortedPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-
-            for (Player player : sortedPlayers) {
-                logger.info("Adding player to table: " + player.getName() + " (ID: " + player.getId() + ")");
-                tableModel.addPlayerRow(player);
+        // Add check to prevent recursion
+        if (isRefreshing) {
+            logger.debug("Already refreshing players, skipping");
+            return;
+        }
+        
+        isRefreshing = true;
+        try {
+            logger.info("Refreshing players table with " + (players != null ? players.size() : 0) + " players");
+            PlayersTableModel tableModel = table.getPlayersTableModel();
+            
+            if (players == null || players.isEmpty()) {
+                // If no players, just clear the table
+                tableModel.setRowCount(0);
+                return;
             }
+            
+            // Create a map of player IDs to players for the new set
+            Map<Long, Player> newPlayerMap = new HashMap<>();
+            for (Player player : players) {
+                if (player != null && player.getId() != null) {
+                    newPlayerMap.put(player.getId(), player);
+                }
+            }
+            
+            // Get existing players in the table
+            Set<Long> existingPlayerIds = new HashSet<>();
+            int idColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_ID);
+            
+            // First update existing rows and mark for deletion
+            List<Integer> rowsToRemove = new ArrayList<>();
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                Long playerId = (Long) tableModel.getValueAt(i, idColIndex);
+                
+                if (playerId != null) {
+                    existingPlayerIds.add(playerId);
+                    
+                    if (newPlayerMap.containsKey(playerId)) {
+                        // Player still exists - update this row
+                        Player updatedPlayer = newPlayerMap.get(playerId);
+                        updatePlayerRow(updatedPlayer);
+                        // Remove from map since we've handled it
+                        newPlayerMap.remove(playerId);
+                    } else {
+                        // Player no longer exists - mark row for removal
+                        rowsToRemove.add(i);
+                    }
+                }
+            }
+            
+            // Remove rows for deleted players (in reverse order to maintain indices)
+            Collections.sort(rowsToRemove, Collections.reverseOrder());
+            for (int rowIndex : rowsToRemove) {
+                tableModel.removeRow(rowIndex);
+            }
+            
+            // Add rows for new players
+            if (!newPlayerMap.isEmpty()) {
+                List<Player> newPlayers = new ArrayList<>(newPlayerMap.values());
+                Collections.sort(newPlayers, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                
+                for (Player newPlayer : newPlayers) {
+                    logger.info("Adding new player to table: " + newPlayer.getName() + " (ID: " + newPlayer.getId() + ")");
+                    tableModel.addPlayerRow(newPlayer);
+                }
+                
+                // Re-sort the entire table
+                table.sortTable();
+            }
+            
+            // If removing players removed the selection, select another player if available
+            if (!rowsToRemove.isEmpty() && table.getSelectedRow() < 0 && table.getRowCount() > 0) {
+                selectFirstPlayerIfNoneSelected();
+            }
+        } finally {
+            isRefreshing = false;
         }
     }
 
@@ -534,22 +604,8 @@ public class PlayersPanel extends JPanel {
             Player player = null;
 
             if (row >= 0) {
-                // Convert row index to model index if table is sorted
-                int modelRow = table.convertRowIndexToModel(row);
-                // Get player name from the first column
-                String playerName = (String) table.getValueAt(modelRow,
-                        table.getColumnIndex(PlayersTableModel.COL_NAME));
-
-                // Find player in the current session
-                Session session = SessionManager.getInstance().getActiveSession();
-                if (session != null && session.getPlayers() != null) {
-                    for (Player p : session.getPlayers()) {
-                        if (p.getName().equals(playerName)) {
-                            player = p;
-                            break;
-                        }
-                    }
-                }
+                // Get player directly from table helper method (which now uses ID)
+                player = table.getPlayerAtRow(row);
             }
 
             // Log selection for debugging
@@ -568,7 +624,7 @@ public class PlayersPanel extends JPanel {
                 CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
             }
         } catch (Exception ex) {
-            logger.severe("Error in player selection: " + ex.getMessage());
+            logger.error("Error in player selection: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
@@ -578,18 +634,18 @@ public class PlayersPanel extends JPanel {
         if (row < 0 || table.getRowCount() <= row) {
             return null;
         }
-
+        
         try {
             // Convert view index to model index in case of sorting/filtering
             int modelRow = table.convertRowIndexToModel(row);
-
+            
             // Get the player name from the Name column
             String playerName = (String) table.getValueAt(
                     modelRow, table.getColumnIndex(PlayersTableModel.COL_NAME));
-
+            
             // Get the current session
             Session currentSession = SessionManager.getInstance().getActiveSession();
-
+            
             if (currentSession != null && currentSession.getPlayers() != null) {
                 // Find the player with the matching name
                 return currentSession.getPlayers().stream()
@@ -598,9 +654,9 @@ public class PlayersPanel extends JPanel {
                         .orElse(null);
             }
         } catch (Exception e) {
-            logger.severe("Error getting player at row: " + e.getMessage());
+            logger.error("Error getting player at row: " + e.getMessage());
         }
-
+        
         return null;
     }
 
@@ -623,4 +679,12 @@ public class PlayersPanel extends JPanel {
             table.handlePlayerSelection(0);
         }
     }
+
+    // Add this field to the class
+    private boolean isRefreshing = false;
+
+    // Add this field to PlayersPanel
+    private Long lastProcessedSessionId = null;
+    private long lastSessionEventTime = 0;
+    private static final long EVENT_THROTTLE_MS = 100;
 }

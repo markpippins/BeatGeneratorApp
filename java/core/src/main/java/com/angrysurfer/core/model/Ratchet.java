@@ -1,19 +1,12 @@
 package com.angrysurfer.core.model;
 
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.util.Operator;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.service.PlayerExecutor;
-import com.angrysurfer.core.service.SequencerManager;
-import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.core.util.Comparison;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -28,13 +21,18 @@ public class Ratchet extends Strike {
     private double targetTick;
 
     public Ratchet(Player parent, double offset, long interval, int part) {
+        logger.info("Creating new Ratchet - parent: {}, offset: {}, interval: {}, part: {}", parent.getName(), offset,
+                interval, part);
 
-        logger.info("Creating new Ratchet - parent: %s, offset: %d, interval: %d, part: %d",
-                parent.getName(), offset, interval, part);
-
+        // Set parent and session first
         setParent(parent);
-        setSession(getParent().getSession());
-        setNote(getParent().getNote());
+        setSession(parent.getSession());
+
+        // Now we can safely use the session
+        Long ratchets = getSession().getPlayers().stream().filter(p -> p instanceof Ratchet).count() + 1;
+
+        setId(9000 + ratchets);
+        setRootNote(getParent().getRootNote());
         setInstrument(getParent().getInstrument());
         setChannel(getParent().getChannel());
         setSubDivisions(getParent().getSubDivisions());
@@ -52,46 +50,61 @@ public class Ratchet extends Strike {
         setPreset(getParent().getPreset());
         setEnabled(true);
 
-        Long ratchets = ((Session) getSession()).getPlayers().stream().filter(p -> p instanceof Ratchet)
-                .count();
-        setId(-1 - ratchets);
-        setName(getParent().getName()
-                + String.format(getParent().getPlayerClassName(),
-                        ((Session) getParent().getSession()).getPlayers().size()));
+        setName(getParent().getName() + " [R]");
         targetTick = getSession().getTickCount() + offset;
         logger.debug("Adding rule - tick: {}, part: {}", targetTick, part);
         getRules().add(new Rule(Comparison.TICK_COUNT, Operator.EQUALS, targetTick, part));
 
-        synchronized (((Session) getSession()).getPlayers()) {
-            synchronized (((Session) getSession()).getPlayers()) {
-                ((Session) getSession()).getPlayers().add(this);
-                ((Session) getSession()).getRemoveList().add(this);
-            }
+        synchronized (getSession().getPlayers()) {
+            getSession().getPlayers().add(this);
+            getSession().getRemoveList().add(this);
+
+            // Explicitly publish that this player was added
+            CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, this);
+            logger.info("Published PLAYER_ADDED for Ratchet: {}", getName());
         }
 
         CommandBus.getInstance().register(this);
         logger.info("New Ratchet created: {}", this);
         TimingBus.getInstance().register(this);
         logger.info("New Ratchet registered with TimingBus: {}", this);
+
+        // Publish a command that a new player was added
+        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, this);
     }
 
     @Override
-    public void onTick(long tick, long bar) {
-        logger.debug("onTick() - tick: {}, bar: {}", tick, bar);
-        if (isProbable())
-            drumNoteOn((long) (getNote() + getSession().getNoteOffset()));
+    public void onTick(long tick, double beat, long bar, long part, long tickCount, long beatCount, long barCount, long partCount) {
+
+        if (isProbable()) {
+            drumNoteOn((long) (getRootNote() + getSession().getNoteOffset()));
+        }
+
+        if (tickCount > targetTick + 1) {
+            // First publish that this player is being deleted
+            CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this, this);
+            logger.info("Published PLAYER_DELETED for Ratchet: {}", getName());
+
+            // Then remove from session
+            getSession().getPlayers().remove(this);
+            CommandBus.getInstance().unregister(this);
+            TimingBus.getInstance().unregister(this);
+        }
     }
 
     public boolean shouldPlay() {
-        double tick = SequencerManager.getInstance().getCurrentTick();
-        boolean result = tick >= targetTick;
-        if (result) {
-            // Remove this ratchet from the session
-            // SessionManager.getInstance().getCurrentSession().getPlayers().remove(this);
-            // setEnabled(false);
-            // TimingBus.getInstance().unregister(this);
-            // CommandBus.getInstance().unregister(this);
-        }
-        return result;
+        double tick = getSession().getTick();
+        return tick >= targetTick && tick < targetTick + 1;
     }
+
+    // @Override
+    // public void onAction(Command action) {
+    //     if (action.getCommand() == Commands.TIMING_TICK) {
+    //         // if (shouldPlay()) {
+    //         //     onTick(getSession().getTick(), getSession().getBeat(), getSession().getBar(),
+    //         //             getSession().getPart(), getSession().getTickCount(), getSession().getBeatCount(), getSession().getBarCount(),
+    //         //             getSession().getPartCount());
+    //         // }
+    //     }
+    // }
 }

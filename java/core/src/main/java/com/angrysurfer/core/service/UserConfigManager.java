@@ -1,12 +1,14 @@
 package com.angrysurfer.core.service;
 
 import java.util.List;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.UserConfig;
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.redis.UserConfigHelper;
 
@@ -17,7 +19,7 @@ import lombok.Setter;
 @Setter
 public class UserConfigManager {
 
-    private static final Logger logger = Logger.getLogger(UserConfigManager.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(UserConfigManager.class.getName());
     private static UserConfigManager instance;
     private final UserConfigHelper configHelper;
     private final CommandBus commandBus = CommandBus.getInstance();
@@ -49,7 +51,7 @@ public class UserConfigManager {
             commandBus.publish(Commands.USER_CONFIG_LOADED, this, this.currentConfig);
         } else {
             this.currentConfig = new UserConfig();
-            logger.warning("No user configuration found in Redis");
+            logger.error("No user configuration found in Redis");
         }
     }
 
@@ -71,7 +73,7 @@ public class UserConfigManager {
         commandBus.publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
     }
 
-    public List<Instrument> getInstruments() {
+    public List<InstrumentWrapper> getInstruments() {
         return currentConfig.getInstruments();
     }
 
@@ -79,21 +81,21 @@ public class UserConfigManager {
         if (this.currentConfig.getInstruments() == null || getCurrentConfig().getInstruments().isEmpty()) {
             // Load instruments from Redis if config doesn't have them
             try {
-                List<Instrument> instruments = RedisService.getInstance().findAllInstruments();
+                List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
                 if (instruments != null && !instruments.isEmpty()) {
                     getCurrentConfig().setInstruments(instruments);
                     saveConfiguration(getCurrentConfig());
                     logger.info("Loaded " + instruments.size() + " instruments from Redis");
                 }
             } catch (Exception e) {
-                logger.warning("Error loading instruments: " + e.getMessage());
+                logger.error("Error loading instruments: " + e.getMessage());
             }
         }
     }
 
     // Add a method to update an instrument in the config
-    public void updateInstrument(Instrument instrument) {
-        List<Instrument> instruments = currentConfig.getInstruments();
+    public void updateInstrument(InstrumentWrapper instrument) {
+        List<InstrumentWrapper> instruments = currentConfig.getInstruments();
 
         // Find and replace the existing instrument or add if not found
         boolean updated = false;
@@ -118,7 +120,7 @@ public class UserConfigManager {
 
     // Add a method to remove an instrument from the config
     public void removeInstrument(Long instrumentId) {
-        List<Instrument> instruments = currentConfig.getInstruments();
+        List<InstrumentWrapper> instruments = currentConfig.getInstruments();
 
         if (instruments != null) {
             boolean removed = instruments.removeIf(i -> i.getId().equals(instrumentId));

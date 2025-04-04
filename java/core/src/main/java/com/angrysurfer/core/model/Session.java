@@ -15,16 +15,16 @@ import javax.sound.midi.MidiUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.sequencer.LowLatencyMidiClock;
+import com.angrysurfer.core.sequencer.MidiClockSource;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.SequencerManager;
-import com.angrysurfer.core.util.Constants;
-import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Transient;
@@ -53,37 +53,38 @@ public class Session implements Serializable, IBusListener {
     @Transient
     private Set<Player> removeList = new HashSet<>();
 
+    // Replace Cyclers with simple variables initialized to 1 instead of 0
     @JsonIgnore
     @Transient
-    private Cycler beatCycler = new Cycler();
+    private long tick = 1;
 
     @JsonIgnore
     @Transient
-    private Cycler beatCounter = new Cycler(0);
+    private double beat = 1.0;
 
     @JsonIgnore
     @Transient
-    private Cycler barCycler = new Cycler();
+    private long bar = 1;
 
     @JsonIgnore
     @Transient
-    private Cycler barCounter = new Cycler(0);
+    private long part = 1;
 
     @JsonIgnore
     @Transient
-    private Cycler partCycler = new Cycler();
+    private long tickCount = 0;
 
     @JsonIgnore
     @Transient
-    private Cycler partCounter = new Cycler(0);
+    private long beatCount = 0;
 
     @JsonIgnore
     @Transient
-    private Cycler tickCycler = new Cycler();
+    private long barCount = 0;
 
     @JsonIgnore
     @Transient
-    private Cycler tickCounter = new Cycler(0);
+    private long partCount = 0;
 
     @Transient
     private boolean done = false;
@@ -100,7 +101,7 @@ public class Session implements Serializable, IBusListener {
     private Integer bars = Constants.DEFAULT_BAR_COUNT;
     private Integer beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
     private Integer beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
-    private Long partLength = Constants.DEFAULT_PART_LENGTH;
+    private Integer partLength = Constants.DEFAULT_PART_LENGTH;
     private Integer maxTracks = Constants.DEFAULT_MAX_TRACKS;
     private Long songLength = Constants.DEFAULT_SONG_LENGTH;
     private Long swing = Constants.DEFAULT_SWING;
@@ -108,7 +109,10 @@ public class Session implements Serializable, IBusListener {
     private Float tempoInBPM = Constants.DEFAULT_BPM;
     private Integer loopCount = Constants.DEFAULT_LOOP_COUNT;
     private Integer parts = Constants.DEFAULT_PART_COUNT;
-    private Double noteOffset = 0.0;
+    private Integer noteOffset = 0;
+
+    private String name;
+    private String notes = "Session Notes";
 
     @Transient
     private boolean paused = false;
@@ -117,8 +121,34 @@ public class Session implements Serializable, IBusListener {
     @JsonIgnore
     private Set<MuteGroup> muteGroups = new HashSet<>();
 
+    @JsonIgnore
+    @Transient
     private CommandBus commandBus = CommandBus.getInstance();
+
+    @JsonIgnore
+    @Transient
     private TimingBus timingBus = TimingBus.getInstance(); // Add this
+
+    @JsonIgnore
+    @Transient
+    private final MidiClockSource sequencerManager = new MidiClockSource();
+
+    // Consumer for tick callbacks (replacing CyclerListener)
+    // @JsonIgnore
+    // @Transient
+    // private Consumer<Long> tickListener;
+    // Add these fields to the class
+    @JsonIgnore
+    @Transient
+    private Set<IBusListener> tickListeners = new HashSet<>();
+
+    // For better performance, track active players separately
+    @JsonIgnore
+    @Transient
+    private Set<Player> activePlayers = new HashSet<>();
+
+    // FindAll<ControlCodeCaption> getCaptionFindAll();
+    private LowLatencyMidiClock lowLatencyMidiClock;
 
     public Session() {
         setSongLength(Long.MAX_VALUE);
@@ -126,39 +156,58 @@ public class Session implements Serializable, IBusListener {
         timingBus.register(this); // Add this registration
     }
 
-    public Session(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, long partLength) {
+    public Session(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, int partLength) {
         this.tempoInBPM = tempoInBPM;
         this.bars = bars;
         this.beatsPerBar = beatsPerBar;
         this.ticksPerBeat = ticksPerBeat;
         this.parts = parts;
-        this.partLength = partLength;
+        this.partLength = partLength > 0 ? partLength : 1; // Ensure partLength is at least 1
+
+        // Initialize counters
+        tick = 1;
+        beat = 1.0;
+        bar = 1;
+        part = 1;
+        // ... other initialization
+    }
+
+    public int getMetronomChannel() {
+        return 9;
     }
 
     public void addPlayer(Player player) {
         logger.info("addPlayer() - adding player: {}", player);
         if (isRunning())
             synchronized (getAddList()) {
-                getAddList().add(player);
-            }
-        else
+            getAddList().add(player);
+        } else {
             getPlayers().add(player);
+        }
 
         player.setSession(this);
         commandBus.publish(Commands.PLAYER_ADDED, this, player);
+
+        // Auto-register as tick listener if session is running
+        if (isRunning() && player.getEnabled()) {
+            registerTickListener(player);
+        }
     }
 
     public void removePlayer(Player player) {
         logger.info("addPlayer() - removing player: {}", player);
         if (isRunning())
             synchronized (getRemoveList()) {
-                getRemoveList().add(player);
-            }
-        else
+            getRemoveList().add(player);
+        } else {
             getPlayers().remove(player);
+        }
 
         player.setSession(null);
         commandBus.publish(Commands.PLAYER_ADDED, this, player);
+
+        // Unregister from tick listeners
+        unregisterTickListener(player);
     }
 
     public Player getPlayer(Long playerId) {
@@ -167,8 +216,10 @@ public class Session implements Serializable, IBusListener {
     }
 
     public Player getPlayerById(Long id) {
-        if (players == null || id == null) return null;
-        
+        if (players == null || id == null) {
+            return null;
+        }
+
         for (Player player : players) {
             if (id.equals(player.getId())) {
                 return player;
@@ -179,91 +230,104 @@ public class Session implements Serializable, IBusListener {
 
     public void setParts(Integer parts) {
         this.parts = parts;
-        this.partCycler.setLength((long) parts);
     }
 
     public void setBars(Integer bars) {
         this.bars = bars;
-        this.barCycler.setLength((long) bars);
     }
 
     public void setBeatsPerBar(Integer beatsPerBar) {
         this.beatsPerBar = beatsPerBar;
-        this.beatCycler.setLength((long) beatsPerBar);
     }
 
     public double getBeat() {
-        // // logger.debug("getBeat() - current beat: {}", getBeatCycler().get());
-        return getBeatCycler().get();
+        return beat;
     }
 
     public Long getBeatCount() {
-        // // logger.debug("getBeatCount() - current count: {}",
-        // getBeatCounter().get());
-        return getBeatCounter().get();
+        return beatCount;
     }
 
     public Long getTick() {
-        // logger.debug("getTick() - current tick: {}", getTickCycler().get());
-        return getTickCycler().get();
+        return tick;
     }
 
     public Long getTickCount() {
-        // logger.debug("getTickCount() - current count: {}", getTickCounter().get());
-        return getTickCounter().get();
+        return tickCount;
     }
 
     public Long getBar() {
-        // logger.debug("getBar() - current bar: {}", getBarCycler().get());
-        return getBarCycler().get();
+        return bar;
     }
 
     public Long getBarCount() {
-        // logger.debug("getBarCount() - current count: {}", getBarCounter().get());
-        return getBarCounter().get();
-    }
-
-    public void setBars(int bars) {
-        logger.info("setBars() - new value: {}", bars);
-        this.bars = bars;
-        getBarCycler().setLength((long) bars);
+        return barCount;
     }
 
     public Long getPart() {
-        // logger.debug("getPart() - current part: {}", getPartCycler().get());
-        return getPartCycler().get();
+        return part;
     }
 
     public Long getPartCount() {
-        // logger.debug("getPartCount() - current count: {}", getPartCounter().get());
-        return getPartCounter().get();
+        return partCount;
     }
 
-    public void setParts(int parts) {
-        logger.info("setParts() - new value: {}", parts);
-        this.parts = parts;
-        this.partCycler.setLength((long) parts);
-    }
-
-    public void setPartLength(long partLength) {
+    public void setPartLength(int partLength) {
         this.partLength = partLength;
+        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, this);
     }
 
+    /**
+     * Make this a complete reset of all state
+     */
     public void reset() {
-        logger.info("reset() - resetting all cyclers and counters");
-        getTickCycler().reset();
-        getBeatCycler().reset();
-        getBarCycler().reset();
-        getPartCycler().reset();
+        // System.out.println("Session: Resetting session state");
 
-        getTickCounter().reset();
-        getBeatCounter().reset();
-        getBarCounter().reset();
-        getPartCounter().reset();
+        // Reset all position variables to 1 - consistent starting points
+        tick = 1;
+        beat = 1.0;
+        bar = 1;
+        part = 1; // Always start at part 1
 
-        getAddList().clear();
-        getRemoveList().forEach(r -> getPlayers().remove(r));
-        getRemoveList().clear();
+        // Counters still start at 0
+        tickCount = 0;
+        beatCount = 0;
+        barCount = 0;
+        partCount = 0;
+        // System.out.println("Session: All counters reset");
+        // Reset player state
+        if (getPlayers() != null) {
+            // System.out.println("Session: Resetting " + getPlayers().size() + " players");
+            getPlayers().forEach(p -> {
+                if (p.getSkipCycler() != null) {
+                    p.getSkipCycler().reset();
+                }
+                p.setEnabled(false);
+                // System.out.println("Session: Reset player " + p.getId());
+            });
+        }
+
+        // Clear lists
+        if (addList != null) {
+            addList.clear();
+            // System.out.println("Session: Add list cleared");
+        }
+        if (removeList != null) {
+            removeList.clear();
+            // System.out.println("Session: Remove list cleared");
+        }
+
+        // Reset state flags
+        done = false;
+        isActive = false;
+        paused = false;
+        // System.out.println("Session: State flags reset");
+
+        // Clear mute groups
+        clearMuteGroups();
+        // System.out.println("Session: Mute groups cleared");
+
+        // System.out.println("Session: Reset complete");
     }
 
     private void clearMuteGroups() {
@@ -279,90 +343,88 @@ public class Session implements Serializable, IBusListener {
         return 1.0 / beatDivider;
     }
 
+    /**
+     * Clean up at the end of playback
+     */
     public void afterEnd() {
-        logger.info("afterEnd() - resetting cyclers and stopping all notes");
-        getTickCycler().reset();
-        getBeatCycler().reset();
-        getBarCycler().reset();
+        logger.info("afterEnd() - resetting position and stopping all notes");
 
-        IntStream.range(0, 127).forEach(note -> {
+        // Reset all position variables to 1
+        tick = 1;
+        beat = 1.0;
+        bar = 1;
+        part = 1;
+
+        // Reset counters to 0
+        tickCount = 0;
+        beatCount = 0;
+        barCount = 0;
+        partCount = 0;
+
+        // Reset granular beat tracking
+        setGranularBeat(0.0);
+
+        // Stop all notes
+        stopAllNotes();
+    }
+
+    /**
+     * Initialize all timing variables before session playback starts
+     */
+    public void beforeStart() {
+        reset();
+        // Add tick listener
+        // setupTickListener();
+
+        // Set up players
+        if (getPlayers() != null && !getPlayers().isEmpty()) {
+            // System.out.println("Session: Setting up " + getPlayers().size() + "
+            // players");
+            getPlayers().forEach(p -> {
+                // System.out.println("Session: Setting up player " + p.getId() + " (" +
+                // p.getName() + ")");
+                p.setEnabled(true);
+                if (p.getRules() != null) {
+                    // System.out.println(" - Player has " + p.getRules().size() + " rules");
+                }
+            });
+        } else {
+            System.out.println("Session: No players to set up");
+        }
+
+        // Register with timing bus
+        timingBus.register(this);
+        System.out.println("Session: Registered with timing bus");
+
+        // Set active state
+        isActive = true;
+        System.out.println("Session: Session marked as active");
+
+        // Publish session starting event
+        commandBus.publish(Commands.SESSION_STARTING, this);
+        System.out.println("Session: Published SESSION_STARTING event");
+    }
+
+    /**
+     * Helper method to stop all active notes
+     */
+    public void stopAllNotes() {
+        IntStream.range(0, 128).forEach(note -> {
             getPlayers().forEach(p -> {
                 try {
-                    p.getInstrument().noteOff(p.getChannel(), note, 0);
-                } catch (InvalidMidiDataException | MidiUnavailableException e) {
-                    logger.error("Error stopping note {} on channel {}: {}",
-                            note, p.getChannel(), e.getMessage(), e);
+                    if (p.getInstrument() != null) {
+                        p.getInstrument().noteOff(p.getChannel(), note, 0);
+                    }
+                } catch (Exception e) {
+                    logger.error("Error stopping note {} on channel {}: {}", note, p.getChannel(), e.getMessage(), e);
                 }
             });
         });
     }
 
-    public void beforeStart() {
-        logger.info("beforeStart() - initializing cycler lengths");
-        getTickCycler().setLength((long) getTicksPerBeat());
-        getBeatCycler().setLength((long) getBeatsPerBar());
-        getBarCycler().setLength((long) getBars());
-        getPartCycler().setLength((long) getParts());
-     
-        getPlayers().forEach(p -> p.getSkipCycler().setLength(p.getSkips()));
-    }
-
-    public void onStart() {
-        logger.info("onStart() - notifying beat and bar listeners");
-        getBeatCycler().getListeners().forEach(l -> l.starting());
-        getBarCycler().getListeners().forEach(l -> l.starting());
-    }
-
-    public void onStop() {
-        logger.info("onStop() - resetting beat cycler");
-        getBeatCycler().reset();
-    }
-
-    public void beforeTick() {
-        for (Player player : getPlayers())
-            player.setSession(this);
-    }
-
-    public void afterTick() {
-        logger.debug("afterTick() - granularBeat: {}", granularBeat);
-        granularBeat += 1.0 / getTicksPerBeat();
-
-        if (getTick() % getTicksPerBeat() == 0)
-            onBeatChange();
-
-        getTickCycler().advance();
-        getTickCounter().advance();
-    }
-
-    public void onBeatChange() {
-        logger.debug("onBeatChange() - current beat: {}", getBeat());
-        setGranularBeat(0.0);
-        getBeatCycler().advance();
-        getBeatCounter().advance();
-
-        if (getBeat() % getBeatsPerBar() == 0)
-            onBarChange();
-    }
-
-    public void onBarChange() {
-        logger.debug("onBarChange() - current bar: {}", getBar());
-        updatePlayerConfig();
-        if (getBar() % getPartLength() == 0)
-            onPartChange();
-
-        getBarCycler().advance();
-        getBarCounter().advance();
-    }
-
-    public void onPartChange() {
-        logger.debug("onPartChange() - current part: {}", getPart());
-        getPartCycler().advance();
-        getPartCounter().advance();
-    }
-
     private void updatePlayerConfig() {
-        logger.debug("updatePlayerConfig() - removing {} players, adding {} players",
-                getRemoveList().size(), getAddList().size());
+        logger.debug("updatePlayerConfig() - removing {} players, adding {} players", getRemoveList().size(),
+                getAddList().size());
         if (!getRemoveList().isEmpty()) {
             getPlayers().removeAll(getRemoveList());
             getRemoveList().clear();
@@ -375,14 +437,13 @@ public class Session implements Serializable, IBusListener {
     }
 
     public Float getBeatDuration() {
-        // logger.debug("getBeatDuration() - calculated duration: {}",
-        // 60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar());
+        logger.debug("getBeatDuration() - calculated duration: {}",
+                60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar());
         return 60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar();
     }
 
     public double getInterval() {
-        // logger.debug("getInterval() - calculated interval: {}",
-        // 60000 / getTempoInBPM() / getTicksPerBeat());
+        logger.debug("getInterval() - calculated interval: {}", 60000 / getTempoInBPM() / getTicksPerBeat());
         return 60000 / getTempoInBPM() / getTicksPerBeat();
     }
 
@@ -400,8 +461,9 @@ public class Session implements Serializable, IBusListener {
     }
 
     public boolean isRunning() {
-        // Query the SequencerManager directly instead of checking CommandBus
-        return SequencerManager.getInstance().isRunning();
+        boolean running = sequencerManager != null && sequencerManager.isRunning();
+        // System.out.println("Session.isRunning returning: " + running);
+        return running;
     }
 
     public Set<Player> getPlayers() {
@@ -417,180 +479,276 @@ public class Session implements Serializable, IBusListener {
                 && getPlayers().stream().anyMatch(p -> Objects.nonNull(p.getRules()) && p.getRules().size() > 0));
     }
 
-    // Update play() method for better integration with SessionManager
     public void play() {
-        // Initialize devices - keep this here since it's private
+        // System.out.println("Session: Starting play sequence for session " + getId());
+
+        reset();
+
         initializeDevices();
-        
-        // Let SessionManager handle the actual transport control through CommandBus
-        // We don't need to publish the command here - that's handled by UI or other components
+
+        // Add all enabled players to tickListeners
+        syncPlayersWithTickListeners();
+
+        // System.out.println("Session: " + players.size() + " players, " +
+        // tickListeners.size() + " tick listeners");
+        sequencerManager.startSequence();
     }
 
-    // Change from private to public
     public void initializeDevices() {
+        // System.out.println("Session: Initializing devices for session " + getId());
         List<MidiDevice> devices = DeviceManager.getMidiOutDevices();
+        // System.out.println("Session: Found " + devices.size() + " MIDI output
+        // devices");
 
+        if (getPlayers() == null || getPlayers().isEmpty()) {
+            // System.out.println("Session: No players to initialize!");
+            return;
+        }
+
+        // System.out.println("Session: Initializing " + getPlayers().size() + "
+        // players");
         getPlayers().forEach(p -> {
+            // System.out.println("Session: Initializing player " + p.getId() + " (" +
+            // p.getName() + ")");
             initializePlayerDevice(p, devices);
             initializePlayerPreset(p);
             p.setSession(this);
             p.setEnabled(true);
+            // System.out.println("Session: Player " + p.getId() + " initialized and
+            // enabled");
         });
+        // System.out.println("Session: Device initialization complete");
     }
 
-    private void initializePlayerDevice(Player player, List<MidiDevice> devices) {
-        Instrument instrument = player.getInstrument();
-        if (instrument != null) {
-            devices.stream()
-                    .filter(d -> d.getDeviceInfo().getName().equals(instrument.getDeviceName()))
-                    .findFirst()
-                    .ifPresent(device -> {
-                        try {
-                            if (!device.isOpen()) {
-                                device.open();
-                            }
-                            instrument.setDevice(device);
-                        } catch (MidiUnavailableException e) {
-                            logger.error("Failed to open device: " + e.getMessage(), e);
-                        }
-                    });
+    private void initializePlayerDevice(Player p, List<MidiDevice> devices) {
+        // System.out.println("Session: Initializing device for player " + p.getName());
+
+        if (p.getInstrument() == null) {
+            // System.out.println("WARNING: Player " + p.getName() + " has no instrument!");
+            return;
+        }
+
+        try {
+            // System.out.println("Session: Player " + p.getName() + " initialized with
+            // instrument " + p.getInstrument().getName());
+        } catch (Exception e) {
+            System.err.println("Error initializing player device: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     private void initializePlayerPreset(Player player) {
+        // System.out.println("Session: Setting preset for player " + player.getId());
         try {
             if (player.getPreset() > -1) {
-                player.getInstrument().programChange(
-                        player.getChannel(),
-                        player.getPreset(),
-                        0);
+                // System.out.println( "Session: Setting preset " + player.getPreset() + " on
+                // channel " + player.getChannel());
+                player.getInstrument().programChange(player.getChannel(), player.getPreset(), 0);
+                // System.out.println("Session: Preset set successfully");
+            } else {
+                // System.out.println("Session: No preset configured for player");
             }
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
-            logger.error("Failed to set preset: " + e.getMessage(), e);
+            System.err.println("Session: Failed to set preset: " + e.getMessage());
         }
     }
 
     public void stop() {
-        // Reset state
-        setPaused(false);
-        getBeatCycler().reset();
-        
-        // Disable all players when stopping
+        sequencerManager.stop();
+        stopAllNotes();
         getPlayers().forEach(p -> p.setEnabled(false));
 
-        // Delegate stop command to SequencerManager
-        commandBus.publish(Commands.TRANSPORT_STOP, this);
+        // Reset to 1 instead of 0
+        tick = 1;
+        beat = 1.0;
+        bar = 1;
+        part = 1;
+
+        // Reset counters to 0
+        tickCount = 0;
+        beatCount = 0;
+        barCount = 0;
+        partCount = 0;
+
+        setGranularBeat(0.0);
+
+        sequencerManager.cleanup();
     }
 
     @Override
     public void onAction(Command action) {
-        if (action.getCommand() == null)
-            return;
-
-        switch (action.getCommand()) {
-            case Commands.BEFORE_TICK -> {
-                beforeTick();
-            }
-            case Commands.AFTER_TICK -> {
-                afterTick();
-            }
-            case Commands.BEFORE_BEAT -> {
-                // No special before-beat processing yet
-            }
-            case Commands.BASIC_TIMING_BEAT -> {
-                onBeatChange();
-            }
-            case Commands.BEFORE_BAR -> {
-                // No special before-bar processing yet
-            }
-            case Commands.BASIC_TIMING_BAR -> {
-                onBarChange();
-            }
-            case Commands.UPDATE_TEMPO -> {
-                if (action.getData() instanceof Float tempo) {
-                    setTempoInBPM(tempo);
-                }
-            }
-            case Commands.UPDATE_TIME_SIGNATURE -> {
-                if (action.getData() instanceof int[] params && params.length == 2) {
-                    setBeatsPerBar(params[0]);
-                    setTicksPerBeat(params[1]);
-                }
+        if (action.getCommand() != null) {
+            // // System.out.println("Session received action: " + action.getCommand());
+            switch (action.getCommand()) {
+                case Commands.TIMING_PARAMETERS_CHANGED ->
+                    sequencerManager.updateTimingParameters(getTempoInBPM(),
+                            getTicksPerBeat(), getBeatsPerBar());
             }
         }
     }
 
-    // Add a method to sync Session parameters to SequencerManager
-    public void syncToSequencer() {
-        SequencerManager sequencerManager = SequencerManager.getInstance();
-        sequencerManager.updateTimingParameters(
-                getTempoInBPM(),
-                getTicksPerBeat(),
-                getBeatsPerBar());
+    // Refactored onTick method with fixed references
+    public void onTick() {
+
+        timingBus.publish(Commands.TIMING_UPDATE, this, new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+
+        try {
+            tick = tick % ticksPerBeat + 1;
+
+            tickCount++;
+
+            // Calculate beat from tick
+            long newBeat = tickCount / ticksPerBeat;
+            if (newBeat > beatCount) {
+                beat = (beat % beatsPerBar) + 1; // This cycles from 1 to parts                
+                beatCount = newBeat;
+            }
+
+            // Calculate bar from beat
+            long newBar = beatCount / beatsPerBar;
+            if (newBar > barCount) {
+                bar = (bar % bars) + 1; // This cycles from 1 to parts
+                barCount = newBar;
+            }
+
+            // Part calculations on bar change - fix to only increment at partLength
+            // boundaries
+            long newPart = barCount / partLength;
+            if (newPart > partCount) {
+                part = (part % parts) + 1; // This cycles from 1 to parts
+                partCount++;
+                logger.debug("Part changed to {} (partCount={}) at bar {}", part, partCount, barCount);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error in onTick", e);
+        }
     }
 
-    // Add setters that automatically sync when modified during playback
+    public void syncToSequencer() {
+        sequencerManager.updateTimingParameters(getTempoInBPM(), getTicksPerBeat(), getBeatsPerBar());
+    }
+
     public void setTempoInBPM(float tempoInBPM) {
         this.tempoInBPM = tempoInBPM;
 
-        // If currently playing, update the sequencer
         if (isRunning()) {
             syncToSequencer();
         }
+        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
     }
 
     public void setTicksPerBeat(int ticksPerBeat) {
         this.ticksPerBeat = ticksPerBeat;
-        getTickCycler().setLength((long) ticksPerBeat);
 
-        // If currently playing, update the sequencer
         if (isRunning()) {
             syncToSequencer();
         }
+        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
     }
 
     public void setBeatsPerBar(int beatsPerBar) {
         this.beatsPerBar = beatsPerBar;
-        getBeatCycler().setLength((long) beatsPerBar);
 
-        // If currently playing, update the sequencer
         if (isRunning()) {
             syncToSequencer();
         }
+        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
     }
 
-    // // Add this method to Session class
-    // public void updatePlayer(Player updatedPlayer) {
-    //     if (players == null) {
-    //         players = new LinkedHashSet<>();
-    //     }
-        
-    //     // Remove existing player with same ID if found
-    //     players.removeIf(p -> p.getId().equals(updatedPlayer.getId()));
-        
-    //     // Add the updated player
-    //     players.add(updatedPlayer);
-    // }
+    public void setBars(int bars) {
+        this.bars = bars;
 
-    /**
-     * Updates an existing player in the session or adds it if not present
-     * @param updatedPlayer The player with updated details
-     */
+        if (isRunning()) {
+            syncToSequencer();
+        }
+        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+    }
+
+    public void setParts(int parts) {
+        this.parts = parts;
+
+        if (isRunning()) {
+            syncToSequencer();
+        }
+        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+    }
+
     public void updatePlayer(Player updatedPlayer) {
         if (updatedPlayer == null || updatedPlayer.getId() == null) {
             return;
         }
-        
-        // Initialize players set if needed
+
         if (players == null) {
             players = new LinkedHashSet<>();
         }
-        
-        // Remove existing player with same ID
+
         players.removeIf(p -> p.getId().equals(updatedPlayer.getId()));
-        
-        // Add the updated player
+
         updatedPlayer.setSession(this);
         players.add(updatedPlayer);
+
+        // Update tick listener registration based on enabled state
+        if (updatedPlayer.getEnabled()) {
+            registerTickListener(updatedPlayer);
+        } else {
+            unregisterTickListener(updatedPlayer);
+        }
+
+        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+    }
+
+    /**
+     * Register a timing listener that needs every tick event
+     */
+    public void registerTickListener(IBusListener listener) {
+        if (listener != null) {
+            if (tickListeners == null) {
+                tickListeners = new HashSet<>();
+            }
+            tickListeners.add(listener);
+        }
+    }
+
+    /**
+     * Remove a timing listener
+     */
+    public void unregisterTickListener(IBusListener listener) {
+        if (listener != null && tickListeners != null) {
+            tickListeners.remove(listener);
+        }
+    }
+
+    // Add this method to Session class to sync players with tickListeners
+    private void syncPlayersWithTickListeners() {
+        if (tickListeners == null) {
+            tickListeners = new HashSet<>();
+        }
+
+        // Add all players to tickListeners
+        if (players != null) {
+            for (Player player : players) {
+                if (player.getEnabled()) {
+                    // Register player as a tick listener if not already registered
+                    registerTickListener(player);
+                }
+            }
+        }
+    }
+
+    public void startSession() {
+        // Initialize and start the low latency clock if not already done
+        if (lowLatencyMidiClock == null) {
+            lowLatencyMidiClock = new LowLatencyMidiClock(this);
+        }
+        lowLatencyMidiClock.start();
+        // ...other start initialization code...
+    }
+
+    public void stopSession() {
+        if (lowLatencyMidiClock != null) {
+            lowLatencyMidiClock.stop();
+        }
+        // ...other stop cleanup code...
     }
 }

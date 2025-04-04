@@ -4,41 +4,50 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter.SortKey;
+import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableRowSorter;
 
-import com.angrysurfer.beats.ColorUtils;
-import com.angrysurfer.beats.service.UIHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.core.util.Constants;
 
 public class PlayersTable extends JTable {
-    private static final Logger logger = Logger.getLogger(PlayersTable.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PlayersTable.class.getName());
 
     private final PlayersTableModel tableModel;
-    private final Set<String> flashingPlayerNames = new HashSet<>();
+    private final Set<Long> flashingPlayerIds = new HashSet<>();
     private Timer flashTimer;
     private final Color FLASH_COLOR = ColorUtils.coolBlue; // new Color(255, 255, 200); // Light yellow flash
     private final int FLASH_DURATION_MS = 500; // Flash duration in milliseconds
     private int lastSelectedRow = -1;
+    private ListSelectionListener selectionListener;
 
     private static final int[] BOOLEAN_COLUMNS = PlayersTableModel.getBooleanColumns();
     private static final int[] NUMERIC_COLUMNS = PlayersTableModel.getNumericColumns();
@@ -49,7 +58,9 @@ public class PlayersTable extends JTable {
 
         setupTable();
         setupSelectionListener();
-        setupMouseListener(); // Add this line
+        setupMouseListener();
+        setupMouseWheel();     // Add this line
+        setupCommandBusListener();
     }
 
     public PlayersTableModel getPlayersTableModel() {
@@ -57,18 +68,39 @@ public class PlayersTable extends JTable {
     }
 
     private void setupTable() {
-        // Set minimum and preferred widths for Name and Instrument columns  
+        // Hide the ID column
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setMinWidth(30);
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setMaxWidth(30);
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setWidth(0);
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setPreferredWidth(30);
+        
+        // Set column widths for Name column
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setMinWidth(100);
-        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT)).setMinWidth(100);
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setPreferredWidth(150);
+        
+        // Double the width of the Instrument column
+        int instrumentColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT);
+        getColumnModel().getColumn(instrumentColumnIndex).setMinWidth(120); // Increased from 100
+        getColumnModel().getColumn(instrumentColumnIndex).setPreferredWidth(120); // Doubled from 150
+        
+        // Reduce the Note column back to normal size - no longer showing drum names here
+        int noteColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_NOTE);
+        getColumnModel().getColumn(noteColumnIndex).setMinWidth(40); // Reduced from 60
+        getColumnModel().getColumn(noteColumnIndex).setPreferredWidth(60); // Reduced from 100
+        getColumnModel().getColumn(noteColumnIndex).setMaxWidth(80); // Reduced from 160
+        
+        // Keep the wider Preset column to fit preset names and drum names
+        int presetColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_PRESET);
+        getColumnModel().getColumn(presetColumnIndex).setMinWidth(80);
+        getColumnModel().getColumn(presetColumnIndex).setPreferredWidth(100);
+        getColumnModel().getColumn(presetColumnIndex).setMaxWidth(140);
 
-        // Set relative widths for columns
-        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setPreferredWidth(200);
-        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT)).setPreferredWidth(150);
-
-        // Set fixed widths for other columns
+        // Set fixed widths for other columns - skip Preset and Instrument columns
         for (int i = 2; i < getColumnCount(); i++) {
-            getColumnModel().getColumn(i).setMaxWidth(80);
-            getColumnModel().getColumn(i).setPreferredWidth(60);
+            if (i != presetColumnIndex && i != instrumentColumnIndex && i != noteColumnIndex) { 
+                getColumnModel().getColumn(i).setMaxWidth(80);
+                getColumnModel().getColumn(i).setPreferredWidth(60);
+            }
         }
 
         // Configure table appearance
@@ -87,9 +119,9 @@ public class PlayersTable extends JTable {
 
         // Save and restore column order
         SwingUtilities.invokeLater(
-                () -> UIHelper.getInstance().saveColumnOrder(this, Constants.PLAYER, PlayersTableModel.COLUMNS));
+                () -> UIHelper.saveColumnOrder(this, Constants.PLAYER, PlayersTableModel.COLUMNS));
         SwingUtilities.invokeLater(
-                () -> UIHelper.getInstance().restoreColumnOrder(this, Constants.PLAYER, PlayersTableModel.COLUMNS));
+                () -> UIHelper.restoreColumnOrder(this, Constants.PLAYER, PlayersTableModel.COLUMNS));
 
         // Set custom renderer for all rows - this handles centering numeric values internally
         setupCustomRowRenderer();
@@ -117,7 +149,7 @@ public class PlayersTable extends JTable {
                                 if (isPlayerFlashing(player)) {
                                     bgColor = isSelected ? FLASH_COLOR.darker() : FLASH_COLOR;
                                 } else if (player != null && player.isPlaying()) {
-                                    bgColor = isSelected ? ColorUtils.charcoalGray.darker() : ColorUtils.charcoalGray;
+                                    bgColor = isSelected ? ColorUtils.mutedRed.darker() : ColorUtils.fadedLime;
                                 } else if (isSelected) {
                                     bgColor = table.getSelectionBackground();
                                 }
@@ -149,7 +181,7 @@ public class PlayersTable extends JTable {
                 if (e.getFromIndex() != e.getToIndex()) {
                     logger.info("Column moved from " + e.getFromIndex() + " to " + e.getToIndex());
                     SwingUtilities.invokeLater(
-                            () -> UIHelper.getInstance().saveColumnOrder(PlayersTable.this, Constants.PLAYER,
+                            () -> UIHelper.saveColumnOrder(PlayersTable.this, Constants.PLAYER,
                                     PlayersTableModel.COLUMNS));
                 }
             }
@@ -178,12 +210,13 @@ public class PlayersTable extends JTable {
     }
 
     private void setupSelectionListener() {
-        getSelectionModel().addListSelectionListener(e -> {
+        selectionListener = e -> {
             if (!e.getValueIsAdjusting()) { // Only handle when selection is complete
                 int selectedRow = getSelectedRow();
                 handlePlayerSelection(selectedRow);
             }
-        });
+        };
+        getSelectionModel().addListSelectionListener(selectionListener);
     }
 
     private void setupMouseListener() {
@@ -203,6 +236,134 @@ public class PlayersTable extends JTable {
                 }
             }
         });
+    }
+
+    private void setupCommandBusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
+            @Override
+            public void onAction(Command action) {
+                if (action.getCommand() == null) return;
+                
+                switch (action.getCommand()) {
+                    case Commands.PLAYER_ADDED:
+                        if (action.getData() instanceof Player player) {
+                            System.out.println("PlayersTable received PLAYER_ADDED: " + player.getName());
+                            
+                            SwingUtilities.invokeLater(() -> {
+                                // Only add if not already in table
+                                if (findPlayerRowIndex(player) == -1) {
+                                    getPlayersTableModel().addPlayerRow(player);
+                                    System.out.println("Added player to table model: " + player.getName());
+                                    repaint();
+                                }
+                            });
+                        }
+                        break;
+                        
+                    case Commands.PLAYER_DELETED:
+                        if (action.getData() instanceof Player player) {
+                            System.out.println("PlayersTable received PLAYER_DELETED: " + player.getName());
+                            
+                            SwingUtilities.invokeLater(() -> {
+                                int rowIndex = findPlayerRowIndex(player);
+                                if (rowIndex >= 0) {
+                                    System.out.println("Removing player from table row " + rowIndex + ": " + player.getName());
+                                    getPlayersTableModel().removeRow(convertRowIndexToModel(rowIndex));
+                                    repaint();
+                                }
+                            });
+                        }
+                        break;
+                    
+                    case Commands.PLAYER_ROW_REFRESH:
+                        if (action.getData() instanceof Player player) {
+                            SwingUtilities.invokeLater(() -> {
+                                updatePlayerRow(player);
+                            });
+                        }
+                        break;
+                        
+                    case Commands.SESSION_UPDATED:
+                    case Commands.SESSION_SELECTED:
+                    case Commands.SESSION_LOADED:
+                        if (action.getData() instanceof Session session) {
+                            SwingUtilities.invokeLater(() -> {
+                                updateTableFromSession(session);
+                            });
+                        }
+                        break;
+
+                    case Commands.NEW_VALUE_VELOCITY_MIN:
+                    case Commands.NEW_VALUE_VELOCITY_MAX:
+                        if (action.getData() instanceof Object[] data && data.length >= 2) {
+                            if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
+                                SwingUtilities.invokeLater(() -> {
+                                    // Find player in table
+                                    int rowIndex = findPlayerRowIndexById(playerId);
+                                    if (rowIndex >= 0) {
+                                        // Get player
+                                        Player player = getPlayerAtRow(rowIndex);
+                                        if (player != null) {
+                                            // Update table row
+                                            updatePlayerRow(player);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        break;
+
+                    case Commands.PLAYER_SELECTED:
+                        if (action.getData() instanceof Player player) {
+                            SwingUtilities.invokeLater(() -> {
+                                // Find the row for this player
+                                int rowIndex = findPlayerRowIndex(player);
+                                if (rowIndex >= 0) {
+                                    // Select the row without triggering additional selection events
+                                    getSelectionModel().removeListSelectionListener(selectionListener);
+                                    
+                                    // Clear current selection and select the player's row
+                                    clearSelection();
+                                    setRowSelectionInterval(rowIndex, rowIndex);
+                                    
+                                    // Make sure the row is visible
+                                    scrollRectToVisible(getCellRect(rowIndex, 0, true));
+                                    
+                                    // Store as last selected row
+                                    lastSelectedRow = rowIndex;
+                                    
+                                    // Restore the selection listener
+                                    getSelectionModel().addListSelectionListener(selectionListener);
+                                    
+                                    // Request focus so keyboard navigation works
+                                    requestFocus();
+                                    
+                                    logger.info("Selected row " + rowIndex + " for player: " + player.getName());
+                                }
+                            });
+                        }
+                        break;
+                }
+            }
+        });
+    }
+
+    private void updateTableFromSession(Session session) {
+        // Clear existing rows
+        while (tableModel.getRowCount() > 0) {
+            tableModel.removeRow(0);
+        }
+        
+        // Add all players from the session
+        if (session != null && session.getPlayers() != null) {
+            for (Player player : session.getPlayers()) {
+                tableModel.addPlayerRow(player);
+            }
+        }
+        
+        // Sort and repaint
+        sortTable();
+        repaint();
     }
 
     public void handlePlayerSelection(int row) {
@@ -233,7 +394,7 @@ public class PlayersTable extends JTable {
                 CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
             }
         } catch (Exception ex) {
-            logger.severe("Error in player selection: " + ex.getMessage());
+            logger.error("Error in player selection: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
@@ -247,34 +408,34 @@ public class PlayersTable extends JTable {
             // Convert view index to model index in case of sorting/filtering
             int modelRow = convertRowIndexToModel(row);
 
-            // Get the player name from the Name column
-            String playerName = (String) tableModel.getValueAt(
-                    modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
+            // Get the player ID from the ID column
+            Long playerId = (Long) tableModel.getValueAt(
+                    modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_ID));
 
             // Get the current session
             Session currentSession = SessionManager.getInstance().getActiveSession();
 
             if (currentSession != null && currentSession.getPlayers() != null) {
-                // Find the player with the matching name
+                // Find the player with the matching ID
                 return currentSession.getPlayers().stream()
-                        .filter(p -> playerName.equals(p.getName()))
+                        .filter(p -> playerId.equals(p.getId()))
                         .findFirst()
                         .orElse(null);
             }
         } catch (Exception e) {
-            logger.severe("Error getting player at row: " + e.getMessage());
+            logger.error("Error getting player at row: " + e.getMessage());
         }
 
         return null;
     }
 
     public void flashPlayerRow(Player player) {
-        if (player == null || player.getName() == null) {
+        if (player == null || player.getId() == null) {
             return;
         }
 
         // Add player to flashing set
-        flashingPlayerNames.add(player.getName());
+        flashingPlayerIds.add(player.getId());
 
         // Cancel existing timer if one is running
         if (flashTimer != null && flashTimer.isRunning()) {
@@ -284,7 +445,7 @@ public class PlayersTable extends JTable {
         // Create new timer to end the flash effect
         flashTimer = new Timer(FLASH_DURATION_MS, e -> {
             // Clear flashing players
-            flashingPlayerNames.clear();
+            flashingPlayerIds.clear();
 
             // Repaint the table
             repaint();
@@ -302,12 +463,12 @@ public class PlayersTable extends JTable {
     }
 
     public boolean isPlayerFlashing(Player player) {
-        return player != null && player.getName() != null &&
-                flashingPlayerNames.contains(player.getName());
+        return player != null && player.getId() != null &&
+                flashingPlayerIds.contains(player.getId());
     }
 
-    public boolean isPlayerFlashing(String playerName) {
-        return flashingPlayerNames.contains(playerName);
+    public boolean isPlayerFlashing(Long playerId) {
+        return flashingPlayerIds.contains(playerId);
     }
 
     private boolean isInArray(int[] array, int value) {
@@ -326,7 +487,7 @@ public class PlayersTable extends JTable {
             // Find row index for this player
             int rowIndex = findPlayerRowIndex(player);
             if (rowIndex == -1) {
-                logger.warning("Player not found in table: " + player.getName());
+                logger.error("Player not found in table: " + player.getName());
                 return;
             }
 
@@ -335,7 +496,7 @@ public class PlayersTable extends JTable {
 
             // Update each column with fresh data
             tableModel.setValueAt(player.getName(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
-            tableModel.setValueAt(player.getNote(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NOTE));
+            tableModel.setValueAt(player.getRootNote(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NOTE));
             tableModel.setValueAt(player.getLevel(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_LEVEL));
             tableModel.setValueAt(player.isMuted(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_MUTE));
             tableModel.setValueAt(player.getProbability(), modelRow,
@@ -366,26 +527,43 @@ public class PlayersTable extends JTable {
 
             logger.info("Updated row " + rowIndex + " for player: " + player.getName());
         } catch (Exception e) {
-            logger.severe("Error updating player row: " + e.getMessage());
+            logger.error("Error updating player row: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private int findPlayerRowIndex(Player player) {
-        if (player == null)
-            return -1;
-
-        int nameColIndex = tableModel.getColumnIndex(PlayersTableModel.COL_NAME);
-
-        // Search by name and then verify by ID
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            String playerName = (String) tableModel.getValueAt(i, nameColIndex);
-            if (player.getName().equals(playerName)) {
-                return i;
+    public int findPlayerRowIndex(Player player) {
+        PlayersTableModel model = getPlayersTableModel();
+        if (player == null || model == null) return -1;
+        
+        for (int i = 0; i < model.getRowCount(); i++) {
+            Long rowPlayerId = (Long) model.getValueAt(i, 0);
+            if (rowPlayerId != null && rowPlayerId.equals(player.getId())) {
+                return convertRowIndexFromModel(i);
             }
         }
+        return -1;
+    }
 
-        return -1; // Not found
+    /**
+     * Find the view row index of a player by ID
+     * @param playerId ID of the player to find
+     * @return Row index in view coordinates, or -1 if not found
+     */
+    public int findPlayerRowIndexById(Long playerId) {
+        PlayersTableModel model = getPlayersTableModel();
+        if (playerId == null || model == null) return -1;
+        
+        // Search through model rows
+        for (int i = 0; i < model.getRowCount(); i++) {
+            Long rowPlayerId = (Long) model.getValueAt(i, model.getColumnIndex(PlayersTableModel.COL_ID));
+            if (rowPlayerId != null && rowPlayerId.equals(playerId)) {
+                // Convert to view coordinates
+                return convertRowIndexFromModel(i);
+            }
+        }
+        
+        return -1;
     }
 
     public int getLastSelectedRow() {
@@ -415,5 +593,76 @@ public class PlayersTable extends JTable {
      */
     public int getFlashDurationMs() {
         return FLASH_DURATION_MS;
+    }
+
+    /**
+     * Sorts the table by player name
+     */
+    public void sortTable() {
+        // Fix the unchecked cast warning
+        if (getRowSorter() instanceof TableRowSorter<?> sorter) {
+            int nameColumnIndex = getColumnIndex(PlayersTableModel.COL_NAME);
+            List<SortKey> sortKeys = new ArrayList<>();
+            sortKeys.add(new SortKey(nameColumnIndex, SortOrder.ASCENDING));
+            sorter.setSortKeys(sortKeys);
+            sorter.sort();
+        }
+    }
+
+    /**
+     * Converts a row index from the model's coordinate space to the view's coordinate space
+     * @param modelRow The row index in model coordinates
+     * @return The row index in view coordinates, or -1 if not found/visible
+     */
+    public int convertRowIndexFromModel(int modelRow) {
+        if (modelRow < 0) {
+            return -1;
+        }
+        
+        // Search through all rows in the view to find the one that maps to this model row
+        for (int i = 0; i < getRowCount(); i++) {
+            if (convertRowIndexToModel(i) == modelRow) {
+                return i;
+            }
+        }
+        
+        // Row might not be visible due to filtering
+        return -1;
+    }
+
+    private void setupMouseWheel() {
+        addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(java.awt.event.MouseWheelEvent e) {
+                // Get the parent scroll pane if available
+                java.awt.Container parent = getParent();
+                while (parent != null && !(parent instanceof javax.swing.JScrollPane)) {
+                    parent = parent.getParent();
+                }
+                
+                if (parent != null) {
+                    // We have a scroll pane, let's scroll it
+                    javax.swing.JScrollPane scrollPane = (javax.swing.JScrollPane) parent;
+                    
+                    // Get the current scroll position
+                    int currentPosition = scrollPane.getVerticalScrollBar().getValue();
+                    
+                    // Calculate scroll amount - faster when modifier keys are pressed
+                    int scrollAmount = e.getUnitsToScroll() * getRowHeight();
+                    if (e.isShiftDown()) {
+                        scrollAmount *= 3; // Scroll 3x faster with shift
+                    }
+                    if (e.isControlDown()) {
+                        scrollAmount *= 5; // Scroll 5x faster with control
+                    }
+                    
+                    // Apply the new scroll position
+                    scrollPane.getVerticalScrollBar().setValue(currentPosition + scrollAmount);
+                    
+                    // Consume the event so it doesn't propagate
+                    e.consume();
+                }
+            }
+        });
     }
 }

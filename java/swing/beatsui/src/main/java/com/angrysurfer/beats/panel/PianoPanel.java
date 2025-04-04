@@ -1,7 +1,7 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.Component;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -14,31 +14,33 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-import com.angrysurfer.beats.ColorUtils;
-import com.angrysurfer.beats.animation.ColorAnimator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.angrysurfer.beats.widget.ColorAnimator;
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.core.util.Scale;
 
-public class PianoPanel extends StatusProviderPanel {
+public class PianoPanel extends JPanel {
     private static final String DEFAULT_ROOT = "C";
     private String currentRoot = DEFAULT_ROOT; // Add root note tracking
     private String currentScale = "Chromatic"; // Default scale
@@ -48,23 +50,14 @@ public class PianoPanel extends StatusProviderPanel {
     private final ColorAnimator colorAnimator;
     private JButton activeButton = null; // Add this field to track active button
     private int currentOctave = 5; // Default octave (C5 = MIDI note 60)
-    private static final Logger logger = Logger.getLogger(PianoPanel.class.getName());
-
-    public PianoPanel() {
-        this(null);
-        setupActionBusListener();
-    }
+    private static final Logger logger = LoggerFactory.getLogger(PianoPanel.class.getName());
 
     private JButton followScaleBtn;
 
-    // private JButton followChordBtn;
-
-    public PianoPanel(StatusConsumer statusConsumer) {
-        super(null, statusConsumer);
-        // Increase width from 230 to 265 to accommodate the extra buttons
-        setPreferredSize(new Dimension(255, 80));
-        setMinimumSize(new Dimension(265, 80));
-        // setBorder(BorderFactory.createLineBorder(Color.lightGray, 1));
+    public PianoPanel() {
+        super(null); // Remove statusConsumer parameter
+        setPreferredSize(new Dimension(255, 60));
+        setMinimumSize(new Dimension(265, 60));
         setBorder(BorderFactory.createEmptyBorder(20,2,20,2));
         setOpaque(true);
         setBackground(ColorUtils.fadedOrange);
@@ -191,8 +184,8 @@ public class PianoPanel extends StatusProviderPanel {
 
                     // Add these new cases
                     case Commands.PLAYER_SELECTED -> {
-                        if (action.getData() instanceof Player player && player.getNote() != null) {
-                            int note = player.getNote().intValue();
+                        if (action.getData() instanceof Player player && player.getRootNote() != null) {
+                            int note = player.getRootNote().intValue();
                             logger.info("Piano panel: Player selected with note " + note);
                             updateOctave(note);
                         }
@@ -226,9 +219,14 @@ public class PianoPanel extends StatusProviderPanel {
 
     private void handleKeyPress(int note) {
         if (!heldNotes.contains(note)) {
+            // Update status bar using CommandBus
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE, 
+                this,
+                new StatusUpdate(getClass().getSimpleName(), "Playing", "Playing note " + note)
+            );
+            
             // Visual feedback
-            if (Objects.nonNull(statusConsumer))
-                statusConsumer.setStatus("Playing note " + note);
             highlightKey(note);
             // MIDI note on
             playNote(note);
@@ -246,16 +244,21 @@ public class PianoPanel extends StatusProviderPanel {
             unhighlightKey(note);
             // We don't need to send MIDI note-off here since PlayerManager
             // already scheduled it
-            if (Objects.nonNull(statusConsumer)) {
-                statusConsumer.setStatus("");
-            }
+            
+            // Clear status
+            CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
         } else {
             // Add to held notes and play
-            if (Objects.nonNull(statusConsumer)) {
-                Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-                String playerInfo = activePlayer != null ? " through " + activePlayer.getName() : " (no active player)";
-                statusConsumer.setStatus("Holding note " + note + playerInfo);
-            }
+            Player activePlayer = PlayerManager.getInstance().getActivePlayer();
+            String playerInfo = activePlayer != null ? " through " + activePlayer.getName() : " (no active player)";
+            
+            // Update status using CommandBus
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate(getClass().getSimpleName(), "Holding note " + note + playerInfo, null)
+            );
+            
             heldNotes.add(note);
             highlightKey(note);
             playNote(note);
@@ -269,8 +272,9 @@ public class PianoPanel extends StatusProviderPanel {
         if (!heldNotes.contains(note)) {
             unhighlightKey(note);
             stopNote(note);
-            if (Objects.nonNull(statusConsumer))
-                statusConsumer.setStatus("");
+            
+            // Clear status
+            CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
         }
     }
 
@@ -280,7 +284,6 @@ public class PianoPanel extends StatusProviderPanel {
             if (key != null) {
                 key.getModel().setPressed(true);
                 key.getModel().setArmed(true);
-                System.out.println("Highlighting key for note: " + note); // Debug
             }
         });
     }
@@ -291,18 +294,20 @@ public class PianoPanel extends StatusProviderPanel {
             if (key != null) {
                 key.getModel().setPressed(false);
                 key.getModel().setArmed(false);
-                System.out.println("Unhighlighting key for note: " + note); // Debug
             }
         });
     }
 
     private void playNote(int note) {
-        System.out.println("Playing note: " + note);
-        if (Objects.nonNull(statusConsumer)) {
-            Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-            String playerInfo = activePlayer != null ? " through " + activePlayer.getName() : " (no active player)";
-            statusConsumer.setStatus("Playing note " + note + playerInfo);
-        }
+        // Update status with player information
+        Player activePlayer = PlayerManager.getInstance().getActivePlayer();
+        String playerInfo = activePlayer != null ? " through " + activePlayer.getName() : " (no active player)";
+        
+        CommandBus.getInstance().publish(
+            Commands.STATUS_UPDATE,
+            this,
+            new StatusUpdate(getClass().getSimpleName(), "Playing note " + note + playerInfo, null)
+        );
 
         if (SessionManager.getInstance().isRecording()) {
             CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, note);
@@ -331,10 +336,8 @@ public class PianoPanel extends StatusProviderPanel {
     }
 
     private void stopNote(int note) {
-        System.out.println("Stopping note: " + note);
-        if (Objects.nonNull(statusConsumer)) {
-            statusConsumer.setStatus("");
-        }
+        // Clear status
+        CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
 
         // For held notes we don't want to send MIDI note-off since the PlayerManager
         // already schedules note-off. If we implement longer held notes, we'd need
@@ -523,11 +526,16 @@ public class PianoPanel extends StatusProviderPanel {
 
         // Play the notes as a chord if the scale button is active
         if (activeButton == followScaleBtn && !scaleNotesList.isEmpty()) {
-            // Update status to show what's being played
-            if (Objects.nonNull(statusConsumer)) {
-                statusConsumer.setStatus(String.format("Playing %s %s (Octave %d)",
-                        currentRoot, currentScale, currentOctave));
-            }
+            // Update status using CommandBus
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate(
+                    getClass().getSimpleName(),
+                    String.format("Playing %s %s (Octave %d)", currentRoot, currentScale, currentOctave),
+                    null
+                )
+            );
 
             // Play each note in the scale with slight delay for arpeggio effect
             final int[] delayMs = { 0 };

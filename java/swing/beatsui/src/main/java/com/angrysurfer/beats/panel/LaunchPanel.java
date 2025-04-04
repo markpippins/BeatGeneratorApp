@@ -18,29 +18,25 @@ import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-import com.angrysurfer.beats.ColorUtils;
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.StatusConsumer;
 
-public class LaunchPanel extends StatusProviderPanel implements IBusListener {
+public class LaunchPanel extends JPanel implements IBusListener {
 
     private final CommandBus commandBus = CommandBus.getInstance();
 
     private static final int[] LAUNCH_PAD_LABELS = {
-            13, 14, 15, 16, // inputs 1-4 map to 13,14,15,16
-            9, 10, 11, 12, // inputs 5-8 map to 9,10,11,12
-            5, 6, 7, 8, // inputs 9-12 map to 5,6,7,8
-            1, 2, 3, 4 // inputs 13-16 map to 1,2,3,4
+        13, 14, 15, 16, // inputs 1-4 map to 13,14,15,16
+        9, 10, 11, 12, // inputs 5-8 map to 9,10,11,12
+        5, 6, 7, 8, // inputs 9-12 map to 5,6,7,8
+        1, 2, 3, 4 // inputs 13-16 map to 1,2,3,4
     };
 
     public LaunchPanel() {
-        this(null);
-    }
-
-    public LaunchPanel(StatusConsumer statusConsumer) {
-        super(new BorderLayout(), statusConsumer);
+        super(new BorderLayout());
         commandBus.register(this);
         setup();
     }
@@ -62,13 +58,13 @@ public class LaunchPanel extends StatusProviderPanel implements IBusListener {
         gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         Color[] quadrantColors = {
-                ColorUtils.mutedRed, // Top-left
-                ColorUtils.mutedOlive, // Top-right
-                ColorUtils.warmMustard, // Bottom-left
-                ColorUtils.fadedOrange // Bottom-right
+            ColorUtils.mutedRed, // Top-left
+            ColorUtils.mutedOlive, // Top-right
+            ColorUtils.warmMustard, // Bottom-left
+            ColorUtils.fadedOrange // Bottom-right
         };
 
-        int[] count = { 1, 1, 1, 1 };
+        int[] count = {1, 1, 1, 1};
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 int quadrant = (row / 4) * 2 + (col / 4);
@@ -95,14 +91,17 @@ public class LaunchPanel extends StatusProviderPanel implements IBusListener {
                 Math.min(baseColor.getGreen() + 100, 255),
                 Math.min(baseColor.getBlue() + 100, 255));
 
-        final boolean[] isFlashing = { false };
+        final boolean[] isFlashing = {false};
 
         button.addActionListener(e -> {
             isFlashing[0] = true;
             button.repaint();
 
             // Update status when pad is pressed
-            setStatus("Pad " + button.getText() + " pressed");
+            CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("Launch Panel", "Playing", "Pad " + button.getText()));
 
             Timer timer = new Timer(100, evt -> {
                 isFlashing[0] = false;

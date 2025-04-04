@@ -2,14 +2,14 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.util.Objects;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -17,25 +17,27 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
+import com.angrysurfer.beats.widget.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.util.Scale;
 
 public class ControlPanel extends JPanel {
-    private static final Logger logger = Logger.getLogger(ControlPanel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(ControlPanel.class.getName());
     private static final int BUTTON_SIZE = 30;
-
-    private final StatusConsumer statusConsumer;
+    private static final int PANEL_HEIGHT = 100; // Increased from 90 to 100px
 
     // Dials
-    private Dial noteDial;
     private Dial levelDial;
     private NoteSelectionDial noteSelectionDial;
     private Dial swingDial;
@@ -46,6 +48,8 @@ public class ControlPanel extends JPanel {
     private Dial panDial;
     private Dial sparseDial;
 
+    private JButton nextScaleButton;
+    private JButton prevScaleButton;
     // Current active player
     private Player activePlayer;
 
@@ -56,86 +60,212 @@ public class ControlPanel extends JPanel {
     // Helper flag to prevent feedback when programmatically updating controls
     private boolean listenersEnabled = true;
 
-    public ControlPanel(StatusConsumer statusConsumer) {
-        super(new FlowLayout(FlowLayout.LEFT));
-        this.statusConsumer = statusConsumer;
+    public ControlPanel() {
+        // Use BorderLayout as the main layout for better component positioning
+        super(new BorderLayout());
 
-        initComponents();
+        // Set fixed height - updated to match new PANEL_HEIGHT
+        setMinimumSize(new Dimension(getMinimumSize().width, PANEL_HEIGHT));
+        setPreferredSize(new Dimension(getPreferredSize().width, PANEL_HEIGHT));
+        setMaximumSize(new Dimension(Short.MAX_VALUE, PANEL_HEIGHT));
+
+        // Create a wrapper panel for the left-side controls using FlowLayout
+        JPanel leftControlsWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        leftControlsWrapper.setOpaque(false); // Make transparent to show parent background
+
+        // Create the MiniLaunchPanel that will be positioned on the right
+        MiniLaunchPanel launchPanel = new MiniLaunchPanel();
+        
+        // Add all standard components to the left wrapper
+        initComponents(leftControlsWrapper);
+
+        // Create a vertical centering panel with BoxLayout for left controls
+        JPanel centeringPanel = new JPanel();
+        centeringPanel.setLayout(new BoxLayout(centeringPanel, BoxLayout.Y_AXIS));
+        centeringPanel.setOpaque(false);
+
+        // Add vertical glue at top for centering
+        centeringPanel.add(Box.createVerticalGlue());
+        // Add the controls wrapper
+        centeringPanel.add(leftControlsWrapper);
+        // Add vertical glue at bottom for centering
+        centeringPanel.add(Box.createVerticalGlue());
+
+        // Create a right panel with centered MiniLaunchPanel - ensure vertical centering
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setOpaque(false);
+        
+        // Add equal glue above and below to ensure perfect vertical centering
+        rightPanel.add(Box.createVerticalGlue());
+        
+        // Center the launch panel horizontally within its container
+        JPanel launchCenterPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        launchCenterPanel.setOpaque(false);
+        launchCenterPanel.add(launchPanel);
+        
+        rightPanel.add(launchCenterPanel);
+        rightPanel.add(Box.createVerticalGlue());
+        
+        // Add both panels to the main panel
+        add(centeringPanel, BorderLayout.CENTER);
+        add(rightPanel, BorderLayout.EAST);
+
         setupCommandBusListener();
     }
 
-    private void initComponents() {
-        setMinimumSize(new Dimension(getMinimumSize().width, 100));
-        setPreferredSize(new Dimension(getPreferredSize().width, 100));
+    private static final String PLAYER_PANEL = "PLAYER_PANEL";
+    private static final String SESSION_PANEL = "SESSION_PANEL";
 
+    private void initComponents(JPanel controlsWrapper) {
         // Add vertical adjust panels
-        add(createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP, Commands.PRESET_DOWN));
-        add(createVerticalAdjustPanel("Spread", "↑", "↓", Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN));
-        add(createScaleAdjustPanel());
+        JPanel presetPanel = UIHelper.createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP,
+                Commands.PRESET_DOWN);
+        presetPanel.setName(PLAYER_PANEL + "_PRESET");
+        controlsWrapper.add(presetPanel);
+
+        JPanel offsetPanel = UIHelper.createVerticalAdjustPanel("Offset", "↑", "↓", Commands.TRANSPOSE_UP,
+                Commands.TRANSPOSE_DOWN);
+        offsetPanel.setName(SESSION_PANEL + "_OFFSET");
+        controlsWrapper.add(offsetPanel);
+
+        controlsWrapper.add(createScaleAdjustPanel());
 
         // Add octave panel
-        JPanel navPanel = createOctavePanel();
-        add(navPanel);
+        JPanel octavePanel = createOctavePanel();
+        octavePanel.setName(PLAYER_PANEL + "_OCTAVE");
+        controlsWrapper.add(octavePanel);
 
-        // Create all dials
-        createAndAddDials();
+        // Create and add dials
+        createAndAddDials(controlsWrapper);
 
         // Initially disable dials
         disableDials();
-
-        // Add MiniLaunchPanel
-        add(new MiniLaunchPanel(null));
 
         // Set up control change listeners
         setupControlChangeListeners();
     }
 
-    private void createAndAddDials() {
-        var dialSize = new Dimension(90, 90);
+    /**
+     * Create and add dials to the control panel
+     */
+    private void createAndAddDials(JPanel controlsWrapper) {
+        // Create note selection dial with special sizing
         noteSelectionDial = new NoteSelectionDial();
-        noteSelectionDial.setPreferredSize(dialSize);
-        noteSelectionDial.setMinimumSize(dialSize);
-        noteSelectionDial.setMaximumSize(dialSize);
+        // Make slightly smaller to fit better in the panel - from 90x90 to 70x70
+        var noteDialSize = new Dimension(90, 90);
+        noteSelectionDial.setPreferredSize(noteDialSize);
+        noteSelectionDial.setMinimumSize(noteDialSize);
+        noteSelectionDial.setMaximumSize(noteDialSize);
         noteSelectionDial.setCommand(Commands.NEW_VALUE_NOTE);
-
-        noteDial = createDial("note", 60, 0, 127, 1);
-        noteDial.setCommand(Commands.NEW_VALUE_NOTE);
-
+        
+        // Regular dials
         levelDial = createDial("level", 100, 0, 127, 1);
         levelDial.setCommand(Commands.NEW_VALUE_LEVEL);
 
         panDial = createDial("pan", 64, 0, 127, 1);
         panDial.setCommand(Commands.NEW_VALUE_PAN);
-
+        panDial.setKnobColor(ColorUtils.mutedRed);
+        panDial.setGradientStartColor(panDial.getKnobColor().brighter());
+        panDial.setGradientEndColor(panDial.getKnobColor().darker());
+        
         velocityMinDial = createDial("minVelocity", 64, 0, 127, 1);
         velocityMinDial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
-
+        velocityMinDial.setKnobColor(ColorUtils.warmGray);
+        velocityMinDial.setGradientStartColor(velocityMinDial.getKnobColor().brighter());
+        velocityMinDial.setGradientEndColor(velocityMinDial.getKnobColor().darker());
+        
         velocityMaxDial = createDial("maxVelocity", 127, 0, 127, 1);
         velocityMaxDial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
+        velocityMaxDial.setKnobColor(ColorUtils.warmGray);
+        velocityMaxDial.setGradientStartColor(velocityMaxDial.getKnobColor().brighter());
+        velocityMaxDial.setGradientEndColor(velocityMaxDial.getKnobColor().darker());
 
         swingDial = createDial("swing", 50, 0, 100, 1);
         swingDial.setCommand(Commands.NEW_VALUE_SWING);
+        swingDial.setKnobColor(ColorUtils.slateGray);
+        swingDial.setGradientStartColor(swingDial.getKnobColor().brighter());
+        swingDial.setGradientEndColor(swingDial.getKnobColor().darker());
 
         probabilityDial = createDial("probability", 100, 0, 100, 1);
         probabilityDial.setCommand(Commands.NEW_VALUE_PROBABILITY);
+        probabilityDial.setKnobColor(ColorUtils.deepNavy);
+        probabilityDial.setGradientStartColor(probabilityDial.getKnobColor().brighter());
+        probabilityDial.setGradientEndColor(probabilityDial.getKnobColor().darker());
 
         randomDial = createDial("random", 0, 0, 100, 1);
         randomDial.setCommand(Commands.NEW_VALUE_RANDOM);
+        randomDial.setKnobColor(ColorUtils.mutedOlive);
+        randomDial.setGradientStartColor(randomDial.getKnobColor().brighter());
+        randomDial.setGradientEndColor(randomDial.getKnobColor().darker());
 
         sparseDial = createDial("sparse", 0, 0, 100, 1);
         sparseDial.setCommand(Commands.NEW_VALUE_SPARSE);
+        sparseDial.setKnobColor(ColorUtils.deepTeal);
+        sparseDial.setGradientStartColor(sparseDial.getKnobColor().brighter());
+        sparseDial.setGradientEndColor(sparseDial.getKnobColor().darker());
 
-        // Add dials to panel with labels
-        add(createLabeledControl(null, noteSelectionDial));
-        add(createLabeledControl("Note", noteDial));
-        add(createLabeledControl("Level", levelDial));
-        add(createLabeledControl("Pan", panDial));
-        add(createLabeledControl("Min Vel", velocityMinDial));
-        add(createLabeledControl("Max Vel", velocityMaxDial));
-        add(createLabeledControl("Swing", swingDial));
-        add(createLabeledControl("Probability", probabilityDial));
-        add(createLabeledControl("Random", randomDial));
-        add(createLabeledControl("Sparse", sparseDial));
+        // Add note selection dial with special panel width (80px vs 60px)
+        controlsWrapper.add(noteSelectionDial);
+        
+        // Add regular dials with standard panel width (60px)
+        controlsWrapper.add(createLabeledControl("Level", levelDial));
+        controlsWrapper.add(createLabeledControl("Pan", panDial));
+        controlsWrapper.add(createLabeledControl("Min Vel", velocityMinDial));
+        controlsWrapper.add(createLabeledControl("Max Vel", velocityMaxDial));
+        controlsWrapper.add(createLabeledControl("Swing", swingDial));
+        controlsWrapper.add(createLabeledControl("Probability", probabilityDial));
+        controlsWrapper.add(createLabeledControl("Random", randomDial));
+        controlsWrapper.add(createLabeledControl("Sparse", sparseDial));
+    }
+
+    /**
+     * Create a labeled control panel with standard 60px width
+     */
+    private JPanel createLabeledControl(String label, Dial dial) {
+        return createLabeledControl(label, dial, 60);
+    }
+
+    /**
+     * Create a labeled control panel with custom width
+     */
+    private JPanel createLabeledControl(String label, Dial dial, int panelWidth) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setOpaque(false);
+
+        // Set consistent panel height but allow custom width
+        panel.setPreferredSize(new Dimension(panelWidth, PANEL_HEIGHT - 10));
+        panel.setMinimumSize(new Dimension(panelWidth, PANEL_HEIGHT - 10));
+        panel.setMaximumSize(new Dimension(panelWidth, PANEL_HEIGHT - 10));
+
+        // Add spacer at top if there's a label
+        if (label != null) {
+            JLabel l = new JLabel(label);
+            l.setHorizontalAlignment(JLabel.CENTER);
+            l.setAlignmentX(Component.CENTER_ALIGNMENT);
+            panel.add(l);
+        } else {
+            // Add empty space if no label
+            panel.add(Box.createVerticalStrut(15));
+        }
+
+        // Add flexible space
+        panel.add(Box.createVerticalGlue());
+
+        // Center the dial
+        JPanel dialWrapper = new JPanel();
+        dialWrapper.setOpaque(false);
+        dialWrapper.setLayout(new BoxLayout(dialWrapper, BoxLayout.X_AXIS));
+        dialWrapper.add(Box.createHorizontalGlue());
+        dialWrapper.add(dial);
+        dialWrapper.add(Box.createHorizontalGlue());
+        dialWrapper.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        panel.add(dialWrapper);
+        panel.add(Box.createVerticalGlue());
+
+        return panel;
     }
 
     private JPanel createOctavePanel() {
@@ -152,7 +282,7 @@ public class ControlPanel extends JPanel {
         // Add action listeners
         upButton.addActionListener(e -> {
             if (activePlayer != null) {
-                int currentNote = activePlayer.getNote().intValue();
+                int currentNote = activePlayer.getRootNote().intValue();
                 int newNote = Math.min(127, currentNote + 12); // Don't exceed 127 (max MIDI note)
 
                 // Only update if it actually changed
@@ -160,10 +290,9 @@ public class ControlPanel extends JPanel {
                     logger.info("Octave UP: Changing note from " + currentNote + " to " + newNote);
 
                     // Update player's note
-                    activePlayer.setNote((long) newNote);
+                    activePlayer.setRootNote(newNote);
 
                     // Update the dials (without triggering listeners)
-                    noteDial.setValue(newNote, false);
                     noteSelectionDial.setValue(newNote, false);
 
                     // Save the change and notify UI
@@ -180,7 +309,7 @@ public class ControlPanel extends JPanel {
 
         downButton.addActionListener(e -> {
             if (activePlayer != null) {
-                int currentNote = activePlayer.getNote().intValue();
+                int currentNote = activePlayer.getRootNote().intValue();
                 int newNote = Math.max(0, currentNote - 12); // Don't go below 0 (min MIDI note)
 
                 // Only update if it actually changed
@@ -188,10 +317,9 @@ public class ControlPanel extends JPanel {
                     logger.info("Octave DOWN: Changing note from " + currentNote + " to " + newNote);
 
                     // Update player's note
-                    activePlayer.setNote((long) newNote);
+                    activePlayer.setRootNote(newNote);
 
                     // Update the dials (without triggering listeners)
-                    noteDial.setValue(newNote, false);
                     noteSelectionDial.setValue(newNote, false);
 
                     // Save the change and notify UI
@@ -232,66 +360,33 @@ public class ControlPanel extends JPanel {
         downButton.setEnabled(note >= 12);
     }
 
-    private JPanel createVerticalAdjustPanel(String label, String upLabel, String downLabel,
-            String upCommand, String downCommand) {
-        JPanel navPanel = new JPanel(new BorderLayout(0, 2));
-        navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5)); // Add margins
-        JLabel octaveLabel = new JLabel(label, JLabel.CENTER);
-
-        // Create up and down buttons
-        JButton prevButton = new JButton(upLabel);
-        prevButton.setActionCommand(upCommand);
-        prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
-                PlayerManager.getInstance().getActivePlayer()));
-        prevButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-        prevButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-
-        JButton nextButton = new JButton(downLabel);
-        nextButton.setActionCommand(downCommand);
-        nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), this,
-                PlayerManager.getInstance().getActivePlayer()));
-        nextButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-        nextButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-
-        // Enable/disable buttons based on player selection
-        prevButton.setEnabled(false);
-        nextButton.setEnabled(false);
-
-        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 2));
-        buttonPanel.add(prevButton);
-        buttonPanel.add(nextButton);
-
-        navPanel.add(octaveLabel, BorderLayout.NORTH);
-        navPanel.add(buttonPanel, BorderLayout.CENTER);
-
-        return navPanel;
-    }
-
     private JPanel createScaleAdjustPanel() {
-        JPanel navPanel = new JPanel(new BorderLayout(0, 2));
-        navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+        JPanel scalePanel = new JPanel(new BorderLayout(0, 2));
+        scalePanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+        scalePanel.setName(SESSION_PANEL + "_SCALE");
+
         JLabel scaleLabel = new JLabel("Scale", JLabel.CENTER);
 
         // Create scale navigation buttons
-        JButton prevButton = new JButton("↑");
-        prevButton.setActionCommand(Commands.PREV_SCALE_SELECTED);
-        prevButton.addActionListener(e -> {
+        prevScaleButton = new JButton("↑");
+        prevScaleButton.setActionCommand(Commands.PREV_SCALE_SELECTED);
+        prevScaleButton.addActionListener(e -> {
             CommandBus.getInstance().publish(Commands.PREV_SCALE_SELECTED, this, Scale.SCALE_PATTERNS.keySet());
         });
-        prevButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-        prevButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        prevScaleButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        prevScaleButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
 
-        JButton nextButton = new JButton("↓");
-        nextButton.setActionCommand(Commands.NEXT_SCALE_SELECTED);
-        nextButton.addActionListener(e -> {
+        nextScaleButton = new JButton("↓");
+        nextScaleButton.setActionCommand(Commands.NEXT_SCALE_SELECTED);
+        nextScaleButton.addActionListener(e -> {
             CommandBus.getInstance().publish(Commands.NEXT_SCALE_SELECTED, this, Scale.SCALE_PATTERNS.keySet());
         });
-        nextButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-        nextButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        nextScaleButton.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        nextScaleButton.setMaximumSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
 
         // Enable buttons by default
-        prevButton.setEnabled(true);
-        nextButton.setEnabled(true);
+        prevScaleButton.setEnabled(true);
+        nextScaleButton.setEnabled(true);
 
         // Add command bus listener for scale events
         CommandBus.getInstance().register(new IBusListener() {
@@ -301,25 +396,25 @@ public class ControlPanel extends JPanel {
                     return;
                 }
                 switch (action.getCommand()) {
-                    case Commands.FIRST_SCALE_SELECTED -> prevButton.setEnabled(false);
-                    case Commands.LAST_SCALE_SELECTED -> nextButton.setEnabled(false);
-                    case Commands.SCALE_SELECTED -> {
-                        prevButton.setEnabled(true);
-                        nextButton.setEnabled(true);
-                    }
+                case Commands.FIRST_SCALE_SELECTED -> prevScaleButton.setEnabled(false);
+                case Commands.LAST_SCALE_SELECTED -> nextScaleButton.setEnabled(false);
+                case Commands.SCALE_SELECTED -> {
+                    prevScaleButton.setEnabled(true);
+                    nextScaleButton.setEnabled(true);
+                }
                 }
             }
         });
 
         // Layout buttons vertically
         JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 2));
-        buttonPanel.add(prevButton);
-        buttonPanel.add(nextButton);
+        buttonPanel.add(prevScaleButton);
+        buttonPanel.add(nextScaleButton);
 
-        navPanel.add(scaleLabel, BorderLayout.NORTH);
-        navPanel.add(buttonPanel, BorderLayout.CENTER);
+        scalePanel.add(scaleLabel, BorderLayout.NORTH);
+        scalePanel.add(buttonPanel, BorderLayout.CENTER);
 
-        return navPanel;
+        return scalePanel;
     }
 
     private Dial createDial(String propertyName, long value, int min, int max, int majorTick) {
@@ -352,31 +447,16 @@ public class ControlPanel extends JPanel {
                     return;
 
                 switch (action.getCommand()) {
-                    case Commands.PLAYER_SELECTED -> dial.setEnabled(true);
-                    case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
+                case Commands.PLAYER_SELECTED -> dial.setEnabled(true);
+                case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
                 }
             }
         });
         return dial;
     }
 
-    private JPanel createLabeledControl(String label, Dial dial) {
-        JPanel panel = new JPanel(new BorderLayout(5, 2));
-        if (label != null) {
-            JLabel l = new JLabel(label);
-            l.setHorizontalAlignment(JLabel.CENTER);
-            panel.add(l, BorderLayout.NORTH);
-        }
-        panel.add(Box.createVerticalStrut(8), BorderLayout.CENTER); // Add vertical space
-        panel.add(dial, BorderLayout.SOUTH);
-        panel.setMinimumSize(new Dimension(60, 80)); // Set minimum size
-        panel.setMaximumSize(new Dimension(60, 80)); // Set maximum size
-        return panel;
-    }
-
     private void enableDials() {
         levelDial.setEnabled(true);
-        noteDial.setEnabled(true);
         noteSelectionDial.setEnabled(true);
         swingDial.setEnabled(true);
         probabilityDial.setEnabled(true);
@@ -389,7 +469,6 @@ public class ControlPanel extends JPanel {
 
     private void disableDials() {
         levelDial.setEnabled(false);
-        noteDial.setEnabled(false);
         noteSelectionDial.setEnabled(false);
         swingDial.setEnabled(false);
         probabilityDial.setEnabled(false);
@@ -403,12 +482,23 @@ public class ControlPanel extends JPanel {
     private void updateVerticalAdjustButtons(boolean enabled) {
         // Find and update all buttons in vertical adjust panels
         for (Component comp : getComponents()) {
-            if (comp instanceof JPanel) {
-                for (Component inner : ((JPanel) comp).getComponents()) {
-                    if (inner instanceof JButton) {
-                        inner.setEnabled(enabled && Objects.nonNull(PlayerManager.getInstance().getActivePlayer()));
-                    }
-                }
+            if (comp instanceof JPanel panel && (panel.getName() != null && panel.getName().contains("PLAYER_PANEL"))) {
+                // Improved traversal to handle nested panels
+                traverseAndEnableButtons(panel, enabled);
+            }
+        }
+    }
+
+    // New helper method to properly traverse component hierarchy
+    private void traverseAndEnableButtons(Container container, boolean enabled) {
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof JButton button) {
+                // Enable button if we have an active player
+                button.setEnabled(enabled);
+                logger.debug("Button " + button.getText() + " enabled: " + enabled);
+            } else if (comp instanceof Container innerContainer) {
+                // Recursively search nested containers
+                traverseAndEnableButtons(innerContainer, enabled);
             }
         }
     }
@@ -425,8 +515,8 @@ public class ControlPanel extends JPanel {
                 try {
                     if (Commands.PLAYER_SELECTED.equals(cmd)) {
                         if (action.getData() instanceof Player player) {
-                            logger.info("ControlPanel updating controls for player: " +
-                                    player.getName() + " (ID: " + player.getId() + ")");
+                            logger.info("ControlPanel updating controls for player: " + player.getName() + " (ID: "
+                                    + player.getId() + ")");
 
                             // Store reference to current player
                             activePlayer = player;
@@ -434,6 +524,8 @@ public class ControlPanel extends JPanel {
                             // Update controls on EDT to avoid concurrency issues
                             SwingUtilities.invokeLater(() -> {
                                 updateDialsFromPlayer(player);
+                                // Explicitly enable vertical adjust buttons
+                                updateVerticalAdjustButtons(true);
                             });
                         }
                     } else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {
@@ -443,7 +535,7 @@ public class ControlPanel extends JPanel {
                         updateVerticalAdjustButtons(false);
                     }
                 } catch (Exception e) {
-                    logger.severe("Error in command handler: " + e.getMessage());
+                    logger.error("Error in command handler: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -451,24 +543,6 @@ public class ControlPanel extends JPanel {
     }
 
     private void setupControlChangeListeners() {
-        // For note dial
-        noteDial.addChangeListener(e -> {
-            if (!listenersEnabled || activePlayer == null)
-                return;
-
-            int value = noteDial.getValue();
-            logger.info("Updating player note to: " + value);
-
-            // Update player
-            activePlayer.setNote((long) value);
-
-            // Save the change and notify UI
-            PlayerManager.getInstance().updatePlayerNote(activePlayer, value);
-
-            // Request row refresh in players panel (important!)
-            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
-        });
-
         // For level dial
         levelDial.addChangeListener(e -> {
             if (!listenersEnabled || activePlayer == null)
@@ -520,33 +594,73 @@ public class ControlPanel extends JPanel {
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
         });
 
-        // Add velocityMinDial listener
+        // Replace the velocityMinDial listener with this:
         velocityMinDial.addChangeListener(e -> {
             if (!listenersEnabled || activePlayer == null)
                 return;
 
-            int value = velocityMinDial.getValue();
-            logger.info("Updating player min velocity to: " + value);
+            int minValue = velocityMinDial.getValue();
+            int maxValue = velocityMaxDial.getValue();
 
-            // Update player and save
-            activePlayer.setMinVelocity((long) value);
-            PlayerManager.getInstance().updatePlayerVelocityMin(activePlayer, value);
+            logger.info("Updating player min velocity to: " + minValue);
+
+            // Ensure min velocity doesn't exceed max velocity
+            if (minValue > maxValue) {
+                // Update max velocity to match min velocity
+                listenersEnabled = false; // Prevent feedback loop
+                velocityMaxDial.setValue(minValue);
+                activePlayer.setMaxVelocity((long) minValue);
+                
+                // Force immediate visual update of the max dial
+                velocityMaxDial.repaint();
+                
+                listenersEnabled = true;
+                
+                // Log the adjustment
+                logger.info("Auto-adjusted max velocity to match: " + minValue);
+            }
+
+            // Update player
+            activePlayer.setMinVelocity((long) minValue);
+
+            // Save the changes and notify UI
+            PlayerManager.getInstance().updatePlayerVelocityMin(activePlayer, minValue);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
         });
 
-        // Add velocityMaxDial listener
+        // Replace the velocityMaxDial listener with this:
         velocityMaxDial.addChangeListener(e -> {
             if (!listenersEnabled || activePlayer == null)
                 return;
 
-            int value = velocityMaxDial.getValue();
-            logger.info("Updating player max velocity to: " + value);
+            int maxValue = velocityMaxDial.getValue();
+            int minValue = velocityMinDial.getValue();
 
-            // Update player and save
-            activePlayer.setMaxVelocity((long) value);
-            PlayerManager.getInstance().updatePlayerVelocityMax(activePlayer, value);
+            logger.info("Updating player max velocity to: " + maxValue);
+
+            // Ensure max velocity is not less than min velocity
+            if (maxValue < minValue) {
+                // Update min velocity to match max velocity
+                listenersEnabled = false; // Prevent feedback loop
+                velocityMinDial.setValue(maxValue);
+                activePlayer.setMinVelocity((long) maxValue);
+                
+                // Force immediate visual update of the min dial
+                velocityMinDial.repaint();
+                
+                listenersEnabled = true;
+                
+                // Log the adjustment
+                logger.info("Auto-adjusted min velocity to match: " + maxValue);
+            }
+
+            // Update player
+            activePlayer.setMaxVelocity((long) maxValue);
+
+            // Save the changes and notify UI
+            PlayerManager.getInstance().updatePlayerVelocityMax(activePlayer, maxValue);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -609,7 +723,7 @@ public class ControlPanel extends JPanel {
             logger.info("Updating player note to: " + value);
 
             // Update player and save
-            activePlayer.setNote((long) value);
+            activePlayer.setRootNote(value);
             PlayerManager.getInstance().updatePlayerNote(activePlayer, value);
 
             // Request row refresh
@@ -619,7 +733,7 @@ public class ControlPanel extends JPanel {
 
     public void updateDialsFromPlayer(Player player) {
         if (player == null) {
-            logger.warning("Attempted to update dials with null player");
+            logger.error("Attempted to update dials with null player");
             return;
         }
 
@@ -631,7 +745,7 @@ public class ControlPanel extends JPanel {
 
             // Get player values, handle potential nulls
             int level = player.getLevel() != null ? player.getLevel().intValue() : 64;
-            int note = player.getNote() != null ? player.getNote().intValue() : 60;
+            int note = player.getRootNote() != null ? player.getRootNote().intValue() : 60;
             int swing = player.getSwing() != null ? player.getSwing().intValue() : 0;
             int minVelocity = player.getMinVelocity() != null ? player.getMinVelocity().intValue() : 64;
             int maxVelocity = player.getMaxVelocity() != null ? player.getMaxVelocity().intValue() : 127;
@@ -642,7 +756,6 @@ public class ControlPanel extends JPanel {
             int panPosition = player.getPanPosition() != null ? player.getPanPosition().intValue() : 64;
 
             // Update dials without triggering notifications (false parameter)
-            noteDial.setValue(note, false);
             levelDial.setValue(level, false);
             swingDial.setValue(swing, false);
             velocityMinDial.setValue(minVelocity, false);
@@ -671,7 +784,7 @@ public class ControlPanel extends JPanel {
 
             logger.info("Successfully updated all dials for player: " + player.getName());
         } catch (Exception e) {
-            logger.severe("Error updating dials: " + e.getMessage());
+            logger.error("Error updating dials: " + e.getMessage());
             e.printStackTrace();
 
             // Make sure listeners are re-enabled even if there's an error

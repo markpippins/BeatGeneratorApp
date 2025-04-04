@@ -47,23 +47,19 @@ public class Rule implements Serializable {
     private transient Player player;
 
     // Update COMPARISONS array to match Comparison interface
-    public static final String[] COMPARISONS = {
-            "=", ">", "<", "%", "!="
-    };
+    public static final String[] COMPARISONS = { "=", ">", "<", "%", "!=" };
 
     // Update OPERATORS array to match Operator interface
-    public static final String[] OPERATORS = {
-            "Tick", "Beat", "Bar", "Part", "Beat Duration",
-            "Tick Count", "Beat Count", "Bar Count", "Part Count"
-    };
+    public static final String[] OPERATORS = { "Tick", "Beat", "Bar", "Part", "Beat Duration", "Tick Count",
+            "Beat Count", "Bar Count", "Part Count" };
 
     public Rule() {
 
     }
 
     public Rule(int operator, int comparison, Double value, int part) {
-        logger.debug("Creating new Rule - operator: {}, comparison: {}, value: {}, part: {}",
-                operator, comparison, value, part);
+        logger.debug("Creating new Rule - operator: {}, comparison: {}, value: {}, part: {}", operator, comparison,
+                value, part);
         setOperator(operator);
         setComparison(comparison);
         setValue(value);
@@ -93,23 +89,17 @@ public class Rule implements Serializable {
     }
 
     public boolean isEqualTo(Rule rule) {
-        boolean result = (getValue().equals(rule.getValue()) &&
-                (this.getComparison() == rule.getComparison()) &&
-                (this.getOperator() == rule.getOperator()));
-        logger.debug("isEqualTo() - comparing with rule: {}, result: {}", rule.getId(), result);
+        boolean result = (getValue().equals(rule.getValue()) && (this.getPart() == rule.getPart())
+                && (this.getComparison() == rule.getComparison()) && (this.getOperator() == rule.getOperator()));
+        // logger.debug("isEqualTo() - comparing with rule: {}, result: {}", rule.getId(), result);
         return result;
     }
 
     public Object[] toRow() {
-        logger.debug("Converting rule to row - ID: {}, Operator: {}, Comparison: {}, Value: {}, Part: {}",
-                getId(), getOperator(), getComparison(), getValue(), getPart());
+        logger.debug("Converting rule to row - ID: {}, Operator: {}, Comparison: {}, Value: {}, Part: {}", getId(),
+                getOperator(), getComparison(), getValue(), getPart());
 
-        return new Object[] {
-                OPERATORS[getOperator()],
-                COMPARISONS[getComparison()],
-                getValue(),
-                getPart()
-        };
+        return new Object[] { OPERATORS[getOperator()], COMPARISONS[getComparison()], getValue(), getPart() };
     }
 
     public static Rule fromRow(Object[] row) {
@@ -143,21 +133,19 @@ public class Rule implements Serializable {
             rule.setPart(Integer.parseInt(partValue.toString()));
         }
 
-        logger.debug("Created rule from row - Operator: {}, Comparison: {}, Value: {}, Part: {}",
-                rule.getOperator(), rule.getComparison(), rule.getValue(), rule.getPart());
+        logger.debug("Created rule from row - Operator: {}, Comparison: {}, Value: {}, Part: {}", rule.getOperator(),
+                rule.getComparison(), rule.getValue(), rule.getPart());
 
         return rule;
     }
 
     // Add these helper methods to Rule class for safer formatting
     public String getComparisonText() {
-        return getComparison() >= 0 && getComparison() < COMPARISONS.length ? 
-               COMPARISONS[getComparison()] : "Unknown";
+        return getComparison() >= 0 && getComparison() < COMPARISONS.length ? COMPARISONS[getComparison()] : "Unknown";
     }
 
     public String getOperatorText() {
-        return getOperator() >= 0 && getOperator() < OPERATORS.length ? 
-               OPERATORS[getOperator()] : "Unknown";
+        return getOperator() >= 0 && getOperator() < OPERATORS.length ? OPERATORS[getOperator()] : "Unknown";
     }
 
     public String getPartText() {
@@ -166,21 +154,22 @@ public class Rule implements Serializable {
 
     @Override
     public String toString() {
-        String compStr = getComparison() >= 0 && getComparison() < COMPARISONS.length ? 
-                        COMPARISONS[getComparison()] : "Unknown";
-        String opStr = getOperator() >= 0 && getOperator() < OPERATORS.length ? 
-                      OPERATORS[getOperator()] : "Unknown";
+        String compStr = getComparison() >= 0 && getComparison() < COMPARISONS.length ? COMPARISONS[getComparison()]
+                : "Unknown";
+        String opStr = getOperator() >= 0 && getOperator() < OPERATORS.length ? OPERATORS[getOperator()] : "Unknown";
         String partStr = getPart() == 0 ? "All" : String.valueOf(getPart());
-        
+
         // Change %d to %s for getValue() to handle any numeric type
-        return String.format("Rule[id=%d, %s %s %s, Part=%s]", 
-                getId(), compStr, opStr, String.valueOf(getValue()), partStr);
+        return String.format("Rule[id=%d, %s %s %s, Part=%s]", getId(), compStr, opStr, String.valueOf(getValue()),
+                partStr);
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Rule rule = (Rule) o;
         return Objects.equals(id, rule.id);
     }
@@ -191,12 +180,16 @@ public class Rule implements Serializable {
     }
 
     public boolean functionallyEquals(Rule other) {
-        if (this == other) return true;
-        if (other == null) return false;
-        
-        return this.operator == other.operator &&
-               this.comparison == other.comparison &&
-               this.part == other.part &&
-               Math.abs(this.value - other.value) < 0.00001;
+        if (this == other)
+            return true;
+        if (other == null)
+            return false;
+
+        return this.operator == other.operator && this.comparison == other.comparison && this.part == other.part
+                && Math.abs(this.value - other.value) < 0.00001;
+    }
+
+    public boolean matches(double tickValue) {
+        return Operator.evaluate(getComparison(), tickValue, getValue().doubleValue());
     }
 }

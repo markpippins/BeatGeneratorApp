@@ -8,14 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.angrysurfer.core.model.Comparison;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Operator;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.util.Operator;
-import com.angrysurfer.core.util.Comparison;
 import com.angrysurfer.core.util.update.RuleUpdateType;
 
 import lombok.Getter;
@@ -42,21 +42,21 @@ public class PlayerService {
     }
 
     public Player addPlayer(String instrumentName) {
-        Instrument instrument = instrumentService.findByName(instrumentName);
+        InstrumentWrapper instrument = instrumentService.findByName(instrumentName);
         return addPlayer(instrument, getNoteForMidiInstrument(instrument));
     }
 
-    public Player addPlayer(String instrumentName, long note) {
-        Instrument instrument = instrumentService.findByName(instrumentName);
+    public Player addPlayer(String instrumentName, int note) {
+        InstrumentWrapper instrument = instrumentService.findByName(instrumentName);
         return addPlayer(instrument, note);
     }
 
-    private long getNoteForMidiInstrument(Instrument instrument) {
-        Long note = Objects.nonNull(instrument.getLowestNote()) ? instrument.getLowestNote() : 60L;
+    private int getNoteForMidiInstrument(InstrumentWrapper instrument) {
+        Integer note = Objects.nonNull(instrument.getLowestNote()) ? instrument.getLowestNote() : 60;
         return note + getSession().getPlayers().size();
     }
 
-    public Player addPlayer(Instrument instrument, long note) {
+    public Player addPlayer(InstrumentWrapper instrument, int note) {
         Player player = playerManager.addPlayer(getSession(), instrument, note);
         redisService.savePlayer(player);
         return player;

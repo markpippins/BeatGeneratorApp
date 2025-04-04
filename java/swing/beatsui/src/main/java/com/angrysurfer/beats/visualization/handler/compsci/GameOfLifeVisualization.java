@@ -3,9 +3,9 @@ package com.angrysurfer.beats.visualization.handler.compsci;
 import java.awt.Color;
 import java.util.Random;
 
-import com.angrysurfer.beats.ColorUtils;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.GridButton;
 
 public class GameOfLifeVisualization implements IVisualizationHandler {

@@ -1,7 +1,9 @@
 package com.angrysurfer.core.redis;
 
 import java.util.Set;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Song;
@@ -15,7 +17,7 @@ import redis.clients.jedis.JedisPool;
 @Getter
 @Setter
 public class SongHelper {
-    private static final Logger logger = Logger.getLogger(SongHelper.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(SongHelper.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
     private final PatternHelper patternHelper;
@@ -38,7 +40,7 @@ public class SongHelper {
             }
             return null;
         } catch (Exception e) {
-            logger.severe("Error finding song: " + e.getMessage());
+            logger.error("Error finding song: " + e.getMessage());
             return null;
         }
     }
@@ -66,7 +68,7 @@ public class SongHelper {
             song.setPatterns(patterns);
             return song;
         } catch (Exception e) {
-            logger.severe("Error saving song: " + e.getMessage());
+            logger.error("Error saving song: " + e.getMessage());
             throw new RuntimeException("Failed to save song", e);
         }
     }
@@ -79,7 +81,7 @@ public class SongHelper {
                 .min(Long::compareTo)
                 .orElse(null);
         } catch (Exception e) {
-            logger.severe("Error getting minimum song ID: " + e.getMessage());
+            logger.error("Error getting minimum song ID: " + e.getMessage());
             return null;
         }
     }
@@ -129,7 +131,7 @@ public class SongHelper {
                 jedis.del("song:" + songId);
             }
         } catch (Exception e) {
-            logger.severe("Error deleting song: " + e.getMessage());
+            logger.error("Error deleting song: " + e.getMessage());
             throw new RuntimeException("Failed to delete song", e);
         }
     }

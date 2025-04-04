@@ -12,9 +12,9 @@ import com.angrysurfer.beats.visualization.handler.music.ScrollingSequencerVisua
 import com.angrysurfer.beats.widget.GridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.StatusUpdate;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -40,16 +40,14 @@ public class Visualizer implements IBusListener {
     private static final int VISUALIZATION_DELAY = 30000; // 30 seconds
     private static final int VISUALIZATION_CHANGE_DELAY = 10000; // 10 seconds * 6 = 1 minute
 
-    private StatusConsumer statusConsumer;
     private final CommandBus commandBus = CommandBus.getInstance();
 
     private List<IVisualizationHandler> visualizations = new ArrayList<>();
 
     private boolean isLocked = false; // Add this field
 
-    public Visualizer(JComponent parent, StatusConsumer statusConsumer, GridButton[][] buttons) {
+    public Visualizer(JComponent parent, GridButton[][] buttons) {
         this.parent = parent;
-        this.statusConsumer = statusConsumer;
         this.buttons = buttons;
         initializeVisualizations();
         setupTimers();
@@ -59,8 +57,9 @@ public class Visualizer implements IBusListener {
 
     @Override
     public void onAction(Command action) {
-        if (action.getCommand() == null)
+        if (action.getCommand() == null) {
             return;
+        }
 
         switch (action.getCommand()) {
             case Commands.START_VISUALIZATION:
@@ -93,22 +92,35 @@ public class Visualizer implements IBusListener {
                 refreshVisualizations();
                 break;
 
-            case Commands.TRANSPORT_PLAY:
+            case Commands.TRANSPORT_START:
             case Commands.TRANSPORT_STATE_CHANGED: // <-- Add this case
                 // For state changed, check if it's true (playing)
-                if (Commands.TRANSPORT_STATE_CHANGED.equals(action.getCommand()) && 
-                    !(action.getData() instanceof Boolean && (Boolean)action.getData())) {
+                if (Commands.TRANSPORT_STATE_CHANGED.equals(action.getCommand())
+                        && !(action.getData() instanceof Boolean && (Boolean) action.getData())) {
                     break; // Only proceed if transport is starting
                 }
-                
+
+                stopVisualizer();
                 // Find and start the ScrollingSequencerVisualization
-                for (IVisualizationHandler vis : visualizations) {
-                    if (vis instanceof ScrollingSequencerVisualization) {
-                        startVisualizer(vis);
-                        isLocked = true; // Lock to prevent auto-switching during sequencer mode
-                        break;
-                    }
-                }
+                // for (IVisualizationHandler vis : visualizations) {
+                //     if (vis instanceof ScrollingSequencerVisualization) {
+                //         startVisualizer(vis);
+                //         isLocked = true; // Lock to prevent auto-switching during sequencer mode
+                //         break;
+                //     }
+                // }
+                break;
+
+            case Commands.PLAYER_SELECTED:
+                stopVisualizer();
+                // Find and start the StrikeVisualizationHandler
+                // for (IVisualizationHandler vis : visualizations) {
+                //     if (vis instanceof StrikeVisualizationHandler) {
+                //         startVisualizer(vis);
+                //         isLocked = true; // Lock to prevent auto-switching during sequencer mode
+                //         break;
+                //     }
+                // }
                 break;
 
             case Commands.TRANSPORT_STOP:
@@ -205,8 +217,8 @@ public class Visualizer implements IBusListener {
     private void processClass(String className, List<IVisualizationHandler> visualizations) {
         try {
             Class<?> cls = Class.forName(className);
-            if (IVisualizationHandler.class.isAssignableFrom(cls) &&
-                    !java.lang.reflect.Modifier.isAbstract(cls.getModifiers())) {
+            if (IVisualizationHandler.class.isAssignableFrom(cls)
+                    && !java.lang.reflect.Modifier.isAbstract(cls.getModifiers())) {
                 IVisualizationHandler handler = (IVisualizationHandler) cls.getDeclaredConstructor()
                         .newInstance();
                 visualizations.add(handler);
@@ -271,8 +283,9 @@ public class Visualizer implements IBusListener {
 
     private void setDisplayMode(IVisualizationHandler visualization) {
         currentVisualization = visualization;
-        if (Objects.nonNull(currentVisualization) && currentVisualization instanceof LockHandler)
+        if (Objects.nonNull(currentVisualization) && currentVisualization instanceof LockHandler) {
             ((LockHandler) currentVisualization).lockDisplay();
+        }
 
         clearDisplay();
     }
@@ -286,12 +299,16 @@ public class Visualizer implements IBusListener {
     }
 
     public void updateDisplay() {
-        if (!isVisualizationMode || currentVisualization == null)
+        if (!isVisualizationMode || currentVisualization == null) {
             return;
-
-        if (statusConsumer != null) {
-            statusConsumer.setMessage(currentVisualization.getName());
         }
+
+        CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("Visualizer", "", currentVisualization.getName())
+        );
+
         try {
             currentVisualization.update(buttons);
         } catch (Exception e) {

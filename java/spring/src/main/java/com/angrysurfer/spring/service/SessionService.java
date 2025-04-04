@@ -42,7 +42,7 @@ public class SessionService implements IBusListener {
     @Override
     public void onAction(Command action) {
         switch (action.getCommand()) {
-            case Commands.TRANSPORT_PLAY -> play();
+            case Commands.TRANSPORT_START -> play();
             case Commands.TRANSPORT_STOP -> stop();
             case Commands.TRANSPORT_PAUSE -> pause();
         }
@@ -85,12 +85,12 @@ public class SessionService implements IBusListener {
                 }
                 case SessionUpdateType.PARTS -> {
                     session.setParts((int) updateValue);
-                    session.getPartCycler().reset();
+                    // session.getPartCycler().reset();
                 }
                 case SessionUpdateType.BASE_NOTE_OFFSET ->
-                    session.setNoteOffset(session.getNoteOffset() + updateValue);
+                    session.setNoteOffset((int) (session.getNoteOffset() + updateValue));
                 case SessionUpdateType.BARS -> session.setBars((int) updateValue);
-                case SessionUpdateType.PART_LENGTH -> session.setPartLength(updateValue);
+                case SessionUpdateType.PART_LENGTH -> session.setPartLength((int) updateValue);
                 case SessionUpdateType.MAX_TRACKS -> session.setMaxTracks((int) updateValue);
             }
             redisService.saveSession(session);

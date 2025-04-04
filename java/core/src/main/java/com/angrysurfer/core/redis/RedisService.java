@@ -2,7 +2,6 @@ package com.angrysurfer.core.redis;
 
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -11,13 +10,13 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -27,9 +26,12 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Getter
 public class RedisService implements IBusListener {
-    private static final Logger logger = Logger.getLogger(RedisService.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(RedisService.class);
     private static RedisService instance;
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
@@ -113,12 +115,75 @@ public class RedisService implements IBusListener {
         return sessionHelper.getMaximumSessionId();
     }
 
-    public Long getPreviousSessionId(Session session) {
-        return sessionHelper.getPreviousSessionId(session);
+    /**
+     * Get the next sequential session ID after the provided session
+     */
+    public Long getNextSessionId(Session session) {
+        if (session == null) {
+            logger.warn("Cannot get next session ID: current session is null");
+            return null;
+        }
+
+        Long currentId = session.getId();
+        List<Long> allIds = getAllSessionIds();
+        logger.info("Finding next ID after {} among {} session IDs", currentId, allIds != null ? allIds.size() : 0);
+
+        if (allIds == null || allIds.isEmpty()) {
+            return null;
+        }
+
+        // Sort IDs in ascending order
+        allIds.sort(Long::compareTo);
+
+        // Log all IDs for debugging
+        logger.debug("All session IDs (sorted): {}", allIds);
+
+        // Find first ID greater than current
+        for (Long id : allIds) {
+            if (id > currentId) {
+                logger.info("Found next ID: {} > {}", id, currentId);
+                return id;
+            }
+        }
+
+        logger.info("No session ID greater than {} found", currentId);
+        return null;
     }
 
-    public Long getNextSessionId(Session session) {
-        return sessionHelper.getNextSessionId(session);
+    /**
+     * Get the previous sequential session ID before the provided session
+     */
+    public Long getPreviousSessionId(Session session) {
+        if (session == null) {
+            logger.warn("Cannot get previous session ID: current session is null");
+            return null;
+        }
+
+        Long currentId = session.getId();
+        List<Long> allIds = getAllSessionIds();
+        logger.info("Finding previous ID before {} among {} session IDs", currentId, allIds != null ? allIds.size() : 0);
+
+        if (allIds == null || allIds.isEmpty()) {
+            return null;
+        }
+
+        // Sort IDs in ascending order
+        allIds.sort(Long::compareTo);
+
+        // Log all IDs for debugging
+        logger.debug("All session IDs (sorted): {}", allIds);
+
+        // Find last ID less than current
+        Long prevId = null;
+        for (Long id : allIds) {
+            if (id >= currentId) {
+                break;
+            }
+            prevId = id;
+        }
+
+        logger.info("Found previous ID: {} < {}", prevId, currentId);
+        return prevId;
     }
 
     public List<Long> getAllSessionIds() {
@@ -225,18 +290,12 @@ public class RedisService implements IBusListener {
 
     @Override
     public void onAction(Command action) {
-
         switch (action.getCommand()) {
             case Commands.CLEAR_DATABASE:
                 clearDatabase();
                 break;
-            // case Commands.LOAD_CONFIG:
-            // String configPath = (String) action.getPayload();
-            // UserConfig config = loadConfigFromJSON(configPath);
-            // commandBus.publish(Commands.USER_CONFIG_LOADED, this, config);
-            // break;
             default:
-                logger.warning("Unknown command: " + action.getCommand());
+                logger.warn("Unknown command: {}", action.getCommand());
         }
     }
 
@@ -256,19 +315,19 @@ public class RedisService implements IBusListener {
     }
 
     // Replace direct implementations with delegation to instrumentHelper
-    public List<Instrument> findAllInstruments() {
+    public List<InstrumentWrapper> findAllInstruments() {
         return instrumentHelper.findAllInstruments();
     }
 
-    public Instrument findInstrumentById(Long id) {
+    public InstrumentWrapper findInstrumentById(Long id) {
         return instrumentHelper.findInstrumentById(id);
     }
 
-    public void saveInstrument(Instrument instrument) {
+    public void saveInstrument(InstrumentWrapper instrument) {
         instrumentHelper.saveInstrument(instrument);
     }
 
-    public void deleteInstrument(Instrument instrument) {
+    public void deleteInstrument(InstrumentWrapper instrument) {
         if (instrument != null && instrument.getId() != null) {
             instrumentHelper.deleteInstrument(instrument.getId());
         }
@@ -279,14 +338,13 @@ public class RedisService implements IBusListener {
             String json = jedis.get("tablestate-" + table);
             if (json != null) {
                 TableState state = objectMapper.readValue(json, TableState.class);
-                logger.info("Loaded table state with column order: " +
-                        (state.getColumnOrder() != null ? String.join(", ", state.getColumnOrder())
-                                : "null"));
+                logger.info("Loaded table state with column order: {}", 
+                        (state.getColumnOrder() != null ? String.join(", ", state.getColumnOrder()) : "null"));
                 return state;
             }
             logger.info("No existing table state found, creating new one");
         } catch (Exception e) {
-            logger.severe("Error loading table state: " + e.getMessage());
+            logger.error("Error loading table state: {}", e.getMessage());
         }
         return new TableState();
     }
@@ -295,10 +353,10 @@ public class RedisService implements IBusListener {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = objectMapper.writeValueAsString(state);
             jedis.set("tablestate-" + table, json);
-            logger.info("Saved table state with column order: " +
+            logger.info("Saved table state with column order: {}", 
                     (state.getColumnOrder() != null ? String.join(", ", state.getColumnOrder()) : "null"));
         } catch (Exception e) {
-            logger.severe("Error saving frame state: " + e.getMessage());
+            logger.error("Error saving frame state: {}", e.getMessage());
         }
     }
 
@@ -314,7 +372,7 @@ public class RedisService implements IBusListener {
             }
             logger.info("No existing frame state found, creating new one");
         } catch (Exception e) {
-            logger.severe("Error loading frame state: " + e.getMessage());
+            logger.error("Error loading frame state: {}", e.getMessage());
         }
         return new FrameState();
     }
@@ -326,7 +384,7 @@ public class RedisService implements IBusListener {
             logger.info("Saved frame state with column order: " +
                     (state.getColumnOrder() != null ? String.join(", ", state.getColumnOrder()) : "null"));
         } catch (Exception e) {
-            logger.severe("Error saving frame state: " + e.getMessage());
+            logger.error("Error saving frame state: {}", e.getMessage());
         }
     }
 

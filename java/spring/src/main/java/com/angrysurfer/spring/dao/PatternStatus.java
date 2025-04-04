@@ -33,8 +33,7 @@ public class PatternStatus {
         result.setDirection(pattern.getDirection());
         result.setMuted(pattern.getMuted());
         result.setPosition(pattern.getPosition());
-        // logger.info(String.format("pattern %s, step %s", pattern.getPosition(),
-        // pattern.getStepCycler().get()));
+        logger.info(String.format("pattern %s, step %s", pattern.getPosition(), pattern.getStepCycler().get()));
         return result;
     }
 }

@@ -94,7 +94,7 @@ public class Dialog<T> extends JDialog {
     private void setupTitlePanel() {
         titlePanel = new JPanel();
         titlePanel.setLayout(new BorderLayout());
-        titlePanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         titlePanel.setBackground(getBackground()); // Match dialog background
 
         // Create navigation buttons with same style as toolbar
@@ -129,7 +129,7 @@ public class Dialog<T> extends JDialog {
     private void setupButtonPanel() {
         buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 5, 10));
         buttonPanel.setBackground(getBackground()); // Match dialog background
 
         JButton okButton = createButton("OK", e -> accept());
@@ -204,11 +204,11 @@ public class Dialog<T> extends JDialog {
     // dialog.setTitle("Edit Player: " + samplePlayer.getName());
     // boolean result = dialog.showDialog();
 
-    // System.out.println("Dialog result: " + result);
+    // // System.out.println("Dialog result: " + result);
     // if (result) {
     // ProxyStrike updatedPlayer = ((PlayerEditorPanel)
     // testPanel).getUpdatedPlayer();
-    // System.out.println("Updated player name: " + updatedPlayer.getName());
+    // // System.out.println("Updated player name: " + updatedPlayer.getName());
     // }
     // }
 }

@@ -11,7 +11,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
-import com.angrysurfer.core.model.midi.ControlCodeCaption;
+import com.angrysurfer.core.model.ControlCodeCaption;
 
 import lombok.Getter;
 

@@ -22,6 +22,13 @@ public class Cycler {
 
     private Double stepSize = 1.0;
 
+
+
+
+
+
+    
+
     private Double stepValue = 0.0;
 
     private List<CyclerListener> listeners = new ArrayList<>();
@@ -58,7 +65,7 @@ public class Cycler {
         position.incrementAndGet();
         logger.debug("incrementPosition() - new position: {}", position.get());
         notifyAll(position.get());
-        if (position.get() == getLength()) {
+        if (position.get() > getLength()) {
             logger.debug("Cycle complete at position: {}", position.get());
             cycleComplete();
         }

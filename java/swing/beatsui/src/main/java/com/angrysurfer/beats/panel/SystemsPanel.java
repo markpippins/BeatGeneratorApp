@@ -6,24 +6,28 @@ import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.StatusUpdate;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-class SystemsPanel extends StatusProviderPanel {
+class SystemsPanel extends JPanel {
+
     private final JTable devicesTable;
 
-    public SystemsPanel(StatusConsumer statusConsumer) {
-        super(new BorderLayout(), statusConsumer);
+    public SystemsPanel() {
+        super(new BorderLayout());
         this.devicesTable = createDevicesTable();
         setupLayout();
     }
@@ -35,7 +39,7 @@ class SystemsPanel extends StatusProviderPanel {
 
     private JTable createDevicesTable() {
         String[] columns = {
-            "Name", "Description", "Vendor", "Version", "Max Receivers", 
+            "Name", "Description", "Vendor", "Version", "Max Receivers",
             "Max Transmitters", "Receivers", "Transmitters", "Receiver", "Transmitter"
         };
 
@@ -47,8 +51,12 @@ class SystemsPanel extends StatusProviderPanel {
 
             @Override
             public Class<?> getColumnClass(int column) {
-                if (column == 8 || column == 9) return Boolean.class;
-                if (column >= 4 && column <= 7) return Integer.class;
+                if (column == 8 || column == 9) {
+                    return Boolean.class;
+                }
+                if (column >= 4 && column <= 7) {
+                    return Integer.class;
+                }
                 return String.class;
             }
         };
@@ -58,7 +66,7 @@ class SystemsPanel extends StatusProviderPanel {
             MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
             for (MidiDevice.Info info : infos) {
                 MidiDevice device = MidiSystem.getMidiDevice(info);
-                model.addRow(new Object[] {
+                model.addRow(new Object[]{
                     info.getName(),
                     info.getDescription(),
                     info.getVendor(),
@@ -72,7 +80,11 @@ class SystemsPanel extends StatusProviderPanel {
                 });
             }
         } catch (MidiUnavailableException e) {
-            setStatus("Error loading MIDI devices: " + e.getMessage());
+            CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("Systems Panel", "Error", "Error loading MIDI devices: " + e.getMessage()));
+
         }
 
         JTable table = new JTable(model);
@@ -90,7 +102,7 @@ class SystemsPanel extends StatusProviderPanel {
         table.getColumnModel().getColumn(0).setPreferredWidth(150);
         table.getColumnModel().getColumn(1).setPreferredWidth(200);
         table.getColumnModel().getColumn(2).setPreferredWidth(100);
-        
+
         // Set fixed widths for numeric columns
         for (int i = 4; i <= 7; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(60);

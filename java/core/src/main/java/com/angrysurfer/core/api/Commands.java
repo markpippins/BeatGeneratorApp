@@ -1,6 +1,7 @@
 package com.angrysurfer.core.api;
 
 public class Commands {
+
     // Transport Commands
     public static final String REWIND = "REWIND";
     public static final String PAUSE = "PAUSE";
@@ -14,12 +15,22 @@ public class Commands {
     public static final String TRANSPORT_PAUSE = "TRANSPORT_PAUSE";
     public static final String TRANSPORT_RECORD = "TRANSPORT_RECORD";
     public static final String TRANSPORT_STOP = "TRANSPORT_STOP";
-    public static final String TRANSPORT_PLAY = "TRANSPORT_PLAY";
+    public static final String TRANSPORT_START = "TRANSPORT_START";
     public static final String TRANSPORT_FORWARD = "TRANSPORT_FORWARD";
+    public static final String ALL_NOTES_OFF = "ALL_NOTES_OFF";
 
     // Transport state commands
     public static final String TRANSPORT_STATE_CHANGED = "TRANSPORT_STATE_CHANGED";
     public static final String TRANSPORT_RECORD_STATE_CHANGED = "TRANSPORT_RECORD_STATE_CHANGED";
+
+    // Timing commands - consolidated
+    public static final String TIMING_UPDATE = "TIMING_UPDATE";
+    // public static final String TIMING_TICK = "TIMING_TICK";
+    // public static final String TIMING_BEAT = "TIMING_BEAT";
+    // public static final String TIMING_BAR = "TIMING_BAR";
+    // public static final String TIMING_PART = "TIMING_PART";
+    public static final String TIMING_RESET = "TIMING_RESET";
+    public static final String TIMING_PARAMETERS_CHANGED = "TIMING_PARAMETERS_CHANGED";
 
     // File Commands
     public static final String NEW_FILE = "NEW_FILE";
@@ -50,8 +61,8 @@ public class Commands {
     public static final String PLAYER_EDIT_REQUEST = "PLAYER_EDIT_REQUEST";
     public static final String PLAYER_DELETE_REQUEST = "PLAYER_DELETE_REQUEST";
     public static final String PLAYER_EDIT_CANCELLED = "PLAYER_EDIT_CANCELLED";
-    public static final String EDIT_PLAYER_PARAMETERS = "EDIT_PLAYER_PARAMETERS"; // Add this line
-    public static final String PLAYER_COPY_EDIT_REQUEST = "PLAYER_COPY_EDIT_REQUEST"; // Add this constant with the other player commands
+    public static final String EDIT_PLAYER_PARAMETERS = "EDIT_PLAYER_PARAMETERS";
+    public static final String PLAYER_COPY_EDIT_REQUEST = "PLAYER_COPY_EDIT_REQUEST";
 
     // Player navigation commands
     public static final String PLAYER_ROW_INDEX_REQUEST = "PLAYER_ROW_INDEX_REQUEST";
@@ -92,7 +103,7 @@ public class Commands {
 
     // Control sending commands
     public static final String SEND_ALL_CONTROLS = "SEND_ALL_CONTROLS";
-    public static final String SAVE_CONFIG = "SAVE_INSTRUMENT_CONFIG"; // Add this line
+    public static final String SAVE_CONFIG = "SAVE_INSTRUMENT_CONFIG";
 
     // Session selection commands
     public static final String SESSION = "SESSION";
@@ -102,17 +113,13 @@ public class Commands {
     // Session state commands
     public static final String SESSION_UNSELECTED = "SESSION_UNSELECTED";
     public static final String SESSION_DELETED = "SESSION_DELETED";
-    public static final String SESSION_CREATED = "SESSION_CREATED"; // Add this line
+    public static final String SESSION_CREATED = "SESSION_CREATED";
 
     // Session-Player-Rule relationship commands
     public static final String SESSION_REQUEST = "SESSION_REQUEST";
     public static final String SESSION_LOADED = "SESSION_LOADED";
     public static final String SESSION_CHANGED = "SESSION_CHANGED";
 
-    // public static final String PLAYER_ADDED_TO_SESSION =
-    // "PLAYER_ADDED_TO_SESSION";
-    // public static final String PLAYER_REMOVED_FROM_SESSION =
-    // "PLAYER_REMOVED_FROM_SESSION";
     public static final String RULE_ADDED_TO_PLAYER = "RULE_ADDED_TO_PLAYER";
     public static final String RULE_REMOVED_FROM_PLAYER = "RULE_REMOVED_FROM_PLAYER";
 
@@ -163,6 +170,8 @@ public class Commands {
     public static final String NEW_VALUE_RANDOM = "NEW_VALUE_RANDOM";
     public static final String NEW_VALUE_PAN = "NEW_VALUE_PAN";
     public static final String NEW_VALUE_SPARSE = "NEW_VALUE_SPARSE";
+    public static final String NEW_VALUE_RATCHET_COUNT = "NEW_VALUE_RATCHET_COUNT";
+    public static final String NEW_VALUE_RATCHET_INTERVAL = "NEW_VALUE_RATCHET_INTERVAL";
 
     public static final String TRANSPOSE_UP = "TRANSPOSE_UP";
     public static final String TRANSPOSE_DOWN = "TRANSPOSE_DOWN";
@@ -184,17 +193,6 @@ public class Commands {
 
     public static final String INSTRUMENT_UPDATED = "INSTRUMENT_UPDATED";
     public static final String INSTRUMENTS_REFRESHED = "INSTRUMENTS_REFRESHED";
-
-    // Add timing-specific commands
-    public static final String BASIC_TIMING_TICK = "BASIC_TIMING_TICK";
-    public static final String BASIC_TIMING_BEAT = "BASIC_TIMING_BEAT";
-    public static final String BASIC_TIMING_BAR = "BASIC_TIMING_BAR";
-    public static final String BEFORE_TICK = "BEFORE_TICK";
-    public static final String AFTER_TICK = "AFTER_TICK";
-    public static final String BEFORE_BEAT = "BEFORE_BEAT";
-    public static final String AFTER_BEAT = "AFTER_BEAT";
-    public static final String BEFORE_BAR = "BEFORE_BAR";
-    public static final String AFTER_BAR = "AFTER_BAR";
 
     public static final String TRANSPORT_STATE = "TRANSPORT_STATE";
 
@@ -234,4 +232,27 @@ public class Commands {
     public static final String PLAYER_TABLE_REFRESH_REQUEST = "PLAYER_TABLE_REFRESH_REQUEST";
     public static final String RECORDING_STOPPED = "RECORDING_STOPPED";
     public static final String RECORDING_STARTED = "RECORDING_STARTED";
+    public static final String SESSION_STARTING = "SESSION_STARTING";
+    public static final String SESSION_STOPPED = "SESSION_STOPPED";
+    public static final String SESSION_SAVED = "SESSION_SAVED";
+    public static final String STATUS_UPDATE = "STATUS_UPDATE";
+    public static final String CLEAR_STATUS = "CLEAR_STATUS";
+    public static final String PLAY_TEST_NOTE = "PLAY_TEST_NOTE";
+    public static final String SOUNDBANK_LOADED = "SOUNDBANK_LOADED";
+
+    public static final String SOUNDBANK_UNLOADED = "SOUNDBANK_UNLOADED";
+    public static final String SOUNDBANK_SELECTED = "SOUNDBANK_SELECTED";
+    public static final String SOUNDBANK_UNSELECTED = "SOUNDBANK_UNSELECTED";
+    public static final String SOUNDBANK_ADDED = "SOUNDBANK_ADDED";
+    public static final String SOUNDBANK_UPDATED = "SOUNDBANK_UPDATED";
+    public static final String SOUNDBANK_DELETED = "SOUNDBANK_DELETED";
+    public static final String SOUNDBANK_SELECTED_CHANGED = "SOUNDBANK_SELECTED_CHANGED";
+    public static final String SOUNDBANK_UNSELECTED_CHANGED = "SOUNDBANK_UNSELECTED_CHANGED";
+    public static final String SOUNDBANK_SELECTED_REQUEST = "SOUNDBANK_SELECTED_REQUEST";
+    public static final String SOUNDBANK_UNSELECTED_REQUEST = "SOUNDBANK_UNSELECTED_REQUEST";
+ 
+    public static final String PAD_TOGGLED = "PAD_TOGGLED";
+    public static final String NEW_VALUE_OCTAVE = "NEW_VALUE_OCTAVE";
+    public static final String SEQUENCER_STEP_UPDATE = "SEQUENCER_STEP_UPDATE";
 }
+

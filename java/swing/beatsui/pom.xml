@@ -14,7 +14,7 @@
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
   <properties>
-    <java.version>21</java.version>
+    <java.version>18</java.version>
   </properties>
   <name>beatgen-swing</name>
   <url>http://maven.apache.org</url>
@@ -95,13 +95,26 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>5.3.1</version>
+      <version>5.7.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
-      <version>5.3.1</version>
+      <version>5.7.0</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Add ByteBuddy for better mock handling -->
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>1.14.9</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy-agent</artifactId>
+      <version>1.14.9</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -110,7 +123,13 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.2.2</version>
+        <configuration>
+          <argLine>
+            --add-opens java.base/java.lang=ALL-UNNAMED
+            --add-opens java.base/java.util=ALL-UNNAMED
+          </argLine>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

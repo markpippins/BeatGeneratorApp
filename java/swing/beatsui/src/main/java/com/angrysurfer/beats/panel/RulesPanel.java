@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
@@ -20,14 +19,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.RuleTableModel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusConsumer;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
@@ -40,23 +40,22 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RulesPanel extends JPanel {
-    private static final Logger logger = Logger.getLogger(RulesPanel.class.getName());
+
+    private static final Logger logger = LoggerFactory.getLogger(RulesPanel.class.getName());
     private Player currentPlayer;
 
     private final JTable table;
     private final RuleTableModel tableModel; // Use our custom model
-    private final StatusConsumer status;
     private final ButtonPanel buttonPanel;
     private final ContextMenuHelper contextMenu;
     private int lastSelectedRow = -1;
 
-    public RulesPanel(StatusConsumer status) {
+    public RulesPanel() {
         super(new BorderLayout());
-        this.status = status;
-        
+
         // Create our custom table model
         this.tableModel = new RuleTableModel();
-        
+
         // Use the model in the table
         this.table = new JTable(tableModel);
         this.buttonPanel = new ButtonPanel(
@@ -159,7 +158,7 @@ public class RulesPanel extends JPanel {
                         logger.info("Publishing RULE_ADD_REQUEST for player: " + currentPlayer.getName());
                         CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, currentPlayer);
                     } else {
-                        logger.warning("Cannot add rule - no player selected");
+                        logger.error("Cannot add rule - no player selected");
                     }
                 }
                 case Commands.RULE_EDIT_REQUEST -> {
@@ -168,7 +167,7 @@ public class RulesPanel extends JPanel {
                         logger.info("Publishing RULE_EDIT_REQUEST for rule: " + selectedRule.getId());
                         CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
                     } else {
-                        logger.warning("Cannot edit rule - no rule selected");
+                        logger.error("Cannot edit rule - no rule selected");
                     }
                 }
                 case Commands.RULE_DELETE_REQUEST -> {
@@ -185,8 +184,6 @@ public class RulesPanel extends JPanel {
 
                         // Log deletion request
                         logger.info("Published rule delete request for " + selectedRules.length + " rules");
-                    } else {
-                        status.setMessage("No rules selected to delete");
                     }
                 }
             }
@@ -252,8 +249,9 @@ public class RulesPanel extends JPanel {
         CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null || action.getSender() == this)
+                if (action.getCommand() == null || action.getSender() == this) {
                     return;
+                }
 
                 String cmd = action.getCommand();
                 logger.info("RulesPanel received command: " + cmd);
@@ -261,13 +259,13 @@ public class RulesPanel extends JPanel {
                 try {
                     if (Commands.PLAYER_SELECTED.equals(cmd)) {
                         if (action.getData() instanceof Player selectedPlayer) {
-                            logger.info("RulesPanel processing PLAYER_SELECTED for: " +
-                                    selectedPlayer.getName() + " (ID: " + selectedPlayer.getId() + ")");
+                            logger.info("RulesPanel processing PLAYER_SELECTED for: "
+                                    + selectedPlayer.getName() + " (ID: " + selectedPlayer.getId() + ")");
 
                             // Get a fresh copy of the player from SessionManager
                             currentPlayer = selectedPlayer;
                             loadRules(selectedPlayer);
-                            logger.warning("Using provided player - could not get fresh copy");
+                            logger.error("Using provided player - could not get fresh copy");
 
                             updateButtonStates();
                         }
@@ -296,8 +294,8 @@ public class RulesPanel extends JPanel {
                                 Player freshPlayer = getFreshPlayer(player.getId());
                                 if (freshPlayer != null) {
                                     player = freshPlayer;
-                                    logger.info("Using fresh player with " +
-                                            (player.getRules() != null ? player.getRules().size() : 0) + " rules");
+                                    logger.info("Using fresh player with "
+                                            + (player.getRules() != null ? player.getRules().size() : 0) + " rules");
 
                                     // If we have the player's rules, check for duplicates by ID
                                     if (player.getRules() != null && addedRule != null) {
@@ -313,7 +311,7 @@ public class RulesPanel extends JPanel {
                                         if (Collections.frequency(player.getRules().stream()
                                                 .map(Rule::getId).collect(Collectors.toList()),
                                                 addedRule.getId()) > 1) {
-                                            logger.warning("Duplicate rule detected! ID: " + addedRule.getId());
+                                            logger.error("Duplicate rule detected! ID: " + addedRule.getId());
                                         }
                                     }
                                 }
@@ -330,7 +328,7 @@ public class RulesPanel extends JPanel {
                                     selectLastRule();
                                 }
                             } else {
-                                logger.warning("No active player available after adding rule");
+                                logger.error("No active player available after adding rule");
                             }
                         }
 
@@ -350,8 +348,8 @@ public class RulesPanel extends JPanel {
                                 Player freshPlayer = getFreshPlayer(player.getId());
                                 if (freshPlayer != null) {
                                     player = freshPlayer;
-                                    logger.info("Got fresh player data with " +
-                                            (player.getRules() != null ? player.getRules().size() : 0) + " rules");
+                                    logger.info("Got fresh player data with "
+                                            + (player.getRules() != null ? player.getRules().size() : 0) + " rules");
                                 }
 
                                 // Update current player and refresh rules table
@@ -364,15 +362,15 @@ public class RulesPanel extends JPanel {
                                     if (player.getRules() != null) {
                                         logger.info("Available rule IDs for selection:");
                                         for (Rule r : player.getRules()) {
-                                            logger.info("  Rule ID: " + r.getId() + ", Op: " + r.getOperatorText() +
-                                                    ", Comp: " + r.getComparisonText() + ", Value: " + r.getValue());
+                                            logger.info("  Rule ID: " + r.getId() + ", Op: " + r.getOperatorText()
+                                                    + ", Comp: " + r.getComparisonText() + ", Value: " + r.getValue());
                                         }
                                     }
 
                                     selectRuleById(editedRuleId);
                                 }
                             } else {
-                                logger.warning("No player available after rule edit");
+                                logger.error("No player available after rule edit");
                             }
                         }
 
@@ -386,8 +384,7 @@ public class RulesPanel extends JPanel {
                             if (action.getData() instanceof Player player) {
                                 updatedPlayer = player;
                                 logger.info("Using player from command data");
-                            }
-                            // Then try active player from PlayerManager
+                            } // Then try active player from PlayerManager
                             else {
                                 updatedPlayer = PlayerManager.getInstance().getActivePlayer();
                                 logger.info("Using active player from manager");
@@ -404,9 +401,9 @@ public class RulesPanel extends JPanel {
                                 Player freshPlayer = getFreshPlayer(updatedPlayer.getId());
                                 if (freshPlayer != null) {
                                     updatedPlayer = freshPlayer;
-                                    logger.info("Using fresh player copy with " +
-                                            (freshPlayer.getRules() != null ? freshPlayer.getRules().size() : 0) +
-                                            " rules");
+                                    logger.info("Using fresh player copy with "
+                                            + (freshPlayer.getRules() != null ? freshPlayer.getRules().size() : 0)
+                                            + " rules");
                                 }
 
                                 // Update our reference and refresh the table
@@ -431,14 +428,14 @@ public class RulesPanel extends JPanel {
                                 }
                             } else {
                                 clearRules();
-                                logger.warning("No player available after rule deletion");
+                                logger.error("No player available after rule deletion");
                             }
                         }
 
                         // Other cases...
                     }
                 } catch (Exception e) {
-                    logger.severe("Error processing command: " + e.getMessage());
+                    logger.error("Error processing command: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -504,14 +501,16 @@ public class RulesPanel extends JPanel {
         contextMenu.setEditEnabled(canEdit);
         contextMenu.setDeleteEnabled(canEdit);
 
-        logger.info("Button states updated - Add: " + hasPlayer +
-                ", Edit/Delete: " + canEdit);
+        logger.info("Button states updated - Add: " + hasPlayer
+                + ", Edit/Delete: " + canEdit);
     }
 
     private Rule getSelectedRule() {
         int row = table.getSelectedRow();
-        if (row < 0) return null;
-        
+        if (row < 0) {
+            return null;
+        }
+
         return tableModel.getRuleAt(row);
     }
 
@@ -538,32 +537,32 @@ public class RulesPanel extends JPanel {
     private void loadRules(Player player) {
         try {
             logger.info("Loading rules for player: " + (player != null ? player.getName() : "null"));
-            
+
             if (player != null && player.getRules() != null) {
                 tableModel.setRules(player.getRules()); // Use model's method
             } else {
                 tableModel.setRules(null);
-                logger.warning("No rules to display for player");
+                logger.error("No rules to display for player");
             }
-            
+
             table.revalidate();
             table.repaint();
         } catch (Exception e) {
-            logger.severe("Error loading rules: " + e.getMessage());
+            logger.error("Error loading rules: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     /**
      * Gets a fresh copy of a player from SessionManager
-     * 
+     *
      * @param playerId The ID of the player to fetch
      * @return A fresh Player instance or null if not found
      */
     // Improve the getFreshPlayer method for reliability
     private Player getFreshPlayer(Long playerId) {
         if (playerId == null) {
-            logger.warning("Cannot get fresh player: null ID");
+            logger.error("Cannot get fresh player: null ID");
             return null;
         }
 
@@ -579,10 +578,10 @@ public class RulesPanel extends JPanel {
                 }
             }
 
-            logger.warning("Player " + playerId + " not found in active session");
+            logger.error("Player " + playerId + " not found in active session");
             return null;
         } catch (Exception e) {
-            logger.severe("Error getting fresh player: " + e.getMessage());
+            logger.error("Error getting fresh player: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -590,8 +589,10 @@ public class RulesPanel extends JPanel {
 
     // Add a helper method to select a rule by ID
     private void selectRuleById(Long ruleId) {
-        if (ruleId == null) return;
-        
+        if (ruleId == null) {
+            return;
+        }
+
         int row = tableModel.findRuleRowById(ruleId);
         if (row >= 0) {
             logger.info("Selecting rule at row: " + row);
@@ -599,7 +600,7 @@ public class RulesPanel extends JPanel {
             lastSelectedRow = row;
             table.scrollRectToVisible(table.getCellRect(row, 0, true));
         } else {
-            logger.warning("Could not find rule with ID: " + ruleId);
+            logger.error("Could not find rule with ID: " + ruleId);
         }
     }
 
@@ -623,7 +624,7 @@ public class RulesPanel extends JPanel {
 
     /**
      * Refresh the rules table with a new set of rules
-     * 
+     *
      * @param rules The rules to display
      */
     // Fix the refreshRules method to properly use fresh player data
@@ -631,8 +632,9 @@ public class RulesPanel extends JPanel {
         try {
             logger.info("Refreshing rules table with " + (rules != null ? rules.size() : 0) + " rules");
 
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
-            model.setRowCount(0); // Clear existing content
+            RuleTableModel model = (RuleTableModel) table.getModel();
+            // model.setRowCount(0); // Clear existing content
+            model.setRules(Collections.emptySet());
 
             // Reset selection tracking
             lastSelectedRow = -1;
@@ -656,53 +658,28 @@ public class RulesPanel extends JPanel {
                 });
 
                 // Add sorted rules to table
-                for (Rule rule : sortedRules) {
-                    if (rule == null)
-                        continue;
-
-                    // Add row with correct column order
-                    model.addRow(new Object[] {
-                            rule.getOperatorText(), // Property column - "Beat", "Tick", etc.
-                            rule.getComparisonText(), // Operator column - "==", "<", etc.
-                            rule.getValue(), // Value column
-                            rule.getPartText() // Part column
-                    });
-                }
+                // for (Rule rule : sortedRules) {
+                //     if (rule == null)
+                //         continue;
+                //     // Add row with correct column order
+                //     model. addRow(new Object[] {
+                //             rule.getOperatorText(), // Property column - "Beat", "Tick", etc.
+                //             rule.getComparisonText(), // Operator column - "==", "<", etc.
+                //             rule.getValue(), // Value column
+                //             rule.getPartText() // Part column
+                //     });
+                // }
+                model.setRules(rules);
             } else {
-                logger.warning("No rules to display");
+                logger.error("No rules to display");
             }
 
             table.revalidate();
             table.repaint();
             updateButtonStates();
         } catch (Exception e) {
-            logger.severe("Error refreshing rules: " + e.getMessage());
+            logger.error("Error refreshing rules: " + e.getMessage());
             e.printStackTrace();
-        }
-    }
-
-    // Helper method to get column index by name
-    private int getColumnIndex(String columnName) {
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            if (table.getColumnName(i).equals(columnName)) {
-                return i;
-            }
-        }
-        return -1; // Column not found
-    }
-
-    // Add a consistent way to delete rules that works regardless of calling context
-    private void deleteSelectedRules() {
-        Rule[] selectedRules = getSelectedRules();
-        if (selectedRules.length > 0) {
-            // Remember row for reselection
-            lastSelectedRow = table.getSelectedRow();
-
-            // Publish the delete request
-            CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, selectedRules);
-            logger.info("Published rule delete request for " + selectedRules.length + " rules");
-        } else {
-            status.setMessage("No rules selected to delete");
         }
     }
 }

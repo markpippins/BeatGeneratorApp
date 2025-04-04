@@ -5,12 +5,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
+import javax.swing.JPanel;
 
 import com.angrysurfer.beats.visualization.Visualizer;
 import com.angrysurfer.beats.widget.GridButton;
-import com.angrysurfer.core.api.StatusConsumer;
 
-class GridPanel extends StatusProviderPanel {
+
+class GridPanel extends JPanel {
 
     private GridButton[][] buttons;
     private Visualizer gridSaver;
@@ -18,14 +19,11 @@ class GridPanel extends StatusProviderPanel {
     static int GRID_ROWS = 12;
     static int GRID_COLS = 65;
 
-    public GridPanel() {
-        this(null);
-    }
 
-    public GridPanel(StatusConsumer statusConsumer) {
-        super(new GridLayout(GRID_ROWS, GRID_COLS, 2, 2), statusConsumer);
+    public GridPanel() {
+        super(new GridLayout(GRID_ROWS, GRID_COLS, 2, 2));
         setup();
-        gridSaver = new Visualizer(this, statusConsumer, buttons);
+        gridSaver = new Visualizer(this, buttons);
     }
 
     private void setup() {

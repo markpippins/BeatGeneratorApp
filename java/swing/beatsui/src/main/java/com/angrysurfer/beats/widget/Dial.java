@@ -25,11 +25,11 @@ import lombok.Setter;
 @Setter
 public class Dial extends JComponent {
 
-    private static final int MIN_SIZE = 40;
-    private static final int MAX_SIZE = 60;
-    private static final Color KNOB_COLOR = new Color(30, 100, 255);
-    private static final Color KNOB_GRADIENT_START = new Color(60, 130, 255);
-    private static final Color KNOB_GRADIENT_END = new Color(20, 80, 200);
+    private static final int MIN_SIZE = 45;
+    private static final int MAX_SIZE = 55;
+    // private static final Color KNOB_COLOR = new Color(30, 100, 255);
+    // private static final Color KNOB_GRADIENT_START = new Color(60, 130, 255);
+    // private static final Color KNOB_GRADIENT_END = new Color(20, 80, 200);
     private static final Color HIGHLIGHT_COLOR = new Color(255, 255, 255, 60);
     private static final int BASE_WINDOW_WIDTH = 1200;
     private static final int BASE_WINDOW_HEIGHT = 800;
@@ -39,7 +39,12 @@ public class Dial extends JComponent {
     private int minimum = 0;
     private int maximum = 127;
     private String command;
+    private String label;
     private List<ChangeListener> changeListeners = new ArrayList<>();
+
+    private Color gradientStartColor = new Color(60, 130, 255);
+    private Color gradientEndColor = new Color(20, 80, 200);
+    private Color knobColor = new Color(30, 100, 255);
 
     public Dial() {
         this.command = null;
@@ -86,6 +91,33 @@ public class Dial extends JComponent {
                 }
             }
         });
+
+        // Add mouse wheel support
+        addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(java.awt.event.MouseWheelEvent e) {
+                if (!isEnabled()) {
+                    return;
+                }
+
+                // Get the wheel rotation (negative for up, positive for down)
+                int wheelRotation = e.getWheelRotation();
+
+                // Calculate value change - make it proportional to the value range
+                // A smaller range means finer control
+                int range = maximum - minimum;
+                int changeAmount = Math.max(1, range / 100);
+
+                // Invert the direction: scroll up to increase, down to decrease
+                int delta = -wheelRotation * changeAmount;
+
+                // Calculate new value with bounds checking
+                int newValue = Math.min(maximum, Math.max(minimum, value + delta));
+
+                // Update the value
+                setValue(newValue, true);
+            }
+        });
     }
 
     public Dial(String command) {
@@ -95,7 +127,7 @@ public class Dial extends JComponent {
 
     private boolean updateOnResize = false;
 
-    private void updateSize() {
+    protected void updateSize() {
         Window window = SwingUtilities.getWindowAncestor(this);
         if (window != null) {
             // Calculate size based on window dimensions
@@ -130,13 +162,13 @@ public class Dial extends JComponent {
         int radius = min / 2 - 6;
 
         // Draw knob body with blue color
-        g2d.setColor(KNOB_COLOR);
+        g2d.setColor(knobColor);
         g2d.fillOval(0, 0, min - 1, min - 1);
 
         // Add a subtle gradient for 3D effect
         GradientPaint gp = new GradientPaint(
-                0, 0, KNOB_GRADIENT_START,
-                0, h, KNOB_GRADIENT_END);
+                0, 0, gradientStartColor,
+                0, h, gradientEndColor);
         g2d.setPaint(gp);
         g2d.fillOval(2, 2, min - 4, min - 4);
 
@@ -166,8 +198,9 @@ public class Dial extends JComponent {
         if (value != newValue) {
             value = Math.min(maximum, Math.max(minimum, newValue));
             repaint();
-            if (notify)
+            if (notify) {
                 fireStateChanged();
+            }
             if (command != null && notify) {
                 CommandBus.getInstance().publish(command, this, value);
             }
@@ -197,5 +230,14 @@ public class Dial extends JComponent {
         for (ChangeListener listener : changeListeners) {
             listener.stateChanged(event);
         }
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+        repaint();
+    }
+
+    public String getLabel() {
+        return this.label;
     }
 }

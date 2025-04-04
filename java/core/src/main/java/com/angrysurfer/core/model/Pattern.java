@@ -7,14 +7,11 @@ import java.util.Stack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.util.Constants;
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.sequencer.Quantizer;
+import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.util.Cycler;
-import com.angrysurfer.core.util.Quantizer;
-import com.angrysurfer.core.util.Scale;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -28,6 +25,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -35,7 +33,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name = "pattern")
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Pattern {
 
     private static final Logger logger = LoggerFactory.getLogger(Pattern.class);
@@ -91,10 +88,6 @@ public class Pattern {
 
     @JsonIgnore
     @Transient
-    private boolean unsaved = false;
-    
-    @JsonIgnore
-    @Transient
     private Quantizer quantizer = new Quantizer(Scale.getScale("C", "Chromatic"));
 
     @JsonIgnore
@@ -112,10 +105,9 @@ public class Pattern {
     @OneToMany(mappedBy = "pattern", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Step> steps = new HashSet<>();
 
-    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instrument_id")
-    private Instrument instrument;
+    private InstrumentWrapper instrument;
 
     @JsonIgnore
     @Column(name = "step_cycler")

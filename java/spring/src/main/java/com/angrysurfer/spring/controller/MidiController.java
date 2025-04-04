@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.angrysurfer.core.model.midi.Instrument;
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.InstrumentService;
 
 @CrossOrigin("*")
@@ -75,7 +75,7 @@ public class MidiController {
                 "GET " + Constants.SEND_MESSAGE
                         + " - instrumentId: {}, channel: {}, messageType: {}, data1: {}, data2: {}",
                 instrumentId, channel, messageType, data1, data2);
-        Instrument instrument = instrumentService.getInstrumentById((long) instrumentId);
+        InstrumentWrapper instrument = instrumentService.getInstrumentById((long) instrumentId);
         if (Objects.nonNull(instrument)) {
             instrument.setDevice(DeviceManager.getMidiDevice(instrument.getDeviceName()));
             if (Objects.nonNull(instrument.getDevice())) {

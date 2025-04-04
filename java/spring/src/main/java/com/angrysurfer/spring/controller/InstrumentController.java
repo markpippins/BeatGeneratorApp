@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.angrysurfer.core.model.midi.Instrument;
-import com.angrysurfer.core.util.Constants;
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.spring.service.InstrumentService;
 
 @CrossOrigin("*")
@@ -27,14 +27,14 @@ public class InstrumentController {
     }
 
     @GetMapping(path = Constants.INSTRUMENT_LIST)
-    public @ResponseBody List<Instrument> getInstrumentList() {
+    public @ResponseBody List<InstrumentWrapper> getInstrumentList() {
         logger.info("GET " + Constants.INSTRUMENT_LIST);
-        List<Instrument> instruments = instrumentService.getAllInstruments();
+        List<InstrumentWrapper> instruments = instrumentService.getAllInstruments();
         return instruments;
     }
 
     @GetMapping(path = Constants.INSTRUMENT)
-    public @ResponseBody Instrument getInstrument(@RequestParam Long instrumentId) {
+    public @ResponseBody InstrumentWrapper getInstrument(@RequestParam Long instrumentId) {
         logger.info("GET " + Constants.INSTRUMENT + " - instrumentId: {}", instrumentId);
         return instrumentService.getInstrumentById(instrumentId);
     }

@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.service.PlayerService;
 
 @CrossOrigin("*")
@@ -62,7 +62,7 @@ public class PlayerController {
     @PostMapping(Constants.ADD_PLAYER_FOR_NOTE)
     public ResponseEntity<Player> addPlayer(
             @RequestParam String instrument, 
-            @RequestParam Long note) {
+            @RequestParam Integer note) {
         logger.info("POST {} - instrument: {}, note: {}", 
             Constants.ADD_PLAYER_FOR_NOTE, instrument, note);
         Player player = service.addPlayer(instrument, note);

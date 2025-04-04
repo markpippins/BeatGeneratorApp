@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.model.Strike;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
@@ -20,7 +22,7 @@ import redis.clients.jedis.JedisPool;
 @Getter
 @Setter
 public class PlayerHelper {
-    private static final Logger logger = Logger.getLogger(PlayerHelper.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PlayerHelper.class.getName());
 
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
@@ -63,7 +65,7 @@ public class PlayerHelper {
             }
             return null;
         } catch (Exception e) {
-            logger.severe("Error finding player: " + e.getMessage());
+            logger.error("Error finding player: " + e.getMessage());
             throw new RuntimeException("Failed to find player", e);
         }
     }
@@ -88,7 +90,7 @@ public class PlayerHelper {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.incr("seq:player");
         } catch (Exception e) {
-            logger.severe("Error getting next player ID: " + e.getMessage());
+            logger.error("Error getting next player ID: " + e.getMessage());
             throw new RuntimeException("Failed to get next player ID", e);
         }
     }
@@ -114,7 +116,7 @@ public class PlayerHelper {
     // }
     // return ids;
     // } catch (Exception e) {
-    // logger.severe("Error getting player IDs: " + e.getMessage());
+    // logger.error("Error getting player IDs: " + e.getMessage());
     // throw new RuntimeException("Failed to get player IDs", e);
     // }
     // }
@@ -161,7 +163,7 @@ public class PlayerHelper {
 
             logger.info(String.format("Saved player %d with %d rules", player.getId(), rules.size()));
         } catch (Exception e) {
-            logger.severe("Error saving player: " + e.getMessage());
+            logger.error("Error saving player: " + e.getMessage());
             throw new RuntimeException("Failed to save player", e);
         }
     }
@@ -185,7 +187,7 @@ public class PlayerHelper {
             String key = getPlayerKey(player.getPlayerClassName(), player.getId());
             jedis.del(key);
         } catch (Exception e) {
-            logger.severe("Error deleting player: " + e.getMessage());
+            logger.error("Error deleting player: " + e.getMessage());
             throw new RuntimeException("Failed to delete player", e);
         }
     }
@@ -194,7 +196,7 @@ public class PlayerHelper {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.incr("seq:player");
         } catch (Exception e) {
-            logger.severe("Error getting next player ID: " + e.getMessage());
+            logger.error("Error getting next player ID: " + e.getMessage());
             throw new RuntimeException("Failed to get next player ID", e);
         }
     }
@@ -216,7 +218,7 @@ public class PlayerHelper {
             logger.info("Successfully added player " + player.getId() +
                     " (" + player.getName() + ") to session " + session.getId());
         } catch (Exception e) {
-            logger.severe("Error adding player to session: " + e.getMessage());
+            logger.error("Error adding player to session: " + e.getMessage());
             throw new RuntimeException("Failed to add player to session", e);
         }
     }

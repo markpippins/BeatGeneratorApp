@@ -1,393 +1,281 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sound.midi.MidiChannel;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
+import javax.swing.JTabbedPane;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.StatusUpdate;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.service.InternalSynthManager;
 
-class X0XPanel extends StatusProviderPanel implements IBusListener {
+public class X0XPanel extends JPanel implements IBusListener {
+
+    private static final Logger logger = LoggerFactory.getLogger(X0XPanel.class);
+
     private final List<TriggerButton> triggerButtons = new ArrayList<>();
+    private final List<Dial> velocityDials = new ArrayList<>();
+    private final List<Dial> gateDials = new ArrayList<>();
 
     private boolean isPlaying = false;
-    private int currentStep = 0;
+    private Synthesizer synthesizer = null;
 
-    // Add a class member for timer-based stepping
-    private javax.swing.Timer stepTimer;
+    // MIDI parameters for note playback only
+    private int latencyCompensation = 20; // milliseconds to compensate for system latency
+    private int lookAheadMs = 40; // How far ahead to schedule notes
+    private boolean useAheadScheduling = true; // Enable/disable look-ahead
+    private int activeMidiChannel = 15;  // Use channel 16 (15-based index) consistently
+
+    private MelodicSequencerPanel melodicSequencerPanel;
+    private DrumSequencerPanel drumSequencerPanel;
+    private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
 
     public X0XPanel() {
         super(new BorderLayout());
-        setStatusConsumer(statusConsumer);
-        // Register with both buses
-        TimingBus.getInstance().register(this);
+
+        // Initialize the synthesizer
+        initializeSynthesizer();
+
+        // Register with command bus
         CommandBus.getInstance().register(this);
+
+        // Set up UI components
         setup();
-        
-        // Initialize the step timer
-        setupStepTimer();
     }
 
-    // Add this method to set up the timer
-    private void setupStepTimer() {
-        // Start with 120 BPM = 500ms per beat = 125ms per step (for 4 steps per beat)
-        int initialMsPerStep = 125;
-        
-        stepTimer = new javax.swing.Timer(initialMsPerStep, e -> {
-            if (isPlaying) {
-                int nextStep = (currentStep + 1) % 16;
-                System.out.println("Timer firing: current=" + currentStep + ", next=" + nextStep);
-                updateStep(currentStep, nextStep);
-                currentStep = nextStep;
+    private void initializeSynthesizer() {
+        try {
+            MidiSystem.getMidiDeviceInfo();
+
+            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+            MidiDevice.Info gervillInfo = null;
+
+            for (MidiDevice.Info info : infos) {
+                if (info.getName().contains("Gervill")) {
+                    gervillInfo = info;
+                    break;
+                }
             }
-        });
-        stepTimer.setRepeats(true);
+
+            if (gervillInfo != null) {
+                MidiDevice device = MidiSystem.getMidiDevice(gervillInfo);
+                if (device instanceof Synthesizer) {
+                    synthesizer = (Synthesizer) device;
+                }
+            }
+
+            if (synthesizer == null) {
+                synthesizer = MidiSystem.getSynthesizer();
+            }
+
+            if (synthesizer != null && !synthesizer.isOpen()) {
+                synthesizer.open();
+                logger.info("Opened synthesizer: " + synthesizer.getDeviceInfo().getName());
+            }
+
+            if (synthesizer != null && synthesizer.isOpen()) {
+                MidiChannel channel = synthesizer.getChannels()[activeMidiChannel];
+
+                if (channel != null) {
+                    channel.controlChange(7, 100); // Set volume to 100
+                    channel.controlChange(10, 64); // Pan center
+                    channel.programChange(0); // Default program (Grand Piano)
+                    logger.info("Configured channel 16 (index 15) on synthesizer");
+
+                    String presetName = InternalSynthManager.getInstance().getPresetName(1L, 0);
+                    logger.info("Initial preset: " + presetName);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error initializing synthesizer: " + e.getMessage(), e);
+        }
     }
 
     @Override
     public void onAction(Command action) {
-        if (action.getCommand() == null) return;
-        
+        if (action.getCommand() == null) {
+            return;
+        }
+
         switch (action.getCommand()) {
-            case Commands.TRANSPORT_PLAY -> {
+            case Commands.TRANSPORT_START -> {
                 isPlaying = true;
-                currentStep = 0;
-                
-                // Reset the step timer whenever tempo changes
-                int currentBPM = 120; // Default
-                try {
-                    Session session = SessionManager.getInstance().getActiveSession();
-                    if (session != null) {
-                        currentBPM = Math.round(session.getTempoInBPM());
-                    }
-                } catch (Exception ex) {
-                    // Use default if can't get session
-                }
-                
-                // Calculate ms per step: 60000ms/min ÷ BPM = ms/beat, then divide by 4 steps/beat
-                int msPerBeat = 60000 / currentBPM;
-                int msPerStep = msPerBeat / 4;
-                stepTimer.setDelay(msPerStep);
-                
-                // Start the timer
-                stepTimer.start();
-                
-                SwingUtilities.invokeLater(() -> {
-                    // Reset all buttons first
-                    for (TriggerButton button : triggerButtons) {
-                        button.setHighlighted(false);
-                    }
-                    // Highlight first step
-                    if (!triggerButtons.isEmpty()) {
-                        triggerButtons.get(0).setHighlighted(true);
-                    }
-                    System.out.println("X0X: Transport Play - reset to step 0, step timer started");
-                });
+                // Sequencer handles its own state - nothing to do here
             }
-            
+
             case Commands.TRANSPORT_STOP -> {
                 isPlaying = false;
-                // Stop the timer
-                stepTimer.stop();
-                resetSequence();
-                System.out.println("X0X: Transport Stop - sequence reset, step timer stopped");
+                // Sequencer handles its own state - nothing to do here
             }
-            
-            // COMPLETELY DISABLE the tick-based approach
-            // case Commands.BASIC_TIMING_TICK -> {
-            //    // Removed to avoid conflicts
-            // }
-            
-            case Commands.BASIC_TIMING_BEAT -> {
-                // Just use for tempo synchronization
-                if (isPlaying && action.getData() instanceof Number beatNum) {
-                    System.out.println("X0X: Beat " + beatNum.intValue() + " (purely informational)");
-                }
-            }
-            
+
             case Commands.SESSION_UPDATED -> {
-                // Update tempo when session changes
-                if (action.getData() instanceof Session session) {
-                    int bpm = Math.round(session.getTempoInBPM());
-                    int msPerBeat = 60000 / bpm;
-                    int msPerStep = msPerBeat / 4;
-                    stepTimer.setDelay(msPerStep);
-                    System.out.println("X0X: Session updated - tempo=" + bpm + ", msPerStep=" + msPerStep);
-                }
+                // Nothing to do here - sequencer handles timing updates
             }
 
-            // Enable tempo change handling
-            // case Commands.TEMPO_CHANGED -> {
-            //     if (action.getData() instanceof Number tempoBPM) {
-            //         int bpm = tempoBPM.intValue();
-            //         int msPerBeat = 60000 / bpm;
-            //         int msPerStep = msPerBeat / 4;
-            //         stepTimer.setDelay(msPerStep);
-            //         System.out.println("X0X: Tempo changed to " + bpm + " BPM, step timer=" + msPerStep + "ms");
-            //     }
-            // }
-        }
-    }
-
-    private void updateStep(int oldStep, int newStep) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                // Clear previous step
-                if (oldStep >= 0 && oldStep < triggerButtons.size()) {
-                    triggerButtons.get(oldStep).setHighlighted(false);
-                }
-                
-                // Highlight current step
-                if (newStep >= 0 && newStep < triggerButtons.size()) {
-                    triggerButtons.get(newStep).setHighlighted(true);
-                    if (getStatusConsumer() != null) {
-                        getStatusConsumer().setStatus("Step: " + (newStep + 1) + " of 16");
+            case Commands.ROOT_NOTE_SELECTED -> {
+                if (action.getData() instanceof String) {
+                    String rootNote = (String) action.getData();
+                    if (melodicSequencerPanel != null) {
+                        melodicSequencerPanel.getSequencer().setRootNote(rootNote);
+                        melodicSequencerPanel.getSequencer().updateQuantizer();
                     }
                 }
-            } catch (Exception e) {
-                System.err.println("Error updating X0X step: " + e.getMessage());
             }
-        });
-    }
 
-    private void resetSequence() {
-        currentStep = 0;
-        SwingUtilities.invokeLater(() -> {
-            // Clear all highlights when stopped
-            for (TriggerButton button : triggerButtons) {
-                button.setHighlighted(false);
-            }
-        });
-    }
-
-    private void updateTriggerButtons() {
-        try {
-            // Debug output to help diagnose issues
-            System.out.println("Updating trigger buttons: step=" + currentStep + 
-                               ", isPlaying=" + isPlaying + 
-                               ", triggerButtons.size=" + triggerButtons.size());
-            
-            // First clear all button highlights
-            for (TriggerButton button : triggerButtons) {
-                button.setHighlighted(false);
-            }
-            
-            // Then highlight only the current step
-            if (isPlaying && currentStep >= 0 && currentStep < triggerButtons.size()) {
-                triggerButtons.get(currentStep).setHighlighted(true);
-                
-                // Update status
-                if (getStatusConsumer() != null) {
-                    getStatusConsumer().setStatus("Step: " + (currentStep + 1));
+            case Commands.SCALE_SELECTED -> {
+                if (action.getData() instanceof String) {
+                    String scaleName = (String) action.getData();
+                    if (melodicSequencerPanel != null) {
+                        melodicSequencerPanel.getSequencer().setScale(scaleName);
+                        melodicSequencerPanel.getSequencer().updateQuantizer();
+                    }
                 }
             }
-        } catch (Exception e) {
-            System.err.println("Error updating trigger buttons: " + e.getMessage());
-            e.printStackTrace();  // Print stack trace for better debugging
+
+            // Listen for step updates from sequencer to update status display
+            case Commands.SEQUENCER_STEP_UPDATE -> {
+                if (action.getData() instanceof MelodicSequencer.StepUpdateEvent) {
+                    MelodicSequencer.StepUpdateEvent stepUpdateEvent = (MelodicSequencer.StepUpdateEvent) action.getData();
+
+                    int step = stepUpdateEvent.getNewStep();
+                    int patternLength = melodicSequencerPanel.getSequencer().getPatternLength();
+
+                    // Update status display with current step
+                    CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this,
+                            new StatusUpdate("Step: " + (step + 1) + " of " + patternLength));
+                }
+            }
         }
     }
 
     private void setup() {
-        setLayout(new BorderLayout());
-        add(createX0XPanel(), BorderLayout.CENTER);
-        
-        // Create more comprehensive debug panel
-        JPanel debugPanel = new JPanel();
-        debugPanel.setLayout(new BoxLayout(debugPanel, BoxLayout.Y_AXIS));
-        
-        // Panel for test buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        
-        // Display current step
-        JLabel stepLabel = new JLabel("Step: 0/16");
-        buttonPanel.add(stepLabel);
-        
-        // Test button to cycle through all 16 steps exactly once
-        JButton testCycleButton = new JButton("Test All 16 Steps");
-        testCycleButton.addActionListener(e -> {
-            // Use array to track progress across timer ticks
-            final int[] counter = {0};
-            
-            javax.swing.Timer timer = new javax.swing.Timer(100, event -> {
-                // Reset all buttons first
-                for (TriggerButton button : triggerButtons) {
-                    button.setHighlighted(false);
-                }
-                
-                // Highlight the current test step
-                if (counter[0] < triggerButtons.size()) {
-                    triggerButtons.get(counter[0]).setHighlighted(true);
-                    stepLabel.setText("Test Step: " + (counter[0] + 1) + "/16");
-                    System.out.println("Test highlighting step " + counter[0]);
-                    counter[0]++;
-                } else {
-                    // Stop when we've gone through all steps
-                    ((javax.swing.Timer)event.getSource()).stop();
-                    stepLabel.setText("Test complete");
-                    
-                    // Reset all highlights
-                    for (TriggerButton button : triggerButtons) {
-                        button.setHighlighted(false);
+        JPanel containerPanel = new JPanel(new BorderLayout());
+        containerPanel.setBorder(BorderFactory.createEmptyBorder());
+
+        JTabbedPane x0xPanel = createX0XPanel();
+        containerPanel.add(new JScrollPane(x0xPanel), BorderLayout.CENTER);
+
+        add(containerPanel);
+    }
+
+    private JTabbedPane createX0XPanel() {
+        JTabbedPane tabbedPane = new JTabbedPane();
+
+        tabbedPane.addTab("Drums", createDrumPanel());
+        tabbedPane.addTab("Drum Effects", createDrumEffectsPanel());
+        tabbedPane.addTab("Melodic", createMelodicSequencerPanel());
+        tabbedPane.addTab("Synth", createInstrumentPanel());
+        return tabbedPane;
+    }
+
+    private Component createDrumPanel() {
+        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {
+            playDrumNote(noteEvent.getNote(), noteEvent.getVelocity());
+        });
+        return drumSequencerPanel;
+    }
+
+    private Component createDrumEffectsPanel() {
+        drumEffectsSequencerPanel = new DrumEffectsSequencerPanel(noteEvent -> {
+            playDrumNote(noteEvent.getNote(), noteEvent.getVelocity());
+        });
+        return drumEffectsSequencerPanel;
+    }
+
+    private Component createMelodicSequencerPanel() {
+        melodicSequencerPanel = new MelodicSequencerPanel(noteEvent -> {
+            // Add logging to debug
+            logger.info("Playing note: {}, velocity: {}, duration: {}",
+                    noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
+
+            // Call the playNote method
+            playNote(noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
+        });
+
+        return melodicSequencerPanel;
+    }
+
+    private Component createInstrumentPanel() {
+        return new InternalSynthControlPanel(synthesizer);
+    }
+
+    public void playNote(int note, int velocity, int durationMs) {
+        if (synthesizer != null && synthesizer.isOpen()) {
+            try {
+                // Use the same channel consistently - very important!
+                final MidiChannel channel = synthesizer.getChannels()[activeMidiChannel];
+
+                if (channel != null) {
+                    if (useAheadScheduling) {
+                        new Thread(() -> {
+                            try {
+                                Thread.sleep(1);
+                                Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+
+                                long currentTime = System.currentTimeMillis();
+                                long targetTime = currentTime + lookAheadMs;
+                                long waitTime = targetTime - System.currentTimeMillis();
+
+                                if (waitTime > 0) {
+                                    Thread.sleep(waitTime);
+                                }
+
+                                channel.noteOn(note, velocity);
+                                Thread.sleep(durationMs);
+                                channel.noteOff(note);
+                            } catch (InterruptedException e) {
+                                // Ignore interruptions
+                            }
+                        }).start();
+                    } else {
+                        channel.noteOn(note, velocity);
+
+                        java.util.Timer timer = new java.util.Timer(true);
+                        timer.schedule(new java.util.TimerTask() {
+                            @Override
+                            public void run() {
+                                channel.noteOff(note);
+                                timer.cancel();
+                            }
+                        }, durationMs);
                     }
                 }
-            });
-            timer.setInitialDelay(0);
-            timer.start();
-        });
-        buttonPanel.add(testCycleButton);
-        
-        // Button to verify the trigger buttons collection
-        JButton verifyButton = new JButton("Verify Buttons");
-        verifyButton.addActionListener(e -> {
-            System.out.println("==== TRIGGER BUTTON VERIFICATION ====");
-            System.out.println("Number of trigger buttons: " + triggerButtons.size());
-            if (triggerButtons.size() != 16) {
-                System.out.println("ERROR: Expected 16 buttons but found " + triggerButtons.size());
+            } catch (Exception e) {
+                logger.error("Error playing note: " + e.getMessage(), e);
             }
-            
-            for (int i = 0; i < triggerButtons.size(); i++) {
-                // Don't try to access isHighlighted() as it doesn't exist
-                System.out.println("Button " + i + ": " + 
-                    triggerButtons.get(i).getName());
-                    
-                // Visual test - temporarily highlight each button in sequence
-                final int buttonIndex = i;
-                SwingUtilities.invokeLater(() -> {
-                    // First clear all highlights
-                    for (TriggerButton btn : triggerButtons) {
-                        btn.setHighlighted(false);
-                    }
-                    // Highlight just this button
-                    triggerButtons.get(buttonIndex).setHighlighted(true);
-                });
-                
-                // Pause briefly to see the highlight
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
+        }
+    }
+
+    public void playDrumNote(int note, int velocity) {
+        if (synthesizer != null && synthesizer.isOpen()) {
+            try {
+                // Use the drum channel consistently (channel 10, index 9)
+                final MidiChannel channel = synthesizer.getChannels()[9];
+
+                if (channel != null) {
+                    channel.noteOn(note, velocity);
                 }
+            } catch (Exception e) {
+                logger.error("Error playing drum note: " + e.getMessage(), e);
             }
-            
-            // Reset all highlights after verification
-            SwingUtilities.invokeLater(() -> {
-                for (TriggerButton btn : triggerButtons) {
-                    btn.setHighlighted(false);
-                }
-            });
-            
-            stepLabel.setText("Verified: " + triggerButtons.size() + " buttons");
-        });
-        buttonPanel.add(verifyButton);
-        
-        debugPanel.add(buttonPanel);
-        add(debugPanel, BorderLayout.SOUTH);
-        
-        // Verify setup
-        System.out.println("X0XPanel setup complete: " + triggerButtons.size() + " trigger buttons created");
-    }
-
-    private JPanel createX0XPanel() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
-
-        // Create panel for the 16 columns
-        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 5, 0));
-        sequencePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        // Create 16 columns
-        for (int i = 0; i < 16; i++) {
-            JPanel columnPanel = createSequenceColumn(i);
-            sequencePanel.add(columnPanel);
         }
-
-        // Wrap in scroll pane in case window gets too small
-        JScrollPane scrollPane = new JScrollPane(sequencePanel);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
-        return mainPanel;
     }
-
-    private JPanel createSequenceColumn(int index) {
-        // Use BoxLayout for vertical arrangement
-        JPanel column = new JPanel();
-        column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
-        column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
-
-        // Add 4 knobs
-        for (int i = 0; i < 5; i++) {
-            JLabel label = new JLabel(getKnobLabel(i));
-            label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-            label.setForeground(Color.GRAY);
-            label.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            labelPanel.add(label);
-            // Add label to the column
-            column.add(labelPanel);
-
-            Dial dial = new Dial();
-            dial.setUpdateOnResize(false);
-            dial.setToolTipText(String.format("Step %d Knob %d", index + 1, i + 1));
-            dial.setName("JDial-" + index + "-" + i);
-            // Center the dial horizontally
-            JPanel dialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            dialPanel.add(dial);
-            column.add(dialPanel);
-
-            // Add small spacing between knobs
-            column.add(Box.createRigidArea(new Dimension(0, 5)));
-        }
-
-        // Add the trigger button
-        TriggerButton triggerButton = new TriggerButton("");
-        triggerButton.setName("TriggerButton-" + index);
-        triggerButton.setToolTipText("Step " + (index + 1));
-        triggerButtons.add(triggerButton);
-        // Center the button horizontally
-        JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        buttonPanel1.add(triggerButton);
-        column.add(buttonPanel1);
-
-        // Add the pad button
-        JButton padButton = new DrumButton(); // createPadButton(index);
-        padButton.setName("PadButton-" + index);
-        padButton.setToolTipText("Pad " + (index + 1));
-        padButton.setText(Integer.toString(index + 1));
-
-        JPanel buttonPanel2 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        buttonPanel2.add(padButton);
-        column.add(buttonPanel2);
-
-        return column;
-    }
-
-    private String getKnobLabel(int i) {
-        return i == 0 ? "Note" : i == 1 ? "Vel." : i == 2 ? "Gate" : "Prob.";
-    }
-
 }

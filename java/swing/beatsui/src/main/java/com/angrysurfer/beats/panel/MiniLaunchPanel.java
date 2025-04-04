@@ -23,21 +23,20 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.ColorUtils;
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.StatusConsumer;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.midi.Instrument;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
-public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener {
+public class MiniLaunchPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(MiniLaunchPanel.class);
 
-    private static final int BUTTON_SIZE = 40;
+    private static final int BUTTON_SIZE = 38;
     private static final int GRID_ROWS = 2;
     private static final int GRID_COLS = 4;
     private static final int GRID_GAP = 5;
@@ -45,7 +44,7 @@ public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener
 
     // Add label mapping array
     private static final int[] PAD_LABELS = {
-            43, 44, 45, 46, // top row
+            40, 41, 42, 43, // top row
             36, 37, 38, 39 // bottom row
     };
 
@@ -72,8 +71,8 @@ public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener
         }
     }
 
-    public MiniLaunchPanel(StatusConsumer statusConsumer) {
-        super(new BorderLayout(), statusConsumer);
+    public MiniLaunchPanel() {
+        super(new BorderLayout());
         commandBus.register(this);
         setup();
     }
@@ -201,7 +200,7 @@ public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener
         Player activePlayer = PlayerManager.getInstance().getActivePlayer();
 
         if (activePlayer == null) {
-            // logger.debug("No active player to receive MIDI note: {}", midiNote);
+            logger.debug("No active player to receive MIDI note: {}", midiNote);
             return false;
         }
 
@@ -213,7 +212,7 @@ public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener
 
         try {
             // Use the player's instrument, channel, and a reasonable velocity
-            Instrument instrument = activePlayer.getInstrument();
+            InstrumentWrapper instrument = activePlayer.getInstrument();
             if (instrument == null) {
                 logger.debug("Active player has no instrument");
                 return false;
@@ -245,7 +244,7 @@ public class MiniLaunchPanel extends StatusProviderPanel implements IBusListener
             int velocity = (int) Math.round((activePlayer.getMinVelocity() + activePlayer.getMaxVelocity()) / 2.0);
 
             // Just update the note in memory temporarily - don't save to Redis
-            activePlayer.setNote((long) midiNote);
+            activePlayer.setRootNote(midiNote);
 
             // Send the note to the device
             logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);

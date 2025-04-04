@@ -1,7 +1,10 @@
 package com.angrysurfer.beats.panel;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
 
 public class ButtonPanel extends JPanel {
     private final JButton addButton;
