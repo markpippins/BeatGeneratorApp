@@ -604,8 +604,14 @@ public class ControlPanel extends JPanel {
                 listenersEnabled = false; // Prevent feedback loop
                 velocityMaxDial.setValue(minValue);
                 activePlayer.setMaxVelocity((long) minValue);
-                velocityMaxDial.invalidate();
+                
+                // Force immediate visual update of the max dial
+                velocityMaxDial.repaint();
+                
                 listenersEnabled = true;
+                
+                // Log the adjustment
+                logger.info("Auto-adjusted max velocity to match: " + minValue);
             }
 
             // Update player
@@ -634,7 +640,14 @@ public class ControlPanel extends JPanel {
                 listenersEnabled = false; // Prevent feedback loop
                 velocityMinDial.setValue(maxValue);
                 activePlayer.setMinVelocity((long) maxValue);
+                
+                // Force immediate visual update of the min dial
+                velocityMinDial.repaint();
+                
                 listenersEnabled = true;
+                
+                // Log the adjustment
+                logger.info("Auto-adjusted min velocity to match: " + maxValue);
             }
 
             // Update player

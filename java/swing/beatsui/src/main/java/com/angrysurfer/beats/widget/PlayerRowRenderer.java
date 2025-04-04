@@ -108,16 +108,34 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
                     // Get drum name from InternalSynthManager using the actual note
                     String drumName = InternalSynthManager.getInstance().getDrumName(actualNote);
                     
-                    // Show both the base note and the actual note if offset is applied
-                    String displayText = drumName;
-                    // if (sessionNoteOffset != 0) {
-                    //     displayText = drumName + " (offset: " + (sessionNoteOffset > 0 ? "+" : "") + sessionNoteOffset + ")";
-                    // }
-                    
-                    // Set the drum name in the preset column
-                    label.setText(displayText);
+                    // Show drum name in the preset column
+                    label.setText(drumName);
                     label.setToolTipText("Drum: " + drumName + " (Note: " + actualNote + ")");
                     label.setHorizontalAlignment(JLabel.LEFT); // Left-align drum names as they can be long
+                }
+                // For instruments with loaded soundbanks, show preset names from that soundbank
+                else if (player.getInstrument() != null && player.getInstrument().getSoundbankName() != null) {
+                    // Get preset value
+                    long presetValue = value instanceof Number ? ((Number)value).longValue() : 0;
+                    
+                    // Get bank index (default to 0 if null)
+                    int bankIndex = player.getInstrument().getBankIndex() != null ? 
+                                    player.getInstrument().getBankIndex() : 0;
+                    
+                    // Get preset name using soundbank name and bank
+                    String presetName = InternalSynthManager.getInstance().getPresetNames(
+                        player.getInstrument().getSoundbankName(), bankIndex)
+                        .stream()
+                        .skip(presetValue)
+                        .findFirst()
+                        .orElse("Preset " + presetValue);
+                    
+                    // Use preset name instead of number
+                    label.setText(presetName);
+                    label.setToolTipText(player.getInstrument().getSoundbankName() + 
+                                        " Bank " + bankIndex + 
+                                        " Preset " + presetValue + ": " + presetName);
+                    label.setHorizontalAlignment(JLabel.LEFT);
                 }
                 // For internal synth instruments, show preset name
                 else if (player.getInstrument() != null && 
@@ -131,7 +149,7 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
                     // Use preset name instead of number
                     label.setText(presetName);
                     label.setToolTipText(presetName);
-                    label.setHorizontalAlignment(JLabel.LEFT); // Changed from CENTER to LEFT for consistent text alignment
+                    label.setHorizontalAlignment(JLabel.LEFT);
                 }
                 // For standard presets, just show the number
                 else {
