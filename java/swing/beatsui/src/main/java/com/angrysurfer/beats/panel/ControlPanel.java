@@ -20,6 +20,7 @@ import javax.swing.event.ChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.UIHelper;
@@ -167,21 +168,36 @@ public class ControlPanel extends JPanel {
 
         velocityMinDial = createDial("minVelocity", 64, 0, 127, 1);
         velocityMinDial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
-
+        velocityMinDial.setKnobColor(ColorUtils.dustyAmber);
+        velocityMinDial.setGradientStartColor(velocityMinDial.getKnobColor().brighter());
+        velocityMinDial.setGradientEndColor(velocityMinDial.getKnobColor().darker());
+        
         velocityMaxDial = createDial("maxVelocity", 127, 0, 127, 1);
         velocityMaxDial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
+        velocityMaxDial.setKnobColor(ColorUtils.dustyAmber);
+        velocityMaxDial.setGradientStartColor(velocityMaxDial.getKnobColor().brighter());
+        velocityMaxDial.setGradientEndColor(velocityMaxDial.getKnobColor().darker());
 
         swingDial = createDial("swing", 50, 0, 100, 1);
         swingDial.setCommand(Commands.NEW_VALUE_SWING);
 
         probabilityDial = createDial("probability", 100, 0, 100, 1);
         probabilityDial.setCommand(Commands.NEW_VALUE_PROBABILITY);
+        probabilityDial.setKnobColor(ColorUtils.deepNavy);
+        probabilityDial.setGradientStartColor(probabilityDial.getKnobColor().brighter());
+        probabilityDial.setGradientEndColor(probabilityDial.getKnobColor().darker());
 
         randomDial = createDial("random", 0, 0, 100, 1);
         randomDial.setCommand(Commands.NEW_VALUE_RANDOM);
+        randomDial.setKnobColor(ColorUtils.mutedOlive);
+        randomDial.setGradientStartColor(randomDial.getKnobColor().brighter());
+        randomDial.setGradientEndColor(randomDial.getKnobColor().darker());
 
         sparseDial = createDial("sparse", 0, 0, 100, 1);
         sparseDial.setCommand(Commands.NEW_VALUE_SPARSE);
+        sparseDial.setKnobColor(ColorUtils.deepTeal);
+        sparseDial.setGradientStartColor(sparseDial.getKnobColor().brighter());
+        sparseDial.setGradientEndColor(sparseDial.getKnobColor().darker());
 
         // Add note selection dial with special panel width (80px vs 60px)
         controlsWrapper.add(noteSelectionDial);
@@ -588,6 +604,7 @@ public class ControlPanel extends JPanel {
                 listenersEnabled = false; // Prevent feedback loop
                 velocityMaxDial.setValue(minValue);
                 activePlayer.setMaxVelocity((long) minValue);
+                velocityMaxDial.invalidate();
                 listenersEnabled = true;
             }
 
