@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model;
+package com.angrysurfer.core.sequencer;
 
 // Add a helper class for drum items
 public class DrumItem {

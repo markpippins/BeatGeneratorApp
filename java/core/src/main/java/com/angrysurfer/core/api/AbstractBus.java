@@ -8,7 +8,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.angrysurfer.core.util.LogManager;
+import com.angrysurfer.core.service.LogManager;
 
 public class AbstractBus implements IBusListener {
 

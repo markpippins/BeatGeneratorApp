@@ -252,5 +252,7 @@ public class Commands {
     public static final String SOUNDBANK_UNSELECTED_REQUEST = "SOUNDBANK_UNSELECTED_REQUEST";
  
     public static final String PAD_TOGGLED = "PAD_TOGGLED";
+    public static final String NEW_VALUE_OCTAVE = "NEW_VALUE_OCTAVE";
+    public static final String SEQUENCER_STEP_UPDATE = "SEQUENCER_STEP_UPDATE";
 }
 

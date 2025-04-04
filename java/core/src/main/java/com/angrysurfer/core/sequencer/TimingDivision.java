@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model;
+package com.angrysurfer.core.sequencer;
 
 // Timing parameters
 public enum TimingDivision {

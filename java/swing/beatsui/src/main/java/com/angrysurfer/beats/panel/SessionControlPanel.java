@@ -23,8 +23,8 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.Scale;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.sequencer.Scale;
 
 /**
  * Panel for session parameters and controls (right side of toolbar)

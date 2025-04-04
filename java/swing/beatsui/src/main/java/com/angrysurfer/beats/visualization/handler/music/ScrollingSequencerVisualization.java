@@ -18,10 +18,10 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.api.TimingUpdate;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.SessionManager;
 
 public class ScrollingSequencerVisualization extends LockHandler implements IVisualizationHandler, IBusListener {

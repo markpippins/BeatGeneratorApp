@@ -1,9 +1,7 @@
-package com.angrysurfer.core.util;
+package com.angrysurfer.core.sequencer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.model.Scale;
 
 public class Quantizer {
     private Boolean[] scale;

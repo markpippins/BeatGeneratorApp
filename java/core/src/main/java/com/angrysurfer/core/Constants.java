@@ -1,4 +1,4 @@
-package com.angrysurfer.core.util;
+package com.angrysurfer.core;
 
 public class Constants {
     public static final double DEFAULT_BEAT_OFFSET = 1.0;

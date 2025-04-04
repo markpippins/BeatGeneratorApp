@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model;
+package com.angrysurfer.core.sequencer;
 
 // Helper class to represent presets in the combo box
 public class PresetItem {

@@ -1,4 +1,4 @@
-package com.angrysurfer.core.util;
+package com.angrysurfer.core.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

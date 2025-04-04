@@ -1,4 +1,4 @@
-package com.angrysurfer.core.model;
+package com.angrysurfer.core.sequencer;
 
 /**
  * Class to represent a note event

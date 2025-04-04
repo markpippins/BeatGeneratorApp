@@ -1,4 +1,4 @@
-package com.angrysurfer.core.service;
+package com.angrysurfer.core.sequencer;
 
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -22,6 +22,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -21,9 +21,9 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.api.TimingUpdate;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 
 import lombok.Getter;
 import lombok.Setter;

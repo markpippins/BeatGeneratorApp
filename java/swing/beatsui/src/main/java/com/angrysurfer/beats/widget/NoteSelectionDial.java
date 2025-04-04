@@ -14,7 +14,7 @@ import java.awt.geom.Point2D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.Scale;
+import com.angrysurfer.core.sequencer.Scale;
 
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.MidiDevice;

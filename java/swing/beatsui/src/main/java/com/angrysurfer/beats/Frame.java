@@ -25,13 +25,13 @@ import com.angrysurfer.beats.panel.PlayersPanel;
 import com.angrysurfer.beats.panel.SessionPanel;
 import com.angrysurfer.beats.panel.X0XPanel;
 import com.angrysurfer.beats.widget.PlayersTable;
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.util.Constants;
 
 public class Frame extends JFrame implements AutoCloseable {
 

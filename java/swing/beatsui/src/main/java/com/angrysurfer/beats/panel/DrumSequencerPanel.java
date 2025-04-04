@@ -33,11 +33,11 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.api.TimingUpdate;
 import com.angrysurfer.core.model.Direction;
-import com.angrysurfer.core.model.NoteEvent;
 import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.model.TimingDivision;
+import com.angrysurfer.core.sequencer.NoteEvent;
+import com.angrysurfer.core.sequencer.TimingDivision;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 
 /**
  * A sequencer panel with X0X-style step sequencing capabilities

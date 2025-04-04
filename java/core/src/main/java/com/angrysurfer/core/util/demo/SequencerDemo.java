@@ -1,3 +1,4 @@
+package com.angrysurfer.core.util.demo;
 // package com.angrysurfer.core;
 
 // import javax.sound.midi.InvalidMidiDataException;

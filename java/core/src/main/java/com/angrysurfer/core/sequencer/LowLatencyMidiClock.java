@@ -1,4 +1,4 @@
-package com.angrysurfer.core.service;
+package com.angrysurfer.core.sequencer;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -6,8 +6,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.util.Constants;
 
 public class LowLatencyMidiClock {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(

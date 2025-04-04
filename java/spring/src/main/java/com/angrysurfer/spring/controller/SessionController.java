@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.util.Constants;
 import com.angrysurfer.spring.dao.SessionStatus;
 import com.angrysurfer.spring.service.SessionService;
 import com.angrysurfer.spring.service.SongService;
