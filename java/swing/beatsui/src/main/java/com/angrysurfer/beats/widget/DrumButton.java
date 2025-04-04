@@ -52,6 +52,8 @@ public class DrumButton extends JButton implements IBusListener {
         setup();
     }
 
+
+
     private void setup() {
         Color baseColor = new Color(50, 130, 200); // A vibrant, cool blue
         // new Color(60, 60, 60); // Dark grey base
