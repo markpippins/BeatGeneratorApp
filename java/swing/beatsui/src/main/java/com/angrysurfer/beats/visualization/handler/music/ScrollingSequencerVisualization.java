@@ -396,7 +396,7 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
         
         switch (action.getCommand()) {
             // Transport state changes
-            case Commands.TRANSPORT_PLAY, Commands.METRONOME_START -> {
+            case Commands.TRANSPORT_START, Commands.METRONOME_START -> {
                 isPlaying = true;
                 startRenderTimer();
             }

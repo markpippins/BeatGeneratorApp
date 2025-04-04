@@ -8,6 +8,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
@@ -60,6 +61,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     private JComboBox<Integer> bankCombo;
     private JSpinner presetSpinner;
     private JButton loadSoundbankButton;
+    private JButton deleteSoundbankButton;
     private JButton previewButton;
 
     // Special Components for Drum Channel
@@ -208,6 +210,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         // Limit bank combo's width to simulate 4 columns wide
         bankCombo.setPreferredSize(new java.awt.Dimension(60, bankCombo.getPreferredSize().height));
         loadSoundbankButton = new JButton("Load...");
+        deleteSoundbankButton = new JButton("Delete");
 
         // Note: We no longer add these components to the soundbankPanel here
         // because they'll be added directly to the main layout in layoutComponents()
@@ -341,6 +344,46 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         // Replace your existing listener with this direct approach
         loadSoundbankButton.addActionListener(e -> loadSoundbankFile());
 
+        // Delete soundbank button listener
+        deleteSoundbankButton.addActionListener(e -> {
+            String selectedSoundbank = (String) soundbankCombo.getSelectedItem();
+            if (selectedSoundbank == null) {
+                JOptionPane.showMessageDialog(this,
+                        "No soundbank selected",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Confirm deletion
+            int result = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to delete soundbank: " + selectedSoundbank + "?",
+                    "Confirm Deletion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            
+            if (result == JOptionPane.YES_OPTION) {
+                try {
+                    // Call InternalSynthManager to delete the soundbank
+                    boolean deleted = InternalSynthManager.getInstance().deleteSoundbank(selectedSoundbank);
+                    
+                    if (deleted) {
+                        // Refresh the UI
+                        initializeSoundbanks();
+                        JOptionPane.showMessageDialog(this,
+                                "Soundbank deleted: " + selectedSoundbank,
+                                "Success", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                                "Failed to delete soundbank",
+                                "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (Exception ex) {
+                    logger.error("Error deleting soundbank: {}", ex.getMessage(), ex);
+                    JOptionPane.showMessageDialog(this,
+                            "Error deleting soundbank: " + ex.getMessage(),
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
         // Preview button listener
         previewButton.addActionListener(e -> playPreviewNote());
     }
@@ -434,6 +477,11 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         sbGbc.gridx = 4;
         sbGbc.weightx = 0.0;
         soundbankRow.add(loadSoundbankButton, sbGbc);
+
+        // Column 5: Delete button
+        sbGbc.gridx = 5;
+        sbGbc.weightx = 0.0;
+        soundbankRow.add(deleteSoundbankButton, sbGbc);
 
         // Add the soundbank row to the main panel (now at row 1)
         gbc.gridx = 0;
@@ -584,13 +632,19 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
 
             // Debug output
             logger.info("Retrieved {} soundbanks from InternalSynthManager", names.size());
-            for (String name : names) {
-                logger.info("  Found soundbank: {}", name);
-            }
-
+            
+            // Filter out empty names and sort alphabetically
+            List<String> filteredAndSorted = names.stream()
+                    .filter(name -> name != null && !name.trim().isEmpty())
+                    .sorted()
+                    .collect(Collectors.toList());
+            
+            logger.info("After filtering and sorting, have {} soundbanks", filteredAndSorted.size());
+            
             // Add to combo box
-            for (String name : names) {
+            for (String name : filteredAndSorted) {
                 soundbankCombo.addItem(name);
+                logger.info("  Added soundbank: {}", name);
             }
 
             // Select appropriate soundbank based on player settings

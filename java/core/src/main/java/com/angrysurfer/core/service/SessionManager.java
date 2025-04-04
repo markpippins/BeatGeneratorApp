@@ -124,8 +124,8 @@ public class SessionManager implements IBusListener {
                     case Commands.SESSION_REQUEST -> handleSessionRequest();
                     case Commands.TRANSPORT_REWIND -> moveBack();
                     case Commands.TRANSPORT_FORWARD -> moveForward();
-                    case Commands.TRANSPORT_PLAY -> {
-                        // System.out.println("SessionManager: Received TRANSPORT_PLAY command");
+                    case Commands.TRANSPORT_START -> {
+                        // System.out.println("SessionManager: Received TRANSPORT_START command");
                         if (activeSession != null) {
                             // System.out.println("Starting session: " + activeSession.getId());
                             activeSession.play();

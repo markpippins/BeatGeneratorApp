@@ -44,7 +44,7 @@ import com.angrysurfer.core.model.TimingDivision;
  */
 public class DrumSequencerPanel extends JPanel implements IBusListener {
 
-    private static final Logger logger = Logger.getLogger(MelodicSequencerPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(DrumSequencerPanel.class.getName());
 
     // UI Components
     private final List<DrumButton> drumButtons = new ArrayList<>();
@@ -428,8 +428,19 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Add a clean action listener that doesn't interfere with toggle behavior
         triggerButton.addActionListener(e -> {
-            // No need to manually toggle - JToggleButton handles it automatically
-            System.out.println("Trigger " + index + " is now " + (triggerButton.isSelected() ? "ON" : "OFF"));
+            // Get the current toggle state
+            boolean isOn = triggerButton.isSelected();
+
+            // Update the pattern array for the selected drum pad
+            if (selectedPadIndex >= 0 && selectedPadIndex < DRUM_PAD_COUNT) {
+                // Update the pattern for this step and the selected drum
+                patterns[selectedPadIndex][index] = isOn;
+                // logger.info("Step {} for drum {} is now {}", index, selectedPadIndex, (isOn ? "ON" : "OFF"));
+            } else {
+                // No drum pad is selected
+                logger.info("No drum pad selected - select a pad first to edit pattern");
+                // We could show a message here if desired
+            }
         });
 
         triggerButtons.add(triggerButton);
@@ -483,37 +494,39 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Update the sequencer step indicator
-     *
-     * @param oldStep Previous step
-     * @param newStep New step
-     * @return Whether a note should be played
+     * Update the step highlighting in the sequencer
      */
-    public NoteEvent updateStep(int oldStep, int newStep) {
-        // Clear previous step highlight
+    public void updateStep(int oldStep, int newStep) {
+        // Validate indices to prevent out of bounds errors
         if (oldStep >= 0 && oldStep < triggerButtons.size()) {
             TriggerButton oldButton = triggerButtons.get(oldStep);
             oldButton.setHighlighted(false);
+            oldButton.repaint(); // Force immediate visual update
         }
 
-        // Highlight current step
         if (newStep >= 0 && newStep < triggerButtons.size()) {
             TriggerButton newButton = triggerButtons.get(newStep);
             newButton.setHighlighted(true);
-
-            // Check if a note should be played
+            newButton.repaint(); // Force immediate visual update
         }
-
-        return null; // No note to play
+        
+        // Log the step change if needed
+        // logger.format("Step highlight updated: {} -> {}", oldStep, newStep);
     }
 
     /**
-     * Reset the sequencer
+     * Reset the sequencer state
      */
     public void reset() {
-        // Clear all highlights when stopped
-        for (TriggerButton button : triggerButtons) {
-            button.setHighlighted(false);
+        beat = 0;
+        
+        // Clear all highlighting
+        for (int i = 0; i < triggerButtons.size(); i++) {
+            TriggerButton button = triggerButtons.get(i);
+            if (button != null) {
+                button.setHighlighted(false);
+                button.repaint();
+            }
         }
     }
 
@@ -630,64 +643,94 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         }
     }
 
-    // Implement beat listening and animation for TriggerButtons
+    /**
+     * Called on each beat to update the sequencer state
+     */
     private void onBeat() {
-        // Determine the current step based on the timing logic
-        int currentStep = getCurrentStep(); // Implement this method to get the current step based on the timing logic
-
-        updateStep(beat - 1, beat); // Update the step indicator
-        // Iterate through all drum pads
-        for (int padIndex = 0; padIndex < DRUM_PAD_COUNT; padIndex++) {
-            // Check if the pattern for the current step is active for this pad
-            if (patterns[padIndex][currentStep]) {
-                // Trigger the note using DrumNoteOn
-                noteEventConsumer.accept(new NoteEvent(strikes[padIndex].getRootNote(), 127, 250)); // Example velocity and duration
+        try {
+            // Calculate the previous step to unhighlight
+            int previousStep = (beat > 0) ? 
+                    (int)((beat - 1) % patternLength) : 
+                    (int)(patternLength - 1);
+            
+            // Calculate current step index (0-based, mod pattern length)
+            int currentStep = getCurrentStep();
+            
+            // Update visual highlighting
+            updateStep(previousStep, currentStep);
+            
+            // Process all drum pads to trigger notes
+            for (int padIndex = 0; padIndex < DRUM_PAD_COUNT; padIndex++) {
+                // Only trigger if this pad has this step activated
+                if (currentStep < patternLength && patterns[padIndex][currentStep]) {
+                    // Get the drum sound for this pad
+                    Strike strike = strikes[padIndex];
+                    if (strike != null) {
+                        // Send note event to trigger the sound
+                        noteEventConsumer.accept(new NoteEvent(
+                            strike.getRootNote(),
+                            127, // Full velocity
+                            250  // Duration in ms
+                        ));
+                    }
+                }
             }
+            
+            // Increment beat counter
+            beat++;
+            
+            // Handle looping behavior
+            if (isLooping && beat >= patternLength) {
+                // logger.debug("Loop point reached at beat {}, resetting to 0", beat);
+                beat = 0;
+            }
+        } catch (Exception e) {
+            // logger.error("Error in onBeat(): {}", e.getMessage(), e);
         }
     }
 
-    // Method to get the current step based on timing logic
+    /**
+     * Calculate the current step safely accounting for looping
+     */
     private int getCurrentStep() {
-        return (int) (beat % PATTERN_LENGTH) + 1; // Simple modulo for step calculation
+        // Make sure we wrap properly around the pattern length (e.g., 16 steps)
+        return (int) (beat % patternLength);
     }
 
-// Implement the onAction method to handle timing updates
     @Override
-    public void onAction(Command action
-    ) {
-        if (action.getCommand() == null) {
+    public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) {
             return;
         }
 
         switch (action.getCommand()) {
             case Commands.TIMING_UPDATE -> {
-                // Call onBeat to handle beat updates
                 if (action.getData() instanceof TimingUpdate) {
-                    TimingUpdate timingUpdate = (TimingUpdate) action.getData();
-                    if (timingUpdate.beatCount() > beat) {
+                    TimingUpdate update = (TimingUpdate) action.getData();
+                    
+                    // Only update on tick (or whatever timing resolution you need)
+                    // This ensures the sequencer advances at the right time
+                    if (update.tick() == 1) { // First tick of each beat
                         onBeat();
-                        beat++;
                     }
                 }
-
-                break;
             }
-
-            case "PAD_TOGGLED" -> {
-                DrumButton toggledButton = (DrumButton) action.getData();
-                int padIndex = getDrumButtonIndex(toggledButton); // Find the index of the toggled button
-
-                if (padIndex != -1) {
-                    // Update the active pattern index
-                    selectDrumPad(padIndex); // Call selectDrumPad to update the UI and active pattern
-                }
+            
+            case Commands.TRANSPORT_START -> {
+                // Reset beat counter when transport starts
+                beat = 0;
+                logger.info("Transport started - resetting beat counter");
             }
-
-            // ... existing cases ...
+            
+            case Commands.TRANSPORT_STOP -> {
+                // Reset state when stopped
+                reset();
+                logger.info("Transport stopped - resetting sequencer state");
             }
+        }
     }
-    // Method to find the index of a DrumButton in the list
 
+    // Method to find the index of a DrumButton in the list
     private int getDrumButtonIndex(DrumButton button) {
         for (int i = 0; i < drumButtons.size(); i++) {
             if (drumButtons.get(i) == button) {

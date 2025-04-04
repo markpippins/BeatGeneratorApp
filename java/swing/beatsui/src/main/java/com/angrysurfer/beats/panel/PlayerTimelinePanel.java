@@ -786,6 +786,12 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 playerInfo.append(" (").append(deviceName).append(")");
             }
 
+            // Add soundbank name if available
+            String soundbankName = player.getInstrument().getSoundbankName();
+            if (soundbankName != null && !soundbankName.isEmpty()) {
+                playerInfo.append(" [").append(soundbankName).append("]");
+            }
+
             // Get preset name if available
             if (player.getPreset() != null) {
                 Long instrumentId = player.getInstrument().getId();
@@ -796,10 +802,28 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                     // Get drum name for the note
                     String drumName = InternalSynthManager.getInstance().getDrumName(player.getRootNote().intValue());
                     playerInfo.append(" - ").append(drumName);
+                } else if (soundbankName != null && !soundbankName.isEmpty()) {
+                    // For instruments with loaded soundbanks
+                    Integer bankIndex = player.getInstrument().getBankIndex();
+                    if (bankIndex == null) bankIndex = 0;
+                    
+                    // Try to get preset name from soundbank
+                    try {
+                        String presetName = InternalSynthManager.getInstance()
+                            .getPresetNames(soundbankName, bankIndex)
+                            .stream()
+                            .skip(presetNumber)
+                            .findFirst()
+                            .orElse("Preset " + presetNumber);
+                        
+                        playerInfo.append(" - ").append(presetName);
+                    } catch (Exception e) {
+                        // Fallback to just showing preset number
+                        playerInfo.append(" - Preset ").append(presetNumber);
+                    }
                 } else {
-                    // For other channels, show preset name
+                    // For standard internal instruments
                     String presetName = InternalSynthManager.getInstance().getPresetName(instrumentId, presetNumber);
-
                     if (presetName != null && !presetName.isEmpty()) {
                         playerInfo.append(" - ").append(presetName);
                     }

@@ -42,7 +42,7 @@ public class SessionService implements IBusListener {
     @Override
     public void onAction(Command action) {
         switch (action.getCommand()) {
-            case Commands.TRANSPORT_PLAY -> play();
+            case Commands.TRANSPORT_START -> play();
             case Commands.TRANSPORT_STOP -> stop();
             case Commands.TRANSPORT_PAUSE -> pause();
         }

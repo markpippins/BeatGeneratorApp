@@ -15,7 +15,7 @@ public class Commands {
     public static final String TRANSPORT_PAUSE = "TRANSPORT_PAUSE";
     public static final String TRANSPORT_RECORD = "TRANSPORT_RECORD";
     public static final String TRANSPORT_STOP = "TRANSPORT_STOP";
-    public static final String TRANSPORT_PLAY = "TRANSPORT_PLAY";
+    public static final String TRANSPORT_START = "TRANSPORT_START";
     public static final String TRANSPORT_FORWARD = "TRANSPORT_FORWARD";
     public static final String ALL_NOTES_OFF = "ALL_NOTES_OFF";
 

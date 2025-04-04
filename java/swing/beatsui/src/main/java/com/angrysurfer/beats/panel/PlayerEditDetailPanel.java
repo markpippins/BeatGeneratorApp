@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,7 +39,8 @@ public class PlayerEditDetailPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(PlayerEditDetailPanel.class);
     private static final int SLIDER_HEIGHT = 80;
-
+    private static final int PANEL_HEIGHT = 125; 
+    
     // Reference to player being edited
     private final Player player;
 
@@ -129,12 +132,20 @@ public class PlayerEditDetailPanel extends JPanel {
 
     /**
      * Creates the performance panel with reordered controls: Octave, Note,
-     * Level, Pan
+     * Level, Pan - with vertical centering and fixed height
      */
     private JPanel createPerformancePanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        // Use GridBagLayout for better component positioning and centering
+        JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Performance"));
-
+        
+        // Set fixed height for the panel
+        panel.setPreferredSize(new Dimension(panel.getPreferredSize().width, PANEL_HEIGHT));
+        panel.setMinimumSize(new Dimension(0, PANEL_HEIGHT));
+        
+        // Create a flow sub-panel to hold the actual controls
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        
         // 1. OCTAVE CONTROLS
         JPanel navPanel = new JPanel(new BorderLayout(0, 2));
         navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
@@ -148,7 +159,7 @@ public class PlayerEditDetailPanel extends JPanel {
 
         navPanel.add(octaveLabel, BorderLayout.NORTH);
         navPanel.add(buttonPanel, BorderLayout.CENTER);
-        panel.add(navPanel);
+        controlsPanel.add(navPanel);
 
         // 2. NOTE DIAL
         Dimension dialSize = new Dimension(100, 100);
@@ -162,10 +173,10 @@ public class PlayerEditDetailPanel extends JPanel {
         JLabel noteLabel = new JLabel("Note", JLabel.CENTER);
         notePanel.add(noteLabel, BorderLayout.NORTH);
         notePanel.add(noteDial, BorderLayout.CENTER);
-        panel.add(notePanel);
+        controlsPanel.add(notePanel);
 
         // 3. LEVEL SLIDER
-        panel.add(createLabeledSlider("Level", levelSlider));
+        controlsPanel.add(createLabeledSlider("Level", levelSlider));
 
         // 4. PAN DIAL
         Dimension panDialSize = new Dimension(60, 60);
@@ -177,28 +188,54 @@ public class PlayerEditDetailPanel extends JPanel {
         JLabel panLabel = new JLabel("Pan", JLabel.CENTER);
         panPanel.add(panLabel, BorderLayout.NORTH);
         panPanel.add(panDial, BorderLayout.CENTER);
-        panel.add(panPanel);
+        controlsPanel.add(panPanel);
+        
+        // Add the controls panel to the main panel, centered vertically
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER; // Center vertically and horizontally
+        gbc.weighty = 1.0; // Take all vertical space
+        panel.add(controlsPanel, gbc);
 
         return panel;
     }
 
     /**
      * Creates the modulation panel with velocity controls first, then swing,
-     * probability, etc.
+     * probability, etc. - with vertical centering and fixed height
      */
     private JPanel createModulationPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        // Use GridBagLayout for better component positioning and centering
+        JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Modulation"));
+        
+        // Set fixed height for the panel - SAME HEIGHT as performance panel
+        panel.setPreferredSize(new Dimension(panel.getPreferredSize().width, PANEL_HEIGHT));
+        panel.setMinimumSize(new Dimension(0, PANEL_HEIGHT));
+        
+        // Create a flow sub-panel to hold the actual controls
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
         // 1. VELOCITY CONTROLS (added first)
-        panel.add(createLabeledSlider("Min Vel", velocityMinSlider));
-        panel.add(createLabeledSlider("Max Vel", velocityMaxSlider));
+        controlsPanel.add(createLabeledSlider("Min Vel", velocityMinSlider));
+        controlsPanel.add(createLabeledSlider("Max Vel", velocityMaxSlider));
 
         // 2. OTHER MODULATION CONTROLS
-        panel.add(createLabeledSlider("Swing", swingSlider));
-        panel.add(createLabeledSlider("Probability", probabilitySlider));
-        panel.add(createLabeledSlider("Random", randomSlider));
-        panel.add(createLabeledSlider("Sparse", sparseSlider));
+        controlsPanel.add(createLabeledSlider("Swing", swingSlider));
+        controlsPanel.add(createLabeledSlider("Probability", probabilitySlider));
+        controlsPanel.add(createLabeledSlider("Random", randomSlider));
+        controlsPanel.add(createLabeledSlider("Sparse", sparseSlider));
+        
+        // Add the controls panel to the main panel, centered vertically
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER; // Center vertically and horizontally
+        gbc.weighty = 1.0; // Take all vertical space
+        panel.add(controlsPanel, gbc);
 
         return panel;
     }

@@ -358,7 +358,7 @@ public class SessionDisplayPanel extends JPanel {
                         }
                     }
 
-                    case Commands.TRANSPORT_PLAY -> {
+                    case Commands.TRANSPORT_START -> {
                         // Get active session and sync before playing
                         currentSession = SessionManager.getInstance().getActiveSession();
                         if (currentSession != null) {

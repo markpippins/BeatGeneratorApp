@@ -49,15 +49,34 @@ public class TriggerButton extends JToggleButton {
         return isSelected();
     }
 
+    /**
+     * Set whether this step is currently highlighted (active step during playback)
+     */
     public void setHighlighted(boolean highlighted) {
-        if (this.highlighted != highlighted) {
-            this.highlighted = highlighted;
-            repaint();
-        }
+        this.highlighted = highlighted;
+        repaint(); // Request a repaint to show the highlight
+    }
+
+    /**
+     * Get whether this step is currently highlighted
+     */
+    public boolean isHighlighted() {
+        return highlighted;
     }
 
     @Override
     protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        
+        // If this step is highlighted (current playback position)
+        if (highlighted) {
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setColor(Color.YELLOW); // Or your preferred highlight color
+            g2d.setStroke(new BasicStroke(2));
+            g2d.drawRect(1, 1, getWidth() - 3, getHeight() - 3);
+            g2d.dispose();
+        }
+
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 

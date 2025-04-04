@@ -139,7 +139,7 @@ public class TransportPanel extends JPanel {
         });
         
         stopButton = createToolbarButton(Commands.TRANSPORT_STOP, "⏹", "Stop");
-        playButton = createToolbarButton(Commands.TRANSPORT_PLAY, "▶", "Play");
+        playButton = createToolbarButton(Commands.TRANSPORT_START, "▶", "Play");
         forwardButton = createToolbarButton(Commands.TRANSPORT_FORWARD, "⏭", "Next Session");
 
         add(rewindButton);
@@ -313,7 +313,7 @@ public class TransportPanel extends JPanel {
                                 });
                             }
                             break;
-                        case Commands.TRANSPORT_PLAY:
+                        case Commands.TRANSPORT_START:
                             SwingUtilities.invokeLater(() -> pauseButton.setEnabled(true));
                             break;
                         case Commands.TRANSPORT_STOP:

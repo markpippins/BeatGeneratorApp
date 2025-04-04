@@ -652,9 +652,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             switch (cmd) {
                 case Commands.TIMING_UPDATE -> {
 
-                    if (x0xPlayer || !(action.getData() instanceof TimingUpdate)) {
+                    if (getRules().isEmpty() || x0xPlayer || !(action.getData() instanceof TimingUpdate)) 
                         return;
-                    }
 
                     TimingUpdate timingUpdate = (TimingUpdate) action.getData();
                     if (timingUpdate.tickCount() == lastTriggeredTick) {
@@ -681,7 +680,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
                     // Disable self when transport stops
                     setEnabled(false);
                 }
-                case Commands.TRANSPORT_PLAY -> {
+                case Commands.TRANSPORT_START -> {
                     // Re-enable self on transport start/play
                     setEnabled(true);
                 }

@@ -92,7 +92,7 @@ public class Visualizer implements IBusListener {
                 refreshVisualizations();
                 break;
 
-            case Commands.TRANSPORT_PLAY:
+            case Commands.TRANSPORT_START:
             case Commands.TRANSPORT_STATE_CHANGED: // <-- Add this case
                 // For state changed, check if it's true (playing)
                 if (Commands.TRANSPORT_STATE_CHANGED.equals(action.getCommand())

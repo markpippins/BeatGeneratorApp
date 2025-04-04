@@ -132,9 +132,19 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
                     
                     // Use preset name instead of number
                     label.setText(presetName);
-                    label.setToolTipText(player.getInstrument().getSoundbankName() + 
-                                        " Bank " + bankIndex + 
-                                        " Preset " + presetValue + ": " + presetName);
+                    
+                    // Enhanced tooltip with better formatting
+                    String tooltip = String.format("<html>" +
+                                                  "<b>Soundbank:</b> %s<br>" +
+                                                  "<b>Bank:</b> %d<br>" +
+                                                  "<b>Preset %d:</b> %s" +
+                                                  "</html>", 
+                                                  player.getInstrument().getSoundbankName(),
+                                                  bankIndex,
+                                                  presetValue,
+                                                  presetName);
+                    
+                    label.setToolTipText(tooltip);
                     label.setHorizontalAlignment(JLabel.LEFT);
                 }
                 // For internal synth instruments, show preset name

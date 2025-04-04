@@ -248,7 +248,7 @@ public class StatusBar extends JPanel implements IBusListener {
             case Commands.TIMING_RESET -> {
                 resetTimingCounters();
             }
-            case Commands.TRANSPORT_PLAY -> {
+            case Commands.TRANSPORT_START -> {
                 resetTimingCounters();
                 setStatus("Playing");
             }

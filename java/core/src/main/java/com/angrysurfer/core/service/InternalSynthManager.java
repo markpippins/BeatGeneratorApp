@@ -1155,4 +1155,31 @@ public class InternalSynthManager {
         }
         return null;
     }
+
+    /**
+     * Delete a soundbank by name
+     * @param name The name of the soundbank to delete
+     * @return true if deleted successfully, false otherwise
+     */
+    public boolean deleteSoundbank(String name) {
+        if (name == null || name.isEmpty() || !soundbanks.containsKey(name)) {
+            return false;
+        }
+        
+        try {
+            // Remove from soundbanks map
+            soundbanks.remove(name);
+            
+            // Remove from available banks map
+            availableBanksMap.remove(name);
+            
+            // Log the deletion
+            logger.info("Deleted soundbank: {}", name);
+            
+            return true;
+        } catch (Exception e) {
+            logger.error("Error deleting soundbank {}: {}", name, e.getMessage());
+            return false;
+        }
+    }
 }

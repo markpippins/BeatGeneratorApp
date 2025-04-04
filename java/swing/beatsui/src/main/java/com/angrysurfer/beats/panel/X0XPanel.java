@@ -162,7 +162,7 @@ public class X0XPanel extends JPanel implements IBusListener {
         }
 
         switch (action.getCommand()) {
-            case Commands.TRANSPORT_PLAY -> {
+            case Commands.TRANSPORT_START -> {
                 isPlaying = true;
                 patternCompleted = false;
 
