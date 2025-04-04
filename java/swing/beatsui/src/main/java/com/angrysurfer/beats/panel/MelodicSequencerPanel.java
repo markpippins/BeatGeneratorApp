@@ -32,9 +32,9 @@ import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
@@ -64,6 +64,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private JComboBox<String> rootNoteCombo;
     private JComboBox<String> scaleCombo;
     private JComboBox<String> directionCombo;
+    private JComboBox<String> rangeCombo;
 
     public MelodicSequencerPanel(Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
@@ -217,6 +218,17 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             sequencer.setLooping(loopCheckbox.isSelected());
         });
 
+        // Range combo box
+        JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        rangePanel.add(new JLabel("Range:"));
+
+        // Create range combo with octave range options
+        String[] rangeOptions = {"1 Octave", "2 Octaves", "3 Octaves", "4 Octaves"};
+        rangeCombo = new JComboBox<>(rangeOptions);
+        rangeCombo.setSelectedIndex(1); // Default to 2 octaves
+        rangeCombo.setPreferredSize(new Dimension(90, 25));
+        rangePanel.add(rangeCombo);
+
         // ADD BACK CLEAR AND GENERATE BUTTONS
         JButton clearButton = new JButton("Clear");
         clearButton.addActionListener(e -> {
@@ -242,8 +254,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         
         JButton generateButton = new JButton("Generate");
         generateButton.addActionListener(e -> {
-            // Default settings: 2 octave range, 50% density
-            sequencer.generatePattern(2, 50);
+            // Get selected octave range from the combo
+            int octaveRange = rangeCombo.getSelectedIndex() + 1; // 1-4 octaves
+            
+            // Default settings: selected octave range, 50% density
+            sequencer.generatePattern(octaveRange, 50);
             
             // Update UI to reflect the generated pattern
             syncUIWithSequencer();
@@ -257,8 +272,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         panel.add(scalePanel);
         panel.add(quantizeCheckbox);
         panel.add(loopCheckbox);
-        panel.add(clearButton);     // Add Clear button
-        panel.add(generateButton);  // Add Generate button
+        panel.add(rangePanel);       // Add Range combo before the buttons
+        panel.add(clearButton);      // Add Clear button
+        panel.add(generateButton);   // Add Generate button
 
         return panel;
     }
