@@ -114,6 +114,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private String scale = "Chromatic";
 
+    private Boolean x0xPlayer = false;
+
     @JsonIgnore
     private Boolean enabled = false;
 
@@ -650,7 +652,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             switch (cmd) {
                 case Commands.TIMING_UPDATE -> {
 
-                    if (!(action.getData() instanceof TimingUpdate)) {
+                    if (x0xPlayer || !(action.getData() instanceof TimingUpdate)) {
                         return;
                     }
 

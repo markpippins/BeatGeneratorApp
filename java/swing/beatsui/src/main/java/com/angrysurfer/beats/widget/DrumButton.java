@@ -11,21 +11,44 @@ import javax.swing.JComponent;
 import javax.swing.Timer;
 import javax.swing.plaf.basic.BasicButtonUI;
 
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class DrumButton extends JButton {
+public class DrumButton extends JButton implements IBusListener {
+
+    private boolean toggle; // Toggle attribute
+    private boolean isToggled; // Current toggle state
+    private boolean exclusive; // Exclusive toggle attribute
+    private Color defaultColor = new Color(50, 130, 200); // Default color
+    private Color highlightColor = new Color(255, 100, 100); // Highlight color
 
     public DrumButton() {
         super();
-        // setUI(new BasicButtonUI());
-        // setContentAreaFilled(false);
-        // setFocusable(false);
-        // setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        // setBorderPainted(false);
-        // setOpaque(true);
+        this.toggle = false; // Default to not toggled
+        this.isToggled = false; // Initial state
+        this.exclusive = false; // Default to not exclusive
+
+        // Register this button to listen for PAD_TOGGLED messages
+        CommandBus.getInstance().register(this);
+
+        // Add action listener to handle toggle behavior
+        addActionListener(e -> {
+            if (toggle) {
+                isToggled = !isToggled; // Toggle the state
+                repaint(); // Repaint to reflect the change
+
+                // Publish the PAD_TOGGLED command to the CommandBus
+                CommandBus.getInstance().publish(Commands.PAD_TOGGLED, this);
+                // CommandBus.getInstance().publish(new Command("PAD_TOGGLED", this));
+            }
+        });
         setup();
     }
 
@@ -61,7 +84,11 @@ public class DrumButton extends JButton {
                 if (isFlashing[0]) {
                     g2d.setColor(flashColor);
                 } else {
-                    g2d.setColor(baseColor);
+                    if (isToggled) {
+                        g2d.setColor(highlightColor);
+                    } else {
+                        g2d.setColor(defaultColor);
+                    }
                 }
 
                 g2d.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
@@ -82,6 +109,38 @@ public class DrumButton extends JButton {
         setContentAreaFilled(false);
         setBorderPainted(false);
         setFocusPainted(false);
+    }
+
+    // Method to set the toggle attribute
+    public void setToggle(boolean toggle) {
+        this.toggle = toggle;
+    }
+
+    // Method to set the exclusive attribute
+    public void setExclusive(boolean exclusive) {
+        this.exclusive = exclusive;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        // Set the color based on the toggle state
+        if (isToggled) {
+            g.setColor(highlightColor); // Use highlight color if toggled
+        } else {
+            g.setColor(defaultColor); // Use default color if not toggled
+        }
+        super.paintComponent(g); // Call the superclass method to paint the button
+    }
+
+    @Override
+    public void onAction(Command action) {
+        if ("PAD_TOGGLED".equals(action.getCommand())) {
+            // Check if the sender is not this button and exclusive is true
+            if (exclusive && action.getData() != this) {
+                isToggled = false; // Toggle off
+                repaint(); // Repaint to reflect the change
+            }
+        }
     }
 
 }

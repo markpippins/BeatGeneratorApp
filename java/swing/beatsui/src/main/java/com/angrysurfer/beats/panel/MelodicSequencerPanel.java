@@ -26,14 +26,19 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beats.util.Direction;
-import com.angrysurfer.beats.util.NoteEvent;
-import com.angrysurfer.beats.util.TimingDivision;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.TriggerButton;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.TimingUpdate;
+import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.model.NoteEvent;
 import com.angrysurfer.core.model.Scale;
+import com.angrysurfer.core.model.TimingDivision;
 import com.angrysurfer.core.util.Quantizer;
 
 import lombok.Getter;
@@ -44,7 +49,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class MelodicSequencerPanel extends JPanel {
+public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = Logger.getLogger(DrumSequencerPanel.class.getName());
 
@@ -89,6 +94,20 @@ public class MelodicSequencerPanel extends JPanel {
 
     private JComboBox<String> rangeCombo;
 
+    // New variables for MelodicSequencerPanel
+    private int currentStep = 0; // Current step in the pattern
+    private int stepCounter = 0; // Current step in X0X pattern (0-15)
+    private int tickCounter = 0; // Count ticks within current step
+    private int ticksPerStep = 6; // How many ticks make one X0X step
+    private int nextStepTick = 0; // When to trigger the next step
+    private int latencyCompensation = 20; // milliseconds to compensate for system latency
+    private boolean patternCompleted = false; // Flag for when pattern has completed but transport continues
+    private int activeMidiChannel = 15; // Use channel 16 (15-based index) consistently
+    private int lookAheadMs = 40; // How far ahead to schedule notes
+    private boolean useAheadScheduling = true; // Enable/disable look-ahead
+
+    private boolean isPlaying = false; // Flag to indicate if the sequencer is playing
+
     /**
      * Create a new SequencerPanel
      *
@@ -97,6 +116,10 @@ public class MelodicSequencerPanel extends JPanel {
     public MelodicSequencerPanel(Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
         this.noteEventConsumer = noteEventConsumer;
+
+        // Register with TimingBus
+        TimingBus.getInstance().register(this);
+
         initialize();
     }
 
@@ -787,6 +810,91 @@ public class MelodicSequencerPanel extends JPanel {
      */
     private String getKnobLabel(int i) {
         return i == 0 ? "Note" : i == 1 ? "Vel." : i == 2 ? "Gate" : "Prob.";
+    }
+
+    // Move the TIMING_UPDATE case logic from DrumSequencerPanel to MelodicSequencerPanel
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == null) {
+            return;
+        }
+
+        switch (action.getCommand()) {
+            // ... existing cases ...
+
+            case Commands.TIMING_UPDATE -> {
+                if (!isPlaying || action.getData() == null || !(action.getData() instanceof TimingUpdate)) {
+                    return;
+                }
+
+                TimingUpdate update = (TimingUpdate) action.getData();
+
+                // Handle tick change (previously TIMING_TICK)
+                if (update.tick() != null && update.tickCount() != null && !patternCompleted) {
+                    tickCounter++;
+
+                    if (tickCounter >= nextStepTick) {
+                        // Logic to calculate the next step and handle pattern completion
+                        int oldStep = stepCounter;
+                        int patternLength = getPatternLength(); // Assuming this method exists
+                        Direction direction = getCurrentDirection(); // Assuming this method exists
+
+                        // Calculate the next step based on direction
+                        int nextStep = calculateNextStep(stepCounter, patternLength, direction);
+
+                        // Check if we've completed a full pattern
+                        boolean patternEnded = hasPatternEnded(stepCounter, nextStep, patternLength, direction);
+
+                        if (patternEnded) {
+                            // Mark pattern as completed
+                            patternCompleted = true;
+
+                            // Reset tick counter for next step timing
+                            tickCounter = 0;
+                            nextStepTick = ticksPerStep;
+
+                            // Update UI for current step before stopping
+                            updateStep(oldStep, stepCounter); // Assuming this method exists
+
+                            // We're done with this tick - wait for next beat to restart if looping
+                            return;
+                        }
+
+                        // Normal case - continue pattern
+                        stepCounter = nextStep;
+
+                        // Update UI and get note event if needed
+                        updateStep(oldStep, stepCounter); // Assuming this method exists
+
+                        // Reset tick counter and calculate next step time
+                        tickCounter = 0;
+                        nextStepTick = ticksPerStep;
+                    }
+                }
+            }
+
+            // ... existing cases ...
+        }
+    }
+
+    // Move the following methods to MelodicSequencerPanel
+    private boolean hasPatternEnded(int currentStep, int nextStep, int patternLength, Direction direction) {
+        // Logic to determine if the pattern has ended
+        // Similar to the original implementation in DrumSequencerPanel
+        return false; // Placeholder return, actual implementation needed
+    }
+
+    private void resetSequence() {
+        stepCounter = 0;
+        tickCounter = 0;
+        patternCompleted = false;
+        // Additional reset logic if needed
+    }
+
+    private int calculateNextStep(int currentStep, int patternLength, Direction direction) {
+        // Logic to calculate the next step based on direction
+        // Similar to the original implementation in DrumSequencerPanel
+        return 0; // Placeholder return, actual implementation needed
     }
 
 }

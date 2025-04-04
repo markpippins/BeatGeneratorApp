@@ -239,4 +239,18 @@ public class Commands {
     public static final String CLEAR_STATUS = "CLEAR_STATUS";
     public static final String PLAY_TEST_NOTE = "PLAY_TEST_NOTE";
     public static final String SOUNDBANK_LOADED = "SOUNDBANK_LOADED";
+
+    public static final String SOUNDBANK_UNLOADED = "SOUNDBANK_UNLOADED";
+    public static final String SOUNDBANK_SELECTED = "SOUNDBANK_SELECTED";
+    public static final String SOUNDBANK_UNSELECTED = "SOUNDBANK_UNSELECTED";
+    public static final String SOUNDBANK_ADDED = "SOUNDBANK_ADDED";
+    public static final String SOUNDBANK_UPDATED = "SOUNDBANK_UPDATED";
+    public static final String SOUNDBANK_DELETED = "SOUNDBANK_DELETED";
+    public static final String SOUNDBANK_SELECTED_CHANGED = "SOUNDBANK_SELECTED_CHANGED";
+    public static final String SOUNDBANK_UNSELECTED_CHANGED = "SOUNDBANK_UNSELECTED_CHANGED";
+    public static final String SOUNDBANK_SELECTED_REQUEST = "SOUNDBANK_SELECTED_REQUEST";
+    public static final String SOUNDBANK_UNSELECTED_REQUEST = "SOUNDBANK_UNSELECTED_REQUEST";
+ 
+    public static final String PAD_TOGGLED = "PAD_TOGGLED";
 }
+

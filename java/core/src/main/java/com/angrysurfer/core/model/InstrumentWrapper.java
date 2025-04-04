@@ -1,6 +1,9 @@
 package com.angrysurfer.core.model;
 
 import java.io.Serializable;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,15 +17,20 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
+import javax.sound.midi.Soundbank;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.feature.MidiMessage;
 import com.angrysurfer.core.model.feature.Pad;
+import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.util.IntegerArrayConverter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -351,6 +359,125 @@ public class InstrumentWrapper implements Serializable {
                 programChange(channel, currentPreset, 0);
                 logger.info("Applied bank={}, program={} to channel={}", bankIndex, currentPreset, channel);
             }
+        }
+    }
+
+    /**
+     * Load a soundbank file directly and add it to InternalSynthManager
+     */
+    private void loadSoundbankFile() {
+        try {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Load Soundbank");
+            fileChooser.setFileFilter(new FileNameExtensionFilter("Soundbank Files (*.sf2, *.dls)", "sf2", "dls"));
+            
+            // Show dialog
+            int result = fileChooser.showOpenDialog(null);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                
+                // Log that we're loading the file
+                logger.info("Loading soundbank file: {}", selectedFile.getAbsolutePath());
+                
+                // Load the soundbank directly
+                try {
+                    // Load the soundbank with MidiSystem
+                    Soundbank soundbank = MidiSystem.getSoundbank(selectedFile);
+                    
+                    if (soundbank != null) {
+                        // Get the soundbank name
+                        String name = soundbank.getName();
+                        
+                        // Log success
+                        logger.info("Successfully loaded soundbank: {}", name);
+                        
+                        // Add to InternalSynthManager's collection
+                        InternalSynthManager manager = InternalSynthManager.getInstance();
+                        Map<String, Soundbank> soundbanks = new HashMap<>();
+                        
+                        // Use reflection to access the private soundbanks map
+                        try {
+                            Field soundbanksField = InternalSynthManager.class.getDeclaredField("soundbanks");
+                            soundbanksField.setAccessible(true);
+                            soundbanks = (Map<String, Soundbank>) soundbanksField.get(manager);
+                            
+                            // Add the new soundbank
+                            soundbanks.put(name, soundbank);
+                            
+                            // Update available banks for this soundbank
+                            try {
+                                // Get the availableBanksMap field
+                                Field availableBanksMapField = InternalSynthManager.class.getDeclaredField("availableBanksMap");
+                                availableBanksMapField.setAccessible(true);
+                                Map<String, List<Integer>> availableBanksMap = 
+                                    (Map<String, List<Integer>>) availableBanksMapField.get(manager);
+                                
+                                // Call determineAvailableBanks
+                                Method determineAvailableBanksMethod = 
+                                    InternalSynthManager.class.getDeclaredMethod("determineAvailableBanks", Soundbank.class);
+                                determineAvailableBanksMethod.setAccessible(true);
+                                List<Integer> banks = (List<Integer>) determineAvailableBanksMethod.invoke(manager, soundbank);
+                                
+                                // Store result
+                                availableBanksMap.put(name, banks);
+                                
+                            } catch (Exception e) {
+                                logger.error("Error setting available banks: {}", e.getMessage());
+                                // Default to bank 0 if we can't determine available banks
+                                try {
+                                    Field availableBanksMapField = InternalSynthManager.class.getDeclaredField("availableBanksMap");
+                                    availableBanksMapField.setAccessible(true);
+                                    Map<String, List<Integer>> availableBanksMap = 
+                                        (Map<String, List<Integer>>) availableBanksMapField.get(manager);
+                                    
+                                    List<Integer> defaultBanks = new ArrayList<>();
+                                    defaultBanks.add(0);
+                                    availableBanksMap.put(name, defaultBanks);
+                                } catch (Exception ex) {
+                                    logger.error("Error setting default bank: {}", ex.getMessage());
+                                }
+                            }
+                        } catch (Exception e) {
+                            logger.error("Error adding soundbank: {}", e.getMessage());
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Error loading soundbank file: {}", e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error in loadSoundbankFile: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Load a soundbank file and assign it to this instrument.
+     * This uses the InternalSynthManager's public loadSoundbank(File) method.
+     */
+    public void loadSoundbankFileForInstrument() {
+        try {
+            javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+            fileChooser.setDialogTitle("Load Soundbank");
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Soundbank Files (*.sf2, *.dls)", "sf2", "dls"));
+            
+            // Show the file chooser dialog
+            int result = fileChooser.showOpenDialog(null);
+            if (result == javax.swing.JFileChooser.APPROVE_OPTION) {
+                java.io.File selectedFile = fileChooser.getSelectedFile();
+                logger.info("Attempting to load soundbank file: {}", selectedFile.getAbsolutePath());
+                
+                // Call the public method from InternalSynthManager to load the soundbank
+                String loadedSoundbankName = com.angrysurfer.core.service.InternalSynthManager.getInstance().loadSoundbank(selectedFile);
+                if (loadedSoundbankName != null) {
+                    // Update this instrument with the new soundbank name
+                    setSoundbankName(loadedSoundbankName);
+                    logger.info("Updated instrument {} with soundbank: {}", getName(), loadedSoundbankName);
+                } else {
+                    logger.error("InternalSynthManager failed to load soundbank from: {}", selectedFile.getAbsolutePath());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error loading soundbank file for instrument: {}", e.getMessage(), e);
         }
     }
 }

@@ -749,12 +749,9 @@ class InstrumentsPanel extends JPanel {
     private void setupContextMenuListeners() {
         instrumentsContextMenu.addActionListener(e -> {
             switch (e.getActionCommand()) {
-                case "ADD_INSTRUMENT" ->
-                    showInstrumentDialog(null);
-                case "EDIT_INSTRUMENT" ->
-                    editSelectedInstrument();
-                case "DELETE_INSTRUMENT" ->
-                    deleteSelectedInstrument();
+                case "ADD_INSTRUMENT" -> showInstrumentDialog(null);
+                case "EDIT_INSTRUMENT" -> editSelectedInstrument();
+                case "DELETE_INSTRUMENT" -> deleteSelectedInstrument();
             }
         });
 

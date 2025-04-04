@@ -21,7 +21,9 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.DrumItem;
 import com.angrysurfer.core.model.InstrumentWrapper;
+
 
 /**
  * Manager for internal synthesizer instruments and presets. This singleton
@@ -988,5 +990,169 @@ public class InternalSynthManager {
         public String getName() {
             return name;
         }
+    }
+
+    /**
+     * Get a list of available drum sounds for channel 9
+     * 
+     * @return List of DrumItems
+     */
+    public List<DrumItem> getDrumItems() {
+        List<DrumItem> items = new ArrayList<>();
+        
+        // Add standard GM drum sounds (35-81)
+        for (int note = 35; note <= 81; note++) {
+            String drumName = getDrumName(note);
+            items.add(new DrumItem(note, note + ": " + drumName));
+        }
+        
+        return items;
+    }
+
+    /**
+     * Apply preset change to the specified instrument
+     * 
+     * @param instrument The instrument to apply changes to
+     * @param preset The preset number to apply
+     */
+    public void applyPresetChange(InstrumentWrapper instrument, int channel, int preset) {
+        if (instrument == null) {
+            return;
+        }
+        
+        try {
+            // Get channel, bank and other required values
+            // int channel = instrument.getChannel();
+            Integer bankIndex = instrument.getBankIndex();
+            
+            if (bankIndex == null) {
+                bankIndex = 0; // Default to bank 0
+            }
+            
+            // For standard MIDI, bank is split into MSB/LSB controller values
+            int bankMSB = (bankIndex >> 7) & 0x7F;  // Controller 0
+            int bankLSB = bankIndex & 0x7F;         // Controller 32
+            
+            // Send bank select messages
+            instrument.controlChange(channel, 0, bankMSB);   // Bank select MSB
+            instrument.controlChange(channel, 32, bankLSB);  // Bank select LSB
+            
+            // Send program change
+            instrument.programChange(channel, 0, preset);
+            
+            logger.info("Applied preset change: channel={}, bank={}, preset={}", 
+                    channel, bankIndex, preset);
+                    
+        } catch (Exception e) {
+            logger.error("Error applying preset change: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Play a preview note using the specified instrument and preset
+     * 
+     * @param instrument The instrument to use
+     * @param preset The preset number to play
+     */
+    public void playPreviewNote(InstrumentWrapper instrument, int channel, int preset) {
+        if (instrument == null) {
+            return;
+        }
+        
+        try {
+            // Make sure device is open
+            if (!instrument.getDevice().isOpen()) {
+                instrument.getDevice().open();
+            }
+            
+            // Get channel
+            // int channel = instrument.getChannel();
+            
+            // Apply the preset first
+            applyPresetChange(instrument, channel, preset);
+            
+            // Play a C major chord (C4, E4, G4)
+            instrument.noteOn(channel, 60, 100); // C4
+            instrument.noteOn(channel, 64, 100); // E4
+            instrument.noteOn(channel, 67, 100); // G4
+            
+            // Schedule note off after 500ms
+            new Thread(() -> {
+                try {
+                    Thread.sleep(500);
+                    instrument.noteOff(channel, 60, 0);
+                    instrument.noteOff(channel, 64, 0);
+                    instrument.noteOff(channel, 67, 0);
+                } catch (Exception e) {
+                    // Ignore interruption
+                }
+            }).start();
+            
+        } catch (Exception e) {
+            logger.error("Error playing preview: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Play a drum sound preview on channel 9
+     * 
+     * @param instrument The instrument to use
+     * @param noteNumber The drum note number to play
+     */
+    public void playDrumPreview(InstrumentWrapper instrument, int noteNumber) {
+        if (instrument == null) {
+            return;
+        }
+        
+        try {
+            // Make sure device is open
+            if (!instrument.getDevice().isOpen()) {
+                instrument.getDevice().open();
+            }
+            
+            // For drum channel (always 9)
+            int drumChannel = 9;
+            
+            // Apply standard drum kit (bank 0, program 0)
+            instrument.controlChange(drumChannel, 0, 0);   // Bank MSB
+            instrument.controlChange(drumChannel, 32, 0);  // Bank LSB
+            instrument.programChange(drumChannel, 0, 0);   // Program 0
+            
+            // Play the drum sound
+            instrument.noteOn(drumChannel, noteNumber, 100);
+            
+            // No need to schedule noteOff for percussion sounds
+            
+        } catch (Exception e) {
+            logger.error("Error playing drum preview: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Load a soundbank from a file
+     * 
+     * @param file The soundbank file to load
+     * @return The name of the loaded soundbank
+     */
+    public String loadSoundbank(File file) {
+        try {
+            // Load the soundbank
+            Soundbank soundbank = loadSoundbankFile(file);
+            
+            if (soundbank != null) {
+                // Add to soundbank map
+                String name = soundbank.getName();
+                soundbanks.put(name, soundbank);
+                
+                // Determine available banks
+                availableBanksMap.put(name, determineAvailableBanks(soundbank));
+                
+                logger.info("Loaded soundbank: {} from {}", name, file.getAbsolutePath());
+                return name;
+            }
+        } catch (Exception e) {
+            logger.error("Error loading soundbank: {}", e.getMessage());
+        }
+        return null;
     }
 }

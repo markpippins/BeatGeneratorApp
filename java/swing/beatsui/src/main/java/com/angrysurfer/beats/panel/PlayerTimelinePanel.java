@@ -164,7 +164,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         int ticksPerBeat = 6; // Default value
         int totalBeats = beatsPerBar * bars;
         int totalTicks = totalBeats * ticksPerBeat;
-        int labelWidth = 80;
+        int labelWidth = 40;
         int totalWidth = labelWidth + totalTicks * cellWidth;
 
         // Set size for time labels panel
@@ -238,7 +238,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         int totalTicks = totalBeats * ticksPerBeat;
 
         // Account for label panel width
-        int labelWidth = 80;
+        int labelWidth = 40;
         int rowHeight = cellHeight;
 
         // Draw horizontal row dividers
@@ -282,6 +282,9 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
      * Initialize empty components with placeholders
      */
     private void initEmptyComponents() {
+        
+        setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+
         // Create header with player name - keep minimal
         nameLabel = new JLabel("Select a player to view timeline");
         nameLabel.setFont(new Font("Arial", Font.BOLD, 13));
@@ -484,7 +487,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
         // Add to grid
         gridPanel.add(labelPanel);
-        labelPanel.setBounds(0, 0, 80, rowHeight * TOTAL_ROWS);
+        labelPanel.setBounds(0, 0, 40, rowHeight * TOTAL_ROWS);
 
         // Create labels
         String[] labelTexts = {"Tick", "Ticks", "Beat", "Beats", "Bar", "Bars", "Part", "Parts"};
@@ -629,7 +632,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
             return; // Only add cells for active rules
         }
         // Account for label panel width
-        int labelWidth = 80;
+        int labelWidth = 40;
 
         // UPDATED: Position cell exactly at the row with no margin
         int x = labelWidth + tickIndex * cellWidth + 1; // Add label width with 1px offset
@@ -673,7 +676,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         timeLabelsPanel.removeAll();
 
         // Account for label panel width
-        int labelWidth = 80;
+        int labelWidth = 40;
 
         // Add bar numbers - show 1-based values to match Session's 1-based counting
         for (int bar = 0; bar < bars; bar++) {
@@ -837,7 +840,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         int totalTicks = totalBeats * ticksPerBeat;
 
         // Account for label panel width
-        int labelWidth = 80;
+        int labelWidth = 40;
         int rowHeight = cellHeight; // Match the reduced row height we use elsewhere
 
         // Draw horizontal row dividers

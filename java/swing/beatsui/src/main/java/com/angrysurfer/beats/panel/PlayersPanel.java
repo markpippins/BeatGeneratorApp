@@ -269,32 +269,29 @@ public class PlayersPanel extends JPanel {
                         case Commands.SESSION_SELECTED:
                         case Commands.SESSION_CHANGED:
                         case Commands.SESSION_LOADED: {
-                            SwingUtilities.invokeLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (action.getData() instanceof Session) {
-                                        final Session session = (Session) action.getData();
-                                        long now = System.currentTimeMillis();
-                                        if (session.getId() != null &&
-                                                session.getId().equals(lastProcessedSessionId) &&
-                                                (now - lastSessionEventTime) < EVENT_THROTTLE_MS) {
-                                            logger.debug("PlayersPanel: Ignoring duplicate session event: " + session.getId());
-                                            return;
-                                        }
-                                        lastProcessedSessionId = session.getId();
-                                        lastSessionEventTime = now;
-        
-                                        logger.info("PlayersPanel: Updating with new session: " + session.getId());
-                                        SwingUtilities.invokeLater(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                enableControls(true);
-                                                refreshPlayers(session.getPlayers());
-                                                selectFirstPlayerIfNoneSelected();
-                                            }
-                                        });
+                            SwingUtilities.invokeLater(() -> {
+                                if (action.getData() instanceof Session) {
+                                    final Session session = (Session) action.getData();
+                                    long now = System.currentTimeMillis();
+                                    if (session.getId() != null &&
+                                            session.getId().equals(lastProcessedSessionId) &&
+                                            (now - lastSessionEventTime) < EVENT_THROTTLE_MS) {
+                                        logger.debug("PlayersPanel: Ignoring duplicate session event: " + session.getId());
+                                        return;
                                     }
+                                    lastProcessedSessionId = session.getId();
+                                    lastSessionEventTime = now;
+                                    
+                                    logger.info("PlayersPanel: Updating with new session: " + session.getId());
+                                    SwingUtilities.invokeLater(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            enableControls(true);
+                                            refreshPlayers(session.getPlayers());
+                                            selectFirstPlayerIfNoneSelected();
                                         }
+                                    });
+                                }
                             });
                             break;
                         }

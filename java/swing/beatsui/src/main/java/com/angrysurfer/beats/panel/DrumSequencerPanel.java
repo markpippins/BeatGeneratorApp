@@ -18,26 +18,31 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beats.util.Direction;
-import com.angrysurfer.beats.util.NoteEvent;
-import com.angrysurfer.beats.util.TimingDivision;
 import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.TimingUpdate;
+import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.model.NoteEvent;
 import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.model.TimingDivision;
 
 /**
  * A sequencer panel with X0X-style step sequencing capabilities
  */
-public class DrumSequencerPanel extends JPanel {
+public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = Logger.getLogger(MelodicSequencerPanel.class.getName());
 
@@ -49,7 +54,7 @@ public class DrumSequencerPanel extends JPanel {
     private final List<Dial> cutoffDials = new ArrayList<>();
     private final List<Dial> resonanceDials = new ArrayList<>();
 
-    private int selectedPadIndex;
+    private int selectedPadIndex = -1; // Default to no selection
 
     // Sequence parameters
     private JSpinner lastStepSpinner;
@@ -84,6 +89,11 @@ public class DrumSequencerPanel extends JPanel {
     // Array to hold the strikes (drum pads)
     private Strike[] strikes = new Strike[DRUM_PAD_COUNT];
 
+    // Variable to track the active pattern
+    private int activePatternIndex = 0; // Default to the first pattern
+
+    int beat = 0;
+
     /**
      * Create a new SequencerPanel
      *
@@ -93,10 +103,14 @@ public class DrumSequencerPanel extends JPanel {
         super(new BorderLayout());
         this.noteEventConsumer = noteEventConsumer;
 
+        // Register with TimingBus
+        TimingBus.getInstance().register(this);
+
         // Initialize strikes with root notes starting from 36
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             strikes[i] = new Strike(); // Initialize each strike
-            strikes[i].setRootNote(36 + i); // Set root note for each strike
+            strikes[i].setRootNote(36 + i); // Set root note for each
+            strikes[i].setX0xPlayer(true);
         }
 
         // Initialize other parameters
@@ -303,87 +317,20 @@ public class DrumSequencerPanel extends JPanel {
     }
 
     private void generatePattern() {
-        // First clear the pattern to ensure clean state
-        clearPattern();
-
-        // Get selected octave range (1-4)
-        int octaveRange = Integer.parseInt((String) rangeCombo.getSelectedItem());
-
-        // Calculate note range based on octaves
-        int baseNote = 60 - ((octaveRange * 12) / 2); // Center around middle C (60)
-        int totalNoteRange = octaveRange * 12;
-
-        logger.info("Generating pattern with " + octaveRange + " octave range: "
-                + baseNote + " to " + (baseNote + totalNoteRange - 1));
-
-        // Process all steps
-        for (int i = 0; i < velocityDials.size(); i++) {
-            final int stepIndex = i;
-
-            // Only process steps within the current pattern length
-            if (i >= patternLength) {
-                continue;
-            }
-
-            // Randomly decide if this step should be active (70% chance)
-            boolean activateStep = Math.random() < 0.7;
-
-            if (activateStep) {
-                // Activate the step
-                triggerButtons.get(i).setSelected(true);
-
-                // Generate random velocity and decay values
-                int velocity = 85 + (int) (Math.random() * 110);  // 40-100
-                int decay = 30 + (int) (Math.random() * 50);     // 30-80
-                int cutoff = 30 + (int) (Math.random() * 20);     // 30-80
-                int resonance = 30 + (int) (Math.random() * 20);     // 30-80
-
-                // Use SwingUtilities.invokeLater for all UI updates
-                final int velToSet = velocity;
-                final int decayToSet = decay;
-
-                SwingUtilities.invokeLater(() -> {
-                    try {
-
-                        Dial velocityDial = velocityDials.get(stepIndex);
-                        // Set velocity and decay
-                        if (stepIndex < velocityDials.size()) {
-                            velocityDials.get(stepIndex).setValue(velToSet);
-                        }
-
-                        if (stepIndex < decayDials.size()) {
-                            decayDials.get(stepIndex).setValue(decayToSet);
-                        }
-                    } catch (Exception ex) {
-                        logger.warning("Error at step " + stepIndex + ": " + ex.getMessage());
-                        ex.printStackTrace();
-                    }
-                });
-            }
+        if (selectedPadIndex < 0 || selectedPadIndex >= DRUM_PAD_COUNT) {
+            // No drum button is selected, show a message
+            JOptionPane.showMessageDialog(this, "Please select a drum pad to generate a pattern.", "No Drum Pad Selected", JOptionPane.WARNING_MESSAGE);
+            return;
         }
 
-        // Final UI refresh to ensure all components display correctly
-        SwingUtilities.invokeLater(() -> {
-            for (Dial dial : velocityDials) {
-                dial.repaint();
-            }
-            for (Dial dial : decayDials) {
-                dial.repaint();
-            }
+        // Populate the pattern for the selected drum button
+        for (int i = 0; i < PATTERN_LENGTH; i++) {
+            // Example logic to randomly activate steps in the pattern
+            patterns[selectedPadIndex][i] = Math.random() < 0.5; // 50% chance to activate the step
+        }
 
-            for (Dial dial : decayDials) {
-                dial.repaint();
-            }
-            for (Dial dial : cutoffDials) {
-                dial.repaint();
-            }
-            for (Dial dial : resonanceDials) {
-                dial.repaint();
-            }
-
-            validate();
-            repaint();
-        });
+        // Refresh the trigger buttons to reflect the new pattern
+        refreshTriggerButtonsForPad(selectedPadIndex);
     }
 
     /**
@@ -497,36 +444,37 @@ public class DrumSequencerPanel extends JPanel {
         drumButton.setName("DrumButton-" + index);
         drumButton.setToolTipText("Pad " + (index + 1));
         drumButton.setText(Integer.toString(index + 1));
-
+        drumButton.setToggle(true);
+        drumButton.setExclusive(true);
         // Add action to manually trigger the note when pad button is clicked
-        drumButton.addActionListener(e -> {
-            // if (index < noteDials.size()) {
-            //     // Get note from dial
-            //     NoteSelectionDial noteDial = noteDials.get(index);
-            //     int noteValue = noteDial.getValue();
+        drumButton.addActionListener(e -> selectDrumPad(index));
 
-            //     // Apply quantization if enabled
-            //     int quantizedNote = quantizeNote(noteValue);
-            //     // Apply octave shift
-            //     int shiftedNote = applyOctaveShift(quantizedNote);
-            //     // Get velocity
-            //     int velocity = 127; // Full velocity for manual triggers
-            //     if (index < velocityDials.size()) {
-            //         velocity = (int) Math.round(velocityDials.get(index).getValue() * 1.27);
-            //         velocity = Math.max(1, Math.min(127, velocity));
-            //     }
-            //     // Get decay time
-            //     int decayTime = 250; // Longer decay time for manual triggers
-            //     if (index < decayDials.size()) {
-            //         decayTime = (int) Math.round(50 + decayDials.get(index).getValue() * 4.5);
-            //     }
-            //     // Trigger the note through the callback
-            //     if (noteEventConsumer != null) {
-            //         noteEventConsumer.accept(new NoteEvent(shiftedNote, velocity, decayTime));
-            //     }
-            // }
-        });
-
+        // {
+        // if (index < noteDials.size()) {
+        //     // Get note from dial
+        //     NoteSelectionDial noteDial = noteDials.get(index);
+        //     int noteValue = noteDial.getValue();
+        //     // Apply quantization if enabled
+        //     int quantizedNote = quantizeNote(noteValue);
+        //     // Apply octave shift
+        //     int shiftedNote = applyOctaveShift(quantizedNote);
+        //     // Get velocity
+        //     int velocity = 127; // Full velocity for manual triggers
+        //     if (index < velocityDials.size()) {
+        //         velocity = (int) Math.round(velocityDials.get(index).getValue() * 1.27);
+        //         velocity = Math.max(1, Math.min(127, velocity));
+        //     }
+        //     // Get decay time
+        //     int decayTime = 250; // Longer decay time for manual triggers
+        //     if (index < decayDials.size()) {
+        //         decayTime = (int) Math.round(50 + decayDials.get(index).getValue() * 4.5);
+        //     }
+        //     // Trigger the note through the callback
+        //     if (noteEventConsumer != null) {
+        //         noteEventConsumer.accept(new NoteEvent(shiftedNote, velocity, decayTime));
+        //     }
+        // }
+        // });
         JPanel buttonPanel2 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         buttonPanel2.add(drumButton);
         column.add(buttonPanel2);
@@ -661,7 +609,8 @@ public class DrumSequencerPanel extends JPanel {
     // Method to select a drum pad and update the UI
     private void selectDrumPad(int padIndex) {
         selectedPadIndex = padIndex; // Update selected pad index
-        refreshTriggerButtonsForPad(padIndex); // Refresh the trigger buttons
+        activePatternIndex = padIndex; // Set active pattern index to the selected pad
+        refreshTriggerButtonsForPad(padIndex); // Refresh the trigger buttons to show the current pattern
     }
 
     // Method to toggle the step for the active drum pad
@@ -676,21 +625,75 @@ public class DrumSequencerPanel extends JPanel {
     private void refreshTriggerButtonsForPad(int padIndex) {
         for (int i = 0; i < triggerButtons.size(); i++) {
             TriggerButton button = triggerButtons.get(i);
-            button.setSelected(patterns[padIndex][i]); // Set button state based on pattern
+            button.setSelected(patterns[padIndex][i]); // Set button state based on the stored pattern
             button.setHighlighted(false); // Reset highlight
         }
     }
 
     // Implement beat listening and animation for TriggerButtons
     private void onBeat() {
-        if (selectedPadIndex >= 0 && selectedPadIndex < DRUM_PAD_COUNT) {
-            // Logic to animate the trigger buttons based on the current step
-            for (int i = 0; i < PATTERN_LENGTH; i++) {
-                if (patterns[selectedPadIndex][i]) {
-                    // Trigger the note using DrumNoteOn
-                    noteEventConsumer.accept(new NoteEvent(strikes[selectedPadIndex].getRootNote(), 127, 250)); // Example velocity and duration
-                }
+        // Determine the current step based on the timing logic
+        int currentStep = getCurrentStep(); // Implement this method to get the current step based on the timing logic
+
+        updateStep(beat - 1, beat); // Update the step indicator
+        // Iterate through all drum pads
+        for (int padIndex = 0; padIndex < DRUM_PAD_COUNT; padIndex++) {
+            // Check if the pattern for the current step is active for this pad
+            if (patterns[padIndex][currentStep]) {
+                // Trigger the note using DrumNoteOn
+                noteEventConsumer.accept(new NoteEvent(strikes[padIndex].getRootNote(), 127, 250)); // Example velocity and duration
             }
         }
+    }
+
+    // Method to get the current step based on timing logic
+    private int getCurrentStep() {
+        return (int) (beat % PATTERN_LENGTH) + 1; // Simple modulo for step calculation
+    }
+
+// Implement the onAction method to handle timing updates
+    @Override
+    public void onAction(Command action
+    ) {
+        if (action.getCommand() == null) {
+            return;
+        }
+
+        switch (action.getCommand()) {
+            case Commands.TIMING_UPDATE -> {
+                // Call onBeat to handle beat updates
+                if (action.getData() instanceof TimingUpdate) {
+                    TimingUpdate timingUpdate = (TimingUpdate) action.getData();
+                    if (timingUpdate.beatCount() > beat) {
+                        onBeat();
+                        beat++;
+                    }
+                }
+
+                break;
+            }
+
+            case "PAD_TOGGLED" -> {
+                DrumButton toggledButton = (DrumButton) action.getData();
+                int padIndex = getDrumButtonIndex(toggledButton); // Find the index of the toggled button
+
+                if (padIndex != -1) {
+                    // Update the active pattern index
+                    selectDrumPad(padIndex); // Call selectDrumPad to update the UI and active pattern
+                }
+            }
+
+            // ... existing cases ...
+            }
+    }
+    // Method to find the index of a DrumButton in the list
+
+    private int getDrumButtonIndex(DrumButton button) {
+        for (int i = 0; i < drumButtons.size(); i++) {
+            if (drumButtons.get(i) == button) {
+                return i; // Return the index if found
+            }
+        }
+        return -1; // Return -1 if not found
     }
 }

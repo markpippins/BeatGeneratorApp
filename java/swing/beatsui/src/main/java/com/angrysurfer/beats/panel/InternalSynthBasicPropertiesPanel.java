@@ -33,14 +33,14 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.util.DrumItem;
-import com.angrysurfer.beats.util.PresetItem;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.DrumItem;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.PresetItem;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.UserConfigManager;
 

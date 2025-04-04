@@ -15,9 +15,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.util.Direction;
-import com.angrysurfer.beats.util.NoteEvent;
-import com.angrysurfer.beats.util.TimingDivision;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.Command;
@@ -27,7 +24,10 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.api.TimingUpdate;
+import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.model.NoteEvent;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.model.TimingDivision;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
 
