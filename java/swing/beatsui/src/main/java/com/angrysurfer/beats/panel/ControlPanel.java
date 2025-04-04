@@ -158,28 +158,34 @@ public class ControlPanel extends JPanel {
         noteSelectionDial.setMinimumSize(noteDialSize);
         noteSelectionDial.setMaximumSize(noteDialSize);
         noteSelectionDial.setCommand(Commands.NEW_VALUE_NOTE);
-
+        
         // Regular dials
         levelDial = createDial("level", 100, 0, 127, 1);
         levelDial.setCommand(Commands.NEW_VALUE_LEVEL);
 
         panDial = createDial("pan", 64, 0, 127, 1);
         panDial.setCommand(Commands.NEW_VALUE_PAN);
-
+        panDial.setKnobColor(ColorUtils.mutedRed);
+        panDial.setGradientStartColor(panDial.getKnobColor().brighter());
+        panDial.setGradientEndColor(panDial.getKnobColor().darker());
+        
         velocityMinDial = createDial("minVelocity", 64, 0, 127, 1);
         velocityMinDial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
-        velocityMinDial.setKnobColor(ColorUtils.dustyAmber);
+        velocityMinDial.setKnobColor(ColorUtils.warmGray);
         velocityMinDial.setGradientStartColor(velocityMinDial.getKnobColor().brighter());
         velocityMinDial.setGradientEndColor(velocityMinDial.getKnobColor().darker());
         
         velocityMaxDial = createDial("maxVelocity", 127, 0, 127, 1);
         velocityMaxDial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
-        velocityMaxDial.setKnobColor(ColorUtils.dustyAmber);
+        velocityMaxDial.setKnobColor(ColorUtils.warmGray);
         velocityMaxDial.setGradientStartColor(velocityMaxDial.getKnobColor().brighter());
         velocityMaxDial.setGradientEndColor(velocityMaxDial.getKnobColor().darker());
 
         swingDial = createDial("swing", 50, 0, 100, 1);
         swingDial.setCommand(Commands.NEW_VALUE_SWING);
+        swingDial.setKnobColor(ColorUtils.slateGray);
+        swingDial.setGradientStartColor(swingDial.getKnobColor().brighter());
+        swingDial.setGradientEndColor(swingDial.getKnobColor().darker());
 
         probabilityDial = createDial("probability", 100, 0, 100, 1);
         probabilityDial.setCommand(Commands.NEW_VALUE_PROBABILITY);
