@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
+import com.angrysurfer.beats.widget.DrumSequencerButton;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -32,6 +33,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
@@ -49,6 +51,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private final List<TriggerButton> triggerButtons = new ArrayList<>();
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> decayDials = new ArrayList<>();
+    private DrumInfoPanel drumInfoPanel;
     
     // Core sequencer - manages all sequencing logic
     private DrumSequencer sequencer;
@@ -88,11 +91,14 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             updateStepHighlighting(event.getOldStep(), event.getNewStep());
         });
         
+        // Register with the command bus - MAKE SURE THIS IS HERE
+        CommandBus.getInstance().register(this);
+        
+        // Debug: Print confirmation of registration
+        System.out.println("DrumSequencerPanel registered with CommandBus");
+        
         // Initialize UI components
         initialize();
-        
-        // Register with command bus for UI updates
-        CommandBus.getInstance().register(this);
     }
 
     /**
@@ -101,9 +107,21 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private void initialize() {
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
+        // Create top panel to hold both info and parameters
+        JPanel topPanel = new JPanel(new BorderLayout());
+        
+        // Create drum info panel
+        drumInfoPanel = new DrumInfoPanel(sequencer);
+        
         // Add sequence parameters panel at the top
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
-        add(sequenceParamsPanel, BorderLayout.NORTH);
+        
+        // Add both to the top panel
+        topPanel.add(drumInfoPanel, BorderLayout.WEST);
+        topPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+        
+        // Add top panel to main layout
+        add(topPanel, BorderLayout.NORTH);
         
         // Create panel for drum pads and steps
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -264,20 +282,13 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             strike.setMinVelocity(80L);  // Set reasonable minimum velocity
             strike.setMaxVelocity(127L); // Set maximum velocity
             strike.setLevel(100L);       // Set full level
+            strike.setName(drumNames[i]); // Set the name
             
             sequencer.setStrike(i, strike);
             
-            // Create the button
-            DrumButton button = new DrumButton();
-            button.setText(drumNames[i]);
-            
-            button.setToolTipText(drumNames[i] + " (Note: " + defaultNotes[i] + ")");
-            
-            // Set button action to select this pad
-            int padIndex = i;
-            button.addActionListener(e -> {
-                selectDrumPad(padIndex);
-            });
+            // Create the button - use DrumSequencerButton instead of DrumButton
+            DrumSequencerButton button = new DrumSequencerButton(i, sequencer);
+            button.setDrumName(drumNames[i]);
             
             // Add manual note trigger on right-click
             button.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -285,7 +296,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 public void mouseClicked(java.awt.event.MouseEvent evt) {
                     if (evt.getButton() == java.awt.event.MouseEvent.BUTTON3) {
                         // Right click - play the note
-                        Strike strike = sequencer.getStrike(padIndex);
+                        Strike strike = sequencer.getStrike(button.getDrumPadIndex());
                         if (strike != null) {
                             NoteEvent noteEvent = new NoteEvent(
                                 strike.getRootNote(),
@@ -401,6 +412,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     public void onAction(Command action) {
         if (action == null || action.getCommand() == null) return;
         
+        System.out.println("DrumSequencerPanel received command: " + action.getCommand()); // Debug
+        
         switch (action.getCommand()) {
             case Commands.TRANSPORT_START -> {
                 // Ensure UI is in sync with sequencer state
@@ -413,6 +426,38 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 for (TriggerButton button : triggerButtons) {
                     button.setHighlighted(false);
                     button.repaint();
+                }
+            }
+            
+            case Commands.DRUM_PAD_SELECTED -> {
+                System.out.println("DrumSequencerPanel: DRUM_PAD_SELECTED received"); // Debug
+                
+                if (action.getData() instanceof DrumPadSelectionEvent event) {
+                    System.out.println("  Selection: " + event.getOldSelection() + " -> " + event.getNewSelection()); // Debug
+                    
+                    // Update the selectedPadIndex in the panel
+                    selectedPadIndex = event.getNewSelection();
+                    
+                    // Update the drum info panel with the new selection
+                    if (drumInfoPanel != null) {
+                        drumInfoPanel.updateInfo(event.getNewSelection());
+                    } else {
+                        System.err.println("Error: drumInfoPanel is null!"); // Debug
+                    }
+                    
+                    // Update all buttons to reflect the new selection
+                    for (int i = 0; i < drumButtons.size(); i++) {
+                        if (drumButtons.get(i) instanceof DrumSequencerButton) {
+                            ((DrumSequencerButton) drumButtons.get(i)).setSelected(i == event.getNewSelection());
+                        }
+                    }
+                    
+                    // Log that we received the selection event
+                    logger.debug("Drum pad selected: {} -> {}", 
+                                 event.getOldSelection(), event.getNewSelection());
+                } else {
+                    System.err.println("Error: expected DrumPadSelectionEvent but got " + 
+                                      (action.getData() != null ? action.getData().getClass().getName() : "null")); // Debug
                 }
             }
         }

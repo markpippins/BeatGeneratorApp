@@ -254,5 +254,10 @@ public class Commands {
     public static final String PAD_TOGGLED = "PAD_TOGGLED";
     public static final String NEW_VALUE_OCTAVE = "NEW_VALUE_OCTAVE";
     public static final String SEQUENCER_STEP_UPDATE = "SEQUENCER_STEP_UPDATE";
+
+    /**
+     * Command for drum pad selection events
+     */
+    public static final String DRUM_PAD_SELECTED = "DRUM_PAD_SELECTED";
 }
 
