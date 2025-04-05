@@ -2,11 +2,7 @@ package com.angrysurfer.core.model;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.LongStream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,10 +11,7 @@ import lombok.Setter;
 @Setter
 public class Strike extends Player {
 
-    private static final Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
-
-    static final Random rand = new Random();
-
+ 
     public static int KICK = 36;
     public static int SNARE = 37;
     public static int CLOSED_HAT = 38;
@@ -41,7 +34,7 @@ public class Strike extends Player {
     }
 
     public Strike(String name, Session session, InstrumentWrapper instrument, int note,
-            List<Integer> allowableControlMessages, long minVelocity, long maxVelocity) {
+            List<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
         super(name, session, instrument, allowableControlMessages);
         setRootNote(note);
         setMinVelocity(minVelocity);

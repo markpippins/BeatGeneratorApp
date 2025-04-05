@@ -95,7 +95,7 @@ public class TickCyclerListener implements CyclerListener {
     @Override
     public void starting() {
         logger.info("starting");
-        songEngine.getActiveSong().getPatterns().forEach(p -> p.getStepCycler().setLength((long) p.getSteps().size()));
+        songEngine.getActiveSong().getPatterns().forEach(p -> p.getStepCycler().setLength(p.getSteps().size()));
         songEngine.getActiveSong().getPatterns().forEach(p -> p.getStepCycler().reset());
         this.advanced(0);
     }

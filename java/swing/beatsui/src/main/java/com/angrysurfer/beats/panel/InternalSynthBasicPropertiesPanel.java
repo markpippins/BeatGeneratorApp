@@ -108,7 +108,7 @@ public class InternalSynthBasicPropertiesPanel extends JPanel {
         
         // Channel spinner
         channelSpinner = new JSpinner(new SpinnerNumberModel(
-                player.getChannel(), 0, 15, 1));
+                (long) player.getChannel(), 0, 15, 1));
         
         // Preset spinner for external devices
         presetSpinner = new JSpinner(new SpinnerNumberModel(
@@ -960,12 +960,12 @@ public class InternalSynthBasicPropertiesPanel extends JPanel {
                     if (presetCombo.getSelectedItem() instanceof DrumItem) {
                         int noteNumber = ((DrumItem) presetCombo.getSelectedItem()).getNoteNumber();
                         player.setRootNote(noteNumber);
-                        instrument.setCurrentPreset(0L); // Standard GM drum kit
+                        instrument.setCurrentPreset(0); // Standard GM drum kit
                     }
                 } else {
                     // For melodic instruments
                     if (presetCombo.getSelectedItem() instanceof PresetItem) {
-                        long preset = ((PresetItem) presetCombo.getSelectedItem()).getNumber();
+                        int preset = ((PresetItem) presetCombo.getSelectedItem()).getNumber();
                         instrument.setCurrentPreset(preset);
                         player.setPreset(preset);
                     }
@@ -977,7 +977,7 @@ public class InternalSynthBasicPropertiesPanel extends JPanel {
                 }
             } else {
                 // For external instruments, use spinner value
-                long preset = ((Number) presetSpinner.getValue()).longValue();
+                int preset = ((Number) presetSpinner.getValue()).intValue();
                 player.setPreset(preset);
             }
             
@@ -1013,7 +1013,7 @@ public class InternalSynthBasicPropertiesPanel extends JPanel {
     /**
      * Get the selected preset
      */
-    public long getSelectedPreset() {
+    public int getSelectedPreset() {
         if (usingInternalSynth) {
             if (isDrumChannel && presetCombo.getSelectedItem() instanceof DrumItem) {
                 return 0; // For drums, preset is always 0 (standard GM kit)
@@ -1021,7 +1021,7 @@ public class InternalSynthBasicPropertiesPanel extends JPanel {
                 return ((PresetItem) presetCombo.getSelectedItem()).getNumber();
             }
         }
-        return ((Number) presetSpinner.getValue()).longValue();
+        return ((Number) presetSpinner.getValue()).intValue();
     }
     
     /**

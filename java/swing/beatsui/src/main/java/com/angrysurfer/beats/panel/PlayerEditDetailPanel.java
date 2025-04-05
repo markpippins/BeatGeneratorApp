@@ -92,7 +92,7 @@ public class PlayerEditDetailPanel extends JPanel {
         swingSlider = createSlider("Swing", player.getSwing(), 0, 100);
         probabilitySlider = createSlider("Probability", player.getProbability(), 0, 100);
         randomSlider = createSlider("Random", player.getRandomDegree(), 0, 100);
-        sparseSlider = createSlider("Sparse", (long) (player.getSparse() * 100), 0, 100);
+        sparseSlider = createSlider("Sparse", (int) (player.getSparse() * 100), 0, 100);
 
         // Initialize ratchet controls with tick spacing
         ratchetCountSlider = createSlider("Count", player.getRatchetCount(), 0, 6, true);
@@ -429,19 +429,19 @@ public class PlayerEditDetailPanel extends JPanel {
      * Updates the player object with current control values
      */
     public void updatePlayer() {
-        player.setLevel((long) levelSlider.getValue());
+        player.setLevel(levelSlider.getValue());
         player.setRootNote(noteDial.getValue());
-        player.setMinVelocity((long) velocityMinSlider.getValue());
-        player.setMaxVelocity((long) velocityMaxSlider.getValue());
-        player.setPanPosition((long) panDial.getValue());  // Changed from panSlider to panDial
+        player.setMinVelocity(velocityMinSlider.getValue());
+        player.setMaxVelocity(velocityMaxSlider.getValue());
+        player.setPanPosition(panDial.getValue());  // Changed from panSlider to panDial
 
-        player.setSwing((long) swingSlider.getValue());
-        player.setProbability((long) probabilitySlider.getValue());
-        player.setRandomDegree((long) randomSlider.getValue());
+        player.setSwing(swingSlider.getValue());
+        player.setProbability(probabilitySlider.getValue());
+        player.setRandomDegree(randomSlider.getValue());
         player.setSparse(((double) sparseSlider.getValue()) / 100.0);
 
-        player.setRatchetCount((long) ratchetCountSlider.getValue());
-        player.setRatchetInterval((long) ratchetIntervalSlider.getValue());
+        player.setRatchetCount(ratchetCountSlider.getValue());
+        player.setRatchetInterval(ratchetIntervalSlider.getValue());
 
         logger.debug("Updated player parameters: level={}, note={}, swing={}",
                 player.getLevel(), player.getRootNote(), player.getSwing());
@@ -450,7 +450,7 @@ public class PlayerEditDetailPanel extends JPanel {
     /**
      * Creates a vertical slider with the given parameters
      */
-    private JSlider createSlider(String name, Long value, int min, int max) {
+    private JSlider createSlider(String name, Integer value, int min, int max) {
         // Handle null values safely
         int safeValue;
         if (value == null) {
@@ -478,7 +478,7 @@ public class PlayerEditDetailPanel extends JPanel {
     /**
      * Creates a vertical slider with major tick marks
      */
-    private JSlider createSlider(String name, long value, int min, int max, boolean setMajorTickSpacing) {
+    private JSlider createSlider(String name, int value, int min, int max, boolean setMajorTickSpacing) {
         JSlider slider = createSlider(name, value, min, max);
         if (setMajorTickSpacing) {
             slider.setMajorTickSpacing((max - min) / 4);

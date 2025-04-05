@@ -2,7 +2,8 @@ package com.angrysurfer.core.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,18 +17,13 @@ public class Cycler {
 
     static Logger logger = LoggerFactory.getLogger(Cycler.class.getCanonicalName());
 
-    private Long length = 1L;
+    private Integer length = 1;
 
-    private AtomicLong position = new AtomicLong(1);
+    private AtomicInteger position = new AtomicInteger(1);
 
     private Double stepSize = 1.0;
 
-
-
-
-
-
-    
+    private Double stepSizeIncrement = 0.0;    
 
     private Double stepValue = 0.0;
 
@@ -37,17 +33,17 @@ public class Cycler {
 
     }
 
-    public Cycler(long length) {
+    public Cycler(int length) {
         this.length = length;
     }
     
-    public Long advance() {
+    public Integer advance() {
         logger.debug("advance() - current position: {}, length: {}", position.get(), length);
         if (position.get() == length && length > 1)
             position.set(0);
         
         if (getLength() == 1)
-            return 1L;
+            return 1;
 
         if (stepSize < 1 && stepSize > 0) {
             stepValue = stepValue + stepSize;
@@ -61,7 +57,7 @@ public class Cycler {
         return incrementPosition();
     }
 
-    private Long incrementPosition() {
+    private Integer incrementPosition() {
         position.incrementAndGet();
         logger.debug("incrementPosition() - new position: {}", position.get());
         notifyAll(position.get());
@@ -72,13 +68,13 @@ public class Cycler {
         return position.get(); 
     }
 
-    public Long get() {
+    public Integer get() {
         return position.get() == 0 ? 1 : position.get();
     }
 
-    public Long zeroBasedGet() {
+    public Integer zeroBasedGet() {
         if (position.get() == 0)
-            return 0L;
+            return 0;
 
         return position.get() - 1;
     }
@@ -106,7 +102,7 @@ public class Cycler {
         getListeners().remove(listener);
     }
 
-    public void notifyAll(long position) {
+    public void notifyAll(Integer position) {
         logger.debug("notifyAll() - notifying {} listeners of position: {}", listeners.size(), position);
         getListeners().forEach(l -> l.advanced(position));
     }

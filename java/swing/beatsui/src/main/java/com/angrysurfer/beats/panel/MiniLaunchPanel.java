@@ -49,7 +49,7 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
     };
 
     // Keep track of last preset sent to each channel
-    private final Map<Integer, Long> lastSentPresets = new HashMap<>();
+    private final Map<Integer, Integer> lastSentPresets = new HashMap<>();
 
     private static final class PadButton extends JButton {
         private final int midiNote;
@@ -222,8 +222,8 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
 
             // Only send program change if preset has changed for this channel
             if (activePlayer.getPreset() != null) {
-                Long lastPreset = lastSentPresets.get(channel);
-                Long currentPreset = activePlayer.getPreset();
+                Integer lastPreset = lastSentPresets.get(channel);
+                Integer currentPreset = activePlayer.getPreset();
 
                 // Send program change only if the preset has changed for this channel
                 if (lastPreset == null || !lastPreset.equals(currentPreset)) {

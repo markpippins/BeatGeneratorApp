@@ -303,9 +303,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             // Create a Strike object for this drum pad with velocity and level settings
             Strike strike = new Strike();
             strike.setRootNote(defaultNotes[i]);
-            strike.setMinVelocity(80L);  
-            strike.setMaxVelocity(127L); 
-            strike.setLevel(100L);      
+            strike.setMinVelocity(80);  
+            strike.setMaxVelocity(127); 
+            strike.setLevel(100);      
             strike.setName(drumNames[i]);
             
             sequencer.setStrike(i, strike);

@@ -48,29 +48,29 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private String name = "Player";
 
-    private int channel = 0;
+    private Integer channel = 0;
 
-    private Long swing = 0L;
+    private Integer swing = 0;
 
-    private Long level = 100L;
+    private Integer level = 100;
 
     private Integer rootNote = 60;
 
-    private Long minVelocity = 100L;
+    private Integer minVelocity = 100;
 
-    private Long maxVelocity = 110L;
+    private Integer maxVelocity = 110;
 
-    private Long preset = 1L;
+    private Integer preset = 1;
 
     private Boolean stickyPreset = false;
 
-    private Long probability = 100L;
+    private Integer probability = 100;
 
-    private Long randomDegree = 0L;
+    private Integer randomDegree = 0;
 
-    private Long ratchetCount = 0L;
+    private Integer ratchetCount = 0;
 
-    private Long ratchetInterval = 1L;
+    private Integer ratchetInterval = 1;
 
     private Integer internalBars = Constants.DEFAULT_BAR_COUNT;
 
@@ -80,7 +80,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private Boolean useInternalBars = false;
 
-    private Long panPosition = 63L;
+    private Integer panPosition = 63;
 
     private Boolean preserveOnPurge = false;
 
@@ -90,7 +90,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private boolean muted = false;
 
-    private Long position;
+    private Integer position;
 
     private Long lastTick = 0L;
 
@@ -98,17 +98,17 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private Long lastPlayedBar;
 
-    private Long skips = 0L;
+    private Integer skips = 0;
 
     private double lastPlayedBeat;
 
-    private Long subDivisions = 4L;
+    private Integer subDivisions = 4;
 
-    private Long beatFraction = 1L;
+    private Integer beatFraction = 1;
 
-    private Long fadeOut = 0L;
+    private Integer fadeOut = 0;
 
-    private Long fadeIn = 0L;
+    private Integer fadeIn = 0;
 
     private Boolean accent = false;
 
@@ -193,11 +193,11 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     public void drumNoteOn(long note) {
         logger.debug("drumNoteOn() - note: {}", note);
 
-        int velWeight = getMaxVelocity().intValue() - getMinVelocity().intValue();
+        int velWeight = getMaxVelocity() - getMinVelocity();
 
         long velocity = getMinVelocity() + rand.nextInt(velWeight + 1);
         // Send note on message
-        int randWeight = randomDegree.intValue() > 0 ? rand.nextInt(randomDegree.intValue()) : 0;
+        int randWeight = randomDegree > 0 ? rand.nextInt(randomDegree) : 0;
 
         java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
             try {

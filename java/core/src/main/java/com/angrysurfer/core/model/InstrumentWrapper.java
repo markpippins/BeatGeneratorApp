@@ -104,7 +104,7 @@ public class InstrumentWrapper implements Serializable {
     // Add fields for soundbank support
     private String soundbankName;
     private Integer bankIndex;
-    private Long currentPreset;
+    private Integer currentPreset;
 
     public InstrumentWrapper() {
 
@@ -327,7 +327,7 @@ public class InstrumentWrapper implements Serializable {
      * Get the currently selected preset
      * @return The preset number
      */
-    public Long getCurrentPreset() {
+    public Integer getCurrentPreset() {
         return currentPreset;
     }
 
@@ -335,7 +335,7 @@ public class InstrumentWrapper implements Serializable {
      * Set the currently selected preset
      * @param preset The preset number
      */
-    public void setCurrentPreset(Long preset) {
+    public void setCurrentPreset(int preset) {
         this.currentPreset = preset;
         logger.info("Set current preset to: {}", preset);
     }
