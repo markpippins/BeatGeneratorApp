@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.DrumSequencerButton;
-import com.angrysurfer.beats.widget.TriggerButton;
+import com.angrysurfer.beats.widget.DrumSelectorButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -52,7 +52,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     // UI Components
     private final List<DrumSequencerButton> drumButtons = new ArrayList<>();
-    private List<TriggerButton> triggerButtons = new ArrayList<>();
+    private List<DrumSelectorButton> triggerButtons = new ArrayList<>();
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> decayDials = new ArrayList<>();
     private DrumInfoPanel drumInfoPanel;
@@ -367,7 +367,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 final int s = step;
                 
                 // Create button with empty label (not null)
-                TriggerButton button = new TriggerButton("");
+                DrumSelectorButton button = new DrumSelectorButton("");
                 button.setPreferredSize(new Dimension(25, 25));
                 button.setMinimumSize(new Dimension(20, 20));
                 
@@ -400,7 +400,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     /**
      * Update a step button's appearance based on whether it's within the pattern length
      */
-    private void updateStepButtonAppearance(TriggerButton button, int drumIndex, int step) {
+    private void updateStepButtonAppearance(DrumSelectorButton button, int drumIndex, int step) {
         int patternLength = sequencer.getPatternLength(drumIndex);
         
         if (step >= patternLength) {
@@ -421,7 +421,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         for (int step = 0; step < 64; step++) {
             int buttonIndex = drumIndex * 64 + step;
             if (buttonIndex < triggerButtons.size()) {
-                TriggerButton button = triggerButtons.get(buttonIndex);
+                DrumSelectorButton button = triggerButtons.get(buttonIndex);
                 updateStepButtonAppearance(button, drumIndex, step);
             }
         }
@@ -528,7 +528,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             
             case Commands.TRANSPORT_STOP -> {
                 // Clear all highlighting
-                for (TriggerButton button : triggerButtons) {
+                for (DrumSelectorButton button : triggerButtons) {
                     button.setHighlighted(false);
                     button.repaint();
                 }
@@ -643,7 +643,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 int buttonIndex = drumIndex * 16 + step;
                 
                 if (buttonIndex < triggerButtons.size()) {
-                    TriggerButton button = triggerButtons.get(buttonIndex);
+                    DrumSelectorButton button = triggerButtons.get(buttonIndex);
                     button.setToggled(sequencer.isStepActive(drumIndex, step));
                 }
             }
@@ -685,7 +685,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Show indices on buttons in debug mode
         if (triggerButtons != null) {
             for (int i = 0; i < triggerButtons.size(); i++) {
-                TriggerButton button = triggerButtons.get(i);
+                DrumSelectorButton button = triggerButtons.get(i);
                 int drumIndex = i / 16;
                 int stepIndex = i % 16;
                 
