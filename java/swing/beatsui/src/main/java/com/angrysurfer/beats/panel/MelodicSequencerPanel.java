@@ -39,6 +39,7 @@ import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.Scale;
+import com.angrysurfer.core.sequencer.StepUpdateEvent;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -654,7 +655,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
             // Handle sequencer step updates
             case Commands.SEQUENCER_STEP_UPDATE -> {
-                if (action.getData() instanceof MelodicSequencer.StepUpdateEvent stepEvent) {
+                if (action.getData() instanceof StepUpdateEvent stepEvent) {
                     updateStepHighlighting(stepEvent.getOldStep(), stepEvent.getNewStep());
                 }
             }

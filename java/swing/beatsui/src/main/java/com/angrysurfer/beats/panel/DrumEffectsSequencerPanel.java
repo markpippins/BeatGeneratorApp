@@ -28,7 +28,7 @@ import javax.swing.border.EmptyBorder;
 import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
-import com.angrysurfer.beats.widget.TriggerButton;
+import com.angrysurfer.beats.widget.DrumSequencerGridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
@@ -48,7 +48,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     // UI Components
     private final List<DrumButton> drumButtons = new ArrayList<>();
-    private final List<TriggerButton> triggerButtons = new ArrayList<>();
+    private final List<DrumSequencerGridButton> selectorButtons = new ArrayList<>();
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> decayDials = new ArrayList<>();
     private final List<Dial> cutoffDials = new ArrayList<>();
@@ -208,7 +208,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         timingCombo.addActionListener(e -> {
             TimingDivision selected = (TimingDivision) timingCombo.getSelectedItem();
             timingDivision = selected;
-            System.out.println("Timing set to: " + selected + " (" + selected.getStepsPerBeat() + " steps per beat)");
+            System.out.println("Timing set to: " + selected + " (" + selected.getTicksPerBeat() + " steps per beat)");
 
             // Notify listeners that timing has changed
             if (timingChangeListener != null) {
@@ -306,9 +306,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         }
 
         // Unselect all buttons
-        for (int i = 0; i < triggerButtons.size(); i++) {
-            triggerButtons.get(i).setSelected(false);
-            triggerButtons.get(i).setHighlighted(false);
+        for (int i = 0; i < selectorButtons.size(); i++) {
+            selectorButtons.get(i).setSelected(false);
+            selectorButtons.get(i).setHighlighted(false);
         }
 
         // Force repaint to ensure UI updates
@@ -419,12 +419,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         column.add(Box.createRigidArea(new Dimension(0, 5)));
 
         // Add the trigger button - make it a toggle button
-        TriggerButton triggerButton = new TriggerButton("");
+        DrumSequencerGridButton triggerButton = new DrumSequencerGridButton("");
+        
         triggerButton.setName("TriggerButton-" + index);
         triggerButton.setToolTipText("Step " + (index + 1));
 
         // Make it toggleable
-        triggerButton.setToggleable(true);
+        // triggerButton.setToggleable(true);
 
         // Add a clean action listener that doesn't interfere with toggle behavior
         triggerButton.addActionListener(e -> {
@@ -443,7 +444,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             }
         });
 
-        triggerButtons.add(triggerButton);
+        selectorButtons.add(triggerButton);
         // Center the button horizontally
         JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         buttonPanel1.add(triggerButton);
@@ -498,14 +499,14 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
      */
     public void updateStep(int oldStep, int newStep) {
         // Validate indices to prevent out of bounds errors
-        if (oldStep >= 0 && oldStep < triggerButtons.size()) {
-            TriggerButton oldButton = triggerButtons.get(oldStep);
+        if (oldStep >= 0 && oldStep < selectorButtons.size()) {
+            DrumSequencerGridButton oldButton = selectorButtons.get(oldStep);
             oldButton.setHighlighted(false);
             oldButton.repaint(); // Force immediate visual update
         }
 
-        if (newStep >= 0 && newStep < triggerButtons.size()) {
-            TriggerButton newButton = triggerButtons.get(newStep);
+        if (newStep >= 0 && newStep < selectorButtons.size()) {
+            DrumSequencerGridButton newButton = selectorButtons.get(newStep);
             newButton.setHighlighted(true);
             newButton.repaint(); // Force immediate visual update
         }
@@ -521,8 +522,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         beat = 0;
         
         // Clear all highlighting
-        for (int i = 0; i < triggerButtons.size(); i++) {
-            TriggerButton button = triggerButtons.get(i);
+        for (int i = 0; i < selectorButtons.size(); i++) {
+            DrumSequencerGridButton button = selectorButtons.get(i);
             if (button != null) {
                 button.setHighlighted(false);
                 button.repaint();
@@ -636,8 +637,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     // Method to refresh the trigger buttons for the selected pad
     private void refreshTriggerButtonsForPad(int padIndex) {
-        for (int i = 0; i < triggerButtons.size(); i++) {
-            TriggerButton button = triggerButtons.get(i);
+        for (int i = 0; i < selectorButtons.size(); i++) {
+            DrumSequencerGridButton button = selectorButtons.get(i);
             button.setSelected(patterns[padIndex][i]); // Set button state based on the stored pattern
             button.setHighlighted(false); // Reset highlight
         }

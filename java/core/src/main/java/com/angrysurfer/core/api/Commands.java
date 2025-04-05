@@ -204,6 +204,7 @@ public class Commands {
     public static final String PATTERN_ADDED = "PATTERN_ADDED";
     public static final String PATTERN_REMOVED = "PATTERN_REMOVED";
     public static final String PATTERN_UPDATED = "PATTERN_UPDATED";
+    public static final String PATTERN_PARAMS_CHANGED = "PATTERN_PARAMS_CHANGED";
 
     public static final String STEP_UPDATED = "STEP_UPDATED";
 
@@ -254,5 +255,10 @@ public class Commands {
     public static final String PAD_TOGGLED = "PAD_TOGGLED";
     public static final String NEW_VALUE_OCTAVE = "NEW_VALUE_OCTAVE";
     public static final String SEQUENCER_STEP_UPDATE = "SEQUENCER_STEP_UPDATE";
+
+    /**
+     * Command for drum pad selection events
+     */
+    public static final String DRUM_PAD_SELECTED = "DRUM_PAD_SELECTED";
 }
 

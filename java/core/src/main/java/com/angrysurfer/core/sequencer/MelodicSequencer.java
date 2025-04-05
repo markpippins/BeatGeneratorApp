@@ -74,10 +74,10 @@ public class MelodicSequencer implements IBusListener {
         initializePatternData();
         
         // Create a simple default pattern (every 4th step)
-        for (int i = 0; i < 16; i += 4) {
-            activeSteps.set(i, true);
-            noteValues.set(i, 60 + (i % 12)); // C, E, G, B sequence
-        }
+        // for (int i = 0; i < 16; i += 4) {
+        //     activeSteps.set(i, true);
+        //     noteValues.set(i, 60 + (i % 12)); // C, E, G, B sequence
+        // }
         
         // Register with CommandBus
         CommandBus.getInstance().register(this);
@@ -447,27 +447,6 @@ public class MelodicSequencer implements IBusListener {
         this.noteEventListener = listener;
     }
     
-    /**
-     * Event class for step updates
-     */
-    public static class StepUpdateEvent {
-        private final int oldStep;
-        private final int newStep;
-        
-        public StepUpdateEvent(int oldStep, int newStep) {
-            this.oldStep = oldStep;
-            this.newStep = newStep;
-        }
-        
-        public int getOldStep() {
-            return oldStep;
-        }
-        
-        public int getNewStep() {
-            return newStep;
-        }
-    }
-
     public void decrementOctaveShift() {
         octaveShift--;
     }
