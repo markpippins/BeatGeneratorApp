@@ -420,6 +420,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Add the trigger button - make it a toggle button
         DrumSelectorButton triggerButton = new DrumSelectorButton("");
+        
         triggerButton.setName("TriggerButton-" + index);
         triggerButton.setToolTipText("Step " + (index + 1));
 

@@ -1,10 +1,10 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -13,8 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -27,10 +25,10 @@ import javax.swing.SpinnerNumberModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.DrumButton;
-import com.angrysurfer.beats.widget.DrumSequencerButton;
 import com.angrysurfer.beats.widget.DrumSelectorButton;
+import com.angrysurfer.beats.widget.DrumSequencerButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -73,6 +71,24 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private JButton clearPatternButton;
     private JSpinner densitySpinner;
     
+    private Color[] colors = {
+        ColorUtils.mutedOlive,
+        ColorUtils.fadedLime,
+        ColorUtils.dustyAmber,
+        ColorUtils.warmMustard,
+        ColorUtils.deepOrange,
+        ColorUtils.agedOffWhite,
+        ColorUtils.deepTeal,
+        ColorUtils.darkGray,
+        ColorUtils.warmGray,
+        ColorUtils.mutedRed,
+        ColorUtils.fadedOrange,
+        ColorUtils.coolBlue,
+        ColorUtils.warmOffWhite,
+        ColorUtils.slateGray,
+        ColorUtils.deepNavy        
+    };
+
     // Number of drum pads and pattern length
     private static final int DRUM_PAD_COUNT = 16; // 16 tracks
     
@@ -331,8 +347,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Create the step grid panel with proper cell visibility
      */
     private JPanel createStepGridPanel() {
+        // Use consistent cell size with even spacing
         JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, 16, 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        panel.setBackground(new Color(40, 40, 40));
         
         triggerButtons = new ArrayList<>();
         
@@ -342,30 +360,29 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 final int di = drumIndex;
                 final int s = step;
                 
-                // Create button with empty label (not null)
+                // Create button with empty label
                 DrumSelectorButton button = new DrumSelectorButton("");
+                // Use consistent size for alignment
                 button.setPreferredSize(new Dimension(25, 25));
-                button.setMinimumSize(new Dimension(20, 20));
+                button.setMinimumSize(new Dimension(25, 25));
+                button.setMaximumSize(new Dimension(25, 25));
+                button.setDrumPadIndex(drumIndex);
                 
-                // Set initial background - important to make all buttons visible
+                // Make button visible
                 button.setBackground(Color.DARK_GRAY);
                 button.setOpaque(true);
                 
+                // Set toggle action
                 button.addActionListener(e -> {
                     sequencer.toggleStep(di, s);
                     button.setToggled(sequencer.isStepActive(di, s));
-                    // Debug logging
-                    logger.debug("Toggle step: drum={}, step={}, active={}", 
-                        di, s, sequencer.isStepActive(di, s));
                 });
                 
-                // Set button state based on pattern
+                // Set initial state
                 button.setToggled(sequencer.isStepActive(drumIndex, step));
                 
-                // Store reference to button
+                // Track and add
                 triggerButtons.add(button);
-                
-                // Add to panel
                 panel.add(button);
             }
         }
