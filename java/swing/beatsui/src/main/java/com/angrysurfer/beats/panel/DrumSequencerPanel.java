@@ -25,7 +25,6 @@ import javax.swing.SpinnerNumberModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumSelectorButton;
 import com.angrysurfer.beats.widget.DrumSequencerButton;
@@ -71,24 +70,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private JButton clearPatternButton;
     private JSpinner densitySpinner;
     
-    private Color[] colors = {
-        ColorUtils.mutedOlive,
-        ColorUtils.fadedLime,
-        ColorUtils.dustyAmber,
-        ColorUtils.warmMustard,
-        ColorUtils.deepOrange,
-        ColorUtils.agedOffWhite,
-        ColorUtils.deepTeal,
-        ColorUtils.darkGray,
-        ColorUtils.warmGray,
-        ColorUtils.mutedRed,
-        ColorUtils.fadedOrange,
-        ColorUtils.coolBlue,
-        ColorUtils.warmOffWhite,
-        ColorUtils.slateGray,
-        ColorUtils.deepNavy        
-    };
-
     // Number of drum pads and pattern length
     private static final int DRUM_PAD_COUNT = 16; // 16 tracks
     
@@ -366,7 +347,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 button.setPreferredSize(new Dimension(25, 25));
                 button.setMinimumSize(new Dimension(25, 25));
                 button.setMaximumSize(new Dimension(25, 25));
-                button.setDrumPadIndex(drumIndex);
                 
                 // Make button visible
                 button.setBackground(Color.DARK_GRAY);
