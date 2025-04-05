@@ -1,6 +1,9 @@
 package com.angrysurfer.beats.widget;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -47,11 +50,19 @@ public class DrumSequencerButton extends JButton implements IBusListener {
         this.drumPadIndex = drumPadIndex;
         this.sequencer = sequencer;
 
-        setOpaque(true);  // Important for background color to show
-        setContentAreaFilled(true);
-        setBorderPainted(true);
-        setBackground(normalColor);
-
+        // Set fixed width to match grid cells
+        setPreferredSize(new Dimension(120, 25));
+        setMinimumSize(new Dimension(120, 25));
+        setMaximumSize(new Dimension(120, 25));
+        
+        // Visual settings for flat look
+        setOpaque(false);
+        setContentAreaFilled(false);
+        setBorderPainted(false);
+        setFocusPainted(false);
+        setForeground(Color.WHITE);
+        setFont(new Font(getFont().getName(), Font.BOLD, 11));
+        
         // Register for command bus events to track selection changes
         CommandBus.getInstance().register(this);
 
@@ -75,7 +86,7 @@ public class DrumSequencerButton extends JButton implements IBusListener {
 
                 // Only handle selection if mouse is still over the button
                 if (contains(e.getPoint())) {
-                    System.out.println("DrumSequencerButton: selecting pad " + drumPadIndex); // Debug
+                    System.out.println("DrumSequencerButton: selecting pad " + drumPadIndex);
 
                     // Call the sequencer's selectDrumPad method
                     if (sequencer != null) {
@@ -93,76 +104,61 @@ public class DrumSequencerButton extends JButton implements IBusListener {
                 repaint();
             }
         });
-
-        // Add right-click listener for previewing sounds
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON3) {
-                    // Right-click to preview sound
-                    Strike strike = sequencer.getStrike(drumPadIndex);
-                    if (strike != null && sequencer.getNoteEventListener() != null) {
-                        sequencer.getNoteEventListener().accept(
-                            new com.angrysurfer.core.sequencer.NoteEvent(
-                                strike.getRootNote(),
-                                127, // Full velocity 
-                                250  // 250ms duration
-                            )
-                        );
-                    }
-                }
-            }
-        });
-
-        // Add an ActionListener that logs selection
-        this.addActionListener(e -> {
-            // logger.info("Drum button clicked: {}", drumPadIndex);
-            sequencer.selectDrumPad(drumPadIndex);
-        });
+        
+        // Add ActionListener for selection
+        this.addActionListener(e -> sequencer.selectDrumPad(drumPadIndex));
     }
 
     /**
-     * Override the paint method to handle the various visual states
+     * Override the paint method to create flat buttons with rounded edges
      */
     @Override
     public void paint(Graphics g) {
-        // Get the current UI state
-        boolean currentPressed = isPressed;
-        boolean currentSelected = isSelected;
-
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
         // Determine the color based on button state
         Color buttonColor;
-        if (currentPressed) {
+        if (isPressed) {
             buttonColor = pressedColor;
-        } else if (currentSelected) {
+        } else if (isSelected) {
             buttonColor = selectedColor;
         } else {
             buttonColor = normalColor;
         }
-
-        // Set the current color for painting
-        setBackground(buttonColor);
-
-        // Call the parent paint method
-        super.paint(g);
-
-        // Add a selection indicator if selected
-        if (currentSelected) {
-            Graphics2D g2d = (Graphics2D) g.create();
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2d.setColor(new Color(255, 255, 255, 100)); // White, semi-transparent
-
-            int w = getWidth();
-            int h = getHeight();
-            int thickness = 3;
-
-            g2d.fillRect(0, 0, w, thickness); // Top
-            g2d.fillRect(0, h - thickness, w, thickness); // Bottom
-            g2d.fillRect(0, 0, thickness, h); // Left
-            g2d.fillRect(w - thickness, 0, thickness, h); // Right
-
-            g2d.dispose();
+        
+        // Draw flat button with rounded corners
+        int width = getWidth();
+        int height = getHeight();
+        int arc = 8; // Rounded corner radius
+        
+        // Fill button background with rounded corners
+        g2d.setColor(buttonColor);
+        g2d.fillRoundRect(0, 0, width - 1, height - 1, arc, arc);
+        
+        // Draw subtle border
+        g2d.setColor(buttonColor.darker());
+        g2d.drawRoundRect(0, 0, width - 1, height - 1, arc, arc);
+        
+        // Draw text with drop shadow for better visibility
+        String text = getText();
+        if (text != null && !text.isEmpty()) {
+            FontMetrics metrics = g2d.getFontMetrics();
+            int textWidth = metrics.stringWidth(text);
+            int textHeight = metrics.getHeight();
+            int x = (width - textWidth) / 2;
+            int y = (height - textHeight) / 2 + metrics.getAscent();
+            
+            // Draw text shadow
+            g2d.setColor(new Color(0, 0, 0, 80));
+            g2d.drawString(text, x + 1, y + 1);
+            
+            // Draw text
+            g2d.setColor(getForeground());
+            g2d.drawString(text, x, y);
         }
+        
+        g2d.dispose();
     }
 
     /**

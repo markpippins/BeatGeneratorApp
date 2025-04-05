@@ -55,7 +55,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private List<DrumSelectorButton> triggerButtons = new ArrayList<>();
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> decayDials = new ArrayList<>();
-    private DrumInfoPanel drumInfoPanel;
+    private DrumSequencerInfoPanel drumInfoPanel;
     
     // Core sequencer - manages all sequencing logic
     private DrumSequencer sequencer;
@@ -127,7 +127,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         JPanel topPanel = new JPanel(new BorderLayout());
         
         // Create drum info panel
-        drumInfoPanel = new DrumInfoPanel(sequencer);
+        drumInfoPanel = new DrumSequencerInfoPanel(sequencer);
         
         // Add sequence parameters panel at the top
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
@@ -280,9 +280,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Create the drum pads panel on the left side
      */
     private JPanel createDrumPadsPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        // Use GridLayout for perfect vertical alignment with grid cells
+        JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, 1, 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
+        panel.setBackground(new Color(40, 40, 40)); // Match grid background
         
         // Create drum buttons for standard drum kit sounds
         String[] drumNames = {
@@ -305,47 +306,22 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             // Create a Strike object for this drum pad with velocity and level settings
             Strike strike = new Strike();
             strike.setRootNote(defaultNotes[i]);
-            strike.setMinVelocity(80L);  // Set reasonable minimum velocity
-            strike.setMaxVelocity(127L); // Set maximum velocity
-            strike.setLevel(100L);       // Set full level
-            strike.setName(drumNames[i]); // Set the name
+            strike.setMinVelocity(80L);  
+            strike.setMaxVelocity(127L); 
+            strike.setLevel(100L);      
+            strike.setName(drumNames[i]);
             
             sequencer.setStrike(i, strike);
             
-            // Create the button - use DrumSequencerButton instead of DrumButton
+            // Create the button with flat, rounded style
             DrumSequencerButton button = new DrumSequencerButton(drumIndex, sequencer);
             button.setDrumName(drumNames[i]);
             
-            // Keep the right-click listener for sound preview
-            button.addMouseListener(new java.awt.event.MouseAdapter() {
-                @Override
-                public void mouseClicked(java.awt.event.MouseEvent evt) {
-                    if (evt.getButton() == java.awt.event.MouseEvent.BUTTON3) {
-                        // Right click - play the note
-                        Strike strike = sequencer.getStrike(button.getDrumPadIndex());
-                        if (strike != null) {
-                            NoteEvent noteEvent = new NoteEvent(
-                                strike.getRootNote(),
-                                127, // Full velocity
-                                250  // Duration in ms
-                            );
-                            sequencer.getNoteEventListener().accept(noteEvent);
-                        }
-                    }
-                }
-            });
+            // Add the button directly to the panel for perfect alignment
+            panel.add(button);
             
+            // Add to tracked buttons list
             drumButtons.add(button);
-            
-            // Add the button to the panel with some spacing
-            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 2));
-            buttonPanel.add(button);
-            panel.add(buttonPanel);
-            
-            // Add a small gap between buttons
-            if (i < DRUM_PAD_COUNT - 1) {
-                panel.add(Box.createRigidArea(new Dimension(0, 2)));
-            }
         }
         
         return panel;

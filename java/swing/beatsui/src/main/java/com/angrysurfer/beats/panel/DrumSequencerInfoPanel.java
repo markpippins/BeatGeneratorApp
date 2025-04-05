@@ -15,7 +15,7 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 /**
  * Panel to display information about the currently selected drum pad
  */
-public class DrumInfoPanel extends JPanel {
+public class DrumSequencerInfoPanel extends JPanel {
     private JLabel drumNameLabel;
     private JLabel noteLabel;
     private JLabel velocityLabel;
@@ -24,7 +24,7 @@ public class DrumInfoPanel extends JPanel {
     private DrumSequencer sequencer;
     private int currentDrumIndex = 0;
 
-    public DrumInfoPanel(DrumSequencer sequencer) {
+    public DrumSequencerInfoPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         
         // Use a BorderLayout for the panel
