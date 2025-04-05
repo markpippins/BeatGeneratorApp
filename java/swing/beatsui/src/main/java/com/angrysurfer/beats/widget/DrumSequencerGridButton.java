@@ -7,7 +7,7 @@ import javax.swing.DefaultButtonModel;
 import javax.swing.JToggleButton;
 import javax.swing.Timer;
 
-public class DrumSelectorButton extends JToggleButton {
+public class DrumSequencerGridButton extends JToggleButton {
     
     private boolean isHighlighted = false;
     private int drumPadIndex = -1; // Default to -1 for unassigned index
@@ -16,7 +16,7 @@ public class DrumSelectorButton extends JToggleButton {
      * 
      * @param text The button text
      */
-    public DrumSelectorButton(String text) {
+    public DrumSequencerGridButton(String text) {
         super(text);
         initialize();
     }
@@ -24,7 +24,7 @@ public class DrumSelectorButton extends JToggleButton {
     /**
      * Create a new trigger button without label
      */
-    public DrumSelectorButton() {
+    public DrumSequencerGridButton() {
         super();
         initialize();
     }

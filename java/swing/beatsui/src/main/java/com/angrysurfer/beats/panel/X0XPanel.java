@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.DrumSelectorButton;
+import com.angrysurfer.beats.widget.DrumSequencerGridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -31,7 +31,7 @@ public class X0XPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(X0XPanel.class);
 
-    private final List<DrumSelectorButton> triggerButtons = new ArrayList<>();
+    private final List<DrumSequencerGridButton> triggerButtons = new ArrayList<>();
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
 
