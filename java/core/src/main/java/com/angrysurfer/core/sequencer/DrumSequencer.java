@@ -287,6 +287,11 @@ public class DrumSequencer implements IBusListener {
 
     // Getter and setter methods for per-drum parameters
     public int getPatternLength(int drumIndex) {
+        // Add bounds check
+        if (drumIndex < 0 || drumIndex >= DRUM_PAD_COUNT) {
+            logger.warn("Invalid drum index {} for getPatternLength", drumIndex);
+            return 16; // Return default
+        }
         return patternLengths[drumIndex];
     }
 
@@ -305,6 +310,11 @@ public class DrumSequencer implements IBusListener {
     }
 
     public Direction getDirection(int drumIndex) {
+        // Add bounds check
+        if (drumIndex < 0 || drumIndex >= DRUM_PAD_COUNT) {
+            logger.warn("Invalid drum index {} for getDirection", drumIndex);
+            return Direction.FORWARD; // Return default
+        }
         return directions[drumIndex];
     }
 
@@ -322,6 +332,11 @@ public class DrumSequencer implements IBusListener {
     }
 
     public TimingDivision getTimingDivision(int drumIndex) {
+        // Add bounds check
+        if (drumIndex < 0 || drumIndex >= DRUM_PAD_COUNT) {
+            logger.warn("Invalid drum index {} for getTimingDivision", drumIndex);
+            return TimingDivision.NORMAL; // Return default
+        }
         return timingDivisions[drumIndex];
     }
 
@@ -339,6 +354,11 @@ public class DrumSequencer implements IBusListener {
     }
 
     public boolean isLooping(int drumIndex) {
+        // Add bounds check
+        if (drumIndex < 0 || drumIndex >= DRUM_PAD_COUNT) {
+            logger.warn("Invalid drum index {} for isLooping", drumIndex);
+            return true; // Return default
+        }
         return loopingFlags[drumIndex];
     }
 
@@ -413,6 +433,8 @@ public class DrumSequencer implements IBusListener {
         if (padIndex >= 0 && padIndex < DRUM_PAD_COUNT) {
             selectedPadIndex = padIndex;
         }
+
+        logger.info("Drum pad selected: {} -> {}", oldSelection, selectedPadIndex);
 
         // Publish selection event on the command bus
         CommandBus.getInstance().publish(

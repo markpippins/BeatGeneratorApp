@@ -56,15 +56,27 @@ public class TriggerButton extends JToggleButton {
     }
     
     /**
-     * Convenience method to match DrumButton API - delegates to setSelected
-     * 
-     * @param toggled Whether the button should be toggled on
+     * Set the toggled state of this button
      */
     public void setToggled(boolean toggled) {
+        // Always make sure the button is set to be visible and opaque first
+        setVisible(true);
+        setOpaque(true);
+        
+        // Set the selected state
         setSelected(toggled);
-        if (!isHighlighted) {
-            setBackground(toggled ? new Color(100, 200, 100) : Color.DARK_GRAY);
+        
+        // Update background color based on state
+        if (isHighlighted()) {
+            setBackground(Color.ORANGE);
+        } else if (toggled) {
+            setBackground(new Color(100, 200, 100)); // Green for active steps
+        } else {
+            setBackground(Color.DARK_GRAY);  // Dark gray for inactive steps
         }
+        
+        // Make sure the change is visible
+        repaint();
     }
     
     /**
