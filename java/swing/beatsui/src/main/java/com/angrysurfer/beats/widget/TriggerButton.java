@@ -1,140 +1,109 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+
+import javax.swing.DefaultButtonModel;
 import javax.swing.JToggleButton;
-import java.awt.event.ActionListener;
+import javax.swing.Timer;
 
 public class TriggerButton extends JToggleButton {
-    private Color baseColor;
-    private Color activeColor;
-    private boolean highlighted = false;
-    private boolean toggleable = false;
-    private static final Dimension BUTTON_SIZE = new Dimension(30, 20);
-
+    
+    private boolean isHighlighted = false;
+    
+    /**
+     * Create a new trigger button with label
+     * 
+     * @param text The button text
+     */
     public TriggerButton(String text) {
         super(text);
-        setup();
+        initialize();
     }
-
-    private void setup() {
-        baseColor = ColorUtils.deepOrange;
-        activeColor = Color.GREEN;
-        
-        setContentAreaFilled(false);
-        setFocusPainted(false);
-        setBorderPainted(false);
-        
-        // Set fixed size
-        setMaximumSize(BUTTON_SIZE);
-        setPreferredSize(BUTTON_SIZE);
-        setMinimumSize(BUTTON_SIZE);
-
-        // Only try to remove listeners if they exist
-        ActionListener[] listeners = getActionListeners();
-        if (listeners != null && listeners.length > 0) {
-            removeActionListener(listeners[0]);
-        }
-    }
-
-    public void setToggleable(boolean toggleable) {
-        this.toggleable = toggleable;
-        setEnabled(toggleable); // Only enable the button if it's toggleable
-    }
-
-    public boolean isToggleable() {
-        return toggleable;
-    }
-
-    public boolean isActive() {
-        return isSelected();
-    }
-
+    
     /**
-     * Set whether this step is currently highlighted (active step during playback)
+     * Create a new trigger button without label
+     */
+    public TriggerButton() {
+        super();
+        initialize();
+    }
+    
+    /**
+     * Initialize common properties
+     */
+    private void initialize() {
+        setPreferredSize(new Dimension(20, 20));
+        setBackground(Color.DARK_GRAY);
+        setForeground(Color.WHITE);
+        setBorderPainted(false);
+        setFocusPainted(false);
+        setContentAreaFilled(true);
+    }
+    
+    /**
+     * Set whether this button is highlighted
+     * 
+     * @param highlighted true to highlight, false to unhighlight
      */
     public void setHighlighted(boolean highlighted) {
-        this.highlighted = highlighted;
-        repaint(); // Request a repaint to show the highlight
+        this.isHighlighted = highlighted;
+        if (highlighted) {
+            setBackground(Color.ORANGE);
+        } else {
+            setBackground(isSelected() ? new Color(100, 200, 100) : Color.DARK_GRAY);
+        }
     }
-
+    
     /**
-     * Get whether this step is currently highlighted
+     * Convenience method to match DrumButton API - delegates to setSelected
+     * 
+     * @param toggled Whether the button should be toggled on
+     */
+    public void setToggled(boolean toggled) {
+        setSelected(toggled);
+        if (!isHighlighted) {
+            setBackground(toggled ? new Color(100, 200, 100) : Color.DARK_GRAY);
+        }
+    }
+    
+    /**
+     * Set whether this button is toggleable
+     * 
+     * @param toggleable If true, the button will maintain its selected state when clicked
+     */
+    public void setToggleable(boolean toggleable) {
+        // JToggleButton is already toggleable by default
+        // This method is provided for API compatibility with other button classes
+        
+        // If we want to disable toggling:
+        if (!toggleable) {
+            // Override the model to prevent toggling
+            setModel(new DefaultButtonModel() {
+                @Override
+                public void setSelected(boolean b) {
+                    // Only allow selection, not toggling
+                    if (b) {
+                        super.setSelected(b);
+                        // Automatically revert after a short delay
+                        Timer timer = new Timer(100, e -> super.setSelected(false));
+                        timer.setRepeats(false);
+                        timer.start();
+                    }
+                }
+            });
+        } else {
+            // Restore default toggle button behavior
+            setModel(new DefaultButtonModel());
+        }
+    }
+    
+    /**
+     * Get the highlighted state
+     * 
+     * @return true if highlighted, false otherwise
      */
     public boolean isHighlighted() {
-        return highlighted;
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        
-        // If this step is highlighted (current playback position)
-        if (highlighted) {
-            Graphics2D g2d = (Graphics2D) g.create();
-            g2d.setColor(Color.YELLOW); // Or your preferred highlight color
-            g2d.setStroke(new BasicStroke(2));
-            g2d.drawRect(1, 1, getWidth() - 3, getHeight() - 3);
-            g2d.dispose();
-        }
-
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        int width = getWidth();
-        int height = getHeight();
-        
-        // Use highlight color if step is active
-        Color currentColor = highlighted ? Color.WHITE : 
-                           isSelected() ? activeColor : baseColor;
-
-        // Draw main button body
-        g2d.setPaint(new GradientPaint(
-            0, 0, 
-            currentColor.brighter(), 
-            0, height, 
-            currentColor.darker()
-        ));
-        g2d.fillRoundRect(0, 0, width, height, 10, 10);
-
-        // Draw highlight for 3D effect
-        g2d.setPaint(new GradientPaint(
-            0, 0,
-            new Color(255, 255, 255, 100),
-            0, height / 2,
-            new Color(255, 255, 255, 0)
-        ));
-        g2d.fillRoundRect(0, 0, width, height, 10, 10);
-
-        // Draw border
-        g2d.setColor(isSelected() ? activeColor.darker() : baseColor.darker());
-        g2d.setStroke(new BasicStroke(1.5f));
-        g2d.drawRoundRect(0, 0, width - 1, height - 1, 10, 10);
-
-        // Draw text with shadow for depth
-        String text = getText();
-        FontMetrics metrics = g2d.getFontMetrics(getFont());
-        int x = (width - metrics.stringWidth(text)) / 2;
-        int y = ((height - metrics.getHeight()) / 2) + metrics.getAscent();
-
-        // Draw text shadow
-        g2d.setColor(isSelected() ? activeColor.darker().darker() : baseColor.darker().darker());
-        g2d.drawString(text, x + 1, y + 1);
-
-        // Draw main text
-        g2d.setColor(isSelected() ? baseColor : activeColor);
-        g2d.drawString(text, x, y);
-
-        // Add pressed effect when active
-        if (toggleable && isSelected()) {
-            g2d.setPaint(new Color(0, 0, 0, 30));
-            g2d.fillRoundRect(0, 0, width, height, 10, 10);
-        }
-
-        g2d.dispose();
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-        return BUTTON_SIZE;
+        return isHighlighted;
     }
 }

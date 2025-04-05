@@ -11,19 +11,19 @@ public enum TimingDivision {
     SIXTEENTH_TRIPLET("1/16 Triplets", 12); // Sixteenth note triplets (12 steps per beat)
 
     private final String displayName;
-    private final int stepsPerBeat;
+    private final int ticksPerBeat;
 
-    TimingDivision(String displayName, int stepsPerBeat) {
+    TimingDivision(String displayName, int ticksPerBeat) {
         this.displayName = displayName;
-        this.stepsPerBeat = stepsPerBeat;
+        this.ticksPerBeat = ticksPerBeat;
     }
 
     public String getDisplayName() {
         return displayName;
     }
 
-    public int getStepsPerBeat() {
-        return stepsPerBeat;
+    public int getTicksPerBeat() {
+        return ticksPerBeat;
     }
 
     @Override

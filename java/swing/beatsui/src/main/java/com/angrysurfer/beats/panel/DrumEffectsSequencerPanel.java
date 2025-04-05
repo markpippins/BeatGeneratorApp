@@ -208,7 +208,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         timingCombo.addActionListener(e -> {
             TimingDivision selected = (TimingDivision) timingCombo.getSelectedItem();
             timingDivision = selected;
-            System.out.println("Timing set to: " + selected + " (" + selected.getStepsPerBeat() + " steps per beat)");
+            System.out.println("Timing set to: " + selected + " (" + selected.getTicksPerBeat() + " steps per beat)");
 
             // Notify listeners that timing has changed
             if (timingChangeListener != null) {

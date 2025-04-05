@@ -24,7 +24,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.StepUpdateEvent;
 import com.angrysurfer.core.service.InternalSynthManager;
 
 public class X0XPanel extends JPanel implements IBusListener {
@@ -152,15 +152,15 @@ public class X0XPanel extends JPanel implements IBusListener {
 
             // Listen for step updates from sequencer to update status display
             case Commands.SEQUENCER_STEP_UPDATE -> {
-                if (action.getData() instanceof MelodicSequencer.StepUpdateEvent) {
-                    MelodicSequencer.StepUpdateEvent stepUpdateEvent = (MelodicSequencer.StepUpdateEvent) action.getData();
+                if (action.getData() instanceof StepUpdateEvent) {
+                    StepUpdateEvent stepUpdateEvent = (StepUpdateEvent) action.getData();
 
                     int step = stepUpdateEvent.getNewStep();
                     int patternLength = melodicSequencerPanel.getSequencer().getPatternLength();
 
                     // Update status display with current step
-                    CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this,
-                            new StatusUpdate("Step: " + (step + 1) + " of " + patternLength));
+                    // CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this,
+                    //         new StatusUpdate("Step: " + (step + 1) + " of " + patternLength));
                 }
             }
         }

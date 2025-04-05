@@ -168,16 +168,22 @@ public class DrumSequencerButton extends DrumButton implements IBusListener {
     }
     
     /**
-     * Set the selected state of this button
-     * 
-     * @param selected Whether this button is selected
+     * Set whether this button is selected
      */
     @Override
     public void setSelected(boolean selected) {
-        if (this.isSelected != selected) {
-            this.isSelected = selected;
-            repaint();
+        isSelected = selected;
+        
+        // Visual update - use the appropriate color based on selection state
+        if (isSelected) {
+            setBackground(selectedColor);
+        } else if (isPressed) {
+            setBackground(pressedColor);
+        } else {
+            setBackground(normalColor);
         }
+        
+        repaint();
     }
 
     /**
