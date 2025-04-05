@@ -7,6 +7,9 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -23,16 +26,16 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class DrumSequencerButton extends DrumButton implements IBusListener {
-    
+public class DrumSequencerButton extends JButton implements IBusListener {
+
     private int drumPadIndex;
     private DrumSequencer sequencer;
     private boolean isSelected = false;
     private boolean isPressed = false;
-    private Color selectedColor = new Color(255, 140, 0); // Orange selected color
-    private Color normalColor = new Color(50, 130, 200);  // Default blue color
+    private Color selectedColor = new Color(255, 128, 0); // Bright orange
+    private Color normalColor = new Color(80, 80, 80);    // Dark gray
     private Color pressedColor = new Color(120, 180, 240); // Lighter blue when pressed
-    
+
     /**
      * Create a new drum sequencer button
      * 
@@ -43,21 +46,20 @@ public class DrumSequencerButton extends DrumButton implements IBusListener {
         super();
         this.drumPadIndex = drumPadIndex;
         this.sequencer = sequencer;
-        
-        // Override toggle behavior from parent class
-        setToggle(false); // Important: disable toggle behavior inherited from parent
-        
-        // Set default color
-        setDefaultColor(normalColor);
-        
+
+        setOpaque(true);  // Important for background color to show
+        setContentAreaFilled(true);
+        setBorderPainted(true);
+        setBackground(normalColor);
+
         // Register for command bus events to track selection changes
         CommandBus.getInstance().register(this);
-        
+
         // Replace existing action listeners to prevent toggle behavior
         for (java.awt.event.ActionListener al : getActionListeners()) {
             removeActionListener(al);
         }
-        
+
         // Add mouse listener for visual feedback and selection
         addMouseListener(new MouseAdapter() {
             @Override
@@ -65,16 +67,16 @@ public class DrumSequencerButton extends DrumButton implements IBusListener {
                 isPressed = true;
                 repaint();
             }
-            
+
             @Override
             public void mouseReleased(MouseEvent e) {
                 isPressed = false;
                 repaint();
-                
+
                 // Only handle selection if mouse is still over the button
                 if (contains(e.getPoint())) {
                     System.out.println("DrumSequencerButton: selecting pad " + drumPadIndex); // Debug
-                    
+
                     // Call the sequencer's selectDrumPad method
                     if (sequencer != null) {
                         sequencer.selectDrumPad(drumPadIndex);
@@ -83,7 +85,7 @@ public class DrumSequencerButton extends DrumButton implements IBusListener {
                     }
                 }
             }
-            
+
             @Override
             public void mouseExited(MouseEvent e) {
                 // Reset pressed state if mouse exits
@@ -91,7 +93,7 @@ public class DrumSequencerButton extends DrumButton implements IBusListener {
                 repaint();
             }
         });
-        
+
         // Add right-click listener for previewing sounds
         addMouseListener(new MouseAdapter() {
             @Override
@@ -102,7 +104,7 @@ public class DrumSequencerButton extends DrumButton implements IBusListener {
                     if (strike != null && sequencer.getNoteEventListener() != null) {
                         sequencer.getNoteEventListener().accept(
                             new com.angrysurfer.core.sequencer.NoteEvent(
-                                strike.getRootNote(), 
+                                strike.getRootNote(),
                                 127, // Full velocity 
                                 250  // 250ms duration
                             )
@@ -111,8 +113,14 @@ public class DrumSequencerButton extends DrumButton implements IBusListener {
                 }
             }
         });
+
+        // Add an ActionListener that logs selection
+        this.addActionListener(e -> {
+            // logger.info("Drum button clicked: {}", drumPadIndex);
+            sequencer.selectDrumPad(drumPadIndex);
+        });
     }
-    
+
     /**
      * Override the paint method to handle the various visual states
      */
@@ -121,7 +129,7 @@ public class DrumSequencerButton extends DrumButton implements IBusListener {
         // Get the current UI state
         boolean currentPressed = isPressed;
         boolean currentSelected = isSelected;
-        
+
         // Determine the color based on button state
         Color buttonColor;
         if (currentPressed) {
@@ -131,32 +139,32 @@ public class DrumSequencerButton extends DrumButton implements IBusListener {
         } else {
             buttonColor = normalColor;
         }
-        
+
         // Set the current color for painting
-        setDefaultColor(buttonColor);
-        
+        setBackground(buttonColor);
+
         // Call the parent paint method
         super.paint(g);
-        
+
         // Add a selection indicator if selected
         if (currentSelected) {
             Graphics2D g2d = (Graphics2D) g.create();
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setColor(new Color(255, 255, 255, 100)); // White, semi-transparent
-            
+
             int w = getWidth();
             int h = getHeight();
             int thickness = 3;
-            
+
             g2d.fillRect(0, 0, w, thickness); // Top
             g2d.fillRect(0, h - thickness, w, thickness); // Bottom
             g2d.fillRect(0, 0, thickness, h); // Left
             g2d.fillRect(w - thickness, 0, thickness, h); // Right
-            
+
             g2d.dispose();
         }
     }
-    
+
     /**
      * Set the drum name and tooltip
      * 
@@ -166,24 +174,42 @@ public class DrumSequencerButton extends DrumButton implements IBusListener {
         setText(name);
         setToolTipText(name + " (Pad " + (drumPadIndex + 1) + ")");
     }
-    
+
     /**
-     * Set whether this button is selected
+     * Override isSelected to return the selection state
+     */
+    @Override
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    /**
+     * Override setSelected to update visual state
      */
     @Override
     public void setSelected(boolean selected) {
-        isSelected = selected;
-        
-        // Visual update - use the appropriate color based on selection state
-        if (isSelected) {
+        this.isSelected = selected;
+
+        // Update visual appearance
+        if (selected) {
             setBackground(selectedColor);
-        } else if (isPressed) {
-            setBackground(pressedColor);
+            setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.WHITE, 2),
+                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+            ));
         } else {
             setBackground(normalColor);
+            setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.GRAY, 1),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+            ));
         }
-        
+
+        // Force repaint to make selection visible
         repaint();
+
+        // Log the selection for debugging
+        System.out.println("DrumSequencerButton " + drumPadIndex + " selected: " + selected);
     }
 
     /**

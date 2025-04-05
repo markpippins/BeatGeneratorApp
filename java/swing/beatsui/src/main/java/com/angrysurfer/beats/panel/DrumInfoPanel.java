@@ -1,6 +1,7 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -213,5 +214,47 @@ public class DrumInfoPanel extends JPanel {
         }
         
         patternUsageLabel.setText("Pattern: " + activeSteps + "/" + patternLength);
+    }
+
+    /**
+     * Update this panel to display information for the selected drum
+     * 
+     * @param drumIndex The index of the selected drum
+     */
+    public void updateForDrum(int drumIndex) {
+        if (sequencer == null || drumIndex < 0 || drumIndex >= 16) {
+            return;
+        }
+        
+        // Get drum info
+        Strike strike = sequencer.getStrike(drumIndex);
+        if (strike == null) {
+            return;
+        }
+        
+        // Update panel title to show correct drum number
+        setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.ORANGE, 2),
+            "Pad" + (drumIndex + 1) + " | " + strike.getName()
+        ));
+        
+        // Update name label if available
+        if (drumNameLabel != null) {
+            drumNameLabel.setText(strike.getName());
+        }
+        
+        // Update note label if available
+        if (noteLabel != null) {
+            noteLabel.setText("Note: " + strike.getRootNote());
+        }
+        
+        // Update level display if available
+        if (velocityLabel != null) {
+            velocityLabel.setText("Velocity: " + strike.getLevel().intValue());
+        }
+        
+        // Force update
+        revalidate();
+        repaint();
     }
 }

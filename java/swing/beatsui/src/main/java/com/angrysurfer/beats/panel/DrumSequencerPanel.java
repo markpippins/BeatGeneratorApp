@@ -51,7 +51,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(DrumEffectsSequencerPanel.class);
 
     // UI Components
-    private final List<DrumButton> drumButtons = new ArrayList<>();
+    private final List<DrumSequencerButton> drumButtons = new ArrayList<>();
     private List<TriggerButton> triggerButtons = new ArrayList<>();
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> decayDials = new ArrayList<>();
@@ -184,8 +184,13 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         lastStepSpinner = new JSpinner(lastStepModel);
         lastStepSpinner.setPreferredSize(new Dimension(50, 25));
         lastStepSpinner.addChangeListener(e -> {
+            if (updatingUI) return; // Avoid feedback loops
+            
             int lastStep = (Integer) lastStepSpinner.getValue();
-            sequencer.setPatternLength(lastStep);
+            logger.info("Setting last step to {} for drum {}", lastStep, selectedPadIndex);
+            
+            // Use the selected drum index, not a hardcoded value
+            sequencer.setPatternLength(selectedPadIndex, lastStep);
         });
         lastStepPanel.add(lastStepSpinner);
 
@@ -196,15 +201,22 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
         directionCombo.setPreferredSize(new Dimension(90, 25));
         directionCombo.addActionListener(e -> {
+            if (updatingUI) return; // Avoid feedback loops
+            
             int selectedIndex = directionCombo.getSelectedIndex();
-            Direction direction = switch (selectedIndex) {
-                case 0 -> Direction.FORWARD;
-                case 1 -> Direction.BACKWARD;
-                case 2 -> Direction.BOUNCE;
-                case 3 -> Direction.RANDOM;
-                default -> Direction.FORWARD;
-            };
-            sequencer.setDirection(direction);
+            Direction direction = Direction.FORWARD; // Default
+            
+            switch (selectedIndex) {
+                case 0 -> direction = Direction.FORWARD;
+                case 1 -> direction = Direction.BACKWARD;
+                case 2 -> direction = Direction.BOUNCE;
+                case 3 -> direction = Direction.RANDOM;
+            }
+            
+            logger.info("Setting direction to {} for drum {}", direction, selectedPadIndex);
+            
+            // Use the selected drum index, not a hardcoded value
+            sequencer.setDirection(selectedPadIndex, direction);
         });
         directionPanel.add(directionCombo);
 
@@ -215,15 +227,28 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         timingCombo = new JComboBox<>(TimingDivision.values());
         timingCombo.setPreferredSize(new Dimension(90, 25));
         timingCombo.addActionListener(e -> {
+            if (updatingUI) return; // Avoid feedback loops
+            
             TimingDivision division = (TimingDivision) timingCombo.getSelectedItem();
-            sequencer.setTimingDivision(division);
+            if (division != null) {
+                logger.info("Setting timing to {} for drum {}", division, selectedPadIndex);
+                
+                // Use the selected drum index, not a hardcoded value
+                sequencer.setTimingDivision(selectedPadIndex, division);
+            }
         });
         timingPanel.add(timingCombo);
 
         // Loop checkbox
         loopCheckbox = new JCheckBox("Loop", true); // Default to looping enabled
         loopCheckbox.addActionListener(e -> {
-            sequencer.setLooping(loopCheckbox.isSelected());
+            if (updatingUI) return; // Avoid feedback loops
+            
+            boolean loop = loopCheckbox.isSelected();
+            logger.info("Setting loop to {} for drum {}", loop, selectedPadIndex);
+            
+            // Use the selected drum index, not a hardcoded value
+            sequencer.setLooping(selectedPadIndex, loop);
         });
 
         // Range combo box for pattern generation
@@ -291,14 +316,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             DrumSequencerButton button = new DrumSequencerButton(drumIndex, sequencer);
             button.setDrumName(drumNames[i]);
             
-            button.addActionListener(e -> {
-                // Make sure we select the correct drum
-                if (sequencer != null) {
-                    sequencer.selectDrumPad(drumIndex);
-                }
-            });
-            
-            // Add manual note trigger on right-click
+            // Keep the right-click listener for sound preview
             button.addMouseListener(new java.awt.event.MouseAdapter() {
                 @Override
                 public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -526,28 +544,44 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 // Update the UI for the changed selection
                 if (action.getData() instanceof DrumPadSelectionEvent event) {
                     // Update the selectedPadIndex in the panel
-                    int oldSelection = selectedPadIndex;
                     selectedPadIndex = event.getNewSelection();
                     
-                    logger.debug("Drum selected: {} -> {}", oldSelection, selectedPadIndex);
+                    logger.info("Drum selected: {} -> {}", event.getOldSelection(), selectedPadIndex);
                     
-                    // Make sure we have a valid index before updating UI
                     if (selectedPadIndex >= 0 && selectedPadIndex < DRUM_PAD_COUNT) {
-                        // Update drum buttons
+                        // Update the selection state of all drum buttons with debug output
                         for (int i = 0; i < drumButtons.size(); i++) {
-                            if (i < drumButtons.size()) {
-                                DrumSequencerButton button = (DrumSequencerButton) drumButtons.get(i);
-                                button.setSelected(i == selectedPadIndex);
-                            }
+                            DrumSequencerButton button = (DrumSequencerButton) drumButtons.get(i);
+                            boolean shouldBeSelected = (i == selectedPadIndex);
+                            
+                            // Debug which button is being selected
+                            logger.info("Setting button {} selected={}", i, shouldBeSelected);
+                            
+                            // Force repaint to ensure visual update
+                            button.setSelected(shouldBeSelected);
+                            button.repaint();
                         }
                         
-                        // Update parameters display
+                        // Add visual indicator elsewhere in UI
+                        if (drumInfoPanel != null) {
+                            drumInfoPanel.setBorder(BorderFactory.createTitledBorder(
+                                BorderFactory.createLineBorder(Color.ORANGE, 2),
+                                "Drum: " + (selectedPadIndex + 1)
+                             ));
+                            
+                            // Update the info panel content
+                            drumInfoPanel.updateForDrum(selectedPadIndex);
+                            drumInfoPanel.repaint();
+                        }
+                        
+                        // Update UI components with explicit repaints
                         updateParameterControls();
                         
-                        // Update grid display to show steps for the selected drum
-                        syncUIWithSequencer();
-                    } else {
-                        logger.warn("Invalid drum index selected: {}", selectedPadIndex);
+                        // Force repaint of controls panel
+                        lastStepSpinner.repaint();
+                        directionCombo.repaint();
+                        timingCombo.repaint();
+                        loopCheckbox.repaint();
                     }
                 }
             }
@@ -564,14 +598,18 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             return;
         }
 
-        // Prevent feedback loops
+        // Prevent feedback loops during UI updates
         updatingUI = true;
         try {
-            // Set last step spinner
-            lastStepSpinner.setValue(sequencer.getPatternLength());
-            
-            // Set direction combo
+            // Use getters that take explicit drum index
+            int length = sequencer.getPatternLength(selectedPadIndex);
             Direction dir = sequencer.getDirection(selectedPadIndex);
+            TimingDivision timing = sequencer.getTimingDivision(selectedPadIndex);
+            boolean isLooping = sequencer.isLooping(selectedPadIndex);
+            
+            // Update UI components without triggering their change listeners
+            lastStepSpinner.setValue(length);
+            
             switch(dir) {
                 case FORWARD -> directionCombo.setSelectedIndex(0);
                 case BACKWARD -> directionCombo.setSelectedIndex(1);
@@ -579,11 +617,16 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 case RANDOM -> directionCombo.setSelectedIndex(3);
             }
             
-            // Set timing combo
-            timingCombo.setSelectedItem(sequencer.getTimingDivision(selectedPadIndex));
+            timingCombo.setSelectedItem(timing); 
+            loopCheckbox.setSelected(isLooping);
             
-            // Set loop checkbox
-            loopCheckbox.setSelected(sequencer.isLooping(selectedPadIndex));
+            // Don't call revalidate() here - it triggers re-layout
+            // Just repaint the components
+            lastStepSpinner.repaint();
+            directionCombo.repaint();
+            timingCombo.repaint();
+            loopCheckbox.repaint();
+            
         } finally {
             updatingUI = false;
         }

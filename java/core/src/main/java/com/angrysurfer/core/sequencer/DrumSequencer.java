@@ -298,6 +298,7 @@ public class DrumSequencer implements IBusListener {
     public void setPatternLength(int drumIndex, int length) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT
                 && length > 0 && length <= MAX_STEPS) {
+            logger.info("Setting pattern length for drum {} to {}", drumIndex, length);
             patternLengths[drumIndex] = length;
 
             // Notify UI of parameter change
@@ -381,6 +382,7 @@ public class DrumSequencer implements IBusListener {
      * @param length The new pattern length (1-64)
      */
     public void setPatternLength(int length) {
+        logger.info("Setting pattern length for drum {} to {}", selectedPadIndex, length);
         setPatternLength(selectedPadIndex, length);
     }
 
@@ -432,16 +434,17 @@ public class DrumSequencer implements IBusListener {
         // Update selected pad (ensure it's within bounds)
         if (padIndex >= 0 && padIndex < DRUM_PAD_COUNT) {
             selectedPadIndex = padIndex;
+            logger.info("Drum pad selected: {} -> {}", oldSelection, selectedPadIndex);
+            
+            // Publish selection event on the command bus
+            CommandBus.getInstance().publish(
+                    Commands.DRUM_PAD_SELECTED,
+                    this,
+                    new DrumPadSelectionEvent(oldSelection, selectedPadIndex)
+            );
+        } else {
+            logger.warn("Invalid drum pad index: {}", padIndex);
         }
-
-        logger.info("Drum pad selected: {} -> {}", oldSelection, selectedPadIndex);
-
-        // Publish selection event on the command bus
-        CommandBus.getInstance().publish(
-                Commands.DRUM_PAD_SELECTED,
-                this,
-                new DrumPadSelectionEvent(oldSelection, selectedPadIndex)
-        );
     }
 
     /**
