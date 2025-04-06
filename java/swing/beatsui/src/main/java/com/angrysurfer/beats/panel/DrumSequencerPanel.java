@@ -2,6 +2,7 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -14,20 +15,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.JPopupMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JDialog;
-import javax.swing.ButtonGroup;
-import javax.swing.JRadioButton;
-import javax.swing.Box;
+import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,7 @@ import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.DrumStepUpdateEvent;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
 
@@ -76,6 +79,15 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private JButton generatePatternButton;
     private JButton clearPatternButton;
     private JSpinner densitySpinner;
+    private JButton prevQuadrantButton;
+    private JButton nextQuadrantButton;
+    private JLabel currentQuadrantLabel;
+    private JRadioButton steps16Radio;
+    private JRadioButton steps32Radio;
+    private JRadioButton steps48Radio;
+    private JRadioButton steps64Radio;
+    private JRadioButton followModeRadio;
+    private JRadioButton massiveModeRadio;
     
     // Number of drum pads and pattern length
     private static final int DRUM_PAD_COUNT = 16; // 16 tracks
@@ -97,6 +109,17 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private int euclideanStartStep = -1;
     private boolean isDragging = false;
     private boolean[] tempEuclideanPattern = null;
+
+    // Quadrant and view mode fields
+    private static final int STEPS_PER_QUADRANT = 16;
+    private int currentQuadrant = 0; // 0-based (0-3 for quadrants 1-4)
+    private int maxPatternLength = 16; // Default to 16 steps
+
+    private enum ViewMode { FOLLOW, MASSIVE }
+    private ViewMode currentViewMode = ViewMode.FOLLOW;
+
+    // Store the grid panel for view mode switching
+    private JPanel gridPanel;
 
     /**
      * Create a new DrumSequencerPanel
@@ -166,14 +189,12 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Setup pattern controls
         setupPatternControls();
         
-        // Add debug button
-        JButton debugButton = new JButton("Debug Grid");
-        debugButton.addActionListener(e -> toggleDebugMode());
-        sequenceParamsPanel.add(debugButton);
+        // Initialize quadrant navigation controls
+        updateQuadrantControls();
         
         // Select the first drum by default
         if (sequencer != null) {
-            sequencer.selectDrumPad(0);
+            selectDrumPad(0);
         }
     }
 
@@ -183,14 +204,18 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private JPanel createSequenceParametersPanel() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
-
+        panel.setLayout(new BorderLayout());
+        
+        // Main parameters row
+        JPanel mainControlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        
+        // === Add existing controls to mainControlsPanel ===
         // Last Step spinner
         JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         lastStepPanel.add(new JLabel("Last:"));
-
-        // Create spinner model with range 1-16, default 16
-        SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 16, 1);
+        
+        // Create spinner model with range 1-64, default 16
+        SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 64, 1);
         lastStepSpinner = new JSpinner(lastStepModel);
         lastStepSpinner.setPreferredSize(new Dimension(50, 25));
         lastStepSpinner.addChangeListener(e -> {
@@ -199,15 +224,15 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             int lastStep = (Integer) lastStepSpinner.getValue();
             logger.info("Setting last step to {} for drum {}", lastStep, selectedPadIndex);
             
-            // Use the selected drum index, not a hardcoded value
             sequencer.setPatternLength(selectedPadIndex, lastStep);
+            updatePatternLengthControls(); // Update quadrant visibility based on pattern length
         });
         lastStepPanel.add(lastStepSpinner);
-
+        mainControlsPanel.add(lastStepPanel);
+        
         // Direction combo
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         directionPanel.add(new JLabel("Dir:"));
-
         directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
         directionCombo.setPreferredSize(new Dimension(90, 25));
         directionCombo.addActionListener(e -> {
@@ -225,15 +250,15 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             
             logger.info("Setting direction to {} for drum {}", direction, selectedPadIndex);
             
-            // Use the selected drum index, not a hardcoded value
             sequencer.setDirection(selectedPadIndex, direction);
         });
         directionPanel.add(directionCombo);
-
+        mainControlsPanel.add(directionPanel);
+        
         // Timing division combo
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         timingPanel.add(new JLabel("Timing:"));
-
+        
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
         timingCombo.setPreferredSize(new Dimension(90, 25));
         timingCombo.addActionListener(e -> {
@@ -243,12 +268,12 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             if (division != null) {
                 logger.info("Setting timing to {} for drum {}", division, selectedPadIndex);
                 
-                // Use the selected drum index, not a hardcoded value
                 sequencer.setTimingDivision(selectedPadIndex, division);
             }
         });
         timingPanel.add(timingCombo);
-
+        mainControlsPanel.add(timingPanel);
+        
         // Loop checkbox
         loopCheckbox = new JCheckBox("Loop", true); // Default to looping enabled
         loopCheckbox.addActionListener(e -> {
@@ -257,40 +282,111 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             boolean loop = loopCheckbox.isSelected();
             logger.info("Setting loop to {} for drum {}", loop, selectedPadIndex);
             
-            // Use the selected drum index, not a hardcoded value
             sequencer.setLooping(selectedPadIndex, loop);
         });
-
+        mainControlsPanel.add(loopCheckbox);
+        
         // Range combo box for pattern generation
         JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         rangePanel.add(new JLabel("Density:"));
-
+        
         // Create density spinner
         densitySpinner = new JSpinner(new SpinnerNumberModel(50, 25, 100, 25));
         densitySpinner.setPreferredSize(new Dimension(60, 25));
         rangePanel.add(densitySpinner);
-
+        mainControlsPanel.add(rangePanel);
+        
         // ADD CLEAR AND GENERATE BUTTONS
         clearPatternButton = new JButton("Clear");
         generatePatternButton = new JButton("Generate");
-
+        mainControlsPanel.add(clearPatternButton);
+        mainControlsPanel.add(generatePatternButton);
+        
         // ADD MIXER BUTTON
         JButton mixButton = new JButton("Mix...");
         mixButton.addActionListener(e -> {
             // Show the mixer dialog
             StrikeMixerPanel.showDialog(this, sequencer);
         });
-
-        // Add all components to panel in a single row
-        panel.add(lastStepPanel);
-        panel.add(directionPanel);
-        panel.add(timingPanel);
-        panel.add(loopCheckbox);
-        panel.add(rangePanel);
-        panel.add(clearPatternButton);
-        panel.add(generatePatternButton);
-        panel.add(mixButton);  // Add the Mix button to the parameters panel
-
+        mainControlsPanel.add(mixButton);  // Add the Mix button to the parameters panel
+        
+        // === Add quadrant navigation controls ===
+        JPanel quadrantPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        prevQuadrantButton = new JButton("◀");
+        prevQuadrantButton.setToolTipText("Show previous 16 steps");
+        prevQuadrantButton.addActionListener(e -> navigateQuadrant(-1));
+        
+        currentQuadrantLabel = new JLabel("1 / 1");
+        currentQuadrantLabel.setPreferredSize(new Dimension(40, 25));
+        currentQuadrantLabel.setHorizontalAlignment(JLabel.CENTER);
+        
+        nextQuadrantButton = new JButton("▶");
+        nextQuadrantButton.setToolTipText("Show next 16 steps");
+        nextQuadrantButton.addActionListener(e -> navigateQuadrant(1));
+        
+        quadrantPanel.add(prevQuadrantButton);
+        quadrantPanel.add(currentQuadrantLabel);
+        quadrantPanel.add(nextQuadrantButton);
+        mainControlsPanel.add(quadrantPanel);
+        
+        // Create a bottom row for the radio buttons and view mode
+        JPanel patternControlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        
+        // Pattern length radio buttons
+        JPanel patternLengthPanel = new JPanel();
+        patternLengthPanel.setBorder(BorderFactory.createTitledBorder("Pattern Length"));
+        patternLengthPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        
+        ButtonGroup patternLengthGroup = new ButtonGroup();
+        
+        steps16Radio = new JRadioButton("16");
+        steps16Radio.setSelected(true);
+        steps32Radio = new JRadioButton("32");
+        steps48Radio = new JRadioButton("48");
+        steps64Radio = new JRadioButton("64");
+        
+        steps16Radio.addActionListener(e -> setMaxPatternLength(16));
+        steps32Radio.addActionListener(e -> setMaxPatternLength(32));
+        steps48Radio.addActionListener(e -> setMaxPatternLength(48));
+        steps64Radio.addActionListener(e -> setMaxPatternLength(64));
+        
+        patternLengthGroup.add(steps16Radio);
+        patternLengthGroup.add(steps32Radio);
+        patternLengthGroup.add(steps48Radio);
+        patternLengthGroup.add(steps64Radio);
+        
+        patternLengthPanel.add(steps16Radio);
+        patternLengthPanel.add(steps32Radio);
+        patternLengthPanel.add(steps48Radio);
+        patternLengthPanel.add(steps64Radio);
+        
+        patternControlsPanel.add(patternLengthPanel);
+        
+        // View mode selector
+        JPanel viewModePanel = new JPanel();
+        viewModePanel.setBorder(BorderFactory.createTitledBorder("View Mode"));
+        viewModePanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        
+        ButtonGroup viewModeGroup = new ButtonGroup();
+        followModeRadio = new JRadioButton("Follow");
+        followModeRadio.setSelected(true);
+        massiveModeRadio = new JRadioButton("Massive");
+        
+        followModeRadio.addActionListener(e -> setViewMode(ViewMode.FOLLOW));
+        massiveModeRadio.addActionListener(e -> setViewMode(ViewMode.MASSIVE));
+        
+        viewModeGroup.add(followModeRadio);
+        viewModeGroup.add(massiveModeRadio);
+        
+        viewModePanel.add(followModeRadio);
+        viewModePanel.add(massiveModeRadio);
+        
+        patternControlsPanel.add(viewModePanel);
+        
+        // Add the buttons to the panel structure
+        panel.add(mainControlsPanel, BorderLayout.NORTH);
+        panel.add(patternControlsPanel, BorderLayout.SOUTH);
+        
         return panel;
     }
 
@@ -349,22 +445,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Create the step grid panel with proper cell visibility
      */
     private JPanel createStepGridPanel() {
-        // Use consistent cell size with even spacing
-        JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, 16, 2, 2));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        // panel.setBackground(new Color(40, 40, 40));
-        
-        triggerButtons = new ArrayList<>();
-        
-        // Create grid buttons
-        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            for (int step = 0; step < 16; step++) {
-                DrumSequencerGridButton button = createStepButton(drumIndex, step);
-                panel.add(button);
-            }
-        }
-        
-        return panel;
+        // Create the initial grid panel as the FOLLOW mode with quadrant 0
+        gridPanel = createQuadrantGridPanel(0);
+        return gridPanel;
     }
 
     /**
@@ -695,26 +778,47 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     /**
      * Update step highlighting during playback
-     * 
-     * @param drumIndex Index of the drum pad
-     * @param oldStep Previous step to unhighlight
-     * @param newStep New step to highlight
+     * Also handles automatic quadrant navigation in FOLLOW mode
      */
     private void updateStepHighlighting(int drumIndex, int oldStep, int newStep) {
-        // Calculate button indices - use correct formula: drumIndex * 16 + step
-        int oldButtonIndex = drumIndex * 16 + oldStep;
-        int newButtonIndex = drumIndex * 16 + newStep;
+        // In FOLLOW mode, automatically navigate to the quadrant containing the new step
+        if (currentViewMode == ViewMode.FOLLOW) {
+            int targetQuadrant = newStep / STEPS_PER_QUADRANT;
+            if (targetQuadrant != currentQuadrant) {
+                currentQuadrant = targetQuadrant;
+                updateQuadrantControls();
+                updateGridView();
+                return; // Grid was rebuilt, highlighting will be handled there
+            }
+        }
+
+        // Otherwise update highlights as usual
+        // We need to map from absolute step positions to visible positions
+        int visibleOldStep, visibleNewStep;
         
-        // Unhighlight old step button
-        if (oldStep >= 0 && oldStep < 16 && oldButtonIndex < triggerButtons.size()) {
-            triggerButtons.get(oldButtonIndex).setHighlighted(false);
-            triggerButtons.get(oldButtonIndex).repaint();
+        if (currentViewMode == ViewMode.FOLLOW) {
+            // In FOLLOW mode, subtract the quadrant offset
+            visibleOldStep = oldStep - (currentQuadrant * STEPS_PER_QUADRANT);
+            visibleNewStep = newStep - (currentQuadrant * STEPS_PER_QUADRANT);
+        } else {
+            // In MASSIVE mode, use absolute positions
+            visibleOldStep = oldStep;
+            visibleNewStep = newStep;
         }
         
-        // Highlight new step button
-        if (newStep >= 0 && newStep < 16 && newButtonIndex < triggerButtons.size()) {
-            triggerButtons.get(newButtonIndex).setHighlighted(true);
-            triggerButtons.get(newButtonIndex).repaint();
+        // Only update visible steps
+        if (visibleOldStep >= 0 && visibleOldStep < triggerButtons.size() / DRUM_PAD_COUNT) {
+            int oldButtonIndex = drumIndex * (triggerButtons.size() / DRUM_PAD_COUNT) + visibleOldStep;
+            if (oldButtonIndex < triggerButtons.size()) {
+                triggerButtons.get(oldButtonIndex).setHighlighted(false);
+            }
+        }
+        
+        if (visibleNewStep >= 0 && visibleNewStep < triggerButtons.size() / DRUM_PAD_COUNT) {
+            int newButtonIndex = drumIndex * (triggerButtons.size() / DRUM_PAD_COUNT) + visibleNewStep;
+            if (newButtonIndex < triggerButtons.size()) {
+                triggerButtons.get(newButtonIndex).setHighlighted(true);
+            }
         }
     }
 
@@ -761,9 +865,22 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      */
     @Override
     public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) return;
+        if (action.getCommand() == null) return;
         
         switch (action.getCommand()) {
+            case Commands.SEQUENCER_STEP_UPDATE -> {
+                if (action.getData() instanceof DrumStepUpdateEvent evt) {
+                    // If in FOLLOW mode, check if we need to switch quadrants
+                    if (currentViewMode == ViewMode.FOLLOW) {
+                        int targetQuadrant = evt.getNewStep() / STEPS_PER_QUADRANT;
+                        if (targetQuadrant != currentQuadrant) {
+                            currentQuadrant = targetQuadrant;
+                            updateQuadrantControls();
+                            SwingUtilities.invokeLater(this::updateGridView);
+                        }
+                    }
+                }
+            }
             case Commands.TRANSPORT_START -> {
                 // No need for startPlayback() since we're using the TimingBus
                 
@@ -1020,6 +1137,323 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
                 button.setToggled(sequencer.isStepActive(drumIndex, step));
                 button.clearTemporaryState();
+            }
+        }
+    }
+
+    /**
+     * Navigate to a different quadrant
+     * 
+     * @param delta The direction to move (-1 for previous, +1 for next)
+     */
+    private void navigateQuadrant(int delta) {
+        int maxQuadrants = maxPatternLength / STEPS_PER_QUADRANT;
+        int newQuadrant = currentQuadrant + delta;
+        
+        if (newQuadrant >= 0 && newQuadrant < maxQuadrants) {
+            currentQuadrant = newQuadrant;
+            updateGridView();
+            updateQuadrantControls();
+        }
+    }
+
+    /**
+     * Update the quadrant navigation controls based on current state
+     */
+    private void updateQuadrantControls() {
+        int maxQuadrants = maxPatternLength / STEPS_PER_QUADRANT;
+        
+        // Update quadrant label
+        currentQuadrantLabel.setText((currentQuadrant + 1) + " / " + maxQuadrants);
+        
+        // Enable/disable navigation buttons
+        prevQuadrantButton.setEnabled(currentQuadrant > 0);
+        nextQuadrantButton.setEnabled(currentQuadrant < maxQuadrants - 1);
+    }
+
+    /**
+     * Set the maximum pattern length
+     * 
+     * @param steps The new maximum pattern length (16, 32, 48, or 64)
+     */
+    private void setMaxPatternLength(int steps) {
+        if (steps != 16 && steps != 32 && steps != 48 && steps != 64) {
+            throw new IllegalArgumentException("Pattern length must be 16, 32, 48, or 64");
+        }
+        
+        if (maxPatternLength == steps) return; // No change
+        
+        // Store previous length for potential UI updates
+        int previousLength = maxPatternLength;
+        maxPatternLength = steps;
+        
+        // If current quadrant is now out of bounds, adjust it
+        int maxQuadrants = maxPatternLength / STEPS_PER_QUADRANT;
+        if (currentQuadrant >= maxQuadrants) {
+            currentQuadrant = maxQuadrants - 1;
+        }
+        
+        // Update UI
+        updateQuadrantControls();
+        
+        // Force grid rebuild since dimensions changed
+        updateGridView();
+        
+        // Adjust last step spinner's maximum
+        ((SpinnerNumberModel)lastStepSpinner.getModel()).setMaximum(maxPatternLength);
+        
+        // If we're in Massive mode, we might need to adjust pattern lengths for
+        // individual drums to match the new maximum
+        if (currentViewMode == ViewMode.MASSIVE) {
+            // Optionally adjust pattern lengths for all drums
+            for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                int currentLength = sequencer.getPatternLength(drumIndex);
+                if (currentLength > maxPatternLength) {
+                    sequencer.setPatternLength(drumIndex, maxPatternLength);
+                }
+            }
+        }
+        
+        logger.info("Maximum pattern length set to {}", maxPatternLength);
+    }
+
+    /**
+     * Set the view mode
+     * 
+     * @param mode The new view mode (FOLLOW or MASSIVE)
+     */
+    private void setViewMode(ViewMode mode) {
+        if (currentViewMode == mode) return; // No change
+        
+        currentViewMode = mode;
+        
+        // Update grid display
+        updateGridView();
+        
+        // Enable/disable quadrant navigation based on view mode
+        boolean enableNavigation = (currentViewMode == ViewMode.FOLLOW);
+        prevQuadrantButton.setEnabled(enableNavigation && currentQuadrant > 0);
+        nextQuadrantButton.setEnabled(enableNavigation && 
+                                     currentQuadrant < (maxPatternLength / STEPS_PER_QUADRANT) - 1);
+        currentQuadrantLabel.setEnabled(enableNavigation);
+        
+        logger.info("View mode set to {}", currentViewMode);
+    }
+
+    /**
+     * Update the grid view based on current view mode and quadrant
+     */
+    private void updateGridView() {
+        // Remove the existing grid panel from the container
+        Container parent = gridPanel.getParent();
+        parent.remove(gridPanel);
+        
+        // Create a new grid panel based on the current view mode
+        if (currentViewMode == ViewMode.FOLLOW) {
+            gridPanel = createQuadrantGridPanel(currentQuadrant);
+        } else {
+            gridPanel = createMassiveGridPanel();
+        }
+        
+        // Add the new grid panel to the container
+        parent.add(gridPanel, BorderLayout.CENTER);
+        
+        // Refresh the UI
+        parent.revalidate();
+        parent.repaint();
+        
+        // Ensure all buttons reflect the correct state
+        fullSyncGridWithSequencer();
+    }
+
+    /**
+     * Create a grid panel showing just one quadrant (16 steps)
+     * 
+     * @param quadrant The quadrant index to show (0-3)
+     * @return The new grid panel
+     */
+    private JPanel createQuadrantGridPanel(int quadrant) {
+        // Use consistent cell size with even spacing
+        JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, STEPS_PER_QUADRANT, 2, 2));
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        
+        triggerButtons = new ArrayList<>();
+        
+        // Calculate the step offset for this quadrant
+        int stepOffset = quadrant * STEPS_PER_QUADRANT;
+        
+        // Create grid buttons
+        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+            for (int step = 0; step < STEPS_PER_QUADRANT; step++) {
+                int absoluteStep = stepOffset + step;
+                DrumSequencerGridButton button = createStepButton(drumIndex, absoluteStep);
+                panel.add(button);
+            }
+        }
+        
+        return panel;
+    }
+
+    /**
+     * Create a grid panel showing all steps (up to 64)
+     * 
+     * @return The new grid panel
+     */
+    private JPanel createMassiveGridPanel() {
+        // Calculate number of columns needed
+        int columns = maxPatternLength;
+        
+        // Create panel with smaller cells
+        JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, columns, 1, 1));
+        panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        
+        // Reset trigger buttons list - critical for proper state tracking
+        triggerButtons = new ArrayList<>();
+        
+        // Create all buttons with proper state
+        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+            for (int step = 0; step < maxPatternLength; step++) {
+                // Create button with correct state from sequencer
+                DrumSequencerGridButton button = createStepButton(drumIndex, step);
+                
+                // Apply special massive mode styling
+                int cellSize = calculateCellSize(maxPatternLength);
+                button.setPreferredSize(new Dimension(cellSize, cellSize));
+                button.setMinimumSize(new Dimension(cellSize, cellSize));
+                button.setMaximumSize(new Dimension(cellSize, cellSize));
+                
+                // Visual indicators for better rhythm reference
+                if (step % 4 == 0) {
+                    button.setBorder(BorderFactory.createLineBorder(new Color(80, 80, 100), 1));
+                } else {
+                    button.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+                }
+                
+                // Add button to panel and tracking list
+                panel.add(button);
+                triggerButtons.add(button);
+            }
+        }
+        
+        return panel;
+    }
+
+    /**
+     * Calculate appropriate cell size based on pattern length
+     */
+    private int calculateCellSize(int patternLength) {
+        // Scale cells inversely with pattern length
+        switch (patternLength) {
+            case 16:  return 24; // Default size
+            case 32:  return 16;
+            case 48:  return 12;
+            case 64:  return 10;
+            default:  return 24;
+        }
+    }
+
+    /**
+     * Update pattern length radio buttons and quadrant navigation controls
+     * based on current pattern length
+     */
+    private void updatePatternLengthControls() {
+        // Get the current pattern length for the selected drum
+        int patternLength = sequencer.getPatternLength(selectedPadIndex);
+        
+        // Update radio buttons without triggering their action listeners
+        updatingUI = true;
+        try {
+            // Select the appropriate radio button based on pattern length
+            if (patternLength <= 16) {
+                steps16Radio.setSelected(true);
+                maxPatternLength = 16;
+            } else if (patternLength <= 32) {
+                steps32Radio.setSelected(true);
+                maxPatternLength = 32;
+            } else if (patternLength <= 48) {
+                steps48Radio.setSelected(true);
+                maxPatternLength = 48;
+            } else {
+                steps64Radio.setSelected(true);
+                maxPatternLength = 64;
+            }
+        } finally {
+            updatingUI = false;
+        }
+        
+        // Update quadrant navigation
+        int maxQuadrants = maxPatternLength / STEPS_PER_QUADRANT;
+        
+        // Ensure current quadrant is within valid range
+        if (currentQuadrant >= maxQuadrants) {
+            currentQuadrant = maxQuadrants - 1;
+        }
+        
+        // Update navigation buttons state and label
+        updateQuadrantControls();
+        
+        // If in FOLLOW mode, update the grid view to show the current quadrant
+        if (currentViewMode == ViewMode.FOLLOW) {
+            updateGridView();
+        }
+        
+        // Force update for all step buttons
+        updateStepButtonsForDrum(selectedPadIndex);
+        
+        logger.debug("Pattern length controls updated for length {}", patternLength);
+    }
+
+    /**
+     * Completely synchronize all step buttons with sequencer state
+     * This ensures all buttons correctly reflect the pattern state
+     */
+    private void fullSyncGridWithSequencer() {
+        // For MASSIVE view, we need to sync all visible steps
+        if (currentViewMode == ViewMode.MASSIVE) {
+            for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                int patternLength = sequencer.getPatternLength(drumIndex);
+                
+                // For each visible button in this row
+                for (int step = 0; step < maxPatternLength; step++) {
+                    // Calculate button index in the triggerButtons list
+                    int buttonIndex = drumIndex * maxPatternLength + step;
+                    
+                    // Make sure we don't go out of bounds
+                    if (buttonIndex < triggerButtons.size()) {
+                        DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
+                        
+                        // Update toggle state from sequencer
+                        button.setToggled(sequencer.isStepActive(drumIndex, step));
+                        
+                        // Update enabled state based on pattern length
+                        boolean isWithinPatternLength = step < patternLength;
+                        button.setEnabled(isWithinPatternLength);
+                        
+                        // Clear any temporary states
+                        button.clearTemporaryState();
+                    }
+                }
+            }
+        }
+        // For FOLLOW view, only sync the current quadrant
+        else {
+            int startStep = currentQuadrant * STEPS_PER_QUADRANT;
+            int endStep = startStep + STEPS_PER_QUADRANT;
+            
+            for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                int patternLength = sequencer.getPatternLength(drumIndex);
+                
+                for (int stepOffset = 0; stepOffset < STEPS_PER_QUADRANT; stepOffset++) {
+                    int step = startStep + stepOffset;
+                    int buttonIndex = drumIndex * STEPS_PER_QUADRANT + stepOffset;
+                    
+                    if (buttonIndex < triggerButtons.size()) {
+                        DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
+                        button.setToggled(sequencer.isStepActive(drumIndex, step));
+                        button.setEnabled(step < patternLength);
+                        button.clearTemporaryState();
+                    }
+                }
             }
         }
     }
