@@ -109,11 +109,11 @@ public class PlayerManager {
                         if (activePlayer != null) {
                             // Increment preset value (with upper bound of 127)
                             int currentPreset = activePlayer.getPreset() != null ? 
-                                              activePlayer.getPreset().intValue() : 0;
+                                              activePlayer.getPreset() : 0;
                             int newPreset = Math.min(127, currentPreset + 1);
                             
                             // Update the preset
-                            activePlayer.setPreset((long) newPreset);
+                            activePlayer.setPreset(newPreset);
                             
                             // First publish lightweight update for immediate UI feedback
                             commandBus.publish(Commands.PRESET_CHANGED, this, 
@@ -140,7 +140,7 @@ public class PlayerManager {
                             int newPreset = Math.max(0, currentPreset - 1);
                             
                             // Update the preset
-                            activePlayer.setPreset((long) newPreset);
+                            activePlayer.setPreset(newPreset);
                             
                             // First publish lightweight update for immediate UI feedback
                             commandBus.publish(Commands.PRESET_CHANGED, this, 
@@ -221,7 +221,7 @@ public class PlayerManager {
 
                     case Commands.NEW_VALUE_VELOCITY_MIN -> {
                         if (action.getData() instanceof Object[] data && data.length >= 2) {
-                            if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
+                            if (data[0] instanceof Long playerId && data[1] instanceof Integer value) {
                                 Session currentSession = SessionManager.getInstance().getActiveSession();
                                 if (currentSession != null) {
                                     Player player = currentSession.getPlayer(playerId);
@@ -248,7 +248,7 @@ public class PlayerManager {
 
                     case Commands.NEW_VALUE_VELOCITY_MAX -> {
                         if (action.getData() instanceof Object[] data && data.length >= 2) {
-                            if (data[0] instanceof Long playerId && data[1] instanceof Long value) {
+                            if (data[0] instanceof Long playerId && data[1] instanceof Integer value) {
                                 Session currentSession = SessionManager.getInstance().getActiveSession();
                                 if (currentSession != null) {
                                     Player player = currentSession.getPlayer(playerId);
@@ -423,7 +423,7 @@ public class PlayerManager {
                 });
     }
 
-    public Player updatePlayer(Session session, Long playerId, int updateType, long updateValue) {
+    public Player updatePlayer(Session session, Long playerId, int updateType, int updateValue) {
         Player player = session.getPlayer(playerId);
         if (player == null)
             return null;
@@ -463,7 +463,7 @@ public class PlayerManager {
         return player;
     }
 
-    private void handlePresetChange(Player player, long updateValue) {
+    private void handlePresetChange(Player player, int updateValue) {
         try {
             player.noteOff(0, 0);
             player.setPreset(updateValue);
@@ -493,7 +493,7 @@ public class PlayerManager {
 
     // Player property update methods
     public void updatePlayerLevel(Player player, int level) {
-        player.setLevel((long) level);
+        player.setLevel(level);
     }
 
     public void updatePlayerSparse(Player player, int sparse) {
@@ -501,27 +501,27 @@ public class PlayerManager {
     }
 
     public void updatePlayerPan(Player player, int pan) {
-        player.setPanPosition((long) pan);
+        player.setPanPosition(pan);
     }
 
     public void updatePlayerRandom(Player player, int random) {
-        player.setRandomDegree((long) random);
+        player.setRandomDegree(random);
     }
 
     public void updatePlayerVelocityMax(Player player, int velocityMax) {
-        player.setMaxVelocity((long) velocityMax);
+        player.setMaxVelocity(velocityMax);
     }
 
     public void updatePlayerVelocityMin(Player player, int velocityMin) {
-        player.setMinVelocity((long) velocityMin);
+        player.setMinVelocity(velocityMin);
     }
 
     public void updatePlayerProbability(Player player, int probability) {
-        player.setProbability((long) probability);
+        player.setProbability(probability);
     }
 
     public void updatePlayerSwing(Player player, int swing) {
-        player.setSwing((long) swing);
+        player.setSwing(swing);
     }
 
     public void updatePlayerNote(Player player, int note) {

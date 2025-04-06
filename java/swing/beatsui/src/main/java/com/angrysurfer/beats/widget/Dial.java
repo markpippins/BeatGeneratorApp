@@ -25,8 +25,6 @@ import lombok.Setter;
 @Setter
 public class Dial extends JComponent {
 
-    private static final int MIN_SIZE = 45;
-    private static final int MAX_SIZE = 55;
     // private static final Color KNOB_COLOR = new Color(30, 100, 255);
     // private static final Color KNOB_GRADIENT_START = new Color(60, 130, 255);
     // private static final Color KNOB_GRADIENT_END = new Color(20, 80, 200);
@@ -42,10 +40,15 @@ public class Dial extends JComponent {
     private String label;
     private List<ChangeListener> changeListeners = new ArrayList<>();
 
+    private int minSize = 50;
+    private int maxSize = 70;
+
     private Color gradientStartColor = new Color(60, 130, 255);
     private Color gradientEndColor = new Color(20, 80, 200);
     private Color knobColor = new Color(30, 100, 255);
 
+
+    
     public Dial() {
         this.command = null;
         updateSize();
@@ -134,9 +137,9 @@ public class Dial extends JComponent {
             double widthRatio = (double) window.getWidth() / BASE_WINDOW_WIDTH;
             double heightRatio = (double) window.getHeight() / BASE_WINDOW_HEIGHT;
             double scaleFactor = updateOnResize ? 1
-                    : Math.min(Math.max(widthRatio, heightRatio), MAX_SIZE / (double) MIN_SIZE);
+                    : Math.min(Math.max(widthRatio, heightRatio), getMaxSize() / (double) getMinSize());
 
-            int size = Math.min(MAX_SIZE, (int) (MIN_SIZE * scaleFactor));
+            int size = Math.min(getMaxSize(), (int) (getMinSize() * scaleFactor));
 
             Dimension newSize = new Dimension(size, size);
             setPreferredSize(newSize);
@@ -144,8 +147,8 @@ public class Dial extends JComponent {
             revalidate();
         } else {
             // Default size when no window is available
-            setPreferredSize(new Dimension(MIN_SIZE, MIN_SIZE));
-            setMinimumSize(new Dimension(MIN_SIZE, MIN_SIZE));
+            setPreferredSize(new Dimension(getMinSize(), getMinSize()));
+            setMinimumSize(new Dimension(getMinSize(), getMinSize()));
         }
     }
 

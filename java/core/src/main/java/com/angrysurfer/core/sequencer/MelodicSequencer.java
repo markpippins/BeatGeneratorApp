@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import javax.sound.midi.MidiDevice;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,43 +13,36 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.feature.Note;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
 
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * Core sequencer engine that handles timing, pattern sequencing,
- * and note generation for melodic patterns.
- */
 @Getter
 @Setter
 public class MelodicSequencer implements IBusListener {
+
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencer.class);
 
-    // Sequencer state
-    private int currentStep = 0;             // Current step in the pattern
-    private int stepCounter = 0;             // Current step in X0X pattern (0-15)
-    private int tickCounter = 0;             // Count ticks within current step
-    private int ticksPerStep = 24;            // How many ticks make one X0X step
-    private int nextStepTick = 0;            // When to trigger the next step
-    private boolean patternCompleted = false; // Flag for when pattern has completed but transport continues
-    
-    // Pattern parameters
-    private int patternLength = 16;          // Number of steps in pattern
-    private boolean isLooping = true;        // Whether pattern should loop
-    private Direction direction = Direction.FORWARD; // Playback direction
-    private boolean bounceForward = true;    // Used for bounce direction
-    
-    // Timing & MIDI parameters
+    // Sequencing parameters
+    private int stepCounter = 0;          // Current step in the pattern
+    private int patternLength = 16;       // Default pattern length
+    private Direction direction = Direction.FORWARD; // Default direction
+    private boolean looping = true;       // Default to looping
+    private long tickCounter = 0;          // Tick counter
+    private long ticksPerStep = 24;       // Base ticks per step (96 PPQN / 4 = 24)
+    private boolean isPlaying = false;    // Flag indicating playback state
+    private int bounceDirection = 1;      // Direction for bounce mode
+    private int channel = 3;          // Default MIDI channel
+
     private TimingDivision timingDivision = TimingDivision.NORMAL;
-    private int latencyCompensation = 20;    // ms to compensate for system latency
-    private int activeMidiChannel = 15;      // Use channel 16 (15-based index)
-    private int lookAheadMs = 40;            // How far ahead to schedule notes
-    private boolean useAheadScheduling = true; // Enable/disable look-ahead
-    private boolean isPlaying = false;       // Flag indicating playback state
-    
+
     // Scale & quantization
     private String selectedRootNote = "C";
     private String selectedScale = "Chromatic";
@@ -55,59 +50,165 @@ public class MelodicSequencer implements IBusListener {
     private boolean quantizeEnabled = true;
     private Quantizer quantizer;
     private int octaveShift = 0;             // Compatibility for scale
-    
+
     // Pattern data storage
     private List<Boolean> activeSteps = new ArrayList<>();      // Step on/off state
     private List<Integer> noteValues = new ArrayList<>();       // Note for each step
     private List<Integer> velocityValues = new ArrayList<>();   // Velocity for each step
     private List<Integer> gateValues = new ArrayList<>();       // Gate time for each step
-    
+
+    // Note object for storing melodic properties (NEW)
+    private Note note;
+
     // Event handling
     private Consumer<StepUpdateEvent> stepUpdateListener;
     private Consumer<NoteEvent> noteEventListener;
-    
+
     /**
      * Creates a new melodic sequencer
      */
     public MelodicSequencer() {
         // Initialize pattern data with default values
         initializePatternData();
-        
-        // Create a simple default pattern (every 4th step)
-        // for (int i = 0; i < 16; i += 4) {
-        //     activeSteps.set(i, true);
-        //     noteValues.set(i, 60 + (i % 12)); // C, E, G, B sequence
-        // }
-        
+
+        // Initialize note properties (NEW)
+        initializeNote();
+
         // Register with CommandBus
         CommandBus.getInstance().register(this);
-        
+
         TimingBus.getInstance().register(this);
 
         // Initialize the quantizer with default settings
         updateQuantizer();
-        
-        // Set up a diagnostics timer to check if we're receiving timing updates
-        new java.util.Timer().schedule(new java.util.TimerTask() {
-            @Override
-            public void run() {
-                logger.info("MelodicSequencer diagnostic: isPlaying={}, currentStep={}, tickCounter={}",
-                          isPlaying, stepCounter, tickCounter);
-            }
-        }, 5000, 5000); // Check every 5 seconds
-        
+
         logger.info("MelodicSequencer initialized and registered with CommandBus");
     }
-    
+
+    public MelodicSequencer(Integer channel) {
+        this();
+        this.channel = channel; // Set the channel for this instance
+    }
+
+    /**
+     * Initialize the Note object with proper InstrumentWrapper and connected MidiDevice
+     */
+    private void initializeNote() {
+        note = new Note();
+        note.setName("Melody");
+        note.setRootNote(60); // Middle C
+        note.setMinVelocity(60);
+        note.setMaxVelocity(127);
+        note.setLevel(100);
+        note.setChannel(channel); // Use the sequencer's channel setting
+
+        try {
+            // Get the InstrumentManager instance
+            InstrumentManager instrumentManager = InstrumentManager.getInstance();
+
+            // Look for an internal synth instrument first
+            InstrumentWrapper internalInstrument = null;
+            String deviceName = "Gervill"; // Default Java synth name
+
+            // Try to find existing internal instrument
+            List<InstrumentWrapper> instruments = instrumentManager.getCachedInstruments();
+            for (InstrumentWrapper instrument : instruments) {
+                if (Boolean.TRUE.equals(instrument.getInternal())) {
+                    internalInstrument = instrument;
+                    internalInstrument.setInternal(true);
+                    internalInstrument.setDeviceName("Gervill"); 
+                    internalInstrument.setSoundbankName("Default");
+                    internalInstrument.setBankIndex(0);
+                    internalInstrument.setCurrentPreset(0);  // Piano
+                    break;
+                }
+            }
+
+            // If no internal instrument found, create one
+            if (internalInstrument == null) {
+                // Create a new internal instrument - but don't set the device yet!
+                internalInstrument = new InstrumentWrapper("Internal Synth", null, channel);
+                internalInstrument.setInternal(true);
+                internalInstrument.setDeviceName(deviceName);
+                
+                // Set default soundbank parameters
+                internalInstrument.setSoundbankName("Default");
+                internalInstrument.setBankIndex(0);
+                internalInstrument.setCurrentPreset(0);  // Piano
+
+                // Give it a unique ID
+                // note.setPreset(internalInstrument.getCurrentPreset());
+            }
+
+            internalInstrument.setId(9985L + getNote().getChannel()); // Unique ID for internal synth
+            note.setInstrument(internalInstrument);
+
+            // Now properly connect the device using DeviceManager
+            // Check if device is available
+            List<String> availableDevices = DeviceManager.getInstance().getAvailableOutputDeviceNames();
+            if (!availableDevices.contains(deviceName)) {
+                CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("Device not available: " + deviceName));
+                    
+                logger.error("Device not available: {}", deviceName);
+            } else {
+                // Try to reinitialize the device connection
+                MidiDevice device = DeviceManager.getMidiDevice(deviceName);
+                if (device != null) {
+                    if (!device.isOpen()) {
+                        device.open();
+                    }
+                    
+                    boolean connected = device.isOpen();
+                    if (connected) {
+                        internalInstrument.setDevice(device);
+                        internalInstrument.setAvailable(true);
+                        
+                        // Update in cache/config
+                        instrumentManager.updateInstrument(internalInstrument);
+                        logger.info("Successfully connected to device: {}", deviceName);
+                    } else {
+                        logger.error("Failed to open device: {}", deviceName);
+                    }
+                }
+            }
+
+            // Set the instrument on the note
+            note.setInstrument(internalInstrument);
+
+            // Configure the note's channel
+            note.setChannel(channel);
+
+            logger.info("Initialized Note with InstrumentWrapper: {}", internalInstrument.getName());
+            
+            // Test the connection
+            try {
+                if (internalInstrument.getAvailable()) {
+                    internalInstrument.noteOn(channel, 60, 100);
+                    Thread.sleep(100);
+                    internalInstrument.noteOff(channel, 60, 0);
+                    logger.info("Test note played successfully");
+                    
+                }
+            } catch (Exception e) {
+                logger.warn("Test note failed: {}", e.getMessage());
+            }
+        } catch (Exception e) {
+            logger.error("Failed to initialize Note with InstrumentWrapper: {}", e.getMessage(), e);
+        }
+    }
+
     /**
      * Initialize pattern data arrays with default values
      */
     private void initializePatternData() {
-        activeSteps.clear();
-        noteValues.clear();
-        velocityValues.clear();
-        gateValues.clear();
-        
+        activeSteps = new ArrayList<>(patternLength);
+        noteValues = new ArrayList<>(patternLength);
+        velocityValues = new ArrayList<>(patternLength);
+        gateValues = new ArrayList<>(patternLength);
+
         // Fill with default values
         for (int i = 0; i < patternLength; i++) {
             activeSteps.add(false);          // All steps off by default
@@ -116,276 +217,254 @@ public class MelodicSequencer implements IBusListener {
             gateValues.add(50);              // 50% gate time
         }
     }
-    
+
     /**
-     * Process timing updates from the timing bus
+     * Process a timing tick and play notes through the Note's InstrumentWrapper
+     *
+     * @param tick Current tick count
      */
-    @Override
-    public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) {
+    public void processTick(Long tick) {
+        if (!isPlaying || tick == null) {
             return;
         }
-        
-        switch (action.getCommand()) {
-            case Commands.TIMING_UPDATE -> {
-                if (isPlaying && action.getData() instanceof TimingUpdate update) {
-                    // Process tick for step sequencing
-                    tickCounter++;
-                    
-                    if (tickCounter >= nextStepTick) {
-                        processStepAdvance();
-                    }
+
+        tickCounter = tick.intValue();
+
+        // Check if it's time for the next step
+        if (tick % ticksPerStep == 0) {
+            // Store old step for UI update
+            int oldStep = stepCounter;
+
+            // Calculate next step based on direction and pattern length
+            calculateNextStep();
+
+            // Check if the current step is active
+            if (stepCounter < activeSteps.size() && activeSteps.get(stepCounter)) {
+                // Retrieve the specific note, velocity, and gate values for this step
+                int noteValue = stepCounter < noteValues.size()
+                        ? noteValues.get(stepCounter) : 60;  // Default to middle C
+
+                // Apply quantization first, then octave shift
+                if (quantizeEnabled) {
+                    noteValue = quantizeNote(noteValue);
+                }
+                noteValue = applyOctaveShift(noteValue);
+
+                // Get velocity for this specific step
+                int velocity = stepCounter < velocityValues.size()
+                        ? velocityValues.get(stepCounter) : 100;  // Default velocity
+
+                // Get gate time for this specific step (gate value is percentage, convert to ms)
+                int gateTime = stepCounter < gateValues.size()
+                        ? gateValues.get(stepCounter) * 5 : 250;  // Scale gate value to ms
+
+                // Play the note directly using the Note object's instrument
+                playNoteDirectly(noteValue, velocity, gateTime);
+
+                // Optionally still notify external listeners if configured
+                if (noteEventListener != null) {
+                    logger.debug("Sending NoteEvent to external listener: note={}, vel={}, gate={}",
+                            noteValue, velocity, gateTime);
+
+                    noteEventListener.accept(
+                            new NoteEvent(noteValue, velocity, gateTime)
+                    );
                 }
             }
-            case Commands.TRANSPORT_START -> {
-                resetSequence();
-                isPlaying = true;
-                logger.info("Sequencer started");
+
+            // Notify UI of step change
+            if (stepUpdateListener != null) {
+                stepUpdateListener.accept(new StepUpdateEvent(oldStep, stepCounter));
             }
-            case Commands.TRANSPORT_STOP -> {
-                isPlaying = false;
-                // Notify UI that we stopped (with -1 as new step to indicate no active step)
-                notifyStepUpdate(stepCounter, -1);
-                logger.info("Sequencer stopped");
-            }
-            // Handle other commands as needed
         }
     }
-    
+
     /**
-     * Process step advance - calculate next step and trigger notes if needed
+     * Play a note directly using the Note's InstrumentWrapper
+     *
+     * @param midiNote The MIDI note number to play
+     * @param velocity The velocity (volume) of the note
+     * @param duration The duration in milliseconds
      */
-    private void processStepAdvance() {
-        // Remember current step for highlighting
-        int oldStep = stepCounter;
-        
-        // Calculate the next step based on direction
-        int nextStep = calculateNextStep(stepCounter, patternLength, direction);
-        
-        // Update step counter
-        stepCounter = nextStep;
-        
-        // Notify UI of step change
-        notifyStepUpdate(oldStep, stepCounter);
-        
-        // Check if a note should be triggered on this step
-        if (stepCounter >= 0 && stepCounter < activeSteps.size() && activeSteps.get(stepCounter)) {
-            triggerNote(stepCounter);
-        }
-        
-        // Reset tick counter and calculate next step time
-        tickCounter = 0;
-        nextStepTick = ticksPerStep;
-        
-        // Log the step advance
-        logger.debug("Step advanced to: {}", stepCounter);
-    }
-    
-    /**
-     * Trigger note for a specific step
-     */
-    private void triggerNote(int step) {
-        if (step < 0 || step >= noteValues.size()) {
+    private void playNoteDirectly(int midiNote, int velocity, int duration) {
+        if (note == null || note.getInstrument() == null) {
+            logger.warn("Cannot play note directly - note or instrument is null");
             return;
         }
-        
-        // Get note value
-        int noteValue = noteValues.get(step);
-        
-        // Apply quantization if enabled
-        int quantizedNote = quantizeNote(noteValue);
-        
-        // Apply octave shift
-        int shiftedNote = applyOctaveShift(quantizedNote);
-        
-        // Get velocity and gate
-        int velocity = step < velocityValues.size() ? velocityValues.get(step) : 100;
-        int gate = step < gateValues.size() ? gateValues.get(step) : 100;
-        
-        // Create note event
-        NoteEvent event = new NoteEvent(shiftedNote, velocity, gate);
-        
-        // Notify listener
-        if (noteEventListener != null) {
-            noteEventListener.accept(event);
+
+        try {
+            final InstrumentWrapper instrument = note.getInstrument();
+            final int channel = note.getChannel();
+
+            // Log what we're about to play
+            logger.info("Playing note directly: note={}, vel={}, duration={}, channel={}, instrument={}",
+                    midiNote, velocity, duration, channel, instrument.getName());
+
+            // Set the channel's current program if needed
+            if (note.getPreset() != null) {
+                // Send bank select messages if a bank is specified
+                if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
+                    instrument.controlChange(channel, 0, 0);     // Bank MSB
+                    instrument.controlChange(channel, 32, instrument.getBankIndex()); // Bank LSB
+                }
+
+                // Send program change
+                instrument.programChange(channel, note.getPreset().intValue(), 0);
+            }
+
+            // Play the note - ERROR IS HERE
+            instrument.noteOn(channel, midiNote, velocity);  // Correct - use instrument directly
+
+            // Schedule note off after the specified duration
+            final int noteToStop = midiNote; // Capture for use in lambda
+
+            new Thread(() -> {
+                try {
+                    Thread.sleep(duration);
+                    instrument.noteOff(channel, noteToStop, 0);
+                } catch (Exception e) {
+                    logger.error("Error in note thread: {}", e.getMessage());
+                }
+            }).start();
+
+        } catch (Exception e) {
+            logger.error("Error playing note directly: {}", e.getMessage(), e);
         }
     }
-    
-    /**
-     * Notifies listeners about step updates
-     */
-    private void notifyStepUpdate(int oldStep, int newStep) {
-        StepUpdateEvent event = new StepUpdateEvent(oldStep, newStep);
-        
-        // 1. Notify direct listeners
-        if (stepUpdateListener != null) {
-            stepUpdateListener.accept(event);
-        }
-        
-        // 2. Also publish on command bus so other components can respond
-        CommandBus.getInstance().publish(Commands.SEQUENCER_STEP_UPDATE, this, event);
-        
-        // Log the update
-        logger.debug("Published step update: {} -> {}", oldStep, newStep);
-    }
-    
-    /**
-     * Reset the sequence to initial state
-     */
-    public void resetSequence() {
-        stepCounter = 0;
-        tickCounter = 0;
-        patternCompleted = false;
-        nextStepTick = ticksPerStep;
-    }
-    
+
     /**
      * Calculate the next step based on the current direction
      */
-    private int calculateNextStep(int currentStep, int patternLength, Direction direction) {
+    private void calculateNextStep() {
         switch (direction) {
-            case FORWARD:
-                return (currentStep + 1) % patternLength;
-                
-            case BACKWARD:
-                return (currentStep - 1 + patternLength) % patternLength;
-                
-            case BOUNCE:
-                if (bounceForward) {
-                    int nextStep = currentStep + 1;
-                    if (nextStep >= patternLength - 1) {
-                        bounceForward = false;
-                        return Math.max(0, patternLength - 1);
+            case FORWARD -> {
+                stepCounter++;
+                if (stepCounter >= patternLength) {
+                    stepCounter = 0;
+                    if (!looping) {
+                        isPlaying = false;
                     }
-                    return nextStep;
-                } else {
-                    int nextStep = currentStep - 1;
-                    if (nextStep <= 0) {
-                        bounceForward = true;
-                        return 0;
-                    }
-                    return nextStep;
                 }
-                
-            case RANDOM:
-                return (int) (Math.random() * patternLength);
-                
-            default:
-                return (currentStep + 1) % patternLength;
-        }
-    }
-    
-    /**
-     * Check if the pattern has ended based on current and next step
-     */
-    private boolean hasPatternEnded(int currentStep, int nextStep, int patternLength, Direction direction) {
-        switch (direction) {
-            case FORWARD:
-                return currentStep == patternLength - 1 && nextStep == 0;
-                
-            case BACKWARD:
-                return currentStep == 0 && nextStep == patternLength - 1;
-                
-            case BOUNCE:
-                // In bounce mode, we consider the pattern ended when
-                // we reach either end and change direction
-                if (bounceForward) {
-                    return currentStep == patternLength - 2 && nextStep == patternLength - 1;
-                } else {
-                    return currentStep == 1 && nextStep == 0;
-                }
-                
-            case RANDOM:
-                // For random mode, pattern only ends at the last step index
-                return currentStep == patternLength - 1;
-                
-            default:
-                return false;
-        }
-    }
-    
-    /**
-     * Apply quantization to a note if enabled
-     */
-    public int quantizeNote(int note) {
-        if (quantizer != null && quantizeEnabled) {
-            return quantizer.quantizeNote(note);
-        }
-        return note;
-    }
-    
-    /**
-     * Apply octave shift to a note
-     */
-    public int applyOctaveShift(int note) {
-        // Add 12 semitones per octave
-        int shiftedNote = note + (octaveShift * 12);
-        
-        // Ensure the note is within valid MIDI range (0-127)
-        return Math.max(0, Math.min(127, shiftedNote));
-    }
-    
-    /**
-     * Update the quantizer based on selected root note and scale
-     */
-    public void updateQuantizer() {
-        try {
-            scaleNotes = com.angrysurfer.core.sequencer.Scale.getScale(selectedRootNote, selectedScale);
-            quantizer = new Quantizer(scaleNotes);
-            logger.info("Quantizer updated for {} {}", selectedRootNote, selectedScale);
-        } catch (Exception e) {
-            logger.error("Error creating quantizer: {}", e.getMessage());
-            // Default to chromatic scale if there's an error
-            Boolean[] chromaticScale = new Boolean[12];
-            for (int i = 0; i < 12; i++) {
-                chromaticScale[i] = true;
             }
-            scaleNotes = chromaticScale;
-            quantizer = new Quantizer(scaleNotes);
+            case BACKWARD -> {
+                stepCounter--;
+                if (stepCounter < 0) {
+                    stepCounter = patternLength - 1;
+                    if (!looping) {
+                        isPlaying = false;
+                    }
+                }
+            }
+            case BOUNCE -> {
+                stepCounter += bounceDirection;
+
+                if (stepCounter >= patternLength) {
+                    stepCounter = patternLength - 2;
+                    bounceDirection = -1;
+                } else if (stepCounter < 0) {
+                    stepCounter = 1;
+                    bounceDirection = 1;
+                }
+
+                if (stepCounter == 0 || stepCounter == patternLength - 1) {
+                    if (!looping) {
+                        isPlaying = false;
+                    }
+                }
+            }
+            case RANDOM -> {
+                // Remember old step
+                int oldStep = stepCounter;
+
+                // Generate random step
+                stepCounter = (int) (Math.random() * patternLength);
+
+                // Ensure we don't get the same step twice
+                if (stepCounter == oldStep && patternLength > 1) {
+                    stepCounter = (stepCounter + 1) % patternLength;
+                }
+            }
         }
     }
-    
+
     /**
-     * Set step data for a specific step index
+     * Get the root note of the melodic sequencer
+     *
+     * @return MIDI note value (0-127)
      */
-    public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate) {
-        if (stepIndex < 0 || stepIndex >= patternLength) {
-            return;
-        }
-        
-        // Resize collections if needed
-        ensureCapacity(stepIndex + 1);
-        
-        // Update step data
-        activeSteps.set(stepIndex, active);
-        noteValues.set(stepIndex, note);
-        velocityValues.set(stepIndex, velocity);
-        gateValues.set(stepIndex, gate);
+    public Integer getRootNote() {
+        return note != null ? note.getRootNote() : 60;
     }
-    
+
     /**
-     * Ensure collections have at least the specified capacity
+     * Set the root note of the melodic sequencer
+     *
+     * @param rootNote MIDI note value (0-127)
      */
-    private void ensureCapacity(int capacity) {
-        while (activeSteps.size() < capacity) {
-            activeSteps.add(false);
-        }
-        
-        while (noteValues.size() < capacity) {
-            noteValues.add(60);
-        }
-        
-        while (velocityValues.size() < capacity) {
-            velocityValues.add(100);
-        }
-        
-        while (gateValues.size() < capacity) {
-            gateValues.add(50);
+    public void setRootNote(Integer rootNote) {
+        if (note != null && rootNote != null) {
+            note.setRootNote(rootNote);
         }
     }
-    
+
     /**
-     * Clear the pattern (set all steps inactive)
+     * Get the name of the melody
+     *
+     * @return The melody name
+     */
+    public String getName() {
+        return note != null ? note.getName() : "Melody";
+    }
+
+    /**
+     * Set the name of the melody
+     *
+     * @param name The new melody name
+     */
+    public void setName(String name) {
+        if (note != null && name != null) {
+            note.setName(name);
+        }
+    }
+
+    /**
+     * Get the velocity level
+     *
+     * @return Velocity level (0-127)
+     */
+    public Long getLevel() {
+        return note != null ? note.getLevel() : 100L;
+    }
+
+    /**
+     * Set the velocity level
+     *
+     * @param level Velocity level (0-127)
+     */
+    public void setLevel(int level) {
+        if (note != null && level >= 0 && level <= 127) {
+            note.setLevel(level);
+        }
+    }
+
+    /**
+     * Decrement the octave shift by 1
+     */
+    public void decrementOctaveShift() {
+        octaveShift--;
+        logger.info("Octave shift decreased to {}", octaveShift);
+    }
+
+    /**
+     * Increment the octave shift by 1
+     */
+    public void incrementOctaveShift() {
+        octaveShift++;
+        logger.info("Octave shift increased to {}", octaveShift);
+    }
+
+    /**
+     * Clear the entire pattern
      */
     public void clearPattern() {
         for (int i = 0; i < activeSteps.size(); i++) {
@@ -393,83 +472,327 @@ public class MelodicSequencer implements IBusListener {
         }
         logger.info("Pattern cleared");
     }
-    
+
     /**
-     * Generate random pattern data
+     * Generate a random pattern with the given parameters
+     *
+     * @param octaveRange The number of octaves to span (1-4)
+     * @param density Percentage of steps to activate (1-100)
      */
     public void generatePattern(int octaveRange, int density) {
         // Clear existing pattern
         clearPattern();
+
+        // Calculate base note from root note
+        int baseNote = 60; // Middle C by default
+
+        // Calculate number of steps to activate
+        int stepsToActivate = patternLength * density / 100;
+        stepsToActivate = Math.max(1, Math.min(stepsToActivate, patternLength));
+
+        // Always activate the first step
+        if (activeSteps.size() > 0) {
+            activeSteps.set(0, true);
+        }
+        if (noteValues.size() > 0) {
+            noteValues.set(0, baseNote);
+        }
+        if (velocityValues.size() > 0) {
+            velocityValues.set(0, 100);
+        }
+        if (gateValues.size() > 0) {
+            gateValues.set(0, 75);
+        }
+
+        stepsToActivate--;
+
+        // Activate random remaining steps
+        for (int i = 0; i < stepsToActivate; i++) {
+            // Find an inactive step
+            int step;
+            do {
+                step = (int) (Math.random() * patternLength);
+            } while (step < activeSteps.size() && activeSteps.get(step));
+
+            // Activate it if valid index
+            if (step < activeSteps.size()) {
+                activeSteps.set(step, true);
+            }
+
+            // Generate a random note within the octave range if valid index
+            if (step < noteValues.size()) {
+                int noteOffset = (int) (Math.random() * (12 * octaveRange));
+                noteValues.set(step, baseNote + noteOffset);
+            }
+
+            // Random velocity (60-127) if valid index
+            if (step < velocityValues.size()) {
+                velocityValues.set(step, 60 + (int) (Math.random() * 68));
+            }
+
+            // Random gate time (25-100) if valid index
+            if (step < gateValues.size()) {
+                gateValues.set(step, 25 + (int) (Math.random() * 76));
+            }
+        }
+
+        logger.info("Generated pattern: octaves={}, density={}", octaveRange, density);
+    }
+
+    /**
+     * Quantize a note to the current scale
+     *
+     * @param note The MIDI note number to quantize
+     * @return The quantized note number
+     */
+    public int quantizeNote(int note) {
+        if (quantizer == null) {
+            updateQuantizer(); // Ensure we have a quantizer
+        }
         
-        // Calculate note range based on octaves
-        int baseNote = 60 - ((octaveRange * 12) / 2); // Center around middle C (60)
-        int totalNoteRange = octaveRange * 12;
+        try {
+            return quantizer.quantizeNote(note);
+        } catch (Exception e) {
+            logger.error("Error quantizing note {}: {}", note, e.getMessage());
+            return note; // Return original note if quantization fails
+        }
+    }
+
+    /**
+     * Update the quantizer with current scale settings
+     */
+    public void updateQuantizer() {
+        // Create Boolean array representing which notes are in the scale
+        scaleNotes = createScaleArray(selectedRootNote, selectedScale);
         
-        logger.info("Generating pattern with {} octave range: {} to {}", 
-                octaveRange, baseNote, baseNote + totalNoteRange - 1);
+        // Create new quantizer with the scale
+        quantizer = new Quantizer(scaleNotes);
         
-        // Generate for each step
-        for (int i = 0; i < patternLength; i++) {
-            // Determine if step should be active based on density (0-100)
-            boolean activateStep = Math.random() * 100 < density;
-            
-            if (activateStep) {
-                // Calculate random note within range
-                int randomNote = baseNote + (int)(Math.random() * totalNoteRange);
-                randomNote = Math.max(24, Math.min(96, randomNote));
-                
-                // Quantize if enabled
-                if (quantizeEnabled && quantizer != null) {
-                    randomNote = quantizeNote(randomNote);
-                }
-                
-                // Generate random velocity and gate values
-                int velocity = 40 + (int)(Math.random() * 60);  // 40-100
-                int gate = 30 + (int)(Math.random() * 50);      // 30-80
-                
-                // Set the step data
-                setStepData(i, true, randomNote, velocity, gate);
+        logger.info("Quantizer updated with root note {} and scale {}", selectedRootNote, selectedScale);
+    }
+
+    /**
+     * Create a Boolean array representing which notes are in the scale
+     */
+    private Boolean[] createScaleArray(String rootNote, String scaleName) {
+        Boolean[] result = new Boolean[12];
+        for (int i = 0; i < 12; i++) {
+            result[i] = false;
+        }
+        
+        // Get root note index using Scale class
+        int rootIndex = Scale.getRootNoteIndex(rootNote);
+        
+        // Get scale pattern from Scale class - FIX: Use a proper int[] array as default
+        int[] pattern = Scale.SCALE_PATTERNS.getOrDefault(scaleName, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
+        
+        // Apply pattern to root note
+        for (int offset : pattern) {
+            int noteIndex = (rootIndex + offset) % 12;
+            result[noteIndex] = true;
+        }
+        
+        return result;
+    }
+
+    /**
+     * Set the root note for scale quantization
+     *
+     * @param rootNote Root note name (C, C#, D, etc.)
+     */
+    public void setRootNote(String rootNote) {
+        if (rootNote != null && !rootNote.equals(selectedRootNote)) {
+            selectedRootNote = rootNote;
+            updateQuantizer();
+            logger.info("Root note set to {}", rootNote);
+        }
+    }
+
+    /**
+     * Set the scale for note quantization
+     *
+     * @param scale Scale name
+     */
+    public void setScale(String scale) {
+        if (scale != null && !scale.equals(selectedScale)) {
+            selectedScale = scale;
+            updateQuantizer();
+            logger.info("Scale set to {}", scale);
+        }
+    }
+
+    /**
+     * Apply octave shift to a MIDI note value
+     *
+     * @param noteValue MIDI note value to shift
+     * @return Shifted note value
+     */
+    public int applyOctaveShift(int noteValue) {
+        int shiftedValue = noteValue + (octaveShift * 12);
+        // Keep notes in MIDI range (0-127)
+        return Math.max(0, Math.min(127, shiftedValue));
+    }
+
+    /**
+     * Enable or disable quantization
+     *
+     * @param enabled True to enable, false to disable
+     */
+    public void setQuantizeEnabled(boolean enabled) {
+        this.quantizeEnabled = enabled;
+        logger.info("Quantization {}", enabled ? "enabled" : "disabled");
+    }
+
+    /**
+     * Check if quantization is enabled
+     *
+     * @return True if quantization is enabled
+     */
+    public boolean isQuantizeEnabled() {
+        return quantizeEnabled;
+    }
+
+    /**
+     * Set data for a specific step
+     *
+     * @param stepIndex The step index
+     * @param isActive Whether the step is active
+     * @param noteValue The MIDI note value
+     * @param velocityValue The velocity value
+     * @param gateValue The gate time value
+     */
+    public void setStepData(int stepIndex, boolean isActive, int noteValue, int velocityValue, int gateValue) {
+        if (stepIndex >= 0 && stepIndex < patternLength) {
+            if (stepIndex < activeSteps.size()) {
+                activeSteps.set(stepIndex, isActive);
+            }
+
+            if (stepIndex < noteValues.size()) {
+                noteValues.set(stepIndex, noteValue);
+            }
+
+            if (stepIndex < velocityValues.size()) {
+                velocityValues.set(stepIndex, velocityValue);
+            }
+
+            if (stepIndex < gateValues.size()) {
+                gateValues.set(stepIndex, gateValue);
             }
         }
     }
-    
+
     /**
-     * Set step update listener
+     * Reset the sequencer to start position
      */
-    public void setStepUpdateListener(Consumer<StepUpdateEvent> listener) {
-        this.stepUpdateListener = listener;
+    public void reset() {
+        // Initialize step counter based on direction
+        stepCounter = direction == Direction.FORWARD ? 0 : patternLength - 1;
+        tickCounter = 0;
+
+        // Notify UI that we've reset
+        if (stepUpdateListener != null) {
+            stepUpdateListener.accept(new StepUpdateEvent(-1, stepCounter));
+        }
+
+        logger.debug("Melodic sequencer reset to step {}", stepCounter);
     }
-    
+
     /**
-     * Set note event listener
+     * Start playback
      */
-    public void setNoteEventListener(Consumer<NoteEvent> listener) {
-        this.noteEventListener = listener;
-    }
-    
-    public void decrementOctaveShift() {
-        octaveShift--;
+    public void play() {
+        if (!isPlaying) {
+            isPlaying = true;
+            reset();
+
+            // Notify via command bus that we've started
+            // CommandBus.getInstance().publish(Commands.TRANSPORT_START, this);
+            logger.info("Melodic sequencer playback started");
+        }
     }
 
-    public void incrementOctaveShift() {
-        octaveShift++;
+    /**
+     * Stop playback
+     */
+    public void stop() {
+        if (isPlaying) {
+            isPlaying = false;
+
+            // Notify via command bus that we've stopped
+            // CommandBus.getInstance().publish(Commands.TRANSPORT_STOP, this);
+            logger.info("Melodic sequencer playback stopped");
+        }
     }
 
-    // Method name compatibility for root note
-    public void setRootNote(String selectedRootNote) {
-        this.selectedRootNote = selectedRootNote;
+    /**
+     * Set the timing division for step playback
+     *
+     * @param division The timing division to use
+     */
+    public void setTimingDivision(TimingDivision division) {
+        if (division != null) {
+            this.timingDivision = division;
+
+            // Update the ticksPerStep based on the timing division
+            this.ticksPerStep = calculateTicksPerStep(division);
+
+            logger.info("Timing division set to {}, ticks per step: {}", division, ticksPerStep);
+        }
     }
 
-    public String getRootNote() {
-        return this.selectedRootNote;
+    /**
+     * Get the current timing division
+     *
+     * @return The current timing division
+     */
+    public TimingDivision getTimingDivision() {
+        return timingDivision;
     }
 
-    // Method name compatibility for scale
-    public void setScale(String scale) {
-        this.selectedScale = scale;
+    /**
+     * Calculate ticks per step based on timing division
+     */
+    private long calculateTicksPerStep(TimingDivision timing) {
+        // Use the ticksPerBeat value from the enum
+        return (24 * 4) / timing.getTicksPerBeat();
     }
 
-    public String getScale() {
-        return this.selectedScale;
+    /**
+     * Implementation of IBusListener interface
+     */
+    @Override
+    public void onAction(Command action) {
+        if (action == null) {
+            return;
+        }
+
+        switch (action.getCommand()) {
+            case Commands.TIMING_UPDATE -> {
+                if (isPlaying && action.getData() instanceof TimingUpdate update) {
+                    if (update.tick() != null) {
+                        processTick(update.tick());
+                    }
+                }
+            }
+
+            case Commands.TRANSPORT_START -> {
+                play();
+            }
+
+            case Commands.TRANSPORT_STOP -> {
+                stop();
+            }
+
+            // Handle other commands as needed
+        }
+    }
+
+    /**
+     * Get the current step counter value
+     *
+     * @return Current step position
+     */
+    public int getStepCounter() {
+        return stepCounter;
     }
 }

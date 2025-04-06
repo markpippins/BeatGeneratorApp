@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,13 +22,19 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.JPopupMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JDialog;
+import javax.swing.ButtonGroup;
+import javax.swing.JRadioButton;
+import javax.swing.Box;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.DrumSequencerGridButton;
 import com.angrysurfer.beats.widget.DrumSequencerButton;
+import com.angrysurfer.beats.widget.DrumSequencerGridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -84,6 +91,12 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     // Debug mode flag
     private boolean debugMode = false;
+
+    // Add these fields to track Euclidean pattern state
+    private int euclideanStartDrum = -1;
+    private int euclideanStartStep = -1;
+    private boolean isDragging = false;
+    private boolean[] tempEuclideanPattern = null;
 
     /**
      * Create a new DrumSequencerPanel
@@ -221,7 +234,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         timingPanel.add(new JLabel("Timing:"));
 
-        timingCombo = new JComboBox<>(TimingDivision.values());
+        timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
         timingCombo.setPreferredSize(new Dimension(90, 25));
         timingCombo.addActionListener(e -> {
             if (updatingUI) return; // Avoid feedback loops
@@ -261,6 +274,13 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         clearPatternButton = new JButton("Clear");
         generatePatternButton = new JButton("Generate");
 
+        // ADD MIXER BUTTON
+        JButton mixButton = new JButton("Mix...");
+        mixButton.addActionListener(e -> {
+            // Show the mixer dialog
+            StrikeMixerPanel.showDialog(this, sequencer);
+        });
+
         // Add all components to panel in a single row
         panel.add(lastStepPanel);
         panel.add(directionPanel);
@@ -269,6 +289,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         panel.add(rangePanel);
         panel.add(clearPatternButton);
         panel.add(generatePatternButton);
+        panel.add(mixButton);  // Add the Mix button to the parameters panel
 
         return panel;
     }
@@ -280,7 +301,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Use GridLayout for perfect vertical alignment with grid cells
         JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, 1, 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
-        panel.setBackground(new Color(40, 40, 40)); // Match grid background
+        // panel.setBackground(new Color(40, 40, 40)); // Match grid background
         
         // Create drum buttons for standard drum kit sounds
         String[] drumNames = {
@@ -303,9 +324,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             // Create a Strike object for this drum pad with velocity and level settings
             Strike strike = new Strike();
             strike.setRootNote(defaultNotes[i]);
-            strike.setMinVelocity(80L);  
-            strike.setMaxVelocity(127L); 
-            strike.setLevel(100L);      
+            strike.setMinVelocity(80);  
+            strike.setMaxVelocity(127); 
+            strike.setLevel(100);      
             strike.setName(drumNames[i]);
             
             sequencer.setStrike(i, strike);
@@ -331,43 +352,294 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Use consistent cell size with even spacing
         JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, 16, 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        panel.setBackground(new Color(40, 40, 40));
+        // panel.setBackground(new Color(40, 40, 40));
         
         triggerButtons = new ArrayList<>();
         
         // Create grid buttons
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
             for (int step = 0; step < 16; step++) {
-                final int finalDrumIndex = drumIndex;
-                final int finalStep = step;
-                
-                // Create button with empty label
-                DrumSequencerGridButton button = new DrumSequencerGridButton("");
-                // Use consistent size for alignment
-                button.setPreferredSize(new Dimension(25, 25));
-                button.setMinimumSize(new Dimension(25, 25));
-                button.setMaximumSize(new Dimension(25, 25));
-                
-                // Make button visible
-                button.setBackground(Color.DARK_GRAY);
-                button.setOpaque(true);
-                
-                // Set toggle action
-                button.addActionListener(e -> {
-                    sequencer.toggleStep(finalDrumIndex, finalStep);
-                    button.setToggled(sequencer.isStepActive(finalDrumIndex, finalStep));
-                });
-                
-                // Set initial state
-                button.setToggled(sequencer.isStepActive(drumIndex, step));
-                
-                // Track and add
-                triggerButtons.add(button);
+                DrumSequencerGridButton button = createStepButton(drumIndex, step);
                 panel.add(button);
             }
         }
         
         return panel;
+    }
+
+    /**
+     * Create a step button with proper behavior
+     * @return The created button
+     */
+    private DrumSequencerGridButton createStepButton(int drumIndex, int step) {
+        final int finalDrumIndex = drumIndex;
+        final int finalStep = step;
+
+        DrumSequencerGridButton button = new DrumSequencerGridButton();
+        button.setToolTipText("Step " + (step + 1));
+        button.setToggleable(true);
+
+        // Create popup menu for right-click
+        JPopupMenu popupMenu = new JPopupMenu();
+        
+        // Add "Fill..." menu item
+        JMenuItem fillItem = new JMenuItem("Fill...");
+        fillItem.addActionListener(e -> {
+            showFillDialog(finalDrumIndex, finalStep);
+        });
+        popupMenu.add(fillItem);
+        
+        // Add "Clear Row" menu item
+        JMenuItem clearRowItem = new JMenuItem("Clear Row");
+        clearRowItem.addActionListener(e -> {
+            clearRow(finalDrumIndex);
+        });
+        popupMenu.add(clearRowItem);
+        
+        // Add separator and more pattern options
+        popupMenu.addSeparator();
+        
+        // JMenuItem everyItem = new JMenuItem("Every Step");
+        // everyItem.addActionListener(e -> {
+        //     applyPatternEveryN(finalDrumIndex, 1);
+        // });
+        // popupMenu.add(everyItem);
+
+        // Add "Every 2 Steps" pattern
+        JMenuItem every2Item = new JMenuItem("Every 2 Steps");
+        every2Item.addActionListener(e -> {
+            applyPatternEveryN(finalDrumIndex, 2);
+        });
+        popupMenu.add(every2Item);
+        
+        JMenuItem every3Item = new JMenuItem("Every 3 Steps");
+        every3Item.addActionListener(e -> {
+            applyPatternEveryN(finalDrumIndex, 3);
+        });
+        popupMenu.add(every3Item);
+ 
+        // Add "Every 4 Steps" pattern
+        JMenuItem every4Item = new JMenuItem("Every 4 Steps");
+        every4Item.addActionListener(e -> {
+            applyPatternEveryN(finalDrumIndex, 4);
+        });
+        popupMenu.add(every4Item);
+        
+        // Mouse adapter for left/right click handling
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                // Left click toggles the cell
+                if (e.getButton() == java.awt.event.MouseEvent.BUTTON1) {
+                    sequencer.toggleStep(finalDrumIndex, finalStep);
+                    button.setToggled(sequencer.isStepActive(finalDrumIndex, finalStep));
+                }
+                // Right click shows popup menu
+                else if (e.getButton() == java.awt.event.MouseEvent.BUTTON3) {
+                    popupMenu.show(button, e.getX(), e.getY());
+                }
+            }
+        });
+
+        // Set initial state
+        button.setToggled(sequencer.isStepActive(drumIndex, step));
+        
+        // Update appearance based on pattern length
+        updateStepButtonAppearance(button, drumIndex, step);
+        
+        // Add to our list of buttons
+        triggerButtons.add(button);
+        
+        return button;
+    }
+
+    /**
+     * Show dialog for filling pattern from a starting point
+     */
+    private void showFillDialog(int drumIndex, int startStep) {
+        // Create a dialog with pattern options
+        JDialog fillDialog = new JDialog();
+        fillDialog.setTitle("Fill Pattern");
+        fillDialog.setLayout(new BorderLayout());
+        fillDialog.setSize(300, 220);
+        fillDialog.setModal(true);
+        fillDialog.setLocationRelativeTo(this);
+        
+        // Create a panel for pattern types
+        JPanel patternPanel = new JPanel(new GridLayout(0, 1));
+        patternPanel.setBorder(BorderFactory.createTitledBorder("Pattern Type"));
+        
+        // Create radio buttons for pattern types
+        ButtonGroup patternGroup = new ButtonGroup();
+        JRadioButton everyStepRadio = new JRadioButton("Every Step");
+        JRadioButton everyNStepsRadio = new JRadioButton("Every N Steps");
+        JRadioButton euclideanRadio = new JRadioButton("Euclidean", true);
+        
+        patternGroup.add(everyStepRadio);
+        patternGroup.add(everyNStepsRadio);
+        patternGroup.add(euclideanRadio);
+        
+        patternPanel.add(everyStepRadio);
+        patternPanel.add(everyNStepsRadio);
+        patternPanel.add(euclideanRadio);
+        
+        // Parameter panel for inputs
+        JPanel paramPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        paramPanel.setBorder(BorderFactory.createTitledBorder("Parameters"));
+        
+        // N-step spinner
+        JLabel stepsLabel = new JLabel("Steps:");
+        SpinnerNumberModel stepsModel = new SpinnerNumberModel(2, 1, 16, 1);
+        JSpinner stepsSpinner = new JSpinner(stepsModel);
+        stepsSpinner.setEnabled(false);
+        
+        // Density spinner for Euclidean
+        JLabel densityLabel = new JLabel("Density:");
+        SpinnerNumberModel densityModel = new SpinnerNumberModel(4, 1, 16, 1);
+        JSpinner densitySpinner = new JSpinner(densityModel);
+        
+        paramPanel.add(stepsLabel);
+        paramPanel.add(stepsSpinner);
+        paramPanel.add(Box.createHorizontalStrut(10));
+        paramPanel.add(densityLabel);
+        paramPanel.add(densitySpinner);
+        
+        // Enable/disable appropriate controls based on selection
+        everyNStepsRadio.addActionListener(e -> {
+            stepsSpinner.setEnabled(true);
+            densitySpinner.setEnabled(false);
+        });
+        
+        everyStepRadio.addActionListener(e -> {
+            stepsSpinner.setEnabled(false);
+            densitySpinner.setEnabled(false);
+        });
+        
+        euclideanRadio.addActionListener(e -> {
+            stepsSpinner.setEnabled(false);
+            densitySpinner.setEnabled(true);
+        });
+        
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton applyButton = new JButton("Apply");
+        JButton cancelButton = new JButton("Cancel");
+        
+        buttonPanel.add(applyButton);
+        buttonPanel.add(cancelButton);
+        
+        // Add action listeners
+        applyButton.addActionListener(e -> {
+            int patternLength = sequencer.getPatternLength(drumIndex);
+            
+            if (everyStepRadio.isSelected()) {
+                // Fill every step from startStep to end
+                fillEveryStep(drumIndex, startStep, patternLength - 1);
+            } 
+            else if (everyNStepsRadio.isSelected()) {
+                // Fill every N steps
+                int n = (Integer) stepsSpinner.getValue();
+                fillEveryNSteps(drumIndex, startStep, patternLength - 1, n);
+            }
+            else {
+                // Euclidean pattern
+                int pulses = (Integer) densitySpinner.getValue();
+                fillEuclideanPattern(drumIndex, startStep, patternLength, pulses);
+            }
+            
+            fillDialog.dispose();
+        });
+        
+        cancelButton.addActionListener(e -> fillDialog.dispose());
+        
+        // Add panels to dialog
+        fillDialog.add(patternPanel, BorderLayout.NORTH);
+        fillDialog.add(paramPanel, BorderLayout.CENTER);
+        fillDialog.add(buttonPanel, BorderLayout.SOUTH);
+        
+        fillDialog.setVisible(true);
+    }
+
+    /**
+     * Fill pattern with every step active
+     */
+    private void fillEveryStep(int drumIndex, int startStep, int endStep) {
+        for (int step = startStep; step <= endStep; step++) {
+            setStepActive(drumIndex, step, true);
+        }
+    }
+
+    /**
+     * Fill pattern with every N steps active
+     */
+    private void fillEveryNSteps(int drumIndex, int startStep, int endStep, int n) {
+        for (int step = startStep; step <= endStep; step++) {
+            if ((step - startStep) % n == 0) {
+                setStepActive(drumIndex, step, true);
+            } else {
+                setStepActive(drumIndex, step, false);
+            }
+        }
+    }
+
+    /**
+     * Fill with an Euclidean pattern
+     */
+    private void fillEuclideanPattern(int drumIndex, int startStep, int patternLength, int pulses) {
+        boolean[] pattern = generateEuclideanPattern(startStep, patternLength, pulses);
+        
+        // Apply the pattern
+        for (int step = 0; step < patternLength; step++) {
+            setStepActive(drumIndex, step, pattern[step]);
+        }
+    }
+
+    /**
+     * Helper to set a step active and update UI
+     */
+    private void setStepActive(int drumIndex, int step, boolean active) {
+        // Update sequencer
+        if (sequencer.isStepActive(drumIndex, step) != active) {
+            sequencer.toggleStep(drumIndex, step);
+        }
+        
+        // Update UI
+        int buttonIndex = drumIndex * 16 + step;
+        if (buttonIndex < triggerButtons.size()) {
+            DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
+            button.setToggled(active);
+        }
+    }
+
+    /**
+     * Clear all steps in a row
+     */
+    private void clearRow(int drumIndex) {
+        int patternLength = sequencer.getPatternLength(drumIndex);
+        
+        // Clear all steps
+        for (int step = 0; step < patternLength; step++) {
+            if (sequencer.isStepActive(drumIndex, step)) {
+                setStepActive(drumIndex, step, false);
+            }
+        }
+    }
+
+    /**
+     * Apply a pattern with every N steps active
+     */
+    private void applyPatternEveryN(int drumIndex, int n) {
+        int patternLength = sequencer.getPatternLength(drumIndex);
+        
+        // Clear row first
+        clearRow(drumIndex);
+        
+        // Set every Nth step
+        for (int step = 0; step < patternLength; step++) {
+            if (step % n == 0) {
+                setStepActive(drumIndex, step, true);
+            }
+        }
     }
 
     /**
@@ -668,6 +940,86 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 } else {
                     button.setText("");
                 }
+            }
+        }
+    }
+
+    /**
+     * Generate a Euclidean rhythm pattern
+     * 
+     * @param startPosition Position to start the pattern (rotation)
+     * @param steps Total number of steps in the pattern
+     * @param pulses Number of active beats to distribute
+     * @return Boolean array with the pattern
+     */
+    private boolean[] generateEuclideanPattern(int startPosition, int steps, int pulses) {
+        boolean[] pattern = new boolean[steps];
+        
+        // Handle edge cases
+        if (pulses <= 0) return pattern;
+        if (pulses >= steps) {
+            Arrays.fill(pattern, true);
+            return pattern;
+        }
+        
+        // Generate the pattern using Bresenham's line algorithm
+        // which effectively creates evenly spaced pulses
+        int error = steps - pulses;
+        for (int i = 0; i < steps; i++) {
+            if (error < 0) {
+                pattern[(i + startPosition) % steps] = true;
+                error += steps - pulses;
+            } else {
+                pattern[(i + startPosition) % steps] = false;
+                error -= pulses;
+            }
+        }
+        
+        return pattern;
+    }
+
+    /**
+     * Update display of the Euclidean pattern as it's being created
+     */
+    private void updateEuclideanPatternDisplay(int drumIndex, boolean[] pattern) {
+        int patternLength = sequencer.getPatternLength(drumIndex);
+        
+        for (int step = 0; step < patternLength; step++) {
+            int buttonIndex = drumIndex * 16 + step;
+            if (buttonIndex < triggerButtons.size()) {
+                DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
+                button.setTemporaryState(pattern[step]);
+            }
+        }
+    }
+
+    /**
+     * Apply the final Euclidean pattern to the sequencer
+     */
+    private void applyEuclideanPattern(int drumIndex, boolean[] pattern) {
+        int patternLength = sequencer.getPatternLength(drumIndex);
+        
+        // First clear existing pattern
+        for (int step = 0; step < patternLength; step++) {
+            if (sequencer.isStepActive(drumIndex, step)) {
+                sequencer.toggleStep(drumIndex, step);
+            }
+        }
+        
+        // Set new pattern
+        for (int step = 0; step < patternLength; step++) {
+            if (pattern[step]) {
+                sequencer.toggleStep(drumIndex, step);
+            }
+        }
+        
+        // Update UI
+        for (int step = 0; step < patternLength; step++) {
+            int buttonIndex = drumIndex * 16 + step;
+            if (buttonIndex < triggerButtons.size()) {
+                DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
+                button.setToggled(sequencer.isStepActive(drumIndex, step));
+                button.clearTemporaryState();
             }
         }
     }

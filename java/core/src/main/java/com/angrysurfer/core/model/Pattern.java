@@ -88,7 +88,7 @@ public class Pattern {
 
     @JsonIgnore
     @Transient
-    private Quantizer quantizer = new Quantizer(Scale.getScale("C", "Chromatic"));
+    private Quantizer quantizer = new Quantizer(Scale.getScale("C", Scale.SCALE_CHROMATIC));
 
     @JsonIgnore
     @Transient

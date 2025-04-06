@@ -10,6 +10,7 @@ public class TriggerButton extends JToggleButton {
     private boolean highlighted = false;
     private boolean toggleable = false;
     private static final Dimension BUTTON_SIZE = new Dimension(30, 20);
+    private static final Color highlightColor = Color.YELLOW;
 
     public TriggerButton(String text) {
         super(text);
@@ -50,11 +51,13 @@ public class TriggerButton extends JToggleButton {
     }
 
     /**
-     * Set whether this step is currently highlighted (active step during playback)
+     * Set highlighted state (current playback position)
      */
     public void setHighlighted(boolean highlighted) {
-        this.highlighted = highlighted;
-        repaint(); // Request a repaint to show the highlight
+        if (this.highlighted != highlighted) {
+            this.highlighted = highlighted;
+            repaint(); // Force visual update
+        }
     }
 
     /**
@@ -64,16 +67,25 @@ public class TriggerButton extends JToggleButton {
         return highlighted;
     }
 
+    /**
+     * Override paint component to properly show both selected and highlighted states
+     */
     @Override
     protected void paintComponent(Graphics g) {
+        // Call parent for basic rendering
         super.paintComponent(g);
         
-        // If this step is highlighted (current playback position)
-        if (highlighted) {
-            Graphics2D g2d = (Graphics2D) g.create();
-            g2d.setColor(Color.YELLOW); // Or your preferred highlight color
-            g2d.setStroke(new BasicStroke(2));
-            g2d.drawRect(1, 1, getWidth() - 3, getHeight() - 3);
+        // Add custom painting based on state
+        if (isHighlighted()) {
+            Graphics2D g2d = (Graphics2D)g.create();
+            g2d.setColor(highlightColor);
+            
+            // Draw highlight indicator (e.g., a border)
+            int thickness = 3;
+            g2d.setStroke(new BasicStroke(thickness));
+            g2d.drawRect(thickness/2, thickness/2, 
+                         getWidth()-thickness, getHeight()-thickness);
+            
             g2d.dispose();
         }
 

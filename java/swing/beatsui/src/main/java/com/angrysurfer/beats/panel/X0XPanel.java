@@ -23,7 +23,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
 import com.angrysurfer.core.service.InternalSynthManager;
 
@@ -171,7 +170,7 @@ public class X0XPanel extends JPanel implements IBusListener {
         containerPanel.setBorder(BorderFactory.createEmptyBorder());
 
         JTabbedPane x0xPanel = createX0XPanel();
-        containerPanel.add(new JScrollPane(x0xPanel), BorderLayout.CENTER);
+        containerPanel.add(x0xPanel, BorderLayout.CENTER);
 
         add(containerPanel);
     }
@@ -179,11 +178,25 @@ public class X0XPanel extends JPanel implements IBusListener {
     private JTabbedPane createX0XPanel() {
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        tabbedPane.addTab("Drums", createDrumPanel());
-        tabbedPane.addTab("Drum Effects", createDrumEffectsPanel());
-        tabbedPane.addTab("Melodic", createMelodicSequencerPanel());
+        tabbedPane.addTab("Poly Drum", createDrumPanel());
+        tabbedPane.addTab("Poly Effects", createDrumEffectsPanel());
+        tabbedPane.addTab("Mono 1", createMelodicSequencerPanel(3));
+        tabbedPane.addTab("Mono 2", createMelodicSequencerPanel(4));
+        tabbedPane.addTab("Mono 3", createMelodicSequencerPanel(5));
+        tabbedPane.addTab("Mono 4", createMelodicSequencerPanel(6));
         tabbedPane.addTab("Synth", createInstrumentPanel());
+        tabbedPane.addTab("Chords", createChordSequencerPanel());
+        tabbedPane.addTab("Mixer", createMixerPanel());
+
         return tabbedPane;
+    }
+    private Component createMixerPanel() {
+        return new MixerPanel(synthesizer);
+    }
+
+
+    private Component createChordSequencerPanel() {
+        return new JPanel();
     }
 
     private Component createDrumPanel() {
@@ -200,14 +213,13 @@ public class X0XPanel extends JPanel implements IBusListener {
         return drumEffectsSequencerPanel;
     }
 
-    private Component createMelodicSequencerPanel() {
-        melodicSequencerPanel = new MelodicSequencerPanel(noteEvent -> {
+    private Component createMelodicSequencerPanel(int channel) {
+        melodicSequencerPanel = new MelodicSequencerPanel(channel, noteEvent -> {
             // Add logging to debug
-            logger.info("Playing note: {}, velocity: {}, duration: {}",
-                    noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
-
+            // logger.info("Playing note: {}, velocity: {}, duration: {}",
+            //         noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
             // Call the playNote method
-            playNote(noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
+            // playNote(noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
         });
 
         return melodicSequencerPanel;

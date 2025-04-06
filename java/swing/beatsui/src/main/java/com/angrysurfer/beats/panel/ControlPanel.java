@@ -552,7 +552,7 @@ public class ControlPanel extends JPanel {
             logger.info("Updating player level to: " + value);
 
             // Update player
-            activePlayer.setLevel((long) value);
+            activePlayer.setLevel(value);
 
             // Save the change and notify UI
             PlayerManager.getInstance().updatePlayerLevel(activePlayer, value);
@@ -570,7 +570,7 @@ public class ControlPanel extends JPanel {
             logger.info("Updating player swing to: " + value);
 
             // Update player
-            activePlayer.setSwing((long) value);
+            activePlayer.setSwing(value);
 
             // Save the change and notify UI
             PlayerManager.getInstance().updatePlayerSwing(activePlayer, value);
@@ -609,7 +609,7 @@ public class ControlPanel extends JPanel {
                 // Update max velocity to match min velocity
                 listenersEnabled = false; // Prevent feedback loop
                 velocityMaxDial.setValue(minValue);
-                activePlayer.setMaxVelocity((long) minValue);
+                activePlayer.setMaxVelocity(minValue);
                 
                 // Force immediate visual update of the max dial
                 velocityMaxDial.repaint();
@@ -621,7 +621,7 @@ public class ControlPanel extends JPanel {
             }
 
             // Update player
-            activePlayer.setMinVelocity((long) minValue);
+            activePlayer.setMinVelocity(minValue);
 
             // Save the changes and notify UI
             PlayerManager.getInstance().updatePlayerVelocityMin(activePlayer, minValue);
@@ -645,7 +645,7 @@ public class ControlPanel extends JPanel {
                 // Update min velocity to match max velocity
                 listenersEnabled = false; // Prevent feedback loop
                 velocityMinDial.setValue(maxValue);
-                activePlayer.setMinVelocity((long) maxValue);
+                activePlayer.setMinVelocity(maxValue);
                 
                 // Force immediate visual update of the min dial
                 velocityMinDial.repaint();
@@ -657,7 +657,7 @@ public class ControlPanel extends JPanel {
             }
 
             // Update player
-            activePlayer.setMaxVelocity((long) maxValue);
+            activePlayer.setMaxVelocity(maxValue);
 
             // Save the changes and notify UI
             PlayerManager.getInstance().updatePlayerVelocityMax(activePlayer, maxValue);
@@ -675,7 +675,7 @@ public class ControlPanel extends JPanel {
             logger.info("Updating player pan to: " + value);
 
             // Update player and save
-            activePlayer.setPanPosition((long) value);
+            activePlayer.setPanPosition(value);
             PlayerManager.getInstance().updatePlayerPan(activePlayer, value);
 
             // Request row refresh
@@ -691,7 +691,7 @@ public class ControlPanel extends JPanel {
             logger.info("Updating player random to: " + value);
 
             // Update player and save
-            activePlayer.setRandomDegree((long) value);
+            activePlayer.setRandomDegree(value);
             PlayerManager.getInstance().updatePlayerRandom(activePlayer, value);
 
             // Request row refresh

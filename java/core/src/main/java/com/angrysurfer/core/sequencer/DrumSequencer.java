@@ -49,6 +49,8 @@ public class DrumSequencer implements IBusListener {
     private TimingDivision[] timingDivisions; // Timing for each drum
     private boolean[] loopingFlags;         // Loop setting for each drum
     private int[] bounceDirections;         // 1 for forward, -1 for backward (for bounce mode)
+    private int[] velocities;               // Velocity for each drum
+    private int[] originalVelocities;       // Saved original velocities for resetting
 
     // Pattern data storage
     private boolean[][] patterns;           // [drumIndex][stepIndex]
@@ -77,6 +79,12 @@ public class DrumSequencer implements IBusListener {
         timingDivisions = new TimingDivision[DRUM_PAD_COUNT];
         loopingFlags = new boolean[DRUM_PAD_COUNT];
         bounceDirections = new int[DRUM_PAD_COUNT];
+
+        // Initialize velocity arrays
+        velocities = new int[DRUM_PAD_COUNT];
+        originalVelocities = new int[DRUM_PAD_COUNT];
+        Arrays.fill(velocities, 100);  // Default to 100
+        Arrays.fill(originalVelocities, 100);
 
         // Default values
         Arrays.fill(patternLengths, 16);      // Default to 16 steps
@@ -118,58 +126,60 @@ public class DrumSequencer implements IBusListener {
                 continue;
             }
 
-            // Get parameters for this drum
-            Direction direction = directions[drumIndex];
-            boolean isLooping = loopingFlags[drumIndex];
-            int patternLength = patternLengths[drumIndex];
-            TimingDivision timing = timingDivisions[drumIndex];
-
             // Check if it's time for next step for this drum
             if (tick >= nextStepTick[drumIndex]) {
                 // Calculate ticks for this drum's timing division
-                int drumTicksPerStep = calculateTicksPerStep(timing);
+                int drumTicksPerStep = calculateTicksPerStep(timingDivisions[drumIndex]);
 
                 // Set next step tick
                 nextStepTick[drumIndex] = tick + drumTicksPerStep;
 
                 // Handle if pattern is completed and not looping
-                if (patternCompleted[drumIndex] && !isLooping) {
+                if (patternCompleted[drumIndex] && !loopingFlags[drumIndex]) {
                     continue; // Skip this drum
                 }
 
-                // Store old step for UI update
-                int oldStep = currentStep[drumIndex];
-
-                // Calculate next step based on direction
-                calculateNextStep(drumIndex);
-
-                // Check for note trigger
-                if (patterns[drumIndex][currentStep[drumIndex]]) {
-                    // Trigger the note
-                    Strike strike = strikes[drumIndex];
-                    if (strike != null && noteEventListener != null) {
-                        logger.debug("Triggering note: drum={}, note={}, level={}",
-                                drumIndex, strike.getRootNote(), strike.getLevel());
-                        noteEventListener.accept(
-                                new NoteEvent(
-                                        strike.getRootNote(),
-                                        strike.getLevel().intValue(),
-                                        250 // Use a default duration in milliseconds
-                                )
-                        );
-                    } else {
-                        logger.warn("Can't trigger note: strike={}, listener={}",
-                                strike, noteEventListener);
-                    }
-                }
-
-                // Notify UI of step change
-                if (stepUpdateListener != null) {
-                    stepUpdateListener.accept(
-                            new DrumStepUpdateEvent(drumIndex, oldStep, currentStep[drumIndex])
-                    );
-                }
+                // Process the current step for this drum
+                processStep(drumIndex);
             }
+        }
+    }
+
+    /**
+     * Process the current step for a drum
+     * 
+     * @param drumIndex The drum to process
+     */
+    private void processStep(int drumIndex) {
+        // Get the current step for this drum
+        int step = currentStep[drumIndex];
+        
+        // Check if this step is active
+        if (patterns[drumIndex][step]) {
+            // Get the Strike for this drum
+            Strike strike = strikes[drumIndex];
+            
+            // If we have a valid Strike and note event listener, trigger the note
+            if (strike != null && noteEventListener != null) {
+                int note = strike.getRootNote();
+                
+                // Use the velocity from the velocities array
+                int velocity = velocities[drumIndex];
+                
+                // Create a note event with the note and velocity
+                NoteEvent event = new NoteEvent(note, velocity, 100);
+                noteEventListener.accept(event);
+            }
+        }
+        
+        // Calculate next step
+        calculateNextStep(drumIndex);
+        
+        // Notify listeners of step update
+        if (stepUpdateListener != null) {
+            int oldStep = step;
+            int newStep = currentStep[drumIndex];
+            stepUpdateListener.accept(new DrumStepUpdateEvent(drumIndex, oldStep, newStep));
         }
     }
 
@@ -366,6 +376,34 @@ public class DrumSequencer implements IBusListener {
     public void setLooping(int drumIndex, boolean loop) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
             loopingFlags[drumIndex] = loop;
+
+            // Notify UI of parameter change
+            CommandBus.getInstance().publish(
+                    Commands.PATTERN_PARAMS_CHANGED,
+                    this,
+                    drumIndex
+            );
+        }
+    }
+
+    public int getVelocity(int drumIndex) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            return velocities[drumIndex];
+        }
+        return 100; // Default value
+    }
+
+    public void setVelocity(int drumIndex, int velocity) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            // Constrain to valid MIDI range
+            velocity = Math.max(0, Math.min(127, velocity));
+            velocities[drumIndex] = velocity;
+
+            // If we have a Strike object for this drum, update its level
+            Strike strike = getStrike(drumIndex);
+            if (strike != null) {
+                strike.setLevel(velocity);
+            }
 
             // Notify UI of parameter change
             CommandBus.getInstance().publish(

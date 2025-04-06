@@ -2,8 +2,8 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -26,7 +26,7 @@ public class DrumSequencerInfoPanel extends JPanel {
 
     public DrumSequencerInfoPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
-        
+
         // Use a BorderLayout for the panel
         setLayout(new BorderLayout(10, 5));
         setBorder(BorderFactory.createTitledBorder("Selected Drum"));
@@ -49,6 +49,8 @@ public class DrumSequencerInfoPanel extends JPanel {
         infoPanel.add(new JLabel("|"));
         infoPanel.add(patternUsageLabel);
         
+        infoPanel.setPreferredSize(new Dimension(400, 30));
+        infoPanel.setMinimumSize(new Dimension(400, 30));
         // Add info panel to main layout
         add(infoPanel, BorderLayout.CENTER);
         
@@ -81,7 +83,7 @@ public class DrumSequencerInfoPanel extends JPanel {
         
         // Update panel title
         setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.ORANGE, 2),
+            // BorderFactory.createLineBorder(Color.ORANGE, 2),
             "Pad" + (drumPadIndex + 1)
         ));
         

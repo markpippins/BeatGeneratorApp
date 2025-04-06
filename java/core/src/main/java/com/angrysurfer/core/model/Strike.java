@@ -2,11 +2,9 @@ package com.angrysurfer.core.model;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.LongStream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,10 +13,7 @@ import lombok.Setter;
 @Setter
 public class Strike extends Player {
 
-    private static final Logger logger = LoggerFactory.getLogger(Strike.class.getCanonicalName());
-
-    static final Random rand = new Random();
-
+ 
     public static int KICK = 36;
     public static int SNARE = 37;
     public static int CLOSED_HAT = 38;
@@ -41,7 +36,7 @@ public class Strike extends Player {
     }
 
     public Strike(String name, Session session, InstrumentWrapper instrument, int note,
-            List<Integer> allowableControlMessages, long minVelocity, long maxVelocity) {
+            List<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
         super(name, session, instrument, allowableControlMessages);
         setRootNote(note);
         setMinVelocity(minVelocity);
@@ -49,7 +44,7 @@ public class Strike extends Player {
     }
 
     @Override
-    public void onTick(long tick, double beat, long bar, long part, long tickCount, long beatCount, long barCount, long partCount) {
+    public void onTick(TimingUpdate timingUpdate) {
         // Get additional timing values from the session
         Session session = getSession();
         if (session == null) {
@@ -58,11 +53,11 @@ public class Strike extends Player {
         }
       
         // Check if we should play based on the current timing
-        boolean shouldPlayResult = shouldPlay(tick, beat, bar, part, tickCount, beatCount, barCount, partCount);
+        boolean shouldPlayResult = shouldPlay(timingUpdate);
         
         if (shouldPlayResult) {
             try {
-                long noteToPlay = getRootNote();
+                int noteToPlay = getRootNote();
                 // System.out.println("Strike.onTick playing note: " + noteToPlay);
                 drumNoteOn(noteToPlay);
             } catch(Exception e) {

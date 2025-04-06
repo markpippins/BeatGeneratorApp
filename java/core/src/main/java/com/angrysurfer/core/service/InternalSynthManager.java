@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.sound.midi.Instrument;
 import javax.sound.midi.MidiSystem;
@@ -24,7 +25,6 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.sequencer.DrumItem;
 
-
 /**
  * Manager for internal synthesizer instruments and presets. This singleton
  * provides access to internal synthesizers and their preset information.
@@ -39,7 +39,7 @@ public class InternalSynthManager {
 
     // Use LinkedHashMap to preserve insertion order
     private final LinkedHashMap<String, Soundbank> soundbanks = new LinkedHashMap<>();
-    
+
     // Map to store available banks for each soundbank (by name)
     private Map<String, List<Integer>> availableBanksMap = new HashMap<>();
 
@@ -92,13 +92,13 @@ public class InternalSynthManager {
                                 // Required synthesizer parameter
                                 if (params.length >= 5 && params[4] instanceof Synthesizer) {
                                     Synthesizer targetSynth = (Synthesizer) params[4];
-                                    
+
                                     // Optional soundbank name parameter
                                     String soundbankName = null;
                                     if (params.length >= 6 && params[5] instanceof String) {
                                         soundbankName = (String) params[5];
                                     }
-                                    
+
                                     logger.info("PLAY_TEST_NOTE with explicit synthesizer");
 
                                     // Play the note with the specified synthesizer and soundbank
@@ -336,7 +336,7 @@ public class InternalSynthManager {
 
             // Add the default Java soundbank as the first entry
             soundbanks.put("Java Internal Soundbank", null);
-            
+
             // Initialize default available banks
             availableBanksMap.put("Java Internal Soundbank", Arrays.asList(0));
 
@@ -349,9 +349,9 @@ public class InternalSynthManager {
 
             for (File dir : soundbankDirs) {
                 if (dir.exists() && dir.isDirectory()) {
-                    File[] soundbankFiles = dir.listFiles((d, name) -> 
-                        name.toLowerCase().endsWith(".sf2") || name.toLowerCase().endsWith(".dls"));
-                    
+                    File[] soundbankFiles = dir.listFiles((d, name)
+                            -> name.toLowerCase().endsWith(".sf2") || name.toLowerCase().endsWith(".dls"));
+
                     if (soundbankFiles != null) {
                         for (File file : soundbankFiles) {
                             try {
@@ -359,16 +359,16 @@ public class InternalSynthManager {
                                 if (soundbank != null && !soundbanks.containsKey(soundbank.getName())) {
                                     String sbName = soundbank.getName();
                                     soundbanks.put(sbName, soundbank);
-                                    
+
                                     // Initialize available banks for this soundbank
                                     availableBanksMap.put(sbName, determineAvailableBanks(soundbank));
-                                    
-                                    logger.info("Loaded soundbank: {} from {}", 
-                                        sbName, file.getAbsolutePath());
+
+                                    logger.info("Loaded soundbank: {} from {}",
+                                            sbName, file.getAbsolutePath());
                                 }
                             } catch (Exception e) {
-                                logger.error("Error loading soundbank {}: {}", 
-                                    file.getName(), e.getMessage());
+                                logger.error("Error loading soundbank {}: {}",
+                                        file.getName(), e.getMessage());
                             }
                         }
                     }
@@ -383,14 +383,14 @@ public class InternalSynthManager {
 
     /**
      * Determine available banks for a soundbank
-     * 
+     *
      * @param soundbank The soundbank to analyze
      * @return List of available bank numbers
      */
     private List<Integer> determineAvailableBanks(Soundbank soundbank) {
         List<Integer> banks = new ArrayList<>();
         banks.add(0); // Always add bank 0 (GM sounds)
-        
+
         if (soundbank != null) {
             // Check for multi-bank support
             boolean hasMultipleBanks = false;
@@ -409,7 +409,7 @@ public class InternalSynthManager {
                 }
             }
         }
-        
+
         return banks;
     }
 
@@ -435,10 +435,10 @@ public class InternalSynthManager {
                     }
 
                     soundbanks.put(name, soundbank);
-                    
+
                     // Initialize available banks for this soundbank
                     availableBanksMap.put(name, determineAvailableBanks(soundbank));
-                    
+
                     logger.info("Loaded soundbank: " + name);
                     return soundbank;
                 } else {
@@ -452,15 +452,15 @@ public class InternalSynthManager {
     }
 
     /**
-     * DEPRECATED - Use loadSoundbankByName instead
-     * This method is maintained for backward compatibility only
+     * DEPRECATED - Use loadSoundbankByName instead This method is maintained
+     * for backward compatibility only
      */
     @Deprecated
     public boolean selectSoundbank(int index) {
         try {
             // Convert index to name
             List<String> names = new ArrayList<>(soundbanks.keySet());
-            
+
             if (index < 0 || index >= names.size()) {
                 logger.error("Invalid soundbank index: {}", index);
                 return false;
@@ -475,8 +475,8 @@ public class InternalSynthManager {
     }
 
     /**
-     * Load a soundbank by name
-     * Note: This method no longer updates a "current" soundbank
+     * Load a soundbank by name Note: This method no longer updates a "current"
+     * soundbank
      *
      * @param name Name of the soundbank to select
      * @return true if the soundbank exists, false otherwise
@@ -487,7 +487,7 @@ public class InternalSynthManager {
                 logger.error("Soundbank not found: {}", name);
                 return false;
             }
-            
+
             logger.info("Soundbank exists: {}", name);
             return true;
         } catch (Exception e) {
@@ -514,8 +514,8 @@ public class InternalSynthManager {
     }
 
     /**
-     * DEPRECATED - Use getAvailableBanksByName instead
-     * This method is maintained for backward compatibility only
+     * DEPRECATED - Use getAvailableBanksByName instead This method is
+     * maintained for backward compatibility only
      */
     @Deprecated
     public List<Integer> getAvailableBanks(int soundbankIndex) {
@@ -525,7 +525,7 @@ public class InternalSynthManager {
             String name = names.get(soundbankIndex);
             return getAvailableBanksByName(name);
         }
-        
+
         // Return default if invalid index
         List<Integer> defaultBanks = new ArrayList<>();
         defaultBanks.add(0);
@@ -538,7 +538,10 @@ public class InternalSynthManager {
      * @return List of soundbank names
      */
     public List<String> getSoundbankNames() {
-        return new ArrayList<>(soundbanks.keySet());
+        List<String> result = new ArrayList<>(soundbanks.keySet());
+        // result = result.stream().filter(r -> r != null && !r.isEmpty()).toList();
+        result.sort(String::compareToIgnoreCase);
+        return result;
     }
 
     /**
@@ -551,8 +554,8 @@ public class InternalSynthManager {
     }
 
     /**
-     * DEPRECATED - Use getSoundbankByName instead
-     * This method is maintained for backward compatibility only
+     * DEPRECATED - Use getSoundbankByName instead This method is maintained for
+     * backward compatibility only
      */
     @Deprecated
     public Soundbank getSoundbank(int index) {
@@ -611,7 +614,7 @@ public class InternalSynthManager {
                                 // Make sure program is in valid range
                                 if (program >= 0 && program < 128) {
                                     presetNames.set(program, instrument.getName());
-                                    logger.info("Found instrument: {} (Bank {}, Program {})", 
+                                    logger.info("Found instrument: {} (Bank {}, Program {})",
                                             instrument.getName(), patch.getBank(), patch.getProgram());
                                 }
                             }
@@ -646,7 +649,8 @@ public class InternalSynthManager {
     }
 
     /**
-     * Get preset names for a specific soundbank and bank (already had the correct signature)
+     * Get preset names for a specific soundbank and bank (already had the
+     * correct signature)
      *
      * @param soundbankName Name of the soundbank
      * @param bank The bank number
@@ -834,8 +838,10 @@ public class InternalSynthManager {
      * @param channel MIDI channel (0-15)
      * @param note Note number (0-127)
      * @param velocity Velocity (0-127)
-     * @param preset Optional preset number to select before playing (-1 to use current preset)
-     * @param soundbankName Optional name of the soundbank to use for bank selection
+     * @param preset Optional preset number to select before playing (-1 to use
+     * current preset)
+     * @param soundbankName Optional name of the soundbank to use for bank
+     * selection
      */
     public void playTestNote(Synthesizer synth, int channel, int note, int velocity, int preset, String soundbankName) {
         try {
@@ -854,13 +860,13 @@ public class InternalSynthManager {
                     // Get the first bank from available banks for this soundbank
                     List<Integer> banks = availableBanksMap.get(soundbankName);
                     Integer bankToUse = (banks != null && !banks.isEmpty()) ? banks.get(0) : 0;
-                    
+
                     // Send bank select MSB (CC 0)
                     synth.getChannels()[safeChannel].controlChange(0, 0);
 
                     // Send bank select LSB (CC 32) 
                     synth.getChannels()[safeChannel].controlChange(32, bankToUse);
-                    
+
                     logger.info("Using bank {} for soundbank {}", bankToUse, soundbankName);
                 }
 
@@ -901,7 +907,7 @@ public class InternalSynthManager {
 
     /**
      * Get a soundbank by name (renamed from getCurrentSoundbank)
-     * 
+     *
      * @param soundbankName Name of the soundbank to get
      * @return The soundbank or null if not found
      */
@@ -910,7 +916,8 @@ public class InternalSynthManager {
     }
 
     /**
-     * DEPRECATED - Use getSoundbank(String) or getSoundbankByName(String) instead
+     * DEPRECATED - Use getSoundbank(String) or getSoundbankByName(String)
+     * instead
      */
     @Deprecated
     public Soundbank getCurrentSoundbank() {
@@ -994,24 +1001,24 @@ public class InternalSynthManager {
 
     /**
      * Get a list of available drum sounds for channel 9
-     * 
+     *
      * @return List of DrumItems
      */
     public List<DrumItem> getDrumItems() {
         List<DrumItem> items = new ArrayList<>();
-        
+
         // Add standard GM drum sounds (35-81)
         for (int note = 35; note <= 81; note++) {
             String drumName = getDrumName(note);
             items.add(new DrumItem(note, note + ": " + drumName));
         }
-        
+
         return items;
     }
 
     /**
      * Apply preset change to the specified instrument
-     * 
+     *
      * @param instrument The instrument to apply changes to
      * @param preset The preset number to apply
      */
@@ -1019,30 +1026,30 @@ public class InternalSynthManager {
         if (instrument == null) {
             return;
         }
-        
+
         try {
             // Get channel, bank and other required values
             // int channel = instrument.getChannel();
             Integer bankIndex = instrument.getBankIndex();
-            
+
             if (bankIndex == null) {
                 bankIndex = 0; // Default to bank 0
             }
-            
+
             // For standard MIDI, bank is split into MSB/LSB controller values
             int bankMSB = (bankIndex >> 7) & 0x7F;  // Controller 0
             int bankLSB = bankIndex & 0x7F;         // Controller 32
-            
+
             // Send bank select messages
             instrument.controlChange(channel, 0, bankMSB);   // Bank select MSB
             instrument.controlChange(channel, 32, bankLSB);  // Bank select LSB
-            
+
             // Send program change
             instrument.programChange(channel, 0, preset);
-            
-            logger.info("Applied preset change: channel={}, bank={}, preset={}", 
+
+            logger.info("Applied preset change: channel={}, bank={}, preset={}",
                     channel, bankIndex, preset);
-                    
+
         } catch (Exception e) {
             logger.error("Error applying preset change: {}", e.getMessage());
         }
@@ -1050,7 +1057,7 @@ public class InternalSynthManager {
 
     /**
      * Play a preview note using the specified instrument and preset
-     * 
+     *
      * @param instrument The instrument to use
      * @param preset The preset number to play
      */
@@ -1058,24 +1065,23 @@ public class InternalSynthManager {
         if (instrument == null) {
             return;
         }
-        
+
         try {
             // Make sure device is open
             if (!instrument.getDevice().isOpen()) {
                 instrument.getDevice().open();
             }
-            
+
             // Get channel
             // int channel = instrument.getChannel();
-            
             // Apply the preset first
             applyPresetChange(instrument, channel, preset);
-            
+
             // Play a C major chord (C4, E4, G4)
             instrument.noteOn(channel, 60, 100); // C4
             instrument.noteOn(channel, 64, 100); // E4
             instrument.noteOn(channel, 67, 100); // G4
-            
+
             // Schedule note off after 500ms
             new Thread(() -> {
                 try {
@@ -1087,7 +1093,7 @@ public class InternalSynthManager {
                     // Ignore interruption
                 }
             }).start();
-            
+
         } catch (Exception e) {
             logger.error("Error playing preview: {}", e.getMessage());
         }
@@ -1095,7 +1101,7 @@ public class InternalSynthManager {
 
     /**
      * Play a drum sound preview on channel 9
-     * 
+     *
      * @param instrument The instrument to use
      * @param noteNumber The drum note number to play
      */
@@ -1103,26 +1109,25 @@ public class InternalSynthManager {
         if (instrument == null) {
             return;
         }
-        
+
         try {
             // Make sure device is open
             if (!instrument.getDevice().isOpen()) {
                 instrument.getDevice().open();
             }
-            
+
             // For drum channel (always 9)
             int drumChannel = 9;
-            
+
             // Apply standard drum kit (bank 0, program 0)
             instrument.controlChange(drumChannel, 0, 0);   // Bank MSB
             instrument.controlChange(drumChannel, 32, 0);  // Bank LSB
             instrument.programChange(drumChannel, 0, 0);   // Program 0
-            
+
             // Play the drum sound
             instrument.noteOn(drumChannel, noteNumber, 100);
-            
+
             // No need to schedule noteOff for percussion sounds
-            
         } catch (Exception e) {
             logger.error("Error playing drum preview: {}", e.getMessage());
         }
@@ -1130,7 +1135,7 @@ public class InternalSynthManager {
 
     /**
      * Load a soundbank from a file
-     * 
+     *
      * @param file The soundbank file to load
      * @return The name of the loaded soundbank
      */
@@ -1138,15 +1143,15 @@ public class InternalSynthManager {
         try {
             // Load the soundbank
             Soundbank soundbank = loadSoundbankFile(file);
-            
+
             if (soundbank != null) {
                 // Add to soundbank map
                 String name = soundbank.getName();
                 soundbanks.put(name, soundbank);
-                
+
                 // Determine available banks
                 availableBanksMap.put(name, determineAvailableBanks(soundbank));
-                
+
                 logger.info("Loaded soundbank: {} from {}", name, file.getAbsolutePath());
                 return name;
             }
@@ -1158,6 +1163,7 @@ public class InternalSynthManager {
 
     /**
      * Delete a soundbank by name
+     *
      * @param name The name of the soundbank to delete
      * @return true if deleted successfully, false otherwise
      */
@@ -1165,17 +1171,17 @@ public class InternalSynthManager {
         if (name == null || name.isEmpty() || !soundbanks.containsKey(name)) {
             return false;
         }
-        
+
         try {
             // Remove from soundbanks map
             soundbanks.remove(name);
-            
+
             // Remove from available banks map
             availableBanksMap.remove(name);
-            
+
             // Log the deletion
             logger.info("Deleted soundbank: {}", name);
-            
+
             return true;
         } catch (Exception e) {
             logger.error("Error deleting soundbank {}: {}", name, e.getMessage());

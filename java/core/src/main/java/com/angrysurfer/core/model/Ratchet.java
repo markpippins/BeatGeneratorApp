@@ -3,10 +3,10 @@ package com.angrysurfer.core.model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -74,13 +74,13 @@ public class Ratchet extends Strike {
     }
 
     @Override
-    public void onTick(long tick, double beat, long bar, long part, long tickCount, long beatCount, long barCount, long partCount) {
+    public void onTick(TimingUpdate timingUpdate) {
 
         if (isProbable()) {
-            drumNoteOn((long) (getRootNote() + getSession().getNoteOffset()));
+            drumNoteOn((getRootNote() + getSession().getNoteOffset()));
         }
 
-        if (tickCount > targetTick + 1) {
+        if (timingUpdate.tickCount() > targetTick + 1) {
             // First publish that this player is being deleted
             CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this, this);
             logger.info("Published PLAYER_DELETED for Ratchet: {}", getName());

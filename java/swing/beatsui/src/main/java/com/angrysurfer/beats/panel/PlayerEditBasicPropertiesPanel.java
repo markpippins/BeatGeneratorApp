@@ -116,7 +116,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
 
         // Channel spinner (0-15)
         channelSpinner = new JSpinner(new SpinnerNumberModel(
-                player.getChannel(), // value
+                (long) player.getChannel(), // value
                 0, // min
                 15, // max
                 1 // step
@@ -261,7 +261,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         presetSpinner.addChangeListener(e -> {
             if (!initializing) {
                 int preset = ((Number) presetSpinner.getValue()).intValue();
-                player.setPreset((long) preset);
+                player.setPreset(preset);
             }
         });
 
@@ -310,11 +310,11 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                 PresetItem item = (PresetItem) presetCombo.getSelectedItem();
 
                 // Update player's preset
-                player.setPreset((long) item.getNumber());
+                player.setPreset(item.getNumber());
 
                 // Update instrument's current preset
                 if (player.getInstrument() != null) {
-                    player.getInstrument().setCurrentPreset((long) item.getNumber());
+                    player.getInstrument().setCurrentPreset(item.getNumber());
                 }
 
                 // Apply preset change to instrument
@@ -984,8 +984,8 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             if (bank != null && preset != null) {
                 // Store values in instrument
                 instrument.setBankIndex(bank);
-                instrument.setCurrentPreset(preset.longValue());
-                player.setPreset(preset.longValue());
+                instrument.setCurrentPreset(preset);
+                player.setPreset(preset);
 
                 // For synths, use the InstrumentWrapper's method to apply bank/program changes
                 instrument.applyBankAndProgram(channel);
@@ -1063,7 +1063,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
 
         // For external instruments, ensure preset is updated from spinner
         if (!isInternalSynth && !isDrumChannel && presetSpinner.isVisible()) {
-            player.setPreset(((Number) presetSpinner.getValue()).longValue());
+            player.setPreset((Integer) presetSpinner.getValue());
         }
 
         // For internal instruments, apply soundbank/bank settings
