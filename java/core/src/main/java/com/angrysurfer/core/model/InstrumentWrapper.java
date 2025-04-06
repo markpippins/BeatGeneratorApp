@@ -145,31 +145,31 @@ public class InstrumentWrapper implements Serializable {
         return assignments.getOrDefault(cc, "NONE");
     }
 
-    public void channelPressure(int channel, long data1, long data2)
+    public void channelPressure(int channel, int data1, int data2)
             throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, channel, (int) data1, (int) data2));
     }
 
-    public void controlChange(int channel, long data1, long data2)
+    public void controlChange(int channel, int data1, int data2)
             throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, (int) data1, (int) data2));
     }
 
-    public void noteOn(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+    public void noteOn(int channel, int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, channel, (int) data1,
                 (int) data2));
     }
 
-    public void noteOff(int channel, long data1, long data2) throws InvalidMidiDataException, MidiUnavailableException {
+    public void noteOff(int channel, int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.NOTE_OFF, channel, (int) data1, (int) data2));
     }
 
-    public void polyPressure(int channel, long data1, long data2)
+    public void polyPressure(int channel, int data1, int data2)
             throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.POLY_PRESSURE, channel, (int) data1, (int) data2));
     }
 
-    public void programChange(int channel, long data1, long data2)
+    public void programChange(int channel, int data1, int data2)
             throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.PROGRAM_CHANGE, channel, (int) data1, (int) data2));
     }

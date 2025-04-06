@@ -23,7 +23,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
 import com.angrysurfer.core.service.InternalSynthManager;
 
@@ -203,11 +202,10 @@ public class X0XPanel extends JPanel implements IBusListener {
     private Component createMelodicSequencerPanel() {
         melodicSequencerPanel = new MelodicSequencerPanel(noteEvent -> {
             // Add logging to debug
-            logger.info("Playing note: {}, velocity: {}, duration: {}",
-                    noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
-
+            // logger.info("Playing note: {}, velocity: {}, duration: {}",
+            //         noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
             // Call the playNote method
-            playNote(noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
+            // playNote(noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
         });
 
         return melodicSequencerPanel;

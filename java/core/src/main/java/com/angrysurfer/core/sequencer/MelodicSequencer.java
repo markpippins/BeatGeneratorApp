@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import javax.sound.midi.MidiDevice;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,9 +13,13 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.feature.Note;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -33,6 +39,7 @@ public class MelodicSequencer implements IBusListener {
     private long ticksPerStep = 24;       // Base ticks per step (96 PPQN / 4 = 24)
     private boolean isPlaying = false;    // Flag indicating playback state
     private int bounceDirection = 1;      // Direction for bounce mode
+    private int channel = 3;          // Default MIDI channel
 
     private TimingDivision timingDivision = TimingDivision.NORMAL;
 
@@ -79,7 +86,7 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Initialize a default Note object (NEW)
+     * Initialize the Note object with proper InstrumentWrapper and connected MidiDevice
      */
     private void initializeNote() {
         note = new Note();
@@ -88,8 +95,99 @@ public class MelodicSequencer implements IBusListener {
         note.setMinVelocity(60);
         note.setMaxVelocity(127);
         note.setLevel(100);
+        note.setChannel(channel); // Use the sequencer's channel setting
 
-        logger.info("Created default note for melodic sequencer: {}", note.getName());
+        try {
+            // Get the InstrumentManager instance
+            InstrumentManager instrumentManager = InstrumentManager.getInstance();
+
+            // Look for an internal synth instrument first
+            InstrumentWrapper internalInstrument = null;
+            String deviceName = "Gervill"; // Default Java synth name
+
+            // Try to find existing internal instrument
+            List<InstrumentWrapper> instruments = instrumentManager.getCachedInstruments();
+            for (InstrumentWrapper instrument : instruments) {
+                if (Boolean.TRUE.equals(instrument.getInternal())) {
+                    internalInstrument = instrument;
+                    deviceName = instrument.getDeviceName();
+                    break;
+                }
+            }
+
+            // If no internal instrument found, create one
+            if (internalInstrument == null) {
+                // Create a new internal instrument - but don't set the device yet!
+                internalInstrument = new InstrumentWrapper("Internal Synth", null, channel);
+                internalInstrument.setInternal(true);
+                internalInstrument.setDeviceName(deviceName);
+                
+                // Set default soundbank parameters
+                internalInstrument.setSoundbankName("Default");
+                internalInstrument.setBankIndex(0);
+                internalInstrument.setCurrentPreset(0);  // Piano
+
+                // Give it a unique ID
+                internalInstrument.setId(9985L + channel);
+                // note.setPreset(internalInstrument.getCurrentPreset());
+            }
+
+            note.setInstrument(internalInstrument);
+
+            // Now properly connect the device using DeviceManager
+            // Check if device is available
+            List<String> availableDevices = DeviceManager.getInstance().getAvailableOutputDeviceNames();
+            if (!availableDevices.contains(deviceName)) {
+                CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("Device not available: " + deviceName));
+                    
+                logger.error("Device not available: {}", deviceName);
+            } else {
+                // Try to reinitialize the device connection
+                MidiDevice device = DeviceManager.getMidiDevice(deviceName);
+                if (device != null) {
+                    if (!device.isOpen()) {
+                        device.open();
+                    }
+                    
+                    boolean connected = device.isOpen();
+                    if (connected) {
+                        internalInstrument.setDevice(device);
+                        internalInstrument.setAvailable(true);
+                        
+                        // Update in cache/config
+                        instrumentManager.updateInstrument(internalInstrument);
+                        logger.info("Successfully connected to device: {}", deviceName);
+                    } else {
+                        logger.error("Failed to open device: {}", deviceName);
+                    }
+                }
+            }
+
+            // Set the instrument on the note
+            note.setInstrument(internalInstrument);
+
+            // Configure the note's channel
+            note.setChannel(channel);
+
+            logger.info("Initialized Note with InstrumentWrapper: {}", internalInstrument.getName());
+            
+            // Test the connection
+            try {
+                if (internalInstrument.getAvailable()) {
+                    internalInstrument.noteOn(channel, 60, 100);
+                    Thread.sleep(100);
+                    internalInstrument.noteOff(channel, 60, 0);
+                    logger.info("Test note played successfully");
+                }
+            } catch (Exception e) {
+                logger.warn("Test note failed: {}", e.getMessage());
+            }
+        } catch (Exception e) {
+            logger.error("Failed to initialize Note with InstrumentWrapper: {}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -111,15 +209,15 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Process a timing tick
+     * Process a timing tick and play notes through the Note's InstrumentWrapper
      *
      * @param tick Current tick count
-             */
+     */
     public void processTick(Long tick) {
         if (!isPlaying || tick == null) {
             return;
         }
-        
+
         tickCounter = tick.intValue();
 
         // Check if it's time for the next step
@@ -142,24 +240,85 @@ public class MelodicSequencer implements IBusListener {
                 }
                 noteValue = applyOctaveShift(noteValue);
 
-                int velocity = stepCounter < velocityValues.size() ? velocityValues.get(stepCounter) : 100;
-                int gateTime = stepCounter < gateValues.size() ? gateValues.get(stepCounter) * 5 : 250;
+                // Get velocity for this specific step
+                int velocity = stepCounter < velocityValues.size()
+                        ? velocityValues.get(stepCounter) : 100;  // Default velocity
 
-                // Then trigger the note:
+                // Get gate time for this specific step (gate value is percentage, convert to ms)
+                int gateTime = stepCounter < gateValues.size()
+                        ? gateValues.get(stepCounter) * 5 : 250;  // Scale gate value to ms
+
+                // Play the note directly using the Note object's instrument
+                playNoteDirectly(noteValue, velocity, gateTime);
+
+                // Optionally still notify external listeners if configured
                 if (noteEventListener != null) {
-                    logger.debug("Playing note: step={}, note={}, vel={}, gate={}", 
-                               stepCounter, noteValue, velocity, gateTime);
-                    
+                    logger.debug("Sending NoteEvent to external listener: note={}, vel={}, gate={}",
+                            noteValue, velocity, gateTime);
+
                     noteEventListener.accept(
-                        new NoteEvent(noteValue, velocity, gateTime)
+                            new NoteEvent(noteValue, velocity, gateTime)
                     );
                 }
-
-                // Notify UI of step change
-                if (stepUpdateListener != null) {
-                    stepUpdateListener.accept(new StepUpdateEvent(oldStep, stepCounter));
-                }
             }
+
+            // Notify UI of step change
+            if (stepUpdateListener != null) {
+                stepUpdateListener.accept(new StepUpdateEvent(oldStep, stepCounter));
+            }
+        }
+    }
+
+    /**
+     * Play a note directly using the Note's InstrumentWrapper
+     *
+     * @param midiNote The MIDI note number to play
+     * @param velocity The velocity (volume) of the note
+     * @param duration The duration in milliseconds
+     */
+    private void playNoteDirectly(int midiNote, int velocity, int duration) {
+        if (note == null || note.getInstrument() == null) {
+            logger.warn("Cannot play note directly - note or instrument is null");
+            return;
+        }
+
+        try {
+            final InstrumentWrapper instrument = note.getInstrument();
+            final int channel = note.getChannel();
+
+            // Log what we're about to play
+            logger.info("Playing note directly: note={}, vel={}, duration={}, channel={}, instrument={}",
+                    midiNote, velocity, duration, channel, instrument.getName());
+
+            // Set the channel's current program if needed
+            if (note.getPreset() != null) {
+                // Send bank select messages if a bank is specified
+                if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
+                    instrument.controlChange(channel, 0, 0);     // Bank MSB
+                    instrument.controlChange(channel, 32, instrument.getBankIndex()); // Bank LSB
+                }
+
+                // Send program change
+                instrument.programChange(channel, note.getPreset().intValue(), 0);
+            }
+
+            // Play the note - ERROR IS HERE
+            instrument.noteOn(channel, midiNote, velocity);  // Correct - use instrument directly
+
+            // Schedule note off after the specified duration
+            final int noteToStop = midiNote; // Capture for use in lambda
+
+            new Thread(() -> {
+                try {
+                    Thread.sleep(duration);
+                    instrument.noteOff(channel, noteToStop, 0);
+                } catch (Exception e) {
+                    logger.error("Error in note thread: {}", e.getMessage());
+                }
+            }).start();
+
+        } catch (Exception e) {
+            logger.error("Error playing note directly: {}", e.getMessage(), e);
         }
     }
 
@@ -598,17 +757,17 @@ public class MelodicSequencer implements IBusListener {
     public void setTimingDivision(TimingDivision division) {
         if (division != null) {
             this.timingDivision = division;
-            
+
             // Update the ticksPerStep based on the timing division
             this.ticksPerStep = calculateTicksPerStep(division);
-            
+
             logger.info("Timing division set to {}, ticks per step: {}", division, ticksPerStep);
         }
     }
 
     /**
      * Get the current timing division
-     * 
+     *
      * @return The current timing division
      */
     public TimingDivision getTimingDivision() {
@@ -651,5 +810,14 @@ public class MelodicSequencer implements IBusListener {
 
             // Handle other commands as needed
         }
+    }
+
+    /**
+     * Get the current step counter value
+     *
+     * @return Current step position
+     */
+    public int getStepCounter() {
+        return stepCounter;
     }
 }

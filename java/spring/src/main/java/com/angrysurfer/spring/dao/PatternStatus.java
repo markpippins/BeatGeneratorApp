@@ -16,7 +16,7 @@ public class PatternStatus {
 
     private Long pattern;
     private Integer position;
-    private Long activeStep;
+    private Integer activeStep;
     private Integer length;
     private Integer firstStep;
     private Integer lastStep;

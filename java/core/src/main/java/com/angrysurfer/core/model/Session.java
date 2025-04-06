@@ -64,11 +64,11 @@ public class Session implements Serializable, IBusListener {
 
     @JsonIgnore
     @Transient
-    private long bar = 1;
+    private int bar = 1;
 
     @JsonIgnore
     @Transient
-    private long part = 1;
+    private int part = 1;
 
     @JsonIgnore
     @Transient
@@ -76,15 +76,15 @@ public class Session implements Serializable, IBusListener {
 
     @JsonIgnore
     @Transient
-    private long beatCount = 0;
+    private int beatCount = 0;
 
     @JsonIgnore
     @Transient
-    private long barCount = 0;
+    private int barCount = 0;
 
     @JsonIgnore
     @Transient
-    private long partCount = 0;
+    private int partCount = 0;
 
     @Transient
     private boolean done = false;
@@ -104,7 +104,7 @@ public class Session implements Serializable, IBusListener {
     private Integer partLength = Constants.DEFAULT_PART_LENGTH;
     private Integer maxTracks = Constants.DEFAULT_MAX_TRACKS;
     private Long songLength = Constants.DEFAULT_SONG_LENGTH;
-    private Long swing = Constants.DEFAULT_SWING;
+    private Integer swing = Constants.DEFAULT_SWING;
     private Integer ticksPerBeat = Constants.DEFAULT_PPQ;
     private Float tempoInBPM = Constants.DEFAULT_BPM;
     private Integer loopCount = Constants.DEFAULT_LOOP_COUNT;
@@ -244,7 +244,7 @@ public class Session implements Serializable, IBusListener {
         return beat;
     }
 
-    public Long getBeatCount() {
+    public Integer getBeatCount() {
         return beatCount;
     }
 
@@ -256,19 +256,19 @@ public class Session implements Serializable, IBusListener {
         return tickCount;
     }
 
-    public Long getBar() {
+    public Integer getBar() {
         return bar;
     }
 
-    public Long getBarCount() {
+    public Integer getBarCount() {
         return barCount;
     }
 
-    public Long getPart() {
+    public Integer getPart() {
         return part;
     }
 
-    public Long getPartCount() {
+    public Integer getPartCount() {
         return partCount;
     }
 
@@ -598,14 +598,14 @@ public class Session implements Serializable, IBusListener {
             tickCount++;
 
             // Calculate beat from tick
-            long newBeat = tickCount / ticksPerBeat;
+            int newBeat = (int) (tickCount / ticksPerBeat);
             if (newBeat > beatCount) {
                 beat = (beat % beatsPerBar) + 1; // This cycles from 1 to parts                
                 beatCount = newBeat;
             }
 
             // Calculate bar from beat
-            long newBar = beatCount / beatsPerBar;
+            int newBar = beatCount / beatsPerBar;
             if (newBar > barCount) {
                 bar = (bar % bars) + 1; // This cycles from 1 to parts
                 barCount = newBar;
@@ -613,7 +613,7 @@ public class Session implements Serializable, IBusListener {
 
             // Part calculations on bar change - fix to only increment at partLength
             // boundaries
-            long newPart = barCount / partLength;
+            int newPart = barCount / partLength;
             if (newPart > partCount) {
                 part = (part % parts) + 1; // This cycles from 1 to parts
                 partCount++;

@@ -280,7 +280,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Use GridLayout for perfect vertical alignment with grid cells
         JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, 1, 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
-        panel.setBackground(new Color(40, 40, 40)); // Match grid background
+        // panel.setBackground(new Color(40, 40, 40)); // Match grid background
         
         // Create drum buttons for standard drum kit sounds
         String[] drumNames = {
@@ -331,7 +331,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Use consistent cell size with even spacing
         JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, 16, 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        panel.setBackground(new Color(40, 40, 40));
+        // panel.setBackground(new Color(40, 40, 40));
         
         triggerButtons = new ArrayList<>();
         

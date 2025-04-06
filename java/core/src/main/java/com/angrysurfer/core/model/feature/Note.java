@@ -1,6 +1,7 @@
 package com.angrysurfer.core.model.feature;
 
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 
 import jakarta.persistence.Entity;
 import lombok.Getter;
@@ -27,10 +28,8 @@ public class Note extends Player {
     }
 
     @Override
-    public void onTick(long tick, double beat, long bar, long part, long tickCount, long beatCount, long barCount,
-            long partCount) {
-        // Implementation for timed playback
-        // This will be called by the sequencer when this note should play
+    public void onTick(TimingUpdate timingUpdate) {
+ 
     }
     
     // Override to handle rootNote property

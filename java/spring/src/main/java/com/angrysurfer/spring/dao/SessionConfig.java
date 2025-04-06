@@ -18,7 +18,7 @@ public class SessionConfig implements Serializable {
     private Long songLength;
     private Integer ticksPerBeat;
     private Integer beatsPerBar;
-    private Long swing;
+    private Integer swing;
     private Integer beatDivider;
     private Integer maxTracks;
     private Integer partLength;

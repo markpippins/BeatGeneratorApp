@@ -1,6 +1,6 @@
 package com.angrysurfer.core.sequencer;
 
-public record TimingUpdate(Long tick, Double beat, Long bar, Long part, Long tickCount, Long beatCount, Long barCount, Long partCount) {
+public record TimingUpdate(Long tick, Double beat, Integer bar, Integer part, Long tickCount, Integer beatCount, Integer barCount, Integer partCount) {
     /**
      * Constructor for updating tick and beat only
      */

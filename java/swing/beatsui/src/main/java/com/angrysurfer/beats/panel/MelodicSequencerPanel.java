@@ -22,6 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
+import com.angrysurfer.core.sequencer.PresetItem;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
@@ -73,6 +75,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private boolean listenersEnabled = true;
     private boolean updatingUI = false;
 
+    /**
+     * Modify constructor to use only one step update mechanism (direct listener)
+     */
     public MelodicSequencerPanel(Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
 
@@ -82,7 +87,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Set up the note event listener
         sequencer.setNoteEventListener(noteEventConsumer);
 
-        // Set up step update listener
+        // Set up step update listener with DIRECT callback (no CommandBus)
         sequencer.setStepUpdateListener(event -> {
             updateStepHighlighting(event.getOldStep(), event.getNewStep());
         });
@@ -90,16 +95,21 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Initialize the UI
         initialize();
 
-        // Register with command bus for UI updates
+        // Register with command bus for other UI updates (not step highlighting)
         CommandBus.getInstance().register(this);
     }
 
     private void initialize() {
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
+        JPanel paramsPanel = new JPanel(new BorderLayout());
+        add(paramsPanel, BorderLayout.NORTH);
+
         // Add sequence parameters panel at the top
-        JPanel sequenceParamsPanel = createSequenceParametersPanel();
-        add(sequenceParamsPanel, BorderLayout.NORTH);
+
+        paramsPanel.add(createSequenceParametersPanel(), BorderLayout.NORTH);
+        paramsPanel.add(createSoundPanel(), BorderLayout.EAST);
+
 
         // Create panel for the 16 columns
         JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 5, 0));
@@ -126,7 +136,15 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         loopCheckbox.setSelected(sequencer.isLooping());
     }
 
-    
+     /**
+     * Create a panel with soundbank and preset selectors
+     */
+    private JPanel createSoundPanel() {
+        SoundPanel soundPanel = new SoundPanel(getSequencer().getNote());
+
+        return soundPanel;
+    }
+
     private JPanel createSequenceParametersPanel() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
@@ -517,7 +535,16 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         return i == 0 ? "Note" : i == 1 ? "Vel." : i == 2 ? "Gate" : "Prob.";
     }
 
+    /**
+     * Update step highlighting during playback with improved thread safety and consistency
+     */
     private void updateStepHighlighting(int oldStep, int newStep) {
+        // Use SwingUtilities to ensure we're on the EDT
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> updateStepHighlighting(oldStep, newStep));
+            return;
+        }
+
         // Clear previous step highlight
         if (oldStep >= 0 && oldStep < triggerButtons.size()) {
             TriggerButton oldButton = triggerButtons.get(oldStep);
@@ -531,11 +558,14 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             newButton.setHighlighted(true);
             newButton.repaint();
         }
+
+        // Debug log to track step changes
+        logger.debug("Step highlight updated: {} -> {}", oldStep, newStep);
     }
 
     private void updateOctaveLabel() {
         if (octaveLabel != null) {
-            octaveLabel.setText("Octave: " + sequencer.getOctaveShift());
+            octaveLabel.setText(Integer.toString(sequencer.getOctaveShift()));
         }
     }
 
@@ -547,11 +577,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         try {
             // Disable listeners to prevent feedback loops during updates
             boolean originalListenersState = disableAllListeners();
-            
+
             try {
                 // Sync loop checkbox
                 loopCheckbox.setSelected(sequencer.isLooping());
-                
+
                 // Sync direction combo
                 for (int i = 0; i < directionCombo.getItemCount(); i++) {
                     String item = directionCombo.getItemAt(i);
@@ -561,36 +591,36 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                         break;
                     }
                 }
-                
+
                 // Sync scale settings
                 rootNoteCombo.setSelectedItem(sequencer.getSelectedRootNote());
                 scaleCombo.setSelectedItem(sequencer.getSelectedScale());
-                
+
                 // Update octave label
                 updateOctaveLabel();
-                
+
                 // Sync timing division
                 timingCombo.setSelectedItem(sequencer.getTimingDivision());
-                
+
                 // Sync step data - update ALL controls from sequencer state
                 List<Boolean> activeSteps = sequencer.getActiveSteps();
                 List<Integer> noteValues = sequencer.getNoteValues();
                 List<Integer> velocityValues = sequencer.getVelocityValues();
                 List<Integer> gateValues = sequencer.getGateValues();
-                
+
                 // Debug logging to verify data is correct
-                logger.debug("syncUIWithSequencer: Updating UI with {} active steps", 
-                             activeSteps != null ? activeSteps.size() : 0);
-                
+                logger.debug("syncUIWithSequencer: Updating UI with {} active steps",
+                        activeSteps != null ? activeSteps.size() : 0);
+
                 // Only process as many steps as we have UI controls for
-                int stepsToProcess = Math.min(triggerButtons.size(), 
-                                             Math.min(activeSteps.size(), 
-                                                      Math.min(noteValues.size(),
-                                                               Math.min(velocityValues.size(), 
-                                                                        gateValues.size()))));
-                
+                int stepsToProcess = Math.min(triggerButtons.size(),
+                        Math.min(activeSteps.size(),
+                                Math.min(noteValues.size(),
+                                        Math.min(velocityValues.size(),
+                                                gateValues.size()))));
+
                 logger.debug("syncUIWithSequencer: Processing {} steps", stepsToProcess);
-                
+
                 // Update all UI controls from sequencer state
                 for (int i = 0; i < stepsToProcess; i++) {
                     // Get values from sequencer
@@ -598,16 +628,16 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     int noteValue = noteValues.get(i);
                     int velocityValue = velocityValues.get(i);
                     int gateValue = gateValues.get(i);
-                    
+
                     // Debug log for note values
                     logger.debug("Step {}: active={}, note={}, velocity={}, gate={}",
-                               i, isActive, noteValue, velocityValue, gateValue);
-                    
+                            i, isActive, noteValue, velocityValue, gateValue);
+
                     // Force-update UI controls without triggering change listeners
                     if (i < triggerButtons.size()) {
                         triggerButtons.get(i).setSelected(isActive);
                     }
-                    
+
                     // Explicitly ensure the note dials are updated
                     if (i < noteDials.size()) {
                         Dial noteDial = noteDials.get(i);
@@ -615,7 +645,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                             noteDial.setValue(noteValue, false);
                         }
                     }
-                    
+
                     // Update velocity dials
                     if (i < velocityDials.size()) {
                         Dial velocityDial = velocityDials.get(i);
@@ -623,7 +653,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                             velocityDial.setValue(velocityValue, false);
                         }
                     }
-                    
+
                     // Update gate dials
                     if (i < gateDials.size()) {
                         Dial gateDial = gateDials.get(i);
@@ -636,7 +666,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 // Always restore listener state
                 restoreListeners(originalListenersState);
             }
-            
+
             // Force repaint to ensure UI updates
             revalidate();
             repaint();
@@ -663,6 +693,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         listenersEnabled = previousState;
     }
 
+    /**
+     * Modify onAction to remove the duplicate step highlighting handler
+     */
     @Override
     public void onAction(Command action) {
         if (action == null || action.getCommand() == null) {
@@ -671,7 +704,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         switch (action.getCommand()) {
             case Commands.TRANSPORT_STOP -> {
-                // Only update UI elements, sequencer handles its own state
+                // Clear all highlighting when transport stops
                 for (TriggerButton button : triggerButtons) {
                     button.setHighlighted(false);
                     button.repaint();
@@ -681,16 +714,23 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             case Commands.TRANSPORT_START -> {
                 // Make sure UI is in sync when transport starts
                 syncUIWithSequencer();
-            }
 
-            // Handle sequencer step updates
-            case Commands.SEQUENCER_STEP_UPDATE -> {
-                if (action.getData() instanceof StepUpdateEvent stepEvent) {
-                    updateStepHighlighting(stepEvent.getOldStep(), stepEvent.getNewStep());
+                // Reset all highlights
+                for (TriggerButton button : triggerButtons) {
+                    button.setHighlighted(false);
+                }
+
+                // Re-highlight the current step if sequencer is already playing
+                if (sequencer.isPlaying()) {
+                    int currentStep = sequencer.getStepCounter();
+                    if (currentStep >= 0 && currentStep < triggerButtons.size()) {
+                        triggerButtons.get(currentStep).setHighlighted(true);
+                        triggerButtons.get(currentStep).repaint();
+                    }
                 }
             }
 
-            // Handle other UI-specific commands as needed
+            // Other cases remain unchanged...
             case Commands.NEW_VALUE_OCTAVE -> {
                 if (action.getData() instanceof Integer octaveShift) {
                     sequencer.setOctaveShift(octaveShift);

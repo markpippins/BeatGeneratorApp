@@ -21,13 +21,13 @@ public class SessionStatus implements Serializable {
     private Long id;
     private Long tick;
     private Double beat;
-    private Long bar;
-    private Long part;
+    private Integer bar;
+    private Integer part;
 
     private Long tickCount;
-    private Long beatCount;
-    private Long barCount;
-    private Long partCount;
+    private Integer beatCount;
+    private Integer barCount;
+    private Integer partCount;
 
     private Integer bars;
     private Integer beatsPerBar;
@@ -35,7 +35,7 @@ public class SessionStatus implements Serializable {
     private Integer partLength;
     private Integer maxTracks;
     private Long songLength;
-    private Long swing;
+    private Integer swing;
     private Integer ticksPerBeat;
     private Float tempoInBPM;
     private Integer loopCount;

@@ -1,3 +1,4 @@
+
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
@@ -45,11 +46,12 @@ import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.UserConfigManager;
 
 /**
- * A panel containing basic player properties controls including soundbank/preset
- * support for internal synths
+ * A panel containing basic player properties controls including
+ * soundbank/preset support for internal synths
  */
-public class InternalSynthBasicPropertiesPanel extends JPanel {
-    private static final Logger logger = LoggerFactory.getLogger(InternalSynthBasicPropertiesPanel.class);
+
+public class InternalSynthPresetPanel extends JPanel {
+    private static final Logger logger = LoggerFactory.getLogger(InternalSynthPresetPanel.class);
     
     // Player reference
     private Player player;
@@ -81,7 +83,7 @@ public class InternalSynthBasicPropertiesPanel extends JPanel {
      * 
      * @param player The player to edit
      */
-    public InternalSynthBasicPropertiesPanel(Player player) {
+    public InternalSynthPresetPanel(Player player) {
         super(new GridBagLayout());
         this.player = player;
         
@@ -407,9 +409,8 @@ public class InternalSynthBasicPropertiesPanel extends JPanel {
             
             // Clear and populate soundbank combo
             soundbankCombo.removeAllItems();
-            for (String name : names) {
+            for (String name : names) 
                 soundbankCombo.addItem(name);
-            }
             
             // Try to restore selection or use player's stored soundbank
             boolean restored = false;

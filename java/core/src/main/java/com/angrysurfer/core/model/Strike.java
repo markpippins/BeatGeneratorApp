@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.LongStream;
 
+import com.angrysurfer.core.sequencer.TimingUpdate;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -42,7 +44,7 @@ public class Strike extends Player {
     }
 
     @Override
-    public void onTick(long tick, double beat, long bar, long part, long tickCount, long beatCount, long barCount, long partCount) {
+    public void onTick(TimingUpdate timingUpdate) {
         // Get additional timing values from the session
         Session session = getSession();
         if (session == null) {
@@ -51,11 +53,11 @@ public class Strike extends Player {
         }
       
         // Check if we should play based on the current timing
-        boolean shouldPlayResult = shouldPlay(tick, beat, bar, part, tickCount, beatCount, barCount, partCount);
+        boolean shouldPlayResult = shouldPlay(timingUpdate);
         
         if (shouldPlayResult) {
             try {
-                long noteToPlay = getRootNote();
+                int noteToPlay = getRootNote();
                 // System.out.println("Strike.onTick playing note: " + noteToPlay);
                 drumNoteOn(noteToPlay);
             } catch(Exception e) {
