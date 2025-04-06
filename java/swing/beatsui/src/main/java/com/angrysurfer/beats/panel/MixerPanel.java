@@ -226,6 +226,8 @@ public class MixerPanel extends JPanel implements IBusListener {
         
         // Volume dial
         Dial volumeDial = new Dial();
+        volumeDial.setMinSize(75);
+        volumeDial.setMaxSize(100);
         volumeDial.setValue(100); // Default volume
         volumeDial.setToolTipText("Volume");
         volumeDial.setPreferredSize(new Dimension(40, 40));
