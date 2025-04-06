@@ -274,6 +274,13 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         clearPatternButton = new JButton("Clear");
         generatePatternButton = new JButton("Generate");
 
+        // ADD MIXER BUTTON
+        JButton mixButton = new JButton("Mix...");
+        mixButton.addActionListener(e -> {
+            // Show the mixer dialog
+            StrikeMixerPanel.showDialog(this, sequencer);
+        });
+
         // Add all components to panel in a single row
         panel.add(lastStepPanel);
         panel.add(directionPanel);
@@ -282,6 +289,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         panel.add(rangePanel);
         panel.add(clearPatternButton);
         panel.add(generatePatternButton);
+        panel.add(mixButton);  // Add the Mix button to the parameters panel
 
         return panel;
     }
@@ -454,8 +462,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         fillDialog.setTitle("Fill Pattern");
         fillDialog.setLayout(new BorderLayout());
         fillDialog.setSize(300, 220);
-        fillDialog.setRes
-                fillDialog.setLocationRelativeTo(this);
+        fillDialog.setResizable(false);
+        fillDialog.setLocationRelativeTo(this);
         
         // Create a panel for pattern types
         JPanel patternPanel = new JPanel(new GridLayout(0, 1));
