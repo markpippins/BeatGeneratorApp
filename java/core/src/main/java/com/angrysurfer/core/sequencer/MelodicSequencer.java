@@ -239,7 +239,7 @@ public class MelodicSequencer implements IBusListener {
                 int noteValue = stepCounter < noteValues.size()
                         ? noteValues.get(stepCounter) : 60;  // Default to middle C
 
-                // Apply octave shift and quantization if enabled
+                // Apply quantization first, then octave shift
                 if (quantizeEnabled) {
                     noteValue = quantizeNote(noteValue);
                 }
@@ -535,13 +535,72 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
+     * Quantize a note to the current scale
+     *
+     * @param note The MIDI note number to quantize
+     * @return The quantized note number
+     */
+    public int quantizeNote(int note) {
+        if (quantizer == null) {
+            updateQuantizer(); // Ensure we have a quantizer
+        }
+        
+        try {
+            return quantizer.quantizeNote(note);
+        } catch (Exception e) {
+            logger.error("Error quantizing note {}: {}", note, e.getMessage());
+            return note; // Return original note if quantization fails
+        }
+    }
+
+    /**
+     * Update the quantizer with current scale settings
+     */
+    public void updateQuantizer() {
+        // Create Boolean array representing which notes are in the scale
+        scaleNotes = createScaleArray(selectedRootNote, selectedScale);
+        
+        // Create new quantizer with the scale
+        quantizer = new Quantizer(scaleNotes);
+        
+        logger.info("Quantizer updated with root note {} and scale {}", selectedRootNote, selectedScale);
+    }
+
+    /**
+     * Create a Boolean array representing which notes are in the scale
+     */
+    private Boolean[] createScaleArray(String rootNote, String scaleName) {
+        Boolean[] result = new Boolean[12];
+        for (int i = 0; i < 12; i++) {
+            result[i] = false;
+        }
+        
+        // Get root note index using Scale class
+        int rootIndex = Scale.getRootNoteIndex(rootNote);
+        
+        // Get scale pattern from Scale class - FIX: Use a proper int[] array as default
+        int[] pattern = Scale.SCALE_PATTERNS.getOrDefault(scaleName, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
+        
+        // Apply pattern to root note
+        for (int offset : pattern) {
+            int noteIndex = (rootIndex + offset) % 12;
+            result[noteIndex] = true;
+        }
+        
+        return result;
+    }
+
+    /**
      * Set the root note for scale quantization
      *
      * @param rootNote Root note name (C, C#, D, etc.)
      */
     public void setRootNote(String rootNote) {
-        this.selectedRootNote = rootNote;
-        logger.info("Root note set to {}", rootNote);
+        if (rootNote != null && !rootNote.equals(selectedRootNote)) {
+            selectedRootNote = rootNote;
+            updateQuantizer();
+            logger.info("Root note set to {}", rootNote);
+        }
     }
 
     /**
@@ -550,94 +609,42 @@ public class MelodicSequencer implements IBusListener {
      * @param scale Scale name
      */
     public void setScale(String scale) {
-        this.selectedScale = scale;
-        logger.info("Scale set to {}", scale);
-    }
-
-    /**
-     * Update the quantizer with current scale settings
-     */
-    public void updateQuantizer() {
-        Boolean[] scaleNotes = createScaleNotesArray();
-        quantizer = new Quantizer(scaleNotes);
-        logger.info("Quantizer updated for {}, {}", selectedRootNote, selectedScale);
-    }
-
-    /**
-     * Create a Boolean array representing which notes are in the scale
-     */
-    private Boolean[] createScaleNotesArray() {
-        Boolean[] notes = new Boolean[12];
-        for (int i = 0; i < 12; i++) {
-            notes[i] = Boolean.TRUE; // Default to all notes (chromatic)
+        if (scale != null && !scale.equals(selectedScale)) {
+            selectedScale = scale;
+            updateQuantizer();
+            logger.info("Scale set to {}", scale);
         }
-
-        // Get root note index (C=0, C#=1, etc.)
-        int rootIndex = getRootNoteIndex(selectedRootNote);
-
-        // Apply scale pattern based on selected scale
-        if ("Major".equals(selectedScale)) {
-            // Major scale pattern: 0,2,4,5,7,9,11
-            for (int i = 0; i < 12; i++) {
-                notes[i] = Boolean.FALSE; // Reset all
-            }
-            notes[rootIndex] = Boolean.TRUE;
-            notes[(rootIndex + 2) % 12] = Boolean.TRUE;
-            notes[(rootIndex + 4) % 12] = Boolean.TRUE;
-            notes[(rootIndex + 5) % 12] = Boolean.TRUE;
-            notes[(rootIndex + 7) % 12] = Boolean.TRUE;
-            notes[(rootIndex + 9) % 12] = Boolean.TRUE;
-            notes[(rootIndex + 11) % 12] = Boolean.TRUE;
-        } else if ("Minor".equals(selectedScale)) {
-            // Natural minor scale pattern: 0,2,3,5,7,8,10
-            for (int i = 0; i < 12; i++) {
-                notes[i] = Boolean.FALSE; // Reset all
-            }
-            notes[rootIndex] = Boolean.TRUE;
-            notes[(rootIndex + 2) % 12] = Boolean.TRUE;
-            notes[(rootIndex + 3) % 12] = Boolean.TRUE;
-            notes[(rootIndex + 5) % 12] = Boolean.TRUE;
-            notes[(rootIndex + 7) % 12] = Boolean.TRUE;
-            notes[(rootIndex + 8) % 12] = Boolean.TRUE;
-            notes[(rootIndex + 10) % 12] = Boolean.TRUE;
-        }
-        // Chromatic scale (default) has all notes enabled
-
-        return notes;
     }
 
     /**
-     * Convert root note name to index
+     * Apply octave shift to a MIDI note value
+     *
+     * @param noteValue MIDI note value to shift
+     * @return Shifted note value
      */
-    private int getRootNoteIndex(String rootNote) {
-        return switch (rootNote) {
-            case "C" ->
-                0;
-            case "C#", "Db" ->
-                1;
-            case "D" ->
-                2;
-            case "D#", "Eb" ->
-                3;
-            case "E" ->
-                4;
-            case "F" ->
-                5;
-            case "F#", "Gb" ->
-                6;
-            case "G" ->
-                7;
-            case "G#", "Ab" ->
-                8;
-            case "A" ->
-                9;
-            case "A#", "Bb" ->
-                10;
-            case "B" ->
-                11;
-            default ->
-                0; // Default to C
-        };
+    public int applyOctaveShift(int noteValue) {
+        int shiftedValue = noteValue + (octaveShift * 12);
+        // Keep notes in MIDI range (0-127)
+        return Math.max(0, Math.min(127, shiftedValue));
+    }
+
+    /**
+     * Enable or disable quantization
+     *
+     * @param enabled True to enable, false to disable
+     */
+    public void setQuantizeEnabled(boolean enabled) {
+        this.quantizeEnabled = enabled;
+        logger.info("Quantization {}", enabled ? "enabled" : "disabled");
+    }
+
+    /**
+     * Check if quantization is enabled
+     *
+     * @return True if quantization is enabled
+     */
+    public boolean isQuantizeEnabled() {
+        return quantizeEnabled;
     }
 
     /**
@@ -667,48 +674,6 @@ public class MelodicSequencer implements IBusListener {
                 gateValues.set(stepIndex, gateValue);
             }
         }
-    }
-
-    /**
-     * Quantize a note value to the current scale
-     *
-     * @param noteValue The note value to quantize
-     * @return The quantized note value
-     */
-    public int quantizeNote(int noteValue) {
-        if (quantizer != null && quantizeEnabled) {
-            return quantizer.quantizeNote(noteValue);
-        }
-        return noteValue;
-    }
-
-    /**
-     * Apply octave shift to a note value
-     *
-     * @param noteValue The note value to shift
-     * @return The shifted note value
-     */
-    public int applyOctaveShift(int noteValue) {
-        return Math.min(127, Math.max(0, noteValue + (12 * octaveShift)));
-    }
-
-    /**
-     * Get the current octave shift
-     *
-     * @return The octave shift value
-     */
-    public int getOctaveShift() {
-        return octaveShift;
-    }
-
-    /**
-     * Set the octave shift
-     *
-     * @param shift The octave shift value
-     */
-    public void setOctaveShift(int shift) {
-        this.octaveShift = shift;
-        logger.info("Octave shift set to {}", shift);
     }
 
     /**

@@ -357,26 +357,38 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         return panel;
     }
 
+    /**
+     * Improve the createScaleCombo method to use Scale.getScales()
+     */
     private JComboBox<String> createScaleCombo() {
-        String[] scaleNames = Scale.SCALE_PATTERNS.keySet()
-                .stream()
-                .sorted()
-                .toArray(String[]::new);
+        // Use the Scale class to get scale names instead of accessing SCALE_PATTERNS directly
+        String[] scaleNames = Scale.getScales();
 
         JComboBox<String> combo = new JComboBox<>(scaleNames);
-        combo.setSelectedItem("Chromatic");
+        combo.setSelectedItem("Chromatic"); // Default to Chromatic
 
         combo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                String selectedScale = (String) combo.getSelectedItem();
+            if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
+                String selectedScale = (String) e.getItem();
                 sequencer.setScale(selectedScale);
-                sequencer.updateQuantizer();
+                
+                // Publish event for other listeners
+                CommandBus.getInstance().publish(
+                    Commands.SCALE_SELECTED,
+                    this,
+                    selectedScale
+                );
+                
+                logger.info("Scale selected: {}", selectedScale);
             }
         });
 
         return combo;
     }
 
+    /**
+     * Improve the createRootNoteCombo method
+     */
     private JComboBox<String> createRootNoteCombo() {
         String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
@@ -384,10 +396,18 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         combo.setSelectedItem("C"); // Default to C
 
         combo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                String selectedRootNote = (String) combo.getSelectedItem();
-                sequencer.setRootNote(selectedRootNote);
-                sequencer.updateQuantizer();
+            if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
+                String rootNote = (String) e.getItem();
+                sequencer.setRootNote(rootNote);
+                
+                // Publish event for other listeners
+                CommandBus.getInstance().publish(
+                    Commands.ROOT_NOTE_SELECTED,
+                    this,
+                    rootNote
+                );
+                
+                logger.info("Root note selected: {}", rootNote);
             }
         });
 
@@ -596,106 +616,50 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Synchronizes all UI components with the current state of the sequencer
+     * Update the syncUIWithSequencer method to handle scale settings
      */
     private void syncUIWithSequencer() {
         updatingUI = true;
         try {
-            // Disable listeners to prevent feedback loops during updates
-            boolean originalListenersState = disableAllListeners();
-
-            try {
-                // Sync loop checkbox
-                loopCheckbox.setSelected(sequencer.isLooping());
-
-                // Sync direction combo
-                for (int i = 0; i < directionCombo.getItemCount(); i++) {
-                    String item = directionCombo.getItemAt(i);
-                    Direction currentDirection = sequencer.getDirection();
-                    if (currentDirection != null && item.equalsIgnoreCase(currentDirection.toString())) {
-                        directionCombo.setSelectedIndex(i);
-                        break;
-                    }
-                }
-
-                // Sync scale settings
-                rootNoteCombo.setSelectedItem(sequencer.getSelectedRootNote());
-                scaleCombo.setSelectedItem(sequencer.getSelectedScale());
-
-                // Update octave label
-                updateOctaveLabel();
-
-                // Sync timing division
-                timingCombo.setSelectedItem(sequencer.getTimingDivision());
-
-                // Sync step data - update ALL controls from sequencer state
-                List<Boolean> activeSteps = sequencer.getActiveSteps();
-                List<Integer> noteValues = sequencer.getNoteValues();
-                List<Integer> velocityValues = sequencer.getVelocityValues();
-                List<Integer> gateValues = sequencer.getGateValues();
-
-                // Debug logging to verify data is correct
-                logger.debug("syncUIWithSequencer: Updating UI with {} active steps",
-                        activeSteps != null ? activeSteps.size() : 0);
-
-                // Only process as many steps as we have UI controls for
-                int stepsToProcess = Math.min(triggerButtons.size(),
-                        Math.min(activeSteps.size(),
-                                Math.min(noteValues.size(),
-                                        Math.min(velocityValues.size(),
-                                                gateValues.size()))));
-
-                logger.debug("syncUIWithSequencer: Processing {} steps", stepsToProcess);
-
-                // Update all UI controls from sequencer state
-                for (int i = 0; i < stepsToProcess; i++) {
-                    // Get values from sequencer
-                    boolean isActive = activeSteps.get(i);
-                    int noteValue = noteValues.get(i);
-                    int velocityValue = velocityValues.get(i);
-                    int gateValue = gateValues.get(i);
-
-                    // Debug log for note values
-                    logger.debug("Step {}: active={}, note={}, velocity={}, gate={}",
-                            i, isActive, noteValue, velocityValue, gateValue);
-
-                    // Force-update UI controls without triggering change listeners
-                    if (i < triggerButtons.size()) {
-                        triggerButtons.get(i).setSelected(isActive);
-                    }
-
-                    // Explicitly ensure the note dials are updated
-                    if (i < noteDials.size()) {
-                        Dial noteDial = noteDials.get(i);
-                        if (noteDial.getValue() != noteValue) {
-                            noteDial.setValue(noteValue, false);
-                        }
-                    }
-
-                    // Update velocity dials
-                    if (i < velocityDials.size()) {
-                        Dial velocityDial = velocityDials.get(i);
-                        if (velocityDial.getValue() != velocityValue) {
-                            velocityDial.setValue(velocityValue, false);
-                        }
-                    }
-
-                    // Update gate dials
-                    if (i < gateDials.size()) {
-                        Dial gateDial = gateDials.get(i);
-                        if (gateDial.getValue() != gateValue) {
-                            gateDial.setValue(gateValue, false);
-                        }
-                    }
-                }
-            } finally {
-                // Always restore listener state
-                restoreListeners(originalListenersState);
+            // Update existing trigger buttons
+            for (int i = 0; i < Math.min(triggerButtons.size(), sequencer.getActiveSteps().size()); i++) {
+                TriggerButton button = triggerButtons.get(i);
+                button.setSelected(sequencer.getActiveSteps().get(i));
             }
-
-            // Force repaint to ensure UI updates
-            revalidate();
-            repaint();
+            
+            // Update existing dials
+            for (int i = 0; i < Math.min(noteDials.size(), sequencer.getNoteValues().size()); i++) {
+                noteDials.get(i).setValue(sequencer.getNoteValues().get(i));
+            }
+            
+            for (int i = 0; i < Math.min(velocityDials.size(), sequencer.getVelocityValues().size()); i++) {
+                velocityDials.get(i).setValue(sequencer.getVelocityValues().get(i));
+            }
+            
+            for (int i = 0; i < Math.min(gateDials.size(), sequencer.getGateValues().size()); i++) {
+                gateDials.get(i).setValue(sequencer.getGateValues().get(i));
+            }
+            
+            // Update other UI controls
+            loopCheckbox.setSelected(sequencer.isLooping());
+            
+            // Update direction combo
+            int dirIndex = 0;
+            switch (sequencer.getDirection()) {
+                case FORWARD -> dirIndex = 0;
+                case BACKWARD -> dirIndex = 1;
+                case BOUNCE -> dirIndex = 2;
+                case RANDOM -> dirIndex = 3;
+            }
+            directionCombo.setSelectedIndex(dirIndex);
+            
+            // Update timing division combo
+            timingCombo.setSelectedItem(sequencer.getTimingDivision());
+            
+            // Update scale and root note combos
+            rootNoteCombo.setSelectedItem(sequencer.getSelectedRootNote());
+            scaleCombo.setSelectedItem(sequencer.getSelectedScale());
+            
         } finally {
             updatingUI = false;
         }
