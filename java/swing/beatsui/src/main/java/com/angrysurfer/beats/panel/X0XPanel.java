@@ -170,7 +170,7 @@ public class X0XPanel extends JPanel implements IBusListener {
         containerPanel.setBorder(BorderFactory.createEmptyBorder());
 
         JTabbedPane x0xPanel = createX0XPanel();
-        containerPanel.add(new JScrollPane(x0xPanel), BorderLayout.CENTER);
+        containerPanel.add(x0xPanel, BorderLayout.CENTER);
 
         add(containerPanel);
     }
@@ -178,14 +178,25 @@ public class X0XPanel extends JPanel implements IBusListener {
     private JTabbedPane createX0XPanel() {
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        tabbedPane.addTab("Drums", createDrumPanel());
-        tabbedPane.addTab("Drum Effects", createDrumEffectsPanel());
-        tabbedPane.addTab("Melodic 1", createMelodicSequencerPanel(3));
-        tabbedPane.addTab("Melodic 2", createMelodicSequencerPanel(4));
-        tabbedPane.addTab("Melodic 3", createMelodicSequencerPanel(5));
-        
+        tabbedPane.addTab("Poly Drum", createDrumPanel());
+        tabbedPane.addTab("Poly Effects", createDrumEffectsPanel());
+        tabbedPane.addTab("Mono 1", createMelodicSequencerPanel(3));
+        tabbedPane.addTab("Mono 2", createMelodicSequencerPanel(4));
+        tabbedPane.addTab("Mono 3", createMelodicSequencerPanel(5));
+        tabbedPane.addTab("Mono 4", createMelodicSequencerPanel(6));
         tabbedPane.addTab("Synth", createInstrumentPanel());
+        tabbedPane.addTab("Chords", createChordSequencerPanel());
+        tabbedPane.addTab("Mixer", createMixerPanel());
+
         return tabbedPane;
+    }
+    private Component createMixerPanel() {
+        return new MixerPanel(synthesizer);
+    }
+
+
+    private Component createChordSequencerPanel() {
+        return new JPanel();
     }
 
     private Component createDrumPanel() {
