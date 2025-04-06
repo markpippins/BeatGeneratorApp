@@ -180,7 +180,10 @@ public class X0XPanel extends JPanel implements IBusListener {
 
         tabbedPane.addTab("Drums", createDrumPanel());
         tabbedPane.addTab("Drum Effects", createDrumEffectsPanel());
-        tabbedPane.addTab("Melodic", createMelodicSequencerPanel());
+        tabbedPane.addTab("Melodic 1", createMelodicSequencerPanel(3));
+        tabbedPane.addTab("Melodic 2", createMelodicSequencerPanel(4));
+        tabbedPane.addTab("Melodic 3", createMelodicSequencerPanel(5));
+        
         tabbedPane.addTab("Synth", createInstrumentPanel());
         return tabbedPane;
     }
@@ -199,8 +202,8 @@ public class X0XPanel extends JPanel implements IBusListener {
         return drumEffectsSequencerPanel;
     }
 
-    private Component createMelodicSequencerPanel() {
-        melodicSequencerPanel = new MelodicSequencerPanel(noteEvent -> {
+    private Component createMelodicSequencerPanel(int channel) {
+        melodicSequencerPanel = new MelodicSequencerPanel(channel, noteEvent -> {
             // Add logging to debug
             // logger.info("Playing note: {}, velocity: {}, duration: {}",
             //         noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());

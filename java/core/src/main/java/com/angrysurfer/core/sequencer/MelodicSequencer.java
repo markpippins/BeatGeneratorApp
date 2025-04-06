@@ -85,6 +85,11 @@ public class MelodicSequencer implements IBusListener {
         logger.info("MelodicSequencer initialized and registered with CommandBus");
     }
 
+    public MelodicSequencer(Integer channel) {
+        this();
+        this.channel = channel; // Set the channel for this instance
+    }
+
     /**
      * Initialize the Note object with proper InstrumentWrapper and connected MidiDevice
      */

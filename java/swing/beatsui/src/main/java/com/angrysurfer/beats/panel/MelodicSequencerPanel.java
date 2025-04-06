@@ -39,10 +39,9 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
-import com.angrysurfer.core.sequencer.PresetItem;
 import com.angrysurfer.core.sequencer.Scale;
-import com.angrysurfer.core.sequencer.StepUpdateEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
+import com.angrysurfer.core.service.InternalSynthManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -78,11 +77,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     /**
      * Modify constructor to use only one step update mechanism (direct listener)
      */
-    public MelodicSequencerPanel(Consumer<NoteEvent> noteEventConsumer) {
+    public MelodicSequencerPanel(Integer channel, Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
 
         // Create the sequencer
-        sequencer = new MelodicSequencer();
+        sequencer = new MelodicSequencer(channel);
 
         // Set up the note event listener
         sequencer.setNoteEventListener(noteEventConsumer);
@@ -309,6 +308,48 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             syncUIWithSequencer();
         });
 
+        // Add Preset selection combo box before Edit Sound button
+        JPanel presetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        presetPanel.add(new JLabel("Preset:"));
+        
+        // Create combo box for instrument presets
+        JComboBox<String> presetCombo = new JComboBox<>();
+        presetCombo.setPreferredSize(new Dimension(180, 25));
+        
+        // Populate with GM instrument presets from InternalSynthManager
+        populatePresetCombo(presetCombo);
+        
+        presetCombo.addActionListener(e -> {
+            if (!updatingUI) {
+                String selectedItem = (String) presetCombo.getSelectedItem();
+                if (selectedItem != null) {
+                    // Parse preset number from format "0: Acoustic Grand Piano"
+                    int presetNumber = parsePresetNumber(selectedItem);
+                    
+                    // Update the sequencer's note preset
+                    if (sequencer.getNote() != null) {
+                        sequencer.getNote().setPreset(presetNumber);
+                        
+                        // Apply preset change via instrument
+                        if (sequencer.getNote().getInstrument() != null) {
+                            try {
+                                sequencer.getNote().getInstrument().programChange(
+                                    sequencer.getNote().getChannel(), 
+                                    presetNumber,
+                                    0
+                                );
+                                logger.info("Changed preset to: {}", selectedItem);
+                            } catch (Exception ex) {
+                                logger.error("Failed to set preset: {}", ex.getMessage());
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        presetPanel.add(presetCombo);
+
         // Add Edit Player button
         JButton editPlayerButton = new JButton("Edit Sound");
         editPlayerButton.addActionListener(e -> {
@@ -343,9 +384,47 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         panel.add(rangePanel);       // Add Range combo before the buttons
         panel.add(clearButton);      // Add Clear button
         panel.add(generateButton);   // Add Generate button
+        panel.add(presetPanel);      // Add preset panel before Edit Sound button
         panel.add(editPlayerButton); // Add Edit Player button
 
         return panel;
+    }
+
+    /**
+     * Populate the preset combo with General MIDI instrument names
+     */
+    private void populatePresetCombo(JComboBox<String> combo) {
+        updatingUI = true;
+        try {
+            combo.removeAllItems();
+            
+            // Get the list of GM preset names from InternalSynthManager
+            List<String> presetNames = InternalSynthManager.getInstance().getGeneralMIDIPresetNames();
+            
+            // Add each preset with its index
+            for (int i = 0; i < presetNames.size(); i++) {
+                combo.addItem(i + ": " + presetNames.get(i));
+            }
+            
+            // Select current preset if available
+            if (sequencer.getNote() != null && sequencer.getNote().getPreset() != null) {
+                int currentPreset = sequencer.getNote().getPreset();
+                if (currentPreset >= 0 && currentPreset < presetNames.size()) {
+                    combo.setSelectedItem(currentPreset + ": " + presetNames.get(currentPreset));
+                }
+            }
+        } finally {
+            updatingUI = false;
+        }
+    }
+
+    private int parsePresetNumber(String presetString) {
+        try {
+            return Integer.parseInt(presetString.split(":")[0].trim());
+        } catch (NumberFormatException e) {
+            logger.error("Failed to parse preset number from: {}", presetString);
+            return -1;
+        }
     }
 
     /**
