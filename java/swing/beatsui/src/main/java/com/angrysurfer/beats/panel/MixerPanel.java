@@ -102,33 +102,34 @@ public class MixerPanel extends JPanel implements IBusListener {
     }
     
     /**
-     * Set up the mixer UI components
+     * Set up the mixer UI components with vertical channel strips
      */
     private void setupUI() {
-        // Create header row with labels
-        JPanel headerPanel = createHeaderRow();
+        // Create main container with horizontal layout for channel strips
+        JPanel mixerPanel = new JPanel();
+        mixerPanel.setLayout(new BoxLayout(mixerPanel, BoxLayout.X_AXIS));
         
-        // Create channel strips panel
-        JPanel channelStripsPanel = new JPanel();
-        channelStripsPanel.setLayout(new BoxLayout(channelStripsPanel, BoxLayout.Y_AXIS));
+        // Create track labels panel (left side instead of header row)
+        JPanel trackLabelsPanel = createTrackLabelsPanel();
+        mixerPanel.add(trackLabelsPanel);
         
-        // Add all mixer channels (including drums, mono tracks and master)
+        // Add all mixer channels side by side (including drums, mono tracks and master)
         for (int i = 0; i < trackNames.length; i++) {
-            JPanel channelStrip = createChannelStrip(i, trackNames[i], trackChannels[i]);
-            channelStripsPanel.add(channelStrip);
+            JPanel channelStrip = createVerticalChannelStrip(i, trackNames[i], trackChannels[i]);
+            mixerPanel.add(channelStrip);
             
             // Add separator except after the last channel
             if (i < trackNames.length - 1) {
-                channelStripsPanel.add(Box.createVerticalStrut(5));
+                mixerPanel.add(Box.createHorizontalStrut(5));
             }
         }
         
-        // Put channel strips in a scroll pane
-        JScrollPane scrollPane = new JScrollPane(channelStripsPanel);
+        // Put mixer panel in scroll pane
+        JScrollPane scrollPane = new JScrollPane(mixerPanel);
         scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         
-        // Add header and channel strips to main panel
-        add(headerPanel, BorderLayout.NORTH);
+        // Add mixer panel to main layout
         add(scrollPane, BorderLayout.CENTER);
         
         // Add global controls at bottom (master effects)
@@ -140,58 +141,50 @@ public class MixerPanel extends JPanel implements IBusListener {
     }
     
     /**
-     * Create the header row with labels for each section
+     * Create track labels panel (left side)
      */
-    private JPanel createHeaderRow() {
-        JPanel headerPanel = new JPanel(new GridLayout(1, 7, 5, 0));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+    private JPanel createTrackLabelsPanel() {
+        JPanel labelsPanel = new JPanel(new GridLayout(7, 1, 0, 5));
+        labelsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
-        // Track name header
-        JLabel trackLabel = new JLabel("Track", SwingConstants.CENTER);
-        trackLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        headerPanel.add(trackLabel);
+        // Add section labels
+        JLabel controlLabel = new JLabel("Control", JLabel.LEFT);
+        controlLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        labelsPanel.add(controlLabel);
         
-        // Mute/Solo header
-        JPanel muteSoloHeader = new JPanel(new GridLayout(1, 2));
-        JLabel muteLabel = new JLabel("Mute", SwingConstants.CENTER);
-        JLabel soloLabel = new JLabel("Solo", SwingConstants.CENTER);
+        JLabel muteLabel = new JLabel("Mute/Solo", JLabel.LEFT);
         muteLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        soloLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        muteSoloHeader.add(muteLabel);
-        muteSoloHeader.add(soloLabel);
-        headerPanel.add(muteSoloHeader);
+        labelsPanel.add(muteLabel);
         
-        // Volume header
-        JLabel volumeLabel = new JLabel("Volume", SwingConstants.CENTER);
+        JLabel volumeLabel = new JLabel("Volume", JLabel.LEFT);
         volumeLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        headerPanel.add(volumeLabel);
+        labelsPanel.add(volumeLabel);
         
-        // Pan header
-        JLabel panLabel = new JLabel("Pan", SwingConstants.CENTER);
+        JLabel panLabel = new JLabel("Pan", JLabel.LEFT);
         panLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        headerPanel.add(panLabel);
+        labelsPanel.add(panLabel);
         
-        // Effects headers
-        JLabel reverbLabel = new JLabel("Reverb", SwingConstants.CENTER);
+        JLabel reverbLabel = new JLabel("Reverb", JLabel.LEFT);
         reverbLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        headerPanel.add(reverbLabel);
+        labelsPanel.add(reverbLabel);
         
-        JLabel chorusLabel = new JLabel("Chorus", SwingConstants.CENTER);
+        JLabel chorusLabel = new JLabel("Chorus", JLabel.LEFT);
         chorusLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        headerPanel.add(chorusLabel);
+        labelsPanel.add(chorusLabel);
         
-        JLabel delayLabel = new JLabel("Delay", SwingConstants.CENTER);
+        JLabel delayLabel = new JLabel("Delay", JLabel.LEFT);
         delayLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        headerPanel.add(delayLabel);
+        labelsPanel.add(delayLabel);
         
-        return headerPanel;
+        return labelsPanel;
     }
     
     /**
-     * Create a channel strip for a specific track
+     * Create a vertical channel strip for a specific track
      */
-    private JPanel createChannelStrip(int index, String name, int midiChannel) {
-        JPanel panel = new JPanel(new GridLayout(1, 7, 5, 0));
+    private JPanel createVerticalChannelStrip(int index, String name, int midiChannel) {
+        JPanel panel = new JPanel(new GridLayout(7, 1, 0, 5));
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         boolean isMaster = midiChannel == -1;
         
         // Track name with stylized border
@@ -201,7 +194,8 @@ public class MixerPanel extends JPanel implements IBusListener {
             BorderFactory.createEmptyBorder(2, 5, 2, 5)
         ));
         
-        JLabel nameLabel = new JLabel(name);
+        JLabel nameLabel = new JLabel(name, JLabel.CENTER);
+        nameLabel.setPreferredSize(new Dimension(100, 25));
         nameLabel.setFont(new Font("Arial", Font.BOLD, isMaster ? 13 : 12));
         if (isMaster) {
             nameLabel.setForeground(ColorUtils.mutedRed);
@@ -223,13 +217,14 @@ public class MixerPanel extends JPanel implements IBusListener {
         soloButton.setFont(new Font("Arial", Font.BOLD, 10));
         soloButton.setToolTipText("Solo " + name);
         soloButton.setFocusable(false);
+        soloButton.setEnabled(!isMaster); // Master can't be soloed
         
         // Add buttons to panel
         muteSoloPanel.add(muteButton);
         muteSoloPanel.add(soloButton);
-        panel.add(muteSoloPanel);
+        panel.add(wrapInCenteredPanel(muteSoloPanel));
         
-        // Replace JSlider with Dial for volume
+        // Volume dial
         Dial volumeDial = new Dial();
         volumeDial.setValue(100); // Default volume
         volumeDial.setToolTipText("Volume");
@@ -274,16 +269,10 @@ public class MixerPanel extends JPanel implements IBusListener {
         muteButtons.add(muteButton);
         soloButtons.add(soloButton);
         
-        // Update control listeners
+        // Add listeners for controls
         setupControlListeners(index, midiChannel, volumeDial, panDial, 
                               reverbDial, chorusDial, delayDial,
                               muteButton, soloButton);
-        
-        // For master channel, disable certain controls
-        if (isMaster) {
-            panDial.setEnabled(false);
-            soloButton.setEnabled(false);
-        }
         
         return panel;
     }

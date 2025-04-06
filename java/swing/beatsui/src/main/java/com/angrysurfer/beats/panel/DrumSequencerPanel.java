@@ -221,7 +221,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         timingPanel.add(new JLabel("Timing:"));
 
-        timingCombo = new JComboBox<>(TimingDivision.values());
+        timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
         timingCombo.setPreferredSize(new Dimension(90, 25));
         timingCombo.addActionListener(e -> {
             if (updatingUI) return; // Avoid feedback loops
