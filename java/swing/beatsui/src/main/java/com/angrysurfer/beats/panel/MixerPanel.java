@@ -230,7 +230,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         volumeDial.setMaxSize(100);
         volumeDial.setValue(100); // Default volume
         volumeDial.setToolTipText("Volume");
-        volumeDial.setPreferredSize(new Dimension(40, 40));
+        volumeDial.setPreferredSize(new Dimension(75, 75));
         volumeDials.add(volumeDial);
         panel.add(wrapInCenteredPanel(volumeDial));
         
@@ -239,7 +239,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         panDial.setValue(64); // Center
         panDial.setEnabled(!isMaster); // Master has no pan
         panDial.setToolTipText("Pan");
-        panDial.setPreferredSize(new Dimension(40, 40));
+        panDial.setPreferredSize(new Dimension(75, 75));
         panDials.add(panDial);
         panel.add(wrapInCenteredPanel(panDial));
         
@@ -247,7 +247,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         Dial reverbDial = new Dial();
         reverbDial.setValue(0);
         reverbDial.setToolTipText("Reverb Send");
-        reverbDial.setPreferredSize(new Dimension(40, 40));
+        reverbDial.setPreferredSize(new Dimension(75, 75));
         reverbDials.add(reverbDial);
         panel.add(wrapInCenteredPanel(reverbDial));
         
@@ -255,7 +255,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         Dial chorusDial = new Dial();
         chorusDial.setValue(0);
         chorusDial.setToolTipText("Chorus Send");
-        chorusDial.setPreferredSize(new Dimension(40, 40));
+        chorusDial.setPreferredSize(new Dimension(75, 75));
         chorusDials.add(chorusDial);
         panel.add(wrapInCenteredPanel(chorusDial));
         
@@ -263,7 +263,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         Dial delayDial = new Dial();
         delayDial.setValue(0);
         delayDial.setToolTipText("Delay Send");
-        delayDial.setPreferredSize(new Dimension(40, 40));
+        delayDial.setPreferredSize(new Dimension(75, 75));
         delayDials.add(delayDial);
         panel.add(wrapInCenteredPanel(delayDial));
         

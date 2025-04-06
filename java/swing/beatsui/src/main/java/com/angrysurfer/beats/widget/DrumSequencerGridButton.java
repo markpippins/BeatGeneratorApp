@@ -11,6 +11,10 @@ public class DrumSequencerGridButton extends JToggleButton {
     
     private boolean isHighlighted = false;
     private int drumPadIndex = -1; // Default to -1 for unassigned index
+    private boolean isTemporary = false;
+    private Color normalColor;
+    private Color temporaryColor = new Color(200, 150, 40); // Amber highlight
+
     /**
      * Create a new trigger button with label
      * 
@@ -117,5 +121,46 @@ public class DrumSequencerGridButton extends JToggleButton {
      */
     public boolean isHighlighted() {
         return isHighlighted;
+    }
+
+    /**
+     * Check if the button is toggled on
+     * 
+     * @return true if toggled on, false otherwise
+     */
+    public boolean isToggled() {
+        return isSelected();
+    }
+
+    /**
+     * Set a temporary state during pattern drawing
+     */
+    public void setTemporaryState(boolean state) {
+        isTemporary = state;
+        if (state) {
+            normalColor = getBackground();
+            setBackground(temporaryColor);
+        } else {
+            setBackground(isSelected() ? getActiveColor() : getInactiveColor());
+        }
+        repaint();
+    }
+
+    /**
+     * Clear temporary state after pattern is applied
+     */
+    public void clearTemporaryState() {
+        isTemporary = false;
+        setBackground(isSelected() ? getActiveColor() : getInactiveColor());
+        repaint();
+    }
+
+    // Helper methods - implement if not already present
+    private Color getActiveColor() {
+        return new Color(60, 180, 120); // Green when active
+    }
+
+    private Color getInactiveColor() {
+        return new Color(60, 60, 60);   // Dark gray when inactive
     }
 }
