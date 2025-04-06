@@ -145,6 +145,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         return soundPanel;
     }
 
+    /**
+     * Create panel for sequence parameters (loop, direction, timing, etc.)
+     */
     private JPanel createSequenceParametersPanel() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
@@ -315,6 +318,28 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             syncUIWithSequencer();
         });
 
+        // Add Edit Player button
+        JButton editPlayerButton = new JButton("Edit Sound");
+        editPlayerButton.addActionListener(e -> {
+            // Get the Note from the sequencer and publish edit request
+            if (sequencer != null && sequencer.getNote() != null) {
+                logger.info("Opening player editor for: {}", sequencer.getNote().getName());
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_SELECTED,
+                    this,
+                    sequencer.getNote()
+                );
+
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_EDIT_REQUEST,
+                    this,
+                    sequencer.getNote()
+                );
+            } else {
+                logger.warn("Cannot edit player - Note is not initialized");
+            }
+        });
+
         // Add all components to panel in a single row
         panel.add(lastStepPanel);
         panel.add(directionPanel);
@@ -327,6 +352,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         panel.add(rangePanel);       // Add Range combo before the buttons
         panel.add(clearButton);      // Add Clear button
         panel.add(generateButton);   // Add Generate button
+        panel.add(editPlayerButton); // Add Edit Player button
 
         return panel;
     }

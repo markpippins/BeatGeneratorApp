@@ -128,10 +128,10 @@ public class MelodicSequencer implements IBusListener {
                 internalInstrument.setCurrentPreset(0);  // Piano
 
                 // Give it a unique ID
-                internalInstrument.setId(9985L + channel);
                 // note.setPreset(internalInstrument.getCurrentPreset());
             }
 
+            internalInstrument.setId(9985L + getNote().getChannel()); // Unique ID for internal synth
             note.setInstrument(internalInstrument);
 
             // Now properly connect the device using DeviceManager
