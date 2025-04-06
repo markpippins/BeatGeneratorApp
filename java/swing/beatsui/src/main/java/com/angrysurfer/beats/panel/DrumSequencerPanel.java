@@ -462,7 +462,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         fillDialog.setTitle("Fill Pattern");
         fillDialog.setLayout(new BorderLayout());
         fillDialog.setSize(300, 220);
-        fillDialog.setResizable(false);
+        fillDialog.setModal(true);
         fillDialog.setLocationRelativeTo(this);
         
         // Create a panel for pattern types
