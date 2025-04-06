@@ -18,6 +18,9 @@ import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
@@ -29,6 +32,7 @@ public class App implements IBusListener {
     private static final RedisService redisService = RedisService.getInstance();
 
     private Frame frame;
+    private static SplashScreen splash;
 
     public static void main(String[] args) {
         // Configure logging first
@@ -36,28 +40,73 @@ public class App implements IBusListener {
 
         try {
             logger.info("Starting application...");
-
-            // Initialize services first
-            logger.info("Initializing services...");
-            initializeServices();
-
-            // Then setup UI
-            logger.info("Setting up Look and Feel...");
-            setupLookAndFeel();
-
+            
+            // Create and initialize splash screen synchronously
+            splash = new SplashScreen();
+            splash.setTaskCount(6);
+            
+            // Show splash screen using SwingUtilities.invokeLater
             SwingUtilities.invokeLater(() -> {
-                try {
-                    logger.info("Creating main application window...");
-                    App app = new App();
-                    app.createAndShowGUI();
-                    logger.info("Application started successfully");
-                } catch (Exception e) {
-                    handleInitializationFailure("Failed to create application window", e);
-                }
+                splash.setVisible(true);
+                splash.setStatus("Initializing application...");
+                
+                // Only start initialization AFTER splash screen is visible
+                // This ensures splash is initialized before background work begins
+                startInitialization();
             });
         } catch (Exception e) {
+            if (splash != null) splash.dispose();
             handleInitializationFailure("Fatal error during application startup", e);
         }
+    }
+
+    /**
+     * Start the background initialization process
+     */
+    private static void startInitialization() {
+        // Create a separate thread for initialization
+        new Thread(() -> {
+            try {
+                // Initialize services in background
+                initializeServices();
+                
+                // Setup UI on EDT when services are ready
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        splash.setStatus("Setting up Look and Feel...");
+                        setupLookAndFeel();
+                        
+                        splash.setStatus("Creating main window...");
+                        App app = new App();
+                        
+                        splash.setStatus("Loading application...");
+                        app.createAndShowGUI();
+                        
+                        // Dispose splash screen after short delay
+                        splash.setProgress(100);
+                        splash.setStatus("Ready!");
+                        
+                        // Small delay before closing splash screen
+                        try {
+                            Thread.sleep(600);
+                        } catch (InterruptedException e) {
+                            // Ignore
+                        }
+                        
+                        splash.dispose();
+                        logger.info("Application started successfully");
+                    } catch (Exception e) {
+                        if (splash != null) splash.dispose();
+                        handleInitializationFailure("Failed to create application window", e);
+                    }
+                });
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    if (splash != null) splash.dispose();
+                    handleInitializationFailure("Fatal error during application startup", e);
+                });
+            }
+        }).start();
     }
 
     private void createAndShowGUI() {
@@ -100,6 +149,8 @@ public class App implements IBusListener {
                 UIManager.setLookAndFeel(new FlatLightLaf());
                 logger.info("Set default Look and Feel: FlatLightLaf");
             }
+            
+            splash.completeTask("Applied visual theme");
         } catch (Exception e) {
             logger.error("Error setting look and feel: " + e.getMessage());
             try {
@@ -115,25 +166,31 @@ public class App implements IBusListener {
             // Initialize RedisService first
             RedisService redisService = RedisService.getInstance();
             logger.info("Redis service initialized");
-
+            splash.completeTask("Connected to database");
             
-            SessionManager.getInstance().initialize();
+            // Initialize SessionManager
+            SessionManager sessionManager = SessionManager.getInstance();
+            sessionManager.initialize();
             logger.info("Session manager initialized");
+            splash.completeTask("Initialized session manager");
 
-            // Initialize SessionManager before any UI components
+            // Initialize MIDI device manager
+            DeviceManager deviceManager = DeviceManager.getInstance();
+            deviceManager.refreshDeviceList();
+            splash.completeTask("Detected MIDI devices");
+            
+            // Initialize synth engine
+            InternalSynthManager.getInstance().initializeSoundbanks();
+            splash.completeTask("Loaded internal synthesizer");
 
-            // SessionManager sessionManager = SessionManager.getInstance();
-            logger.info("Session manager initialized");
-
-            // // Initialize instrument management after session
+            // Initialize instrument management
             InstrumentHelper instrumentHelper = redisService.getInstrumentHelper();
-            // // InstrumentEngine instrumentManager =
-            // // InstrumentEngine.getInstance(instrumentHelper);
-
-            // // Verify instrument cache initialization
             List<InstrumentWrapper> instruments = instrumentHelper.findAllInstruments();
             logger.info("Found " + instruments.size() + " instruments in Redis");
-            // // instrumentManager.refreshCache(); // Ensure cache is populated
+            
+            // Initialize InstrumentManager (if not already)
+            InstrumentManager.getInstance().refreshInstruments();
+            splash.completeTask("Loaded instrument configurations");
 
             // Signal system ready
             CommandBus.getInstance().publish(Commands.SYSTEM_READY, App.class, null);
