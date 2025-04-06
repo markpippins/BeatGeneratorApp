@@ -110,7 +110,11 @@ public class MelodicSequencer implements IBusListener {
             for (InstrumentWrapper instrument : instruments) {
                 if (Boolean.TRUE.equals(instrument.getInternal())) {
                     internalInstrument = instrument;
-                    deviceName = instrument.getDeviceName();
+                    internalInstrument.setInternal(true);
+                    internalInstrument.setDeviceName("Gervill"); 
+                    internalInstrument.setSoundbankName("Default");
+                    internalInstrument.setBankIndex(0);
+                    internalInstrument.setCurrentPreset(0);  // Piano
                     break;
                 }
             }
@@ -181,6 +185,7 @@ public class MelodicSequencer implements IBusListener {
                     Thread.sleep(100);
                     internalInstrument.noteOff(channel, 60, 0);
                     logger.info("Test note played successfully");
+                    
                 }
             } catch (Exception e) {
                 logger.warn("Test note failed: {}", e.getMessage());
