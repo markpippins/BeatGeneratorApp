@@ -108,7 +108,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add sequence parameters panel at the top
 
         paramsPanel.add(createSequenceParametersPanel(), BorderLayout.NORTH);
-        paramsPanel.add(createSoundPanel(), BorderLayout.EAST);
 
 
         // Create panel for the 16 columns
@@ -136,14 +135,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         loopCheckbox.setSelected(sequencer.isLooping());
     }
 
-     /**
-     * Create a panel with soundbank and preset selectors
-     */
-    private JPanel createSoundPanel() {
-        SoundPanel soundPanel = new SoundPanel(getSequencer().getNote());
-
-        return soundPanel;
-    }
 
     /**
      * Create panel for sequence parameters (loop, direction, timing, etc.)
@@ -629,15 +620,19 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             
             // Update existing dials
             for (int i = 0; i < Math.min(noteDials.size(), sequencer.getNoteValues().size()); i++) {
-                noteDials.get(i).setValue(sequencer.getNoteValues().get(i));
+                noteDials.get(i).setValue(sequencer.getNoteValues().get(i), true);
             }
             
+            // Update existing velocity dials with force repaint
             for (int i = 0; i < Math.min(velocityDials.size(), sequencer.getVelocityValues().size()); i++) {
                 velocityDials.get(i).setValue(sequencer.getVelocityValues().get(i));
+                velocityDials.get(i).repaint();  // Force repaint
             }
             
+            // Update existing gate dials with force repaint
             for (int i = 0; i < Math.min(gateDials.size(), sequencer.getGateValues().size()); i++) {
                 gateDials.get(i).setValue(sequencer.getGateValues().get(i));
+                gateDials.get(i).repaint();  // Force repaint
             }
             
             // Update other UI controls

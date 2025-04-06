@@ -50,8 +50,8 @@ public class NoteSelectionDial extends Dial {
         setMaximum(127); // Full MIDI range
         setValue(60, false); // Default to middle C (MIDI note 60)
 
-        setPreferredSize(new Dimension(90, 90));
-        setMinimumSize(new Dimension(90, 90));
+        setPreferredSize(new Dimension(100, 100));
+        setMinimumSize(new Dimension(100, 100));
 
         addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent e) {
@@ -143,7 +143,8 @@ public class NoteSelectionDial extends Dial {
         double radius = (size - 2 * margin) / 2.0;
 
         // Draw dial background
-        g2d.setColor(ColorUtils.warmMustard);
+        // g2d.setColor(ColorUtils.charcoalGray);
+        g2d.setColor(getParent().getBackground());
         g2d.fillOval(x + margin, y + margin, size - 2 * margin, size - 2 * margin);
 
         // Draw outer ring
