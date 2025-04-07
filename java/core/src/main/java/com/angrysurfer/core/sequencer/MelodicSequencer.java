@@ -58,7 +58,7 @@ public class MelodicSequencer implements IBusListener {
     private List<Integer> gateValues = new ArrayList<>();       // Gate time for each step
 
     // Note object for storing melodic properties (NEW)
-    private Note note;
+    private Note notePlayer;
 
     // Event handling
     private Consumer<StepUpdateEvent> stepUpdateListener;
@@ -94,13 +94,13 @@ public class MelodicSequencer implements IBusListener {
      * Initialize the Note object with proper InstrumentWrapper and connected MidiDevice
      */
     private void initializeNote() {
-        note = new Note();
-        note.setName("Melody");
-        note.setRootNote(60); // Middle C
-        note.setMinVelocity(60);
-        note.setMaxVelocity(127);
-        note.setLevel(100);
-        note.setChannel(channel); // Use the sequencer's channel setting
+        notePlayer = new Note();
+        notePlayer.setName("Melody");
+        notePlayer.setRootNote(60); // Middle C
+        notePlayer.setMinVelocity(60);
+        notePlayer.setMaxVelocity(127);
+        notePlayer.setLevel(100);
+        notePlayer.setChannel(channel); // Use the sequencer's channel setting
 
         try {
             // Get the InstrumentManager instance
@@ -140,8 +140,8 @@ public class MelodicSequencer implements IBusListener {
                 // note.setPreset(internalInstrument.getCurrentPreset());
             }
 
-            internalInstrument.setId(9985L + getNote().getChannel()); // Unique ID for internal synth
-            note.setInstrument(internalInstrument);
+            internalInstrument.setId(9985L + getNotePlayer().getChannel()); // Unique ID for internal synth
+            notePlayer.setInstrument(internalInstrument);
 
             // Now properly connect the device using DeviceManager
             // Check if device is available
@@ -176,10 +176,10 @@ public class MelodicSequencer implements IBusListener {
             }
 
             // Set the instrument on the note
-            note.setInstrument(internalInstrument);
+            notePlayer.setInstrument(internalInstrument);
 
             // Configure the note's channel
-            note.setChannel(channel);
+            notePlayer.setChannel(channel);
 
             logger.info("Initialized Note with InstrumentWrapper: {}", internalInstrument.getName());
             
@@ -287,21 +287,21 @@ public class MelodicSequencer implements IBusListener {
      * @param duration The duration in milliseconds
      */
     private void playNoteDirectly(int midiNote, int velocity, int duration) {
-        if (note == null || note.getInstrument() == null) {
+        if (notePlayer == null || notePlayer.getInstrument() == null) {
             logger.warn("Cannot play note directly - note or instrument is null");
             return;
         }
 
         try {
-            final InstrumentWrapper instrument = note.getInstrument();
-            final int channel = note.getChannel();
+            final InstrumentWrapper instrument = notePlayer.getInstrument();
+            final int channel = notePlayer.getChannel();
 
             // Log what we're about to play
             logger.info("Playing note directly: note={}, vel={}, duration={}, channel={}, instrument={}",
                     midiNote, velocity, duration, channel, instrument.getName());
 
             // Set the channel's current program if needed
-            if (note.getPreset() != null) {
+            if (notePlayer.getPreset() != null) {
                 // Send bank select messages if a bank is specified
                 if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
                     instrument.controlChange(channel, 0, 0);     // Bank MSB
@@ -309,7 +309,7 @@ public class MelodicSequencer implements IBusListener {
                 }
 
                 // Send program change
-                instrument.programChange(channel, note.getPreset().intValue(), 0);
+                instrument.programChange(channel, notePlayer.getPreset().intValue(), 0);
             }
 
             // Play the note - ERROR IS HERE
@@ -393,7 +393,7 @@ public class MelodicSequencer implements IBusListener {
      * @return MIDI note value (0-127)
      */
     public Integer getRootNote() {
-        return note != null ? note.getRootNote() : 60;
+        return notePlayer != null ? notePlayer.getRootNote() : 60;
     }
 
     /**
@@ -402,8 +402,8 @@ public class MelodicSequencer implements IBusListener {
      * @param rootNote MIDI note value (0-127)
      */
     public void setRootNote(Integer rootNote) {
-        if (note != null && rootNote != null) {
-            note.setRootNote(rootNote);
+        if (notePlayer != null && rootNote != null) {
+            notePlayer.setRootNote(rootNote);
         }
     }
 
@@ -413,7 +413,7 @@ public class MelodicSequencer implements IBusListener {
      * @return The melody name
      */
     public String getName() {
-        return note != null ? note.getName() : "Melody";
+        return notePlayer != null ? notePlayer.getName() : "Melody";
     }
 
     /**
@@ -422,8 +422,8 @@ public class MelodicSequencer implements IBusListener {
      * @param name The new melody name
      */
     public void setName(String name) {
-        if (note != null && name != null) {
-            note.setName(name);
+        if (notePlayer != null && name != null) {
+            notePlayer.setName(name);
         }
     }
 
@@ -433,7 +433,7 @@ public class MelodicSequencer implements IBusListener {
      * @return Velocity level (0-127)
      */
     public Long getLevel() {
-        return note != null ? note.getLevel() : 100L;
+        return notePlayer != null ? notePlayer.getLevel() : 100L;
     }
 
     /**
@@ -442,8 +442,8 @@ public class MelodicSequencer implements IBusListener {
      * @param level Velocity level (0-127)
      */
     public void setLevel(int level) {
-        if (note != null && level >= 0 && level <= 127) {
-            note.setLevel(level);
+        if (notePlayer != null && level >= 0 && level <= 127) {
+            notePlayer.setLevel(level);
         }
     }
 

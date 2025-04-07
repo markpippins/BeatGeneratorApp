@@ -794,7 +794,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 }
             }
 
-            case Commands.PATTERN_LOADED, Commands.PATTERN_UPDATED -> {
+            case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_UPDATED -> {
                 // Refresh the entire UI when a pattern is loaded or updated
                 logger.info("Pattern loaded/updated - refreshing UI");
                 SwingUtilities.invokeLater(() -> {
@@ -808,7 +808,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 });
             }
 
-            case Commands.PATTERN_PARAMS_CHANGED -> {
+            case Commands.DRUM_SEQUENCE_PARAMS_CHANGED -> {
                 logger.debug("Pattern parameters changed");
                 // Always do a full UI sync when pattern parameters change
                 syncUIWithSequencer();
@@ -1195,7 +1195,7 @@ class DrumSequenceNavigationPanel extends JPanel {
             manager.loadSequence(firstId, sequencer);
             updateSequenceIdDisplay();
             CommandBus.getInstance().publish(
-                    Commands.PATTERN_LOADED,
+                    Commands.DRUM_SEQUENCE_LOADED,
                     this,
                     sequencer.getDrumSequenceId()
             );
@@ -1211,7 +1211,7 @@ class DrumSequenceNavigationPanel extends JPanel {
             manager.loadSequence(prevId, sequencer);
             updateSequenceIdDisplay();
             CommandBus.getInstance().publish(
-                    Commands.PATTERN_LOADED,
+                    Commands.DRUM_SEQUENCE_LOADED,
                     this,
                     sequencer.getDrumSequenceId()
             );
@@ -1228,7 +1228,7 @@ class DrumSequenceNavigationPanel extends JPanel {
             manager.loadSequence(nextId, sequencer);
             updateSequenceIdDisplay();
             CommandBus.getInstance().publish(
-                    Commands.PATTERN_LOADED,
+                    Commands.DRUM_SEQUENCE_LOADED,
                     this,
                     sequencer.getDrumSequenceId()
             );
@@ -1258,7 +1258,7 @@ class DrumSequenceNavigationPanel extends JPanel {
 
             updateSequenceIdDisplay();
             CommandBus.getInstance().publish(
-                    Commands.PATTERN_UPDATED,
+                    Commands.DRUM_SEQUENCE_UPDATED,
                     this,
                     sequencer.getDrumSequenceId()
             );
@@ -1274,7 +1274,7 @@ class DrumSequenceNavigationPanel extends JPanel {
             manager.loadSequence(lastId, sequencer);
             updateSequenceIdDisplay();
             CommandBus.getInstance().publish(
-                    Commands.PATTERN_LOADED,
+                    Commands.DRUM_SEQUENCE_LOADED,
                     this,
                     sequencer.getDrumSequenceId()
             );

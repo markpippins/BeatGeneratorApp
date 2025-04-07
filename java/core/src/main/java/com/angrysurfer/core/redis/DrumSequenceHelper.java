@@ -124,7 +124,7 @@ class DrumSequenceHelper {
             }
             
             // Notify that pattern has updated
-            commandBus.publish(Commands.PATTERN_UPDATED, this, sequencer.getDrumSequenceId());
+            commandBus.publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getDrumSequenceId());
             
         } catch (Exception e) {
             logger.error("Error applying drum sequence data to sequencer: " + e.getMessage(), e);
@@ -232,7 +232,7 @@ class DrumSequenceHelper {
             logger.info("Deleted drum sequence {}", drumSequenceId);
             
             // Notify listeners
-            commandBus.publish(Commands.PATTERN_REMOVED, this, drumSequenceId);
+            commandBus.publish(Commands.DRUM_SEQUENCE_REMOVED, this, drumSequenceId);
         } catch (Exception e) {
             logger.error("Error deleting drum sequence {}: {}", drumSequenceId, e.getMessage());
             throw new RuntimeException("Failed to delete drum sequence", e);

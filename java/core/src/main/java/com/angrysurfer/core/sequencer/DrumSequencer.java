@@ -59,7 +59,7 @@ public class DrumSequencer implements IBusListener {
     private boolean[][] patterns;           // [drumIndex][stepIndex]
 
     // Strike objects for each drum pad
-    private Strike[] strikes;
+    private Strike[] players;
 
     // Selection state
     private int selectedPadIndex = 0;       // Currently selected drum pad
@@ -100,7 +100,7 @@ public class DrumSequencer implements IBusListener {
         patterns = new boolean[DRUM_PAD_COUNT][MAX_STEPS];
 
         // Initialize strikes
-        strikes = new Strike[DRUM_PAD_COUNT];
+        players = new Strike[DRUM_PAD_COUNT];
 
         // Register with command bus
         CommandBus.getInstance().register(this);
@@ -128,7 +128,7 @@ public class DrumSequencer implements IBusListener {
                     logger.info("Loaded initial drum sequence: {}", firstId);
                     // Publish event to notify UI components
                     CommandBus.getInstance().publish(
-                            Commands.PATTERN_LOADED,
+                            Commands.DRUM_SEQUENCE_LOADED,
                             this,
                             drumSequenceId
                     );
@@ -158,7 +158,7 @@ public class DrumSequencer implements IBusListener {
         // Process each drum separately
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
             // Skip if no strike configured
-            if (strikes[drumIndex] == null) {
+            if (players[drumIndex] == null) {
                 continue;
             }
 
@@ -193,7 +193,7 @@ public class DrumSequencer implements IBusListener {
         // Check if this step is active
         if (patterns[drumIndex][step]) {
             // Get the Strike for this drum
-            Strike strike = strikes[drumIndex];
+            Strike strike = players[drumIndex];
 
             // If we have a valid Strike and note event listener, trigger the note
             if (strike != null && noteEventListener != null) {
@@ -349,7 +349,7 @@ public class DrumSequencer implements IBusListener {
 
             // Notify UI of parameter change
             CommandBus.getInstance().publish(
-                    Commands.PATTERN_PARAMS_CHANGED,
+                    Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                     this,
                     drumIndex
             );
@@ -371,7 +371,7 @@ public class DrumSequencer implements IBusListener {
 
             // Notify UI of parameter change
             CommandBus.getInstance().publish(
-                    Commands.PATTERN_PARAMS_CHANGED,
+                    Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                     this,
                     drumIndex
             );
@@ -393,7 +393,7 @@ public class DrumSequencer implements IBusListener {
 
             // Notify UI of parameter change
             CommandBus.getInstance().publish(
-                    Commands.PATTERN_PARAMS_CHANGED,
+                    Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                     this,
                     drumIndex
             );
@@ -415,7 +415,7 @@ public class DrumSequencer implements IBusListener {
 
             // Notify UI of parameter change
             CommandBus.getInstance().publish(
-                    Commands.PATTERN_PARAMS_CHANGED,
+                    Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                     this,
                     drumIndex
             );
@@ -443,7 +443,7 @@ public class DrumSequencer implements IBusListener {
 
             // Notify UI of parameter change
             CommandBus.getInstance().publish(
-                    Commands.PATTERN_PARAMS_CHANGED,
+                    Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                     this,
                     drumIndex
             );
@@ -529,7 +529,7 @@ public class DrumSequencer implements IBusListener {
      */
     public Strike getStrike(int drumIndex) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
-            return strikes[drumIndex];
+            return players[drumIndex];
         }
         return null;
     }
@@ -542,7 +542,7 @@ public class DrumSequencer implements IBusListener {
      */
     public void setStrike(int drumIndex, Strike strike) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
-            strikes[drumIndex] = strike;
+            players[drumIndex] = strike;
         }
     }
 
@@ -606,7 +606,7 @@ public class DrumSequencer implements IBusListener {
 
         // Notify UI of pattern change
         CommandBus.getInstance().publish(
-                Commands.PATTERN_PARAMS_CHANGED,
+                Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                 this,
                 selectedPadIndex
         );

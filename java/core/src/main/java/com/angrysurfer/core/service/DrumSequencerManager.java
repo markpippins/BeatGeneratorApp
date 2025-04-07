@@ -45,12 +45,12 @@ public class DrumSequencerManager implements IBusListener {
         }
         
         switch (action.getCommand()) {
-            case Commands.SAVE_PATTERN -> {
+            case Commands.SAVE_DRUM_SEQUENCE -> {
                 if (action.getData() instanceof DrumSequencer sequencer) {
                     saveSequence(sequencer);
                 }
             }
-            case Commands.LOAD_PATTERN -> {
+            case Commands.LOAD_DRUM_SEQUENCE -> {
                 if (action.getData() instanceof Long id) {
                     loadSequenceById(id);
                 }
