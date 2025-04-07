@@ -29,7 +29,7 @@ public class DrumSequencer implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencer.class);
 
     // Constants
-    private static final int DRUM_PAD_COUNT = 16; // Number of drum pads
+    public static final int DRUM_PAD_COUNT = 16; // Number of drum pads
     private static final int MAX_STEPS = 64;      // Maximum pattern length
 
     // Global sequencing state

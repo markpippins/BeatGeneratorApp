@@ -1152,20 +1152,27 @@ class DrumSequenceNavigationPanel extends JPanel {
         long currentId = sequencer.getDrumSequenceId();
         boolean hasSequences = manager.hasSequences();
         
-        // Refresh the first/last IDs directly from the manager
+        // Get first/last sequence IDs
         Long firstId = manager.getFirstSequenceId();
         Long lastId = manager.getLastSequenceId();
         
+        // First/Previous buttons enabled if we're not at the first sequence
         boolean isFirst = !hasSequences || (firstId != null && currentId <= firstId);
+        
+        // Next button is ALWAYS enabled when we have a valid sequence ID
+        // This allows creating new sequences or going to the next one
+        boolean enableNext = true;
+        
+        // Last button enabled if we're not at the last sequence
         boolean isLast = !hasSequences || (lastId != null && currentId >= lastId);
         
-        // Log the button state calculations for debugging
+        // Log button states for debugging
         logger.debug("Button states: currentId={}, firstId={}, lastId={}, isFirst={}, isLast={}", 
-                currentId, firstId, lastId, isFirst, isLast);
+              currentId, firstId, lastId, isFirst, isLast);
         
         firstButton.setEnabled(hasSequences && !isFirst);
         prevButton.setEnabled(hasSequences && !isFirst);
-        nextButton.setEnabled(hasSequences && !isLast);
+        nextButton.setEnabled(enableNext);  // Always enable next
         lastButton.setEnabled(hasSequences && !isLast);
     }
     
@@ -1202,15 +1209,36 @@ class DrumSequenceNavigationPanel extends JPanel {
     }
     
     /**
-     * Load the next sequence
+     * Load the next sequence, or create a new one if at the last sequence
      */
     private void loadNextSequence() {
         Long nextId = manager.getNextSequenceId(sequencer.getDrumSequenceId());
+        
         if (nextId != null) {
             manager.loadSequence(nextId, sequencer);
             updateSequenceIdDisplay();
             CommandBus.getInstance().publish(
                 Commands.PATTERN_LOADED,
+                this,
+                sequencer.getDrumSequenceId()
+            );
+        } 
+        else if (sequencer.getDrumSequenceId() != 0) {
+            // We're at the last saved sequence, so create a new blank one
+            sequencer.setDrumSequenceId(0); // Set to 0 to indicate new unsaved sequence
+            sequencer.reset();  // Clear the current pattern
+            
+            // Initialize default patterns and settings
+            for (int i = 0; i < DrumSequencer.DRUM_PAD_COUNT; i++) {
+                sequencer.setLooping(i, true);
+                sequencer.setDirection(i, Direction.FORWARD);
+                sequencer.setPatternLength(i, 16);
+                sequencer.setTimingDivision(i, TimingDivision.NORMAL);
+            }
+            
+            updateSequenceIdDisplay();
+            CommandBus.getInstance().publish(
+                Commands.PATTERN_UPDATED,
                 this,
                 sequencer.getDrumSequenceId()
             );
