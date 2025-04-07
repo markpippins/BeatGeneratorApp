@@ -14,6 +14,7 @@ import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.service.DrumSequencerManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -105,8 +106,41 @@ public class DrumSequencer implements IBusListener {
         CommandBus.getInstance().register(this);
         TimingBus.getInstance().register(this);
 
-        // Initialize default pattern
-        initializeDefaultPattern();
+        // Load first saved sequence (if available) instead of default pattern
+        loadFirstSequence();
+    }
+
+    /**
+     * Load the first available sequence from storage
+     */
+    private void loadFirstSequence() {
+        try {
+            // Get the manager
+            DrumSequencerManager manager = DrumSequencerManager.getInstance();
+
+            // Get the first sequence ID
+            Long firstId = manager.getFirstSequenceId();
+
+            if (firstId != null) {
+                // Load the sequence
+                boolean loaded = manager.loadSequence(firstId, this);
+                if (loaded) {
+                    logger.info("Loaded initial drum sequence: {}", firstId);
+                    // Publish event to notify UI components
+                    CommandBus.getInstance().publish(
+                            Commands.PATTERN_LOADED,
+                            this,
+                            drumSequenceId
+                    );
+                } else {
+                    logger.warn("Failed to load initial drum sequence");
+                }
+            } else {
+                logger.info("No saved drum sequences found, using empty pattern");
+            }
+        } catch (Exception e) {
+            logger.error("Error loading initial drum sequence: {}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -149,34 +183,34 @@ public class DrumSequencer implements IBusListener {
 
     /**
      * Process the current step for a drum
-     * 
+     *
      * @param drumIndex The drum to process
      */
     private void processStep(int drumIndex) {
         // Get the current step for this drum
         int step = currentStep[drumIndex];
-        
+
         // Check if this step is active
         if (patterns[drumIndex][step]) {
             // Get the Strike for this drum
             Strike strike = strikes[drumIndex];
-            
+
             // If we have a valid Strike and note event listener, trigger the note
             if (strike != null && noteEventListener != null) {
                 int note = strike.getRootNote();
-                
+
                 // Use the velocity from the velocities array
                 int velocity = velocities[drumIndex];
-                
+
                 // Create a note event with the note and velocity
                 NoteEvent event = new NoteEvent(note, velocity, 100);
                 noteEventListener.accept(event);
             }
         }
-        
+
         // Calculate next step
         calculateNextStep(drumIndex);
-        
+
         // Notify listeners of step update
         if (stepUpdateListener != null) {
             int oldStep = step;
@@ -475,7 +509,7 @@ public class DrumSequencer implements IBusListener {
         if (padIndex >= 0 && padIndex < DRUM_PAD_COUNT) {
             selectedPadIndex = padIndex;
             logger.info("Drum pad selected: {} -> {}", oldSelection, selectedPadIndex);
-            
+
             // Publish selection event on the command bus
             CommandBus.getInstance().publish(
                     Commands.DRUM_PAD_SELECTED,
