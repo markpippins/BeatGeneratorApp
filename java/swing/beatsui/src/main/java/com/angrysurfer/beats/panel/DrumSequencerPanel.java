@@ -14,20 +14,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.JPopupMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JDialog;
-import javax.swing.ButtonGroup;
-import javax.swing.JRadioButton;
-import javax.swing.Box;
+import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +47,7 @@ import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
+import com.angrysurfer.core.service.DrumSequencerManager;
 
 /**
  * A sequencer panel with X0X-style step sequencing capabilities.
@@ -60,6 +63,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> decayDials = new ArrayList<>();
     private DrumSequencerInfoPanel drumInfoPanel;
+    private DrumSequenceNavigationPanel navigationPanel;
     
     // Core sequencer - manages all sequencing logic
     private DrumSequencer sequencer;
@@ -133,18 +137,26 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private void initialize() {
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
-        // Create top panel to hold both info and parameters
+        // Create top panel to hold info, navigation and parameters
         JPanel topPanel = new JPanel(new BorderLayout());
         
-        // Create drum info panel
+        // Create drum info panel (left side)
         drumInfoPanel = new DrumSequencerInfoPanel(sequencer);
         
-        // Add sequence parameters panel at the top
+        // Create sequence navigation panel (center)
+        navigationPanel = new DrumSequenceNavigationPanel(sequencer);
+        
+        // Create sequence parameters panel (right side)
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
         
-        // Add both to the top panel
-        topPanel.add(drumInfoPanel, BorderLayout.WEST);
-        topPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+        // Use a wrapper panel for drum info and navigation for proper layout
+        JPanel leftSidePanel = new JPanel(new BorderLayout());
+        leftSidePanel.add(drumInfoPanel, BorderLayout.WEST);
+        leftSidePanel.add(navigationPanel, BorderLayout.CENTER);
+        
+        // Add panels to the top panel
+        topPanel.add(leftSidePanel, BorderLayout.CENTER);
+        topPanel.add(sequenceParamsPanel, BorderLayout.EAST);
         
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
@@ -166,14 +178,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Setup pattern controls
         setupPatternControls();
         
-        // Add debug button
-        JButton debugButton = new JButton("Debug Grid");
-        debugButton.addActionListener(e -> toggleDebugMode());
-        sequenceParamsPanel.add(debugButton);
-        
         // Select the first drum by default
         if (sequencer != null) {
-            sequencer.selectDrumPad(0);
+            selectDrumPad(0);
         }
     }
 
@@ -761,7 +768,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      */
     @Override
     public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) return;
+        if (action == null || action.getCommand() == null) {
+            return;
+        }
         
         switch (action.getCommand()) {
             case Commands.TRANSPORT_START -> {
@@ -777,6 +786,20 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                     button.setHighlighted(false);
                     button.repaint();
                 }
+            }
+            
+            case Commands.PATTERN_LOADED, Commands.PATTERN_UPDATED -> {
+                // Refresh the entire UI when a pattern is loaded or updated
+                logger.info("Pattern loaded/updated - refreshing UI");
+                SwingUtilities.invokeLater(() -> {
+                    refreshGridUI();
+                    
+                    // Also update the parameters panel to reflect values from the loaded pattern
+                    updateParameterControls();
+                    
+                    // Update the info panel for the selected drum
+                    drumInfoPanel.updateInfo(selectedPadIndex);
+                });
             }
             
             case Commands.PATTERN_PARAMS_CHANGED -> {
@@ -831,6 +854,24 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 }
             }
         }
+    }
+
+    /**
+     * Refresh the entire grid UI to match the current sequencer state
+     */
+    private void refreshGridUI() {
+        // Update all step buttons for all drums
+        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+            updateStepButtonsForDrum(drumIndex);
+        }
+        
+        // Reselect the current drum to ensure all controls are properly updated
+        selectDrumPad(selectedPadIndex);
+        
+        // Update parameter controls for the selected drum
+        syncUIWithSequencer();
+        
+        logger.debug("Grid UI refreshed completely");
     }
 
     /**
@@ -1022,5 +1063,198 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 button.clearTemporaryState();
             }
         }
+    }
+}
+
+/**
+ * Panel providing navigation controls for drum sequences
+ */
+class DrumSequenceNavigationPanel extends JPanel {
+    private static final Logger logger = LoggerFactory.getLogger(DrumSequenceNavigationPanel.class);
+    
+    private JLabel sequenceIdLabel;
+    private JButton firstButton;
+    private JButton prevButton;
+    private JButton nextButton;
+    private JButton lastButton;
+    private JButton saveButton;
+    
+    private final DrumSequencer sequencer;
+    private final DrumSequencerManager manager;
+
+    public DrumSequenceNavigationPanel(DrumSequencer sequencer) {
+        this.sequencer = sequencer;
+        this.manager = DrumSequencerManager.getInstance();
+        
+        initializeUI();
+    }
+    
+    private void initializeUI() {
+        // Set layout and border
+        setLayout(new FlowLayout(FlowLayout.CENTER, 10, 2));
+        setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
+            "Sequence Navigation",
+            TitledBorder.CENTER,
+            TitledBorder.TOP
+        ));
+        
+        // Create ID label
+        sequenceIdLabel = new JLabel(getFormattedIdText());
+        sequenceIdLabel.setPreferredSize(new Dimension(120, 25));
+        
+        // Create navigation buttons
+        firstButton = createButton("|<", "First sequence", e -> loadFirstSequence());
+        prevButton = createButton("<", "Previous sequence", e -> loadPreviousSequence());
+        nextButton = createButton(">", "Next sequence", e -> loadNextSequence());
+        lastButton = createButton(">|", "Last sequence", e -> loadLastSequence());
+        
+        // Create save button - make it stand out more
+        saveButton = createButton("Save", "Save current sequence", e -> saveCurrentSequence());
+        saveButton.setBackground(new Color(220, 240, 255));
+        
+        // Add components to panel
+        add(sequenceIdLabel);
+        add(firstButton);
+        add(prevButton);
+        add(nextButton);
+        add(lastButton);
+        add(saveButton);
+        
+        // Set initial button state
+        updateButtonStates();
+    }
+    
+    private JButton createButton(String text, String tooltip, java.awt.event.ActionListener listener) {
+        JButton button = new JButton(text);
+        button.setToolTipText(tooltip);
+        button.addActionListener(listener);
+        button.setPreferredSize(new Dimension(60, 25));
+        return button;
+    }
+    
+    /**
+     * Update the ID display with current sequence ID
+     */
+    public void updateSequenceIdDisplay() {
+        sequenceIdLabel.setText(getFormattedIdText());
+        updateButtonStates();
+    }
+    
+    private String getFormattedIdText() {
+        return "Sequence ID: " + (sequencer.getDrumSequenceId() > 0 ? sequencer.getDrumSequenceId() : "New");
+    }
+    
+    /**
+     * Enable/disable buttons based on current sequence position
+     */
+    private void updateButtonStates() {
+        long currentId = sequencer.getDrumSequenceId();
+        boolean hasSequences = manager.hasSequences();
+        
+        // Refresh the first/last IDs directly from the manager
+        Long firstId = manager.getFirstSequenceId();
+        Long lastId = manager.getLastSequenceId();
+        
+        boolean isFirst = !hasSequences || (firstId != null && currentId <= firstId);
+        boolean isLast = !hasSequences || (lastId != null && currentId >= lastId);
+        
+        // Log the button state calculations for debugging
+        logger.debug("Button states: currentId={}, firstId={}, lastId={}, isFirst={}, isLast={}", 
+                currentId, firstId, lastId, isFirst, isLast);
+        
+        firstButton.setEnabled(hasSequences && !isFirst);
+        prevButton.setEnabled(hasSequences && !isFirst);
+        nextButton.setEnabled(hasSequences && !isLast);
+        lastButton.setEnabled(hasSequences && !isLast);
+    }
+    
+    /**
+     * Load the first available sequence
+     */
+    private void loadFirstSequence() {
+        Long firstId = manager.getFirstSequenceId();
+        if (firstId != null) {
+            manager.loadSequence(firstId, sequencer);
+            updateSequenceIdDisplay();
+            CommandBus.getInstance().publish(
+                Commands.PATTERN_LOADED,
+                this,
+                sequencer.getDrumSequenceId()
+            );
+        }
+    }
+    
+    /**
+     * Load the previous sequence
+     */
+    private void loadPreviousSequence() {
+        Long prevId = manager.getPreviousSequenceId(sequencer.getDrumSequenceId());
+        if (prevId != null) {
+            manager.loadSequence(prevId, sequencer);
+            updateSequenceIdDisplay();
+            CommandBus.getInstance().publish(
+                Commands.PATTERN_LOADED,
+                this,
+                sequencer.getDrumSequenceId()
+            );
+        }
+    }
+    
+    /**
+     * Load the next sequence
+     */
+    private void loadNextSequence() {
+        Long nextId = manager.getNextSequenceId(sequencer.getDrumSequenceId());
+        if (nextId != null) {
+            manager.loadSequence(nextId, sequencer);
+            updateSequenceIdDisplay();
+            CommandBus.getInstance().publish(
+                Commands.PATTERN_LOADED,
+                this,
+                sequencer.getDrumSequenceId()
+            );
+        }
+    }
+    
+    /**
+     * Load the last available sequence
+     */
+    private void loadLastSequence() {
+        Long lastId = manager.getLastSequenceId();
+        if (lastId != null) {
+            manager.loadSequence(lastId, sequencer);
+            updateSequenceIdDisplay();
+            CommandBus.getInstance().publish(
+                Commands.PATTERN_LOADED,
+                this,
+                sequencer.getDrumSequenceId()
+            );
+        }
+    }
+    
+    /**
+     * Save the current sequence
+     */
+    private void saveCurrentSequence() {
+        // Save the sequence
+        manager.saveSequence(sequencer);
+        
+        // After saving, get the latest sequence IDs from the database
+        manager.refreshSequenceList();
+        
+        // Update display and button states
+        updateSequenceIdDisplay();
+        
+        // Force update of button states
+        updateButtonStates();
+        
+        CommandBus.getInstance().publish(
+            Commands.DRUM_SEQUENCE_SAVED,
+            this,
+            sequencer.getDrumSequenceId()
+        );
+        
+        logger.info("Saved drum sequence: {}", sequencer.getDrumSequenceId());
     }
 }

@@ -38,6 +38,8 @@ public class DrumSequencer implements IBusListener {
     private int ticksPerStep = 24;          // Base ticks per step
     private boolean isPlaying = false;      // Global play state
 
+    private long drumSequenceId = 0;
+
     // Per-drum sequencing state
     private int[] currentStep;              // Current step for each drum
     private boolean[] patternCompleted;     // Pattern completion flag for each drum
