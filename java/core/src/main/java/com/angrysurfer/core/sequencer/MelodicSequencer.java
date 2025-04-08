@@ -245,11 +245,17 @@ public class MelodicSequencer implements IBusListener {
 
         tickCounter = tick;
 
-        // FIXED APPROACH: Use same fixed ticksPerStep as DrumSequencer
-        int fixedTicksPerStep = 24; // Match the value used in DrumSequencer
+        // IMPORTANT: Use timing division to calculate tick interval
+        // rather than using a fixed value of 24
+        int ticksForDivision = timingDivision.getTicksPerBeat();
         
-        // Check if it's time for the next step using fixed step size
-        if (tick % fixedTicksPerStep == 0) {
+        // Make sure we have a valid minimum value
+        if (ticksForDivision <= 0) {
+            ticksForDivision = 24; // Emergency fallback
+        }
+        
+        // Check if it's time for the next step using the timing division
+        if (tick % ticksForDivision == 0) {
             // Get previous step for highlighting updates
             int prevStep = stepCounter;
             
@@ -261,7 +267,7 @@ public class MelodicSequencer implements IBusListener {
                 stepUpdateListener.accept(new StepUpdateEvent(prevStep, stepCounter));
             }
             
-            // Check if the current step is active
+            // Check if the current step is active and process it
             if (stepCounter >= 0 && stepCounter < activeSteps.size() && activeSteps.get(stepCounter)) {
                 // Get parameters for the current step
                 int noteValue = noteValues.get(stepCounter);
