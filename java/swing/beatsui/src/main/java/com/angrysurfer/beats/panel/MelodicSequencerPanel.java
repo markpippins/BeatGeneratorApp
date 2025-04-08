@@ -327,14 +327,14 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     int presetNumber = parsePresetNumber(selectedItem);
                     
                     // Update the sequencer's note preset
-                    if (sequencer.getNote() != null) {
-                        sequencer.getNote().setPreset(presetNumber);
+                    if (sequencer.getNotePlayer() != null) {
+                        sequencer.getNotePlayer().setPreset(presetNumber);
                         
                         // Apply preset change via instrument
-                        if (sequencer.getNote().getInstrument() != null) {
+                        if (sequencer.getNotePlayer().getInstrument() != null) {
                             try {
-                                sequencer.getNote().getInstrument().programChange(
-                                    sequencer.getNote().getChannel(), 
+                                sequencer.getNotePlayer().getInstrument().programChange(
+                                    sequencer.getNotePlayer().getChannel(), 
                                     presetNumber,
                                     0
                                 );
@@ -354,18 +354,18 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JButton editPlayerButton = new JButton("Edit Sound");
         editPlayerButton.addActionListener(e -> {
             // Get the Note from the sequencer and publish edit request
-            if (sequencer != null && sequencer.getNote() != null) {
-                logger.info("Opening player editor for: {}", sequencer.getNote().getName());
+            if (sequencer != null && sequencer.getNotePlayer() != null) {
+                logger.info("Opening player editor for: {}", sequencer.getNotePlayer().getName());
                 CommandBus.getInstance().publish(
                     Commands.PLAYER_SELECTED,
                     this,
-                    sequencer.getNote()
+                    sequencer.getNotePlayer()
                 );
 
                 CommandBus.getInstance().publish(
                     Commands.PLAYER_EDIT_REQUEST,
                     this,
-                    sequencer.getNote()
+                    sequencer.getNotePlayer()
                 );
             } else {
                 logger.warn("Cannot edit player - Note is not initialized");
@@ -407,8 +407,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
             
             // Select current preset if available
-            if (sequencer.getNote() != null && sequencer.getNote().getPreset() != null) {
-                int currentPreset = sequencer.getNote().getPreset();
+            if (sequencer.getNotePlayer() != null && sequencer.getNotePlayer().getPreset() != null) {
+                int currentPreset = sequencer.getNotePlayer().getPreset();
                 if (currentPreset >= 0 && currentPreset < presetNames.size()) {
                     combo.setSelectedItem(currentPreset + ": " + presetNames.get(currentPreset));
                 }
@@ -510,7 +510,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
             // Create dial - first one is always a NoteSelectionDial
             Dial dial = i == 0 ? new NoteSelectionDial() : new Dial();
-
+            
             // Store the dial in the appropriate collection based on its type
             switch (i) {
                 case 0 -> {

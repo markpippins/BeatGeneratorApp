@@ -3,10 +3,13 @@ package com.angrysurfer.core.redis;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
@@ -17,6 +20,8 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
+import com.angrysurfer.core.sequencer.DrumSequenceData;
+import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -25,9 +30,6 @@ import lombok.Getter;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Getter
 public class RedisService implements IBusListener {
@@ -46,6 +48,7 @@ public class RedisService implements IBusListener {
     private final InstrumentHelper instrumentHelper;
     private final SessionHelper sessionHelper;
     private final UserConfigHelper userConfigHelper;
+    private final DrumSequenceHelper drumSequenceHelper;
     // private final RedisConfigHelper configHelper;
 
     private RedisService() {
@@ -61,6 +64,7 @@ public class RedisService implements IBusListener {
         this.songHelper = new SongHelper(jedisPool, objectMapper);
         this.instrumentHelper = new InstrumentHelper(jedisPool, objectMapper);
         this.userConfigHelper = new UserConfigHelper(jedisPool, objectMapper);
+        this.drumSequenceHelper = new DrumSequenceHelper(jedisPool, objectMapper);
         // this.configHelper = new RedisConfigHelper(jedisPool, objectMapper);
 
         commandBus.register(this);
@@ -455,5 +459,46 @@ public class RedisService implements IBusListener {
         playerHelper.addPlayerToSession(session, player);
         // Save the session after updating its players
         saveSession(session);
+    }
+
+    // Drum sequence methods
+    public DrumSequenceData findDrumSequenceById(Long id) {
+        return drumSequenceHelper.findDrumSequenceById(id);
+    }
+
+    public void applyDrumSequenceToSequencer(DrumSequenceData data, DrumSequencer sequencer) {
+        drumSequenceHelper.applyToSequencer(data, sequencer);
+    }
+
+    public void saveDrumSequence(DrumSequencer sequencer) {
+        drumSequenceHelper.saveDrumSequence(sequencer);
+    }
+
+    public List<Long> getAllDrumSequenceIds() {
+        return drumSequenceHelper.getAllDrumSequenceIds();
+    }
+
+    public Long getMinimumDrumSequenceId() {
+        return drumSequenceHelper.getMinimumDrumSequenceId();
+    }
+
+    public Long getMaximumDrumSequenceId() {
+        return drumSequenceHelper.getMaximumDrumSequenceId();
+    }
+
+    public DrumSequenceData newDrumSequence() {
+        return drumSequenceHelper.newDrumSequence();
+    }
+
+    public void deleteDrumSequence(Long id) {
+        drumSequenceHelper.deleteDrumSequence(id);
+    }
+
+    public Long getNextDrumSequenceId(Long currentId) {
+        return drumSequenceHelper.getNextDrumSequenceId(currentId);
+    }
+
+    public Long getPreviousDrumSequenceId(Long currentId) {
+        return drumSequenceHelper.getPreviousDrumSequenceId(currentId);
     }
 }

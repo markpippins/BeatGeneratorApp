@@ -83,7 +83,7 @@ public class DrumSequencerInfoPanel extends JPanel {
         
         // Update panel title
         setBorder(BorderFactory.createTitledBorder(
-            // BorderFactory.createLineBorder(Color.ORANGE, 2),
+            // BorderFactory.createLineBorder(Color.ORANGE, 2), 
             "Pad" + (drumPadIndex + 1)
         ));
         

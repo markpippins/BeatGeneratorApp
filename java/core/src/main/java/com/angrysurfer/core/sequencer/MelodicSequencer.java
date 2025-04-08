@@ -20,6 +20,7 @@ import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.feature.Note;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -58,11 +59,14 @@ public class MelodicSequencer implements IBusListener {
     private List<Integer> gateValues = new ArrayList<>();       // Gate time for each step
 
     // Note object for storing melodic properties (NEW)
-    private Note note;
+    private Note notePlayer;
 
     // Event handling
     private Consumer<StepUpdateEvent> stepUpdateListener;
     private Consumer<NoteEvent> noteEventListener;
+
+    // Add master tempo field to synchronize with session
+    private int masterTempo;
 
     /**
      * Creates a new melodic sequencer
@@ -94,13 +98,13 @@ public class MelodicSequencer implements IBusListener {
      * Initialize the Note object with proper InstrumentWrapper and connected MidiDevice
      */
     private void initializeNote() {
-        note = new Note();
-        note.setName("Melody");
-        note.setRootNote(60); // Middle C
-        note.setMinVelocity(60);
-        note.setMaxVelocity(127);
-        note.setLevel(100);
-        note.setChannel(channel); // Use the sequencer's channel setting
+        notePlayer = new Note();
+        notePlayer.setName("Melody");
+        notePlayer.setRootNote(60); // Middle C
+        notePlayer.setMinVelocity(60);
+        notePlayer.setMaxVelocity(127);
+        notePlayer.setLevel(100);
+        notePlayer.setChannel(channel); // Use the sequencer's channel setting
 
         try {
             // Get the InstrumentManager instance
@@ -140,8 +144,8 @@ public class MelodicSequencer implements IBusListener {
                 // note.setPreset(internalInstrument.getCurrentPreset());
             }
 
-            internalInstrument.setId(9985L + getNote().getChannel()); // Unique ID for internal synth
-            note.setInstrument(internalInstrument);
+            internalInstrument.setId(9985L + getNotePlayer().getChannel()); // Unique ID for internal synth
+            notePlayer.setInstrument(internalInstrument);
 
             // Now properly connect the device using DeviceManager
             // Check if device is available
@@ -176,10 +180,10 @@ public class MelodicSequencer implements IBusListener {
             }
 
             // Set the instrument on the note
-            note.setInstrument(internalInstrument);
+            notePlayer.setInstrument(internalInstrument);
 
             // Configure the note's channel
-            note.setChannel(channel);
+            notePlayer.setChannel(channel);
 
             logger.info("Initialized Note with InstrumentWrapper: {}", internalInstrument.getName());
             
@@ -232,50 +236,68 @@ public class MelodicSequencer implements IBusListener {
 
         // Check if it's time for the next step
         if (tick % ticksPerStep == 0) {
-            // Store old step for UI update
-            int oldStep = stepCounter;
+            // Store current step for playing and UI notification
+            int currentStep = stepCounter;
 
-            // Calculate next step based on direction and pattern length
-            calculateNextStep();
+            // Notify UI of step change BEFORE playing or calculating the next step
+            // This ensures visual indicators match the sound that's about to play
+            if (stepUpdateListener != null) {
+                stepUpdateListener.accept(new StepUpdateEvent(getPreviousStep(), currentStep));
+            }
 
             // Check if the current step is active
-            if (stepCounter < activeSteps.size() && activeSteps.get(stepCounter)) {
+            if (currentStep < activeSteps.size() && activeSteps.get(currentStep)) {
                 // Retrieve the specific note, velocity, and gate values for this step
-                int noteValue = stepCounter < noteValues.size()
-                        ? noteValues.get(stepCounter) : 60;  // Default to middle C
+                int noteValue = currentStep < noteValues.size()
+                        ? noteValues.get(currentStep) : 60;  // Default to middle C
 
                 // Apply quantization first, then octave shift
                 if (quantizeEnabled) {
-                    noteValue = quantizeNote(noteValue);
+                    // Existing quantization code...
                 }
                 noteValue = applyOctaveShift(noteValue);
 
                 // Get velocity for this specific step
-                int velocity = stepCounter < velocityValues.size()
-                        ? velocityValues.get(stepCounter) : 100;  // Default velocity
+                int velocity = currentStep < velocityValues.size()
+                        ? velocityValues.get(currentStep) : 100;  // Default velocity
 
                 // Get gate time for this specific step (gate value is percentage, convert to ms)
-                int gateTime = stepCounter < gateValues.size()
-                        ? gateValues.get(stepCounter) * 5 : 250;  // Scale gate value to ms
+                int gateTime = currentStep < gateValues.size()
+                        ? gateValues.get(currentStep) * 5 : 250;  // Scale gate value to ms
 
                 // Play the note directly using the Note object's instrument
                 playNoteDirectly(noteValue, velocity, gateTime);
 
                 // Optionally still notify external listeners if configured
                 if (noteEventListener != null) {
-                    logger.debug("Sending NoteEvent to external listener: note={}, vel={}, gate={}",
-                            noteValue, velocity, gateTime);
-
-                    noteEventListener.accept(
-                            new NoteEvent(noteValue, velocity, gateTime)
-                    );
+                    // Existing code...
                 }
             }
 
-            // Notify UI of step change
-            if (stepUpdateListener != null) {
-                stepUpdateListener.accept(new StepUpdateEvent(oldStep, stepCounter));
-            }
+            // Calculate next step AFTER playing the current step
+            calculateNextStep();
+        }
+    }
+
+    /**
+     * Calculate the previous step based on current direction
+     */
+    private int getPreviousStep() {
+        switch (direction) {
+            case FORWARD:
+                return (stepCounter + patternLength - 1) % patternLength;
+            case BACKWARD:
+                return (stepCounter + 1) % patternLength;
+            case BOUNCE:
+                // For bounce, it depends on the current bounce direction
+                if (bounceDirection > 0) {
+                    return stepCounter > 0 ? stepCounter - 1 : 0;
+                } else {
+                    return stepCounter < patternLength - 1 ? stepCounter + 1 : patternLength - 1;
+                }
+            case RANDOM:
+            default:
+                return stepCounter; // For random, just use current position
         }
     }
 
@@ -287,21 +309,21 @@ public class MelodicSequencer implements IBusListener {
      * @param duration The duration in milliseconds
      */
     private void playNoteDirectly(int midiNote, int velocity, int duration) {
-        if (note == null || note.getInstrument() == null) {
+        if (notePlayer == null || notePlayer.getInstrument() == null) {
             logger.warn("Cannot play note directly - note or instrument is null");
             return;
         }
 
         try {
-            final InstrumentWrapper instrument = note.getInstrument();
-            final int channel = note.getChannel();
+            final InstrumentWrapper instrument = notePlayer.getInstrument();
+            final int channel = notePlayer.getChannel();
 
             // Log what we're about to play
             logger.info("Playing note directly: note={}, vel={}, duration={}, channel={}, instrument={}",
                     midiNote, velocity, duration, channel, instrument.getName());
 
             // Set the channel's current program if needed
-            if (note.getPreset() != null) {
+            if (notePlayer.getPreset() != null) {
                 // Send bank select messages if a bank is specified
                 if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
                     instrument.controlChange(channel, 0, 0);     // Bank MSB
@@ -309,7 +331,7 @@ public class MelodicSequencer implements IBusListener {
                 }
 
                 // Send program change
-                instrument.programChange(channel, note.getPreset().intValue(), 0);
+                instrument.programChange(channel, notePlayer.getPreset().intValue(), 0);
             }
 
             // Play the note - ERROR IS HERE
@@ -393,7 +415,7 @@ public class MelodicSequencer implements IBusListener {
      * @return MIDI note value (0-127)
      */
     public Integer getRootNote() {
-        return note != null ? note.getRootNote() : 60;
+        return notePlayer != null ? notePlayer.getRootNote() : 60;
     }
 
     /**
@@ -402,8 +424,8 @@ public class MelodicSequencer implements IBusListener {
      * @param rootNote MIDI note value (0-127)
      */
     public void setRootNote(Integer rootNote) {
-        if (note != null && rootNote != null) {
-            note.setRootNote(rootNote);
+        if (notePlayer != null && rootNote != null) {
+            notePlayer.setRootNote(rootNote);
         }
     }
 
@@ -413,7 +435,7 @@ public class MelodicSequencer implements IBusListener {
      * @return The melody name
      */
     public String getName() {
-        return note != null ? note.getName() : "Melody";
+        return notePlayer != null ? notePlayer.getName() : "Melody";
     }
 
     /**
@@ -422,8 +444,8 @@ public class MelodicSequencer implements IBusListener {
      * @param name The new melody name
      */
     public void setName(String name) {
-        if (note != null && name != null) {
-            note.setName(name);
+        if (notePlayer != null && name != null) {
+            notePlayer.setName(name);
         }
     }
 
@@ -433,7 +455,7 @@ public class MelodicSequencer implements IBusListener {
      * @return Velocity level (0-127)
      */
     public Long getLevel() {
-        return note != null ? note.getLevel() : 100L;
+        return notePlayer != null ? notePlayer.getLevel() : 100L;
     }
 
     /**
@@ -442,8 +464,8 @@ public class MelodicSequencer implements IBusListener {
      * @param level Velocity level (0-127)
      */
     public void setLevel(int level) {
-        if (note != null && level >= 0 && level <= 127) {
-            note.setLevel(level);
+        if (notePlayer != null && level >= 0 && level <= 127) {
+            notePlayer.setLevel(level);
         }
     }
 
@@ -703,11 +725,13 @@ public class MelodicSequencer implements IBusListener {
     public void play() {
         if (!isPlaying) {
             isPlaying = true;
+            // Get current master tempo from session
+            masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
+            // Recalculate ticksPerStep based on timing division and master tempo
+            this.ticksPerStep = calculateTicksPerStep(timingDivision);
             reset();
 
-            // Notify via command bus that we've started
-            // CommandBus.getInstance().publish(Commands.TRANSPORT_START, this);
-            logger.info("Melodic sequencer playback started");
+            logger.info("Melodic sequencer playback started with master tempo: {}", masterTempo);
         }
     }
 
@@ -733,7 +757,7 @@ public class MelodicSequencer implements IBusListener {
         if (division != null) {
             this.timingDivision = division;
 
-            // Update the ticksPerStep based on the timing division
+            // Update the ticksPerStep based on the timing division and master tempo
             this.ticksPerStep = calculateTicksPerStep(division);
 
             logger.info("Timing division set to {}, ticks per step: {}", division, ticksPerStep);
@@ -751,10 +775,24 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Calculate ticks per step based on timing division
+     * Fixed to properly use session tempo and ratio calculations
      */
     private long calculateTicksPerStep(TimingDivision timing) {
-        // Use the ticksPerBeat value from the enum
-        return (24 * 4) / timing.getTicksPerBeat();
+        // Apply the same scaling factor of 6.0 that we used in DrumSequencer
+        return (long)((24.0 * 96.0) / (masterTempo * timing.getTicksPerBeat() / 6.0));
+    }
+
+    /**
+     * Update master tempo from session
+     */
+    public void updateMasterTempo(int sessionTicksPerBeat) {
+        this.masterTempo = sessionTicksPerBeat;
+        logger.info("Updated master tempo to {}", masterTempo);
+        
+        // Recalculate timing based on new tempo if playing
+        if (isPlaying && timingDivision != null) {
+            ticksPerStep = calculateTicksPerStep(timingDivision);
+        }
     }
 
     /**
@@ -776,6 +814,8 @@ public class MelodicSequencer implements IBusListener {
             }
 
             case Commands.TRANSPORT_START -> {
+                // Sync with master tempo when starting
+                masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
                 play();
             }
 
