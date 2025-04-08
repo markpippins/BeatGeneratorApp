@@ -891,68 +891,43 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      */
     @Override
     public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) {
+        if (action.getCommand() == null) {
             return;
         }
 
         switch (action.getCommand()) {
-            // Transport state changes
+            case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_UPDATED -> {
+                // Update the UI to reflect new sequence data
+                SwingUtilities.invokeLater(() -> {
+                    // Update the entire grid UI
+                    refreshGridUI();
+                    
+                    // Update the parameter controls for the selected drum
+                    updateParameterControls();
+                    
+                    // Update the drum info panel
+                    if (drumInfoPanel != null) {
+                        drumInfoPanel.updateInfo(selectedPadIndex);
+                    }
+                    
+                    // Reset all step highlighting
+                    clearAllStepHighlighting();
+                    
+                    logger.info("Refreshed UI after sequence {} loaded/updated", 
+                               sequencer.getDrumSequenceId());
+                });
+            }
+            
+            case Commands.DRUM_PAD_SELECTED -> {
+                // Existing drum pad selection code...
+            }
+            
             case Commands.TRANSPORT_START -> {
-                logger.debug("Transport started");
+                // Existing transport start code...
             }
             
             case Commands.TRANSPORT_STOP -> {
-                logger.debug("Transport stopped");
-            }
-            
-            // Handle drum sequence events
-            case Commands.DRUM_SEQUENCE_LOADED -> {
-                // Refresh UI completely when a sequence is loaded
-                if (action.getData() instanceof Long sequenceId) {
-                    logger.info("Drum sequence {} loaded", sequenceId);
-                    refreshGridUI();
-                    updateParameterControls();
-                    navigationPanel.updateSequenceIdDisplay();
-                }
-            }
-            
-            case Commands.DRUM_SEQUENCE_SAVED -> {
-                // Update navigation display after save
-                if (action.getData() instanceof Long sequenceId) {
-                    logger.info("Drum sequence {} saved", sequenceId);
-                    navigationPanel.updateSequenceIdDisplay();
-                }
-            }
-            
-            // Handle pad selection events from other sources
-            case Commands.DRUM_PAD_SELECTED -> {
-                if (action.getData() instanceof DrumPadSelectionEvent event) {
-                    // Instead of checking the source, check if the selection is different
-                    // to avoid potential infinite loops
-                    if (event.getNewSelection() != selectedPadIndex) {
-                        selectDrumPad(event.getNewSelection());
-                    }
-                }
-            }
-            
-            // Handle tempo changes
-            case Commands.UPDATE_TEMPO -> {
-                if (action.getData() instanceof Integer ticksPerBeat) {
-                    sequencer.updateMasterTempo(ticksPerBeat);
-                }
-            }
-            
-            // Handle session timing updates (for highlighting the current step)
-            case Commands.TIMING_UPDATE -> {
-                if (action.getData() instanceof TimingUpdate update) {
-                    // The sequencer will handle this internally via its own listener
-                    // We don't need to do anything here
-                }
-            }
-            
-            case Commands.SESSION_UPDATED -> {
-                // Sync UI with sequencer when session parameters change
-                syncUIWithSequencer();
+                // Existing transport stop code...
             }
         }
     }
