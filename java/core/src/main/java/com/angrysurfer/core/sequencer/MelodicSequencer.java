@@ -638,11 +638,20 @@ public class MelodicSequencer implements IBusListener {
      * @param rootNote Root note name (C, C#, D, etc.)
      */
     public void setRootNote(String rootNote) {
-        if (rootNote != null && !rootNote.equals(selectedRootNote)) {
-            selectedRootNote = rootNote;
-            updateQuantizer();
-            logger.info("Root note set to {}", rootNote);
+        this.selectedRootNote = rootNote;
+        updateQuantizer();
+        
+        // IMPORTANT: Re-quantize all notes in the pattern when root note changes
+        if (quantizeEnabled && quantizer != null) {
+            for (int i = 0; i < noteValues.size(); i++) {
+                noteValues.set(i, quantizer.quantizeNote(noteValues.get(i)));
+            }
+            
+            // Notify listeners that pattern has been updated
+            CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
         }
+        
+        logger.info("Root note set to {} and notes re-quantized", rootNote);
     }
 
     /**
@@ -651,11 +660,20 @@ public class MelodicSequencer implements IBusListener {
      * @param scale Scale name
      */
     public void setScale(String scale) {
-        if (scale != null && !scale.equals(selectedScale)) {
-            selectedScale = scale;
-            updateQuantizer();
-            logger.info("Scale set to {}", scale);
+        this.selectedScale = scale;
+        updateQuantizer();
+        
+        // IMPORTANT: Re-quantize all notes in the pattern when scale changes
+        if (quantizeEnabled && quantizer != null) {
+            for (int i = 0; i < noteValues.size(); i++) {
+                noteValues.set(i, quantizer.quantizeNote(noteValues.get(i)));
+            }
+            
+            // Notify listeners that pattern has been updated
+            CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
         }
+        
+        logger.info("Scale set to {} and notes re-quantized", scale);
     }
 
     /**

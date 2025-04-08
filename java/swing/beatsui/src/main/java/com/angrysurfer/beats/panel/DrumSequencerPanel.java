@@ -121,26 +121,26 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // Create top panel to hold info, navigation and parameters
+        // Create top panel to hold navigation, parameters and info
         JPanel topPanel = new JPanel(new BorderLayout(5, 5));
 
-        // Create drum info panel (left side)
+        // Create drum info panel (now on right side)
         drumInfoPanel = new DrumSequencerInfoPanel(sequencer);
 
-        // Create sequence navigation panel (center)
+        // Create sequence navigation panel (in center)
         navigationPanel = new DrumSequenceNavigationPanel(sequencer);
 
-        // Create sequence parameters panel (right side)
+        // Create sequence parameters panel (left side)
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
 
-        // Use a wrapper panel for drum info and navigation for proper layout
-        JPanel leftSidePanel = new JPanel(new BorderLayout());
-        leftSidePanel.add(drumInfoPanel, BorderLayout.WEST);
-        leftSidePanel.add(navigationPanel, BorderLayout.CENTER);
-
-        // Add components to top panel
-        topPanel.add(leftSidePanel, BorderLayout.CENTER);
-        topPanel.add(sequenceParamsPanel, BorderLayout.EAST);
+        // CHANGED: Navigation panel goes directly in center
+        topPanel.add(navigationPanel, BorderLayout.CENTER);
+        
+        // CHANGED: Parameters panel goes on left
+        topPanel.add(sequenceParamsPanel, BorderLayout.WEST);
+        
+        // CHANGED: Drum info panel goes on right
+        topPanel.add(drumInfoPanel, BorderLayout.EAST);
 
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);

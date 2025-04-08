@@ -758,64 +758,50 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Modify onAction to remove the duplicate step highlighting handler
+     * Modify onAction to prevent the infinite scale selection loop
      */
     @Override
     public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) {
-            return;
-        }
-
         switch (action.getCommand()) {
-            case Commands.TRANSPORT_STOP -> {
-                // Clear all highlighting when transport stops
-                for (TriggerButton button : triggerButtons) {
-                    button.setHighlighted(false);
-                    button.repaint();
-                }
-            }
-
-            case Commands.TRANSPORT_START -> {
-                // Make sure UI is in sync when transport starts
-                syncUIWithSequencer();
-
-                // Reset all highlights
-                for (TriggerButton button : triggerButtons) {
-                    button.setHighlighted(false);
-                }
-
-                // Re-highlight the current step if sequencer is already playing
-                if (sequencer.isPlaying()) {
-                    int currentStep = sequencer.getStepCounter();
-                    if (currentStep >= 0 && currentStep < triggerButtons.size()) {
-                        triggerButtons.get(currentStep).setHighlighted(true);
-                        triggerButtons.get(currentStep).repaint();
+            case Commands.ROOT_NOTE_SELECTED -> {
+                if (action.getData() instanceof String rootNote) {
+                    // Only update if this isn't our own event
+                    if (action.getSender() != this) {
+                        boolean wasUpdating = updatingUI;
+                        updatingUI = true;
+                        try {
+                            // Update root note combo without triggering more events
+                            rootNoteCombo.setSelectedItem(rootNote);
+                            // Update the sequencer
+                            if (sequencer != null) {
+                                sequencer.setRootNote(rootNote);
+                                sequencer.updateQuantizer();
+                            }
+                        } finally {
+                            updatingUI = wasUpdating;
+                        }
                     }
                 }
             }
-
-            // Other cases remain unchanged...
-            case Commands.NEW_VALUE_OCTAVE -> {
-                if (action.getData() instanceof Integer octaveShift) {
-                    sequencer.setOctaveShift(octaveShift);
-                    updateOctaveLabel();
-                }
-            }
-
-            // Add handling for scale and root note global changes
-            case Commands.ROOT_NOTE_SELECTED -> {
-                if (action.getData() instanceof String rootNote) {
-                    rootNoteCombo.setSelectedItem(rootNote);
-                    sequencer.setRootNote(rootNote);
-                    sequencer.updateQuantizer();
-                }
-            }
-
+            
             case Commands.SCALE_SELECTED -> {
                 if (action.getData() instanceof String scaleName) {
-                    scaleCombo.setSelectedItem(scaleName);
-                    sequencer.setScale(scaleName);
-                    sequencer.updateQuantizer();
+                    // Only update if this isn't our own event
+                    if (action.getSender() != this) {
+                        boolean wasUpdating = updatingUI;
+                        updatingUI = true;
+                        try {
+                            // Update scale combo without triggering more events
+                            scaleCombo.setSelectedItem(scaleName);
+                            // Update the sequencer
+                            if (sequencer != null) {
+                                sequencer.setScale(scaleName);
+                                sequencer.updateQuantizer();
+                            }
+                        } finally {
+                            updatingUI = wasUpdating;
+                        }
+                    }
                 }
             }
         }
