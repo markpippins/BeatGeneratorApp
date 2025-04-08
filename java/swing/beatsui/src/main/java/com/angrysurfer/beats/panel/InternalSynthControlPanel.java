@@ -37,6 +37,7 @@ import com.angrysurfer.core.service.InternalSynthManager;
  * filter and modulation parameters.
  */
 public class InternalSynthControlPanel extends JPanel {
+
     private static final Logger logger = LoggerFactory.getLogger(InternalSynthControlPanel.class);
 
     private final Synthesizer synthesizer;
@@ -50,13 +51,13 @@ public class InternalSynthControlPanel extends JPanel {
     private InternalSynthEnvelopePanel envelopePanel;
     private InternalSynthEffectsPanel effectsPanel;
     private InternalSynthMixerPanel mixerPanel;
-    
+
     // Track the currently selected soundbank name
     private String currentSoundbankName = null;
 
     /**
      * Create a new SynthControlPanel
-     * 
+     *
      * @param synthesizer The MIDI synthesizer to control
      */
     public InternalSynthControlPanel(Synthesizer synthesizer) {
@@ -85,7 +86,7 @@ public class InternalSynthControlPanel extends JPanel {
 
     /**
      * Set a MIDI CC value on the synth
-     * 
+     *
      * @param ccNumber The CC number to set
      * @param value The value to set (0-127)
      */
@@ -95,7 +96,7 @@ public class InternalSynthControlPanel extends JPanel {
 
     /**
      * Set a MIDI CC value on the synth with specified channel
-     * 
+     *
      * @param channel MIDI channel (0-15)
      * @param ccNumber The CC number to set
      * @param value The value to set (0-127)
@@ -117,6 +118,7 @@ public class InternalSynthControlPanel extends JPanel {
      * Inner class to represent preset items in the combo box
      */
     private static class PresetItem {
+
         private final int number;
         private final String name;
 
@@ -220,30 +222,30 @@ public class InternalSynthControlPanel extends JPanel {
             // Use the manager instance to initialize soundbanks
             InternalSynthManager manager = InternalSynthManager.getInstance();
             manager.initializeSoundbanks();
-            
+
             // Update UI with data from the manager
             soundbankCombo.removeAllItems();
             List<String> names = manager.getSoundbankNames();
             for (String name : names) {
                 soundbankCombo.addItem(name);
             }
-            
+
             // Temporarily remove the action listener to prevent double-triggering
             ActionListener[] listeners = soundbankCombo.getActionListeners();
             for (ActionListener listener : listeners) {
                 soundbankCombo.removeActionListener(listener);
             }
-            
+
             // Select the first soundbank
             if (soundbankCombo.getItemCount() > 0) {
                 soundbankCombo.setSelectedIndex(0);
                 String selectedName = (String) soundbankCombo.getSelectedItem();
                 currentSoundbankName = selectedName;
-                
+
                 // Explicitly populate banks for this soundbank
                 populateBanksCombo(selectedName);
             }
-            
+
             // Restore the action listeners
             for (ActionListener listener : listeners) {
                 soundbankCombo.addActionListener(listener);
@@ -260,16 +262,16 @@ public class InternalSynthControlPanel extends JPanel {
         try {
             // Store the selected soundbank name
             currentSoundbankName = soundbankName;
-            
+
             // Get the soundbank by name
             InternalSynthManager manager = InternalSynthManager.getInstance();
             Soundbank soundbank = manager.getSoundbankByName(soundbankName);
-            
+
             // Load the soundbank into the synthesizer if it's not null
             if (soundbank != null && synthesizer != null && synthesizer.isOpen()) {
                 // Unload any current instruments
                 synthesizer.unloadAllInstruments(synthesizer.getDefaultSoundbank());
-                
+
                 // Load the new soundbank
                 boolean loaded = synthesizer.loadAllInstruments(soundbank);
                 if (loaded) {
@@ -278,7 +280,7 @@ public class InternalSynthControlPanel extends JPanel {
                     logger.error("Failed to load soundbank: {}", soundbankName);
                 }
             }
-            
+
             // Populate banks for this soundbank
             populateBanksCombo(soundbankName);
         } catch (Exception e) {
@@ -292,11 +294,11 @@ public class InternalSynthControlPanel extends JPanel {
     private void populateBanksCombo(String soundbankName) {
         try {
             bankCombo.removeAllItems();
-            
+
             // Get banks by soundbank name
             List<Integer> banks = InternalSynthManager.getInstance()
                     .getAvailableBanksByName(soundbankName);
-            
+
             // Add banks to combo box
             for (Integer bank : banks) {
                 bankCombo.addItem(bank);
@@ -307,17 +309,17 @@ public class InternalSynthControlPanel extends JPanel {
             for (ActionListener listener : listeners) {
                 bankCombo.removeActionListener(listener);
             }
-            
+
             // Select the first bank
             if (bankCombo.getItemCount() > 0) {
                 bankCombo.setSelectedIndex(0);
-                
+
                 // Explicitly populate presets for this bank
                 if (bankCombo.getSelectedItem() instanceof Integer bank) {
                     populatePresetComboForBank(bank);
                 }
             }
-            
+
             // Restore the action listeners
             for (ActionListener listener : listeners) {
                 bankCombo.addActionListener(listener);
@@ -333,42 +335,42 @@ public class InternalSynthControlPanel extends JPanel {
     private void populatePresetComboForBank(int bank) {
         try {
             presetCombo.removeAllItems();
-            
+
             // Get preset names from InternalSynthManager for the current soundbank
             InternalSynthManager manager = InternalSynthManager.getInstance();
             List<String> presetNames = manager.getPresetNames(currentSoundbankName, bank);
-            
+
             logger.info("Retrieved {} preset names for bank {}", presetNames.size(), bank);
-            
+
             // Add all presets to the combo box with format: "0: Acoustic Grand Piano"
             for (int i = 0; i < Math.min(128, presetNames.size()); i++) {
                 String presetName = presetNames.get(i);
-                
+
                 // Use generic name if the specific name is empty
                 if (presetName == null || presetName.isEmpty()) {
                     presetName = "Program " + i;
                 }
-                
+
                 // Add the preset to the combo box
                 presetCombo.addItem(new PresetItem(i, i + ": " + presetName));
             }
-            
+
             // Temporarily remove the action listener
             ActionListener[] listeners = presetCombo.getActionListeners();
             for (ActionListener listener : listeners) {
                 presetCombo.removeActionListener(listener);
             }
-            
+
             // Select the first preset by default
             if (presetCombo.getItemCount() > 0) {
                 presetCombo.setSelectedIndex(0);
-                
+
                 // Explicitly set the program change
                 if (presetCombo.getSelectedItem() instanceof PresetItem item) {
                     setProgramChange(bank, item.getNumber());
                 }
             }
-            
+
             // Restore the action listeners
             for (ActionListener listener : listeners) {
                 presetCombo.addActionListener(listener);
@@ -385,13 +387,13 @@ public class InternalSynthControlPanel extends JPanel {
         try {
             // Use DialogManager approach but implement directly here
             File soundbankFile = showSoundbankFileChooser();
-            
+
             if (soundbankFile != null && soundbankFile.exists()) {
                 logger.info("Loading soundbank file: {}", soundbankFile.getAbsolutePath());
-                
+
                 // Use the manager to load the soundbank
                 Soundbank soundbank = InternalSynthManager.getInstance().loadSoundbankFile(soundbankFile);
-                
+
                 if (soundbank != null) {
                     // Update UI with the new soundbank list
                     List<String> names = InternalSynthManager.getInstance().getSoundbankNames();
@@ -399,7 +401,7 @@ public class InternalSynthControlPanel extends JPanel {
                     for (String name : names) {
                         soundbankCombo.addItem(name);
                     }
-                    
+
                     // Select the newly added soundbank
                     soundbankCombo.setSelectedIndex(soundbankCombo.getItemCount() - 1);
                 }
@@ -442,17 +444,17 @@ public class InternalSynthControlPanel extends JPanel {
                 if (channel != null) {
                     // Send bank select MSB (CC 0)
                     channel.controlChange(0, 0);
-                    
+
                     // Send bank select LSB (CC 32)
                     channel.controlChange(32, bank);
-                    
+
                     // Send program change
                     channel.programChange(program);
-                    
-                    logger.info("Sent program change: channel={}, bank={}, program={}", 
+
+                    logger.info("Sent program change: channel={}, bank={}, program={}",
                             midiChannel, bank, program);
                 }
-                
+
                 // Reset controls and controllers after the change
                 resetControlsToDefault();
                 reinitializeControllers();
@@ -467,42 +469,52 @@ public class InternalSynthControlPanel extends JPanel {
      */
     private void resetControlsToDefault() {
         System.out.println("Resetting UI controls to default values...");
-        
+
         // Reset all oscillator panels
         for (InternalSynthOscillatorPanel panel : oscillatorPanels) {
             panel.resetToDefaults();
         }
-        
+
         // Reset all specialized panels
-        if (lfoPanel != null) lfoPanel.resetToDefaults();
-        if (filterPanel != null) filterPanel.resetToDefaults();
-        if (envelopePanel != null) envelopePanel.resetToDefaults();
-        if (effectsPanel != null) effectsPanel.resetToDefaults();
-        if (mixerPanel != null) mixerPanel.resetToDefaults();
-        
+        if (lfoPanel != null) {
+            lfoPanel.resetToDefaults();
+        }
+        if (filterPanel != null) {
+            filterPanel.resetToDefaults();
+        }
+        if (envelopePanel != null) {
+            envelopePanel.resetToDefaults();
+        }
+        if (effectsPanel != null) {
+            effectsPanel.resetToDefaults();
+        }
+        if (mixerPanel != null) {
+            mixerPanel.resetToDefaults();
+        }
+
         // Reset all sliders (except those in specialized panels)
         UIHelper.findComponentsByType(this, JSlider.class, component -> {
             JSlider slider = (JSlider) component;
             // Skip slider if it's owned by one of the specialized panels
-            if (slider.getParent() != null && 
-                    (UIHelper.isChildOf(slider, lfoPanel) || 
-                     UIHelper.isChildOf(slider, filterPanel) ||
-                     UIHelper.isChildOf(slider, envelopePanel) ||
-                     UIHelper.isChildOf(slider, effectsPanel))) {
+            if (slider.getParent() != null
+                    && (UIHelper.isChildOf(slider, lfoPanel)
+                    || UIHelper.isChildOf(slider, filterPanel)
+                    || UIHelper.isChildOf(slider, envelopePanel)
+                    || UIHelper.isChildOf(slider, effectsPanel))) {
                 return;
             }
-            
+
             int defaultValue = (slider.getMaximum() - slider.getMinimum()) / 2 + slider.getMinimum();
             slider.setValue(defaultValue);
             System.out.println("Reset slider to " + defaultValue);
         });
-        
+
         // Reset all dials to appropriate values (using the utility method)
         UIHelper.findComponentsByType(this, Dial.class, component -> {
             Dial dial = (Dial) component;
             String name = dial.getName();
             int value = 64; // Default to middle
-            
+
             // Set specific defaults based on control name
             if (name != null) {
                 if (name.contains("volume")) {
@@ -519,10 +531,10 @@ public class InternalSynthControlPanel extends JPanel {
                 }
                 System.out.println("Reset " + name + " to " + value);
             }
-            
+
             dial.setValue(value);
         });
-        
+
         // After resetting UI, force MIDI controller resets for all channels
         try {
             for (int ch = 0; ch < 3; ch++) {
@@ -530,14 +542,14 @@ public class InternalSynthControlPanel extends JPanel {
                 int baseCCForOsc = ch * 20 + 20;
                 int volume = (ch == 0) ? 100 : 0;
                 setControlChange(midiChannel, baseCCForOsc + 4, volume);
-                
+
                 // Reset all other controllers
                 setControlChange(midiChannel, baseCCForOsc, 0);     // Waveform
                 setControlChange(midiChannel, baseCCForOsc + 1, 64); // Octave
                 setControlChange(midiChannel, baseCCForOsc + 2, 64); // Tune
                 setControlChange(midiChannel, baseCCForOsc + 3, 64); // Brightness
             }
-            
+
             // Set master volume
             setControlChange(midiChannel, 7, 100);
         } catch (Exception e) {
@@ -560,10 +572,10 @@ public class InternalSynthControlPanel extends JPanel {
         InternalSynthOscillatorPanel osc1Panel = new InternalSynthOscillatorPanel(synthesizer, midiChannel, 0);
         InternalSynthOscillatorPanel osc2Panel = new InternalSynthOscillatorPanel(synthesizer, midiChannel, 1);
         InternalSynthOscillatorPanel osc3Panel = new InternalSynthOscillatorPanel(synthesizer, midiChannel, 2);
-        
+
         // Store references to the oscillator panels
-        oscillatorPanels = new InternalSynthOscillatorPanel[] { osc1Panel, osc2Panel, osc3Panel };
-        
+        oscillatorPanels = new InternalSynthOscillatorPanel[]{osc1Panel, osc2Panel, osc3Panel};
+
         // Add property change listener for osc1 waveform changes
         osc1Panel.addPropertyChangeListener("oscillator1WaveformChanged", evt -> {
             // Property change handling could go here
@@ -573,53 +585,57 @@ public class InternalSynthControlPanel extends JPanel {
         row1Panel.add(osc1Panel);
         row1Panel.add(Box.createHorizontalStrut(10));
         row1Panel.add(osc2Panel);
-        
+
         // ROW 2: Oscillator 3 and Oscillator Mix panel in horizontal layout
         JPanel row2Panel = new JPanel();
         row2Panel.setLayout(new BoxLayout(row2Panel, BoxLayout.X_AXIS));
         row2Panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         // Create oscillator mix panel
         JPanel oscMixPanel = createOscillatorMixPanel();
-        
+
+        effectsPanel = new InternalSynthEffectsPanel(synthesizer, midiChannel);
+
         // Add oscillator 3 and mix panel to row 2
         row2Panel.add(osc3Panel);
         row2Panel.add(Box.createHorizontalStrut(10));
         row2Panel.add(oscMixPanel);
-        
+        row2Panel.add(Box.createHorizontalStrut(10));
+        row2Panel.add(effectsPanel);
+
         // ROW 3: Envelope, Filter, LFO and Effects panels
         JPanel row3Panel = new JPanel();
         row3Panel.setLayout(new BoxLayout(row3Panel, BoxLayout.X_AXIS));
         row3Panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         // Create the missing panels
         envelopePanel = new InternalSynthEnvelopePanel(synthesizer, midiChannel);
         filterPanel = new InternalSynthFilterPanel(synthesizer, midiChannel);
         lfoPanel = new InternalSynthLFOPanel(synthesizer, midiChannel);
-        effectsPanel = new InternalSynthEffectsPanel(synthesizer, midiChannel);
-        
+        // effectsPanel = new InternalSynthEffectsPanel(synthesizer, midiChannel);
+
         // Add all panels to row 3 with spacing
         row3Panel.add(envelopePanel);
         row3Panel.add(Box.createHorizontalStrut(10));
         row3Panel.add(filterPanel);
         row3Panel.add(Box.createHorizontalStrut(10));
         row3Panel.add(lfoPanel);
-        row3Panel.add(Box.createHorizontalStrut(10));
-        row3Panel.add(effectsPanel);
-        
+        // row3Panel.add(Box.createHorizontalStrut(10));
+        // row3Panel.add(effectsPanel);
+
         // Add all rows to main panel with vertical spacing
         mainPanel.add(row1Panel);
         mainPanel.add(Box.createVerticalStrut(10));
         mainPanel.add(row2Panel);
         mainPanel.add(Box.createVerticalStrut(10));
         mainPanel.add(row3Panel);
-        
+
         // Add scroll pane for better UI experience
         JScrollPane scrollPane = new JScrollPane(mainPanel);
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        
+
         return scrollPane;
     }
 
@@ -632,7 +648,7 @@ public class InternalSynthControlPanel extends JPanel {
                 BorderFactory.createEtchedBorder(),
                 "Oscillator Mix"));
         
-        // Create dials section for the mix panel
+        // Create dials section for the mix panel with FlowLayout
         JPanel dialsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         
         // Balance control (Osc1-Osc2)
@@ -670,7 +686,7 @@ public class InternalSynthControlPanel extends JPanel {
         dialsPanel.add(balance3Panel);
         dialsPanel.add(masterPanel);
         
-        // Add to main mix panel
+        // Add to main mix panel - CENTER position ensures vertical centering
         mixPanel.add(dialsPanel, BorderLayout.CENTER);
         
         // Add event handlers for the dials
@@ -724,7 +740,7 @@ public class InternalSynthControlPanel extends JPanel {
                 for (InternalSynthOscillatorPanel panel : oscillatorPanels) {
                     panel.updateSynthState();
                 }
-                
+
                 // Update LFO panel state
                 if (lfoPanel != null) {
                     lfoPanel.updateSynthState();
@@ -756,7 +772,7 @@ public class InternalSynthControlPanel extends JPanel {
             }
         }
     }
-    
+
     /**
      * Add a method to play test notes using the InternalSynthManager
      */
@@ -764,7 +780,7 @@ public class InternalSynthControlPanel extends JPanel {
         if (synthesizer != null && synthesizer.isOpen()) {
             // Use the manager but pass the synthesizer and soundbank name explicitly
             InternalSynthManager.getInstance().playTestNote(
-                synthesizer, midiChannel, note, velocity, preset, currentSoundbankName);
+                    synthesizer, midiChannel, note, velocity, preset, currentSoundbankName);
         }
     }
 }

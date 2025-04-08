@@ -65,8 +65,11 @@ public class InternalSynthOscillatorPanel extends JPanel {
                 new Font("Dialog", Font.BOLD, 11)
         ));
         
-        // CHANGE: Use a single FlowLayout row for all controls
-        setLayout(new FlowLayout(FlowLayout.CENTER, 10, 3));
+        // Use BorderLayout to achieve vertical centering
+        setLayout(new BorderLayout());
+        
+        // Create the flow panel that contains all controls
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         
         // Create the toggle section
         JPanel togglePanel = new JPanel();
@@ -144,14 +147,18 @@ public class InternalSynthOscillatorPanel extends JPanel {
         volumePanel.add(volumeDial);
         volumePanel.add(volumeLabel);
 
-        // CHANGE: Add all controls in a single row
-        add(togglePanel);
-        add(wavePanel);
-        add(octavePanel);
-        add(tunePanel);
-        add(brightnessPanel);
-        add(volumePanel);
+        // Add all controls to the flow panel
+        controlsPanel.add(togglePanel);
+        controlsPanel.add(wavePanel);
+        controlsPanel.add(octavePanel);
+        controlsPanel.add(tunePanel);
+        controlsPanel.add(brightnessPanel);
+        controlsPanel.add(volumePanel);
 
+        // Add the flow panel to the CENTER of the BorderLayout
+        // This ensures vertical centering
+        add(controlsPanel, BorderLayout.CENTER);
+        
         // Add event handlers
         setupEventHandlers();
     }
