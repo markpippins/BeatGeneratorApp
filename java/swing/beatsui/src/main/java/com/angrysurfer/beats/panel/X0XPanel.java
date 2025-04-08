@@ -11,7 +11,6 @@ import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 
 import org.slf4j.Logger;
@@ -23,6 +22,8 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.feature.Note;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
 import com.angrysurfer.core.service.InternalSynthManager;
 
@@ -215,11 +216,43 @@ public class X0XPanel extends JPanel implements IBusListener {
 
     private Component createMelodicSequencerPanel(int channel) {
         melodicSequencerPanel = new MelodicSequencerPanel(channel, noteEvent -> {
-            // Add logging to debug
-            // logger.info("Playing note: {}, velocity: {}, duration: {}",
-            //         noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
-            // Call the playNote method
-            // playNote(noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
+            // We don't need to use our local playNote method - the sequencer has its own note player
+            // Let the MelodicSequencer handle the actual note playing through its notePlayer
+            if (melodicSequencerPanel.getSequencer() != null && 
+                melodicSequencerPanel.getSequencer().getNotePlayer() != null) {
+                try {
+                    // Let the sequencer's notePlayer handle the note
+                    Note notePlayer = melodicSequencerPanel.getSequencer().getNotePlayer();
+                    InstrumentWrapper instrument = notePlayer.getInstrument();
+                    
+                    if (instrument != null) {
+                        // Log what we're playing for debugging
+                        logger.debug("Playing via MelodicSequencer notePlayer: note={}, vel={}, dur={}",
+                                noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
+                        
+                        // Use the sequencer's notePlayer instrument directly
+                        int midiNote = noteEvent.getNote();
+                        int velocity = noteEvent.getVelocity();
+                        int duration = noteEvent.getDurationMs();
+                        // int channel = notePlayer.getChannel();
+                        
+                        // Play the note
+                        instrument.noteOn(channel, midiNote, velocity);
+                        
+                        // Schedule note-off
+                        new Thread(() -> {
+                            try {
+                                Thread.sleep(duration);
+                                instrument.noteOff(channel, midiNote, 0);
+                            } catch (Exception ex) {
+                                logger.error("Error stopping note: {}", ex.getMessage(), ex);
+                            }
+                        }).start();
+                    }
+                } catch (Exception e) {
+                    logger.error("Error playing through notePlayer: {}", e.getMessage(), e);
+                }
+            }
         });
 
         return melodicSequencerPanel;

@@ -3,6 +3,7 @@ package com.angrysurfer.beats.widget;
 import java.awt.Color;
 import java.awt.Dimension;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultButtonModel;
 import javax.swing.JToggleButton;
 import javax.swing.Timer;
@@ -14,6 +15,7 @@ public class DrumSequencerGridButton extends JToggleButton {
     private boolean isTemporary = false;
     private Color normalColor;
     private Color temporaryColor = new Color(200, 150, 40); // Amber highlight
+    private boolean inPattern = true;
 
     /**
      * Create a new trigger button with label
@@ -153,6 +155,49 @@ public class DrumSequencerGridButton extends JToggleButton {
         isTemporary = false;
         setBackground(isSelected() ? getActiveColor() : getInactiveColor());
         repaint();
+    }
+
+    /**
+     * Set whether this button is in the pattern
+     * 
+     * @param inPattern true if in pattern, false otherwise
+     */
+    public void setInPattern(boolean inPattern) {
+        this.inPattern = inPattern;
+        updateAppearance();
+    }
+
+    /**
+     * Get whether this button is in the pattern
+     * 
+     * @return true if in pattern, false otherwise
+     */
+    public boolean isInPattern() {
+        return inPattern;
+    }
+
+    /**
+     * Update the appearance of the button based on its state
+     */
+    private void updateAppearance() {
+        if (!isEnabled()) {
+            setBackground(ColorUtils.darkGray);
+            return;
+        }
+        
+        if (!inPattern) {
+            // Subdued appearance for steps outside the pattern length
+            setBackground(ColorUtils.charcoalGray);
+            setBorder(BorderFactory.createLineBorder(ColorUtils.slateGray, 1));
+            return;
+        }
+        
+        // Regular appearance for steps in the pattern
+        if (isSelected()) {
+            setBackground(isHighlighted() ? ColorUtils.dustyAmber : ColorUtils.deepOrange);
+        } else {
+            setBackground(isHighlighted() ? ColorUtils.fadedOrange : ColorUtils.slateGray);
+        }
     }
 
     // Helper methods - implement if not already present

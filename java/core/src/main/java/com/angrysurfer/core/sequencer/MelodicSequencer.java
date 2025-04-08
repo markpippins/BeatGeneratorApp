@@ -243,50 +243,45 @@ public class MelodicSequencer implements IBusListener {
             return;
         }
 
-        tickCounter = tick.intValue();
+        tickCounter = tick;
 
-        // Check if it's time for the next step
-        if (tick % ticksPerStep == 0) {
-            // Store current step for playing and UI notification
-            int currentStep = stepCounter;
-
-            // Notify UI of step change BEFORE playing or calculating the next step
-            // This ensures visual indicators match the sound that's about to play
-            if (stepUpdateListener != null) {
-                stepUpdateListener.accept(new StepUpdateEvent(getPreviousStep(), currentStep));
-            }
-
-            // Check if the current step is active
-            if (currentStep < activeSteps.size() && activeSteps.get(currentStep)) {
-                // Retrieve the specific note, velocity, and gate values for this step
-                int noteValue = currentStep < noteValues.size()
-                        ? noteValues.get(currentStep) : 60;  // Default to middle C
-
-                // Apply quantization first, then octave shift
-                if (quantizeEnabled) {
-                    // Existing quantization code...
-                }
-                noteValue = applyOctaveShift(noteValue);
-
-                // Get velocity for this specific step
-                int velocity = currentStep < velocityValues.size()
-                        ? velocityValues.get(currentStep) : 100;  // Default velocity
-
-                // Get gate time for this specific step (gate value is percentage, convert to ms)
-                int gateTime = currentStep < gateValues.size()
-                        ? gateValues.get(currentStep) * 5 : 250;  // Scale gate value to ms
-
-                // Play the note directly using the Note object's instrument
-                playNoteDirectly(noteValue, velocity, gateTime);
-
-                // Optionally still notify external listeners if configured
-                if (noteEventListener != null) {
-                    // Existing code...
-                }
-            }
-
-            // Calculate next step AFTER playing the current step
+        // FIXED APPROACH: Use same fixed ticksPerStep as DrumSequencer
+        int fixedTicksPerStep = 24; // Match the value used in DrumSequencer
+        
+        // Check if it's time for the next step using fixed step size
+        if (tick % fixedTicksPerStep == 0) {
+            // Get previous step for highlighting updates
+            int prevStep = stepCounter;
+            
+            // Calculate the next step based on the current direction
             calculateNextStep();
+            
+            // Notify listeners of step update
+            if (stepUpdateListener != null) {
+                stepUpdateListener.accept(new StepUpdateEvent(prevStep, stepCounter));
+            }
+            
+            // Check if the current step is active
+            if (stepCounter >= 0 && stepCounter < activeSteps.size() && activeSteps.get(stepCounter)) {
+                // Get parameters for the current step
+                int noteValue = noteValues.get(stepCounter);
+                int velocity = velocityValues.get(stepCounter);
+                int gateLength = gateValues.get(stepCounter);
+                
+                // Apply octave shift and quantize note if needed
+                if (quantizeEnabled && quantizer != null) {
+                    noteValue = quantizer.quantizeNote(noteValue);
+                }
+                int finalNoteValue = applyOctaveShift(noteValue);
+                
+                // Calculate note duration based on gate value and tempo
+                int durationMs = calculateNoteDuration(gateLength);
+                
+                // Play the note using the configured note event listener
+                if (noteEventListener != null) {
+                    noteEventListener.accept(new NoteEvent(finalNoteValue, velocity, durationMs));
+                }
+            }
         }
     }
 
@@ -738,8 +733,6 @@ public class MelodicSequencer implements IBusListener {
             isPlaying = true;
             // Get current master tempo from session
             masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
-            // Recalculate ticksPerStep based on timing division and master tempo
-            this.ticksPerStep = calculateTicksPerStep(timingDivision);
             reset();
 
             logger.info("Melodic sequencer playback started with master tempo: {}", masterTempo);
@@ -768,10 +761,7 @@ public class MelodicSequencer implements IBusListener {
         if (division != null) {
             this.timingDivision = division;
 
-            // Update the ticksPerStep based on the timing division and master tempo
-            this.ticksPerStep = calculateTicksPerStep(division);
-
-            logger.info("Timing division set to {}, ticks per step: {}", division, ticksPerStep);
+            logger.info("Timing division set to {}", division);
         }
     }
 
@@ -785,25 +775,11 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Calculate ticks per step based on timing division
-     * Fixed to properly use session tempo and ratio calculations
-     */
-    private long calculateTicksPerStep(TimingDivision timing) {
-        // Apply the same scaling factor of 6.0 that we used in DrumSequencer
-        return (long)((24.0 * 96.0) / (masterTempo * timing.getTicksPerBeat() / 6.0));
-    }
-
-    /**
      * Update master tempo from session
      */
     public void updateMasterTempo(int sessionTicksPerBeat) {
         this.masterTempo = sessionTicksPerBeat;
         logger.info("Updated master tempo to {}", masterTempo);
-        
-        // Recalculate timing based on new tempo if playing
-        if (isPlaying && timingDivision != null) {
-            ticksPerStep = calculateTicksPerStep(timingDivision);
-        }
     }
 
     /**
@@ -865,5 +841,30 @@ public class MelodicSequencer implements IBusListener {
 
     public List<Integer> getGateValues() {
         return new ArrayList<>(gateValues);
+    }
+
+    /**
+     * Calculate note duration in milliseconds based on gate length percentage and current tempo
+     * 
+     * @param gateLength Gate length (0-100 percent)
+     * @return Duration in milliseconds
+     */
+    private int calculateNoteDuration(int gateLength) {
+        // Safety check for gate length
+        int safeGateLength = Math.max(1, Math.min(100, gateLength));
+        
+        // Calculate beat duration in milliseconds (60000ms / BPM)
+        // Using fixed tempo calculation that works with 24 ticks per step
+        double beatsPerMinute = 120.0;  // Default BPM
+        
+        if (masterTempo > 0) {
+            // Calculate BPM from masterTempo (typically 96 PPQN)
+            beatsPerMinute = 60.0 * (masterTempo / 24.0);
+        }
+        
+        int beatDurationMs = (int)(60000 / beatsPerMinute);
+        
+        // Apply gate percentage to get note duration
+        return (beatDurationMs * safeGateLength) / 100;
     }
 }
