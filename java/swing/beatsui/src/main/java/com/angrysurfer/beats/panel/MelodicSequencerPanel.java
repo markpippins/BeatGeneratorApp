@@ -2,7 +2,6 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -500,7 +499,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             JLabel label = new JLabel(getKnobLabel(i));
             label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
             label.setForeground(Color.GRAY);
-            label.setAlignmentX(Component.CENTER_ALIGNMENT);
+            // label.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             if (i > 0) {
                 JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
@@ -518,6 +517,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     noteDials.add(dial);
                 }
                 case 1 -> {
+                    // dial.setPreferredSize(new Dimension(90, 90));
                     velocityDial[0] = dial;
                     velocityDials.add(dial);
                 }

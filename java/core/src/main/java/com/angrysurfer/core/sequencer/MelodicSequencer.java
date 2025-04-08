@@ -277,7 +277,10 @@ public class MelodicSequencer implements IBusListener {
                 // Calculate note duration based on gate value and tempo
                 int durationMs = calculateNoteDuration(gateLength);
                 
-                // Play the note using the configured note event listener
+                // Play the note directly using the sequencer's internal method
+                playNoteDirectly(finalNoteValue, velocity, durationMs);
+                
+                // Also notify the UI through the listener if needed
                 if (noteEventListener != null) {
                     noteEventListener.accept(new NoteEvent(finalNoteValue, velocity, durationMs));
                 }
