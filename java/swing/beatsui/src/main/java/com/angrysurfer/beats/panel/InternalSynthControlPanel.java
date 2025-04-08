@@ -4,9 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.sound.midi.MidiChannel;
@@ -21,11 +20,10 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
+import javax.swing.JScrollPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.event.ActionListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -547,16 +545,16 @@ public class InternalSynthControlPanel extends JPanel {
         }
     }
 
-    private JPanel createParamsPanel() {
+    private JScrollPane createParamsPanel() {
         // Main panel with vertical layout
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // ROW 1: Oscillator panels in horizontal layout
-        JPanel oscillatorsPanel = new JPanel();
-        oscillatorsPanel.setLayout(new BoxLayout(oscillatorsPanel, BoxLayout.X_AXIS));
-        oscillatorsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // ROW 1: Oscillator panels 1 & 2 in horizontal layout
+        JPanel row1Panel = new JPanel();
+        row1Panel.setLayout(new BoxLayout(row1Panel, BoxLayout.X_AXIS));
+        row1Panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Create three oscillator panels
         InternalSynthOscillatorPanel osc1Panel = new InternalSynthOscillatorPanel(synthesizer, midiChannel, 0);
@@ -568,68 +566,119 @@ public class InternalSynthControlPanel extends JPanel {
         
         // Add property change listener for osc1 waveform changes
         osc1Panel.addPropertyChangeListener("oscillator1WaveformChanged", evt -> {
-            // Handle program change if needed when oscillator 1's waveform changes
-            if (presetCombo.getSelectedItem() instanceof PresetItem && synthesizer != null) {
-                PresetItem item = (PresetItem) presetCombo.getSelectedItem();
-                MidiChannel channel = synthesizer.getChannels()[midiChannel];
-                if (channel != null) {
-                    channel.programChange(item.getNumber());
-                }
-            }
+            // Property change handling could go here
         });
 
-        // Add oscillator panels to row 1
-        oscillatorsPanel.add(osc1Panel);
-        oscillatorsPanel.add(Box.createHorizontalStrut(10));
-        oscillatorsPanel.add(osc2Panel);
-        oscillatorsPanel.add(Box.createHorizontalStrut(10));
-        oscillatorsPanel.add(osc3Panel);
-
-        // Add first row to main panel
-        mainPanel.add(oscillatorsPanel);
-        mainPanel.add(Box.createVerticalStrut(15));
+        // Add oscillator panels 1 & 2 to row 1
+        row1Panel.add(osc1Panel);
+        row1Panel.add(Box.createHorizontalStrut(10));
+        row1Panel.add(osc2Panel);
         
-        // ROW 2: Mixer panel (left-aligned)
-        JPanel mixerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        mixerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // ROW 2: Oscillator 3 and Oscillator Mix panel in horizontal layout
+        JPanel row2Panel = new JPanel();
+        row2Panel.setLayout(new BoxLayout(row2Panel, BoxLayout.X_AXIS));
+        row2Panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Create mixer panel
-        mixerPanel = new InternalSynthMixerPanel(synthesizer, midiChannel);
-        mixerRow.add(mixerPanel);
+        // Create oscillator mix panel
+        JPanel oscMixPanel = createOscillatorMixPanel();
         
-        // Add second row to main panel
-        mainPanel.add(mixerRow);
-        mainPanel.add(Box.createVerticalStrut(15));
+        // Add oscillator 3 and mix panel to row 2
+        row2Panel.add(osc3Panel);
+        row2Panel.add(Box.createHorizontalStrut(10));
+        row2Panel.add(oscMixPanel);
         
-        // ROW 3: Envelope, Filter, LFO, and Effects panels
-        JPanel bottomRow = new JPanel(new GridLayout(1, 4, 10, 0));
-        bottomRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // ROW 3: Envelope, Filter, LFO and Effects panels
+        JPanel row3Panel = new JPanel();
+        row3Panel.setLayout(new BoxLayout(row3Panel, BoxLayout.X_AXIS));
+        row3Panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Create all bottom row panels
+        // Create the missing panels
         envelopePanel = new InternalSynthEnvelopePanel(synthesizer, midiChannel);
         filterPanel = new InternalSynthFilterPanel(synthesizer, midiChannel);
         lfoPanel = new InternalSynthLFOPanel(synthesizer, midiChannel);
         effectsPanel = new InternalSynthEffectsPanel(synthesizer, midiChannel);
         
-        // Add panels to the bottom row
-        bottomRow.add(envelopePanel);
-        bottomRow.add(filterPanel);
-        bottomRow.add(lfoPanel);
-        bottomRow.add(effectsPanel);
+        // Add all panels to row 3 with spacing
+        row3Panel.add(envelopePanel);
+        row3Panel.add(Box.createHorizontalStrut(10));
+        row3Panel.add(filterPanel);
+        row3Panel.add(Box.createHorizontalStrut(10));
+        row3Panel.add(lfoPanel);
+        row3Panel.add(Box.createHorizontalStrut(10));
+        row3Panel.add(effectsPanel);
         
-        // Add third row to main panel
-        mainPanel.add(bottomRow);
-
-        // Add scrolling for the entire panel
+        // Add all rows to main panel with vertical spacing
+        mainPanel.add(row1Panel);
+        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(row2Panel);
+        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(row3Panel);
+        
+        // Add scroll pane for better UI experience
         JScrollPane scrollPane = new JScrollPane(mainPanel);
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        
+        return scrollPane;
+    }
 
-        JPanel containerPanel = new JPanel(new BorderLayout());
-        containerPanel.add(scrollPane, BorderLayout.CENTER);
-
-        return containerPanel;
+    /**
+     * Create a panel for oscillator mixing controls
+     */
+    private JPanel createOscillatorMixPanel() {
+        JPanel mixPanel = new JPanel(new BorderLayout(0, 5));
+        mixPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(),
+                "Oscillator Mix"));
+        
+        // Create dials section for the mix panel
+        JPanel dialsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        
+        // Balance control (Osc1-Osc2)
+        JPanel balance12Panel = new JPanel();
+        balance12Panel.setLayout(new BoxLayout(balance12Panel, BoxLayout.Y_AXIS));
+        JLabel balanceLabel = new JLabel("1 <-> 2", JLabel.CENTER);
+        balanceLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        Dial balanceDial = UIHelper.createLabeledDial("", "Balance between Osc 1 & 2", 64);
+        balanceDial.setAlignmentX(Component.CENTER_ALIGNMENT);
+        balance12Panel.add(balanceDial);
+        balance12Panel.add(balanceLabel);
+        
+        // Balance control (mix-Osc3)
+        JPanel balance3Panel = new JPanel();
+        balance3Panel.setLayout(new BoxLayout(balance3Panel, BoxLayout.Y_AXIS));
+        JLabel balance3Label = new JLabel("Mix <-> 3", JLabel.CENTER);
+        balance3Label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        Dial balance3Dial = UIHelper.createLabeledDial("", "Balance between Mix & Osc 3", 64);
+        balance3Dial.setAlignmentX(Component.CENTER_ALIGNMENT);
+        balance3Panel.add(balance3Dial);
+        balance3Panel.add(balance3Label);
+        
+        // Master volume control
+        JPanel masterPanel = new JPanel();
+        masterPanel.setLayout(new BoxLayout(masterPanel, BoxLayout.Y_AXIS));
+        JLabel masterLabel = new JLabel("Master", JLabel.CENTER);
+        masterLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        Dial masterDial = UIHelper.createLabeledDial("", "Master Volume", 100);
+        masterDial.setAlignmentX(Component.CENTER_ALIGNMENT);
+        masterPanel.add(masterDial);
+        masterPanel.add(masterLabel);
+        
+        // Add dials to panel
+        dialsPanel.add(balance12Panel);
+        dialsPanel.add(balance3Panel);
+        dialsPanel.add(masterPanel);
+        
+        // Add to main mix panel
+        mixPanel.add(dialsPanel, BorderLayout.CENTER);
+        
+        // Add event handlers for the dials
+        balanceDial.addChangeListener(e -> setControlChange(60, balanceDial.getValue()));
+        balance3Dial.addChangeListener(e -> setControlChange(61, balance3Dial.getValue()));
+        masterDial.addChangeListener(e -> setControlChange(7, masterDial.getValue()));
+        
+        return mixPanel;
     }
 
     /**
