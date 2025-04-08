@@ -513,11 +513,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             // Store the dial in the appropriate collection based on its type
             switch (i) {
                 case 0 -> {
+                    dial.setPreferredSize(new Dimension(60, 60));
                     noteDial[0] = dial;
                     noteDials.add(dial);
                 }
                 case 1 -> {
-                    // dial.setPreferredSize(new Dimension(90, 90));
                     velocityDial[0] = dial;
                     velocityDials.add(dial);
                 }

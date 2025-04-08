@@ -69,7 +69,8 @@ public class InternalSynthOscillatorPanel extends JPanel {
         setLayout(new BorderLayout());
         
         // Create the flow panel that contains all controls
-        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        // CHANGED: Use LEFT alignment instead of CENTER for controls
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         
         // Create the toggle section
         JPanel togglePanel = new JPanel();
@@ -156,7 +157,7 @@ public class InternalSynthOscillatorPanel extends JPanel {
         controlsPanel.add(volumePanel);
 
         // Add the flow panel to the CENTER of the BorderLayout
-        // This ensures vertical centering
+        // This ensures vertical centering while allowing horizontal left alignment
         add(controlsPanel, BorderLayout.CENTER);
         
         // Add event handlers
