@@ -74,14 +74,17 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private boolean listenersEnabled = true;
     private boolean updatingUI = false;
 
+    // Add this as a field
+    private MelodicSequenceNavigationPanel navigationPanel;
+
     /**
      * Modify constructor to use only one step update mechanism (direct listener)
      */
-    public MelodicSequencerPanel(Integer channel, Consumer<NoteEvent> noteEventConsumer) {
+    public MelodicSequencerPanel(Integer id, Integer channel, Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
 
         // Create the sequencer
-        sequencer = new MelodicSequencer(channel);
+        sequencer = new MelodicSequencer(id, channel);
 
         // Set up the note event listener
         sequencer.setNoteEventListener(noteEventConsumer);
@@ -105,9 +108,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         add(paramsPanel, BorderLayout.NORTH);
 
         // Add sequence parameters panel at the top
-
         paramsPanel.add(createSequenceParametersPanel(), BorderLayout.NORTH);
 
+        // Add navigation panel
+        navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
+        paramsPanel.add(navigationPanel, BorderLayout.SOUTH);
 
         // Create panel for the 16 columns
         JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 5, 0));

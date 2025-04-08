@@ -180,20 +180,20 @@ public class X0XPanel extends JPanel implements IBusListener {
 
         tabbedPane.addTab("Poly Drum", createDrumPanel());
         tabbedPane.addTab("Poly Effects", createDrumEffectsPanel());
-        tabbedPane.addTab("Mono 1", createMelodicSequencerPanel(3));
-        tabbedPane.addTab("Mono 2", createMelodicSequencerPanel(4));
-        tabbedPane.addTab("Mono 3", createMelodicSequencerPanel(5));
-        tabbedPane.addTab("Mono 4", createMelodicSequencerPanel(6));
+        tabbedPane.addTab("Mono 1", createMelodicSequencerPanel(1, 3));
+        tabbedPane.addTab("Mono 2", createMelodicSequencerPanel(2, 4));
+        tabbedPane.addTab("Mono 3", createMelodicSequencerPanel(3, 5));
+        tabbedPane.addTab("Mono 4", createMelodicSequencerPanel(4, 6));
         tabbedPane.addTab("Synth", createInstrumentPanel());
         tabbedPane.addTab("Chords", createChordSequencerPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
 
         return tabbedPane;
     }
+
     private Component createMixerPanel() {
         return new MixerPanel(synthesizer);
     }
-
 
     private Component createChordSequencerPanel() {
         return new JPanel();
@@ -213,8 +213,8 @@ public class X0XPanel extends JPanel implements IBusListener {
         return drumEffectsSequencerPanel;
     }
 
-    private Component createMelodicSequencerPanel(int channel) {
-        melodicSequencerPanel = new MelodicSequencerPanel(channel, noteEvent -> {
+    private Component createMelodicSequencerPanel(int id, int channel) {
+        melodicSequencerPanel = new MelodicSequencerPanel(id, channel, noteEvent -> {
             // Add logging to debug
             // logger.info("Playing note: {}, velocity: {}, duration: {}",
             //         noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());

@@ -316,7 +316,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Use GridLayout for perfect vertical alignment with grid cells
         JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, 1, 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
-        // panel.setBackground(new Color(40, 40, 40)); // Match grid background
 
         // Create drum buttons for standard drum kit sounds
         String[] drumNames = {
@@ -336,28 +335,66 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             final int drumIndex = i;
-            // Create a Strike object for this drum pad with velocity and level settings
+            
+            // Create a Strike object for this drum pad
             Strike strike = new Strike();
-            strike.setRootNote(defaultNotes[i]);
-            strike.setMinVelocity(80);
-            strike.setMaxVelocity(127);
-            strike.setLevel(100);
             strike.setName(drumNames[i]);
-
-            sequencer.setStrike(i, strike);
-
-            // Create the button with flat, rounded style
-            DrumSequencerButton button = new DrumSequencerButton(drumIndex, sequencer);
-            button.setDrumName(drumNames[i]);
-
-            // Add the button directly to the panel for perfect alignment
-            panel.add(button);
-
-            // Add to tracked buttons list
-            drumButtons.add(button);
+            strike.setRootNote(defaultNotes[i]);
+            strike.setLevel(100); // Default velocity
+            
+            // Set the strike in the sequencer
+            sequencer.setStrike(drumIndex, strike);
+            
+            // Create the drum button with proper selection handling
+            DrumSequencerButton drumButton = new DrumSequencerButton(drumIndex, sequencer);
+            drumButton.setToolTipText("Select " + drumNames[i] + " (Note: " + defaultNotes[i] + ")");
+            
+            // THIS IS THE KEY PART - Add action listener for drum selection
+            drumButton.addActionListener(e -> selectDrumPad(drumIndex));
+            
+            // Add to our tracking list
+            drumButtons.add(drumButton);
+            
+            // Add to the panel
+            panel.add(drumButton);
         }
 
         return panel;
+    }
+
+    /**
+     * Handle selection of a drum pad
+     *
+     * @param padIndex The index of the selected pad
+     */
+    private void selectDrumPad(int padIndex) {
+        if (padIndex < 0 || padIndex >= DRUM_PAD_COUNT) {
+            return;
+        }
+        
+        // Update selected index
+        selectedPadIndex = padIndex;
+        
+        // Update visual selection state of buttons
+        for (int i = 0; i < drumButtons.size(); i++) {
+            drumButtons.get(i).setSelected(i == padIndex);
+        }
+        
+        // Update UI controls for this drum
+        updateParameterControls();
+        
+        // Update info panel with this drum's details
+        drumInfoPanel.updateInfo(padIndex);
+        
+        // Tell the sequencer about selection
+        sequencer.selectDrumPad(padIndex);
+        
+        // Update step buttons for this drum to show pattern length correctly
+        updateStepButtonsForDrum(padIndex);
+        
+        logger.info("Selected drum pad: {} ({})", padIndex, 
+                    sequencer.getStrike(padIndex) != null ? 
+                    sequencer.getStrike(padIndex).getName() : "unnamed");
     }
 
     /**
@@ -683,27 +720,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 updateStepButtonAppearance(button, drumIndex, step);
             }
         }
-    }
-
-    /**
-     * Handle selection of a drum pad
-     *
-     * @param padIndex The index of the selected pad
-     */
-    private void selectDrumPad(int padIndex) {
-        // Deselect previous pad
-        if (selectedPadIndex >= 0 && selectedPadIndex < drumButtons.size()) {
-            drumButtons.get(selectedPadIndex).setSelected(false);
-        }
-
-        // Select new pad
-        selectedPadIndex = padIndex;
-        if (selectedPadIndex >= 0 && selectedPadIndex < drumButtons.size()) {
-            drumButtons.get(selectedPadIndex).setSelected(true);
-        }
-
-        // Update sequencer state
-        sequencer.setSelectedPadIndex(padIndex);
     }
 
     /**

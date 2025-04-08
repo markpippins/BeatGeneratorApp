@@ -273,5 +273,18 @@ public class Commands {
     public static final String LOAD_DRUM_SEQUENCE = "LOAD_DRUM_SEQUENCE";
     public static final String DRUM_SEQUENCE_PARAMS_CHANGED = "DRUM_SEQUENCE_PARAMS_CHANGED";
     public static final String DRUM_SEQUENCE_LOADED = "DRUM_SEQUENCE_LOADED";
+
+    public static final String MELODIC_SEQUENCE_SAVED = "MELODIC_SEQUENCE_SAVED";
+    public static final String MELODIC_SEQUENCE_UPDATED = "MELODIC_SEQUENCE_UPDATED";
+    public static final String MELODIC_SEQUENCE_LOADED = "MELODIC_SEQUENCE_LOADED";
+    public static final String MELODIC_SEQUENCE_REMOVED = "MELODIC_SEQUENCE_REMOVED";
+    public static final String MELODIC_SEQUENCE_ADDED = "MELODIC_SEQUENCE_ADDED";
+    public static final String MELODIC_SEQUENCE_SELECTED = "MELODIC_SEQUENCE_SELECTED";
+
+    // Navigation commands
+    public static final String MELODIC_SEQUENCE_NEXT = "MELODIC_SEQUENCE_NEXT";
+    public static final String MELODIC_SEQUENCE_PREV = "MELODIC_SEQUENCE_PREV";
+    public static final String MELODIC_SEQUENCE_FIRST = "MELODIC_SEQUENCE_FIRST";
+    public static final String MELODIC_SEQUENCE_LAST = "MELODIC_SEQUENCE_LAST";
 }
 
