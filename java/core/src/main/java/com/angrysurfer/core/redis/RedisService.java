@@ -22,6 +22,8 @@ import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.MelodicSequenceData;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -49,6 +51,7 @@ public class RedisService implements IBusListener {
     private final SessionHelper sessionHelper;
     private final UserConfigHelper userConfigHelper;
     private final DrumSequenceHelper drumSequenceHelper;
+    private final MelodicSequencerHelper melodicSequencerHelper;
     // private final RedisConfigHelper configHelper;
 
     private RedisService() {
@@ -65,6 +68,7 @@ public class RedisService implements IBusListener {
         this.instrumentHelper = new InstrumentHelper(jedisPool, objectMapper);
         this.userConfigHelper = new UserConfigHelper(jedisPool, objectMapper);
         this.drumSequenceHelper = new DrumSequenceHelper(jedisPool, objectMapper);
+        this.melodicSequencerHelper = new MelodicSequencerHelper(jedisPool, objectMapper);
         // this.configHelper = new RedisConfigHelper(jedisPool, objectMapper);
 
         commandBus.register(this);
@@ -500,5 +504,56 @@ public class RedisService implements IBusListener {
 
     public Long getPreviousDrumSequenceId(Long currentId) {
         return drumSequenceHelper.getPreviousDrumSequenceId(currentId);
+    }
+
+    // Melodic sequence methods
+    public MelodicSequenceData newMelodicSequence() {
+        // Default to sequencer ID 1 when no ID is specified
+        return melodicSequencerHelper.newMelodicSequence(1);
+    }
+
+    public void applyMelodicSequenceToSequencer(MelodicSequenceData data, MelodicSequencer sequencer) {
+        melodicSequencerHelper.applyToSequencer(data, sequencer);
+    }
+
+    public MelodicSequenceData findMelodicSequenceById(Long id) {
+        // Default to sequencer ID 1 when no sequencer ID is specified
+        return melodicSequencerHelper.findMelodicSequenceById(id, 1);
+    }
+
+    public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId) {
+        return melodicSequencerHelper.findMelodicSequenceById(id, sequencerId);
+    }
+
+    public void saveMelodicSequence(MelodicSequencer sequencer) {
+        melodicSequencerHelper.saveMelodicSequence(sequencer);
+    }
+
+    public List<Long> getAllMelodicSequenceIds(Integer sequencerId) {
+        return melodicSequencerHelper.getAllMelodicSequenceIds(sequencerId);
+    }
+
+    public Long getMinimumMelodicSequenceId(Integer sequencerId) {
+        return melodicSequencerHelper.getMinimumMelodicSequenceId(sequencerId);
+    }
+
+    public Long getMaximumMelodicSequenceId(Integer sequencerId) {
+        return melodicSequencerHelper.getMaximumMelodicSequenceId(sequencerId);
+    }
+
+    public MelodicSequenceData newMelodicSequence(Integer sequencerId) {
+        return melodicSequencerHelper.newMelodicSequence(sequencerId);
+    }
+
+    public void deleteMelodicSequence(Integer sequencerId, Long id) {
+        melodicSequencerHelper.deleteMelodicSequence(sequencerId, id);
+    }
+
+    public Long getNextMelodicSequenceId(Integer sequencerId, Long currentId) {
+        return melodicSequencerHelper.getNextMelodicSequenceId(sequencerId, currentId);
+    }
+
+    public Long getPreviousMelodicSequenceId(Integer sequencerId, Long currentId) {
+        return melodicSequencerHelper.getPreviousMelodicSequenceId(sequencerId, currentId);
     }
 }

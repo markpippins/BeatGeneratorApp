@@ -68,6 +68,10 @@ public class MelodicSequencer implements IBusListener {
     // Add master tempo field to synchronize with session
     private int masterTempo;
 
+    // Add these fields
+    private Integer id;
+    private Long melodicSequenceId = 0L;
+
     /**
      * Creates a new melodic sequencer
      */
@@ -92,6 +96,13 @@ public class MelodicSequencer implements IBusListener {
     public MelodicSequencer(Integer channel) {
         this();
         this.channel = channel; // Set the channel for this instance
+    }
+
+    // Constructor with ID
+    public MelodicSequencer(Integer id, Integer channel) {
+        this.id = id;
+        this.channel = channel;
+        // Other initialization...
     }
 
     /**
@@ -814,12 +825,15 @@ public class MelodicSequencer implements IBusListener {
             }
 
             case Commands.TRANSPORT_START -> {
+                logger.info("Received TRANSPORT_START command");
                 // Sync with master tempo when starting
                 masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
+                logger.info("Master tempo set to {} ticks per beat", masterTempo);
                 play();
             }
 
             case Commands.TRANSPORT_STOP -> {
+                logger.info("Received TRANSPORT_STOP command");
                 stop();
             }
 
@@ -834,5 +848,22 @@ public class MelodicSequencer implements IBusListener {
      */
     public int getStepCounter() {
         return stepCounter;
+    }
+
+    // Getter methods for sequence data
+    public List<Boolean> getActiveSteps() {
+        return new ArrayList<>(activeSteps);
+    }
+
+    public List<Integer> getNoteValues() {
+        return new ArrayList<>(noteValues);
+    }
+
+    public List<Integer> getVelocityValues() {
+        return new ArrayList<>(velocityValues);
+    }
+
+    public List<Integer> getGateValues() {
+        return new ArrayList<>(gateValues);
     }
 }
