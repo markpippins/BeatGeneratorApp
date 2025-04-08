@@ -43,7 +43,6 @@ import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
-import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
 
 /**
@@ -737,21 +736,57 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Refresh the entire grid UI to match the current sequencer state
      */
     private void refreshGridUI() {
-        // First, clear any active step highlighting
-        clearAllStepHighlighting();
+        if (triggerButtons == null || triggerButtons.isEmpty()) {
+            logger.warn("Cannot refresh grid UI - triggerButtons list is empty");
+            return;
+        }
+
+        logger.info("Refreshing entire grid UI for sequence {}", sequencer.getDrumSequenceId());
         
-        // Update all step buttons for all drums
-        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            updateStepButtonsForDrum(drumIndex);
+        // Temporarily disable any listeners if needed
+        boolean wasListeningToChanges = true;  // Add field if needed
+        
+        try {
+            // wasListeningToChanges = disableUIEventListeners();
+            
+            // Ensure we refresh ALL drums and ALL steps
+            for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                for (int step = 0; step < 16; step++) {
+                    int buttonIndex = drumIndex * 16 + step;
+                    
+                    if (buttonIndex < triggerButtons.size()) {
+                        DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
+                        
+                        if (button != null) {
+                            // Get the current state from the sequencer
+                            boolean active = sequencer.isStepActive(drumIndex, step);
+                            
+                            // Force update button state without triggering events
+                            button.setToggled(active);
+                            button.setHighlighted(false);  // Clear any highlighting
+                            button.repaint();  // Force immediate repaint
+                        }
+                    }
+                }
+                
+                // Update the drum row's appearance
+                updateRowAppearance(drumIndex, drumIndex == selectedPadIndex);
+            }
+        } finally {
+            // Re-enable listeners if needed
+            // if (wasListeningToChanges) {
+            //    enableUIEventListeners();
+            // }
         }
         
-        // Reselect the current drum to ensure all controls are properly updated
-        selectDrumPad(selectedPadIndex);
+        // Make sure the UI shows the correct selected drum
+        updateParameterControls();
         
-        // Update parameter controls for the selected drum
-        syncUIWithSequencer();
+        // Ensure proper visual refresh
+        revalidate();
+        repaint();
         
-        logger.debug("Grid UI refreshed completely");
+        logger.info("Grid UI refresh completed");
     }
 
     /**

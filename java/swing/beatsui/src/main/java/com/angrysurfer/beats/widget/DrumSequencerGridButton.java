@@ -208,4 +208,21 @@ public class DrumSequencerGridButton extends JToggleButton {
     private Color getInactiveColor() {
         return new Color(60, 60, 60);   // Dark gray when inactive
     }
+
+    /**
+     * Set active state without triggering events
+     * This is used during grid refreshes to avoid event loops
+     * 
+     * @param active Whether the step is active
+     */
+    public void setActiveQuietly(boolean active) {
+        boolean oldValue = isSelected();
+        
+        if (oldValue != active) {
+            // Use direct model access to avoid firing events
+            getModel().setSelected(active);
+            // Update appearance without firing events
+            updateAppearance();
+        }
+    }
 }
