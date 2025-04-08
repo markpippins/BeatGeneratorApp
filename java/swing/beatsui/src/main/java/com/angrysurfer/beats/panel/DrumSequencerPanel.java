@@ -81,6 +81,12 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     // Debug mode flag
     private boolean debugMode = false;
 
+    // Add this field to the class
+    private boolean isPlaying = false;
+
+    // Add this field to the class
+    private boolean isSelectingDrumPad = false;
+
     /**
      * Create a new DrumSequencerPanel
      *
@@ -341,48 +347,32 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Handle selection of a drum pad - completely revised to fix display issues
      */
     private void selectDrumPad(int padIndex) {
-        if (padIndex < 0 || padIndex >= DRUM_PAD_COUNT) {
-            return;
-        }
+        // Guard against recursive calls
+        if (isSelectingDrumPad) return;
         
-        // Update selected index
-        selectedPadIndex = padIndex;
-        
-        // Update visual selection state of buttons
-        for (int i = 0; i < drumButtons.size(); i++) {
-            drumButtons.get(i).setSelected(i == padIndex);
-        }
-        
-        // Update UI controls for this drum
-        updateParameterControls();
-        
-        // Update info panel with this drum's details
-        if (drumInfoPanel != null) {
-            drumInfoPanel.updateInfo(padIndex);
-        }
-        
-        // Tell the sequencer about selection
-        sequencer.selectDrumPad(padIndex);
-        
-        // CRITICAL FIX: Make sure *all* grid cells are visible before updating
-        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            for (int step = 0; step < 16; step++) {
-                int buttonIndex = (drumIndex * 16) + step;
-                if (buttonIndex >= 0 && buttonIndex < triggerButtons.size()) {
-                    DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
-                    button.setVisible(true);  // Keep all buttons visible
-                }
+        isSelectingDrumPad = true;
+        try {
+            // Store the selected pad index
+            selectedPadIndex = padIndex;
+            
+            // Tell sequencer about the selection (without sending another event back)
+            sequencer.setSelectedPadIndex(padIndex);
+            
+            // Update UI for all drum rows
+            for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+                updateRowAppearance(i, i == padIndex);
             }
+            
+            // Update parameter controls for the selected drum
+            updateParameterControls();
+            
+            // Update info panel
+            if (drumInfoPanel != null) {
+                drumInfoPanel.updateInfo(padIndex);
+            }
+        } finally {
+            isSelectingDrumPad = false;
         }
-        
-        // Now update appearance after ensuring visibility
-        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            updateRowAppearance(drumIndex, drumIndex == padIndex);
-        }
-        
-        logger.info("Selected drum pad: {} ({})", padIndex, 
-                    sequencer.getStrike(padIndex) != null ? 
-                    sequencer.getStrike(padIndex).getName() : "unnamed");
     }
 
     /**
@@ -429,32 +419,35 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * @param newStep The new step to highlight
      */
     private void updateStepHighlighting(int drumIndex, int oldStep, int newStep) {
-        // Run on EDT for thread safety
-        SwingUtilities.invokeLater(() -> {
-            try {
-                // Remove highlight from old step if valid
-                if (oldStep >= 0 && oldStep < sequencer.getPatternLength(drumIndex)) {
-                    int oldButtonIndex = (drumIndex * 16) + oldStep;
-                    if (oldButtonIndex >= 0 && oldButtonIndex < triggerButtons.size()) {
-                        DrumSequencerGridButton oldButton = triggerButtons.get(oldButtonIndex);
-                        oldButton.setHighlighted(false);
-                        oldButton.repaint();
-                    }
-                }
-                
-                // Add highlight to new step if valid
-                if (newStep >= 0 && newStep < sequencer.getPatternLength(drumIndex)) {
-                    int newButtonIndex = (drumIndex * 16) + newStep;
-                    if (newButtonIndex >= 0 && newButtonIndex < triggerButtons.size()) {
-                        DrumSequencerGridButton newButton = triggerButtons.get(newButtonIndex);
-                        newButton.setHighlighted(true);
-                        newButton.repaint();
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("Error updating step highlighting", e);
+        // Only update highlighting if we're actually playing
+        if (!isPlaying) {
+            return;
+        }
+
+        // Ensure we're on the EDT for UI updates
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> updateStepHighlighting(drumIndex, oldStep, newStep));
+            return;
+        }
+
+        // Calculate button indices based on the drum and step
+        int oldButtonIndex = drumIndex * 16 + oldStep;
+        int newButtonIndex = drumIndex * 16 + newStep;
+
+        // Ensure indices are valid
+        if (oldButtonIndex >= 0 && oldButtonIndex < triggerButtons.size()) {
+            DrumSequencerGridButton oldButton = triggerButtons.get(oldButtonIndex);
+            if (oldButton != null) {
+                oldButton.setHighlighted(false);
             }
-        });
+        }
+
+        if (newButtonIndex >= 0 && newButtonIndex < triggerButtons.size()) {
+            DrumSequencerGridButton newButton = triggerButtons.get(newButtonIndex);
+            if (newButton != null) {
+                newButton.setHighlighted(true);
+            }
+        }
     }
 
     /**
@@ -912,22 +905,24 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                     
                     // Reset all step highlighting
                     clearAllStepHighlighting();
-                    
-                    logger.info("Refreshed UI after sequence {} loaded/updated", 
-                               sequencer.getDrumSequenceId());
                 });
             }
             
             case Commands.DRUM_PAD_SELECTED -> {
-                // Existing drum pad selection code...
+                if (action.getData() instanceof DrumPadSelectionEvent event) {
+                    selectDrumPad(event.getNewSelection());
+                }
             }
             
             case Commands.TRANSPORT_START -> {
-                // Existing transport start code...
+                // Show step highlighting when playing starts
+                isPlaying = true;
             }
             
             case Commands.TRANSPORT_STOP -> {
-                // Existing transport stop code...
+                // Hide step highlighting when playing stops
+                isPlaying = false;
+                clearAllStepHighlighting();
             }
         }
     }
