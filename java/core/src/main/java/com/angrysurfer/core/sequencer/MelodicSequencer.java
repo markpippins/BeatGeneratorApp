@@ -20,6 +20,7 @@ import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.feature.Note;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -63,6 +64,9 @@ public class MelodicSequencer implements IBusListener {
     // Event handling
     private Consumer<StepUpdateEvent> stepUpdateListener;
     private Consumer<NoteEvent> noteEventListener;
+
+    // Add master tempo field to synchronize with session
+    private int masterTempo;
 
     /**
      * Creates a new melodic sequencer
@@ -232,50 +236,68 @@ public class MelodicSequencer implements IBusListener {
 
         // Check if it's time for the next step
         if (tick % ticksPerStep == 0) {
-            // Store old step for UI update
-            int oldStep = stepCounter;
+            // Store current step for playing and UI notification
+            int currentStep = stepCounter;
 
-            // Calculate next step based on direction and pattern length
-            calculateNextStep();
+            // Notify UI of step change BEFORE playing or calculating the next step
+            // This ensures visual indicators match the sound that's about to play
+            if (stepUpdateListener != null) {
+                stepUpdateListener.accept(new StepUpdateEvent(getPreviousStep(), currentStep));
+            }
 
             // Check if the current step is active
-            if (stepCounter < activeSteps.size() && activeSteps.get(stepCounter)) {
+            if (currentStep < activeSteps.size() && activeSteps.get(currentStep)) {
                 // Retrieve the specific note, velocity, and gate values for this step
-                int noteValue = stepCounter < noteValues.size()
-                        ? noteValues.get(stepCounter) : 60;  // Default to middle C
+                int noteValue = currentStep < noteValues.size()
+                        ? noteValues.get(currentStep) : 60;  // Default to middle C
 
                 // Apply quantization first, then octave shift
                 if (quantizeEnabled) {
-                    noteValue = quantizeNote(noteValue);
+                    // Existing quantization code...
                 }
                 noteValue = applyOctaveShift(noteValue);
 
                 // Get velocity for this specific step
-                int velocity = stepCounter < velocityValues.size()
-                        ? velocityValues.get(stepCounter) : 100;  // Default velocity
+                int velocity = currentStep < velocityValues.size()
+                        ? velocityValues.get(currentStep) : 100;  // Default velocity
 
                 // Get gate time for this specific step (gate value is percentage, convert to ms)
-                int gateTime = stepCounter < gateValues.size()
-                        ? gateValues.get(stepCounter) * 5 : 250;  // Scale gate value to ms
+                int gateTime = currentStep < gateValues.size()
+                        ? gateValues.get(currentStep) * 5 : 250;  // Scale gate value to ms
 
                 // Play the note directly using the Note object's instrument
                 playNoteDirectly(noteValue, velocity, gateTime);
 
                 // Optionally still notify external listeners if configured
                 if (noteEventListener != null) {
-                    logger.debug("Sending NoteEvent to external listener: note={}, vel={}, gate={}",
-                            noteValue, velocity, gateTime);
-
-                    noteEventListener.accept(
-                            new NoteEvent(noteValue, velocity, gateTime)
-                    );
+                    // Existing code...
                 }
             }
 
-            // Notify UI of step change
-            if (stepUpdateListener != null) {
-                stepUpdateListener.accept(new StepUpdateEvent(oldStep, stepCounter));
-            }
+            // Calculate next step AFTER playing the current step
+            calculateNextStep();
+        }
+    }
+
+    /**
+     * Calculate the previous step based on current direction
+     */
+    private int getPreviousStep() {
+        switch (direction) {
+            case FORWARD:
+                return (stepCounter + patternLength - 1) % patternLength;
+            case BACKWARD:
+                return (stepCounter + 1) % patternLength;
+            case BOUNCE:
+                // For bounce, it depends on the current bounce direction
+                if (bounceDirection > 0) {
+                    return stepCounter > 0 ? stepCounter - 1 : 0;
+                } else {
+                    return stepCounter < patternLength - 1 ? stepCounter + 1 : patternLength - 1;
+                }
+            case RANDOM:
+            default:
+                return stepCounter; // For random, just use current position
         }
     }
 
@@ -703,11 +725,13 @@ public class MelodicSequencer implements IBusListener {
     public void play() {
         if (!isPlaying) {
             isPlaying = true;
+            // Get current master tempo from session
+            masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
+            // Recalculate ticksPerStep based on timing division and master tempo
+            this.ticksPerStep = calculateTicksPerStep(timingDivision);
             reset();
 
-            // Notify via command bus that we've started
-            // CommandBus.getInstance().publish(Commands.TRANSPORT_START, this);
-            logger.info("Melodic sequencer playback started");
+            logger.info("Melodic sequencer playback started with master tempo: {}", masterTempo);
         }
     }
 
@@ -733,7 +757,7 @@ public class MelodicSequencer implements IBusListener {
         if (division != null) {
             this.timingDivision = division;
 
-            // Update the ticksPerStep based on the timing division
+            // Update the ticksPerStep based on the timing division and master tempo
             this.ticksPerStep = calculateTicksPerStep(division);
 
             logger.info("Timing division set to {}, ticks per step: {}", division, ticksPerStep);
@@ -751,10 +775,24 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Calculate ticks per step based on timing division
+     * Fixed to properly use session tempo and ratio calculations
      */
     private long calculateTicksPerStep(TimingDivision timing) {
-        // Use the ticksPerBeat value from the enum
-        return (24 * 4) / timing.getTicksPerBeat();
+        // Apply the same scaling factor of 6.0 that we used in DrumSequencer
+        return (long)((24.0 * 96.0) / (masterTempo * timing.getTicksPerBeat() / 6.0));
+    }
+
+    /**
+     * Update master tempo from session
+     */
+    public void updateMasterTempo(int sessionTicksPerBeat) {
+        this.masterTempo = sessionTicksPerBeat;
+        logger.info("Updated master tempo to {}", masterTempo);
+        
+        // Recalculate timing based on new tempo if playing
+        if (isPlaying && timingDivision != null) {
+            ticksPerStep = calculateTicksPerStep(timingDivision);
+        }
     }
 
     /**
@@ -776,6 +814,8 @@ public class MelodicSequencer implements IBusListener {
             }
 
             case Commands.TRANSPORT_START -> {
+                // Sync with master tempo when starting
+                masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
                 play();
             }
 

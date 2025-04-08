@@ -10,11 +10,11 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.service.DrumSequencerManager;
+import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -34,7 +34,7 @@ public class DrumSequencer implements IBusListener {
     private static final int MAX_STEPS = 64;      // Maximum pattern length
 
     // Global sequencing state
-    private int tickCounter = 0;            // Count ticks
+    private long tickCounter = 0;            // Count ticks
     private int beatCounter = 0;            // Count beats  
     private int ticksPerStep = 24;          // Base ticks per step
     private boolean isPlaying = false;      // Global play state
@@ -44,7 +44,7 @@ public class DrumSequencer implements IBusListener {
     // Per-drum sequencing state
     private int[] currentStep;              // Current step for each drum
     private boolean[] patternCompleted;     // Pattern completion flag for each drum
-    private int[] nextStepTick;             // Next step trigger tick for each drum
+    private long[] nextStepTick;             // Next step trigger tick for each drum
 
     // Per-drum pattern parameters
     private int[] patternLengths;           // Pattern length for each drum
@@ -68,6 +68,8 @@ public class DrumSequencer implements IBusListener {
     private Consumer<DrumStepUpdateEvent> stepUpdateListener;
     private Consumer<NoteEvent> noteEventListener;
 
+    private int masterTempo;
+
     /**
      * Creates a new drum sequencer with per-drum parameters
      */
@@ -75,7 +77,7 @@ public class DrumSequencer implements IBusListener {
         // Initialize arrays
         currentStep = new int[DRUM_PAD_COUNT];
         patternCompleted = new boolean[DRUM_PAD_COUNT];
-        nextStepTick = new int[DRUM_PAD_COUNT];
+        nextStepTick = new long[DRUM_PAD_COUNT];
 
         patternLengths = new int[DRUM_PAD_COUNT];
         directions = new Direction[DRUM_PAD_COUNT];
@@ -148,7 +150,7 @@ public class DrumSequencer implements IBusListener {
      *
      * @param tick The current tick count
      */
-    public void processTick(int tick) {
+    public void processTick(long tick) {
         if (!isPlaying) {
             return;
         }
@@ -190,6 +192,14 @@ public class DrumSequencer implements IBusListener {
         // Get the current step for this drum
         int step = currentStep[drumIndex];
 
+        // Notify listeners of step update BEFORE playing the sound
+        // This ensures visual indicators match the sound that's about to play
+        if (stepUpdateListener != null) {
+            // For the old step, use the previous step (calculated based on direction)
+            int oldStep = getPreviousStep(drumIndex);
+            stepUpdateListener.accept(new DrumStepUpdateEvent(drumIndex, oldStep, step));
+        }
+
         // Check if this step is active
         if (patterns[drumIndex][step]) {
             // Get the Strike for this drum
@@ -210,13 +220,29 @@ public class DrumSequencer implements IBusListener {
 
         // Calculate next step
         calculateNextStep(drumIndex);
+    }
 
-        // Notify listeners of step update
-        if (stepUpdateListener != null) {
-            int oldStep = step;
-            int newStep = currentStep[drumIndex];
-            stepUpdateListener.accept(new DrumStepUpdateEvent(drumIndex, oldStep, newStep));
-        }
+    /**
+     * Calculate the previous step based on current direction
+     */
+    private int getPreviousStep(int drumIndex) {
+        Direction direction = directions[drumIndex];
+        int currentPos = currentStep[drumIndex];
+        int length = patternLengths[drumIndex];
+        
+        return switch (direction) {
+            case FORWARD -> (currentPos + length - 1) % length;
+            case BACKWARD -> (currentPos + 1) % length;
+            case BOUNCE -> {
+                // For bounce, it depends on the current bounce direction
+                if (bounceDirections[drumIndex] > 0) {
+                    yield currentPos > 0 ? currentPos - 1 : 0;
+                } else {
+                    yield currentPos < length - 1 ? currentPos + 1 : length - 1;
+                }
+            }
+            case RANDOM -> currentPos; // For random, just use current position
+        };
     }
 
     /**
@@ -281,22 +307,51 @@ public class DrumSequencer implements IBusListener {
 
     /**
      * Calculate ticks per step based on timing division
+     * Modified to apply scaling factor of 6 to match MelodicSequencer timing at PPQ 48
      */
     private int calculateTicksPerStep(TimingDivision timing) {
-        // Use the ticksPerBeat value directly from the enum
-        return (ticksPerStep * 4) / timing.getTicksPerBeat();
+        // Apply a scale factor of 6 to match MelodicSequencer behavior
+        return (int)((24.0 * 96.0) / (masterTempo * timing.getTicksPerBeat() / 6.0));
+    }
+
+    /**
+     * Update master tempo from session
+     */
+    public void updateMasterTempo(int sessionTicksPerBeat) {
+        this.masterTempo = sessionTicksPerBeat;
+        logger.info("Updated master tempo to {}", masterTempo);
+        
+        // Recalculate all next step timings based on new tempo
+        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+            if (timingDivisions[drumIndex] != null) {
+                int calculatedTicksPerStep = calculateTicksPerStep(timingDivisions[drumIndex]);
+                nextStepTick[drumIndex] = tickCounter + calculatedTicksPerStep;
+            }
+        }
     }
 
     /**
      * Reset the sequencer to start position
      */
     public void reset() {
+        // Reset all step tracking arrays
         Arrays.fill(currentStep, 0);
         Arrays.fill(patternCompleted, false);
         Arrays.fill(nextStepTick, 0);
         Arrays.fill(bounceDirections, 1);
+        
+        // Reset global counters
         tickCounter = 0;
         beatCounter = 0;
+        
+        // Force the sequencer to generate an event to update visual indicators
+        if (stepUpdateListener != null) {
+            for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                stepUpdateListener.accept(new DrumStepUpdateEvent(drumIndex, -1, currentStep[drumIndex]));
+            }
+        }
+        
+        logger.debug("Sequencer fully reset - all counters and indicators cleared");
     }
 
     /**
@@ -647,7 +702,6 @@ public class DrumSequencer implements IBusListener {
      */
     @Override
     public void onAction(Command action) {
-        // Handle commands as needed
         if (action == null || action.getCommand() == null) {
             return;
         }
@@ -655,6 +709,7 @@ public class DrumSequencer implements IBusListener {
         switch (action.getCommand()) {
             case Commands.TRANSPORT_START -> {
                 isPlaying = true;
+                masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
                 reset();
             }
             case Commands.TRANSPORT_STOP -> {
@@ -662,26 +717,19 @@ public class DrumSequencer implements IBusListener {
                 reset();
             }
             case Commands.TIMING_UPDATE -> {
-                // Process timing update
-                if (isPlaying && action.getData() instanceof TimingUpdate timingUpdate) {
-                    if (timingUpdate.tick() != null) {
-                        // Process the tick
-                        processTick(timingUpdate.tickCount().intValue());
-
-                        if (timingUpdate.beat() > beatCounter) {
-                            // Notify UI of status update every 4 ticks
-                            int step = currentStep[selectedPadIndex];
-                            int patternLength = patternLengths[selectedPadIndex];
-                            logger.debug("Status update: Step {} of {}", step + 1, patternLength);
-
-                            // Publish status update to command bus
-                            CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this,
-                                    new StatusUpdate("Step: " + (step + 1) + " of " + patternLength));
-
-                            beatCounter++;
-                        }
-
+                if (isPlaying && action.getData() instanceof TimingUpdate update) {
+                    if (update.tick() != null) {
+                        processTick(update.tick());
                     }
+                }
+            }
+            case Commands.UPDATE_TEMPO -> {
+                if (action.getData() instanceof Integer ticksPerBeat) {
+                    updateMasterTempo(ticksPerBeat);
+                } else if (action.getData() instanceof Float) {
+                    // If BPM is sent instead, get ticksPerBeat from session
+                    int tpb = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
+                    updateMasterTempo(tpb);
                 }
             }
         }

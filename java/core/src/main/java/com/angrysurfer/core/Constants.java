@@ -2,7 +2,7 @@ package com.angrysurfer.core;
 
 public class Constants {
     public static final double DEFAULT_BEAT_OFFSET = 1.0;
-    public static int DEFAULT_PPQ = 24;
+    public static int DEFAULT_PPQ = 48; // Update the default PPQ to 48 to work with both sequencers
     public static int DEFAULT_BAR_COUNT = 4;
     public static int DEFAULT_BEATS_PER_BAR = 4;
     public static int DEFAULT_BEAT_DIVIDER = 16;

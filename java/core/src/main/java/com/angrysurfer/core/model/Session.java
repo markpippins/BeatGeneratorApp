@@ -396,6 +396,9 @@ public class Session implements Serializable, IBusListener {
         timingBus.register(this);
         System.out.println("Session: Registered with timing bus");
 
+        // Notify about tempo to all sequencers
+        commandBus.publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
+
         // Set active state
         isActive = true;
         System.out.println("Session: Session marked as active");
@@ -640,6 +643,8 @@ public class Session implements Serializable, IBusListener {
 
     public void setTicksPerBeat(int ticksPerBeat) {
         this.ticksPerBeat = ticksPerBeat;
+        // Notify about tempo change
+        commandBus.publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
 
         if (isRunning()) {
             syncToSequencer();

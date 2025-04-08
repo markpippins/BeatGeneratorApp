@@ -770,7 +770,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Handle command bus events
+     * Handle command bus events with improved sequence loading
      */
     @Override
     public void onAction(Command action) {
@@ -780,84 +780,34 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         switch (action.getCommand()) {
             case Commands.TRANSPORT_START -> {
-                // No need for startPlayback() since we're using the TimingBus
-
-                // Update UI to show initial state
-                syncUIWithSequencer();
+                startPlayback();
             }
 
             case Commands.TRANSPORT_STOP -> {
-                // Clear all highlighting
-                for (DrumSequencerGridButton button : triggerButtons) {
-                    button.setHighlighted(false);
-                    button.repaint();
-                }
+                stopPlayback();
             }
 
-            case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_UPDATED -> {
-                // Refresh the entire UI when a pattern is loaded or updated
-                logger.info("Pattern loaded/updated - refreshing UI");
+            // Add or update these cases for sequence loading
+            case Commands.PATTERN_LOADED, Commands.DRUM_SEQUENCE_LOADED -> {
+                // Reset the sequencer's step counters
+                sequencer.reset();
+
+                // Refresh the entire UI
                 SwingUtilities.invokeLater(() -> {
                     refreshGridUI();
 
-                    // Also update the parameters panel to reflect values from the loaded pattern
-                    updateParameterControls();
-
                     // Update the info panel for the selected drum
                     drumInfoPanel.updateInfo(selectedPadIndex);
+
+                    // Update the parameter controls to reflect loaded sequence
+                    updateParameterControls();
                 });
+
+                logger.info("Refreshed UI after loading sequence: {}", sequencer.getDrumSequenceId());
             }
 
-            case Commands.DRUM_SEQUENCE_PARAMS_CHANGED -> {
-                logger.debug("Pattern parameters changed");
-                // Always do a full UI sync when pattern parameters change
-                syncUIWithSequencer();
-            }
-
-            case Commands.DRUM_PAD_SELECTED -> {
-                // Update the UI for the changed selection
-                if (action.getData() instanceof DrumPadSelectionEvent event) {
-                    // Update the selectedPadIndex in the panel
-                    selectedPadIndex = event.getNewSelection();
-
-                    logger.info("Drum selected: {} -> {}", event.getOldSelection(), selectedPadIndex);
-
-                    if (selectedPadIndex >= 0 && selectedPadIndex < DRUM_PAD_COUNT) {
-                        // Update the selection state of all drum buttons with debug output
-                        for (int i = 0; i < drumButtons.size(); i++) {
-                            DrumSequencerButton button = (DrumSequencerButton) drumButtons.get(i);
-                            boolean shouldBeSelected = (i == selectedPadIndex);
-
-                            // Debug which button is being selected
-                            logger.info("Setting button {} selected={}", i, shouldBeSelected);
-
-                            // Force repaint to ensure visual update
-                            button.setSelected(shouldBeSelected);
-                            button.repaint();
-                        }
-
-                        // Add visual indicator elsewhere in UI
-                        if (drumInfoPanel != null) {
-                            drumInfoPanel.setBorder(BorderFactory.createTitledBorder(
-                                    BorderFactory.createLineBorder(Color.ORANGE, 2),
-                                    "Drum: " + (selectedPadIndex + 1)
-                            ));
-
-                            // Update the info panel content
-                            drumInfoPanel.updateForDrum(selectedPadIndex);
-                            drumInfoPanel.repaint();
-                        }
-
-                        // Update UI components with explicit repaints
-                        updateParameterControls();
-
-                        // Force repaint of controls panel
-                        lastStepSpinner.repaint();
-                        directionCombo.repaint();
-                        timingCombo.repaint();
-                        loopCheckbox.repaint();
-                    }
-                }
+            case Commands.PATTERN_UPDATED -> {
+                SwingUtilities.invokeLater(this::refreshGridUI);
             }
         }
     }
@@ -866,6 +816,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Refresh the entire grid UI to match the current sequencer state
      */
     private void refreshGridUI() {
+        // First, clear any active step highlighting
+        clearAllStepHighlighting();
+
         // Update all step buttons for all drums
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
             updateStepButtonsForDrum(drumIndex);
@@ -878,6 +831,16 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         syncUIWithSequencer();
 
         logger.debug("Grid UI refreshed completely");
+    }
+
+    /**
+     * Clear all step highlighting across all drum rows
+     */
+    private void clearAllStepHighlighting() {
+        for (DrumSequencerGridButton button : triggerButtons) {
+            button.clearTemporaryState();
+            button.repaint();
+        }
     }
 
     /**
@@ -1187,18 +1150,35 @@ class DrumSequenceNavigationPanel extends JPanel {
     }
 
     /**
+     * Load the sequence with the given ID
+     */
+    private void loadSequence(Long sequenceId) {
+        if (sequenceId != null) {
+            // Load the sequence
+            manager.loadSequence(sequenceId, sequencer);
+
+            // Reset the sequencer to ensure proper step indicator state
+            sequencer.reset();
+
+            // Update UI
+            updateSequenceIdDisplay();
+
+            // Use consistent command for sequence loading notifications
+            CommandBus.getInstance().publish(
+                Commands.PATTERN_LOADED,
+                this,
+                sequencer.getDrumSequenceId()
+            );
+        }
+    }
+
+    /**
      * Load the first available sequence
      */
     private void loadFirstSequence() {
         Long firstId = manager.getFirstSequenceId();
         if (firstId != null) {
-            manager.loadSequence(firstId, sequencer);
-            updateSequenceIdDisplay();
-            CommandBus.getInstance().publish(
-                    Commands.DRUM_SEQUENCE_LOADED,
-                    this,
-                    sequencer.getDrumSequenceId()
-            );
+            loadSequence(firstId);
         }
     }
 
@@ -1208,13 +1188,7 @@ class DrumSequenceNavigationPanel extends JPanel {
     private void loadPreviousSequence() {
         Long prevId = manager.getPreviousSequenceId(sequencer.getDrumSequenceId());
         if (prevId != null) {
-            manager.loadSequence(prevId, sequencer);
-            updateSequenceIdDisplay();
-            CommandBus.getInstance().publish(
-                    Commands.DRUM_SEQUENCE_LOADED,
-                    this,
-                    sequencer.getDrumSequenceId()
-            );
+            loadSequence(prevId);
         }
     }
 
@@ -1225,13 +1199,7 @@ class DrumSequenceNavigationPanel extends JPanel {
         Long nextId = manager.getNextSequenceId(sequencer.getDrumSequenceId());
 
         if (nextId != null) {
-            manager.loadSequence(nextId, sequencer);
-            updateSequenceIdDisplay();
-            CommandBus.getInstance().publish(
-                    Commands.DRUM_SEQUENCE_LOADED,
-                    this,
-                    sequencer.getDrumSequenceId()
-            );
+            loadSequence(nextId);
         } else if (sequencer.getDrumSequenceId() != 0) {
             // We're at the last saved sequence, so create a new blank one
             sequencer.setDrumSequenceId(0); // Set to 0 to indicate new unsaved sequence
@@ -1258,9 +1226,9 @@ class DrumSequenceNavigationPanel extends JPanel {
 
             updateSequenceIdDisplay();
             CommandBus.getInstance().publish(
-                    Commands.DRUM_SEQUENCE_UPDATED,
-                    this,
-                    sequencer.getDrumSequenceId()
+                Commands.DRUM_SEQUENCE_UPDATED,
+                this,
+                sequencer.getDrumSequenceId()
             );
         }
     }
@@ -1271,13 +1239,7 @@ class DrumSequenceNavigationPanel extends JPanel {
     private void loadLastSequence() {
         Long lastId = manager.getLastSequenceId();
         if (lastId != null) {
-            manager.loadSequence(lastId, sequencer);
-            updateSequenceIdDisplay();
-            CommandBus.getInstance().publish(
-                    Commands.DRUM_SEQUENCE_LOADED,
-                    this,
-                    sequencer.getDrumSequenceId()
-            );
+            loadSequence(lastId);
         }
     }
 

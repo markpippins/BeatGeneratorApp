@@ -510,7 +510,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
             // Create dial - first one is always a NoteSelectionDial
             Dial dial = i == 0 ? new NoteSelectionDial() : new Dial();
-
+            
             // Store the dial in the appropriate collection based on its type
             switch (i) {
                 case 0 -> {
