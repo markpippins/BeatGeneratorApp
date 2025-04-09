@@ -1,16 +1,20 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.FlowLayout;
+
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
@@ -19,7 +23,7 @@ import com.angrysurfer.core.service.DrumSequencerManager;
 /**
  * Panel providing navigation controls for drum sequences
  */
-public class DrumSequencerNavigationPanel extends JPanel {
+public class DrumSequencerNavigationPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencerNavigationPanel.class);
 
@@ -44,6 +48,9 @@ public class DrumSequencerNavigationPanel extends JPanel {
         setBorder(BorderFactory.createTitledBorder("Sequence"));
         
         initializeUI();
+        
+        // Register with command bus to receive sequence updates
+        CommandBus.getInstance().register(this);
     }
 
     private void initializeUI() {
@@ -110,21 +117,30 @@ public class DrumSequencerNavigationPanel extends JPanel {
         Long firstId = manager.getFirstSequenceId();
         Long lastId = manager.getLastSequenceId();
 
+        // Special case for new sequences (ID <= 0)
+        boolean isNewSequence = currentId <= 0;
+
         // First/Previous buttons - enabled if we're not at the first sequence
-        boolean isFirst = !hasSequences || (firstId != null && currentId <= firstId);
+        // AND we have sequences in the database AND we're not editing a new sequence
+        boolean isFirst = isNewSequence ? false : (firstId != null && currentId <= firstId);
 
-        // Next button should ALWAYS be enabled - this allows creating new sequences
-        // even when at the last saved sequence
         // Last button - only enabled if we're not at the last sequence
-        boolean isLast = !hasSequences || (lastId != null && currentId >= lastId);
+        boolean isLast = isNewSequence ? true : (lastId != null && currentId >= lastId);
 
-        firstButton.setEnabled(hasSequences && !isFirst);
-        prevButton.setEnabled(hasSequences && !isFirst);
+        // Enable previous/first buttons if we're on a new sequence AND we have sequences in DB
+        if (isNewSequence && hasSequences) {
+            firstButton.setEnabled(true);
+            prevButton.setEnabled(true);
+        } else {
+            firstButton.setEnabled(hasSequences && !isFirst);
+            prevButton.setEnabled(hasSequences && !isFirst);
+        }
+
         nextButton.setEnabled(true);  // Always enable the next button
         lastButton.setEnabled(hasSequences && !isLast);
 
-        logger.debug("Button states: currentId={}, firstId={}, lastId={}, isFirst={}, isLast={}",
-                currentId, firstId, lastId, isFirst, isLast);
+        logger.info("Button states: currentId={}, firstId={}, lastId={}, isFirst={}, isLast={}, hasSequences={}, isNew={}",
+                currentId, firstId, lastId, isFirst, isLast, hasSequences, isNewSequence);
     }
 
     /**
@@ -133,7 +149,7 @@ public class DrumSequencerNavigationPanel extends JPanel {
     private void loadSequence(Long sequenceId) {
         if (sequenceId != null) {
             // Use the manager directly to load the sequence
-            DrumSequencerManager.getInstance().loadSequence(sequenceId);
+            manager.loadSequence(sequenceId);
 
             // Reset the sequencer to ensure proper step indicator state
             sequencer.reset();
@@ -141,7 +157,6 @@ public class DrumSequencerNavigationPanel extends JPanel {
             // Update UI
             updateSequenceIdDisplay();
 
-            // Use consistent command for sequence loading notifications
             CommandBus.getInstance().publish(
                 Commands.DRUM_SEQUENCE_LOADED, 
                 this, 
@@ -149,10 +164,9 @@ public class DrumSequencerNavigationPanel extends JPanel {
             );
         }
     }
-
-    /**
-     * Load the first available sequence
-     */
+    
+    // Load first/previous/next/last sequence methods...
+    
     private void loadFirstSequence() {
         Long firstId = manager.getFirstSequenceId();
         if (firstId != null) {
@@ -160,9 +174,6 @@ public class DrumSequencerNavigationPanel extends JPanel {
         }
     }
 
-    /**
-     * Load the previous sequence
-     */
     private void loadPreviousSequence() {
         Long prevId = manager.getPreviousSequenceId(sequencer.getDrumSequenceId());
         if (prevId != null) {
@@ -170,17 +181,14 @@ public class DrumSequencerNavigationPanel extends JPanel {
         }
     }
 
-    /**
-     * Load the next sequence, or create a new one if at the last sequence
-     */
     private void loadNextSequence() {
         Long nextId = manager.getNextSequenceId(sequencer.getDrumSequenceId());
-
         if (nextId != null) {
             loadSequence(nextId);
         } else {
             // We're at the last saved sequence, so create a new blank one
             sequencer.setDrumSequenceId(0); // Set to 0 to indicate new unsaved sequence
+            logger.info("Creating new sequence, ID set to 0");
 
             // Reset the sequencer
             sequencer.reset();
@@ -202,7 +210,12 @@ public class DrumSequencerNavigationPanel extends JPanel {
                 sequencer.setTimingDivision(i, TimingDivision.NORMAL);
             }
 
-            updateSequenceIdDisplay();
+            // Update UI AFTER all changes
+            SwingUtilities.invokeLater(() -> {
+                updateSequenceIdDisplay();
+                updateButtonStates();
+            });
+            
             CommandBus.getInstance().publish(
                 Commands.DRUM_SEQUENCE_CREATED,
                 this,
@@ -211,9 +224,6 @@ public class DrumSequencerNavigationPanel extends JPanel {
         }
     }
 
-    /**
-     * Load the last available sequence
-     */
     private void loadLastSequence() {
         Long lastId = manager.getLastSequenceId();
         if (lastId != null) {
@@ -221,23 +231,44 @@ public class DrumSequencerNavigationPanel extends JPanel {
         }
     }
 
-    /**
-     * Save the current sequence
-     */
     private void saveCurrentSequence() {
-        // Use the manager directly to save the sequence
-        DrumSequencerManager.getInstance().saveSequence();
-
+        // Save the sequence
+        manager.saveSequence();
+        
+        // After saving, get the latest sequence IDs from the database
+        manager.refreshSequenceList();
+        
         // Update display and button states
         updateSequenceIdDisplay();
-        updateButtonStates();
-
+        
         CommandBus.getInstance().publish(
                 Commands.DRUM_SEQUENCE_SAVED,
                 this,
                 sequencer.getDrumSequenceId()
         );
-
+        
         logger.info("Saved drum sequence: {}", sequencer.getDrumSequenceId());
+    }
+    
+    /**
+     * Implement IBusListener to respond to sequence-related events
+     */
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == null) return;
+        
+        switch (action.getCommand()) {
+            case Commands.DRUM_SEQUENCE_LOADED, 
+                 Commands.DRUM_SEQUENCE_CREATED, 
+                 Commands.DRUM_SEQUENCE_SAVED,
+                 Commands.DRUM_SEQUENCE_DELETED -> {
+                // Update UI on EDT for thread safety
+                SwingUtilities.invokeLater(() -> {
+                    updateSequenceIdDisplay();
+                    updateButtonStates();  // Explicitly update button states
+                    logger.info("Updated UI after command: {}", action.getCommand());
+                });
+            }
+        }
     }
 }
