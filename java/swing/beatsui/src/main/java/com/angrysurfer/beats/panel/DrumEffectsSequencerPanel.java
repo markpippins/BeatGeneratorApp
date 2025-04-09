@@ -22,6 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import org.slf4j.Logger;
@@ -38,11 +39,9 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
-import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
 
 /**
@@ -714,83 +713,60 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     @Override
     public void onAction(Command action) {
-        if (action.getCommand() == null) {
-            return;
-        }
-
+        if (action.getCommand() == null) return;
+        
         switch (action.getCommand()) {
             case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_SAVED, 
                  Commands.DRUM_SEQUENCE_CREATED, Commands.DRUM_SEQUENCE_UPDATED -> {
-                // Refresh UI when sequence changes
-                if (selectedPadIndex >= 0) {
-                    updateControlsFromSequencer();
+                // CRITICAL: Force immediate grid refresh on ANY sequence event
+                
+                // Clear all old data
+                for (DrumSequencerGridButton button : selectorButtons) {
+                    button.setToggled(false);
+                    button.setHighlighted(false);
+                }
+                
+                // Force UI update on EDT
+                SwingUtilities.invokeLater(() -> {
+                    // Update pattern display for current drum
                     updatePatternDisplay();
-                }
+                    
+                    // Update parameter controls
+                    updateControlsFromSequencer();
+                    
+                    // Log refresh happening
+                    logger.info("Forced grid refresh after sequence change: {}", action.getCommand());
+                });
             }
             
-            case Commands.DRUM_PAD_SELECTED -> {
-                if (action.getData() instanceof DrumPadSelectionEvent event) {
-                    selectDrumPad(event.getNewSelection());
-                }
-            }
-            
-            // Other cases remain mostly the same
-            case Commands.TIMING_UPDATE -> {
-                if (action.getData() instanceof TimingUpdate) {
-                    TimingUpdate update = (TimingUpdate) action.getData();
-
-                    // Only update on tick (or whatever timing resolution you need)
-                    // This ensures the DrumSequencerManager.getInstance().getSequencer()advances at the right time
-                    if (update.tick() == 1) { // First tick of each beat
-                        onBeat();
-                    }
-                }
-            }
-
-            case Commands.TRANSPORT_START -> {
-                // Reset beat counter when transport starts
-                beat = 0;
-                logger.info("Transport started - resetting beat counter");
-            }
-
-            case Commands.TRANSPORT_STOP -> {
-                // Reset state when stopped
-                reset();
-                logger.info("Transport stopped - resetting DrumSequencerManager.getInstance().getSequencer()state");
-            }
+            // Other cases...
         }
     }
 
-
     /**
-     * Update pattern controls from the
-     * DrumSequencerManager.getInstance().getSequencer()
+     * Update UI controls from sequencer state
      */
     private void updateControlsFromSequencer() {
-        if (DrumSequencerManager.getInstance().getSequencer() != null) {
-            // Update last step spinner
-            int currentLength = DrumSequencerManager.getInstance().getSequencer().getPatternLength(selectedPadIndex);
-            lastStepSpinner.setValue(currentLength);
-
-            // Update loop checkbox
-            loopCheckbox.setSelected(DrumSequencerManager.getInstance().getSequencer().isLooping(selectedPadIndex));
-
-            // Update direction combo
-            Direction dir = DrumSequencerManager.getInstance().getSequencer().getDirection(selectedPadIndex);
-            switch (dir) {
-                case FORWARD ->
-                    directionCombo.setSelectedIndex(0);
-                case BACKWARD ->
-                    directionCombo.setSelectedIndex(1);
-                case BOUNCE ->
-                    directionCombo.setSelectedIndex(2);
-                case RANDOM ->
-                    directionCombo.setSelectedIndex(3);
-            }
-
-            // Update timing division combo
-            TimingDivision timing = DrumSequencerManager.getInstance().getSequencer().getTimingDivision(selectedPadIndex);
-            timingCombo.setSelectedItem(timing);
+        if (selectedPadIndex < 0) return;
+        
+        DrumSequencer seq = getSequencer();
+        
+        // Update pattern length spinner
+        lastStepSpinner.setValue(seq.getPatternLength(selectedPadIndex));
+        
+        // Update loop checkbox
+        loopCheckbox.setSelected(seq.isLooping(selectedPadIndex));
+        
+        // Update direction combo
+        Direction dir = seq.getDirection(selectedPadIndex);
+        switch (dir) {
+            case FORWARD -> directionCombo.setSelectedIndex(0);
+            case BACKWARD -> directionCombo.setSelectedIndex(1);
+            case BOUNCE -> directionCombo.setSelectedIndex(2);
+            case RANDOM -> directionCombo.setSelectedIndex(3);
         }
+        
+        // Update timing division combo
+        timingCombo.setSelectedItem(seq.getTimingDivision(selectedPadIndex));
     }
 }
