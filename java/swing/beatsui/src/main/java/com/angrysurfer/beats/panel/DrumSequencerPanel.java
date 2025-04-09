@@ -45,10 +45,16 @@ import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.DrumSequencerManager;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * A sequencer panel with X0X-style step sequencing capabilities. This is the UI
  * component for the DrumSequencer.
  */
+
+ @Getter
+ @Setter
 public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumEffectsSequencerPanel.class);
