@@ -2,6 +2,7 @@ package com.angrysurfer.core.redis;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
