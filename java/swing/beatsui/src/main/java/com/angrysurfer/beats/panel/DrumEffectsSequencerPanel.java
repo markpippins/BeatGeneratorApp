@@ -373,12 +373,12 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             label.setForeground(Color.GRAY);
             label.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-            if (i > 0) {
+            // if (i > 0) {
                 JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
                 labelPanel.add(label);
                 // Add label to the column
                 column.add(labelPanel);
-            }
+            // }
 
             // Create dial - first one is always a NoteSelectionDial
             Dial dial = new Dial();
@@ -576,13 +576,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             case 1:
                 return "Decay";
             case 2:
-                return "Cutoff";
+                return "Probability";
             case 3:
-                return "Resonance";
+                return "Reverb";
             case 4:
-                return "Drive";
+                return "Chorus";
             case 5:
-                return "Tone";
+                return "Delay";
             default:
                 return "";
         }

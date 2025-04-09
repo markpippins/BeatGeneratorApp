@@ -53,8 +53,8 @@ import lombok.Setter;
  * component for the DrumSequencer.
  */
 
- @Getter
- @Setter
+@Getter
+@Setter
 public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumEffectsSequencerPanel.class);
@@ -63,7 +63,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private final List<DrumSequencerButton> drumButtons = new ArrayList<>();
     private List<DrumSequencerGridButton> triggerButtons = new ArrayList<>();
     private DrumSequencerInfoPanel drumInfoPanel;
-    private DrumSequenceNavigationPanel navigationPanel;
+    private DrumSequencerNavigationPanel navigationPanel;
 
     // Core sequencer - manages all sequencing logic
     private DrumSequencer sequencer;
@@ -138,8 +138,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Create drum info panel (now on right side)
         drumInfoPanel = new DrumSequencerInfoPanel(sequencer);
 
-        // Create sequence navigation panel (in center)
-        navigationPanel = new DrumSequenceNavigationPanel(sequencer);
+        // Create sequence navigation panel (in center) - using the new standalone class
+        navigationPanel = new DrumSequencerNavigationPanel(sequencer);
 
         // Create sequence parameters panel (left side)
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
