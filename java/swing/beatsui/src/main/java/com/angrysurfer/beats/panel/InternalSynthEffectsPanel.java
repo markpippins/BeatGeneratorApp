@@ -1,6 +1,5 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -15,6 +14,9 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
+
+import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.beats.widget.UIHelper;
 
 /**
  * Panel for controlling effects parameters of a synthesizer
@@ -32,9 +34,9 @@ public class InternalSynthEffectsPanel extends JPanel {
     
     // UI components
     private JSlider effectTypeSlider;
-    private JSlider param1Slider;
-    private JSlider param2Slider;
-    private JSlider mixSlider;
+    private Dial param1Dial;
+    private Dial param2Dial;
+    private Dial mixDial;
     
     // Parameter group panels for dynamic labeling
     private JPanel param1Group;
@@ -66,27 +68,24 @@ public class InternalSynthEffectsPanel extends JPanel {
                 new Font("Dialog", Font.BOLD, 11)
         ));
 
-        // Use FlowLayout for sliders in a row with good spacing
-        setLayout(new FlowLayout(FlowLayout.CENTER, 12, 5));
+        // Use FlowLayout for controls with consistent spacing
+        setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
 
-        // Create effect type selector with labeled vertical slider
-        effectTypeSlider = createLabeledVerticalSlider(
-                "Effect Type", 0, 3, 0,
-                new String[]{"Reverb", "Delay", "Chorus", "Drive"}
-        );
+        // Create effect type selector as a HORIZONTAL slider
+        effectTypeSlider = createHorizontalEffectTypeSlider();
+        
+        // Create parameter dials instead of sliders
+        param1Dial = createParameterDial("Size/Time", 20);
+        param2Dial = createParameterDial("Decay/Fdbk", 30);
+        mixDial = createParameterDial("Mix", 20);
 
-        // Create parameter sliders
-        param1Slider = createVerticalSlider("Parameter 1", 0);
-        param2Slider = createVerticalSlider("Parameter 2", 0);
-        mixSlider = createVerticalSlider("Mix", 0);
-
-        // Create slider groups with labels
+        // Create dial groups with labels
         JPanel typeGroup = createSliderGroup("Type", effectTypeSlider);
-        param1Group = createSliderGroup("Size/Time", param1Slider);
-        param2Group = createSliderGroup("Decay/Fdbk", param2Slider);
-        JPanel mixGroup = createSliderGroup("Mix", mixSlider);
+        param1Group = createDialGroup("Size/Time", param1Dial);
+        param2Group = createDialGroup("Decay/Fdbk", param2Dial);
+        JPanel mixGroup = createDialGroup("Mix", mixDial);
 
-        // Add slider groups to panel
+        // Add components to panel
         add(typeGroup);
         add(param1Group);
         add(param2Group);
@@ -95,7 +94,82 @@ public class InternalSynthEffectsPanel extends JPanel {
         // Add event listeners
         setupEventHandlers();
     }
-    
+
+    /**
+     * Create a horizontal effect type slider with labels
+     */
+    private JSlider createHorizontalEffectTypeSlider() {
+        JSlider slider = new JSlider(SwingConstants.HORIZONTAL, 0, 3, 0);
+        slider.setToolTipText("Effect Type");
+        
+        // Set up tick marks and labels
+        slider.setMajorTickSpacing(1);
+        slider.setPaintTicks(true);
+        slider.setPaintLabels(true);
+        slider.setSnapToTicks(true);
+        
+        // Create tick labels
+        Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
+        labelTable.put(0, new JLabel("Reverb"));
+        labelTable.put(1, new JLabel("Delay"));
+        labelTable.put(2, new JLabel("Chorus"));
+        labelTable.put(3, new JLabel("Drive"));
+        slider.setLabelTable(labelTable);
+        
+        // Add FlatLaf styling
+        slider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
+        slider.putClientProperty("JSlider.paintThumbArrowShape", Boolean.TRUE);
+        
+        // Set size for horizontal slider
+        slider.setPreferredSize(new Dimension(240, 50));
+        
+        return slider;
+    }
+
+    /**
+     * Create a parameter dial with label
+     */
+    private Dial createParameterDial(String label, int initialValue) {
+        Dial dial = UIHelper.createLabeledDial("", label, initialValue);
+        dial.setPreferredSize(new Dimension(60, 60));
+        return dial;
+    }
+
+    /**
+     * Create a panel with a dial and label
+     */
+    private JPanel createDialGroup(String title, Dial dial) {
+        JPanel group = new JPanel();
+        group.setLayout(new BoxLayout(group, BoxLayout.Y_AXIS));
+        group.setBorder(BorderFactory.createTitledBorder(title));
+        
+        // Center the dial
+        // JPanel dialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        dial.setPreferredSize(new Dimension(60,60));
+        // dialPanel.add(dial);
+        
+        group.add(dial);
+        
+        return group;
+    }
+
+    /**
+     * Create a panel with a slider and title
+     */
+    private JPanel createSliderGroup(String title, JSlider slider) {
+        JPanel group = new JPanel();
+        group.setLayout(new BoxLayout(group, BoxLayout.Y_AXIS));
+        group.setBorder(BorderFactory.createTitledBorder(title));
+        
+        // Center the slider
+        JPanel sliderPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        sliderPanel.add(slider);
+        
+        group.add(sliderPanel);
+        
+        return group;
+    }
+
     /**
      * Add event listeners to all controls
      */
@@ -108,25 +182,19 @@ public class InternalSynthEffectsPanel extends JPanel {
             }
         });
 
-        param1Slider.addChangeListener(e -> {
-            if (!param1Slider.getValueIsAdjusting()) {
-                setControlChange(CC_PARAM1, param1Slider.getValue());
-            }
+        param1Dial.addChangeListener(e -> {
+            setControlChange(CC_PARAM1, param1Dial.getValue());
         });
 
-        param2Slider.addChangeListener(e -> {
-            if (!param2Slider.getValueIsAdjusting()) {
-                setControlChange(CC_PARAM2, param2Slider.getValue());
-            }
+        param2Dial.addChangeListener(e -> {
+            setControlChange(CC_PARAM2, param2Dial.getValue());
         });
 
-        mixSlider.addChangeListener(e -> {
-            if (!mixSlider.getValueIsAdjusting()) {
-                setControlChange(CC_MIX, mixSlider.getValue());
-            }
+        mixDial.addChangeListener(e -> {
+            setControlChange(CC_MIX, mixDial.getValue());
         });
     }
-    
+
     /**
      * Update parameter labels based on the selected effect type
      * 
@@ -152,15 +220,15 @@ public class InternalSynthEffectsPanel extends JPanel {
                 break;
         }
     }
-    
+
     /**
      * Reset all controls to their default values
      */
     public void resetToDefaults() {
         effectTypeSlider.setValue(0);     // Reverb
-        param1Slider.setValue(20);        // Small room size
-        param2Slider.setValue(30);        // Medium decay
-        mixSlider.setValue(20);           // Light mix
+        param1Dial.setValue(20);          // Small room size
+        param2Dial.setValue(30);          // Medium decay
+        mixDial.setValue(20);             // Light mix
         
         // Update parameter labels for the default effect type
         updateParameterLabels(0);
@@ -168,17 +236,17 @@ public class InternalSynthEffectsPanel extends JPanel {
         // Send these values to the synth
         updateSynthState();
     }
-    
+
     /**
      * Send the current state of all controls to the synthesizer
      */
     public void updateSynthState() {
         setControlChange(CC_EFFECT_TYPE, effectTypeSlider.getValue() * 32);
-        setControlChange(CC_PARAM1, param1Slider.getValue());
-        setControlChange(CC_PARAM2, param2Slider.getValue());
-        setControlChange(CC_MIX, mixSlider.getValue());
+        setControlChange(CC_PARAM1, param1Dial.getValue());
+        setControlChange(CC_PARAM2, param2Dial.getValue());
+        setControlChange(CC_MIX, mixDial.getValue());
     }
-    
+
     /**
      * Set a MIDI CC value on the synth
      * 
@@ -199,99 +267,6 @@ public class InternalSynthEffectsPanel extends JPanel {
         }
     }
     
-    /**
-     * Create a slider with a label underneath
-     */
-    private JPanel createSliderGroup(String title, JSlider slider) {
-        JPanel group = new JPanel();
-        group.setLayout(new BoxLayout(group, BoxLayout.Y_AXIS));
-        group.setBorder(BorderFactory.createTitledBorder(title));
-
-        // Center the slider
-        JPanel sliderPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        sliderPanel.add(slider);
-
-        group.add(sliderPanel);
-
-        return group;
-    }
-
-    /**
-     * Create a vertical slider with consistent styling
-     * 
-     * @param tooltip Tooltip text
-     * @param initialValue Initial value (0-127)
-     * @return Configured JSlider
-     */
-    private JSlider createVerticalSlider(String tooltip, int initialValue) {
-        JSlider slider = new JSlider(SwingConstants.VERTICAL, 0, 127, initialValue);
-        slider.setToolTipText(tooltip);
-
-        // Set up tick marks
-        slider.setMajorTickSpacing(32);
-        slider.setMinorTickSpacing(16);
-        slider.setPaintTicks(true);
-        slider.setPaintLabels(true);
-        slider.setSnapToTicks(false);
-
-        // Create tick labels - just show a few key values
-        Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
-        labelTable.put(0, new JLabel("0"));
-        labelTable.put(32, new JLabel("32"));
-        labelTable.put(64, new JLabel("64"));
-        labelTable.put(96, new JLabel("96"));
-        labelTable.put(127, new JLabel("127"));
-        slider.setLabelTable(labelTable);
-
-        // FlatLaf properties
-        slider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
-        slider.putClientProperty("JSlider.paintThumbArrowShape", Boolean.TRUE);
-
-        // Set reasonable size for a vertical slider
-        slider.setPreferredSize(new Dimension(60, 120));
-
-        return slider;
-    }
-
-    /**
-     * Create a vertical slider with labeled tick marks
-     * 
-     * @param tooltip Tooltip text
-     * @param min Minimum value
-     * @param max Maximum value 
-     * @param initialValue Initial value
-     * @param labels Array of labels for tick marks
-     * @return Configured JSlider with labels
-     */
-    private JSlider createLabeledVerticalSlider(String tooltip, int min, int max, int initialValue, String[] labels) {
-        JSlider slider = new JSlider(SwingConstants.VERTICAL, min, max, initialValue);
-        slider.setToolTipText(tooltip);
-
-        // Set up tick marks and labels
-        slider.setMajorTickSpacing(1);
-        slider.setPaintTicks(true);
-        slider.setPaintLabels(true);
-        slider.setSnapToTicks(true);
-
-        // Create tick labels
-        Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
-        for (int i = min; i <= max; i++) {
-            JLabel label = new JLabel(labels[i]);
-            label.setFont(new Font("Dialog", Font.PLAIN, 9));
-            labelTable.put(i, label);
-        }
-        slider.setLabelTable(labelTable);
-
-        // Add FlatLaf styling
-        slider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
-        slider.putClientProperty("JSlider.paintThumbArrowShape", Boolean.TRUE);
-
-        // Set reasonable size for a vertical slider
-        slider.setPreferredSize(new Dimension(60, 120));
-
-        return slider;
-    }
-    
     // Getters and setters for individual control values
     
     public int getEffectType() {
@@ -304,26 +279,26 @@ public class InternalSynthEffectsPanel extends JPanel {
     }
     
     public int getParam1() {
-        return param1Slider.getValue();
+        return param1Dial.getValue();
     }
     
     public void setParam1(int value) {
-        param1Slider.setValue(value);
+        param1Dial.setValue(value);
     }
     
     public int getParam2() {
-        return param2Slider.getValue();
+        return param2Dial.getValue();
     }
     
     public void setParam2(int value) {
-        param2Slider.setValue(value);
+        param2Dial.setValue(value);
     }
     
     public int getMix() {
-        return mixSlider.getValue();
+        return mixDial.getValue();
     }
     
     public void setMix(int value) {
-        mixSlider.setValue(value);
+        mixDial.setValue(value);
     }
 }

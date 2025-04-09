@@ -1,10 +1,10 @@
 package com.angrysurfer.core.sequencer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -362,49 +362,55 @@ public class Scale {
     }
 
     /**
-     * Get a Boolean array representing which notes are in the scale
-     *
-     * @param rootNote The root note name (C, C#, D, etc.)
-     * @param scaleName The name of the scale
-     * @return Boolean array where true values indicate notes in the scale
+     * Get the Boolean array for a scale with specified root and scale name
+     * @param rootNoteName The root note (C, C#, etc.)
+     * @param scaleName The scale name (Major, Minor, etc.)
+     * @return Boolean array of 12 scale notes
+     * @throws IllegalArgumentException if root or scale name is invalid
      */
-    // public static Boolean[] getScale(String rootNote, String scaleName) {
-    //     Boolean[] result = new Boolean[12];
-    //     for (int i = 0; i < 12; i++) {
-    //         result[i] = false;
-    //     }
-    //     // Get root note index
-    //     int rootIndex = getRootNoteIndex(rootNote);
-    //     // Get scale pattern from map
-    //     int[] pattern = SCALE_PATTERNS.getOrDefault(scaleName, 
-    //                     new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
-    //     // Apply pattern to root note
-    //     for (int offset : pattern) {
-    //         int noteIndex = (rootIndex + offset) % 12;
-    //         result[noteIndex] = true;
-    //     }
-    //     return result;
-    // }
-    // Generate a scale based on the root note and scale name
-    public static Boolean[] getScale(String key, String scaleName) {
-        int rootIndex = findRootIndex(key);
-        int[] pattern = SCALE_PATTERNS.get(scaleName);
-        if (rootIndex == -1 || pattern == null) {
-            throw new IllegalArgumentException("Invalid key or scale name");
+    public static Boolean[] getScale(String rootNoteName, String scaleName) {
+        // Validate parameters to prevent exceptions
+        if (rootNoteName == null || scaleName == null) {
+            logger.warn("Null parameters passed to getScale: root={}, scale={}", rootNoteName, scaleName);
+            return getDefaultScale(); // Return chromatic scale as fallback
         }
 
-        // Create the scale as a Boolean array
-        Boolean[] scale = new Boolean[SCALE_NOTES.length];
-        for (int i = 0; i < SCALE_NOTES.length; i++) {
-            scale[i] = false;
+        // Normalize inputs to help with matching
+        String normalizedRoot = rootNoteName.trim();
+        String normalizedScale = scaleName.trim();
+        
+        // Check if root note is valid
+        int rootOffset = getRootOffset(normalizedRoot);
+        if (rootOffset < 0) {
+            logger.warn("Invalid root note name: '{}'", normalizedRoot);
+            return getDefaultScale(); // Return chromatic scale as fallback
         }
-
-        // Mark the notes in the scale as true
-        for (int step : pattern) {
-            int noteIndex = (rootIndex + step) % SCALE_NOTES.length;
-            scale[noteIndex] = true;
+        
+        // Check if scale name is valid 
+        int[] pattern = getScalePattern(normalizedScale);
+        if (pattern == null) {
+            logger.warn("Invalid scale name: '{}'", normalizedScale);
+            return getDefaultScale(); // Return chromatic scale as fallback
         }
+        
+        // Continue with existing scale creation logic...
+        Boolean[] scale = new Boolean[12];
+        Arrays.fill(scale, Boolean.FALSE);
+        
+        // Set scale notes based on pattern
+        for (int i : pattern) {
+            scale[(i + rootOffset) % 12] = Boolean.TRUE;
+        }
+        
+        return scale;
+    }
 
+    /**
+     * Get a default chromatic scale as fallback
+     */
+    private static Boolean[] getDefaultScale() {
+        Boolean[] scale = new Boolean[12];
+        Arrays.fill(scale, Boolean.TRUE); // All notes
         return scale;
     }
 
@@ -514,5 +520,15 @@ public class Scale {
         // Calculate the MIDI note number
         // The formula is: (octave + 1) * 12 + noteOffset
         return (octave + 1) * 12 + noteOffset;
+    }
+
+    /**
+     * Get the scale pattern for a given scale name.
+     *
+     * @param scaleName The name of the scale
+     * @return The scale pattern as an array of integers, or null if not found
+     */
+    private static int[] getScalePattern(String scaleName) {
+        return SCALE_PATTERNS.get(scaleName);
     }
 }

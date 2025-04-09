@@ -9,7 +9,6 @@ import java.awt.Font;
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -66,49 +65,56 @@ public class InternalSynthOscillatorPanel extends JPanel {
                 new Font("Dialog", Font.BOLD, 11)
         ));
         
-        // Create top row for basic controls
-        JPanel topRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        // Use BorderLayout to achieve vertical centering
+        setLayout(new BorderLayout());
         
-        // Create the toggle switch for oscillator on/off
-        JLabel toggleLabel = new JLabel("On/Off:");
+        // Create the flow panel that contains all controls
+        // CHANGED: Use LEFT alignment instead of CENTER for controls
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        
+        // Create the toggle section
+        JPanel togglePanel = new JPanel();
+        togglePanel.setLayout(new BoxLayout(togglePanel, BoxLayout.Y_AXIS));
+        JLabel toggleLabel = new JLabel("On/Off", JLabel.CENTER);
+        toggleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         toggleLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         enabledToggle = new JCheckBox();
         enabledToggle.setName("osc" + oscillatorIndex + "Toggle");
         enabledToggle.setSelected(oscillatorIndex == 0); // First oscillator on by default
+        enabledToggle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        togglePanel.add(enabledToggle);
+        togglePanel.add(toggleLabel);
         
-        // Waveform selector with inline label
-        JLabel waveLabel = new JLabel("Waveform:");
+        // Waveform selector with vertical label
+        JPanel wavePanel = new JPanel();
+        wavePanel.setLayout(new BoxLayout(wavePanel, BoxLayout.Y_AXIS));
+        JLabel waveLabel = new JLabel("Wave", JLabel.CENTER);
+        waveLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         waveLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         waveformCombo = new JComboBox<>(
                 new String[]{"Sine", "Square", "Saw", "Triangle", "Pulse"});
         waveformCombo.setName("waveformCombo" + oscillatorIndex);
         waveformCombo.setPreferredSize(new Dimension(80, 25));
+        waveformCombo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        wavePanel.add(waveformCombo);
+        wavePanel.add(waveLabel);
         
-        // Octave selector with inline label
-        JLabel octaveLabel = new JLabel("Octave:");
+        // Octave selector with vertical label
+        JPanel octavePanel = new JPanel();
+        octavePanel.setLayout(new BoxLayout(octavePanel, BoxLayout.Y_AXIS));
+        JLabel octaveLabel = new JLabel("Oct", JLabel.CENTER);
         octaveLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
+        octaveLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         octaveCombo = new JComboBox<>(
                 new String[]{"-2", "-1", "0", "+1", "+2"});
         octaveCombo.setName("octaveCombo" + oscillatorIndex);
         octaveCombo.setSelectedIndex(2); // Default to "0"
         octaveCombo.setPreferredSize(new Dimension(50, 25));
-
-        // Add controls to top row
-        topRow.add(toggleLabel);
-        topRow.add(enabledToggle);
-        topRow.add(Box.createHorizontalStrut(5));
+        octaveCombo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        octavePanel.add(octaveCombo);
+        octavePanel.add(octaveLabel);
         
-        topRow.add(waveLabel);
-        topRow.add(waveformCombo);
-        topRow.add(Box.createHorizontalStrut(5));
-        
-        topRow.add(octaveLabel);
-        topRow.add(octaveCombo);
-        
-        // Create bottom row for dials
-        JPanel bottomRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        
-        // Create parameter dials with labels
+        // Create parameter dials with labels (already using vertical layout)
         JPanel tunePanel = new JPanel();
         tunePanel.setLayout(new BoxLayout(tunePanel, BoxLayout.Y_AXIS));
         JLabel tuneLabel = new JLabel("Tune", JLabel.CENTER);
@@ -142,15 +148,18 @@ public class InternalSynthOscillatorPanel extends JPanel {
         volumePanel.add(volumeDial);
         volumePanel.add(volumeLabel);
 
-        // Add dial groups to bottom row
-        bottomRow.add(tunePanel);
-        bottomRow.add(brightnessPanel);
-        bottomRow.add(volumePanel);
-        
-        // Add rows to the main panel
-        add(topRow, BorderLayout.NORTH);
-        add(bottomRow, BorderLayout.CENTER);
+        // Add all controls to the flow panel
+        controlsPanel.add(togglePanel);
+        controlsPanel.add(wavePanel);
+        controlsPanel.add(octavePanel);
+        controlsPanel.add(tunePanel);
+        controlsPanel.add(brightnessPanel);
+        controlsPanel.add(volumePanel);
 
+        // Add the flow panel to the CENTER of the BorderLayout
+        // This ensures vertical centering while allowing horizontal left alignment
+        add(controlsPanel, BorderLayout.CENTER);
+        
         // Add event handlers
         setupEventHandlers();
     }

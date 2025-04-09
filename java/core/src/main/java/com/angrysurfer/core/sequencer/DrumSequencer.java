@@ -167,8 +167,13 @@ public class DrumSequencer implements IBusListener {
                 continue;
             }
 
-            // FIXED APPROACH: Use modulo arithmetic like MelodicSequencer
-            int drumTicksPerStep = 24; // Fixed value for consistent testing
+            // IMPORTANT: Use each drum's timing division instead of fixed value
+            int drumTicksPerStep = timingDivisions[drumIndex].getTicksPerBeat(); 
+            
+            // Make sure we have a valid minimum value
+            if (drumTicksPerStep <= 0) {
+                drumTicksPerStep = 24; // Emergency fallback
+            }
             
             // Use modulo instead of next tick calculations - more stable
             if (tick % drumTicksPerStep == 0) {
@@ -186,7 +191,8 @@ public class DrumSequencer implements IBusListener {
                 processStep(drumIndex);
                 
                 // Debug log to track progression
-                logger.debug("Drum {} step processed at tick {}", drumIndex, tick);
+                logger.debug("Drum {} step processed at tick {} (timing: {})", 
+                           drumIndex, tick, timingDivisions[drumIndex].getDisplayName());
             }
         }
     }
