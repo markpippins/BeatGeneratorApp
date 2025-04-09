@@ -1,5 +1,6 @@
 package com.angrysurfer.core.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -13,19 +14,32 @@ import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 
+import lombok.Getter;
+
 /**
- * Manager for drum sequences persistence and operations
+ * Singleton manager for the DrumSequencer instance
  */
+@Getter
 public class DrumSequencerManager implements IBusListener {
+
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencerManager.class);
     private static DrumSequencerManager instance;
-    private final RedisService redisService;
-    private final CommandBus commandBus;
+    private final CommandBus commandBus = CommandBus.getInstance();
     
+    // The sequencer is now lazily initialized
+    private DrumSequencer sequencer;
+    
+    // Cache sequence IDs for faster navigation
+    private List<Long> cachedSequenceIds = new ArrayList<>();
+    private boolean sequenceListDirty = true;
+    
+    /**
+     * Private constructor for singleton pattern
+     */
     private DrumSequencerManager() {
-        this.redisService = RedisService.getInstance();
-        this.commandBus = CommandBus.getInstance();
+        // DON'T create the sequencer in the constructor - breaks circular dependency
         commandBus.register(this);
+        logger.info("DrumSequencerManager initialized");
     }
     
     /**
@@ -38,173 +52,182 @@ public class DrumSequencerManager implements IBusListener {
         return instance;
     }
     
-    @Override
-    public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) {
-            return;
-        }
-        
-        switch (action.getCommand()) {
-            case Commands.SAVE_DRUM_SEQUENCE -> {
-                if (action.getData() instanceof DrumSequencer sequencer) {
-                    saveSequence(sequencer);
-                }
-            }
-            case Commands.LOAD_DRUM_SEQUENCE -> {
-                if (action.getData() instanceof Long id) {
-                    loadSequenceById(id);
-                }
+    /**
+     * Get the sequencer instance, lazily initializing it if needed
+     */
+    public synchronized DrumSequencer getSequencer() {
+        if (sequencer == null) {
+            logger.info("Creating new DrumSequencer instance");
+            sequencer = new DrumSequencer(false); // Don't load sequence in constructor
+            
+            // Now that sequencer is fully initialized, try to load first sequence
+            Long firstId = RedisService.getInstance().getMinimumDrumSequenceId();
+            if (firstId != null) {
+                loadSequence(firstId);
             }
         }
+        return sequencer;
     }
     
     /**
-     * Save a drum sequence
-     * 
-     * @param sequencer The sequencer containing pattern data
-     * @return The ID of the saved sequence
+     * Check if any sequences exist in storage
      */
-    public Long saveSequence(DrumSequencer sequencer) {
-        try {
-            redisService.saveDrumSequence(sequencer);
-            logger.info("Saved drum sequence with ID: {}", sequencer.getDrumSequenceId());
-            return sequencer.getDrumSequenceId();
-        } catch (Exception e) {
-            logger.error("Error saving drum sequence: " + e.getMessage(), e);
-            return null;
-        }
+    public boolean hasSequences() {
+        return RedisService.getInstance().getMinimumDrumSequenceId() != null;
     }
     
     /**
-     * Load a drum sequence by ID
-     * 
-     * @param id The sequence ID to load
-     * @return The loaded sequence data or null if not found
+     * Get the ID of the first available sequence
      */
-    public DrumSequenceData loadSequenceById(Long id) {
-        try {
-            return redisService.findDrumSequenceById(id);
-        } catch (Exception e) {
-            logger.error("Error loading drum sequence {}: {}", id, e.getMessage(), e);
-            return null;
-        }
+    public Long getFirstSequenceId() {
+        return RedisService.getInstance().getMinimumDrumSequenceId();
     }
     
     /**
-     * Load a sequence into the given sequencer
-     * 
-     * @param id The sequence ID to load
-     * @param sequencer The sequencer to load into
-     * @return true if successful, false otherwise
+     * Get the ID of the last available sequence
      */
-    public boolean loadSequence(Long id, DrumSequencer sequencer) {
+    public Long getLastSequenceId() {
+        return RedisService.getInstance().getMaximumDrumSequenceId();
+    }
+    
+    /**
+     * Get the ID of the previous sequence before the given sequence
+     */
+    public Long getPreviousSequenceId(long currentId) {
+        return RedisService.getInstance().getPreviousDrumSequenceId(currentId);
+    }
+    
+    /**
+     * Get the ID of the next sequence after the given sequence
+     */
+    public Long getNextSequenceId(long currentId) {
+        return RedisService.getInstance().getNextDrumSequenceId(currentId);
+    }
+    
+    /**
+     * Load a drum sequence into the sequencer
+     */
+    public void loadSequence(Long sequenceId, DrumSequencer targetSequencer) {
         try {
-            DrumSequenceData data = loadSequenceById(id);
+            DrumSequenceData data = RedisService.getInstance().findDrumSequenceById(sequenceId);
             if (data != null) {
-                redisService.applyDrumSequenceToSequencer(data, sequencer);
-                logger.info("Loaded drum sequence {} into sequencer", id);
-                return true;
+                RedisService.getInstance().applyDrumSequenceToSequencer(data, targetSequencer);
+                logger.info("Loaded drum sequence {}", sequenceId);
+                
+                // Notify listeners
+                commandBus.publish(Commands.DRUM_SEQUENCE_LOADED, this, sequenceId);
+            } else {
+                logger.warn("Drum sequence {} not found", sequenceId);
             }
-            return false;
         } catch (Exception e) {
-            logger.error("Error applying drum sequence to sequencer: " + e.getMessage(), e);
-            return false;
+            logger.error("Error loading drum sequence: {}", e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Load a drum sequence into the central sequencer
+     */
+    public void loadSequence(Long sequenceId) {
+        loadSequence(sequenceId, getSequencer());
+    }
+    
+    /**
+     * Save the current drum sequence
+     */
+    public void saveSequence(DrumSequencer targetSequencer) {
+        try {
+            RedisService.getInstance().saveDrumSequence(targetSequencer);
+            sequenceListDirty = true;
+            logger.info("Saved drum sequence {}", targetSequencer.getDrumSequenceId());
+            
+            // Notify listeners
+            commandBus.publish(Commands.DRUM_SEQUENCE_SAVED, this, targetSequencer.getDrumSequenceId());
+        } catch (Exception e) {
+            logger.error("Error saving drum sequence: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Save the central drum sequence
+     */
+    public void saveSequence() {
+        saveSequence(getSequencer());
     }
     
     /**
      * Create a new drum sequence
-     * 
-     * @return The new sequence data
      */
-    public DrumSequenceData createNewSequence() {
+    public void createNewSequence(DrumSequencer targetSequencer) {
         try {
-            return redisService.newDrumSequence();
+            DrumSequenceData data = RedisService.getInstance().newDrumSequence();
+            RedisService.getInstance().applyDrumSequenceToSequencer(data, targetSequencer);
+            sequenceListDirty = true;
+            logger.info("Created new drum sequence {}", data.getId());
+            
+            // Notify listeners
+            commandBus.publish(Commands.DRUM_SEQUENCE_CREATED, this, data.getId());
         } catch (Exception e) {
-            logger.error("Error creating new drum sequence: " + e.getMessage(), e);
-            return null;
+            logger.error("Error creating new drum sequence: {}", e.getMessage(), e);
         }
     }
     
     /**
-     * Initialize a new sequence in the given sequencer
-     * 
-     * @param sequencer The sequencer to initialize
-     * @return The ID of the new sequence
+     * Create a new drum sequence in the central sequencer
      */
-    public Long initializeNewSequence(DrumSequencer sequencer) {
+    public void createNewSequence() {
+        createNewSequence(getSequencer());
+    }
+    
+    /**
+     * Delete a drum sequence
+     */
+    public void deleteSequence(Long sequenceId) {
         try {
-            DrumSequenceData data = createNewSequence();
-            if (data != null) {
-                redisService.applyDrumSequenceToSequencer(data, sequencer);
-                return data.getId();
-            }
-            return null;
+            RedisService.getInstance().deleteDrumSequence(sequenceId);
+            sequenceListDirty = true;
+            logger.info("Deleted drum sequence {}", sequenceId);
+            
+            // Notify listeners
+            commandBus.publish(Commands.DRUM_SEQUENCE_DELETED, this, sequenceId);
         } catch (Exception e) {
-            logger.error("Error initializing new sequence: " + e.getMessage(), e);
-            return null;
+            logger.error("Error deleting drum sequence: {}", e.getMessage(), e);
         }
     }
     
     /**
-     * Get the previous sequence ID
-     * 
-     * @param currentId The current sequence ID
-     * @return The previous ID or null if none
-     */
-    public Long getPreviousSequenceId(Long currentId) {
-        return redisService.getPreviousDrumSequenceId(currentId);
-    }
-    
-    /**
-     * Get the next sequence ID
-     * 
-     * @param currentId The current sequence ID
-     * @return The next ID or null if none
-     */
-    public Long getNextSequenceId(Long currentId) {
-        return redisService.getNextDrumSequenceId(currentId);
-    }
-    
-    /**
-     * Get the first sequence ID
-     * 
-     * @return The first ID or null if none
-     */
-    public Long getFirstSequenceId() {
-        return redisService.getMinimumDrumSequenceId();
-    }
-    
-    /**
-     * Get the last sequence ID
-     * 
-     * @return The last ID or null if none
-     */
-    public Long getLastSequenceId() {
-        return redisService.getMaximumDrumSequenceId();
-    }
-    
-    /**
-     * Check if there are any sequences available
-     * 
-     * @return true if sequences exist, false otherwise
-     */
-    public boolean hasSequences() {
-        List<Long> ids = redisService.getAllDrumSequenceIds();
-        return ids != null && !ids.isEmpty();
-    }
-    
-    /**
-     * Refresh the internal list of sequences from the database
+     * Refresh the list of available drum sequences
      */
     public void refreshSequenceList() {
-        try {
-            // Force a refresh of the sequence ID list from Redis
-            List<Long> sequenceIds = redisService.getAllDrumSequenceIds();
-            logger.info("Refreshed drum sequence list, found {} sequences", 
-                       sequenceIds != null ? sequenceIds.size() : 0);
-        } catch (Exception e) {
-            logger.error("Error refreshing sequence list: " + e.getMessage(), e);
+        if (sequenceListDirty) {
+            cachedSequenceIds = RedisService.getInstance().getAllDrumSequenceIds();
+            sequenceListDirty = false;
+        }
+    }
+    
+    /**
+     * Get the list of all drum sequence IDs
+     */
+    public List<Long> getAllSequenceIds() {
+        refreshSequenceList();
+        return new ArrayList<>(cachedSequenceIds);
+    }
+    
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == null) return;
+        
+        switch (action.getCommand()) {
+            case Commands.DRUM_SEQUENCE_SAVED, Commands.DRUM_SEQUENCE_CREATED, 
+                 Commands.DRUM_SEQUENCE_DELETED -> {
+                // Mark sequence list as dirty when changes occur
+                sequenceListDirty = true;
+            }
+            case Commands.TRANSPORT_START -> {
+                getSequencer().play();
+            }
+            case Commands.TRANSPORT_STOP -> {
+                getSequencer().stop();
+            }
         }
     }
 }

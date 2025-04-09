@@ -34,6 +34,13 @@ public class DrumSequenceData implements Serializable {
     // The actual step patterns
     private boolean[][] patterns;          // Step patterns for each drum
     
+    // Add new parameter arrays
+    private int[] param1Values;
+    private int[] param2Values;
+    private int[] param3Values;
+    private int[] param4Values;
+    private int[] param5Values;
+    
     public DrumSequenceData() {
         // Default constructor
     }

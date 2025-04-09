@@ -35,6 +35,9 @@ public class DrumSequencer implements IBusListener {
     public static final int DRUM_PAD_COUNT = 16; // Number of drum pads
     private static final int MAX_STEPS = 64;      // Maximum pattern length
 
+    // Add this field to control whether to load an initial sequence
+    private boolean loadInitialSequence = true;
+
     // Global sequencing state
     private long tickCounter = 0;            // Count ticks
     private int beatCounter = 0;            // Count beats  
@@ -73,10 +76,28 @@ public class DrumSequencer implements IBusListener {
 
     private int masterTempo;
 
+    // New parameter arrays - one array per parameter type, each containing values for all drums
+    private int[] param1Values; // Could be decay, filter cutoff, etc.
+    private int[] param2Values; // Could be resonance, etc.
+    private int[] param3Values; // Could be reverb amount, etc.
+    private int[] param4Values; // Could be chorus, etc.
+    private int[] param5Values; // Could be delay, etc.
+
     /**
-     * Creates a new drum sequencer with per-drum parameters
+     * Creates a new drum sequencer with default behavior (loads initial sequence)
      */
     public DrumSequencer() {
+        this(true); // Default to loading initial sequence
+    }
+    
+    /**
+     * Creates a new drum sequencer with option to skip initial sequence loading
+     * 
+     * @param loadInitialSequence Whether to load the first sequence at initialization
+     */
+    public DrumSequencer(boolean loadInitialSequence) {
+        this.loadInitialSequence = loadInitialSequence;
+        
         // Initialize arrays
         currentStep = new int[DRUM_PAD_COUNT];
         patternCompleted = new boolean[DRUM_PAD_COUNT];
@@ -136,12 +157,28 @@ public class DrumSequencer implements IBusListener {
             logger.debug("Initialized drum pad {} with note {}", i, 36 + i);
         }
 
+        // Initialize the new parameter arrays
+        param1Values = new int[DRUM_PAD_COUNT];
+        param2Values = new int[DRUM_PAD_COUNT];
+        param3Values = new int[DRUM_PAD_COUNT];
+        param4Values = new int[DRUM_PAD_COUNT];
+        param5Values = new int[DRUM_PAD_COUNT];
+        
+        // Set default values
+        Arrays.fill(param1Values, 64); // Default to middle value
+        Arrays.fill(param2Values, 64);
+        Arrays.fill(param3Values, 0);  // Default to no effect
+        Arrays.fill(param4Values, 0);
+        Arrays.fill(param5Values, 0);
+
         // Register with command bus
         CommandBus.getInstance().register(this);
         TimingBus.getInstance().register(this);
 
-        // Load first saved sequence (if available) instead of default pattern
-        loadFirstSequence();
+        // Load first saved sequence if requested (otherwise uses empty pattern)
+        if (loadInitialSequence) {
+            loadFirstSequence();
+        }
     }
 
     /**
@@ -156,19 +193,16 @@ public class DrumSequencer implements IBusListener {
             Long firstId = manager.getFirstSequenceId();
 
             if (firstId != null) {
-                // Load the sequence
-                boolean loaded = manager.loadSequence(firstId, this);
-                if (loaded) {
-                    logger.info("Loaded initial drum sequence: {}", firstId);
-                    // Publish event to notify UI components
-                    CommandBus.getInstance().publish(
-                            Commands.DRUM_SEQUENCE_LOADED,
-                            this,
-                            drumSequenceId
-                    );
-                } else {
-                    logger.warn("Failed to load initial drum sequence");
-                }
+                // Load the sequence - don't try to capture a return value
+                manager.loadSequence(firstId, this);
+                
+                logger.info("Loaded initial drum sequence: {}", firstId);
+                // Publish event to notify UI components
+                CommandBus.getInstance().publish(
+                        Commands.DRUM_SEQUENCE_LOADED,
+                        this,
+                        drumSequenceId
+                );
             } else {
                 logger.info("No saved drum sequences found, using empty pattern");
             }
@@ -573,6 +607,71 @@ public class DrumSequencer implements IBusListener {
                     this,
                     drumIndex
             );
+        }
+    }
+
+    public int getParam1(int drumIndex) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            return param1Values[drumIndex];
+        }
+        return 0;
+    }
+
+    public void setParam1(int drumIndex, int value) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            param1Values[drumIndex] = value;
+        }
+    }
+
+    public int getParam2(int drumIndex) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            return param2Values[drumIndex];
+        }
+        return 0;
+    }
+
+    public void setParam2(int drumIndex, int value) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            param2Values[drumIndex] = value;
+        }
+    }
+
+    public int getParam3(int drumIndex) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            return param3Values[drumIndex];
+        }
+        return 0;
+    }
+
+    public void setParam3(int drumIndex, int value) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            param3Values[drumIndex] = value;
+        }
+    }
+
+    public int getParam4(int drumIndex) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            return param4Values[drumIndex];
+        }
+        return 0;
+    }
+
+    public void setParam4(int drumIndex, int value) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            param4Values[drumIndex] = value;
+        }
+    }
+
+    public int getParam5(int drumIndex) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            return param5Values[drumIndex];
+        }
+        return 0;
+    }
+
+    public void setParam5(int drumIndex, int value) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            param5Values[drumIndex] = value;
         }
     }
 

@@ -11,9 +11,9 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JDialog;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 
@@ -21,10 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.panel.MainPanel;
-import com.angrysurfer.beats.panel.PlayersPanel;
 import com.angrysurfer.beats.panel.SessionPanel;
 import com.angrysurfer.beats.panel.X0XPanel;
-import com.angrysurfer.beats.widget.PlayersTable;
 import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -44,7 +42,7 @@ public class Frame extends JFrame implements AutoCloseable {
     private MainPanel mainPanel;
 
     public Frame() {
-        super("Beats");
+        super("Clocks: A Multi-Sequencer");
         this.keyNoteMap = setupKeyMap();
 
         // Create background panel first

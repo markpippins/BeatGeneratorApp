@@ -123,6 +123,37 @@ class DrumSequenceHelper {
                 }
             }
             
+            // Apply parameter values
+            if (data.getParam1Values() != null) {
+                for (int i = 0; i < Math.min(data.getParam1Values().length, DRUM_PAD_COUNT); i++) {
+                    sequencer.setParam1(i, data.getParam1Values()[i]);
+                }
+            }
+            
+            if (data.getParam2Values() != null) {
+                for (int i = 0; i < Math.min(data.getParam2Values().length, DRUM_PAD_COUNT); i++) {
+                    sequencer.setParam2(i, data.getParam2Values()[i]);
+                }
+            }
+            
+            if (data.getParam3Values() != null) {
+                for (int i = 0; i < Math.min(data.getParam3Values().length, DRUM_PAD_COUNT); i++) {
+                    sequencer.setParam3(i, data.getParam3Values()[i]);
+                }
+            }
+            
+            if (data.getParam4Values() != null) {
+                for (int i = 0; i < Math.min(data.getParam4Values().length, DRUM_PAD_COUNT); i++) {
+                    sequencer.setParam4(i, data.getParam4Values()[i]);
+                }
+            }
+            
+            if (data.getParam5Values() != null) {
+                for (int i = 0; i < Math.min(data.getParam5Values().length, DRUM_PAD_COUNT); i++) {
+                    sequencer.setParam5(i, data.getParam5Values()[i]);
+                }
+            }
+            
             // Notify that pattern has updated
             commandBus.publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getDrumSequenceId());
             
@@ -154,6 +185,13 @@ class DrumSequenceHelper {
             data.setLoopingFlags(Arrays.copyOf(sequencer.getLoopingFlags(), DRUM_PAD_COUNT));
             data.setVelocities(Arrays.copyOf(sequencer.getVelocities(), DRUM_PAD_COUNT));
             data.setOriginalVelocities(Arrays.copyOf(sequencer.getOriginalVelocities(), DRUM_PAD_COUNT));
+            
+            // Copy parameter data
+            data.setParam1Values(Arrays.copyOf(sequencer.getParam1Values(), DRUM_PAD_COUNT));
+            data.setParam2Values(Arrays.copyOf(sequencer.getParam2Values(), DRUM_PAD_COUNT));
+            data.setParam3Values(Arrays.copyOf(sequencer.getParam3Values(), DRUM_PAD_COUNT)); 
+            data.setParam4Values(Arrays.copyOf(sequencer.getParam4Values(), DRUM_PAD_COUNT));
+            data.setParam5Values(Arrays.copyOf(sequencer.getParam5Values(), DRUM_PAD_COUNT));
             
             // Copy step patterns (all drums, all steps)
             boolean[][] patterns = new boolean[DRUM_PAD_COUNT][MAX_STEPS];

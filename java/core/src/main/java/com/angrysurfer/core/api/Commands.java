@@ -274,6 +274,9 @@ public class Commands {
     public static final String DRUM_SEQUENCE_PARAMS_CHANGED = "DRUM_SEQUENCE_PARAMS_CHANGED";
     public static final String DRUM_SEQUENCE_LOADED = "DRUM_SEQUENCE_LOADED";
     public static final  String DRUM_SEQUENCE_CREATED = "DRUM_SEQUENCE_CREATED";
+    public static final String DRUM_SEQUENCE_DELETED = "DRUM_SEQUENCE_DELETED";
+    public static final String DRUM_SEQUENCE_NEXT = "DRUM_SEQUENCE_NEXT";
+    public static final String DRUM_SEQUENCE_PREV = "DRUM_SEQUENCE_PREV";
 
     public static final String MELODIC_SEQUENCE_SAVED = "MELODIC_SEQUENCE_SAVED";
     public static final String MELODIC_SEQUENCE_UPDATED = "MELODIC_SEQUENCE_UPDATED";

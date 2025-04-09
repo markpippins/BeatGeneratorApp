@@ -8,8 +8,6 @@ import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sound.midi.MidiChannel;
-import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -26,7 +24,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
@@ -142,9 +139,20 @@ public class X0XPanel extends JPanel implements IBusListener {
         // Create the synth control panel first to get the synthesizer
         internalSynthControlPanel = new InternalSynthControlPanel();
         
-        // Add tabs
-        tabbedPane.addTab("Drum Sequencer", createDrumPanel());
-        tabbedPane.addTab("Drum Machine", createDrumEffectsPanel());
+        // Add tabs - using the DrumSequencerManager
+        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {
+            // Handle note events (UI feedback only)
+            logger.debug("Drum note event: {}", noteEvent);
+        });
+        tabbedPane.addTab("Drum Sequencer", drumSequencerPanel);
+        
+        // DrumEffectsSequencerPanel also uses the shared sequencer from manager
+        drumEffectsSequencerPanel = new DrumEffectsSequencerPanel(noteEvent -> {
+
+        });
+        tabbedPane.addTab("Drum Machine", drumEffectsSequencerPanel);
+        
+        // Rest of the tabs...
         tabbedPane.addTab("Mono Sequencer 1", createMelodicSequencerPanel(3));
         tabbedPane.addTab("Mono Sequencer 2", createMelodicSequencerPanel(4));
         tabbedPane.addTab("Mono Sequencer 3", createMelodicSequencerPanel(5));

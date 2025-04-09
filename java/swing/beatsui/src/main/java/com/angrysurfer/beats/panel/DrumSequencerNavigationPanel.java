@@ -132,8 +132,8 @@ public class DrumSequencerNavigationPanel extends JPanel {
      */
     private void loadSequence(Long sequenceId) {
         if (sequenceId != null) {
-            // Load the sequence
-            manager.loadSequence(sequenceId, sequencer);
+            // Use the manager directly to load the sequence
+            DrumSequencerManager.getInstance().loadSequence(sequenceId);
 
             // Reset the sequencer to ensure proper step indicator state
             sequencer.reset();
@@ -225,16 +225,11 @@ public class DrumSequencerNavigationPanel extends JPanel {
      * Save the current sequence
      */
     private void saveCurrentSequence() {
-        // Save the sequence
-        manager.saveSequence(sequencer);
-
-        // After saving, get the latest sequence IDs from the database
-        manager.refreshSequenceList();
+        // Use the manager directly to save the sequence
+        DrumSequencerManager.getInstance().saveSequence();
 
         // Update display and button states
         updateSequenceIdDisplay();
-
-        // Force update of button states
         updateButtonStates();
 
         CommandBus.getInstance().publish(
