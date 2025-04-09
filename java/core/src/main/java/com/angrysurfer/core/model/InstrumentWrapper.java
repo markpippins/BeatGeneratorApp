@@ -42,7 +42,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class InstrumentWrapper implements Serializable {
+public final class InstrumentWrapper implements Serializable {
 
     static Logger logger = LoggerFactory.getLogger(InstrumentWrapper.class.getCanonicalName());
 

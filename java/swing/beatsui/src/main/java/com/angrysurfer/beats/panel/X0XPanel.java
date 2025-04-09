@@ -26,9 +26,11 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
+import com.angrysurfer.core.service.InternalSynthManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -41,7 +43,7 @@ public class X0XPanel extends JPanel implements IBusListener {
 
     // Add this field to store the tabbedPane reference
     private JTabbedPane tabbedPane;
-
+    
     // Existing fields
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
@@ -51,9 +53,10 @@ public class X0XPanel extends JPanel implements IBusListener {
     private boolean useAheadScheduling = true;
     private int activeMidiChannel = 15;
     private MelodicSequencerPanel melodicSequencerPanel;
-    private InternalSynthControlPanel internalSynthControlPanel;
     private DrumSequencerPanel drumSequencerPanel;
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
+    // Keep the reference for panel access but remove synth management logic
+    private InternalSynthControlPanel internalSynthControlPanel;
 
     public X0XPanel() {
         super(new BorderLayout());
@@ -136,18 +139,20 @@ public class X0XPanel extends JPanel implements IBusListener {
     private JTabbedPane createX0XPanel() {
         JTabbedPane tabbedPane = new JTabbedPane();
 
+        // Create the synth control panel first to get the synthesizer
+        internalSynthControlPanel = new InternalSynthControlPanel();
+        
         // Add tabs
-        tabbedPane.addTab("Poly Drum", createDrumPanel());
-        tabbedPane.addTab("Poly Effects", createDrumEffectsPanel());
-        tabbedPane.addTab("Mono 1", createMelodicSequencerPanel(3));
-        tabbedPane.addTab("Mono 2", createMelodicSequencerPanel(4));
-        tabbedPane.addTab("Mono 3", createMelodicSequencerPanel(5));
-        tabbedPane.addTab("Mono 4", createMelodicSequencerPanel(6));
-        tabbedPane.addTab("Synth", createInternalSynthControlPanel());
-        tabbedPane.addTab("Chords", createChordSequencerPanel());
-
-        tabbedPane.addTab("Mixer", createMixerPanel(getInternalSynthControlPanel().getSynthesizer()));
-
+        tabbedPane.addTab("Drum Sequencer", createDrumPanel());
+        tabbedPane.addTab("Drum Machine", createDrumEffectsPanel());
+        tabbedPane.addTab("Mono Sequencer 1", createMelodicSequencerPanel(3));
+        tabbedPane.addTab("Mono Sequencer 2", createMelodicSequencerPanel(4));
+        tabbedPane.addTab("Mono Sequencer 3", createMelodicSequencerPanel(5));
+        tabbedPane.addTab("Mono Sequencer 4", createMelodicSequencerPanel(6));
+        tabbedPane.addTab("Synth", internalSynthControlPanel);
+        tabbedPane.addTab("Poly Sequencer", createChordSequencerPanel());
+        tabbedPane.addTab("Mixer", createMixerPanel());
+        
         // Add trailing toolbar with mute buttons to the tabbed pane
         JPanel tabToolbar = createMuteButtonsToolbar();
         tabbedPane.putClientProperty("JTabbedPane.trailingComponent", tabToolbar);
@@ -295,8 +300,9 @@ public class X0XPanel extends JPanel implements IBusListener {
         }
     }
 
-    private Component createMixerPanel(Synthesizer synthesizer) {
-        return new MixerPanel(synthesizer);
+    private Component createMixerPanel() {
+        // Get synthesizer from InternalSynthManager instead of SynthControlPanel
+        return new MixerPanel(InternalSynthManager.getInstance().getSynthesizer());
     }
 
     private Component createChordSequencerPanel() {
@@ -305,7 +311,11 @@ public class X0XPanel extends JPanel implements IBusListener {
 
     private Component createDrumPanel() {
         drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {
-            playDrumNote(noteEvent.getNote(), noteEvent.getVelocity());
+            // This callback is now only for UI feedback, not for playing sounds
+            logger.debug("Drum note event received: note={}, velocity={}", 
+                    noteEvent.getNote(), noteEvent.getVelocity());
+            
+            // You could add UI feedback here, like flashing the corresponding drum pad
         });
         return drumSequencerPanel;
     }
@@ -334,64 +344,12 @@ public class X0XPanel extends JPanel implements IBusListener {
     }
 
     public void playNote(int note, int velocity, int durationMs) {
-        if (getInternalSynthControlPanel().getSynthesizer() != null && getInternalSynthControlPanel().getSynthesizer().isOpen()) {
-            try {
-                // Use the same channel consistently - very important!
-                final MidiChannel channel = internalSynthControlPanel.getSynthesizer().getChannels()[activeMidiChannel];
-
-                if (channel != null) {
-                    if (useAheadScheduling) {
-                        new Thread(() -> {
-                            try {
-                                Thread.sleep(1);
-                                Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-
-                                long currentTime = System.currentTimeMillis();
-                                long targetTime = currentTime + lookAheadMs;
-                                long waitTime = targetTime - System.currentTimeMillis();
-
-                                if (waitTime > 0) {
-                                    Thread.sleep(waitTime);
-                                }
-
-                                channel.noteOn(note, velocity);
-                                Thread.sleep(durationMs);
-                                channel.noteOff(note);
-                            } catch (InterruptedException e) {
-                                // Ignore interruptions
-                            }
-                        }).start();
-                    } else {
-                        channel.noteOn(note, velocity);
-
-                        java.util.Timer timer = new java.util.Timer(true);
-                        timer.schedule(new java.util.TimerTask() {
-                            @Override
-                            public void run() {
-                                channel.noteOff(note);
-                                timer.cancel();
-                            }
-                        }, durationMs);
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("Error playing note: " + e.getMessage(), e);
-            }
-        }
+        // Delegate to InternalSynthManager
+        InternalSynthManager.getInstance().playNote(note, velocity, durationMs, activeMidiChannel);
     }
 
     public void playDrumNote(int note, int velocity) {
-        if (getInternalSynthControlPanel().getSynthesizer() != null && getInternalSynthControlPanel().getSynthesizer().isOpen()) {
-            try {
-                // Use the drum channel consistently (channel 10, index 9)
-                final MidiChannel channel = getInternalSynthControlPanel().getSynthesizer().getChannels()[9];
-
-                if (channel != null) {
-                    channel.noteOn(note, velocity);
-                }
-            } catch (Exception e) {
-                logger.error("Error playing drum note: " + e.getMessage(), e);
-            }
-        }
+        // Delegate to InternalSynthManager
+        InternalSynthManager.getInstance().playDrumNote(note, velocity);
     }
 }

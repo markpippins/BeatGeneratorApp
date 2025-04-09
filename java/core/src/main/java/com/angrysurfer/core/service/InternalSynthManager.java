@@ -10,10 +10,12 @@ import java.util.Map;
 import java.util.Objects;
 
 import javax.sound.midi.Instrument;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Patch;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
+import javax.sound.midi.MidiChannel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,10 @@ public class InternalSynthManager {
 
     private static final Logger logger = LoggerFactory.getLogger(InternalSynthManager.class);
     private static InternalSynthManager instance;
+    
+    // Add synthesizer as a central instance
+    private Synthesizer synthesizer;
+    private int defaultMidiChannel = 15; // Default channel for melodic sounds
 
     // Map of synth IDs to preset information
     private final Map<Long, SynthData> synthDataMap = new HashMap<>();
@@ -42,7 +48,7 @@ public class InternalSynthManager {
 
     // Map to store available banks for each soundbank (by name)
     private Map<String, List<Integer>> availableBanksMap = new HashMap<>();
-
+    
     /**
      * Get the singleton instance
      */
@@ -58,65 +64,142 @@ public class InternalSynthManager {
      */
     private InternalSynthManager() {
         try {
-            // Initialize synth and other setup code...
             initializeSynthData();
-
-            // Register for command bus events
-            CommandBus.getInstance().register(new IBusListener() {
-                @Override
-                public void onAction(Command action) {
-                    if (action.getCommand() == null) {
-                        return;
-                    }
-
-                    if (Commands.PLAY_TEST_NOTE.equals(action.getCommand())) {
-                        // Handle test note request
-                        try {
-                            // Extract parameters
-                            Object[] params = (Object[]) action.getData();
-                            if (params.length >= 3) {
-                                int channel = (Integer) params[0];
-                                int note = (Integer) params[1];
-                                int velocity = (Integer) params[2];
-
-                                logger.info("PLAY_TEST_NOTE received: channel={}, note={}, velocity={}",
-                                        channel, note, velocity);
-
-                                // Optional preset parameter
-                                int preset = -1;
-                                if (params.length >= 4 && params[3] != null) {
-                                    preset = (Integer) params[3];
-                                    logger.info("PLAY_TEST_NOTE with preset: {}", preset);
-                                }
-
-                                // Required synthesizer parameter
-                                if (params.length >= 5 && params[4] instanceof Synthesizer) {
-                                    Synthesizer targetSynth = (Synthesizer) params[4];
-
-                                    // Optional soundbank name parameter
-                                    String soundbankName = null;
-                                    if (params.length >= 6 && params[5] instanceof String) {
-                                        soundbankName = (String) params[5];
-                                    }
-
-                                    logger.info("PLAY_TEST_NOTE with explicit synthesizer");
-
-                                    // Play the note with the specified synthesizer and soundbank
-                                    playTestNote(targetSynth, channel, note, velocity, preset, soundbankName);
-                                } else {
-                                    logger.error("PLAY_TEST_NOTE missing required synthesizer parameter");
-                                }
-                            } else {
-                                logger.warn("PLAY_TEST_NOTE called with insufficient parameters: {}", params);
-                            }
-                        } catch (Exception e) {
-                            logger.error("Error playing test note: " + e.getMessage(), e);
-                        }
-                    }
-                }
-            });
+            initializeSoundbanks();
+            initializeSynthesizer(); // Add synthesizer initialization
         } catch (Exception e) {
-            logger.error("Error initializing InternalSynthManager: " + e.getMessage());
+            logger.error("Error initializing InternalSynthManager", e);
+        }
+    }
+
+    /**
+     * Initialize the synthesizer
+     * This should be called during startup
+     */
+    public void initializeSynthesizer() {
+        try {
+            // Try to find Gervill synthesizer first
+            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+            MidiDevice.Info gervillInfo = null;
+
+            for (MidiDevice.Info info : infos) {
+                if (info.getName().contains("Gervill")) {
+                    gervillInfo = info;
+                    break;
+                }
+            }
+
+            if (gervillInfo != null) {
+                synthesizer = (Synthesizer) MidiSystem.getMidiDevice(gervillInfo);
+            }
+
+            // If Gervill not found, get default synthesizer
+            if (synthesizer == null) {
+                synthesizer = MidiSystem.getSynthesizer();
+            }
+
+            if (synthesizer != null && !synthesizer.isOpen()) {
+                synthesizer.open();
+            }
+
+            if (synthesizer != null && synthesizer.isOpen()) {
+                logger.info("Synthesizer initialized: {}", synthesizer.getDeviceInfo().getName());
+            }
+        } catch (Exception e) {
+            logger.error("Error initializing synthesizer: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Get the synthesizer instance
+     * @return The MIDI synthesizer
+     */
+    public Synthesizer getSynthesizer() {
+        if (synthesizer == null || !synthesizer.isOpen()) {
+            initializeSynthesizer();
+        }
+        return synthesizer;
+    }
+
+    /**
+     * Play a note on the synthesizer
+     * 
+     * @param note MIDI note number
+     * @param velocity Note velocity (0-127)
+     * @param durationMs Duration in milliseconds
+     * @param channel MIDI channel to use
+     */
+    public void playNote(int note, int velocity, int durationMs, int channel) {
+        if (synthesizer == null || !synthesizer.isOpen()) {
+            logger.warn("Cannot play note - synthesizer is not available");
+            return;
+        }
+        
+        try {
+            final MidiChannel midiChannel = synthesizer.getChannels()[channel];
+            if (midiChannel != null) {
+                midiChannel.noteOn(note, velocity);
+
+                java.util.Timer timer = new java.util.Timer(true);
+                timer.schedule(new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+                        midiChannel.noteOff(note);
+                        timer.cancel();
+                    }
+                }, durationMs);
+            }
+        } catch (Exception e) {
+            logger.error("Error playing note: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Play a note on the default melodic channel
+     */
+    public void playNote(int note, int velocity, int durationMs) {
+        playNote(note, velocity, durationMs, defaultMidiChannel);
+    }
+
+    /**
+     * Play a drum note on channel 9 (drum channel)
+     * 
+     * @param note MIDI note number
+     * @param velocity Note velocity (0-127)
+     */
+    public void playDrumNote(int note, int velocity) {
+        if (synthesizer == null || !synthesizer.isOpen()) {
+            logger.warn("Cannot play drum note - synthesizer is not available");
+            return;
+        }
+        
+        try {
+            // Drum channel is 9 (10 in human terms)
+            final MidiChannel channel = synthesizer.getChannels()[9];
+            if (channel != null) {
+                channel.noteOn(note, velocity);
+            }
+        } catch (Exception e) {
+            logger.error("Error playing drum note: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Set MIDI Control Change on a specific channel
+     */
+    public void setControlChange(int channel, int ccNumber, int value) {
+        if (synthesizer == null || !synthesizer.isOpen()) {
+            logger.warn("Cannot send CC - synthesizer is not available");
+            return;
+        }
+        
+        try {
+            MidiChannel midiChannel = synthesizer.getChannels()[channel];
+            if (midiChannel != null) {
+                midiChannel.controlChange(ccNumber, value);
+            }
+        } catch (Exception e) {
+            logger.error("Error setting control change: " + e.getMessage(), e);
         }
     }
 

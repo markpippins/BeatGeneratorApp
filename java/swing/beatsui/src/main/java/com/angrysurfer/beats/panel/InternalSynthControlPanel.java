@@ -47,10 +47,9 @@ public class InternalSynthControlPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(InternalSynthControlPanel.class);
 
-    private Synthesizer synthesizer;
+    // Remove synthesizer field - now managed by InternalSynthManager
     private JComboBox<PresetItem> presetCombo;
-    private int midiChannel = 15;
-
+    private final int midiChannel = 15; // Keep for reference in this panel
     private JComboBox<String> soundbankCombo;
     private JComboBox<Integer> bankCombo;
     private InternalSynthOscillatorPanel[] oscillatorPanels;
@@ -64,63 +63,24 @@ public class InternalSynthControlPanel extends JPanel {
     private String currentSoundbankName = null;
 
     /**
-     * Create a new SynthControlPanel
-     *
-     * @param synthesizer The MIDI synthesizer to control
+     * Create a new SynthControlPanel with its own synthesizer
      */
     public InternalSynthControlPanel() {
         super(new BorderLayout(5, 5));
+        
+        // No longer initializing synthesizer here - using singleton instead
+        // Just ensure it's available
+        InternalSynthManager.getInstance().getSynthesizer();
+        
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        initializeSynthesizer();
         setupUI();
     }
-
-    private void initializeSynthesizer() {
-        try {
-            MidiSystem.getMidiDeviceInfo();
-
-            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-            MidiDevice.Info gervillInfo = null;
-
-            for (MidiDevice.Info info : infos) {
-                if (info.getName().contains("Gervill")) {
-                    gervillInfo = info;
-                    break;
-                }
-            }
-
-            if (gervillInfo != null) {
-                MidiDevice device = MidiSystem.getMidiDevice(gervillInfo);
-                if (device instanceof Synthesizer) {
-                    synthesizer = (Synthesizer) device;
-                }
-            }
-
-            if (synthesizer == null) {
-                synthesizer = MidiSystem.getSynthesizer();
-            }
-
-            if (synthesizer != null && !synthesizer.isOpen()) {
-                synthesizer.open();
-                logger.info("Opened synthesizer: " + synthesizer.getDeviceInfo().getName());
-            }
-
-            if (synthesizer != null && synthesizer.isOpen()) {
-                MidiChannel channel = synthesizer.getChannels()[midiChannel];
-
-                if (channel != null) {
-                    channel.controlChange(7, 100); // Set volume to 100
-                    channel.controlChange(10, 64); // Pan center
-                    channel.programChange(0); // Default program (Grand Piano)
-                    logger.info("Configured channel 16 (index 15) on synthesizer");
-
-                    String presetName = InternalSynthManager.getInstance().getPresetName(1L, 0);
-                    logger.info("Initial preset: " + presetName);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Error initializing synthesizer: " + e.getMessage(), e);
-        }
+    
+    /**
+     * Get the synthesizer from InternalSynthManager
+     */
+    public Synthesizer getSynthesizer() {
+        return InternalSynthManager.getInstance().getSynthesizer();
     }
 
     private void setupUI() {
@@ -157,16 +117,8 @@ public class InternalSynthControlPanel extends JPanel {
      * @param value The value to set (0-127)
      */
     protected void setControlChange(int channel, int ccNumber, int value) {
-        if (synthesizer != null && synthesizer.isOpen()) {
-            try {
-                MidiChannel midiCh = synthesizer.getChannels()[channel];
-                if (midiCh != null) {
-                    midiCh.controlChange(ccNumber, value);
-                }
-            } catch (Exception e) {
-                logger.error("Error setting CC {} on channel {}: {}", ccNumber, channel + 1, e.getMessage());
-            }
-        }
+        // Delegate to InternalSynthManager
+        InternalSynthManager.getInstance().setControlChange(channel, ccNumber, value);
     }
 
     /**
@@ -323,12 +275,12 @@ public class InternalSynthControlPanel extends JPanel {
             Soundbank soundbank = manager.getSoundbankByName(soundbankName);
 
             // Load the soundbank into the synthesizer if it's not null
-            if (soundbank != null && synthesizer != null && synthesizer.isOpen()) {
+            if (soundbank != null && getSynthesizer() != null && getSynthesizer().isOpen()) {
                 // Unload any current instruments
-                synthesizer.unloadAllInstruments(synthesizer.getDefaultSoundbank());
+                getSynthesizer().unloadAllInstruments(getSynthesizer().getDefaultSoundbank());
 
                 // Load the new soundbank
-                boolean loaded = synthesizer.loadAllInstruments(soundbank);
+                boolean loaded = getSynthesizer().loadAllInstruments(soundbank);
                 if (loaded) {
                     logger.info("Loaded soundbank: {}", soundbankName);
                 } else {
@@ -492,10 +444,10 @@ public class InternalSynthControlPanel extends JPanel {
      * Send program change to the synthesizer with bank selection
      */
     private void setProgramChange(int bank, int program) {
-        if (synthesizer != null && synthesizer.isOpen()) {
+        if (getSynthesizer() != null && getSynthesizer().isOpen()) {
             try {
                 // Handle program changes directly since InternalSynthManager no longer has sendProgramChange
-                MidiChannel channel = synthesizer.getChannels()[midiChannel];
+                MidiChannel channel = getSynthesizer().getChannels()[midiChannel];
                 if (channel != null) {
                     // Send bank select MSB (CC 0)
                     channel.controlChange(0, 0);
@@ -624,9 +576,9 @@ public class InternalSynthControlPanel extends JPanel {
         row1Panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Create three oscillator panels
-        InternalSynthOscillatorPanel osc1Panel = new InternalSynthOscillatorPanel(synthesizer, midiChannel, 0);
-        InternalSynthOscillatorPanel osc2Panel = new InternalSynthOscillatorPanel(synthesizer, midiChannel, 1);
-        InternalSynthOscillatorPanel osc3Panel = new InternalSynthOscillatorPanel(synthesizer, midiChannel, 2);
+        InternalSynthOscillatorPanel osc1Panel = new InternalSynthOscillatorPanel(getSynthesizer(), midiChannel, 0);
+        InternalSynthOscillatorPanel osc2Panel = new InternalSynthOscillatorPanel(getSynthesizer(), midiChannel, 1);
+        InternalSynthOscillatorPanel osc3Panel = new InternalSynthOscillatorPanel(getSynthesizer(), midiChannel, 2);
 
         // Store references to the oscillator panels
         oscillatorPanels = new InternalSynthOscillatorPanel[]{osc1Panel, osc2Panel, osc3Panel};
@@ -649,7 +601,7 @@ public class InternalSynthControlPanel extends JPanel {
         // Create oscillator mix panel
         JPanel oscMixPanel = createOscillatorMixPanel();
 
-        effectsPanel = new InternalSynthEffectsPanel(synthesizer, midiChannel);
+        effectsPanel = new InternalSynthEffectsPanel(getSynthesizer(), midiChannel);
 
         // Add oscillator 3 and mix panel to row 2
         row2Panel.add(osc3Panel);
@@ -664,9 +616,9 @@ public class InternalSynthControlPanel extends JPanel {
         row3Panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Create the missing panels
-        envelopePanel = new InternalSynthEnvelopePanel(synthesizer, midiChannel);
-        filterPanel = new InternalSynthFilterPanel(synthesizer, midiChannel);
-        lfoPanel = new InternalSynthLFOPanel(synthesizer, midiChannel);
+        envelopePanel = new InternalSynthEnvelopePanel(getSynthesizer(), midiChannel);
+        filterPanel = new InternalSynthFilterPanel(getSynthesizer(), midiChannel);
+        lfoPanel = new InternalSynthLFOPanel(getSynthesizer(), midiChannel);
         // effectsPanel = new InternalSynthEffectsPanel(synthesizer, midiChannel);
 
         // Add all panels to row 3 with spacing
@@ -756,9 +708,9 @@ public class InternalSynthControlPanel extends JPanel {
      * Reset controllers and synchronize controls after preset change
      */
     private void reinitializeControllers() {
-        if (synthesizer != null && synthesizer.isOpen()) {
+        if (getSynthesizer() != null && getSynthesizer().isOpen()) {
             try {
-                MidiChannel channel = synthesizer.getChannels()[midiChannel];
+                MidiChannel channel = getSynthesizer().getChannels()[midiChannel];
 
                 // First reset all controllers and send all notes off
                 channel.resetAllControllers();
@@ -832,11 +784,18 @@ public class InternalSynthControlPanel extends JPanel {
      * Add a method to play test notes using the InternalSynthManager
      */
     public void playTestNote(int note, int velocity, int preset) {
-        if (synthesizer != null && synthesizer.isOpen()) {
+        if (getSynthesizer() != null && getSynthesizer().isOpen()) {
             // Use the manager but pass the synthesizer and soundbank name explicitly
             InternalSynthManager.getInstance().playTestNote(
-                    synthesizer, midiChannel, note, velocity, preset, currentSoundbankName);
+                    getSynthesizer(), midiChannel, note, velocity, preset, currentSoundbankName);
         }
+    }
+
+    /**
+     * Play a test note 
+     */
+    public void playNote(int note, int velocity, int durationMs) {
+        InternalSynthManager.getInstance().playNote(note, velocity, durationMs, midiChannel);
     }
 
 }

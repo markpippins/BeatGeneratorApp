@@ -179,7 +179,8 @@ public class App implements IBusListener {
             deviceManager.refreshDeviceList();
             splash.completeTask("Detected MIDI devices");
             
-            // Initialize synth engine
+            // Initialize synth engine - now using InternalSynthManager
+            InternalSynthManager.getInstance().initializeSynthesizer();
             InternalSynthManager.getInstance().initializeSoundbanks();
             splash.completeTask("Loaded internal synthesizer");
 
