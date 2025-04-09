@@ -9,6 +9,8 @@ import java.io.File;
 import java.util.List;
 
 import javax.sound.midi.MidiChannel;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
@@ -20,9 +22,9 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
-import javax.swing.JScrollPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.slf4j.Logger;
@@ -32,17 +34,23 @@ import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.UIHelper;
 import com.angrysurfer.core.service.InternalSynthManager;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Panel for controlling a MIDI synthesizer with tabs for oscillator, envelope,
  * filter and modulation parameters.
  */
+@Getter
+@Setter
 public class InternalSynthControlPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(InternalSynthControlPanel.class);
 
-    private final Synthesizer synthesizer;
+    private Synthesizer synthesizer;
     private JComboBox<PresetItem> presetCombo;
-    private final int midiChannel = 15; // Use channel 16 (index 15)
+    private int midiChannel = 15;
+
     private JComboBox<String> soundbankCombo;
     private JComboBox<Integer> bankCombo;
     private InternalSynthOscillatorPanel[] oscillatorPanels;
@@ -60,12 +68,59 @@ public class InternalSynthControlPanel extends JPanel {
      *
      * @param synthesizer The MIDI synthesizer to control
      */
-    public InternalSynthControlPanel(Synthesizer synthesizer) {
+    public InternalSynthControlPanel() {
         super(new BorderLayout(5, 5));
-        this.synthesizer = synthesizer;
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+        initializeSynthesizer();
         setupUI();
+    }
+
+    private void initializeSynthesizer() {
+        try {
+            MidiSystem.getMidiDeviceInfo();
+
+            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+            MidiDevice.Info gervillInfo = null;
+
+            for (MidiDevice.Info info : infos) {
+                if (info.getName().contains("Gervill")) {
+                    gervillInfo = info;
+                    break;
+                }
+            }
+
+            if (gervillInfo != null) {
+                MidiDevice device = MidiSystem.getMidiDevice(gervillInfo);
+                if (device instanceof Synthesizer) {
+                    synthesizer = (Synthesizer) device;
+                }
+            }
+
+            if (synthesizer == null) {
+                synthesizer = MidiSystem.getSynthesizer();
+            }
+
+            if (synthesizer != null && !synthesizer.isOpen()) {
+                synthesizer.open();
+                logger.info("Opened synthesizer: " + synthesizer.getDeviceInfo().getName());
+            }
+
+            if (synthesizer != null && synthesizer.isOpen()) {
+                MidiChannel channel = synthesizer.getChannels()[midiChannel];
+
+                if (channel != null) {
+                    channel.controlChange(7, 100); // Set volume to 100
+                    channel.controlChange(10, 64); // Pan center
+                    channel.programChange(0); // Default program (Grand Piano)
+                    logger.info("Configured channel 16 (index 15) on synthesizer");
+
+                    String presetName = InternalSynthManager.getInstance().getPresetName(1L, 0);
+                    logger.info("Initial preset: " + presetName);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error initializing synthesizer: " + e.getMessage(), e);
+        }
     }
 
     private void setupUI() {
@@ -647,10 +702,10 @@ public class InternalSynthControlPanel extends JPanel {
         mixPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(),
                 "Oscillator Mix"));
-        
+
         // Create dials section for the mix panel with FlowLayout
         JPanel dialsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        
+
         // Balance control (Osc1-Osc2)
         JPanel balance12Panel = new JPanel();
         balance12Panel.setLayout(new BoxLayout(balance12Panel, BoxLayout.Y_AXIS));
@@ -660,7 +715,7 @@ public class InternalSynthControlPanel extends JPanel {
         balanceDial.setAlignmentX(Component.CENTER_ALIGNMENT);
         balance12Panel.add(balanceDial);
         balance12Panel.add(balanceLabel);
-        
+
         // Balance control (mix-Osc3)
         JPanel balance3Panel = new JPanel();
         balance3Panel.setLayout(new BoxLayout(balance3Panel, BoxLayout.Y_AXIS));
@@ -670,7 +725,7 @@ public class InternalSynthControlPanel extends JPanel {
         balance3Dial.setAlignmentX(Component.CENTER_ALIGNMENT);
         balance3Panel.add(balance3Dial);
         balance3Panel.add(balance3Label);
-        
+
         // Master volume control
         JPanel masterPanel = new JPanel();
         masterPanel.setLayout(new BoxLayout(masterPanel, BoxLayout.Y_AXIS));
@@ -680,20 +735,20 @@ public class InternalSynthControlPanel extends JPanel {
         masterDial.setAlignmentX(Component.CENTER_ALIGNMENT);
         masterPanel.add(masterDial);
         masterPanel.add(masterLabel);
-        
+
         // Add dials to panel
         dialsPanel.add(balance12Panel);
         dialsPanel.add(balance3Panel);
         dialsPanel.add(masterPanel);
-        
+
         // Add to main mix panel - CENTER position ensures vertical centering
         mixPanel.add(dialsPanel, BorderLayout.CENTER);
-        
+
         // Add event handlers for the dials
         balanceDial.addChangeListener(e -> setControlChange(60, balanceDial.getValue()));
         balance3Dial.addChangeListener(e -> setControlChange(61, balance3Dial.getValue()));
         masterDial.addChangeListener(e -> setControlChange(7, masterDial.getValue()));
-        
+
         return mixPanel;
     }
 
@@ -783,4 +838,5 @@ public class InternalSynthControlPanel extends JPanel {
                     synthesizer, midiChannel, note, velocity, preset, currentSoundbankName);
         }
     }
+
 }
