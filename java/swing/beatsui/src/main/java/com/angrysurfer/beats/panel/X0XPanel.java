@@ -8,8 +8,6 @@ import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sound.midi.MidiChannel;
-import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -26,7 +24,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
@@ -136,19 +133,26 @@ public class X0XPanel extends JPanel implements IBusListener {
         add(containerPanel);
     }
 
+    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[4] ;
+
     private JTabbedPane createX0XPanel() {
         JTabbedPane tabbedPane = new JTabbedPane();
 
         // Create the synth control panel first to get the synthesizer
         internalSynthControlPanel = new InternalSynthControlPanel();
-        
+        melodicPanels[0] = createMelodicSequencerPanel(2);
+        melodicPanels[1] = createMelodicSequencerPanel(3);
+        melodicPanels[2] = createMelodicSequencerPanel(4);
+        melodicPanels[3] = createMelodicSequencerPanel(5);
+
         // Add tabs
         tabbedPane.addTab("Drum Sequencer", createDrumPanel());
         tabbedPane.addTab("Drum Machine", createDrumEffectsPanel());
-        tabbedPane.addTab("Mono Sequencer 1", createMelodicSequencerPanel(3));
-        tabbedPane.addTab("Mono Sequencer 2", createMelodicSequencerPanel(4));
-        tabbedPane.addTab("Mono Sequencer 3", createMelodicSequencerPanel(5));
-        tabbedPane.addTab("Mono Sequencer 4", createMelodicSequencerPanel(6));
+        tabbedPane.addTab("Mono Sequencer 1", melodicPanels[0]);
+        tabbedPane.addTab("Mono Sequencer 2", melodicPanels[1]);
+        tabbedPane.addTab("Mono Sequencer 3", melodicPanels[2]);
+        tabbedPane.addTab("Mono Sequencer 4", melodicPanels[3]);
+        
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Poly Sequencer", createChordSequencerPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
@@ -284,20 +288,27 @@ public class X0XPanel extends JPanel implements IBusListener {
      */
     private void toggleMelodicMute(int seqIndex, boolean muted) {
         logger.info("{}muting melodic sequencer {}", muted ? "" : "Un", seqIndex + 1);
-        // Calculate the actual tab index (Mono 1 starts at tab index 2)
-        int tabIndex = seqIndex + 2;
-
-        if (tabIndex >= 0 && tabIndex < 6) {
-            Component comp = tabbedPane.getComponentAt(tabIndex);
-            if (comp instanceof MelodicSequencerPanel) {
-                MelodicSequencerPanel panel = (MelodicSequencerPanel) comp;
-                MelodicSequencer sequencer = panel.getSequencer();
-                if (sequencer != null) {
-                    // Set volume to 0 when muted, 100 when unmuted
-                    sequencer.setLevel(muted ? 0 : 100);
-                }
+        if (melodicPanels[seqIndex] != null) {
+            // Use the sequencer's API to mute the specific melodic sequencer
+            MelodicSequencer sequencer = melodicPanels[seqIndex].getSequencer();
+            if (sequencer != null) {
+                sequencer.setLevel(muted ? 0 : 100);
             }
         }
+        // Calculate the actual tab index (Mono 1 starts at tab index 2)
+        // int tabIndex = seqIndex + 2;
+
+        // if (tabIndex >= 0 && tabIndex < 6) {
+        //     Component comp = tabbedPane.getComponentAt(tabIndex);
+        //     if (comp instanceof MelodicSequencerPanel) {
+        //         MelodicSequencerPanel panel = (MelodicSequencerPanel) comp;
+        //         MelodicSequencer sequencer = panel.getSequencer();
+        //         if (sequencer != null) {
+        //             // Set volume to 0 when muted, 100 when unmuted
+        //             sequencer.setLevel(muted ? 0 : 100);
+        //         }
+        //     }
+        // }
     }
 
     private Component createMixerPanel() {
@@ -332,7 +343,7 @@ public class X0XPanel extends JPanel implements IBusListener {
         return drumEffectsSequencerPanel;
     }
 
-    private Component createMelodicSequencerPanel(int channel) {
+    private MelodicSequencerPanel createMelodicSequencerPanel(int channel) {
         melodicSequencerPanel = new MelodicSequencerPanel(channel, noteEvent -> {
             // This callback should only be used for UI updates if needed
             // The actual note playing is handled inside the sequencer

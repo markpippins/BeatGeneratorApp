@@ -157,7 +157,7 @@ public class PlayersPanel extends JPanel {
         buttonWrapper.add(rightButtonPanel, BorderLayout.EAST);
 
         // Add to setupLayout method
-        muteButton = new JButton("Mute");
+        muteButton = new JButton("🔇");
         muteButton.addActionListener(e -> {
             Player player = getSelectedPlayer();
             if (player != null) {

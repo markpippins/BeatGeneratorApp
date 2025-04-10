@@ -284,7 +284,7 @@ public class MelodicSequencer implements IBusListener {
                 int durationMs = calculateNoteDuration(gateLength);
                 
                 // Play the note directly using the sequencer's internal method
-                playNoteDirectly(finalNoteValue, velocity, durationMs);
+                playNote(finalNoteValue, velocity, durationMs);
                 
                 // Also notify the UI through the listener if needed
                 if (noteEventListener != null) {
@@ -323,7 +323,7 @@ public class MelodicSequencer implements IBusListener {
      * @param velocity The velocity (volume) of the note
      * @param duration The duration in milliseconds
      */
-    private void playNoteDirectly(int midiNote, int velocity, int duration) {
+    private void playNote(int midiNote, int velocity, int duration) {
         if (notePlayer == null || notePlayer.getInstrument() == null) {
             logger.warn("Cannot play note directly - note or instrument is null");
             return;
@@ -350,7 +350,7 @@ public class MelodicSequencer implements IBusListener {
             }
 
             // Play the note - ERROR IS HERE
-            instrument.noteOn(channel, midiNote, velocity);  // Correct - use instrument directly
+            instrument.noteOn(channel, midiNote, notePlayer.getLevel());  // Correct - use instrument directly
 
             // Schedule note off after the specified duration
             final int noteToStop = midiNote; // Capture for use in lambda
