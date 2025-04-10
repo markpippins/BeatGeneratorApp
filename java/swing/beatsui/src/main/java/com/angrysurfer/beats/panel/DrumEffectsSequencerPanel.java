@@ -253,7 +253,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         octavePanel.add(octaveUpBtn);
 
         // Loop checkbox
-        loopCheckbox = new JCheckBox("Loop", true); // Default to looping enabled
+        loopCheckbox = new JCheckBox("🔁", true); // Default to looping enabled
         loopCheckbox.addActionListener(e -> {
             boolean looping = loopCheckbox.isSelected();
             System.out.println("Loop set to: " + looping);

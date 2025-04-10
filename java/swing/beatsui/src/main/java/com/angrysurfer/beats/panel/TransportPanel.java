@@ -35,6 +35,7 @@ public class TransportPanel extends JPanel {
     private JButton forwardButton;
     private JButton pauseButton;
     private boolean isRecording = false;
+    private boolean isPlaying = false;
     
     // Add a flag to track initial application load state
     private boolean initialLoadCompleted = false;
@@ -55,7 +56,8 @@ public class TransportPanel extends JPanel {
         
         // Start with recording disabled
         isRecording = false;
-        
+        isPlaying = false;
+
         // Set up a timer to enable auto-recording after 3 seconds
         // This gives time for the application to fully load before enabling the feature
         autoRecordingEnableTimer = new javax.swing.Timer(3000, e -> {
@@ -235,7 +237,17 @@ public class TransportPanel extends JPanel {
             recordButton.setForeground(UIManager.getColor("Button.foreground"));
         }
     }
-    
+
+    private void updatePlayButtonAppearance() {
+        if (isPlaying) {
+            playButton.setBackground(Color.GREEN);
+            playButton.setForeground(Color.WHITE);
+        } else {
+            playButton.setBackground(UIManager.getColor("Button.background"));
+            playButton.setForeground(UIManager.getColor("Button.foreground"));
+        }
+    }
+
     /**
      * Update the enabled state of transport buttons based on session state
      */
@@ -314,11 +326,15 @@ public class TransportPanel extends JPanel {
                             }
                             break;
                         case Commands.TRANSPORT_START:
+                            isPlaying = true;
                             SwingUtilities.invokeLater(() -> pauseButton.setEnabled(true));
+                            updatePlayButtonAppearance();
                             break;
                         case Commands.TRANSPORT_STOP:
                             SwingUtilities.invokeLater(() -> pauseButton.setEnabled(false));
                             isRecording = false;
+                            isPlaying = false;
+                            updatePlayButtonAppearance();
                             updateRecordButtonAppearance();
                             break;
                         case Commands.TRANSPORT_RECORD_START:
@@ -350,6 +366,7 @@ public class TransportPanel extends JPanel {
                     
                     // Keep track of last command processed
                     lastCommand = cmd;
+                    updatePlayButtonAppearance();
                 }
             }
         });

@@ -7,7 +7,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -299,12 +298,12 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         JButton zoomOutButton = new JButton("-");
         zoomOutButton.setFont(new Font("Arial", Font.BOLD, 14));
         zoomOutButton.setFocusPainted(false);
-        zoomOutButton.setMargin(new Insets(0, 6, 0, 6));
+        // zoomOutButton.setMargin(new Insets(0, 2, 0, 2));
         
         JButton zoomInButton = new JButton("+");
         zoomInButton.setFont(new Font("Arial", Font.BOLD, 14));
         zoomInButton.setFocusPainted(false);
-        zoomInButton.setMargin(new Insets(0, 6, 0, 6));
+        // zoomInButton.setMargin(new Insets(0, 2, 0, 2));
         
         // Add action listeners for zoom buttons
         zoomOutButton.addActionListener(e -> {
