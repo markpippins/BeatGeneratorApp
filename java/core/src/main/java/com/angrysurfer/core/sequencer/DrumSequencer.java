@@ -727,22 +727,22 @@ public class DrumSequencer implements IBusListener {
      * @param padIndex The index of the drum pad to select (0-15)
      */
     public void selectDrumPad(int padIndex) {
-        // Store old selection
-        int oldSelection = selectedPadIndex;
-
-        // Update selected pad (ensure it's within bounds)
-        if (padIndex >= 0 && padIndex < DRUM_PAD_COUNT) {
+        // Validate index
+        if (padIndex < 0 || padIndex >= DRUM_PAD_COUNT) {
+            return;
+        }
+        
+        // CRITICAL FIX: Only change selection and notify if different
+        if (selectedPadIndex != padIndex) {
+            int oldPadIndex = selectedPadIndex;
             selectedPadIndex = padIndex;
-            logger.info("Drum pad selected: {} -> {}", oldSelection, selectedPadIndex);
-
-            // Publish selection event on the command bus
+            
+            // Notify listeners about the selection change
             CommandBus.getInstance().publish(
-                    Commands.DRUM_PAD_SELECTED,
-                    this,
-                    new DrumPadSelectionEvent(oldSelection, selectedPadIndex)
+                Commands.DRUM_PAD_SELECTED,
+                this,
+                new DrumPadSelectionEvent(oldPadIndex, padIndex)
             );
-        } else {
-            logger.warn("Invalid drum pad index: {}", padIndex);
         }
     }
 

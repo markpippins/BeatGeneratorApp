@@ -8,8 +8,15 @@ import javax.swing.DefaultButtonModel;
 import javax.swing.JToggleButton;
 import javax.swing.Timer;
 
+import lombok.Getter;
+import lombok.Setter;
+@Getter
+@Setter
 public class DrumSequencerGridButton extends JToggleButton {
     
+    private int stepIndex;
+    private boolean toggled = false;
+    private boolean highlighted = false;
     private boolean isHighlighted = false;
     private int drumPadIndex = -1; // Default to -1 for unassigned index
     private boolean isTemporary = false;
@@ -36,6 +43,21 @@ public class DrumSequencerGridButton extends JToggleButton {
     }
     
     /**
+     * Create a new trigger button with step index
+     * 
+     * @param stepIndex The step index
+     */
+    public DrumSequencerGridButton(int stepIndex) {
+        super();
+        this.stepIndex = stepIndex;
+        setPreferredSize(new Dimension(30, 30));
+        setBorderPainted(false);
+        setFocusPainted(false);
+        setContentAreaFilled(true);
+        updateAppearance();
+    }
+    
+    /**
      * Initialize common properties
      */
     private void initialize() {
@@ -53,18 +75,16 @@ public class DrumSequencerGridButton extends JToggleButton {
      * @param highlighted true to highlight, false to unhighlight
      */
     public void setHighlighted(boolean highlighted) {
+        this.highlighted = highlighted;
         this.isHighlighted = highlighted;
-        if (highlighted) {
-            setBackground(Color.ORANGE);
-        } else {
-            setBackground(isSelected() ? new Color(100, 200, 100) : Color.DARK_GRAY);
-        }
+        updateAppearance();
     }
     
     /**
      * Set the toggled state of this button
      */
     public void setToggled(boolean toggled) {
+        this.toggled = toggled;
         // Always make sure the button is set to be visible and opaque first
         setVisible(true);
         setOpaque(true);
@@ -73,13 +93,7 @@ public class DrumSequencerGridButton extends JToggleButton {
         setSelected(toggled);
         
         // Update background color based on state
-        if (isHighlighted()) {
-            setBackground(Color.ORANGE);
-        } else if (toggled) {
-            setBackground(new Color(100, 200, 100)); // Green for active steps
-        } else {
-            setBackground(Color.DARK_GRAY);  // Dark gray for inactive steps
-        }
+        updateAppearance();
         
         // Make sure the change is visible
         repaint();
@@ -122,7 +136,7 @@ public class DrumSequencerGridButton extends JToggleButton {
      * @return true if highlighted, false otherwise
      */
     public boolean isHighlighted() {
-        return isHighlighted;
+        return highlighted;
     }
 
     /**
@@ -131,7 +145,16 @@ public class DrumSequencerGridButton extends JToggleButton {
      * @return true if toggled on, false otherwise
      */
     public boolean isToggled() {
-        return isSelected();
+        return toggled;
+    }
+
+    /**
+     * Get the step index
+     * 
+     * @return The step index
+     */
+    public int getStepIndex() {
+        return stepIndex;
     }
 
     /**
@@ -193,10 +216,10 @@ public class DrumSequencerGridButton extends JToggleButton {
         }
         
         // Regular appearance for steps in the pattern
-        if (isSelected()) {
-            setBackground(isHighlighted() ? ColorUtils.dustyAmber : ColorUtils.deepOrange);
+        if (highlighted) {
+            setBackground(toggled ? ColorUtils.fadedOrange : ColorUtils.slateGray);
         } else {
-            setBackground(isHighlighted() ? ColorUtils.fadedOrange : ColorUtils.slateGray);
+            setBackground(toggled ? ColorUtils.dustyAmber : ColorUtils.charcoalGray);
         }
     }
 

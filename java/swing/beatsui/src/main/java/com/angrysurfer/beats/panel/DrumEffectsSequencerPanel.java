@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -39,6 +40,7 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
@@ -52,7 +54,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     static Logger logger = LoggerFactory.getLogger(DrumEffectsSequencerPanel.class);
 
-// Keep the manager reference
+    // Keep the manager reference
     private final DrumSequencerManager drumSequencerManager;
     private DrumSequencerNavigationPanel navigationPanel;
 
@@ -86,6 +88,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     // Simple beat counter for UI updates
     private int beat = 0;
+
+    // Field to track listening state
+    private boolean isListening = true;
 
     /**
      * Create a new DrumEffectsSequencerPanel
@@ -234,10 +239,14 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             Direction direction = Direction.FORWARD;
 
             switch (selectedIndex) {
-                case 0 -> direction = Direction.FORWARD;
-                case 1 -> direction = Direction.BACKWARD;
-                case 2 -> direction = Direction.BOUNCE;
-                case 3 -> direction = Direction.RANDOM;
+                case 0 ->
+                    direction = Direction.FORWARD;
+                case 1 ->
+                    direction = Direction.BACKWARD;
+                case 2 ->
+                    direction = Direction.BOUNCE;
+                case 3 ->
+                    direction = Direction.RANDOM;
             }
 
             if (selectedPadIndex >= 0) {
@@ -578,7 +587,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         return getSequencer().getDirection(selectedPadIndex);
     }
 
-
     /**
      * Get the knob label for a specific index
      */
@@ -633,26 +641,201 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         return getSequencer().getTimingDivision(selectedPadIndex);
     }
 
-    // Method to select a drum pad and update the UI
+    /**
+     * Select a drum pad and update the UI
+     */
     private void selectDrumPad(int padIndex) {
-        selectedPadIndex = padIndex; // Update selected pad index
-        refreshTriggerButtonsForPad(padIndex); // Refresh the trigger buttons to show the current pattern
+        // Validate index
+        if (padIndex < 0 || padIndex >= DRUM_PAD_COUNT) {
+            return;
+        }
+
+        // CRITICAL FIX: Avoid recursion if same pad already selected
+        if (selectedPadIndex == padIndex) {
+            return;
+        }
+
+        // Store new selection
+        selectedPadIndex = padIndex;
+
+        // Update drum pad button selection state
+        for (int i = 0; i < drumButtons.size(); i++) {
+            drumButtons.get(i).setSelected(i == selectedPadIndex);
+        }
+
+        // Update step display for the selected drum
+        refreshTriggerButtonsForPad(padIndex);
+
+        // Update parameter controls
+        updateControlsFromSequencer();
+
+        // Notify sequencer - but temporarily disable our listener to avoid loop
+        boolean wasListening = disableCommandBusListening();
+        try {
+            getSequencer().selectDrumPad(padIndex);
+        } finally {
+            restoreCommandBusListening(wasListening);
+        }
+
+        logger.debug("Selected drum pad {}", padIndex + 1);
     }
 
-    // Method to toggle the step for the active drum pad
-    private void toggleStepForActivePad(int stepIndex) {
-        if (selectedPadIndex >= 0 && selectedPadIndex < DRUM_PAD_COUNT) {
-            getSequencer().toggleStep(selectedPadIndex, stepIndex); // Toggle the state
-            refreshTriggerButtonsForPad(selectedPadIndex); // Refresh the trigger buttons to reflect the change
+    /**
+     * Refresh trigger buttons for a specific drum pad
+     */
+    private void refreshTriggerButtonsForPad(int padIndex) {
+        if (padIndex < 0 || selectorButtons == null) {
+            return;
+        }
+
+        DrumSequencer seq = getSequencer();
+        if (seq == null) {
+            return;
+        }
+        
+        logger.debug("Updating trigger buttons for drum {}", padIndex + 1);
+
+        // Update each button's state to match sequencer
+        for (int i = 0; i < selectorButtons.size(); i++) {
+            if (i < selectorButtons.size()) {
+                DrumSequencerGridButton button = selectorButtons.get(i);
+                boolean isActive = seq.isStepActive(padIndex, i);
+                
+                // Force update regardless of current state
+                button.setToggled(isActive);
+            }
         }
     }
 
-    // Method to refresh the trigger buttons for the selected pad
-    private void refreshTriggerButtonsForPad(int padIndex) {
-        for (int i = 0; i < selectorButtons.size(); i++) {
-            DrumSequencerGridButton button = selectorButtons.get(i);
-            button.setSelected(getSequencer().isStepActive(padIndex, i)); // Set button state based on the stored pattern
-            button.setHighlighted(false); // Reset highlight
+    // Add these methods to enable/disable command bus listening temporarily
+    private boolean disableCommandBusListening() {
+        boolean wasListening = true; // Default to true if field doesn't exist
+        try {
+            // Store current state and disable
+            Field listeningField = this.getClass().getDeclaredField("isListening");
+            listeningField.setAccessible(true);
+            wasListening = (boolean) listeningField.get(this);
+            listeningField.set(this, false);
+        } catch (Exception e) {
+            // If field doesn't exist, add it
+            try {
+                Field field = this.getClass().getDeclaredField("isListening");
+                field.setAccessible(true);
+                field.set(this, false);
+            } catch (Exception ex) {
+                // Can't modify the field, fallback to alternative approach
+                logger.error("Could not modify isListening field", ex);
+            }
+        }
+        return wasListening;
+    }
+
+    private void restoreCommandBusListening(boolean state) {
+        try {
+            Field listeningField = this.getClass().getDeclaredField("isListening");
+            listeningField.setAccessible(true);
+            listeningField.set(this, state);
+        } catch (Exception e) {
+            logger.error("Could not restore isListening field", e);
+        }
+    }
+
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == null) {
+            return;
+        }
+
+        switch (action.getCommand()) {
+            case Commands.DRUM_SEQUENCE_LOADED,
+                 Commands.DRUM_SEQUENCE_SAVED,
+                 Commands.DRUM_SEQUENCE_CREATED,
+                 Commands.DRUM_SEQUENCE_UPDATED -> {
+                logger.warn("⚠️ SEQUENCE CHANGED: {} - EXECUTING FORCED GRID REBUILD", action.getCommand());
+
+                // CRITICAL FIX: Execute on EDT with proper sequence
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        // PHASE 1: COMPLETE GRID RESET
+                        // -----------------------------------------
+                        logger.warn("PHASE 1: GRID RESET BEGIN");
+                        
+                        // Disable command bus listening to prevent loops
+                        boolean wasListening = disableCommandBusListening();
+                        
+                        try {
+                            // Reset sequencer to clear playback state
+                            getSequencer().reset();
+                            
+                            // Clear every single grid button
+                            for (DrumSequencerGridButton button : selectorButtons) {
+                                button.setToggled(false);
+                                button.setHighlighted(false);
+                                button.repaint();
+                            }
+                            
+                            // Reset all drum button selections
+                            for (DrumButton button : drumButtons) {
+                                button.setSelected(false);
+                                button.repaint();
+                            }
+                            
+                            // Force complete panel repaint
+                            invalidate();
+                            repaint();
+                            
+                            logger.warn("PHASE 1: GRID RESET COMPLETE - ALL BUTTONS CLEARED");
+                            
+                            // PHASE 2: DATA RELOADING
+                            // -----------------------------------------
+                            logger.warn("PHASE 2: DATA RELOAD BEGIN");
+                            
+                            // Set up target drum
+                            int padToSelect = selectedPadIndex >= 0 ? selectedPadIndex : 0;
+                            selectedPadIndex = padToSelect;
+                            
+                            // Set the active drum pad button
+                            if (padToSelect < drumButtons.size()) {
+                                drumButtons.get(padToSelect).setSelected(true);
+                                drumButtons.get(padToSelect).repaint();
+                            }
+                            
+                            // Update parameter controls to match new sequence
+                            updateControlsFromSequencer();
+                            
+                            // EXPLICITLY reload sequence data for the selected drum
+                            logger.warn("Loading sequence data for drum {}", padToSelect + 1);
+                            
+                            // Refresh the grid with active steps from the sequencer
+                            refreshTriggerButtonsForPad(selectedPadIndex);
+                            
+                            // Final repaint to show everything
+                            validate();
+                            repaint();
+                            
+                            logger.warn("✅ PHASE 2: DATA RELOAD COMPLETE - GRID REBUILT SUCCESSFULLY");
+                        } finally {
+                            // Always restore command bus listening
+                            restoreCommandBusListening(wasListening);
+                        }
+                    } catch (Exception e) {
+                        logger.error("❌ CRITICAL ERROR during grid refresh: {}", e.getMessage(), e);
+                        e.printStackTrace();
+                    }
+                });
+            }
+            
+            case Commands.DRUM_PAD_SELECTED -> {
+                // Handle drum pad selection (existing code)
+                if (action.getData() instanceof DrumPadSelectionEvent event) {
+                    // Only handle if we didn't send this event ourselves
+                    if (action.getSender() != this) {
+                        selectDrumPad(event.getNewSelection());
+                    }
+                }
+            }
+
+            // Other cases remain unchanged...
         }
     }
 
@@ -711,35 +894,51 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         return (int) (beat % getPatternLength());
     }
 
-    @Override
-    public void onAction(Command action) {
-        if (action.getCommand() == null) return;
-        
-        switch (action.getCommand()) {
-            case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_SAVED, 
-                 Commands.DRUM_SEQUENCE_CREATED, Commands.DRUM_SEQUENCE_UPDATED -> {
-                // CRITICAL: Force immediate grid refresh on ANY sequence event
-                
-                // Clear all old data
-                for (DrumSequencerGridButton button : selectorButtons) {
-                    button.setToggled(false);
-                    button.setHighlighted(false);
-                }
-                
-                // Force UI update on EDT
-                SwingUtilities.invokeLater(() -> {
-                    // Update pattern display for current drum
-                    updatePatternDisplay();
-                    
-                    // Update parameter controls
-                    updateControlsFromSequencer();
-                    
-                    // Log refresh happening
-                    logger.info("Forced grid refresh after sequence change: {}", action.getCommand());
-                });
+    /**
+     * Clear all patterns visualization in the grid
+     * This resets the visual state of all buttons but doesn't change the sequencer data
+     */
+    private void clearAllDrumPatterns() {
+        // Reset all button states for all pads
+        for (DrumSequencerGridButton button : selectorButtons) {
+            button.setToggled(false);
+            button.setHighlighted(false);
+        }
+
+        // Update drum pad buttons to show none selected
+        for (DrumButton button : drumButtons) {
+            button.setSelected(false);
+        }
+
+        logger.debug("All grid patterns cleared");
+    }
+
+    /**
+     * Refresh the entire grid display to match the current sequencer state
+     * for the selected drum pad
+     */
+    private void refreshGridDisplay() {
+        // First ensure we've cleared everything
+        clearAllDrumPatterns();
+
+        // Then update display for current selection if valid
+        if (selectedPadIndex >= 0) {
+            // Update drum pad selection
+            if (selectedPadIndex < drumButtons.size()) {
+                drumButtons.get(selectedPadIndex).setSelected(true);
             }
-            
-            // Other cases...
+
+            // Update step buttons for selected drum
+            refreshTriggerButtonsForPad(selectedPadIndex);
+        }
+    }
+
+    /**
+     * Clear all step highlighting to reset the visual state
+     */
+    private void clearAllStepHighlights() {
+        for (DrumSequencerGridButton button : selectorButtons) {
+            button.setHighlighted(false);
         }
     }
 
@@ -747,25 +946,31 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
      * Update UI controls from sequencer state
      */
     private void updateControlsFromSequencer() {
-        if (selectedPadIndex < 0) return;
-        
+        if (selectedPadIndex < 0) {
+            return;
+        }
+
         DrumSequencer seq = getSequencer();
-        
+
         // Update pattern length spinner
         lastStepSpinner.setValue(seq.getPatternLength(selectedPadIndex));
-        
+
         // Update loop checkbox
         loopCheckbox.setSelected(seq.isLooping(selectedPadIndex));
-        
+
         // Update direction combo
         Direction dir = seq.getDirection(selectedPadIndex);
         switch (dir) {
-            case FORWARD -> directionCombo.setSelectedIndex(0);
-            case BACKWARD -> directionCombo.setSelectedIndex(1);
-            case BOUNCE -> directionCombo.setSelectedIndex(2);
-            case RANDOM -> directionCombo.setSelectedIndex(3);
+            case FORWARD ->
+                directionCombo.setSelectedIndex(0);
+            case BACKWARD ->
+                directionCombo.setSelectedIndex(1);
+            case BOUNCE ->
+                directionCombo.setSelectedIndex(2);
+            case RANDOM ->
+                directionCombo.setSelectedIndex(3);
         }
-        
+
         // Update timing division combo
         timingCombo.setSelectedItem(seq.getTimingDivision(selectedPadIndex));
     }
