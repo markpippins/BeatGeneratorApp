@@ -1,6 +1,9 @@
 package com.angrysurfer.core.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,38 +15,46 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.DrumStepUpdateEvent;
+import com.angrysurfer.core.sequencer.NoteEvent;
 
 /**
- * Manager for drum sequences persistence and operations
+ * Manager for DrumSequencer instances.
+ * Maintains a collection of sequencers and provides methods to create and access them.
  */
 public class DrumSequencerManager implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencerManager.class);
+
     private static DrumSequencerManager instance;
+
     private final RedisService redisService;
     private final CommandBus commandBus;
-    
+
+    // Store sequencers in an ArrayList for indexed access
+    private final List<DrumSequencer> sequencers;
+
+    // Private constructor for singleton pattern
     private DrumSequencerManager() {
         this.redisService = RedisService.getInstance();
         this.commandBus = CommandBus.getInstance();
+        this.sequencers = new ArrayList<>();
         commandBus.register(this);
     }
-    
-    /**
-     * Get the singleton instance
-     */
+
+    // Singleton access method
     public static synchronized DrumSequencerManager getInstance() {
         if (instance == null) {
             instance = new DrumSequencerManager();
         }
         return instance;
     }
-    
+
     @Override
     public void onAction(Command action) {
         if (action == null || action.getCommand() == null) {
             return;
         }
-        
+
         switch (action.getCommand()) {
             case Commands.SAVE_DRUM_SEQUENCE -> {
                 if (action.getData() instanceof DrumSequencer sequencer) {
@@ -57,10 +68,10 @@ public class DrumSequencerManager implements IBusListener {
             }
         }
     }
-    
+
     /**
      * Save a drum sequence
-     * 
+     *
      * @param sequencer The sequencer containing pattern data
      * @return The ID of the saved sequence
      */
@@ -74,10 +85,10 @@ public class DrumSequencerManager implements IBusListener {
             return null;
         }
     }
-    
+
     /**
      * Load a drum sequence by ID
-     * 
+     *
      * @param id The sequence ID to load
      * @return The loaded sequence data or null if not found
      */
@@ -89,10 +100,10 @@ public class DrumSequencerManager implements IBusListener {
             return null;
         }
     }
-    
+
     /**
      * Load a sequence into the given sequencer
-     * 
+     *
      * @param id The sequence ID to load
      * @param sequencer The sequencer to load into
      * @return true if successful, false otherwise
@@ -111,10 +122,10 @@ public class DrumSequencerManager implements IBusListener {
             return false;
         }
     }
-    
+
     /**
      * Create a new drum sequence
-     * 
+     *
      * @return The new sequence data
      */
     public DrumSequenceData createNewSequence() {
@@ -125,10 +136,10 @@ public class DrumSequencerManager implements IBusListener {
             return null;
         }
     }
-    
+
     /**
      * Initialize a new sequence in the given sequencer
-     * 
+     *
      * @param sequencer The sequencer to initialize
      * @return The ID of the new sequence
      */
@@ -145,55 +156,55 @@ public class DrumSequencerManager implements IBusListener {
             return null;
         }
     }
-    
+
     /**
      * Get the previous sequence ID
-     * 
+     *
      * @param currentId The current sequence ID
      * @return The previous ID or null if none
      */
     public Long getPreviousSequenceId(Long currentId) {
         return redisService.getPreviousDrumSequenceId(currentId);
     }
-    
+
     /**
      * Get the next sequence ID
-     * 
+     *
      * @param currentId The current sequence ID
      * @return The next ID or null if none
      */
     public Long getNextSequenceId(Long currentId) {
         return redisService.getNextDrumSequenceId(currentId);
     }
-    
+
     /**
      * Get the first sequence ID
-     * 
+     *
      * @return The first ID or null if none
      */
     public Long getFirstSequenceId() {
         return redisService.getMinimumDrumSequenceId();
     }
-    
+
     /**
      * Get the last sequence ID
-     * 
+     *
      * @return The last ID or null if none
      */
     public Long getLastSequenceId() {
         return redisService.getMaximumDrumSequenceId();
     }
-    
+
     /**
      * Check if there are any sequences available
-     * 
+     *
      * @return true if sequences exist, false otherwise
      */
     public boolean hasSequences() {
         List<Long> ids = redisService.getAllDrumSequenceIds();
         return ids != null && !ids.isEmpty();
     }
-    
+
     /**
      * Refresh the internal list of sequences from the database
      */
@@ -201,10 +212,104 @@ public class DrumSequencerManager implements IBusListener {
         try {
             // Force a refresh of the sequence ID list from Redis
             List<Long> sequenceIds = redisService.getAllDrumSequenceIds();
-            logger.info("Refreshed drum sequence list, found {} sequences", 
-                       sequenceIds != null ? sequenceIds.size() : 0);
+            logger.info("Refreshed drum sequence list, found {} sequences",
+                    sequenceIds != null ? sequenceIds.size() : 0);
         } catch (Exception e) {
             logger.error("Error refreshing sequence list: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Create a new DrumSequencer and add it to the manager.
+     *
+     * @return The newly created DrumSequencer
+     */
+    public synchronized DrumSequencer newSequencer() {
+        DrumSequencer sequencer = new DrumSequencer();
+        sequencers.add(sequencer);
+        logger.info("Created new drum sequencer (index: {})", sequencers.size() - 1);
+        return sequencer;
+    }
+
+    /**
+     * Create a new DrumSequencer with a note event listener and add it to the manager.
+     *
+     * @param noteEventListener Callback for when a note should be played
+     * @return The newly created DrumSequencer
+     */
+    public synchronized DrumSequencer newSequencer(Consumer<NoteEvent> noteEventListener) {
+        DrumSequencer sequencer = new DrumSequencer();
+        sequencer.setNoteEventListener(noteEventListener);
+        sequencers.add(sequencer);
+        logger.info("Created new drum sequencer with note event listener (index: {})",
+                sequencers.size() - 1);
+        return sequencer;
+    }
+
+    /**
+     * Create a new DrumSequencer with note event and step update listeners.
+     *
+     * @param noteEventListener Callback for when a note should be played
+     * @param stepUpdateListener Callback for step updates during playback
+     * @return The newly created DrumSequencer
+     */
+    public synchronized DrumSequencer newSequencer(
+            Consumer<NoteEvent> noteEventListener,
+            Consumer<DrumStepUpdateEvent> stepUpdateListener) {  // Changed from StepUpdateEvent to DrumStepUpdateEvent
+        DrumSequencer sequencer = new DrumSequencer();
+        sequencer.setNoteEventListener(noteEventListener);
+        sequencer.setStepUpdateListener(stepUpdateListener);
+        sequencers.add(sequencer);
+        logger.info("Created new drum sequencer with note event and step update listeners (index: {})",
+                sequencers.size() - 1);
+        return sequencer;
+    }
+
+    /**
+     * Get a sequencer by its index in the collection.
+     *
+     * @param index The index of the sequencer
+     * @return The DrumSequencer at the specified index, or null if not found
+     */
+    public synchronized DrumSequencer getSequencer(int index) {
+        if (index >= 0 && index < sequencers.size()) {
+            return sequencers.get(index);
+        }
+        logger.warn("Sequencer with index {} not found", index);
+        return null;
+    }
+
+    /**
+     * Get the number of sequencers currently managed.
+     *
+     * @return The number of sequencers
+     */
+    public synchronized int getSequencerCount() {
+        return sequencers.size();
+    }
+
+    /**
+     * Get an unmodifiable view of all sequencers.
+     *
+     * @return Unmodifiable list of all sequencers
+     */
+    public synchronized List<DrumSequencer> getAllSequencers() {
+        return Collections.unmodifiableList(sequencers);
+    }
+
+    /**
+     * Remove a sequencer from the manager.
+     *
+     * @param index The index of the sequencer to remove
+     * @return true if removed successfully, false otherwise
+     */
+    public synchronized boolean removeSequencer(int index) {
+        if (index >= 0 && index < sequencers.size()) {
+            sequencers.remove(index);
+            logger.info("Removed drum sequencer at index {}", index);
+            return true;
+        }
+        logger.warn("Failed to remove sequencer at index {}: not found", index);
+        return false;
     }
 }
