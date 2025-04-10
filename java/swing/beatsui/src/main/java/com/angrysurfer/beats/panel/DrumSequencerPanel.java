@@ -42,6 +42,7 @@ import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
+import com.angrysurfer.core.service.DrumSequencerManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -99,15 +100,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         super(new BorderLayout());
 
         // Create the sequencer
-        sequencer = new DrumSequencer();
-
-        // Set the note event listener
-        sequencer.setNoteEventListener(noteEventConsumer);
-
-        // Set step update listener for highlighting
-        sequencer.setStepUpdateListener(event -> {
-            updateStepHighlighting(event.getDrumIndex(), event.getOldStep(), event.getNewStep());
-        });
+        sequencer = DrumSequencerManager.getInstance().newSequencer(
+            noteEventConsumer, 
+            event -> updateStepHighlighting(event.getDrumIndex(), event.getOldStep(), event.getNewStep())
+        );
 
         // Register with the command bus - MAKE SURE THIS IS HERE
         CommandBus.getInstance().register(this);
