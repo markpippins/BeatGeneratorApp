@@ -41,6 +41,7 @@ import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.service.MelodicSequencerManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -80,7 +81,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         super(new BorderLayout());
 
         // Create the sequencer
-        sequencer = new MelodicSequencer(channel);
+        sequencer = MelodicSequencerManager.getInstance().newSequencer(channel);
 
         // Set up the note event listener
         sequencer.setNoteEventListener(noteEventConsumer);

@@ -49,7 +49,7 @@ public class X0XPanel extends JPanel implements IBusListener {
     private int lookAheadMs = 40;
     private boolean useAheadScheduling = true;
     private int activeMidiChannel = 15;
-    private MelodicSequencerPanel melodicSequencerPanel;
+    
     private DrumSequencerPanel drumSequencerPanel;
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
     // Keep the reference for panel access but remove synth management logic
@@ -89,20 +89,20 @@ public class X0XPanel extends JPanel implements IBusListener {
             case Commands.ROOT_NOTE_SELECTED -> {
                 if (action.getData() instanceof String) {
                     String rootNote = (String) action.getData();
-                    if (melodicSequencerPanel != null) {
-                        melodicSequencerPanel.getSequencer().setRootNote(rootNote);
-                        melodicSequencerPanel.getSequencer().updateQuantizer();
-                    }
+                    // if (melodicSequencerPanel != null) {
+                    //     melodicSequencerPanel.getSequencer().setRootNote(rootNote);
+                    //     melodicSequencerPanel.getSequencer().updateQuantizer();
+                    // }
                 }
             }
 
             case Commands.SCALE_SELECTED -> {
                 if (action.getData() instanceof String) {
                     String scaleName = (String) action.getData();
-                    if (melodicSequencerPanel != null) {
-                        melodicSequencerPanel.getSequencer().setScale(scaleName);
-                        melodicSequencerPanel.getSequencer().updateQuantizer();
-                    }
+                    // if (melodicSequencerPanel != null) {
+                    //     melodicSequencerPanel.getSequencer().setScale(scaleName);
+                    //     melodicSequencerPanel.getSequencer().updateQuantizer();
+                    // }
                 }
             }
 
@@ -112,7 +112,7 @@ public class X0XPanel extends JPanel implements IBusListener {
                     StepUpdateEvent stepUpdateEvent = (StepUpdateEvent) action.getData();
 
                     int step = stepUpdateEvent.getNewStep();
-                    int patternLength = melodicSequencerPanel.getSequencer().getPatternLength();
+                    // int patternLength = melodicSequencerPanel.getSequencer().getPatternLength();
 
                     // Update status display with current step
                     // CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this,
@@ -338,13 +338,13 @@ public class X0XPanel extends JPanel implements IBusListener {
 
     private Component createDrumEffectsPanel() {
         drumEffectsSequencerPanel = new DrumEffectsSequencerPanel(noteEvent -> {
-            playDrumNote(noteEvent.getNote(), noteEvent.getVelocity());
+            // playDrumNote(noteEvent.getNote(), noteEvent.getVelocity());
         });
         return drumEffectsSequencerPanel;
     }
 
     private MelodicSequencerPanel createMelodicSequencerPanel(int channel) {
-        melodicSequencerPanel = new MelodicSequencerPanel(channel, noteEvent -> {
+        MelodicSequencerPanel melodicSequencerPanel = new MelodicSequencerPanel(channel, noteEvent -> {
             // This callback should only be used for UI updates if needed
             // The actual note playing is handled inside the sequencer
             logger.debug("Note event received from sequencer: note={}, velocity={}, duration={}",
