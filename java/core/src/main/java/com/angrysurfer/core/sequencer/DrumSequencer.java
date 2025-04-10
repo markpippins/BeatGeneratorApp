@@ -12,8 +12,10 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.service.DrumSequencerManager;
+import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
@@ -60,6 +62,7 @@ public class DrumSequencer implements IBusListener {
 
     // Strike objects for each drum pad
     private Strike[] players;
+    private InstrumentWrapper[] instruments;
 
     // Selection state
     private int selectedPadIndex = 0;       // Currently selected drum pad
@@ -98,14 +101,40 @@ public class DrumSequencer implements IBusListener {
         Arrays.fill(loopingFlags, true);      // Default to looping
         Arrays.fill(bounceDirections, 1);     // Default to forward bounce
 
-        // CRITICAL FIX: Initialize masterTempo with default value
+        // Initialize masterTempo with default value
         masterTempo = 96; // Default PPQN if not set by session
 
         // Initialize patterns with max possible length
         patterns = new boolean[DRUM_PAD_COUNT][MAX_STEPS];
 
-        // Initialize strikes
+        // Get internal synthesizer from InternalSynthManager
+        javax.sound.midi.Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
+
+        // Initialize strikes with proper configuration
+        instruments = new InstrumentWrapper[DRUM_PAD_COUNT];
         players = new Strike[DRUM_PAD_COUNT];
+
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            players[i] = new Strike();
+            players[i].setName("Drum " + (i + 1));
+            // Set default root notes - standard GM drum map starting points
+            players[i].setRootNote(36 + i); // Start from MIDI note 36 (C1)
+            // Configure to use drum channel (9)
+            players[i].setChannel(9);
+
+            // Create an InstrumentWrapper for the internal synth
+            instruments[i] = new InstrumentWrapper(players[i].getName(), synth);
+            instruments[i].setDeviceName(synth.getDeviceInfo().getName());
+            instruments[i].setChannels(new Integer[]{9}); // Drum channel
+            instruments[i].setInternal(true);
+
+            logger.info("Created internal synth instrument for drum sequencer: {}", instruments[i].getName());
+
+            // Assign the internal synth instrument
+            players[i].setInstrument(instruments[i]);
+
+            logger.debug("Initialized drum pad {} with note {}", i, 36 + i);
+        }
 
         // Register with command bus
         CommandBus.getInstance().register(this);
@@ -168,20 +197,20 @@ public class DrumSequencer implements IBusListener {
             }
 
             // IMPORTANT: Use each drum's timing division instead of fixed value
-            int drumTicksPerStep = timingDivisions[drumIndex].getTicksPerBeat(); 
-            
+            int drumTicksPerStep = timingDivisions[drumIndex].getTicksPerBeat();
+
             // Make sure we have a valid minimum value
             if (drumTicksPerStep <= 0) {
                 drumTicksPerStep = 24; // Emergency fallback
             }
-            
+
             // Use modulo instead of next tick calculations - more stable
             if (tick % drumTicksPerStep == 0) {
                 // Reset pattern completion flag if we're looping
                 if (patternCompleted[drumIndex] && loopingFlags[drumIndex]) {
                     patternCompleted[drumIndex] = false;
                 }
-                
+
                 // Handle if pattern is completed and not looping
                 if (patternCompleted[drumIndex] && !loopingFlags[drumIndex]) {
                     continue; // Skip this drum
@@ -189,10 +218,10 @@ public class DrumSequencer implements IBusListener {
 
                 // Process the current step for this drum
                 processStep(drumIndex);
-                
+
                 // Debug log to track progression
-                logger.debug("Drum {} step processed at tick {} (timing: {})", 
-                           drumIndex, tick, timingDivisions[drumIndex].getDisplayName());
+                logger.debug("Drum {} step processed at tick {} (timing: {})",
+                        drumIndex, tick, timingDivisions[drumIndex].getDisplayName());
             }
         }
     }
@@ -209,26 +238,24 @@ public class DrumSequencer implements IBusListener {
         // Notify listeners of step update BEFORE playing the sound
         // This ensures visual indicators match the sound that's about to play
         if (stepUpdateListener != null) {
-            // For the old step, use the previous step (calculated based on direction)
-            int oldStep = getPreviousStep(drumIndex);
-            stepUpdateListener.accept(new DrumStepUpdateEvent(drumIndex, oldStep, step));
+            // FIXED: Use the proper constructor with the required parameters
+            // instead of trying to use setters on a new instance
+            DrumStepUpdateEvent event = new DrumStepUpdateEvent(
+                    drumIndex,
+                    getPreviousStep(drumIndex),
+                    step
+            );
+            stepUpdateListener.accept(event);
         }
 
         // Check if this step is active
         if (patterns[drumIndex][step]) {
-            // Get the Strike for this drum
-            Strike strike = players[drumIndex];
+            // Use the velocity for this drum
+            int velocity = velocities[drumIndex];
 
-            // If we have a valid Strike and note event listener, trigger the note
-            if (strike != null && noteEventListener != null) {
-                int note = strike.getRootNote();
-
-                // Use the velocity from the velocities array
-                int velocity = velocities[drumIndex];
-
-                // Create a note event with the note and velocity
-                NoteEvent event = new NoteEvent(note, velocity, 100);
-                noteEventListener.accept(event);
+            // Play the note directly here instead of using external handlers
+            if (velocity > 0) {
+                playDrumNote(drumIndex, velocity);
             }
         }
 
@@ -243,10 +270,12 @@ public class DrumSequencer implements IBusListener {
         Direction direction = directions[drumIndex];
         int currentPos = currentStep[drumIndex];
         int length = patternLengths[drumIndex];
-        
+
         return switch (direction) {
-            case FORWARD -> (currentPos + length - 1) % length;
-            case BACKWARD -> (currentPos + 1) % length;
+            case FORWARD ->
+                (currentPos + length - 1) % length;
+            case BACKWARD ->
+                (currentPos + 1) % length;
             case BOUNCE -> {
                 // For bounce, it depends on the current bounce direction
                 if (bounceDirections[drumIndex] > 0) {
@@ -255,7 +284,8 @@ public class DrumSequencer implements IBusListener {
                     yield currentPos < length - 1 ? currentPos + 1 : length - 1;
                 }
             }
-            case RANDOM -> currentPos; // For random, just use current position
+            case RANDOM ->
+                currentPos; // For random, just use current position
         };
     }
 
@@ -320,8 +350,8 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Calculate ticks per step based on timing division
-     * Fixed to prevent division by zero or very small values
+     * Calculate ticks per step based on timing division Fixed to prevent
+     * division by zero or very small values
      */
     private int calculateTicksPerStep(TimingDivision timing) {
         // CRITICAL FIX: Add safety check to prevent division by zero
@@ -329,22 +359,22 @@ public class DrumSequencer implements IBusListener {
             logger.warn("Invalid masterTempo value ({}), using default of 96", masterTempo);
             masterTempo = 96;  // Emergency fallback
         }
-        
+
         double ticksPerBeat = timing.getTicksPerBeat();
         if (ticksPerBeat <= 0) {
             logger.warn("Invalid ticksPerBeat value ({}), using default of 24", ticksPerBeat);
             ticksPerBeat = 24.0;  // Emergency fallback
         }
-        
+
         // Simplified calculation that works consistently
-        int result = (int)(masterTempo / (ticksPerBeat / 24.0));
-        
+        int result = (int) (masterTempo / (ticksPerBeat / 24.0));
+
         // Add safety check for the final result
         if (result <= 0) {
             logger.warn("Calculated invalid ticksPerStep ({}), using default of 24", result);
             result = 24;  // Emergency fallback for extreme values
         }
-        
+
         return result;
     }
 
@@ -354,7 +384,7 @@ public class DrumSequencer implements IBusListener {
     public void updateMasterTempo(int sessionTicksPerBeat) {
         this.masterTempo = sessionTicksPerBeat;
         logger.info("Updated master tempo to {}", masterTempo);
-        
+
         // Recalculate all next step timings based on new tempo
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
             if (timingDivisions[drumIndex] != null) {
@@ -373,18 +403,18 @@ public class DrumSequencer implements IBusListener {
         Arrays.fill(patternCompleted, false);
         Arrays.fill(nextStepTick, 0);
         Arrays.fill(bounceDirections, 1);
-        
+
         // Reset global counters
         tickCounter = 0;
         beatCounter = 0;
-        
+
         // Force the sequencer to generate an event to update visual indicators
         if (stepUpdateListener != null) {
             for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
                 stepUpdateListener.accept(new DrumStepUpdateEvent(drumIndex, -1, currentStep[drumIndex]));
             }
         }
-        
+
         logger.debug("Sequencer fully reset - all counters and indicators cleared");
     }
 
@@ -393,16 +423,16 @@ public class DrumSequencer implements IBusListener {
      */
     public void play() {
         isPlaying = true;
-        
+
         // CRITICAL FIX: Reset step positions to ensure consistent playback
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             // Set all next step ticks to the current tick to trigger immediately
             nextStepTick[i] = tickCounter;
-            
+
             // Reset pattern completion flags
             patternCompleted[i] = false;
         }
-        
+
         logger.info("DrumSequencer playback started at tick {}", tickCounter);
     }
 
@@ -775,4 +805,47 @@ public class DrumSequencer implements IBusListener {
             }
         }
     }
+
+    /**
+     * Play a drum note using the Strike for the specified drum pad
+     *
+     * @param drumIndex The drum pad index to play
+     * @param velocity The velocity to play the note with
+     */
+    public void playDrumNote(int drumIndex, int velocity) {
+        if (drumIndex < 0 || drumIndex >= DRUM_PAD_COUNT) {
+            logger.warn("Invalid drum index: {}", drumIndex);
+            return;
+        }
+
+        Strike strike = players[drumIndex];
+        if (strike == null) {
+            logger.debug("No Strike assigned to drum pad {}", drumIndex);
+            return;
+        }
+
+        if (strike.getInstrument() == null) {
+            strike.setInstrument(instruments[drumIndex]);
+            strike.setChannel(9);
+        }
+
+        if (strike.getInstrument() == null) {
+            logger.debug("No instrument assigned to Strike for drum pad {}", drumIndex);
+            return;
+        }
+
+        int noteNumber = strike.getRootNote();
+        try {
+            // Use the Strike's instrument directly to play the note
+            strike.noteOn(noteNumber, velocity);
+
+            // Still notify listeners for UI updates
+            if (noteEventListener != null) {
+                noteEventListener.accept(new NoteEvent(noteNumber, velocity, 0));
+            }
+        } catch (Exception e) {
+            logger.error("Error playing drum note: {}", e.getMessage(), e);
+        }
+    }
+
 }
