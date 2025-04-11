@@ -5,6 +5,10 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,6 +120,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
         add(scrollPane, BorderLayout.CENTER);
+
+        // Initialize drum pads with numbered labels
+        initializeDrumPads();
     }
 
     /**
@@ -624,6 +631,20 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // System.out.println("Toggled step " + stepIndex + " for drum " + selectedPadIndex + ": " + isNowActive);
             // Notify other components of the pattern change
             CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, null, this);
+        }
+    }
+
+    // Replace the initializeDrumPads method with this:
+    private void initializeDrumPads() {
+        // Apply numbered labels to each pad with beat indicators
+        for (int i = 0; i < drumButtons.size(); i++) {
+            DrumButton button = drumButtons.get(i);
+            
+            // Set the pad number (1-based)
+            button.setPadNumber(i + 1);  // Change to i+1 for 1-based numbering
+            
+            // Set main beat flag for pads 1, 5, 9, 13 (zero-indexed as 0, 4, 8, 12)
+            button.setIsMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
         }
     }
 }

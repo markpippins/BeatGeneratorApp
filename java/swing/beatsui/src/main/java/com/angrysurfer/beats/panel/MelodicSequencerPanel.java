@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -62,6 +64,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private List<Dial> noteDials = new ArrayList<>();
     private List<Dial> velocityDials = new ArrayList<>();
     private List<Dial> gateDials = new ArrayList<>();
+    private List<DrumButton> melodicPadButtons = new ArrayList<>();
 
     // Labels and UI components
     private JLabel octaveLabel;
@@ -132,6 +135,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Sync UI controls with sequencer state
         loopCheckbox.setSelected(sequencer.isLooping());
+
+        // Initialize melodic pads
+        initializeMelodicPads();
     }
 
 
@@ -568,7 +574,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         column.add(buttonPanel1);
 
         // Add the pad button
-        JButton padButton = new DrumButton();
+        DrumButton padButton = new DrumButton();
         padButton.setName("PadButton-" + index);
         padButton.setToolTipText("Pad " + (index + 1));
         padButton.setText(Integer.toString(index + 1));
@@ -644,6 +650,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             sequencer.setStepData(index, triggerButton[0].isSelected(),
                     noteDial[0].getValue(), velocityDial[0].getValue(), gateDial[0].getValue());
         });
+
+        melodicPadButtons.add(padButton);
 
         return column;
     }
@@ -805,6 +813,22 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Initialize melodic pads and apply numbered labels with beat indicators.
+     */
+    private void initializeMelodicPads() {
+        // Apply numbered labels to each pad with beat indicators
+        for (int i = 0; i < melodicPadButtons.size(); i++) {
+            DrumButton pad = melodicPadButtons.get(i);
+            
+            // Set the pad number (1-based)
+            pad.setPadNumber(i + 1);
+            
+            // Set main beat flag for pads 1, 5, 9, 13 (zero-indexed as 0, 4, 8, 12)
+            pad.setIsMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
         }
     }
 }

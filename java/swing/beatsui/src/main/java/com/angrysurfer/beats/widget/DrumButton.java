@@ -2,6 +2,8 @@ package com.angrysurfer.beats.widget;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -23,6 +25,8 @@ import lombok.Setter;
 @Setter
 public class DrumButton extends JButton implements IBusListener {
 
+    private int padNumber;
+    private boolean isMainBeat;
     private boolean toggle; // Toggle attribute
     private boolean isToggled; // Current toggle state
     private boolean exclusive; // Exclusive toggle attribute
@@ -52,11 +56,26 @@ public class DrumButton extends JButton implements IBusListener {
         setup();
     }
 
+    public void setPadNumber(int padNumber) {
+        this.padNumber = padNumber;
+        repaint();
+    }
 
+    public int getPadNumber() {
+        return padNumber;
+    }
+
+    public void setIsMainBeat(boolean isMainBeat) {
+        this.isMainBeat = isMainBeat;
+        repaint();
+    }
+
+    public boolean isMainBeat() {
+        return isMainBeat;
+    }
 
     private void setup() {
         Color baseColor = new Color(50, 130, 200); // A vibrant, cool blue
-        // new Color(60, 60, 60); // Dark grey base
         Color flashColor = new Color(160, 160, 160); // Lighter grey for flash
         final boolean[] isFlashing = { false };
 
@@ -102,6 +121,31 @@ public class DrumButton extends JButton implements IBusListener {
                 // Add highlight
                 g2d.setColor(new Color(255, 255, 255, 30));
                 g2d.drawLine(2, 2, w - 3, 2);
+
+                // Draw pad number if set
+                if (padNumber > 0) {
+                    // Use white text for better contrast
+                    g2d.setColor(Color.WHITE);
+
+                    // Use a bold font
+                    g2d.setFont(g2d.getFont().deriveFont(Font.BOLD, 14f));
+
+                    String padText = String.valueOf(padNumber);
+                    FontMetrics fm = g2d.getFontMetrics();
+
+                    // Center the text
+                    int textX = (w - fm.stringWidth(padText)) / 2;
+                    int textY = (h + fm.getAscent() - fm.getDescent()) / 2;
+
+                    // Draw the text
+                    g2d.drawString(padText, textX, textY);
+
+                    // Draw underline for main beats (1, 5, 9, 13)
+                    if (isMainBeat) {
+                        int underlineY = textY + 2; // 2 pixels below text baseline
+                        g2d.drawLine(textX, underlineY, textX + fm.stringWidth(padText), underlineY);
+                    }
+                }
 
                 g2d.dispose();
             }
