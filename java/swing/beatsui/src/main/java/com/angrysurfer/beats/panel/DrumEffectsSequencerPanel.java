@@ -127,18 +127,16 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
         column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
             label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-            label.setForeground(Color.GRAY);
+            // label.setForeground(Color.GRAY);
             label.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-            if (i > 0) {
-                JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-                labelPanel.add(label);
-                // Add label to the column
-                column.add(labelPanel);
-            }
+            JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+            labelPanel.add(label);
+            // Add label to the column
+            column.add(labelPanel);
 
             // Create dial - first one is always a NoteSelectionDial
             Dial dial = new Dial();
@@ -156,7 +154,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
                     // Add change listener
                     dial.addChangeListener(e -> {
-                        if (selectedPadIndex >= 0) { // && !dial.getValueIsAdjusting()) {
+                        if (selectedPadIndex >= 0) {
                             sequencer.setStepVelocity(selectedPadIndex, index, dial.getValue());
                         }
                     });
@@ -170,7 +168,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
                     // Add change listener
                     dial.addChangeListener(e -> {
-                        if (selectedPadIndex >= 0) { // && !dial.getValueIsAdjusting()) {
+                        if (selectedPadIndex >= 0) {
                             sequencer.setStepDecay(selectedPadIndex, index, dial.getValue());
                         }
                     });
@@ -180,12 +178,17 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 case 2: // Probability
                     dial.setMinimum(0);
                     dial.setMaximum(100);
-                    dial.setValue(100); // Default value
-
+                    dial.setValue(100); // Default to 100% (always plays)
+                    
                     // Add change listener
                     dial.addChangeListener(e -> {
-                        if (selectedPadIndex >= 0) { // && !dial.getValueIsAdjusting()) {
+                        if (selectedPadIndex >= 0) {
+                            // Update the sequencer
                             sequencer.setStepProbability(selectedPadIndex, index, dial.getValue());
+                            
+                            // Add debug output if needed (uncomment to enable)
+                            // System.out.println("Set probability for drum " + selectedPadIndex + 
+                            //                   ", step " + index + " to " + dial.getValue() + "%");
                         }
                     });
                     probabilityDials.add(dial);
@@ -198,7 +201,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
                     // Add change listener
                     dial.addChangeListener(e -> {
-                        if (selectedPadIndex >= 0) { // && !dial.getValueIsAdjusting()) {
+                        if (selectedPadIndex >= 0) {
                             sequencer.setStepNudge(selectedPadIndex, index, dial.getValue());
                         }
                     });
@@ -525,7 +528,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
                         // Log for debugging
                         // System.out.println("DrumEffectsSequencer updating step: old=" + previousStep + ", new=" + currentStep);
-
                         // Update visual highlighting for the step change
                         updateStep(previousStep, currentStep);
                     }
@@ -616,7 +618,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
             // Debug output
             // System.out.println("Toggled step " + stepIndex + " for drum " + selectedPadIndex + ": " + isNowActive);
-
             // Notify other components of the pattern change
             CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, null, this);
         }

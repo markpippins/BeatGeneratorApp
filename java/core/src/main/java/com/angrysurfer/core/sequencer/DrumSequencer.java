@@ -112,8 +112,6 @@ public class DrumSequencer implements IBusListener {
 
         // Initialize patterns with max possible length
         patterns = new boolean[DRUM_PAD_COUNT][MAX_STEPS];
-
-        // Initialize parameter arrays
         stepVelocities = new int[DRUM_PAD_COUNT][MAX_STEPS];
         stepDecays = new int[DRUM_PAD_COUNT][MAX_STEPS];
         stepProbabilities = new int[DRUM_PAD_COUNT][MAX_STEPS];
@@ -667,12 +665,13 @@ public class DrumSequencer implements IBusListener {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
             return stepProbabilities[drumIndex][stepIndex];
         }
-        return 0;
+        return 100; // Default to 100% if out of bounds
     }
 
     public void setStepProbability(int drumIndex, int stepIndex, int probability) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
-            stepProbabilities[drumIndex][stepIndex] = probability;
+            // Clamp value between 0-100
+            stepProbabilities[drumIndex][stepIndex] = Math.max(0, Math.min(100, probability));
         }
     }
 
