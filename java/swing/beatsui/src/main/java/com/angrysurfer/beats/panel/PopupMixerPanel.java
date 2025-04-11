@@ -129,7 +129,7 @@ public class PopupMixerPanel extends JPanel {
     }
     
     private JToggleButton createMuteButton(int drumIndex) {
-        JToggleButton muteButton = new JToggleButton("M");
+        JToggleButton muteButton = new JToggleButton("🔇");
         muteButton.setToolTipText("Mute Drum " + (drumIndex + 1));
         muteButton.setPreferredSize(new Dimension(30, 30));
         muteButton.setMargin(new Insets(2, 2, 2, 2));
@@ -166,7 +166,7 @@ public class PopupMixerPanel extends JPanel {
     }
     
     private JToggleButton createSoloButton(int drumIndex) {
-        JToggleButton soloButton = new JToggleButton("S");
+        JToggleButton soloButton = new JToggleButton("🎙️");
         soloButton.setToolTipText("Solo Drum " + (drumIndex + 1));
         soloButton.setPreferredSize(new Dimension(30, 30));
         soloButton.setMargin(new Insets(2, 2, 2, 2));

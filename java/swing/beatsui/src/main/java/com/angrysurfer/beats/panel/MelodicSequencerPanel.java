@@ -159,7 +159,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Direction combo
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        directionPanel.add(new JLabel("Dir:"));
+        directionPanel.add(new JLabel("↔️"));
 
         directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
         directionCombo.setPreferredSize(new Dimension(90, 25));
@@ -183,7 +183,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Timing division combo
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        timingPanel.add(new JLabel("Timing:"));
+        timingPanel.add(new JLabel("🕒"));
 
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
         timingCombo.setPreferredSize(new Dimension(90, 25));

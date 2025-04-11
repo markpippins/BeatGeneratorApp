@@ -9,6 +9,9 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Window;
+import java.awt.Dialog;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -348,7 +351,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JButton createAllNotesOffButton() {
         JButton notesOffButton = new JButton();
-        notesOffButton.setText("■");
+        notesOffButton.setText("🚨");
         notesOffButton.setPreferredSize(new Dimension(28, 28));
         notesOffButton.setMinimumSize(new Dimension(28, 28));
         notesOffButton.setMaximumSize(new Dimension(28, 28));
@@ -406,39 +409,42 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         mixButton.setPreferredSize(new Dimension(60, 28));
         mixButton.putClientProperty("JButton.buttonType", "roundRect");
         
-        // Add action listener to show strike mixer dialog
+        // Add action listener to show mixer dialog
         mixButton.addActionListener(e -> {
-            // Create StrikeMixerPanel if it doesn't exist yet
-            if (strikeMixerPanel == null) {
-                DrumSequencer sequencer = null;
-                if (drumSequencerPanel != null) {
-                    sequencer = drumSequencerPanel.getSequencer();
-                }
+            // Get current sequencer
+            DrumSequencer sequencer = null;
+            if (drumSequencerPanel != null) {
+                sequencer = drumSequencerPanel.getSequencer();
+            }
+            
+            if (sequencer != null) {
+                // Create a new PopupMixerPanel and dialog each time
+                PopupMixerPanel mixerPanel = new PopupMixerPanel(sequencer);
                 
-                if (sequencer != null) {
-                    strikeMixerPanel = new PopupMixerPanel(sequencer);
-                    
-                    // Create dialog to show the mixer
-                    JDialog mixerDialog = new JDialog(SwingUtilities.getWindowAncestor(this), 
-                                                   "Drum Mixer", 
-                                                   JDialog.ModalityType.MODELESS); // Non-modal dialog
-                    mixerDialog.setContentPane(strikeMixerPanel);
-                    mixerDialog.pack();
-                    mixerDialog.setLocationRelativeTo(this);
-                    mixerDialog.setMinimumSize(new Dimension(600, 400));
-                    mixerDialog.setVisible(true);
-                } else {
-                    JOptionPane.showMessageDialog(this, 
-                                                "No drum sequencer available", 
-                                                "Error", 
-                                                JOptionPane.ERROR_MESSAGE);
-                }
+                // Create dialog to show the mixer
+                JDialog mixerDialog = new JDialog(SwingUtilities.getWindowAncestor(this), 
+                                               "Drum Mixer", 
+                                               Dialog.ModalityType.MODELESS); // Non-modal dialog
+                mixerDialog.setContentPane(mixerPanel);
+                mixerDialog.pack();
+                mixerDialog.setLocationRelativeTo(this);
+                mixerDialog.setMinimumSize(new Dimension(600, 400));
+                
+                // Add window listener to handle dialog closing
+                mixerDialog.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        // Clean up any resources if needed
+                        // (Optional) For example, remove any listeners registered to the mixer panel
+                    }
+                });
+                
+                mixerDialog.setVisible(true);
             } else {
-                // If panel exists, just make its container visible
-                Container parent = strikeMixerPanel.getParent();
-                if (parent instanceof Window) {
-                    ((Window) parent).setVisible(true);
-                }
+                JOptionPane.showMessageDialog(this, 
+                                            "No drum sequencer available", 
+                                            "Error", 
+                                            JOptionPane.ERROR_MESSAGE);
             }
         });
         

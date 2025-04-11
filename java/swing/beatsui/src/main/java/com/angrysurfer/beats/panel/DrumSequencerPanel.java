@@ -202,7 +202,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Direction combo
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        directionPanel.add(new JLabel("Dir:"));
+        directionPanel.add(new JLabel("↔️"));
 
         directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
         directionCombo.setPreferredSize(new Dimension(90, 25));
@@ -230,7 +230,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Timing division combo
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        timingPanel.add(new JLabel("Timing:"));
+        timingPanel.add(new JLabel("🕒"));
 
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
         timingCombo.setPreferredSize(new Dimension(90, 25));
@@ -265,7 +265,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         rangePanel.add(densitySpinner);
 
         // ADD CLEAR AND GENERATE BUTTONS
-        clearPatternButton = new JButton("Clear");
+        clearPatternButton = new JButton("🗑️");
         generatePatternButton = new JButton("Generate");
 
         // Add all components to panel in a single row
@@ -274,8 +274,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         panel.add(timingPanel);
         panel.add(loopToggleButton);
         panel.add(rangePanel);
-        panel.add(clearPatternButton);
         panel.add(generatePatternButton);
+        panel.add(clearPatternButton);
 
         return panel;
     }

@@ -236,7 +236,7 @@ package com.angrysurfer.beats.panel;
 
 //         // Direction combo
 //         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-//         directionPanel.add(new JLabel("Dir:"));
+//         directionPanel.add(new JLabel("↔️"));
 
 //         directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
 //         directionCombo.setPreferredSize(new Dimension(90, 25));
@@ -263,7 +263,7 @@ package com.angrysurfer.beats.panel;
 
 //         // Timing division combo
 //         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-//         timingPanel.add(new JLabel("Timing:"));
+//         timingPanel.add(new JLabel("🕒"));
 
 //         timingCombo = new JComboBox<>(TimingDivision.values());
 //         timingCombo.setPreferredSize(new Dimension(90, 25));

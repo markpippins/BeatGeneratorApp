@@ -232,7 +232,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             newButton.repaint();
 
             // Debug output
-            System.out.println("Highlighting drum effect step: " + newStep);
+            // System.out.println("Highlighting drum effect step: " + newStep);
         }
     }
 
@@ -403,8 +403,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         }
 
         // Debug output
-        System.out.println("Refreshed buttons for drum " + padIndex +
-                ", current step=" + currentStep);
+        // System.out.println("Refreshed buttons for drum " + padIndex + ", current step=" + currentStep);
     }
 
     // Update control modification to use sequencer
@@ -447,7 +446,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                         int previousStep = calculatePreviousStep(currentStep);
 
                         // Log for debugging
-                        System.out.println("DrumEffectsSequencer updating step: old=" + previousStep + ", new=" + currentStep);
+                        // System.out.println("DrumEffectsSequencer updating step: old=" + previousStep + ", new=" + currentStep);
 
                         // Update visual highlighting for the step change
                         updateStep(previousStep, currentStep);
@@ -518,7 +517,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             button.repaint();
 
             // Debug output
-            System.out.println("Toggled step " + stepIndex + " for drum " + selectedPadIndex + ": " + isNowActive);
+            // System.out.println("Toggled step " + stepIndex + " for drum " + selectedPadIndex + ": " + isNowActive);
 
             // Notify other components of the pattern change
             CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, null, this);
