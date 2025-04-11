@@ -11,9 +11,9 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JDialog;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 
@@ -21,10 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.panel.MainPanel;
-import com.angrysurfer.beats.panel.PlayersPanel;
 import com.angrysurfer.beats.panel.SessionPanel;
-import com.angrysurfer.beats.panel.X0XPanel;
-import com.angrysurfer.beats.widget.PlayersTable;
 import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -251,7 +248,7 @@ public class Frame extends JFrame implements AutoCloseable {
                 else if (mainPanel != null && keyNoteMap.containsKey(keyChar)) {
                     // Find X0XPanel within the component hierarchy
                     Component selected = mainPanel.getSelectedComponent();
-                    X0XPanel x0xPanel = findX0XPanel(selected);
+                    MainPanel x0xPanel = findX0XPanel(selected);
                     
                     if (x0xPanel != null) {
                         // Get base note (for octave 5)
@@ -285,19 +282,19 @@ public class Frame extends JFrame implements AutoCloseable {
     /**
      * Recursively find the X0XPanel within a component hierarchy
      */
-    private X0XPanel findX0XPanel(Component component) {
+    private MainPanel findX0XPanel(Component component) {
         if (component == null) {
             return null;
         }
         
-        if (component instanceof X0XPanel) {
-            return (X0XPanel) component;
+        if (component instanceof MainPanel) {
+            return (MainPanel) component;
         }
         
         if (component instanceof Container) {
             Container container = (Container) component;
             for (Component child : container.getComponents()) {
-                X0XPanel panel = findX0XPanel(child);
+                MainPanel panel = findX0XPanel(child);
                 if (panel != null) {
                     return panel;
                 }
@@ -360,4 +357,6 @@ public class Frame extends JFrame implements AutoCloseable {
         }
         dispose();
     }
+
+    
 }
