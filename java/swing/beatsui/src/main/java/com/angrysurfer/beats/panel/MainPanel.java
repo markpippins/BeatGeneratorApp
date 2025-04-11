@@ -3,10 +3,12 @@ package com.angrysurfer.beats.panel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Window;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +17,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -55,6 +58,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
     private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[4];
+    private StrikeMixerPanel strikeMixerPanel;
 
     public MainPanel(StatusBar statusBar) {
         super(new BorderLayout());
@@ -102,14 +106,18 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         buttonPanel.setOpaque(false);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
 
+        // Add mix button first
+        buttonPanel.add(createMixButton());
+
+        // Add existing control buttons
+        buttonPanel.add(createAllNotesOffButton());
+        buttonPanel.add(createMetronomeToggleButton());
+        buttonPanel.add(createRestartButton());
+
         JPanel muteButtonsToolbar = createMuteButtonsToolbar();
         tabToolbar.add(muteButtonsToolbar);
         
         tabToolbar.add(Box.createHorizontalStrut(10));
-
-        buttonPanel.add(createAllNotesOffButton());
-        buttonPanel.add(createMetronomeToggleButton());
-        buttonPanel.add(createRestartButton());
 
         tabToolbar.add(buttonPanel);
         tabToolbar.add(Box.createVerticalGlue());
@@ -388,6 +396,53 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             }
         });
         return restartButton;
+    }
+
+    private JButton createMixButton() {
+        JButton mixButton = new JButton("Mix");
+        mixButton.setToolTipText("Show Drum Mixer");
+        
+        // Style to match other controls
+        mixButton.setPreferredSize(new Dimension(60, 28));
+        mixButton.putClientProperty("JButton.buttonType", "roundRect");
+        
+        // Add action listener to show strike mixer dialog
+        mixButton.addActionListener(e -> {
+            // Create StrikeMixerPanel if it doesn't exist yet
+            if (strikeMixerPanel == null) {
+                DrumSequencer sequencer = null;
+                if (drumSequencerPanel != null) {
+                    sequencer = drumSequencerPanel.getSequencer();
+                }
+                
+                if (sequencer != null) {
+                    strikeMixerPanel = new StrikeMixerPanel(sequencer);
+                    
+                    // Create dialog to show the mixer
+                    JDialog mixerDialog = new JDialog(SwingUtilities.getWindowAncestor(this), 
+                                                   "Drum Mixer", 
+                                                   JDialog.ModalityType.MODELESS); // Non-modal dialog
+                    mixerDialog.setContentPane(strikeMixerPanel);
+                    mixerDialog.pack();
+                    mixerDialog.setLocationRelativeTo(this);
+                    mixerDialog.setMinimumSize(new Dimension(600, 400));
+                    mixerDialog.setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(this, 
+                                                "No drum sequencer available", 
+                                                "Error", 
+                                                JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                // If panel exists, just make its container visible
+                Container parent = strikeMixerPanel.getParent();
+                if (parent instanceof Window) {
+                    ((Window) parent).setVisible(true);
+                }
+            }
+        });
+        
+        return mixButton;
     }
 
     public int getSelectedTab() {
