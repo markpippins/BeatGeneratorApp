@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -201,9 +202,11 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         });
         lastStepPanel.add(lastStepSpinner);
 
-        // Direction combo
+        // Direction combo - Make label skinnier
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        directionPanel.add(new JLabel("↔️"));
+        JLabel directionLabel = new JLabel("↔️");
+        directionLabel.setPreferredSize(new Dimension(20, 25)); // Make smaller
+        directionPanel.add(directionLabel);
 
         directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
         directionCombo.setPreferredSize(new Dimension(90, 25));
@@ -229,9 +232,11 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         });
         directionPanel.add(directionCombo);
 
-        // Timing division combo
+        // Timing division combo - Make label skinnier
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        timingPanel.add(new JLabel("🕒"));
+        JLabel timingLabel = new JLabel("🕒");
+        timingLabel.setPreferredSize(new Dimension(20, 25)); // Make smaller
+        timingPanel.add(timingLabel);
 
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
         timingCombo.setPreferredSize(new Dimension(90, 25));
@@ -246,8 +251,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         });
         timingPanel.add(timingCombo);
 
-        // Loop checkbox
+        // Loop checkbox - Make skinnier
         loopToggleButton = new JToggleButton("🔁", true); // Default to looping enabled
+        loopToggleButton.setPreferredSize(new Dimension(40, 25)); // Reduce width
+        loopToggleButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
         loopToggleButton.addActionListener(e -> {
             boolean loop = loopToggleButton.isSelected();
             logger.info("Setting loop to {} for drum {}", loop, selectedPadIndex);
@@ -265,9 +272,14 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         densitySpinner.setPreferredSize(new Dimension(60, 25));
         rangePanel.add(densitySpinner);
 
-        // ADD CLEAR AND GENERATE BUTTONS
+        // ADD CLEAR AND GENERATE BUTTONS - Make skinnier
         clearPatternButton = new JButton("🗑️");
+        clearPatternButton.setPreferredSize(new Dimension(40, 25)); // Reduce width
+        clearPatternButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
+
         generatePatternButton = new JButton("🎲");
+        generatePatternButton.setPreferredSize(new Dimension(40, 25)); // Reduce width
+        generatePatternButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
 
         // Add all components to panel in a single row
         panel.add(lastStepPanel);
@@ -285,8 +297,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         JPanel swingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         swingPanel.setBorder(BorderFactory.createTitledBorder("Swing"));
 
-        // Swing toggle
+        // Swing toggle - Make skinnier
         JToggleButton swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());
+        swingToggle.setPreferredSize(new Dimension(50, 25)); // Slightly wider for text "On"
+        swingToggle.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
         swingToggle.addActionListener(e -> {
             sequencer.setSwingEnabled(swingToggle.isSelected());
         });
