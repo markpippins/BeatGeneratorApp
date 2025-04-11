@@ -79,6 +79,10 @@ public class DrumSequencer implements IBusListener {
 
     private int masterTempo;
 
+    // Swing parameters
+    private int swingPercentage = 50;       // Default swing percentage (50 = no swing)
+    private boolean swingEnabled = false;   // Swing enabled flag
+
     /**
      * Creates a new drum sequencer with per-drum parameters
      */
@@ -162,6 +166,43 @@ public class DrumSequencer implements IBusListener {
 
         // Load first saved sequence (if available) instead of default pattern
         loadFirstSequence();
+    }
+
+    /**
+     * Sets the global swing percentage
+     * @param percentage Value from 50 (no swing) to 75 (maximum swing)
+     */
+    public void setSwingPercentage(int percentage) {
+        // Limit to valid range
+        this.swingPercentage = Math.max(50, Math.min(75, percentage));
+        logger.info("Swing percentage set to: {}", swingPercentage);
+        
+        // Notify UI of parameter change
+        CommandBus.getInstance().publish(
+            Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
+            this,
+            -1  // -1 indicates global parameter
+        );
+    }
+
+    public int getSwingPercentage() {
+        return swingPercentage;
+    }
+
+    public void setSwingEnabled(boolean enabled) {
+        this.swingEnabled = enabled;
+        logger.info("Swing enabled: {}", enabled);
+        
+        // Notify UI of parameter change
+        CommandBus.getInstance().publish(
+            Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
+            this,
+            -1
+        );
+    }
+
+    public boolean isSwingEnabled() {
+        return swingEnabled;
     }
 
     /**
@@ -287,7 +328,16 @@ public class DrumSequencer implements IBusListener {
             // Get the per-step parameters
             int velocity = stepVelocities[drumIndex][stepIndex];
             int probability = stepProbabilities[drumIndex][stepIndex];
-
+            int decay = stepDecays[drumIndex][stepIndex];
+            int nudge = stepNudges[drumIndex][stepIndex];
+            
+            // Apply swing to even-numbered steps (odd indices in 0-indexed array)
+            if (swingEnabled && stepIndex % 2 == 1) {
+                // Calculate swing amount based on percentage
+                int swingAmount = calculateSwingAmount(drumIndex);
+                nudge += swingAmount;
+            }
+            
             // Check probability - only play if random number is less than probability
             if (Math.random() * 100 < probability) {
                 // Apply global velocity scaling
@@ -307,10 +357,6 @@ public class DrumSequencer implements IBusListener {
 
                         if (player.getInstrument() != null) {
                             // Now safe to trigger the note
-                            int decay = stepDecays[drumIndex][stepIndex];
-                            int nudge = stepNudges[drumIndex][stepIndex];
-
-                            // Apply nudge delay if specified
                             if (nudge > 0) {
                                 // Create final copies of variables used in lambda
                                 final int finalNoteNumber = player.getRootNote();
@@ -349,6 +395,44 @@ public class DrumSequencer implements IBusListener {
                 }
             }
         }
+    }
+
+    /**
+     * Calculate swing amount in milliseconds based on current tempo and timing division
+     */
+    private int calculateSwingAmount(int drumIndex) {
+        // Get session BPM
+        float bpm = SessionManager.getInstance().getActiveSession().getTempoInBPM();
+        if (bpm <= 0) bpm = 120; // Default fallback
+        
+        // Calculate step duration in milliseconds
+        TimingDivision division = timingDivisions[drumIndex];
+        float stepDurationMs = 60000f / bpm; // Duration of quarter note in ms
+        
+        // Adjust for timing division based on actual enum values
+        switch (division) {
+            case NORMAL -> stepDurationMs *= 1; // No change for normal timing
+            case DOUBLE -> stepDurationMs /= 2; // Double time (faster)
+            case HALF -> stepDurationMs *= 2;   // Half time (slower)
+            case QUARTER -> stepDurationMs *= 4; // Quarter time (very slow)
+            case TRIPLET -> stepDurationMs *= 2.0f/3.0f; // Triplet feel
+            case QUARTER_TRIPLET -> stepDurationMs *= 4.0f/3.0f; // Quarter note triplets
+            case EIGHTH_TRIPLET -> stepDurationMs *= 1.0f/3.0f; // Eighth note triplets
+            case SIXTEENTH -> stepDurationMs *= 1.0f/4.0f; // Sixteenth notes
+            case SIXTEENTH_TRIPLET -> stepDurationMs *= 1.0f/6.0f; // Sixteenth note triplets
+            case BEBOP -> stepDurationMs *= 1; // Same as normal for swing calculations
+            case FIVE_FOUR -> stepDurationMs *= 5.0f/4.0f; // 5/4 time
+            case SEVEN_EIGHT -> stepDurationMs *= 7.0f/8.0f; // 7/8 time
+            case NINE_EIGHT -> stepDurationMs *= 9.0f/8.0f; // 9/8 time
+            case TWELVE_EIGHT -> stepDurationMs *= 12.0f/8.0f; // 12/8 time
+            case SIX_FOUR -> stepDurationMs *= 6.0f/4.0f; // 6/4 time
+        }
+        
+        // Calculate swing percentage (convert from 50-75% to 0-25%)
+        float swingFactor = (swingPercentage - 50) / 100f;
+        
+        // Return swing amount in milliseconds
+        return (int)(stepDurationMs * swingFactor);
     }
 
     /**
