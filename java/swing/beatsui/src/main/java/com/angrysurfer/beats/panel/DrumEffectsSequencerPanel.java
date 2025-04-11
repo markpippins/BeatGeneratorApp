@@ -722,7 +722,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             }
         });
         lastStepPanel.add(lastStepSpinner);
-        controlsPanel.add(lastStepPanel);
 
         // Direction combo - Make label skinnier
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -747,7 +746,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             sequencer.setDirection(selectedPadIndex, direction);
         });
         directionPanel.add(directionCombo);
-        controlsPanel.add(directionPanel);
 
         // Timing division combo - Make label skinnier
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -765,7 +763,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             }
         });
         timingPanel.add(timingCombo);
-        controlsPanel.add(timingPanel);
 
         // Loop checkbox - Make skinnier
         loopToggleButton = new JToggleButton("🔁", true); // Default to looping enabled
@@ -776,7 +773,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // logger.info("Setting loop to {} for drum {}", loop, selectedPadIndex);
             sequencer.setLooping(selectedPadIndex, loop);
         });
-        controlsPanel.add(loopToggleButton);
 
         // Pattern density control
         JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -785,7 +781,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         densitySpinner = new JSpinner(new SpinnerNumberModel(50, 25, 100, 25));
         densitySpinner.setPreferredSize(new Dimension(60, 25));
         rangePanel.add(densitySpinner);
-        controlsPanel.add(rangePanel);
 
         // Random pattern generator button
         generatePatternButton = new JButton("🎲");
@@ -798,7 +793,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 refreshGridUI();
             }
         });
-        controlsPanel.add(generatePatternButton);
 
         // Clear pattern button
         clearPatternButton = new JButton("🗑️");
@@ -810,6 +804,43 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 refreshGridUI();
             }
         });
+
+        // Create rotation panel
+        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        rotationPanel.add(new JLabel("Rotate:"));
+
+        // Push forward button 
+        JButton pushForwardButton = new JButton("⟶");
+        pushForwardButton.setToolTipText("Push pattern forward (right)");
+        pushForwardButton.setPreferredSize(new Dimension(40, 25));
+        pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
+        pushForwardButton.addActionListener(e -> {
+            sequencer.pushForward();
+            refreshGridUI();
+        });
+
+        // Pull backward button
+        JButton pullBackwardButton = new JButton("⟵");
+        pullBackwardButton.setToolTipText("Pull pattern backward (left)");
+        pullBackwardButton.setPreferredSize(new Dimension(40, 25));
+        pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
+        pullBackwardButton.addActionListener(e -> {
+            sequencer.pullBackward();
+            refreshGridUI();
+        });
+
+        // Add buttons to rotation panel
+        rotationPanel.add(pullBackwardButton);
+        rotationPanel.add(pushForwardButton);
+
+        // Final assembly in createSequenceParametersPanel
+        controlsPanel.add(lastStepPanel);
+        controlsPanel.add(directionPanel);
+        controlsPanel.add(timingPanel);
+        controlsPanel.add(loopToggleButton);
+        controlsPanel.add(rangePanel);
+        controlsPanel.add(rotationPanel);        // Add the rotation panel here
+        controlsPanel.add(generatePatternButton);
         controlsPanel.add(clearPatternButton);
 
         return controlsPanel;

@@ -1017,6 +1017,120 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
+     * Push the pattern forward by one step for the selected drum pad, 
+     * wrapping the last step to the first position
+     */
+    public void pushForward() {
+        int drumIndex = selectedPadIndex;
+        int length = patternLengths[drumIndex];
+        
+        if (length <= 1) {
+            return; // No need to rotate a single-step pattern
+        }
+        
+        // Rotate main pattern (trigger states)
+        boolean lastTrigger = patterns[drumIndex][length - 1];
+        for (int i = length - 1; i > 0; i--) {
+            patterns[drumIndex][i] = patterns[drumIndex][i - 1];
+        }
+        patterns[drumIndex][0] = lastTrigger;
+        
+        // Rotate step velocities
+        int lastVelocity = stepVelocities[drumIndex][length - 1];
+        for (int i = length - 1; i > 0; i--) {
+            stepVelocities[drumIndex][i] = stepVelocities[drumIndex][i - 1];
+        }
+        stepVelocities[drumIndex][0] = lastVelocity;
+        
+        // Rotate step decays
+        int lastDecay = stepDecays[drumIndex][length - 1];
+        for (int i = length - 1; i > 0; i--) {
+            stepDecays[drumIndex][i] = stepDecays[drumIndex][i - 1];
+        }
+        stepDecays[drumIndex][0] = lastDecay;
+        
+        // Rotate step probabilities
+        int lastProbability = stepProbabilities[drumIndex][length - 1];
+        for (int i = length - 1; i > 0; i--) {
+            stepProbabilities[drumIndex][i] = stepProbabilities[drumIndex][i - 1];
+        }
+        stepProbabilities[drumIndex][0] = lastProbability;
+        
+        // Rotate step nudges
+        int lastNudge = stepNudges[drumIndex][length - 1];
+        for (int i = length - 1; i > 0; i--) {
+            stepNudges[drumIndex][i] = stepNudges[drumIndex][i - 1];
+        }
+        stepNudges[drumIndex][0] = lastNudge;
+        
+        logger.info("Pushed pattern forward for drum {}", drumIndex);
+        
+        // Notify UI of pattern change
+        CommandBus.getInstance().publish(
+            Commands.DRUM_SEQUENCE_UPDATED,
+            this,
+            null
+        );
+    }
+
+    /**
+     * Pull the pattern backward by one step for the selected drum pad,
+     * wrapping the first step to the last position
+     */
+    public void pullBackward() {
+        int drumIndex = selectedPadIndex;
+        int length = patternLengths[drumIndex];
+        
+        if (length <= 1) {
+            return; // No need to rotate a single-step pattern
+        }
+        
+        // Rotate main pattern (trigger states)
+        boolean firstTrigger = patterns[drumIndex][0];
+        for (int i = 0; i < length - 1; i++) {
+            patterns[drumIndex][i] = patterns[drumIndex][i + 1];
+        }
+        patterns[drumIndex][length - 1] = firstTrigger;
+        
+        // Rotate step velocities
+        int firstVelocity = stepVelocities[drumIndex][0];
+        for (int i = 0; i < length - 1; i++) {
+            stepVelocities[drumIndex][i] = stepVelocities[drumIndex][i + 1];
+        }
+        stepVelocities[drumIndex][length - 1] = firstVelocity;
+        
+        // Rotate step decays
+        int firstDecay = stepDecays[drumIndex][0];
+        for (int i = 0; i < length - 1; i++) {
+            stepDecays[drumIndex][i] = stepDecays[drumIndex][i + 1];
+        }
+        stepDecays[drumIndex][length - 1] = firstDecay;
+        
+        // Rotate step probabilities
+        int firstProbability = stepProbabilities[drumIndex][0];
+        for (int i = 0; i < length - 1; i++) {
+            stepProbabilities[drumIndex][i] = stepProbabilities[drumIndex][i + 1];
+        }
+        stepProbabilities[drumIndex][length - 1] = firstProbability;
+        
+        // Rotate step nudges
+        int firstNudge = stepNudges[drumIndex][0];
+        for (int i = 0; i < length - 1; i++) {
+            stepNudges[drumIndex][i] = stepNudges[drumIndex][i + 1];
+        }
+        stepNudges[drumIndex][length - 1] = firstNudge;
+        
+        logger.info("Pulled pattern backward for drum {}", drumIndex);
+        
+        // Notify UI of pattern change
+        CommandBus.getInstance().publish(
+            Commands.DRUM_SEQUENCE_UPDATED,
+            this,
+            null
+        );
+    }
+
+    /**
      * Required by IBusListener interface
      */
     @Override
