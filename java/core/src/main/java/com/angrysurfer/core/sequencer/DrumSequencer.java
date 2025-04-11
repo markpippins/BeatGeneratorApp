@@ -60,6 +60,12 @@ public class DrumSequencer implements IBusListener {
     // Pattern data storage
     private boolean[][] patterns;           // [drumIndex][stepIndex]
 
+    // Per-step parameter values for each drum
+    private int[][] stepVelocities;      // Velocity for each step of each drum [drumIndex][stepIndex]
+    private int[][] stepDecays;          // Decay (gate time) for each step [drumIndex][stepIndex]
+    private int[][] stepProbabilities;   // Probability for each step [drumIndex][stepIndex]
+    private int[][] stepNudges;          // Timing nudge for each step [drumIndex][stepIndex]
+
     // Strike objects for each drum pad
     private Strike[] players;
     private InstrumentWrapper[] instruments;
@@ -106,6 +112,22 @@ public class DrumSequencer implements IBusListener {
 
         // Initialize patterns with max possible length
         patterns = new boolean[DRUM_PAD_COUNT][MAX_STEPS];
+
+        // Initialize parameter arrays
+        stepVelocities = new int[DRUM_PAD_COUNT][MAX_STEPS];
+        stepDecays = new int[DRUM_PAD_COUNT][MAX_STEPS];
+        stepProbabilities = new int[DRUM_PAD_COUNT][MAX_STEPS];
+        stepNudges = new int[DRUM_PAD_COUNT][MAX_STEPS];
+
+        // Set default values
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            for (int j = 0; j < MAX_STEPS; j++) {
+                stepVelocities[i][j] = 100;  // Default velocity at 100
+                stepDecays[i][j] = 60;       // Default decay at 60
+                stepProbabilities[i][j] = 100; // Default probability at 100% (always play)
+                stepNudges[i][j] = 0;        // Default nudge at 0 (no offset)
+            }
+        }
 
         // Get internal synthesizer from InternalSynthManager
         javax.sound.midi.Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
@@ -248,19 +270,58 @@ public class DrumSequencer implements IBusListener {
             stepUpdateListener.accept(event);
         }
 
-        // Check if this step is active
-        if (patterns[drumIndex][step]) {
-            // Use the velocity for this drum
-            int velocity = velocities[drumIndex];
-
-            // Play the note directly here instead of using external handlers
-            if (velocity > 0) {
-                playDrumNote(drumIndex, velocity);
-            }
-        }
+        // Trigger the drum step
+        triggerDrumStep(drumIndex, step);
 
         // Calculate next step
         calculateNextStep(drumIndex);
+    }
+
+    /**
+     * Trigger a drum step with per-step parameters
+     *
+     * @param drumIndex The drum pad index
+     * @param stepIndex The step index
+     */
+    private void triggerDrumStep(int drumIndex, int stepIndex) {
+        // First check if the step is active
+        if (patterns[drumIndex][stepIndex]) {
+            // Get the per-step parameters
+            int velocity = stepVelocities[drumIndex][stepIndex];
+            int probability = stepProbabilities[drumIndex][stepIndex];
+
+            // Check probability - only play if random number is less than probability
+            if (Math.random() * 100 < probability) {
+                // Apply global velocity scaling
+                int finalVelocity = (int) (velocity * (velocities[drumIndex] / 127.0));
+
+                // Add these safety checks before playing the note
+                if (finalVelocity > 0 && drumIndex >= 0 && drumIndex < players.length) {
+                    Strike player = players[drumIndex];
+
+                    // Check if player exists
+                    if (player != null) {
+                        // Check if player has a valid instrument before trying to play
+                        if (player.getInstrument() == null) {
+                            player.setInstrument(instruments[drumIndex]);
+                            player.setChannel(9);
+                        }
+
+                        if (player.getInstrument() != null) {
+                            // Now safe to trigger the note
+                            int decay = stepDecays[drumIndex][stepIndex];
+                            player.noteOn(player.getRootNote(), finalVelocity, decay);
+                        } else {
+                            // Log warning about missing instrument
+                            logger.warn("No instrument assigned to player for drum " + drumIndex);
+                        }
+                    } else {
+                        // Log warning about missing player
+                        logger.warn("No player assigned for drum " + drumIndex);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -573,6 +634,58 @@ public class DrumSequencer implements IBusListener {
                     this,
                     drumIndex
             );
+        }
+    }
+
+    public int getStepVelocity(int drumIndex, int stepIndex) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+            return stepVelocities[drumIndex][stepIndex];
+        }
+        return 0;
+    }
+
+    public void setStepVelocity(int drumIndex, int stepIndex, int velocity) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+            stepVelocities[drumIndex][stepIndex] = velocity;
+        }
+    }
+
+    public int getStepDecay(int drumIndex, int stepIndex) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+            return stepDecays[drumIndex][stepIndex];
+        }
+        return 0;
+    }
+
+    public void setStepDecay(int drumIndex, int stepIndex, int decay) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+            stepDecays[drumIndex][stepIndex] = decay;
+        }
+    }
+
+    public int getStepProbability(int drumIndex, int stepIndex) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+            return stepProbabilities[drumIndex][stepIndex];
+        }
+        return 0;
+    }
+
+    public void setStepProbability(int drumIndex, int stepIndex, int probability) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+            stepProbabilities[drumIndex][stepIndex] = probability;
+        }
+    }
+
+    public int getStepNudge(int drumIndex, int stepIndex) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+            return stepNudges[drumIndex][stepIndex];
+        }
+        return 0;
+    }
+
+    public void setStepNudge(int drumIndex, int stepIndex, int nudge) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+            stepNudges[drumIndex][stepIndex] = nudge;
         }
     }
 
