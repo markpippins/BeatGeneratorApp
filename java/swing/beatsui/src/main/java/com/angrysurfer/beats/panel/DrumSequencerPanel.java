@@ -267,7 +267,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // ADD CLEAR AND GENERATE BUTTONS
         clearPatternButton = new JButton("🗑️");
-        generatePatternButton = new JButton("Generate");
+        generatePatternButton = new JButton("🎲");
 
         // Add all components to panel in a single row
         panel.add(lastStepPanel);
