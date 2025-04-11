@@ -308,7 +308,36 @@ public class DrumSequencer implements IBusListener {
                         if (player.getInstrument() != null) {
                             // Now safe to trigger the note
                             int decay = stepDecays[drumIndex][stepIndex];
-                            player.noteOn(player.getRootNote(), finalVelocity, decay);
+                            int nudge = stepNudges[drumIndex][stepIndex];
+
+                            // Apply nudge delay if specified
+                            if (nudge > 0) {
+                                // Create final copies of variables used in lambda
+                                final int finalNoteNumber = player.getRootNote();
+                                final int finalVelocityCopy = finalVelocity;
+                                final int finalDecay = decay;
+                                final int finalDrumIndex = drumIndex;
+                                final int finalStepIndex = stepIndex;
+                                final int finalNudge = nudge;
+
+                                // Schedule delayed note using executor service
+                                java.util.concurrent.ScheduledExecutorService scheduler =
+                                        java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+
+                                scheduler.schedule(() -> {
+                                    // Use final copies inside lambda
+                                    player.noteOn(finalNoteNumber, finalVelocityCopy, finalDecay);
+
+                                    // Log for debugging
+                                    logger.debug("Triggered delayed drum {}: step={}, nudge={}ms, vel={}, decay={}",
+                                            finalDrumIndex, finalStepIndex, finalNudge, finalVelocityCopy, finalDecay);
+
+                                    // Shutdown the scheduler since we're done with it
+                                    scheduler.shutdown();
+                                }, nudge, java.util.concurrent.TimeUnit.MILLISECONDS);
+                            } else {
+                                player.noteOn(player.getRootNote(), finalVelocity, decay);
+                            }
                         } else {
                             // Log warning about missing instrument
                             logger.warn("No instrument assigned to player for drum " + drumIndex);
@@ -405,6 +434,28 @@ public class DrumSequencer implements IBusListener {
                 // Random is considered complete after each step
                 patternCompleted[drumIndex] = true;
             }
+        }
+    }
+
+    /**
+     * Advances the step for a specific drum based on its direction
+     * 
+     * @param drumIndex The drum to advance
+     */
+    private void advanceStepForDrum(int drumIndex) {
+        // Use existing calculateNextStep method which already updates currentStep
+        calculateNextStep(drumIndex);
+    }
+
+    /**
+     * Calculates when the next step should occur for a drum
+     * 
+     * @param drumIndex The drum to calculate for
+     */
+    private void calculateNextStepTime(int drumIndex) {
+        if (timingDivisions[drumIndex] != null) {
+            int calculatedTicksPerStep = calculateTicksPerStep(timingDivisions[drumIndex]);
+            nextStepTick[drumIndex] = tickCounter + calculatedTicksPerStep;
         }
     }
 
@@ -960,4 +1011,79 @@ public class DrumSequencer implements IBusListener {
         }
     }
 
+    /**
+     * Process timing updates and trigger notes with nudge delays
+     *
+     * @param update The timing update
+     */
+    private void processTimingUpdate(TimingUpdate update) {
+        // For each drum
+        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+            // Skip if we're past the next step tick for this drum
+            if (update.tickCount() >= nextStepTick[drumIndex]) {
+                // Get the current step for this drum
+                int stepIndex = currentStep[drumIndex];
+
+                // Check if the step is active in the pattern
+                if (patterns[drumIndex][stepIndex]) {
+                    // Get step parameters
+                    int velocity = stepVelocities[drumIndex][stepIndex];
+                    int probability = stepProbabilities[drumIndex][stepIndex];
+                    int decay = stepDecays[drumIndex][stepIndex];
+                    int nudge = stepNudges[drumIndex][stepIndex];
+
+                    // Apply probability - only play note if random value is below probability percentage
+                    if (Math.random() * 100 < probability) {
+                        // Apply velocity scaling using the drum's overall velocity
+                        int finalVelocity = (int) (velocity * (velocities[drumIndex] / 127.0));
+
+                        // Get the player for this drum
+                        Strike player = players[drumIndex];
+
+                        // Only play if player exists, has instrument, and velocity is > 0
+                        if (player != null && player.getInstrument() != null && finalVelocity > 0) {
+                            // Get the note number
+                            int noteNumber = drumIndex + 36; // Default MIDI mapping, adjust as needed
+
+                            // Apply nudge delay if specified
+                            if (nudge > 0) {
+                                // Schedule delayed note using executor service
+                                java.util.concurrent.ScheduledExecutorService scheduler =
+                                        java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+
+                                scheduler.schedule(() -> {
+                                    // Trigger the note with specified parameters after delay
+                                    player.noteOn(noteNumber, finalVelocity, decay);
+
+                                    // Log for debugging
+                                    // logger.debug("Triggered delayed drum {}: step={}, nudge={}ms, vel={}, decay={}",
+                                    //         drumIndex, stepIndex, nudge, finalVelocity, decay);
+
+                                    // Shutdown the scheduler since we're done with it
+                                    scheduler.shutdown();
+                                }, nudge, java.util.concurrent.TimeUnit.MILLISECONDS);
+                            } else {
+                                // No nudge, play immediately
+                                player.noteOn(noteNumber, finalVelocity, decay);
+
+                                // Log for debugging
+                                logger.debug("Triggered drum {}: step={}, vel={}, decay={}",
+                                        drumIndex, stepIndex, finalVelocity, decay);
+                            }
+                        }
+                    } else {
+                        // Note skipped due to probability
+                        logger.debug("Drum {} step {} skipped due to probability: {}/100",
+                                drumIndex, stepIndex, probability);
+                    }
+                }
+
+                // Update step counter for this drum
+                advanceStepForDrum(drumIndex);
+
+                // Calculate next step time
+                calculateNextStepTime(drumIndex);
+            }
+        }
+    }
 }

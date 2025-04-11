@@ -195,14 +195,18 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     break;
 
                 case 3: // Nudge
-                    dial.setMinimum(-50);
-                    dial.setMaximum(50);
-                    dial.setValue(0); // Default value
+                    dial.setMinimum(0);     // Changed from -50 to 0
+                    dial.setMaximum(100);   // Changed from 50 to 100
+                    dial.setValue(0);       // Default value (no delay)
 
                     // Add change listener
                     dial.addChangeListener(e -> {
                         if (selectedPadIndex >= 0) {
                             sequencer.setStepNudge(selectedPadIndex, index, dial.getValue());
+                            
+                            // Optional debug output
+                            // System.out.println("Set nudge for drum " + selectedPadIndex + 
+                            //                   ", step " + index + " to " + dial.getValue() + "ms");
                         }
                     });
                     nudgeDials.add(dial);
