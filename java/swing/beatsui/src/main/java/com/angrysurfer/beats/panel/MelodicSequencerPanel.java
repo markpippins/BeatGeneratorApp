@@ -4,8 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -65,6 +64,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private List<Dial> velocityDials = new ArrayList<>();
     private List<Dial> gateDials = new ArrayList<>();
     private List<DrumButton> melodicPadButtons = new ArrayList<>();
+    private List<Dial> probabilityDials = new ArrayList<>();
+    private List<Dial> nudgeDials = new ArrayList<>();
 
     // Labels and UI components
     private JLabel octaveLabel;
@@ -303,6 +304,12 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             for (Dial dial : gateDials) {
                 dial.setValue(50);
             }
+            for (Dial dial : probabilityDials) {
+                dial.setValue(100);
+            }
+            for (Dial dial : nudgeDials) {
+                dial.setValue(0);
+            }
         });
 
         JButton generateButton = new JButton("🎲");
@@ -384,6 +391,38 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
         });
 
+        // Create a panel specifically for rotation controls
+        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        rotationPanel.add(new JLabel("Rotate:"));
+
+        // Create push forward button (using right arrow emoji)
+        JButton pushForwardButton = new JButton("⟶");
+        pushForwardButton.setToolTipText("Push sequence forward (right)");
+        pushForwardButton.setPreferredSize(new Dimension(40, 25));
+        pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
+        pushForwardButton.addActionListener(e -> {
+            sequencer.pushForward();
+
+            // Update the UI to reflect the changes
+            SwingUtilities.invokeLater(this::syncUIWithSequencer);
+        });
+
+        // Create pull backward button (using left arrow emoji)
+        JButton pullBackwardButton = new JButton("⟵");
+        pullBackwardButton.setToolTipText("Pull sequence backward (left)");
+        pullBackwardButton.setPreferredSize(new Dimension(40, 25));
+        pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
+        pullBackwardButton.addActionListener(e -> {
+            sequencer.pullBackward();
+
+            // Update the UI to reflect the changes
+            SwingUtilities.invokeLater(this::syncUIWithSequencer);
+        });
+
+        // Add buttons to the rotation panel
+        rotationPanel.add(pullBackwardButton);
+        rotationPanel.add(pushForwardButton);
+
         // Add all components to panel in a single row
         panel.add(lastStepPanel);
         panel.add(directionPanel);
@@ -398,6 +437,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         panel.add(generateButton);   // Add Generate button
         panel.add(presetPanel);      // Add preset panel before Edit Sound button
         panel.add(editPlayerButton); // Add Edit Player button
+        panel.add(rotationPanel);    // Add rotation panel
 
         return panel;
     }
@@ -505,20 +545,22 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Reduce border padding to make columns narrower
         column.setBorder(BorderFactory.createEmptyBorder(3, 1, 3, 1));
 
-        // Add 3 knobs
+        // Add 5 knobs
         Dial[] noteDial = {null};
         Dial[] velocityDial = {null};
         Dial[] gateDial = {null};
+        Dial[] probabilityDial = {null};
+        Dial[] nudgeDial = {null};
         TriggerButton[] triggerButton = {null};
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 5; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
             // Make label more compact with smaller padding
             label.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
             label.setForeground(Color.GRAY);
             label.setFont(label.getFont().deriveFont(10f)); // Smaller font
 
-            if (i < 2) {
+            if (i < 4) {
                 JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
                 labelPanel.add(label);
                 column.add(labelPanel);
@@ -530,22 +572,39 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             // Store the dial in the appropriate collection based on its type
             switch (i) {
                 case 0 -> {
-                    // Set smaller size for velocity dial
-                    // dial.setPreferredSize(new Dimension(30, 30));
                     velocityDial[0] = dial;
                     velocityDials.add(dial);
                 }
                 case 1 -> {
-                    // Set smaller size for gate dial
-                    // dial.setPreferredSize(new Dimension(30, 30));
                     gateDial[0] = dial;
                     gateDials.add(dial);
                 }
                 case 2 -> {
-                    // Reduce the note dial size to make it more compact
                     dial.setPreferredSize(new Dimension(75, 75)); // Reduced from 75x75
                     noteDial[0] = dial;
                     noteDials.add(dial);
+                }
+                case 3 -> {
+                    dial.setMinimum(0);
+                    dial.setMaximum(100);
+                    dial.setValue(100); // Default to 100%
+                    dial.addChangeListener(e -> {
+                        if (!listenersEnabled) return;
+                        sequencer.setProbabilityValue(index, dial.getValue());
+                    });
+                    probabilityDial[0] = dial;
+                    probabilityDials.add(dial);
+                }
+                case 4 -> {
+                    dial.setMinimum(0);
+                    dial.setMaximum(250);
+                    dial.setValue(0); // Default to no nudge
+                    dial.addChangeListener(e -> {
+                        if (!listenersEnabled) return;
+                        sequencer.setNudgeValue(index, dial.getValue());
+                    });
+                    nudgeDial[0] = dial;
+                    nudgeDials.add(dial);
                 }
             }
 
@@ -575,8 +634,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             int note = noteDials.get(index).getValue();
             int velocity = velocityDials.get(index).getValue();
             int gate = gateDials.get(index).getValue();
+            int probability = probabilityDials.get(index).getValue();
+            int nudge = nudgeDials.get(index).getValue();
             // Update sequencer pattern data
-            sequencer.setStepData(index, isSelected, note, velocity, gate);
+            sequencer.setStepData(index, isSelected, note, velocity, gate, probability, nudge);
         });
 
         triggerButtons.add(triggerButton[0]);
@@ -591,9 +652,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         padButton.setToolTipText("Pad " + (index + 1));
 
         // IMPORTANT: Set a fixed size for ALL pad buttons
-        // padButton.setPreferredSize(new Dimension(30, 30)); // Fixed size for all pads
-        // padButton.setMinimumSize(new Dimension(30, 30));   // Enforce minimum size
-        // padButton.setMaximumSize(new Dimension(30, 30));   // Enforce maximum size
         // Add action to manually trigger the note when pad button is clicked
         padButton.addActionListener(e -> {
             if (index < noteDials.size()) {
@@ -641,9 +699,22 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 return;
             }
 
-            // Update sequencer pattern data
+            // Get probability and nudge values 
+            int probability = 100;
+            int nudge = 0;
+
+            if (index < probabilityDials.size()) {
+                probability = probabilityDials.get(index).getValue();
+            }
+
+            if (index < nudgeDials.size()) {
+                nudge = nudgeDials.get(index).getValue();
+            }
+
+            // Update sequencer with all step data
             sequencer.setStepData(index, triggerButton[0].isSelected(),
-                    noteDial[0].getValue(), velocityDial[0].getValue(), gateDial[0].getValue());
+                    noteDial[0].getValue(), velocityDial[0].getValue(), 
+                    gateDial[0].getValue(), probability, nudge);
         });
 
         velocityDial[0].addChangeListener(e -> {
@@ -653,7 +724,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
             // Update sequencer pattern data
             sequencer.setStepData(index, triggerButton[0].isSelected(),
-                    noteDial[0].getValue(), velocityDial[0].getValue(), gateDial[0].getValue());
+                    noteDial[0].getValue(), velocityDial[0].getValue(), 
+                    gateDial[0].getValue(), probabilityDials.get(index).getValue(), 
+                    nudgeDials.get(index).getValue());
         });
 
         gateDial[0].addChangeListener(e -> {
@@ -663,7 +736,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
             // Update sequencer pattern data
             sequencer.setStepData(index, triggerButton[0].isSelected(),
-                    noteDial[0].getValue(), velocityDial[0].getValue(), gateDial[0].getValue());
+                    noteDial[0].getValue(), velocityDial[0].getValue(), 
+                    gateDial[0].getValue(), probabilityDials.get(index).getValue(), 
+                    nudgeDials.get(index).getValue());
         });
 
         melodicPadButtons.add(padButton);
@@ -671,7 +746,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     private String getKnobLabel(int i) {
-        return i == 0 ? "Velocity" : i == 1 ? "Gate" : i == 2 ? "Note" : "Probability";
+        return i == 0 ? "Velocity" : i == 1 ? "Gate" : i == 2 ? "Note" : i == 3 ? "Probability" : "Nudge";
     }
 
     /**
@@ -736,6 +811,18 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             for (int i = 0; i < Math.min(gateDials.size(), sequencer.getGateValues().size()); i++) {
                 gateDials.get(i).setValue(sequencer.getGateValues().get(i));
                 gateDials.get(i).repaint();  // Force repaint
+            }
+
+            // Update probability dials
+            for (int i = 0; i < Math.min(probabilityDials.size(), sequencer.getProbabilityValues().size()); i++) {
+                probabilityDials.get(i).setValue(sequencer.getProbabilityValue(i));
+                probabilityDials.get(i).repaint();
+            }
+
+            // Update nudge dials
+            for (int i = 0; i < Math.min(nudgeDials.size(), sequencer.getNudgeValues().size()); i++) {
+                nudgeDials.get(i).setValue(sequencer.getNudgeValue(i));
+                nudgeDials.get(i).repaint();
             }
 
             // Update other UI controls

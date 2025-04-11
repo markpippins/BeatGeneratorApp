@@ -34,6 +34,8 @@ public class MelodicSequenceData implements Serializable {
     private List<Integer> noteValues;
     private List<Integer> velocityValues;
     private List<Integer> gateValues;
+    private List<Integer> probabilityValues;
+    private List<Integer> nudgeValues;
     
     // Constructor
     public MelodicSequenceData() {

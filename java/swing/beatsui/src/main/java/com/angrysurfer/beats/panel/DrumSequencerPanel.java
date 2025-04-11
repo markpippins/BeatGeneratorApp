@@ -281,6 +281,34 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         generatePatternButton.setPreferredSize(new Dimension(40, 25)); // Reduce width
         generatePatternButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
 
+        // Create rotation panel for push/pull buttons
+        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        rotationPanel.add(new JLabel("Rotate:"));
+
+        // Push forward button
+        JButton pushForwardButton = new JButton("⟶");
+        pushForwardButton.setToolTipText("Push pattern forward (right)");
+        pushForwardButton.setPreferredSize(new Dimension(40, 25));
+        pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
+        pushForwardButton.addActionListener(e -> {
+            sequencer.pushForward();
+            refreshGridUI();
+        });
+
+        // Pull backward button
+        JButton pullBackwardButton = new JButton("⟵");
+        pullBackwardButton.setToolTipText("Pull pattern backward (left)");
+        pullBackwardButton.setPreferredSize(new Dimension(40, 25));
+        pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
+        pullBackwardButton.addActionListener(e -> {
+            sequencer.pullBackward();
+            refreshGridUI();
+        });
+
+        // Add buttons to rotation panel
+        rotationPanel.add(pullBackwardButton);
+        rotationPanel.add(pushForwardButton);
+
         // Add all components to panel in a single row
         panel.add(lastStepPanel);
         panel.add(directionPanel);
@@ -289,6 +317,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         panel.add(rangePanel);
         panel.add(generatePatternButton);
         panel.add(clearPatternButton);
+        panel.add(rotationPanel);
 
         return panel;
     }

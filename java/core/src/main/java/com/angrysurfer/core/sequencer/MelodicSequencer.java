@@ -1,6 +1,7 @@
 package com.angrysurfer.core.sequencer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -57,6 +58,8 @@ public class MelodicSequencer implements IBusListener {
     private List<Integer> noteValues = new ArrayList<>();       // Note for each step
     private List<Integer> velocityValues = new ArrayList<>();   // Velocity for each step
     private List<Integer> gateValues = new ArrayList<>();       // Gate time for each step
+    private List<Integer> probabilityValues = new ArrayList<>();
+    private List<Integer> nudgeValues = new ArrayList<>();
 
     // Note object for storing melodic properties (NEW)
     private Note notePlayer;
@@ -267,36 +270,15 @@ public class MelodicSequencer implements IBusListener {
                 stepUpdateListener.accept(new StepUpdateEvent(prevStep, stepCounter));
             }
             
-            // Check if the current step is active and process it
-            if (stepCounter >= 0 && stepCounter < activeSteps.size() && activeSteps.get(stepCounter)) {
-                // Get parameters for the current step
-                int noteValue = noteValues.get(stepCounter);
-                int velocity = velocityValues.get(stepCounter);
-                int gateLength = gateValues.get(stepCounter);
-                
-                // Apply octave shift and quantize note if needed
-                if (quantizeEnabled && quantizer != null) {
-                    noteValue = quantizer.quantizeNote(noteValue);
-                }
-                int finalNoteValue = applyOctaveShift(noteValue);
-                
-                // Calculate note duration based on gate value and tempo
-                int durationMs = calculateNoteDuration(gateLength);
-                
-                // Play the note directly using the sequencer's internal method
-                playNote(finalNoteValue, velocity, durationMs);
-                
-                // Also notify the UI through the listener if needed
-                if (noteEventListener != null) {
-                    noteEventListener.accept(new NoteEvent(finalNoteValue, velocity, durationMs));
-                }
-            }
+            // Trigger the note for the current step
+            triggerNote(stepCounter);
         }
     }
 
     /**
      * Calculate the previous step based on current direction
      */
+    @SuppressWarnings("unused")
     private int getPreviousStep() {
         switch (direction) {
             case FORWARD:
@@ -323,6 +305,7 @@ public class MelodicSequencer implements IBusListener {
      * @param velocity The velocity (volume) of the note
      * @param duration The duration in milliseconds
      */
+    @SuppressWarnings("unused")
     private void playNote(int midiNote, int velocity, int duration) {
         if (notePlayer == null || notePlayer.getInstrument() == null) {
             logger.warn("Cannot play note directly - note or instrument is null");
@@ -420,6 +403,79 @@ public class MelodicSequencer implements IBusListener {
                 if (stepCounter == oldStep && patternLength > 1) {
                     stepCounter = (stepCounter + 1) % patternLength;
                 }
+            }
+        }
+    }
+
+    /**
+     * Triggers a note for the specified step, applying probability and nudge.
+     * @param stepIndex The step index
+     */
+    private void triggerNote(int stepIndex) {
+        // Only trigger if step is active
+        if (stepIndex >= 0 && stepIndex < activeSteps.size() && activeSteps.get(stepIndex)) {
+            // Get step parameters
+            int[] note = { getNoteValue(stepIndex) };
+            int velocity = getVelocityValue(stepIndex);
+            int gate = getGateValue(stepIndex);
+            int probability = getProbabilityValue(stepIndex);
+            int nudge = getNudgeValue(stepIndex);
+            
+            // Apply scale quantization if enabled
+            if (quantizeEnabled) {
+                note[0] = quantizeNote(note[0]);
+            }
+            
+            // Apply octave shift
+            note[0] = applyOctaveShift(note[0]);
+            
+            // Check probability - only play if random number is less than probability
+            if (Math.random() * 100 < probability) {
+                // Create the note event
+                final NoteEvent noteEvent = new NoteEvent(note[0], velocity, gate);
+                
+                // Apply nudge if specified
+                if (nudge > 0) {
+                    // Schedule delayed note using executor service
+                    final java.util.concurrent.ScheduledExecutorService scheduler =
+                            java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+                    
+                    // Create final copies of variables for lambda
+                    final int finalStepIndex = stepIndex;
+                    final int finalNote = note[0];
+                    
+                    scheduler.schedule(() -> {
+                        // 1. First notify the note event listener for UI updates
+                        if (noteEventListener != null) {
+                            noteEventListener.accept(noteEvent);
+                        }
+                        
+                        // 2. Also play the note directly using instrument
+                        int duration = calculateNoteDuration(gate);
+                        playNote(finalNote, velocity, duration);
+                        
+                        // Log the delayed note
+                        logger.debug("Triggered delayed note for step {}: note={}, nudge={}ms, vel={}, gate={}",
+                                finalStepIndex, finalNote, nudge, velocity, gate);
+                        
+                        // Shutdown the scheduler
+                        scheduler.shutdown();
+                    }, nudge, java.util.concurrent.TimeUnit.MILLISECONDS);
+                } else {
+                    // No nudge, play immediately
+                    
+                    // 1. First notify the note event listener for UI updates
+                    if (noteEventListener != null) {
+                        noteEventListener.accept(noteEvent);
+                    }
+                    
+                    // 2. Also play the note directly using instrument
+                    int duration = calculateNoteDuration(gate);
+                    playNote(note[0], velocity, duration);
+                }
+            } else {
+                // Note skipped due to probability
+                logger.debug("Step {} skipped due to probability: {}/100", stepIndex, probability);
             }
         }
     }
@@ -708,32 +764,51 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Set data for a specific step
-     *
+     * Sets all data for a specific step.
      * @param stepIndex The step index
-     * @param isActive Whether the step is active
-     * @param noteValue The MIDI note value
-     * @param velocityValue The velocity value
-     * @param gateValue The gate time value
+     * @param active Whether the step is active
+     * @param note The note value
+     * @param velocity The velocity value
+     * @param gate The gate value
+     * @param probability The probability value (0-100)
+     * @param nudge The nudge value in milliseconds
      */
-    public void setStepData(int stepIndex, boolean isActive, int noteValue, int velocityValue, int gateValue) {
-        if (stepIndex >= 0 && stepIndex < patternLength) {
-            if (stepIndex < activeSteps.size()) {
-                activeSteps.set(stepIndex, isActive);
-            }
-
-            if (stepIndex < noteValues.size()) {
-                noteValues.set(stepIndex, noteValue);
-            }
-
-            if (stepIndex < velocityValues.size()) {
-                velocityValues.set(stepIndex, velocityValue);
-            }
-
-            if (stepIndex < gateValues.size()) {
-                gateValues.set(stepIndex, gateValue);
-            }
+    public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate, int probability, int nudge) {
+        // Set active state
+        while (activeSteps.size() <= stepIndex) {
+            activeSteps.add(false);
         }
+        activeSteps.set(stepIndex, active);
+        
+        // Set note value
+        while (noteValues.size() <= stepIndex) {
+            noteValues.add(60); // Default to middle C
+        }
+        noteValues.set(stepIndex, note);
+        
+        // Set velocity value
+        while (velocityValues.size() <= stepIndex) {
+            velocityValues.add(100); // Default velocity
+        }
+        velocityValues.set(stepIndex, velocity);
+        
+        // Set gate value
+        while (gateValues.size() <= stepIndex) {
+            gateValues.add(50); // Default gate
+        }
+        gateValues.set(stepIndex, gate);
+        
+        // Set probability value
+        setProbabilityValue(stepIndex, probability);
+        
+        // Set nudge value
+        setNudgeValue(stepIndex, nudge);
+    }
+
+    // Keep the old method for backward compatibility
+    public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate) {
+        // Call the new method with default probability and nudge values
+        setStepData(stepIndex, active, note, velocity, gate, 100, 0);
     }
 
     /**
@@ -871,11 +946,48 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
+     * Gets the note value for a specific step.
+     * @param stepIndex The step index
+     * @return MIDI note value (0-127)
+     */
+    public int getNoteValue(int stepIndex) {
+        if (stepIndex >= 0 && stepIndex < noteValues.size()) {
+            return noteValues.get(stepIndex);
+        }
+        return 60; // Default to middle C if step is out of bounds
+    }
+
+    /**
+     * Gets the velocity value for a specific step.
+     * @param stepIndex The step index
+     * @return Velocity value (0-127)
+     */
+    public int getVelocityValue(int stepIndex) {
+        if (stepIndex >= 0 && stepIndex < velocityValues.size()) {
+            return velocityValues.get(stepIndex);
+        }
+        return 100; // Default velocity if step is out of bounds
+    }
+
+    /**
+     * Gets the gate value for a specific step.
+     * @param stepIndex The step index
+     * @return Gate value (0-100)
+     */
+    public int getGateValue(int stepIndex) {
+        if (stepIndex >= 0 && stepIndex < gateValues.size()) {
+            return gateValues.get(stepIndex);
+        }
+        return 50; // Default gate time if step is out of bounds
+    }
+
+    /**
      * Calculate note duration in milliseconds based on gate length percentage and current tempo
      * 
      * @param gateLength Gate length (0-100 percent)
      * @return Duration in milliseconds
      */
+    @SuppressWarnings("unused")
     private int calculateNoteDuration(int gateLength) {
         // Safety check for gate length
         int safeGateLength = Math.max(1, Math.min(100, gateLength));
@@ -893,5 +1005,219 @@ public class MelodicSequencer implements IBusListener {
         
         // Apply gate percentage to get note duration
         return (beatDurationMs * safeGateLength) / 100;
+    }
+
+    /**
+     * Gets the probability value for a specific step.
+     * @param stepIndex The step index
+     * @return Probability value (0-100)
+     */
+    public int getProbabilityValue(int stepIndex) {
+        if (stepIndex >= 0 && stepIndex < probabilityValues.size()) {
+            return probabilityValues.get(stepIndex);
+        }
+        return 100; // Default to 100% if step is out of bounds
+    }
+
+    /**
+     * Sets the probability value for a specific step.
+     * @param stepIndex The step index
+     * @param probability Probability value (0-100)
+     */
+    public void setProbabilityValue(int stepIndex, int probability) {
+        // Ensure probability is in valid range
+        probability = Math.max(0, Math.min(100, probability));
+        
+        // Ensure step index is valid
+        if (stepIndex >= 0) {
+            // Expand lists if needed
+            while (probabilityValues.size() <= stepIndex) {
+                probabilityValues.add(100);
+            }
+            probabilityValues.set(stepIndex, probability);
+        }
+    }
+
+    /**
+     * Gets the nudge value for a specific step.
+     * @param stepIndex The step index
+     * @return Nudge value in milliseconds
+     */
+    public int getNudgeValue(int stepIndex) {
+        if (stepIndex >= 0 && stepIndex < nudgeValues.size()) {
+            return nudgeValues.get(stepIndex);
+        }
+        return 0; // Default to no nudge if step is out of bounds
+    }
+
+    /**
+     * Sets the nudge value for a specific step.
+     * @param stepIndex The step index
+     * @param nudge Nudge value in milliseconds
+     */
+    public void setNudgeValue(int stepIndex, int nudge) {
+        // Ensure nudge is positive
+        nudge = Math.max(0, nudge);
+        
+        // Ensure step index is valid
+        if (stepIndex >= 0) {
+            // Expand lists if needed
+            while (nudgeValues.size() <= stepIndex) {
+                nudgeValues.add(0);
+            }
+            nudgeValues.set(stepIndex, nudge);
+        }
+    }
+
+    /**
+     * Gets all probability values.
+     * @return List of probability values
+     */
+    public List<Integer> getProbabilityValues() {
+        return Collections.unmodifiableList(probabilityValues);
+    }
+
+    /**
+     * Gets all nudge values.
+     * @return List of nudge values
+     */
+    public List<Integer> getNudgeValues() {
+        return Collections.unmodifiableList(nudgeValues);
+    }
+
+    /**
+     * Push the sequence forward by one step, wrapping the last element to the first position
+     */
+    public void pushForward() {
+        if (patternLength <= 1) {
+            return; // No need to rotate a single-step pattern
+        }
+        
+        // Rotate active steps
+        if (activeSteps.size() > 0) {
+            boolean lastValue = activeSteps.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                activeSteps.set(i, activeSteps.get(i - 1));
+            }
+            activeSteps.set(0, lastValue);
+        }
+        
+        // Rotate note values
+        if (noteValues.size() > 0) {
+            int lastValue = noteValues.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                noteValues.set(i, noteValues.get(i - 1));
+            }
+            noteValues.set(0, lastValue);
+        }
+        
+        // Rotate velocity values
+        if (velocityValues.size() > 0) {
+            int lastValue = velocityValues.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                velocityValues.set(i, velocityValues.get(i - 1));
+            }
+            velocityValues.set(0, lastValue);
+        }
+        
+        // Rotate gate values
+        if (gateValues.size() > 0) {
+            int lastValue = gateValues.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                gateValues.set(i, gateValues.get(i - 1));
+            }
+            gateValues.set(0, lastValue);
+        }
+        
+        // Rotate probability values
+        if (probabilityValues.size() > 0) {
+            int lastValue = probabilityValues.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                probabilityValues.set(i, probabilityValues.get(i - 1));
+            }
+            probabilityValues.set(0, lastValue);
+        }
+        
+        // Rotate nudge values
+        if (nudgeValues.size() > 0) {
+            int lastValue = nudgeValues.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                nudgeValues.set(i, nudgeValues.get(i - 1));
+            }
+            nudgeValues.set(0, lastValue);
+        }
+        
+        logger.info("Sequence pushed forward by one step");
+        
+        // Notify listeners that the pattern has been updated
+        CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
+    }
+
+    /**
+     * Pull the sequence backward by one step, wrapping the first element to the last position
+     */
+    public void pullBackward() {
+        if (patternLength <= 1) {
+            return; // No need to rotate a single-step pattern
+        }
+        
+        // Rotate active steps
+        if (activeSteps.size() > 0) {
+            boolean firstValue = activeSteps.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                activeSteps.set(i, activeSteps.get(i + 1));
+            }
+            activeSteps.set(patternLength - 1, firstValue);
+        }
+        
+        // Rotate note values
+        if (noteValues.size() > 0) {
+            int firstValue = noteValues.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                noteValues.set(i, noteValues.get(i + 1));
+            }
+            noteValues.set(patternLength - 1, firstValue);
+        }
+        
+        // Rotate velocity values
+        if (velocityValues.size() > 0) {
+            int firstValue = velocityValues.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                velocityValues.set(i, velocityValues.get(i + 1));
+            }
+            velocityValues.set(patternLength - 1, firstValue);
+        }
+        
+        // Rotate gate values
+        if (gateValues.size() > 0) {
+            int firstValue = gateValues.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                gateValues.set(i, gateValues.get(i + 1));
+            }
+            gateValues.set(patternLength - 1, firstValue);
+        }
+        
+        // Rotate probability values
+        if (probabilityValues.size() > 0) {
+            int firstValue = probabilityValues.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                probabilityValues.set(i, probabilityValues.get(i + 1));
+            }
+            probabilityValues.set(patternLength - 1, firstValue);
+        }
+        
+        // Rotate nudge values
+        if (nudgeValues.size() > 0) {
+            int firstValue = nudgeValues.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                nudgeValues.set(i, nudgeValues.get(i + 1));
+            }
+            nudgeValues.set(patternLength - 1, firstValue);
+        }
+        
+        logger.info("Sequence pulled backward by one step");
+        
+        // Notify listeners that the pattern has been updated
+        CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
     }
 }
