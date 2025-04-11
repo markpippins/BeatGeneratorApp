@@ -286,5 +286,9 @@ public class Commands {
     public static final String MELODIC_SEQUENCE_PREV = "MELODIC_SEQUENCE_PREV";
     public static final String MELODIC_SEQUENCE_FIRST = "MELODIC_SEQUENCE_FIRST";
     public static final String MELODIC_SEQUENCE_LAST = "MELODIC_SEQUENCE_LAST";
+    public static final String DRUM_SEQUENCE_CREATED = "DRUM_SEQUENCE_CREATED";
+    public static final String TRANSPORT_RESET = "TRANSPORT_RESET";
+    public static final String DRUM_SEQUENCE_FIRST = "DRUM_SEQUENCE_FIRST";
+    public static final String DRUM_SEQUENCE_LAST = "DRUM_SEQUENCE_LAST";
 }
 

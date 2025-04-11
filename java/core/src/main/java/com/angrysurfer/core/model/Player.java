@@ -244,6 +244,28 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         }
     }
 
+    public void noteOn(int note, int velocity, int decay) {
+        logger.debug("noteOn() - note: {}, velocity: {}", note, velocity);
+
+        int fixedVelocity = velocity < 126 ? velocity : 126;
+
+        try {
+            // Set playing state to true
+            setPlaying(true);
+
+            // Schedule UI refresh after a short delay
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
+                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), decay, // 50ms delay
+                    java.util.concurrent.TimeUnit.MILLISECONDS);
+
+            getInstrument().noteOn(getChannel(), note, fixedVelocity);
+        } catch (Exception e) {
+            logger.error("Error in noteOn: {}", e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+
     public void noteOff(int note, int velocity) {
         logger.debug("noteOff() - note: {}, velocity: {}", note, velocity);
         try {
