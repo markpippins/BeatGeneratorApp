@@ -423,7 +423,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 
                 // Create dialog to show the mixer
                 JDialog mixerDialog = new JDialog(SwingUtilities.getWindowAncestor(this), 
-                                               "Drum Mixer", 
+                                               "Pop-Up Mixer", 
                                                Dialog.ModalityType.MODELESS); // Non-modal dialog
                 mixerDialog.setContentPane(mixerPanel);
                 mixerDialog.pack();

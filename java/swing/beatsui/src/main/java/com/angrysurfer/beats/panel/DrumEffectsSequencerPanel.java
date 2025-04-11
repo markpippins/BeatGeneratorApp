@@ -49,8 +49,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
     private final List<TriggerButton> selectorButtons = new ArrayList<>();
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> decayDials = new ArrayList<>();
-    private final List<Dial> cutoffDials = new ArrayList<>();
-    private final List<Dial> resonanceDials = new ArrayList<>();
+    private final List<Dial> probabilityDials = new ArrayList<>();
+    private final List<Dial> nudgeDials = new ArrayList<>();
 
     private int selectedPadIndex = -1; // Default to no selection
 
@@ -127,7 +127,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
         column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
 
-        // Add 3 knobs
         for (int i = 0; i < 5; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
             label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -159,11 +158,11 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     break;
 
                 case 2:
-                    cutoffDials.add(dial); // Store the decay dial
+                    probabilityDials.add(dial); // Store the decay dial
                     break;
 
                 case 3:
-                    resonanceDials.add(dial); // Store the decay dial
+                    nudgeDials.add(dial); // Store the decay dial
                     break;
             }
 
@@ -281,9 +280,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             case 1:
                 return "Decay";
             case 2:
-                return "Cutoff";
+                return "Probability";
             case 3:
-                return "Resonance";
+                return "Nudge";
             case 4:
                 return "Drive";
             case 5:
