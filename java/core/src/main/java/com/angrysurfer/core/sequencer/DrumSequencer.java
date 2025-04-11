@@ -174,6 +174,7 @@ public class DrumSequencer implements IBusListener {
      */
     public void setSwingPercentage(int percentage) {
         // Limit to valid range
+
         this.swingPercentage = Math.max(50, Math.min(75, percentage));
         logger.info("Swing percentage set to: {}", swingPercentage);
         
