@@ -3,6 +3,7 @@ package com.angrysurfer.core.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -311,5 +312,88 @@ public class DrumSequencerManager implements IBusListener {
         }
         logger.warn("Failed to remove sequencer at index {}: not found", index);
         return false;
+    }
+
+    /**
+     * Load the first available pattern into the specified sequencer
+     * 
+     * @param sequencer The sequencer to update
+     * @return The ID of the first pattern, or null if none available
+     */
+    public Long loadFirstPattern(DrumSequencer sequencer) {
+        // Get the first sequence ID from RedisService
+        Long firstId = redisService.getMinimumDrumSequenceId();
+        
+        if (firstId != null) {
+            // Load the sequence data
+            DrumSequenceData data = redisService.findDrumSequenceById(firstId);
+            if (data != null) {
+                // Apply to sequencer
+                redisService.applyDrumSequenceToSequencer(data, sequencer);
+                logger.info("Loaded first drum sequence (ID: {})", data.getId());
+                return data.getId();
+            }
+        }
+        
+        // Create a default sequence if none exists
+        logger.info("No drum sequences found, creating default");
+        DrumSequenceData newData = redisService.newDrumSequence();
+        redisService.applyDrumSequenceToSequencer(newData, sequencer);
+        return newData.getId();
+    }
+
+    /**
+     * Load the next pattern for a specific sequencer
+     * 
+     * @param sequencer The sequencer to update
+     * @param currentId The current pattern ID
+     * @return The ID of the next pattern, or the same ID if at the end
+     */
+    public Long loadNextPattern(DrumSequencer sequencer, Long currentId) {
+        // Find the next sequence ID after the current one
+        Long nextId = redisService.getNextDrumSequenceId(currentId);
+        
+        if (nextId != null) {
+            // Load the sequence data
+            DrumSequenceData data = redisService.findDrumSequenceById(nextId);
+            if (data != null) {
+                // Apply to sequencer
+                redisService.applyDrumSequenceToSequencer(data, sequencer);
+                logger.info("Loaded next drum sequence (ID: {})", data.getId());
+                return data.getId();
+            }
+        }
+        
+        // No next sequence, stay on current
+        logger.info("No next drum sequence available after ID {}", currentId);
+        return currentId;
+    }
+
+    /**
+     * Load the last pattern for a specific sequencer
+     * 
+     * @param sequencer The sequencer to update
+     * @return The ID of the last pattern, or null if none available
+     */
+    public Long loadLastPattern(DrumSequencer sequencer) {
+        // Get the last sequence ID from RedisService
+        Long lastId = redisService.getMaximumDrumSequenceId();
+        
+        if (lastId != null) {
+            // Load the sequence data
+            DrumSequenceData data = redisService.findDrumSequenceById(lastId);
+            if (data != null) {
+                // Apply to sequencer
+                redisService.applyDrumSequenceToSequencer(data, sequencer);
+                logger.info("Loaded last drum sequence (ID: {})", data.getId());
+                return data.getId();
+            }
+        }
+        
+        // Create a default sequence if none exists
+        logger.info("No drum sequences found, creating default");
+        DrumSequenceData newData = redisService.newDrumSequence();
+        redisService.applyDrumSequenceToSequencer(newData, sequencer);
+        return newData.getId();
     }
 }

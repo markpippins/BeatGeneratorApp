@@ -133,8 +133,7 @@ public final class InstrumentWrapper implements Serializable {
     }
 
     public boolean receivesOn(Integer channel) {
-        List<Integer> channels = Arrays.asList(this.channels);
-        return channels.contains(channel);
+        return Arrays.asList(this.channels).contains(channel);
     }
 
     // Convenience method for single-channel devices
