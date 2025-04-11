@@ -58,7 +58,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
     private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[4];
-    private StrikeMixerPanel strikeMixerPanel;
+    private PopupMixerPanel strikeMixerPanel;
 
     public MainPanel(StatusBar statusBar) {
         super(new BorderLayout());
@@ -112,7 +112,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         // Add existing control buttons
         buttonPanel.add(createAllNotesOffButton());
         buttonPanel.add(createMetronomeToggleButton());
-        buttonPanel.add(createRestartButton());
+        // buttonPanel.add(createRestartButton());
 
         JPanel muteButtonsToolbar = createMuteButtonsToolbar();
         tabToolbar.add(muteButtonsToolbar);
@@ -294,8 +294,8 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JToggleButton createMetronomeToggleButton() {
         JToggleButton metronomeButton = new JToggleButton();
-        metronomeButton.setText("⏱");
-        metronomeButton.setBackground(ColorUtils.mutedRed);
+        metronomeButton.setText("🕰️");
+        // metronomeButton.setBackground(ColorUtils.mutedRed);
         metronomeButton.setPreferredSize(new Dimension(28, 28));
         metronomeButton.setMinimumSize(new Dimension(28, 28));
         metronomeButton.setMaximumSize(new Dimension(28, 28));
@@ -311,8 +311,8 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             boolean isSelected = metronomeButton.isSelected();
             logger.info("Metronome toggled: " + (isSelected ? "ON" : "OFF"));
             CommandBus.getInstance().publish(isSelected ? Commands.METRONOME_START : Commands.METRONOME_STOP, this);
-            metronomeButton.setText(isSelected ? "⏱" : "⏱");
-            metronomeButton.setBackground(isSelected ? ColorUtils.mutedOlive : ColorUtils.mutedRed);
+            // metronomeButton.setText(isSelected ? "⏱" : "⏱");
+            // metronomeButton.setBackground(isSelected ? ColorUtils.mutedOlive : ColorUtils.mutedRed);
         });
 
         CommandBus.getInstance().register(new IBusListener() {
@@ -416,7 +416,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 }
                 
                 if (sequencer != null) {
-                    strikeMixerPanel = new StrikeMixerPanel(sequencer);
+                    strikeMixerPanel = new PopupMixerPanel(sequencer);
                     
                     // Create dialog to show the mixer
                     JDialog mixerDialog = new JDialog(SwingUtilities.getWindowAncestor(this), 
