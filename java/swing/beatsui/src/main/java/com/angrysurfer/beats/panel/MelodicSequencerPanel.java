@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -392,6 +393,38 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
         });
 
+        // Create a panel specifically for rotation controls
+        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        rotationPanel.add(new JLabel("Rotate:"));
+
+        // Create push forward button (using right arrow emoji)
+        JButton pushForwardButton = new JButton("⟶");
+        pushForwardButton.setToolTipText("Push sequence forward (right)");
+        pushForwardButton.setPreferredSize(new Dimension(40, 25));
+        pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
+        pushForwardButton.addActionListener(e -> {
+            sequencer.pushForward();
+
+            // Update the UI to reflect the changes
+            SwingUtilities.invokeLater(this::syncUIWithSequencer);
+        });
+
+        // Create pull backward button (using left arrow emoji)
+        JButton pullBackwardButton = new JButton("⟵");
+        pullBackwardButton.setToolTipText("Pull sequence backward (left)");
+        pullBackwardButton.setPreferredSize(new Dimension(40, 25));
+        pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
+        pullBackwardButton.addActionListener(e -> {
+            sequencer.pullBackward();
+
+            // Update the UI to reflect the changes
+            SwingUtilities.invokeLater(this::syncUIWithSequencer);
+        });
+
+        // Add buttons to the rotation panel
+        rotationPanel.add(pullBackwardButton);
+        rotationPanel.add(pushForwardButton);
+
         // Add all components to panel in a single row
         panel.add(lastStepPanel);
         panel.add(directionPanel);
@@ -406,6 +439,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         panel.add(generateButton);   // Add Generate button
         panel.add(presetPanel);      // Add preset panel before Edit Sound button
         panel.add(editPlayerButton); // Add Edit Player button
+        panel.add(rotationPanel);    // Add rotation panel
 
         return panel;
     }

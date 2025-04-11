@@ -1084,4 +1084,140 @@ public class MelodicSequencer implements IBusListener {
     public List<Integer> getNudgeValues() {
         return Collections.unmodifiableList(nudgeValues);
     }
+
+    /**
+     * Push the sequence forward by one step, wrapping the last element to the first position
+     */
+    public void pushForward() {
+        if (patternLength <= 1) {
+            return; // No need to rotate a single-step pattern
+        }
+        
+        // Rotate active steps
+        if (activeSteps.size() > 0) {
+            boolean lastValue = activeSteps.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                activeSteps.set(i, activeSteps.get(i - 1));
+            }
+            activeSteps.set(0, lastValue);
+        }
+        
+        // Rotate note values
+        if (noteValues.size() > 0) {
+            int lastValue = noteValues.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                noteValues.set(i, noteValues.get(i - 1));
+            }
+            noteValues.set(0, lastValue);
+        }
+        
+        // Rotate velocity values
+        if (velocityValues.size() > 0) {
+            int lastValue = velocityValues.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                velocityValues.set(i, velocityValues.get(i - 1));
+            }
+            velocityValues.set(0, lastValue);
+        }
+        
+        // Rotate gate values
+        if (gateValues.size() > 0) {
+            int lastValue = gateValues.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                gateValues.set(i, gateValues.get(i - 1));
+            }
+            gateValues.set(0, lastValue);
+        }
+        
+        // Rotate probability values
+        if (probabilityValues.size() > 0) {
+            int lastValue = probabilityValues.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                probabilityValues.set(i, probabilityValues.get(i - 1));
+            }
+            probabilityValues.set(0, lastValue);
+        }
+        
+        // Rotate nudge values
+        if (nudgeValues.size() > 0) {
+            int lastValue = nudgeValues.get(patternLength - 1);
+            for (int i = patternLength - 1; i > 0; i--) {
+                nudgeValues.set(i, nudgeValues.get(i - 1));
+            }
+            nudgeValues.set(0, lastValue);
+        }
+        
+        logger.info("Sequence pushed forward by one step");
+        
+        // Notify listeners that the pattern has been updated
+        CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
+    }
+
+    /**
+     * Pull the sequence backward by one step, wrapping the first element to the last position
+     */
+    public void pullBackward() {
+        if (patternLength <= 1) {
+            return; // No need to rotate a single-step pattern
+        }
+        
+        // Rotate active steps
+        if (activeSteps.size() > 0) {
+            boolean firstValue = activeSteps.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                activeSteps.set(i, activeSteps.get(i + 1));
+            }
+            activeSteps.set(patternLength - 1, firstValue);
+        }
+        
+        // Rotate note values
+        if (noteValues.size() > 0) {
+            int firstValue = noteValues.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                noteValues.set(i, noteValues.get(i + 1));
+            }
+            noteValues.set(patternLength - 1, firstValue);
+        }
+        
+        // Rotate velocity values
+        if (velocityValues.size() > 0) {
+            int firstValue = velocityValues.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                velocityValues.set(i, velocityValues.get(i + 1));
+            }
+            velocityValues.set(patternLength - 1, firstValue);
+        }
+        
+        // Rotate gate values
+        if (gateValues.size() > 0) {
+            int firstValue = gateValues.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                gateValues.set(i, gateValues.get(i + 1));
+            }
+            gateValues.set(patternLength - 1, firstValue);
+        }
+        
+        // Rotate probability values
+        if (probabilityValues.size() > 0) {
+            int firstValue = probabilityValues.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                probabilityValues.set(i, probabilityValues.get(i + 1));
+            }
+            probabilityValues.set(patternLength - 1, firstValue);
+        }
+        
+        // Rotate nudge values
+        if (nudgeValues.size() > 0) {
+            int firstValue = nudgeValues.get(0);
+            for (int i = 0; i < patternLength - 1; i++) {
+                nudgeValues.set(i, nudgeValues.get(i + 1));
+            }
+            nudgeValues.set(patternLength - 1, firstValue);
+        }
+        
+        logger.info("Sequence pulled backward by one step");
+        
+        // Notify listeners that the pattern has been updated
+        CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
+    }
 }
