@@ -14,7 +14,7 @@ public class AbstractBus implements IBusListener {
 
     private final List<IBusListener> listeners = new CopyOnWriteArrayList<>();
     private final LogManager logManager = LogManager.getInstance();
-    
+
     // Thread pool for asynchronous command processing
     private final ExecutorService commandExecutor;
     private final boolean asyncProcessing;
@@ -22,14 +22,14 @@ public class AbstractBus implements IBusListener {
     public AbstractBus() {
         this(true, Runtime.getRuntime().availableProcessors());
     }
-    
+
     public AbstractBus(boolean asyncProcessing, int threadPoolSize) {
         this.asyncProcessing = asyncProcessing;
-        
+
         // Create named thread factory for better debugging
         ThreadFactory threadFactory = new ThreadFactory() {
             private final AtomicInteger threadNumber = new AtomicInteger(1);
-            
+
             @Override
             public Thread newThread(Runnable r) {
                 Thread t = new Thread(r, getClass().getSimpleName() + "-" + threadNumber.getAndIncrement());
@@ -37,7 +37,7 @@ public class AbstractBus implements IBusListener {
                 return t;
             }
         };
-        
+
         // Create thread pool if using async processing
         if (asyncProcessing) {
             commandExecutor = Executors.newFixedThreadPool(threadPoolSize, threadFactory);
@@ -46,18 +46,19 @@ public class AbstractBus implements IBusListener {
             commandExecutor = null;
             logManager.info("AbstractBus", "Created synchronous command bus");
         }
-        
+
         // Register self to handle logging commands
         register(this);
     }
 
     public void register(IBusListener listener) {
-        // System.out.println("AbstractBus: Registering listener " + listener.getClass().getName());
-        listeners.add(listener);
+        if (listener != null && !listeners.contains(listener))
+            listeners.add(listener);
     }
 
     public void unregister(IBusListener listener) {
-        // System.out.println("AbstractBus: Unregistering listener " + listener.getClass().getName());
+        // System.out.println("AbstractBus: Unregistering listener " +
+        // listener.getClass().getName());
         listeners.remove(listener);
     }
 
@@ -71,14 +72,16 @@ public class AbstractBus implements IBusListener {
     }
 
     public void publish(String command, Object sender, Object data) {
-        // System.out.println("AbstractBus: Publishing command " + command + " to " + listeners.size() + " listeners");
+        // System.out.println("AbstractBus: Publishing command " + command + " to " +
+        // listeners.size() + " listeners");
         Command cmd = new Command(command, sender, data);
         for (IBusListener listener : listeners) {
-            // System.out.println("AbstractBus: Sending " + command + " to " + listener.getClass().getName());
+            // System.out.println("AbstractBus: Sending " + command + " to " +
+            // listener.getClass().getName());
             listener.onAction(cmd);
         }
     }
-    
+
     /**
      * Publishes a command to be processed by all registered listeners.
      * Depending on the bus configuration, processing will happen either
@@ -106,7 +109,7 @@ public class AbstractBus implements IBusListener {
             processCommand(action);
         }
     }
-    
+
     /**
      * Publish a command with immediate execution regardless of async setting.
      * Use this for commands that must be processed immediately.
@@ -118,10 +121,10 @@ public class AbstractBus implements IBusListener {
             logManager.error("CommandBus", "Attempted to publish null action");
             return;
         }
-        
+
         processCommand(action);
     }
-    
+
     /**
      * Process the command by notifying all listeners
      */

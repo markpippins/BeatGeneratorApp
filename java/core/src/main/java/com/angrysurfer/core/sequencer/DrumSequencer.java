@@ -83,6 +83,12 @@ public class DrumSequencer implements IBusListener {
     private int swingPercentage = 50;       // Default swing percentage (50 = no swing)
     private boolean swingEnabled = false;   // Swing enabled flag
 
+    private Consumer<NoteEvent> noteEventPublisher;
+
+    public void setNoteEventPublisher(Consumer<NoteEvent> publisher) {
+        this.noteEventPublisher = publisher;
+    }
+
     /**
      * Creates a new drum sequencer with per-drum parameters
      */
@@ -375,6 +381,7 @@ public class DrumSequencer implements IBusListener {
                                     // Use final copies inside lambda
                                     player.noteOn(finalNoteNumber, finalVelocityCopy, finalDecay);
 
+                                    publishNoteEvent(finalDrumIndex, finalVelocity, decay);
                                     // Log for debugging
                                     logger.debug("Triggered delayed drum {}: step={}, nudge={}ms, vel={}, decay={}",
                                             finalDrumIndex, finalStepIndex, finalNudge, finalVelocityCopy, finalDecay);
@@ -384,6 +391,7 @@ public class DrumSequencer implements IBusListener {
                                 }, nudge, java.util.concurrent.TimeUnit.MILLISECONDS);
                             } else {
                                 player.noteOn(player.getRootNote(), finalVelocity, decay);
+                                publishNoteEvent(drumIndex, finalVelocity, decay);
                             }
                         } else {
                             // Log warning about missing instrument
@@ -395,6 +403,23 @@ public class DrumSequencer implements IBusListener {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Trigger a note and publish a NoteEvent
+     *
+     * @param drumIndex The drum pad index
+     * @param velocity The velocity of the note
+     */
+    private void publishNoteEvent(int drumIndex, int velocity, int durationMs) {
+
+        // Add this at the end:
+        if (noteEventPublisher != null) {
+            // Convert drum index back to MIDI note (36=kick, etc.)
+            int midiNote = drumIndex + 36;
+            NoteEvent event = new NoteEvent(midiNote, velocity, durationMs);
+            noteEventPublisher.accept(event);
         }
     }
 

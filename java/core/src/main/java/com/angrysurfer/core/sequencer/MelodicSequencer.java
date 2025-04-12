@@ -78,6 +78,13 @@ public class MelodicSequencer implements IBusListener {
     // Add this field to the class
     private boolean latchEnabled = false;
 
+    // Add or modify this field and methods
+    private Consumer<NoteEvent> noteEventPublisher;
+
+    public void setNoteEventPublisher(Consumer<NoteEvent> publisher) {
+        this.noteEventPublisher = publisher;
+    }
+
     /**
      * Creates a new melodic sequencer
      */
@@ -531,6 +538,12 @@ public class MelodicSequencer implements IBusListener {
                     // 2. Also play the note directly using instrument
                     int duration = calculateNoteDuration(gate);
                     playNote(note[0], velocity, duration);
+                }
+
+                // Add this at the end:
+                if (noteEventPublisher != null && velocity > 0) {
+                    NoteEvent event = new NoteEvent(note[0], velocity, gate);
+                    noteEventPublisher.accept(event);
                 }
             } else {
                 // Note skipped due to probability

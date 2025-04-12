@@ -24,6 +24,8 @@ public class NoteEvent {
     }
 
     public int getDurationMs() {
-        return durationMs;
+        // If gate represents a percentage of beat duration, convert to ms
+        // Assuming 100 gate = 250ms at 120bpm (500ms per beat)
+        return (int)(durationMs * 2.5); // Simple approximation
     }
 }
