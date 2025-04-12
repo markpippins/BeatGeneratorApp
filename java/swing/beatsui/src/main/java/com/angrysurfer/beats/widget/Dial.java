@@ -47,8 +47,6 @@ public class Dial extends JComponent {
     private Color gradientEndColor = new Color(20, 80, 200);
     private Color knobColor = new Color(30, 100, 255);
 
-
-    
     public Dial() {
         this.command = null;
         updateSize();
@@ -121,11 +119,18 @@ public class Dial extends JComponent {
                 setValue(newValue, true);
             }
         });
+
     }
 
     public Dial(String command) {
         this();
         setCommand(command);
+    }
+
+    public void setKnobColor(Color color) {
+        this.knobColor = color;
+        this.gradientStartColor = color.brighter();
+        this.gradientEndColor = color.darker();
     }
 
     private boolean updateOnResize = false;

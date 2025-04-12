@@ -84,19 +84,27 @@ public class InternalSynthControlPanel extends JPanel {
     }
 
     private void setupUI() {
+        setLayout(new BorderLayout());
+        
         // Create preset selection at top
         JPanel soundPanel = createSoundPanel();
         add(soundPanel, BorderLayout.NORTH);
 
-        // Main panel with tabs - simplified to just one tab
+        // Main panel with tabs
         JTabbedPane paramTabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
         paramTabs.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
-
-        // Add a single comprehensive Parameters tab
         paramTabs.addTab("Parameters", createParamsPanel());
-
-        // Add the tabs to the main panel
         add(paramTabs, BorderLayout.CENTER);
+        
+        // Create piano panel
+        InternalSynthPianoPanel pianoPanel = new InternalSynthPianoPanel();
+        
+        // Add to a container panel to center it horizontally
+        JPanel pianoContainer = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        pianoContainer.add(pianoPanel);
+        
+        // Add to the bottom of the main panel
+        add(pianoContainer, BorderLayout.SOUTH);
     }
 
     /**

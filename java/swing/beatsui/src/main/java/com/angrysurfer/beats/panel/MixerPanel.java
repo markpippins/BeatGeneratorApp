@@ -232,6 +232,8 @@ public class MixerPanel extends JPanel implements IBusListener {
         volumeDial.setToolTipText("Volume");
         volumeDial.setPreferredSize(new Dimension(75, 75));
         volumeDials.add(volumeDial);
+        volumeDial.setKnobColor(ColorUtils.getDialColor("volume"));
+
         panel.add(wrapInCenteredPanel(volumeDial));
         
         // Pan dial
@@ -240,6 +242,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         panDial.setEnabled(!isMaster); // Master has no pan
         panDial.setToolTipText("Pan");
         panDial.setPreferredSize(new Dimension(75, 75));
+        panDial.setKnobColor(ColorUtils.getDialColor("pan"));
         panDials.add(panDial);
         panel.add(wrapInCenteredPanel(panDial));
         
@@ -248,6 +251,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         reverbDial.setValue(0);
         reverbDial.setToolTipText("Reverb Send");
         reverbDial.setPreferredSize(new Dimension(75, 75));
+        reverbDial.setKnobColor(ColorUtils.getDialColor("reverb"));
         reverbDials.add(reverbDial);
         panel.add(wrapInCenteredPanel(reverbDial));
         
@@ -256,6 +260,8 @@ public class MixerPanel extends JPanel implements IBusListener {
         chorusDial.setValue(0);
         chorusDial.setToolTipText("Chorus Send");
         chorusDial.setPreferredSize(new Dimension(75, 75));
+        chorusDial.setKnobColor(ColorUtils.getDialColor("chorus"));
+
         chorusDials.add(chorusDial);
         panel.add(wrapInCenteredPanel(chorusDial));
         
@@ -264,6 +270,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         delayDial.setValue(0);
         delayDial.setToolTipText("Delay Send");
         delayDial.setPreferredSize(new Dimension(75, 75));
+        delayDial.setKnobColor(ColorUtils.getDialColor("delay"));
         delayDials.add(delayDial);
         panel.add(wrapInCenteredPanel(delayDial));
         

@@ -55,7 +55,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
 
         // Create ID label
         sequenceIdLabel = new JLabel(getFormattedIdText());
-        sequenceIdLabel.setPreferredSize(new Dimension(120, 25));
+        sequenceIdLabel.setPreferredSize(new Dimension(40, 25));
 
         // Create navigation buttons
         firstButton = createButton("⏮", "First sequence", e -> loadFirstSequence());
@@ -82,7 +82,8 @@ public class DrumSequenceNavigationPanel extends JPanel {
         JButton button = new JButton(text);
         button.setToolTipText(tooltip);
         button.addActionListener(listener);
-        button.setPreferredSize(new Dimension(60, 25));
+        button.setPreferredSize(new Dimension(32, 32));
+        
         return button;
     }
 
@@ -95,7 +96,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
     }
 
     private String getFormattedIdText() {
-        return "Sequence ID: " + (sequencer.getDrumSequenceId() > 0 ? sequencer.getDrumSequenceId() : "New");
+        return "Seq: " + (sequencer.getDrumSequenceId() > 0 ? sequencer.getDrumSequenceId() : "New");
     }
 
     /**
@@ -135,8 +136,11 @@ public class DrumSequenceNavigationPanel extends JPanel {
             manager.loadSequence(sequenceId, sequencer);
 
             // Reset the sequencer to ensure proper step indicator state
-            sequencer.reset();
-
+            if (sequencer.isPlaying())
+                sequencer.reset(true);
+            else
+                sequencer.reset(false);
+                
             // Update UI
             updateSequenceIdDisplay();
 

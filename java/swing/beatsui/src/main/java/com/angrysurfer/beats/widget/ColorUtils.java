@@ -27,4 +27,51 @@ public class ColorUtils {
     public static Color fadedOrange = new Color(210, 120, 50); // Vintage indicator light
     public static Color coolBlue = new Color(50, 130, 200); // Neve-style trim
     public static Color warmOffWhite = new Color(230, 220, 200);// Aged plastic knobs
+
+    public static Color getDialColor(String name) {
+
+        switch (name) {
+            case "swing":
+                return charcoalGray;
+            case "velocity":
+                return slateGray;
+            case "probability":
+                return deepNavy;
+            case "random":
+                return mutedOlive;
+            case "sparse":
+                return fadedLime;
+            case "pan":
+                return dustyAmber;
+            case "gate":
+            case "decay":
+                return warmMustard;
+            case "nudge":
+                return deepOrange;
+            case "tilt":
+                return mutedRed;
+            case "tune":
+                return fadedOrange;
+            case "bright":
+                return darkGray;
+            default:
+                return coolBlue; // Default to white if not found
+        }
+    }
+
+    public static Color getButtonColor() {
+        return new Color(150, 150, 150); // Aged metal panel
+    }
+
+    public static Color getBackgroundColor() {
+        return new Color(40, 40, 40); // Deep console casing
+    }
+
+    public static Color getTextColor() {
+        return new Color(255, 255, 255); // Bright white text for contrast
+    }
+
+    public static Color getAccentColor() {
+        return new Color(30, 80, 90); // Tascam-inspired accent color
+    }
 }

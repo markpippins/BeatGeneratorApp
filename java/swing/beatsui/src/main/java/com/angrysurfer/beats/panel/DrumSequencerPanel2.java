@@ -219,7 +219,7 @@ package com.angrysurfer.beats.panel;
 
 //         // Last Step spinner
 //         JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-//         lastStepPanel.add(new JLabel("Last:"));
+//         lastStepPanel.add(new JLabel("Last Step:"));
 
 //         // Create spinner model with range 1-16, default 16
 //         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 16, 1);
@@ -281,7 +281,7 @@ package com.angrysurfer.beats.panel;
 
 //         // Octave shift controls
 //         JPanel octavePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-//         octavePanel.add(new JLabel("Oct:"));
+//         octavePanel.add(new JLabel("Octave:"));
 
 //         // Down button
 //         JButton octaveDownBtn = new JButton("-");

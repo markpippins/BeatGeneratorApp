@@ -425,7 +425,7 @@ public class ControlPanel extends JPanel {
         dial.setPreferredSize(new Dimension(50, 50));
         dial.setMinimumSize(new Dimension(50, 50));
         dial.setMaximumSize(new Dimension(50, 50));
-
+        dial.setBackground(ColorUtils.getDialColor(propertyName));
         // Store the property name in the dial
         dial.setName(propertyName);
 

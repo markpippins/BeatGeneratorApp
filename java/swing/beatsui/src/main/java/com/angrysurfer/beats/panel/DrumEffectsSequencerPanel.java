@@ -101,13 +101,11 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         CommandBus.getInstance().register(this);
         TimingBus.getInstance().register(this);
 
-        // Initialize other parameters
+        // Initialize UI components
         initialize();
-
-        // Select the first drum by default if available
-        if (!drumButtons.isEmpty()) {
-            selectDrumPad(0);
-        }
+        
+        // NOTE: Don't select the first drum here, it will be done in initializeDrumPads()
+        // which will execute after all buttons are created
     }
 
     /**
@@ -187,16 +185,17 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // Create dial - first one is always a NoteSelectionDial
             Dial dial = new Dial();
 
-            dial.setGradientStartColor(getKnobColor(i).brighter());
-            dial.setGradientEndColor(getKnobColor(i).darker());
-            dial.setKnobColor(getKnobColor(i));
-
+            // dial.setGradientStartColor(getKnobColor(i).brighter());
+            // dial.setGradientEndColor(getKnobColor(i).darker());
+            // dial.setKnobColor(getKnobColor(i));
+            
             // Configure each dial based on its type
             switch (i) {
                 case 0: // Velocity
                     dial.setMinimum(0);
                     dial.setMaximum(127);
                     dial.setValue(100); // Default value
+                    dial.setKnobColor(ColorUtils.getDialColor("velocity"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -211,6 +210,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(1);
                     dial.setMaximum(200);
                     dial.setValue(60); // Default value
+                    dial.setKnobColor(ColorUtils.getDialColor("decay"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -225,7 +225,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(100);
                     dial.setValue(100); // Default to 100% (always plays)
-                    
+                    dial.setKnobColor(ColorUtils.getDialColor("probability"));
+
                     // Add change listener
                     dial.addChangeListener(e -> {
                         if (selectedPadIndex >= 0) {
@@ -244,6 +245,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);     
                     dial.setMaximum(250);   
                     dial.setValue(0);     
+                    dial.setKnobColor(ColorUtils.getDialColor("nudge"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -691,16 +693,37 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     // Replace the initializeDrumPads method with this:
     private void initializeDrumPads() {
-        // Apply numbered labels to each pad with beat indicators
+        // Names for each drum part - these will be used in tooltips
+        String[] drumNames = {
+            "Kick", "Snare", "Closed HH", "Open HH", 
+            "Tom 1", "Tom 2", "Tom 3", "Crash",
+            "Ride", "Rim", "Clap", "Cow", 
+            "Clave", "Shaker", "Perc 1", "Perc 2"
+        };
+        
+        // Apply numbered labels and tooltips to each pad with beat indicators
         for (int i = 0; i < drumButtons.size(); i++) {
             DrumButton button = drumButtons.get(i);
             
             // Set the pad number (1-based)
-            button.setPadNumber(i + 1);  // Change to i+1 for 1-based numbering
+            button.setPadNumber(i + 1);
             
             // Set main beat flag for pads 1, 5, 9, 13 (zero-indexed as 0, 4, 8, 12)
             button.setIsMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
+            
+            // Set detailed tooltip
+            String drumName = (i < drumNames.length) ? drumNames[i] : "Drum " + (i + 1);
+            button.setToolTipText(drumName + " - Click to edit effects for this drum");
         }
+        
+        // Ensure the first pad is automatically selected after initialization
+        SwingUtilities.invokeLater(() -> {
+            if (!drumButtons.isEmpty()) {
+                selectDrumPad(0);
+                // Log that first pad was selected
+                logger.info("First drum pad automatically selected");
+            }
+        });
     }
 
     private JPanel createSequenceParametersPanel() {
@@ -709,7 +732,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Last Step spinner
         JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        lastStepPanel.add(new JLabel("Last:"));
+        lastStepPanel.add(new JLabel("Last Step:"));
         
         lastStepSpinner = new JSpinner(new SpinnerNumberModel(16, 1, 16, 1));
         lastStepSpinner.setPreferredSize(new Dimension(50, 25));
