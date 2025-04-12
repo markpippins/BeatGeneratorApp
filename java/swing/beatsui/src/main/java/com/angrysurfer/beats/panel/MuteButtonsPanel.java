@@ -49,18 +49,21 @@ public class MuteButtonsPanel extends JPanel {
     }
     
     private void initializeUI() {
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setOpaque(false);
         
+        // Add vertical glue for centering
         add(Box.createVerticalGlue());
         add(createButtonsPanel());
         add(Box.createVerticalGlue());
     }
     
     private JPanel createButtonsPanel() {
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 0));
+        // Change from RIGHT alignment to CENTER for better vertical centering
+        // Increase vertical gap from 0 to 5 for better spacing
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 5));
         buttonPanel.setOpaque(false);
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 8));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(4, 2, 4, 8)); // Add padding
 
         // Create drum mute buttons
         for (int i = 0; i < 16; i++) {
@@ -69,7 +72,8 @@ public class MuteButtonsPanel extends JPanel {
             drumMuteButtons.add(muteButton);
         }
 
-        buttonPanel.add(Box.createHorizontalStrut(8));
+        // Add a more visible separator
+        buttonPanel.add(Box.createHorizontalStrut(12));
 
         // Create melodic sequencer mute buttons
         for (int i = 0; i < 4; i++) {
@@ -84,13 +88,17 @@ public class MuteButtonsPanel extends JPanel {
     private JToggleButton createMuteButton(int index, boolean isDrum) {
         JToggleButton muteButton = new JToggleButton();
 
-        Dimension size = new Dimension(16, 16);
+        // Increase button size from 16x16 to 28x28 to match other controls
+        Dimension size = new Dimension(20, 20);
         muteButton.setPreferredSize(size);
         muteButton.setMinimumSize(size);
         muteButton.setMaximumSize(size);
 
         muteButton.setText("");
         muteButton.setToolTipText("Mute " + (isDrum ? "Drum " : "Synth ") + (index + 1));
+        
+        // Ensure square appearance
+        muteButton.putClientProperty("JButton.buttonType", "square");
         muteButton.putClientProperty("JButton.squareSize", true);
 
         Color defaultColor = isDrum
