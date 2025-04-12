@@ -40,6 +40,7 @@ public class DrumSequencer implements IBusListener {
     private int beatCounter = 0; // Count beats
     private int ticksPerStep = 24; // Base ticks per step
     private boolean isPlaying = false; // Global play state
+    private int absoluteStep = 0; // Global step counter independent of individual drum steps
 
     private long drumSequenceId = -1;
 
@@ -212,6 +213,14 @@ public class DrumSequencer implements IBusListener {
         return swingEnabled;
     }
 
+    public int getAbsoluteStep() {
+        return absoluteStep;
+    }
+
+    public void setAbsoluteStep(int step) {
+        this.absoluteStep = step;
+    }
+
     /**
      * Load a sequence while preserving playback position if sequencer is running
      * 
@@ -228,14 +237,6 @@ public class DrumSequencer implements IBusListener {
         // Store current playback state
         boolean wasPlaying = isPlaying;
 
-        // Store current step positions if we're playing
-        // int[] oldStepPositions = null;
-        // if (wasPlaying) {
-        // // Copy current step positions for all drums
-        // oldStepPositions = Arrays.copyOf(currentStep, currentStep.length);
-        // logger.info("Preserving step positions while switching sequences");
-        // }
-
         // Get the manager
         DrumSequencerManager manager = DrumSequencerManager.getInstance();
 
@@ -244,17 +245,6 @@ public class DrumSequencer implements IBusListener {
 
         if (loaded) {
             logger.info("Loaded drum sequence: {}", sequenceId);
-
-            // If we were playing, restore step positions
-            // if (wasPlaying && oldStepPositions != null) {
-            // // Only restore positions for drums with same or longer pattern length
-            // for (int i = 0; i < DRUM_PAD_COUNT; i++) {
-            // if (oldStepPositions[i] < patternLengths[i]) {
-            // currentStep[i] = oldStepPositions[i];
-            // logger.debug("Restored position for drum {}: step {}", i, currentStep[i]);
-            // }
-            // }
-            // }
 
             // Immediately update visual indicators without resetting
             if (stepUpdateListener != null) {
@@ -317,9 +307,13 @@ public class DrumSequencer implements IBusListener {
             // Reset global counters
             tickCounter = 0;
             beatCounter = 0;
+            absoluteStep = 0; // Reset the absolute step counter
         } else {
             // Just reset state flags but keep positions
             Arrays.fill(patternCompleted, false);
+            Arrays.fill(currentStep, absoluteStep);
+            
+            // Don't reset absoluteStep when preserving positions
 
             // Recalculate next step times
             for (int i = 0; i < DRUM_PAD_COUNT; i++) {
@@ -343,10 +337,10 @@ public class DrumSequencer implements IBusListener {
     /**
      * Keep the original reset method for backward compatibility
      */
-    // public void ` {
-    //     // Call the new method with preservePositions=false
-    //     reset(false);
-    // }
+    public void reset() {
+        // Call the new method with preservePositions=false
+        reset(false);
+    }
 
     /**
      * Process a timing tick - now handles each drum separately
@@ -359,6 +353,17 @@ public class DrumSequencer implements IBusListener {
         }
 
         tickCounter = tick;
+
+        // Use the standard timing (first drum's timing) to determine global step changes
+        int standardTicksPerStep = TimingDivision.NORMAL.getTicksPerBeat();
+
+        // Update absoluteStep based on the tick count - for the global timing
+        if (tick % standardTicksPerStep == 0) {
+            // Increment the absoluteStep (cycle through the maximum pattern length)
+            absoluteStep = (absoluteStep + 1) % MAX_STEPS;
+            // Log the absolute step for debugging
+            logger.debug("Absolute step: {}", absoluteStep);
+        }
 
         // Process each drum separately
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
@@ -716,30 +721,6 @@ public class DrumSequencer implements IBusListener {
                 nextStepTick[drumIndex] = tickCounter + calculatedTicksPerStep;
             }
         }
-    }
-
-    /**
-     * Reset the sequencer to start position
-     */
-    public void reset() {
-        // Reset all step tracking arrays
-        Arrays.fill(currentStep, 0);
-        Arrays.fill(patternCompleted, false);
-        Arrays.fill(nextStepTick, 0);
-        Arrays.fill(bounceDirections, 1);
-
-        // Reset global counters
-        tickCounter = 0;
-        beatCounter = 0;
-
-        // Force the sequencer to generate an event to update visual indicators
-        if (stepUpdateListener != null) {
-            for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-                stepUpdateListener.accept(new DrumStepUpdateEvent(drumIndex, -1, currentStep[drumIndex]));
-            }
-        }
-
-        logger.debug("Sequencer fully reset - all counters and indicators cleared");
     }
 
     /**
