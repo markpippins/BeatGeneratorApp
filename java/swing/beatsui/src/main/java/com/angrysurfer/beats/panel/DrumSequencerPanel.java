@@ -205,7 +205,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Last Step spinner
         JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        lastStepPanel.add(new JLabel("Last:"));
+        lastStepPanel.add(new JLabel("Last Step:"));
 
         // Create spinner model with range 1-MAX_STEPS, default DEFAULT_PATTERN_LENGTH
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(DEFAULT_PATTERN_LENGTH, 1, MAX_STEPS, 1);

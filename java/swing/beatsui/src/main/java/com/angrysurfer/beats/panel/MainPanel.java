@@ -85,12 +85,12 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             melodicPanels[i] = createMelodicSequencerPanel(i + 2);
         }
 
-        tabbedPane.addTab("Drum Sequencer", createDrumPanel());
-        tabbedPane.addTab("Drum Machine", createDrumEffectsPanel());
-        tabbedPane.addTab("Mono Sequencer 1", melodicPanels[0]);
-        tabbedPane.addTab("Mono Sequencer 2", melodicPanels[1]);
-        tabbedPane.addTab("Mono Sequencer 3", melodicPanels[2]);
-        tabbedPane.addTab("Mono Sequencer 4", melodicPanels[3]);
+        tabbedPane.addTab("Drum", createDrumPanel());
+        tabbedPane.addTab("Machine", createDrumEffectsPanel());
+        tabbedPane.addTab("Mono 1", melodicPanels[0]);
+        tabbedPane.addTab("Mono 2", melodicPanels[1]);
+        tabbedPane.addTab("Mono 3", melodicPanels[2]);
+        tabbedPane.addTab("Mono 4", melodicPanels[3]);
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Poly Sequencer", createChordSequencerPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
@@ -124,7 +124,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         JPanel muteButtonsToolbar = createMuteButtonsToolbar();
 
         // Add the mute buttons toolbar
-        tabToolbar.add(muteButtonsToolbar);
+        add(muteButtonsToolbar, BorderLayout.NORTH);
         
         tabToolbar.add(Box.createHorizontalStrut(10));
 

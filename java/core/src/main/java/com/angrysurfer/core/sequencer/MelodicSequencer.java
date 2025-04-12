@@ -33,15 +33,15 @@ public class MelodicSequencer implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencer.class);
 
     // Sequencing parameters
-    private int stepCounter = 0;          // Current step in the pattern
-    private int patternLength = 16;       // Default pattern length
+    private int stepCounter = 0; // Current step in the pattern
+    private int patternLength = 16; // Default pattern length
     private Direction direction = Direction.FORWARD; // Default direction
-    private boolean looping = true;       // Default to looping
-    private long tickCounter = 0;          // Tick counter
-    private long ticksPerStep = 24;       // Base ticks per step (96 PPQN / 4 = 24)
-    private boolean isPlaying = false;    // Flag indicating playback state
-    private int bounceDirection = 1;      // Direction for bounce mode
-    private int channel = 3;          // Default MIDI channel
+    private boolean looping = true; // Default to looping
+    private long tickCounter = 0; // Tick counter
+    private long ticksPerStep = 24; // Base ticks per step (96 PPQN / 4 = 24)
+    private boolean isPlaying = false; // Flag indicating playback state
+    private int bounceDirection = 1; // Direction for bounce mode
+    private int channel = 3; // Default MIDI channel
 
     private TimingDivision timingDivision = TimingDivision.NORMAL;
 
@@ -51,13 +51,13 @@ public class MelodicSequencer implements IBusListener {
     private Boolean[] scaleNotes;
     private boolean quantizeEnabled = true;
     private Quantizer quantizer;
-    private int octaveShift = 0;             // Compatibility for scale
+    private int octaveShift = 0; // Compatibility for scale
 
     // Pattern data storage
-    private List<Boolean> activeSteps = new ArrayList<>();      // Step on/off state
-    private List<Integer> noteValues = new ArrayList<>();       // Note for each step
-    private List<Integer> velocityValues = new ArrayList<>();   // Velocity for each step
-    private List<Integer> gateValues = new ArrayList<>();       // Gate time for each step
+    private List<Boolean> activeSteps = new ArrayList<>(); // Step on/off state
+    private List<Integer> noteValues = new ArrayList<>(); // Note for each step
+    private List<Integer> velocityValues = new ArrayList<>(); // Velocity for each step
+    private List<Integer> gateValues = new ArrayList<>(); // Gate time for each step
     private List<Integer> probabilityValues = new ArrayList<>();
     private List<Integer> nudgeValues = new ArrayList<>();
 
@@ -80,6 +80,9 @@ public class MelodicSequencer implements IBusListener {
 
     // Add or modify this field and methods
     private Consumer<NoteEvent> noteEventPublisher;
+
+    // Add this field to the class
+    private int currentTilt = 0;
 
     public void setNoteEventPublisher(Consumer<NoteEvent> publisher) {
         this.noteEventPublisher = publisher;
@@ -119,7 +122,8 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Initialize the Note object with proper InstrumentWrapper and connected MidiDevice
+     * Initialize the Note object with proper InstrumentWrapper and connected
+     * MidiDevice
      */
     private void initializeNote() {
         notePlayer = new Note();
@@ -144,10 +148,10 @@ public class MelodicSequencer implements IBusListener {
                 if (Boolean.TRUE.equals(instrument.getInternal())) {
                     internalInstrument = instrument;
                     internalInstrument.setInternal(true);
-                    internalInstrument.setDeviceName("Gervill"); 
+                    internalInstrument.setDeviceName("Gervill");
                     internalInstrument.setSoundbankName("Default");
                     internalInstrument.setBankIndex(0);
-                    internalInstrument.setCurrentPreset(0);  // Piano
+                    internalInstrument.setCurrentPreset(0); // Piano
                     break;
                 }
             }
@@ -158,11 +162,11 @@ public class MelodicSequencer implements IBusListener {
                 internalInstrument = new InstrumentWrapper("Internal Synth", null, channel);
                 internalInstrument.setInternal(true);
                 internalInstrument.setDeviceName(deviceName);
-                
+
                 // Set default soundbank parameters
                 internalInstrument.setSoundbankName("Default");
                 internalInstrument.setBankIndex(0);
-                internalInstrument.setCurrentPreset(0);  // Piano
+                internalInstrument.setCurrentPreset(0); // Piano
 
                 // Give it a unique ID
                 // note.setPreset(internalInstrument.getCurrentPreset());
@@ -176,10 +180,10 @@ public class MelodicSequencer implements IBusListener {
             List<String> availableDevices = DeviceManager.getInstance().getAvailableOutputDeviceNames();
             if (!availableDevices.contains(deviceName)) {
                 CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("Device not available: " + deviceName));
-                    
+                        Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate("Device not available: " + deviceName));
+
                 logger.error("Device not available: {}", deviceName);
             } else {
                 // Try to reinitialize the device connection
@@ -188,12 +192,12 @@ public class MelodicSequencer implements IBusListener {
                     if (!device.isOpen()) {
                         device.open();
                     }
-                    
+
                     boolean connected = device.isOpen();
                     if (connected) {
                         internalInstrument.setDevice(device);
                         internalInstrument.setAvailable(true);
-                        
+
                         // Update in cache/config
                         instrumentManager.updateInstrument(internalInstrument);
                         logger.info("Successfully connected to device: {}", deviceName);
@@ -210,7 +214,7 @@ public class MelodicSequencer implements IBusListener {
             notePlayer.setChannel(channel);
 
             logger.info("Initialized Note with InstrumentWrapper: {}", internalInstrument.getName());
-            
+
             // Test the connection
             try {
                 if (internalInstrument.getAvailable()) {
@@ -218,7 +222,7 @@ public class MelodicSequencer implements IBusListener {
                     Thread.sleep(100);
                     internalInstrument.noteOff(channel, 60, 0);
                     logger.info("Test note played successfully");
-                    
+
                 }
             } catch (Exception e) {
                 logger.warn("Test note failed: {}", e.getMessage());
@@ -239,10 +243,10 @@ public class MelodicSequencer implements IBusListener {
 
         // Fill with default values
         for (int i = 0; i < patternLength; i++) {
-            activeSteps.add(false);          // All steps off by default
-            noteValues.add(60);              // Middle C
-            velocityValues.add(100);         // Medium-high velocity
-            gateValues.add(50);              // 50% gate time
+            activeSteps.add(false); // All steps off by default
+            noteValues.add(60); // Middle C
+            velocityValues.add(100); // Medium-high velocity
+            gateValues.add(50); // 50% gate time
         }
     }
 
@@ -261,25 +265,25 @@ public class MelodicSequencer implements IBusListener {
         // IMPORTANT: Use timing division to calculate tick interval
         // rather than using a fixed value of 24
         int ticksForDivision = timingDivision.getTicksPerBeat();
-        
+
         // Make sure we have a valid minimum value
         if (ticksForDivision <= 0) {
             ticksForDivision = 24; // Emergency fallback
         }
-        
+
         // Check if it's time for the next step using the timing division
         if (tick % ticksForDivision == 0) {
             // Get previous step for highlighting updates
             int prevStep = stepCounter;
-            
+
             // Calculate the next step based on the current direction
             calculateNextStep();
-            
+
             // Notify listeners of step update
             if (stepUpdateListener != null) {
                 stepUpdateListener.accept(new StepUpdateEvent(prevStep, stepCounter));
             }
-            
+
             // Trigger the note for the current step
             triggerNote(stepCounter);
         }
@@ -334,7 +338,7 @@ public class MelodicSequencer implements IBusListener {
             if (notePlayer.getPreset() != null) {
                 // Send bank select messages if a bank is specified
                 if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
-                    instrument.controlChange(channel, 0, 0);     // Bank MSB
+                    instrument.controlChange(channel, 0, 0); // Bank MSB
                     instrument.controlChange(channel, 32, instrument.getBankIndex()); // Bank LSB
                 }
 
@@ -343,7 +347,7 @@ public class MelodicSequencer implements IBusListener {
             }
 
             // Play the note - ERROR IS HERE
-            instrument.noteOn(channel, midiNote, notePlayer.getLevel());  // Correct - use instrument directly
+            instrument.noteOn(channel, midiNote, notePlayer.getLevel()); // Correct - use instrument directly
 
             // Schedule note off after the specified duration
             final int noteToStop = midiNote; // Capture for use in lambda
@@ -367,45 +371,45 @@ public class MelodicSequencer implements IBusListener {
      */
     private void calculateNextStep() {
         int oldStep = stepCounter;
-        
+
         switch (direction) {
             case FORWARD -> {
                 stepCounter++;
-                
+
                 // Check if we've reached the end of the pattern
                 if (stepCounter >= patternLength) {
                     stepCounter = 0;
-                    
+
                     // Generate a new pattern if latch is enabled
                     if (latchEnabled) {
                         // Get the current octave range setting (default to 2 if unset)
                         int octaveRange = 2;
-                        
+
                         // Use a consistent density (adjust as needed)
                         int density = 50;
-                        
+
                         // Generate a new pattern
                         generatePattern(octaveRange, density);
-                        
+
                         // Notify UI of pattern change
                         CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
-                        
+
                         logger.info("Latch mode: Generated new pattern at cycle end");
                     }
-                    
+
                     if (!looping) {
                         isPlaying = false;
                     }
                 }
             }
-            
+
             // Handle other direction cases similarly
             case BACKWARD -> {
                 stepCounter--;
-                
+
                 if (stepCounter < 0) {
                     stepCounter = patternLength - 1;
-                    
+
                     // Generate a new pattern if latch is enabled
                     if (latchEnabled) {
                         int octaveRange = 2;
@@ -414,21 +418,21 @@ public class MelodicSequencer implements IBusListener {
                         CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
                         logger.info("Latch mode: Generated new pattern at cycle end");
                     }
-                    
+
                     if (!looping) {
                         isPlaying = false;
                     }
                 }
             }
-            
+
             case BOUNCE -> {
                 // Update step counter according to bounce direction
                 stepCounter += bounceDirection;
-                
+
                 // Check if we need to change bounce direction
                 if (stepCounter <= 0 || stepCounter >= patternLength - 1) {
                     bounceDirection *= -1;
-                    
+
                     // At pattern end, generate new pattern if latch enabled
                     if (stepCounter <= 0 || stepCounter >= patternLength - 1) {
                         if (latchEnabled) {
@@ -439,21 +443,21 @@ public class MelodicSequencer implements IBusListener {
                             logger.info("Latch mode: Generated new pattern at cycle end");
                         }
                     }
-                    
+
                     if (!looping) {
                         isPlaying = false;
                     }
                 }
             }
-            
+
             case RANDOM -> {
                 // Random doesn't have a clear cycle end, so we'll consider
                 // hitting step 0 as the "cycle end" for latch purposes
                 int priorStep = stepCounter;
-                
+
                 // Generate random step
                 stepCounter = (int) (Math.random() * patternLength);
-                
+
                 // If we randomly hit step 0 and we weren't at step 0 before
                 if (stepCounter == 0 && priorStep != 0) {
                     if (latchEnabled) {
@@ -466,7 +470,7 @@ public class MelodicSequencer implements IBusListener {
                 }
             }
         }
-        
+
         // Notify step listeners about the step change
         if (stepUpdateListener != null) {
             stepUpdateListener.accept(new StepUpdateEvent(oldStep, stepCounter));
@@ -475,6 +479,7 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Triggers a note for the specified step, applying probability and nudge.
+     * 
      * @param stepIndex The step index
      */
     private void triggerNote(int stepIndex) {
@@ -486,55 +491,56 @@ public class MelodicSequencer implements IBusListener {
             int gate = getGateValue(stepIndex);
             int probability = getProbabilityValue(stepIndex);
             int nudge = getNudgeValue(stepIndex);
-            
+
             // Apply scale quantization if enabled
             if (quantizeEnabled) {
                 note[0] = quantizeNote(note[0]);
             }
-            
+
             // Apply octave shift
             note[0] = applyOctaveShift(note[0]);
-            
+            note[0] = applyTilt(note[0]);
+
             // Check probability - only play if random number is less than probability
             if (Math.random() * 100 < probability) {
                 // Create the note event
                 final NoteEvent noteEvent = new NoteEvent(note[0], velocity, gate);
-                
+
                 // Apply nudge if specified
                 if (nudge > 0) {
                     // Schedule delayed note using executor service
-                    final java.util.concurrent.ScheduledExecutorService scheduler =
-                            java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
-                    
+                    final java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors
+                            .newSingleThreadScheduledExecutor();
+
                     // Create final copies of variables for lambda
                     final int finalStepIndex = stepIndex;
                     final int finalNote = note[0];
-                    
+
                     scheduler.schedule(() -> {
                         // 1. First notify the note event listener for UI updates
                         if (noteEventListener != null) {
                             noteEventListener.accept(noteEvent);
                         }
-                        
+
                         // 2. Also play the note directly using instrument
                         int duration = calculateNoteDuration(gate);
                         playNote(finalNote, velocity, duration);
-                        
+
                         // Log the delayed note
                         logger.debug("Triggered delayed note for step {}: note={}, nudge={}ms, vel={}, gate={}",
                                 finalStepIndex, finalNote, nudge, velocity, gate);
-                        
+
                         // Shutdown the scheduler
                         scheduler.shutdown();
                     }, nudge, java.util.concurrent.TimeUnit.MILLISECONDS);
                 } else {
                     // No nudge, play immediately
-                    
+
                     // 1. First notify the note event listener for UI updates
                     if (noteEventListener != null) {
                         noteEventListener.accept(noteEvent);
                     }
-                    
+
                     // 2. Also play the note directly using instrument
                     int duration = calculateNoteDuration(gate);
                     playNote(note[0], velocity, duration);
@@ -550,6 +556,18 @@ public class MelodicSequencer implements IBusListener {
                 logger.debug("Step {} skipped due to probability: {}/100", stepIndex, probability);
             }
         }
+    }
+
+    /**
+     * Apply tilt to a MIDI note value
+     *
+     * @param noteValue MIDI note value to shift
+     * @return Tilted note value
+     */
+    private int applyTilt(int noteValue) {
+        int shiftedValue = noteValue + getCurrentTilt();
+        // Keep notes in MIDI range (0-127)
+        return Math.max(0, Math.min(127, shiftedValue));
     }
 
     /**
@@ -642,7 +660,7 @@ public class MelodicSequencer implements IBusListener {
      * Generate a random pattern with the given parameters
      *
      * @param octaveRange The number of octaves to span (1-4)
-     * @param density Percentage of steps to activate (1-100)
+     * @param density     Percentage of steps to activate (1-100)
      */
     public void generatePattern(int octaveRange, int density) {
         // Clear existing pattern
@@ -714,7 +732,7 @@ public class MelodicSequencer implements IBusListener {
         if (quantizer == null) {
             updateQuantizer(); // Ensure we have a quantizer
         }
-        
+
         try {
             return quantizer.quantizeNote(note);
         } catch (Exception e) {
@@ -729,10 +747,10 @@ public class MelodicSequencer implements IBusListener {
     public void updateQuantizer() {
         // Create Boolean array representing which notes are in the scale
         scaleNotes = createScaleArray(selectedRootNote, selectedScale);
-        
+
         // Create new quantizer with the scale
         quantizer = new Quantizer(scaleNotes);
-        
+
         logger.info("Quantizer updated with root note {} and scale {}", selectedRootNote, selectedScale);
     }
 
@@ -744,19 +762,20 @@ public class MelodicSequencer implements IBusListener {
         for (int i = 0; i < 12; i++) {
             result[i] = false;
         }
-        
+
         // Get root note index using Scale class
         int rootIndex = Scale.getRootNoteIndex(rootNote);
-        
+
         // Get scale pattern from Scale class - FIX: Use a proper int[] array as default
-        int[] pattern = Scale.SCALE_PATTERNS.getOrDefault(scaleName, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
-        
+        int[] pattern = Scale.SCALE_PATTERNS.getOrDefault(scaleName,
+                new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
+
         // Apply pattern to root note
         for (int offset : pattern) {
             int noteIndex = (rootIndex + offset) % 12;
             result[noteIndex] = true;
         }
-        
+
         return result;
     }
 
@@ -768,17 +787,17 @@ public class MelodicSequencer implements IBusListener {
     public void setRootNote(String rootNote) {
         this.selectedRootNote = rootNote;
         updateQuantizer();
-        
+
         // IMPORTANT: Re-quantize all notes in the pattern when root note changes
         if (quantizeEnabled && quantizer != null) {
             for (int i = 0; i < noteValues.size(); i++) {
                 noteValues.set(i, quantizer.quantizeNote(noteValues.get(i)));
             }
-            
+
             // Notify listeners that pattern has been updated
             CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
         }
-        
+
         logger.info("Root note set to {} and notes re-quantized", rootNote);
     }
 
@@ -790,17 +809,17 @@ public class MelodicSequencer implements IBusListener {
     public void setScale(String scale) {
         this.selectedScale = scale;
         updateQuantizer();
-        
+
         // IMPORTANT: Re-quantize all notes in the pattern when scale changes
         if (quantizeEnabled && quantizer != null) {
             for (int i = 0; i < noteValues.size(); i++) {
                 noteValues.set(i, quantizer.quantizeNote(noteValues.get(i)));
             }
-            
+
             // Notify listeners that pattern has been updated
             CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
         }
-        
+
         logger.info("Scale set to {} and notes re-quantized", scale);
     }
 
@@ -837,42 +856,44 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Sets all data for a specific step.
-     * @param stepIndex The step index
-     * @param active Whether the step is active
-     * @param note The note value
-     * @param velocity The velocity value
-     * @param gate The gate value
+     * 
+     * @param stepIndex   The step index
+     * @param active      Whether the step is active
+     * @param note        The note value
+     * @param velocity    The velocity value
+     * @param gate        The gate value
      * @param probability The probability value (0-100)
-     * @param nudge The nudge value in milliseconds
+     * @param nudge       The nudge value in milliseconds
      */
-    public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate, int probability, int nudge) {
+    public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate, int probability,
+            int nudge) {
         // Set active state
         while (activeSteps.size() <= stepIndex) {
             activeSteps.add(false);
         }
         activeSteps.set(stepIndex, active);
-        
+
         // Set note value
         while (noteValues.size() <= stepIndex) {
             noteValues.add(60); // Default to middle C
         }
         noteValues.set(stepIndex, note);
-        
+
         // Set velocity value
         while (velocityValues.size() <= stepIndex) {
             velocityValues.add(100); // Default velocity
         }
         velocityValues.set(stepIndex, velocity);
-        
+
         // Set gate value
         while (gateValues.size() <= stepIndex) {
             gateValues.add(50); // Default gate
         }
         gateValues.set(stepIndex, gate);
-        
+
         // Set probability value
         setProbabilityValue(stepIndex, probability);
-        
+
         // Set nudge value
         setNudgeValue(stepIndex, nudge);
     }
@@ -1019,6 +1040,7 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Gets the note value for a specific step.
+     * 
      * @param stepIndex The step index
      * @return MIDI note value (0-127)
      */
@@ -1031,6 +1053,7 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Gets the velocity value for a specific step.
+     * 
      * @param stepIndex The step index
      * @return Velocity value (0-127)
      */
@@ -1043,6 +1066,7 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Gets the gate value for a specific step.
+     * 
      * @param stepIndex The step index
      * @return Gate value (0-100)
      */
@@ -1054,7 +1078,8 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Calculate note duration in milliseconds based on gate length percentage and current tempo
+     * Calculate note duration in milliseconds based on gate length percentage and
+     * current tempo
      * 
      * @param gateLength Gate length (0-100 percent)
      * @return Duration in milliseconds
@@ -1063,24 +1088,25 @@ public class MelodicSequencer implements IBusListener {
     private int calculateNoteDuration(int gateLength) {
         // Safety check for gate length
         int safeGateLength = Math.max(1, Math.min(100, gateLength));
-        
+
         // Calculate beat duration in milliseconds (60000ms / BPM)
         // Using fixed tempo calculation that works with 24 ticks per step
-        double beatsPerMinute = 120.0;  // Default BPM
-        
+        double beatsPerMinute = 120.0; // Default BPM
+
         if (masterTempo > 0) {
             // Calculate BPM from masterTempo (typically 96 PPQN)
             beatsPerMinute = 60.0 * (masterTempo / 24.0);
         }
-        
-        int beatDurationMs = (int)(60000 / beatsPerMinute);
-        
+
+        int beatDurationMs = (int) (60000 / beatsPerMinute);
+
         // Apply gate percentage to get note duration
         return (beatDurationMs * safeGateLength) / 100;
     }
 
     /**
      * Gets the probability value for a specific step.
+     * 
      * @param stepIndex The step index
      * @return Probability value (0-100)
      */
@@ -1093,13 +1119,14 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Sets the probability value for a specific step.
-     * @param stepIndex The step index
+     * 
+     * @param stepIndex   The step index
      * @param probability Probability value (0-100)
      */
     public void setProbabilityValue(int stepIndex, int probability) {
         // Ensure probability is in valid range
         probability = Math.max(0, Math.min(100, probability));
-        
+
         // Ensure step index is valid
         if (stepIndex >= 0) {
             // Expand lists if needed
@@ -1112,6 +1139,7 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Gets the nudge value for a specific step.
+     * 
      * @param stepIndex The step index
      * @return Nudge value in milliseconds
      */
@@ -1124,13 +1152,14 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Sets the nudge value for a specific step.
+     * 
      * @param stepIndex The step index
-     * @param nudge Nudge value in milliseconds
+     * @param nudge     Nudge value in milliseconds
      */
     public void setNudgeValue(int stepIndex, int nudge) {
         // Ensure nudge is positive
         nudge = Math.max(0, nudge);
-        
+
         // Ensure step index is valid
         if (stepIndex >= 0) {
             // Expand lists if needed
@@ -1143,6 +1172,7 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Gets all probability values.
+     * 
      * @return List of probability values
      */
     public List<Integer> getProbabilityValues() {
@@ -1151,6 +1181,7 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Gets all nudge values.
+     * 
      * @return List of nudge values
      */
     public List<Integer> getNudgeValues() {
@@ -1158,13 +1189,14 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Push the sequence forward by one step, wrapping the last element to the first position
+     * Push the sequence forward by one step, wrapping the last element to the first
+     * position
      */
     public void pushForward() {
         if (patternLength <= 1) {
             return; // No need to rotate a single-step pattern
         }
-        
+
         // Rotate active steps
         if (activeSteps.size() > 0) {
             boolean lastValue = activeSteps.get(patternLength - 1);
@@ -1173,7 +1205,7 @@ public class MelodicSequencer implements IBusListener {
             }
             activeSteps.set(0, lastValue);
         }
-        
+
         // Rotate note values
         if (noteValues.size() > 0) {
             int lastValue = noteValues.get(patternLength - 1);
@@ -1182,7 +1214,7 @@ public class MelodicSequencer implements IBusListener {
             }
             noteValues.set(0, lastValue);
         }
-        
+
         // Rotate velocity values
         if (velocityValues.size() > 0) {
             int lastValue = velocityValues.get(patternLength - 1);
@@ -1191,7 +1223,7 @@ public class MelodicSequencer implements IBusListener {
             }
             velocityValues.set(0, lastValue);
         }
-        
+
         // Rotate gate values
         if (gateValues.size() > 0) {
             int lastValue = gateValues.get(patternLength - 1);
@@ -1200,7 +1232,7 @@ public class MelodicSequencer implements IBusListener {
             }
             gateValues.set(0, lastValue);
         }
-        
+
         // Rotate probability values
         if (probabilityValues.size() > 0) {
             int lastValue = probabilityValues.get(patternLength - 1);
@@ -1209,7 +1241,7 @@ public class MelodicSequencer implements IBusListener {
             }
             probabilityValues.set(0, lastValue);
         }
-        
+
         // Rotate nudge values
         if (nudgeValues.size() > 0) {
             int lastValue = nudgeValues.get(patternLength - 1);
@@ -1218,21 +1250,22 @@ public class MelodicSequencer implements IBusListener {
             }
             nudgeValues.set(0, lastValue);
         }
-        
+
         logger.info("Sequence pushed forward by one step");
-        
+
         // Notify listeners that the pattern has been updated
         CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
     }
 
     /**
-     * Pull the sequence backward by one step, wrapping the first element to the last position
+     * Pull the sequence backward by one step, wrapping the first element to the
+     * last position
      */
     public void pullBackward() {
         if (patternLength <= 1) {
             return; // No need to rotate a single-step pattern
         }
-        
+
         // Rotate active steps
         if (activeSteps.size() > 0) {
             boolean firstValue = activeSteps.get(0);
@@ -1241,7 +1274,7 @@ public class MelodicSequencer implements IBusListener {
             }
             activeSteps.set(patternLength - 1, firstValue);
         }
-        
+
         // Rotate note values
         if (noteValues.size() > 0) {
             int firstValue = noteValues.get(0);
@@ -1250,7 +1283,7 @@ public class MelodicSequencer implements IBusListener {
             }
             noteValues.set(patternLength - 1, firstValue);
         }
-        
+
         // Rotate velocity values
         if (velocityValues.size() > 0) {
             int firstValue = velocityValues.get(0);
@@ -1259,7 +1292,7 @@ public class MelodicSequencer implements IBusListener {
             }
             velocityValues.set(patternLength - 1, firstValue);
         }
-        
+
         // Rotate gate values
         if (gateValues.size() > 0) {
             int firstValue = gateValues.get(0);
@@ -1268,7 +1301,7 @@ public class MelodicSequencer implements IBusListener {
             }
             gateValues.set(patternLength - 1, firstValue);
         }
-        
+
         // Rotate probability values
         if (probabilityValues.size() > 0) {
             int firstValue = probabilityValues.get(0);
@@ -1277,7 +1310,7 @@ public class MelodicSequencer implements IBusListener {
             }
             probabilityValues.set(patternLength - 1, firstValue);
         }
-        
+
         // Rotate nudge values
         if (nudgeValues.size() > 0) {
             int firstValue = nudgeValues.get(0);
@@ -1286,9 +1319,9 @@ public class MelodicSequencer implements IBusListener {
             }
             nudgeValues.set(patternLength - 1, firstValue);
         }
-        
+
         logger.info("Sequence pulled backward by one step");
-        
+
         // Notify listeners that the pattern has been updated
         CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
     }
@@ -1306,9 +1339,32 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Checks if latch mode is enabled
+     * 
      * @return True if latch mode is enabled
      */
     public boolean isLatchEnabled() {
         return latchEnabled;
+    }
+
+    /**
+     * Sets a temporary note offset that applies to all notes in the current bar
+     * without changing the stored pattern data
+     * 
+     * @param tiltValue The amount to shift notes up or down (-4 to +4 semitones)
+     */
+    public void setCurrentTilt(int tiltValue) {
+        this.currentTilt = tiltValue;
+
+        // Log the application of tilt
+        logger.debug("Setting tilt for sequencer channel {} to {}", getChannel(), tiltValue);
+    }
+
+    /**
+     * Gets the current tilt value
+     * 
+     * @return The current tilt value (-4 to +4)
+     */
+    public int getCurrentTilt() {
+        return currentTilt;
     }
 }

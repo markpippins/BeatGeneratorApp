@@ -128,6 +128,14 @@ public class Dial extends JComponent {
         setCommand(command);
     }
 
+    @Override
+    public void setBackground(Color color) {
+        super.setBackground(color);
+        this.knobColor = color;
+        this.gradientStartColor = color.brighter();
+        this.gradientEndColor = color.darker();
+    }
+
     private boolean updateOnResize = false;
 
     protected void updateSize() {
