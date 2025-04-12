@@ -33,7 +33,31 @@ public class DrumSequencer implements IBusListener {
 
     // Constants
     public static final int DRUM_PAD_COUNT = 16; // Number of drum pads
-    private static final int MAX_STEPS = 64; // Maximum pattern length
+    public static final int MAX_STEPS = 64; // Maximum pattern length
+
+    // MIDI and music constants
+    private static final int MIDI_DRUM_CHANNEL = 9; // Standard MIDI drum channel
+    public static final int MIDI_DRUM_NOTE_OFFSET = 36; // First drum pad note number
+    private static final int MAX_MIDI_VELOCITY = 127; // Maximum MIDI velocity
+    
+    // Default values for parameters
+    public static final int DEFAULT_VELOCITY = 100; // Default note velocity
+    public static final int DEFAULT_DECAY = 60; // Default note decay
+    public static final int DEFAULT_PROBABILITY = 100; // Default step probability (%)
+    public static final int DEFAULT_PATTERN_LENGTH = 16; // Default pattern length
+    private static final int DEFAULT_TICKS_PER_BEAT = 24; // Default timing fallback
+    private static final int DEFAULT_MASTER_TEMPO = 96; // Default master tempo
+    
+    // Swing parameters
+    private static final int NO_SWING = 50; // Percentage value for no swing
+    public static final int MAX_SWING = 75; // Maximum swing percentage
+    public static final int MIN_SWING = 50; // Minimum swing percentage
+    
+    // Pattern generation parameters
+    private static final int MAX_DENSITY = 10; // Maximum density for pattern generation
+    
+    // Button dimensions
+    private static final int DRUM_PAD_SIZE = 28; // Standard drum pad button size
 
     // Global sequencing state
     private long tickCounter = 0; // Count ticks
@@ -108,18 +132,18 @@ public class DrumSequencer implements IBusListener {
         // Initialize velocity arrays
         velocities = new int[DRUM_PAD_COUNT];
         originalVelocities = new int[DRUM_PAD_COUNT];
-        Arrays.fill(velocities, 100); // Default to 100
-        Arrays.fill(originalVelocities, 100);
+        Arrays.fill(velocities, DEFAULT_VELOCITY);
+        Arrays.fill(originalVelocities, DEFAULT_VELOCITY);
 
         // Default values
-        Arrays.fill(patternLengths, 16); // Default to 16 steps
+        Arrays.fill(patternLengths, DEFAULT_PATTERN_LENGTH);
         Arrays.fill(directions, Direction.FORWARD); // Default to forward
         Arrays.fill(timingDivisions, TimingDivision.NORMAL); // Default timing
         Arrays.fill(loopingFlags, true); // Default to looping
         Arrays.fill(bounceDirections, 1); // Default to forward bounce
 
         // Initialize masterTempo with default value
-        masterTempo = 96; // Default PPQN if not set by session
+        masterTempo = DEFAULT_MASTER_TEMPO;
 
         // Initialize patterns with max possible length
         patterns = new boolean[DRUM_PAD_COUNT][MAX_STEPS];
@@ -131,9 +155,9 @@ public class DrumSequencer implements IBusListener {
         // Set default values
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             for (int j = 0; j < MAX_STEPS; j++) {
-                stepVelocities[i][j] = 100; // Default velocity at 100
-                stepDecays[i][j] = 60; // Default decay at 60
-                stepProbabilities[i][j] = 100; // Default probability at 100% (always play)
+                stepVelocities[i][j] = DEFAULT_VELOCITY;
+                stepDecays[i][j] = DEFAULT_DECAY;
+                stepProbabilities[i][j] = DEFAULT_PROBABILITY;
                 stepNudges[i][j] = 0; // Default nudge at 0 (no offset)
             }
         }
@@ -149,14 +173,14 @@ public class DrumSequencer implements IBusListener {
             players[i] = new Strike();
             players[i].setName("Drum " + (i + 1));
             // Set default root notes - standard GM drum map starting points
-            players[i].setRootNote(36 + i); // Start from MIDI note 36 (C1)
+            players[i].setRootNote(MIDI_DRUM_NOTE_OFFSET + i); // Start from MIDI note 36 (C1)
             // Configure to use drum channel (9)
-            players[i].setChannel(9);
+            players[i].setChannel(MIDI_DRUM_CHANNEL);
 
             // Create an InstrumentWrapper for the internal synth
             instruments[i] = new InstrumentWrapper(players[i].getName(), synth);
             instruments[i].setDeviceName(synth.getDeviceInfo().getName());
-            instruments[i].setChannels(new Integer[] { 9 }); // Drum channel
+            instruments[i].setChannels(new Integer[] { MIDI_DRUM_CHANNEL }); // Drum channel
             instruments[i].setInternal(true);
 
             logger.info("Created internal synth instrument for drum sequencer: {}", instruments[i].getName());
@@ -164,7 +188,7 @@ public class DrumSequencer implements IBusListener {
             // Assign the internal synth instrument
             players[i].setInstrument(instruments[i]);
 
-            logger.debug("Initialized drum pad {} with note {}", i, 36 + i);
+            logger.debug("Initialized drum pad {} with note {}", i, MIDI_DRUM_NOTE_OFFSET + i);
         }
 
         // Register with command bus
@@ -183,7 +207,7 @@ public class DrumSequencer implements IBusListener {
     public void setSwingPercentage(int percentage) {
         // Limit to valid range
 
-        this.swingPercentage = Math.max(50, Math.min(75, percentage));
+        this.swingPercentage = Math.max(MIN_SWING, Math.min(MAX_SWING, percentage));
         logger.info("Swing percentage set to: {}", swingPercentage);
 
         // Notify UI of parameter change
@@ -524,7 +548,7 @@ public class DrumSequencer implements IBusListener {
         // Add this at the end:
         if (noteEventPublisher != null) {
             // Convert drum index back to MIDI note (36=kick, etc.)
-            int midiNote = drumIndex + 36;
+            int midiNote = drumIndex + MIDI_DRUM_NOTE_OFFSET;
             NoteEvent event = new NoteEvent(midiNote, velocity, durationMs);
             noteEventPublisher.accept(event);
         }
@@ -685,14 +709,14 @@ public class DrumSequencer implements IBusListener {
     private int calculateTicksPerStep(TimingDivision timing) {
         // CRITICAL FIX: Add safety check to prevent division by zero
         if (masterTempo <= 0) {
-            logger.warn("Invalid masterTempo value ({}), using default of 96", masterTempo);
-            masterTempo = 96; // Emergency fallback
+            logger.warn("Invalid masterTempo value ({}), using default of {}", masterTempo, DEFAULT_MASTER_TEMPO);
+            masterTempo = DEFAULT_MASTER_TEMPO; // Emergency fallback
         }
 
         double ticksPerBeat = timing.getTicksPerBeat();
         if (ticksPerBeat <= 0) {
-            logger.warn("Invalid ticksPerBeat value ({}), using default of 24", ticksPerBeat);
-            ticksPerBeat = 24.0; // Emergency fallback
+            logger.warn("Invalid ticksPerBeat value ({}), using default of {}", ticksPerBeat, DEFAULT_TICKS_PER_BEAT);
+            ticksPerBeat = DEFAULT_TICKS_PER_BEAT; // Emergency fallback
         }
 
         // Simplified calculation that works consistently
@@ -767,7 +791,7 @@ public class DrumSequencer implements IBusListener {
         // Add bounds check
         if (drumIndex < 0 || drumIndex >= DRUM_PAD_COUNT) {
             logger.warn("Invalid drum index {} for getPatternLength", drumIndex);
-            return 16; // Return default
+            return DEFAULT_PATTERN_LENGTH; // Return default
         }
         return patternLengths[drumIndex];
     }
@@ -853,13 +877,13 @@ public class DrumSequencer implements IBusListener {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
             return velocities[drumIndex];
         }
-        return 100; // Default value
+        return DEFAULT_VELOCITY; // Default value
     }
 
     public void setVelocity(int drumIndex, int velocity) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
             // Constrain to valid MIDI range
-            velocity = Math.max(0, Math.min(127, velocity));
+            velocity = Math.max(0, Math.min(MAX_MIDI_VELOCITY, velocity));
             velocities[drumIndex] = velocity;
 
             // If we have a Strike object for this drum, update its level
@@ -906,7 +930,7 @@ public class DrumSequencer implements IBusListener {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
             return stepProbabilities[drumIndex][stepIndex];
         }
-        return 100; // Default to 100% if out of bounds
+        return DEFAULT_PROBABILITY; // Default to 100% if out of bounds
     }
 
     public void setStepProbability(int drumIndex, int stepIndex, int probability) {
@@ -1067,7 +1091,7 @@ public class DrumSequencer implements IBusListener {
         }
 
         // Generate new pattern based on density (1-10)
-        int hitsToAdd = Math.max(1, Math.min(10, density)) * length / 10;
+        int hitsToAdd = Math.max(1, Math.min(MAX_DENSITY, density)) * length / MAX_DENSITY;
 
         // Always add a hit on the first beat
         patterns[drumIndex][0] = true;
@@ -1344,7 +1368,7 @@ public class DrumSequencer implements IBusListener {
                         // Only play if player exists, has instrument, and velocity is > 0
                         if (player != null && player.getInstrument() != null && finalVelocity > 0) {
                             // Get the note number
-                            int noteNumber = drumIndex + 36; // Default MIDI mapping, adjust as needed
+                            int noteNumber = drumIndex + MIDI_DRUM_NOTE_OFFSET; // Default MIDI mapping, adjust as needed
 
                             // Apply nudge delay if specified
                             if (nudge > 0) {
