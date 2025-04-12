@@ -33,45 +33,45 @@ public class DrumSequencer implements IBusListener {
 
     // Constants
     public static final int DRUM_PAD_COUNT = 16; // Number of drum pads
-    private static final int MAX_STEPS = 64;      // Maximum pattern length
+    private static final int MAX_STEPS = 64; // Maximum pattern length
 
     // Global sequencing state
-    private long tickCounter = 0;            // Count ticks
-    private int beatCounter = 0;            // Count beats  
-    private int ticksPerStep = 24;          // Base ticks per step
-    private boolean isPlaying = false;      // Global play state
+    private long tickCounter = 0; // Count ticks
+    private int beatCounter = 0; // Count beats
+    private int ticksPerStep = 24; // Base ticks per step
+    private boolean isPlaying = false; // Global play state
 
     private long drumSequenceId = -1;
 
     // Per-drum sequencing state
-    private int[] currentStep;              // Current step for each drum
-    private boolean[] patternCompleted;     // Pattern completion flag for each drum
-    private long[] nextStepTick;             // Next step trigger tick for each drum
+    private int[] currentStep; // Current step for each drum
+    private boolean[] patternCompleted; // Pattern completion flag for each drum
+    private long[] nextStepTick; // Next step trigger tick for each drum
 
     // Per-drum pattern parameters
-    private int[] patternLengths;           // Pattern length for each drum
-    private Direction[] directions;         // Direction for each drum
+    private int[] patternLengths; // Pattern length for each drum
+    private Direction[] directions; // Direction for each drum
     private TimingDivision[] timingDivisions; // Timing for each drum
-    private boolean[] loopingFlags;         // Loop setting for each drum
-    private int[] bounceDirections;         // 1 for forward, -1 for backward (for bounce mode)
-    private int[] velocities;               // Velocity for each drum
-    private int[] originalVelocities;       // Saved original velocities for resetting
+    private boolean[] loopingFlags; // Loop setting for each drum
+    private int[] bounceDirections; // 1 for forward, -1 for backward (for bounce mode)
+    private int[] velocities; // Velocity for each drum
+    private int[] originalVelocities; // Saved original velocities for resetting
 
     // Pattern data storage
-    private boolean[][] patterns;           // [drumIndex][stepIndex]
+    private boolean[][] patterns; // [drumIndex][stepIndex]
 
     // Per-step parameter values for each drum
-    private int[][] stepVelocities;      // Velocity for each step of each drum [drumIndex][stepIndex]
-    private int[][] stepDecays;          // Decay (gate time) for each step [drumIndex][stepIndex]
-    private int[][] stepProbabilities;   // Probability for each step [drumIndex][stepIndex]
-    private int[][] stepNudges;          // Timing nudge for each step [drumIndex][stepIndex]
+    private int[][] stepVelocities; // Velocity for each step of each drum [drumIndex][stepIndex]
+    private int[][] stepDecays; // Decay (gate time) for each step [drumIndex][stepIndex]
+    private int[][] stepProbabilities; // Probability for each step [drumIndex][stepIndex]
+    private int[][] stepNudges; // Timing nudge for each step [drumIndex][stepIndex]
 
     // Strike objects for each drum pad
     private Strike[] players;
     private InstrumentWrapper[] instruments;
 
     // Selection state
-    private int selectedPadIndex = 0;       // Currently selected drum pad
+    private int selectedPadIndex = 0; // Currently selected drum pad
 
     // Event handling
     private Consumer<DrumStepUpdateEvent> stepUpdateListener;
@@ -80,8 +80,8 @@ public class DrumSequencer implements IBusListener {
     private int masterTempo;
 
     // Swing parameters
-    private int swingPercentage = 50;       // Default swing percentage (50 = no swing)
-    private boolean swingEnabled = false;   // Swing enabled flag
+    private int swingPercentage = 50; // Default swing percentage (50 = no swing)
+    private boolean swingEnabled = false; // Swing enabled flag
 
     private Consumer<NoteEvent> noteEventPublisher;
 
@@ -107,15 +107,15 @@ public class DrumSequencer implements IBusListener {
         // Initialize velocity arrays
         velocities = new int[DRUM_PAD_COUNT];
         originalVelocities = new int[DRUM_PAD_COUNT];
-        Arrays.fill(velocities, 100);  // Default to 100
+        Arrays.fill(velocities, 100); // Default to 100
         Arrays.fill(originalVelocities, 100);
 
         // Default values
-        Arrays.fill(patternLengths, 16);      // Default to 16 steps
-        Arrays.fill(directions, Direction.FORWARD);  // Default to forward
+        Arrays.fill(patternLengths, 16); // Default to 16 steps
+        Arrays.fill(directions, Direction.FORWARD); // Default to forward
         Arrays.fill(timingDivisions, TimingDivision.NORMAL); // Default timing
-        Arrays.fill(loopingFlags, true);      // Default to looping
-        Arrays.fill(bounceDirections, 1);     // Default to forward bounce
+        Arrays.fill(loopingFlags, true); // Default to looping
+        Arrays.fill(bounceDirections, 1); // Default to forward bounce
 
         // Initialize masterTempo with default value
         masterTempo = 96; // Default PPQN if not set by session
@@ -130,10 +130,10 @@ public class DrumSequencer implements IBusListener {
         // Set default values
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             for (int j = 0; j < MAX_STEPS; j++) {
-                stepVelocities[i][j] = 100;  // Default velocity at 100
-                stepDecays[i][j] = 60;       // Default decay at 60
+                stepVelocities[i][j] = 100; // Default velocity at 100
+                stepDecays[i][j] = 60; // Default decay at 60
                 stepProbabilities[i][j] = 100; // Default probability at 100% (always play)
-                stepNudges[i][j] = 0;        // Default nudge at 0 (no offset)
+                stepNudges[i][j] = 0; // Default nudge at 0 (no offset)
             }
         }
 
@@ -155,7 +155,7 @@ public class DrumSequencer implements IBusListener {
             // Create an InstrumentWrapper for the internal synth
             instruments[i] = new InstrumentWrapper(players[i].getName(), synth);
             instruments[i].setDeviceName(synth.getDeviceInfo().getName());
-            instruments[i].setChannels(new Integer[]{9}); // Drum channel
+            instruments[i].setChannels(new Integer[] { 9 }); // Drum channel
             instruments[i].setInternal(true);
 
             logger.info("Created internal synth instrument for drum sequencer: {}", instruments[i].getName());
@@ -176,6 +176,7 @@ public class DrumSequencer implements IBusListener {
 
     /**
      * Sets the global swing percentage
+     * 
      * @param percentage Value from 50 (no swing) to 75 (maximum swing)
      */
     public void setSwingPercentage(int percentage) {
@@ -183,12 +184,12 @@ public class DrumSequencer implements IBusListener {
 
         this.swingPercentage = Math.max(50, Math.min(75, percentage));
         logger.info("Swing percentage set to: {}", swingPercentage);
-        
+
         // Notify UI of parameter change
         CommandBus.getInstance().publish(
-            Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
-            this,
-            -1  // -1 indicates global parameter
+                Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
+                this,
+                -1 // -1 indicates global parameter
         );
     }
 
@@ -199,13 +200,12 @@ public class DrumSequencer implements IBusListener {
     public void setSwingEnabled(boolean enabled) {
         this.swingEnabled = enabled;
         logger.info("Swing enabled: {}", enabled);
-        
+
         // Notify UI of parameter change
         CommandBus.getInstance().publish(
-            Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
-            this,
-            -1
-        );
+                Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
+                this,
+                -1);
     }
 
     public boolean isSwingEnabled() {
@@ -213,7 +213,76 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Load the first available sequence from storage
+     * Load a sequence while preserving playback position if sequencer is running
+     * 
+     * @param sequenceId The ID of the sequence to load
+     * @return true if sequence loaded successfully
+     */
+    public boolean loadSequence(long sequenceId) {
+        // Don't do anything if trying to load the currently active sequence
+        if (sequenceId == drumSequenceId) {
+            logger.info("Sequence {} already loaded", sequenceId);
+            return true;
+        }
+
+        // Store current playback state
+        boolean wasPlaying = isPlaying;
+
+        // Store current step positions if we're playing
+        // int[] oldStepPositions = null;
+        // if (wasPlaying) {
+        // // Copy current step positions for all drums
+        // oldStepPositions = Arrays.copyOf(currentStep, currentStep.length);
+        // logger.info("Preserving step positions while switching sequences");
+        // }
+
+        // Get the manager
+        DrumSequencerManager manager = DrumSequencerManager.getInstance();
+
+        // Load the sequence
+        boolean loaded = manager.loadSequence(sequenceId, this);
+
+        if (loaded) {
+            logger.info("Loaded drum sequence: {}", sequenceId);
+
+            // If we were playing, restore step positions
+            // if (wasPlaying && oldStepPositions != null) {
+            // // Only restore positions for drums with same or longer pattern length
+            // for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            // if (oldStepPositions[i] < patternLengths[i]) {
+            // currentStep[i] = oldStepPositions[i];
+            // logger.debug("Restored position for drum {}: step {}", i, currentStep[i]);
+            // }
+            // }
+            // }
+
+            // Immediately update visual indicators without resetting
+            if (stepUpdateListener != null) {
+                for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                    // Force an update with the current positions
+                    stepUpdateListener.accept(
+                            new DrumStepUpdateEvent(drumIndex, -1, currentStep[drumIndex]));
+                }
+            }
+
+            // Publish event to notify UI components
+            CommandBus.getInstance().publish(
+                    Commands.DRUM_SEQUENCE_LOADED,
+                    this,
+                    drumSequenceId);
+
+            // Preserve playing state (don't stop if we were playing)
+            isPlaying = wasPlaying;
+
+            return true;
+        } else {
+            logger.warn("Failed to load drum sequence {}", sequenceId);
+            return false;
+        }
+    }
+
+    /**
+     * Modify this method to use our new loadSequence method
      */
     private void loadFirstSequence() {
         try {
@@ -224,19 +293,8 @@ public class DrumSequencer implements IBusListener {
             Long firstId = manager.getFirstSequenceId();
 
             if (firstId != null) {
-                // Load the sequence
-                boolean loaded = manager.loadSequence(firstId, this);
-                if (loaded) {
-                    logger.info("Loaded initial drum sequence: {}", firstId);
-                    // Publish event to notify UI components
-                    CommandBus.getInstance().publish(
-                            Commands.DRUM_SEQUENCE_LOADED,
-                            this,
-                            drumSequenceId
-                    );
-                } else {
-                    logger.warn("Failed to load initial drum sequence");
-                }
+                // Use our new method instead of directly calling manager.loadSequence
+                loadSequence(firstId);
             } else {
                 logger.info("No saved drum sequences found, using empty pattern");
             }
@@ -244,6 +302,51 @@ public class DrumSequencer implements IBusListener {
             logger.error("Error loading initial drum sequence: {}", e.getMessage(), e);
         }
     }
+
+    /**
+     * Override the reset method to preserve positions when needed
+     */
+    public void reset(boolean preservePositions) {
+        if (!preservePositions) {
+            // Original full reset behavior
+            Arrays.fill(currentStep, 0);
+            Arrays.fill(patternCompleted, false);
+            Arrays.fill(nextStepTick, 0);
+            Arrays.fill(bounceDirections, 1);
+
+            // Reset global counters
+            tickCounter = 0;
+            beatCounter = 0;
+        } else {
+            // Just reset state flags but keep positions
+            Arrays.fill(patternCompleted, false);
+
+            // Recalculate next step times
+            for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+                if (timingDivisions[i] != null) {
+                    int calculatedTicksPerStep = calculateTicksPerStep(timingDivisions[i]);
+                    nextStepTick[i] = tickCounter + calculatedTicksPerStep;
+                }
+            }
+        }
+
+        // Force the sequencer to generate an event to update visual indicators
+        if (stepUpdateListener != null) {
+            for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                stepUpdateListener.accept(new DrumStepUpdateEvent(drumIndex, -1, currentStep[drumIndex]));
+            }
+        }
+
+        logger.debug("Sequencer reset - preservePositions={}", preservePositions);
+    }
+
+    /**
+     * Keep the original reset method for backward compatibility
+     */
+    // public void ` {
+    //     // Call the new method with preservePositions=false
+    //     reset(false);
+    // }
 
     /**
      * Process a timing tick - now handles each drum separately
@@ -311,8 +414,7 @@ public class DrumSequencer implements IBusListener {
             DrumStepUpdateEvent event = new DrumStepUpdateEvent(
                     drumIndex,
                     getPreviousStep(drumIndex),
-                    step
-            );
+                    step);
             stepUpdateListener.accept(event);
         }
 
@@ -337,14 +439,14 @@ public class DrumSequencer implements IBusListener {
             int probability = stepProbabilities[drumIndex][stepIndex];
             int decay = stepDecays[drumIndex][stepIndex];
             int nudge = stepNudges[drumIndex][stepIndex];
-            
+
             // Apply swing to even-numbered steps (odd indices in 0-indexed array)
             if (swingEnabled && stepIndex % 2 == 1) {
                 // Calculate swing amount based on percentage
                 int swingAmount = calculateSwingAmount(drumIndex);
                 nudge += swingAmount;
             }
-            
+
             // Check probability - only play if random number is less than probability
             if (Math.random() * 100 < probability) {
                 // Apply global velocity scaling
@@ -374,8 +476,8 @@ public class DrumSequencer implements IBusListener {
                                 final int finalNudge = nudge;
 
                                 // Schedule delayed note using executor service
-                                java.util.concurrent.ScheduledExecutorService scheduler =
-                                        java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+                                java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors
+                                        .newSingleThreadScheduledExecutor();
 
                                 scheduler.schedule(() -> {
                                     // Use final copies inside lambda
@@ -410,7 +512,7 @@ public class DrumSequencer implements IBusListener {
      * Trigger a note and publish a NoteEvent
      *
      * @param drumIndex The drum pad index
-     * @param velocity The velocity of the note
+     * @param velocity  The velocity of the note
      */
     private void publishNoteEvent(int drumIndex, int velocity, int durationMs) {
 
@@ -424,41 +526,43 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Calculate swing amount in milliseconds based on current tempo and timing division
+     * Calculate swing amount in milliseconds based on current tempo and timing
+     * division
      */
     private int calculateSwingAmount(int drumIndex) {
         // Get session BPM
         float bpm = SessionManager.getInstance().getActiveSession().getTempoInBPM();
-        if (bpm <= 0) bpm = 120; // Default fallback
-        
+        if (bpm <= 0)
+            bpm = 120; // Default fallback
+
         // Calculate step duration in milliseconds
         TimingDivision division = timingDivisions[drumIndex];
         float stepDurationMs = 60000f / bpm; // Duration of quarter note in ms
-        
+
         // Adjust for timing division based on actual enum values
         switch (division) {
             case NORMAL -> stepDurationMs *= 1; // No change for normal timing
             case DOUBLE -> stepDurationMs /= 2; // Double time (faster)
-            case HALF -> stepDurationMs *= 2;   // Half time (slower)
+            case HALF -> stepDurationMs *= 2; // Half time (slower)
             case QUARTER -> stepDurationMs *= 4; // Quarter time (very slow)
-            case TRIPLET -> stepDurationMs *= 2.0f/3.0f; // Triplet feel
-            case QUARTER_TRIPLET -> stepDurationMs *= 4.0f/3.0f; // Quarter note triplets
-            case EIGHTH_TRIPLET -> stepDurationMs *= 1.0f/3.0f; // Eighth note triplets
-            case SIXTEENTH -> stepDurationMs *= 1.0f/4.0f; // Sixteenth notes
-            case SIXTEENTH_TRIPLET -> stepDurationMs *= 1.0f/6.0f; // Sixteenth note triplets
+            case TRIPLET -> stepDurationMs *= 2.0f / 3.0f; // Triplet feel
+            case QUARTER_TRIPLET -> stepDurationMs *= 4.0f / 3.0f; // Quarter note triplets
+            case EIGHTH_TRIPLET -> stepDurationMs *= 1.0f / 3.0f; // Eighth note triplets
+            case SIXTEENTH -> stepDurationMs *= 1.0f / 4.0f; // Sixteenth notes
+            case SIXTEENTH_TRIPLET -> stepDurationMs *= 1.0f / 6.0f; // Sixteenth note triplets
             case BEBOP -> stepDurationMs *= 1; // Same as normal for swing calculations
-            case FIVE_FOUR -> stepDurationMs *= 5.0f/4.0f; // 5/4 time
-            case SEVEN_EIGHT -> stepDurationMs *= 7.0f/8.0f; // 7/8 time
-            case NINE_EIGHT -> stepDurationMs *= 9.0f/8.0f; // 9/8 time
-            case TWELVE_EIGHT -> stepDurationMs *= 12.0f/8.0f; // 12/8 time
-            case SIX_FOUR -> stepDurationMs *= 6.0f/4.0f; // 6/4 time
+            case FIVE_FOUR -> stepDurationMs *= 5.0f / 4.0f; // 5/4 time
+            case SEVEN_EIGHT -> stepDurationMs *= 7.0f / 8.0f; // 7/8 time
+            case NINE_EIGHT -> stepDurationMs *= 9.0f / 8.0f; // 9/8 time
+            case TWELVE_EIGHT -> stepDurationMs *= 12.0f / 8.0f; // 12/8 time
+            case SIX_FOUR -> stepDurationMs *= 6.0f / 4.0f; // 6/4 time
         }
-        
+
         // Calculate swing percentage (convert from 50-75% to 0-25%)
         float swingFactor = (swingPercentage - 50) / 100f;
-        
+
         // Return swing amount in milliseconds
-        return (int)(stepDurationMs * swingFactor);
+        return (int) (stepDurationMs * swingFactor);
     }
 
     /**
@@ -577,13 +681,13 @@ public class DrumSequencer implements IBusListener {
         // CRITICAL FIX: Add safety check to prevent division by zero
         if (masterTempo <= 0) {
             logger.warn("Invalid masterTempo value ({}), using default of 96", masterTempo);
-            masterTempo = 96;  // Emergency fallback
+            masterTempo = 96; // Emergency fallback
         }
 
         double ticksPerBeat = timing.getTicksPerBeat();
         if (ticksPerBeat <= 0) {
             logger.warn("Invalid ticksPerBeat value ({}), using default of 24", ticksPerBeat);
-            ticksPerBeat = 24.0;  // Emergency fallback
+            ticksPerBeat = 24.0; // Emergency fallback
         }
 
         // Simplified calculation that works consistently
@@ -592,7 +696,7 @@ public class DrumSequencer implements IBusListener {
         // Add safety check for the final result
         if (result <= 0) {
             logger.warn("Calculated invalid ticksPerStep ({}), using default of 24", result);
-            result = 24;  // Emergency fallback for extreme values
+            result = 24; // Emergency fallback for extreme values
         }
 
         return result;
@@ -697,8 +801,7 @@ public class DrumSequencer implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                     this,
-                    drumIndex
-            );
+                    drumIndex);
         }
     }
 
@@ -719,8 +822,7 @@ public class DrumSequencer implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                     this,
-                    drumIndex
-            );
+                    drumIndex);
         }
     }
 
@@ -741,8 +843,7 @@ public class DrumSequencer implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                     this,
-                    drumIndex
-            );
+                    drumIndex);
         }
     }
 
@@ -763,8 +864,7 @@ public class DrumSequencer implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                     this,
-                    drumIndex
-            );
+                    drumIndex);
         }
     }
 
@@ -791,8 +891,7 @@ public class DrumSequencer implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                     this,
-                    drumIndex
-            );
+                    drumIndex);
         }
     }
 
@@ -913,8 +1012,7 @@ public class DrumSequencer implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.DRUM_PAD_SELECTED,
                     this,
-                    new DrumPadSelectionEvent(oldSelection, selectedPadIndex)
-            );
+                    new DrumPadSelectionEvent(oldSelection, selectedPadIndex));
         } else {
             logger.warn("Invalid drum pad index: {}", padIndex);
         }
@@ -937,7 +1035,7 @@ public class DrumSequencer implements IBusListener {
      * Set the Strike object for a specific drum pad
      *
      * @param drumIndex The index of the drum pad (0-15)
-     * @param strike The Strike object to associate with the drum pad
+     * @param strike    The Strike object to associate with the drum pad
      */
     public void setStrike(int drumIndex, Strike strike) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
@@ -1007,8 +1105,7 @@ public class DrumSequencer implements IBusListener {
         CommandBus.getInstance().publish(
                 Commands.DRUM_SEQUENCE_PARAMS_CHANGED,
                 this,
-                selectedPadIndex
-        );
+                selectedPadIndex);
 
         logger.info("Generated pattern for drum {}", selectedPadIndex);
     }
@@ -1042,60 +1139,59 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Push the pattern forward by one step for the selected drum pad, 
+     * Push the pattern forward by one step for the selected drum pad,
      * wrapping the last step to the first position
      */
     public void pushForward() {
         int drumIndex = selectedPadIndex;
         int length = patternLengths[drumIndex];
-        
+
         if (length <= 1) {
             return; // No need to rotate a single-step pattern
         }
-        
+
         // Rotate main pattern (trigger states)
         boolean lastTrigger = patterns[drumIndex][length - 1];
         for (int i = length - 1; i > 0; i--) {
             patterns[drumIndex][i] = patterns[drumIndex][i - 1];
         }
         patterns[drumIndex][0] = lastTrigger;
-        
+
         // Rotate step velocities
         int lastVelocity = stepVelocities[drumIndex][length - 1];
         for (int i = length - 1; i > 0; i--) {
             stepVelocities[drumIndex][i] = stepVelocities[drumIndex][i - 1];
         }
         stepVelocities[drumIndex][0] = lastVelocity;
-        
+
         // Rotate step decays
         int lastDecay = stepDecays[drumIndex][length - 1];
         for (int i = length - 1; i > 0; i--) {
             stepDecays[drumIndex][i] = stepDecays[drumIndex][i - 1];
         }
         stepDecays[drumIndex][0] = lastDecay;
-        
+
         // Rotate step probabilities
         int lastProbability = stepProbabilities[drumIndex][length - 1];
         for (int i = length - 1; i > 0; i--) {
             stepProbabilities[drumIndex][i] = stepProbabilities[drumIndex][i - 1];
         }
         stepProbabilities[drumIndex][0] = lastProbability;
-        
+
         // Rotate step nudges
         int lastNudge = stepNudges[drumIndex][length - 1];
         for (int i = length - 1; i > 0; i--) {
             stepNudges[drumIndex][i] = stepNudges[drumIndex][i - 1];
         }
         stepNudges[drumIndex][0] = lastNudge;
-        
+
         logger.info("Pushed pattern forward for drum {}", drumIndex);
-        
+
         // Notify UI of pattern change
         CommandBus.getInstance().publish(
-            Commands.DRUM_SEQUENCE_UPDATED,
-            this,
-            null
-        );
+                Commands.DRUM_SEQUENCE_UPDATED,
+                this,
+                null);
     }
 
     /**
@@ -1105,54 +1201,53 @@ public class DrumSequencer implements IBusListener {
     public void pullBackward() {
         int drumIndex = selectedPadIndex;
         int length = patternLengths[drumIndex];
-        
+
         if (length <= 1) {
             return; // No need to rotate a single-step pattern
         }
-        
+
         // Rotate main pattern (trigger states)
         boolean firstTrigger = patterns[drumIndex][0];
         for (int i = 0; i < length - 1; i++) {
             patterns[drumIndex][i] = patterns[drumIndex][i + 1];
         }
         patterns[drumIndex][length - 1] = firstTrigger;
-        
+
         // Rotate step velocities
         int firstVelocity = stepVelocities[drumIndex][0];
         for (int i = 0; i < length - 1; i++) {
             stepVelocities[drumIndex][i] = stepVelocities[drumIndex][i + 1];
         }
         stepVelocities[drumIndex][length - 1] = firstVelocity;
-        
+
         // Rotate step decays
         int firstDecay = stepDecays[drumIndex][0];
         for (int i = 0; i < length - 1; i++) {
             stepDecays[drumIndex][i] = stepDecays[drumIndex][i + 1];
         }
         stepDecays[drumIndex][length - 1] = firstDecay;
-        
+
         // Rotate step probabilities
         int firstProbability = stepProbabilities[drumIndex][0];
         for (int i = 0; i < length - 1; i++) {
             stepProbabilities[drumIndex][i] = stepProbabilities[drumIndex][i + 1];
         }
         stepProbabilities[drumIndex][length - 1] = firstProbability;
-        
+
         // Rotate step nudges
         int firstNudge = stepNudges[drumIndex][0];
         for (int i = 0; i < length - 1; i++) {
             stepNudges[drumIndex][i] = stepNudges[drumIndex][i + 1];
         }
         stepNudges[drumIndex][length - 1] = firstNudge;
-        
+
         logger.info("Pulled pattern backward for drum {}", drumIndex);
-        
+
         // Notify UI of pattern change
         CommandBus.getInstance().publish(
-            Commands.DRUM_SEQUENCE_UPDATED,
-            this,
-            null
-        );
+                Commands.DRUM_SEQUENCE_UPDATED,
+                this,
+                null);
     }
 
     /**
@@ -1197,7 +1292,7 @@ public class DrumSequencer implements IBusListener {
      * Play a drum note using the Strike for the specified drum pad
      *
      * @param drumIndex The drum pad index to play
-     * @param velocity The velocity to play the note with
+     * @param velocity  The velocity to play the note with
      */
     public void playDrumNote(int drumIndex, int velocity) {
         if (drumIndex < 0 || drumIndex >= DRUM_PAD_COUNT) {
@@ -1256,7 +1351,8 @@ public class DrumSequencer implements IBusListener {
                     int decay = stepDecays[drumIndex][stepIndex];
                     int nudge = stepNudges[drumIndex][stepIndex];
 
-                    // Apply probability - only play note if random value is below probability percentage
+                    // Apply probability - only play note if random value is below probability
+                    // percentage
                     if (Math.random() * 100 < probability) {
                         // Apply velocity scaling using the drum's overall velocity
                         int finalVelocity = (int) (velocity * (velocities[drumIndex] / 127.0));
@@ -1272,16 +1368,17 @@ public class DrumSequencer implements IBusListener {
                             // Apply nudge delay if specified
                             if (nudge > 0) {
                                 // Schedule delayed note using executor service
-                                java.util.concurrent.ScheduledExecutorService scheduler =
-                                        java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+                                java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors
+                                        .newSingleThreadScheduledExecutor();
 
                                 scheduler.schedule(() -> {
                                     // Trigger the note with specified parameters after delay
                                     player.noteOn(noteNumber, finalVelocity, decay);
 
                                     // Log for debugging
-                                    // logger.debug("Triggered delayed drum {}: step={}, nudge={}ms, vel={}, decay={}",
-                                    //         drumIndex, stepIndex, nudge, finalVelocity, decay);
+                                    // logger.debug("Triggered delayed drum {}: step={}, nudge={}ms, vel={},
+                                    // decay={}",
+                                    // drumIndex, stepIndex, nudge, finalVelocity, decay);
 
                                     // Shutdown the scheduler since we're done with it
                                     scheduler.shutdown();

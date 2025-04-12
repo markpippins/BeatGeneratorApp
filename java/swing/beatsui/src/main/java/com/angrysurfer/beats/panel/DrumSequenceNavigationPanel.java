@@ -135,8 +135,11 @@ public class DrumSequenceNavigationPanel extends JPanel {
             manager.loadSequence(sequenceId, sequencer);
 
             // Reset the sequencer to ensure proper step indicator state
-            sequencer.reset();
-
+            if (sequencer.isPlaying())
+                sequencer.reset(true);
+            else
+                sequencer.reset(false);
+                
             // Update UI
             updateSequenceIdDisplay();
 
