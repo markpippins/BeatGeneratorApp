@@ -3,13 +3,12 @@ package com.angrysurfer.beats.panel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Window;
-import java.awt.Dialog;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -62,6 +61,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[4];
     private PopupMixerPanel strikeMixerPanel;
+    private MuteButtonsPanel muteButtonsPanel;
 
     public MainPanel(StatusBar statusBar) {
         super(new BorderLayout());
@@ -117,7 +117,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         buttonPanel.add(createMetronomeToggleButton());
         // buttonPanel.add(createRestartButton());
 
+        // Create mute buttons toolbar early
         JPanel muteButtonsToolbar = createMuteButtonsToolbar();
+
+        // Add the mute buttons toolbar
         tabToolbar.add(muteButtonsToolbar);
         
         tabToolbar.add(Box.createHorizontalStrut(10));
@@ -126,6 +129,9 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabToolbar.add(Box.createVerticalGlue());
 
         tabbedPane.putClientProperty("JTabbedPane.trailingComponent", tabToolbar);
+
+        // At the end of the method, update the mute buttons with sequencers
+        updateMuteButtonSequencers();
     }
     
     private Component createDrumPanel() {
@@ -159,89 +165,27 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
     
     private JPanel createMuteButtonsToolbar() {
-        JPanel tabToolbar = new JPanel();
-        tabToolbar.setLayout(new BoxLayout(tabToolbar, BoxLayout.X_AXIS));
-        tabToolbar.setOpaque(false);
+        // Create the mute buttons panel
+        muteButtonsPanel = new MuteButtonsPanel();
         
-        tabToolbar.add(Box.createVerticalGlue());
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 0));
-        buttonPanel.setOpaque(false);
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 8));
-
-        for (int i = 0; i < 16; i++) {
-            JToggleButton muteButton = createMuteButton(i, true);
-            buttonPanel.add(muteButton);
-        }
-
-        buttonPanel.add(Box.createHorizontalStrut(8));
-
-        for (int i = 0; i < 4; i++) {
-            JToggleButton muteButton = createMuteButton(i, false);
-            buttonPanel.add(muteButton);
-        }
-
-        tabToolbar.add(buttonPanel);
-        tabToolbar.add(Box.createVerticalGlue());
-
-        return tabToolbar;
+        // We'll update the sequencers after they're created
+        return muteButtonsPanel;
     }
-    
-    private JToggleButton createMuteButton(int index, boolean isDrum) {
-        JToggleButton muteButton = new JToggleButton();
 
-        Dimension size = new Dimension(16, 16);
-        muteButton.setPreferredSize(size);
-        muteButton.setMinimumSize(size);
-        muteButton.setMaximumSize(size);
-
-        muteButton.setText("");
-        muteButton.setToolTipText("Mute " + (isDrum ? "Drum " : "Synth ") + (index + 1));
-        muteButton.putClientProperty("JButton.squareSize", true);
-
-        Color defaultColor = isDrum
-                ? ColorUtils.fadedOrange.darker()
-                : ColorUtils.coolBlue.darker();
-        Color activeColor = isDrum
-                ? ColorUtils.fadedOrange
-                : ColorUtils.coolBlue;
-
-        muteButton.setBackground(defaultColor);
-
-        muteButton.addActionListener(e -> {
-            boolean isMuted = muteButton.isSelected();
-            muteButton.setBackground(isMuted ? activeColor : defaultColor);
-
-            if (isDrum) {
-                if (drumSequencerPanel != null) {
-                    toggleDrumMute(index, isMuted);
-                }
-            } else {
-                toggleMelodicMute(index, isMuted);
-            }
-        });
-
-        return muteButton;
-    }
-    
-    private void toggleDrumMute(int drumIndex, boolean muted) {
-        logger.info("{}muting drum {}", muted ? "" : "Un", drumIndex + 1);
+    private void updateMuteButtonSequencers() {
+        // Set the drum sequencer
         if (drumSequencerPanel != null) {
-            DrumSequencer sequencer = drumSequencerPanel.getSequencer();
-            if (sequencer != null) {
-                sequencer.setVelocity(drumIndex, muted ? 0 : 100);
+            muteButtonsPanel.setDrumSequencer(drumSequencerPanel.getSequencer());
+        }
+        
+        // Set the melodic sequencers
+        List<MelodicSequencer> melodicSequencers = new ArrayList<>();
+        for (MelodicSequencerPanel panel : melodicPanels) {
+            if (panel != null) {
+                melodicSequencers.add(panel.getSequencer());
             }
         }
-    }
-    
-    private void toggleMelodicMute(int seqIndex, boolean muted) {
-        logger.info("{}muting melodic sequencer {}", muted ? "" : "Un", seqIndex + 1);
-        if (melodicPanels[seqIndex] != null) {
-            MelodicSequencer sequencer = melodicPanels[seqIndex].getSequencer();
-            if (sequencer != null) {
-                sequencer.setLevel(muted ? 0 : 100);
-            }
-        }
+        muteButtonsPanel.setMelodicSequencers(melodicSequencers);
     }
     
     public void playNote(int note, int velocity, int durationMs) {

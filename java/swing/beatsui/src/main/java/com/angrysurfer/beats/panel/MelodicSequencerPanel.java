@@ -21,6 +21,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
@@ -74,6 +75,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private JComboBox<String> directionCombo;
     private JComboBox<String> rangeCombo;
     private JComboBox<TimingDivision> timingCombo;
+    private JToggleButton latchToggleButton;
+    private JSpinner lastStepSpinner;
 
     private boolean listenersEnabled = true;
     private boolean updatingUI = false;
@@ -162,7 +165,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Create spinner model with range 1-16, default 16
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 16, 1);
-        JSpinner lastStepSpinner = new JSpinner(lastStepModel);
+        lastStepSpinner = new JSpinner(lastStepModel);  // Use class field instead of local variable
         lastStepSpinner.setPreferredSize(new Dimension(50, 25));
         lastStepSpinner.addChangeListener(e -> {
             int lastStep = (Integer) lastStepSpinner.getValue();
@@ -267,7 +270,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         });
 
         // Loop checkbox
-        loopCheckbox = new JCheckBox("🔁", true); // Default to looping enabled
+        loopCheckbox = new JCheckBox("🔁", true);
         loopCheckbox.addActionListener(e -> {
             sequencer.setLooping(loopCheckbox.isSelected());
         });
@@ -325,6 +328,14 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
             // IMPORTANT: Update UI to match generated pattern
             syncUIWithSequencer();
+        });
+
+        // Add latch toggle button
+        latchToggleButton = new JToggleButton("Latch", false);
+        latchToggleButton.setToolTipText("Generate new pattern each cycle");
+        latchToggleButton.addActionListener(e -> {
+            sequencer.setLatchEnabled(latchToggleButton.isSelected());
+            logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
         });
 
         // Add Preset selection combo box before Edit Sound button
@@ -435,6 +446,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         panel.add(rangePanel);       // Add Range combo before the buttons
         panel.add(clearButton);      // Add Clear button
         panel.add(generateButton);   // Add Generate button
+        panel.add(latchToggleButton); // Add Latch toggle button
         panel.add(presetPanel);      // Add preset panel before Edit Sound button
         panel.add(editPlayerButton); // Add Edit Player button
         panel.add(rotationPanel);    // Add rotation panel
@@ -785,70 +797,80 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Update the syncUIWithSequencer method to handle scale settings
+     * Synchronize all UI elements with the current sequencer state
      */
     private void syncUIWithSequencer() {
         updatingUI = true;
         try {
-            // Update existing trigger buttons
-            for (int i = 0; i < Math.min(triggerButtons.size(), sequencer.getActiveSteps().size()); i++) {
-                TriggerButton button = triggerButtons.get(i);
-                button.setSelected(sequencer.getActiveSteps().get(i));
+            // Update trigger buttons
+            List<Boolean> activeSteps = sequencer.getActiveSteps();
+            for (int i = 0; i < Math.min(triggerButtons.size(), activeSteps.size()); i++) {
+                triggerButtons.get(i).setSelected(activeSteps.get(i));
+                triggerButtons.get(i).repaint();
             }
-
-            // Update existing dials
-            for (int i = 0; i < Math.min(noteDials.size(), sequencer.getNoteValues().size()); i++) {
-                noteDials.get(i).setValue(sequencer.getNoteValues().get(i), true);
+            
+            // Update note dials
+            List<Integer> noteValues = sequencer.getNoteValues();
+            for (int i = 0; i < Math.min(noteDials.size(), noteValues.size()); i++) {
+                noteDials.get(i).setValue(noteValues.get(i));
+                noteDials.get(i).repaint();
             }
-
-            // Update existing velocity dials with force repaint
-            for (int i = 0; i < Math.min(velocityDials.size(), sequencer.getVelocityValues().size()); i++) {
-                velocityDials.get(i).setValue(sequencer.getVelocityValues().get(i));
-                velocityDials.get(i).repaint();  // Force repaint
+            
+            // Update velocity dials
+            List<Integer> velocityValues = sequencer.getVelocityValues();
+            for (int i = 0; i < Math.min(velocityDials.size(), velocityValues.size()); i++) {
+                velocityDials.get(i).setValue(velocityValues.get(i));
+                velocityDials.get(i).repaint();
             }
-
-            // Update existing gate dials with force repaint
-            for (int i = 0; i < Math.min(gateDials.size(), sequencer.getGateValues().size()); i++) {
-                gateDials.get(i).setValue(sequencer.getGateValues().get(i));
-                gateDials.get(i).repaint();  // Force repaint
+            
+            // Update gate dials
+            List<Integer> gateValues = sequencer.getGateValues();
+            for (int i = 0; i < Math.min(gateDials.size(), gateValues.size()); i++) {
+                gateDials.get(i).setValue(gateValues.get(i));
+                gateDials.get(i).repaint();
             }
-
+            
             // Update probability dials
-            for (int i = 0; i < Math.min(probabilityDials.size(), sequencer.getProbabilityValues().size()); i++) {
-                probabilityDials.get(i).setValue(sequencer.getProbabilityValue(i));
+            List<Integer> probabilityValues = sequencer.getProbabilityValues();
+            for (int i = 0; i < Math.min(probabilityDials.size(), probabilityValues.size()); i++) {
+                probabilityDials.get(i).setValue(probabilityValues.get(i));
                 probabilityDials.get(i).repaint();
             }
-
+            
             // Update nudge dials
-            for (int i = 0; i < Math.min(nudgeDials.size(), sequencer.getNudgeValues().size()); i++) {
-                nudgeDials.get(i).setValue(sequencer.getNudgeValue(i));
+            List<Integer> nudgeValues = sequencer.getNudgeValues();
+            for (int i = 0; i < Math.min(nudgeDials.size(), nudgeValues.size()); i++) {
+                nudgeDials.get(i).setValue(nudgeValues.get(i));
                 nudgeDials.get(i).repaint();
             }
-
-            // Update other UI controls
-            loopCheckbox.setSelected(sequencer.isLooping());
-
-            // Update direction combo
-            int dirIndex = 0;
-            switch (sequencer.getDirection()) {
-                case FORWARD ->
-                    dirIndex = 0;
-                case BACKWARD ->
-                    dirIndex = 1;
-                case BOUNCE ->
-                    dirIndex = 2;
-                case RANDOM ->
-                    dirIndex = 3;
+            
+            // Update parameter controls
+            if (loopCheckbox != null) {
+                loopCheckbox.setSelected(sequencer.isLooping());
             }
-            directionCombo.setSelectedIndex(dirIndex);
-
-            // Update timing division combo
-            timingCombo.setSelectedItem(sequencer.getTimingDivision());
-
-            // Update scale and root note combos
-            rootNoteCombo.setSelectedItem(sequencer.getSelectedRootNote());
-            scaleCombo.setSelectedItem(sequencer.getSelectedScale());
-
+            
+            if (lastStepSpinner != null) {
+                lastStepSpinner.setValue(sequencer.getPatternLength());
+            }
+            
+            if (directionCombo != null) {
+                switch (sequencer.getDirection()) {
+                    case FORWARD -> directionCombo.setSelectedIndex(0);
+                    case BACKWARD -> directionCombo.setSelectedIndex(1);
+                    case BOUNCE -> directionCombo.setSelectedIndex(2);
+                    case RANDOM -> directionCombo.setSelectedIndex(3);
+                }
+            }
+            
+            if (latchToggleButton != null) {
+                latchToggleButton.setSelected(sequencer.isLatchEnabled());
+            }
+            
+            // Force a revalidate and repaint of the entire panel
+            revalidate();
+            repaint();
+            
+            logger.debug("UI synchronized with sequencer state");
         } finally {
             updatingUI = false;
         }
@@ -877,6 +899,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
      */
     @Override
     public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) {
+            return;
+        }
+
         switch (action.getCommand()) {
             case Commands.ROOT_NOTE_SELECTED -> {
                 if (action.getData() instanceof String rootNote) {
@@ -917,6 +943,29 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                             updatingUI = wasUpdating;
                         }
                     }
+                }
+            }
+
+            case Commands.PATTERN_UPDATED -> {
+                // Only handle events from our sequencer to avoid loops
+                if (action.getSender() == sequencer) {
+                    logger.info("Received PATTERN_UPDATED event, refreshing UI");
+
+                    // Update UI on EDT
+                    SwingUtilities.invokeLater(() -> {
+                        // Disable listeners while updating UI
+                        listenersEnabled = false;
+                        try {
+                            // Completely refresh UI from sequencer state
+                            syncUIWithSequencer();
+
+                            // Repaint all components
+                            repaint();
+                        } finally {
+                            // Re-enable listeners
+                            listenersEnabled = true;
+                        }
+                    });
                 }
             }
         }
