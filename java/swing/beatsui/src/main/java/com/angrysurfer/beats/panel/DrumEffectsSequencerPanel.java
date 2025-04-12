@@ -185,8 +185,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // Create dial - first one is always a NoteSelectionDial
             Dial dial = new Dial();
 
-            dial.setGradientStartColor(getKnobColor(i).brighter());
-            dial.setGradientEndColor(getKnobColor(i).darker());
+            // dial.setGradientStartColor(getKnobColor(i).brighter());
+            // dial.setGradientEndColor(getKnobColor(i).darker());
             // dial.setKnobColor(getKnobColor(i));
             
             // Configure each dial based on its type
