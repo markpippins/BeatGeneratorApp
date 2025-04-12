@@ -290,5 +290,7 @@ public class Commands {
     public static final String TRANSPORT_RESET = "TRANSPORT_RESET";
     public static final String DRUM_SEQUENCE_FIRST = "DRUM_SEQUENCE_FIRST";
     public static final String DRUM_SEQUENCE_LAST = "DRUM_SEQUENCE_LAST";
+    public static final String DRUM_NOTE_TRIGGERED = "DRUM_NOTE_TRIGGERED";
+    public static final String MELODIC_NOTE_TRIGGERED = "MELODIC_NOTE_TRIGGERED";
 }
 

@@ -47,6 +47,11 @@ import com.angrysurfer.core.service.InternalSynthManager;
 public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MainPanel.class.getName());
     
+    static {
+        // Enable trace logging for CommandBus events
+        System.setProperty("org.slf4j.simpleLogger.log.com.angrysurfer.core.api.CommandBus", "debug");
+    }
+    
     private JTabbedPane tabbedPane;
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
@@ -138,6 +143,11 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {
             logger.debug("Drum note event received: note={}, velocity={}", 
                     noteEvent.getNote(), noteEvent.getVelocity());
+            
+            // Publish to CommandBus so MuteButtonsPanel can respond
+            // Subtract 36 to convert MIDI note to drum index (36=kick, etc.)
+            int drumIndex = noteEvent.getNote() - 36;
+            CommandBus.getInstance().publish(Commands.DRUM_NOTE_TRIGGERED, drumSequencerPanel.getSequencer(), drumIndex);
         });
         return drumSequencerPanel;
     }
@@ -153,6 +163,20 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         return new MelodicSequencerPanel(channel, noteEvent -> {
             logger.debug("Note event received from sequencer: note={}, velocity={}, duration={}",
                     noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
+            
+            // Get the panel's sequencer to use as the event source
+            MelodicSequencer sequencer = null;
+            for (MelodicSequencerPanel panel : melodicPanels) {
+                if (panel != null && panel.getSequencer().getChannel() == channel) {
+                    sequencer = panel.getSequencer();
+                    break;
+                }
+            }
+            
+            // Publish to CommandBus so MuteButtonsPanel can respond
+            if (sequencer != null) {
+                CommandBus.getInstance().publish(Commands.MELODIC_NOTE_TRIGGERED, sequencer, noteEvent);
+            }
         });
     }
     
@@ -175,14 +199,42 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private void updateMuteButtonSequencers() {
         // Set the drum sequencer
         if (drumSequencerPanel != null) {
-            muteButtonsPanel.setDrumSequencer(drumSequencerPanel.getSequencer());
+            DrumSequencer drumSeq = drumSequencerPanel.getSequencer();
+            muteButtonsPanel.setDrumSequencer(drumSeq);
+            
+            // *** THIS IS THE CRITICAL PART - Set up drum note event publisher ***
+            logger.info("Setting up drum note event publisher");
+            drumSeq.setNoteEventPublisher(noteEvent -> {
+                int drumIndex = noteEvent.getNote() - 36;  // Convert MIDI note to drum index
+                logger.debug("Publishing drum note event: index={}, velocity={}", 
+                         drumIndex, noteEvent.getVelocity());
+                CommandBus.getInstance().publish(
+                    Commands.DRUM_NOTE_TRIGGERED, 
+                    drumSeq, 
+                    drumIndex
+                );
+            });
         }
         
         // Set the melodic sequencers
         List<MelodicSequencer> melodicSequencers = new ArrayList<>();
         for (MelodicSequencerPanel panel : melodicPanels) {
             if (panel != null) {
-                melodicSequencers.add(panel.getSequencer());
+                MelodicSequencer seq = panel.getSequencer();
+                melodicSequencers.add(seq);
+                
+                // *** THIS IS ALSO CRITICAL - Set up melodic note event publisher ***
+                logger.info("Setting up melodic note event publisher for channel {}", 
+                         seq.getChannel());
+                seq.setNoteEventPublisher(noteEvent -> {
+                    logger.debug("Publishing melodic note event: note={}, velocity={}", 
+                             noteEvent.getNote(), noteEvent.getVelocity());
+                    CommandBus.getInstance().publish(
+                        Commands.MELODIC_NOTE_TRIGGERED, 
+                        seq, 
+                        noteEvent
+                    );
+                });
             }
         }
         muteButtonsPanel.setMelodicSequencers(melodicSequencers);
