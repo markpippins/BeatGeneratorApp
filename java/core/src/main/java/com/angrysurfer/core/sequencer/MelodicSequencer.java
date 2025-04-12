@@ -75,6 +75,9 @@ public class MelodicSequencer implements IBusListener {
     private Integer id;
     private Long melodicSequenceId = 0L;
 
+    // Add this field to the class
+    private boolean latchEnabled = false;
+
     /**
      * Creates a new melodic sequencer
      */
@@ -356,54 +359,110 @@ public class MelodicSequencer implements IBusListener {
      * Calculate the next step based on the current direction
      */
     private void calculateNextStep() {
+        int oldStep = stepCounter;
+        
         switch (direction) {
             case FORWARD -> {
                 stepCounter++;
+                
+                // Check if we've reached the end of the pattern
                 if (stepCounter >= patternLength) {
                     stepCounter = 0;
+                    
+                    // Generate a new pattern if latch is enabled
+                    if (latchEnabled) {
+                        // Get the current octave range setting (default to 2 if unset)
+                        int octaveRange = 2;
+                        
+                        // Use a consistent density (adjust as needed)
+                        int density = 50;
+                        
+                        // Generate a new pattern
+                        generatePattern(octaveRange, density);
+                        
+                        // Notify UI of pattern change
+                        CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
+                        
+                        logger.info("Latch mode: Generated new pattern at cycle end");
+                    }
+                    
                     if (!looping) {
                         isPlaying = false;
                     }
                 }
             }
+            
+            // Handle other direction cases similarly
             case BACKWARD -> {
                 stepCounter--;
+                
                 if (stepCounter < 0) {
                     stepCounter = patternLength - 1;
+                    
+                    // Generate a new pattern if latch is enabled
+                    if (latchEnabled) {
+                        int octaveRange = 2;
+                        int density = 50;
+                        generatePattern(octaveRange, density);
+                        CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
+                        logger.info("Latch mode: Generated new pattern at cycle end");
+                    }
+                    
                     if (!looping) {
                         isPlaying = false;
                     }
                 }
             }
+            
             case BOUNCE -> {
+                // Update step counter according to bounce direction
                 stepCounter += bounceDirection;
-
-                if (stepCounter >= patternLength) {
-                    stepCounter = patternLength - 2;
-                    bounceDirection = -1;
-                } else if (stepCounter < 0) {
-                    stepCounter = 1;
-                    bounceDirection = 1;
-                }
-
-                if (stepCounter == 0 || stepCounter == patternLength - 1) {
+                
+                // Check if we need to change bounce direction
+                if (stepCounter <= 0 || stepCounter >= patternLength - 1) {
+                    bounceDirection *= -1;
+                    
+                    // At pattern end, generate new pattern if latch enabled
+                    if (stepCounter <= 0 || stepCounter >= patternLength - 1) {
+                        if (latchEnabled) {
+                            int octaveRange = 2;
+                            int density = 50;
+                            generatePattern(octaveRange, density);
+                            CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
+                            logger.info("Latch mode: Generated new pattern at cycle end");
+                        }
+                    }
+                    
                     if (!looping) {
                         isPlaying = false;
                     }
                 }
             }
+            
             case RANDOM -> {
-                // Remember old step
-                int oldStep = stepCounter;
-
+                // Random doesn't have a clear cycle end, so we'll consider
+                // hitting step 0 as the "cycle end" for latch purposes
+                int priorStep = stepCounter;
+                
                 // Generate random step
                 stepCounter = (int) (Math.random() * patternLength);
-
-                // Ensure we don't get the same step twice
-                if (stepCounter == oldStep && patternLength > 1) {
-                    stepCounter = (stepCounter + 1) % patternLength;
+                
+                // If we randomly hit step 0 and we weren't at step 0 before
+                if (stepCounter == 0 && priorStep != 0) {
+                    if (latchEnabled) {
+                        int octaveRange = 2;
+                        int density = 50;
+                        generatePattern(octaveRange, density);
+                        CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
+                        logger.info("Latch mode: Generated new pattern at random cycle point");
+                    }
                 }
             }
+        }
+        
+        // Notify step listeners about the step change
+        if (stepUpdateListener != null) {
+            stepUpdateListener.accept(new StepUpdateEvent(oldStep, stepCounter));
         }
     }
 
@@ -1219,5 +1278,24 @@ public class MelodicSequencer implements IBusListener {
         
         // Notify listeners that the pattern has been updated
         CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
+    }
+
+    /**
+     * Sets whether latch mode is enabled.
+     * When enabled, a new pattern is generated each cycle.
+     * 
+     * @param enabled True to enable latch mode, false to disable
+     */
+    public void setLatchEnabled(boolean enabled) {
+        this.latchEnabled = enabled;
+        logger.info("Latch mode set to: {}", enabled);
+    }
+
+    /**
+     * Checks if latch mode is enabled
+     * @return True if latch mode is enabled
+     */
+    public boolean isLatchEnabled() {
+        return latchEnabled;
     }
 }
