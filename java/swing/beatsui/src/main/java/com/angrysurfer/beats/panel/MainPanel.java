@@ -8,7 +8,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
-import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -32,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.StatusBar;
-import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -40,9 +38,9 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
 import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.service.SessionManager;
 
 public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MainPanel.class.getName());
@@ -55,7 +53,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private JTabbedPane tabbedPane;
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
-    private boolean isPlaying = false;
+    
     private int latencyCompensation = 20;
     private int lookAheadMs = 40;
     private boolean useAheadScheduling = true;
@@ -256,11 +254,11 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         switch (action.getCommand()) {
             case Commands.TRANSPORT_START -> {
-                isPlaying = true;
+                // isPlaying = true;
             }
 
             case Commands.TRANSPORT_STOP -> {
-                isPlaying = false;
+                // isPlaying = false;
             }
 
             case Commands.SESSION_UPDATED -> {
@@ -287,6 +285,23 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                     int step = stepUpdateEvent.getNewStep();
                     // Handle step update if needed
                 }
+            }
+
+            case Commands.TOGGLE_TRANSPORT -> {
+                // Instead of manipulating sequencer directly, publish appropriate commands
+                // logger.info("Toggling transport state (current state: {})", isPlaying ? "playing" : "stopped");
+                
+                if (SessionManager.getInstance().getActiveSession().isRunning()) {
+                    // If currently playing, publish stop command
+                    logger.info("Publishing TRANSPORT_STOP command");
+                    CommandBus.getInstance().publish(Commands.TRANSPORT_STOP, this);
+                } else {
+                    // If currently stopped, publish start command
+                    logger.info("Publishing TRANSPORT_START command");
+                    CommandBus.getInstance().publish(Commands.TRANSPORT_START, this);
+                }
+                
+                // The state will be updated when we receive TRANSPORT_STARTED or TRANSPORT_STOPPED events
             }
         }
     }

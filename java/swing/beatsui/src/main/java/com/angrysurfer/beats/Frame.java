@@ -189,6 +189,25 @@ public class Frame extends JFrame implements AutoCloseable {
                     return false;
                 }
                 
+                // Check for modal dialogs - don't handle keys when dialogs are showing
+                if (isModalDialogShowing()) {
+                    return false;
+                }
+                
+                // Handle spacebar for transport control (add this block)
+                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    // Don't intercept space if typing in a text field
+                    if (e.getComponent() instanceof javax.swing.text.JTextComponent) {
+                        return false;
+                    }
+                    
+                    logger.info("Spacebar pressed - Toggling transport");
+                    CommandBus.getInstance().publish(Commands.TOGGLE_TRANSPORT, this);
+                    e.consume();
+                    return true;
+                }
+                
+                // Existing key handling for piano keys
                 char keyChar = Character.toLowerCase(e.getKeyChar());
                 boolean keyMapped = keyNoteMap.containsKey(keyChar);
                 

@@ -292,5 +292,6 @@ public class Commands {
     public static final String DRUM_SEQUENCE_LAST = "DRUM_SEQUENCE_LAST";
     public static final String DRUM_NOTE_TRIGGERED = "DRUM_NOTE_TRIGGERED";
     public static final String MELODIC_NOTE_TRIGGERED = "MELODIC_NOTE_TRIGGERED";
+    public static final String TOGGLE_TRANSPORT = "TOGGLE_TRANSPORT";
 }
 
