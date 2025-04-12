@@ -151,7 +151,7 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
                                 // This created an infinite recursion if getDurationMs() called itself
                                 
                                 // Use a fixed duration if unsure (in milliseconds)
-                                int durationMs = noteEvent.getDurationMs(); 
+                                int durationMs = (int) noteEvent.getDurationMs() / 4; 
                                 
                                 // Try to use note velocity for visual intensity
                                 int velocity = noteEvent.getVelocity();
@@ -177,6 +177,7 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
     private void flashButton(JToggleButton button, boolean isDrum, int velocity, int durationMs) {
         // Safety check
         if (button == null) return;
+        
         
         // Generate hash code based on button identity
         final int buttonId = System.identityHashCode(button);
