@@ -115,6 +115,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Add sequence parameters panel at the top
         paramsPanel.add(createSequenceParametersPanel(), BorderLayout.NORTH);
+        paramsPanel.add(new MelodicSequenceNavigationPanel(sequencer), BorderLayout.CENTER);
 
         // Create panel for the 16 columns with reduced spacing
         JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0)); // Reduced from 5 to 2
@@ -781,7 +782,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     private String getKnobLabel(int i) {
-        return i == 0 ? "Velocity" : i == 1 ? "Gate" : i == 2 ? "Note" : i == 3 ? "Probability" : i == 4 ? "Nudge" : "Unknown";
+        return i == 0 ? "Velocity" : i == 1 ? "Gate" : i == 2 ? "Probability" : i == 3 ? "Nudge" : "Unknown";
     }
 
     /**

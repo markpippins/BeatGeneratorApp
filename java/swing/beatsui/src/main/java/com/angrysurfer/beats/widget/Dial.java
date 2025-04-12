@@ -121,6 +121,7 @@ public class Dial extends JComponent {
                 setValue(newValue, true);
             }
         });
+        
     }
 
     public Dial(String command) {

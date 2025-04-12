@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.beats.widget.ToggleDialPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -44,21 +45,21 @@ import com.angrysurfer.core.service.SessionManager;
 
 public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MainPanel.class.getName());
-    
+
     static {
         // Enable trace logging for CommandBus events
         System.setProperty("org.slf4j.simpleLogger.log.com.angrysurfer.core.api.CommandBus", "debug");
     }
-    
+
     private JTabbedPane tabbedPane;
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
-    
+
     private int latencyCompensation = 20;
     private int lookAheadMs = 40;
     private boolean useAheadScheduling = true;
     private int activeMidiChannel = 15;
-    
+
     private DrumSequencerPanel drumSequencerPanel;
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
     private InternalSynthControlPanel internalSynthControlPanel;
@@ -69,18 +70,18 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     public MainPanel(StatusBar statusBar) {
         super(new BorderLayout());
         setBorder(new EmptyBorder(2, 5, 2, 5));
-        
+
         CommandBus.getInstance().register(this);
-        
+
         setupTabbedPane(statusBar);
         add(tabbedPane, BorderLayout.CENTER);
     }
 
     private void setupTabbedPane(StatusBar statusBar) {
         tabbedPane = new JTabbedPane();
-        
+
         internalSynthControlPanel = new InternalSynthControlPanel();
-        
+
         for (int i = 0; i < melodicPanels.length; i++) {
             melodicPanels[i] = createMelodicSequencerPanel(i + 2);
         }
@@ -94,12 +95,12 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Poly Sequencer", createChordSequencerPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
-        
+
         tabbedPane.addTab("Players", new SessionPanel());
         tabbedPane.addTab("Instruments", new InstrumentsPanel());
         tabbedPane.addTab("Launch", new LaunchPanel());
         tabbedPane.addTab("System", new SystemsPanel());
-        
+
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
 
         JPanel tabToolbar = new JPanel();
@@ -125,7 +126,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // Add the mute buttons toolbar
         add(muteButtonsToolbar, BorderLayout.NORTH);
-        
+
         tabToolbar.add(Box.createHorizontalStrut(10));
 
         tabToolbar.add(buttonPanel);
@@ -136,32 +137,33 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         // At the end of the method, update the mute buttons with sequencers
         updateMuteButtonSequencers();
     }
-    
+
     private Component createDrumPanel() {
         drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {
-            logger.debug("Drum note event received: note={}, velocity={}", 
+            logger.debug("Drum note event received: note={}, velocity={}",
                     noteEvent.getNote(), noteEvent.getVelocity());
-            
+
             // Publish to CommandBus so MuteButtonsPanel can respond
             // Subtract 36 to convert MIDI note to drum index (36=kick, etc.)
             int drumIndex = noteEvent.getNote() - 36;
-            CommandBus.getInstance().publish(Commands.DRUM_NOTE_TRIGGERED, drumSequencerPanel.getSequencer(), drumIndex);
+            CommandBus.getInstance().publish(Commands.DRUM_NOTE_TRIGGERED, drumSequencerPanel.getSequencer(),
+                    drumIndex);
         });
         return drumSequencerPanel;
     }
-    
+
     private Component createDrumEffectsPanel() {
         drumEffectsSequencerPanel = new DrumEffectsSequencerPanel(noteEvent -> {
             // No-op for now
         });
         return drumEffectsSequencerPanel;
     }
-    
+
     private MelodicSequencerPanel createMelodicSequencerPanel(int channel) {
         return new MelodicSequencerPanel(channel, noteEvent -> {
             logger.debug("Note event received from sequencer: note={}, velocity={}, duration={}",
                     noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
-            
+
             // Get the panel's sequencer to use as the event source
             MelodicSequencer sequencer = null;
             for (MelodicSequencerPanel panel : melodicPanels) {
@@ -170,26 +172,31 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                     break;
                 }
             }
-            
+
             // Publish to CommandBus so MuteButtonsPanel can respond
             if (sequencer != null) {
                 CommandBus.getInstance().publish(Commands.MELODIC_NOTE_TRIGGERED, sequencer, noteEvent);
             }
         });
     }
-    
+
     private Component createChordSequencerPanel() {
-        return new JPanel();
+        JPanel chordSequencerPanel = new JPanel(new FlowLayout());
+        ToggleDialPanel panel = new ToggleDialPanel();
+        panel.setPreferredSize(new Dimension(80, 90));
+        panel.setMaximumSize(new Dimension(80, 90));
+        chordSequencerPanel.add(panel);
+        return chordSequencerPanel;
     }
-    
+
     private Component createMixerPanel() {
         return new MixerPanel(InternalSynthManager.getInstance().getSynthesizer());
     }
-    
+
     private JPanel createMuteButtonsToolbar() {
         // Create the mute buttons panel
         muteButtonsPanel = new MuteButtonsPanel();
-        
+
         // We'll update the sequencers after they're created
         return muteButtonsPanel;
     }
@@ -199,53 +206,51 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         if (drumSequencerPanel != null) {
             DrumSequencer drumSeq = drumSequencerPanel.getSequencer();
             muteButtonsPanel.setDrumSequencer(drumSeq);
-            
+
             // *** THIS IS THE CRITICAL PART - Set up drum note event publisher ***
             logger.info("Setting up drum note event publisher");
             drumSeq.setNoteEventPublisher(noteEvent -> {
-                int drumIndex = noteEvent.getNote() - 36;  // Convert MIDI note to drum index
-                logger.debug("Publishing drum note event: index={}, velocity={}", 
-                         drumIndex, noteEvent.getVelocity());
+                int drumIndex = noteEvent.getNote() - 36; // Convert MIDI note to drum index
+                logger.debug("Publishing drum note event: index={}, velocity={}",
+                        drumIndex, noteEvent.getVelocity());
                 CommandBus.getInstance().publish(
-                    Commands.DRUM_NOTE_TRIGGERED, 
-                    drumSeq, 
-                    drumIndex
-                );
+                        Commands.DRUM_NOTE_TRIGGERED,
+                        drumSeq,
+                        drumIndex);
             });
         }
-        
+
         // Set the melodic sequencers
         List<MelodicSequencer> melodicSequencers = new ArrayList<>();
         for (MelodicSequencerPanel panel : melodicPanels) {
             if (panel != null) {
                 MelodicSequencer seq = panel.getSequencer();
                 melodicSequencers.add(seq);
-                
+
                 // *** THIS IS ALSO CRITICAL - Set up melodic note event publisher ***
-                logger.info("Setting up melodic note event publisher for channel {}", 
-                         seq.getChannel());
+                logger.info("Setting up melodic note event publisher for channel {}",
+                        seq.getChannel());
                 seq.setNoteEventPublisher(noteEvent -> {
-                    logger.debug("Publishing melodic note event: note={}, velocity={}", 
-                             noteEvent.getNote(), noteEvent.getVelocity());
+                    logger.debug("Publishing melodic note event: note={}, velocity={}",
+                            noteEvent.getNote(), noteEvent.getVelocity());
                     CommandBus.getInstance().publish(
-                        Commands.MELODIC_NOTE_TRIGGERED, 
-                        seq, 
-                        noteEvent
-                    );
+                            Commands.MELODIC_NOTE_TRIGGERED,
+                            seq,
+                            noteEvent);
                 });
             }
         }
         muteButtonsPanel.setMelodicSequencers(melodicSequencers);
     }
-    
+
     public void playNote(int note, int velocity, int durationMs) {
         InternalSynthManager.getInstance().playNote(note, velocity, durationMs, activeMidiChannel);
     }
-    
+
     public void playDrumNote(int note, int velocity) {
         InternalSynthManager.getInstance().playDrumNote(note, velocity);
     }
-    
+
     @Override
     public void onAction(Command action) {
         if (action.getCommand() == null) {
@@ -289,8 +294,9 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
             case Commands.TOGGLE_TRANSPORT -> {
                 // Instead of manipulating sequencer directly, publish appropriate commands
-                // logger.info("Toggling transport state (current state: {})", isPlaying ? "playing" : "stopped");
-                
+                // logger.info("Toggling transport state (current state: {})", isPlaying ?
+                // "playing" : "stopped");
+
                 if (SessionManager.getInstance().getActiveSession().isRunning()) {
                     // If currently playing, publish stop command
                     logger.info("Publishing TRANSPORT_STOP command");
@@ -300,8 +306,9 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                     logger.info("Publishing TRANSPORT_START command");
                     CommandBus.getInstance().publish(Commands.TRANSPORT_START, this);
                 }
-                
-                // The state will be updated when we receive TRANSPORT_STARTED or TRANSPORT_STOPPED events
+
+                // The state will be updated when we receive TRANSPORT_STARTED or
+                // TRANSPORT_STOPPED events
             }
         }
     }
@@ -320,13 +327,14 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         metronomeButton.setVerticalAlignment(SwingConstants.CENTER);
         metronomeButton.setMargin(new Insets(0, 0, 0, 0));
         metronomeButton.setToolTipText("Toggle Metronome");
-        
+
         metronomeButton.addActionListener(e -> {
             boolean isSelected = metronomeButton.isSelected();
             logger.info("Metronome toggled: " + (isSelected ? "ON" : "OFF"));
             CommandBus.getInstance().publish(isSelected ? Commands.METRONOME_START : Commands.METRONOME_STOP, this);
             // metronomeButton.setText(isSelected ? "⏱" : "⏱");
-            // metronomeButton.setBackground(isSelected ? ColorUtils.mutedOlive : ColorUtils.mutedRed);
+            // metronomeButton.setBackground(isSelected ? ColorUtils.mutedOlive :
+            // ColorUtils.mutedRed);
         });
 
         CommandBus.getInstance().register(new IBusListener() {
@@ -336,23 +344,23 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                     return;
 
                 switch (action.getCommand()) {
-                case Commands.METRONOME_STARTED:
-                    SwingUtilities.invokeLater(() -> {
-                        metronomeButton.setSelected(true);
-                        metronomeButton.setBackground(Color.GREEN);
-                        metronomeButton.invalidate();
-                        metronomeButton.repaint();
-                    });
-                    break;
+                    case Commands.METRONOME_STARTED:
+                        SwingUtilities.invokeLater(() -> {
+                            metronomeButton.setSelected(true);
+                            metronomeButton.setBackground(Color.GREEN);
+                            metronomeButton.invalidate();
+                            metronomeButton.repaint();
+                        });
+                        break;
 
-                case Commands.METRONOME_STOPPED:
-                    SwingUtilities.invokeLater(() -> {
-                        metronomeButton.setSelected(false);
-                        metronomeButton.setBackground(Color.RED);
-                        metronomeButton.invalidate();
-                        metronomeButton.repaint();
-                    });
-                    break;
+                    case Commands.METRONOME_STOPPED:
+                        SwingUtilities.invokeLater(() -> {
+                            metronomeButton.setSelected(false);
+                            metronomeButton.setBackground(Color.RED);
+                            metronomeButton.invalidate();
+                            metronomeButton.repaint();
+                        });
+                        break;
                 }
             }
         });
@@ -373,7 +381,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         notesOffButton.setVerticalAlignment(SwingConstants.CENTER);
         notesOffButton.setMargin(new Insets(0, 0, 0, 0));
         notesOffButton.setToolTipText("All Notes Off - Silence All Sounds");
-        
+
         notesOffButton.addActionListener(e -> {
             logger.info("All Notes Off button pressed");
             CommandBus.getInstance().publish(Commands.ALL_NOTES_OFF, this);
@@ -386,26 +394,27 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         JButton restartButton = new JButton("Restart App");
         restartButton.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
-                    null, 
+                    null,
                     "This will restart the application. Any unsaved changes will be lost.\nContinue?",
-                    "Restart Application", 
+                    "Restart Application",
                     JOptionPane.YES_NO_OPTION);
-            
+
             if (result == JOptionPane.YES_OPTION) {
                 try {
                     System.exit(0);
-                    
+
                     String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-                    File currentJar = new File(MainPanel.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-                    
-                    if(currentJar.getName().endsWith(".jar")) {
+                    File currentJar = new File(
+                            MainPanel.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+
+                    if (currentJar.getName().endsWith(".jar")) {
                         ProcessBuilder builder = new ProcessBuilder(javaBin, "-jar", currentJar.getPath());
                         builder.start();
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null, 
-                        "Error restarting: " + ex.getMessage(),
-                        "Restart Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null,
+                            "Error restarting: " + ex.getMessage(),
+                            "Restart Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -415,11 +424,11 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private JButton createMixButton() {
         JButton mixButton = new JButton("Mix");
         mixButton.setToolTipText("Show Drum Mixer");
-        
+
         // Style to match other controls
         mixButton.setPreferredSize(new Dimension(60, 28));
         mixButton.putClientProperty("JButton.buttonType", "roundRect");
-        
+
         // Add action listener to show mixer dialog
         mixButton.addActionListener(e -> {
             // Get current sequencer
@@ -427,20 +436,20 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             if (drumSequencerPanel != null) {
                 sequencer = drumSequencerPanel.getSequencer();
             }
-            
+
             if (sequencer != null) {
                 // Create a new PopupMixerPanel and dialog each time
                 PopupMixerPanel mixerPanel = new PopupMixerPanel(sequencer);
-                
+
                 // Create dialog to show the mixer
-                JDialog mixerDialog = new JDialog(SwingUtilities.getWindowAncestor(this), 
-                                               "Pop-Up Mixer", 
-                                               Dialog.ModalityType.MODELESS); // Non-modal dialog
+                JDialog mixerDialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+                        "Pop-Up Mixer",
+                        Dialog.ModalityType.MODELESS); // Non-modal dialog
                 mixerDialog.setContentPane(mixerPanel);
                 mixerDialog.pack();
                 mixerDialog.setLocationRelativeTo(this);
                 mixerDialog.setMinimumSize(new Dimension(600, 400));
-                
+
                 // Add window listener to handle dialog closing
                 mixerDialog.addWindowListener(new WindowAdapter() {
                     @Override
@@ -449,16 +458,16 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                         // (Optional) For example, remove any listeners registered to the mixer panel
                     }
                 });
-                
+
                 mixerDialog.setVisible(true);
             } else {
-                JOptionPane.showMessageDialog(this, 
-                                            "No drum sequencer available", 
-                                            "Error", 
-                                            JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "No drum sequencer available",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
-        
+
         return mixButton;
     }
 
