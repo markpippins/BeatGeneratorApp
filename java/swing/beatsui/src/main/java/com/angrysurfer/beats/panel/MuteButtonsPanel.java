@@ -147,11 +147,22 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
                     if (melodicSequencers != null) {
                         for (int i = 0; i < melodicSequencers.size(); i++) {
                             if (melodicSequencers.get(i) == source) {
-                                // Fix duration calculation - the previous was calling getDurationMs() twice
-                                // This created an infinite recursion if getDurationMs() called itself
+                                // Use a more conservative duration calculation
+                                // Ensure it's not too long or too short
+                                int durationMs = 150; // Fixed reasonable duration
                                 
-                                // Use a fixed duration if unsure (in milliseconds)
-                                int durationMs = (int) noteEvent.getDurationMs() / 4; 
+                                try {
+                                    if (noteEvent.getDurationMs() > 0) {
+                                        // Cap at 500ms to prevent sticking
+                                        durationMs = Math.min(500, (int) noteEvent.getDurationMs() / 4);
+                                    }
+                                } catch (Exception ex) {
+                                    // If any error occurs, use the default
+                                    logger.warn("Error calculating note duration", ex);
+                                }
+                                
+                                // Ensure minimum duration
+                                durationMs = Math.max(100, durationMs);
                                 
                                 // Try to use note velocity for visual intensity
                                 int velocity = noteEvent.getVelocity();
@@ -178,6 +189,8 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
         // Safety check
         if (button == null) return;
         
+        // Ensure reasonable duration limits
+        durationMs = Math.max(100, Math.min(500, durationMs));
         
         // Generate hash code based on button identity
         final int buttonId = System.identityHashCode(button);
@@ -186,6 +199,7 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
         ScheduledExecutorService existingTimer = activeNoteTimers.get(buttonId);
         if (existingTimer != null) {
             existingTimer.shutdownNow();
+            activeNoteTimers.remove(buttonId);
         }
         
         // Get button current state
@@ -201,26 +215,57 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
         
         // Update UI on EDT with dramatic changes
         SwingUtilities.invokeLater(() -> {
-            // Change background to bright yellow
-            button.setBackground(flashColor);
-            
-            // Set black text for contrast
-            button.setForeground(Color.BLACK);
-            
-            // Add thick border
-            button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 3));
-            
-            // Force immediate repaint
-            button.repaint();
+            try {
+                // Change background to bright yellow
+                button.setBackground(flashColor);
+                
+                // Set black text for contrast
+                button.setForeground(Color.BLACK);
+                
+                // Add thick border
+                button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 3));
+                
+                // Force immediate repaint
+                button.repaint();
+            } catch (Exception ex) {
+                logger.error("Error updating button appearance", ex);
+            }
         });
         
         // Create timer to revert color after duration
         ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
         activeNoteTimers.put(buttonId, timer);
         
+        // Also create a swing timer as a backup in case the executor fails
+        final javax.swing.Timer backupTimer = new javax.swing.Timer(durationMs + 100, e -> {
+            resetButtonAppearance(button, originalBg, originalFg, originalBorder, buttonId);
+            ((javax.swing.Timer)e.getSource()).stop();
+        });
+        backupTimer.setRepeats(false);
+        backupTimer.start();
+        
         // Schedule task to revert to original appearance
         timer.schedule(() -> {
-            SwingUtilities.invokeLater(() -> {
+            try {
+                resetButtonAppearance(button, originalBg, originalFg, originalBorder, buttonId);
+                // Stop the backup timer since we succeeded
+                SwingUtilities.invokeLater(() -> backupTimer.stop());
+            } catch (Exception ex) {
+                logger.error("Error resetting button appearance", ex);
+            } finally {
+                activeNoteTimers.remove(buttonId);
+                timer.shutdown();
+            }
+        }, durationMs, TimeUnit.MILLISECONDS);
+    }
+    
+    /**
+     * Helper method to reset button appearance
+     */
+    private void resetButtonAppearance(JToggleButton button, Color originalBg, Color originalFg, 
+                                     javax.swing.border.Border originalBorder, int buttonId) {
+        SwingUtilities.invokeLater(() -> {
+            try {
                 // Restore original appearance
                 button.setBackground(originalBg);
                 button.setForeground(originalFg);
@@ -228,15 +273,39 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
                 
                 // Force repaint
                 button.repaint();
-            });
-            activeNoteTimers.remove(buttonId);
-            timer.shutdown();
-        }, durationMs, TimeUnit.MILLISECONDS);
+            } catch (Exception ex) {
+                logger.error("Error in resetButtonAppearance", ex);
+            }
+        });
     }
     
     /**
-     * Get a color based on note velocity
+     * Safety method to reset all buttons
      */
+    public void resetAllButtons() {
+        // Force clean all active timers
+        for (ScheduledExecutorService timer : new ArrayList<>(activeNoteTimers.values())) {
+            timer.shutdownNow();
+        }
+        activeNoteTimers.clear();
+        
+        // Reset all drum buttons
+        for (JToggleButton button : drumMuteButtons) {
+            boolean isMuted = button.isSelected();
+            button.setBackground(isMuted ? MUTED_COLOR : DRUM_UNMUTED_COLOR);
+            button.setForeground(Color.WHITE);
+            button.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
+        }
+        
+        // Reset all melodic buttons
+        for (JToggleButton button : melodicMuteButtons) {
+            boolean isMuted = button.isSelected();
+            button.setBackground(isMuted ? MUTED_COLOR : MELODIC_UNMUTED_COLOR);
+            button.setForeground(Color.WHITE);
+            button.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
+        }
+    }
+    
     private Color getVelocityColor(int velocity, boolean isDrum) {
         // Normalize velocity to 0.0-1.0 range
         float normalizedVelocity = Math.min(1.0f, Math.max(0.0f, velocity / 127.0f));
