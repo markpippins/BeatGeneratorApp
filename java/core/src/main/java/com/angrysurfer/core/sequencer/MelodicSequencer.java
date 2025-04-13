@@ -240,13 +240,17 @@ public class MelodicSequencer implements IBusListener {
         noteValues = new ArrayList<>(patternLength);
         velocityValues = new ArrayList<>(patternLength);
         gateValues = new ArrayList<>(patternLength);
+        probabilityValues = new ArrayList<>(patternLength); // Add this
+        nudgeValues = new ArrayList<>(patternLength);       // Add this
 
         // Fill with default values
         for (int i = 0; i < patternLength; i++) {
             activeSteps.add(false); // All steps off by default
-            noteValues.add(60); // Middle C
+            noteValues.add(60);     // Middle C
             velocityValues.add(100); // Medium-high velocity
-            gateValues.add(50); // 50% gate time
+            gateValues.add(50);     // 50% gate time
+            probabilityValues.add(100); // 100% probability by default
+            nudgeValues.add(0);     // No timing nudge by default
         }
     }
 
@@ -650,10 +654,13 @@ public class MelodicSequencer implements IBusListener {
      * Clear the entire pattern
      */
     public void clearPattern() {
-        for (int i = 0; i < activeSteps.size(); i++) {
+        // Set all steps to inactive
+        for (int i = 0; i < patternLength; i++) {
             activeSteps.set(i, false);
         }
-        logger.info("Pattern cleared");
+
+        // Notify listeners about the pattern update
+        notifyPatternUpdated();
     }
 
     /**
@@ -1327,6 +1334,99 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
+     * Rotates the pattern one step to the left (backward)
+     */
+    public void rotatePatternLeft() {
+        if (patternLength <= 1) return;
+        
+        // Ensure all lists have adequate size
+        while (activeSteps.size() < patternLength) activeSteps.add(false);
+        while (noteValues.size() < patternLength) noteValues.add(60);
+        while (velocityValues.size() < patternLength) velocityValues.add(100);
+        while (gateValues.size() < patternLength) gateValues.add(50);
+        while (probabilityValues.size() < patternLength) probabilityValues.add(100);
+        while (nudgeValues.size() < patternLength) nudgeValues.add(0);
+        
+        // Store the first step's values
+        boolean firstActive = activeSteps.get(0);
+        int firstNote = noteValues.get(0);
+        int firstVelocity = velocityValues.get(0);
+        int firstGate = gateValues.get(0);
+        int firstProbability = probabilityValues.get(0);
+        int firstNudge = nudgeValues.get(0);
+        
+        // Shift all steps left by one position
+        for (int i = 0; i < patternLength - 1; i++) {
+            activeSteps.set(i, activeSteps.get(i + 1));
+            noteValues.set(i, noteValues.get(i + 1));
+            velocityValues.set(i, velocityValues.get(i + 1));
+            gateValues.set(i, gateValues.get(i + 1));
+            probabilityValues.set(i, probabilityValues.get(i + 1));
+            nudgeValues.set(i, nudgeValues.get(i + 1));
+        }
+        
+        // Place the saved first step values at the last position
+        activeSteps.set(patternLength - 1, firstActive);
+        noteValues.set(patternLength - 1, firstNote);
+        velocityValues.set(patternLength - 1, firstVelocity);
+        gateValues.set(patternLength - 1, firstGate);
+        probabilityValues.set(patternLength - 1, firstProbability);
+        nudgeValues.set(patternLength - 1, firstNudge);
+        
+        // Notify listeners about the pattern update
+        notifyPatternUpdated();
+    }
+
+    /**
+     * Rotates the pattern one step to the right (forward)
+     */
+    public void rotatePatternRight() {
+        if (patternLength <= 1) return;
+        
+        // Ensure all lists have adequate size
+        while (activeSteps.size() < patternLength) activeSteps.add(false);
+        while (noteValues.size() < patternLength) noteValues.add(60);
+        while (velocityValues.size() < patternLength) velocityValues.add(100);
+        while (gateValues.size() < patternLength) gateValues.add(50);
+        while (probabilityValues.size() < patternLength) probabilityValues.add(100);
+        while (nudgeValues.size() < patternLength) nudgeValues.add(0);
+        
+        // Store the last step's values
+        boolean lastActive = activeSteps.get(patternLength - 1);
+        int lastNote = noteValues.get(patternLength - 1);
+        int lastVelocity = velocityValues.get(patternLength - 1);
+        int lastGate = gateValues.get(patternLength - 1);
+        int lastProbability = probabilityValues.get(patternLength - 1);
+        int lastNudge = nudgeValues.get(patternLength - 1);
+        
+        // Shift all steps right by one position
+        for (int i = patternLength - 1; i > 0; i--) {
+            activeSteps.set(i, activeSteps.get(i - 1));
+            noteValues.set(i, noteValues.get(i - 1));
+            velocityValues.set(i, velocityValues.get(i - 1));
+            gateValues.set(i, gateValues.get(i - 1));
+            probabilityValues.set(i, probabilityValues.get(i - 1));
+            nudgeValues.set(i, nudgeValues.get(i - 1));
+        }
+        
+        // Place the saved last step values at the first position
+        activeSteps.set(0, lastActive);
+        noteValues.set(0, lastNote);
+        velocityValues.set(0, lastVelocity);
+        gateValues.set(0, lastGate);
+        probabilityValues.set(0, lastProbability);
+        nudgeValues.set(0, lastNudge);
+        
+        // Notify listeners about the pattern update
+        notifyPatternUpdated();
+    }
+
+    // For backward compatibility
+    public void rotatePattern() {
+        rotatePatternRight();
+    }
+
+    /**
      * Sets whether latch mode is enabled.
      * When enabled, a new pattern is generated each cycle.
      * 
@@ -1366,5 +1466,12 @@ public class MelodicSequencer implements IBusListener {
      */
     public int getCurrentTilt() {
         return currentTilt;
+    }
+
+    /**
+     * Notify listeners about the pattern update
+     */
+    private void notifyPatternUpdated() {
+        CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
     }
 }
