@@ -8,6 +8,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
     // Size constants to match other panels
     private static final int SMALL_CONTROL_WIDTH = 40;
     private static final int MEDIUM_CONTROL_WIDTH = 60;
+    private static final int LABEL_WIDTH = 85;
     private static final int CONTROL_HEIGHT = 25;
 
     private JLabel sequenceIdLabel;
@@ -62,8 +64,16 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         ));
 
         // Create ID label
-        sequenceIdLabel = new JLabel(getFormattedIdText());
-        sequenceIdLabel.setPreferredSize(new Dimension(100, CONTROL_HEIGHT));
+        sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
+        sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, CONTROL_HEIGHT));
+        // sequenceIdLabel.setBorder(BorderFactory.createCompoundBorder(
+        //         BorderFactory.createLineBorder(ColorUtils.lightGray, 1),
+        //         BorderFactory.createEmptyBorder(0, 5, 0, 5)
+        // ));
+        sequenceIdLabel.setOpaque(true);
+        sequenceIdLabel.setBackground(ColorUtils.darkGray);
+        sequenceIdLabel.setForeground(ColorUtils.coolBlue);
+        sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
 
         // Create navigation buttons with icons instead of text
         firstButton = createButton("⏮", "First sequence", e -> loadFirstSequence());
@@ -111,7 +121,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
     }
 
     private String getFormattedIdText() {
-        return "ID: " + 
+        return "Seq: " + 
             (sequencer.getMelodicSequenceId() == 0 ? "New" : sequencer.getMelodicSequenceId());
     }
 
@@ -175,7 +185,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             );
         }
     }
-
+    
     private void loadFirstSequence() {
         Long firstId = redisService.getMinimumMelodicSequenceId(sequencer.getId());
         if (firstId != null) {

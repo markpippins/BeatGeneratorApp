@@ -110,16 +110,22 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private void initialize() {
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        JPanel paramsPanel = new JPanel(new BorderLayout());
-        add(paramsPanel, BorderLayout.NORTH);
+        // Create the top panel with a BorderLayout for better organization
+        JPanel topPanel = new JPanel(new BorderLayout(5, 5));
+        add(topPanel, BorderLayout.NORTH);
 
-        // Add sequence parameters panel at the top
-        paramsPanel.add(new MelodicSequenceNavigationPanel(sequencer), BorderLayout.WEST);
-        paramsPanel.add(createSequenceParametersPanel(), BorderLayout.CENTER);
+        // Add navigation panel on the left
+        topPanel.add(new MelodicSequenceNavigationPanel(sequencer), BorderLayout.WEST);
+        
+        // Add sequence parameters in the center
+        topPanel.add(createSequenceParametersPanel(), BorderLayout.CENTER);
+        
+        // Add sound parameters on the right
+        topPanel.add(createSoundParametersPanel(), BorderLayout.EAST);
 
         // Create panel for the 16 columns with reduced spacing
-        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0)); // Reduced from 5 to 2
-        sequencePanel.setBorder(new EmptyBorder(5, 5, 5, 5)); // Reduced padding
+        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0)); 
+        sequencePanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         // Create 16 columns
         for (int i = 0; i < 16; i++) {
@@ -134,26 +140,79 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
         add(scrollPane, BorderLayout.CENTER);
+    }
 
-        // Initialize UI state from sequencer
-        updateOctaveLabel();
-
-        // Sync UI controls with sequencer state
-        loopCheckbox.setSelected(sequencer.isLooping());
-
-        // Make sure pad initialization happens AFTER all pads are created
-        // and BEFORE the panel is made visible
-        SwingUtilities.invokeLater(() -> {
-            // Initialize melodic pads with forced repaint
-            initializeMelodicPads();
-
-            // Force a complete repaint of the panel and all children
-            revalidate();
-            repaint();
+    /**
+     * Creates the sound parameters panel with preset selection and sound editing
+     */
+    private JPanel createSoundParametersPanel() {
+        // Size constants
+        final int SMALL_CONTROL_WIDTH = 30;
+        final int LARGE_CONTROL_WIDTH = 90;
+        final int CONTROL_HEIGHT = 25;
+        
+        // Create the panel with a titled border
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createTitledBorder("Sound Parameters"));
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        
+        // Create preset combo
+        JComboBox<String> presetCombo = new JComboBox<>();
+        presetCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH*2, CONTROL_HEIGHT));
+        presetCombo.setToolTipText("Select instrument preset");
+        populatePresetCombo(presetCombo);
+        
+        // Add listener for preset changes
+        presetCombo.addActionListener(e -> {
+            if (updatingUI || presetCombo.getSelectedIndex() < 0) return;
+            
+            int presetIndex = presetCombo.getSelectedIndex();
+            logger.info("Selected preset index: {}", presetIndex);
+            
+            if (sequencer.getNotePlayer() != null) {
+                sequencer.getNotePlayer().setPreset(presetIndex);
+                
+                // Inform the system about the preset change
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_UPDATED,
+                    this,
+                    sequencer.getNotePlayer()
+                );
+            }
         });
+        
+        // Create edit button with pencil icon and skinny width
+        JButton editButton = new JButton("✎");
+        editButton.setToolTipText("Edit sound for this sequencer");
+        editButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        editButton.setMargin(new Insets(1, 1, 1, 1));
+        editButton.setFocusable(false);
+        
+        // Add listener for edit button
+        editButton.addActionListener(e -> {
+            if (sequencer != null && sequencer.getNotePlayer() != null) {
+                logger.info("Opening player editor for: {}", sequencer.getNotePlayer().getName());
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_SELECTED,
+                        this,
+                        sequencer.getNotePlayer()
+                );
 
-        TiltSequencerPanel tiltSequencerPanel = new TiltSequencerPanel(sequencer);
-        add(tiltSequencerPanel, BorderLayout.SOUTH);
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_EDIT_REQUEST,
+                        this,
+                        sequencer.getNotePlayer()
+                );
+            } else {
+                logger.warn("Cannot edit player - Note player is not initialized");
+            }
+        });
+        
+        // Add components to panel
+        panel.add(presetCombo);
+        panel.add(editButton);
+        
+        return panel;
     }
 
     /**
@@ -370,39 +429,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
         });
 
-        // Preset panel
-        JPanel presetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-
-        JComboBox<String> presetCombo = new JComboBox<>();
-        presetCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH*2, CONTROL_HEIGHT));
-        presetCombo.setToolTipText("Select instrument preset");
-        populatePresetCombo(presetCombo);
-        presetPanel.add(presetCombo);
-
-        // Edit Player button
-        JButton editPlayerButton = new JButton("✏️");
-        editPlayerButton.setToolTipText("Edit sound for this sequencer");
-        editPlayerButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        editPlayerButton.setMargin(new Insets(2, 2, 2, 2));
-        editPlayerButton.addActionListener(e -> {
-            if (sequencer != null && sequencer.getNotePlayer() != null) {
-                logger.info("Opening player editor for: {}", sequencer.getNotePlayer().getName());
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTED,
-                        this,
-                        sequencer.getNotePlayer()
-                );
-
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_EDIT_REQUEST,
-                        this,
-                        sequencer.getNotePlayer()
-                );
-            } else {
-                logger.warn("Cannot edit player - Note is not initialized");
-            }
-        });
-
         // --- Add controls to panel in the desired order ---
         
         // First, add core controls in the same order as DrumSequencerPanel
@@ -421,8 +447,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         panel.add(scalePanel);
         panel.add(quantizeCheckbox);
         panel.add(latchToggleButton);
-        panel.add(presetPanel);
-        panel.add(editPlayerButton);
 
         return panel;
     }
