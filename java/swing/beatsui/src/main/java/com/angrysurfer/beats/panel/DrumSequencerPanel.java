@@ -197,19 +197,26 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         
         add(scrollPane, BorderLayout.CENTER);
         
-        // Create a panel for the bottom controls that will contain both 
-        // sequence parameters and swing control
+        // Create a panel for the bottom controls
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
         
         // Add sequence parameters to the center
+        sequenceParamsPanel = createSequenceParametersPanel();
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
         
-        // Create and add generate panel on the right
-        JPanel generatePanel = createGeneratePanel();
-        bottomPanel.add(generatePanel, BorderLayout.EAST);
+        // Create a container for the right-side panels
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         
-        // Add swing panel on the far right
-        bottomPanel.add(swingPanel, BorderLayout.EAST);
+        // Create and add generate panel 
+        JPanel generatePanel = createGeneratePanel();
+        rightPanel.add(generatePanel);
+        
+        // Add swing panel
+        swingPanel = createSwingControlPanel();
+        rightPanel.add(swingPanel);
+        
+        // Add the right panel container to the east position
+        bottomPanel.add(rightPanel, BorderLayout.EAST);
         
         // Add the bottom panel to the main panel
         add(bottomPanel, BorderLayout.SOUTH);
@@ -234,7 +241,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         densityCombo.setSelectedIndex(1); // Default to 50%
         densityCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
         densityCombo.setToolTipText("Set pattern density");
-        panel.add(densityCombo);
         
         // Generate button with dice icon
         JButton generateButton = new JButton("🎲");
@@ -245,16 +251,15 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             // Get selected density from the combo
             int density = (densityCombo.getSelectedIndex() + 1) * 25;
             sequencer.generatePattern(density);
-            syncUIWithSequencer();
+            refreshGridUI();
         });
+
         panel.add(generateButton);
+        panel.add(densityCombo);
         
         return panel;
     }
 
-    /**
-     * Create panel for sequence parameters (last step, loop, etc.)
-     */
     private JPanel createSequenceParametersPanel() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
@@ -341,23 +346,11 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             sequencer.setLooping(selectedPadIndex, loop);
         });
 
-        // Range combo box for pattern generation
-        JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        rangePanel.add(new JLabel("Density:"));
-
-        // Create density spinner
-        densitySpinner = new JSpinner(new SpinnerNumberModel(50, 25, 100, 25));
-        densitySpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        rangePanel.add(densitySpinner);
-
         // ADD CLEAR AND GENERATE BUTTONS - Make skinnier
         clearPatternButton = new JButton("🗑️");
+        clearPatternButton.setToolTipText("Clear the pattern for this drum");
         clearPatternButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT)); // Reduce width
         clearPatternButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
-
-        generatePatternButton = new JButton("🎲");
-        generatePatternButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT)); // Reduce width
-        generatePatternButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
 
         // Create rotation panel for push/pull buttons
         JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -392,10 +385,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         panel.add(directionPanel);
         panel.add(timingPanel);
         panel.add(loopToggleButton);
-        panel.add(rangePanel);
-        panel.add(generatePatternButton);
-        panel.add(clearPatternButton);
+        // panel.add(rangePanel);
+        // panel.add(generatePatternButton);
         panel.add(rotationPanel);
+        panel.add(clearPatternButton);
 
         return panel;
     }

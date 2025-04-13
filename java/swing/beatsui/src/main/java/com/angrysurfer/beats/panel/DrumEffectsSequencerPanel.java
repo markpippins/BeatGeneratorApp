@@ -830,28 +830,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             sequencer.setLooping(selectedPadIndex, loop);
         });
 
-        // Pattern density control
-        JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        rangePanel.add(new JLabel("Density:"));
-        
-        densitySpinner = new JSpinner(new SpinnerNumberModel(50, 25, 100, 25));
-        densitySpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        densitySpinner.setToolTipText("Set pattern density for random generation");
-        rangePanel.add(densitySpinner);
-
-        // Generate pattern button
-        generatePatternButton = new JButton("🎲");
-        generatePatternButton.setToolTipText("Generate random pattern");
-        generatePatternButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        generatePatternButton.setMargin(new Insets(2, 2, 2, 2));
-        generatePatternButton.addActionListener(e -> {
-            if (selectedPadIndex >= 0) {
-                int density = (Integer)densitySpinner.getValue();
-                sequencer.generatePattern(density);
-                refreshGridUI();
-            }
-        });
-
         // Clear pattern button
         clearPatternButton = new JButton("🗑️");
         clearPatternButton.setToolTipText("Clear pattern");
@@ -896,10 +874,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         controlsPanel.add(directionPanel);
         controlsPanel.add(timingPanel);
         controlsPanel.add(loopToggleButton);
-        controlsPanel.add(rangePanel);
-        controlsPanel.add(generatePatternButton);
-        controlsPanel.add(clearPatternButton);
         controlsPanel.add(rotationPanel);
+        controlsPanel.add(clearPatternButton);
 
         return controlsPanel;
     }
@@ -957,7 +933,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         densityCombo.setSelectedIndex(1); // Default to 50%
         densityCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
         densityCombo.setToolTipText("Set pattern density");
-        panel.add(densityCombo);
         
         // Generate button with dice icon
         JButton generateButton = new JButton("🎲");
@@ -971,6 +946,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             refreshGridUI();
         });
         panel.add(generateButton);
+        panel.add(densityCombo);
         
         return panel;
     }
