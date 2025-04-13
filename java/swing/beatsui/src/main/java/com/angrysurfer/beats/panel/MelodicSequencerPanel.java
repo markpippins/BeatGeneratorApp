@@ -140,6 +140,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
         add(scrollPane, BorderLayout.CENTER);
+        
+        // Add Tilt Sequencer Panel at the bottom (SOUTH)
+        TiltSequencerPanel tiltPanel = new TiltSequencerPanel(sequencer);
+        add(tiltPanel, BorderLayout.SOUTH);
     }
 
     /**
