@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.ArrayList;
-import java.util.IllegalFormatConversionException;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -14,15 +13,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.RulesTable;
 import com.angrysurfer.beats.widget.ToggleSwitch;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -54,7 +50,7 @@ public class PlayerEditPanel extends JPanel {
     private final ToggleSwitch preserveOnPurgeSwitch;
 
     // Rules table
-    private JTable rulesTable;
+    private RulesTable rulesTable;
     private final JButton addRuleButton;
     private final JButton editRuleButton;
     private final JButton deleteRuleButton;
@@ -85,7 +81,6 @@ public class PlayerEditPanel extends JPanel {
                 player.getInternalBars() != null ? player.getInternalBars().intValue() : 4, 1, 64, 1));
 
         // Initialize table and buttons
-        rulesTable = new JTable();
         addRuleButton = new JButton("Add");
         editRuleButton = new JButton("Edit");
         deleteRuleButton = new JButton("Delete");
@@ -318,39 +313,8 @@ public class PlayerEditPanel extends JPanel {
                 return;
             }
 
-            // Get table model
-            DefaultTableModel model = (DefaultTableModel) rulesTable.getModel();
-            model.setRowCount(0); // Clear existing rows
-
-            // Add each rule to the table
-            for (Rule rule : player.getRules()) {
-                if (rule == null) {
-                    continue;
-                }
-
-                try {
-                    // Get display text for rule properties
-                    String operatorText = rule.getOperator() >= 0 && rule.getOperator() < Rule.OPERATORS.length
-                            ? Rule.OPERATORS[rule.getOperator()]
-                            : "Unknown";
-
-                    String comparisonText = rule.getComparison() >= 0 && rule.getComparison() < Rule.COMPARISONS.length
-                            ? Rule.COMPARISONS[rule.getComparison()]
-                            : "Unknown";
-
-                    String partText = rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart());
-
-                    model.addRow(new Object[]{operatorText, comparisonText, rule.getValue(), partText});
-                } catch (IllegalFormatConversionException e) {
-                    logger.error("Format conversion error: " + e.getMessage());
-                    model.addRow(new Object[]{
-                        rule.getOperator() >= 0 ? Rule.OPERATORS[rule.getOperator()] : "Unknown", 
-                        rule.getComparison() >= 0 ? Rule.COMPARISONS[rule.getComparison()] : "Unknown", 
-                        String.valueOf(rule.getValue()), 
-                        rule.getPart() == 0 ? "All" : String.valueOf(rule.getPart())
-                    });
-                }
-            }
+            // Update rules in the table model
+            rulesTable.getRuleTableModel().setRules(player.getRules());
 
             // Refresh display
             rulesTable.revalidate();
@@ -372,48 +336,6 @@ public class PlayerEditPanel extends JPanel {
     }
 
     private void setupRulesTable() {
-        // Define column names
-        String[] columnNames = {"Comparison", "Operator", "Value", "Part"};
-        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
-
-        // Apply model to table
-        rulesTable.setModel(model);
-        rulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        // Configure cell renderers
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
-        leftRenderer.setHorizontalAlignment(JLabel.LEFT);
-
-        // Apply renderers - first column left aligned, others centered
-        rulesTable.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);
-        for (int i = 1; i < rulesTable.getColumnCount(); i++) {
-            rulesTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-        }
-
-        // Add selection listener for button state management
-        rulesTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                updateButtonStates();
-            }
-        });
-
-        // Add double-click handler
-        rulesTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (evt.getClickCount() == 2) {
-                    Rule selectedRule = getSelectedRule();
-                    if (selectedRule != null) {
-                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
-                    }
-                }
-            }
-        });
-
-        // Load initial rules
-        updateRulesTable();
-
         // Initialize button states
         updateButtonStates();
     }
@@ -432,6 +354,14 @@ public class PlayerEditPanel extends JPanel {
         JPanel rulesPanel = new JPanel(new BorderLayout(5, 5));
         rulesPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Rules"),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
+        // Create and configure the rules table
+        rulesTable = new RulesTable();
+        
+        // Initialize with player's rules
+        if (player != null && player.getRules() != null) {
+            rulesTable.getRuleTableModel().setRules(player.getRules());
+        }
 
         // Add table in a scroll pane
         JScrollPane scrollPane = new JScrollPane(rulesTable);

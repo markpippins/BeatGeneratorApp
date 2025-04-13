@@ -1,12 +1,14 @@
 package com.angrysurfer.beats.widget;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.table.AbstractTableModel;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Rule;
 
@@ -15,6 +17,12 @@ import com.angrysurfer.core.model.Rule;
  */
 public class RuleTableModel extends AbstractTableModel {
     private static final Logger logger = LoggerFactory.getLogger(RuleTableModel.class.getName());
+    
+    // Column constants
+    public static final int COL_OPERATOR = 0;
+    public static final int COL_COMPARISON = 1;
+    public static final int COL_VALUE = 2;
+    public static final int COL_PART = 3;
     
     private final String[] columnNames = { "Comparison", "Operator", "Value", "Part" };
     private final List<Rule> rules = new ArrayList<>();
@@ -48,10 +56,10 @@ public class RuleTableModel extends AbstractTableModel {
         Rule rule = rules.get(rowIndex);
         
         return switch (columnIndex) {
-            case 0 -> rule.getOperatorText();    // Property column - "Beat", "Tick", etc.
-            case 1 -> rule.getComparisonText();  // Operator column - "==", "<", etc.
-            case 2 -> rule.getValue();           // Value column
-            case 3 -> rule.getPartText();        // Part column
+            case COL_OPERATOR -> rule.getOperatorText();     // Property column - "Beat", "Tick", etc.
+            case COL_COMPARISON -> rule.getComparisonText(); // Operator column - "==", "<", etc.
+            case COL_VALUE -> rule.getValue();               // Value column
+            case COL_PART -> rule.getPartText();             // Part column
             default -> null;
         };
     }
@@ -66,13 +74,9 @@ public class RuleTableModel extends AbstractTableModel {
             rules.addAll(newRules);
             
             // Sort rules for consistent display order
-            rules.sort((r1, r2) -> {
-                int comp = Integer.compare(r1.getOperator(), r2.getOperator());
-                if (comp == 0) {
-                    return Double.compare(r1.getValue(), r2.getValue());
-                }
-                return comp;
-            });
+            rules.sort(Comparator
+                .comparingInt(Rule::getOperator)
+                .thenComparingDouble(Rule::getValue));
             
             logger.info("Table model loaded with " + rules.size() + " rules");
         } else {
@@ -122,5 +126,57 @@ public class RuleTableModel extends AbstractTableModel {
         }
         
         return selectedRules.toArray(new Rule[0]);
+    }
+    
+    /**
+     * Add a single rule to the model
+     */
+    public void addRule(Rule rule) {
+        if (rule != null) {
+            rules.add(rule);
+            
+            // Resort rules
+            rules.sort(Comparator
+                .comparingInt(Rule::getOperator)
+                .thenComparingDouble(Rule::getValue));
+            
+            fireTableDataChanged();
+        }
+    }
+    
+    /**
+     * Remove a rule from the model by ID
+     */
+    public boolean removeRule(Long ruleId) {
+        if (ruleId == null) return false;
+        
+        int index = findRuleRowById(ruleId);
+        if (index >= 0) {
+            rules.remove(index);
+            fireTableRowsDeleted(index, index);
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Update a rule in the model
+     */
+    public boolean updateRule(Rule updatedRule) {
+        if (updatedRule == null || updatedRule.getId() == null) return false;
+        
+        int index = findRuleRowById(updatedRule.getId());
+        if (index >= 0) {
+            rules.set(index, updatedRule);
+            
+            // Resort rules as order may have changed
+            rules.sort(Comparator
+                .comparingInt(Rule::getOperator)
+                .thenComparingDouble(Rule::getValue));
+            
+            fireTableDataChanged();
+            return true;
+        }
+        return false;
     }
 }

@@ -7,6 +7,7 @@ import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -19,6 +20,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -32,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.ToggleDialPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -93,7 +94,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Mono 3", melodicPanels[2]);
         tabbedPane.addTab("Mono 4", melodicPanels[3]);
         tabbedPane.addTab("Synth", internalSynthControlPanel);
-        tabbedPane.addTab("Poly Sequencer", createChordSequencerPanel());
+        tabbedPane.addTab("Mod Matrix", createModulationMatrixPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
 
         tabbedPane.addTab("Players", new SessionPanel());
@@ -180,13 +181,45 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         });
     }
 
-    private Component createChordSequencerPanel() {
-        JPanel chordSequencerPanel = new JPanel(new FlowLayout());
-        ToggleDialPanel panel = new ToggleDialPanel();
-        panel.setPreferredSize(new Dimension(80, 90));
-        panel.setMaximumSize(new Dimension(80, 90));
-        chordSequencerPanel.add(panel);
-        return chordSequencerPanel;
+    private Component createModulationMatrixPanel() {
+        // Create a main panel with a border
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Create a panel with GridLayout (1 row, 3 columns) with spacing
+        JPanel lfoBankPanel = new JPanel(new GridLayout(1, 3, 15, 0));
+        
+        // Create three LFO panels with distinct names
+        LFOPanel lfo1 = new LFOPanel();
+        lfo1.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("LFO 1"),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        
+        LFOPanel lfo2 = new LFOPanel();
+        lfo2.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("LFO 2"),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        
+        LFOPanel lfo3 = new LFOPanel();
+        lfo3.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("LFO 3"),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        
+        // Add the three LFO panels to the grid
+        lfoBankPanel.add(lfo1);
+        lfoBankPanel.add(lfo2);
+        lfoBankPanel.add(lfo3);
+        
+        // Add the grid panel to the main panel
+        mainPanel.add(lfoBankPanel, BorderLayout.CENTER);
+        
+        // Add a title header
+        JLabel titleLabel = new JLabel("Modulation Matrix", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Dialog", Font.BOLD, 16));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        
+        return mainPanel;
     }
 
     private Component createMixerPanel() {
