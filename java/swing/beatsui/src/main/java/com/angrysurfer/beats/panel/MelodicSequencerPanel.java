@@ -159,17 +159,32 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
+        // Add sequence grid to center
         add(scrollPane, BorderLayout.CENTER);
         
         // Create a container panel for both southern panels - SWAPPED ORDER
         JPanel southPanel = new JPanel(new BorderLayout(5, 5));
         
-        // Create tilt panel and add it to the TOP of the south panel
+        // Create tilt panel with LIMITED HEIGHT and add it to the TOP of the south panel
         TiltSequencerPanel tiltPanel = new TiltSequencerPanel(sequencer);
+        
+        // Set a fixed preferred height for the tilt panel to prevent it from taking too much space
+        tiltPanel.setPreferredSize(new Dimension(tiltPanel.getPreferredSize().width, 100));
         southPanel.add(tiltPanel, BorderLayout.NORTH);
         
-        // Add sequence parameters to the BOTTOM of the south panel
-        southPanel.add(sequenceParamsPanel, BorderLayout.SOUTH);
+        // Create a container for the bottom controls (parameters + generate)
+        JPanel bottomControlsPanel = new JPanel(new BorderLayout(5, 5));
+        
+        // Add sequence parameters to the center of bottom controls
+        sequenceParamsPanel = createSequenceParametersPanel();
+        bottomControlsPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+        
+        // Create and add generate panel to the right of sequence parameters
+        JPanel generatePanel = createGeneratePanel();
+        bottomControlsPanel.add(generatePanel, BorderLayout.EAST);
+        
+        // Add the bottom controls container to the south panel
+        southPanel.add(bottomControlsPanel, BorderLayout.SOUTH);
         
         // Add the south panel to the main layout
         add(southPanel, BorderLayout.SOUTH);
@@ -319,82 +334,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             sequencer.setLooping(loopCheckbox.isSelected());
         });
 
-        // Range panel (similar to density in drum panel)
-        JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        rangePanel.add(new JLabel("Range:"));
-
-        // Create range combo with octave range options
-        String[] rangeOptions = {"1 Octave", "2 Octaves", "3 Octaves", "4 Octaves"};
-        rangeCombo = new JComboBox<>(rangeOptions);
-        rangeCombo.setSelectedIndex(1); // Default to 2 octaves
-        rangeCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        rangeCombo.setToolTipText("Set the octave range for pattern generation");
-        rangePanel.add(rangeCombo);
-
-        // Generate button with consistent styling
-        JButton generateButton = new JButton("🎲");
-        generateButton.setToolTipText("Generate a random pattern");
-        generateButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        generateButton.setMargin(new Insets(2, 2, 2, 2));
-        generateButton.addActionListener(e -> {
-            // Get selected octave range from the combo
-            int octaveRange = rangeCombo.getSelectedIndex() + 1;
-            int density = 50;  // Fixed density for now
-            sequencer.generatePattern(octaveRange, density);
-            syncUIWithSequencer();
-        });
-
-        // Clear pattern button with consistent styling
-        JButton clearButton = new JButton("🗑️");
-        clearButton.setToolTipText("Clear pattern");
-        clearButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        clearButton.setMargin(new Insets(2, 2, 2, 2));
-        clearButton.addActionListener(e -> {
-            sequencer.clearPattern();
-            
-            // Update UI after clearing pattern
-            for (TriggerButton button : triggerButtons) {
-                button.setSelected(false);
-                button.repaint();
-            }
-
-            // Reset dials to default values
-            for (Dial dial : noteDials) { dial.setValue(60); }
-            for (Dial dial : velocityDials) { dial.setValue(100); }
-            for (Dial dial : gateDials) { dial.setValue(50); }
-            for (Dial dial : probabilityDials) { dial.setValue(100); }
-            for (Dial dial : nudgeDials) { dial.setValue(0); }
-        });
-
-        // Create a panel specifically for rotation controls
-        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-
-        // Pull backward button
-        JButton pullBackwardButton = new JButton("⟵");
-        pullBackwardButton.setToolTipText("Pull pattern backward (left)");
-        pullBackwardButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
-        pullBackwardButton.addActionListener(e -> {
-            sequencer.pullBackward();
-            SwingUtilities.invokeLater(this::syncUIWithSequencer);
-        });
-
-        // Push forward button
-        JButton pushForwardButton = new JButton("⟶");
-        pushForwardButton.setToolTipText("Push pattern forward (right)");
-        pushForwardButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
-        pushForwardButton.addActionListener(e -> {
-            sequencer.pushForward();
-            SwingUtilities.invokeLater(this::syncUIWithSequencer);
-        });
-
-        // Add buttons to rotation panel
-        rotationPanel.add(pullBackwardButton);
-        rotationPanel.add(pushForwardButton);
-
-        // --- Additional controls specific to MelodicSequencerPanel ---
-        
         // Octave panel 
         JPanel octavePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         octavePanel.add(new JLabel("Oct:"));
@@ -453,15 +392,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             sequencer.setQuantizeEnabled(quantizeCheckbox.isSelected());
         });
 
-        // Latch toggle button
-        latchToggleButton = new JToggleButton("L", false);
-        latchToggleButton.setToolTipText("Generate new pattern each cycle");
-        latchToggleButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        latchToggleButton.addActionListener(e -> {
-            sequencer.setLatchEnabled(latchToggleButton.isSelected());
-            logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
-        });
-
         // --- Add controls to panel in the desired order ---
         
         // First, add core controls in the same order as DrumSequencerPanel
@@ -469,18 +399,61 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         panel.add(directionPanel);
         panel.add(timingPanel);
         panel.add(loopCheckbox);
-        panel.add(rangePanel);
-        panel.add(generateButton);
-        panel.add(clearButton);
-        panel.add(rotationPanel);
         
         // Then add additional controls specific to MelodicSequencerPanel
         panel.add(octavePanel);
         panel.add(rootNotePanel);
         panel.add(scalePanel);
         panel.add(quantizeCheckbox);
-        panel.add(latchToggleButton);
 
+        return panel;
+    }
+
+    /**
+     * Creates a dedicated panel for generation controls
+     */
+    private JPanel createGeneratePanel() {
+        // Size constants
+        final int SMALL_CONTROL_WIDTH = 40;
+        final int MEDIUM_CONTROL_WIDTH = 90;
+        final int CONTROL_HEIGHT = 25;
+        
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createTitledBorder("Generate"));
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        
+        // Range combo (moved from sequence parameters panel)
+        String[] rangeOptions = {"1 Octave", "2 Octaves", "3 Octaves", "4 Octaves"};
+        rangeCombo = new JComboBox<>(rangeOptions);
+        rangeCombo.setSelectedIndex(1); // Default to 2 octaves
+        rangeCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        rangeCombo.setToolTipText("Set the octave range for pattern generation");
+        panel.add(rangeCombo);
+        
+        // Generate button with consistent styling
+        JButton generateButton = new JButton("🎲");
+        generateButton.setToolTipText("Generate a random pattern");
+        generateButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        generateButton.setMargin(new Insets(2, 2, 2, 2));
+        generateButton.addActionListener(e -> {
+            // Get selected octave range from the combo
+            int octaveRange = rangeCombo.getSelectedIndex() + 1;
+            int density = 50;  // Fixed density for now
+            sequencer.generatePattern(octaveRange, density);
+            syncUIWithSequencer();
+        });
+        panel.add(generateButton);
+        
+        // Latch toggle button (moved from sequence parameters panel)
+        latchToggleButton = new JToggleButton("L", false);
+        latchToggleButton.setToolTipText("Generate new pattern each cycle");
+        latchToggleButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        latchToggleButton.addActionListener(e -> {
+            sequencer.setLatchEnabled(latchToggleButton.isSelected());
+            logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
+        });
+        panel.add(latchToggleButton);
+        
         return panel;
     }
 

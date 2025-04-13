@@ -170,9 +170,23 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         
         // Create a panel for the bottom controls
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
+
+        // Add sequence parameters to the center
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
-        bottomPanel.add(swingPanel, BorderLayout.EAST);
-        
+
+        // Create a container for the right-side panels
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+
+        // Create and add generate panel 
+        JPanel generatePanel = createGeneratePanel();
+        rightPanel.add(generatePanel);
+
+        // Add swing panel
+        rightPanel.add(swingPanel);
+
+        // Add the right panel container to the east position
+        bottomPanel.add(rightPanel, BorderLayout.EAST);
+
         // Add the bottom panel to the main panel
         add(bottomPanel, BorderLayout.SOUTH);
 
@@ -922,6 +936,43 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         swingPanel.add(valueLabel);
 
         return swingPanel;
+    }
+
+    /**
+     * Creates a dedicated panel for effects pattern generation controls
+     */
+    private JPanel createGeneratePanel() {
+        // Size constants
+        final int SMALL_CONTROL_WIDTH = 40;
+        final int MEDIUM_CONTROL_WIDTH = 90;
+        final int CONTROL_HEIGHT = 25;
+        
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createTitledBorder("Generate"));
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        
+        // Create density combo without a label
+        String[] densityOptions = {"25%", "50%", "75%", "100%"};
+        JComboBox<String> densityCombo = new JComboBox<>(densityOptions);
+        densityCombo.setSelectedIndex(1); // Default to 50%
+        densityCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        densityCombo.setToolTipText("Set pattern density");
+        panel.add(densityCombo);
+        
+        // Generate button with dice icon
+        JButton generateButton = new JButton("🎲");
+        generateButton.setToolTipText("Generate a random pattern");
+        generateButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        generateButton.setMargin(new Insets(2, 2, 2, 2));
+        generateButton.addActionListener(e -> {
+            // Get selected density from the combo
+            int density = (densityCombo.getSelectedIndex() + 1) * 25;
+            sequencer.generatePattern(density);
+            refreshGridUI();
+        });
+        panel.add(generateButton);
+        
+        return panel;
     }
 
     /**
