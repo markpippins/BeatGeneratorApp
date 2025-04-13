@@ -151,57 +151,54 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // Create top panel to hold navigation, parameters and info
+        // Create west panel to hold navigation
+        JPanel westPanel = new JPanel(new BorderLayout(5, 5));
+        
+        // Create east panel for sound parameters 
+        JPanel eastPanel = new JPanel(new BorderLayout(5, 5));
+        
+        // Create top panel to hold west and east panels
         JPanel topPanel = new JPanel(new BorderLayout(5, 5));
 
-        // Create drum info panel (now on right side)
-        // drumInfoPanel = new DrumSequencerInfoPanel(sequencer);
+        // Create sequence navigation panel
+        DrumSequenceNavigationPanel navigationPanel = new DrumSequenceNavigationPanel(sequencer);
 
-        // Create sequence navigation panel (in center)
-        navigationPanel = new DrumSequenceNavigationPanel(sequencer);
-
-        // Create sequence parameters panel (left side)
+        // Create sequence parameters panel
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
 
-        // SWAPPED: Navigation panel now goes on left
-        topPanel.add(navigationPanel, BorderLayout.WEST);
+        // Navigation panel goes NORTH-WEST
+        westPanel.add(navigationPanel, BorderLayout.NORTH);
+        
+        // Swing controls and sound parameters go NORTH-EAST
+        JPanel eastTopPanel = new JPanel(new BorderLayout(5, 5));
+        eastTopPanel.add(createSwingControlPanel(), BorderLayout.WEST);
+        eastTopPanel.add(createSoundParametersPanel(), BorderLayout.EAST);
+        eastPanel.add(eastTopPanel, BorderLayout.NORTH);
 
-        // SWAPPED: Parameters panel now goes in center
-        topPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
-
-        // Drum info panel stays on right
-        topPanel.add(createSwingControls(), BorderLayout.EAST);
+        // Add panels to the top panel
+        topPanel.add(westPanel, BorderLayout.WEST);
+        topPanel.add(eastPanel, BorderLayout.EAST);
 
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
-
-        // Create main content panel with drum pads on left, grid on right
-        JPanel contentPanel = new JPanel(new BorderLayout(10, 0));
-
-        // Create drum pads panel on left
+        
+        // Create drum selector panel and add to WEST of main layout
         JPanel drumPadsPanel = createDrumPadsPanel();
-        contentPanel.add(drumPadsPanel, BorderLayout.WEST);
+        add(drumPadsPanel, BorderLayout.WEST);
 
-        // Create step grid panel
-        JPanel gridPanel = createStepGridPanel();
-
-        // IMPORTANT: Use only ONE JScrollPane for the grid
-        JScrollPane scrollPane = new JScrollPane(gridPanel);
+        // Create the center grid panel with sequence buttons
+        JPanel sequencePanel = createSequenceGridPanel();
+        
+        // Wrap in scroll pane
+        JScrollPane scrollPane = new JScrollPane(sequencePanel);
+        scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-        scrollPane.setBorder(null); // Remove border from scroll pane
-
-        contentPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // Add content panel to main layout
-        add(contentPanel, BorderLayout.CENTER);
-
-        // Add sound parameters panel
-        JPanel soundParamsPanel = createSoundParametersPanel();
-        add(soundParamsPanel, BorderLayout.SOUTH);
-
-        // Select the first drum pad by default
-        SwingUtilities.invokeLater(() -> selectDrumPad(0));
+        
+        add(scrollPane, BorderLayout.CENTER);
+        
+        // Add sequence parameters panel to the BOTTOM of the entire panel
+        add(sequenceParamsPanel, BorderLayout.SOUTH);
     }
 
     /**
@@ -352,7 +349,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         return panel;
     }
 
-    private JPanel createSwingControls() {
+    private JPanel createSwingControlPanel() {
         JPanel swingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         swingPanel.setBorder(BorderFactory.createTitledBorder("Swing"));
 
@@ -645,7 +642,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     /**
      * Create the step grid panel with proper cell visibility
      */
-    private JPanel createStepGridPanel() {
+    private JPanel createSequenceGridPanel() {
         // Use consistent cell size with even spacing
         JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, DEFAULT_PATTERN_LENGTH, 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -1165,7 +1162,11 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 }
 
                 Long id = instrument.getId();
-
+                if (id == null) {
+                    logger.warn("No instrument ID found for selected drum index: {}", selectedDrum);
+                    return;
+                }
+                
                 // Get the list of drum kit names
                 List<String> presets = InternalSynthManager.getInstance().getPresetNames(id);
 

@@ -119,23 +119,30 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // Create top panel to hold navigation, parameters and info
+        // Create west panel to hold navigation
+        JPanel westPanel = new JPanel(new BorderLayout(5, 5));
+        
+        // Create east panel for sound parameters 
+        JPanel eastPanel = new JPanel(new BorderLayout(5, 5));
+        
+        // Create top panel to hold west and east panels
         JPanel topPanel = new JPanel(new BorderLayout(5, 5));
 
-        // Create sequence navigation panel (in center)
+        // Create sequence navigation panel
         navigationPanel = new DrumSequenceNavigationPanel(sequencer);
 
-        // Create sequence parameters panel (left side)
+        // Create sequence parameters panel
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
 
-        // SWAPPED: Navigation panel now goes on left
-        topPanel.add(navigationPanel, BorderLayout.WEST);
+        // Navigation panel goes NORTH-WEST
+        westPanel.add(navigationPanel, BorderLayout.NORTH);
+        
+        // Swing controls go NORTH-EAST
+        eastPanel.add(createSwingControls(), BorderLayout.NORTH);
 
-        // SWAPPED: Parameters panel now goes in center
-        topPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
-
-        // Drum info panel stays on right
-        topPanel.add(createSwingControls(), BorderLayout.EAST);
+        // Add panels to the top panel
+        topPanel.add(westPanel, BorderLayout.WEST);
+        topPanel.add(eastPanel, BorderLayout.EAST);
 
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
@@ -157,6 +164,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
         add(scrollPane, BorderLayout.CENTER);
+        
+        // Add sequence parameters panel to the BOTTOM of the entire panel
+        add(sequenceParamsPanel, BorderLayout.SOUTH);
 
         // Initialize drum pads with numbered labels
         initializeDrumPads();

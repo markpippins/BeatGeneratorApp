@@ -108,22 +108,42 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     private void initialize() {
+        // Clear any existing components first to prevent duplication
+        removeAll();
+
+        // Use a consistent BorderLayout
+        setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // Create the top panel with a BorderLayout for better organization
+        // Create west panel to hold navigation
+        JPanel westPanel = new JPanel(new BorderLayout(5, 5));
+        
+        // Create east panel for sound parameters 
+        JPanel eastPanel = new JPanel(new BorderLayout(5, 5));
+        
+        // Create top panel to hold west and east panels
         JPanel topPanel = new JPanel(new BorderLayout(5, 5));
+
+        // Create sequence navigation panel
+        MelodicSequenceNavigationPanel navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
+
+        // Create sequence parameters panel
+        JPanel sequenceParamsPanel = createSequenceParametersPanel();
+
+        // Navigation panel goes NORTH-WEST
+        westPanel.add(navigationPanel, BorderLayout.NORTH);
+        
+        // Sound parameters go NORTH-EAST
+        eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
+
+        // Add panels to the top panel
+        topPanel.add(westPanel, BorderLayout.WEST);
+        topPanel.add(eastPanel, BorderLayout.EAST);
+
+        // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
 
-        // Add navigation panel on the left
-        topPanel.add(new MelodicSequenceNavigationPanel(sequencer), BorderLayout.WEST);
-        
-        // Add sequence parameters in the center
-        topPanel.add(createSequenceParametersPanel(), BorderLayout.CENTER);
-        
-        // Add sound parameters on the right
-        topPanel.add(createSoundParametersPanel(), BorderLayout.EAST);
-
-        // Create panel for the 16 columns with reduced spacing
+        // Create panel for the 16 columns
         JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0)); 
         sequencePanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
@@ -141,9 +161,18 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         add(scrollPane, BorderLayout.CENTER);
         
-        // Add Tilt Sequencer Panel at the bottom (SOUTH)
+        // Add sequence parameters panel to the BOTTOM of the entire panel
+        add(sequenceParamsPanel, BorderLayout.SOUTH);
+        
+        // Add Tilt Sequencer Panel at the bottom (SOUTH), below the sequence parameters
+        // Create a container panel for both southern panels
+        JPanel southPanel = new JPanel(new BorderLayout(5, 5));
+        southPanel.add(sequenceParamsPanel, BorderLayout.NORTH);
+        
         TiltSequencerPanel tiltPanel = new TiltSequencerPanel(sequencer);
-        add(tiltPanel, BorderLayout.SOUTH);
+        southPanel.add(tiltPanel, BorderLayout.SOUTH);
+        
+        add(southPanel, BorderLayout.SOUTH);
     }
 
     /**
