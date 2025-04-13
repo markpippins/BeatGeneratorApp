@@ -424,7 +424,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Create a panel specifically for rotation controls
         JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        rotationPanel.add(new JLabel("Rotate:"));
+        // rotationPanel.add(new JLabel("Rotate:"));
 
         // Create push forward button (using right arrow emoji)
         JButton pushForwardButton = new JButton("⟶");

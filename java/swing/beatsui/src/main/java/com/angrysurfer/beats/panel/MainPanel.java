@@ -370,7 +370,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JButton createAllNotesOffButton() {
         JButton notesOffButton = new JButton();
-        notesOffButton.setText("🚨");
+        notesOffButton.setText("🔕");
         notesOffButton.setPreferredSize(new Dimension(28, 28));
         notesOffButton.setMinimumSize(new Dimension(28, 28));
         notesOffButton.setMaximumSize(new Dimension(28, 28));
