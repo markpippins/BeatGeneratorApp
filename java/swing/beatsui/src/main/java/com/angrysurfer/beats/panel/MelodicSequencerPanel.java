@@ -160,6 +160,12 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
      * Create panel for sequence parameters (loop, direction, timing, etc.)
      */
     private JPanel createSequenceParametersPanel() {
+        // Size constants to match DrumSequencerPanel
+        final int SMALL_CONTROL_WIDTH = 40;
+        final int MEDIUM_CONTROL_WIDTH = 60;
+        final int LARGE_CONTROL_WIDTH = 90;
+        final int CONTROL_HEIGHT = 25;
+
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
@@ -170,128 +176,58 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Create spinner model with range 1-16, default 16
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 16, 1);
-        lastStepSpinner = new JSpinner(lastStepModel);  // Use class field instead of local variable
-        lastStepSpinner.setPreferredSize(new Dimension(50, 25));
+        lastStepSpinner = new JSpinner(lastStepModel);
+        lastStepSpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        lastStepSpinner.setToolTipText("Set the last step for the pattern (1-16)");
         lastStepSpinner.addChangeListener(e -> {
             int lastStep = (Integer) lastStepSpinner.getValue();
             sequencer.setPatternLength(lastStep);
         });
         lastStepPanel.add(lastStepSpinner);
-        lastStepPanel.setToolTipText("Set the last step for the selected drum");
 
-        // Direction combo
+        // Direction combo - remove the label
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        directionPanel.add(new JLabel("↔️"));
-        directionPanel.setToolTipText("Set the direction for the selected drum");
-
+        
         directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
-        directionCombo.setPreferredSize(new Dimension(90, 25));
+        directionCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
+        directionCombo.setToolTipText("Set the playback direction of the pattern");
         directionCombo.addActionListener(e -> {
             int selectedIndex = directionCombo.getSelectedIndex();
             Direction direction = switch (selectedIndex) {
-                case 0 ->
-                    Direction.FORWARD;
-                case 1 ->
-                    Direction.BACKWARD;
-                case 2 ->
-                    Direction.BOUNCE;
-                case 3 ->
-                    Direction.RANDOM;
-                default ->
-                    Direction.FORWARD;
+                case 0 -> Direction.FORWARD;
+                case 1 -> Direction.BACKWARD;
+                case 2 -> Direction.BOUNCE;
+                case 3 -> Direction.RANDOM;
+                default -> Direction.FORWARD;
             };
             sequencer.setDirection(direction);
         });
         directionPanel.add(directionCombo);
 
-        // Timing division combo
+        // Timing division combo - remove the label
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        timingPanel.add(new JLabel("🕒"));
-        timingPanel.setToolTipText("Set the timing interval for the selected drum");
-
+        
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
-        timingCombo.setPreferredSize(new Dimension(90, 25));
+        timingCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
+        timingCombo.setToolTipText("Set the timing division for this pattern");
         timingCombo.addActionListener(e -> {
             TimingDivision division = (TimingDivision) timingCombo.getSelectedItem();
             if (division != null) {
                 logger.info("Setting timing division to {}", division);
-
-                // Apply the timing division setting to the sequencer
                 sequencer.setTimingDivision(division);
             }
         });
         timingPanel.add(timingCombo);
 
-        // Octave shift controls
-        JPanel octavePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-        octavePanel.add(new JLabel("Octave:"));
-
-        // Down button
-        JButton octaveDownBtn = new JButton("-");
-        octaveDownBtn.setMargin(new java.awt.Insets(1, 5, 1, 5));
-        octaveDownBtn.setFocusable(false);
-        octaveDownBtn.addActionListener(e -> {
-            sequencer.decrementOctaveShift();
-            updateOctaveLabel();
-        });
-
-        octaveDownBtn.setToolTipText("Lower the octave for the selected drum");
-
-        // Up button
-        JButton octaveUpBtn = new JButton("+");
-        octaveUpBtn.setMargin(new java.awt.Insets(1, 5, 1, 5));
-        octaveUpBtn.setFocusable(false);
-        octaveUpBtn.addActionListener(e -> {
-            sequencer.incrementOctaveShift();
-            updateOctaveLabel();
-        });
-
-        octaveUpBtn.setToolTipText("Raise the octave for the selected drum");
-
-        // Label showing current octave
-        octaveLabel = new JLabel("0");
-        octaveLabel.setPreferredSize(new Dimension(20, 20));
-        octaveLabel.setHorizontalAlignment(JLabel.CENTER);
-
-        octavePanel.add(octaveDownBtn);
-        octavePanel.add(octaveLabel);
-        octavePanel.add(octaveUpBtn);
-
-        // Root Note combo
-        JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        rootNotePanel.add(new JLabel("Root:"));
-
-        // Create root note selector
-        rootNoteCombo = createRootNoteCombo();
-        rootNoteCombo.setPreferredSize(new Dimension(50, 25));
-        rootNoteCombo.setToolTipText("Set the root note for the selected drum");
-        rootNotePanel.add(rootNoteCombo);
-
-        // Scale selection panel
-        JPanel scalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        scalePanel.add(new JLabel("Scale:"));
-
-        // Add scale selector (similar to SessionControlPanel)
-        scaleCombo = createScaleCombo();
-        scaleCombo.setPreferredSize(new Dimension(120, 25));
-        scaleCombo.setToolTipText("Set the scale for the selected drum");
-        scalePanel.add(scaleCombo);
-
-        // Quantize checkbox
-        JCheckBox quantizeCheckbox = new JCheckBox("Quantize", true);
-        quantizeCheckbox.setToolTipText("Quantize");
-        quantizeCheckbox.addActionListener(e -> {
-            sequencer.setQuantizeEnabled(quantizeCheckbox.isSelected());
-        });
-
-        // Loop checkbox
+        // Loop checkbox - standardize with emoji
         loopCheckbox = new JCheckBox("🔁", true);
-        loopCheckbox.setToolTipText("Loop the sequence for the selected drum");
+        loopCheckbox.setToolTipText("Loop this pattern");
+        loopCheckbox.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
         loopCheckbox.addActionListener(e -> {
             sequencer.setLooping(loopCheckbox.isSelected());
         });
 
-        // Range combo box
+        // Range panel (similar to density in drum panel)
         JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         rangePanel.add(new JLabel("Range:"));
 
@@ -299,15 +235,31 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         String[] rangeOptions = {"1 Octave", "2 Octaves", "3 Octaves", "4 Octaves"};
         rangeCombo = new JComboBox<>(rangeOptions);
         rangeCombo.setSelectedIndex(1); // Default to 2 octaves
-        rangeCombo.setPreferredSize(new Dimension(90, 25));
-        rangeCombo.setToolTipText("Set the octave range for the selected drum");
+        rangeCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        rangeCombo.setToolTipText("Set the octave range for pattern generation");
         rangePanel.add(rangeCombo);
 
-        // ADD BACK CLEAR AND GENERATE BUTTONS
+        // Generate button with consistent styling
+        JButton generateButton = new JButton("🎲");
+        generateButton.setToolTipText("Generate a random pattern");
+        generateButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        generateButton.setMargin(new Insets(2, 2, 2, 2));
+        generateButton.addActionListener(e -> {
+            // Get selected octave range from the combo
+            int octaveRange = rangeCombo.getSelectedIndex() + 1;
+            int density = 50;  // Fixed density for now
+            sequencer.generatePattern(octaveRange, density);
+            syncUIWithSequencer();
+        });
+
+        // Clear pattern button with consistent styling
         JButton clearButton = new JButton("🗑️");
+        clearButton.setToolTipText("Clear pattern");
+        clearButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        clearButton.setMargin(new Insets(2, 2, 2, 2));
         clearButton.addActionListener(e -> {
             sequencer.clearPattern();
-
+            
             // Update UI after clearing pattern
             for (TriggerButton button : triggerButtons) {
                 button.setSelected(false);
@@ -315,95 +267,124 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
 
             // Reset dials to default values
-            for (Dial dial : noteDials) {
-                dial.setValue(60); // Middle C
-            }
-            for (Dial dial : velocityDials) {
-                dial.setValue(100);
-            }
-            for (Dial dial : gateDials) {
-                dial.setValue(50);
-            }
-            for (Dial dial : probabilityDials) {
-                dial.setValue(100);
-            }
-            for (Dial dial : nudgeDials) {
-                dial.setValue(0);
-            }
+            for (Dial dial : noteDials) { dial.setValue(60); }
+            for (Dial dial : velocityDials) { dial.setValue(100); }
+            for (Dial dial : gateDials) { dial.setValue(50); }
+            for (Dial dial : probabilityDials) { dial.setValue(100); }
+            for (Dial dial : nudgeDials) { dial.setValue(0); }
         });
 
-        JButton generateButton = new JButton("🎲");
-        generateButton.setToolTipText("Generate a new pattern");
-        generateButton.addActionListener(e -> {
-            // Get selected octave range from the combo
-            int octaveRange = rangeCombo.getSelectedIndex() + 1; // 1-4 octaves
+        // Create a panel specifically for rotation controls
+        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
 
-            // Set density to 50% for now (could add a slider for this)
-            int density = 50;
-
-            // Generate pattern with selected parameters
-            sequencer.generatePattern(octaveRange, density);
-
-            // IMPORTANT: Update UI to match generated pattern
-            syncUIWithSequencer();
+        // Pull backward button
+        JButton pullBackwardButton = new JButton("⟵");
+        pullBackwardButton.setToolTipText("Pull pattern backward (left)");
+        pullBackwardButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
+        pullBackwardButton.addActionListener(e -> {
+            sequencer.pullBackward();
+            SwingUtilities.invokeLater(this::syncUIWithSequencer);
         });
 
-        // Add latch toggle button
-        latchToggleButton = new JToggleButton("Latch", false);
+        // Push forward button
+        JButton pushForwardButton = new JButton("⟶");
+        pushForwardButton.setToolTipText("Push pattern forward (right)");
+        pushForwardButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
+        pushForwardButton.addActionListener(e -> {
+            sequencer.pushForward();
+            SwingUtilities.invokeLater(this::syncUIWithSequencer);
+        });
+
+        // Add buttons to rotation panel
+        rotationPanel.add(pullBackwardButton);
+        rotationPanel.add(pushForwardButton);
+
+        // --- Additional controls specific to MelodicSequencerPanel ---
+        
+        // Octave panel 
+        JPanel octavePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        octavePanel.add(new JLabel("Oct:"));
+
+        JButton octaveDownBtn = new JButton("-");
+        octaveDownBtn.setMargin(new java.awt.Insets(1, 5, 1, 5));
+        octaveDownBtn.setFocusable(false);
+        octaveDownBtn.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH/2, CONTROL_HEIGHT));
+        octaveDownBtn.addActionListener(e -> {
+            sequencer.decrementOctaveShift();
+            updateOctaveLabel();
+        });
+        octaveDownBtn.setToolTipText("Lower the octave");
+
+        octaveLabel = new JLabel("0");
+        octaveLabel.setPreferredSize(new Dimension(20, 20));
+        octaveLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        JButton octaveUpBtn = new JButton("+");
+        octaveUpBtn.setMargin(new java.awt.Insets(1, 5, 1, 5));
+        octaveUpBtn.setFocusable(false);
+        octaveUpBtn.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH/2, CONTROL_HEIGHT));
+        octaveUpBtn.addActionListener(e -> {
+            sequencer.incrementOctaveShift();
+            updateOctaveLabel();
+        });
+        octaveUpBtn.setToolTipText("Raise the octave");
+
+        octavePanel.add(octaveDownBtn);
+        octavePanel.add(octaveLabel);
+        octavePanel.add(octaveUpBtn);
+
+        // Root Note panel
+        JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        rootNotePanel.add(new JLabel("Root:"));
+
+        rootNoteCombo = createRootNoteCombo();
+        rootNoteCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        rootNoteCombo.setToolTipText("Set the root note");
+        rootNotePanel.add(rootNoteCombo);
+
+        // Scale panel
+        JPanel scalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        scalePanel.add(new JLabel("Scale:"));
+
+        scaleCombo = createScaleCombo();
+        scaleCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
+        scaleCombo.setToolTipText("Set the scale");
+        scalePanel.add(scaleCombo);
+
+        // Quantize checkbox
+        JCheckBox quantizeCheckbox = new JCheckBox("Q", true);
+        quantizeCheckbox.setToolTipText("Quantize notes to scale");
+        quantizeCheckbox.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        quantizeCheckbox.addActionListener(e -> {
+            sequencer.setQuantizeEnabled(quantizeCheckbox.isSelected());
+        });
+
+        // Latch toggle button
+        latchToggleButton = new JToggleButton("L", false);
         latchToggleButton.setToolTipText("Generate new pattern each cycle");
+        latchToggleButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
         latchToggleButton.addActionListener(e -> {
             sequencer.setLatchEnabled(latchToggleButton.isSelected());
             logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
         });
 
-        // Add Preset selection combo box before Edit Sound button
+        // Preset panel
         JPanel presetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        // presetPanel.add(new JLabel("Preset:"));
 
-        // Create combo box for instrument presets
         JComboBox<String> presetCombo = new JComboBox<>();
-        presetCombo.setPreferredSize(new Dimension(180, 25));
-        presetCombo.setToolTipText("Select a preset for the selected drum");
-
-        // Populate with GM instrument presets from InternalSynthManager
+        presetCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH*2, CONTROL_HEIGHT));
+        presetCombo.setToolTipText("Select instrument preset");
         populatePresetCombo(presetCombo);
-
-        presetCombo.addActionListener(e -> {
-            if (!updatingUI) {
-                String selectedItem = (String) presetCombo.getSelectedItem();
-                if (selectedItem != null) {
-                    // Parse preset number from format "0: Acoustic Grand Piano"
-                    int presetNumber = parsePresetNumber(selectedItem);
-
-                    // Update the sequencer's note preset
-                    if (sequencer.getNotePlayer() != null) {
-                        sequencer.getNotePlayer().setPreset(presetNumber);
-
-                        // Apply preset change via instrument
-                        if (sequencer.getNotePlayer().getInstrument() != null) {
-                            try {
-                                sequencer.getNotePlayer().getInstrument().programChange(
-                                        sequencer.getNotePlayer().getChannel(),
-                                        presetNumber,
-                                        0
-                                );
-                                logger.info("Changed preset to: {}", selectedItem);
-                            } catch (Exception ex) {
-                                logger.error("Failed to set preset: {}", ex.getMessage());
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
         presetPanel.add(presetCombo);
 
-        // Add Edit Player button
+        // Edit Player button
         JButton editPlayerButton = new JButton("✏️");
-        editPlayerButton.setToolTipText("Edit sound for the selected drum");
+        editPlayerButton.setToolTipText("Edit sound for this sequencer");
+        editPlayerButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        editPlayerButton.setMargin(new Insets(2, 2, 2, 2));
         editPlayerButton.addActionListener(e -> {
-            // Get the Note from the sequencer and publish edit request
             if (sequencer != null && sequencer.getNotePlayer() != null) {
                 logger.info("Opening player editor for: {}", sequencer.getNotePlayer().getName());
                 CommandBus.getInstance().publish(
@@ -422,54 +403,26 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
         });
 
-        // Create a panel specifically for rotation controls
-        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        // rotationPanel.add(new JLabel("Rotate:"));
-
-        // Create push forward button (using right arrow emoji)
-        JButton pushForwardButton = new JButton("⟶");
-        pushForwardButton.setToolTipText("Push sequence forward (right)");
-        pushForwardButton.setPreferredSize(new Dimension(40, 25));
-        pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
-        pushForwardButton.addActionListener(e -> {
-            sequencer.pushForward();
-
-            // Update the UI to reflect the changes
-            SwingUtilities.invokeLater(this::syncUIWithSequencer);
-        });
-
-        // Create pull backward button (using left arrow emoji)
-        JButton pullBackwardButton = new JButton("⟵");
-        pullBackwardButton.setToolTipText("Pull sequence backward (left)");
-        pullBackwardButton.setPreferredSize(new Dimension(40, 25));
-        pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
-        pullBackwardButton.addActionListener(e -> {
-            sequencer.pullBackward();
-
-            // Update the UI to reflect the changes
-            SwingUtilities.invokeLater(this::syncUIWithSequencer);
-        });
-
-        // Add buttons to the rotation panel
-        rotationPanel.add(pullBackwardButton);
-        rotationPanel.add(pushForwardButton);
-
-        // Add all components to panel in a single row
+        // --- Add controls to panel in the desired order ---
+        
+        // First, add core controls in the same order as DrumSequencerPanel
         panel.add(lastStepPanel);
         panel.add(directionPanel);
-        panel.add(timingPanel);      // Add Timing combo
+        panel.add(timingPanel);
+        panel.add(loopCheckbox);
+        panel.add(rangePanel);
+        panel.add(generateButton);
+        panel.add(clearButton);
+        panel.add(rotationPanel);
+        
+        // Then add additional controls specific to MelodicSequencerPanel
         panel.add(octavePanel);
         panel.add(rootNotePanel);
         panel.add(scalePanel);
         panel.add(quantizeCheckbox);
-        panel.add(loopCheckbox);
-        panel.add(rangePanel);       // Add Range combo before the buttons
-        panel.add(clearButton);      // Add Clear button
-        panel.add(generateButton);   // Add Generate button
-        panel.add(latchToggleButton); // Add Latch toggle button
-        panel.add(presetPanel);      // Add preset panel before Edit Sound button
-        panel.add(editPlayerButton); // Add Edit Player button
-        panel.add(rotationPanel);    // Add rotation panel
+        panel.add(latchToggleButton);
+        panel.add(presetPanel);
+        panel.add(editPlayerButton);
 
         return panel;
     }
@@ -681,55 +634,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         buttonPanel1.add(triggerButton[0]);
         column.add(buttonPanel1);
-
-        // // Make pad button more compact and CONSISTENT SIZE
-        // DrumButton padButton = new DrumButton();
-        // padButton.setName("PadButton-" + index);
-        // padButton.setToolTipText("Pad " + (index + 1));
-
-        // // IMPORTANT: Set a fixed size for ALL pad buttons
-        // // Add action to manually trigger the note when pad button is clicked
-        // padButton.addActionListener(e -> {
-        //     if (index < noteDials.size()) {
-        //         // Get note from dial
-        //         int noteValue = noteDials.get(index).getValue();
-
-        //         // Apply quantization if enabled
-        //         int quantizedNote = sequencer.quantizeNote(noteValue);
-
-        //         // Apply octave shift
-        //         int shiftedNote = sequencer.applyOctaveShift(quantizedNote);
-
-        //         // Get velocity
-        //         int velocity = 127; // Full velocity for manual triggers
-        //         if (index < velocityDials.size()) {
-        //             velocity = (int) Math.round(velocityDials.get(index).getValue() * 1.27);
-        //             velocity = Math.max(1, Math.min(127, velocity));
-        //         }
-
-        //         // Get gate time
-        //         int gateTime = 250; // Longer gate time for manual triggers
-        //         if (index < gateDials.size()) {
-        //             gateTime = (int) Math.round(50 + gateDials.get(index).getValue() * 4.5);
-        //         }
-
-        //         // Create note event
-        //         NoteEvent noteEvent = new NoteEvent(shiftedNote, velocity, gateTime);
-
-        //         // Pass to sequencer's note event listener directly
-        //         if (sequencer.getNoteEventListener() != null) {
-        //             sequencer.getNoteEventListener().accept(noteEvent);
-        //         } else {
-        //             // Fallback if no listener is set - log the error
-        //             logger.error("No note event listener set in sequencer");
-        //         }
-        //     }
-        // });
-
-        // JPanel buttonPanel2 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        // buttonPanel2.add(padButton);
-        // column.add(buttonPanel2);
-        // melodicPadButtons.add(padButton);
 
         noteDial[0].addChangeListener(e -> {
             if (!listenersEnabled) {
