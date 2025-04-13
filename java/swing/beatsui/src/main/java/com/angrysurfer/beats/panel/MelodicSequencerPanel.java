@@ -161,17 +161,17 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         add(scrollPane, BorderLayout.CENTER);
         
-        // Add sequence parameters panel to the BOTTOM of the entire panel
-        add(sequenceParamsPanel, BorderLayout.SOUTH);
-        
-        // Add Tilt Sequencer Panel at the bottom (SOUTH), below the sequence parameters
-        // Create a container panel for both southern panels
+        // Create a container panel for both southern panels - SWAPPED ORDER
         JPanel southPanel = new JPanel(new BorderLayout(5, 5));
-        southPanel.add(sequenceParamsPanel, BorderLayout.NORTH);
         
+        // Create tilt panel and add it to the TOP of the south panel
         TiltSequencerPanel tiltPanel = new TiltSequencerPanel(sequencer);
-        southPanel.add(tiltPanel, BorderLayout.SOUTH);
+        southPanel.add(tiltPanel, BorderLayout.NORTH);
         
+        // Add sequence parameters to the BOTTOM of the south panel
+        southPanel.add(sequenceParamsPanel, BorderLayout.SOUTH);
+        
+        // Add the south panel to the main layout
         add(southPanel, BorderLayout.SOUTH);
     }
 

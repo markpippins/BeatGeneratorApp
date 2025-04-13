@@ -165,15 +165,15 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Create sequence parameters panel
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
+        
+        // Create swing control panel
+        JPanel swingPanel = createSwingControlPanel();
 
         // Navigation panel goes NORTH-WEST
         westPanel.add(navigationPanel, BorderLayout.NORTH);
         
-        // Swing controls and sound parameters go NORTH-EAST
-        JPanel eastTopPanel = new JPanel(new BorderLayout(5, 5));
-        eastTopPanel.add(createSwingControlPanel(), BorderLayout.WEST);
-        eastTopPanel.add(createSoundParametersPanel(), BorderLayout.EAST);
-        eastPanel.add(eastTopPanel, BorderLayout.NORTH);
+        // Sound parameters go NORTH-EAST
+        eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
 
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
@@ -197,8 +197,14 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         
         add(scrollPane, BorderLayout.CENTER);
         
-        // Add sequence parameters panel to the BOTTOM of the entire panel
-        add(sequenceParamsPanel, BorderLayout.SOUTH);
+        // Create a panel for the bottom controls that will contain both 
+        // sequence parameters and swing control
+        JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
+        bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+        bottomPanel.add(swingPanel, BorderLayout.EAST);
+        
+        // Add the bottom panel to the main panel
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 
     /**

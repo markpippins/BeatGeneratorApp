@@ -77,88 +77,88 @@ public class PlayerManager {
         commandBus.register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null) return;
-                
+                if (action.getCommand() == null)
+                    return;
+
                 switch (action.getCommand()) {
                     case Commands.PLAYER_SELECTED -> {
                         if (action.getData() instanceof Player) {
                             playerSelected((Player) action.getData());
                         }
                     }
-                    
+
                     case Commands.PLAYER_UNSELECTED -> {
                         logger.info("Player unselected");
                         activePlayer = null;
                     }
-                    
+
                     case Commands.PLAYER_UPDATED -> {
                         if (action.getData() instanceof Player && !action.getSender().equals(this)) {
                             playerUpdated((Player) action.getData());
                         }
                     }
-                    
+
                     case Commands.MINI_NOTE_SELECTED -> {
                         if (action.getData() instanceof Number) {
                             int midiNote = ((Number) action.getData()).intValue();
                             sendNoteToActivePlayer(midiNote);
                         }
                     }
-                    
+
                     // Add preset change handlers with preview - replace existing implementation
                     case Commands.PRESET_UP -> {
                         if (activePlayer != null) {
                             // Increment preset value (with upper bound of 127)
-                            int currentPreset = activePlayer.getPreset() != null ? 
-                                              activePlayer.getPreset() : 0;
+                            int currentPreset = activePlayer.getPreset() != null ? activePlayer.getPreset() : 0;
                             int newPreset = Math.min(127, currentPreset + 1);
-                            
+
                             // Update the preset
                             activePlayer.setPreset(newPreset);
-                            
+
                             // First publish lightweight update for immediate UI feedback
-                            commandBus.publish(Commands.PRESET_CHANGED, this, 
-                                Map.of("playerId", activePlayer.getId(), 
-                                       "preset", newPreset, 
-                                       "playerName", activePlayer.getName()));
-                            
+                            commandBus.publish(Commands.PRESET_CHANGED, this,
+                                    Map.of("playerId", activePlayer.getId(),
+                                            "preset", newPreset,
+                                            "playerName", activePlayer.getName()));
+
                             // Then publish full player update for complete UI refresh
                             commandBus.publish(Commands.PLAYER_UPDATED, activePlayer);
-                            
+
                             // Play a preview note immediately
                             sendNoteToActivePlayer(60);
-                            
+
                             // Schedule saving to Redis after a delay to avoid rapid successive saves
                             schedulePlayerSave(activePlayer);
                         }
                     }
-                    
+
                     case Commands.PRESET_DOWN -> {
                         if (activePlayer != null) {
                             // Decrement preset value (with lower bound of 0)
-                            int currentPreset = activePlayer.getPreset() != null ? 
-                                              activePlayer.getPreset().intValue() : 0;
+                            int currentPreset = activePlayer.getPreset() != null ? activePlayer.getPreset().intValue()
+                                    : 0;
                             int newPreset = Math.max(0, currentPreset - 1);
-                            
+
                             // Update the preset
                             activePlayer.setPreset(newPreset);
-                            
+
                             // First publish lightweight update for immediate UI feedback
-                            commandBus.publish(Commands.PRESET_CHANGED, this, 
-                                Map.of("playerId", activePlayer.getId(), 
-                                       "preset", newPreset, 
-                                       "playerName", activePlayer.getName()));
-                            
+                            commandBus.publish(Commands.PRESET_CHANGED, this,
+                                    Map.of("playerId", activePlayer.getId(),
+                                            "preset", newPreset,
+                                            "playerName", activePlayer.getName()));
+
                             // Then publish full player update for complete UI refresh
                             commandBus.publish(Commands.PLAYER_UPDATED, activePlayer);
-                            
+
                             // Play a preview note immediately
                             sendNoteToActivePlayer(60);
-                            
+
                             // Schedule saving to Redis after a delay to avoid rapid successive saves
                             schedulePlayerSave(activePlayer);
                         }
                     }
-                    
+
                     case Commands.RULE_DELETE_REQUEST -> {
                         if (action.getData() instanceof Rule[] rules) {
                             logger.info("Processing rule delete request for {} rules", rules.length);
@@ -169,21 +169,21 @@ public class PlayerManager {
                                 // Get a fresh copy of the player to ensure we have current state
                                 // Player freshPlayer = redisService.findPlayerById(player.getId());
                                 // if (freshPlayer == null) {
-                                //     logger.error("Could not find player with ID: {}", player.getId());
-                                //     return;
+                                // logger.error("Could not find player with ID: {}", player.getId());
+                                // return;
                                 // }
-                                
+
                                 // Track if we deleted any rules
                                 boolean deletedRules = false;
-                                
+
                                 // Remove rules from player and Redis
                                 for (Rule rule : rules) {
                                     Long ruleId = rule.getId();
-                                    
+
                                     // First remove from Redis directly
                                     redisService.deleteRule(ruleId);
                                     logger.info("Attempted to delete rule from Redis: {}", ruleId);
-                                    
+
                                     // Then remove from player's collection
                                     if (player.getRules() != null) {
                                         boolean removed = player.getRules().removeIf(r -> r.getId().equals(ruleId));
@@ -195,24 +195,25 @@ public class PlayerManager {
                                         }
                                     }
                                 }
-                                
+
                                 if (deletedRules) {
                                     // Save updated player - Don't assign to boolean since method returns void
                                     redisService.savePlayer(player);
                                     logger.info("Player {} saved after rule deletion", player.getId());
-                                    
+
                                     // Get another fresh copy after saving
                                     // Player refreshedPlayer = redisService.findPlayerById(freshPlayer.getId());
-                                    
+
                                     // Notify UI
                                     commandBus.publish(Commands.RULE_DELETED, this, player);
                                     commandBus.publish(Commands.PLAYER_UPDATED, this, player);
                                     commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-                                    
+
                                     // Log rules count after operation
                                     int rulesCount = player.getRules() != null ? player.getRules().size() : 0;
-                                    logger.info("Player {} now has {} rules after deletion", player.getId(), rulesCount);
-                                    
+                                    logger.info("Player {} now has {} rules after deletion", player.getId(),
+                                            rulesCount);
+
                                     debugPlayerRules(player);
                                 }
                             }
@@ -228,15 +229,15 @@ public class PlayerManager {
                                     if (player != null) {
                                         // Set new min velocity
                                         player.setMinVelocity(value);
-                                        
+
                                         // Ensure max velocity is at least min velocity
                                         if (player.getMaxVelocity() < value) {
                                             player.setMaxVelocity(value);
                                         }
-                                        
+
                                         // Save player
                                         savePlayerProperties(player);
-                                        
+
                                         // Publish player update
                                         commandBus.publish(Commands.PLAYER_UPDATED, this, player);
                                         commandBus.publish(Commands.PLAYER_ROW_REFRESH, this, player);
@@ -255,15 +256,15 @@ public class PlayerManager {
                                     if (player != null) {
                                         // Set new max velocity
                                         player.setMaxVelocity(value);
-                                        
+
                                         // Ensure min velocity doesn't exceed max velocity
                                         if (player.getMinVelocity() > value) {
                                             player.setMinVelocity(value);
                                         }
-                                        
+
                                         // Save player
                                         savePlayerProperties(player);
-                                        
+
                                         // Publish player update
                                         commandBus.publish(Commands.PLAYER_UPDATED, this, player);
                                         commandBus.publish(Commands.PLAYER_ROW_REFRESH, this, player);
@@ -288,7 +289,7 @@ public class PlayerManager {
     }
 
     public void playerUpdated(Player player) {
-        if (Objects.equals(activePlayer.getId(), player.getId())) {
+        if (Objects.nonNull(player.getId()) && Objects.equals(activePlayer.getId(), player.getId())) {
             this.activePlayer = player;
             commandBus.publish(Commands.PLAYER_SELECTED, this, player);
         }
@@ -305,26 +306,26 @@ public class PlayerManager {
 
     public Rule addRule(Player player, int operator, int comparison, double value, int part) {
         Rule rule = new Rule(operator, comparison, value, part, true);
-        
+
         // Set bidirectional relationship
         rule.setPlayer(player);
-        
+
         // Initialize rules collection if needed
         if (player.getRules() == null) {
             player.setRules(new HashSet<>());
         }
-        
+
         // Don't add duplicate rules
         if (player.getRules().stream().noneMatch(r -> r.isEqualTo(rule))) {
             player.getRules().add(rule);
-            
+
             // IMPORTANT: Save the player to persist the rule relationship
             savePlayerWithRules(player);
-            
+
             // Publish events
             commandBus.publish(Commands.RULE_ADDED, this, player);
             commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-            
+
             return rule;
         }
         return null;
@@ -332,30 +333,31 @@ public class PlayerManager {
 
     /**
      * Saves a player and ensures rules are properly persisted
+     * 
      * @param player The player to save
      */
     private void savePlayerWithRules(Player player) {
         try {
             // Save to Redis without expecting boolean return
             redisService.savePlayer(player);
-            
+
             // Also update in session to ensure consistency
             Session session = SessionManager.getInstance().getActiveSession();
             if (session != null) {
                 // Find and update player in session
                 Set<Player> players = session.getPlayers();
-                
+
                 // Remove existing player with same ID
                 players.removeIf(p -> p.getId().equals(player.getId()));
-                
+
                 // Add updated player
                 players.add(player);
-                
+
                 // Save session to persist changes without expecting boolean return
                 redisService.saveSession(session);
-                
-                logger.info("Saved player " + player.getName() + " with " + 
-                          (player.getRules() != null ? player.getRules().size() : 0) + " rules");
+
+                logger.info("Saved player " + player.getName() + " with " +
+                        (player.getRules() != null ? player.getRules().size() : 0) + " rules");
             }
         } catch (Exception e) {
             logger.error("Error saving player: " + e.getMessage());
@@ -367,7 +369,7 @@ public class PlayerManager {
             logger.error("Cannot remove rule: player or ruleId is null");
             return;
         }
-        
+
         // Get the rule from player's rules collection
         Rule ruleToRemove = null;
         if (player.getRules() != null) {
@@ -378,29 +380,29 @@ public class PlayerManager {
                 }
             }
         }
-        
+
         if (ruleToRemove != null) {
             // Remove from player's collection
             boolean removed = player.getRules().remove(ruleToRemove);
             if (!removed) {
                 logger.warn("Failed to remove rule from player's collection: {}", ruleId);
             }
-            
+
             // Delete from Redis directly without expecting boolean return
             redisService.deleteRule(ruleId);
             logger.info("Attempted to delete rule from Redis: {}", ruleId);
-            
+
             // Save the updated player (without the rule)
             savePlayerWithRules(player);
-            
+
             // Debug the state after removal
             debugPlayerRules(player);
-            
+
             // Notify listeners about the change
             commandBus.publish(Commands.RULE_DELETED, this, player);
             commandBus.publish(Commands.PLAYER_UPDATED, this, player);
             commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-            
+
             logger.info("Removed rule {} from player {}", ruleId, player.getName());
         } else {
             logger.warn("Rule {} not found in player {}", ruleId, player.getName());
@@ -530,6 +532,7 @@ public class PlayerManager {
 
     /**
      * Saves player properties and ensures persistence
+     * 
      * @param player The player to save
      */
     public void savePlayerProperties(Player player) {
@@ -537,22 +540,22 @@ public class PlayerManager {
             logger.error("Cannot save null player");
             return;
         }
-        
+
         try {
             // Save to Redis without expecting boolean return
             redisService.savePlayer(player);
             logger.info("Saved player properties: " + player.getName());
-            
+
             // Also update in session to ensure consistency
             Session session = SessionManager.getInstance().getActiveSession();
             if (session != null) {
                 // Find and update player in session
                 Set<Player> players = session.getPlayers();
-                
+
                 // Remove existing player with same ID and add updated one
                 players.removeIf(p -> p.getId().equals(player.getId()));
                 players.add(player);
-                
+
                 // Update session in Redis if needed
                 redisService.saveSession(session);
             }
@@ -572,26 +575,26 @@ public class PlayerManager {
             logger.error("Cannot delete null rule");
             return;
         }
-        
+
         Player player = rule.getPlayer();
         if (player == null) {
             logger.error("Rule {} has no associated player", rule.getId());
             return;
         }
-        
+
         // Delete from Redis first without expecting boolean return
         redisService.deleteRule(rule.getId());
         logger.info("Attempted to delete rule from Redis: {}", rule.getId());
-        
+
         // Remove from player
         if (player.getRules() != null) {
             boolean removed = player.getRules().remove(rule);
             logger.info("Rule {} removed from player's collection: {}", rule.getId(), removed);
         }
-        
+
         // Save updated player
         savePlayerWithRules(player);
-        
+
         // Notify listeners
         commandBus.publish(Commands.RULE_DELETED, this, player);
         commandBus.publish(Commands.PLAYER_UPDATED, this, player);
@@ -620,14 +623,15 @@ public class PlayerManager {
 
     public void setActivePlayer(Player player) {
         if (!Objects.equals(this.activePlayer, player)) {
-            logger.info("PlayerManager.setActivePlayer: " + 
-                      (player != null ? player.getName() + " (ID: " + player.getId() + ")" : "null"));
+            logger.info("PlayerManager.setActivePlayer: " +
+                    (player != null ? player.getName() + " (ID: " + player.getId() + ")" : "null"));
             this.activePlayer = player;
         }
     }
 
     /**
      * Sends a MIDI note to the active player without triggering heavy updates
+     * 
      * @param midiNote The MIDI note to send
      * @return true if note was successfully sent, false otherwise
      */
@@ -636,7 +640,7 @@ public class PlayerManager {
             logger.debug("No active player to receive MIDI note: {}", midiNote);
             return false;
         }
-        
+
         try {
             // Use the player's instrument, channel, and a reasonable velocity
             InstrumentWrapper instrument = activePlayer.getInstrument();
@@ -644,50 +648,49 @@ public class PlayerManager {
                 logger.debug("Active player has no instrument");
                 return false;
             }
-            
+
             int channel = activePlayer.getChannel();
-            
+
             // CRITICAL FIX: Send program change before playing the note
             if (activePlayer.getPreset() != null) {
                 try {
-                    logger.debug("Sending program change: channel={}, preset={}", 
-                               channel, activePlayer.getPreset());
+                    logger.debug("Sending program change: channel={}, preset={}",
+                            channel, activePlayer.getPreset());
                     instrument.programChange(channel, activePlayer.getPreset(), 0);
                 } catch (Exception e) {
                     logger.warn("Failed to send program change: {}", e.getMessage());
                     // Continue anyway to play the note
                 }
             }
-            
+
             // Calculate velocity from player settings
             int velocity = (int) Math.round((activePlayer.getMinVelocity() + activePlayer.getMaxVelocity()) / 2.0);
-            
+
             // Just update the note in memory temporarily - don't save to Redis
             activePlayer.setRootNote(midiNote);
-            
+
             // Send the note to the device
             logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);
             instrument.noteOn(channel, midiNote, velocity);
-            
+
             // Schedule note-off after a reasonable duration
             long duration = 250; // milliseconds
             new java.util.Timer(true).schedule( // Use daemon timer
-                new java.util.TimerTask() {
-                    @Override
-                    public void run() {
-                        try {
-                            instrument.noteOff(channel, midiNote, 0);
-                        } catch (Exception e) {
-                            // Just log at debug level - not a critical error
-                            logger.debug("Error sending note-off: {}", e.getMessage());
+                    new java.util.TimerTask() {
+                        @Override
+                        public void run() {
+                            try {
+                                instrument.noteOff(channel, midiNote, 0);
+                            } catch (Exception e) {
+                                // Just log at debug level - not a critical error
+                                logger.debug("Error sending note-off: {}", e.getMessage());
+                            }
                         }
-                    }
-                },
-                duration
-            );
-            
+                    },
+                    duration);
+
             return true;
-            
+
         } catch (Exception e) {
             logger.warn("Error sending MIDI note: {}", e.getMessage());
             return false;
@@ -699,10 +702,10 @@ public class PlayerManager {
         if (saveTimer != null) {
             saveTimer.cancel();
         }
-        
+
         // Create new timer
         saveTimer = new java.util.Timer(true);
-        
+
         // Schedule save after a short delay (500ms)
         saveTimer.schedule(new java.util.TimerTask() {
             @Override
@@ -722,19 +725,19 @@ public class PlayerManager {
     public void debugPlayerRules(Player player) {
         logger.info("=== DEBUG PLAYER RULES ===");
         logger.info("Player: " + player.getName() + " (ID: " + player.getId() + ")");
-        
+
         if (player.getRules() == null) {
             logger.info("Rules collection is NULL");
             return;
         }
-        
+
         logger.info("Rules count: " + player.getRules().size());
-        
+
         for (Rule rule : player.getRules()) {
-            logger.info("Rule ID: " + rule.getId() + 
-                      " - Player ID: " + (rule.getPlayer() != null ? rule.getPlayer().getId() : "NULL") +
-                      " - " + rule.getOperatorText() + " " + 
-                      rule.getComparisonText() + " " + rule.getValue());
+            logger.info("Rule ID: " + rule.getId() +
+                    " - Player ID: " + (rule.getPlayer() != null ? rule.getPlayer().getId() : "NULL") +
+                    " - " + rule.getOperatorText() + " " +
+                    rule.getComparisonText() + " " + rule.getValue());
         }
         logger.info("=========================");
     }

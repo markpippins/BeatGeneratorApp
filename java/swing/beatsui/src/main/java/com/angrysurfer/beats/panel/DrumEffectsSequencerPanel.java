@@ -133,12 +133,15 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Create sequence parameters panel
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
+        
+        // Create swing controls
+        JPanel swingPanel = createSwingControls();
 
         // Navigation panel goes NORTH-WEST
         westPanel.add(navigationPanel, BorderLayout.NORTH);
         
-        // Swing controls go NORTH-EAST
-        eastPanel.add(createSwingControls(), BorderLayout.NORTH);
+        // Sound parameters go NORTH-EAST (if you have them)
+        // eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
 
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
@@ -165,8 +168,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         add(scrollPane, BorderLayout.CENTER);
         
-        // Add sequence parameters panel to the BOTTOM of the entire panel
-        add(sequenceParamsPanel, BorderLayout.SOUTH);
+        // Create a panel for the bottom controls
+        JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
+        bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+        bottomPanel.add(swingPanel, BorderLayout.EAST);
+        
+        // Add the bottom panel to the main panel
+        add(bottomPanel, BorderLayout.SOUTH);
 
         // Initialize drum pads with numbered labels
         initializeDrumPads();
