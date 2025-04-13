@@ -114,8 +114,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         add(paramsPanel, BorderLayout.NORTH);
 
         // Add sequence parameters panel at the top
-        paramsPanel.add(createSequenceParametersPanel(), BorderLayout.NORTH);
-        paramsPanel.add(new MelodicSequenceNavigationPanel(sequencer), BorderLayout.CENTER);
+        paramsPanel.add(new MelodicSequenceNavigationPanel(sequencer), BorderLayout.WEST);
+        paramsPanel.add(createSequenceParametersPanel(), BorderLayout.CENTER);
 
         // Create panel for the 16 columns with reduced spacing
         JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0)); // Reduced from 5 to 2
