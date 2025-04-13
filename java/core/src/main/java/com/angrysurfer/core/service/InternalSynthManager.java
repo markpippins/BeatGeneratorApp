@@ -718,18 +718,18 @@ public class InternalSynthManager {
         }
     }
 
-    /**
-     * DEPRECATED - Use getPresetNames(String, int) instead
-     */
-    @Deprecated
-    public List<String> getPresetNames(int bank) {
-        logger.warn("Using deprecated getPresetNames(int) method - should specify soundbank name");
-        // Return General MIDI names for backward compatibility
-        if (bank == 0) {
-            return getGeneralMIDIPresetNames();
-        }
-        return new ArrayList<>();
-    }
+    // /**
+    //  * DEPRECATED - Use getPresetNames(String, int) instead
+    //  */
+    // @Deprecated
+    // public List<String> getPresetNames(int bank) {
+    //     logger.warn("Using deprecated getPresetNames(int) method - should specify soundbank name");
+    //     // Return General MIDI names for backward compatibility
+    //     if (bank == 0) {
+    //         return getGeneralMIDIPresetNames();
+    //     }
+    //     return new ArrayList<>();
+    // }
 
     /**
      * Get preset names for a specific soundbank and bank (already had the

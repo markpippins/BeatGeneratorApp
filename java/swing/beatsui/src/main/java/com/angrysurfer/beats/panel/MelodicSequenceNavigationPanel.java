@@ -2,16 +2,19 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Insets;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Direction;
@@ -26,6 +29,12 @@ import com.angrysurfer.core.sequencer.TimingDivision;
 public class MelodicSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceNavigationPanel.class);
+    
+    // Size constants to match other panels
+    private static final int SMALL_CONTROL_WIDTH = 40;
+    private static final int MEDIUM_CONTROL_WIDTH = 60;
+    private static final int LABEL_WIDTH = 85;
+    private static final int CONTROL_HEIGHT = 25;
 
     private JLabel sequenceIdLabel;
     private JButton firstButton;
@@ -45,28 +54,39 @@ public class MelodicSequenceNavigationPanel extends JPanel {
     }
 
     private void initializeUI() {
-        // Set layout and border
-        setLayout(new FlowLayout(FlowLayout.CENTER, 10, 2));
+        // Set layout and border with more compact spacing
+        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
         setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEtchedBorder(),
+                BorderFactory.createLineBorder(ColorUtils.deepNavy),
                 "Sequence Navigation",
-                TitledBorder.CENTER,
+                TitledBorder.LEFT,
                 TitledBorder.TOP
         ));
 
         // Create ID label
-        sequenceIdLabel = new JLabel(getFormattedIdText());
-        sequenceIdLabel.setPreferredSize(new Dimension(120, 25));
+        sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
+        sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, CONTROL_HEIGHT));
+        // sequenceIdLabel.setBorder(BorderFactory.createCompoundBorder(
+        //         BorderFactory.createLineBorder(ColorUtils.lightGray, 1),
+        //         BorderFactory.createEmptyBorder(0, 5, 0, 5)
+        // ));
+        sequenceIdLabel.setOpaque(true);
+        sequenceIdLabel.setBackground(ColorUtils.darkGray);
+        sequenceIdLabel.setForeground(ColorUtils.coolBlue);
+        sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
 
-        // Create navigation buttons
-        firstButton = createButton("|<", "First sequence", e -> loadFirstSequence());
-        prevButton = createButton("<", "Previous sequence", e -> loadPreviousSequence());
-        nextButton = createButton(">", "Next sequence", e -> loadNextSequence());
-        lastButton = createButton(">|", "Last sequence", e -> loadLastSequence());
-
-        // Create save button
-        saveButton = createButton("Save", "Save current sequence", e -> saveCurrentSequence());
-        saveButton.setBackground(new java.awt.Color(220, 240, 255));
+        // Create navigation buttons with icons instead of text
+        firstButton = createButton("⏮", "First sequence", e -> loadFirstSequence());
+        prevButton = createButton("◀", "Previous sequence", e -> loadPreviousSequence());
+        nextButton = createButton("▶", "Next sequence", e -> loadNextSequence());
+        lastButton = createButton("⏭", "Last sequence", e -> loadLastSequence());
+        
+        // Create save button with icon
+        saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
+        
+        // Match color scheme from other panels
+        // saveButton.setBackground(ColorUtils.getButtonColor("save"));
+        // saveButton.setForeground(ColorUtils.getButtonTextColor("save"));
 
         // Add components to panel
         add(sequenceIdLabel);
@@ -85,6 +105,11 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         button.setToolTipText(tooltip);
         button.addActionListener(listener);
         button.setFocusable(false);
+        
+        // Set consistent size and margins to match other panels
+        button.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        button.setMargin(new Insets(2, 2, 2, 2));
+        
         return button;
     }
 
@@ -96,7 +121,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
     }
 
     private String getFormattedIdText() {
-        return "Sequence ID: " + 
+        return "Seq: " + 
             (sequencer.getMelodicSequenceId() == 0 ? "New" : sequencer.getMelodicSequenceId());
     }
 
@@ -160,10 +185,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             );
         }
     }
-
-    /**
-     * Load the first available sequence
-     */
+    
     private void loadFirstSequence() {
         Long firstId = redisService.getMinimumMelodicSequenceId(sequencer.getId());
         if (firstId != null) {
@@ -171,9 +193,6 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         }
     }
 
-    /**
-     * Load the previous sequence
-     */
     private void loadPreviousSequence() {
         Long prevId = redisService.getPreviousMelodicSequenceId(
             sequencer.getId(), 
@@ -185,9 +204,6 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         }
     }
 
-    /**
-     * Load the next sequence, or create a new one if at the last sequence
-     */
     private void loadNextSequence() {
         Long nextId = redisService.getNextMelodicSequenceId(
             sequencer.getId(), 
@@ -226,9 +242,6 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         }
     }
 
-    /**
-     * Load the last available sequence
-     */
     private void loadLastSequence() {
         Long lastId = redisService.getMaximumMelodicSequenceId(sequencer.getId());
         if (lastId != null) {
@@ -236,9 +249,6 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         }
     }
 
-    /**
-     * Save the current sequence
-     */
     private void saveCurrentSequence() {
         // Save the sequence
         redisService.saveMelodicSequence(sequencer);

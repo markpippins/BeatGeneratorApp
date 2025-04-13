@@ -42,7 +42,7 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
         this.sequencer = sequencer;
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Harmonic Tilt"));
-        setPreferredSize(new Dimension(getPreferredSize().width, 150));
+        setPreferredSize(new Dimension(getPreferredSize().width, 110));
 
         JPanel dialsPanel = new JPanel(new GridLayout(1, DIAL_COUNT, 2, 0));
         JPanel labelsPanel = new JPanel(new GridLayout(1, DIAL_COUNT, 2, 0));
@@ -55,16 +55,16 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
 
             // Create container for dial with spacing
             JPanel dialContainer = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            dialContainer.setPreferredSize(new Dimension(80, 80));
+            // dialContainer.setPreferredSize(new Dimension(80, 80));
             dialContainer.add(dial);
 
             dialContainers.add(dialContainer);
             dialsPanel.add(dialContainer);
 
             // Create label for dial
-            JLabel label = new JLabel(String.valueOf(i + 1), JLabel.CENTER);
-            label.setFont(label.getFont().deriveFont(10f));
-            labelsPanel.add(label);
+            // JLabel label = new JLabel(String.valueOf(i + 1), JLabel.CENTER);
+            // label.setFont(label.getFont().deriveFont(10f));
+            // labelsPanel.add(label);
         }
 
         JPanel mainPanel = new JPanel(new BorderLayout());

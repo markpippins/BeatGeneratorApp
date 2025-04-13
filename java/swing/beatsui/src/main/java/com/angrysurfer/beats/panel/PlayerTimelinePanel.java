@@ -13,6 +13,7 @@ import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -267,7 +268,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
         // Draw vertical tick lines (thinner)
         g2d.setColor(new Color(220, 220, 220)); // Very light gray
-        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[]{1, 2}, 0));
+        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[] { 1, 2 }, 0));
         for (int tick = 0; tick <= totalTicks; tick++) {
             // Skip lines that are already drawn as beat or bar lines
             if (tick % ticksPerBeat != 0) {
@@ -281,7 +282,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
      * Initialize empty components with placeholders
      */
     private void initEmptyComponents() {
-        
+
         setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
         // Create header with player name - keep minimal
@@ -293,18 +294,18 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         // Create zoom control panel
         JPanel zoomControlPanel = new JPanel(new BorderLayout(5, 0));
         zoomControlPanel.setOpaque(false);
-        
+
         // Create zoom buttons with proper styling
         JButton zoomOutButton = new JButton("-");
         zoomOutButton.setFont(new Font("Arial", Font.BOLD, 14));
         zoomOutButton.setFocusPainted(false);
         // zoomOutButton.setMargin(new Insets(0, 2, 0, 2));
-        
+
         JButton zoomInButton = new JButton("+");
         zoomInButton.setFont(new Font("Arial", Font.BOLD, 14));
         zoomInButton.setFocusPainted(false);
         // zoomInButton.setMargin(new Insets(0, 2, 0, 2));
-        
+
         // Add action listeners for zoom buttons
         zoomOutButton.addActionListener(e -> {
             // Decrease cell width but keep minimum of 4px
@@ -313,29 +314,29 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 updateGridAfterZoom();
             }
         });
-        
+
         zoomInButton.addActionListener(e -> {
             // Increase cell width (no practical upper limit needed)
             cellWidth++;
             updateGridAfterZoom();
         });
-        
+
         // Add buttons to zoom panel
         zoomControlPanel.add(zoomOutButton, BorderLayout.WEST);
         zoomControlPanel.add(zoomInButton, BorderLayout.EAST);
         zoomControlPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-        
+
         // Use BorderLayout for infoPanel to place buttons on the right
         JPanel infoPanel = new JPanel(new BorderLayout());
         // infoPanel.setBackground(ColorUtils.coolBlue);
         infoPanel.add(nameLabel, BorderLayout.CENTER);
         infoPanel.add(zoomControlPanel, BorderLayout.EAST);
-        
+
         infoPanel.setMinimumSize(new Dimension(800, 30));
         infoPanel.setPreferredSize(new Dimension(800, 30));
-        
+
         add(infoPanel, BorderLayout.NORTH);
-        
+
         // Create main grid panel with fixed cell size
         gridPanel = new JPanel() {
             @Override
@@ -391,11 +392,11 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 // Refresh empty grid
                 drawEmptyTimelineGrid();
             }
-            
+
             // Make sure scrollbars update
             revalidate();
             repaint();
-            
+
             // Ensure current position stays visible
             scrollToCurrentPosition();
         });
@@ -489,7 +490,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         labelPanel.setBounds(0, 0, 40, rowHeight * TOTAL_ROWS);
 
         // Create labels
-        String[] labelTexts = {"Tick", "Ticks", "Beat", "Beats", "Bar", "Bars", "Part", "Parts"};
+        String[] labelTexts = { "Tick", "Ticks", "Beat", "Beats", "Bar", "Bars", "Part", "Parts" };
         for (int i = 0; i < TOTAL_ROWS; i++) {
             JLabel label = createRowLabel(labelTexts[i]);
             label.setBounds(0, i * rowHeight, 80, rowHeight);
@@ -502,7 +503,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         label.setForeground(Color.WHITE);
         // Use a smaller font for the reduced row height
         label.setFont(new Font("Arial", Font.BOLD, 10));
-        label.setHorizontalAlignment(JLabel.LEFT); 
+        label.setHorizontalAlignment(JLabel.LEFT);
         return label;
     }
 
@@ -701,7 +702,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 // Add labelWidth to x position to account for left panel
                 int x = labelWidth
                         + (bar * beatsPerBar * player.getSession().getTicksPerBeat()
-                        + beat * player.getSession().getTicksPerBeat()) * cellWidth
+                                + beat * player.getSession().getTicksPerBeat()) * cellWidth
                         + (player.getSession().getTicksPerBeat() * cellWidth / 2) - 3; // Center in beat
                 beatLabel.setBounds(x, 10, 10, 10);
 
@@ -740,7 +741,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                     drawEmptyTimelineGrid();
                 }
                 case Commands.PLAYER_UPDATED -> {
-                    if (player != null && action.getData() instanceof Player p && p.getId().equals(player.getId())) {
+                    if (player != null && action.getData() instanceof Player p && Objects.nonNull(p.getId())
+                            && p.getId().equals(player.getId())) {
                         player = p;
                         updateTimelineWithFixedRowHeights();
                     }
@@ -804,17 +806,18 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 } else if (soundbankName != null && !soundbankName.isEmpty()) {
                     // For instruments with loaded soundbanks
                     Integer bankIndex = player.getInstrument().getBankIndex();
-                    if (bankIndex == null) bankIndex = 0;
-                    
+                    if (bankIndex == null)
+                        bankIndex = 0;
+
                     // Try to get preset name from soundbank
                     try {
                         String presetName = InternalSynthManager.getInstance()
-                            .getPresetNames(soundbankName, bankIndex)
-                            .stream()
-                            .skip(presetNumber)
-                            .findFirst()
-                            .orElse("Preset " + presetNumber);
-                        
+                                .getPresetNames(soundbankName, bankIndex)
+                                .stream()
+                                .skip(presetNumber)
+                                .findFirst()
+                                .orElse("Preset " + presetNumber);
+
                         playerInfo.append(" - ").append(presetName);
                     } catch (Exception e) {
                         // Fallback to just showing preset number
@@ -893,7 +896,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
         // Draw vertical tick lines (thinner)
         g2d.setColor(new Color(220, 220, 220)); // Very light gray
-        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[]{1, 2}, 0));
+        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[] { 1, 2 }, 0));
         for (int tick = 0; tick <= totalTicks; tick++) {
             // Skip lines that are already drawn as beat or bar lines
             if (tick % ticksPerBeat != 0) {

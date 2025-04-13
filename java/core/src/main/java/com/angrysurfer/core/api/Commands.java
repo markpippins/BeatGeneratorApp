@@ -293,5 +293,7 @@ public class Commands {
     public static final String DRUM_NOTE_TRIGGERED = "DRUM_NOTE_TRIGGERED";
     public static final String MELODIC_NOTE_TRIGGERED = "MELODIC_NOTE_TRIGGERED";
     public static final String TOGGLE_TRANSPORT = "TOGGLE_TRANSPORT";
-}
+    public static final String LFO_VALUE_CHANGED = "LFO_VALUE_CHANGED";
+    public static final String LFO_SELECTED = "LFO_SELECTED";
 
+}
