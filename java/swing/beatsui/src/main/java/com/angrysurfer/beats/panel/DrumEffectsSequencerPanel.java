@@ -870,10 +870,10 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         rotationPanel.add(pushForwardButton);
 
         // Add all components to panel in the same order as DrumSequencerPanel
-        controlsPanel.add(lastStepPanel);
-        controlsPanel.add(directionPanel);
         controlsPanel.add(timingPanel);
+        controlsPanel.add(directionPanel);
         controlsPanel.add(loopToggleButton);
+        controlsPanel.add(lastStepPanel);
         controlsPanel.add(rotationPanel);
         controlsPanel.add(clearPatternButton);
 
