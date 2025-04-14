@@ -2,16 +2,19 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Insets;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Direction;
@@ -25,6 +28,12 @@ import com.angrysurfer.core.service.DrumSequencerManager;
 public class DrumSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumSequenceNavigationPanel.class);
+    
+    // Size constants to match other panels
+    private static final int SMALL_CONTROL_WIDTH = 40;
+    private static final int MEDIUM_CONTROL_WIDTH = 60;
+    private static final int LABEL_WIDTH = 85;
+    private static final int CONTROL_HEIGHT = 25;
 
     private JLabel sequenceIdLabel;
     private JButton firstButton;
@@ -44,26 +53,30 @@ public class DrumSequenceNavigationPanel extends JPanel {
     }
 
     private void initializeUI() {
-        // Set layout and border
-        setLayout(new FlowLayout(FlowLayout.CENTER, 10, 2));
+        // Set layout and border with more compact spacing
+        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
         setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEtchedBorder(),
+                BorderFactory.createLineBorder(ColorUtils.deepNavy),
                 "Sequence Navigation",
-                TitledBorder.CENTER,
+                TitledBorder.LEFT,
                 TitledBorder.TOP
         ));
 
-        // Create ID label
-        sequenceIdLabel = new JLabel(getFormattedIdText());
-        sequenceIdLabel.setPreferredSize(new Dimension(40, 25));
+        // Create ID label with styling
+        sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
+        sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, CONTROL_HEIGHT));
+        sequenceIdLabel.setOpaque(true);
+        sequenceIdLabel.setBackground(ColorUtils.darkGray);
+        sequenceIdLabel.setForeground(ColorUtils.coolBlue);
+        sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
 
-        // Create navigation buttons
+        // Create navigation buttons with icons
         firstButton = createButton("⏮", "First sequence", e -> loadFirstSequence());
         prevButton = createButton("◀", "Previous sequence", e -> loadPreviousSequence());
         nextButton = createButton("▶", "Next sequence", e -> loadNextSequence());
         lastButton = createButton("⏭", "Last sequence", e -> loadLastSequence());
-
-        // Create save button - make it stand out more
+        
+        // Create save button with icon
         saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
         
         // Add components to panel
@@ -82,7 +95,11 @@ public class DrumSequenceNavigationPanel extends JPanel {
         JButton button = new JButton(text);
         button.setToolTipText(tooltip);
         button.addActionListener(listener);
-        button.setPreferredSize(new Dimension(32, 32));
+        button.setFocusable(false);
+        
+        // Set consistent size and margins to match other panels
+        button.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        button.setMargin(new Insets(2, 2, 2, 2));
         
         return button;
     }
@@ -96,7 +113,8 @@ public class DrumSequenceNavigationPanel extends JPanel {
     }
 
     private String getFormattedIdText() {
-        return "Seq: " + (sequencer.getDrumSequenceId() > 0 ? sequencer.getDrumSequenceId() : "New");
+        return "Seq: " + 
+            (sequencer.getDrumSequenceId() == 0 ? "New" : sequencer.getDrumSequenceId());
     }
 
     /**
