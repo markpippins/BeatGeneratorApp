@@ -149,7 +149,8 @@ public class LFOPanel extends JPanel implements AutoCloseable {
 
         // Create live waveform panel to replace the value display
         liveWaveformPanel = new LiveWaveformPanel();
-        liveWaveformPanel.setPreferredSize(new Dimension(600, 100));
+        liveWaveformPanel.setMinimumSize(new Dimension(600, 300));
+        liveWaveformPanel.setPreferredSize(new Dimension(600, 300));
         JPanel liveWaveformContainer = new JPanel(new BorderLayout(5, 5));
         liveWaveformContainer.setBorder(BorderFactory.createTitledBorder("Live Output"));
         liveWaveformContainer.add(liveWaveformPanel, BorderLayout.CENTER);
