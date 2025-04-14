@@ -40,6 +40,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
 
     // UI components
     private WaveformPanel waveformPanel;
+    private LiveWaveformPanel liveWaveformPanel;
     private JComboBox<String> waveformCombo;
     private DoubleDial freqDial;
     private DoubleDial ampDial;
@@ -140,11 +141,26 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         JPanel topControlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         JPanel dialPanel = new JPanel(new GridLayout(1, 5, 5, 5));
 
-        // Create waveform visualization panel
+        // Create waveform visualization panel - MAKE IT SMALLER
         waveformPanel = new WaveformPanel();
-        waveformPanel.setPreferredSize(new Dimension(600, 200));
-        waveformPanelContainer.setBorder(BorderFactory.createTitledBorder("Waveform"));
+        waveformPanel.setPreferredSize(new Dimension(600, 120)); // Reduced height to ~1/4
+        waveformPanelContainer.setBorder(BorderFactory.createTitledBorder("Waveform Shape"));
         waveformPanelContainer.add(waveformPanel, BorderLayout.CENTER);
+
+        // Create live waveform panel to replace the value display
+        liveWaveformPanel = new LiveWaveformPanel();
+        liveWaveformPanel.setPreferredSize(new Dimension(600, 100));
+        JPanel liveWaveformContainer = new JPanel(new BorderLayout(5, 5));
+        liveWaveformContainer.setBorder(BorderFactory.createTitledBorder("Live Output"));
+        liveWaveformContainer.add(liveWaveformPanel, BorderLayout.CENTER);
+
+        // Create compact value display
+        JPanel valueDisplayPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        valueLabel = new JLabel("0.00");
+        valueLabel.setFont(new Font("Monospaced", Font.BOLD, 14));
+        valueDisplayPanel.add(new JLabel("Current:"));
+        valueDisplayPanel.add(valueLabel);
+        liveWaveformContainer.add(valueDisplayPanel, BorderLayout.SOUTH);
 
         // Create waveform selector
         String[] waveforms = { "Sine", "Triangle", "Sawtooth", "Square", "Pulse", "Random" };
@@ -171,7 +187,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         JPanel freqPanel = createDialPanel(
             "Frequency", 
             "Controls the oscillation rate in Hertz (cycles per second)",
-            0.001, 20.0, frequency, 0.001, // Keep 0.01 step for frequency
+            0.001, 20.0, frequency, 0.1, // Keep 0.01 step for frequency
             val -> {
                 frequency = val;
                 updateWaveformDisplay();
@@ -181,7 +197,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         JPanel ampPanel = createDialPanel(
             "Amplitude", 
             "Controls the height/strength of the waveform (0-1)",
-            0.0, 1.0, amplitude, 0.0001, // ULTRA-FINE STEP for finer control
+            0.0, 1.0, amplitude, 0.01, // ULTRA-FINE STEP for finer control
             val -> {
                 amplitude = val;
                 updateWaveformDisplay();
@@ -191,7 +207,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         JPanel offsetPanel = createDialPanel(
             "Offset", 
             "Shifts the center position of the waveform up or down",
-            -1.0, 1.0, offset, 0.0001, // ULTRA-FINE STEP for finer control
+            -1.0, 1.0, offset, 0.01, // ULTRA-FINE STEP for finer control
             val -> {
                 offset = val;
                 updateWaveformDisplay();
@@ -201,7 +217,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         JPanel phasePanel = createDialPanel(
             "Phase", 
             "Shifts the starting position within the waveform cycle (0-360°)",
-            0.0, 1.0, phase, 0.001, // SMALLER STEP for finer control
+            0.0, 1.0, phase, 0.01, // SMALLER STEP for finer control
             val -> {
                 phase = val;
                 updateWaveformDisplay();
@@ -211,7 +227,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         JPanel pwPanel = createDialPanel(
             "Pulse Width", 
             "Controls the duty cycle of pulse waveforms (ratio of high to low time)",
-            0.01, 0.99, pulseWidth, 0.0001, // ULTRA-FINE STEP for finer control
+            0.01, 0.99, pulseWidth, 0.001, // ULTRA-FINE STEP for finer control
             val -> {
                 pulseWidth = val;
                 updateWaveformDisplay();
@@ -225,25 +241,6 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         dialPanel.add(phasePanel);
         dialPanel.add(pwPanel);
 
-        // Create value display components
-        JPanel valueDisplayPanel = new JPanel(new BorderLayout(5, 5));
-        valueDisplayPanel.setBorder(BorderFactory.createTitledBorder("Current Value"));
-
-        valueLabel = new JLabel("0.00");
-        valueLabel.setFont(new Font("Monospaced", Font.BOLD, 16));
-        valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
-        // Create bipolar slider to show current value
-        bipolarSlider = new JSlider(JSlider.HORIZONTAL, -100, 100, 0);
-        bipolarSlider.setMajorTickSpacing(50);
-        bipolarSlider.setMinorTickSpacing(10);
-        bipolarSlider.setPaintTicks(true);
-        bipolarSlider.setPaintLabels(true);
-        bipolarSlider.setEnabled(false); // For display only
-
-        valueDisplayPanel.add(valueLabel, BorderLayout.NORTH);
-        valueDisplayPanel.add(bipolarSlider, BorderLayout.CENTER);
-
         // Build top control panel
         topControlPanel.add(new JLabel("Waveform:"));
         topControlPanel.add(waveformCombo);
@@ -253,7 +250,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         // Add components to main panels
         controlPanel.add(topControlPanel, BorderLayout.NORTH);
         controlPanel.add(dialPanel, BorderLayout.CENTER);
-        controlPanel.add(valueDisplayPanel, BorderLayout.SOUTH);
+        controlPanel.add(liveWaveformContainer, BorderLayout.SOUTH); // Use the live waveform instead
 
         // Add components to main panel
         add(waveformPanelContainer, BorderLayout.CENTER);
@@ -397,8 +394,10 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                 SwingUtilities.invokeLater(() -> {
                     currentValue = newValue[0];
                     valueLabel.setText(String.format("%.2f", newValue[0]));
-                    bipolarSlider.setValue((int) (newValue[0] * 100));
-
+                    
+                    // Update the live waveform panel with the new value
+                    liveWaveformPanel.addValue(newValue[0]);
+                    
                     // Notify listeners if attached
                     if (valueChangeListener != null) {
                         valueChangeListener.accept(newValue[0]);
@@ -560,6 +559,81 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                 g2d.drawLine(markerX, 0, markerX, height);
             }
 
+            g2d.dispose();
+        }
+    }
+
+    /**
+     * Panel for visualizing the live waveform
+     */
+    private class LiveWaveformPanel extends JPanel {
+        private static final int HISTORY_SIZE = 500; // Number of points to keep in history
+        private final java.util.Deque<Double> valueHistory = new java.util.ArrayDeque<>(HISTORY_SIZE);
+        
+        public LiveWaveformPanel() {
+            setBackground(Color.BLACK);
+            // Initialize with zeros
+            for (int i = 0; i < HISTORY_SIZE; i++) {
+                valueHistory.addLast(0.0);
+            }
+        }
+        
+        public void addValue(double value) {
+            // Add new value and remove oldest if full
+            valueHistory.addLast(value);
+            if (valueHistory.size() > HISTORY_SIZE) {
+                valueHistory.removeFirst();
+            }
+            repaint(); // Trigger redraw with new data
+        }
+        
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g.create();
+            
+            int width = getWidth();
+            int height = getHeight();
+            int midY = height / 2;
+            
+            // Anti-aliasing for smoother lines
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Draw center line
+            g2d.setColor(new Color(40, 40, 40));
+            g2d.drawLine(0, midY, width, midY);
+            
+            // Draw horizontal grid lines at 25%, 50%, 75%
+            g2d.setColor(new Color(30, 30, 30));
+            g2d.drawLine(0, midY - height / 4, width, midY - height / 4);
+            g2d.drawLine(0, midY + height / 4, width, midY + height / 4);
+            
+            // Draw waveform from history
+            g2d.setColor(new Color(255, 100, 100)); // Different color for live waveform
+            g2d.setStroke(new BasicStroke(2f));
+            
+            Path2D.Double path = new Path2D.Double();
+            boolean first = true;
+            
+            // Convert history to array for easier indexing
+            Double[] values = valueHistory.toArray(new Double[0]);
+            
+            for (int i = 0; i < values.length; i++) {
+                // Calculate x position (newest values on the right)
+                double x = ((double) i / values.length) * width;
+                
+                // Calculate y position (invert since Y grows downward)
+                double y = midY - (values[i] * height / 2);
+                
+                if (first) {
+                    path.moveTo(x, y);
+                    first = false;
+                } else {
+                    path.lineTo(x, y);
+                }
+            }
+            
+            g2d.draw(path);
             g2d.dispose();
         }
     }

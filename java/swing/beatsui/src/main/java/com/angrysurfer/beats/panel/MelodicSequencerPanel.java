@@ -335,6 +335,43 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             sequencer.setLooping(loopToggleButton.isSelected());
         });
 
+        // Create rotation panel
+        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+
+        // Rotate Left button
+        JButton rotateLeftButton = new JButton("⟵");
+        rotateLeftButton.setToolTipText("Rotate pattern one step left");
+        rotateLeftButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        rotateLeftButton.setMargin(new Insets(2, 2, 2, 2));
+        rotateLeftButton.addActionListener(e -> {
+            sequencer.rotatePatternLeft();
+            syncUIWithSequencer();
+        });
+
+        // Rotate Right button
+        JButton rotateRightButton = new JButton("⟶");
+        rotateRightButton.setToolTipText("Rotate pattern one step right");
+        rotateRightButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        rotateRightButton.setMargin(new Insets(2, 2, 2, 2));
+        rotateRightButton.addActionListener(e -> {
+            sequencer.rotatePatternRight();
+            syncUIWithSequencer();
+        });
+
+        // Add buttons to rotation panel
+        rotationPanel.add(rotateLeftButton);
+        rotationPanel.add(rotateRightButton);
+
+        // Clear button
+        JButton clearButton = new JButton("🗑️");
+        clearButton.setToolTipText("Clear pattern");
+        clearButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        clearButton.setMargin(new Insets(2, 2, 2, 2));
+        clearButton.addActionListener(e -> {
+            sequencer.clearPattern();
+            syncUIWithSequencer();
+        });
+
         // Octave panel
         JPanel octavePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         octavePanel.add(new JLabel("Octave:"));
@@ -400,6 +437,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         panel.add(directionPanel);
         panel.add(loopToggleButton);
         panel.add(lastStepPanel);
+        panel.add(rotationPanel);  // Add the rotation panel here
+        panel.add(clearButton);    // Add the clear button here
 
         // Then add additional controls specific to MelodicSequencerPanel
         panel.add(rootNotePanel);
