@@ -459,6 +459,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // Clear previous selection
             if (selectedPadIndex >= 0 && selectedPadIndex < drumButtons.size()) {
                 drumButtons.get(selectedPadIndex).setSelected(false);
+                drumButtons.get(selectedPadIndex).setText("");
                 drumButtons.get(selectedPadIndex).repaint();
             }
 
@@ -468,6 +469,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // Update drum button visual state
             if (padIndex >= 0 && padIndex < drumButtons.size()) {
                 drumButtons.get(padIndex).setSelected(true);
+                System.out.println(drumButtons.get(padIndex).getText());
+                drumButtons.get(padIndex).setText("SEL");
                 drumButtons.get(padIndex).repaint();
 
                 // Enable trigger buttons
