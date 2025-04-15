@@ -102,8 +102,11 @@ class InstrumentsPanel extends JPanel {
         // Setup key bindings
         setupKeyBindings();
 
-        // Finally add everything to the panel
+        // Add main content to the CENTER
         add(createOptionsPanel(), BorderLayout.CENTER);
+        
+        // Add MIDI test panel to the SOUTH position (bottom) of the main panel
+        add(createMidiTestControls(), BorderLayout.SOUTH);
     }
 
     private void registerCommandListener() {
@@ -182,9 +185,6 @@ class InstrumentsPanel extends JPanel {
         buttonPanel.add(enableInstrumentButton);
 
         toolBar.add(buttonPanel, BorderLayout.CENTER);
-        
-        // Add MIDI test panel to the bottom of the toolbar
-        toolBar.add(createMidiTestControls(), BorderLayout.SOUTH);
         
         return toolBar;
     }
