@@ -337,7 +337,7 @@ class InstrumentsPanel extends JPanel {
                         logger.error("Error sending note off: {}", e.getMessage());
                     }
                 }
-            }, 500);
+            }, 1500);
             
             // Log and update status
             CommandBus.getInstance().publish(
