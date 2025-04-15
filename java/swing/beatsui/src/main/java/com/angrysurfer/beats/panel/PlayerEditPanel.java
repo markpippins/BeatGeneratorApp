@@ -3,6 +3,8 @@ package com.angrysurfer.beats.panel;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +13,9 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
@@ -277,45 +281,100 @@ public class PlayerEditPanel extends JPanel {
         return panel;
     }
 
-    private void setupRulesPanel() {
-        // Add button handlers
-        addRuleButton.addActionListener(e -> CommandBus.getInstance().publish(
-                Commands.RULE_ADD_REQUEST, this, player));
+    private void setupRulesTable() {
+        // Initialize the rules table
+        rulesTable = new RulesTable();
+        
+        // Initialize with player's rules
+        if (player != null && player.getRules() != null) {
+            rulesTable.getRuleTableModel().setRules(player.getRules());
+        }
+        
+        // Add selection listener for enabling/disabling buttons
+        rulesTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                updateButtonStates();
+            }
+        });
+        
+        // Add context menu to the table
+        setupRulesTableContextMenu();
+        
+        // Initialize button states
+        updateButtonStates();
+    }
 
-        editRuleButton.addActionListener(e -> {
+    /**
+     * Sets up the context menu for the rules table
+     */
+    private void setupRulesTableContextMenu() {
+        // Create new popup menu
+        JPopupMenu contextMenu = new JPopupMenu();
+        
+        // Add Rule menu item
+        JMenuItem addMenuItem = new JMenuItem("Add Rule");
+        addMenuItem.addActionListener(e -> CommandBus.getInstance().publish(
+                Commands.RULE_ADD_REQUEST, this, player));
+        contextMenu.add(addMenuItem);
+        
+        // Edit Rule menu item - enabled only when a rule is selected
+        JMenuItem editMenuItem = new JMenuItem("Edit Rule");
+        editMenuItem.addActionListener(e -> {
             Rule selectedRule = getSelectedRule();
             if (selectedRule != null) {
                 CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
             }
         });
-
-        deleteRuleButton.addActionListener(e -> {
+        contextMenu.add(editMenuItem);
+        
+        // Delete Rule menu item - enabled only when a rule is selected
+        JMenuItem deleteMenuItem = new JMenuItem("Delete Rule");
+        deleteMenuItem.addActionListener(e -> {
             Rule selectedRule = getSelectedRule();
             if (selectedRule != null) {
                 CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, new Rule[]{selectedRule});
             }
         });
-
-        // Listen for rule updates
-        CommandBus.getInstance().register(new IBusListener() {
+        contextMenu.add(deleteMenuItem);
+        
+        // Add mouse listener to show the context menu
+        rulesTable.addMouseListener(new MouseAdapter() {
             @Override
-            public void onAction(Command action) {
-                if (action.getCommand() == null) {
-                    return;
-                }
-
-                if (Commands.PLAYER_UPDATED.equals(action.getCommand())) {
-                    if (action.getData() instanceof Player) {
-                        Player updatedPlayer = (Player) action.getData();
-                        if (updatedPlayer.getId().equals(player.getId())) {
-                            player.setRules(updatedPlayer.getRules());
-                            updateRulesTable();
-                            updateButtonStates();
-                        }
+            public void mousePressed(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+            
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+            
+            private void maybeShowPopup(MouseEvent e) {
+                // Check explicitly for right mouse button on Windows
+                if (e.isPopupTrigger() || e.getButton() == MouseEvent.BUTTON3) {
+                    // Select the row under the mouse pointer
+                    int row = rulesTable.rowAtPoint(e.getPoint());
+                    if (row >= 0) {
+                        rulesTable.setRowSelectionInterval(row, row);
                     }
+                    
+                    // Update menu item states based on selection
+                    boolean hasSelection = rulesTable.getSelectedRow() >= 0;
+                    editMenuItem.setEnabled(hasSelection);
+                    deleteMenuItem.setEnabled(hasSelection);
+                    
+                    // Show the context menu
+                    contextMenu.show(e.getComponent(), e.getX(), e.getY());
+                    
+                    // Debug message
+                    logger.debug("Showing context menu at {},{} with selection: {}", 
+                                e.getX(), e.getY(), hasSelection);
                 }
             }
         });
+        
+        // Associate the popup with the table
+        rulesTable.setComponentPopupMenu(contextMenu);
     }
 
     private Rule getSelectedRule() {
@@ -369,13 +428,21 @@ public class PlayerEditPanel extends JPanel {
         }
     }
 
-    private void setupRulesTable() {
-        // Initialize button states
-        updateButtonStates();
-    }
-
+    /**
+     * Update button states based on selection
+     */
     private void updateButtonStates() {
+        // FIX: Logic was inverted - buttons should be enabled when there IS a selection
         boolean hasSelection = rulesTable.getSelectedRow() >= 0;
+        
+        // Debug the selection state
+        logger.debug("Selected row: {} - Setting edit/delete enabled: {}", 
+                    rulesTable.getSelectedRow(), hasSelection);
+        
+        // Add button always enabled
+        addRuleButton.setEnabled(true);
+        
+        // Edit and delete buttons only enabled when a rule is selected
         editRuleButton.setEnabled(hasSelection);
         deleteRuleButton.setEnabled(hasSelection);
     }
@@ -404,6 +471,25 @@ public class PlayerEditPanel extends JPanel {
 
         // Create button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        
+        // Add action listeners to buttons
+        addRuleButton.addActionListener(e -> CommandBus.getInstance().publish(
+                Commands.RULE_ADD_REQUEST, this, player));
+                
+        editRuleButton.addActionListener(e -> {
+            Rule selectedRule = getSelectedRule();
+            if (selectedRule != null) {
+                CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
+            }
+        });
+        
+        deleteRuleButton.addActionListener(e -> {
+            Rule selectedRule = getSelectedRule();
+            if (selectedRule != null) {
+                CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, new Rule[]{selectedRule});
+            }
+        });
+        
         buttonPanel.add(addRuleButton);
         buttonPanel.add(editRuleButton);
         buttonPanel.add(deleteRuleButton);
