@@ -37,6 +37,8 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.DrumStepUpdateEvent;
@@ -44,6 +46,7 @@ import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
+import com.angrysurfer.core.service.InternalSynthManager;
 
 /**
  * A sequencer panel with X0X-style step sequencing capabilities
@@ -78,6 +81,11 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
     private JButton generatePatternButton;
     private JButton clearPatternButton;
     private JSpinner densitySpinner;
+
+    // Add these fields to the DrumEffectsSequencerPanel class
+    private boolean updatingUI = false;
+    private JComboBox<String> kitCombo;
+    private JButton editSoundButton;
 
     /**
      * Create a new SequencerPanel
@@ -141,7 +149,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         westPanel.add(navigationPanel, BorderLayout.NORTH);
         
         // Sound parameters go NORTH-EAST (if you have them)
-        // eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
+        eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
 
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
@@ -192,6 +200,133 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Initialize drum pads with numbered labels
         initializeDrumPads();
+    }
+
+    /**
+     * Initialize the sound parameters panel
+     */
+    private JPanel createSoundParametersPanel() {
+        // Size constants
+        final int SMALL_CONTROL_WIDTH = 30;
+        final int LARGE_CONTROL_WIDTH = 90;
+        final int CONTROL_HEIGHT = 25;
+
+        // Create the panel with a titled border
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createTitledBorder("Sound Parameters"));
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+
+        // Create kit/preset combo
+        kitCombo = new JComboBox<>();
+        kitCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH * 2, CONTROL_HEIGHT));
+        kitCombo.setToolTipText("Select drum kit");
+        populateDrumKitCombo(kitCombo);
+
+        // Add listener for kit changes
+        kitCombo.addActionListener(e -> {
+            if (updatingUI || kitCombo.getSelectedIndex() < 0)
+                return;
+
+            int kitIndex = kitCombo.getSelectedIndex();
+            logger.info("Selected drum kit index: " + kitIndex);
+
+            // Get the currently selected player from the players array
+            if (selectedPadIndex >= 0 && selectedPadIndex < sequencer.getPlayers().length) {
+                // Update the selected drum's kit/preset
+                sequencer.getPlayers()[selectedPadIndex].setPreset(kitIndex);
+
+                // Inform the system about the kit change
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_UPDATED,
+                        this,
+                        sequencer.getPlayers()[selectedPadIndex]);
+            }
+        });
+
+        // Create edit button with pencil icon and skinny width
+        editSoundButton = new JButton("✎");
+        editSoundButton.setToolTipText("Edit drum sound");
+        editSoundButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        editSoundButton.setMargin(new Insets(1, 1, 1, 1));
+        editSoundButton.setFocusable(false);
+
+        // Add listener for edit button
+        editSoundButton.addActionListener(e -> {
+            // Get the currently selected player
+            if (selectedPadIndex >= 0 && selectedPadIndex < sequencer.getPlayers().length) {
+                logger.info("Opening drum sound editor for: " + sequencer.getPlayers()[selectedPadIndex].getName());
+
+                // Send the selected player to the editor
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_SELECTED,
+                        this,
+                        sequencer.getPlayers()[selectedPadIndex]);
+
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_EDIT_REQUEST,
+                        this,
+                        sequencer.getPlayers()[selectedPadIndex]);
+            } else {
+                logger.warning("Cannot edit player - No drum selected or player not initialized");
+            }
+        });
+
+        // Add components to panel
+        panel.add(kitCombo);
+        panel.add(editSoundButton);
+
+        return panel;
+    }
+
+    /**
+     * Populate the drum kit combo with available drum kits
+     */
+    private void populateDrumKitCombo(JComboBox<String> combo) {
+        updatingUI = true;
+        try {
+            combo.removeAllItems();
+
+            if (selectedPadIndex < 0 || selectedPadIndex >= sequencer.getPlayers().length) {
+                logger.warning("No valid drum selected for kit combo population");
+                return;
+            }
+
+            Player player = sequencer.getPlayers()[selectedPadIndex];
+            if (player == null) {
+                logger.warning("No player found for selected drum index: " + selectedPadIndex);
+                return;
+            }
+            
+            InstrumentWrapper instrument = player.getInstrument();
+            if (instrument == null) {
+                logger.warning("No instrument found for selected drum index: " + selectedPadIndex);
+                return;
+            }
+
+            Long id = instrument.getId();
+            if (id == null) {
+                logger.warning("No instrument ID found for selected drum index: " + selectedPadIndex);
+                return;
+            }
+            
+            // Get the list of drum kit names
+            List<String> presets = InternalSynthManager.getInstance().getPresetNames(id);
+
+            // Add each kit with its index
+            for (int i = 0; i < presets.size(); i++) {
+                combo.addItem(i + ": " + presets.get(i));
+            }
+
+            // Select current kit if available for the selected drum
+            if (player.getPreset() != null) {
+                int currentKit = player.getPreset();
+                if (currentKit >= 0 && currentKit < presets.size()) {
+                    combo.setSelectedItem(currentKit + ": " + presets.get(currentKit));
+                }
+            }
+        } finally {
+            updatingUI = false;
+        }
     }
 
     /**
