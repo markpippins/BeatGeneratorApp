@@ -8,7 +8,6 @@ import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
-import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
@@ -58,11 +57,17 @@ public class SessionPanel extends JPanel implements IBusListener {
     private void setupComponents() {
         setLayout(new BorderLayout());
 
-        // Create horizontal split for player and rule tables
-        JSplitPane tableSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        tableSplitPane.setResizeWeight(1.0); // Give more space to player table
-        tableSplitPane.setLeftComponent(playerTablePanel);
-        tableSplitPane.setRightComponent(ruleTablePanel);
+        // Create container for tables with BorderLayout instead of JSplitPane
+        JPanel tablesPanel = new JPanel(new BorderLayout());
+        
+        // Add player table to CENTER (will take all available space)
+        tablesPanel.add(playerTablePanel, BorderLayout.CENTER);
+        
+        // Make the rules panel skinny with preferred width
+        ruleTablePanel.setPreferredSize(new Dimension(220, ruleTablePanel.getPreferredSize().height));
+        
+        // Add rule table to EAST (will take minimum space needed)
+        tablesPanel.add(ruleTablePanel, BorderLayout.EAST);
         
         // Create the bottom panel with proper constraints
         JPanel bottomPanel = new JPanel(new BorderLayout());
@@ -85,11 +90,8 @@ public class SessionPanel extends JPanel implements IBusListener {
         JPanel timelineContainer = new JPanel(new BorderLayout());
         timelineContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // NO padding
 
-        // Calculate height needed with doubled header height:
-        // - Header: 40px (doubled from 20px)
-        // - Grid: TOTAL_ROWS * cellHeight (8 * 15 = 120px) 
-        // - Time bar: 20px
-        int timelineHeight = 140; // 40 + 120 + 20 = 180px
+        // Calculate height needed with doubled header height
+        int timelineHeight = 140;
         playerTimelinePanel.setPreferredSize(new Dimension(800, timelineHeight));
         playerTimelinePanel.setMinimumSize(new Dimension(200, timelineHeight));
         playerTimelinePanel.setMaximumSize(new Dimension(Short.MAX_VALUE, timelineHeight));
@@ -105,11 +107,11 @@ public class SessionPanel extends JPanel implements IBusListener {
         // Add combined panel to the bottom panel
         bottomPanel.add(combinedPanel, BorderLayout.CENTER);
         
-        // Use BorderLayout for main panel instead of JSplitPane to remove resize option
-        add(tableSplitPane, BorderLayout.CENTER);
+        // Use BorderLayout for main panel
+        add(tablesPanel, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
         
-        // Calculate appropriate sizes - no resizing needed since we're using BorderLayout
+        // Component listener for resizing - modify to handle new layout
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -120,10 +122,7 @@ public class SessionPanel extends JPanel implements IBusListener {
             }
         });
         
-        // Set divider location for table split pane
-        SwingUtilities.invokeLater(() -> {
-            tableSplitPane.setDividerLocation(0.7); // 70% for player table
-        });
+        // Remove the divider location code for the tableSplitPane since it no longer exists
     }
 
     @Override
