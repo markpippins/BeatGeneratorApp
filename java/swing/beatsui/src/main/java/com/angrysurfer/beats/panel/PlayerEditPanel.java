@@ -329,6 +329,7 @@ public class PlayerEditPanel extends JPanel {
         JMenuItem addMenuItem = new JMenuItem("Add Rule");
         addMenuItem.addActionListener(e -> {
             if (player != null) {
+                logger.debug("Context menu: Add rule requested");
                 CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, player);
             }
         });
@@ -336,69 +337,87 @@ public class PlayerEditPanel extends JPanel {
         
         // Edit and Delete Rule menu items (enabled only with selection)
         JMenuItem editMenuItem = new JMenuItem("Edit Rule");
-        JMenuItem deleteMenuItem = new JMenuItem("Delete Rule");
-        
         editMenuItem.addActionListener(e -> {
             try {
                 Rule selectedRule = getSelectedRule();
                 if (selectedRule != null) {
+                    logger.debug("Context menu: Edit rule requested for rule {}", selectedRule.getId());
                     CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
                 }
             } catch (Exception ex) {
-                logger.error("Error in edit menu action: " + ex.getMessage());
+                logger.error("Error in edit menu action: " + ex.getMessage(), ex);
             }
         });
+        contextMenu.add(editMenuItem);
         
+        // FIX: Rewrote delete menu item with better logging and explicit selection handling
+        JMenuItem deleteMenuItem = new JMenuItem("Delete Rule");
         deleteMenuItem.addActionListener(e -> {
             try {
-                Rule selectedRule = getSelectedRule();
-                if (selectedRule != null) {
-                    CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, new Rule[]{selectedRule});
+                // Get the currently selected row explicitly
+                int row = rulesTable.getSelectedRow();
+                logger.debug("Context menu: Delete requested for row {}", row);
+                
+                if (row >= 0 && player != null && player.getRules() != null) {
+                    // Get all rules as a list for indexed access
+                    List<Rule> rulesList = new ArrayList<>(player.getRules());
+                    
+                    if (row < rulesList.size()) {
+                        Rule ruleToDelete = rulesList.get(row);
+                        logger.debug("Context menu: Deleting rule {} at row {}", ruleToDelete.getId(), row);
+                        
+                        // Publish the delete request with the rule
+                        CommandBus.getInstance().publish(
+                            Commands.RULE_DELETE_REQUEST, 
+                            PlayerEditPanel.this,  // Use explicit class reference
+                            new Rule[]{ruleToDelete}
+                        );
+                    }
                 }
             } catch (Exception ex) {
-                logger.error("Error in delete menu action: " + ex.getMessage());
+                logger.error("Error in delete menu action: " + ex.getMessage(), ex);
             }
         });
-        
-        contextMenu.add(editMenuItem);
         contextMenu.add(deleteMenuItem);
         
-        // Add the popup menu to the table (the simpler approach)
-        rulesTable.setComponentPopupMenu(contextMenu);
-        
-        // Also add a mouse listener for right-click selection
+        // Use a simpler approach for the mouse handler - just set the row selection
         rulesTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                // Select row on right-click before popup appears
-                if (e.isPopupTrigger() || e.getButton() == MouseEvent.BUTTON3) {
-                    try {
-                        int row = rulesTable.rowAtPoint(e.getPoint());
-                        if (row >= 0) {
-                            rulesTable.setRowSelectionInterval(row, row);
-                            updateButtonStates();
-                            
-                            // Update menu items enabled state
-                            editMenuItem.setEnabled(true);
-                            deleteMenuItem.setEnabled(true);
-                        } else {
-                            editMenuItem.setEnabled(false);
-                            deleteMenuItem.setEnabled(false);
-                        }
-                    } catch (Exception ex) {
-                        logger.error("Error in mouse event handler: " + ex.getMessage());
-                    }
+                if (e.isPopupTrigger()) {
+                    processMouseEvent(e);
                 }
             }
             
             @Override
             public void mouseReleased(MouseEvent e) {
-                // Same as mousePressed for cross-platform support
                 if (e.isPopupTrigger()) {
-                    mousePressed(e);
+                    processMouseEvent(e);
                 }
             }
+            
+            private void processMouseEvent(MouseEvent e) {
+                // Get the row that was clicked
+                int row = rulesTable.rowAtPoint(e.getPoint());
+                logger.debug("Right-click detected at row {}", row);
+                
+                // Select the row before showing the menu
+                if (row >= 0) {
+                    rulesTable.setRowSelectionInterval(row, row);
+                    editMenuItem.setEnabled(true);
+                    deleteMenuItem.setEnabled(true);
+                } else {
+                    rulesTable.clearSelection();
+                    editMenuItem.setEnabled(false);
+                    deleteMenuItem.setEnabled(false);
+                }
+                
+                // The popup menu will be shown automatically by the component popup menu system
+            }
         });
+        
+        // Set the component popup menu
+        rulesTable.setComponentPopupMenu(contextMenu);
     }
 
     private Rule getSelectedRule() {
