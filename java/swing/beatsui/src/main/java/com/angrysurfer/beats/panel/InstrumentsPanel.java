@@ -102,8 +102,11 @@ class InstrumentsPanel extends JPanel {
         // Setup key bindings
         setupKeyBindings();
 
-        // Finally add everything to the panel
+        // Add main content to the CENTER
         add(createOptionsPanel(), BorderLayout.CENTER);
+        
+        // Add MIDI test panel to the SOUTH position (bottom) of the main panel
+        add(createMidiTestControls(), BorderLayout.SOUTH);
     }
 
     private void registerCommandListener() {
@@ -182,9 +185,6 @@ class InstrumentsPanel extends JPanel {
         buttonPanel.add(enableInstrumentButton);
 
         toolBar.add(buttonPanel, BorderLayout.CENTER);
-        
-        // Add MIDI test panel to the bottom of the toolbar
-        toolBar.add(createMidiTestControls(), BorderLayout.SOUTH);
         
         return toolBar;
     }
@@ -272,6 +272,31 @@ class InstrumentsPanel extends JPanel {
         });
         panel.add(sendCCButton);
         
+        // Add separator
+        panel.add(Box.createHorizontalStrut(15));
+        
+        // --- Program Change section ---
+        
+        // Program number selector
+        JPanel programPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        programPanel.add(new JLabel("Program:"));
+        JSpinner programSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 127, 1));
+        programSpinner.setPreferredSize(new Dimension(50, 25));
+        programSpinner.setToolTipText("Program Number (0-127)");
+        programPanel.add(programSpinner);
+        panel.add(programPanel);
+        
+        // Send Program Change button
+        JButton sendPCButton = new JButton("Send PC");
+        sendPCButton.setMargin(new Insets(2, 8, 2, 8));
+        sendPCButton.addActionListener(e -> {
+            sendMidiProgramChange(
+                (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+                (Integer)programSpinner.getValue()
+            );
+        });
+        panel.add(sendPCButton);
+        
         return panel;
     }
 
@@ -312,7 +337,7 @@ class InstrumentsPanel extends JPanel {
                         logger.error("Error sending note off: {}", e.getMessage());
                     }
                 }
-            }, 500);
+            }, 1500);
             
             // Log and update status
             CommandBus.getInstance().publish(
@@ -376,6 +401,52 @@ class InstrumentsPanel extends JPanel {
                 new StatusUpdate("InstrumentsPanel", "Error", "Failed to send MIDI CC: " + e.getMessage())
             );
             logger.error("Error sending MIDI control change", e);
+        }
+    }
+
+    /**
+     * Sends a MIDI program change message to the selected instrument
+     */
+    private void sendMidiProgramChange(int channel, int programNumber) {
+        if (selectedInstrument == null) {
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("InstrumentsPanel", "Error", "No instrument selected")
+            );
+            return;
+        }
+        
+        try {
+            // Check if the instrument is available
+            if (!selectedInstrument.getAvailable()) {
+                CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Error", "Instrument is not available: " + selectedInstrument.getName())
+                );
+                return;
+            }
+
+            // Send program change message
+            selectedInstrument.programChange(channel, programNumber, 0);
+            
+            // Log and update status
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("InstrumentsPanel", "Info", 
+                    String.format("Sent Program Change: %d on channel: %d", 
+                        programNumber, channel + 1))
+            );
+            
+        } catch (Exception e) {
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("InstrumentsPanel", "Error", "Failed to send MIDI Program Change: " + e.getMessage())
+            );
+            logger.error("Error sending MIDI program change", e);
         }
     }
 

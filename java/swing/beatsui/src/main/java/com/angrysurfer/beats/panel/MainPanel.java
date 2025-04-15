@@ -23,6 +23,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
@@ -98,9 +99,13 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Mixer", createMixerPanel());
 
         tabbedPane.addTab("Players", new SessionPanel());
-        tabbedPane.addTab("Instruments", new InstrumentsPanel());
+        
+        // Create combined panel for Instruments + Systems
+        tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
+        
         tabbedPane.addTab("Launch", new LaunchPanel());
-        tabbedPane.addTab("System", new SystemsPanel());
+        // Remove the separate Systems tab
+        // tabbedPane.addTab("System", new SystemsPanel());
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
 
@@ -137,6 +142,44 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // At the end of the method, update the mute buttons with sequencers
         updateMuteButtonSequencers();
+    }
+
+    /**
+     * Creates a combined panel with InstrumentsPanel and SystemsPanel in a vertical JSplitPane
+     */
+    private JPanel createCombinedInstrumentsSystemPanel() {
+        JPanel combinedPanel = new JPanel(new BorderLayout());
+        
+        // Create the component panels
+        InstrumentsPanel instrumentsPanel = new InstrumentsPanel();
+        SystemsPanel systemsPanel = new SystemsPanel();
+        
+        // Add titled border to systems panel for visual separation
+        systemsPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.GRAY), 
+            "MIDI Devices", 
+            javax.swing.border.TitledBorder.LEFT, 
+            javax.swing.border.TitledBorder.TOP));
+        
+        // Create a vertical JSplitPane (top-bottom arrangement)
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        splitPane.setTopComponent(instrumentsPanel);
+        splitPane.setBottomComponent(systemsPanel);
+        
+        // Set initial divider position (70% for instruments, 30% for systems)
+        splitPane.setDividerLocation(0.7);
+        splitPane.setResizeWeight(0.7); // Keep 70% proportion on resize
+        
+        // Make the divider slightly more visible
+        splitPane.setDividerSize(8);
+        
+        // Remove any borders from the split pane itself
+        splitPane.setBorder(null);
+        
+        // Add the split pane to the combined panel
+        combinedPanel.add(splitPane, BorderLayout.CENTER);
+        
+        return combinedPanel;
     }
 
     private Component createDrumPanel() {

@@ -218,9 +218,9 @@ public class MelodicSequencer implements IBusListener {
             // Test the connection
             try {
                 if (internalInstrument.getAvailable()) {
-                    internalInstrument.noteOn(channel, 60, 100);
+                    internalInstrument.noteOn(9, 36, 100);
                     Thread.sleep(100);
-                    internalInstrument.noteOff(channel, 60, 0);
+                    internalInstrument.noteOff(9, 36, 0);
                     logger.info("Test note played successfully");
 
                 }

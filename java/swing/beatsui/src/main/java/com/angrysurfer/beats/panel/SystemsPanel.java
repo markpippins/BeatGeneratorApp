@@ -64,18 +64,18 @@ class SystemsPanel extends JPanel {
     private void setupLayout() {
         setLayout(new BorderLayout());
         
-        // Create toolbar with refresh button
+        // Create toolbar with refresh button only
         JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton refreshButton = new JButton("Refresh Devices");
         refreshButton.addActionListener(e -> refreshDevicesTable());
         toolBar.add(refreshButton);
         
-        // Add MIDI test controls to toolbar
-        toolBar.add(createMidiTestControls());
-        
         // Add components to panel
         add(toolBar, BorderLayout.NORTH);
         add(new JScrollPane(devicesTable), BorderLayout.CENTER);
+        
+        // Add MIDI test controls to the bottom of the panel instead of toolbar
+        add(createMidiTestControls(), BorderLayout.SOUTH);
     }
 
     private JPopupMenu createContextMenu() {
@@ -273,7 +273,7 @@ class SystemsPanel extends JPanel {
         
         // --- Note testing section ---
         
-        // Channel selector for notes
+        // Channel selector for notes (shared by all sections)
         JPanel channelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         channelPanel.add(new JLabel("Ch:"));
         JSpinner channelSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 16, 1));
@@ -346,6 +346,31 @@ class SystemsPanel extends JPanel {
             );
         });
         panel.add(sendCCButton);
+        
+        // Add separator
+        panel.add(Box.createHorizontalStrut(15));
+        
+        // --- Program Change section ---
+        
+        // Program number selector
+        JPanel programPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        programPanel.add(new JLabel("Program:"));
+        JSpinner programSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 127, 1));
+        programSpinner.setPreferredSize(new Dimension(50, 25));
+        programSpinner.setToolTipText("Program Number (0-127)");
+        programPanel.add(programSpinner);
+        panel.add(programPanel);
+        
+        // Send Program Change button
+        JButton sendPCButton = new JButton("Send PC");
+        sendPCButton.setMargin(new Insets(2, 8, 2, 8));
+        sendPCButton.addActionListener(e -> {
+            sendMidiProgramChange(
+                (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+                (Integer)programSpinner.getValue()
+            );
+        });
+        panel.add(sendPCButton);
         
         return panel;
     }
@@ -455,6 +480,54 @@ class SystemsPanel extends JPanel {
                 new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI CC: " + e.getMessage())
             );
             logger.error("Error sending MIDI control change", e);
+        }
+    }
+
+    /**
+     * Sends a MIDI program change message to the selected output device
+     */
+    private void sendMidiProgramChange(int channel, int programNumber) {
+        try {
+            // Get selected output device from device selection
+            MidiDevice device = getSelectedOutputDevice();
+            if (device == null) {
+                CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
+                );
+                return;
+            }
+            
+            // Open device if not already open
+            if (!device.isOpen()) {
+                device.open();
+            }
+            
+            // Get receiver
+            Receiver receiver = device.getReceiver();
+            
+            // Create program change message
+            ShortMessage pc = new ShortMessage();
+            pc.setMessage(ShortMessage.PROGRAM_CHANGE, channel, programNumber, 0);
+            receiver.send(pc, -1);
+            
+            // Log and update status
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("MIDI Test", "Info", 
+                    String.format("Sent Program Change: %d on channel: %d", 
+                        programNumber, channel + 1))
+            );
+            
+        } catch (Exception e) {
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("MIDI Test", "Error", "Failed to send Program Change: " + e.getMessage())
+            );
+            logger.error("Error sending MIDI program change", e);
         }
     }
 

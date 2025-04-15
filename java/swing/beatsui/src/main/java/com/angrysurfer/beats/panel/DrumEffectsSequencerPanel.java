@@ -103,8 +103,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Initialize UI components
         initialize();
-        
-        // NOTE: Don't select the first drum here, it will be done in initializeDrumPads()
+
+        // NOTE: Don't select the first drum here, it will be done in
+        // initializeDrumPads()
         // which will execute after all buttons are created
     }
 
@@ -121,10 +122,10 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Create west panel to hold navigation
         JPanel westPanel = new JPanel(new BorderLayout(5, 5));
-        
-        // Create east panel for sound parameters 
+
+        // Create east panel for sound parameters
         JPanel eastPanel = new JPanel(new BorderLayout(5, 5));
-        
+
         // Create top panel to hold west and east panels
         JPanel topPanel = new JPanel(new BorderLayout(5, 5));
 
@@ -133,13 +134,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Create sequence parameters panel
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
-        
+
         // Create swing controls
         JPanel swingPanel = createSwingControls();
 
         // Navigation panel goes NORTH-WEST
         westPanel.add(navigationPanel, BorderLayout.NORTH);
-        
+
         // Sound parameters go NORTH-EAST (if you have them)
         // eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
 
@@ -167,7 +168,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
         add(scrollPane, BorderLayout.CENTER);
-        
+
         // Create a panel for the bottom controls
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
 
@@ -177,7 +178,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Create a container for the right-side panels
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
 
-        // Create and add generate panel 
+        // Create and add generate panel
         JPanel generatePanel = createGeneratePanel();
         rightPanel.add(generatePanel);
 
@@ -220,7 +221,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // dial.setGradientStartColor(getKnobColor(i).brighter());
             // dial.setGradientEndColor(getKnobColor(i).darker());
             // dial.setKnobColor(getKnobColor(i));
-            
+
             // Configure each dial based on its type
             switch (i) {
                 case 0: // Velocity
@@ -264,29 +265,29 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                         if (selectedPadIndex >= 0) {
                             // Update the sequencer
                             sequencer.setStepProbability(selectedPadIndex, index, dial.getValue());
-                            
+
                             // Add debug output if needed (uncomment to enable)
-                            // System.out.println("Set probability for drum " + selectedPadIndex + 
-                            //                   ", step " + index + " to " + dial.getValue() + "%");
+                            // System.out.println("Set probability for drum " + selectedPadIndex +
+                            // ", step " + index + " to " + dial.getValue() + "%");
                         }
                     });
                     probabilityDials.add(dial);
                     break;
 
                 case 3: // Nudge
-                    dial.setMinimum(0);     
-                    dial.setMaximum(250);   
-                    dial.setValue(0);     
+                    dial.setMinimum(0);
+                    dial.setMaximum(250);
+                    dial.setValue(0);
                     dial.setKnobColor(ColorUtils.getDialColor("nudge"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
                         if (selectedPadIndex >= 0) {
                             sequencer.setStepNudge(selectedPadIndex, index, dial.getValue());
-                            
+
                             // Optional debug output
-                            // System.out.println("Set nudge for drum " + selectedPadIndex + 
-                            //                   ", step " + index + " to " + dial.getValue() + "ms");
+                            // System.out.println("Set nudge for drum " + selectedPadIndex +
+                            // ", step " + index + " to " + dial.getValue() + "ms");
                             setToolTipText("" + dial.getValue() + "ms");
                         }
                     });
@@ -421,8 +422,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     }
 
-
-
     public void setTimingChangeListener(Consumer<TimingDivision> listener) {
         this.timingChangeListener = listener;
     }
@@ -468,7 +467,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
             // Update controls to match the selected pad's settings
             updateControlsFromSequencer();
-            
+
             // IMPORTANT: Update sequence parameter controls to match selected drum
             updateSequenceParameterControls();
         }
@@ -536,7 +535,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             return;
         }
 
-        // Update all dials to match the sequencer's current values for the selected drum
+        // Update all dials to match the sequencer's current values for the selected
+        // drum
         for (int i = 0; i < selectorButtons.size(); i++) {
             // Update velocity dials
             if (i < velocityDials.size()) {
@@ -597,7 +597,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                         int previousStep = calculatePreviousStep(currentStep);
 
                         // Log for debugging
-                        // System.out.println("DrumEffectsSequencer updating step: old=" + previousStep + ", new=" + currentStep);
+                        // System.out.println("DrumEffectsSequencer updating step: old=" + previousStep
+                        // + ", new=" + currentStep);
                         // Update visual highlighting for the step change
                         updateStep(previousStep, currentStep);
                     }
@@ -642,7 +643,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 if (action.getData() instanceof DrumPadSelectionEvent event && action.getSender() != this) {
                     int newSelection = event.getNewSelection();
                     // logger.info("Received drum selection event: {}", newSelection);
-                    
+
                     // Check if index is valid
                     if (newSelection >= 0 && newSelection < drumButtons.size()) {
                         // Update the selection on the EDT to avoid UI threading issues
@@ -703,7 +704,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             }
 
             // Debug output
-            // System.out.println("Toggled step " + stepIndex + " for drum " + selectedPadIndex + ": " + isNowActive);
+            // System.out.println("Toggled step " + stepIndex + " for drum " +
+            // selectedPadIndex + ": " + isNowActive);
             // Notify other components of the pattern change
             CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, null, this);
         }
@@ -713,27 +715,27 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
     private void initializeDrumPads() {
         // Names for each drum part - these will be used in tooltips
         String[] drumNames = {
-            "Kick", "Snare", "Closed HH", "Open HH", 
-            "Tom 1", "Tom 2", "Tom 3", "Crash",
-            "Ride", "Rim", "Clap", "Cow", 
-            "Clave", "Shaker", "Perc 1", "Perc 2"
+                "Kick", "Snare", "Closed HH", "Open HH",
+                "Tom 1", "Tom 2", "Tom 3", "Crash",
+                "Ride", "Rim", "Clap", "Cow",
+                "Clave", "Shaker", "Perc 1", "Perc 2"
         };
-        
+
         // Apply numbered labels and tooltips to each pad with beat indicators
         for (int i = 0; i < drumButtons.size(); i++) {
             DrumButton button = drumButtons.get(i);
-            
+
             // Set the pad number (1-based)
             button.setPadNumber(i + 1);
-            
+
             // Set main beat flag for pads 1, 5, 9, 13 (zero-indexed as 0, 4, 8, 12)
             button.setIsMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
-            
+
             // Set detailed tooltip
             String drumName = (i < drumNames.length) ? drumNames[i] : "Drum " + (i + 1);
             button.setToolTipText(drumName + " - Click to edit effects for this drum");
         }
-        
+
         // Ensure the first pad is automatically selected after initialization
         SwingUtilities.invokeLater(() -> {
             if (!drumButtons.isEmpty()) {
@@ -750,7 +752,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         final int MEDIUM_CONTROL_WIDTH = 60;
         final int LARGE_CONTROL_WIDTH = 90;
         final int CONTROL_HEIGHT = 25;
-        
+
         JPanel controlsPanel = new JPanel();
         controlsPanel.setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
         controlsPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
@@ -758,12 +760,12 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Last Step spinner
         JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         lastStepPanel.add(new JLabel("Last Step:"));
-        
+
         lastStepSpinner = new JSpinner(new SpinnerNumberModel(16, 1, 16, 1));
         lastStepSpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
         lastStepSpinner.setToolTipText("Set the last step of the pattern (1-16)");
         lastStepSpinner.addChangeListener(e -> {
-            int steps = (Integer)lastStepSpinner.getValue();
+            int steps = (Integer) lastStepSpinner.getValue();
             if (selectedPadIndex >= 0) {
                 sequencer.setPatternLength(selectedPadIndex, steps);
                 updateStepButtonsForDrum(selectedPadIndex);
@@ -773,8 +775,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Direction combo - remove label
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        
-        directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
+
+        directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
         directionCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
         directionCombo.setToolTipText("Set the playback direction of the pattern");
         directionCombo.addActionListener(e -> {
@@ -787,14 +789,14 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 case 2 -> direction = Direction.BOUNCE;
                 case 3 -> direction = Direction.RANDOM;
             }
-            
+
             sequencer.setDirection(selectedPadIndex, direction);
         });
         directionPanel.add(directionCombo);
 
         // Timing division combo - remove label
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        
+
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
         timingCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
         timingCombo.setToolTipText("Set the timing division for this pattern");
@@ -870,7 +872,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
     private JPanel createSwingControls() {
         JPanel swingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         swingPanel.setBorder(BorderFactory.createTitledBorder("Swing"));
-        
+
         // Swing on/off toggle
         JToggleButton swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());
         swingToggle.setPreferredSize(new Dimension(50, 25)); // Slightly wider for text "On"
@@ -908,18 +910,18 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         final int SMALL_CONTROL_WIDTH = 40;
         final int MEDIUM_CONTROL_WIDTH = 90;
         final int CONTROL_HEIGHT = 25;
-        
+
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Generate"));
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-        
+
         // Create density combo without a label
-        String[] densityOptions = {"25%", "50%", "75%", "100%"};
+        String[] densityOptions = { "25%", "50%", "75%", "100%" };
         JComboBox<String> densityCombo = new JComboBox<>(densityOptions);
         densityCombo.setSelectedIndex(1); // Default to 50%
         densityCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
         densityCombo.setToolTipText("Set pattern density");
-        
+
         // Generate button with dice icon
         JButton generateButton = new JButton("🎲");
         generateButton.setToolTipText("Generate a random pattern");
@@ -933,7 +935,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         });
         panel.add(generateButton);
         panel.add(densityCombo);
-        
+
         return panel;
     }
 
@@ -946,33 +948,33 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             setTriggerButtonsEnabled(false);
             return;
         }
-        
+
         // Enable all buttons
         setTriggerButtonsEnabled(true);
-        
+
         // Update each button based on sequencer state
         int patternLength = sequencer.getPatternLength(drumIndex);
-        
+
         for (int i = 0; i < selectorButtons.size(); i++) {
             TriggerButton button = selectorButtons.get(i);
             boolean isInPattern = i < patternLength;
             boolean isActive = isInPattern && sequencer.isStepActive(drumIndex, i);
-            
+
             // Update button state
             button.setEnabled(true);
             button.setSelected(isActive);
-            
+
             // Visual update
             if (!isInPattern) {
                 button.setBackground(Color.DARK_GRAY);
             } else {
                 button.setBackground(isActive ? ColorUtils.deepOrange : Color.GRAY);
             }
-            
+
             // Force repaint
             button.repaint();
         }
-        
+
         // Update dials to match the current drum
         updateControlsFromSequencer();
     }
@@ -985,10 +987,10 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         if (selectedPadIndex >= 0) {
             // Update trigger buttons
             refreshTriggerButtonsForPad(selectedPadIndex);
-            
+
             // Update parameter controls
             updateControlsFromSequencer();
-            
+
             // Update sequence parameters in UI
             updateSequenceParameterControls();
         } else {
@@ -1004,10 +1006,10 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         if (selectedPadIndex < 0) {
             return;
         }
-        
+
         // Update last step spinner
         lastStepSpinner.setValue(sequencer.getPatternLength(selectedPadIndex));
-        
+
         // Update direction combo
         Direction dir = sequencer.getDirection(selectedPadIndex);
         switch (dir) {
@@ -1016,10 +1018,10 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             case BOUNCE -> directionCombo.setSelectedIndex(2);
             case RANDOM -> directionCombo.setSelectedIndex(3);
         }
-        
+
         // Update timing combo
         timingCombo.setSelectedItem(sequencer.getTimingDivision(selectedPadIndex));
-        
+
         // Update loop toggle
         loopToggleButton.setSelected(sequencer.isLooping(selectedPadIndex));
     }
