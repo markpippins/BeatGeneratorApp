@@ -32,6 +32,14 @@ public class MelodicSequencer implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencer.class);
 
+    // Add these constants at the class level
+    public static final int MIN_SWING = 50; // Minimum swing percentage
+    public static final int MAX_SWING = 75; // Maximum swing percentage
+
+    // Add these member variables to the class
+    private int swingPercentage = 50; // Default swing percentage (50 = no swing)
+    private boolean swingEnabled = false; // Swing enabled flag
+
     // Sequencing parameters
     private int stepCounter = 0; // Current step in the pattern
     private int patternLength = 16; // Default pattern length
@@ -241,16 +249,16 @@ public class MelodicSequencer implements IBusListener {
         velocityValues = new ArrayList<>(patternLength);
         gateValues = new ArrayList<>(patternLength);
         probabilityValues = new ArrayList<>(patternLength); // Add this
-        nudgeValues = new ArrayList<>(patternLength);       // Add this
+        nudgeValues = new ArrayList<>(patternLength); // Add this
 
         // Fill with default values
         for (int i = 0; i < patternLength; i++) {
             activeSteps.add(false); // All steps off by default
-            noteValues.add(60);     // Middle C
+            noteValues.add(60); // Middle C
             velocityValues.add(100); // Medium-high velocity
-            gateValues.add(50);     // 50% gate time
+            gateValues.add(50); // 50% gate time
             probabilityValues.add(100); // 100% probability by default
-            nudgeValues.add(0);     // No timing nudge by default
+            nudgeValues.add(0); // No timing nudge by default
         }
     }
 
@@ -482,7 +490,8 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Triggers a note for the specified step, applying probability and nudge.
+     * Triggers a note for the specified step, applying probability, nudge, and
+     * swing.
      * 
      * @param stepIndex The step index
      */
@@ -494,7 +503,7 @@ public class MelodicSequencer implements IBusListener {
             int velocity = getVelocityValue(stepIndex);
             int gate = getGateValue(stepIndex);
             int probability = getProbabilityValue(stepIndex);
-            int nudge = getNudgeValue(stepIndex);
+            int[] nudge = { getNudgeValue(stepIndex) };
 
             // Apply scale quantization if enabled
             if (quantizeEnabled) {
@@ -505,13 +514,20 @@ public class MelodicSequencer implements IBusListener {
             note[0] = applyOctaveShift(note[0]);
             note[0] = applyTilt(note[0]);
 
+            // Apply swing to even-numbered steps (odd indices in 0-indexed array)
+            if (swingEnabled && stepIndex % 2 == 1) {
+                // Calculate swing amount based on percentage
+                int swingAmount = calculateSwingAmount();
+                nudge[0] += swingAmount;
+            }
+
             // Check probability - only play if random number is less than probability
             if (Math.random() * 100 < probability) {
                 // Create the note event
                 final NoteEvent noteEvent = new NoteEvent(note[0], velocity, gate);
 
                 // Apply nudge if specified
-                if (nudge > 0) {
+                if (nudge[0] > 0) {
                     // Schedule delayed note using executor service
                     final java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors
                             .newSingleThreadScheduledExecutor();
@@ -536,7 +552,7 @@ public class MelodicSequencer implements IBusListener {
 
                         // Shutdown the scheduler
                         scheduler.shutdown();
-                    }, nudge, java.util.concurrent.TimeUnit.MILLISECONDS);
+                    }, nudge[0], java.util.concurrent.TimeUnit.MILLISECONDS);
                 } else {
                     // No nudge, play immediately
 
@@ -1337,16 +1353,23 @@ public class MelodicSequencer implements IBusListener {
      * Rotates the pattern one step to the left (backward)
      */
     public void rotatePatternLeft() {
-        if (patternLength <= 1) return;
-        
+        if (patternLength <= 1)
+            return;
+
         // Ensure all lists have adequate size
-        while (activeSteps.size() < patternLength) activeSteps.add(false);
-        while (noteValues.size() < patternLength) noteValues.add(60);
-        while (velocityValues.size() < patternLength) velocityValues.add(100);
-        while (gateValues.size() < patternLength) gateValues.add(50);
-        while (probabilityValues.size() < patternLength) probabilityValues.add(100);
-        while (nudgeValues.size() < patternLength) nudgeValues.add(0);
-        
+        while (activeSteps.size() < patternLength)
+            activeSteps.add(false);
+        while (noteValues.size() < patternLength)
+            noteValues.add(60);
+        while (velocityValues.size() < patternLength)
+            velocityValues.add(100);
+        while (gateValues.size() < patternLength)
+            gateValues.add(50);
+        while (probabilityValues.size() < patternLength)
+            probabilityValues.add(100);
+        while (nudgeValues.size() < patternLength)
+            nudgeValues.add(0);
+
         // Store the first step's values
         boolean firstActive = activeSteps.get(0);
         int firstNote = noteValues.get(0);
@@ -1354,7 +1377,7 @@ public class MelodicSequencer implements IBusListener {
         int firstGate = gateValues.get(0);
         int firstProbability = probabilityValues.get(0);
         int firstNudge = nudgeValues.get(0);
-        
+
         // Shift all steps left by one position
         for (int i = 0; i < patternLength - 1; i++) {
             activeSteps.set(i, activeSteps.get(i + 1));
@@ -1364,7 +1387,7 @@ public class MelodicSequencer implements IBusListener {
             probabilityValues.set(i, probabilityValues.get(i + 1));
             nudgeValues.set(i, nudgeValues.get(i + 1));
         }
-        
+
         // Place the saved first step values at the last position
         activeSteps.set(patternLength - 1, firstActive);
         noteValues.set(patternLength - 1, firstNote);
@@ -1372,7 +1395,7 @@ public class MelodicSequencer implements IBusListener {
         gateValues.set(patternLength - 1, firstGate);
         probabilityValues.set(patternLength - 1, firstProbability);
         nudgeValues.set(patternLength - 1, firstNudge);
-        
+
         // Notify listeners about the pattern update
         notifyPatternUpdated();
     }
@@ -1381,16 +1404,23 @@ public class MelodicSequencer implements IBusListener {
      * Rotates the pattern one step to the right (forward)
      */
     public void rotatePatternRight() {
-        if (patternLength <= 1) return;
-        
+        if (patternLength <= 1)
+            return;
+
         // Ensure all lists have adequate size
-        while (activeSteps.size() < patternLength) activeSteps.add(false);
-        while (noteValues.size() < patternLength) noteValues.add(60);
-        while (velocityValues.size() < patternLength) velocityValues.add(100);
-        while (gateValues.size() < patternLength) gateValues.add(50);
-        while (probabilityValues.size() < patternLength) probabilityValues.add(100);
-        while (nudgeValues.size() < patternLength) nudgeValues.add(0);
-        
+        while (activeSteps.size() < patternLength)
+            activeSteps.add(false);
+        while (noteValues.size() < patternLength)
+            noteValues.add(60);
+        while (velocityValues.size() < patternLength)
+            velocityValues.add(100);
+        while (gateValues.size() < patternLength)
+            gateValues.add(50);
+        while (probabilityValues.size() < patternLength)
+            probabilityValues.add(100);
+        while (nudgeValues.size() < patternLength)
+            nudgeValues.add(0);
+
         // Store the last step's values
         boolean lastActive = activeSteps.get(patternLength - 1);
         int lastNote = noteValues.get(patternLength - 1);
@@ -1398,7 +1428,7 @@ public class MelodicSequencer implements IBusListener {
         int lastGate = gateValues.get(patternLength - 1);
         int lastProbability = probabilityValues.get(patternLength - 1);
         int lastNudge = nudgeValues.get(patternLength - 1);
-        
+
         // Shift all steps right by one position
         for (int i = patternLength - 1; i > 0; i--) {
             activeSteps.set(i, activeSteps.get(i - 1));
@@ -1408,7 +1438,7 @@ public class MelodicSequencer implements IBusListener {
             probabilityValues.set(i, probabilityValues.get(i - 1));
             nudgeValues.set(i, nudgeValues.get(i - 1));
         }
-        
+
         // Place the saved last step values at the first position
         activeSteps.set(0, lastActive);
         noteValues.set(0, lastNote);
@@ -1416,7 +1446,7 @@ public class MelodicSequencer implements IBusListener {
         gateValues.set(0, lastGate);
         probabilityValues.set(0, lastProbability);
         nudgeValues.set(0, lastNudge);
-        
+
         // Notify listeners about the pattern update
         notifyPatternUpdated();
     }
@@ -1473,5 +1503,81 @@ public class MelodicSequencer implements IBusListener {
      */
     private void notifyPatternUpdated() {
         CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
+    }
+
+    /**
+     * Sets the global swing percentage
+     * 
+     * @param percentage Value from 50 (no swing) to 75 (maximum swing)
+     */
+    public void setSwingPercentage(int percentage) {
+        // Limit to valid range
+        this.swingPercentage = Math.max(MIN_SWING, Math.min(MAX_SWING, percentage));
+        logger.info("Swing percentage set to: {}", swingPercentage);
+
+        // Notify UI of parameter change
+        CommandBus.getInstance().publish(
+                Commands.MELODIC_SEQUENCE_PARAMS_CHANGED,
+                this,
+                -1 // -1 indicates global parameter
+        );
+    }
+
+    public int getSwingPercentage() {
+        return swingPercentage;
+    }
+
+    public void setSwingEnabled(boolean enabled) {
+        this.swingEnabled = enabled;
+        logger.info("Swing enabled: {}", enabled);
+
+        // Notify UI of parameter change
+        CommandBus.getInstance().publish(
+                Commands.MELODIC_SEQUENCE_PARAMS_CHANGED,
+                this,
+                -1);
+    }
+
+    public boolean isSwingEnabled() {
+        return swingEnabled;
+    }
+
+    /**
+     * Calculate swing amount in milliseconds based on current tempo and timing
+     * division
+     */
+    private int calculateSwingAmount() {
+        // Get session BPM
+        float bpm = SessionManager.getInstance().getActiveSession().getTempoInBPM();
+        if (bpm <= 0)
+            bpm = 120; // Default fallback
+
+        // Calculate step duration in milliseconds
+        float stepDurationMs = 60000f / bpm; // Duration of quarter note in ms
+
+        // Adjust for timing division based on actual enum values
+        switch (timingDivision) {
+            case NORMAL -> stepDurationMs *= 1; // No change for normal timing
+            case DOUBLE -> stepDurationMs /= 2; // Double time (faster)
+            case HALF -> stepDurationMs *= 2; // Half time (slower)
+            case QUARTER -> stepDurationMs *= 4; // Quarter time (very slow)
+            case TRIPLET -> stepDurationMs *= 2.0f / 3.0f; // Triplet feel
+            case QUARTER_TRIPLET -> stepDurationMs *= 4.0f / 3.0f; // Quarter note triplets
+            case EIGHTH_TRIPLET -> stepDurationMs *= 1.0f / 3.0f; // Eighth note triplets
+            case SIXTEENTH -> stepDurationMs *= 1.0f / 4.0f; // Sixteenth notes
+            case SIXTEENTH_TRIPLET -> stepDurationMs *= 1.0f / 6.0f; // Sixteenth note triplets
+            case BEBOP -> stepDurationMs *= 1; // Same as normal for swing calculations
+            case FIVE_FOUR -> stepDurationMs *= 5.0f / 4.0f; // 5/4 time
+            case SEVEN_EIGHT -> stepDurationMs *= 7.0f / 8.0f; // 7/8 time
+            case NINE_EIGHT -> stepDurationMs *= 9.0f / 8.0f; // 9/8 time
+            case TWELVE_EIGHT -> stepDurationMs *= 12.0f / 8.0f; // 12/8 time
+            case SIX_FOUR -> stepDurationMs *= 6.0f / 4.0f; // 6/4 time
+        }
+
+        // Calculate swing percentage (convert from 50-75% to 0-25%)
+        float swingFactor = (swingPercentage - 50) / 100f;
+
+        // Return swing amount in milliseconds
+        return (int) (stepDurationMs * swingFactor);
     }
 }

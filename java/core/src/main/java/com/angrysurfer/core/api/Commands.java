@@ -295,5 +295,6 @@ public class Commands {
     public static final String TOGGLE_TRANSPORT = "TOGGLE_TRANSPORT";
     public static final String LFO_VALUE_CHANGED = "LFO_VALUE_CHANGED";
     public static final String LFO_SELECTED = "LFO_SELECTED";
+    public static final String MELODIC_SEQUENCE_PARAMS_CHANGED = "MELODIC_SEQUENCE_PARAMS_CHANGED";
 
 }
