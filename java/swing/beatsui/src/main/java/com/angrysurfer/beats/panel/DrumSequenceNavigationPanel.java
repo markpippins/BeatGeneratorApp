@@ -17,9 +17,9 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.DrumSequencerManager;
 
 /**
@@ -28,8 +28,7 @@ import com.angrysurfer.core.service.DrumSequencerManager;
 public class DrumSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumSequenceNavigationPanel.class);
-    
-    // Size constants to match other panels
+
     private static final int SMALL_CONTROL_WIDTH = 40;
     private static final int MEDIUM_CONTROL_WIDTH = 60;
     private static final int LABEL_WIDTH = 85;
@@ -41,6 +40,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
     private JButton nextButton;
     private JButton lastButton;
     private JButton saveButton;
+    private JButton newButton;  // Add new button field
 
     private final DrumSequencer sequencer;
     private final DrumSequencerManager manager;
@@ -53,7 +53,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
     }
 
     private void initializeUI() {
-        // Set layout and border with more compact spacing
+
         setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(ColorUtils.deepNavy),
@@ -62,7 +62,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
                 TitledBorder.TOP
         ));
 
-        // Create ID label with styling
+
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
         sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, CONTROL_HEIGHT));
         sequenceIdLabel.setOpaque(true);
@@ -70,17 +70,20 @@ public class DrumSequenceNavigationPanel extends JPanel {
         sequenceIdLabel.setForeground(ColorUtils.coolBlue);
         sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
 
+        // Create new sequence button with plus icon
+        newButton = createButton("➕", "Create new sequence", e -> createNewSequence());
+
         // Create navigation buttons with icons
         firstButton = createButton("⏮", "First sequence", e -> loadFirstSequence());
         prevButton = createButton("◀", "Previous sequence", e -> loadPreviousSequence());
         nextButton = createButton("▶", "Next sequence", e -> loadNextSequence());
         lastButton = createButton("⏭", "Last sequence", e -> loadLastSequence());
-        
-        // Create save button with icon
+
         saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
         
-        // Add components to panel
+        // Add components to panel - add new button first
         add(sequenceIdLabel);
+        add(newButton);      // Add new button here
         add(firstButton);
         add(prevButton);
         add(nextButton);
@@ -192,44 +195,32 @@ public class DrumSequenceNavigationPanel extends JPanel {
     }
 
     /**
-     * Load the next sequence, or create a new one if at the last sequence
+     * Load the next available sequence
      */
     private void loadNextSequence() {
-        Long nextId = manager.getNextSequenceId(sequencer.getDrumSequenceId());
-
+        // Get current sequence ID
+        Long currentId = sequencer.getDrumSequenceId();
+        
+        // Find the next sequence ID
+        Long nextId = manager.getNextSequenceId(currentId);
+        
+        // If there is a next sequence, load it
         if (nextId != null) {
-            loadSequence(nextId);
-        } else if (sequencer.getDrumSequenceId() != 0) {
-            // We're at the last saved sequence, so create a new blank one
-            sequencer.setDrumSequenceId(0); // Set to 0 to indicate new unsaved sequence
-
-            // Reset the sequencer
-            sequencer.reset();
-
-            // Clear all patterns
-            for (int drumIndex = 0; drumIndex < DrumSequencer.DRUM_PAD_COUNT; drumIndex++) {
-                for (int step = 0; step < 64; step++) { // Clear all steps up to max
-                    if (sequencer.isStepActive(drumIndex, step)) {
-                        sequencer.toggleStep(drumIndex, step); // Turn off any active steps
-                    }
-                }
+            // Load the sequence into the sequencer
+            if (manager.loadSequence(nextId, sequencer)) {
+                logger.info("Loaded next drum sequence: {}", nextId);
+                updateSequenceIdDisplay();
+                
+                // Notify other components that sequence has been updated
+                CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, nextId);
             }
-
-            // Reset to default parameters
-            for (int i = 0; i < DrumSequencer.DRUM_PAD_COUNT; i++) {
-                sequencer.setLooping(i, true);
-                sequencer.setDirection(i, Direction.FORWARD);
-                sequencer.setPatternLength(i, 16);
-                sequencer.setTimingDivision(i, TimingDivision.NORMAL);
-            }
-
-            updateSequenceIdDisplay();
-            CommandBus.getInstance().publish(
-                    Commands.DRUM_SEQUENCE_UPDATED,
-                    this,
-                    sequencer.getDrumSequenceId()
-            );
+        } else {
+            // We're at the last sequence - don't create a new one automatically
+            logger.info("Already at last sequence - use New button to create a new sequence");
         }
+        
+        // Update button states based on new position
+        updateButtonStates();
     }
 
     /**
@@ -265,5 +256,40 @@ public class DrumSequenceNavigationPanel extends JPanel {
         );
 
         logger.info("Saved drum sequence: {}", sequencer.getDrumSequenceId());
+    }
+
+    /**
+     * Create a new sequence and apply it to the sequencer
+     */
+    private void createNewSequence() {
+        try {
+            // Create a new sequence with an assigned ID right away
+            DrumSequenceData newSequence = manager.createNewSequence();
+            
+            if (newSequence != null) {
+                // Apply the new sequence to the sequencer
+                Long newId = newSequence.getId();
+                RedisService.getInstance().applyDrumSequenceToSequencer(newSequence, sequencer);
+                
+                logger.info("Created new drum sequence with ID: {}", newId);
+                
+                // Update UI
+                updateSequenceIdDisplay();
+                
+                // Notify other components
+                CommandBus.getInstance().publish(
+                    Commands.DRUM_SEQUENCE_UPDATED,
+                    this,
+                    newId
+                );
+                
+                // Update button states
+                updateButtonStates();
+            } else {
+                logger.error("Failed to create new sequence - returned null");
+            }
+        } catch (Exception e) {
+            logger.error("Error creating new drum sequence", e);
+        }
     }
 }
