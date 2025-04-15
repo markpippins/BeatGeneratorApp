@@ -2,6 +2,7 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Insets;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -27,8 +28,7 @@ import com.angrysurfer.core.service.DrumSequencerManager;
 public class DrumSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumSequenceNavigationPanel.class);
-    
-    // Size constants
+
     private static final int SMALL_CONTROL_WIDTH = 40;
     private static final int MEDIUM_CONTROL_WIDTH = 60;
     private static final int LABEL_WIDTH = 85;
@@ -53,7 +53,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
     }
 
     private void initializeUI() {
-        // Set layout and border
+
         setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(ColorUtils.deepNavy),
@@ -62,7 +62,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
                 TitledBorder.TOP
         ));
 
-        // Create ID label
+
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
         sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, CONTROL_HEIGHT));
         sequenceIdLabel.setOpaque(true);
@@ -73,13 +73,12 @@ public class DrumSequenceNavigationPanel extends JPanel {
         // Create new sequence button with plus icon
         newButton = createButton("➕", "Create new sequence", e -> createNewSequence());
 
-        // Create navigation buttons
+        // Create navigation buttons with icons
         firstButton = createButton("⏮", "First sequence", e -> loadFirstSequence());
         prevButton = createButton("◀", "Previous sequence", e -> loadPreviousSequence());
         nextButton = createButton("▶", "Next sequence", e -> loadNextSequence());
         lastButton = createButton("⏭", "Last sequence", e -> loadLastSequence());
-        
-        // Create save button
+
         saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
         
         // Add components to panel - add new button first
@@ -99,7 +98,11 @@ public class DrumSequenceNavigationPanel extends JPanel {
         JButton button = new JButton(text);
         button.setToolTipText(tooltip);
         button.addActionListener(listener);
-        button.setPreferredSize(new Dimension(32, 32));
+        button.setFocusable(false);
+        
+        // Set consistent size and margins to match other panels
+        button.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        button.setMargin(new Insets(2, 2, 2, 2));
         
         return button;
     }
@@ -113,7 +116,8 @@ public class DrumSequenceNavigationPanel extends JPanel {
     }
 
     private String getFormattedIdText() {
-        return "Seq: " + (sequencer.getDrumSequenceId() > 0 ? sequencer.getDrumSequenceId() : "New");
+        return "Seq: " + 
+            (sequencer.getDrumSequenceId() == 0 ? "New" : sequencer.getDrumSequenceId());
     }
 
     /**

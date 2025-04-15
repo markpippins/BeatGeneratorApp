@@ -311,6 +311,7 @@ public final class InstrumentWrapper implements Serializable {
                             current = null;
                             receiver.set(null);
                         }
+                        logger.info("Receiver created successfully for {}", getName());
                     } else {
                         logger.error("Reconnected device returned null receiver for {}", getName());
                     }

@@ -135,6 +135,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Debug: Print confirmation of registration
         System.out.println("DrumSequencerPanel registered with CommandBus");
 
+        // Add as listener
+        CommandBus.getInstance().register(this);
+        logger.info("DrumSequencerPanel registered as listener");
+
         // Initialize UI components
         initialize();
     }
@@ -485,6 +489,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Handle selection of a drum pad - completely revised to fix display issues
      */
     private void selectDrumPad(int padIndex) {
+        logger.info("DrumSequencerPanel: Selecting drum pad {}", padIndex);
         // Guard against recursive calls
         if (isSelectingDrumPad) {
             return;
@@ -510,6 +515,14 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             if (drumInfoPanel != null) {
                 drumInfoPanel.updateInfo(padIndex);
             }
+
+            // IMPORTANT: Notify other panels through the command bus
+            CommandBus.getInstance().publish(
+                Commands.DRUM_PAD_SELECTED, 
+                this,  // Send 'this' as the source to prevent circular updates
+                new DrumPadSelectionEvent(-1, padIndex)
+            );
+            logger.info("DrumSequencerPanel: Published selection event for pad {}", padIndex);
         } finally {
             isSelectingDrumPad = false;
         }
@@ -1231,3 +1244,5 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             }
     }
 }
+
+
