@@ -168,6 +168,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Create tilt panel with LIMITED HEIGHT and add it to the TOP of the south
         // panel
         TiltSequencerPanel tiltPanel = new TiltSequencerPanel(sequencer);
+        tiltPanel.setBackground(ColorUtils.getColors()[MelodicSequencerManager.getInstance().getSequencerCount()]);
 
         // Set a fixed preferred height for the tilt panel to prevent it from taking too
         // much space

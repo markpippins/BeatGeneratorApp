@@ -421,28 +421,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     }
 
-    /**
-     * Get the knob label for a specific index
-     */
-    private Color getKnobColor(int i) {
-        switch (i) {
-            case 0:
-                return ColorUtils.warmMustard;
-            case 1:
-                return ColorUtils.coolBlue;
-            case 2:
-                return ColorUtils.deepNavy;
-            case 3:
-                return ColorUtils.deepOrange;
-            case 4:
-                return ColorUtils.deepTeal;
-            case 5:
-                return ColorUtils.slateGray;
-            default:
-                return ColorUtils.deepNavy;
-        }
 
-    }
 
     public void setTimingChangeListener(Consumer<TimingDivision> listener) {
         this.timingChangeListener = listener;
