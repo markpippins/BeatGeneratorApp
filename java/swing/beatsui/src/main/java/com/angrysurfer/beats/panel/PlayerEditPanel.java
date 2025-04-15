@@ -161,7 +161,10 @@ public class PlayerEditPanel extends JPanel {
         // Add the basic properties panel at the top
         add(basicPropertiesPanel, BorderLayout.NORTH);
 
-        // Main content with parameters and rules
+        // Create main content panel with BorderLayout
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        
+        // Main content with parameters 
         JPanel mainContent = new JPanel(new BorderLayout());
 
         // Add the detail panel for sliders
@@ -171,13 +174,18 @@ public class PlayerEditPanel extends JPanel {
         JPanel optionsPanel = createOptionsPanel();
         mainContent.add(optionsPanel, BorderLayout.SOUTH);
 
-        // Rules panel
-        setupRulesPanel();
-
-        // Combine parameters and rules with split pane
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainContent, createRulesPanel());
-        splitPane.setResizeWeight(1.0);
-        add(splitPane, BorderLayout.CENTER);
+        // Add main content to CENTER of content panel
+        contentPanel.add(mainContent, BorderLayout.CENTER);
+        
+        // Create rules panel and make it skinnier
+        JPanel rulesPanel = createRulesPanel();
+        rulesPanel.setPreferredSize(new Dimension(220, rulesPanel.getPreferredSize().height));
+        
+        // Add rules panel to EAST position
+        contentPanel.add(rulesPanel, BorderLayout.EAST);
+        
+        // Add the content panel to the CENTER of the main layout
+        add(contentPanel, BorderLayout.CENTER);
     }
 
     private JPanel createOptionsPanel() {
