@@ -3,6 +3,7 @@ package com.angrysurfer.beats.panel;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -10,21 +11,27 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.sound.midi.MidiDevice;
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -175,7 +182,201 @@ class InstrumentsPanel extends JPanel {
         buttonPanel.add(enableInstrumentButton);
 
         toolBar.add(buttonPanel, BorderLayout.CENTER);
+        
+        // Add MIDI test panel to the bottom of the toolbar
+        toolBar.add(createMidiTestControls(), BorderLayout.SOUTH);
+        
         return toolBar;
+    }
+
+    /**
+     * Creates MIDI testing controls for the toolbar
+     */
+    private JPanel createMidiTestControls() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        panel.setBorder(BorderFactory.createTitledBorder("MIDI Test"));
+        
+        // --- Note testing section ---
+        
+        // Channel selector for notes (use channels defined in the instrument)
+        JPanel channelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        channelPanel.add(new JLabel("Ch:"));
+        JSpinner channelSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 16, 1));
+        channelSpinner.setPreferredSize(new Dimension(50, 25));
+        channelSpinner.setToolTipText("MIDI Channel (1-16)");
+        channelPanel.add(channelSpinner);
+        panel.add(channelPanel);
+        
+        // Note selector
+        JPanel notePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        notePanel.add(new JLabel("Note:"));
+        JSpinner noteSpinner = new JSpinner(new SpinnerNumberModel(60, 0, 127, 1));
+        noteSpinner.setPreferredSize(new Dimension(55, 25));
+        noteSpinner.setToolTipText("MIDI Note (0-127)");
+        notePanel.add(noteSpinner);
+        panel.add(notePanel);
+        
+        // Velocity selector
+        JPanel velocityPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        velocityPanel.add(new JLabel("Vel:"));
+        JSpinner velocitySpinner = new JSpinner(new SpinnerNumberModel(100, 1, 127, 1));
+        velocitySpinner.setPreferredSize(new Dimension(50, 25));
+        velocitySpinner.setToolTipText("Note Velocity (1-127)");
+        velocityPanel.add(velocitySpinner);
+        panel.add(velocityPanel);
+        
+        // Send note button
+        JButton sendNoteButton = new JButton("Send Note");
+        sendNoteButton.setMargin(new Insets(2, 8, 2, 8));
+        sendNoteButton.addActionListener(e -> {
+            sendMidiNote(
+                (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15 
+                (Integer)noteSpinner.getValue(),
+                (Integer)velocitySpinner.getValue()
+            );
+        });
+        panel.add(sendNoteButton);
+        
+        // Add separator
+        panel.add(Box.createHorizontalStrut(15));
+        
+        // --- Control Change section ---
+        
+        // CC number selector
+        JPanel ccPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        ccPanel.add(new JLabel("CC:"));
+        JSpinner ccSpinner = new JSpinner(new SpinnerNumberModel(1, 0, 127, 1));
+        ccSpinner.setPreferredSize(new Dimension(50, 25));
+        ccSpinner.setToolTipText("Control Change Number (0-127)");
+        ccPanel.add(ccSpinner);
+        panel.add(ccPanel);
+        
+        // CC value selector
+        JPanel valuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        valuePanel.add(new JLabel("Val:"));
+        JSpinner valueSpinner = new JSpinner(new SpinnerNumberModel(64, 0, 127, 1));
+        valueSpinner.setPreferredSize(new Dimension(50, 25));
+        valueSpinner.setToolTipText("Control Change Value (0-127)");
+        valuePanel.add(valueSpinner);
+        panel.add(valuePanel);
+        
+        // Send CC button
+        JButton sendCCButton = new JButton("Send CC");
+        sendCCButton.setMargin(new Insets(2, 8, 2, 8));
+        sendCCButton.addActionListener(e -> {
+            sendMidiControlChange(
+                (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+                (Integer)ccSpinner.getValue(),
+                (Integer)valueSpinner.getValue()
+            );
+        });
+        panel.add(sendCCButton);
+        
+        return panel;
+    }
+
+    /**
+     * Sends a MIDI note message to the selected instrument
+     */
+    private void sendMidiNote(int channel, int noteNumber, int velocity) {
+        if (selectedInstrument == null) {
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("InstrumentsPanel", "Error", "No instrument selected")
+            );
+            return;
+        }
+        
+        try {
+            // Check if the instrument is available
+            if (!selectedInstrument.getAvailable()) {
+                CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Error", "Instrument is not available: " + selectedInstrument.getName())
+                );
+                return;
+            }
+
+            // Send note on message
+            selectedInstrument.noteOn(channel, noteNumber, velocity);
+            
+            // Schedule note off message after 500ms
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        selectedInstrument.noteOff(channel, noteNumber, 0);
+                    } catch (Exception e) {
+                        logger.error("Error sending note off: {}", e.getMessage());
+                    }
+                }
+            }, 500);
+            
+            // Log and update status
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("InstrumentsPanel", "Info", 
+                    String.format("Sent note: %d on channel: %d with velocity: %d", 
+                        noteNumber, channel + 1, velocity))
+            );
+            
+        } catch (Exception e) {
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("InstrumentsPanel", "Error", "Failed to send MIDI note: " + e.getMessage())
+            );
+            logger.error("Error sending MIDI note", e);
+        }
+    }
+
+    /**
+     * Sends a MIDI control change message to the selected instrument
+     */
+    private void sendMidiControlChange(int channel, int controlNumber, int value) {
+        if (selectedInstrument == null) {
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("InstrumentsPanel", "Error", "No instrument selected")
+            );
+            return;
+        }
+        
+        try {
+            // Check if the instrument is available
+            if (!selectedInstrument.getAvailable()) {
+                CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Error", "Instrument is not available: " + selectedInstrument.getName())
+                );
+                return;
+            }
+
+            // Send control change message
+            selectedInstrument.controlChange(channel, controlNumber, value);
+            
+            // Log and update status
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("InstrumentsPanel", "Info", 
+                    String.format("Sent CC: %d on channel: %d with value: %d", 
+                        controlNumber, channel + 1, value))
+            );
+            
+        } catch (Exception e) {
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("InstrumentsPanel", "Error", "Failed to send MIDI CC: " + e.getMessage())
+            );
+            logger.error("Error sending MIDI control change", e);
+        }
     }
 
     private JPanel setupControlCodeToolbar() {
