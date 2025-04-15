@@ -19,6 +19,7 @@ import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.feature.Note;
+import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -114,11 +115,32 @@ public class MelodicSequencer implements IBusListener {
         this.channel = channel; // Set the channel for this instance
     }
 
-    // Constructor with ID
+    /**
+     * Creates a new melodic sequencer with ID and loads first sequence if available
+     */
     public MelodicSequencer(Integer id, Integer channel) {
         this.id = id;
         this.channel = channel;
-        // Other initialization...
+        
+        // Initialize pattern data with default values
+        initializePatternData();
+
+        // Initialize note properties
+        initializeNote();
+
+        // Register with CommandBus
+        CommandBus.getInstance().register(this);
+        TimingBus.getInstance().register(this);
+
+        // Initialize the quantizer with default settings
+        updateQuantizer();
+        
+        // Load first sequence if available (or create new one)
+        if (id != null) {
+            loadFirstSequence();
+        }
+        
+        logger.info("MelodicSequencer {} initialized and registered with CommandBus", id);
     }
 
     /**
@@ -1473,5 +1495,37 @@ public class MelodicSequencer implements IBusListener {
      */
     private void notifyPatternUpdated() {
         CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, this);
+    }
+
+    /**
+     * Load the first available sequence for this sequencer
+     * If no sequences exist, create a new one
+     */
+    public void loadFirstSequence() {
+        try {
+            RedisService redis = RedisService.getInstance();
+            
+            // Get the first sequence ID for this sequencer
+            Long firstId = redis.getMinimumMelodicSequenceId(this.id);
+            
+            if (firstId != null) {
+                // Load existing sequence
+                MelodicSequenceData data = redis.findMelodicSequenceById(firstId, this.id);
+                if (data != null) {
+                    redis.applyMelodicSequenceToSequencer(data, this);
+                    logger.info("Loaded first melodic sequence (ID: {}) for sequencer {}", 
+                        firstId, this.id);
+                    return;
+                }
+            }
+            
+            // No sequence exists, create a new one
+            logger.info("No melodic sequences found for sequencer {}, creating default", this.id);
+            MelodicSequenceData newData = redis.newMelodicSequence(this.id);
+            redis.applyMelodicSequenceToSequencer(newData, this);
+            
+        } catch (Exception e) {
+            logger.error("Error loading first melodic sequence: {}", e.getMessage(), e);
+        }
     }
 }
