@@ -98,7 +98,7 @@ public final class InstrumentWrapper implements Serializable {
 
     private String playerClassName;
 
-    private Boolean available = false;
+    private Boolean available = true;
 
     private Set<Pattern> patterns;
 
