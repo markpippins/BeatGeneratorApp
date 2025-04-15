@@ -64,18 +64,18 @@ class SystemsPanel extends JPanel {
     private void setupLayout() {
         setLayout(new BorderLayout());
         
-        // Create toolbar with refresh button
+        // Create toolbar with refresh button only
         JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton refreshButton = new JButton("Refresh Devices");
         refreshButton.addActionListener(e -> refreshDevicesTable());
         toolBar.add(refreshButton);
         
-        // Add MIDI test controls to toolbar
-        toolBar.add(createMidiTestControls());
-        
         // Add components to panel
         add(toolBar, BorderLayout.NORTH);
         add(new JScrollPane(devicesTable), BorderLayout.CENTER);
+        
+        // Add MIDI test controls to the bottom of the panel instead of toolbar
+        add(createMidiTestControls(), BorderLayout.SOUTH);
     }
 
     private JPopupMenu createContextMenu() {

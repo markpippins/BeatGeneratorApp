@@ -23,6 +23,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
@@ -144,29 +145,39 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     /**
-     * Creates a combined panel with InstrumentsPanel at the top and SystemsPanel at the bottom
+     * Creates a combined panel with InstrumentsPanel and SystemsPanel in a vertical JSplitPane
      */
     private JPanel createCombinedInstrumentsSystemPanel() {
-        JPanel combinedPanel = new JPanel(new BorderLayout(0, 10));
+        JPanel combinedPanel = new JPanel(new BorderLayout());
         
-        // Add instruments panel at the top (NORTH)
+        // Create the component panels
         InstrumentsPanel instrumentsPanel = new InstrumentsPanel();
-        combinedPanel.add(instrumentsPanel, BorderLayout.CENTER);
-        
-        // Add systems panel at the bottom (SOUTH)
         SystemsPanel systemsPanel = new SystemsPanel();
         
-        // Optionally, add a titled border to visually separate the sections
+        // Add titled border to systems panel for visual separation
         systemsPanel.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.GRAY), 
             "MIDI Devices", 
             javax.swing.border.TitledBorder.LEFT, 
             javax.swing.border.TitledBorder.TOP));
         
-        // Make systems panel a reasonable but not overwhelming height
-        systemsPanel.setPreferredSize(new Dimension(800, 250));
+        // Create a vertical JSplitPane (top-bottom arrangement)
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        splitPane.setTopComponent(instrumentsPanel);
+        splitPane.setBottomComponent(systemsPanel);
         
-        combinedPanel.add(systemsPanel, BorderLayout.SOUTH);
+        // Set initial divider position (70% for instruments, 30% for systems)
+        splitPane.setDividerLocation(0.7);
+        splitPane.setResizeWeight(0.7); // Keep 70% proportion on resize
+        
+        // Make the divider slightly more visible
+        splitPane.setDividerSize(8);
+        
+        // Remove any borders from the split pane itself
+        splitPane.setBorder(null);
+        
+        // Add the split pane to the combined panel
+        combinedPanel.add(splitPane, BorderLayout.CENTER);
         
         return combinedPanel;
     }
