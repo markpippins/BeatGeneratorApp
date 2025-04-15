@@ -195,14 +195,23 @@ public class PlayerEditPanel extends JPanel {
         // Add top content to CENTER of content panel
         contentPanel.add(topContent, BorderLayout.CENTER);
         
-        // Create options panel that will span the full width
+        // Create container panel with no margins for options and quantize
+        JPanel optionsContainer = new JPanel(new BorderLayout(0, 0));
+        
+        // Create the options panel and add it to the LEFT (CENTER) of the container
         JPanel optionsPanel = createOptionsPanel();
+        optionsContainer.add(optionsPanel, BorderLayout.CENTER);
         
-        // Set a reasonable height for the options panel
-        optionsPanel.setPreferredSize(new Dimension(optionsPanel.getPreferredSize().width, 100));
+        // Create quantize panel and add it to the RIGHT (EAST) of the container
+        JPanel quantizePanel = createQuantizePanel();
+        quantizePanel.setPreferredSize(new Dimension(220, quantizePanel.getPreferredSize().height));
+        optionsContainer.add(quantizePanel, BorderLayout.EAST);
         
-        // Add options panel to SOUTH position of content panel to span full width
-        contentPanel.add(optionsPanel, BorderLayout.SOUTH);
+        // Set a reasonable height for the options container
+        optionsContainer.setPreferredSize(new Dimension(optionsContainer.getPreferredSize().width, 100));
+        
+        // Add the container to SOUTH position to span full width
+        contentPanel.add(optionsContainer, BorderLayout.SOUTH);
         
         // Add the content panel to the CENTER of the main layout
         add(contentPanel, BorderLayout.CENTER);
@@ -234,41 +243,12 @@ public class PlayerEditPanel extends JPanel {
         internalBarsPanel.add(useInternalBarsSwitch);
         internalBarsPanel.add(internalBarsSpinner);
 
-        // Quantize section - integrated into options panel
-        JPanel quantizePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 1));
-        quantizePanel.setBorder(BorderFactory.createTitledBorder("Quantize"));
-        
-        // Initialize quantize checkbox with appropriate label
-        quantizeCheckbox = new JCheckBox("Enable");
-        // quantizeCheckbox.setSelected(player.getQuantizeEnabled() != null ? player.getQuantizeEnabled() : false);
-        quantizePanel.add(quantizeCheckbox);
-        
-        // Initialize scale combo box
-        String[] scales = Scale.getScales();
-        scaleCombo = new JComboBox<>(scales);
-        
-        // Set current scale if available
-        if (player.getScale() != null && !player.getScale().isEmpty()) {
-            scaleCombo.setSelectedItem(player.getScale());
-        }
-        
-        // Set default size
-        scaleCombo.setPreferredSize(new Dimension(120, 25));
-        
-        // Enable/disable based on quantize checkbox
-        scaleCombo.setEnabled(quantizeCheckbox.isSelected());
-        
-        // Add listener to enable/disable scale combo based on checkbox
-        quantizeCheckbox.addActionListener(e -> scaleCombo.setEnabled(quantizeCheckbox.isSelected()));
-        
-        quantizePanel.add(scaleCombo);
-
         // Add all components to the options panel in one row
         optionsPanel.add(preservePanel);
         optionsPanel.add(stickyPresetPanel);
         optionsPanel.add(internalBeatsPanel);
         optionsPanel.add(internalBarsPanel);
-        optionsPanel.add(quantizePanel);  // Add the quantize panel to options
+        // Removed: no longer adding quantize panel here
 
         return optionsPanel;
     }
