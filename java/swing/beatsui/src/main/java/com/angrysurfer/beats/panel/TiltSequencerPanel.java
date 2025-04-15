@@ -46,7 +46,10 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
 
         JPanel dialsPanel = new JPanel(new GridLayout(1, DIAL_COUNT, 2, 0));
         JPanel labelsPanel = new JPanel(new GridLayout(1, DIAL_COUNT, 2, 0));
-
+        
+        dialsPanel.setBackground(getBackground());
+        labelsPanel.setBackground(getBackground());
+        
         // Create the dials and labels
         for (int i = 0; i < DIAL_COUNT; i++) {
             // Create a dial

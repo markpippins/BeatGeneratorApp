@@ -74,4 +74,13 @@ public class ColorUtils {
     public static Color getAccentColor() {
         return new Color(30, 80, 90); // Tascam-inspired accent color
     }
+
+    public static Color[] getColors() {
+        return new Color[] { charcoalGray, slateGray, deepNavy, dustyAmber, warmMustard,
+                darkGray, warmGray, coolBlue, deepOrange, mutedRed, fadedOrange, mutedOlive, fadedLime };
+    }
+
+    public static Color[] getAccentColors() {
+        return new Color[] { agedOffWhite, deepTeal, warmOffWhite };
+    }
 }

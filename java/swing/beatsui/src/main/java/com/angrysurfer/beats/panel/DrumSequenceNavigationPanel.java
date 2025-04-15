@@ -7,11 +7,13 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Direction;
@@ -25,6 +27,12 @@ import com.angrysurfer.core.service.DrumSequencerManager;
 public class DrumSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumSequenceNavigationPanel.class);
+    
+    // Size constants
+    private static final int SMALL_CONTROL_WIDTH = 40;
+    private static final int MEDIUM_CONTROL_WIDTH = 60;
+    private static final int LABEL_WIDTH = 85;
+    private static final int CONTROL_HEIGHT = 25;
 
     private JLabel sequenceIdLabel;
     private JButton firstButton;
@@ -32,6 +40,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
     private JButton nextButton;
     private JButton lastButton;
     private JButton saveButton;
+    private JButton newButton;  // Add new button field
 
     private final DrumSequencer sequencer;
     private final DrumSequencerManager manager;
@@ -45,29 +54,37 @@ public class DrumSequenceNavigationPanel extends JPanel {
 
     private void initializeUI() {
         // Set layout and border
-        setLayout(new FlowLayout(FlowLayout.CENTER, 10, 2));
+        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
         setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEtchedBorder(),
+                BorderFactory.createLineBorder(ColorUtils.deepNavy),
                 "Sequence Navigation",
-                TitledBorder.CENTER,
+                TitledBorder.LEFT,
                 TitledBorder.TOP
         ));
 
         // Create ID label
-        sequenceIdLabel = new JLabel(getFormattedIdText());
-        sequenceIdLabel.setPreferredSize(new Dimension(40, 25));
+        sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
+        sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, CONTROL_HEIGHT));
+        sequenceIdLabel.setOpaque(true);
+        sequenceIdLabel.setBackground(ColorUtils.darkGray);
+        sequenceIdLabel.setForeground(ColorUtils.coolBlue);
+        sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
+
+        // Create new sequence button with plus icon
+        newButton = createButton("➕", "Create new sequence", e -> createNewSequence());
 
         // Create navigation buttons
         firstButton = createButton("⏮", "First sequence", e -> loadFirstSequence());
         prevButton = createButton("◀", "Previous sequence", e -> loadPreviousSequence());
         nextButton = createButton("▶", "Next sequence", e -> loadNextSequence());
         lastButton = createButton("⏭", "Last sequence", e -> loadLastSequence());
-
-        // Create save button - make it stand out more
+        
+        // Create save button
         saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
         
-        // Add components to panel
+        // Add components to panel - add new button first
         add(sequenceIdLabel);
+        add(newButton);      // Add new button here
         add(firstButton);
         add(prevButton);
         add(nextButton);
@@ -247,5 +264,49 @@ public class DrumSequenceNavigationPanel extends JPanel {
         );
 
         logger.info("Saved drum sequence: {}", sequencer.getDrumSequenceId());
+    }
+
+    /**
+     * Create a new sequence and apply it to the sequencer
+     */
+    private void createNewSequence() {
+        try {
+            // Set the sequencer to a new sequence state
+            sequencer.setDrumSequenceId(0); // Set to 0 to indicate new unsaved sequence
+
+            // Reset the sequencer
+            sequencer.reset();
+
+            // Clear all patterns
+            for (int drumIndex = 0; drumIndex < DrumSequencer.DRUM_PAD_COUNT; drumIndex++) {
+                for (int step = 0; step < 64; step++) { // Clear all steps up to max
+                    if (sequencer.isStepActive(drumIndex, step)) {
+                        sequencer.toggleStep(drumIndex, step); // Turn off any active steps
+                    }
+                }
+            }
+
+            // Reset to default parameters
+            for (int i = 0; i < DrumSequencer.DRUM_PAD_COUNT; i++) {
+                sequencer.setLooping(i, true);
+                sequencer.setDirection(i, Direction.FORWARD);
+                sequencer.setPatternLength(i, 16);
+                sequencer.setTimingDivision(i, TimingDivision.NORMAL);
+            }
+
+            // Update UI
+            updateSequenceIdDisplay();
+            
+            // Notify other components
+            CommandBus.getInstance().publish(
+                Commands.DRUM_SEQUENCE_UPDATED,
+                this,
+                sequencer.getDrumSequenceId()
+            );
+            
+            logger.info("Created new drum sequence");
+        } catch (Exception e) {
+            logger.error("Error creating new drum sequence", e);
+        }
     }
 }
