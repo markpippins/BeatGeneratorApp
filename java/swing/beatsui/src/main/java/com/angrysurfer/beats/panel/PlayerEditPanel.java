@@ -8,6 +8,8 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -26,6 +28,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.service.SessionManager;
 
 /**
@@ -58,6 +61,10 @@ public class PlayerEditPanel extends JPanel {
     // Internal beats/bars spinners
     private JSpinner internalBarsSpinner;
     private JSpinner internalBeatsSpinner;
+
+    // New fields
+    private JCheckBox quantizeCheckbox;
+    private JComboBox<String> scaleCombo;
 
     // Constructor - initialize all components
     public PlayerEditPanel(Player player) {
@@ -151,6 +158,12 @@ public class PlayerEditPanel extends JPanel {
         player.setInternalBeats(((Number) internalBeatsSpinner.getValue()).intValue());
         player.setInternalBars(((Number) internalBarsSpinner.getValue()).intValue());
         
+        // Apply quantize settings
+        // player.setQuantizeEnabled(quantizeCheckbox.isSelected());
+        if (quantizeCheckbox.isSelected() && scaleCombo.getSelectedItem() != null) {
+            player.setScale((String) scaleCombo.getSelectedItem());
+        }
+        
         return player;
     }
 
@@ -164,25 +177,32 @@ public class PlayerEditPanel extends JPanel {
         // Create main content panel with BorderLayout
         JPanel contentPanel = new JPanel(new BorderLayout());
         
-        // Main content with parameters 
-        JPanel mainContent = new JPanel(new BorderLayout());
-
-        // Add the detail panel for sliders
-        mainContent.add(detailPanel, BorderLayout.CENTER);
-
-        // Add options panel at the bottom
-        JPanel optionsPanel = createOptionsPanel();
-        mainContent.add(optionsPanel, BorderLayout.SOUTH);
-
-        // Add main content to CENTER of content panel
-        contentPanel.add(mainContent, BorderLayout.CENTER);
+        // Create a top content panel to hold both detail panel and rules panel side by side
+        JPanel topContent = new JPanel(new BorderLayout());
         
-        // Create rules panel and make it skinnier
+        // Add the detail panel to CENTER of top content
+        topContent.add(detailPanel, BorderLayout.CENTER);
+        
+        // Create rules panel
         JPanel rulesPanel = createRulesPanel();
+        
+        // Set the preferred width for the rules panel
         rulesPanel.setPreferredSize(new Dimension(220, rulesPanel.getPreferredSize().height));
         
-        // Add rules panel to EAST position
-        contentPanel.add(rulesPanel, BorderLayout.EAST);
+        // Add rules panel to EAST position of top content
+        topContent.add(rulesPanel, BorderLayout.EAST);
+        
+        // Add top content to CENTER of content panel
+        contentPanel.add(topContent, BorderLayout.CENTER);
+        
+        // Create options panel that will span the full width
+        JPanel optionsPanel = createOptionsPanel();
+        
+        // Set a reasonable height for the options panel
+        optionsPanel.setPreferredSize(new Dimension(optionsPanel.getPreferredSize().width, 100));
+        
+        // Add options panel to SOUTH position of content panel to span full width
+        contentPanel.add(optionsPanel, BorderLayout.SOUTH);
         
         // Add the content panel to the CENTER of the main layout
         add(contentPanel, BorderLayout.CENTER);
@@ -205,24 +225,50 @@ public class PlayerEditPanel extends JPanel {
         // Internal Beats section - more compact FlowLayout 
         JPanel internalBeatsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 1));
         internalBeatsPanel.setBorder(BorderFactory.createTitledBorder("Internal Beats"));
-
-        // Add components directly to the FlowLayout panel
         internalBeatsPanel.add(useInternalBeatsSwitch);
         internalBeatsPanel.add(internalBeatsSpinner);
 
         // Internal Bars section - more compact FlowLayout
         JPanel internalBarsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 1));
         internalBarsPanel.setBorder(BorderFactory.createTitledBorder("Internal Bars"));
-
-        // Add components directly to the FlowLayout panel
         internalBarsPanel.add(useInternalBarsSwitch);
         internalBarsPanel.add(internalBarsSpinner);
+
+        // Quantize section - integrated into options panel
+        JPanel quantizePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 1));
+        quantizePanel.setBorder(BorderFactory.createTitledBorder("Quantize"));
+        
+        // Initialize quantize checkbox with appropriate label
+        quantizeCheckbox = new JCheckBox("Enable");
+        // quantizeCheckbox.setSelected(player.getQuantizeEnabled() != null ? player.getQuantizeEnabled() : false);
+        quantizePanel.add(quantizeCheckbox);
+        
+        // Initialize scale combo box
+        String[] scales = Scale.getScales();
+        scaleCombo = new JComboBox<>(scales);
+        
+        // Set current scale if available
+        if (player.getScale() != null && !player.getScale().isEmpty()) {
+            scaleCombo.setSelectedItem(player.getScale());
+        }
+        
+        // Set default size
+        scaleCombo.setPreferredSize(new Dimension(120, 25));
+        
+        // Enable/disable based on quantize checkbox
+        scaleCombo.setEnabled(quantizeCheckbox.isSelected());
+        
+        // Add listener to enable/disable scale combo based on checkbox
+        quantizeCheckbox.addActionListener(e -> scaleCombo.setEnabled(quantizeCheckbox.isSelected()));
+        
+        quantizePanel.add(scaleCombo);
 
         // Add all components to the options panel in one row
         optionsPanel.add(preservePanel);
         optionsPanel.add(stickyPresetPanel);
         optionsPanel.add(internalBeatsPanel);
         optionsPanel.add(internalBarsPanel);
+        optionsPanel.add(quantizePanel);  // Add the quantize panel to options
 
         return optionsPanel;
     }
@@ -386,5 +432,52 @@ public class PlayerEditPanel extends JPanel {
         rulesPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         return rulesPanel;
+    }
+
+    /**
+     * Creates the quantize panel with scale selection
+     */
+    private JPanel createQuantizePanel() {
+        JPanel quantizePanel = new JPanel(new BorderLayout(5, 5));
+        quantizePanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("Quantize"),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        
+        // Create container for controls
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        
+        // Create and add quantize checkbox
+        quantizeCheckbox = new JCheckBox("Q");
+        quantizeCheckbox.setSelected(false);
+        //  setSelected(player.getQuantizeEnabled() != null ? player.getQuantizeEnabled() : false);
+        controlsPanel.add(quantizeCheckbox, BorderLayout.WEST);
+        
+        // Create and add scale selector
+        // JPanel scalePanel = new JPanel(new BorderLayout(5, 2));
+        // scalePanel.add(new JLabel("Scale:"), BorderLayout.WEST);
+        
+        // Get alphabetized list of scales from Scale class
+        String[] scales = Scale.getScales();
+        scaleCombo = new JComboBox<>(scales);
+        
+        // Set current scale if available
+        if (player.getScale() != null) {
+            scaleCombo.setSelectedItem(player.getScale());
+        }
+        
+        // Enable/disable based on quantize checkbox
+        scaleCombo.setEnabled(quantizeCheckbox.isSelected());
+        
+        // Add listener to enable/disable scale combo based on checkbox
+        quantizeCheckbox.addActionListener(e -> 
+            scaleCombo.setEnabled(quantizeCheckbox.isSelected()));
+        
+        // scalePanel.add(scaleCombo, BorderLayout.CENTER);
+        controlsPanel.add(scaleCombo, BorderLayout.CENTER);
+        
+        // Add controls to panel
+        quantizePanel.add(controlsPanel, BorderLayout.CENTER);
+        
+        return quantizePanel;
     }
 }
