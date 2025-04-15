@@ -98,9 +98,13 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Mixer", createMixerPanel());
 
         tabbedPane.addTab("Players", new SessionPanel());
-        tabbedPane.addTab("Instruments", new InstrumentsPanel());
+        
+        // Create combined panel for Instruments + Systems
+        tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
+        
         tabbedPane.addTab("Launch", new LaunchPanel());
-        tabbedPane.addTab("System", new SystemsPanel());
+        // Remove the separate Systems tab
+        // tabbedPane.addTab("System", new SystemsPanel());
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
 
@@ -137,6 +141,34 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // At the end of the method, update the mute buttons with sequencers
         updateMuteButtonSequencers();
+    }
+
+    /**
+     * Creates a combined panel with InstrumentsPanel at the top and SystemsPanel at the bottom
+     */
+    private JPanel createCombinedInstrumentsSystemPanel() {
+        JPanel combinedPanel = new JPanel(new BorderLayout(0, 10));
+        
+        // Add instruments panel at the top (NORTH)
+        InstrumentsPanel instrumentsPanel = new InstrumentsPanel();
+        combinedPanel.add(instrumentsPanel, BorderLayout.CENTER);
+        
+        // Add systems panel at the bottom (SOUTH)
+        SystemsPanel systemsPanel = new SystemsPanel();
+        
+        // Optionally, add a titled border to visually separate the sections
+        systemsPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.GRAY), 
+            "MIDI Devices", 
+            javax.swing.border.TitledBorder.LEFT, 
+            javax.swing.border.TitledBorder.TOP));
+        
+        // Make systems panel a reasonable but not overwhelming height
+        systemsPanel.setPreferredSize(new Dimension(800, 250));
+        
+        combinedPanel.add(systemsPanel, BorderLayout.SOUTH);
+        
+        return combinedPanel;
     }
 
     private Component createDrumPanel() {
