@@ -99,10 +99,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Mixer", createMixerPanel());
 
         tabbedPane.addTab("Players", new SessionPanel());
-        
+
         // Create combined panel for Instruments + Systems
         tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
-        
+
         tabbedPane.addTab("Launch", new LaunchPanel());
         // Remove the separate Systems tab
         // tabbedPane.addTab("System", new SystemsPanel());
@@ -145,40 +145,41 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     /**
-     * Creates a combined panel with InstrumentsPanel and SystemsPanel in a vertical JSplitPane
+     * Creates a combined panel with InstrumentsPanel and SystemsPanel in a vertical
+     * JSplitPane
      */
     private JPanel createCombinedInstrumentsSystemPanel() {
         JPanel combinedPanel = new JPanel(new BorderLayout());
-        
+
         // Create the component panels
         InstrumentsPanel instrumentsPanel = new InstrumentsPanel();
         SystemsPanel systemsPanel = new SystemsPanel();
-        
+
         // Add titled border to systems panel for visual separation
         systemsPanel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.GRAY), 
-            "MIDI Devices", 
-            javax.swing.border.TitledBorder.LEFT, 
-            javax.swing.border.TitledBorder.TOP));
-        
+                BorderFactory.createLineBorder(Color.GRAY),
+                "MIDI Devices",
+                javax.swing.border.TitledBorder.LEFT,
+                javax.swing.border.TitledBorder.TOP));
+
         // Create a vertical JSplitPane (top-bottom arrangement)
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         splitPane.setTopComponent(instrumentsPanel);
         splitPane.setBottomComponent(systemsPanel);
-        
+
         // Set initial divider position (70% for instruments, 30% for systems)
         splitPane.setDividerLocation(0.7);
         splitPane.setResizeWeight(0.7); // Keep 70% proportion on resize
-        
+
         // Make the divider slightly more visible
         splitPane.setDividerSize(8);
-        
+
         // Remove any borders from the split pane itself
         splitPane.setBorder(null);
-        
+
         // Add the split pane to the combined panel
         combinedPanel.add(splitPane, BorderLayout.CENTER);
-        
+
         return combinedPanel;
     }
 
@@ -228,40 +229,40 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         // Create a main panel with a border
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         // Create a panel with GridLayout (1 row, 3 columns) with spacing
         JPanel lfoBankPanel = new JPanel(new GridLayout(1, 3, 15, 0));
-        
+
         // Create three LFO panels with distinct names
         LFOPanel lfo1 = new LFOPanel();
         lfo1.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder("LFO 1"),
-            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        
+                BorderFactory.createTitledBorder("LFO 1"),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
         LFOPanel lfo2 = new LFOPanel();
         lfo2.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder("LFO 2"),
-            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        
+                BorderFactory.createTitledBorder("LFO 2"),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
         LFOPanel lfo3 = new LFOPanel();
         lfo3.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder("LFO 3"),
-            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        
+                BorderFactory.createTitledBorder("LFO 3"),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
         // Add the three LFO panels to the grid
         lfoBankPanel.add(lfo1);
         lfoBankPanel.add(lfo2);
         lfoBankPanel.add(lfo3);
-        
+
         // Add the grid panel to the main panel
         mainPanel.add(lfoBankPanel, BorderLayout.CENTER);
-        
+
         // Add a title header
         JLabel titleLabel = new JLabel("Modulation Matrix", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Dialog", Font.BOLD, 16));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         mainPanel.add(titleLabel, BorderLayout.NORTH);
-        
+
         return mainPanel;
     }
 
@@ -396,14 +397,14 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         metronomeButton.setPreferredSize(new Dimension(28, 28));
         metronomeButton.setMinimumSize(new Dimension(28, 28));
         metronomeButton.setMaximumSize(new Dimension(28, 28));
-        
+
         // Remove the rounded rectangle property
         // metronomeButton.putClientProperty("JButton.buttonType", "roundRect");
-        
+
         // Explicitly set square size and enforce square shape
         metronomeButton.putClientProperty("JButton.squareSize", true);
         metronomeButton.putClientProperty("JComponent.sizeVariant", "regular");
-        
+
         metronomeButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 18));
         metronomeButton.setHorizontalAlignment(SwingConstants.CENTER);
         metronomeButton.setVerticalAlignment(SwingConstants.CENTER);
@@ -454,14 +455,14 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         notesOffButton.setPreferredSize(new Dimension(28, 28));
         notesOffButton.setMinimumSize(new Dimension(28, 28));
         notesOffButton.setMaximumSize(new Dimension(28, 28));
-        
+
         // Remove the rounded rectangle property
         // notesOffButton.putClientProperty("JButton.buttonType", "roundRect");
-        
+
         // Explicitly set square size and enforce square shape
         notesOffButton.putClientProperty("JButton.squareSize", true);
         notesOffButton.putClientProperty("JComponent.sizeVariant", "regular");
-        
+
         notesOffButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 18));
         notesOffButton.setHorizontalAlignment(SwingConstants.CENTER);
         notesOffButton.setVerticalAlignment(SwingConstants.CENTER);
@@ -509,22 +510,21 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JButton createMixButton() {
         JButton mixButton = new JButton();
-        
         // Use a mixer icon character instead of text to fit in a square button
         mixButton.setText("🎛️");
-        
+
         // Set equal width and height to ensure square shape
         mixButton.setPreferredSize(new Dimension(28, 28));
         mixButton.setMinimumSize(new Dimension(28, 28));
         mixButton.setMaximumSize(new Dimension(28, 28));
-        
+
         // Remove the rounded rectangle property
         // mixButton.putClientProperty("JButton.buttonType", "roundRect");
-        
+
         // Explicitly set square size and enforce square shape
         mixButton.putClientProperty("JButton.squareSize", true);
         mixButton.putClientProperty("JComponent.sizeVariant", "regular");
-        
+
         // Style text to match other buttons
         mixButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 18));
         mixButton.setHorizontalAlignment(SwingConstants.CENTER);
@@ -534,7 +534,41 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // Add action listener to show mixer dialog
         mixButton.addActionListener(e -> {
-            // Existing action listener code...
+            // Get current sequencer
+            DrumSequencer sequencer = null;
+            if (drumSequencerPanel != null) {
+                sequencer = drumSequencerPanel.getSequencer();
+            }
+
+            if (sequencer != null) {
+                // Create a new PopupMixerPanel and dialog each time
+                PopupMixerPanel mixerPanel = new PopupMixerPanel(sequencer);
+
+                // Create dialog to show the mixer
+                JDialog mixerDialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+                        "Pop-Up Mixer",
+                        Dialog.ModalityType.MODELESS); // Non-modal dialog
+                mixerDialog.setContentPane(mixerPanel);
+                mixerDialog.pack();
+                mixerDialog.setLocationRelativeTo(this);
+                mixerDialog.setMinimumSize(new Dimension(600, 400));
+
+                // Add window listener to handle dialog closing
+                mixerDialog.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        // Clean up any resources if needed
+                        // (Optional) For example, remove any listeners registered to the mixer panel
+                    }
+                });
+
+                mixerDialog.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "No drum sequencer available",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         return mixButton;
