@@ -65,7 +65,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private DrumSequencerPanel drumSequencerPanel;
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
     private InternalSynthControlPanel internalSynthControlPanel;
-    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[4];
+    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
     private PopupMixerPanel strikeMixerPanel;
     private MuteButtonsPanel muteButtonsPanel;
 
@@ -94,6 +94,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Mono 2", melodicPanels[1]);
         tabbedPane.addTab("Mono 3", melodicPanels[2]);
         tabbedPane.addTab("Mono 4", melodicPanels[3]);
+        tabbedPane.addTab("Mono 5", melodicPanels[4]);
+        tabbedPane.addTab("Mono 6", melodicPanels[5]);
+        tabbedPane.addTab("Mono 7", melodicPanels[6]);
+        tabbedPane.addTab("Mono 8", melodicPanels[7]);
         tabbedPane.addTab("Song", createSongPanel());
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Mod Matrix", createModulationMatrixPanel());
