@@ -103,21 +103,21 @@ public class InternalSynthPianoPanel extends JPanel {
         InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap actionMap = getActionMap();
         
-        // Left arrow decreases octave
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "octaveDown");
-        actionMap.put("octaveDown", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                shiftOctaveDown();
-            }
-        });
-        
-        // Right arrow increases octave
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "octaveUp");
+        // SWAPPED: Left arrow now increases octave
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "octaveUp");
         actionMap.put("octaveUp", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 shiftOctaveUp();
+            }
+        });
+        
+        // SWAPPED: Right arrow now decreases octave
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "octaveDown");
+        actionMap.put("octaveDown", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shiftOctaveDown();
             }
         });
         

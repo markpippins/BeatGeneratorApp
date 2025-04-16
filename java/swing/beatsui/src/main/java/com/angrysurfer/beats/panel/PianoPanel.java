@@ -9,6 +9,9 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.HierarchyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,11 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.plaf.basic.BasicButtonUI;
@@ -125,6 +132,7 @@ public class PianoPanel extends JPanel {
 
         setupActionBusListener();
         setupPlayerStatusIndicator();
+        setupKeyboardNavigation();
     }
 
     @Override
@@ -702,5 +710,81 @@ public class PianoPanel extends JPanel {
 
         // Force repaint to reflect changes
         repaint();
+    }
+
+    // Add this new method for keyboard navigation
+    private void setupKeyboardNavigation() {
+        // Make the panel focusable so it can receive key events
+        setFocusable(true);
+        
+        // Add key bindings for left and right arrow keys
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+        
+        // Left arrow increases octave
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "octaveUp");
+        actionMap.put("octaveUp", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shiftOctaveUp();
+            }
+        });
+        
+        // Right arrow decreases octave
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "octaveDown");
+        actionMap.put("octaveDown", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shiftOctaveDown();
+            }
+        });
+        
+        // Request focus when the panel becomes visible
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                requestFocusInWindow();
+            }
+        });
+    }
+    
+    // Add helper methods for octave shifting
+    private void shiftOctaveUp() {
+        if (currentOctave < 9) { // Limit the maximum octave
+            currentOctave++;
+            updateNoteToKeyMap();
+            logger.info("Piano panel: Octave up to " + currentOctave + " (via left arrow)");
+            
+            // Show visual feedback
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate(getClass().getSimpleName(), "Octave: " + currentOctave, null)
+            );
+            
+            // If scale is active, reapply it with new octave
+            if (activeButton == followScaleBtn) {
+                applyCurrentScale();
+            }
+        }
+    }
+    
+    private void shiftOctaveDown() {
+        if (currentOctave > 0) { // Limit the minimum octave
+            currentOctave--;
+            updateNoteToKeyMap();
+            logger.info("Piano panel: Octave down to " + currentOctave + " (via right arrow)");
+            
+            // Show visual feedback
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate(getClass().getSimpleName(), "Octave: " + currentOctave, null)
+            );
+            
+            // If scale is active, reapply it with new octave
+            if (activeButton == followScaleBtn) {
+                applyCurrentScale();
+            }
+        }
     }
 }

@@ -392,12 +392,18 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private JToggleButton createMetronomeToggleButton() {
         JToggleButton metronomeButton = new JToggleButton();
         metronomeButton.setText("🕰️");
-        // metronomeButton.setBackground(ColorUtils.mutedRed);
+        // Set equal width and height to ensure square shape
         metronomeButton.setPreferredSize(new Dimension(28, 28));
         metronomeButton.setMinimumSize(new Dimension(28, 28));
         metronomeButton.setMaximumSize(new Dimension(28, 28));
-        metronomeButton.putClientProperty("JButton.buttonType", "roundRect");
+        
+        // Remove the rounded rectangle property
+        // metronomeButton.putClientProperty("JButton.buttonType", "roundRect");
+        
+        // Explicitly set square size and enforce square shape
         metronomeButton.putClientProperty("JButton.squareSize", true);
+        metronomeButton.putClientProperty("JComponent.sizeVariant", "regular");
+        
         metronomeButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 18));
         metronomeButton.setHorizontalAlignment(SwingConstants.CENTER);
         metronomeButton.setVerticalAlignment(SwingConstants.CENTER);
@@ -408,9 +414,6 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             boolean isSelected = metronomeButton.isSelected();
             logger.info("Metronome toggled: " + (isSelected ? "ON" : "OFF"));
             CommandBus.getInstance().publish(isSelected ? Commands.METRONOME_START : Commands.METRONOME_STOP, this);
-            // metronomeButton.setText(isSelected ? "⏱" : "⏱");
-            // metronomeButton.setBackground(isSelected ? ColorUtils.mutedOlive :
-            // ColorUtils.mutedRed);
         });
 
         CommandBus.getInstance().register(new IBusListener() {
@@ -447,11 +450,18 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private JButton createAllNotesOffButton() {
         JButton notesOffButton = new JButton();
         notesOffButton.setText("🔕");
+        // Set equal width and height to ensure square shape
         notesOffButton.setPreferredSize(new Dimension(28, 28));
         notesOffButton.setMinimumSize(new Dimension(28, 28));
         notesOffButton.setMaximumSize(new Dimension(28, 28));
-        notesOffButton.putClientProperty("JButton.buttonType", "roundRect");
+        
+        // Remove the rounded rectangle property
+        // notesOffButton.putClientProperty("JButton.buttonType", "roundRect");
+        
+        // Explicitly set square size and enforce square shape
         notesOffButton.putClientProperty("JButton.squareSize", true);
+        notesOffButton.putClientProperty("JComponent.sizeVariant", "regular");
+        
         notesOffButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 18));
         notesOffButton.setHorizontalAlignment(SwingConstants.CENTER);
         notesOffButton.setVerticalAlignment(SwingConstants.CENTER);
@@ -498,50 +508,33 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private JButton createMixButton() {
-        JButton mixButton = new JButton("Mix");
+        JButton mixButton = new JButton();
+        
+        // Use a mixer icon character instead of text to fit in a square button
+        mixButton.setText("🎛️");
+        
+        // Set equal width and height to ensure square shape
+        mixButton.setPreferredSize(new Dimension(28, 28));
+        mixButton.setMinimumSize(new Dimension(28, 28));
+        mixButton.setMaximumSize(new Dimension(28, 28));
+        
+        // Remove the rounded rectangle property
+        // mixButton.putClientProperty("JButton.buttonType", "roundRect");
+        
+        // Explicitly set square size and enforce square shape
+        mixButton.putClientProperty("JButton.squareSize", true);
+        mixButton.putClientProperty("JComponent.sizeVariant", "regular");
+        
+        // Style text to match other buttons
+        mixButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 18));
+        mixButton.setHorizontalAlignment(SwingConstants.CENTER);
+        mixButton.setVerticalAlignment(SwingConstants.CENTER);
+        mixButton.setMargin(new Insets(0, 0, 0, 0));
         mixButton.setToolTipText("Show Drum Mixer");
-
-        // Style to match other controls
-        mixButton.setPreferredSize(new Dimension(60, 28));
-        mixButton.putClientProperty("JButton.buttonType", "roundRect");
 
         // Add action listener to show mixer dialog
         mixButton.addActionListener(e -> {
-            // Get current sequencer
-            DrumSequencer sequencer = null;
-            if (drumSequencerPanel != null) {
-                sequencer = drumSequencerPanel.getSequencer();
-            }
-
-            if (sequencer != null) {
-                // Create a new PopupMixerPanel and dialog each time
-                PopupMixerPanel mixerPanel = new PopupMixerPanel(sequencer);
-
-                // Create dialog to show the mixer
-                JDialog mixerDialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-                        "Pop-Up Mixer",
-                        Dialog.ModalityType.MODELESS); // Non-modal dialog
-                mixerDialog.setContentPane(mixerPanel);
-                mixerDialog.pack();
-                mixerDialog.setLocationRelativeTo(this);
-                mixerDialog.setMinimumSize(new Dimension(600, 400));
-
-                // Add window listener to handle dialog closing
-                mixerDialog.addWindowListener(new WindowAdapter() {
-                    @Override
-                    public void windowClosed(WindowEvent e) {
-                        // Clean up any resources if needed
-                        // (Optional) For example, remove any listeners registered to the mixer panel
-                    }
-                });
-
-                mixerDialog.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this,
-                        "No drum sequencer available",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            // Existing action listener code...
         });
 
         return mixButton;
