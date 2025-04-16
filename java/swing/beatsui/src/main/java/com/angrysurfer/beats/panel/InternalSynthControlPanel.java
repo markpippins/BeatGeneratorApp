@@ -9,8 +9,6 @@ import java.io.File;
 import java.util.List;
 
 import javax.sound.midi.MidiChannel;
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
@@ -67,15 +65,15 @@ public class InternalSynthControlPanel extends JPanel {
      */
     public InternalSynthControlPanel() {
         super(new BorderLayout(5, 5));
-        
+
         // No longer initializing synthesizer here - using singleton instead
         // Just ensure it's available
         InternalSynthManager.getInstance().getSynthesizer();
-        
+
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         setupUI();
     }
-    
+
     /**
      * Get the synthesizer from InternalSynthManager
      */
@@ -85,7 +83,7 @@ public class InternalSynthControlPanel extends JPanel {
 
     private void setupUI() {
         setLayout(new BorderLayout());
-        
+
         // Create preset selection at top
         JPanel soundPanel = createSoundPanel();
         add(soundPanel, BorderLayout.NORTH);
@@ -95,14 +93,14 @@ public class InternalSynthControlPanel extends JPanel {
         paramTabs.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
         paramTabs.addTab("Parameters", createParamsPanel());
         add(paramTabs, BorderLayout.CENTER);
-        
+
         // Create piano panel
         InternalSynthPianoPanel pianoPanel = new InternalSynthPianoPanel();
-        
+
         // Add to a container panel to center it horizontally
         JPanel pianoContainer = new JPanel(new FlowLayout(FlowLayout.CENTER));
         pianoContainer.add(pianoPanel);
-        
+
         // Add to the bottom of the main panel
         add(pianoContainer, BorderLayout.SOUTH);
     }
@@ -111,7 +109,7 @@ public class InternalSynthControlPanel extends JPanel {
      * Set a MIDI CC value on the synth
      *
      * @param ccNumber The CC number to set
-     * @param value The value to set (0-127)
+     * @param value    The value to set (0-127)
      */
     protected void setControlChange(int ccNumber, int value) {
         setControlChange(midiChannel, ccNumber, value);
@@ -120,9 +118,9 @@ public class InternalSynthControlPanel extends JPanel {
     /**
      * Set a MIDI CC value on the synth with specified channel
      *
-     * @param channel MIDI channel (0-15)
+     * @param channel  MIDI channel (0-15)
      * @param ccNumber The CC number to set
-     * @param value The value to set (0-127)
+     * @param value    The value to set (0-127)
      */
     protected void setControlChange(int channel, int ccNumber, int value) {
         // Delegate to InternalSynthManager
@@ -454,7 +452,8 @@ public class InternalSynthControlPanel extends JPanel {
     private void setProgramChange(int bank, int program) {
         if (getSynthesizer() != null && getSynthesizer().isOpen()) {
             try {
-                // Handle program changes directly since InternalSynthManager no longer has sendProgramChange
+                // Handle program changes directly since InternalSynthManager no longer has
+                // sendProgramChange
                 MidiChannel channel = getSynthesizer().getChannels()[midiChannel];
                 if (channel != null) {
                     // Send bank select MSB (CC 0)
@@ -513,9 +512,9 @@ public class InternalSynthControlPanel extends JPanel {
             // Skip slider if it's owned by one of the specialized panels
             if (slider.getParent() != null
                     && (UIHelper.isChildOf(slider, lfoPanel)
-                    || UIHelper.isChildOf(slider, filterPanel)
-                    || UIHelper.isChildOf(slider, envelopePanel)
-                    || UIHelper.isChildOf(slider, effectsPanel))) {
+                            || UIHelper.isChildOf(slider, filterPanel)
+                            || UIHelper.isChildOf(slider, envelopePanel)
+                            || UIHelper.isChildOf(slider, effectsPanel))) {
                 return;
             }
 
@@ -535,12 +534,12 @@ public class InternalSynthControlPanel extends JPanel {
                 if (name.contains("volume")) {
                     // Set oscillators 2-3 to zero, first one to full
                     if (name.equals("volumeDial0")) {
-                        value = 100;  // Oscillator 1 on full volume
+                        value = 100; // Oscillator 1 on full volume
                     } else {
-                        value = 0;    // Other oscillators muted
+                        value = 0; // Other oscillators muted
                     }
                 } else if (name.contains("tune") || name.contains("detune")) {
-                    value = 64;  // Middle for tuning
+                    value = 64; // Middle for tuning
                 } else if (name.contains("master")) {
                     value = 100; // Master volume full
                 }
@@ -559,7 +558,7 @@ public class InternalSynthControlPanel extends JPanel {
                 setControlChange(midiChannel, baseCCForOsc + 4, volume);
 
                 // Reset all other controllers
-                setControlChange(midiChannel, baseCCForOsc, 0);     // Waveform
+                setControlChange(midiChannel, baseCCForOsc, 0); // Waveform
                 setControlChange(midiChannel, baseCCForOsc + 1, 64); // Octave
                 setControlChange(midiChannel, baseCCForOsc + 2, 64); // Tune
                 setControlChange(midiChannel, baseCCForOsc + 3, 64); // Brightness
@@ -582,6 +581,8 @@ public class InternalSynthControlPanel extends JPanel {
         JPanel row1Panel = new JPanel();
         row1Panel.setLayout(new BoxLayout(row1Panel, BoxLayout.X_AXIS));
         row1Panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // row1Panel.setPreferredSize(new Dimension(getPreferredSize().width, 120));
+        // row1Panel.setMaximumSize(new Dimension(getMaximumSize().width, 120));
 
         // Create three oscillator panels
         InternalSynthOscillatorPanel osc1Panel = new InternalSynthOscillatorPanel(getSynthesizer(), midiChannel, 0);
@@ -589,7 +590,7 @@ public class InternalSynthControlPanel extends JPanel {
         InternalSynthOscillatorPanel osc3Panel = new InternalSynthOscillatorPanel(getSynthesizer(), midiChannel, 2);
 
         // Store references to the oscillator panels
-        oscillatorPanels = new InternalSynthOscillatorPanel[]{osc1Panel, osc2Panel, osc3Panel};
+        oscillatorPanels = new InternalSynthOscillatorPanel[] { osc1Panel, osc2Panel, osc3Panel };
 
         // Add property change listener for osc1 waveform changes
         osc1Panel.addPropertyChangeListener("oscillator1WaveformChanged", evt -> {
@@ -600,11 +601,15 @@ public class InternalSynthControlPanel extends JPanel {
         row1Panel.add(osc1Panel);
         row1Panel.add(Box.createHorizontalStrut(10));
         row1Panel.add(osc2Panel);
+        row1Panel.add(Box.createHorizontalStrut(10));
+        row1Panel.add(osc3Panel);
 
         // ROW 2: Oscillator 3 and Oscillator Mix panel in horizontal layout
         JPanel row2Panel = new JPanel();
         row2Panel.setLayout(new BoxLayout(row2Panel, BoxLayout.X_AXIS));
         row2Panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // row2Panel.setPreferredSize(new Dimension(getPreferredSize().width, 120));
+        // row2Panel.setMaximumSize(new Dimension(getMaximumSize().width, 120));
 
         // Create oscillator mix panel
         JPanel oscMixPanel = createOscillatorMixPanel();
@@ -612,17 +617,15 @@ public class InternalSynthControlPanel extends JPanel {
         effectsPanel = new InternalSynthEffectsPanel(getSynthesizer(), midiChannel);
 
         // Add oscillator 3 and mix panel to row 2
-        row2Panel.add(osc3Panel);
+        row2Panel.add(effectsPanel);
         row2Panel.add(Box.createHorizontalStrut(10));
         row2Panel.add(oscMixPanel);
-        row2Panel.add(Box.createHorizontalStrut(10));
-        row2Panel.add(effectsPanel);
 
         // ROW 3: Envelope, Filter, LFO and Effects panels
         JPanel row3Panel = new JPanel();
         row3Panel.setLayout(new BoxLayout(row3Panel, BoxLayout.X_AXIS));
         row3Panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+        
         // Create the missing panels
         envelopePanel = new InternalSynthEnvelopePanel(getSynthesizer(), midiChannel);
         filterPanel = new InternalSynthFilterPanel(getSynthesizer(), midiChannel);
@@ -641,9 +644,9 @@ public class InternalSynthControlPanel extends JPanel {
         // Add all rows to main panel with vertical spacing
         mainPanel.add(row1Panel);
         mainPanel.add(Box.createVerticalStrut(10));
-        mainPanel.add(row2Panel);
-        mainPanel.add(Box.createVerticalStrut(10));
         mainPanel.add(row3Panel);
+        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(row2Panel);
 
         // Add scroll pane for better UI experience
         JScrollPane scrollPane = new JScrollPane(mainPanel);
@@ -800,7 +803,7 @@ public class InternalSynthControlPanel extends JPanel {
     }
 
     /**
-     * Play a test note 
+     * Play a test note
      */
     public void playNote(int note, int velocity, int durationMs) {
         InternalSynthManager.getInstance().playNote(note, velocity, durationMs, midiChannel);

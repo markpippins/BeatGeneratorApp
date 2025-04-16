@@ -76,8 +76,8 @@ public class ColorUtils {
     }
 
     public static Color[] getColors() {
-        return new Color[] { charcoalGray, slateGray, deepNavy, dustyAmber, warmMustard,
-                darkGray, warmGray, coolBlue, deepOrange, mutedRed, fadedOrange, mutedOlive, fadedLime };
+        return new Color[] { coolBlue, darkGray, warmGray, charcoalGray, slateGray, deepNavy, dustyAmber, warmMustard,
+                deepOrange, mutedRed, fadedOrange, mutedOlive, fadedLime };
     }
 
     public static Color[] getAccentColors() {

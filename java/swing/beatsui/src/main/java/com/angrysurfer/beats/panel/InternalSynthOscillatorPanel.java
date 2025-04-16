@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridBagLayout;
 
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.Synthesizer;
@@ -52,6 +53,9 @@ public class InternalSynthOscillatorPanel extends JPanel {
         this.oscillatorIndex = oscillatorIndex;
         this.baseCCForOsc = oscillatorIndex * 20 + 20; // Space out CC numbers
         
+        // Set fixed height with preferred width
+        setPreferredSize(new Dimension(getPreferredSize().width, 120));
+        
         setupUI();
     }
     
@@ -69,8 +73,7 @@ public class InternalSynthOscillatorPanel extends JPanel {
         setLayout(new BorderLayout());
         
         // Create the flow panel that contains all controls
-        // CHANGED: Use LEFT alignment instead of CENTER for controls
-        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         
         // Create the toggle section
         JPanel togglePanel = new JPanel();
@@ -156,9 +159,12 @@ public class InternalSynthOscillatorPanel extends JPanel {
         controlsPanel.add(brightnessPanel);
         controlsPanel.add(volumePanel);
 
-        // Add the flow panel to the CENTER of the BorderLayout
-        // This ensures vertical centering while allowing horizontal left alignment
-        add(controlsPanel, BorderLayout.CENTER);
+        // Create a wrapper panel to hold the controls panel vertically centered
+        JPanel wrapperPanel = new JPanel(new GridBagLayout());
+        wrapperPanel.add(controlsPanel);
+        
+        // Add the wrapper panel to CENTER to achieve vertical centering
+        add(wrapperPanel, BorderLayout.CENTER);
         
         // Add event handlers
         setupEventHandlers();
@@ -341,6 +347,11 @@ public class InternalSynthOscillatorPanel extends JPanel {
     }
     
     private Dial createCompactDial(String label, String tooltip, int initialValue) {
-        return UIHelper.createLabeledDial(label, tooltip, initialValue);
+        Dial dial = UIHelper.createLabeledDial(label, tooltip, initialValue);
+        
+        // Make the dial slightly smaller to fit within our height constraint
+        dial.setPreferredSize(new Dimension(30, 30));
+        
+        return dial;
     }
 }
