@@ -110,6 +110,12 @@ public class DrumSequencer implements IBusListener {
 
     private Consumer<NoteEvent> noteEventPublisher;
 
+    // Add field for next pattern ID
+    private Long nextPatternId = null;
+    
+    // Track pattern completion for switching
+    private boolean patternJustCompleted = false;
+
     public void setNoteEventPublisher(Consumer<NoteEvent> publisher) {
         this.noteEventPublisher = publisher;
     }
@@ -367,7 +373,7 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Process a timing tick - now handles each drum separately
+     * Process a timing tick - now handles each drum separately and checks for pattern completion
      *
      * @param tick The current tick count
      */
@@ -388,6 +394,9 @@ public class DrumSequencer implements IBusListener {
             // Log the absolute step for debugging
             logger.debug("Absolute step: {}", absoluteStep);
         }
+
+        // Reset pattern completion flag at the start of processing
+        patternJustCompleted = false;
 
         // Process each drum separately
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
@@ -424,6 +433,52 @@ public class DrumSequencer implements IBusListener {
                         drumIndex, tick, timingDivisions[drumIndex].getDisplayName());
             }
         }
+
+        // Check for pattern completion - this happens when all drums have completed
+        // their patterns at least once in the current cycle
+        boolean allCompleted = true;
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            if (!patternCompleted[i] && loopingFlags[i]) {
+                allCompleted = false;
+                break;
+            }
+        }
+
+        // If we completed a full cycle and have a next pattern queued
+        if (allCompleted && nextPatternId != null) {
+            patternJustCompleted = true;
+
+            // Switch to next pattern
+            Long currentId = drumSequenceId;
+            loadSequence(nextPatternId);
+
+            // Notify about pattern switch
+            CommandBus.getInstance().publish(
+                Commands.DRUM_PATTERN_SWITCHED, 
+                this,
+                new PatternSwitchEvent(currentId, nextPatternId)
+            );
+
+            // Clear the next pattern ID (one-shot behavior)
+            nextPatternId = null;
+        }
+    }
+
+    /**
+     * Set the next pattern to automatically switch to when the current pattern completes
+     * @param patternId The ID of the next pattern, or null to disable automatic switching
+     */
+    public void setNextPatternId(Long patternId) {
+        this.nextPatternId = patternId;
+        logger.info("Set next drum pattern ID: {}", patternId);
+    }
+    
+    /**
+     * Get the next pattern ID that will be loaded when the current pattern completes
+     * @return The next pattern ID or null if no pattern is queued
+     */
+    public Long getNextPatternId() {
+        return nextPatternId;
     }
 
     /**

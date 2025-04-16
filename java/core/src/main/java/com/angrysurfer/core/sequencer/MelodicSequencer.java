@@ -85,8 +85,28 @@ public class MelodicSequencer implements IBusListener {
     // Add this field to the class
     private int currentTilt = 0;
 
+    // Add field for next pattern ID
+    private Long nextPatternId = null;
+
     public void setNoteEventPublisher(Consumer<NoteEvent> publisher) {
         this.noteEventPublisher = publisher;
+    }
+
+    /**
+     * Set the next pattern to automatically switch to when the current pattern completes
+     * @param patternId The ID of the next pattern, or null to disable automatic switching
+     */
+    public void setNextPatternId(Long patternId) {
+        this.nextPatternId = patternId;
+        logger.info("Set next melodic pattern ID: {}", patternId);
+    }
+
+    /**
+     * Get the next pattern ID that will be loaded when the current pattern completes
+     * @return The next pattern ID or null if no pattern is queued
+     */
+    public Long getNextPatternId() {
+        return nextPatternId;
     }
 
     /**
@@ -397,6 +417,7 @@ public class MelodicSequencer implements IBusListener {
      */
     private void calculateNextStep() {
         int oldStep = stepCounter;
+        boolean patternCompleted = false;
 
         switch (direction) {
             case FORWARD -> {
@@ -405,6 +426,36 @@ public class MelodicSequencer implements IBusListener {
                 // Check if we've reached the end of the pattern
                 if (stepCounter >= patternLength) {
                     stepCounter = 0;
+                    patternCompleted = true;
+                    
+                    // Handle pattern switching if enabled
+                    if (nextPatternId != null) {
+                        Long currentId = melodicSequenceId;
+                        // Load the next pattern
+                        if (RedisService.getInstance().findMelodicSequenceById(nextPatternId, id) != null) {
+                            // Store current playback state
+                            boolean wasPlaying = isPlaying;
+                            
+                            // Load new pattern
+                            RedisService.getInstance().applyMelodicSequenceToSequencer(
+                                RedisService.getInstance().findMelodicSequenceById(nextPatternId, id), 
+                                this
+                            );
+                            
+                            // Restore playback state
+                            isPlaying = wasPlaying;
+                            
+                            // Notify about pattern switch
+                            CommandBus.getInstance().publish(
+                                Commands.MELODIC_PATTERN_SWITCHED, 
+                                this,
+                                new PatternSwitchEvent(currentId, nextPatternId)
+                            );
+                            
+                            // Clear the next pattern ID (one-shot behavior)
+                            nextPatternId = null;
+                        }
+                    }
 
                     // Generate a new pattern if latch is enabled
                     if (latchEnabled) {
@@ -435,6 +486,36 @@ public class MelodicSequencer implements IBusListener {
 
                 if (stepCounter < 0) {
                     stepCounter = patternLength - 1;
+                    patternCompleted = true;
+
+                    // Handle pattern switching if enabled
+                    if (nextPatternId != null) {
+                        Long currentId = melodicSequenceId;
+                        // Load the next pattern
+                        if (RedisService.getInstance().findMelodicSequenceById(nextPatternId, id) != null) {
+                            // Store current playback state
+                            boolean wasPlaying = isPlaying;
+                            
+                            // Load new pattern
+                            RedisService.getInstance().applyMelodicSequenceToSequencer(
+                                RedisService.getInstance().findMelodicSequenceById(nextPatternId, id), 
+                                this
+                            );
+                            
+                            // Restore playback state
+                            isPlaying = wasPlaying;
+                            
+                            // Notify about pattern switch
+                            CommandBus.getInstance().publish(
+                                Commands.MELODIC_PATTERN_SWITCHED, 
+                                this,
+                                new PatternSwitchEvent(currentId, nextPatternId)
+                            );
+                            
+                            // Clear the next pattern ID (one-shot behavior)
+                            nextPatternId = null;
+                        }
+                    }
 
                     // Generate a new pattern if latch is enabled
                     if (latchEnabled) {

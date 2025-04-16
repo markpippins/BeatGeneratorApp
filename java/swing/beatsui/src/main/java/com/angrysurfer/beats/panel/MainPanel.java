@@ -146,7 +146,8 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createSongPanel() {
-        return new JPanel();
+        // Return instance of our new SongPanel
+        return new SongPanel();
     }
 
     /**

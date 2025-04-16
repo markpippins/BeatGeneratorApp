@@ -251,4 +251,8 @@ public class MelodicSequencerManager {
             return null;
         }
     }
+
+    public List<Long> getAllMelodicSequenceIds(Integer id) {
+       return RedisService.getInstance().getAllMelodicSequenceIds(id);
+    }
 }

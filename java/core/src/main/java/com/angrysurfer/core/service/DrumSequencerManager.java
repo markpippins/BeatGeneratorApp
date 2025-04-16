@@ -396,4 +396,8 @@ public class DrumSequencerManager implements IBusListener {
         redisService.applyDrumSequenceToSequencer(newData, sequencer);
         return newData.getId();
     }
+
+    public List<Long> getAllDrumSequenceIds() {
+        return redisService.getAllDrumSequenceIds();
+    }
 }
