@@ -94,6 +94,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Mono 2", melodicPanels[1]);
         tabbedPane.addTab("Mono 3", melodicPanels[2]);
         tabbedPane.addTab("Mono 4", melodicPanels[3]);
+        tabbedPane.addTab("Song", createSongPanel());
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Mod Matrix", createModulationMatrixPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
@@ -142,6 +143,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // At the end of the method, update the mute buttons with sequencers
         updateMuteButtonSequencers();
+    }
+
+    private Component createSongPanel() {
+        return new JPanel();
     }
 
     /**

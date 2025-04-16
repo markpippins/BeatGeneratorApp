@@ -347,7 +347,7 @@ public class PlayerEditDetailPanel extends JPanel {
             @Override
             public void onAction(Command action) {
                 if (action.getSender() != this && action.getCommand() == Commands.NEW_VALUE_NOTE) {
-                    noteDial.setValue((int) action.getData(), false);
+                    noteDial.setValue((Integer) action.getData(), false);
                 }
             }
         });
