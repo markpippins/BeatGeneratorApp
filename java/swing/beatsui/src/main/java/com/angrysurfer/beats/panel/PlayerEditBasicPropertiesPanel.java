@@ -7,6 +7,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumItem;
 import com.angrysurfer.core.sequencer.PresetItem;
 import com.angrysurfer.core.service.InternalSynthManager;
@@ -171,19 +173,40 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             }
         });
 
-        // Get all available instruments
-        List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
+        // Get all instruments from different sources
+        List<InstrumentWrapper> instruments = new ArrayList<>();
 
-        // Add internal synthesizers
+        // 1. Add instruments from UserConfigManager
+        instruments.addAll(UserConfigManager.getInstance().getInstruments());
+
+        // 2. Add internal synthesizers
         instruments.addAll(InternalSynthManager.getInstance().getInternalSynths());
 
-        // Add instruments to combo box
-        if (instruments != null && !instruments.isEmpty()) {
-            for (InstrumentWrapper instrument : instruments) {
-                if (instrument.getAvailable() && instrument.getDevice() != null) {
-                    instrumentCombo.addItem(instrument);
-                }
+        // 3. Add instruments from Redis (what's shown in InstrumentsPanel)
+        instruments.addAll(RedisService.getInstance().findAllInstruments());
+
+        // Track names to avoid duplicates
+        List<String> names = new ArrayList<>();
+
+        // Create a list of unique instruments for sorting
+        List<InstrumentWrapper> uniqueInstruments = new ArrayList<>();
+
+        // Add only unique instruments to our list
+        for (InstrumentWrapper instrument : instruments) {
+            // if (instrument.getAvailable() && instrument.getDevice() != null
+            if ((instrument.getDevice() != null || instrument.getDeviceName() != null) && !names.contains(instrument.getName())) {
+                uniqueInstruments.add(instrument);
+                names.add(instrument.getName());
             }
+        }
+
+        // Sort instruments alphabetically by name
+        uniqueInstruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
+        // Add sorted instruments to combo box
+        for (InstrumentWrapper instrument : uniqueInstruments) {
+            instrumentCombo.addItem(instrument);
+            logger.debug("Added instrument to combo: {}", instrument.getName());
         }
 
         // Select the player's current instrument
@@ -353,17 +376,17 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                         "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
+
             // Confirm deletion
             int result = JOptionPane.showConfirmDialog(this,
                     "Are you sure you want to delete soundbank: " + selectedSoundbank + "?",
                     "Confirm Deletion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-            
+
             if (result == JOptionPane.YES_OPTION) {
                 try {
                     // Call InternalSynthManager to delete the soundbank
                     boolean deleted = InternalSynthManager.getInstance().deleteSoundbank(selectedSoundbank);
-                    
+
                     if (deleted) {
                         // Refresh the UI
                         initializeSoundbanks();
@@ -510,14 +533,14 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         presetPanel.add(previewButton, pGbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;  // Now at row 2
+        gbc.gridy = 2; // Now at row 2
         gbc.gridwidth = 4;
         add(presetPanel, gbc);
         gbc.gridwidth = 1;
 
         // Row 3: Sound panel row (mostly empty since we moved components)
         gbc.gridx = 0;
-        gbc.gridy = 3;  // Now at row 3
+        gbc.gridy = 3; // Now at row 3
         gbc.gridwidth = 4;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
@@ -632,15 +655,15 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
 
             // Debug output
             logger.info("Retrieved {} soundbanks from InternalSynthManager", names.size());
-            
+
             // Filter out empty names and sort alphabetically
             List<String> filteredAndSorted = names.stream()
                     .filter(name -> name != null && !name.trim().isEmpty())
                     .sorted()
                     .collect(Collectors.toList());
-            
+
             logger.info("After filtering and sorting, have {} soundbanks", filteredAndSorted.size());
-            
+
             // Add to combo box
             for (String name : filteredAndSorted) {
                 soundbankCombo.addItem(name);
@@ -923,9 +946,9 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             int drumChannel = 9;
 
             // Apply standard drum kit
-            instrument.controlChange(drumChannel, 0, 0);   // Bank MSB
-            instrument.controlChange(drumChannel, 32, 0);  // Bank LSB
-            instrument.programChange(drumChannel, 0, 0);   // Standard kit
+            instrument.controlChange(drumChannel, 0, 0); // Bank MSB
+            instrument.controlChange(drumChannel, 32, 0); // Bank LSB
+            instrument.programChange(drumChannel, 0, 0); // Standard kit
 
             // Play the drum note
             instrument.noteOn(drumChannel, noteNumber, 100);
@@ -1058,7 +1081,8 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         // Apply player name
         player.setName(nameField.getText());
 
-        // Apply channel (should already be set via listener, but ensure it's up to date)
+        // Apply channel (should already be set via listener, but ensure it's up to
+        // date)
         player.setChannel(((Number) channelSpinner.getValue()).intValue());
 
         // For external instruments, ensure preset is updated from spinner
