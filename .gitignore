@@ -146,3 +146,4 @@ java/swing/beatsui/target/maven-status/maven-compiler-plugin/compile/default-com
 java/swing/beatsui/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
 java/swing/beatsui/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst
 java/swing/beatsui/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst
+java/.vscode/settings.json
