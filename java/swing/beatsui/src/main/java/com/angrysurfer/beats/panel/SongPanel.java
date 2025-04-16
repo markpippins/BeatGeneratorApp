@@ -7,7 +7,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -396,8 +395,13 @@ public class SongPanel extends JPanel implements IBusListener {
             return;
         }
         
-        // Look ahead to the next bar
-        int nextBar = currentBar + 1;
+        // The currentBar from timing updates is 1-based (starts at 1)
+        // But our pattern positions are 0-based (start at 0)
+        // Convert to 0-based indexing for pattern lookups
+        int zeroBasedCurrentBar = currentBar - 1;
+        
+        // Look ahead to the next bar (still using 0-based index)
+        int nextBar = zeroBasedCurrentBar + 1;
         
         // Check for drum pattern change
         PatternSlot nextDrumSlot = findSlotAtPosition(drumPatternSlots, nextBar);
