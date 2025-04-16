@@ -24,6 +24,7 @@ import javax.swing.SpinnerNumberModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.NumberedTickDial;
 import com.angrysurfer.beats.widget.RulesTable;
 import com.angrysurfer.beats.widget.ToggleSwitch;
 import com.angrysurfer.core.api.Command;
@@ -69,6 +70,7 @@ public class PlayerEditPanel extends JPanel {
     // New fields
     private JCheckBox quantizeCheckbox;
     private JComboBox<String> scaleCombo;
+
 
     // Constructor - initialize all components
     public PlayerEditPanel(Player player) {

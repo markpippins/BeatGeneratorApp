@@ -20,6 +20,7 @@ import javax.swing.UIManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.panel.InternalSynthControlPanel;
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.SessionPanel;
 import com.angrysurfer.core.Constants;
@@ -194,7 +195,7 @@ public class Frame extends JFrame implements AutoCloseable {
                     return false;
                 }
                 
-                // Handle spacebar for transport control (add this block)
+                // Handle spacebar for transport control
                 if (e.getKeyCode() == KeyEvent.VK_SPACE) {
                     // Don't intercept space if typing in a text field
                     if (e.getComponent() instanceof javax.swing.text.JTextComponent) {
@@ -207,7 +208,7 @@ public class Frame extends JFrame implements AutoCloseable {
                     return true;
                 }
                 
-                // Existing key handling for piano keys
+                // Get the pressed key character
                 char keyChar = Character.toLowerCase(e.getKeyChar());
                 boolean keyMapped = keyNoteMap.containsKey(keyChar);
                 
@@ -215,8 +216,21 @@ public class Frame extends JFrame implements AutoCloseable {
                     return false; // Not a mapped key, let the event pass through
                 }
                 
-                // First check if SessionPanel is active (existing behavior)
-                if (mainPanel != null && mainPanel.getSelectedComponent() instanceof SessionPanel) {
+                // First check if internal synth tab is active
+                if (mainPanel != null && isInternalSynthTabActive()) {
+                    // Play note on the internal synth
+                    int baseNote = keyNoteMap.get(keyChar);
+                    
+                    // Determine command based on shift key
+                    String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
+                    CommandBus.getInstance().publish(command, this, baseNote);
+                    
+                    // Consume the event
+                    e.consume();
+                    return true;
+                }
+                // Handle SessionPanel (existing code)
+                else if (mainPanel != null && mainPanel.getSelectedComponent() instanceof SessionPanel) {
                     // Existing SessionPanel handling code...
                     if (keyChar == 'a') {
                         // Special case for 'a' key handling...
@@ -263,7 +277,7 @@ public class Frame extends JFrame implements AutoCloseable {
                         return true;
                     }
                 }
-                // New: Check if X0XPanel is active or contained within the active component
+                // Handle X0XPanel (existing code)
                 else if (mainPanel != null && keyNoteMap.containsKey(keyChar)) {
                     // Find X0XPanel within the component hierarchy
                     Component selected = mainPanel.getSelectedComponent();
@@ -296,6 +310,37 @@ public class Frame extends JFrame implements AutoCloseable {
                 return false;
             }
         });
+    }
+
+    /**
+     * Check if the Internal Synth tab is currently active
+     */
+    private boolean isInternalSynthTabActive() {
+        // Find if the active tab contains the InternalSynthControlPanel
+        Component selectedComponent = mainPanel.getSelectedComponent();
+        return selectedComponent instanceof InternalSynthControlPanel || 
+               (selectedComponent != null && findChildOfType(selectedComponent, InternalSynthControlPanel.class) != null);
+    }
+
+    /**
+     * Find a child component of specific type within a container
+     */
+    private <T> T findChildOfType(Component component, Class<T> type) {
+        if (type.isInstance(component)) {
+            return type.cast(component);
+        }
+        
+        if (component instanceof Container) {
+            Container container = (Container) component;
+            for (int i = 0; i < container.getComponentCount(); i++) {
+                T result = findChildOfType(container.getComponent(i), type);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        
+        return null;
     }
 
     /**

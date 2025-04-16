@@ -9,6 +9,9 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.HierarchyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,13 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.plaf.basic.BasicButtonUI;
@@ -43,7 +48,7 @@ import com.angrysurfer.core.service.InternalSynthManager;
 public class InternalSynthPianoPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(InternalSynthPianoPanel.class);
     private static final int SYNTH_MIDI_CHANNEL = 15; // Internal synth uses channel 15 (16 in human numbering)
-    private static final int OCTAVE_COUNT = 4; // Show 4 octaves for wider range
+    private static final int OCTAVE_COUNT = 5; // Increased from 4 to 5 octaves for wider range
     
     private String currentRoot = "C";
     private String currentScale = "Chromatic";
@@ -85,6 +90,73 @@ public class InternalSynthPianoPanel extends JPanel {
         // Setup listeners
         setupActionBusListener();
         setupPlayerStatusIndicator();
+        
+        // Add keyboard navigation for octave shifting
+        setupKeyboardNavigation();
+    }
+    
+    private void setupKeyboardNavigation() {
+        // Make the panel focusable so it can receive key events
+        setFocusable(true);
+        
+        // Add key bindings for left and right arrow keys
+        InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+        
+        // SWAPPED: Left arrow now increases octave
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "octaveUp");
+        actionMap.put("octaveUp", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shiftOctaveUp();
+            }
+        });
+        
+        // SWAPPED: Right arrow now decreases octave
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "octaveDown");
+        actionMap.put("octaveDown", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shiftOctaveDown();
+            }
+        });
+        
+        // Request focus when the panel becomes visible
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                requestFocusInWindow();
+            }
+        });
+    }
+    
+    private void shiftOctaveDown() {
+        if (baseOctave > 0) {
+            baseOctave--;
+            recreatePiano();
+            logger.info("Piano base octave changed to: {} (via keyboard)", baseOctave);
+            
+            // Show visual feedback - update status
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate(getClass().getSimpleName(), "Octave: " + baseOctave, null)
+            );
+        }
+    }
+    
+    private void shiftOctaveUp() {
+        if (baseOctave < 6) {
+            baseOctave++;
+            recreatePiano();
+            logger.info("Piano base octave changed to: {} (via keyboard)", baseOctave);
+            
+            // Show visual feedback - update status
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate(getClass().getSimpleName(), "Octave: " + baseOctave, null)
+            );
+        }
     }
     
     private void setupControlButtons() {
@@ -103,32 +175,18 @@ public class InternalSynthPianoPanel extends JPanel {
         JButton octaveDownBtn = new JButton();
         octaveDownBtn.setBounds(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight);
         octaveDownBtn.setBackground(ColorUtils.warmMustard);
-        octaveDownBtn.setToolTipText("Octave down");
+        octaveDownBtn.setToolTipText("Octave down (Left Arrow)");
         configureToggleButton(octaveDownBtn);
         
-        // Add octave down functionality
-        octaveDownBtn.addActionListener(e -> {
-            if (baseOctave > 0) {
-                baseOctave--;
-                recreatePiano();
-                logger.info("Piano base octave changed to: {}", baseOctave);
-            }
-        });
+        octaveDownBtn.addActionListener(e -> shiftOctaveDown());
         
         JButton octaveUpBtn = new JButton();
         octaveUpBtn.setBounds(startX, startY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight);
         octaveUpBtn.setBackground(ColorUtils.fadedOrange);
-        octaveUpBtn.setToolTipText("Octave up");
+        octaveUpBtn.setToolTipText("Octave up (Right Arrow)");
         configureToggleButton(octaveUpBtn);
         
-        // Add octave up functionality
-        octaveUpBtn.addActionListener(e -> {
-            if (baseOctave < 6) {
-                baseOctave++;
-                recreatePiano();
-                logger.info("Piano base octave changed to: {}", baseOctave);
-            }
-        });
+        octaveUpBtn.addActionListener(e -> shiftOctaveUp());
         
         add(followScaleBtn);
         add(octaveDownBtn);
