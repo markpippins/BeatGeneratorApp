@@ -297,5 +297,7 @@ public class Commands {
     public static final String LFO_SELECTED = "LFO_SELECTED";
     public static final String DRUM_PATTERN_SWITCHED = "DRUM_PATTERN_SWITCHED";
     public static final String MELODIC_PATTERN_SWITCHED = "MELODIC_PATTERN_SWITCHED";
+    public static final String GLOBAL_LOOPING_ENABLED = "GLOBAL_LOOPING_ENABLED";
+    public static final String GLOBAL_LOOPING_DISABLED = "GLOBAL_LOOPING_DISABLED";
 
 }

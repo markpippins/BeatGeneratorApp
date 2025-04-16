@@ -129,6 +129,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // Add existing control buttons
         buttonPanel.add(createAllNotesOffButton());
+        buttonPanel.add(createLoopToggleButton()); // Add the new loop toggle button
         buttonPanel.add(createMetronomeToggleButton());
         // buttonPanel.add(createRestartButton());
 
@@ -456,6 +457,64 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         });
 
         return metronomeButton;
+    }
+
+    private JToggleButton createLoopToggleButton() {
+        JToggleButton loopButton = new JToggleButton();
+        loopButton.setText("⟳");  // Unicode loop symbol
+        
+        // Set equal width and height to ensure square shape
+        loopButton.setPreferredSize(new Dimension(28, 28));
+        loopButton.setMinimumSize(new Dimension(28, 28));
+        loopButton.setMaximumSize(new Dimension(28, 28));
+        
+        // Explicitly set square size and enforce square shape
+        loopButton.putClientProperty("JButton.squareSize", true);
+        loopButton.putClientProperty("JComponent.sizeVariant", "regular");
+        
+        loopButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 18));
+        loopButton.setHorizontalAlignment(SwingConstants.CENTER);
+        loopButton.setVerticalAlignment(SwingConstants.CENTER);
+        loopButton.setMargin(new Insets(0, 0, 0, 0));
+        loopButton.setToolTipText("Toggle All Sequencer Looping");
+        
+        // Default to selected (looping enabled)
+        loopButton.setSelected(true);
+        
+        loopButton.addActionListener(e -> {
+            boolean isLooping = loopButton.isSelected();
+            logger.info("Global looping toggled: {}", isLooping ? "ON" : "OFF");
+            
+            // Set looping state for drum sequencer
+            if (drumSequencerPanel != null && drumSequencerPanel.getSequencer() != null) {
+                drumSequencerPanel.getSequencer().setLooping(isLooping);
+            }
+            
+            // Set looping state for all melodic sequencers
+            for (MelodicSequencerPanel panel : melodicPanels) {
+                if (panel != null && panel.getSequencer() != null) {
+                    panel.getSequencer().setLooping(isLooping);
+                }
+            }
+            
+            // Set looping state for drum effects sequencer if present
+            // if (drumEffectsSequencerPanel != null && drumEffectsSequencerPanel.getSequencer() != null) {
+            //     drumEffectsSequencerPanel.getSequencer().setLooping(isLooping);
+            // }
+            
+            // Visual feedback - change button color based on state
+            loopButton.setBackground(isLooping ? new Color(120, 200, 120) : new Color(200, 120, 120));
+            
+            // Publish command for other components to respond to
+            CommandBus.getInstance().publish(
+                isLooping ? Commands.GLOBAL_LOOPING_ENABLED : Commands.GLOBAL_LOOPING_DISABLED, 
+                this);
+        });
+        
+        // Initial button color - green for enabled looping
+        loopButton.setBackground(new Color(120, 200, 120));
+        
+        return loopButton;
     }
 
     private JButton createAllNotesOffButton() {

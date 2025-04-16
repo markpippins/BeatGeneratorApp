@@ -38,9 +38,9 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.model.PatternSlot;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.PatternSlot;
 import com.angrysurfer.core.sequencer.PatternSwitchEvent;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
@@ -81,7 +81,7 @@ public class SongPanel extends JPanel implements IBusListener {
     private boolean isDragging = false;
 
     // Add song mode toggle state
-    private boolean songModeEnabled = true;
+    private boolean songModeEnabled = false;
     private JToggleButton songModeToggle;
 
     // Pattern sequencer internal class instance
@@ -160,9 +160,9 @@ public class SongPanel extends JPanel implements IBusListener {
         rewindButton.addActionListener(e -> rewindSong());
         
         // Add song mode toggle with improved feedback and styling
-        songModeToggle = new JToggleButton("Song Mode: ON");
-        songModeToggle.setSelected(songModeEnabled);
-        songModeToggle.setBackground(new Color(120, 200, 120));
+        songModeToggle = new JToggleButton("Song Mode: OFF");
+        songModeToggle.setSelected(false);  // Match the initial songModeEnabled value
+        songModeToggle.setBackground(new Color(200, 120, 120)); // Red for OFF
         songModeToggle.addActionListener(e -> {
             songModeEnabled = songModeToggle.isSelected();
             
@@ -171,6 +171,7 @@ public class SongPanel extends JPanel implements IBusListener {
                 songModeToggle.setText("Song Mode: ON");
                 songModeToggle.setBackground(new Color(120, 200, 120));
                 logger.info("Song mode enabled - patterns will auto-switch");
+                patternSequencer.initializeSequencersForSongMode();
             } else {
                 songModeToggle.setText("Song Mode: OFF");
                 songModeToggle.setBackground(new Color(200, 120, 120));
@@ -377,10 +378,25 @@ public class SongPanel extends JPanel implements IBusListener {
     private void playSong() {
         // Start session playback
         if (!SessionManager.getInstance().getActiveSession().isRunning()) {
-            // If song mode is enabled and we're at the beginning,
-            // check if we need to queue the first patterns
-            if (songModeEnabled && currentBar <= 1) {
-                patternSequencer.handleBarUpdate(currentBar);
+            // If song mode is enabled, initialize sequencers before starting playback
+            if (songModeEnabled) {
+                logger.info("Initializing sequencers for song mode");
+                patternSequencer.initializeSequencersForSongMode();
+                
+                // Load initial patterns if we're at the beginning
+                if (currentBar <= 1) {
+                    logger.info("Loading initial patterns at bar: {}", currentBar);
+                    patternSequencer.handleBarUpdate(currentBar);
+                }
+            } else {
+                // Normal mode - ensure all sequencers are set to loop
+                logger.info("Starting in normal mode (song mode disabled)");
+                if (drumSequencer != null) {
+                    drumSequencer.setLooping(true);
+                }
+                for (MelodicSequencer sequencer : melodicSequencers) {
+                    sequencer.setLooping(true);
+                }
             }
             
             CommandBus.getInstance().publish(Commands.TRANSPORT_START, this);
@@ -410,11 +426,18 @@ public class SongPanel extends JPanel implements IBusListener {
             case Commands.TIMING_BAR -> {
                 if (action.getData() instanceof TimingUpdate update) {
                     // Update current bar for display
+                    int oldBar = currentBar;
                     currentBar = update.bar();
+                    
+                    // Log bar changes
+                    logger.debug("Bar changed: {} -> {}", oldBar, currentBar);
                     
                     // Delegate pattern switching to sequencer if song mode is enabled
                     if (songModeEnabled) {
+                        logger.debug("Song mode is enabled, handling bar update");
                         patternSequencer.handleBarUpdate(currentBar);
+                    } else {
+                        logger.debug("Song mode is disabled, skipping pattern updates");
                     }
                     
                     timelinePanel.repaint();
@@ -457,6 +480,29 @@ public class SongPanel extends JPanel implements IBusListener {
      * Internal class to handle pattern sequencing logic
      */
     private class PatternSequencer {
+        // Track which sequencers are currently active in the song
+        private final Map<String, Boolean> activeSequencers = new HashMap<>();
+        
+        /**
+         * Initialize all sequencers for song mode - disable looping
+         */
+        public void initializeSequencersForSongMode() {
+            // Disable looping in all sequencers when starting song mode
+            if (drumSequencer != null) {
+                drumSequencer.setLooping(false);
+                logger.debug("Initialized drum sequencer: looping disabled");
+            }
+            
+            // Initialize melodic sequencers
+            for (MelodicSequencer sequencer : melodicSequencers) {
+                sequencer.setLooping(false);
+                logger.debug("Initialized melodic sequencer {}: looping disabled", sequencer.getId());
+            }
+            
+            // Clear active tracking
+            activeSequencers.clear();
+        }
+        
         /**
          * Handle a bar update from the timing system
          * @param bar The current bar (1-based)
@@ -465,9 +511,14 @@ public class SongPanel extends JPanel implements IBusListener {
             // The currentBar from timing updates is 1-based (starts at 1)
             // But our pattern positions are 0-based (start at 0)
             int zeroBasedCurrentBar = bar - 1;
+            logger.debug("Handling bar update: bar={}, zeroBasedBar={}", bar, zeroBasedCurrentBar);
+            
+            // Check if we're entering or exiting pattern slots for each sequencer
+            updateSequencerLoopingState(zeroBasedCurrentBar);
             
             // Look ahead to the next bar (still using 0-based index)
             int nextBar = zeroBasedCurrentBar + 1;
+            logger.debug("Looking ahead to next bar: {}", nextBar + 1);
             
             // Check for drum pattern change
             PatternSlot nextDrumSlot = findSlotAtPosition(drumPatternSlots, nextBar);
@@ -492,6 +543,74 @@ public class SongPanel extends JPanel implements IBusListener {
         }
         
         /**
+         * Update the looping state of all sequencers based on pattern slots
+         */
+        private void updateSequencerLoopingState(int currentBar) {
+            // Handle drum sequencer
+            updateSequencerLooping("drum", drumSequencer, drumPatternSlots, currentBar);
+            
+            // Handle melodic sequencers
+            for (MelodicSequencer sequencer : melodicSequencers) {
+                List<PatternSlot> slots = melodicPatternSlots.get(sequencer.getId());
+                if (slots != null) {
+                    updateSequencerLooping("melodic-" + sequencer.getId(), sequencer, slots, currentBar);
+                }
+            }
+        }
+        
+        /**
+         * Update looping state for a specific sequencer
+         */
+        private void updateSequencerLooping(String sequencerId, Object sequencer, 
+                                            List<PatternSlot> slots, int currentBar) {
+            // Check if we're in a pattern slot
+            PatternSlot currentSlot = findSlotAtPosition(slots, currentBar);
+            boolean wasActive = activeSequencers.getOrDefault(sequencerId, false);
+            
+            if (currentSlot != null) {
+                // We're in a pattern slot
+                if (!wasActive) {
+                    // Just entered a pattern slot - enable looping
+                    setSequencerLooping(sequencer, true);
+                    activeSequencers.put(sequencerId, true);
+                    logger.debug("Enabling looping for {} at bar {} (pattern {})", 
+                        sequencerId, currentBar + 1, currentSlot.getPatternId());
+                }
+                
+                // Check if we're at the last bar of this slot
+                int slotEndPos = currentSlot.getPosition() + currentSlot.getLength() - 1;
+                if (currentBar == slotEndPos) {
+                    // Check if there's another slot immediately after this one
+                    PatternSlot nextSlot = findSlotAtPosition(slots, currentBar + 1);
+                    if (nextSlot == null) {
+                        // No slot follows - disable looping at the end of this bar
+                        setSequencerLooping(sequencer, false);
+                        activeSequencers.put(sequencerId, false);
+                        logger.debug("Disabling looping for {} after bar {} (end of pattern {})", 
+                            sequencerId, currentBar + 1, currentSlot.getPatternId());
+                    }
+                }
+            } else if (wasActive) {
+                // We just exited a pattern slot without entering a new one - disable looping
+                setSequencerLooping(sequencer, false);
+                activeSequencers.put(sequencerId, false);
+                logger.debug("Disabling looping for {} at bar {} (exited pattern)", 
+                    sequencerId, currentBar + 1);
+            }
+        }
+        
+        /**
+         * Helper method to set looping state based on sequencer type
+         */
+        private void setSequencerLooping(Object sequencer, boolean looping) {
+            if (sequencer instanceof DrumSequencer) {
+                ((DrumSequencer) sequencer).setLooping(looping);
+            } else if (sequencer instanceof MelodicSequencer) {
+                ((MelodicSequencer) sequencer).setLooping(looping);
+            }
+        }
+        
+        /**
          * Find a pattern slot at a specific position
          */
         private PatternSlot findSlotAtPosition(List<PatternSlot> slots, int position) {
@@ -504,20 +623,27 @@ public class SongPanel extends JPanel implements IBusListener {
         }
         
         /**
-         * Clear all queued next patterns from sequencers
+         * Clear all queued next patterns from sequencers and reset looping state
          */
         public void clearAllQueuedPatterns() {
             // Clear drum sequencer
             if (drumSequencer != null) {
                 drumSequencer.setNextPatternId(null);
+                drumSequencer.setLooping(true); // Reset to normal behavior when song mode is off
             }
             
             // Clear all melodic sequencers
             for (MelodicSequencer sequencer : melodicSequencers) {
-                sequencer.setNextPatternId(null);
+                if (sequencer != null) {
+                    sequencer.setNextPatternId(null);
+                    sequencer.setLooping(true); // Reset to normal behavior when song mode is off
+                }
             }
             
-            logger.info("Cleared all queued patterns (song mode disabled)");
+            // Clear active tracking
+            activeSequencers.clear();
+            
+            logger.info("Cleared all queued patterns and reset sequencer looping states");
         }
     }
     
