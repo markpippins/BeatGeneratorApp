@@ -8,7 +8,7 @@ import com.angrysurfer.beats.font.LedFont;
 import com.angrysurfer.beats.visualization.DisplayType;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class RainbowScrollingTextVisualizer implements IVisualizationHandler {
     private int position = 0;
@@ -23,12 +23,12 @@ public class RainbowScrollingTextVisualizer implements IVisualizationHandler {
     private String currentMessage = MESSAGES[0];
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Paint background black
-        for (GridButton[] row : buttons) {
-            for (GridButton button : row) {
+        for (JButton[] row : buttons) {
+            for (JButton button : row) {
                 button.setBackground(Color.BLACK);
-                button.setOn(true);
+                button.repaint();
             }
         }
 

@@ -7,7 +7,7 @@
 // import com.angrysurfer.beats.font.LedFont;
 // import com.angrysurfer.beats.visualization.IVisualizationHandler;
 // import com.angrysurfer.beats.visualization.VisualizationCategory;
-// import com.angrysurfer.beats.widget.GridButton;
+// import javax.swing.JButton;
 
 // public class BirthdayVisualization implements IVisualizationHandler {
 //     private int position = 0;
@@ -42,10 +42,10 @@
 //     // Add similar patterns for other emojis...
 
 //     @Override
-//     public void update(GridButton[][] buttons) {
+//     public void update(JButton[][] buttons) {
 //         // Clear background to black
-//         for (GridButton[] row : buttons) {
-//             for (GridButton button : row) {
+//         for (JButton[] row : buttons) {
+//             for (JButton button : row) {
 //                 button.setBackground(Color.BLACK);
 //             }
 //         }
@@ -63,7 +63,7 @@
 //         hue = (hue + 0.01f) % 1.0f;
 //     }
 
-//     private void addFirework(GridButton[][] buttons) {
+//     private void addFirework(JButton[][] buttons) {
 //         int centerX = random.nextInt(buttons[0].length);
 //         int centerY = random.nextInt(buttons.length);
 //         Color color = Color.getHSBColor(random.nextFloat(), 0.8f, 1.0f);
@@ -82,7 +82,7 @@
 //         }
 //     }
 
-//     private void drawScrollingMessage(GridButton[][] buttons) {
+//     private void drawScrollingMessage(JButton[][] buttons) {
 //         int currentX = buttons[0].length - position;
         
 //         for (String part : MESSAGE_PARTS) {
@@ -101,7 +101,7 @@
 //         }
 //     }
 
-//     private int drawEmoji(GridButton[][] buttons, String emoji, int startX) {
+//     private int drawEmoji(JButton[][] buttons, String emoji, int startX) {
 //         int[][] pattern = getEmojiPattern(emoji);
 //         if (pattern == null) return startX + 8;  // Skip if no pattern
 
@@ -132,7 +132,7 @@
 //         };
 //     }
 
-//     private int drawText(GridButton[][] buttons, String text, int startX) {
+//     private int drawText(JButton[][] buttons, String text, int startX) {
 //         for (int i = 0; i < text.length(); i++) {
 //             char currentChar = text.charAt(i);
 //             LedFont font = fontLoader.getFont(currentChar);

@@ -7,7 +7,7 @@ import java.util.*;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class LifeSoupVisualization implements IVisualizationHandler {
     private Map<Point, Integer> cells = new HashMap<>();
@@ -34,7 +34,7 @@ public class LifeSoupVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (cells.isEmpty()) {
             initializeSoup(buttons);
         }
@@ -87,7 +87,7 @@ public class LifeSoupVisualization implements IVisualizationHandler {
         phase += 0.02;
     }
 
-    private int countNeighbors(Point p, GridButton[][] buttons) {
+    private int countNeighbors(Point p, JButton[][] buttons) {
         int count = 0;
         for (int[] dir : directions) {
             Point neighbor = new Point(
@@ -99,7 +99,7 @@ public class LifeSoupVisualization implements IVisualizationHandler {
         return count;
     }
 
-    private void spawnPattern(GridButton[][] buttons) {
+    private void spawnPattern(JButton[][] buttons) {
         int startIdx = random.nextInt(patterns.size() / 4) * 4;
         int x = random.nextInt(buttons[0].length);
         int y = random.nextInt(buttons.length);
@@ -114,7 +114,7 @@ public class LifeSoupVisualization implements IVisualizationHandler {
         }
     }
 
-    private void initializeSoup(GridButton[][] buttons) {
+    private void initializeSoup(JButton[][] buttons) {
         cells.clear();
         for (int i = 0; i < 3; i++) {
             spawnPattern(buttons);

@@ -4,7 +4,7 @@ import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class XYPadVisualization implements IVisualizationHandler {
     private double phase = 0.0;
@@ -12,7 +12,7 @@ public class XYPadVisualization implements IVisualizationHandler {
     private int currentModulator = 0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Calculate modulated XY position

@@ -7,7 +7,7 @@ import java.util.*;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class MazeVisualization implements IVisualizationHandler {
     private boolean[][] maze;
@@ -20,7 +20,7 @@ public class MazeVisualization implements IVisualizationHandler {
     private Color currentColor = Color.WHITE;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (maze == null) {
             initializeMaze(buttons);
         }
@@ -77,7 +77,7 @@ public class MazeVisualization implements IVisualizationHandler {
         return neighbors;
     }
 
-    private void initializeMaze(GridButton[][] buttons) {
+    private void initializeMaze(JButton[][] buttons) {
         maze = new boolean[buttons.length][buttons[0].length];
         stack.clear();
         visited.clear();

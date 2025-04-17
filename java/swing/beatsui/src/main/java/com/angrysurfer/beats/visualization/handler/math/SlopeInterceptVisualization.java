@@ -4,7 +4,7 @@ import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class SlopeInterceptVisualization implements IVisualizationHandler {
     private double slope = 1.0;
@@ -14,7 +14,7 @@ public class SlopeInterceptVisualization implements IVisualizationHandler {
     private static final double INTERCEPT_CHANGE_RATE = 0.1;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Clear the display
         clearDisplay(buttons);
         
@@ -27,15 +27,15 @@ public class SlopeInterceptVisualization implements IVisualizationHandler {
         drawLine(buttons);
     }
 
-    private void clearDisplay(GridButton[][] buttons) {
-        for (GridButton[] row : buttons) {
-            for (GridButton button : row) {
+    private void clearDisplay(JButton[][] buttons) {
+        for (JButton[] row : buttons) {
+            for (JButton button : row) {
                 button.setBackground(Color.BLACK);
             }
         }
     }
 
-    private void drawLine(GridButton[][] buttons) {
+    private void drawLine(JButton[][] buttons) {
         int height = buttons.length;
         int width = buttons[0].length;
         

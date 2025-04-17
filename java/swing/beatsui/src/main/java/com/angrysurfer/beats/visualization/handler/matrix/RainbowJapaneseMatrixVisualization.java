@@ -5,7 +5,7 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class RainbowJapaneseMatrixVisualization implements IVisualizationHandler {
     private int[] dropY;
@@ -36,7 +36,7 @@ public class RainbowJapaneseMatrixVisualization implements IVisualizationHandler
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Initialize arrays if needed or if grid size changed
         if (dropY == null || dropY.length != buttons[0].length) {
             dropY = new int[buttons[0].length];

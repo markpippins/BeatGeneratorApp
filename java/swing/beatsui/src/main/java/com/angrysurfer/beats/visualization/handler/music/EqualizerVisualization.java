@@ -7,7 +7,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class EqualizerVisualization extends LockHandler implements IVisualizationHandler {
     
@@ -15,7 +15,7 @@ public class EqualizerVisualization extends LockHandler implements IVisualizatio
     private int[] levels;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         
        
 

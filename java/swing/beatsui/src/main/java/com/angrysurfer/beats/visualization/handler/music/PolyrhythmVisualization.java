@@ -6,7 +6,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class PolyrhythmVisualization extends LockHandler implements IVisualizationHandler {
 
@@ -16,7 +16,7 @@ public class PolyrhythmVisualization extends LockHandler implements IVisualizati
     private double baseSpeed = 0.1;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (phases == null) {
             phases = new double[buttons.length];
         }

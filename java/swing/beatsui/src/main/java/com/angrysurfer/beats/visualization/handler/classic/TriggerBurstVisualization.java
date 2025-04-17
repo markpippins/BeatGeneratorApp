@@ -6,7 +6,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class TriggerBurstVisualization implements IVisualizationHandler {
     private final Random random = new Random();
@@ -16,7 +16,7 @@ public class TriggerBurstVisualization implements IVisualizationHandler {
     private final int[][] directions = {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Create new burst

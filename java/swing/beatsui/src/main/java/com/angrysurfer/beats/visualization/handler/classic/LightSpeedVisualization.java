@@ -8,7 +8,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class LightSpeedVisualization implements IVisualizationHandler {
     private List<LightBeam> beams = new ArrayList<>();
@@ -49,7 +49,7 @@ public class LightSpeedVisualization implements IVisualizationHandler {
             }
         }
 
-        void draw(GridButton[][] buttons) {
+        void draw(JButton[][] buttons) {
             int px = (int) x;
             int py = (int) y;
 
@@ -68,7 +68,7 @@ public class LightSpeedVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (beams.isEmpty()) {
             for (int i = 0; i < 15; i++) {
                 beams.add(new LightBeam(buttons[0].length, buttons.length));

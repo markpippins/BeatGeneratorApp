@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class FroggerVisualization implements IVisualizationHandler {
     private Point frog;
@@ -82,7 +82,7 @@ public class FroggerVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (rows.isEmpty()) {
             initializeGame(buttons);
         }
@@ -148,7 +148,7 @@ public class FroggerVisualization implements IVisualizationHandler {
         }
     }
 
-    private void moveAI(GridButton[][] buttons) {
+    private void moveAI(JButton[][] buttons) {
         // Simple AI: Try to move up while avoiding obstacles
         Row currentRow = rows.get(frog.y);
         
@@ -175,7 +175,7 @@ public class FroggerVisualization implements IVisualizationHandler {
         }
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         frog = new Point(buttons[0].length / 2, buttons.length - 1);
         isDead = false;
         rows.clear();

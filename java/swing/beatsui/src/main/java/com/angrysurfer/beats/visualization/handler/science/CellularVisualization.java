@@ -6,7 +6,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class CellularVisualization implements IVisualizationHandler {
     private int[][] cells;
@@ -19,7 +19,7 @@ public class CellularVisualization implements IVisualizationHandler {
     private double phase = 0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (cells == null) {
             initializeCells(buttons);
         }
@@ -77,7 +77,7 @@ public class CellularVisualization implements IVisualizationHandler {
         return count;
     }
 
-    private void initializeCells(GridButton[][] buttons) {
+    private void initializeCells(JButton[][] buttons) {
         cells = new int[buttons.length][buttons[0].length];
         for (int i = 0; i < buttons.length * buttons[0].length / 4; i++) {
             int x = random.nextInt(buttons[0].length);

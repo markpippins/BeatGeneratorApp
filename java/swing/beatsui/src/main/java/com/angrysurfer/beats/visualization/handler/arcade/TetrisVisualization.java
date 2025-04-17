@@ -8,7 +8,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class TetrisVisualization implements IVisualizationHandler {
     private boolean[][] board;
@@ -38,7 +38,7 @@ public class TetrisVisualization implements IVisualizationHandler {
     };
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (board == null) {
             initializeGame(buttons);
         }
@@ -174,7 +174,7 @@ public class TetrisVisualization implements IVisualizationHandler {
         piecePos = new Point(board[0].length/2 - currentPiece[0].length/2, -1);
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         board = new boolean[buttons.length][buttons[0].length];
         spawnPiece();
     }

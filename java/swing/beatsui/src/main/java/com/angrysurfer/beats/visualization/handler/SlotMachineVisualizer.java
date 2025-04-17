@@ -1,9 +1,12 @@
 package com.angrysurfer.beats.visualization.handler;
 
+import java.awt.Color;
+
+import javax.swing.JButton;
+
 import com.angrysurfer.beats.visualization.DisplayType;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
 
 public class SlotMachineVisualizer implements IVisualizationHandler {
     private int[] positions = {0, 0, 0};
@@ -46,24 +49,24 @@ public class SlotMachineVisualizer implements IVisualizationHandler {
     };
     
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Clear the display
-        for (GridButton[] row : buttons) {
-            for (GridButton button : row) {
-                button.setOn(false);
+        for (JButton[] row : buttons) {
+            for (JButton button : row) {
+                button.setBackground(Color.RED);
             }
         }
         
         // Draw border
         for (int i = 0; i < buttons[0].length; i++) {
-            buttons[0][i].setOn(true);  // Top border
-            buttons[7][i].setOn(true);  // Bottom border
+            buttons[0][i].repaint();  // Top border
+            buttons[7][i].repaint();  // Bottom border
         }
         for (int i = 0; i < buttons.length; i++) {
-            buttons[i][0].setOn(true);  // Left border
-            buttons[i][15].setOn(true); // First divider
-            buttons[i][31].setOn(true); // Second divider
-            buttons[i][47].setOn(true); // Right border
+            buttons[i][0].repaint();  // Left border
+            buttons[i][15].repaint(); // First divider
+            buttons[i][31].repaint(); // Second divider
+            buttons[i][47].repaint(); // Right border
         }
 
         // Update and draw each reel
@@ -84,7 +87,14 @@ public class SlotMachineVisualizer implements IVisualizationHandler {
             // Draw the symbol
             for (int y = 0; y < 5; y++) {
                 for (int x = 0; x < 5; x++) {
-                    buttons[startY + y][startX + x].setOn(symbol[y][x] == 1);
+                    if (symbol[y][x] == 1) {
+                        // Set the button to "on" for the symbol
+                        buttons[startY + y][startX + x].setBackground(Color.GREEN);
+                    }
+                    else {
+                        // Set the button to "off" (background color)
+                        buttons[startY + y][startX + x].setBackground(Color.RED);
+                    }
                 }
             }
         }

@@ -2,7 +2,7 @@ package com.angrysurfer.beats.visualization.handler.geo;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 import java.awt.Color;
 
@@ -13,10 +13,10 @@ public class LissajousVisualization implements IVisualizationHandler {
     private final double frequency2 = 2;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Clear grid
-        for (GridButton[] row : buttons) {
-            for (GridButton button : row) {
+        for (JButton[] row : buttons) {
+            for (JButton button : row) {
                 button.setBackground(Color.BLACK);
             }
         }

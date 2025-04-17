@@ -5,12 +5,12 @@ import java.awt.Color;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class KaleidoscopeVisualization implements IVisualizationHandler {
     private double t = 0.0;
 
-    private void setSymmetricPixels(GridButton[][] buttons, int x, int y, Color color) {
+    private void setSymmetricPixels(JButton[][] buttons, int x, int y, Color color) {
         int centerX = buttons[0].length / 2;
         int centerY = buttons.length / 2;
 
@@ -25,7 +25,7 @@ public class KaleidoscopeVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         
         for (int row = 0; row < buttons.length; row++) {

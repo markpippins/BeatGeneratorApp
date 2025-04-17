@@ -6,7 +6,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class PolyphonicVisualization extends LockHandler implements IVisualizationHandler {
 
@@ -15,7 +15,7 @@ public class PolyphonicVisualization extends LockHandler implements IVisualizati
     private final Color[] voiceColors = {Color.RED, Color.BLUE, Color.GREEN};
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Create multiple interweaving sine waves

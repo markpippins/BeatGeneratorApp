@@ -5,7 +5,7 @@ import java.time.LocalTime;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class ClockVisualization implements IVisualizationHandler {
     private final Color HAND_COLOR = new Color(0, 255, 255);
@@ -13,7 +13,7 @@ public class ClockVisualization implements IVisualizationHandler {
     private double phase = 0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         LocalTime now = LocalTime.now();
@@ -33,7 +33,7 @@ public class ClockVisualization implements IVisualizationHandler {
         phase += 0.1;
     }
 
-    private void drawClockHand(GridButton[][] buttons, double angle, int length, Color color) {
+    private void drawClockHand(JButton[][] buttons, double angle, int length, Color color) {
         int centerX = buttons[0].length / 2;
         int centerY = buttons.length / 2;
         
@@ -44,7 +44,7 @@ public class ClockVisualization implements IVisualizationHandler {
         drawLine(buttons, centerX, centerY, endX, endY, color);
     }
 
-    private void drawLine(GridButton[][] buttons, int x1, int y1, int x2, int y2, Color color) {
+    private void drawLine(JButton[][] buttons, int x1, int y1, int x2, int y2, Color color) {
         int dx = Math.abs(x2 - x1);
         int dy = Math.abs(y2 - y1);
         int sx = x1 < x2 ? 1 : -1;
@@ -62,14 +62,14 @@ public class ClockVisualization implements IVisualizationHandler {
         }
     }
 
-    private void drawDigits(GridButton[][] buttons, String text, int row, Color color) {
+    private void drawDigits(JButton[][] buttons, String text, int row, Color color) {
         int startCol = (buttons[0].length - text.length() * 4) / 2;
         for (int i = 0; i < text.length(); i++) {
             drawDigit(buttons, text.charAt(i), startCol + i * 4, row, color);
         }
     }
 
-    private void drawDigit(GridButton[][] buttons, char digit, int x, int y, Color color) {
+    private void drawDigit(JButton[][] buttons, char digit, int x, int y, Color color) {
         switch (digit) {
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':

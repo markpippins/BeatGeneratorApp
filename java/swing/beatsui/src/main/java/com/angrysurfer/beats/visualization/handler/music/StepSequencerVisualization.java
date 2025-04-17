@@ -6,7 +6,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class StepSequencerVisualization extends LockHandler implements IVisualizationHandler {
 
@@ -15,7 +15,7 @@ public class StepSequencerVisualization extends LockHandler implements IVisualiz
     private boolean[][] sequencerGrid;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
 
        
 

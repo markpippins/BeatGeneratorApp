@@ -7,7 +7,7 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class BilliardsVisualizationHandler implements IVisualizationHandler {
     private final List<Ball> balls = new ArrayList<>();
@@ -70,7 +70,7 @@ public class BilliardsVisualizationHandler implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         gridWidth = buttons.length;
         gridHeight = buttons[0].length;
 
@@ -78,7 +78,7 @@ public class BilliardsVisualizationHandler implements IVisualizationHandler {
         for (int x = 0; x < gridWidth; x++) {
             for (int y = 0; y < gridHeight; y++) {
                 buttons[x][y].setBackground(Color.BLACK);
-                buttons[x][y].setOn(false);
+                buttons[x][y].setBackground(Color.RED);
             }
         }
 
@@ -93,7 +93,7 @@ public class BilliardsVisualizationHandler implements IVisualizationHandler {
             int y = (int) ball.y;
             if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight) {
                 buttons[x][y].setBackground(ball.color);
-                buttons[x][y].setOn(true);
+                buttons[x][y].repaint();
             }
         }
 

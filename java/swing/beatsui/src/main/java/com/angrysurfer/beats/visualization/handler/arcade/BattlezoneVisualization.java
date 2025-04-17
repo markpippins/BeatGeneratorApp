@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class BattlezoneVisualization implements IVisualizationHandler {
     private double playerAngle = 0;
@@ -35,7 +35,7 @@ public class BattlezoneVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         int width = buttons[0].length;
         int height = buttons.length;
         frame++;
@@ -64,7 +64,7 @@ public class BattlezoneVisualization implements IVisualizationHandler {
         drawTank(buttons, width, height);
     }
 
-    private void drawGrid(GridButton[][] buttons, int width, int height) {
+    private void drawGrid(JButton[][] buttons, int width, int height) {
         // Draw horizontal lines
         for (int z = 1; z <= 4; z++) {
             int y = height/2 + (z * height/8);
@@ -94,7 +94,7 @@ public class BattlezoneVisualization implements IVisualizationHandler {
         }
     }
 
-    private void updateEnemies(GridButton[][] buttons, int width, int height) {
+    private void updateEnemies(JButton[][] buttons, int width, int height) {
         List<Point> toRemove = new ArrayList<>();
         
         for (Point enemy : enemies) {
@@ -120,7 +120,7 @@ public class BattlezoneVisualization implements IVisualizationHandler {
         enemies.removeAll(toRemove);
     }
 
-    private void drawTank(GridButton[][] buttons, int width, int height) {
+    private void drawTank(JButton[][] buttons, int width, int height) {
         int x = (int)(playerX * width);
         int y = (int)(playerY * height);
         
@@ -143,7 +143,7 @@ public class BattlezoneVisualization implements IVisualizationHandler {
         }
     }
 
-    private void drawEnemyTank(GridButton[][] buttons, int x, int y, int width, int height) {
+    private void drawEnemyTank(JButton[][] buttons, int x, int y, int width, int height) {
         Color enemyColor = frame % 2 == 0 ? Color.RED : Color.RED.darker();
         
         // Draw enemy tank body

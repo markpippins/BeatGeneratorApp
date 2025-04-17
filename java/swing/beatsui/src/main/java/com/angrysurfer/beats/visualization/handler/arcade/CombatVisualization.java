@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class CombatVisualization implements IVisualizationHandler {
     private Tank tank1, tank2;
@@ -86,7 +86,7 @@ public class CombatVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (tank1 == null) {
             initializeGame(buttons);
         }
@@ -131,7 +131,7 @@ public class CombatVisualization implements IVisualizationHandler {
         drawGame(buttons);
     }
 
-    private void updateTank(Tank tank, Tank enemy, GridButton[][] buttons) {
+    private void updateTank(Tank tank, Tank enemy, JButton[][] buttons) {
         tank.cooldown--;
         
         // AI control
@@ -162,7 +162,7 @@ public class CombatVisualization implements IVisualizationHandler {
         return angle;
     }
 
-    private void drawGame(GridButton[][] buttons) {
+    private void drawGame(JButton[][] buttons) {
         // Draw walls
         for (Point wall : walls) {
             buttons[wall.y][wall.x].setBackground(Color.GRAY);
@@ -186,7 +186,7 @@ public class CombatVisualization implements IVisualizationHandler {
         }
     }
 
-    private void drawTank(GridButton[][] buttons, Tank tank) {
+    private void drawTank(JButton[][] buttons, Tank tank) {
         buttons[tank.pos.y][tank.pos.x].setBackground(tank.color);
         int barrelX = tank.pos.x + (int)Math.round(Math.cos(tank.angle));
         int barrelY = tank.pos.y + (int)Math.round(Math.sin(tank.angle));
@@ -196,7 +196,7 @@ public class CombatVisualization implements IVisualizationHandler {
         }
     }
 
-    private void drawExplosion(GridButton[][] buttons, Explosion exp) {
+    private void drawExplosion(JButton[][] buttons, Explosion exp) {
         for (int y = -exp.radius; y <= exp.radius; y++) {
             for (int x = -exp.radius; x <= exp.radius; x++) {
                 if (x*x + y*y <= exp.radius*exp.radius) {
@@ -211,7 +211,7 @@ public class CombatVisualization implements IVisualizationHandler {
         }
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         // Create tanks
         tank1 = new Tank(new Point(2, 2), 0, Color.BLUE);
         tank2 = new Tank(new Point(buttons[0].length-3, buttons.length-3), Math.PI, Color.RED);

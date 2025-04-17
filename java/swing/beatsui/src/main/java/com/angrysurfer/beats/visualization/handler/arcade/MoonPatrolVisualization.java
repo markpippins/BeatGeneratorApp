@@ -2,7 +2,7 @@ package com.angrysurfer.beats.visualization.handler.arcade;
 
 import java.awt.Color;
 import com.angrysurfer.beats.visualization.*;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class MoonPatrolVisualization implements IVisualizationHandler {
     private double vehicleX = 12;
@@ -27,7 +27,7 @@ public class MoonPatrolVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         int rows = buttons.length;
         int cols = buttons[0].length;

@@ -11,7 +11,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class BrownianVisualization implements IVisualizationHandler {
     private List<Particle> particles = new ArrayList<>();
@@ -55,7 +55,7 @@ public class BrownianVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (particles.isEmpty()) {
             initializeParticles(buttons);
         }
@@ -94,7 +94,7 @@ public class BrownianVisualization implements IVisualizationHandler {
         phase += 0.02;
     }
 
-    private void initializeParticles(GridButton[][] buttons) {
+    private void initializeParticles(JButton[][] buttons) {
         particles.clear();
         trails.clear();
         for (int i = 0; i < 5; i++) {

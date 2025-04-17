@@ -4,13 +4,13 @@ import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class MandelbrotVisualization implements IVisualizationHandler {
     private double t = 0.0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         double zoom = 1.5 + Math.sin(t * 0.1) * 0.5;
         double centerX = -0.5 + Math.sin(t * 0.05) * 0.2;
         double centerY = Math.cos(t * 0.05) * 0.2;

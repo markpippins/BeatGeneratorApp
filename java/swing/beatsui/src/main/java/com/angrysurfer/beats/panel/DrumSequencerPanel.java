@@ -31,6 +31,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.visualization.Visualizer;
 import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.DrumSequencerButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridButton;
@@ -192,6 +193,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Create the center grid panel with sequence buttons
         JPanel sequencePanel = createSequenceGridPanel();
+        // new Visualizer(sequencePanel, gridButtons);
         
         // Wrap in scroll pane
         JScrollPane scrollPane = new JScrollPane(sequencePanel);
@@ -694,6 +696,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         return button;
     }
 
+    private DrumSequencerGridButton[][] gridButtons;
+
     /**
      * Create the step grid panel with proper cell visibility
      */
@@ -702,7 +706,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, DEFAULT_PATTERN_LENGTH, 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
+        // Initialize both storage structures
         triggerButtons = new ArrayList<>(DRUM_PAD_COUNT * DEFAULT_PATTERN_LENGTH); // Pre-size the list
+        gridButtons = new DrumSequencerGridButton[DRUM_PAD_COUNT][DEFAULT_PATTERN_LENGTH]; // Initialize the 2D array
 
         // Create grid buttons
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
@@ -721,6 +727,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 // Add to panel and tracking list
                 panel.add(button);
                 triggerButtons.add(button);
+                
+                // Also store in the 2D array for direct access by coordinates
+                gridButtons[drumIndex][step] = button;
             }
         }
 

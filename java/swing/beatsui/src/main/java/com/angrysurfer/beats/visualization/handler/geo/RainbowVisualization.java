@@ -5,7 +5,7 @@ import java.awt.Color;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class RainbowVisualization implements IVisualizationHandler {
     private int offset = 0;
@@ -16,7 +16,7 @@ public class RainbowVisualization implements IVisualizationHandler {
     };
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Draw rainbow bands with smooth transitions

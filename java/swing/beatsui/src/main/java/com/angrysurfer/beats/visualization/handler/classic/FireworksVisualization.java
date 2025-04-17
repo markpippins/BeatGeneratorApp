@@ -5,13 +5,13 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class FireworksVisualization implements IVisualizationHandler {
     private final Random random = new Random();
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Fade existing colors
         for (int row = 0; row < buttons.length; row++) {
             for (int col = 0; col < buttons[0].length; col++) {

@@ -7,7 +7,7 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class HeartVisualization implements IVisualizationHandler {
     private double heartBeat = 0;
@@ -47,7 +47,7 @@ public class HeartVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         
         // Update heartbeat and color

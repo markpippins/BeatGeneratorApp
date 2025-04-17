@@ -6,7 +6,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class ModularCVVisualization extends LockHandler implements IVisualizationHandler {
 
@@ -15,7 +15,7 @@ public class ModularCVVisualization extends LockHandler implements IVisualizatio
     private final double[] amplitudes = {1.0, 0.8, 0.6, 0.7, 0.9, 0.5, 0.4, 0.3};
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (phases == null) {
             phases = new double[buttons.length];
         }

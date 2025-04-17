@@ -5,7 +5,7 @@ import java.awt.Color;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class PulseVisualization implements IVisualizationHandler {
     private double pulseSize = 0;
@@ -13,7 +13,7 @@ public class PulseVisualization implements IVisualizationHandler {
     private final int maxRadius = 10;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         int centerX = buttons[0].length / 2;

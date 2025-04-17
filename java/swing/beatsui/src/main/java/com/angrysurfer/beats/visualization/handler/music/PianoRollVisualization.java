@@ -7,7 +7,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class PianoRollVisualization extends LockHandler implements IVisualizationHandler {
 
@@ -15,7 +15,7 @@ public class PianoRollVisualization extends LockHandler implements IVisualizatio
     private int seqPosition = 0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         
         seqPosition = (seqPosition + 1) % buttons[0].length;

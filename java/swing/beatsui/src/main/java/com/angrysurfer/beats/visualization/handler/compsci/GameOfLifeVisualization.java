@@ -6,13 +6,13 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.ColorUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class GameOfLifeVisualization implements IVisualizationHandler {
     private final Random random = new Random();
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         boolean[][] nextGen = new boolean[buttons.length][buttons[0].length];
         Color parentBg = buttons[0][0].getParent().getBackground();
 
@@ -45,7 +45,7 @@ public class GameOfLifeVisualization implements IVisualizationHandler {
         }
     }
 
-    private int countLiveNeighbors(GridButton[][] buttons, int row, int col) {
+    private int countLiveNeighbors(JButton[][] buttons, int row, int col) {
         int count = 0;
         Color parentBg = buttons[0][0].getParent().getBackground();
         for (int i = -1; i <= 1; i++) {

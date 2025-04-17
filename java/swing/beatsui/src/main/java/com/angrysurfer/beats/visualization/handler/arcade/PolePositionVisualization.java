@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class PolePositionVisualization implements IVisualizationHandler {
     private double roadX = 0;
@@ -30,7 +30,7 @@ public class PolePositionVisualization implements IVisualizationHandler {
     private static final Color HORIZON_COLOR = new Color(100, 150, 255);
     
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         frames++;
 

@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class TronVisualization implements IVisualizationHandler {
     private List<Point> trail1 = new ArrayList<>();
@@ -21,7 +21,7 @@ public class TronVisualization implements IVisualizationHandler {
     private final int[][] directions = {{0,-1}, {1,0}, {0,1}, {-1,0}}; // up, right, down, left
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (bike1 == null) {
             initializeGame(buttons);
         }
@@ -66,7 +66,7 @@ public class TronVisualization implements IVisualizationHandler {
         }
     }
 
-    private void decideDirection(Point bike, int[] currentDir, List<Point> ownTrail, List<Point> enemyTrail, GridButton[][] buttons) {
+    private void decideDirection(Point bike, int[] currentDir, List<Point> ownTrail, List<Point> enemyTrail, JButton[][] buttons) {
         // Look ahead in current direction
         Point ahead = new Point(
             Math.floorMod(bike.x + currentDir[0], buttons[0].length),
@@ -98,7 +98,7 @@ public class TronVisualization implements IVisualizationHandler {
         return points.stream().anyMatch(point -> point.x == p.x && point.y == p.y);
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         trail1.clear();
         trail2.clear();
         bike1 = new Point(buttons[0].length / 4, buttons.length / 2);

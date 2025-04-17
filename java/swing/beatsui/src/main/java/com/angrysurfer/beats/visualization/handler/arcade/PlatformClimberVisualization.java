@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class PlatformClimberVisualization implements IVisualizationHandler {
     private Point climber;
@@ -22,7 +22,7 @@ public class PlatformClimberVisualization implements IVisualizationHandler {
     private boolean onPlatform = false;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (climber == null) {
             initializeGame(buttons);
         }
@@ -122,7 +122,7 @@ public class PlatformClimberVisualization implements IVisualizationHandler {
         return best != null ? best : new Point(climber.x, 0);
     }
 
-    private void moveTowardsTarget(Point target, GridButton[][] buttons) {
+    private void moveTowardsTarget(Point target, JButton[][] buttons) {
         if (isOnLadder()) {
             // Move up ladder
             if (climber.y > target.y) {
@@ -139,7 +139,7 @@ public class PlatformClimberVisualization implements IVisualizationHandler {
         }
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         climber = new Point(2, buttons.length - 2);
         platforms.clear();
         ladders.clear();
