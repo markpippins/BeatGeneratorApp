@@ -105,29 +105,37 @@ class DrumSequenceHelper {
             }
             
             // Apply patterns
-            if (data.getPatterns() != null) {
-                for (int i = 0; i < Math.min(data.getPatterns().length, DRUM_PAD_COUNT); i++) {
-                    for (int j = 0; j < Math.min(data.getPatterns()[i].length, MAX_STEPS); j++) {
-                        if (data.getPatterns()[i][j]) {
-                            // Make sure it's toggled to ON state if true in stored data
-                            if (!sequencer.isStepActive(i, j)) {
-                                sequencer.toggleStep(i, j);
-                            }
-                        } else {
-                            // Make sure it's toggled to OFF state if false in stored data
-                            if (sequencer.isStepActive(i, j)) {
-                                sequencer.toggleStep(i, j);
-                            }
-                        }
-                    }
-                }
-            }
+            applyDrumSequenceToSequencer(data, sequencer);
             
             // Notify that pattern has updated
             commandBus.publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getDrumSequenceId());
             
         } catch (Exception e) {
             logger.error("Error applying drum sequence data to sequencer: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Apply drum sequence data to sequencer
+     */
+    public void applyDrumSequenceToSequencer(DrumSequenceData data, DrumSequencer sequencer) {
+        // Apply pattern data
+        boolean[][] patterns = data.getPatterns();
+        if (patterns != null) {
+            for (int i = 0; i < Math.min(patterns.length, DrumSequencer.DRUM_PAD_COUNT); i++) {
+                // Copy pattern data
+                if (patterns[i] != null) {
+                    int patternLength = Math.min(patterns[i].length, sequencer.getMaxSteps());
+                    
+                    // Copy pattern data
+                    for (int j = 0; j < patternLength; j++) {
+                        sequencer.getPatterns()[i][j] = patterns[i][j];
+                    }
+                    
+                    // IMPORTANT: Set pattern length for each drum
+                    sequencer.setPatternLength(i, patternLength);
+                }
+            }
         }
     }
 

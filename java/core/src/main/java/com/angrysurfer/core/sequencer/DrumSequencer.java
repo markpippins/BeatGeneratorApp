@@ -10,10 +10,12 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -42,22 +44,22 @@ public class DrumSequencer implements IBusListener {
 
     // Instance variables
     private int maxSteps = 64; // Maximum pattern length
-    private int defaultPatternLength = 16; // Default pattern length
+    private int defaultPatternLength = 32; // Default pattern length
 
     // MIDI and music constants
     private static final int MIDI_DRUM_CHANNEL = 9; // Standard MIDI drum channel
     private static final int MAX_MIDI_VELOCITY = 127; // Maximum MIDI velocity
-    
+
     // Default values for parameters
     private static final int DEFAULT_TICKS_PER_BEAT = 24; // Default timing fallback
     private static final int DEFAULT_MASTER_TEMPO = 96; // Default master tempo
-    
+
     // Swing parameters
     private static final int NO_SWING = 50; // Percentage value for no swing
-    
+
     // Pattern generation parameters
     private static final int MAX_DENSITY = 10; // Maximum density for pattern generation
-    
+
     // Button dimensions
     private static final int DRUM_PAD_SIZE = 28; // Standard drum pad button size
 
@@ -114,7 +116,7 @@ public class DrumSequencer implements IBusListener {
 
     // Add field for next pattern ID
     private Long nextPatternId = null;
-    
+
     // Track pattern completion for switching
     private boolean patternJustCompleted = false;
 
@@ -144,7 +146,7 @@ public class DrumSequencer implements IBusListener {
         Arrays.fill(originalVelocities, DEFAULT_VELOCITY);
 
         // Default values - use instance variables now
-        Arrays.fill(patternLengths, defaultPatternLength);  // Changed from DEFAULT_PATTERN_LENGTH
+        Arrays.fill(patternLengths, defaultPatternLength); // Changed from DEFAULT_PATTERN_LENGTH
         Arrays.fill(directions, Direction.FORWARD); // Default to forward
         Arrays.fill(timingDivisions, TimingDivision.NORMAL); // Default timing
         Arrays.fill(loopingFlags, true); // Default to looping
@@ -154,15 +156,15 @@ public class DrumSequencer implements IBusListener {
         masterTempo = DEFAULT_MASTER_TEMPO;
 
         // Initialize patterns with instance variable
-        patterns = new boolean[DRUM_PAD_COUNT][maxSteps];  // Changed from MAX_STEPS
-        stepVelocities = new int[DRUM_PAD_COUNT][maxSteps];  // Changed from MAX_STEPS
-        stepDecays = new int[DRUM_PAD_COUNT][maxSteps];  // Changed from MAX_STEPS
-        stepProbabilities = new int[DRUM_PAD_COUNT][maxSteps];  // Changed from MAX_STEPS
-        stepNudges = new int[DRUM_PAD_COUNT][maxSteps];  // Changed from MAX_STEPS
+        patterns = new boolean[DRUM_PAD_COUNT][maxSteps]; // Changed from MAX_STEPS
+        stepVelocities = new int[DRUM_PAD_COUNT][maxSteps]; // Changed from MAX_STEPS
+        stepDecays = new int[DRUM_PAD_COUNT][maxSteps]; // Changed from MAX_STEPS
+        stepProbabilities = new int[DRUM_PAD_COUNT][maxSteps]; // Changed from MAX_STEPS
+        stepNudges = new int[DRUM_PAD_COUNT][maxSteps]; // Changed from MAX_STEPS
 
         // Set default values
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
-            for (int j = 0; j < maxSteps; j++) {  // Changed from MAX_STEPS
+            for (int j = 0; j < maxSteps; j++) { // Changed from MAX_STEPS
                 stepVelocities[i][j] = DEFAULT_VELOCITY;
                 stepDecays[i][j] = DEFAULT_DECAY;
                 stepProbabilities[i][j] = DEFAULT_PROBABILITY;
@@ -216,12 +218,12 @@ public class DrumSequencer implements IBusListener {
         // Add validation to ensure it's a reasonable value
         if (maxSteps >= 16 && maxSteps <= 128) {
             this.maxSteps = maxSteps;
-            
+
             // Resize pattern arrays if needed
             if (patterns != null && patterns[0].length < maxSteps) {
                 resizePatternArrays(maxSteps);
             }
-            
+
             logger.info("Maximum steps changed to: {}", maxSteps);
         } else {
             logger.warn("Invalid maxSteps value: {}. Must be between 16 and 128", maxSteps);
@@ -238,8 +240,8 @@ public class DrumSequencer implements IBusListener {
             this.defaultPatternLength = defaultPatternLength;
             logger.info("Default pattern length changed to: {}", defaultPatternLength);
         } else {
-            logger.warn("Invalid defaultPatternLength: {}. Must be between 1 and {}", 
-                       defaultPatternLength, maxSteps);
+            logger.warn("Invalid defaultPatternLength: {}. Must be between 1 and {}",
+                    defaultPatternLength, maxSteps);
         }
     }
 
@@ -251,19 +253,19 @@ public class DrumSequencer implements IBusListener {
         int[][] newStepDecays = new int[DRUM_PAD_COUNT][newSize];
         int[][] newStepProbabilities = new int[DRUM_PAD_COUNT][newSize];
         int[][] newStepNudges = new int[DRUM_PAD_COUNT][newSize];
-        
+
         // Copy existing data
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             // Determine how many elements to copy
             int copyLength = Math.min(patterns[i].length, newSize);
-            
+
             // Copy pattern data
             System.arraycopy(patterns[i], 0, newPatterns[i], 0, copyLength);
             System.arraycopy(stepVelocities[i], 0, newStepVelocities[i], 0, copyLength);
             System.arraycopy(stepDecays[i], 0, newStepDecays[i], 0, copyLength);
             System.arraycopy(stepProbabilities[i], 0, newStepProbabilities[i], 0, copyLength);
             System.arraycopy(stepNudges[i], 0, newStepNudges[i], 0, copyLength);
-            
+
             // Initialize new elements with defaults
             for (int j = copyLength; j < newSize; j++) {
                 newStepVelocities[i][j] = DEFAULT_VELOCITY;
@@ -272,14 +274,14 @@ public class DrumSequencer implements IBusListener {
                 newStepNudges[i][j] = 0;
             }
         }
-        
+
         // Replace the old arrays
         patterns = newPatterns;
         stepVelocities = newStepVelocities;
         stepDecays = newStepDecays;
         stepProbabilities = newStepProbabilities;
         stepNudges = newStepNudges;
-        
+
         logger.info("Pattern arrays resized to {}", newSize);
     }
 
@@ -336,47 +338,125 @@ public class DrumSequencer implements IBusListener {
      * @return true if sequence loaded successfully
      */
     public boolean loadSequence(long sequenceId) {
-        // Don't do anything if trying to load the currently active sequence
-        if (sequenceId == drumSequenceId) {
-            logger.info("Sequence {} already loaded", sequenceId);
-            return true;
-        }
+        return loadSequenceWithRepeat(sequenceId);
+    }
 
-        // Store current playback state
-        boolean wasPlaying = isPlaying;
+    /**
+     * Loads a pattern with smart handling for different pattern lengths:
+     * - Repeats patterns that are even divisions of the default pattern length
+     * - Truncates patterns that are longer than the default pattern length
+     * 
+     * @param patternId The ID of the pattern to load
+     * @return True if load was successful, false otherwise
+     */
+    public boolean loadSequenceWithRepeat(Long patternId) {
+        try {
+            // Get the DrumSequenceData from RedisService
+            DrumSequenceData sequence = RedisService.getInstance().findDrumSequenceById(patternId);
+            if (sequence == null) {
+                logger.warn("Failed to load drum sequence: {}", patternId);
+                return false;
+            }
 
-        // Get the manager
-        DrumSequencerManager manager = DrumSequencerManager.getInstance();
+            // Store the current pattern ID
+            drumSequenceId = patternId;
 
-        // Load the sequence
-        boolean loaded = manager.loadSequence(sequenceId, this);
+            // Apply the sequence data using the helper method
+            RedisService.getInstance().applyDrumSequenceToSequencer(sequence, this);
 
-        if (loaded) {
-            logger.info("Loaded drum sequence: {}", sequenceId);
+            // Get the loaded pattern length - IMPORTANT: use actual length, not array
+            // length
+            int loadedPatternLength = 16; // Assuming first pattern
+            if (loadedPatternLength <= 0) {
+                // Fallback to array length if pattern length isn't stored properly
+                loadedPatternLength = sequence.getPatterns()[0].length;
+            }
 
-            // Immediately update visual indicators without resetting
-            if (stepUpdateListener != null) {
-                for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-                    // Force an update with the current positions
-                    stepUpdateListener.accept(
-                            new DrumStepUpdateEvent(drumIndex, -1, currentStep[drumIndex]));
+            logger.info("Loaded pattern {} with length: {}, default length: {}",
+                    patternId, loadedPatternLength, defaultPatternLength);
+
+            // If we have a valid pattern length, check for repetition opportunities
+            if (loadedPatternLength > 0 && loadedPatternLength < defaultPatternLength) {
+                // Check if pattern length is an even division of default length
+                if (defaultPatternLength % loadedPatternLength == 0) {
+                    int repetitions = defaultPatternLength / loadedPatternLength;
+                    logger.info("Pattern {} is an even division - repeating {} times to fill {} steps",
+                            patternId, repetitions, defaultPatternLength);
+
+                    // Apply pattern repetition for each drum
+                    for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                        // Copy the existing pattern for repetition
+                        boolean[] originalPattern = new boolean[loadedPatternLength];
+                        int[] originalVelocities = new int[loadedPatternLength];
+                        int[] originalDecays = new int[loadedPatternLength];
+                        int[] originalProbabilities = new int[loadedPatternLength];
+                        int[] originalNudges = new int[loadedPatternLength];
+
+                        // Copy the original pattern first
+                        for (int step = 0; step < loadedPatternLength; step++) {
+                            originalPattern[step] = patterns[drumIndex][step];
+                            originalVelocities[step] = stepVelocities[drumIndex][step];
+                            originalDecays[step] = stepDecays[drumIndex][step];
+                            originalProbabilities[step] = stepProbabilities[drumIndex][step];
+                            originalNudges[step] = stepNudges[drumIndex][step];
+                        }
+
+                        // Apply the pattern with repetition
+                        for (int rep = 1; rep < repetitions; rep++) {
+                            for (int step = 0; step < loadedPatternLength; step++) {
+                                int destStep = rep * loadedPatternLength + step;
+                                patterns[drumIndex][destStep] = originalPattern[step];
+                                stepVelocities[drumIndex][destStep] = originalVelocities[step];
+                                stepDecays[drumIndex][destStep] = originalDecays[step];
+                                stepProbabilities[drumIndex][destStep] = originalProbabilities[step];
+                                stepNudges[drumIndex][destStep] = originalNudges[step];
+                            }
+                        }
+
+                        // CRITICAL FIX: Set pattern length to full default length for this drum
+                        setPatternLength(drumIndex, defaultPatternLength);
+                    }
+
+                    // Uncomment and send status message to inform user
+                    CommandBus.getInstance().publish(
+                            Commands.STATUS_UPDATE,
+                            this, new StatusUpdate("Pattern repeated " + repetitions + " times to fill " +
+                                    defaultPatternLength + " steps"));
                 }
             }
 
-            // Publish event to notify UI components
-            CommandBus.getInstance().publish(
-                    Commands.DRUM_SEQUENCE_LOADED,
-                    this,
-                    drumSequenceId);
+            // Handle case where pattern is longer than default
+            if (loadedPatternLength > defaultPatternLength) {
+                logger.warn("Pattern {} is too long ({} steps) - truncated to {} steps",
+                        patternId, loadedPatternLength, defaultPatternLength);
 
-            // Preserve playing state (don't stop if we were playing)
-            isPlaying = wasPlaying;
+                // Uncomment status message to inform user
+                CommandBus.getInstance().publish(
+                        Commands.STATUS_UPDATE, // This command name needs to be changed
+                        this,
+                        new StatusUpdate("Pattern truncated: Original length " + loadedPatternLength +
+                                " exceeds maximum " + defaultPatternLength + " steps"));
 
+                // Ensure all pattern lengths are set correctly
+                for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                    setPatternLength(drumIndex, defaultPatternLength);
+                }
+            }
+
+            // Successfully loaded the pattern
+            notifyPatternChanged();
             return true;
-        } else {
-            logger.warn("Failed to load drum sequence {}", sequenceId);
+        } catch (Exception e) {
+            logger.error("Error loading drum sequence {}: {}", patternId, e.getMessage(), e);
             return false;
         }
+    }
+
+    /**
+     * Notify listeners that pattern has changed
+     */
+    private void notifyPatternChanged() {
+        CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, drumSequenceId);
     }
 
     /**
@@ -420,7 +500,7 @@ public class DrumSequencer implements IBusListener {
             // Just reset state flags but keep positions
             Arrays.fill(patternCompleted, false);
             Arrays.fill(currentStep, absoluteStep);
-            
+
             // Don't reset absoluteStep when preserving positions
 
             // Recalculate next step times
@@ -451,7 +531,8 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Process a timing tick - now handles each drum separately and checks for pattern completion
+     * Process a timing tick - now handles each drum separately and checks for
+     * pattern completion
      *
      * @param tick The current tick count
      */
@@ -462,7 +543,8 @@ public class DrumSequencer implements IBusListener {
 
         tickCounter = tick;
 
-        // Use the standard timing (first drum's timing) to determine global step changes
+        // Use the standard timing (first drum's timing) to determine global step
+        // changes
         int standardTicksPerStep = TimingDivision.NORMAL.getTicksPerBeat();
 
         // Update absoluteStep based on the tick count - for the global timing
@@ -532,10 +614,9 @@ public class DrumSequencer implements IBusListener {
 
             // Notify about pattern switch
             CommandBus.getInstance().publish(
-                Commands.DRUM_PATTERN_SWITCHED, 
-                this,
-                new PatternSwitchEvent(currentId, nextPatternId)
-            );
+                    Commands.DRUM_PATTERN_SWITCHED,
+                    this,
+                    new PatternSwitchEvent(currentId, nextPatternId));
 
             // Clear the next pattern ID (one-shot behavior)
             nextPatternId = null;
@@ -543,16 +624,21 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Set the next pattern to automatically switch to when the current pattern completes
-     * @param patternId The ID of the next pattern, or null to disable automatic switching
+     * Set the next pattern to automatically switch to when the current pattern
+     * completes
+     * 
+     * @param patternId The ID of the next pattern, or null to disable automatic
+     *                  switching
      */
     public void setNextPatternId(Long patternId) {
         this.nextPatternId = patternId;
         logger.info("Set next drum pattern ID: {}", patternId);
     }
-    
+
     /**
-     * Get the next pattern ID that will be loaded when the current pattern completes
+     * Get the next pattern ID that will be loaded when the current pattern
+     * completes
+     * 
      * @return The next pattern ID or null if no pattern is queued
      */
     public Long getNextPatternId() {
@@ -1501,7 +1587,8 @@ public class DrumSequencer implements IBusListener {
                         // Only play if player exists, has instrument, and velocity is > 0
                         if (player != null && player.getInstrument() != null && finalVelocity > 0) {
                             // Get the note number
-                            int noteNumber = drumIndex + MIDI_DRUM_NOTE_OFFSET; // Default MIDI mapping, adjust as needed
+                            int noteNumber = drumIndex + MIDI_DRUM_NOTE_OFFSET; // Default MIDI mapping, adjust as
+                                                                                // needed
 
                             // Apply nudge delay if specified
                             if (nudge > 0) {
