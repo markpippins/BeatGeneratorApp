@@ -1,16 +1,27 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import javax.swing.*;
-import javax.swing.event.*;
+import java.awt.BasicStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.NumberedTickDial;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
 
 /**
  * A panel for editing and visualizing Euclidean rhythm patterns
@@ -19,15 +30,15 @@ public class EuclideanPatternPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(EuclideanPatternPanel.class);
     
     // Pattern parameters
-    private int totalSteps = 16;
-    private int filledSteps = 4;
+    private int steps = 16;
+    private int hits = 4;
     private int rotation = 0;
     private int width = 0;  // Width parameter
     
     // UI components
     private CircleDisplay circleDisplay;
     private NumberedTickDial stepsDial;
-    private NumberedTickDial fillsDial;
+    private NumberedTickDial hitsDial;
     private NumberedTickDial rotationDial;
     private NumberedTickDial widthDial;
     
@@ -100,45 +111,45 @@ public class EuclideanPatternPanel extends JPanel {
         stepsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         stepsDial = new NumberedTickDial(1, 32);
-        stepsDial.setValue(totalSteps);
+        stepsDial.setValue(steps);
         stepsDial.setSize(dialDiameter, dialDiameter);
         stepsDial.setPreferredSize(new Dimension(dialDiameter, dialDiameter));
         stepsDial.addChangeListener(e -> {
-            totalSteps = stepsDial.getValue();
+            steps = stepsDial.getValue();
             
             // Ensure filled steps doesn't exceed total steps
-            if (filledSteps > totalSteps) {
-                filledSteps = totalSteps;
-                fillsDial.setValue(filledSteps);
+            if (hits > steps) {
+                hits = steps;
+                hitsDial.setValue(hits);
             }
             
             // Update fills dial maximum
-            fillsDial.setMaximum(totalSteps);
+            hitsDial.setMaximum(steps);
             
             // Update rotation dial maximum
-            rotationDial.setMaximum(totalSteps > 0 ? totalSteps-1 : 0);
+            rotationDial.setMaximum(steps > 0 ? steps-1 : 0);
             
             updatePattern();
-            logger.debug("Total steps changed to: {}", totalSteps);
+            logger.debug("Total steps changed to: {}", steps);
         });
         stepsPanel.add(stepsDial, BorderLayout.CENTER);
         
         // Create fills dial
         JPanel fillsPanel = new JPanel(new BorderLayout(2, 2));
-        fillsPanel.add(new JLabel("Fills", SwingConstants.CENTER), BorderLayout.NORTH);
+        fillsPanel.add(new JLabel("Hits", SwingConstants.CENTER), BorderLayout.NORTH);
         fillsPanel.setOpaque(false);
         fillsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        fillsDial = new NumberedTickDial(0, totalSteps);
-        fillsDial.setValue(filledSteps);
-        fillsDial.setSize(dialDiameter, dialDiameter);
-        fillsDial.setPreferredSize(new Dimension(dialDiameter, dialDiameter));
-        fillsDial.addChangeListener(e -> {
-            filledSteps = fillsDial.getValue();
+        hitsDial = new NumberedTickDial(0, steps);
+        hitsDial.setValue(hits);
+        hitsDial.setSize(dialDiameter, dialDiameter);
+        hitsDial.setPreferredSize(new Dimension(dialDiameter, dialDiameter));
+        hitsDial.addChangeListener(e -> {
+            hits = hitsDial.getValue();
             updatePattern();
-            logger.debug("Filled steps changed to: {}", filledSteps);
+            logger.debug("Filled steps changed to: {}", hits);
         });
-        fillsPanel.add(fillsDial, BorderLayout.CENTER);
+        fillsPanel.add(hitsDial, BorderLayout.CENTER);
         
         // Create rotation dial panel
         JPanel rotationPanel = new JPanel(new BorderLayout(2, 2));
@@ -146,7 +157,7 @@ public class EuclideanPatternPanel extends JPanel {
         rotationPanel.setOpaque(false);
         rotationPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        rotationDial = new NumberedTickDial(0, totalSteps - 1);
+        rotationDial = new NumberedTickDial(0, steps - 1);
         rotationDial.setValue(rotation);
         rotationDial.setSize(dialDiameter, dialDiameter);
         rotationDial.setPreferredSize(new Dimension(dialDiameter, dialDiameter));
@@ -191,16 +202,16 @@ public class EuclideanPatternPanel extends JPanel {
     
     private void updatePattern() {
         // Update rotation dial's max value based on total steps
-        rotationDial.setMaximum(totalSteps > 0 ? totalSteps - 1 : 0);
+        rotationDial.setMaximum(steps > 0 ? steps - 1 : 0);
         
         // Ensure rotation is within bounds
-        if (rotation >= totalSteps) {
+        if (rotation >= steps) {
             rotation = 0;
             rotationDial.setValue(0);
         }
         
         // Generate the Euclidean pattern
-        boolean[] pattern = generateEuclideanPattern(totalSteps, filledSteps, rotation, width);
+        boolean[] pattern = generateEuclideanPattern(steps, hits, rotation, width);
         
         // Update the visual component
         circleDisplay.setPattern(pattern);
@@ -287,6 +298,15 @@ public class EuclideanPatternPanel extends JPanel {
         return pattern;
     }
     
+    /**
+     * Gets the current pattern of fills as a boolean array
+     * @return boolean array where true represents filled steps
+     */
+    public boolean[] getPattern() {
+        // Generate the pattern with current parameters
+        return generateEuclideanPattern(steps, hits, rotation, width);
+    }
+    
     // Circle display inner class
     private class CircleDisplay extends JPanel {
         private boolean[] pattern;
@@ -294,7 +314,7 @@ public class EuclideanPatternPanel extends JPanel {
         public CircleDisplay() {
             setBackground(new Color(30, 30, 30));
             setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
-            pattern = new boolean[totalSteps];
+            pattern = new boolean[steps];
         }
         
         public void setPattern(boolean[] pattern) {
@@ -328,8 +348,8 @@ public class EuclideanPatternPanel extends JPanel {
                 int dotRadius = Math.max(3, Math.min(radius / 10, isCompact ? 5 : 12));
                 
                 // Arrays for polygon points (only filled steps)
-                int[] polygonX = new int[totalSteps];
-                int[] polygonY = new int[totalSteps];
+                int[] polygonX = new int[steps];
+                int[] polygonY = new int[steps];
                 int filledCount = 0;
                 
                 // Draw each step position at equal angular intervals
@@ -420,8 +440,8 @@ public class EuclideanPatternPanel extends JPanel {
         return stepsDial;
     }
     
-    public NumberedTickDial getFillsDial() {
-        return fillsDial;
+    public NumberedTickDial getHitsDial() {
+        return hitsDial;
     }
     
     public NumberedTickDial getRotationDial() {
