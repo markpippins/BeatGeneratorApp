@@ -2,7 +2,7 @@ package com.angrysurfer.beats.visualization.handler.arcade;
 
 import java.awt.Color;
 import com.angrysurfer.beats.visualization.*;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class MoonLanderVisualization implements IVisualizationHandler {
     private double landerX = 24; // Start in middle
@@ -15,7 +15,7 @@ public class MoonLanderVisualization implements IVisualizationHandler {
     private int frameCount = 0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         int cols = buttons[0].length;
         int rows = buttons.length;

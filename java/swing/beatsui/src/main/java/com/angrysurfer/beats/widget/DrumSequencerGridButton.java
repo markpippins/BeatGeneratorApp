@@ -5,10 +5,11 @@ import java.awt.Dimension;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultButtonModel;
+import javax.swing.JButton;
 import javax.swing.JToggleButton;
 import javax.swing.Timer;
 
-public class DrumSequencerGridButton extends JToggleButton {
+public class DrumSequencerGridButton extends JButton {
     
     private boolean isHighlighted = false;
     private int drumPadIndex = -1; // Default to -1 for unassigned index

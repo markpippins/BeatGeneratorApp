@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class SpaceInvadersVisualization implements IVisualizationHandler {
     private int playerX = 18;
@@ -22,7 +22,7 @@ public class SpaceInvadersVisualization implements IVisualizationHandler {
     private double phase = 0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (invaders.isEmpty()) {
             initializeGame(buttons);
         }
@@ -95,7 +95,7 @@ public class SpaceInvadersVisualization implements IVisualizationHandler {
         phase += 0.2;
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         // Create formation of invaders
         for (int row = 1; row < 4; row++) {
             for (int col = 2; col < buttons[0].length - 2; col += 2) {

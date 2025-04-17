@@ -7,7 +7,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class ProbabilityGridVisualization extends LockHandler implements IVisualizationHandler {
 
@@ -18,7 +18,7 @@ public class ProbabilityGridVisualization extends LockHandler implements IVisual
     private int seqPosition = 0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (probabilities == null) {
             initializeGrid(buttons.length, buttons[0].length);
         }

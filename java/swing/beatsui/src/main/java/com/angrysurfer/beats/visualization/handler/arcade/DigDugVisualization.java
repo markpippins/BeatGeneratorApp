@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class DigDugVisualization implements IVisualizationHandler {
     private Point digger;
@@ -32,7 +32,7 @@ public class DigDugVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (digger == null) {
             initializeGame(buttons);
         }
@@ -105,7 +105,7 @@ public class DigDugVisualization implements IVisualizationHandler {
         return nearest;
     }
 
-    private void moveTowardsTarget(Point target, GridButton[][] buttons) {
+    private void moveTowardsTarget(Point target, JButton[][] buttons) {
         int dx = Integer.compare(target.x, digger.x);
         int dy = Integer.compare(target.y, digger.y);
         
@@ -128,7 +128,7 @@ public class DigDugVisualization implements IVisualizationHandler {
         }
     }
 
-    private void moveTowardsUnexplored(GridButton[][] buttons) {
+    private void moveTowardsUnexplored(JButton[][] buttons) {
         // Find direction with fewest tunnels
         int bestDir = 0;
         int minTunnels = Integer.MAX_VALUE;
@@ -167,18 +167,18 @@ public class DigDugVisualization implements IVisualizationHandler {
         return new Point(pos.x + dx, pos.y + dy);
     }
 
-    private boolean canMoveTo(Point pos, GridButton[][] buttons) {
+    private boolean canMoveTo(Point pos, JButton[][] buttons) {
         return pos.x >= 0 && pos.x < buttons[0].length &&
                pos.y >= 0 && pos.y < buttons.length;
     }
 
-    private void spawnMonster(GridButton[][] buttons) {
+    private void spawnMonster(JButton[][] buttons) {
         int x = random.nextInt(buttons[0].length);
         int y = random.nextInt(buttons.length);
         monsters.add(new Monster(new Point(x, y)));
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         digger = new Point(0, buttons.length - 1);
         tunnels.clear();
         monsters.clear();

@@ -6,7 +6,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class LoopPulseVisualization extends LockHandler implements IVisualizationHandler {
 
@@ -17,7 +17,7 @@ public class LoopPulseVisualization extends LockHandler implements IVisualizatio
     private final double[] speeds = {1.0, 0.5, 0.25, 2.0, 1.5, 0.75, 0.33, 1.25};
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (loopStates == null) {
             loopStates = new int[buttons.length];
             for (int i = 0; i < loopStates.length; i++) {

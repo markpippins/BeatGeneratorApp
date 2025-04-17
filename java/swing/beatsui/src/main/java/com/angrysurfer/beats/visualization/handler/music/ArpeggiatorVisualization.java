@@ -6,14 +6,14 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class ArpeggiatorVisualization extends LockHandler implements IVisualizationHandler {
     private double phase = 0.0;
     private final int[] notes = {0, 4, 7, 12, 7, 4}; // Major triad up and down
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         int position = (int)(phase * 8) % notes.length;

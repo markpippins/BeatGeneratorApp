@@ -6,7 +6,7 @@ import java.util.*;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class KineticsVisualization implements IVisualizationHandler {
     private List<Particle> particles = new ArrayList<>();
@@ -74,7 +74,7 @@ public class KineticsVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (particles.isEmpty()) {
             for (int i = 0; i < 10; i++) {
                 particles.add(new Particle());

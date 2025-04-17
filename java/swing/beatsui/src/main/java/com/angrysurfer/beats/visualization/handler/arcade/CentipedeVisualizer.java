@@ -8,7 +8,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.DisplayType;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class CentipedeVisualizer implements IVisualizationHandler {
     private final Random random = new Random();
@@ -75,12 +75,12 @@ public class CentipedeVisualizer implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Paint background green like grass
-        for (GridButton[] row : buttons) {
-            for (GridButton button : row) {
+        for (JButton[] row : buttons) {
+            for (JButton button : row) {
                 button.setBackground(GRASS_COLOR);
-                button.setOn(true);
+                button.repaint();
             }
         }
 
@@ -103,7 +103,7 @@ public class CentipedeVisualizer implements IVisualizationHandler {
             int y = (int)segment.y;
             if (x >= 0 && x < 48 && y >= 0 && y < 8) {
                 buttons[y][x].setBackground(i == 0 ? HEAD_COLOR : BODY_COLOR);
-                buttons[y][x].setOn(true);
+                buttons[y][x].repaint();
             }
         }
 

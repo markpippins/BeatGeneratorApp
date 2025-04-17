@@ -5,7 +5,7 @@ import java.awt.Color;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class LFOMatrixVisualization extends LockHandler implements IVisualizationHandler {
 
@@ -14,7 +14,7 @@ public class LFOMatrixVisualization extends LockHandler implements IVisualizatio
     private final double[] lfoFreqs = {1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5};
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (lfoValues == null) {
             lfoValues = new double[buttons.length][buttons[0].length];
         }

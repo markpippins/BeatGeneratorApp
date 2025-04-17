@@ -8,7 +8,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class StarTrekVisualization implements IVisualizationHandler {
     private List<Star> stars = new ArrayList<>();
@@ -50,7 +50,7 @@ public class StarTrekVisualization implements IVisualizationHandler {
             warpPhase = 0;
         }
 
-        void draw(GridButton[][] buttons) {
+        void draw(JButton[][] buttons) {
             // Draw Enterprise
             if (!warping || warpPhase % 2 == 0) {
                 // Main hull
@@ -77,7 +77,7 @@ public class StarTrekVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (stars.isEmpty()) {
             for (int i = 0; i < 30; i++) {
                 stars.add(new Star());

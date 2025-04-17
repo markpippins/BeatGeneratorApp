@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class AsteroidsVisualization implements IVisualizationHandler {
     private Point shipPos;
@@ -35,7 +35,7 @@ public class AsteroidsVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (shipPos == null) {
             initializeGame(buttons);
         }
@@ -126,14 +126,14 @@ public class AsteroidsVisualization implements IVisualizationHandler {
         }
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         shipPos = new Point(buttons[0].length / 2, buttons.length / 2);
         shipAngle = 0;
         shots.clear();
         initializeAsteroids(buttons);
     }
 
-    private void initializeAsteroids(GridButton[][] buttons) {
+    private void initializeAsteroids(JButton[][] buttons) {
         asteroids.clear();
         for (int i = 0; i < 5; i++) {
             asteroids.add(new Asteroid(

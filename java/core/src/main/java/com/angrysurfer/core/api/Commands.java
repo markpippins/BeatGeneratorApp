@@ -25,10 +25,10 @@ public class Commands {
 
     // Timing commands - consolidated
     public static final String TIMING_UPDATE = "TIMING_UPDATE";
-    // public static final String TIMING_TICK = "TIMING_TICK";
-    // public static final String TIMING_BEAT = "TIMING_BEAT";
-    // public static final String TIMING_BAR = "TIMING_BAR";
-    // public static final String TIMING_PART = "TIMING_PART";
+    public static final String TIMING_TICK = "TIMING_TICK";
+    public static final String TIMING_BEAT = "TIMING_BEAT";
+    public static final String TIMING_BAR = "TIMING_BAR";
+    public static final String TIMING_PART = "TIMING_PART";
     public static final String TIMING_RESET = "TIMING_RESET";
     public static final String TIMING_PARAMETERS_CHANGED = "TIMING_PARAMETERS_CHANGED";
 
@@ -295,5 +295,9 @@ public class Commands {
     public static final String TOGGLE_TRANSPORT = "TOGGLE_TRANSPORT";
     public static final String LFO_VALUE_CHANGED = "LFO_VALUE_CHANGED";
     public static final String LFO_SELECTED = "LFO_SELECTED";
+    public static final String DRUM_PATTERN_SWITCHED = "DRUM_PATTERN_SWITCHED";
+    public static final String MELODIC_PATTERN_SWITCHED = "MELODIC_PATTERN_SWITCHED";
+    public static final String GLOBAL_LOOPING_ENABLED = "GLOBAL_LOOPING_ENABLED";
+    public static final String GLOBAL_LOOPING_DISABLED = "GLOBAL_LOOPING_DISABLED";
 
 }

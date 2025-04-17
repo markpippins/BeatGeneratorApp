@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class RubiksCompVisualization implements IVisualizationHandler {
     private List<RubiksCuber> cubers = new ArrayList<>();
@@ -34,7 +34,7 @@ public class RubiksCompVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (buttons == null || buttons.length == 0) return;
 
         clearDisplay(buttons);
@@ -46,15 +46,15 @@ public class RubiksCompVisualization implements IVisualizationHandler {
         }
     }
 
-    private void clearDisplay(GridButton[][] buttons) {
-        for (GridButton[] row : buttons) {
-            for (GridButton button : row) {
+    private void clearDisplay(JButton[][] buttons) {
+        for (JButton[] row : buttons) {
+            for (JButton button : row) {
                 button.setBackground(Color.BLACK);
             }
         }
     }
 
-    private void updateAndDrawCompetitors(GridButton[][] buttons) {
+    private void updateAndDrawCompetitors(JButton[][] buttons) {
         for (RubiksCuber cuber : cubers) {
             cuber.update();
             if (cuber.isWinner) {
@@ -65,7 +65,7 @@ public class RubiksCompVisualization implements IVisualizationHandler {
         }
     }
 
-    private void drawProgressBar(GridButton[][] buttons, RubiksCuber cuber) {
+    private void drawProgressBar(JButton[][] buttons, RubiksCuber cuber) {
         if (cuber.y >= 0 && cuber.y < buttons.length) {
             int progressWidth = (int)(cuber.progress * PROGRESS_BAR_WIDTH);
             for (int i = 0; i < PROGRESS_BAR_WIDTH; i++) {

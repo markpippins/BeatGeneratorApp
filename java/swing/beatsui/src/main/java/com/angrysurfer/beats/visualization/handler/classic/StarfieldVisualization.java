@@ -6,7 +6,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class StarfieldVisualization implements IVisualizationHandler {
     private Star[] stars;
@@ -34,7 +34,7 @@ public class StarfieldVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (stars == null) {
             stars = new Star[NUM_STARS];
             for (int i = 0; i < NUM_STARS; i++) {

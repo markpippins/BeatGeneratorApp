@@ -7,7 +7,7 @@ import java.util.*;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class CrystalVisualization implements IVisualizationHandler {
     private Set<Point> crystal = new HashSet<>();
@@ -20,7 +20,7 @@ public class CrystalVisualization implements IVisualizationHandler {
     private double phase = 0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (crystal.isEmpty()) {
             initializeCrystal(buttons);
         }
@@ -76,7 +76,7 @@ public class CrystalVisualization implements IVisualizationHandler {
         phase += 0.1;
     }
 
-    private void initializeCrystal(GridButton[][] buttons) {
+    private void initializeCrystal(JButton[][] buttons) {
         crystal.clear();
         growthPoints.clear();
         

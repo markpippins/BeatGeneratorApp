@@ -6,7 +6,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class WaveVisualization extends LockHandler implements IVisualizationHandler {
 
@@ -15,7 +15,7 @@ public class WaveVisualization extends LockHandler implements IVisualizationHand
     private final double amplitude = 2.0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Calculate wave parameters

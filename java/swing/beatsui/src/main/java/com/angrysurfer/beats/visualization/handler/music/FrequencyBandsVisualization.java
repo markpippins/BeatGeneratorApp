@@ -6,7 +6,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class FrequencyBandsVisualization extends LockHandler implements IVisualizationHandler {
 
@@ -14,7 +14,7 @@ public class FrequencyBandsVisualization extends LockHandler implements IVisuali
     private double phase = 0.0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
 
        
 

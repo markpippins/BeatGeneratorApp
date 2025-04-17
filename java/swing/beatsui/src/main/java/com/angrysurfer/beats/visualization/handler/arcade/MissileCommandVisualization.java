@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class MissileCommandVisualization implements IVisualizationHandler {
     private List<Missile> playerMissiles = new ArrayList<>();
@@ -52,7 +52,7 @@ public class MissileCommandVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (cities.isEmpty()) {
             initializeGame(buttons);
         }
@@ -110,7 +110,7 @@ public class MissileCommandVisualization implements IVisualizationHandler {
         }
     }
 
-    private void updateMissiles(List<Missile> missiles, Color color, GridButton[][] buttons) {
+    private void updateMissiles(List<Missile> missiles, Color color, JButton[][] buttons) {
         for (Missile missile : new ArrayList<>(missiles)) {
             missile.progress += 0.05;
             if (missile.progress >= 1.0) {
@@ -126,7 +126,7 @@ public class MissileCommandVisualization implements IVisualizationHandler {
         }
     }
 
-    private void drawExplosion(Explosion exp, GridButton[][] buttons) {
+    private void drawExplosion(Explosion exp, JButton[][] buttons) {
         for (int y = -exp.radius; y <= exp.radius; y++) {
             for (int x = -exp.radius; x <= exp.radius; x++) {
                 if (x*x + y*y <= exp.radius*exp.radius) {
@@ -141,7 +141,7 @@ public class MissileCommandVisualization implements IVisualizationHandler {
         }
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         cities.clear();
         for (int i = 0; i < 6; i++) {
             cities.add(new City(4 + i * 6));

@@ -8,7 +8,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class TailGunnerVisualization implements IVisualizationHandler {
     private final Random random = new Random();
@@ -41,7 +41,7 @@ public class TailGunnerVisualization implements IVisualizationHandler {
             z -= 0.01; // Move toward viewer
         }
 
-        void draw(GridButton[][] buttons, int width, int height) {
+        void draw(JButton[][] buttons, int width, int height) {
             if (hit) return;
             
             // Perspective projection
@@ -65,7 +65,7 @@ public class TailGunnerVisualization implements IVisualizationHandler {
     }
     
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         int width = buttons[0].length;
         int height = buttons.length;
         frame++;
@@ -106,7 +106,7 @@ public class TailGunnerVisualization implements IVisualizationHandler {
         }
     }
 
-    private void drawCrosshair(GridButton[][] buttons, int width, int height) {
+    private void drawCrosshair(JButton[][] buttons, int width, int height) {
         int centerX = width / 2;
         int centerY = height / 2;
         

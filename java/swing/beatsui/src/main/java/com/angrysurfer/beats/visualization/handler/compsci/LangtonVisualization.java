@@ -5,7 +5,7 @@ import java.awt.Point;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class LangtonVisualization implements IVisualizationHandler {
     private boolean[][] grid;
@@ -34,7 +34,7 @@ public class LangtonVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (grid == null) {
             initializeGrid(buttons);
         }
@@ -85,7 +85,7 @@ public class LangtonVisualization implements IVisualizationHandler {
         return count;
     }
 
-    private void initializeGrid(GridButton[][] buttons) {
+    private void initializeGrid(JButton[][] buttons) {
         grid = new boolean[buttons.length][buttons[0].length];
         ant = new Ant(buttons[0].length / 2, buttons.length / 2);
     }

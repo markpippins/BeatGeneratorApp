@@ -6,7 +6,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class MidiGridVisualization extends LockHandler implements IVisualizationHandler {
     private final Random random = new Random();
@@ -14,7 +14,7 @@ public class MidiGridVisualization extends LockHandler implements IVisualization
     private boolean[][] midiGrid;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
 
        
 

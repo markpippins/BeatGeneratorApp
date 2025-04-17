@@ -12,7 +12,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.widget.ColorUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -62,7 +62,7 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
     private long lastDisplayedBar = -1;
     
     // UI state
-    private GridButton[][] currentButtons = null;
+    private JButton[][] currentButtons = null;
     private int lastPlayheadCol = -1;
     
     // Store original colors to fix trailing issue
@@ -212,7 +212,7 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
     }
     
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Store reference to buttons
         this.currentButtons = buttons;
         
@@ -226,7 +226,7 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
         updateDisplay();
     }
     
-    private void initializeGrid(GridButton[][] buttons) {
+    private void initializeGrid(JButton[][] buttons) {
         SwingUtilities.invokeLater(() -> {
             if (buttons == null || buttons.length == 0) return;
             

@@ -4,13 +4,13 @@ import java.awt.Color;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class RippleVisualization implements IVisualizationHandler {
     private double t = 0.0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         double cx = buttons[0].length / 2.0;
         double cy = buttons.length / 2.0;
         

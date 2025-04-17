@@ -180,8 +180,9 @@ public class Session implements Serializable, IBusListener {
         logger.info("addPlayer() - adding player: {}", player);
         if (isRunning())
             synchronized (getAddList()) {
-            getAddList().add(player);
-        } else {
+                getAddList().add(player);
+            }
+        else {
             getPlayers().add(player);
         }
 
@@ -198,8 +199,9 @@ public class Session implements Serializable, IBusListener {
         logger.info("addPlayer() - removing player: {}", player);
         if (isRunning())
             synchronized (getRemoveList()) {
-            getRemoveList().add(player);
-        } else {
+                getRemoveList().add(player);
+            }
+        else {
             getPlayers().remove(player);
         }
 
@@ -593,18 +595,19 @@ public class Session implements Serializable, IBusListener {
     // Refactored onTick method with fixed references
     public void onTick() {
 
-        timingBus.publish(Commands.TIMING_UPDATE, this, new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
-
         try {
-            tick = tick % ticksPerBeat + 1;
-
             tickCount++;
 
             // Calculate beat from tick
             int newBeat = (int) (tickCount / ticksPerBeat);
             if (newBeat > beatCount) {
-                beat = (beat % beatsPerBar) + 1; // This cycles from 1 to parts                
+                beat = (beat % beatsPerBar) + 1; // This cycles from 1 to parts
                 beatCount = newBeat;
+                timingBus.publish(Commands.TIMING_BEAT, this,
+                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+            } else if (tick == 1) {
+                timingBus.publish(Commands.TIMING_BEAT, this,
+                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
             }
 
             // Calculate bar from beat
@@ -612,7 +615,13 @@ public class Session implements Serializable, IBusListener {
             if (newBar > barCount) {
                 bar = (bar % bars) + 1; // This cycles from 1 to parts
                 barCount = newBar;
+                timingBus.publish(Commands.TIMING_BAR, this,
+                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+            } else if (tick == 1) {
+                timingBus.publish(Commands.TIMING_BAR, this,
+                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
             }
+
 
             // Part calculations on bar change - fix to only increment at partLength
             // boundaries
@@ -621,11 +630,20 @@ public class Session implements Serializable, IBusListener {
                 part = (part % parts) + 1; // This cycles from 1 to parts
                 partCount++;
                 logger.debug("Part changed to {} (partCount={}) at bar {}", part, partCount, barCount);
+                timingBus.publish(Commands.TIMING_PART, this,
+                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+            } else if (tick == 1) {
+                timingBus.publish(Commands.TIMING_PART, this,
+                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
             }
-
         } catch (Exception e) {
             logger.error("Error in onTick", e);
         }
+
+        timingBus.publish(Commands.TIMING_UPDATE, this,
+                new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+        tick = tick % ticksPerBeat + 1;
+
     }
 
     public void syncToSequencer() {

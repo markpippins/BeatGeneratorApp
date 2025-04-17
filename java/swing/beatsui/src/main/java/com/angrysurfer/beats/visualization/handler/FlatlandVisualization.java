@@ -6,7 +6,7 @@ import java.util.*;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class FlatlandVisualization implements IVisualizationHandler {
     private List<Shape> shapes = new ArrayList<>();
@@ -45,7 +45,7 @@ public class FlatlandVisualization implements IVisualizationHandler {
             hue = random.nextFloat();
         }
         
-        void draw(GridButton[][] buttons) {
+        void draw(JButton[][] buttons) {
             // Project 2D polygon into 1D line with varying intensity
             double projection = Math.abs(Math.cos(angle)) * size;
             int width = (int)projection;
@@ -63,7 +63,7 @@ public class FlatlandVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         
         // Add new shapes

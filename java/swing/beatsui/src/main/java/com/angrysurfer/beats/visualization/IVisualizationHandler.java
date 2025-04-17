@@ -2,13 +2,13 @@ package com.angrysurfer.beats.visualization;
 
 import java.awt.Color;
 
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 
 public interface IVisualizationHandler {
 
-    void update(GridButton[][] buttons);
+    void update(JButton[][] buttons);
 
     String getName();
 

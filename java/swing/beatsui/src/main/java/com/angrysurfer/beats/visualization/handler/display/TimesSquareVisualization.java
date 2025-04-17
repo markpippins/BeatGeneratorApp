@@ -7,7 +7,7 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class TimesSquareVisualization implements IVisualizationHandler {
     private List<ScrollingMessage> messages = new ArrayList<>();
@@ -54,7 +54,7 @@ public class TimesSquareVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         int rows = buttons.length;
         int cols = buttons[0].length;
 
@@ -119,7 +119,7 @@ public class TimesSquareVisualization implements IVisualizationHandler {
         messages.removeIf(msg -> msg.x + msg.text.length() * 6 < 0);
     }
 
-    private void drawCharacter(GridButton[][] buttons, char c, int x, int y, Color color) {
+    private void drawCharacter(JButton[][] buttons, char c, int x, int y, Color color) {
         // Simple LED-style character rendering
         switch (c) {
             case '★' -> {

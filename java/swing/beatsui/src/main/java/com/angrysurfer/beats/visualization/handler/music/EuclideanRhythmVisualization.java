@@ -6,7 +6,7 @@ import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class EuclideanRhythmVisualization extends LockHandler implements IVisualizationHandler {
     
@@ -15,7 +15,7 @@ public class EuclideanRhythmVisualization extends LockHandler implements IVisual
     private final int[] pulses = {3, 7, 5, 4, 3, 2, 4, 5};
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         for (int row = 0; row < Math.min(buttons.length, steps.length); row++) {

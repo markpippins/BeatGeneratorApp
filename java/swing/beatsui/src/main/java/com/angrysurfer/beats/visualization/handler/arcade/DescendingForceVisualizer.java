@@ -3,7 +3,7 @@ package com.angrysurfer.beats.visualization.handler.arcade;
 import com.angrysurfer.beats.visualization.DisplayType;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -115,7 +115,7 @@ public class DescendingForceVisualizer implements IVisualizationHandler {
             }
         }
         
-        void draw(GridButton[][] buttons) {
+        void draw(JButton[][] buttons) {
             int startY = (int)y;
             int[][] pattern = INVADER_PATTERNS[patternIndex];  // Use selected pattern
             // Only draw visible portions of the invader
@@ -125,14 +125,14 @@ public class DescendingForceVisualizer implements IVisualizationHandler {
                     for (int col = 0; col < pattern[0].length; col++) {
                         int gridX = x + col;
                         if (gridX >= 0 && gridX < buttons[0].length && pattern[row][col] == 1) {
-                            GridButton button = buttons[gridY][gridX];
+                            JButton button = buttons[gridY][gridX];
                             if (isRainbow) {
                                 // For rainbow invaders, use different colors for each row
                                 button.setBackground(COLORS[(row + frameCount) % COLORS.length]);
                             } else {
                                 button.setBackground(color);
                             }
-                            button.setOn(true);
+                            button.repaint();
                         }
                     }
                 }
@@ -151,12 +151,12 @@ public class DescendingForceVisualizer implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Paint the entire grid black first
-        for (GridButton[] row : buttons) {
-            for (GridButton button : row) {
+        for (JButton[] row : buttons) {
+            for (JButton button : row) {
                 button.setBackground(Color.BLACK);
-                button.setOn(true);
+                button.repaint();
             }
         }
 

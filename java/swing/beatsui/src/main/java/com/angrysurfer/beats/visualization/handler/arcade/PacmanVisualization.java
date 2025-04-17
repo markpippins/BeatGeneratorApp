@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class PacmanVisualization implements IVisualizationHandler {
     private Point pacman = new Point(1, 4);
@@ -32,7 +32,7 @@ public class PacmanVisualization implements IVisualizationHandler {
     private boolean gameInitialized = false;  // Add this field
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (!gameInitialized) {
             initializeGame(buttons);
             gameInitialized = true;
@@ -169,7 +169,7 @@ public class PacmanVisualization implements IVisualizationHandler {
         return dots.isEmpty();
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         int rows = buttons.length;
         int cols = buttons[0].length;
         maze = new boolean[rows][cols];

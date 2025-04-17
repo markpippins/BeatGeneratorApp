@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class RainbowStarVisualization implements IVisualizationHandler {
     private double angle = 0.0;
@@ -42,7 +42,7 @@ public class RainbowStarVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         int centerX = buttons.length / 2;
         int centerY = buttons[0].length / 2;
         
@@ -97,7 +97,7 @@ public class RainbowStarVisualization implements IVisualizationHandler {
         colorIndex = (colorIndex + 1) % rainbowColors.length;
     }
 
-    private void drawLine(GridButton[][] buttons, int x1, int y1, int x2, int y2, Color color) {
+    private void drawLine(JButton[][] buttons, int x1, int y1, int x2, int y2, Color color) {
         int dx = Math.abs(x2 - x1);
         int dy = Math.abs(y2 - y1);
         int sx = x1 < x2 ? 1 : -1;

@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class BreakoutVisualization implements IVisualizationHandler {
     private int paddleX;
@@ -22,7 +22,7 @@ public class BreakoutVisualization implements IVisualizationHandler {
     };
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Initialize game if needed
         if (blocks.isEmpty()) {
             initializeGame(buttons);
@@ -85,7 +85,7 @@ public class BreakoutVisualization implements IVisualizationHandler {
         }
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         paddleX = buttons[0].length / 2;
         ballX = paddleX;
         ballY = buttons.length - 2;

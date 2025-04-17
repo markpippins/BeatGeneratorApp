@@ -5,7 +5,7 @@ import java.util.*;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class BinaryRainVisualization implements IVisualizationHandler {
     private List<Raindrop> raindrops = new ArrayList<>();
@@ -40,7 +40,7 @@ public class BinaryRainVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         // Add new raindrops

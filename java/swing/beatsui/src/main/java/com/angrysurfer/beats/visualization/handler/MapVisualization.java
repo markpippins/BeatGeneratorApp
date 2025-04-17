@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Point;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class MapVisualization implements IVisualizationHandler {
     
@@ -18,7 +18,7 @@ public class MapVisualization implements IVisualizationHandler {
     private final Color DESERT = new Color(238, 214, 175);
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         // Move viewport
         viewportPosition.x = (viewportPosition.x + scrollSpeed) % 1000;
         

@@ -65,7 +65,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private DrumSequencerPanel drumSequencerPanel;
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
     private InternalSynthControlPanel internalSynthControlPanel;
-    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[4];
+    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
     private PopupMixerPanel strikeMixerPanel;
     private MuteButtonsPanel muteButtonsPanel;
 
@@ -94,11 +94,15 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Mono 2", melodicPanels[1]);
         tabbedPane.addTab("Mono 3", melodicPanels[2]);
         tabbedPane.addTab("Mono 4", melodicPanels[3]);
+        tabbedPane.addTab("Mono 5", melodicPanels[4]);
+        tabbedPane.addTab("Mono 6", melodicPanels[5]);
+        tabbedPane.addTab("Mono 7", melodicPanels[6]);
+        tabbedPane.addTab("Mono 8", melodicPanels[7]);
         tabbedPane.addTab("Song", createSongPanel());
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Mod Matrix", createModulationMatrixPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
-
+        tabbedPane.addTab("Euclid", createEuclidPanel());
         tabbedPane.addTab("Players", new SessionPanel());
 
         // Create combined panel for Instruments + Systems
@@ -125,6 +129,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // Add existing control buttons
         buttonPanel.add(createAllNotesOffButton());
+        buttonPanel.add(createLoopToggleButton()); // Add the new loop toggle button
         buttonPanel.add(createMetronomeToggleButton());
         // buttonPanel.add(createRestartButton());
 
@@ -145,8 +150,67 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         updateMuteButtonSequencers();
     }
 
+    private Component createEuclidPanel() {
+        // Create a main panel with a border
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setBackground(new Color(30, 30, 30));
+        
+        // Title at the top
+        JLabel titleLabel = new JLabel("Euclidean Pattern Grid", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Sans Serif", Font.BOLD, 16));
+        titleLabel.setForeground(Color.WHITE);
+        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        
+        // Create a 2x2 grid of Euclidean Pattern panels
+        JPanel gridPanel = new JPanel(new GridLayout(2, 2, 15, 15));
+        gridPanel.setBackground(new Color(40, 40, 40));
+        gridPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Create 4 compact pattern panels
+        String[] patternNames = {"Kick", "Snare", "HiHat", "Perc"};
+        int[][] presets = {
+            {16, 4, 0, 0},   // Pattern 1: 16 steps, 4 fills, no rotation, no width
+            {12, 3, 2, 3},   // Pattern 2: 12 steps, 3 fills, 2 rotation, width 3
+            {8, 5, 1, 0},    // Pattern 3: 8 steps, 5 fills, 1 rotation, no width
+            {10, 7, 3, 6}    // Pattern 4: 10 steps, 7 fills, 3 rotation, width 6
+        };
+        
+        for (int i = 0; i < 4; i++) {
+            // Create and configure panel
+            EuclideanPatternPanel patternPanel = new EuclideanPatternPanel(true);
+            patternPanel.setTitle(patternNames[i]);
+            
+            // Configure with preset values
+            patternPanel.getStepsDial().setValue(presets[i][0]);
+            patternPanel.getFillsDial().setValue(presets[i][1]);
+            patternPanel.getRotationDial().setValue(presets[i][2]);
+            patternPanel.getWidthDial().setValue(presets[i][3]);
+            
+            // Create wrapper with a visible border
+            JPanel wrapper = new JPanel(new BorderLayout());
+            wrapper.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+            wrapper.add(patternPanel, BorderLayout.CENTER);
+            
+            gridPanel.add(wrapper);
+        }
+        
+        // Add the grid to the main panel
+        mainPanel.add(gridPanel, BorderLayout.CENTER);
+        
+        // Force minimum size
+        mainPanel.setMinimumSize(new Dimension(600, 500));
+        mainPanel.setPreferredSize(new Dimension(800, 600));
+        
+        // Debug
+        System.out.println("Created Euclidean panel grid with " + gridPanel.getComponentCount() + " components");
+        
+        return mainPanel;
+    }
+
     private Component createSongPanel() {
-        return new JPanel();
+        // Return instance of our new SongPanel
+        return new SongPanel();
     }
 
     /**
@@ -451,6 +515,64 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         });
 
         return metronomeButton;
+    }
+
+    private JToggleButton createLoopToggleButton() {
+        JToggleButton loopButton = new JToggleButton();
+        loopButton.setText("⟳");  // Unicode loop symbol
+        
+        // Set equal width and height to ensure square shape
+        loopButton.setPreferredSize(new Dimension(28, 28));
+        loopButton.setMinimumSize(new Dimension(28, 28));
+        loopButton.setMaximumSize(new Dimension(28, 28));
+        
+        // Explicitly set square size and enforce square shape
+        loopButton.putClientProperty("JButton.squareSize", true);
+        loopButton.putClientProperty("JComponent.sizeVariant", "regular");
+        
+        loopButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 18));
+        loopButton.setHorizontalAlignment(SwingConstants.CENTER);
+        loopButton.setVerticalAlignment(SwingConstants.CENTER);
+        loopButton.setMargin(new Insets(0, 0, 0, 0));
+        loopButton.setToolTipText("Toggle All Sequencer Looping");
+        
+        // Default to selected (looping enabled)
+        loopButton.setSelected(true);
+        
+        loopButton.addActionListener(e -> {
+            boolean isLooping = loopButton.isSelected();
+            logger.info("Global looping toggled: {}", isLooping ? "ON" : "OFF");
+            
+            // Set looping state for drum sequencer
+            if (drumSequencerPanel != null && drumSequencerPanel.getSequencer() != null) {
+                drumSequencerPanel.getSequencer().setLooping(isLooping);
+            }
+            
+            // Set looping state for all melodic sequencers
+            for (MelodicSequencerPanel panel : melodicPanels) {
+                if (panel != null && panel.getSequencer() != null) {
+                    panel.getSequencer().setLooping(isLooping);
+                }
+            }
+            
+            // Set looping state for drum effects sequencer if present
+            // if (drumEffectsSequencerPanel != null && drumEffectsSequencerPanel.getSequencer() != null) {
+            //     drumEffectsSequencerPanel.getSequencer().setLooping(isLooping);
+            // }
+            
+            // Visual feedback - change button color based on state
+            loopButton.setBackground(isLooping ? new Color(120, 200, 120) : new Color(200, 120, 120));
+            
+            // Publish command for other components to respond to
+            CommandBus.getInstance().publish(
+                isLooping ? Commands.GLOBAL_LOOPING_ENABLED : Commands.GLOBAL_LOOPING_DISABLED, 
+                this);
+        });
+        
+        // Initial button color - green for enabled looping
+        loopButton.setBackground(new Color(120, 200, 120));
+        
+        return loopButton;
     }
 
     private JButton createAllNotesOffButton() {

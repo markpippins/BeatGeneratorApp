@@ -5,7 +5,7 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class TicTacToeVisualization implements IVisualizationHandler {
     private static final int BOARD_SIZE = 3;
@@ -38,7 +38,7 @@ public class TicTacToeVisualization implements IVisualizationHandler {
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         int cellSize = Math.min(buttons.length, buttons[0].length) / BOARD_SIZE;
         int offsetY = (buttons.length - cellSize * BOARD_SIZE) / 2;
         int offsetX = (buttons[0].length - cellSize * BOARD_SIZE) / 2;
@@ -67,15 +67,15 @@ public class TicTacToeVisualization implements IVisualizationHandler {
         }
     }
     
-    private void clearDisplay(GridButton[][] buttons) {
-        for (GridButton[] row : buttons) {
-            for (GridButton button : row) {
+    private void clearDisplay(JButton[][] buttons) {
+        for (JButton[] row : buttons) {
+            for (JButton button : row) {
                 button.setBackground(Color.BLACK);
             }
         }
     }
     
-    private void drawGrid(GridButton[][] buttons, int cellSize, int offsetX, int offsetY) {
+    private void drawGrid(JButton[][] buttons, int cellSize, int offsetX, int offsetY) {
         // Draw vertical lines
         for (int x = 1; x < BOARD_SIZE; x++) {
             int gridX = offsetX + x * cellSize;
@@ -93,7 +93,7 @@ public class TicTacToeVisualization implements IVisualizationHandler {
         }
     }
     
-    private void drawPieces(GridButton[][] buttons, int cellSize, int offsetX, int offsetY) {
+    private void drawPieces(JButton[][] buttons, int cellSize, int offsetX, int offsetY) {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 if (board[i][j] != ' ') {
@@ -103,7 +103,7 @@ public class TicTacToeVisualization implements IVisualizationHandler {
         }
     }
     
-    private void drawSymbol(GridButton[][] buttons, int boardY, int boardX, char symbol, 
+    private void drawSymbol(JButton[][] buttons, int boardY, int boardX, char symbol, 
                           int cellSize, int offsetX, int offsetY) {
         Color color = symbol == 'X' ? X_COLOR : O_COLOR;
         int startY = offsetY + boardY * cellSize;

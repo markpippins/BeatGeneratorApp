@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.Timer;
 
 import com.angrysurfer.beats.visualization.handler.music.ScrollingSequencerVisualization;
-import com.angrysurfer.beats.widget.GridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -25,7 +25,7 @@ public class Visualizer implements IBusListener {
 
     private final JComponent parent;
 
-    private GridButton[][] buttons;
+    private JButton[][] buttons;
     private Timer animationTimer;
     private IVisualizationHandler currentVisualization = null;
 
@@ -46,7 +46,7 @@ public class Visualizer implements IBusListener {
 
     private boolean isLocked = false; // Add this field
 
-    public Visualizer(JComponent parent, GridButton[][] buttons) {
+    public Visualizer(JComponent parent, JButton[][] buttons) {
         this.parent = parent;
         this.buttons = buttons;
         initializeVisualizations();
@@ -293,7 +293,10 @@ public class Visualizer implements IBusListener {
     private void clearDisplay() {
         for (int row = 0; row < buttons.length; row++) {
             for (int col = 0; col < buttons[0].length; col++) {
-                buttons[row][col].reset();
+                buttons[row][col].setText("");
+                buttons[row][col].setToolTipText("");
+                buttons[row][col].setBackground(getParent().getBackground());
+        
             }
         }
     }

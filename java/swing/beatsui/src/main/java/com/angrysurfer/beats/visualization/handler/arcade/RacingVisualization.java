@@ -9,7 +9,7 @@ import java.util.Random;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class RacingVisualization implements IVisualizationHandler {
     private List<Point> track = new ArrayList<>();
@@ -21,7 +21,7 @@ public class RacingVisualization implements IVisualizationHandler {
     private double trackPhase = 0;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (car == null) {
             initializeGame(buttons);
         }
@@ -74,7 +74,7 @@ public class RacingVisualization implements IVisualizationHandler {
         trackPhase += 0.1;
     }
 
-    private void updateTrack(GridButton[][] buttons) {
+    private void updateTrack(JButton[][] buttons) {
         track.clear();
 
         // Generate sine wave track
@@ -131,7 +131,7 @@ public class RacingVisualization implements IVisualizationHandler {
         return angle;
     }
 
-    private void initializeGame(GridButton[][] buttons) {
+    private void initializeGame(JButton[][] buttons) {
         car = new Point(2, buttons.length / 2);
         carAngle = 0;
         carSpeed = 1;

@@ -6,7 +6,7 @@ import java.util.Stack;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class QuickSortVisualization implements IVisualizationHandler {
     private int[] array;
@@ -26,7 +26,7 @@ public class QuickSortVisualization implements IVisualizationHandler {
     private static final Color DEFAULT_COLOR = Color.BLUE;
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         if (array == null || array.length != buttons[0].length) {
             initializeArray(buttons[0].length);
         }

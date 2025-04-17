@@ -2,7 +2,7 @@ package com.angrysurfer.beats.visualization.handler.music;
 
 import java.awt.Color;
 import com.angrysurfer.beats.visualization.*;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class GateSequencerVisualization extends LockHandler implements IVisualizationHandler {
     private int currentStep = 0;
@@ -24,7 +24,7 @@ public class GateSequencerVisualization extends LockHandler implements IVisualiz
     }
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
         
         int gridHeight = buttons.length;

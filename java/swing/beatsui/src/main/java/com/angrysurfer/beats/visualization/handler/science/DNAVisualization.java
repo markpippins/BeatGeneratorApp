@@ -5,7 +5,7 @@ import java.awt.Color;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationUtils;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 public class DNAVisualization implements IVisualizationHandler {
     private double angle = 0;
@@ -14,7 +14,7 @@ public class DNAVisualization implements IVisualizationHandler {
     private static final double VERTICAL_OFFSET = 5.5; // Center the helix vertically
 
     @Override
-    public void update(GridButton[][] buttons) {
+    public void update(JButton[][] buttons) {
         VisualizationUtils.clearDisplay(buttons, buttons[0][0].getParent());
 
         for (int col = 0; col < buttons[0].length; col++) {

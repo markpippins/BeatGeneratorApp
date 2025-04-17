@@ -3,7 +3,7 @@ package com.angrysurfer.beats.visualization;
 import java.awt.Color;
 import java.awt.Point;
 
-import com.angrysurfer.beats.widget.GridButton;
+import javax.swing.JButton;
 
 import java.awt.Container;
 
@@ -24,7 +24,7 @@ public class VisualizationUtils {
         return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
     }
 
-    public static void clearDisplay(GridButton[][] buttons, Container parent) {
+    public static void clearDisplay(JButton[][] buttons, Container parent) {
         Color bg = parent.getBackground();
         for (int row = 0; row < buttons.length; row++) {
             for (int col = 0; col < buttons[0].length; col++) {
@@ -33,7 +33,7 @@ public class VisualizationUtils {
         }
     }
 
-    public static void fillBackground(GridButton[][] buttons, Color color) {
+    public static void fillBackground(JButton[][] buttons, Color color) {
         for (int row = 0; row < buttons.length; row++) {
             for (int col = 0; col < buttons[0].length; col++) {
                 buttons[row][col].setBackground(color);
