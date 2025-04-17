@@ -33,25 +33,27 @@ public class DrumSequencer implements IBusListener {
 
     // Constants
     public static final int DRUM_PAD_COUNT = 16; // Number of drum pads
-    public static final int MAX_STEPS = 64; // Maximum pattern length
-
-    // MIDI and music constants
-    private static final int MIDI_DRUM_CHANNEL = 9; // Standard MIDI drum channel
     public static final int MIDI_DRUM_NOTE_OFFSET = 36; // First drum pad note number
-    private static final int MAX_MIDI_VELOCITY = 127; // Maximum MIDI velocity
-    
-    // Default values for parameters
     public static final int DEFAULT_VELOCITY = 100; // Default note velocity
     public static final int DEFAULT_DECAY = 60; // Default note decay
     public static final int DEFAULT_PROBABILITY = 100; // Default step probability (%)
-    public static final int DEFAULT_PATTERN_LENGTH = 16; // Default pattern length
+    public static final int MIN_SWING = 50; // Minimum swing percentage
+    public static final int MAX_SWING = 75; // Maximum swing percentage
+
+    // Instance variables
+    private int maxSteps = 64; // Maximum pattern length
+    private int defaultPatternLength = 16; // Default pattern length
+
+    // MIDI and music constants
+    private static final int MIDI_DRUM_CHANNEL = 9; // Standard MIDI drum channel
+    private static final int MAX_MIDI_VELOCITY = 127; // Maximum MIDI velocity
+    
+    // Default values for parameters
     private static final int DEFAULT_TICKS_PER_BEAT = 24; // Default timing fallback
     private static final int DEFAULT_MASTER_TEMPO = 96; // Default master tempo
     
     // Swing parameters
     private static final int NO_SWING = 50; // Percentage value for no swing
-    public static final int MAX_SWING = 75; // Maximum swing percentage
-    public static final int MIN_SWING = 50; // Minimum swing percentage
     
     // Pattern generation parameters
     private static final int MAX_DENSITY = 10; // Maximum density for pattern generation
@@ -141,8 +143,8 @@ public class DrumSequencer implements IBusListener {
         Arrays.fill(velocities, DEFAULT_VELOCITY);
         Arrays.fill(originalVelocities, DEFAULT_VELOCITY);
 
-        // Default values
-        Arrays.fill(patternLengths, DEFAULT_PATTERN_LENGTH);
+        // Default values - use instance variables now
+        Arrays.fill(patternLengths, defaultPatternLength);  // Changed from DEFAULT_PATTERN_LENGTH
         Arrays.fill(directions, Direction.FORWARD); // Default to forward
         Arrays.fill(timingDivisions, TimingDivision.NORMAL); // Default timing
         Arrays.fill(loopingFlags, true); // Default to looping
@@ -151,16 +153,16 @@ public class DrumSequencer implements IBusListener {
         // Initialize masterTempo with default value
         masterTempo = DEFAULT_MASTER_TEMPO;
 
-        // Initialize patterns with max possible length
-        patterns = new boolean[DRUM_PAD_COUNT][MAX_STEPS];
-        stepVelocities = new int[DRUM_PAD_COUNT][MAX_STEPS];
-        stepDecays = new int[DRUM_PAD_COUNT][MAX_STEPS];
-        stepProbabilities = new int[DRUM_PAD_COUNT][MAX_STEPS];
-        stepNudges = new int[DRUM_PAD_COUNT][MAX_STEPS];
+        // Initialize patterns with instance variable
+        patterns = new boolean[DRUM_PAD_COUNT][maxSteps];  // Changed from MAX_STEPS
+        stepVelocities = new int[DRUM_PAD_COUNT][maxSteps];  // Changed from MAX_STEPS
+        stepDecays = new int[DRUM_PAD_COUNT][maxSteps];  // Changed from MAX_STEPS
+        stepProbabilities = new int[DRUM_PAD_COUNT][maxSteps];  // Changed from MAX_STEPS
+        stepNudges = new int[DRUM_PAD_COUNT][maxSteps];  // Changed from MAX_STEPS
 
         // Set default values
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
-            for (int j = 0; j < MAX_STEPS; j++) {
+            for (int j = 0; j < maxSteps; j++) {  // Changed from MAX_STEPS
                 stepVelocities[i][j] = DEFAULT_VELOCITY;
                 stepDecays[i][j] = DEFAULT_DECAY;
                 stepProbabilities[i][j] = DEFAULT_PROBABILITY;
@@ -203,6 +205,82 @@ public class DrumSequencer implements IBusListener {
 
         // Load first saved sequence (if available) instead of default pattern
         loadFirstSequence();
+    }
+
+    // Add getters and setters for the new instance variables
+    public int getMaxSteps() {
+        return maxSteps;
+    }
+
+    public void setMaxSteps(int maxSteps) {
+        // Add validation to ensure it's a reasonable value
+        if (maxSteps >= 16 && maxSteps <= 128) {
+            this.maxSteps = maxSteps;
+            
+            // Resize pattern arrays if needed
+            if (patterns != null && patterns[0].length < maxSteps) {
+                resizePatternArrays(maxSteps);
+            }
+            
+            logger.info("Maximum steps changed to: {}", maxSteps);
+        } else {
+            logger.warn("Invalid maxSteps value: {}. Must be between 16 and 128", maxSteps);
+        }
+    }
+
+    public int getDefaultPatternLength() {
+        return defaultPatternLength;
+    }
+
+    public void setDefaultPatternLength(int defaultPatternLength) {
+        // Add validation
+        if (defaultPatternLength > 0 && defaultPatternLength <= maxSteps) {
+            this.defaultPatternLength = defaultPatternLength;
+            logger.info("Default pattern length changed to: {}", defaultPatternLength);
+        } else {
+            logger.warn("Invalid defaultPatternLength: {}. Must be between 1 and {}", 
+                       defaultPatternLength, maxSteps);
+        }
+    }
+
+    // Add a method to resize pattern arrays if max steps changes
+    private void resizePatternArrays(int newSize) {
+        // Create new arrays with the new size
+        boolean[][] newPatterns = new boolean[DRUM_PAD_COUNT][newSize];
+        int[][] newStepVelocities = new int[DRUM_PAD_COUNT][newSize];
+        int[][] newStepDecays = new int[DRUM_PAD_COUNT][newSize];
+        int[][] newStepProbabilities = new int[DRUM_PAD_COUNT][newSize];
+        int[][] newStepNudges = new int[DRUM_PAD_COUNT][newSize];
+        
+        // Copy existing data
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            // Determine how many elements to copy
+            int copyLength = Math.min(patterns[i].length, newSize);
+            
+            // Copy pattern data
+            System.arraycopy(patterns[i], 0, newPatterns[i], 0, copyLength);
+            System.arraycopy(stepVelocities[i], 0, newStepVelocities[i], 0, copyLength);
+            System.arraycopy(stepDecays[i], 0, newStepDecays[i], 0, copyLength);
+            System.arraycopy(stepProbabilities[i], 0, newStepProbabilities[i], 0, copyLength);
+            System.arraycopy(stepNudges[i], 0, newStepNudges[i], 0, copyLength);
+            
+            // Initialize new elements with defaults
+            for (int j = copyLength; j < newSize; j++) {
+                newStepVelocities[i][j] = DEFAULT_VELOCITY;
+                newStepDecays[i][j] = DEFAULT_DECAY;
+                newStepProbabilities[i][j] = DEFAULT_PROBABILITY;
+                newStepNudges[i][j] = 0;
+            }
+        }
+        
+        // Replace the old arrays
+        patterns = newPatterns;
+        stepVelocities = newStepVelocities;
+        stepDecays = newStepDecays;
+        stepProbabilities = newStepProbabilities;
+        stepNudges = newStepNudges;
+        
+        logger.info("Pattern arrays resized to {}", newSize);
     }
 
     /**
@@ -390,7 +468,7 @@ public class DrumSequencer implements IBusListener {
         // Update absoluteStep based on the tick count - for the global timing
         if (tick % standardTicksPerStep == 0) {
             // Increment the absoluteStep (cycle through the maximum pattern length)
-            absoluteStep = (absoluteStep + 1) % MAX_STEPS;
+            absoluteStep = (absoluteStep + 1) % maxSteps;
             // Log the absolute step for debugging
             logger.debug("Absolute step: {}", absoluteStep);
         }
@@ -836,7 +914,7 @@ public class DrumSequencer implements IBusListener {
      */
     public void toggleStep(int drumIndex, int step) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT
-                && step >= 0 && step < MAX_STEPS) {
+                && step >= 0 && step < maxSteps) {
             patterns[drumIndex][step] = !patterns[drumIndex][step];
         }
     }
@@ -846,14 +924,14 @@ public class DrumSequencer implements IBusListener {
         // Add bounds check
         if (drumIndex < 0 || drumIndex >= DRUM_PAD_COUNT) {
             logger.warn("Invalid drum index {} for getPatternLength", drumIndex);
-            return DEFAULT_PATTERN_LENGTH; // Return default
+            return defaultPatternLength; // Return default
         }
         return patternLengths[drumIndex];
     }
 
     public void setPatternLength(int drumIndex, int length) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT
-                && length > 0 && length <= MAX_STEPS) {
+                && length > 0 && length <= maxSteps) {
             logger.info("Setting pattern length for drum {} to {}", drumIndex, length);
             patternLengths[drumIndex] = length;
 
@@ -956,54 +1034,54 @@ public class DrumSequencer implements IBusListener {
     }
 
     public int getStepVelocity(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < maxSteps) {
             return stepVelocities[drumIndex][stepIndex];
         }
         return 0;
     }
 
     public void setStepVelocity(int drumIndex, int stepIndex, int velocity) {
-        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < maxSteps) {
             stepVelocities[drumIndex][stepIndex] = velocity;
         }
     }
 
     public int getStepDecay(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < maxSteps) {
             return stepDecays[drumIndex][stepIndex];
         }
         return 0;
     }
 
     public void setStepDecay(int drumIndex, int stepIndex, int decay) {
-        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < maxSteps) {
             stepDecays[drumIndex][stepIndex] = decay;
         }
     }
 
     public int getStepProbability(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < maxSteps) {
             return stepProbabilities[drumIndex][stepIndex];
         }
         return DEFAULT_PROBABILITY; // Default to 100% if out of bounds
     }
 
     public void setStepProbability(int drumIndex, int stepIndex, int probability) {
-        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < maxSteps) {
             // Clamp value between 0-100
             stepProbabilities[drumIndex][stepIndex] = Math.max(0, Math.min(100, probability));
         }
     }
 
     public int getStepNudge(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < maxSteps) {
             return stepNudges[drumIndex][stepIndex];
         }
         return 0;
     }
 
     public void setStepNudge(int drumIndex, int stepIndex, int nudge) {
-        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT && stepIndex >= 0 && stepIndex < maxSteps) {
             stepNudges[drumIndex][stepIndex] = nudge;
         }
     }
@@ -1112,7 +1190,7 @@ public class DrumSequencer implements IBusListener {
      */
     public boolean isStepActive(int drumIndex, int stepIndex) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT
-                && stepIndex >= 0 && stepIndex < MAX_STEPS) {
+                && stepIndex >= 0 && stepIndex < maxSteps) {
             return patterns[drumIndex][stepIndex];
         }
         return false;
@@ -1123,7 +1201,7 @@ public class DrumSequencer implements IBusListener {
      */
     public void clearPattern() {
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            for (int step = 0; step < MAX_STEPS; step++) {
+            for (int step = 0; step < maxSteps; step++) {
                 patterns[drumIndex][step] = false;
             }
         }
