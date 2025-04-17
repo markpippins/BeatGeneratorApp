@@ -102,7 +102,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Mod Matrix", createModulationMatrixPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
-
+        tabbedPane.addTab("Euclid", createEuclidPanel());
         tabbedPane.addTab("Players", new SessionPanel());
 
         // Create combined panel for Instruments + Systems
@@ -148,6 +148,56 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // At the end of the method, update the mute buttons with sequencers
         updateMuteButtonSequencers();
+    }
+
+    private Component createEuclidPanel() {
+        // Create a main panel with a border
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Title at the top
+        JLabel titleLabel = new JLabel("Euclidean Pattern Grid", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Sans Serif", Font.BOLD, 16));
+        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        
+        // Create a 2x2 grid of Euclidean Pattern panels (changed from 4x4)
+        JPanel gridPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        
+        // Create 4 compact pattern panels (changed from 16)
+        String[] patternNames = {"Kick", "Snare", "HiHat", "Perc"};
+        int[][] presets = {
+            {16, 4, 0},   // Pattern 1: 16 steps, 4 fills, no rotation
+            {12, 3, 2},   // Pattern 2: 12 steps, 3 fills, 2 rotation
+            {8, 5, 1},    // Pattern 3: 8 steps, 5 fills, 1 rotation
+            {10, 7, 3}    // Pattern 4: 10 steps, 7 fills, 3 rotation
+        };
+        
+        for (int i = 0; i < 4; i++) {
+            int row = i / 2;
+            int col = i % 2;
+            
+            EuclideanPatternPanel patternPanel = new EuclideanPatternPanel(true);
+            
+            // Use meaningful names
+            // patternPanel.setTitle(patternNames[i]);
+            
+            // Configure with preset values
+            int steps = presets[i][0];
+            int fills = presets[i][1];
+            int rotation = presets[i][2];
+            
+            // Update the panel's pattern parameters
+            patternPanel.getStepsDial().setValue(steps);
+            patternPanel.getFillsDial().setValue(fills);
+            patternPanel.getRotationDial().setValue(rotation);
+            
+            gridPanel.add(patternPanel);
+        }
+        
+        // Add the grid to the main panel
+        mainPanel.add(gridPanel, BorderLayout.CENTER);
+        
+        return mainPanel;
     }
 
     private Component createSongPanel() {
