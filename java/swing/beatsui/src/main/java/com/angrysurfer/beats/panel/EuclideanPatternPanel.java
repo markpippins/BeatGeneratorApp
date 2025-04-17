@@ -22,12 +22,14 @@ public class EuclideanPatternPanel extends JPanel {
     private int totalSteps = 16;
     private int filledSteps = 4;
     private int rotation = 0;
+    private int width = 0;  // Width parameter
     
     // UI components
     private CircleDisplay circleDisplay;
     private NumberedTickDial stepsDial;
     private NumberedTickDial fillsDial;
     private NumberedTickDial rotationDial;
+    private NumberedTickDial widthDial;
     
     // Title for the panel
     private String title = "Euclidean Pattern";
@@ -43,37 +45,58 @@ public class EuclideanPatternPanel extends JPanel {
         setLayout(new BorderLayout(5, 5));
         isCompact = compact;
         
+        // Set background color
+        setBackground(new Color(40, 40, 40));
+        setOpaque(true);
+        
         int circleDiameter = compact ? 120 : 400;
         int dialDiameter = compact ? 60 : 80;
         
         // Create the circular display component
         circleDisplay = new CircleDisplay();
         circleDisplay.setPreferredSize(new Dimension(circleDiameter, circleDiameter));
+        circleDisplay.setMinimumSize(new Dimension(100, 100));
         
-        // Create control panel
+        // Create control panel with all dials
         JPanel controlPanel = createControlPanel(dialDiameter);
         
-        // Add components to the panel
+        // Add title if in compact mode
+        if (compact) {
+            JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+            titleLabel.setFont(new Font("Sans Serif", Font.BOLD, 12));
+            titleLabel.setForeground(Color.WHITE);
+            add(titleLabel, BorderLayout.NORTH);
+        }
+        
+        // Add components to the panel - CRITICAL! This was likely missing
         add(circleDisplay, BorderLayout.CENTER);
         add(controlPanel, BorderLayout.SOUTH);
         
-        // Update the pattern initially
+        // Set border for visibility
+        setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+        
+        // Set size for the entire panel
+        setPreferredSize(new Dimension(compact ? 180 : 500, compact ? 240 : 600));
+        
+        // Generate and display the initial pattern
         updatePattern();
     }
     
     private JPanel createControlPanel(int dialDiameter) {
         JPanel panel = new JPanel();
         
-        // Change from vertical BoxLayout to horizontal FlowLayout
+        // Use FlowLayout for horizontal arrangement
         panel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createEmptyBorder(5, 0, 5, 0),
-            BorderFactory.createTitledBorder("Pattern Controls")
+            BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.GRAY), "Controls")
         ));
+        panel.setBackground(new Color(40, 40, 40));
         
         // Create steps dial
         JPanel stepsPanel = new JPanel(new BorderLayout(2, 2));
         stepsPanel.add(new JLabel("Steps", SwingConstants.CENTER), BorderLayout.NORTH);
+        stepsPanel.setOpaque(false);
         
         stepsDial = new NumberedTickDial(1, 32);
         stepsDial.setValue(totalSteps);
@@ -91,6 +114,9 @@ public class EuclideanPatternPanel extends JPanel {
             // Update fills dial maximum
             fillsDial.setMaximum(totalSteps);
             
+            // Update rotation dial maximum
+            rotationDial.setMaximum(totalSteps > 0 ? totalSteps-1 : 0);
+            
             updatePattern();
             logger.debug("Total steps changed to: {}", totalSteps);
         });
@@ -99,6 +125,7 @@ public class EuclideanPatternPanel extends JPanel {
         // Create fills dial
         JPanel fillsPanel = new JPanel(new BorderLayout(2, 2));
         fillsPanel.add(new JLabel("Fills", SwingConstants.CENTER), BorderLayout.NORTH);
+        fillsPanel.setOpaque(false);
         
         fillsDial = new NumberedTickDial(0, totalSteps);
         fillsDial.setValue(filledSteps);
@@ -114,6 +141,7 @@ public class EuclideanPatternPanel extends JPanel {
         // Create rotation dial panel
         JPanel rotationPanel = new JPanel(new BorderLayout(2, 2));
         rotationPanel.add(new JLabel("Rotate", SwingConstants.CENTER), BorderLayout.NORTH);
+        rotationPanel.setOpaque(false);
         
         rotationDial = new NumberedTickDial(0, totalSteps - 1);
         rotationDial.setValue(rotation);
@@ -126,17 +154,31 @@ public class EuclideanPatternPanel extends JPanel {
         });
         rotationPanel.add(rotationDial, BorderLayout.CENTER);
         
-        // Add all dial panels horizontally to the control panel
+        // Create width dial panel
+        JPanel widthPanel = new JPanel(new BorderLayout(2, 2));
+        widthPanel.add(new JLabel("Width", SwingConstants.CENTER), BorderLayout.NORTH);
+        widthPanel.setOpaque(false);
+        
+        widthDial = new NumberedTickDial(0, 10);
+        widthDial.setValue(width);
+        widthDial.setSize(dialDiameter, dialDiameter);
+        widthDial.setPreferredSize(new Dimension(dialDiameter, dialDiameter));
+        widthDial.addChangeListener(e -> {
+            width = widthDial.getValue();
+            updatePattern();
+            logger.debug("Width changed to: {}", width);
+        });
+        widthPanel.add(widthDial, BorderLayout.CENTER);
+        
+        // Add all dial panels to the control panel
         panel.add(stepsPanel);
         panel.add(fillsPanel);
         panel.add(rotationPanel);
+        panel.add(widthPanel);
         
         return panel;
     }
     
-    /**
-     * Updates the visual pattern based on current parameters
-     */
     private void updatePattern() {
         // Update rotation dial's max value based on total steps
         rotationDial.setMaximum(totalSteps > 0 ? totalSteps - 1 : 0);
@@ -148,22 +190,39 @@ public class EuclideanPatternPanel extends JPanel {
         }
         
         // Generate the Euclidean pattern
-        boolean[] pattern = generateEuclideanPattern(totalSteps, filledSteps, rotation);
+        boolean[] pattern = generateEuclideanPattern(totalSteps, filledSteps, rotation, width);
         
         // Update the visual component
         circleDisplay.setPattern(pattern);
         circleDisplay.repaint();
     }
     
-    /**
-     * Generates an Euclidean pattern with the given parameters
-     * 
-     * @param steps Total number of steps
-     * @param fills Number of fills (active steps)
-     * @param rotation Pattern rotation
-     * @return Array representing the pattern
-     */
-    private boolean[] generateEuclideanPattern(int steps, int fills, int rotation) {
+    public void setTitle(String title) {
+        this.title = title;
+        
+        // Update title label if in compact mode
+        if (isCompact) {
+            // Find and remove any existing title component
+            Component[] components = getComponents();
+            for (int i = 0; i < components.length; i++) {
+                if (components[i] instanceof JLabel) {
+                    remove(components[i]);
+                    break;
+                }
+            }
+            
+            // Add new title label
+            JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+            titleLabel.setFont(new Font("Sans Serif", Font.BOLD, 12));
+            titleLabel.setForeground(Color.WHITE);
+            add(titleLabel, BorderLayout.NORTH);
+            
+            revalidate();
+            repaint();
+        }
+    }
+    
+    private boolean[] generateEuclideanPattern(int steps, int fills, int rotation, int width) {
         if (steps <= 0) return new boolean[0];
         if (fills <= 0) return new boolean[steps]; // All false
         if (fills >= steps) {
@@ -177,28 +236,48 @@ public class EuclideanPatternPanel extends JPanel {
         
         boolean[] pattern = new boolean[steps];
         
-        // Bresenham's line algorithm adapted for even distribution
-        int increment = steps / fills;
-        int error = steps % fills;
-        int position = 0;
-        
-        for (int i = 0; i < fills; i++) {
-            pattern[(position + rotation) % steps] = true;
-            position += increment;
+        if (width == 0) {
+            // Standard Euclidean pattern - use your existing algorithm
+            int increment = steps / fills;
+            int error = steps % fills;
+            int position = 0;
             
-            // Distribute the remainder evenly
-            if (error > 0) {
-                position++;
-                error--;
+            for (int i = 0; i < fills; i++) {
+                pattern[(position + rotation) % steps] = true;
+                position += increment;
+                
+                // Distribute the remainder evenly
+                if (error > 0) {
+                    position++;
+                    error--;
+                }
+            }
+        } else {
+            // Width-distorted pattern - stretch some sides
+            double widthFactor = width / 10.0; // Normalize to 0.0-1.0
+            int halfSteps = steps / 2;
+            
+            // Use a simpler approach: non-linear spacing between fills
+            for (int i = 0; i < fills; i++) {
+                double normalPosition = (double)i / fills;
+                double distortion = widthFactor * Math.sin(normalPosition * Math.PI * 2);
+                
+                // Calculate position with distortion
+                double adjustedPosition = normalPosition + distortion * 0.2;
+                if (adjustedPosition < 0) adjustedPosition = 0;
+                if (adjustedPosition >= 1) adjustedPosition = 0.999;
+                
+                int position = (int)(adjustedPosition * steps);
+                
+                // Apply rotation and set the step
+                pattern[(position + rotation) % steps] = true;
             }
         }
         
         return pattern;
     }
     
-    /**
-     * Custom component for drawing the circular pattern display
-     */
+    // Circle display inner class
     private class CircleDisplay extends JPanel {
         private boolean[] pattern;
         
@@ -222,7 +301,7 @@ public class EuclideanPatternPanel extends JPanel {
             // Calculate dimensions
             int width = getWidth();
             int height = getHeight();
-            int size = Math.min(width, height) - 40; // Leave some margin
+            int size = Math.min(width, height) - (isCompact ? 10 : 40); // Leave margin based on mode
             
             // Center the circle
             int centerX = width / 2;
@@ -231,43 +310,45 @@ public class EuclideanPatternPanel extends JPanel {
             // Draw outer circle
             g2d.setColor(new Color(60, 60, 60));
             g2d.setStroke(new BasicStroke(2));
-            g2d.drawOval(centerX - size / 2, centerY - size / 2, size, size);
+            g2d.drawOval(centerX - size/2, centerY - size/2, size, size);
             
             // Draw steps - only if we have a valid pattern
             if (pattern != null && pattern.length > 0) {
                 int radius = size / 2;
-                int dotRadius = Math.max(5, Math.min(radius / 10, 12));
+                int dotRadius = Math.max(3, Math.min(radius / 10, isCompact ? 5 : 12));
                 
                 // Arrays for polygon points (only filled steps)
-                int[] polygonX = new int[filledSteps];
-                int[] polygonY = new int[filledSteps];
+                int[] polygonX = new int[totalSteps];
+                int[] polygonY = new int[totalSteps];
                 int filledCount = 0;
                 
                 // Draw each step position at equal angular intervals
                 for (int i = 0; i < pattern.length; i++) {
                     // Calculate angle: start at top (270 degrees) and move clockwise
-                    // Convert to radians and adjust for Java's coordinate system
                     double angleInRadians = Math.toRadians(270 + (360.0 * i / pattern.length));
                     
                     // Calculate position on the circle
                     int x = centerX + (int)(radius * Math.cos(angleInRadians));
                     int y = centerY + (int)(radius * Math.sin(angleInRadians));
                     
-                    // Draw step number for all positions
-                    g2d.setColor(Color.GRAY);
-                    g2d.setFont(new Font("Sans", Font.PLAIN, 10));
-                    String stepText = String.valueOf(i + 1);
-                    FontMetrics fm = g2d.getFontMetrics();
-                    int textWidth = fm.stringWidth(stepText);
-                    int textHeight = fm.getHeight();
-                    
-                    // Position text slightly outside the circle
-                    double textAngle = angleInRadians;
-                    int textRadius = radius + 20;
-                    int textX = centerX + (int)(textRadius * Math.cos(textAngle));
-                    int textY = centerY + (int)(textRadius * Math.sin(textAngle));
-                    
-                    g2d.drawString(stepText, textX - textWidth / 2, textY + textHeight / 4);
+                    // Only draw step numbers in full-size mode
+                    if (!isCompact) {
+                        // Draw step number for all positions
+                        g2d.setColor(Color.GRAY);
+                        g2d.setFont(new Font("Sans", Font.PLAIN, 10));
+                        String stepText = String.valueOf(i + 1);
+                        FontMetrics fm = g2d.getFontMetrics();
+                        int textWidth = fm.stringWidth(stepText);
+                        int textHeight = fm.getHeight();
+                        
+                        // Position text slightly outside the circle
+                        double textAngle = angleInRadians;
+                        int textRadius = radius + (isCompact ? 10 : 20);
+                        int textX = centerX + (int)(textRadius * Math.cos(textAngle));
+                        int textY = centerY + (int)(textRadius * Math.sin(textAngle));
+                        
+                        g2d.drawString(stepText, textX - textWidth/2, textY + textHeight/4);
+                    }
                     
                     // Draw step dot - styled according to whether it's active or not
                     if (pattern[i]) {
@@ -280,22 +361,22 @@ public class EuclideanPatternPanel extends JPanel {
                         
                         // Filled step
                         g2d.setColor(new Color(120, 200, 255));
-                        g2d.fillOval(x - dotRadius, y - dotRadius, dotRadius * 2, dotRadius * 2);
+                        g2d.fillOval(x - dotRadius, y - dotRadius, dotRadius*2, dotRadius*2);
                         g2d.setColor(Color.WHITE);
-                        g2d.drawOval(x - dotRadius, y - dotRadius, dotRadius * 2, dotRadius * 2);
+                        g2d.drawOval(x - dotRadius, y - dotRadius, dotRadius*2, dotRadius*2);
                     } else {
                         // Empty step
                         g2d.setColor(new Color(80, 80, 80));
-                        g2d.drawOval(x - dotRadius, y - dotRadius, dotRadius * 2, dotRadius * 2);
+                        g2d.drawOval(x - dotRadius, y - dotRadius, dotRadius*2, dotRadius*2);
                         g2d.setColor(new Color(50, 50, 50));
-                        g2d.fillOval(x - dotRadius, y - dotRadius, dotRadius * 2, dotRadius * 2);
+                        g2d.fillOval(x - dotRadius, y - dotRadius, dotRadius*2, dotRadius*2);
                     }
                 }
                 
                 // Draw connecting lines between all steps to show the circular structure
                 g2d.setColor(new Color(80, 80, 80));
                 g2d.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 
-                                            0, new float[]{1.0f, 2.0f}, 0));
+                                          0, new float[]{1.0f, 2.0f}, 0));
                 
                 for (int i = 0; i < pattern.length; i++) {
                     // Calculate positions for current and next point
@@ -323,28 +404,21 @@ public class EuclideanPatternPanel extends JPanel {
             g2d.dispose();
         }
     }
-
+    
+    // Getters for the dials
     public NumberedTickDial getStepsDial() {
         return stepsDial;
     }
-
+    
     public NumberedTickDial getFillsDial() {
         return fillsDial;
     }
-
+    
     public NumberedTickDial getRotationDial() {
         return rotationDial;
     }
-
-    public int getTotalSteps() {
-        return totalSteps;
-    }
-
-    public int getFilledSteps() {
-        return filledSteps;
-    }
-
-    public int getRotation() {
-        return rotation;
+    
+    public NumberedTickDial getWidthDial() {
+        return widthDial;
     }
 }
