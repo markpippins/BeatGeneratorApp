@@ -654,7 +654,7 @@ public class SongPanel extends JPanel implements IBusListener {
         
         public TimelinePanel() {
             setLayout(null); // Absolute positioning for pattern blocks
-            setBackground(ColorUtils.getBackgroundColor());
+            setBackground(Color.WHITE);// ColorUtils.getBackgroundColor());
             
             // Track total components (1 drum track + melodic sequencers)
             int trackCount = 1 + melodicSequencers.size();
