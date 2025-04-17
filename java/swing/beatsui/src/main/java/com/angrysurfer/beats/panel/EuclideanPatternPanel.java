@@ -230,61 +230,27 @@ public class EuclideanPatternPanel extends JPanel {
             g2d.setStroke(new BasicStroke(2));
             g2d.drawOval(centerX - size/2, centerY - size/2, size, size);
             
-            // Draw steps
+            // Draw steps - only if we have a valid pattern
             if (pattern != null && pattern.length > 0) {
                 int radius = size / 2;
                 int dotRadius = Math.max(5, Math.min(radius / 10, 12));
                 
-                // Draw line from center to current step
-                if (pattern.length > 0) {
-                    int activeStepIndex = -1;
-                    
-                    // Find first active step for polygon
-                    for (int i = 0; i < pattern.length; i++) {
-                        if (pattern[i]) {
-                            activeStepIndex = i;
-                            break;
-                        }
-                    }
-                    
-                    // Draw polygon connecting filled steps if we have at least one
-                    if (activeStepIndex >= 0 && filledSteps > 0) {
-                        // Create list of points for the polygon
-                        int[] polygonX = new int[filledSteps];
-                        int[] polygonY = new int[filledSteps];
-                        int pointCount = 0;
-                        
-                        // Collect points for filled steps
-                        for (int i = 0; i < pattern.length; i++) {
-                            if (pattern[i] && pointCount < filledSteps) {
-                                double angle = 2 * Math.PI * i / pattern.length - Math.PI / 2;
-                                int x = centerX + (int)(radius * Math.cos(angle));
-                                int y = centerY + (int)(radius * Math.sin(angle));
-                                
-                                polygonX[pointCount] = x;
-                                polygonY[pointCount] = y;
-                                pointCount++;
-                            }
-                        }
-                        
-                        // Draw the polygon if we have at least 2 points
-                        if (pointCount >= 2) {
-                            g2d.setColor(new Color(120, 200, 255, 60));
-                            g2d.setStroke(new BasicStroke(2));
-                            g2d.drawPolygon(polygonX, polygonY, pointCount);
-                            g2d.setColor(new Color(120, 200, 255, 30));
-                            g2d.fillPolygon(polygonX, polygonY, pointCount);
-                        }
-                    }
-                }
+                // Arrays for polygon points (only filled steps)
+                int[] polygonX = new int[filledSteps];
+                int[] polygonY = new int[filledSteps];
+                int filledCount = 0;
                 
-                // Draw all steps and highlight the active ones
+                // Draw each step position at equal angular intervals
                 for (int i = 0; i < pattern.length; i++) {
-                    double angle = 2 * Math.PI * i / pattern.length - Math.PI / 2;
-                    int x = centerX + (int)(radius * Math.cos(angle));
-                    int y = centerY + (int)(radius * Math.sin(angle));
+                    // Calculate angle: start at top (270 degrees) and move clockwise
+                    // Convert to radians and adjust for Java's coordinate system
+                    double angleInRadians = Math.toRadians(270 + (360.0 * i / pattern.length));
                     
-                    // Draw step number (optional for better visualization)
+                    // Calculate position on the circle
+                    int x = centerX + (int)(radius * Math.cos(angleInRadians));
+                    int y = centerY + (int)(radius * Math.sin(angleInRadians));
+                    
+                    // Draw step number for all positions
                     g2d.setColor(Color.GRAY);
                     g2d.setFont(new Font("Sans", Font.PLAIN, 10));
                     String stepText = String.valueOf(i + 1);
@@ -292,14 +258,23 @@ public class EuclideanPatternPanel extends JPanel {
                     int textWidth = fm.stringWidth(stepText);
                     int textHeight = fm.getHeight();
                     
-                    double textAngle = angle;
-                    int textX = centerX + (int)((radius + 20) * Math.cos(textAngle));
-                    int textY = centerY + (int)((radius + 20) * Math.sin(textAngle));
+                    // Position text slightly outside the circle
+                    double textAngle = angleInRadians;
+                    int textRadius = radius + 20;
+                    int textX = centerX + (int)(textRadius * Math.cos(textAngle));
+                    int textY = centerY + (int)(textRadius * Math.sin(textAngle));
                     
                     g2d.drawString(stepText, textX - textWidth/2, textY + textHeight/4);
                     
-                    // Draw step dot
+                    // Draw step dot - styled according to whether it's active or not
                     if (pattern[i]) {
+                        // Store coordinates for the polygon (filled steps only)
+                        if (filledCount < polygonX.length) {
+                            polygonX[filledCount] = x;
+                            polygonY[filledCount] = y;
+                            filledCount++;
+                        }
+                        
                         // Filled step
                         g2d.setColor(new Color(120, 200, 255));
                         g2d.fillOval(x - dotRadius, y - dotRadius, dotRadius*2, dotRadius*2);
@@ -314,14 +289,15 @@ public class EuclideanPatternPanel extends JPanel {
                     }
                 }
                 
-                // Draw connecting lines between steps
+                // Draw connecting lines between all steps to show the circular structure
                 g2d.setColor(new Color(80, 80, 80));
                 g2d.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 
                                             0, new float[]{1.0f, 2.0f}, 0));
                 
                 for (int i = 0; i < pattern.length; i++) {
-                    double angle1 = 2 * Math.PI * i / pattern.length - Math.PI / 2;
-                    double angle2 = 2 * Math.PI * ((i + 1) % pattern.length) / pattern.length - Math.PI / 2;
+                    // Calculate positions for current and next point
+                    double angle1 = Math.toRadians(270 + (360.0 * i / pattern.length));
+                    double angle2 = Math.toRadians(270 + (360.0 * ((i + 1) % pattern.length) / pattern.length));
                     
                     int x1 = centerX + (int)(radius * Math.cos(angle1));
                     int y1 = centerY + (int)(radius * Math.sin(angle1));
@@ -329,6 +305,15 @@ public class EuclideanPatternPanel extends JPanel {
                     int y2 = centerY + (int)(radius * Math.sin(angle2));
                     
                     g2d.drawLine(x1, y1, x2, y2);
+                }
+                
+                // Draw the polygon connecting filled steps
+                if (filledCount >= 2) {
+                    g2d.setColor(new Color(120, 200, 255, 60));
+                    g2d.setStroke(new BasicStroke(2));
+                    g2d.drawPolygon(polygonX, polygonY, filledCount);
+                    g2d.setColor(new Color(120, 200, 255, 30));
+                    g2d.fillPolygon(polygonX, polygonY, filledCount);
                 }
             }
             
