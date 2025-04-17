@@ -57,7 +57,7 @@ public class EuclideanPatternPanel extends JPanel {
         circleDisplay.setPreferredSize(new Dimension(circleDiameter, circleDiameter));
         circleDisplay.setMinimumSize(new Dimension(100, 100));
         
-        // Create control panel with all dials
+        // Create control panel with all dials - now positioned vertically
         JPanel controlPanel = createControlPanel(dialDiameter);
         
         // Add title if in compact mode
@@ -68,15 +68,15 @@ public class EuclideanPatternPanel extends JPanel {
             add(titleLabel, BorderLayout.NORTH);
         }
         
-        // Add components to the panel - CRITICAL! This was likely missing
+        // Add components to the panel - CRITICAL! Now controls on EAST instead of SOUTH
         add(circleDisplay, BorderLayout.CENTER);
-        add(controlPanel, BorderLayout.SOUTH);
+        add(controlPanel, BorderLayout.EAST);  // Changed from SOUTH to EAST
         
         // Set border for visibility
         setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
         
-        // Set size for the entire panel
-        setPreferredSize(new Dimension(compact ? 180 : 500, compact ? 240 : 600));
+        // Set size for the entire panel - adjust for new layout
+        setPreferredSize(new Dimension(compact ? 240 : 600, compact ? 180 : 500));
         
         // Generate and display the initial pattern
         updatePattern();
@@ -85,10 +85,10 @@ public class EuclideanPatternPanel extends JPanel {
     private JPanel createControlPanel(int dialDiameter) {
         JPanel panel = new JPanel();
         
-        // Use FlowLayout for horizontal arrangement
-        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        // Use vertical BoxLayout instead of FlowLayout
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(5, 0, 5, 0),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5),
             BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.GRAY), "Controls")
         ));
         panel.setBackground(new Color(40, 40, 40));
@@ -97,6 +97,7 @@ public class EuclideanPatternPanel extends JPanel {
         JPanel stepsPanel = new JPanel(new BorderLayout(2, 2));
         stepsPanel.add(new JLabel("Steps", SwingConstants.CENTER), BorderLayout.NORTH);
         stepsPanel.setOpaque(false);
+        stepsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         stepsDial = new NumberedTickDial(1, 32);
         stepsDial.setValue(totalSteps);
@@ -126,6 +127,7 @@ public class EuclideanPatternPanel extends JPanel {
         JPanel fillsPanel = new JPanel(new BorderLayout(2, 2));
         fillsPanel.add(new JLabel("Fills", SwingConstants.CENTER), BorderLayout.NORTH);
         fillsPanel.setOpaque(false);
+        fillsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         fillsDial = new NumberedTickDial(0, totalSteps);
         fillsDial.setValue(filledSteps);
@@ -142,6 +144,7 @@ public class EuclideanPatternPanel extends JPanel {
         JPanel rotationPanel = new JPanel(new BorderLayout(2, 2));
         rotationPanel.add(new JLabel("Rotate", SwingConstants.CENTER), BorderLayout.NORTH);
         rotationPanel.setOpaque(false);
+        rotationPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         rotationDial = new NumberedTickDial(0, totalSteps - 1);
         rotationDial.setValue(rotation);
@@ -158,6 +161,7 @@ public class EuclideanPatternPanel extends JPanel {
         JPanel widthPanel = new JPanel(new BorderLayout(2, 2));
         widthPanel.add(new JLabel("Width", SwingConstants.CENTER), BorderLayout.NORTH);
         widthPanel.setOpaque(false);
+        widthPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         widthDial = new NumberedTickDial(0, 10);
         widthDial.setValue(width);
@@ -170,11 +174,17 @@ public class EuclideanPatternPanel extends JPanel {
         });
         widthPanel.add(widthDial, BorderLayout.CENTER);
         
-        // Add all dial panels to the control panel
+        // Add all dial panels to the control panel with vertical spacing
+        panel.add(Box.createVerticalStrut(5));
         panel.add(stepsPanel);
+        panel.add(Box.createVerticalStrut(10));
         panel.add(fillsPanel);
+        panel.add(Box.createVerticalStrut(10));
         panel.add(rotationPanel);
+        panel.add(Box.createVerticalStrut(10));
         panel.add(widthPanel);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(Box.createVerticalGlue()); // Fill extra space at bottom
         
         return panel;
     }
