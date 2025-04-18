@@ -56,6 +56,9 @@ public class DrumSequencer implements IBusListener {
 
     // Swing parameters
     private static final int NO_SWING = 50; // Percentage value for no swing
+    public static final int MAX_SWING = 99; // Maximum swing percentage
+    public static final int MIN_SWING = 25; // Minimum swing percentage
+    
 
     // Pattern generation parameters
     private static final int MAX_DENSITY = 10; // Maximum density for pattern generation

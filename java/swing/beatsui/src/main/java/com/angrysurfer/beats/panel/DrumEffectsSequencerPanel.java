@@ -27,7 +27,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beats.widget.ColorUtils;
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
@@ -228,7 +228,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(127);
                     dial.setValue(100); // Default value
-                    dial.setKnobColor(ColorUtils.getDialColor("velocity"));
+                    dial.setKnobColor(UIUtils.getDialColor("velocity"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -243,7 +243,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(1);
                     dial.setMaximum(200);
                     dial.setValue(60); // Default value
-                    dial.setKnobColor(ColorUtils.getDialColor("decay"));
+                    dial.setKnobColor(UIUtils.getDialColor("decay"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -258,7 +258,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(100);
                     dial.setValue(100); // Default to 100% (always plays)
-                    dial.setKnobColor(ColorUtils.getDialColor("probability"));
+                    dial.setKnobColor(UIUtils.getDialColor("probability"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -278,7 +278,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(250);
                     dial.setValue(0);
-                    dial.setKnobColor(ColorUtils.getDialColor("nudge"));
+                    dial.setKnobColor(UIUtils.getDialColor("nudge"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -968,7 +968,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             if (!isInPattern) {
                 button.setBackground(Color.DARK_GRAY);
             } else {
-                button.setBackground(isActive ? ColorUtils.deepOrange : Color.GRAY);
+                button.setBackground(isActive ? UIUtils.deepOrange : Color.GRAY);
             }
 
             // Force repaint

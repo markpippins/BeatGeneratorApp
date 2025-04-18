@@ -31,8 +31,8 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.visualization.Visualizer;
-import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.DrumSequencerButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridButton;
 import com.angrysurfer.core.api.Command;
@@ -68,6 +68,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private List<DrumSequencerGridButton> triggerButtons = new ArrayList<>();
     private DrumSequencerInfoPanel drumInfoPanel;
     private DrumSequenceNavigationPanel navigationPanel;
+    private Visualizer visualizer;
 
     // Core sequencer - manages all sequencing logic
     private DrumSequencer sequencer;
@@ -191,6 +192,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Create the center grid panel with sequence buttons
         JPanel sequencePanel = createSequenceGridPanel();
+
+        // visualizer = new Visualizer(sequencePanel, gridButtons);
         // new Visualizer(sequencePanel, gridButtons);
 
         // Wrap in scroll pane
@@ -558,7 +561,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 if (isSelected) {
                     // Highlight the selected row's border
                     button.setBorder(BorderFactory.createLineBorder(
-                            ColorUtils.dustyAmber, 1));
+                            UIUtils.dustyAmber, 1));
                 } else {
                     // Normal border for other rows
                     button.setBorder(BorderFactory.createLineBorder(
@@ -642,12 +645,12 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
                 // Style based on whether step is active and in pattern
                 if (!isInPattern) {
-                    button.setBackground(ColorUtils.charcoalGray);
+                    button.setBackground(UIUtils.charcoalGray);
                 } else {
                     if (isActive) {
-                        button.setBackground(ColorUtils.deepOrange);
+                        button.setBackground(UIUtils.deepOrange);
                     } else {
-                        button.setBackground(ColorUtils.slateGray);
+                        button.setBackground(UIUtils.slateGray);
                     }
                 }
 
@@ -781,8 +784,120 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         });
         menu.add(patternItem);
 
+        // Add Euclidean Pattern option
+        JMenuItem euclideanItem = new JMenuItem("Euclidean Pattern...");
+        euclideanItem.addActionListener(e -> showEuclideanDialog(drumIndex));
+        menu.add(euclideanItem);
+
         // Show the menu
         menu.show(component, x, y);
+    }
+
+    /**
+     * Shows a dialog with Euclidean pattern controls
+     * 
+     * @param drumIndex The drum index to apply the pattern to
+     */
+    private void showEuclideanDialog(int drumIndex) {
+        // Create dialog
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+                "Euclidean Pattern Generator",
+                java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        // Create panel with border layout
+        JPanel dialogPanel = new JPanel(new BorderLayout());
+        dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Create the Euclidean pattern panel (compact mode)
+        EuclideanPatternPanel patternPanel = new EuclideanPatternPanel(false);
+
+        // Set default values based on current pattern length
+        int patternLength = sequencer.getPatternLength(drumIndex);
+        patternPanel.getStepsDial().setValue(patternLength);
+        patternPanel.getHitsDial().setValue(Math.max(1, patternLength / 4)); // Default to 25% density
+        patternPanel.getRotationDial().setValue(0);
+        patternPanel.getWidthDial().setValue(0);
+
+        // Add pattern panel to dialog
+        dialogPanel.add(patternPanel, BorderLayout.CENTER);
+
+        // Add button panel at bottom
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        JButton applyButton = new JButton("Apply Pattern");
+        applyButton.addActionListener(e -> {
+            // Get the generated Euclidean pattern
+            boolean[] euclideanPattern = patternPanel.getPattern();
+
+            // Apply the pattern to the selected drum
+            applyEuclideanPattern(drumIndex, euclideanPattern);
+
+            // Close the dialog
+            dialog.dispose();
+        });
+
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(applyButton);
+        dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Set dialog contents and show
+        dialog.setContentPane(dialogPanel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    /**
+     * Applies an Euclidean pattern to the specified drum
+     * 
+     * @param drumIndex The index of the drum to update
+     * @param pattern   The boolean array representing the pattern
+     */
+    private void applyEuclideanPattern(int drumIndex, boolean[] pattern) {
+        if (pattern == null || pattern.length == 0) {
+            logger.warn("Cannot apply null or empty Euclidean pattern");
+            return;
+        }
+
+        try {
+            // First clear the existing pattern
+            clearRow(drumIndex);
+
+            // Set the pattern length if needed
+            int newLength = pattern.length;
+            sequencer.setPatternLength(drumIndex, newLength);
+
+            // Set default values for all steps
+            for (int step = 0; step < newLength; step++) {
+
+                sequencer.setStepProbability(drumIndex, step, DEFAULT_PROBABILITY);
+                sequencer.setStepNudge(drumIndex, step, 0);
+                sequencer.setStepDecay(drumIndex, step, DEFAULT_DECAY);
+                sequencer.setStepVelocity(drumIndex, step, DEFAULT_VELOCITY);
+            }
+
+            // Apply pattern values (activate steps where pattern is true)
+            for (int step = 0; step < pattern.length; step++) {
+                if (pattern[step]) {
+                    // Toggle the step to make it active
+                    if (!sequencer.isStepActive(drumIndex, step)) {
+                        sequencer.toggleStep(drumIndex, step);
+                    }
+                }
+            }
+
+            // Update the UI to reflect changes
+            updateStepButtonsForDrum(drumIndex);
+            updateParameterControls();
+
+            logger.info("Applied Euclidean pattern to drum {}, pattern length: {}", drumIndex, pattern.length);
+        } catch (Exception e) {
+            logger.error("Error applying Euclidean pattern", e);
+        }
     }
 
     /**
@@ -921,6 +1036,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
             // Ensure we refresh ALL drums and ALL steps
             for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+
                 for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
                     int buttonIndex = drumIndex * sequencer.getDefaultPatternLength() + step;
 

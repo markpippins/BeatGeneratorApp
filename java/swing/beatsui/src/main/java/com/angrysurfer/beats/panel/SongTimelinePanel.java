@@ -16,7 +16,7 @@
 
 // import javax.swing.JPanel;
 
-// import com.angrysurfer.beats.widget.ColorUtils;
+// import com.angrysurfer.beats.widget.UIUtils;
 // import com.angrysurfer.core.sequencer.MelodicSequencer;
 // import com.angrysurfer.core.sequencer.PatternSlot;
 // import com.angrysurfer.core.service.SessionManager;
@@ -34,7 +34,7 @@
 //     public SongTimelinePanel(SongPanel songPanel) {
 //         this.songPanel = songPanel;
 //         setLayout(null); // Absolute positioning for pattern blocks
-//         setBackground(ColorUtils.getBackgroundColor());
+//         setBackground(UIUtils.getBackgroundColor());
         
 //         // Track total components (1 drum track + melodic sequencers)
 //         int trackCount = 1 + patternSequencer.getMelodicSequencers().size();
@@ -108,15 +108,15 @@
 //         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
 //         // Draw track headers background
-//         g2d.setColor(ColorUtils.getAccentColor());
+//         g2d.setColor(UIUtils.getAccentColor());
 //         g2d.fillRect(0, SongPanel.HEADER_HEIGHT, SongPanel.TRACK_HEADER_WIDTH, getHeight());
         
 //         // Draw timeline header background
-//         g2d.setColor(ColorUtils.getAccentColor().darker());
+//         g2d.setColor(UIUtils.getAccentColor().darker());
 //         g2d.fillRect(0, 0, getWidth(), SongPanel.HEADER_HEIGHT);
         
 //         // Draw bar numbers
-//         g2d.setColor(ColorUtils.getTextColor());
+//         g2d.setColor(UIUtils.getTextColor());
 //         g2d.setFont(new Font("Dialog", Font.PLAIN, 12));
 //         for (int i = 0; i < this.songPanel.songLength; i++) {
 //             int x = SongPanel.TRACK_HEADER_WIDTH + (i * SongPanel.BAR_WIDTH) + (SongPanel.BAR_WIDTH / 2) - 10;
@@ -124,7 +124,7 @@
 //         }
         
 //         // Draw bar dividers
-//         g2d.setColor(ColorUtils.getTextColor().darker());
+//         g2d.setColor(UIUtils.getTextColor().darker());
 //         for (int i = 0; i <= this.songPanel.songLength; i++) {
 //             int x = SongPanel.TRACK_HEADER_WIDTH + (i * SongPanel.BAR_WIDTH);
 //             g2d.drawLine(x, 0, x, getHeight());
@@ -132,7 +132,7 @@
         
 //         // Draw track names
 //         int trackY = SongPanel.HEADER_HEIGHT;
-//         g2d.setColor(ColorUtils.getTextColor());
+//         g2d.setColor(UIUtils.getTextColor());
         
 //         // Drum track
 //         g2d.drawString("Drums", 10, trackY + (SongPanel.TRACK_HEIGHT / 2));
@@ -145,7 +145,7 @@
 //         }
         
 //         // Draw track dividers
-//         g2d.setColor(ColorUtils.getTextColor().darker());
+//         g2d.setColor(UIUtils.getTextColor().darker());
 //         trackY = SongPanel.HEADER_HEIGHT;
 //         for (int i = 0; i <= 1 + patternSequencer.getMelodicSequencers().size(); i++) {
 //             g2d.drawLine(0, trackY, getWidth(), trackY);
@@ -162,14 +162,14 @@
         
 //         // Draw drum pattern slots
 //         trackY = SongPanel.HEADER_HEIGHT;
-//         drawPatternSlots(g2d, this.songPanel.drumPatternSlots, trackY, ColorUtils.warmMustard);
+//         drawPatternSlots(g2d, this.songPanel.drumPatternSlots, trackY, UIUtils.warmMustard);
         
 //         // Draw melodic pattern slots
 //         trackY += SongPanel.TRACK_HEIGHT;
 //         for (MelodicSequencer sequencer : patternSequencer.getMelodicSequencers()) {
 //             List<PatternSlot> slots = this.songPanel.melodicPatternSlots.get(sequencer.getId());
 //             if (slots != null) {
-//                 drawPatternSlots(g2d, slots, trackY, ColorUtils.coolBlue);
+//                 drawPatternSlots(g2d, slots, trackY, UIUtils.coolBlue);
 //             }
 //             trackY += SongPanel.TRACK_HEIGHT;
 //         }
@@ -186,7 +186,7 @@
                 
 //                 // Draw semi-transparent dragging slot
 //                 Color slotColor = "DRUM".equals(this.songPanel.draggingSlot.getType()) ? 
-//                                    ColorUtils.warmMustard : ColorUtils.coolBlue;
+//                                    UIUtils.warmMustard : UIUtils.coolBlue;
                 
 //                 g2d.setColor(new Color(slotColor.getRed(), slotColor.getGreen(), 
 //                                      slotColor.getBlue(), 128));

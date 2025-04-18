@@ -18,7 +18,7 @@
 // import org.slf4j.Logger;
 // import org.slf4j.LoggerFactory;
 
-// import com.angrysurfer.beats.widget.ColorUtils;
+// import com.angrysurfer.beats.widget.UIUtils;
 // import com.angrysurfer.beats.widget.Dial;
 // import com.angrysurfer.core.api.Command;
 // import com.angrysurfer.core.api.CommandBus;
@@ -232,11 +232,11 @@
 
 //         // Apply different colors for drum vs melodic buttons
 //         Color defaultColor = isDrum
-//                 ? ColorUtils.fadedOrange.darker()
-//                 : ColorUtils.coolBlue.darker();
+//                 ? UIUtils.fadedOrange.darker()
+//                 : UIUtils.coolBlue.darker();
 //         Color activeColor = isDrum
-//                 ? ColorUtils.fadedOrange
-//                 : ColorUtils.coolBlue;
+//                 ? UIUtils.fadedOrange
+//                 : UIUtils.coolBlue;
 
 //         muteButton.setBackground(defaultColor);
 

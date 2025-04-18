@@ -15,6 +15,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
+import javax.sound.midi.ShortMessage;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -300,50 +302,52 @@ class InstrumentsPanel extends JPanel {
         return panel;
     }
 
-    /**
-     * Sends a MIDI note message to the selected instrument
-     */
     private void sendMidiNote(int channel, int noteNumber, int velocity) {
-        if (selectedInstrument == null) {
-            CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("InstrumentsPanel", "Error", "No instrument selected")
-            );
-            return;
-        }
-        
         try {
-            // Check if the instrument is available
-            if (!selectedInstrument.getAvailable()) {
+            // Get selected output device from device selection
+            MidiDevice device = getSelectedInstrument().getDevice();
+            if (device == null) {
+                device = DeviceManager.getInstance().getMidiDevice(getSelectedInstrument().getDeviceName());
+            }
+            if (device == null) {
                 CommandBus.getInstance().publish(
                     Commands.STATUS_UPDATE,
                     this,
-                    new StatusUpdate("InstrumentsPanel", "Error", "Instrument is not available: " + selectedInstrument.getName())
+                    new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
                 );
                 return;
             }
-
-            // Send note on message
-            selectedInstrument.noteOn(channel, noteNumber, velocity);
+            
+            // Open device if not already open
+            if (!device.isOpen()) {
+                device.open();
+            }
+            
+            // Get receiver
+            Receiver receiver = device.getReceiver();
+            
+            // Create note on message
+            ShortMessage noteOn = new ShortMessage();
+            noteOn.setMessage(ShortMessage.NOTE_ON, channel, noteNumber, velocity);
+            receiver.send(noteOn, -1);
+            
+            // Create note off message (to be sent after a delay)
+            ShortMessage noteOff = new ShortMessage();
+            noteOff.setMessage(ShortMessage.NOTE_OFF, channel, noteNumber, 0);
             
             // Schedule note off message after 500ms
             new Timer().schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    try {
-                        selectedInstrument.noteOff(channel, noteNumber, 0);
-                    } catch (Exception e) {
-                        logger.error("Error sending note off: {}", e.getMessage());
-                    }
+                    receiver.send(noteOff, -1);
                 }
-            }, 1500);
+            }, 500);
             
             // Log and update status
             CommandBus.getInstance().publish(
                 Commands.STATUS_UPDATE,
                 this,
-                new StatusUpdate("InstrumentsPanel", "Info", 
+                new StatusUpdate("MIDI Test", "Info", 
                     String.format("Sent note: %d on channel: %d with velocity: %d", 
                         noteNumber, channel + 1, velocity))
             );
@@ -352,11 +356,68 @@ class InstrumentsPanel extends JPanel {
             CommandBus.getInstance().publish(
                 Commands.STATUS_UPDATE,
                 this,
-                new StatusUpdate("InstrumentsPanel", "Error", "Failed to send MIDI note: " + e.getMessage())
+                new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI note: " + e.getMessage())
             );
             logger.error("Error sending MIDI note", e);
         }
     }
+    /**
+     * Sends a MIDI note message to the selected instrument
+     */
+    // private void sendMidiNote(int channel, int noteNumber, int velocity) {
+    //     if (selectedInstrument == null) {
+    //         CommandBus.getInstance().publish(
+    //             Commands.STATUS_UPDATE,
+    //             this,
+    //             new StatusUpdate("InstrumentsPanel", "Error", "No instrument selected")
+    //         );
+    //         return;
+    //     }
+        
+    //     try {
+    //         // Check if the instrument is available
+    //         if (!selectedInstrument.getAvailable()) {
+    //             CommandBus.getInstance().publish(
+    //                 Commands.STATUS_UPDATE,
+    //                 this,
+    //                 new StatusUpdate("InstrumentsPanel", "Error", "Instrument is not available: " + selectedInstrument.getName())
+    //             );
+    //             return;
+    //         }
+
+    //         // Send note on message
+    //         selectedInstrument.noteOn(channel, noteNumber, velocity);
+            
+    //         // Schedule note off message after 500ms
+    //         new Timer().schedule(new TimerTask() {
+    //             @Override
+    //             public void run() {
+    //                 try {
+    //                     selectedInstrument.noteOff(channel, noteNumber, 0);
+    //                 } catch (Exception e) {
+    //                     logger.error("Error sending note off: {}", e.getMessage());
+    //                 }
+    //             }
+    //         }, 1500);
+            
+    //         // Log and update status
+    //         CommandBus.getInstance().publish(
+    //             Commands.STATUS_UPDATE,
+    //             this,
+    //             new StatusUpdate("InstrumentsPanel", "Info", 
+    //                 String.format("Sent note: %d on channel: %d with velocity: %d", 
+    //                     noteNumber, channel + 1, velocity))
+    //         );
+            
+    //     } catch (Exception e) {
+    //         CommandBus.getInstance().publish(
+    //             Commands.STATUS_UPDATE,
+    //             this,
+    //             new StatusUpdate("InstrumentsPanel", "Error", "Failed to send MIDI note: " + e.getMessage())
+    //         );
+    //         logger.error("Error sending MIDI note", e);
+    //     }
+    // }
 
     /**
      * Sends a MIDI control change message to the selected instrument

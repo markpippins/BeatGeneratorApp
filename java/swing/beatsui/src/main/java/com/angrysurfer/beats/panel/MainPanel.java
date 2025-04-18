@@ -9,6 +9,9 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Point;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -19,6 +22,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -34,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.StatusBar;
+import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -68,6 +73,8 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
     private PopupMixerPanel strikeMixerPanel;
     private MuteButtonsPanel muteButtonsPanel;
+
+    private Point dragStartPoint;
 
     public MainPanel(StatusBar statusBar) {
         super(new BorderLayout());
@@ -146,10 +153,79 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         tabbedPane.putClientProperty("JTabbedPane.trailingComponent", tabToolbar);
 
+        // Add mouse motion listener for drag-and-drop functionality
+        tabbedPane.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // Store the drag start point
+                dragStartPoint = e.getLocationOnScreen();
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                int tabIndex = tabbedPane.indexAtLocation(e.getX(), e.getY());
+                if (tabIndex >= 0) {
+                    JComponent comp = (JComponent) tabbedPane.getComponentAt(tabIndex);
+
+                    Point p = e.getLocationOnScreen();
+                    // Check if dragged far enough from original position
+                    // if (isDraggedFarEnough(p, dragStartPoint)) {
+                    // Create new frame containing component from this tab
+                    String title = tabbedPane.getTitleAt(tabIndex);
+                    createDetachedWindow(comp, title, p);
+
+                    // Remove the tab from original pane
+                    tabbedPane.remove(tabIndex);
+                    // }
+                }
+            }
+        });
+
         // At the end of the method, update the mute buttons with sequencers
         updateMuteButtonSequencers();
     }
 
+    private boolean isDraggedFarEnough(Point currentPoint, Point startPoint) {
+        if (startPoint == null) {
+            return false;
+        }
+        int dx = currentPoint.x - startPoint.x;
+        int dy = currentPoint.y - startPoint.y;
+        return Math.sqrt(dx * dx + dy * dy) > 20; // Example threshold
+    }
+
+    /**
+     * Creates a detached window from a tab component and handles reattachment when
+     * closed
+     */
+    private void createDetachedWindow(JComponent comp, String title, Point location) {
+        // Create a modeless dialog for the detached tab
+        JDialog detachedWindow = new JDialog(SwingUtilities.getWindowAncestor(this), title,
+                Dialog.ModalityType.MODELESS);
+        detachedWindow.setContentPane(comp);
+
+        // Add window listener to handle reattachment when window is closed
+        detachedWindow.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                logger.info("Reattaching tab: " + title);
+
+                // Remove component from dialog before adding back to tabbedPane
+                detachedWindow.setContentPane(new JPanel());
+
+                // Add the component back to the tabbed pane
+                tabbedPane.addTab(title, comp);
+
+                // Select the newly added tab
+                tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
+            }
+        });
+
+        // Size, position and display the window
+        detachedWindow.pack();
+        detachedWindow.setLocation(location);
+        detachedWindow.setVisible(true);
+=======
     private Component createEuclidPanel() {
         // Create a main panel with a border
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
@@ -206,6 +282,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         System.out.println("Created Euclidean panel grid with " + gridPanel.getComponentCount() + " components");
         
         return mainPanel;
+
     }
 
     private Component createSongPanel() {
@@ -461,7 +538,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JToggleButton createMetronomeToggleButton() {
         JToggleButton metronomeButton = new JToggleButton();
-        metronomeButton.setText("🕰️");
+        metronomeButton.setText(Symbols.getSymbol(Symbols.METRONOME)); // Unicode metronome symbol
         // Set equal width and height to ensure square shape
         metronomeButton.setPreferredSize(new Dimension(28, 28));
         metronomeButton.setMinimumSize(new Dimension(28, 28));
@@ -519,65 +596,66 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JToggleButton createLoopToggleButton() {
         JToggleButton loopButton = new JToggleButton();
-        loopButton.setText("⟳");  // Unicode loop symbol
-        
+        loopButton.setText(Symbols.getSymbol(Symbols.LOOP)); // Unicode loop symbol
+
         // Set equal width and height to ensure square shape
         loopButton.setPreferredSize(new Dimension(28, 28));
         loopButton.setMinimumSize(new Dimension(28, 28));
         loopButton.setMaximumSize(new Dimension(28, 28));
-        
+
         // Explicitly set square size and enforce square shape
         loopButton.putClientProperty("JButton.squareSize", true);
         loopButton.putClientProperty("JComponent.sizeVariant", "regular");
-        
+
         loopButton.setFont(new Font("Segoe UI Symbol", Font.BOLD, 18));
         loopButton.setHorizontalAlignment(SwingConstants.CENTER);
         loopButton.setVerticalAlignment(SwingConstants.CENTER);
         loopButton.setMargin(new Insets(0, 0, 0, 0));
         loopButton.setToolTipText("Toggle All Sequencer Looping");
-        
+
         // Default to selected (looping enabled)
         loopButton.setSelected(true);
-        
+
         loopButton.addActionListener(e -> {
             boolean isLooping = loopButton.isSelected();
             logger.info("Global looping toggled: {}", isLooping ? "ON" : "OFF");
-            
+
             // Set looping state for drum sequencer
             if (drumSequencerPanel != null && drumSequencerPanel.getSequencer() != null) {
                 drumSequencerPanel.getSequencer().setLooping(isLooping);
             }
-            
+
             // Set looping state for all melodic sequencers
             for (MelodicSequencerPanel panel : melodicPanels) {
                 if (panel != null && panel.getSequencer() != null) {
                     panel.getSequencer().setLooping(isLooping);
                 }
             }
-            
+
             // Set looping state for drum effects sequencer if present
-            // if (drumEffectsSequencerPanel != null && drumEffectsSequencerPanel.getSequencer() != null) {
-            //     drumEffectsSequencerPanel.getSequencer().setLooping(isLooping);
+            // if (drumEffectsSequencerPanel != null &&
+            // drumEffectsSequencerPanel.getSequencer() != null) {
+            // drumEffectsSequencerPanel.getSequencer().setLooping(isLooping);
             // }
-            
+
             // Visual feedback - change button color based on state
             loopButton.setBackground(isLooping ? new Color(120, 200, 120) : new Color(200, 120, 120));
-            
+
             // Publish command for other components to respond to
             CommandBus.getInstance().publish(
-                isLooping ? Commands.GLOBAL_LOOPING_ENABLED : Commands.GLOBAL_LOOPING_DISABLED, 
-                this);
+                    isLooping ? Commands.GLOBAL_LOOPING_ENABLED : Commands.GLOBAL_LOOPING_DISABLED,
+                    this);
         });
-        
+
         // Initial button color - green for enabled looping
         loopButton.setBackground(new Color(120, 200, 120));
-        
+
         return loopButton;
     }
 
     private JButton createAllNotesOffButton() {
         JButton notesOffButton = new JButton();
-        notesOffButton.setText("🔕");
+        notesOffButton.setText(Symbols.getSymbol(Symbols.ALL_NOTES_OFF)); // Unicode all notes off symbol   
         // Set equal width and height to ensure square shape
         notesOffButton.setPreferredSize(new Dimension(28, 28));
         notesOffButton.setMinimumSize(new Dimension(28, 28));
@@ -638,8 +716,9 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private JButton createMixButton() {
         JButton mixButton = new JButton();
         // Use a mixer icon character instead of text to fit in a square button
-        mixButton.setText("🎛️");
-
+        // mixButton.setText("🎛️");
+        mixButton.setText(Symbols.getSymbol(Symbols.MIX)); // Unicode mixer sy
+        
         // Set equal width and height to ensure square shape
         mixButton.setPreferredSize(new Dimension(28, 28));
         mixButton.setMinimumSize(new Dimension(28, 28));
