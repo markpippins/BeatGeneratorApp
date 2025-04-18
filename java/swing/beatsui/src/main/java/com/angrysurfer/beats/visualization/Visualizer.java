@@ -37,8 +37,8 @@ public class Visualizer implements IBusListener {
     private Timer visualizationTimer;
     private Timer visualizationChangeTimer;
 
-    private static final int VISUALIZATION_DELAY = 30000; // 30 seconds
-    private static final int VISUALIZATION_CHANGE_DELAY = 10000; // 10 seconds * 6 = 1 minute
+    private static final int VISUALIZATION_DELAY = 300; // 30 seconds
+    private static final int VISUALIZATION_CHANGE_DELAY = 100; // 10 seconds * 6 = 1 minute
 
     private final CommandBus commandBus = CommandBus.getInstance();
 

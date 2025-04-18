@@ -91,7 +91,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
     public PlayerTimelinePanel() {
         super(new BorderLayout());
 
-        // setBackground(ColorUtils.coolBlue);
+        // setBackground(UIUtils.coolBlue);
 
         // Set a fixed size that won't change
         int fixedHeight = 200; // Reduced height
@@ -328,7 +328,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
         // Use BorderLayout for infoPanel to place buttons on the right
         JPanel infoPanel = new JPanel(new BorderLayout());
-        // infoPanel.setBackground(ColorUtils.coolBlue);
+        // infoPanel.setBackground(UIUtils.coolBlue);
         infoPanel.add(nameLabel, BorderLayout.CENTER);
         infoPanel.add(zoomControlPanel, BorderLayout.EAST);
 
@@ -362,7 +362,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         // Time labels panel with minimal height
         timeLabelsPanel = new JPanel();
         timeLabelsPanel.setLayout(null);
-        // timeLabelsPanel.setBackground(ColorUtils.coolBlue);
+        // timeLabelsPanel.setBackground(UIUtils.coolBlue);
         timeLabelsPanel.setPreferredSize(new Dimension(800, 20)); // Keep minimal
         timeLabelsPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.WHITE));
 

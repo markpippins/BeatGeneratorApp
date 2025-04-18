@@ -29,7 +29,7 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.widget.ColorUtils;
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.UIHelper;
 import com.angrysurfer.core.api.Command;
@@ -190,7 +190,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         // Track name with stylized border
         JPanel namePanel = new JPanel(new BorderLayout());
         namePanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ColorUtils.deepNavy),
+            BorderFactory.createLineBorder(UIUtils.deepNavy),
             BorderFactory.createEmptyBorder(2, 5, 2, 5)
         ));
         
@@ -198,7 +198,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         nameLabel.setPreferredSize(new Dimension(100, 25));
         nameLabel.setFont(new Font("Arial", Font.BOLD, isMaster ? 13 : 12));
         if (isMaster) {
-            nameLabel.setForeground(ColorUtils.mutedRed);
+            nameLabel.setForeground(UIUtils.mutedRed);
         }
         namePanel.add(nameLabel);
         panel.add(namePanel);
@@ -232,7 +232,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         volumeDial.setToolTipText("Volume");
         volumeDial.setPreferredSize(new Dimension(75, 75));
         volumeDials.add(volumeDial);
-        volumeDial.setKnobColor(ColorUtils.getDialColor("volume"));
+        volumeDial.setKnobColor(UIUtils.getDialColor("volume"));
 
         panel.add(wrapInCenteredPanel(volumeDial));
         
@@ -242,7 +242,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         panDial.setEnabled(!isMaster); // Master has no pan
         panDial.setToolTipText("Pan");
         panDial.setPreferredSize(new Dimension(75, 75));
-        panDial.setKnobColor(ColorUtils.getDialColor("pan"));
+        panDial.setKnobColor(UIUtils.getDialColor("pan"));
         panDials.add(panDial);
         panel.add(wrapInCenteredPanel(panDial));
         
@@ -251,7 +251,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         reverbDial.setValue(0);
         reverbDial.setToolTipText("Reverb Send");
         reverbDial.setPreferredSize(new Dimension(75, 75));
-        reverbDial.setKnobColor(ColorUtils.getDialColor("reverb"));
+        reverbDial.setKnobColor(UIUtils.getDialColor("reverb"));
         reverbDials.add(reverbDial);
         panel.add(wrapInCenteredPanel(reverbDial));
         
@@ -260,7 +260,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         chorusDial.setValue(0);
         chorusDial.setToolTipText("Chorus Send");
         chorusDial.setPreferredSize(new Dimension(75, 75));
-        chorusDial.setKnobColor(ColorUtils.getDialColor("chorus"));
+        chorusDial.setKnobColor(UIUtils.getDialColor("chorus"));
 
         chorusDials.add(chorusDial);
         panel.add(wrapInCenteredPanel(chorusDial));
@@ -270,7 +270,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         delayDial.setValue(0);
         delayDial.setToolTipText("Delay Send");
         delayDial.setPreferredSize(new Dimension(75, 75));
-        delayDial.setKnobColor(ColorUtils.getDialColor("delay"));
+        delayDial.setKnobColor(UIUtils.getDialColor("delay"));
         delayDials.add(delayDial);
         panel.add(wrapInCenteredPanel(delayDial));
         
@@ -294,12 +294,12 @@ public class MixerPanel extends JPanel implements IBusListener {
         panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
         panel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(ColorUtils.deepNavy),
+                BorderFactory.createLineBorder(UIUtils.deepNavy),
                 "Master Effects",
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
                 new Font("Arial", Font.BOLD, 12),
-                ColorUtils.deepNavy
+                UIUtils.deepNavy
             ),
             BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));

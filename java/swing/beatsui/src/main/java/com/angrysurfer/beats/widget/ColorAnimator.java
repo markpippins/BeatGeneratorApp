@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.ArrayList;
 import javax.swing.Timer;
 
+import com.angrysurfer.beats.UIUtils;
+
 public class ColorAnimator {
     private final List<Color> colors;
     private int currentIndex = 0;
@@ -16,16 +18,16 @@ public class ColorAnimator {
 
     public ColorAnimator() {
         this.colors = new ArrayList<>();
-        colors.add(ColorUtils.charcoalGray);
-        colors.add(ColorUtils.slateGray);
-        colors.add(ColorUtils.deepNavy);
-        colors.add(ColorUtils.mutedOlive);
-        colors.add(ColorUtils.fadedLime);
-        colors.add(ColorUtils.dustyAmber);
-        colors.add(ColorUtils.warmMustard);
-        colors.add(ColorUtils.deepOrange);
-        colors.add(ColorUtils.agedOffWhite);
-        colors.add(ColorUtils.deepTeal);
+        colors.add(UIUtils.charcoalGray);
+        colors.add(UIUtils.slateGray);
+        colors.add(UIUtils.deepNavy);
+        colors.add(UIUtils.mutedOlive);
+        colors.add(UIUtils.fadedLime);
+        colors.add(UIUtils.dustyAmber);
+        colors.add(UIUtils.warmMustard);
+        colors.add(UIUtils.deepOrange);
+        colors.add(UIUtils.agedOffWhite);
+        colors.add(UIUtils.deepTeal);
 
         colors.add(Color.cyan);
         colors.add(Color.magenta);

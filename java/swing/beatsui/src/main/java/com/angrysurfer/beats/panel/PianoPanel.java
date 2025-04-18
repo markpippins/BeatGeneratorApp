@@ -35,8 +35,8 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.widget.ColorAnimator;
-import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -67,7 +67,7 @@ public class PianoPanel extends JPanel {
         setMinimumSize(new Dimension(265, 60));
         setBorder(BorderFactory.createEmptyBorder(20,2,20,2));
         setOpaque(true);
-        setBackground(ColorUtils.fadedOrange);
+        setBackground(UIUtils.fadedOrange);
 
         // Add three colored buttons on the right side
         int buttonWidth = 25;
@@ -78,18 +78,18 @@ public class PianoPanel extends JPanel {
 
         followScaleBtn = new JButton();
         followScaleBtn.setBounds(startX, startY, buttonWidth, buttonHeight);
-        followScaleBtn.setBackground(ColorUtils.coolBlue);
+        followScaleBtn.setBackground(UIUtils.coolBlue);
 
         configureToggleButton(followScaleBtn);
 
         JButton button2 = new JButton();
         button2.setBounds(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight);
-        button2.setBackground(ColorUtils.warmMustard);
+        button2.setBackground(UIUtils.warmMustard);
         configureToggleButton(button2);
 
         JButton button3 = new JButton();
         button3.setBounds(startX, startY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight);
-        button3.setBackground(ColorUtils.fadedOrange);
+        button3.setBackground(UIUtils.fadedOrange);
         configureToggleButton(button3);
 
         add(followScaleBtn);

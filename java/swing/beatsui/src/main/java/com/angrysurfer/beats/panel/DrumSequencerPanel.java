@@ -31,8 +31,8 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.visualization.Visualizer;
-import com.angrysurfer.beats.widget.ColorUtils;
 import com.angrysurfer.beats.widget.DrumSequencerButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridButton;
 import com.angrysurfer.core.api.Command;
@@ -68,6 +68,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private List<DrumSequencerGridButton> triggerButtons = new ArrayList<>();
     private DrumSequencerInfoPanel drumInfoPanel;
     private DrumSequenceNavigationPanel navigationPanel;
+    private Visualizer visualizer;
 
     // Core sequencer - manages all sequencing logic
     private DrumSequencer sequencer;
@@ -193,7 +194,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Create the center grid panel with sequence buttons
         JPanel sequencePanel = createSequenceGridPanel();
-        // new Visualizer(sequencePanel, gridButtons);
+        // visualizer = new Visualizer(sequencePanel, gridButtons);
 
         // Wrap in scroll pane
         JScrollPane scrollPane = new JScrollPane(sequencePanel);
@@ -555,7 +556,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 if (isSelected) {
                     // Highlight the selected row's border
                     button.setBorder(BorderFactory.createLineBorder(
-                            ColorUtils.dustyAmber, 1));
+                            UIUtils.dustyAmber, 1));
                 } else {
                     // Normal border for other rows
                     button.setBorder(BorderFactory.createLineBorder(
@@ -639,12 +640,12 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
                 // Style based on whether step is active and in pattern
                 if (!isInPattern) {
-                    button.setBackground(ColorUtils.charcoalGray);
+                    button.setBackground(UIUtils.charcoalGray);
                 } else {
                     if (isActive) {
-                        button.setBackground(ColorUtils.deepOrange);
+                        button.setBackground(UIUtils.deepOrange);
                     } else {
-                        button.setBackground(ColorUtils.slateGray);
+                        button.setBackground(UIUtils.slateGray);
                     }
                 }
 

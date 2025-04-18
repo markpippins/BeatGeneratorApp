@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -28,6 +30,9 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.model.feature.MidiMessage;
 import com.angrysurfer.core.model.feature.Pad;
 import com.angrysurfer.core.service.DeviceManager;
@@ -370,6 +375,66 @@ public final class InstrumentWrapper implements Serializable {
         return current;
     }
 
+    public void playMidiNote(int channel, int noteNumber, int velocity, int durationMS) {
+        try {
+            // Get selected output device from device selection
+            
+            if (device == null) {
+                device = DeviceManager.getInstance().getMidiDevice(deviceName);
+            }
+            if (device == null) {
+                CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
+                );
+                return;
+            }
+            
+            // Open device if not already open
+            if (!device.isOpen()) {
+                device.open();
+            }
+            
+            // Get receiver
+            Receiver receiver = device.getReceiver();
+            
+            // Create note on message
+            ShortMessage noteOn = new ShortMessage();
+            noteOn.setMessage(ShortMessage.NOTE_ON, channel, noteNumber, velocity);
+            receiver.send(noteOn, -1);
+            
+            // Create note off message (to be sent after a delay)
+            ShortMessage noteOff = new ShortMessage();
+            noteOff.setMessage(ShortMessage.NOTE_OFF, channel, noteNumber, 0);
+            
+            // Schedule note off message after 500ms
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    receiver.send(noteOff, -1);
+                }
+            }, durationMS);
+            
+            // Log and update status
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("MIDI Test", "Info", 
+                    String.format("Sent note: %d on channel: %d with velocity: %d", 
+                        noteNumber, channel + 1, velocity))
+            );
+            
+        } catch (Exception e) {
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI note: " + e.getMessage())
+            );
+            logger.error("Error sending MIDI note", e);
+        }
+    }
+    
     public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
         try {
             Receiver currentReceiver = getOrCreateReceiver();
@@ -625,7 +690,7 @@ public final class InstrumentWrapper implements Serializable {
                     }
                 } catch (Exception e) {
                     logger.error("Error loading soundbank file: {}", e.getMessage());
-                }
+                }                                  
             }
         } catch (Exception e) {
             logger.error("Error in loadSoundbankFile: {}", e.getMessage());

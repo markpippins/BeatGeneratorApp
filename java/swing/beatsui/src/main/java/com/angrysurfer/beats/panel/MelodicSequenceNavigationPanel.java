@@ -14,7 +14,7 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.widget.ColorUtils;
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Direction;
@@ -61,7 +61,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         // Set layout and border with more compact spacing
         setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
         setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(ColorUtils.deepNavy),
+                BorderFactory.createLineBorder(UIUtils.deepNavy),
                 "Sequence Navigation",
                 TitledBorder.LEFT,
                 TitledBorder.TOP
@@ -71,8 +71,8 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
         sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, CONTROL_HEIGHT));
         sequenceIdLabel.setOpaque(true);
-        sequenceIdLabel.setBackground(ColorUtils.darkGray);
-        sequenceIdLabel.setForeground(ColorUtils.coolBlue);
+        sequenceIdLabel.setBackground(UIUtils.darkGray);
+        sequenceIdLabel.setForeground(UIUtils.coolBlue);
         sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
 
         // Create new sequence button with plus icon

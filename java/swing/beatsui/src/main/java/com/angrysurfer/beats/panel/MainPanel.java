@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.StatusBar;
+import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -168,14 +169,14 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
                     Point p = e.getLocationOnScreen();
                     // Check if dragged far enough from original position
-                    if (isDraggedFarEnough(p, dragStartPoint)) {
-                        // Create new frame containing component from this tab
-                        String title = tabbedPane.getTitleAt(tabIndex);
-                        createDetachedWindow(comp, title, p);
+                    // if (isDraggedFarEnough(p, dragStartPoint)) {
+                    // Create new frame containing component from this tab
+                    String title = tabbedPane.getTitleAt(tabIndex);
+                    createDetachedWindow(comp, title, p);
 
-                        // Remove the tab from original pane
-                        tabbedPane.remove(tabIndex);
-                    }
+                    // Remove the tab from original pane
+                    tabbedPane.remove(tabIndex);
+                    // }
                 }
             }
         });
@@ -479,7 +480,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JToggleButton createMetronomeToggleButton() {
         JToggleButton metronomeButton = new JToggleButton();
-        metronomeButton.setText("🕰️");
+        metronomeButton.setText(Symbols.getSymbol(Symbols.METRONOME)); // Unicode metronome symbol
         // Set equal width and height to ensure square shape
         metronomeButton.setPreferredSize(new Dimension(28, 28));
         metronomeButton.setMinimumSize(new Dimension(28, 28));
@@ -537,7 +538,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JToggleButton createLoopToggleButton() {
         JToggleButton loopButton = new JToggleButton();
-        loopButton.setText("⟳"); // Unicode loop symbol
+        loopButton.setText(Symbols.getSymbol(Symbols.LOOP)); // Unicode loop symbol
 
         // Set equal width and height to ensure square shape
         loopButton.setPreferredSize(new Dimension(28, 28));
@@ -596,7 +597,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JButton createAllNotesOffButton() {
         JButton notesOffButton = new JButton();
-        notesOffButton.setText("🔕");
+        notesOffButton.setText(Symbols.getSymbol(Symbols.ALL_NOTES_OFF)); // Unicode all notes off symbol   
         // Set equal width and height to ensure square shape
         notesOffButton.setPreferredSize(new Dimension(28, 28));
         notesOffButton.setMinimumSize(new Dimension(28, 28));
@@ -657,8 +658,9 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private JButton createMixButton() {
         JButton mixButton = new JButton();
         // Use a mixer icon character instead of text to fit in a square button
-        mixButton.setText("🎛️");
-
+        // mixButton.setText("🎛️");
+        mixButton.setText(Symbols.getSymbol(Symbols.MIX)); // Unicode mixer sy
+        
         // Set equal width and height to ensure square shape
         mixButton.setPreferredSize(new Dimension(28, 28));
         mixButton.setMinimumSize(new Dimension(28, 28));

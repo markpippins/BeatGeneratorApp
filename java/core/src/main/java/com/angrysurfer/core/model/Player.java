@@ -255,16 +255,18 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
             // Schedule UI refresh after a short delay
             java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
-                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), decay, // 50ms delay
+                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), decay, // 50ms
+                                                                                                            // delay
                     java.util.concurrent.TimeUnit.MILLISECONDS);
 
-            getInstrument().noteOn(getChannel(), note, fixedVelocity);
+            // getInstrument().noteOn(getChannel(), note, fixedVelocity);
+            getInstrument().playMidiNote(getChannel(), note, fixedVelocity, decay);
+
         } catch (Exception e) {
             logger.error("Error in noteOn: {}", e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
-
 
     public void noteOff(int note, int velocity) {
         logger.debug("noteOff() - note: {}, velocity: {}", note, velocity);
@@ -319,14 +321,14 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     /**
      * Determines whether this player should play at the given position
      *
-     * @param tickPosition Current position within beat (1-based)
+     * @param tickPosition        Current position within beat (1-based)
      * @param timingUpdate.beat() Current position within bar (1-based)
-     * @param timingUpdate.bar() Current position within pattern (1-based)
-     * @param partPosition Current position within arrangement (1-based)
-     * @param tickCount Global tick counter (continuously increasing)
-     * @param beatCount Global beat counter (continuously increasing)
-     * @param barCount Global bar counter (continuously increasing)
-     * @param partCount Global part counter (continuously increasing)
+     * @param timingUpdate.bar()  Current position within pattern (1-based)
+     * @param partPosition        Current position within arrangement (1-based)
+     * @param tickCount           Global tick counter (continuously increasing)
+     * @param beatCount           Global beat counter (continuously increasing)
+     * @param barCount            Global bar counter (continuously increasing)
+     * @param partCount           Global part counter (continuously increasing)
      */
     public boolean shouldPlay(TimingUpdate timingUpdate) {
         // Early out if no applicable rules or player not enabled
@@ -339,7 +341,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             logger.info("Player {}: Evaluating rules at position tick={}, beat={}, bar={}, part={}",
                     getName(), timingUpdate.tick(), timingUpdate.beat(), timingUpdate.bar(), timingUpdate.part());
             logger.info("Player {}: Global counters: tick={}, beat={}, bar={}, part={}",
-                    getName(), timingUpdate.tickCount(), timingUpdate.beatCount(), timingUpdate.barCount(), timingUpdate.partCount());
+                    getName(), timingUpdate.tickCount(), timingUpdate.beatCount(), timingUpdate.barCount(),
+                    timingUpdate.partCount());
         }
 
         // Refresh rule cache if needed
@@ -499,7 +502,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         // All count constraints must match if present
         if (!tickCountMatched || !beatCountMatched || !barCountMatched || !partCountMatched) {
             if (debug) {
-                logger.info("Player {}: Count constraints not met: tickCount={}, beatCount={}, barCount={}, partCount={}",
+                logger.info(
+                        "Player {}: Count constraints not met: tickCount={}, beatCount={}, barCount={}, partCount={}",
                         getName(), tickCountMatched, beatCountMatched, barCountMatched, partCountMatched);
             }
             return false;
@@ -571,10 +575,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
      * players will trigger.
      *
      * @param rules The set of rules to evaluate
-     * @param tick The tick position
-     * @param beat The beat position
-     * @param bar The bar position
-     * @param part The part position
+     * @param tick  The tick position
+     * @param beat  The beat position
+     * @param bar   The bar position
+     * @param part  The part position
      * @return true if player would play at this position, false otherwise
      */
     public boolean shouldPlayAt(Set<Rule> rules, int tick, int beat, int bar, int part) {

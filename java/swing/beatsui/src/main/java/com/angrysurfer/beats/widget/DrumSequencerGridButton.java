@@ -9,6 +9,8 @@ import javax.swing.JButton;
 import javax.swing.JToggleButton;
 import javax.swing.Timer;
 
+import com.angrysurfer.beats.UIUtils;
+
 public class DrumSequencerGridButton extends JButton {
     
     private boolean isHighlighted = false;
@@ -182,22 +184,22 @@ public class DrumSequencerGridButton extends JButton {
      */
     private void updateAppearance() {
         if (!isEnabled()) {
-            setBackground(ColorUtils.darkGray);
+            setBackground(UIUtils.darkGray);
             return;
         }
         
         if (!inPattern) {
             // Subdued appearance for steps outside the pattern length
-            setBackground(ColorUtils.charcoalGray);
-            setBorder(BorderFactory.createLineBorder(ColorUtils.slateGray, 1));
+            setBackground(UIUtils.charcoalGray);
+            setBorder(BorderFactory.createLineBorder(UIUtils.slateGray, 1));
             return;
         }
         
         // Regular appearance for steps in the pattern
         if (isSelected()) {
-            setBackground(isHighlighted() ? ColorUtils.dustyAmber : ColorUtils.deepOrange);
+            setBackground(isHighlighted() ? UIUtils.dustyAmber : UIUtils.deepOrange);
         } else {
-            setBackground(isHighlighted() ? ColorUtils.fadedOrange : ColorUtils.slateGray);
+            setBackground(isHighlighted() ? UIUtils.fadedOrange : UIUtils.slateGray);
         }
     }
 
