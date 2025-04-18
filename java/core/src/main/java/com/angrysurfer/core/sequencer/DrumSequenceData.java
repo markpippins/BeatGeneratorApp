@@ -21,6 +21,9 @@ public class DrumSequenceData implements Serializable {
     // Optional name/description
     private String name;
     
+    // Global pattern length - NEW FIELD
+    private int patternLength;
+    
     // Pattern parameters per drum
     private int[] patternLengths;         // Length of pattern for each drum
     private Direction[] directions;        // Direction for each drum

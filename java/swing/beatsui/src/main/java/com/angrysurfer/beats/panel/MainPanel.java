@@ -109,7 +109,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Mod Matrix", createModulationMatrixPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
-
+        tabbedPane.addTab("Euclid", createEuclidPanel());
         tabbedPane.addTab("Players", new SessionPanel());
 
         // Create combined panel for Instruments + Systems
@@ -225,6 +225,64 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         detachedWindow.pack();
         detachedWindow.setLocation(location);
         detachedWindow.setVisible(true);
+=======
+    private Component createEuclidPanel() {
+        // Create a main panel with a border
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setBackground(new Color(30, 30, 30));
+        
+        // Title at the top
+        JLabel titleLabel = new JLabel("Euclidean Pattern Grid", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Sans Serif", Font.BOLD, 16));
+        titleLabel.setForeground(Color.WHITE);
+        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        
+        // Create a 2x2 grid of Euclidean Pattern panels
+        JPanel gridPanel = new JPanel(new GridLayout(2, 2, 15, 15));
+        gridPanel.setBackground(new Color(40, 40, 40));
+        gridPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Create 4 compact pattern panels
+        String[] patternNames = {"Kick", "Snare", "HiHat", "Perc"};
+        int[][] presets = {
+            {16, 4, 0, 0},   // Pattern 1: 16 steps, 4 fills, no rotation, no width
+            {12, 3, 2, 3},   // Pattern 2: 12 steps, 3 fills, 2 rotation, width 3
+            {8, 5, 1, 0},    // Pattern 3: 8 steps, 5 fills, 1 rotation, no width
+            {10, 7, 3, 6}    // Pattern 4: 10 steps, 7 fills, 3 rotation, width 6
+        };
+        
+        for (int i = 0; i < 4; i++) {
+            // Create and configure panel
+            EuclideanPatternPanel patternPanel = new EuclideanPatternPanel(true);
+            patternPanel.setTitle(patternNames[i]);
+            
+            // Configure with preset values
+            patternPanel.getStepsDial().setValue(presets[i][0]);
+            patternPanel.getFillsDial().setValue(presets[i][1]);
+            patternPanel.getRotationDial().setValue(presets[i][2]);
+            patternPanel.getWidthDial().setValue(presets[i][3]);
+            
+            // Create wrapper with a visible border
+            JPanel wrapper = new JPanel(new BorderLayout());
+            wrapper.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+            wrapper.add(patternPanel, BorderLayout.CENTER);
+            
+            gridPanel.add(wrapper);
+        }
+        
+        // Add the grid to the main panel
+        mainPanel.add(gridPanel, BorderLayout.CENTER);
+        
+        // Force minimum size
+        mainPanel.setMinimumSize(new Dimension(600, 500));
+        mainPanel.setPreferredSize(new Dimension(800, 600));
+        
+        // Debug
+        System.out.println("Created Euclidean panel grid with " + gridPanel.getComponentCount() + " components");
+        
+        return mainPanel;
+
     }
 
     private Component createSongPanel() {
