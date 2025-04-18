@@ -1,8 +1,8 @@
-package com.angrysurfer.beats.widget;
+package com.angrysurfer.beats;
 
 import java.awt.Color;
 
-public class ColorUtils {
+public class UIUtils {
 
     // Greys & Dark Blues
     public static Color charcoalGray = new Color(40, 40, 40); // Deep console casing
@@ -83,4 +83,7 @@ public class ColorUtils {
     public static Color[] getAccentColors() {
         return new Color[] { agedOffWhite, deepTeal, warmOffWhite };
     }
+
+
+    
 }

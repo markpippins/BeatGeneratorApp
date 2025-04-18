@@ -2,6 +2,9 @@ package com.angrysurfer.beats.widget;
 
 import java.awt.*;
 import javax.swing.JToggleButton;
+
+import com.angrysurfer.beats.UIUtils;
+
 import java.awt.event.ActionListener;
 
 public class TriggerButton extends JToggleButton {
@@ -18,7 +21,7 @@ public class TriggerButton extends JToggleButton {
     }
 
     private void setup() {
-        baseColor = ColorUtils.deepOrange;
+        baseColor = UIUtils.deepOrange;
         activeColor = Color.GREEN;
         
         setContentAreaFilled(false);

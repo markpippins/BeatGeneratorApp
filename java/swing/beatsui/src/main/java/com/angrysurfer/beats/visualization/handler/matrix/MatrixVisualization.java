@@ -3,9 +3,10 @@ package com.angrysurfer.beats.visualization.handler.matrix;
 import java.awt.Color;
 import java.util.Random;
 
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.ColorUtils;
+
 import javax.swing.JButton;
 
 public class MatrixVisualization implements IVisualizationHandler {
@@ -17,8 +18,8 @@ public class MatrixVisualization implements IVisualizationHandler {
         for (int row = buttons.length - 1; row > 0; row--) {
             for (int col = 0; col < buttons[0].length; col++) {
                 Color above = buttons[row - 1][col].getBackground();
-                if (above.equals(ColorUtils.fadedLime)) {
-                    buttons[row][col].setBackground(ColorUtils.mutedOlive);
+                if (above.equals(UIUtils.fadedLime)) {
+                    buttons[row][col].setBackground(UIUtils.mutedOlive);
                 } else if (!above.equals(buttons[0][0].getParent().getBackground())) {
                     buttons[row][col].setBackground(new Color(0,
                             Math.max(above.getGreen() - 20, 0), 0));
@@ -31,7 +32,7 @@ public class MatrixVisualization implements IVisualizationHandler {
         // New matrix symbols at top
         for (int col = 0; col < buttons[0].length; col++) {
             if (random.nextInt(100) < 15) {
-                buttons[0][col].setBackground(ColorUtils.fadedLime);
+                buttons[0][col].setBackground(UIUtils.fadedLime);
             }
         }
     }

@@ -3,9 +3,10 @@ package com.angrysurfer.beats.visualization.handler.compsci;
 import java.awt.Color;
 import java.util.Random;
 
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
-import com.angrysurfer.beats.widget.ColorUtils;
+
 import javax.swing.JButton;
 
 public class GameOfLifeVisualization implements IVisualizationHandler {
@@ -33,7 +34,7 @@ public class GameOfLifeVisualization implements IVisualizationHandler {
         // Update grid
         for (int row = 0; row < buttons.length; row++) {
             for (int col = 0; col < buttons[0].length; col++) {
-                buttons[row][col].setBackground(nextGen[row][col] ? ColorUtils.fadedLime : parentBg);
+                buttons[row][col].setBackground(nextGen[row][col] ? UIUtils.fadedLime : parentBg);
             }
         }
 
@@ -41,7 +42,7 @@ public class GameOfLifeVisualization implements IVisualizationHandler {
         if (random.nextInt(100) < 5) {
             int row = random.nextInt(buttons.length);
             int col = random.nextInt(buttons[0].length);
-            buttons[row][col].setBackground(ColorUtils.fadedLime);
+            buttons[row][col].setBackground(UIUtils.fadedLime);
         }
     }
 

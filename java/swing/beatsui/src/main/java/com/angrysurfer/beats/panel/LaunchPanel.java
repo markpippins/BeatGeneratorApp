@@ -18,7 +18,7 @@ import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-import com.angrysurfer.beats.widget.ColorUtils;
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
@@ -58,10 +58,10 @@ public class LaunchPanel extends JPanel implements IBusListener {
         gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         Color[] quadrantColors = {
-            ColorUtils.mutedRed, // Top-left
-            ColorUtils.mutedOlive, // Top-right
-            ColorUtils.warmMustard, // Bottom-left
-            ColorUtils.fadedOrange // Bottom-right
+            UIUtils.mutedRed, // Top-left
+            UIUtils.mutedOlive, // Top-right
+            UIUtils.warmMustard, // Bottom-left
+            UIUtils.fadedOrange // Bottom-right
         };
 
         int[] count = {1, 1, 1, 1};

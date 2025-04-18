@@ -29,7 +29,7 @@ import javax.swing.border.EmptyBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.widget.ColorUtils;
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
@@ -170,7 +170,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         TiltSequencerPanel tiltPanel = new TiltSequencerPanel(sequencer);
 
         // Color[] colors = { Color.MAGENTA, new Color(0, 0, 0, 0), Color.BLUE, Color.GREEN, Color.YELLOW };
-        tiltPanel.setBackground(ColorUtils.getColors()[MelodicSequencerManager.getInstance().getSequencerCount()]);
+        tiltPanel.setBackground(UIUtils.getColors()[MelodicSequencerManager.getInstance().getSequencerCount()]);
 
         // Set a fixed preferred height for the tilt panel to prevent it from taking too
         // much space
@@ -632,12 +632,12 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 case 0 -> {
                     velocityDial[0] = dial;
                     velocityDials.add(dial);
-                    dial.setKnobColor(ColorUtils.getDialColor("velocity"));
+                    dial.setKnobColor(UIUtils.getDialColor("velocity"));
                 }
                 case 1 -> {
                     gateDial[0] = dial;
                     gateDials.add(dial);
-                    dial.setKnobColor(ColorUtils.getDialColor("gate"));
+                    dial.setKnobColor(UIUtils.getDialColor("gate"));
                 }
                 case 4 -> {
                     dial.setPreferredSize(new Dimension(75, 75)); // Reduced from 75x75
@@ -648,7 +648,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(100);
                     dial.setValue(100); // Default to 100%
-                    dial.setKnobColor(ColorUtils.getDialColor("probability"));
+                    dial.setKnobColor(UIUtils.getDialColor("probability"));
                     dial.addChangeListener(e -> {
                         if (!listenersEnabled)
                             return;
@@ -661,7 +661,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(250);
                     dial.setValue(0); // Default to no nudge
-                    dial.setKnobColor(ColorUtils.getDialColor("nudge"));
+                    dial.setKnobColor(UIUtils.getDialColor("nudge"));
                     dial.addChangeListener(e -> {
                         if (!listenersEnabled)
                             return;
