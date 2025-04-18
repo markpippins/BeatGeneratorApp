@@ -772,12 +772,17 @@ public class SongPanel extends JPanel implements IBusListener {
                 trackY += TRACK_HEIGHT;
             }
             
-            // Highlight current bar (adjust for 0-based display)
-            if (SessionManager.getInstance().getActiveSession().isRunning()) {
-                g2d.setColor(new Color(255, 255, 255, 50)); // Semi-transparent white
-                int zeroBasedCurrentBar = currentBar - 1;
-                int barX = TRACK_HEADER_WIDTH + (zeroBasedCurrentBar * BAR_WIDTH);
+            // Highlight current bar - FIXED VERSION
+            if (currentBar >= 0) {  // Remove session running check to always show position
+                g2d.setColor(new Color(255, 0, 0, 80)); // Semi-transparent red for better visibility
+                
+                // Calculate bar position (account for 1-based vs 0-based indexing)
+                int barX = TRACK_HEADER_WIDTH + ((currentBar > 0 ? currentBar - 1 : 0) * BAR_WIDTH);
                 g2d.fillRect(barX, HEADER_HEIGHT, BAR_WIDTH, getHeight() - HEADER_HEIGHT);
+                
+                // Draw a more visible indicator at the top
+                g2d.setColor(new Color(255, 0, 0));
+                g2d.fillRect(barX, 0, BAR_WIDTH, HEADER_HEIGHT);
             }
             
             // Draw drum pattern slots
