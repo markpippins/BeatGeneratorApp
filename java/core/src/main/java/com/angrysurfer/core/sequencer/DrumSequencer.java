@@ -39,12 +39,10 @@ public class DrumSequencer implements IBusListener {
     public static final int DEFAULT_VELOCITY = 100; // Default note velocity
     public static final int DEFAULT_DECAY = 60; // Default note decay
     public static final int DEFAULT_PROBABILITY = 100; // Default step probability (%)
-    public static final int MIN_SWING = 50; // Minimum swing percentage
-    public static final int MAX_SWING = 75; // Maximum swing percentage
 
     // Instance variables
     private int maxSteps = 64; // Maximum pattern length
-    private int defaultPatternLength = 32; // Default pattern length
+    private int defaultPatternLength = 16; // Default pattern length
 
     // MIDI and music constants
     private static final int MIDI_DRUM_CHANNEL = 9; // Standard MIDI drum channel
