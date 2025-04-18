@@ -731,7 +731,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 button.setVisible(true); // Always make buttons visible
                 
                 if (isInActive) {
-                    button.setBackground(ColorUtils.coolBlue); // Inactive color
+                    button.setBackground(UIUtils
+                    
+                    .coolBlue); // Inactive color
                 }
                 
                 // Add to panel and tracking list
