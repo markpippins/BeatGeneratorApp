@@ -14,13 +14,11 @@ import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
@@ -112,6 +110,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     // Add this field to the class
     private boolean updatingUI = false;
+
+    // Add this field to DrumSequencerPanel:
+    private DrumSequencerSwingPanel swingPanel;
 
     /**
      * Create a new DrumSequencerPanel
@@ -210,7 +211,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         JPanel generatePanel = createGeneratePanel();
         rightPanel.add(generatePanel);
 
-        // Add swing panel
+        // Use the new swing panel
         swingPanel = createSwingControlPanel();
         rightPanel.add(swingPanel);
 
@@ -259,36 +260,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         return panel;
     }
 
+    // Replace createSwingControlPanel with this:
     private JPanel createSwingControlPanel() {
-        JPanel swingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        swingPanel.setBorder(BorderFactory.createTitledBorder("Swing"));
-
-        // Swing toggle - Make skinnier
-        JToggleButton swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());
-        swingToggle.setPreferredSize(new Dimension(50, 25)); // Slightly wider for text "On"
-        swingToggle.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
-        swingToggle.addActionListener(e -> {
-            sequencer.setSwingEnabled(swingToggle.isSelected());
-        });
-        swingPanel.add(swingToggle);
-
-        // Swing amount slider
-        JSlider swingSlider = new JSlider(JSlider.HORIZONTAL, MIN_SWING, MAX_SWING, sequencer.getSwingPercentage());
-        swingSlider.setMajorTickSpacing(5);
-        swingSlider.setPaintTicks(true);
-        swingSlider.setPreferredSize(new Dimension(100, 30));
-
-        JLabel valueLabel = new JLabel(sequencer.getSwingPercentage() + "%");
-
-        swingSlider.addChangeListener(e -> {
-            int value = swingSlider.getValue();
-            sequencer.setSwingPercentage(value);
-            valueLabel.setText(value + "%");
-        });
-
-        swingPanel.add(swingSlider);
-        swingPanel.add(valueLabel);
-
+        // Create panel with specified dimensions and add to container
+        swingPanel = new DrumSequencerSwingPanel(sequencer);
         return swingPanel;
     }
 
@@ -1196,5 +1171,12 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 );
             }
         });
+    }
+
+    // If there's an updateSwingControls() method, update it too:
+    private void updateSwingControls() {
+        if (swingPanel != null) {
+            swingPanel.updateControls();
+        }
     }
 }
