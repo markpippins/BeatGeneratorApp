@@ -58,8 +58,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumEffectsSequencerPanel.class);
 
+    private DrumSequencerGridButton[][] gridButtons;
+
     // UI Components
-    private final List<DrumSequencerButton> drumButtons = new ArrayList<>();
     private List<DrumSequencerGridButton> triggerButtons = new ArrayList<>();
     private DrumSequencerInfoPanel drumInfoPanel;
     private DrumSequenceNavigationPanel navigationPanel;
@@ -113,6 +114,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     // Add this field to DrumSequencerPanel:
     private DrumSequencerSwingPanel swingPanel;
+
+    // Add this field to DrumSequencerPanel:
+    private DrumSelectorPanel drumSelectorPanel;
 
     /**
      * Create a new DrumSequencerPanel
@@ -271,63 +275,15 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Create the drum pads panel on the left side
      */
     private JPanel createDrumPadsPanel() {
-        // Use GridLayout for perfect vertical alignment with grid cells
-        JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, 1, 2, 2));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
-
-        // Create drum buttons for standard drum kit sounds
-        String[] drumNames = {
-                "Kick", "Snare", "Closed HH", "Open HH",
-                "Tom 1", "Tom 2", "Tom 3", "Crash",
-                "Ride", "Rim", "Clap", "Cow",
-                "Clave", "Shaker", "Perc 1", "Perc 2"
-        };
-
-        // Default MIDI notes for General MIDI drums
-        int[] defaultNotes = {
-                MIDI_DRUM_NOTE_OFFSET, MIDI_DRUM_NOTE_OFFSET + 2, MIDI_DRUM_NOTE_OFFSET + 6, MIDI_DRUM_NOTE_OFFSET + 10,
-                MIDI_DRUM_NOTE_OFFSET + 5, MIDI_DRUM_NOTE_OFFSET + 7, MIDI_DRUM_NOTE_OFFSET + 9,
-                MIDI_DRUM_NOTE_OFFSET + 13,
-                MIDI_DRUM_NOTE_OFFSET + 15, MIDI_DRUM_NOTE_OFFSET + 1, MIDI_DRUM_NOTE_OFFSET + 3,
-                MIDI_DRUM_NOTE_OFFSET + 20,
-                MIDI_DRUM_NOTE_OFFSET + 39, MIDI_DRUM_NOTE_OFFSET + 34, MIDI_DRUM_NOTE_OFFSET + 24,
-                MIDI_DRUM_NOTE_OFFSET + 25
-        };
-
-        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
-            final int drumIndex = i;
-
-            // Create a Strike object for this drum pad
-            Strike strike = new Strike();
-            strike.setName(drumNames[i]);
-            strike.setRootNote(defaultNotes[i]);
-            strike.setLevel(100); // Default velocity
-
-            // Set the strike in the sequencer
-            sequencer.setStrike(drumIndex, strike);
-
-            // Create the drum button with proper selection handling
-            DrumSequencerButton drumButton = new DrumSequencerButton(drumIndex, sequencer);
-            drumButton.setText(drumNames[i]);
-            drumButton.setToolTipText("Select " + drumNames[i] + " (Note: " + defaultNotes[i] + ")");
-
-            // THIS IS THE KEY PART - Add action listener for drum selection
-            drumButton.addActionListener(e -> selectDrumPad(drumIndex));
-
-            // Add to our tracking list
-            drumButtons.add(drumButton);
-
-            // Add to the panel
-            panel.add(drumButton);
-        }
-
-        return panel;
+        // Create and return the new drum selector panel
+        drumSelectorPanel = new DrumSelectorPanel(sequencer, this);
+        return drumSelectorPanel;
     }
 
     /**
      * Handle selection of a drum pad - completely revised to fix display issues
      */
-    private void selectDrumPad(int padIndex) {
+    public void selectDrumPad(int padIndex) {
         logger.info("DrumSequencerPanel: Selecting drum pad {}", padIndex);
         // Guard against recursive calls
         if (isSelectingDrumPad) {
@@ -345,6 +301,11 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             // Update UI for all drum rows
             for (int i = 0; i < DRUM_PAD_COUNT; i++) {
                 updateRowAppearance(i, i == padIndex);
+            }
+            
+            // Update the drum selector panel buttons
+            if (drumSelectorPanel != null) {
+                drumSelectorPanel.updateButtonSelection(padIndex);
             }
 
             // Update parameter controls for the selected drum
@@ -531,8 +492,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         return button;
     }
-
-    private DrumSequencerGridButton[][] gridButtons;
 
     /**
      * Create the step grid panel with proper cell visibility
@@ -755,32 +714,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 }
             }
         }
-    }
-
-    /**
-     * Update handlers for pattern generation and clear
-     */
-    private void setupPatternControls() {
-        // Pattern generation
-        generatePatternButton.addActionListener(e -> {
-            // Get selected density
-            int density = (int) densitySpinner.getValue();
-
-            // Generate pattern for current drum
-            sequencer.generatePattern(density);
-
-            // Update UI - IMPORTANT: sync the UI after pattern generation
-            syncUIWithSequencer();
-        });
-
-        // Clear pattern
-        clearPatternButton.addActionListener(e -> {
-            // Clear pattern
-            sequencer.clearPattern();
-
-            // Update UI - IMPORTANT: sync the UI after clearing
-            syncUIWithSequencer();
-        });
     }
 
     /**
@@ -1047,106 +980,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             } finally {
                 updatingUI = false;
             }
-    }
-
-    /**
-     * Sets the maximum pattern length and updates any drums that have longer patterns
-     * @param maxLength The new maximum pattern length
-     */
-    private void applyMaxPatternLength(int maxLength) {
-        logger.info("Setting max pattern length to: {}", maxLength);
-        
-        // Track which drums were updated
-        List<Integer> updatedDrums = new ArrayList<>();
-        
-        // Update lengths for all drums
-        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            int currentLength = sequencer.getPatternLength(drumIndex);
-            
-            // Only update drums that exceed the new maximum
-            if (currentLength > maxLength) {
-                sequencer.setPatternLength(drumIndex, maxLength);
-                updatedDrums.add(drumIndex);
-                logger.debug("Updated drum {} pattern length from {} to {}", 
-                             drumIndex, currentLength, maxLength);
-            }
-        }
-        
-        // Update the UI for all modified drums
-        for (int drumIndex : updatedDrums) {
-            updateStepButtonsForDrum(drumIndex);
-        }
-        
-        // Update parameter controls if the selected drum was affected
-        if (updatedDrums.contains(selectedPadIndex)) {
-            updateParameterControls();
-        }
-        
-        // Show a confirmation message
-        if (!updatedDrums.isEmpty()) {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(
-                    this,
-                    "Updated pattern length for " + updatedDrums.size() + " drums.",
-                    "Pattern Length Updated",
-                    JOptionPane.INFORMATION_MESSAGE
-                );
-            });
-        } else {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(
-                    this,
-                    "No drum patterns were affected.",
-                    "Pattern Length Check",
-                    JOptionPane.INFORMATION_MESSAGE
-                );
-            });
-        }
-    }
-
-    /**
-     * Applies an Euclidean pattern to the specified drum
-     * @param drumIndex The index of the drum to update
-     * @param pattern The boolean array representing the pattern
-     */
-    private void applyEuclideanPattern(int drumIndex, boolean[] pattern) {
-        if (pattern == null || pattern.length == 0) {
-            logger.warn("Cannot apply null or empty Euclidean pattern");
-            return;
-        }
-        
-        try {
-            // First clear the existing pattern
-            clearRow(drumIndex);
-            
-            // Set the pattern length if needed
-            int newLength = pattern.length;
-            sequencer.setPatternLength(drumIndex, newLength);
-            
-            // Apply pattern values (activate steps where pattern is true)
-            for (int step = 0; step < pattern.length; step++) {
-                if (pattern[step]) {
-                    // Toggle the step to make it active
-                    if (!sequencer.isStepActive(drumIndex, step)) {
-                        sequencer.toggleStep(drumIndex, step);
-                    }
-                    
-                    // Set default parameters for this step
-                    sequencer.setStepVelocity(drumIndex, step, DEFAULT_VELOCITY);
-                    sequencer.setStepDecay(drumIndex, step, DEFAULT_DECAY);
-                    sequencer.setStepProbability(drumIndex, step, DEFAULT_PROBABILITY);
-                    sequencer.setStepNudge(drumIndex, step, 0);
-                }
-            }
-            
-            // Update the UI to reflect changes
-            updateStepButtonsForDrum(drumIndex);
-            updateParameterControls();
-            
-            logger.info("Applied Euclidean pattern to drum {}, pattern length: {}", drumIndex, pattern.length);
-        } catch (Exception e) {
-            logger.error("Error applying Euclidean pattern", e);
-        }
     }
 
     /**
