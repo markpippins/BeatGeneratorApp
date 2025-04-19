@@ -300,4 +300,12 @@ public class Commands {
     public static final String GLOBAL_LOOPING_ENABLED = "GLOBAL_LOOPING_ENABLED";
     public static final String GLOBAL_LOOPING_DISABLED = "GLOBAL_LOOPING_DISABLED";
 
+    // Add these new command constants
+    public static final String SHOW_MAX_LENGTH_DIALOG = "SHOW_MAX_LENGTH_DIALOG";
+    public static final String SHOW_EUCLIDEAN_DIALOG = "SHOW_EUCLIDEAN_DIALOG";
+    public static final String SHOW_FILL_DIALOG = "SHOW_FILL_DIALOG";
+    public static final String MAX_LENGTH_SELECTED = "MAX_LENGTH_SELECTED";
+    public static final String EUCLIDEAN_PATTERN_SELECTED = "EUCLIDEAN_PATTERN_SELECTED";
+    public static final String FILL_PATTERN_SELECTED = "FILL_PATTERN_SELECTED";
+
 }
