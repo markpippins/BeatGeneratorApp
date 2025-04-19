@@ -1,16 +1,13 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
@@ -18,9 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.widget.DrumSequencerGridButton;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.sequencer.DrumSequenceModifier;
+import com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 
 /**
@@ -34,6 +29,7 @@ public class DrumSequencerGridPanel extends JPanel {
     private final DrumSequencerGridButton[][] gridButtons;
     private final DrumSequencer sequencer;
     private final DrumSequencerPanel parentPanel;
+    private final DrumSequencerGridPanelContextHandler contextMenuHandler;
     
     // UI constants
     private static final int DRUM_PAD_COUNT = DrumSequencer.DRUM_PAD_COUNT;
@@ -51,6 +47,9 @@ public class DrumSequencerGridPanel extends JPanel {
     public DrumSequencerGridPanel(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
         this.sequencer = sequencer;
         this.parentPanel = parentPanel;
+        
+        // Create the context menu handler
+        this.contextMenuHandler = new DrumSequencerGridPanelContextHandler(sequencer, parentPanel);
         
         // Use GridLayout for perfect grid alignment
         setLayout(new GridLayout(DRUM_PAD_COUNT, sequencer.getDefaultPatternLength(), 2, 2));
@@ -117,14 +116,14 @@ public class DrumSequencerGridPanel extends JPanel {
             @Override
             public void mousePressed(java.awt.event.MouseEvent e) {
                 if (e.isPopupTrigger() || e.getButton() == java.awt.event.MouseEvent.BUTTON3) {
-                    showContextMenu(e.getComponent(), e.getX(), e.getY(), drumIndex, step);
+                    contextMenuHandler.showContextMenu(e.getComponent(), e.getX(), e.getY(), drumIndex, step);
                 }
             }
 
             @Override
             public void mouseReleased(java.awt.event.MouseEvent e) {
                 if (e.isPopupTrigger() || e.getButton() == java.awt.event.MouseEvent.BUTTON3) {
-                    showContextMenu(e.getComponent(), e.getX(), e.getY(), drumIndex, step);
+                    contextMenuHandler.showContextMenu(e.getComponent(), e.getX(), e.getY(), drumIndex, step);
                 }
             }
         });
@@ -215,79 +214,6 @@ public class DrumSequencerGridPanel extends JPanel {
                 // Always repaint
                 button.repaint();
             }
-        }
-    }
-    
-    /**
-     * Display a context menu for a step button
-     */
-    private void showContextMenu(Component component, int x, int y, int drumIndex, int step) {
-        JPopupMenu menu = new JPopupMenu();
-
-        // Add menu items for step operations
-        JMenuItem fillItem = new JMenuItem("Fill From Here...");
-        fillItem.addActionListener(e -> {
-            // Use CommandBus instead of direct dialog creation
-            Object[] params = new Object[] { sequencer, drumIndex, step };
-            CommandBus.getInstance().publish(Commands.SHOW_FILL_DIALOG, this, params);
-        });
-        menu.add(fillItem);
-
-        JMenuItem clearRowItem = new JMenuItem("Clear Row");
-        clearRowItem.addActionListener(e -> parentPanel.clearRow(drumIndex));
-        menu.add(clearRowItem);
-        
-        // Add Set Max Length option
-        JMenuItem setMaxLengthItem = new JMenuItem("Set Max Length...");
-        setMaxLengthItem.addActionListener(e -> {
-            // Use CommandBus instead of direct dialog creation
-            CommandBus.getInstance().publish(Commands.SHOW_MAX_LENGTH_DIALOG, this, sequencer);
-        });
-        menu.add(setMaxLengthItem);
-
-        // Add divider
-        menu.addSeparator();
-
-        // Add pattern generation items
-        JMenuItem patternItem = new JMenuItem("Apply Pattern...");
-        patternItem.addActionListener(e -> {
-            Object[] options = { "Every 2nd Step", "Every 3rd Step", "Every 4th Step" };
-            int choice = javax.swing.JOptionPane.showOptionDialog(
-                    this,
-                    "Choose pattern type:",
-                    "Pattern Generator",
-                    javax.swing.JOptionPane.DEFAULT_OPTION,
-                    javax.swing.JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    options,
-                    options[0]);
-
-            if (choice >= 0) {
-                applyPatternEveryN(drumIndex, 2 + choice);
-            }
-        });
-        menu.add(patternItem);
-
-        // Add Euclidean Pattern option
-        JMenuItem euclideanItem = new JMenuItem("Euclidean Pattern...");
-        euclideanItem.addActionListener(e -> {
-            // Use CommandBus instead of direct dialog creation
-            Object[] params = new Object[] { sequencer, drumIndex };
-            CommandBus.getInstance().publish(Commands.SHOW_EUCLIDEAN_DIALOG, this, params);
-        });
-        menu.add(euclideanItem);
-
-        // Show the menu
-        menu.show(component, x, y);
-    }
-    
-    /**
-     * Apply a pattern that activates every Nth step
-     */
-    private void applyPatternEveryN(int drumIndex, int n) {
-        boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, n);
-        if (success) {
-            updateStepButtonsForDrum(drumIndex);
         }
     }
     
