@@ -1,23 +1,18 @@
 package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
-import java.util.ArrayList;
+import java.awt.Color;
 import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
@@ -26,17 +21,13 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.visualization.Visualizer;
-import com.angrysurfer.beats.widget.DrumSequencerButton;
-import com.angrysurfer.beats.widget.DrumSequencerGridButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequenceModifier;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -58,10 +49,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumEffectsSequencerPanel.class);
 
-    private DrumSequencerGridButton[][] gridButtons;
-
     // UI Components
-    private List<DrumSequencerGridButton> triggerButtons = new ArrayList<>();
     private DrumSequencerInfoPanel drumInfoPanel;
     private DrumSequenceNavigationPanel navigationPanel;
     private Visualizer visualizer;
@@ -118,6 +106,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     // Add this field to DrumSequencerPanel:
     private DrumSelectorPanel drumSelectorPanel;
 
+    // Add this field instead:
+    private DrumSequencerGridPanel gridPanel;
+
     /**
      * Create a new DrumSequencerPanel
      *
@@ -129,7 +120,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Create the sequencer
         sequencer = DrumSequencerManager.getInstance().newSequencer(
                 noteEventConsumer,
-                event -> updateStepHighlighting(event.getDrumIndex(), event.getOldStep(), event.getNewStep()));
+                event -> gridPanel.updateStepHighlighting(event.getDrumIndex(), event.getOldStep(), event.getNewStep()));
 
         // Register with the command bus - MAKE SURE THIS IS HERE
         CommandBus.getInstance().register(this);
@@ -191,7 +182,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Create the center grid panel with sequence buttons
         JPanel sequencePanel = createSequenceGridPanel();
-        // visualizer = new Visualizer(sequencePanel, gridButtons);
+        // visualizer = new Visualizer(sequencePanel, gridPanel);
 
         // Wrap in scroll pane
         JScrollPane scrollPane = new JScrollPane(sequencePanel);
@@ -255,7 +246,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             // Get selected density from the combo
             int density = (densityCombo.getSelectedIndex() + 1) * 25;
             sequencer.generatePattern(density);
-            refreshGridUI();
+            gridPanel.refreshGridUI();
         });
 
         panel.add(generateButton);
@@ -281,6 +272,14 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
+     * Create the sequence grid panel with step buttons
+     */
+    private JPanel createSequenceGridPanel() {
+        gridPanel = new DrumSequencerGridPanel(sequencer, this);
+        return gridPanel;
+    }
+
+    /**
      * Handle selection of a drum pad - completely revised to fix display issues
      */
     public void selectDrumPad(int padIndex) {
@@ -300,7 +299,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
             // Update UI for all drum rows
             for (int i = 0; i < DRUM_PAD_COUNT; i++) {
-                updateRowAppearance(i, i == padIndex);
+                gridPanel.updateRowAppearance(i, i == padIndex);
             }
             
             // Update the drum selector panel buttons
@@ -328,362 +327,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Update appearance of an entire drum row
-     */
-    private void updateRowAppearance(int drumIndex, boolean isSelected) {
-        int patternLength = sequencer.getPatternLength(drumIndex);
-
-        for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
-            int buttonIndex = (drumIndex * sequencer.getDefaultPatternLength()) + step;
-            if (buttonIndex >= 0 && buttonIndex < triggerButtons.size()) {
-                DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
-
-                // Keep all buttons visible
-                button.setVisible(true);
-
-                // Style based on whether step is active and in pattern
-                boolean isInPattern = step < patternLength;
-                boolean isActive = sequencer.isStepActive(drumIndex, step);
-
-                // Update button appearance using the button's own functionality
-                button.setEnabled(isInPattern);
-                button.setSelected(isActive);
-
-                // Add subtle highlighting to the selected row
-                if (isSelected) {
-                    // Highlight the selected row's border
-                    button.setBorder(BorderFactory.createLineBorder(
-                            UIUtils.dustyAmber, 1));
-                } else {
-                    // Normal border for other rows
-                    button.setBorder(BorderFactory.createLineBorder(
-                            Color.DARK_GRAY, 1));
-                }
-            }
-        }
-    }
-
-    /**
-     * Update step highlighting during playback
-     *
-     * @param drumIndex The drum to highlight
-     * @param oldStep   The previous step to un-highlight
-     * @param newStep   The new step to highlight
-     */
-    private void updateStepHighlighting(int drumIndex, int oldStep, int newStep) {
-        // Only update highlighting if we're actually playing
-        if (!isPlaying) {
-            return;
-        }
-
-        // Ensure we're on the EDT for UI updates
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> updateStepHighlighting(drumIndex, oldStep, newStep));
-            return;
-        }
-
-        // Calculate button indices based on the drum and step
-        int oldButtonIndex = drumIndex * sequencer.getDefaultPatternLength() + oldStep;
-        int newButtonIndex = drumIndex * sequencer.getDefaultPatternLength() + newStep;
-
-        // Ensure indices are valid
-        if (oldButtonIndex >= 0 && oldButtonIndex < triggerButtons.size()) {
-            DrumSequencerGridButton oldButton = triggerButtons.get(oldButtonIndex);
-            if (oldButton != null) {
-                oldButton.setHighlighted(false);
-            }
-        }
-
-        if (newButtonIndex >= 0 && newButtonIndex < triggerButtons.size()) {
-            DrumSequencerGridButton newButton = triggerButtons.get(newButtonIndex);
-            if (newButton != null) {
-                newButton.setHighlighted(true);
-            }
-        }
-    }
-
-    /**
-     * Update all step buttons for a specific drum
-     */
-    public void updateStepButtonsForDrum(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= DRUM_PAD_COUNT || triggerButtons.isEmpty()) {
-            // Invalid drum index or buttons not initialized yet
-            logger.warn("Cannot update step buttons: invalid drum index {} or buttons not initialized", drumIndex);
-            return;
-        }
-
-        // Get pattern length for this drum
-        int patternLength = sequencer.getPatternLength(drumIndex);
-        logger.debug("Updating step buttons for drum {} with pattern length {}", drumIndex, patternLength);
-
-        // Update all buttons for this row
-        for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
-            int buttonIndex = (drumIndex * sequencer.getDefaultPatternLength()) + step;
-
-            // Safety check
-            if (buttonIndex >= 0 && buttonIndex < triggerButtons.size()) {
-                DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
-
-                // Make button visible regardless of pattern length - CRITICAL FIX
-                button.setVisible(true);
-
-                // Update button state based on pattern
-                boolean isInPattern = step < patternLength;
-                boolean isActive = isInPattern && sequencer.isStepActive(drumIndex, step);
-
-                // Update button state
-                button.setEnabled(isInPattern);
-                button.setSelected(isActive);
-
-                // Style based on whether step is active and in pattern
-                if (!isInPattern) {
-                    button.setBackground(UIUtils.charcoalGray);
-                } else {
-                    if (isActive) {
-                        button.setBackground(UIUtils.deepOrange);
-                    } else {
-                        button.setBackground(UIUtils.slateGray);
-                    }
-                }
-
-                // Always repaint
-                button.repaint();
-            }
-        }
-    }
-
-    /**
-     * Create step button with proper behavior
-     */
-    private DrumSequencerGridButton createStepButton(int drumIndex, int step) {
-        DrumSequencerGridButton button = new DrumSequencerGridButton();
-
-        // Make button square with constant size
-        button.setPreferredSize(new Dimension(GRID_BUTTON_SIZE, GRID_BUTTON_SIZE));
-
-        // Add debug info if needed
-        if (debugMode) {
-            button.setText(String.format("%d,%d", drumIndex, step));
-            button.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 8));
-        }
-
-        // Add action listener to toggle step state
-        button.addActionListener(e -> {
-            sequencer.toggleStep(drumIndex, step);
-            button.setSelected(sequencer.isStepActive(drumIndex, step));
-        });
-
-        // Add right-click context menu
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mousePressed(java.awt.event.MouseEvent e) {
-                if (e.isPopupTrigger() || e.getButton() == java.awt.event.MouseEvent.BUTTON3) {
-                    showContextMenu(e.getComponent(), e.getX(), e.getY(), drumIndex, step);
-                }
-            }
-
-            @Override
-            public void mouseReleased(java.awt.event.MouseEvent e) {
-                if (e.isPopupTrigger() || e.getButton() == java.awt.event.MouseEvent.BUTTON3) {
-                    showContextMenu(e.getComponent(), e.getX(), e.getY(), drumIndex, step);
-                }
-            }
-        });
-
-        return button;
-    }
-
-    /**
-     * Create the step grid panel with proper cell visibility
-     */
-    private JPanel createSequenceGridPanel() {
-        // Use consistent cell size with even spacing
-        JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, sequencer.getDefaultPatternLength(), 2, 2));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-        // Initialize both storage structures
-        triggerButtons = new ArrayList<>(DRUM_PAD_COUNT * sequencer.getDefaultPatternLength()); // Pre-size the list
-        gridButtons = new DrumSequencerGridButton[DRUM_PAD_COUNT][sequencer.getDefaultPatternLength()]; // Initialize the 2D array
-
-        // Create grid buttons
-        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
-                DrumSequencerGridButton button = createStepButton(drumIndex, step);
-
-                // IMPORTANT: Set initial state based on sequencer
-                boolean isInPattern = step < sequencer.getPatternLength(drumIndex);
-                boolean isActive = sequencer.isStepActive(drumIndex, step);
-
-                // Configure button
-                button.setEnabled(isInPattern); // Use enabled state for in-pattern
-                button.setSelected(isActive);
-                button.setVisible(true); // Always make buttons visible
-
-                // Add to panel and tracking list
-                panel.add(button);
-                triggerButtons.add(button);
-
-                // Also store in the 2D array for direct access by coordinates
-                gridButtons[drumIndex][step] = button;
-            }
-        }
-
-        return panel;
-    }
-
-    /**
-     * Display a context menu for a step button
-     */
-    private void showContextMenu(Component component, int x, int y, int drumIndex, int step) {
-        JPopupMenu menu = new JPopupMenu();
-
-        // Add menu items for step operations
-        JMenuItem fillItem = new JMenuItem("Fill From Here...");
-        fillItem.addActionListener(e -> {
-            // Use CommandBus instead of direct dialog creation
-            Object[] params = new Object[] { sequencer, drumIndex, step };
-            CommandBus.getInstance().publish(Commands.SHOW_FILL_DIALOG, this, params);
-        });
-        menu.add(fillItem);
-
-        JMenuItem clearRowItem = new JMenuItem("Clear Row");
-        clearRowItem.addActionListener(e -> clearRow(drumIndex));
-        menu.add(clearRowItem);
-        
-        // Add Set Max Length option
-        JMenuItem setMaxLengthItem = new JMenuItem("Set Max Length...");
-        setMaxLengthItem.addActionListener(e -> {
-            // Use CommandBus instead of direct dialog creation
-            CommandBus.getInstance().publish(Commands.SHOW_MAX_LENGTH_DIALOG, this, sequencer);
-        });
-        menu.add(setMaxLengthItem);
-
-        // Add divider
-        menu.addSeparator();
-
-        // Add pattern generation items
-        JMenuItem patternItem = new JMenuItem("Apply Pattern...");
-        patternItem.addActionListener(e -> {
-            Object[] options = { "Every 2nd Step", "Every 3rd Step", "Every 4th Step" };
-            int choice = javax.swing.JOptionPane.showOptionDialog(
-                    this,
-                    "Choose pattern type:",
-                    "Pattern Generator",
-                    javax.swing.JOptionPane.DEFAULT_OPTION,
-                    javax.swing.JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    options,
-                    options[0]);
-
-            if (choice >= 0) {
-                applyPatternEveryN(drumIndex, 2 + choice);
-            }
-        });
-        menu.add(patternItem);
-
-        // Add Euclidean Pattern option
-        JMenuItem euclideanItem = new JMenuItem("Euclidean Pattern...");
-        euclideanItem.addActionListener(e -> {
-            // Use CommandBus instead of direct dialog creation
-            Object[] params = new Object[] { sequencer, drumIndex };
-            CommandBus.getInstance().publish(Commands.SHOW_EUCLIDEAN_DIALOG, this, params);
-        });
-        menu.add(euclideanItem);
-
-        // Show the menu
-        menu.show(component, x, y);
-    }
-
-    /**
-     * Clear all steps in a drum row
-     */
-    public void clearRow(int drumIndex) {
-        boolean success = DrumSequenceModifier.clearDrumTrack(sequencer, drumIndex);
-        if (success) {
-            updateStepButtonsForDrum(drumIndex);
-        }
-    }
-
-    /**
-     * Apply a pattern that activates every Nth step
-     */
-    private void applyPatternEveryN(int drumIndex, int n) {
-        boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, n);
-        if (success) {
-            updateStepButtonsForDrum(drumIndex);
-        }
-    }
-
-    /**
-     * Refresh the entire grid UI to match the current sequencer state
-     */
-    public void refreshGridUI() {
-        if (triggerButtons == null || triggerButtons.isEmpty()) {
-            logger.warn("Cannot refresh grid UI - triggerButtons list is empty");
-            return;
-        }
-
-        logger.info("Refreshing entire grid UI for sequence {}", sequencer.getDrumSequenceId());
-
-        // Temporarily disable any listeners if needed
-        boolean wasListeningToChanges = true; // Add field if needed
-
-        try {
-            // wasListeningToChanges = disableUIEventListeners();
-
-            // Ensure we refresh ALL drums and ALL steps
-            for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-                for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) { // Just update the visible
-                    // sequencer.getDefaultPatternLength() steps
-                    // Correct index calculation: drumRow * stepsPerRow + stepColumn
-                    int buttonIndex = drumIndex * sequencer.getDefaultPatternLength() + step;
-
-                    if (buttonIndex < triggerButtons.size()) {
-                        DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
-
-                        if (button != null) {
-                            // Get the current state from the sequencer
-                            boolean active = sequencer.isStepActive(drumIndex, step);
-
-                            // Force update button state without triggering events
-                            button.setToggled(active);
-                            button.setHighlighted(false); // Clear any highlighting
-                            button.repaint(); // Force immediate repaint
-                        }
-                    }
-                }
-
-                // Update the drum row's appearance
-                updateRowAppearance(drumIndex, drumIndex == selectedPadIndex);
-            }
-        } finally {
-            // Re-enable listeners if needed
-            // if (wasListeningToChanges) {
-            // enableUIEventListeners();
-            // }
-        }
-
-        // Make sure the UI shows the correct selected drum
-        updateParameterControls();
-
-        // Ensure proper visual refresh
-        revalidate();
-        repaint();
-
-        logger.info("Grid UI refresh completed");
-    }
-
-    /**
-     * Clear all step highlighting across all drum rows
-     */
-    private void clearAllStepHighlighting() {
-        for (DrumSequencerGridButton button : triggerButtons) {
-            button.clearTemporaryState();
-            button.repaint();
-        }
-    }
-
-    /**
      * Update the parameter controls to reflect the current selected drum
      */
     private void updateParameterControls() {
@@ -698,44 +341,23 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Sync the UI with the current state of the sequencer
-     */
-    public void syncUIWithSequencer() {
-        // For each drum pad
-        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) { // Just update the visible
-                                                                        // sequencer.getDefaultPatternLength() steps
-                // Correct index calculation: drumRow * stepsPerRow + stepColumn
-                int buttonIndex = drumIndex * sequencer.getDefaultPatternLength() + step;
-
-                if (buttonIndex < triggerButtons.size()) {
-                    DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
-                    button.setToggled(sequencer.isStepActive(drumIndex, step));
-                }
-            }
-        }
-    }
-
-    /**
      * Enable debug mode to show grid indices
      */
     public void toggleDebugMode() {
         debugMode = !debugMode;
+        gridPanel.toggleDebugMode();
+    }
 
-        // Show indices on buttons in debug mode
-        if (triggerButtons != null) {
-            for (int i = 0; i < triggerButtons.size(); i++) {
-                DrumSequencerGridButton button = triggerButtons.get(i);
-                int drumIndex = i / sequencer.getDefaultPatternLength();
-                int stepIndex = i % sequencer.getDefaultPatternLength();
-
-                if (debugMode) {
-                    button.setText(drumIndex + "," + stepIndex);
-                    button.setForeground(Color.YELLOW);
-                } else {
-                    button.setText("");
-                }
-            }
+    /**
+     * Enable or disable debug mode to show grid indices
+     * @param enabled Whether debug mode should be enabled
+     */
+    public void toggleDebugMode(boolean enabled) {
+        this.debugMode = enabled;
+        
+        // Delegate to the grid panel
+        if (gridPanel != null) {
+            gridPanel.toggleDebugMode();
         }
     }
 
@@ -753,7 +375,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 // Update the UI to reflect new sequence data
                 SwingUtilities.invokeLater(() -> {
                     // Update the entire grid UI
-                    refreshGridUI();
+                    gridPanel.refreshGridUI();
 
                     // Update the parameter controls for the selected drum
                     updateParameterControls();
@@ -764,7 +386,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                     }
 
                     // Reset all step highlighting
-                    clearAllStepHighlighting();
+                    gridPanel.clearAllStepHighlighting();
                 });
             }
 
@@ -777,12 +399,17 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             case Commands.TRANSPORT_START -> {
                 // Show step highlighting when playing starts
                 isPlaying = true;
+                if (gridPanel != null) {
+                    gridPanel.setPlayingState(true);
+                }
             }
 
             case Commands.TRANSPORT_STOP -> {
                 // Hide step highlighting when playing stops
                 isPlaying = false;
-                clearAllStepHighlighting();
+                if (gridPanel != null) {
+                    gridPanel.setPlayingState(false);
+                }
             }
 
             case Commands.MAX_LENGTH_SELECTED -> {
@@ -791,7 +418,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                     
                     // Update UI for affected drums
                     for (int drumIndex : updatedDrums) {
-                        updateStepButtonsForDrum(drumIndex);
+                        gridPanel.updateStepButtonsForDrum(drumIndex);
                     }
                     
                     // Update parameter controls if the selected drum was affected
@@ -814,7 +441,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                     
                     // If successful, update the UI
                     if (success) {
-                        updateStepButtonsForDrum(drumIndex);
+                        gridPanel.updateStepButtonsForDrum(drumIndex);
                         updateParameterControls();
                     }
                 }
@@ -849,8 +476,25 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                     }
 
                     // Update UI to reflect changes
-                    updateStepButtonsForDrum(drumIndex);
+                    gridPanel.updateStepButtonsForDrum(drumIndex);
                 }
+            }
+        }
+    }
+
+    /**
+     * Clears all steps for a specific drum track
+     * @param drumIndex The index of the drum to clear
+     */
+    public void clearRow(int drumIndex) {
+        boolean success = DrumSequenceModifier.clearDrumTrack(sequencer, drumIndex);
+        if (success) {
+            // Update UI after successful clear
+            gridPanel.updateStepButtonsForDrum(drumIndex);
+            
+            // Update parameter controls if clearing the selected drum
+            if (drumIndex == selectedPadIndex) {
+                updateParameterControls();
             }
         }
     }
@@ -1010,6 +654,25 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private void updateSwingControls() {
         if (swingPanel != null) {
             swingPanel.updateControls();
+        }
+    }
+
+    /**
+     * Updates the UI for a specific drum's steps
+     * @param drumIndex The index of the drum to update
+     */
+    public void updateStepButtonsForDrum(int drumIndex) {
+        if (gridPanel != null) {
+            gridPanel.updateStepButtonsForDrum(drumIndex);
+        }
+    }
+
+    /**
+     * Refreshes the entire grid UI
+     */
+    public void refreshGridUI() {
+        if (gridPanel != null) {
+            gridPanel.refreshGridUI();
         }
     }
 }
