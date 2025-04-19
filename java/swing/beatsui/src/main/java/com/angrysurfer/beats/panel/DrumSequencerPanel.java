@@ -354,7 +354,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         clearPatternButton = new JButton("🗑️");
         clearPatternButton.setToolTipText("Clear the pattern for this drum");
         clearPatternButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT)); // Reduce width
-        clearPatternButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
+        clearPatternButton.setMargin(new Insets(2, 2, 2, 2));
 
         // Create rotation panel for push/pull buttons
         JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -800,37 +800,20 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Clear all steps in a drum row
      */
     private void clearRow(int drumIndex) {
-        for (int step = 0; step < sequencer.getPatternLength(drumIndex); step++) {
-            // Deactivate steps by making sure they're not active
-            if (sequencer.isStepActive(drumIndex, step)) {
-                sequencer.toggleStep(drumIndex, step);
-            }
+        boolean success = DrumSequenceModifier.clearDrumTrack(sequencer, drumIndex);
+        if (success) {
+            updateStepButtonsForDrum(drumIndex);
         }
-
-        // Update the UI
-        updateStepButtonsForDrum(drumIndex);
-        logger.info("Cleared row for drum {}", drumIndex);
     }
 
     /**
      * Apply a pattern that activates every Nth step
      */
     private void applyPatternEveryN(int drumIndex, int n) {
-        int patternLength = sequencer.getPatternLength(drumIndex);
-
-        // Clear existing pattern first
-        clearRow(drumIndex);
-
-        // Set every Nth step
-        for (int i = 0; i < patternLength; i += n) {
-            if (!sequencer.isStepActive(drumIndex, i)) {
-                sequencer.toggleStep(drumIndex, i);
-            }
+        boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, n);
+        if (success) {
+            updateStepButtonsForDrum(drumIndex);
         }
-
-        // Update UI
-        updateStepButtonsForDrum(drumIndex);
-        logger.info("Applied 1/{} pattern to drum {}", n, drumIndex);
     }
 
     /**
@@ -1066,7 +1049,20 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
             case Commands.MAX_LENGTH_SELECTED -> {
                 if (action.getData() instanceof Integer maxLength) {
-                    applyMaxPatternLength(maxLength);
+                    List<Integer> updatedDrums = DrumSequenceModifier.applyMaxPatternLength(sequencer, maxLength);
+                    
+                    // Update UI for affected drums
+                    for (int drumIndex : updatedDrums) {
+                        updateStepButtonsForDrum(drumIndex);
+                    }
+                    
+                    // Update parameter controls if the selected drum was affected
+                    if (updatedDrums.contains(selectedPadIndex)) {
+                        updateParameterControls();
+                    }
+                    
+                    // Show confirmation message
+                    showPatternLengthUpdateMessage(updatedDrums.size());
                 }
             }
 
@@ -1346,5 +1342,29 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         } catch (Exception e) {
             logger.error("Error applying Euclidean pattern", e);
         }
+    }
+
+    /**
+     * Shows a confirmation dialog for pattern length updates
+     * @param updatedCount The number of drum patterns that were modified
+     */
+    private void showPatternLengthUpdateMessage(int updatedCount) {
+        SwingUtilities.invokeLater(() -> {
+            if (updatedCount > 0) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Updated pattern length for " + updatedCount + " drums.",
+                    "Pattern Length Updated",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            } else {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "No drum patterns were affected.",
+                    "Pattern Length Check",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            }
+        });
     }
 }
