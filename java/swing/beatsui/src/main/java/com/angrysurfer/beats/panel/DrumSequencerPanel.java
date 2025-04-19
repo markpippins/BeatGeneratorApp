@@ -18,6 +18,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
@@ -89,8 +90,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private static final int DRUM_PAD_COUNT = DrumSequencer.DRUM_PAD_COUNT;
 
     // Add these constants referencing DrumSequencer constants
-    private static final int MAX_STEPS = DrumSequencer.MAX_STEPS;
-    private static final int DEFAULT_PATTERN_LENGTH = DrumSequencer.DEFAULT_PATTERN_LENGTH;
     private static final int DEFAULT_VELOCITY = DrumSequencer.DEFAULT_VELOCITY;
     private static final int DEFAULT_DECAY = DrumSequencer.DEFAULT_DECAY;
     private static final int DEFAULT_PROBABILITY = DrumSequencer.DEFAULT_PROBABILITY;
@@ -276,11 +275,11 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         lastStepPanel.add(new JLabel("Last Step:"));
 
-        // Create spinner model with range 1-MAX_STEPS, default DEFAULT_PATTERN_LENGTH
-        SpinnerNumberModel lastStepModel = new SpinnerNumberModel(DEFAULT_PATTERN_LENGTH, 1, MAX_STEPS, 1);
+        // Create spinner model with range 1-sequencer.getMaxSteps(), default sequencer.getDefaultPatternLength()
+        SpinnerNumberModel lastStepModel = new SpinnerNumberModel(sequencer.getDefaultPatternLength(), 1, sequencer.getMaxSteps(), 1);
         lastStepSpinner = new JSpinner(lastStepModel);
         lastStepSpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        lastStepSpinner.setToolTipText("Set the last step of the pattern (1-" + MAX_STEPS + ")");
+        lastStepSpinner.setToolTipText("Set the last step of the pattern (1-" + sequencer.getMaxSteps() + ")");
         lastStepSpinner.addChangeListener(e -> {
             int lastStep = (Integer) lastStepSpinner.getValue();
             logger.info("Setting last step to {} for drum {}", lastStep, selectedPadIndex);
@@ -536,8 +535,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private void updateRowAppearance(int drumIndex, boolean isSelected) {
         int patternLength = sequencer.getPatternLength(drumIndex);
 
-        for (int step = 0; step < DEFAULT_PATTERN_LENGTH; step++) {
-            int buttonIndex = (drumIndex * DEFAULT_PATTERN_LENGTH) + step;
+        for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
+            int buttonIndex = (drumIndex * sequencer.getDefaultPatternLength()) + step;
             if (buttonIndex >= 0 && buttonIndex < triggerButtons.size()) {
                 DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
 
@@ -586,8 +585,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         }
 
         // Calculate button indices based on the drum and step
-        int oldButtonIndex = drumIndex * DEFAULT_PATTERN_LENGTH + oldStep;
-        int newButtonIndex = drumIndex * DEFAULT_PATTERN_LENGTH + newStep;
+        int oldButtonIndex = drumIndex * sequencer.getDefaultPatternLength() + oldStep;
+        int newButtonIndex = drumIndex * sequencer.getDefaultPatternLength() + newStep;
 
         // Ensure indices are valid
         if (oldButtonIndex >= 0 && oldButtonIndex < triggerButtons.size()) {
@@ -620,8 +619,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         logger.debug("Updating step buttons for drum {} with pattern length {}", drumIndex, patternLength);
 
         // Update all buttons for this row
-        for (int step = 0; step < DEFAULT_PATTERN_LENGTH; step++) {
-            int buttonIndex = (drumIndex * DEFAULT_PATTERN_LENGTH) + step;
+        for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
+            int buttonIndex = (drumIndex * sequencer.getDefaultPatternLength()) + step;
 
             // Safety check
             if (buttonIndex >= 0 && buttonIndex < triggerButtons.size()) {
@@ -703,16 +702,16 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      */
     private JPanel createSequenceGridPanel() {
         // Use consistent cell size with even spacing
-        JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, DEFAULT_PATTERN_LENGTH, 2, 2));
+        JPanel panel = new JPanel(new GridLayout(DRUM_PAD_COUNT, sequencer.getDefaultPatternLength(), 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         // Initialize both storage structures
-        triggerButtons = new ArrayList<>(DRUM_PAD_COUNT * DEFAULT_PATTERN_LENGTH); // Pre-size the list
-        gridButtons = new DrumSequencerGridButton[DRUM_PAD_COUNT][DEFAULT_PATTERN_LENGTH]; // Initialize the 2D array
+        triggerButtons = new ArrayList<>(DRUM_PAD_COUNT * sequencer.getDefaultPatternLength()); // Pre-size the list
+        gridButtons = new DrumSequencerGridButton[DRUM_PAD_COUNT][sequencer.getDefaultPatternLength()]; // Initialize the 2D array
 
         // Create grid buttons
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            for (int step = 0; step < DEFAULT_PATTERN_LENGTH; step++) {
+            for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
                 DrumSequencerGridButton button = createStepButton(drumIndex, step);
 
                 // IMPORTANT: Set initial state based on sequencer
@@ -774,6 +773,11 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         });
         menu.add(patternItem);
 
+        // Add Set Max Length option
+        JMenuItem setMaxLengthItem = new JMenuItem("Set Max Length...");
+        setMaxLengthItem.addActionListener(e -> showSetMaxLengthDialog());
+        menu.add(setMaxLengthItem);
+
         // Add Euclidean Pattern option
         JMenuItem euclideanItem = new JMenuItem("Euclidean Pattern...");
         euclideanItem.addActionListener(e -> showEuclideanDialog(drumIndex));
@@ -781,6 +785,60 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Show the menu
         menu.show(component, x, y);
+    }
+
+    /**
+     * Shows a dialog for setting maximum pattern length across all drums
+     */
+    private void showSetMaxLengthDialog() {
+        // Create dialog
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+                "Set Maximum Pattern Length",
+                java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        // Create panel with border layout
+        JPanel dialogPanel = new JPanel(new BorderLayout());
+        dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Create a panel for the spinner
+        JPanel spinnerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        spinnerPanel.add(new JLabel("Maximum Pattern Length:"));
+
+        // Create spinner with range from 1 to maxSteps
+        SpinnerNumberModel model = new SpinnerNumberModel(
+                sequencer.getDefaultPatternLength(), // Initial value (current default)
+                1, // Minimum
+                sequencer.getMaxSteps(), // Maximum
+                1 // Step
+        );
+        JSpinner lengthSpinner = new JSpinner(model);
+        spinnerPanel.add(lengthSpinner);
+
+        dialogPanel.add(spinnerPanel, BorderLayout.CENTER);
+
+        // Add button panel at bottom
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        JButton applyButton = new JButton("Apply");
+        applyButton.addActionListener(e -> {
+            int maxLength = (Integer) lengthSpinner.getValue();
+            applyMaxPatternLength(maxLength);
+            dialog.dispose();
+        });
+
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(applyButton);
+        dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Set dialog contents and show
+        dialog.setContentPane(dialogPanel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     /**
@@ -839,6 +897,61 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
+    }
+
+    /**
+     * Sets the maximum pattern length and updates any drums that have longer
+     * patterns
+     * 
+     * @param maxLength The new maximum pattern length
+     */
+    private void applyMaxPatternLength(int maxLength) {
+        logger.info("Setting max pattern length to: {}", maxLength);
+
+        // Track which drums were updated
+        List<Integer> updatedDrums = new ArrayList<>();
+
+        // Update lengths for all drums
+        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+            int currentLength = sequencer.getPatternLength(drumIndex);
+
+            // Only update drums that exceed the new maximum
+            if (currentLength > maxLength) {
+                sequencer.setPatternLength(drumIndex, maxLength);
+                updatedDrums.add(drumIndex);
+                logger.debug("Updated drum {} pattern length from {} to {}",
+                        drumIndex, currentLength, maxLength);
+            }
+        }
+
+        // Update the UI for all modified drums
+        for (int drumIndex : updatedDrums) {
+            updateStepButtonsForDrum(drumIndex);
+        }
+
+        // Update parameter controls if the selected drum was affected
+        if (updatedDrums.contains(selectedPadIndex)) {
+            updateParameterControls();
+        }
+
+        // Show a confirmation message
+        if (!updatedDrums.isEmpty()) {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Updated pattern length for " + updatedDrums.size() + " drums.",
+                        "Pattern Length Updated",
+                        JOptionPane.INFORMATION_MESSAGE);
+            });
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No drum patterns were affected.",
+                        "Pattern Length Check",
+                        JOptionPane.INFORMATION_MESSAGE);
+            });
+        }
     }
 
     /**
@@ -1026,10 +1139,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
             // Ensure we refresh ALL drums and ALL steps
             for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-                for (int step = 0; step < DEFAULT_PATTERN_LENGTH; step++) { // Just update the visible
-                    // DEFAULT_PATTERN_LENGTH steps
+                for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) { // Just update the visible
+                    // sequencer.getDefaultPatternLength() steps
                     // Correct index calculation: drumRow * stepsPerRow + stepColumn
-                    int buttonIndex = drumIndex * DEFAULT_PATTERN_LENGTH + step;
+                    int buttonIndex = drumIndex * sequencer.getDefaultPatternLength() + step;
 
                     if (buttonIndex < triggerButtons.size()) {
                         DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
@@ -1130,10 +1243,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     public void syncUIWithSequencer() {
         // For each drum pad
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            for (int step = 0; step < DEFAULT_PATTERN_LENGTH; step++) { // Just update the visible
-                                                                        // DEFAULT_PATTERN_LENGTH steps
+            for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) { // Just update the visible
+                                                                        // sequencer.getDefaultPatternLength() steps
                 // Correct index calculation: drumRow * stepsPerRow + stepColumn
-                int buttonIndex = drumIndex * DEFAULT_PATTERN_LENGTH + step;
+                int buttonIndex = drumIndex * sequencer.getDefaultPatternLength() + step;
 
                 if (buttonIndex < triggerButtons.size()) {
                     DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
@@ -1179,8 +1292,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         if (triggerButtons != null) {
             for (int i = 0; i < triggerButtons.size(); i++) {
                 DrumSequencerGridButton button = triggerButtons.get(i);
-                int drumIndex = i / DEFAULT_PATTERN_LENGTH;
-                int stepIndex = i % DEFAULT_PATTERN_LENGTH;
+                int drumIndex = i / sequencer.getDefaultPatternLength();
+                int stepIndex = i % sequencer.getDefaultPatternLength();
 
                 if (debugMode) {
                     button.setText(drumIndex + "," + stepIndex);
