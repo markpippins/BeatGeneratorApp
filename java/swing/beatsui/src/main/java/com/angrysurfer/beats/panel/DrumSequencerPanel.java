@@ -12,16 +12,13 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
@@ -50,6 +47,7 @@ import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.sequencer.DrumSequenceModifier;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -743,12 +741,24 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Add menu items for step operations
         JMenuItem fillItem = new JMenuItem("Fill From Here...");
-        fillItem.addActionListener(e -> showFillDialog(drumIndex, step));
+        fillItem.addActionListener(e -> {
+            // Use CommandBus instead of direct dialog creation
+            Object[] params = new Object[] { sequencer, drumIndex, step };
+            CommandBus.getInstance().publish(Commands.SHOW_FILL_DIALOG, this, params);
+        });
         menu.add(fillItem);
 
         JMenuItem clearRowItem = new JMenuItem("Clear Row");
         clearRowItem.addActionListener(e -> clearRow(drumIndex));
         menu.add(clearRowItem);
+        
+        // Add Set Max Length option
+        JMenuItem setMaxLengthItem = new JMenuItem("Set Max Length...");
+        setMaxLengthItem.addActionListener(e -> {
+            // Use CommandBus instead of direct dialog creation
+            CommandBus.getInstance().publish(Commands.SHOW_MAX_LENGTH_DIALOG, this, sequencer);
+        });
+        menu.add(setMaxLengthItem);
 
         // Add divider
         menu.addSeparator();
@@ -773,314 +783,17 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         });
         menu.add(patternItem);
 
-        // Add Set Max Length option
-        JMenuItem setMaxLengthItem = new JMenuItem("Set Max Length...");
-        setMaxLengthItem.addActionListener(e -> showSetMaxLengthDialog());
-        menu.add(setMaxLengthItem);
-
         // Add Euclidean Pattern option
         JMenuItem euclideanItem = new JMenuItem("Euclidean Pattern...");
-        euclideanItem.addActionListener(e -> showEuclideanDialog(drumIndex));
+        euclideanItem.addActionListener(e -> {
+            // Use CommandBus instead of direct dialog creation
+            Object[] params = new Object[] { sequencer, drumIndex };
+            CommandBus.getInstance().publish(Commands.SHOW_EUCLIDEAN_DIALOG, this, params);
+        });
         menu.add(euclideanItem);
 
         // Show the menu
         menu.show(component, x, y);
-    }
-
-    /**
-     * Shows a dialog for setting maximum pattern length across all drums
-     */
-    private void showSetMaxLengthDialog() {
-        // Create dialog
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-                "Set Maximum Pattern Length",
-                java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-
-        // Create panel with border layout
-        JPanel dialogPanel = new JPanel(new BorderLayout());
-        dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Create a panel for the spinner
-        JPanel spinnerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        spinnerPanel.add(new JLabel("Maximum Pattern Length:"));
-
-        // Create spinner with range from 1 to maxSteps
-        SpinnerNumberModel model = new SpinnerNumberModel(
-                sequencer.getDefaultPatternLength(), // Initial value (current default)
-                1, // Minimum
-                sequencer.getMaxSteps(), // Maximum
-                1 // Step
-        );
-        JSpinner lengthSpinner = new JSpinner(model);
-        spinnerPanel.add(lengthSpinner);
-
-        dialogPanel.add(spinnerPanel, BorderLayout.CENTER);
-
-        // Add button panel at bottom
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.addActionListener(e -> dialog.dispose());
-
-        JButton applyButton = new JButton("Apply");
-        applyButton.addActionListener(e -> {
-            int maxLength = (Integer) lengthSpinner.getValue();
-            applyMaxPatternLength(maxLength);
-            dialog.dispose();
-        });
-
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(applyButton);
-        dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Set dialog contents and show
-        dialog.setContentPane(dialogPanel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
-    }
-
-    /**
-     * Shows a dialog with Euclidean pattern controls
-     * 
-     * @param drumIndex The drum index to apply the pattern to
-     */
-    private void showEuclideanDialog(int drumIndex) {
-        // Create dialog
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-                "Euclidean Pattern Generator",
-                java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-
-        // Create panel with border layout
-        JPanel dialogPanel = new JPanel(new BorderLayout());
-        dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Create the Euclidean pattern panel (compact mode)
-        EuclideanPatternPanel patternPanel = new EuclideanPatternPanel(false);
-
-        // Set default values based on current pattern length
-        int patternLength = sequencer.getPatternLength(drumIndex);
-        patternPanel.getStepsDial().setValue(patternLength);
-        patternPanel.getHitsDial().setValue(Math.max(1, patternLength / 4)); // Default to 25% density
-        patternPanel.getRotationDial().setValue(0);
-        patternPanel.getWidthDial().setValue(0);
-
-        // Add pattern panel to dialog
-        dialogPanel.add(patternPanel, BorderLayout.CENTER);
-
-        // Add button panel at bottom
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.addActionListener(e -> dialog.dispose());
-
-        JButton applyButton = new JButton("Apply Pattern");
-        applyButton.addActionListener(e -> {
-            // Get the generated Euclidean pattern
-            boolean[] euclideanPattern = patternPanel.getPattern();
-
-            // Apply the pattern to the selected drum
-            applyEuclideanPattern(drumIndex, euclideanPattern);
-
-            // Close the dialog
-            dialog.dispose();
-        });
-
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(applyButton);
-        dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Set dialog contents and show
-        dialog.setContentPane(dialogPanel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
-    }
-
-    /**
-     * Sets the maximum pattern length and updates any drums that have longer
-     * patterns
-     * 
-     * @param maxLength The new maximum pattern length
-     */
-    private void applyMaxPatternLength(int maxLength) {
-        logger.info("Setting max pattern length to: {}", maxLength);
-
-        // Track which drums were updated
-        List<Integer> updatedDrums = new ArrayList<>();
-
-        // Update lengths for all drums
-        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            int currentLength = sequencer.getPatternLength(drumIndex);
-
-            // Only update drums that exceed the new maximum
-            if (currentLength > maxLength) {
-                sequencer.setPatternLength(drumIndex, maxLength);
-                updatedDrums.add(drumIndex);
-                logger.debug("Updated drum {} pattern length from {} to {}",
-                        drumIndex, currentLength, maxLength);
-            }
-        }
-
-        // Update the UI for all modified drums
-        for (int drumIndex : updatedDrums) {
-            updateStepButtonsForDrum(drumIndex);
-        }
-
-        // Update parameter controls if the selected drum was affected
-        if (updatedDrums.contains(selectedPadIndex)) {
-            updateParameterControls();
-        }
-
-        // Show a confirmation message
-        if (!updatedDrums.isEmpty()) {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Updated pattern length for " + updatedDrums.size() + " drums.",
-                        "Pattern Length Updated",
-                        JOptionPane.INFORMATION_MESSAGE);
-            });
-        } else {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "No drum patterns were affected.",
-                        "Pattern Length Check",
-                        JOptionPane.INFORMATION_MESSAGE);
-            });
-        }
-    }
-
-    /**
-     * Applies an Euclidean pattern to the specified drum
-     * 
-     * @param drumIndex The index of the drum to update
-     * @param pattern   The boolean array representing the pattern
-     */
-    private void applyEuclideanPattern(int drumIndex, boolean[] pattern) {
-        if (pattern == null || pattern.length == 0) {
-            logger.warn("Cannot apply null or empty Euclidean pattern");
-            return;
-        }
-
-        try {
-            // First clear the existing pattern
-            clearRow(drumIndex);
-
-            // Set the pattern length if needed
-            int newLength = pattern.length;
-            sequencer.setPatternLength(drumIndex, newLength);
-
-            // Set default values for all steps
-            for (int step = 0; step < newLength; step++) {
-
-                sequencer.setStepProbability(drumIndex, step, DEFAULT_PROBABILITY);
-                sequencer.setStepNudge(drumIndex, step, 0);
-                sequencer.setStepDecay(drumIndex, step, DEFAULT_DECAY);
-                sequencer.setStepVelocity(drumIndex, step, DEFAULT_VELOCITY);
-            }
-
-            // Apply pattern values (activate steps where pattern is true)
-            for (int step = 0; step < pattern.length; step++) {
-                if (pattern[step]) {
-                    // Toggle the step to make it active
-                    if (!sequencer.isStepActive(drumIndex, step)) {
-                        sequencer.toggleStep(drumIndex, step);
-                    }
-                }
-            }
-
-            // Update the UI to reflect changes
-            updateStepButtonsForDrum(drumIndex);
-            updateParameterControls();
-
-            logger.info("Applied Euclidean pattern to drum {}, pattern length: {}", drumIndex, pattern.length);
-        } catch (Exception e) {
-            logger.error("Error applying Euclidean pattern", e);
-        }
-    }
-
-    /**
-     * Show dialog for creating fill patterns
-     */
-    private void showFillDialog(int drumIndex, int startStep) {
-        // Change from boolean modal parameter to ModalityType
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-                "Fill Pattern",
-                java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Add options for fill pattern
-        JPanel optionsPanel = new JPanel(new GridLayout(4, 1, 5, 5));
-
-        // Fill type options
-        ButtonGroup group = new ButtonGroup();
-        JRadioButton allButton = new JRadioButton("Fill All", true);
-        JRadioButton everyOtherButton = new JRadioButton("Every Other Step");
-        JRadioButton every4thButton = new JRadioButton("Every 4th Step");
-        JRadioButton decayButton = new JRadioButton("Velocity Decay");
-
-        group.add(allButton);
-        group.add(everyOtherButton);
-        group.add(every4thButton);
-        group.add(decayButton);
-
-        optionsPanel.add(allButton);
-        optionsPanel.add(everyOtherButton);
-        optionsPanel.add(every4thButton);
-        optionsPanel.add(decayButton);
-
-        panel.add(optionsPanel, BorderLayout.CENTER);
-
-        // Add buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.addActionListener(e -> dialog.dispose());
-
-        JButton applyButton = new JButton("Apply");
-        applyButton.addActionListener(e -> {
-            // Apply the selected fill pattern
-            int patternLength = sequencer.getPatternLength(drumIndex);
-
-            for (int i = startStep; i < patternLength; i++) {
-                boolean shouldActivate = false;
-
-                if (allButton.isSelected()) {
-                    shouldActivate = true;
-                } else if (everyOtherButton.isSelected()) {
-                    shouldActivate = ((i - startStep) % 2) == 0;
-                } else if (every4thButton.isSelected()) {
-                    shouldActivate = ((i - startStep) % 4) == 0;
-                } else if (decayButton.isSelected()) {
-                    shouldActivate = true;
-                    // Apply velocity decay based on distance
-                    sequencer.setVelocity(drumIndex,
-                            Math.max(DEFAULT_VELOCITY / 2, DEFAULT_VELOCITY - ((i - startStep) * 8)));
-                }
-
-                if (shouldActivate) {
-                    sequencer.toggleStep(drumIndex, i);
-                }
-            }
-
-            // Update UI to reflect changes
-            updateStepButtonsForDrum(drumIndex);
-            dialog.dispose();
-        });
-
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(applyButton);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        dialog.setContentPane(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
     }
 
     /**
@@ -1350,6 +1063,61 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 isPlaying = false;
                 clearAllStepHighlighting();
             }
+
+            case Commands.MAX_LENGTH_SELECTED -> {
+                if (action.getData() instanceof Integer maxLength) {
+                    applyMaxPatternLength(maxLength);
+                }
+            }
+
+            case Commands.EUCLIDEAN_PATTERN_SELECTED -> {
+                if (action.getData() instanceof Object[] result) {
+                    int drumIndex = (Integer) result[0];
+                    boolean[] pattern = (boolean[]) result[1];
+                    
+                    // Use the static method from DrumSequenceModifier
+                    boolean success = DrumSequenceModifier.applyEuclideanPattern(sequencer, drumIndex, pattern);
+                    
+                    // If successful, update the UI
+                    if (success) {
+                        updateStepButtonsForDrum(drumIndex);
+                        updateParameterControls();
+                    }
+                }
+            }
+
+            case Commands.FILL_PATTERN_SELECTED -> {
+                if (action.getData() instanceof Object[] result) {
+                    int drumIndex = (Integer) result[0];
+                    int startStep = (Integer) result[1];
+                    String fillType = (String) result[2];
+
+                    // Apply the fill pattern
+                    int patternLength = sequencer.getPatternLength(drumIndex);
+
+                    for (int i = startStep; i < patternLength; i++) {
+                        boolean shouldActivate = false;
+
+                        switch (fillType) {
+                            case "all" -> shouldActivate = true;
+                            case "everyOther" -> shouldActivate = ((i - startStep) % 2) == 0;
+                            case "every4th" -> shouldActivate = ((i - startStep) % 4) == 0;
+                            case "decay" -> {
+                                shouldActivate = true;
+                                sequencer.setVelocity(drumIndex, 
+                                    Math.max(DEFAULT_VELOCITY / 2, DEFAULT_VELOCITY - ((i - startStep) * 8)));
+                            }
+                        }
+
+                        if (shouldActivate) {
+                            sequencer.toggleStep(drumIndex, i);
+                        }
+                    }
+
+                    // Update UI to reflect changes
+                    updateStepButtonsForDrum(drumIndex);
+                }
+            }
         }
     }
 
@@ -1478,5 +1246,105 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             } finally {
                 updatingUI = false;
             }
+    }
+
+    /**
+     * Sets the maximum pattern length and updates any drums that have longer patterns
+     * @param maxLength The new maximum pattern length
+     */
+    private void applyMaxPatternLength(int maxLength) {
+        logger.info("Setting max pattern length to: {}", maxLength);
+        
+        // Track which drums were updated
+        List<Integer> updatedDrums = new ArrayList<>();
+        
+        // Update lengths for all drums
+        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+            int currentLength = sequencer.getPatternLength(drumIndex);
+            
+            // Only update drums that exceed the new maximum
+            if (currentLength > maxLength) {
+                sequencer.setPatternLength(drumIndex, maxLength);
+                updatedDrums.add(drumIndex);
+                logger.debug("Updated drum {} pattern length from {} to {}", 
+                             drumIndex, currentLength, maxLength);
+            }
+        }
+        
+        // Update the UI for all modified drums
+        for (int drumIndex : updatedDrums) {
+            updateStepButtonsForDrum(drumIndex);
+        }
+        
+        // Update parameter controls if the selected drum was affected
+        if (updatedDrums.contains(selectedPadIndex)) {
+            updateParameterControls();
+        }
+        
+        // Show a confirmation message
+        if (!updatedDrums.isEmpty()) {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Updated pattern length for " + updatedDrums.size() + " drums.",
+                    "Pattern Length Updated",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            });
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "No drum patterns were affected.",
+                    "Pattern Length Check",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            });
+        }
+    }
+
+    /**
+     * Applies an Euclidean pattern to the specified drum
+     * @param drumIndex The index of the drum to update
+     * @param pattern The boolean array representing the pattern
+     */
+    private void applyEuclideanPattern(int drumIndex, boolean[] pattern) {
+        if (pattern == null || pattern.length == 0) {
+            logger.warn("Cannot apply null or empty Euclidean pattern");
+            return;
+        }
+        
+        try {
+            // First clear the existing pattern
+            clearRow(drumIndex);
+            
+            // Set the pattern length if needed
+            int newLength = pattern.length;
+            sequencer.setPatternLength(drumIndex, newLength);
+            
+            // Apply pattern values (activate steps where pattern is true)
+            for (int step = 0; step < pattern.length; step++) {
+                if (pattern[step]) {
+                    // Toggle the step to make it active
+                    if (!sequencer.isStepActive(drumIndex, step)) {
+                        sequencer.toggleStep(drumIndex, step);
+                    }
+                    
+                    // Set default parameters for this step
+                    sequencer.setStepVelocity(drumIndex, step, DEFAULT_VELOCITY);
+                    sequencer.setStepDecay(drumIndex, step, DEFAULT_DECAY);
+                    sequencer.setStepProbability(drumIndex, step, DEFAULT_PROBABILITY);
+                    sequencer.setStepNudge(drumIndex, step, 0);
+                }
+            }
+            
+            // Update the UI to reflect changes
+            updateStepButtonsForDrum(drumIndex);
+            updateParameterControls();
+            
+            logger.info("Applied Euclidean pattern to drum {}, pattern length: {}", drumIndex, pattern.length);
+        } catch (Exception e) {
+            logger.error("Error applying Euclidean pattern", e);
+        }
     }
 }

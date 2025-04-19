@@ -1,10 +1,22 @@
 package com.angrysurfer.beats;
 
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.io.File;
 import java.util.List;
 
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -12,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.panel.CustomControlsPanel;
+import com.angrysurfer.beats.panel.EuclideanPatternPanel;
 import com.angrysurfer.beats.panel.PlayerEditPanel;
 import com.angrysurfer.beats.panel.RuleEditPanel;
 import com.angrysurfer.core.api.Command;
@@ -25,6 +38,7 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
@@ -60,6 +74,17 @@ public class DialogManager implements IBusListener {
             case Commands.EDIT_PLAYER_PARAMETERS -> handlePlayerParameters((Player) action.getData());
             case Commands.LOAD_CONFIG -> SwingUtilities.invokeLater(() -> showConfigFileChooserDialog());
             case Commands.SAVE_CONFIG -> SwingUtilities.invokeLater(() -> showConfigFileSaverDialog());
+            case Commands.SHOW_MAX_LENGTH_DIALOG -> handleMaxLengthDialog((DrumSequencer) action.getData());
+            case Commands.SHOW_EUCLIDEAN_DIALOG -> {
+                if (action.getData() instanceof Object[] params) {
+                    handleEuclideanDialog((DrumSequencer) params[0], (Integer) params[1]);
+                }
+            }
+            case Commands.SHOW_FILL_DIALOG -> {
+                if (action.getData() instanceof Object[] params) {
+                    handleFillDialog((DrumSequencer) params[0], (Integer) params[1], (Integer) params[2]);
+                }
+            }
         }
     }
 
@@ -392,4 +417,150 @@ public class DialogManager implements IBusListener {
         }
     }
 
+    private void handleMaxLengthDialog(DrumSequencer sequencer) {
+        SwingUtilities.invokeLater(() -> {
+            JDialog dialog = new JDialog(frame,
+                    "Set Maximum Pattern Length",
+                    java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+            JPanel dialogPanel = new JPanel(new BorderLayout());
+            dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+            JPanel spinnerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            spinnerPanel.add(new JLabel("Maximum Pattern Length:"));
+
+            SpinnerNumberModel model = new SpinnerNumberModel(
+                    sequencer.getDefaultPatternLength(),
+                    1,
+                    sequencer.getMaxSteps(),
+                    1
+            );
+            JSpinner lengthSpinner = new JSpinner(model);
+            spinnerPanel.add(lengthSpinner);
+
+            dialogPanel.add(spinnerPanel, BorderLayout.CENTER);
+
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+            JButton cancelButton = new JButton("Cancel");
+            cancelButton.addActionListener(e -> dialog.dispose());
+
+            JButton applyButton = new JButton("Apply");
+            applyButton.addActionListener(e -> {
+                int maxLength = (Integer) lengthSpinner.getValue();
+                commandBus.publish(Commands.MAX_LENGTH_SELECTED, this, maxLength);
+                dialog.dispose();
+            });
+
+            buttonPanel.add(cancelButton);
+            buttonPanel.add(applyButton);
+            dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.setContentPane(dialogPanel);
+            dialog.pack();
+            dialog.setLocationRelativeTo(frame);
+            dialog.setVisible(true);
+        });
+    }
+
+    private void handleEuclideanDialog(DrumSequencer sequencer, int drumIndex) {
+        SwingUtilities.invokeLater(() -> {
+            JDialog dialog = new JDialog(frame,
+                    "Euclidean Pattern Generator",
+                    java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+            JPanel dialogPanel = new JPanel(new BorderLayout());
+            dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+            EuclideanPatternPanel patternPanel = new EuclideanPatternPanel(false);
+
+            int patternLength = sequencer.getPatternLength(drumIndex);
+            patternPanel.getStepsDial().setValue(patternLength);
+            patternPanel.getHitsDial().setValue(Math.max(1, patternLength / 4));
+            patternPanel.getRotationDial().setValue(0);
+            patternPanel.getWidthDial().setValue(0);
+
+            dialogPanel.add(patternPanel, BorderLayout.CENTER);
+
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+            JButton cancelButton = new JButton("Cancel");
+            cancelButton.addActionListener(e -> dialog.dispose());
+
+            JButton applyButton = new JButton("Apply Pattern");
+            applyButton.addActionListener(e -> {
+                boolean[] pattern = patternPanel.getPattern();
+                Object[] result = new Object[] { drumIndex, pattern };
+                commandBus.publish(Commands.EUCLIDEAN_PATTERN_SELECTED, this, result);
+                dialog.dispose();
+            });
+
+            buttonPanel.add(cancelButton);
+            buttonPanel.add(applyButton);
+            dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.setContentPane(dialogPanel);
+            dialog.pack();
+            dialog.setLocationRelativeTo(frame);
+            dialog.setVisible(true);
+        });
+    }
+
+    private void handleFillDialog(DrumSequencer sequencer, int drumIndex, int startStep) {
+        SwingUtilities.invokeLater(() -> {
+            JDialog dialog = new JDialog(frame,
+                    "Fill Pattern",
+                    java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+
+            JPanel panel = new JPanel(new BorderLayout(10, 10));
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+            JPanel optionsPanel = new JPanel(new GridLayout(4, 1, 5, 5));
+
+            ButtonGroup group = new ButtonGroup();
+            JRadioButton allButton = new JRadioButton("Fill All", true);
+            JRadioButton everyOtherButton = new JRadioButton("Every Other Step");
+            JRadioButton every4thButton = new JRadioButton("Every 4th Step");
+            JRadioButton decayButton = new JRadioButton("Velocity Decay");
+
+            group.add(allButton);
+            group.add(everyOtherButton);
+            group.add(every4thButton);
+            group.add(decayButton);
+
+            optionsPanel.add(allButton);
+            optionsPanel.add(everyOtherButton);
+            optionsPanel.add(every4thButton);
+            optionsPanel.add(decayButton);
+
+            panel.add(optionsPanel, BorderLayout.CENTER);
+
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton cancelButton = new JButton("Cancel");
+            cancelButton.addActionListener(e -> dialog.dispose());
+
+            JButton applyButton = new JButton("Apply");
+            applyButton.addActionListener(e -> {
+                String fillType = "all";
+                if (everyOtherButton.isSelected()) fillType = "everyOther";
+                else if (every4thButton.isSelected()) fillType = "every4th";
+                else if (decayButton.isSelected()) fillType = "decay";
+
+                Object[] result = new Object[] { drumIndex, startStep, fillType };
+                commandBus.publish(Commands.FILL_PATTERN_SELECTED, this, result);
+                dialog.dispose();
+            });
+
+            buttonPanel.add(cancelButton);
+            buttonPanel.add(applyButton);
+            panel.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.setContentPane(panel);
+            dialog.pack();
+            dialog.setLocationRelativeTo(frame);
+            dialog.setVisible(true);
+        });
+    }
 }
