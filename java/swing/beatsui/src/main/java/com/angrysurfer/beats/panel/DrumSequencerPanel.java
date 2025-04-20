@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
-import java.awt.Color;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -667,6 +666,24 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         }
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
     /**
      * Refreshes the entire grid UI
      */
