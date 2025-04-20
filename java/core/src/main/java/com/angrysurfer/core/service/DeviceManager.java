@@ -23,18 +23,18 @@ import com.angrysurfer.core.exception.MidiDeviceException;
 import com.angrysurfer.core.model.InstrumentWrapper;
 
 public class DeviceManager implements IBusListener {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(DeviceManager.class);
     private static DeviceManager instance;
     private final List<MidiDevice> availableOutputDevices = new ArrayList<>();
     private final CommandBus commandBus = CommandBus.getInstance();
-    
+
     // Private constructor for singleton
     private DeviceManager() {
         refreshDeviceList();
         commandBus.register(this);
     }
-    
+
     // Singleton accessor
     public static synchronized DeviceManager getInstance() {
         if (instance == null) {
@@ -42,35 +42,36 @@ public class DeviceManager implements IBusListener {
         }
         return instance;
     }
-    
+
     // CommandListener implementation
     @Override
     public void onAction(Command action) {
-        if (action.getCommand() == null) return;
-        
+        if (action.getCommand() == null)
+            return;
+
         switch (action.getCommand()) {
             case "REFRESH_MIDI_DEVICES" -> refreshDeviceList();
         }
     }
-    
+
     // Update the device list
     public void refreshDeviceList() {
         logger.info("Refreshing MIDI device list");
         availableOutputDevices.clear();
         availableOutputDevices.addAll(getMidiOutDevices());
     }
-    
+
     // Get names of available output devices
     public List<String> getAvailableOutputDeviceNames() {
         if (availableOutputDevices.isEmpty()) {
             refreshDeviceList();
         }
-        
+
         return availableOutputDevices.stream()
-            .map(device -> device.getDeviceInfo().getName())
-            .collect(Collectors.toList());
+                .map(device -> device.getDeviceInfo().getName())
+                .collect(Collectors.toList());
     }
-    
+
     // Existing static methods can remain for backwards compatibility
     public static void cleanupMidiDevices() {
         logger.info("cleanupMidiDevices()");

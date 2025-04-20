@@ -1,20 +1,17 @@
 package com.angrysurfer.core.model.feature;
-// package com.angrysurfer.midi.model;
 
-// import jakarta.persistence.*;
-// import lombok.Getter;
-// import lombok.Setter;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 
-// @Entity
-// @Getter
-// @Setter
-// public class Chord extends Player {
-//     // @Id
-//     // @GeneratedValue(strategy = GenerationType.SEQUENCE)
-//     // @Column(name = "id", nullable = false)
-//     // private Long id;
-//     @Override
-//     public void onTick(long tick, int bar) {
+import lombok.Getter;
+import lombok.Setter;
 
-//     }
-// }
+@Getter
+@Setter
+public class Chord extends Player {
+
+    @Override
+    public void onTick(TimingUpdate timingUpdate) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+}

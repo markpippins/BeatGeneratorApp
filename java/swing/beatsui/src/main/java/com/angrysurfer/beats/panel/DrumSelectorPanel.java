@@ -81,7 +81,7 @@ public class DrumSelectorPanel extends JPanel {
             strike.setLevel(100); // Default velocity
 
             // Set the strike in the sequencer
-            sequencer.setStrike(drumIndex, strike);
+            sequencer.setPlayer(drumIndex, strike);
 
             // Create the drum button with proper selection handling
             DrumSequencerButton drumButton = new DrumSequencerButton(drumIndex, sequencer);
