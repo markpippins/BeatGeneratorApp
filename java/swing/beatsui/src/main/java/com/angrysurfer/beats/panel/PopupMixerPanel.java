@@ -225,8 +225,8 @@ public class PopupMixerPanel extends JPanel {
         
         // Add drum name label
         String drumName = "Drum " + (drumIndex + 1);
-        if (drumSequencer.getStrike(drumIndex) != null) {
-            drumName = drumSequencer.getStrike(drumIndex).getName();
+        if (drumSequencer.getPlayer(drumIndex) != null) {
+            drumName = drumSequencer.getPlayer(drumIndex).getName();
         }
         
         JLabel nameLabel = new JLabel(drumName);

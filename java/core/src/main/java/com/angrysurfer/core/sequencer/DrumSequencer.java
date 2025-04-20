@@ -3,6 +3,7 @@ package com.angrysurfer.core.sequencer;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
+import com.angrysurfer.core.redis.RedisService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +14,7 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -92,8 +93,8 @@ public class DrumSequencer implements IBusListener {
     private int[][] stepProbabilities; // Probability for each step [drumIndex][stepIndex]
     private int[][] stepNudges; // Timing nudge for each step [drumIndex][stepIndex]
 
-    // Strike objects for each drum pad
-    private Strike[] players;
+    // Player objects for each drum pad
+    private Player[] players;
     private InstrumentWrapper[] instruments;
 
     // Selection state
@@ -172,12 +173,12 @@ public class DrumSequencer implements IBusListener {
         // Get internal synthesizer from InternalSynthManager
         javax.sound.midi.Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
 
-        // Initialize strikes with proper configuration
+        // Initialize Players with proper configuration
         instruments = new InstrumentWrapper[DRUM_PAD_COUNT];
-        players = new Strike[DRUM_PAD_COUNT];
+        players = new Player[DRUM_PAD_COUNT];
 
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
-            players[i] = new Strike();
+            players[i] = RedisService.getInstance().newPlayer();
             players[i].setName("Drum " + (i + 1));
             // Set default root notes - standard GM drum map starting points
             players[i].setRootNote(MIDI_DRUM_NOTE_OFFSET + i); // Start from MIDI note 36 (C1)
@@ -403,7 +404,7 @@ public class DrumSequencer implements IBusListener {
 
         // Process each drum separately
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-            // Skip if no strike configured
+            // Skip if no Player configured
             if (players[drumIndex] == null) {
                 continue;
             }
@@ -545,7 +546,7 @@ public class DrumSequencer implements IBusListener {
 
                 // Add these safety checks before playing the note
                 if (finalVelocity > 0 && drumIndex >= 0 && drumIndex < players.length) {
-                    Strike player = players[drumIndex];
+                    Player player = players[drumIndex];
 
                     // Check if player exists
                     if (player != null) {
@@ -948,10 +949,10 @@ public class DrumSequencer implements IBusListener {
             velocity = Math.max(0, Math.min(MAX_MIDI_VELOCITY, velocity));
             velocities[drumIndex] = velocity;
 
-            // If we have a Strike object for this drum, update its level
-            Strike strike = getStrike(drumIndex);
-            if (strike != null) {
-                strike.setLevel(velocity);
+            // If we have a Player object for this drum, update its level
+            Player Player = getPlayer(drumIndex);
+            if (Player != null) {
+                Player.setLevel(velocity);
             }
 
             // Notify UI of parameter change
@@ -1086,12 +1087,12 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Get the Strike object for a specific drum pad
+     * Get the Player object for a specific drum pad
      *
      * @param drumIndex The index of the drum pad (0-15)
-     * @return The Strike object or null if not set
+     * @return The Player object or null if not set
      */
-    public Strike getStrike(int drumIndex) {
+    public Player getPlayer(int drumIndex) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
             return players[drumIndex];
         }
@@ -1099,14 +1100,14 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Set the Strike object for a specific drum pad
+     * Set the Player object for a specific drum pad
      *
      * @param drumIndex The index of the drum pad (0-15)
-     * @param strike    The Strike object to associate with the drum pad
+     * @param Player    The Player object to associate with the drum pad
      */
-    public void setStrike(int drumIndex, Strike strike) {
+    public void setPlayer(int drumIndex, Player Player) {
         if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
-            players[drumIndex] = strike;
+            players[drumIndex] = Player;
         }
     }
 
@@ -1356,7 +1357,7 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Play a drum note using the Strike for the specified drum pad
+     * Play a drum note using the Player for the specified drum pad
      *
      * @param drumIndex The drum pad index to play
      * @param velocity  The velocity to play the note with
@@ -1367,26 +1368,26 @@ public class DrumSequencer implements IBusListener {
             return;
         }
 
-        Strike strike = players[drumIndex];
-        if (strike == null) {
-            logger.debug("No Strike assigned to drum pad {}", drumIndex);
+        Player Player = players[drumIndex];
+        if (Player == null) {
+            logger.debug("No Player assigned to drum pad {}", drumIndex);
             return;
         }
 
-        if (strike.getInstrument() == null) {
-            strike.setInstrument(instruments[drumIndex]);
-            strike.setChannel(9);
+        if (Player.getInstrument() == null) {
+            Player.setInstrument(instruments[drumIndex]);
+            Player.setChannel(9);
         }
 
-        if (strike.getInstrument() == null) {
-            logger.debug("No instrument assigned to Strike for drum pad {}", drumIndex);
+        if (Player.getInstrument() == null) {
+            logger.debug("No instrument assigned to Player for drum pad {}", drumIndex);
             return;
         }
 
-        int noteNumber = strike.getRootNote();
+        int noteNumber = Player.getRootNote();
         try {
-            // Use the Strike's instrument directly to play the note
-            strike.noteOn(noteNumber, velocity);
+            // Use the Player's instrument directly to play the note
+            Player.noteOn(noteNumber, velocity);
 
             // Still notify listeners for UI updates
             if (noteEventListener != null) {
@@ -1425,7 +1426,7 @@ public class DrumSequencer implements IBusListener {
                         int finalVelocity = (int) (velocity * (velocities[drumIndex] / 127.0));
 
                         // Get the player for this drum
-                        Strike player = players[drumIndex];
+                        Player player = players[drumIndex];
 
                         // Only play if player exists, has instrument, and velocity is > 0
                         if (player != null && player.getInstrument() != null && finalVelocity > 0) {

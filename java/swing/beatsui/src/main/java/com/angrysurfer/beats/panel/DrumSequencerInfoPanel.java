@@ -9,6 +9,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 
@@ -66,7 +67,7 @@ public class DrumSequencerInfoPanel extends JPanel {
         
         currentDrumIndex = drumPadIndex;
         
-        Strike strike = sequencer.getStrike(drumPadIndex);
+        Player strike = sequencer.getPlayer(drumPadIndex);
         
         if (strike == null) {
             drumNameLabel.setText("Name: Not assigned");
