@@ -19,10 +19,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
 import com.angrysurfer.beats.UIUtils;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusUpdate;
-import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.*;
 
 public class LaunchPanel extends JPanel implements IBusListener {
 
@@ -42,7 +39,7 @@ public class LaunchPanel extends JPanel implements IBusListener {
     }
 
     @Override
-    public void onAction(com.angrysurfer.core.api.Command action) {
+    public void onAction(Command action) {
         if (Commands.CHANGE_THEME.equals(action.getCommand())) {
             SwingUtilities.invokeLater(this::repaint);
         }
