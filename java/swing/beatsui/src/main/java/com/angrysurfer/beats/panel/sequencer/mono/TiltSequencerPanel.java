@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ScaleDegreeSelectionDial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.IBusListener;
@@ -191,51 +192,47 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
      * Synchronize the dial positions with the sequencer tilt values
      */
     public void syncWithSequencer() {
-        if (sequencer == null) return;
+        if (sequencer == null) {
+            logger.warn("Cannot sync TiltSequencerPanel - sequencer is null");
+            return;
+        }
         
+        logger.debug("Syncing tilt panel with sequencer values");
+        
+        // Get values directly from sequencer
         List<Integer> tiltValues = sequencer.getHarmonicTiltValues();
-        if (tiltValues != null) {
+        if (tiltValues != null && !tiltValues.isEmpty()) {
+            logger.info("Received {} tilt values from sequencer", tiltValues.size());
+            
+            // Loop through and update dial values
             for (int i = 0; i < Math.min(tiltDials.size(), tiltValues.size()); i++) {
                 int tiltValue = tiltValues.get(i);
+                logger.debug("Setting dial {} to value {}", i, tiltValue);
+                
+                // Ensure the value is in range
+                int safeValue = Math.max(MIN_VALUE, Math.min(MAX_VALUE, tiltValue));
+                if (safeValue != tiltValue) {
+                    logger.warn("Tilt value {} out of range, clamping to {}", tiltValue, safeValue);
+                    tiltValue = safeValue;
+                }
+                
+                // Set the value without triggering change listeners
                 tiltDials.get(i).setValue(tiltValue, false);
             }
+        } else {
+            logger.warn("No harmonic tilt values available from sequencer");
         }
         
         // Highlight the current bar
         highlightCurrentBar();
         
-        // Force repaint
+        // Force repaint to ensure visual updates
+        for (Dial dial : tiltDials) {
+            dial.repaint();
+        }
+        
+        // Force complete panel repaint
+        revalidate();
         repaint();
     }
 }
-
-// JPanel slidersPanel = new JPanel(new GridLayout(1, SLIDER_COUNT, 2, 0));
-// JPanel labelsPanel = new JPanel(new GridLayout(1, SLIDER_COUNT, 2, 0));
-
-// // Create the sliders and labels
-// for (int i = 0; i < SLIDER_COUNT; i++) {
-// // Create a vertical slider
-// JSlider slider = createTiltSlider(i);
-// tiltSliders.add(slider);
-
-// // Create container for slider with spacing
-// JPanel sliderContainer = new JPanel();
-// sliderContainer.setLayout(new BorderLayout());
-// sliderContainer.add(slider, BorderLayout.CENTER);
-
-// // Add padding on sides of slider
-// sliderContainer.add(Box.createHorizontalStrut(2), BorderLayout.WEST);
-// sliderContainer.add(Box.createHorizontalStrut(2), BorderLayout.EAST);
-
-// sliderContainers.add(sliderContainer);
-// slidersPanel.add(sliderContainer);
-
-// // Create label for slider
-// JLabel label = new JLabel(String.valueOf(i + 1), JLabel.CENTER);
-// label.setFont(label.getFont().deriveFont(10f));
-// labelsPanel.add(label);
-// }
-
-// JPanel mainPanel = new JPanel(new BorderLayout());
-// mainPanel.add(slidersPanel, BorderLayout.CENTER);
-// mainPanel.add(labelsPanel, BorderLayout.SOUTH);

@@ -103,11 +103,12 @@ public class MelodicSequencer implements IBusListener {
     /**
      * Initialize the harmonic tilt values with defaults (0)
      */
-    private void initializeHarmonicTiltValues() {
-        harmonicTiltValues.clear();
+    public void initializeHarmonicTiltValues() {
+        harmonicTiltValues = new ArrayList<>();
         for (int i = 0; i < 16; i++) {
             harmonicTiltValues.add(0);
         }
+        logger.debug("Initialized harmonic tilt values with defaults");
     }
 
     /**
@@ -115,6 +116,10 @@ public class MelodicSequencer implements IBusListener {
      * @return List of tilt values for each bar
      */
     public List<Integer> getHarmonicTiltValues() {
+        if (harmonicTiltValues == null || harmonicTiltValues.isEmpty()) {
+            logger.warn("Tilt values not initialized, creating defaults");
+            initializeHarmonicTiltValues();
+        }
         return harmonicTiltValues;
     }
 
@@ -228,6 +233,9 @@ public class MelodicSequencer implements IBusListener {
     public MelodicSequencer(Integer channel) {
         this();
         this.channel = channel; // Set the channel for this instance
+
+        // Initialize tilt values
+        initializeHarmonicTiltValues();
     }
 
     /**

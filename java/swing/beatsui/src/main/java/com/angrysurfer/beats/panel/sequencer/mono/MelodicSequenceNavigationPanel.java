@@ -48,12 +48,17 @@ public class MelodicSequenceNavigationPanel extends JPanel {
     private final MelodicSequencer sequencer;
     private final RedisService redisService;
     private final MelodicSequencerManager manager;
+    private MelodicSequencerPanel parentPanel;
 
-    public MelodicSequenceNavigationPanel(MelodicSequencer sequencer) {
+    // Update the constructor to accept the parent panel reference
+    public MelodicSequenceNavigationPanel(MelodicSequencer sequencer, MelodicSequencerPanel parentPanel) {
         this.sequencer = sequencer;
+        this.parentPanel = parentPanel;  // Store the reference
+        
+        // Rest of constructor remains the same
         this.redisService = RedisService.getInstance();
         this.manager = MelodicSequencerManager.getInstance();
-
+        
         initializeUI();
     }
 
@@ -310,5 +315,16 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         
         logger.info("Saved melodic sequence: {} for sequencer {}", 
                    sequencer.getMelodicSequenceId(), sequencer.getId());
+    }
+
+    // Modify the navigateToSequence method to use parentPanel instead of sequencerPanel
+    private void navigateToSequence(Long sequenceId) {
+        // ...existing code to load the sequence...
+        
+        // After loading the sequence, explicitly update the tilt panel
+        if (parentPanel != null && parentPanel.getTiltSequencerPanel() != null) {
+            logger.info("Explicitly updating tilt panel after navigation");
+            parentPanel.getTiltSequencerPanel().syncWithSequencer();
+        }
     }
 }

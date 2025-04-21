@@ -512,8 +512,54 @@ public class RedisService implements IBusListener {
         return melodicSequencerHelper.newMelodicSequence(1);
     }
 
+    /**
+     * Apply melodic sequence data to sequencer
+     */
     public void applyMelodicSequenceToSequencer(MelodicSequenceData data, MelodicSequencer sequencer) {
-        melodicSequencerHelper.applyToSequencer(data, sequencer);
+        if (data == null || sequencer == null) {
+            logger.warn("Cannot apply null melodic sequence data or sequencer");
+            return;
+        }
+        
+        try {
+            // Update sequence ID and parameters
+            sequencer.setMelodicSequenceId(data.getId());
+            
+            // Apply other parameters (direction, timing, etc)
+            // ...existing code...
+            
+            // Apply step patterns
+            sequencer.setActiveSteps(data.getActiveSteps());
+            sequencer.setNoteValues(data.getNoteValues());
+            sequencer.setVelocityValues(data.getVelocityValues());
+            sequencer.setGateValues(data.getGateValues());
+            
+            // Apply the probability values if available
+            if (data.getProbabilityValues() != null && !data.getProbabilityValues().isEmpty()) {
+                sequencer.setProbabilityValues(data.getProbabilityValues());
+            }
+            
+            // Apply the nudge values if available
+            if (data.getNudgeValues() != null && !data.getNudgeValues().isEmpty()) {
+                sequencer.setNudgeValues(data.getNudgeValues());
+            }
+            
+            // Apply harmonic tilt values if available - IMPORTANT FIX HERE
+            if (data.getHarmonicTiltValues() != null && !data.getHarmonicTiltValues().isEmpty()) {
+                logger.info("Applying {} tilt values to sequencer {}", 
+                    data.getHarmonicTiltValues().size(), sequencer.getId());
+                sequencer.setHarmonicTiltValues(data.getHarmonicTiltValues());
+            } else {
+                // Initialize with default values
+                logger.info("No tilt values found, initializing with defaults for sequencer {}", 
+                    sequencer.getId());
+                sequencer.initializeHarmonicTiltValues();
+            }
+            
+            logger.info("Applied melodic sequence {} to sequencer {}", data.getId(), sequencer.getId());
+        } catch (Exception e) {
+            logger.error("Error applying melodic sequence data: {}", e.getMessage(), e);
+        }
     }
 
     public MelodicSequenceData findMelodicSequenceById(Long id) {
