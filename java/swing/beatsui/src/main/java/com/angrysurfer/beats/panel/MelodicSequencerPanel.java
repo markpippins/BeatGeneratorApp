@@ -127,6 +127,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Create sequence navigation panel
         MelodicSequenceNavigationPanel navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
 
+
         // Create sequence parameters panel
         JPanel sequenceParamsPanel = createSequenceParametersPanel();
 
@@ -170,7 +171,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         TiltSequencerPanel tiltPanel = new TiltSequencerPanel(sequencer);
 
         // Color[] colors = { Color.MAGENTA, new Color(0, 0, 0, 0), Color.BLUE, Color.GREEN, Color.YELLOW };
-        tiltPanel.setBackground(UIUtils.getColors()[MelodicSequencerManager.getInstance().getSequencerCount()]);
 
         // Set a fixed preferred height for the tilt panel to prevent it from taking too
         // much space

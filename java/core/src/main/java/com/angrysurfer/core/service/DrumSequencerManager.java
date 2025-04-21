@@ -34,6 +34,8 @@ public class DrumSequencerManager implements IBusListener {
     // Store sequencers in an ArrayList for indexed access
     private final List<DrumSequencer> sequencers;
 
+    private int selectedPadIndex = 0; // Default to first pad
+
     // Private constructor for singleton pattern
     private DrumSequencerManager() {
         this.redisService = RedisService.getInstance();
@@ -399,5 +401,35 @@ public class DrumSequencerManager implements IBusListener {
 
     public List<Long> getAllDrumSequenceIds() {
         return redisService.getAllDrumSequenceIds();
+    }
+
+    /**
+     * Get the currently selected drum pad index
+     * 
+     * @return The selected pad index
+     */
+    public synchronized int getSelectedPadIndex() {
+        return selectedPadIndex;
+    }
+
+    /**
+     * Set the currently selected drum pad index
+     * 
+     * @param index The new selected pad index
+     */
+    public synchronized void setSelectedPadIndex(int index) {
+        // Validate the index first
+        if (index >= 0 && index < DrumSequencer.DRUM_PAD_COUNT) {
+            selectedPadIndex = index;
+            
+            // Also update the selected pad index in sequencers
+            for (DrumSequencer seq : sequencers) {
+                seq.setSelectedPadIndex(index);
+            }
+            
+            logger.info("Selected pad index set to: {}", index);
+        } else {
+            logger.warn("Attempted to set invalid pad index: {}", index);
+        }
     }
 }

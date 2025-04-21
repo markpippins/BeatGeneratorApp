@@ -61,7 +61,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         // Set layout and border with more compact spacing
         setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
         setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(UIUtils.deepNavy),
+                BorderFactory.createLineBorder(UIUtils.getColors()[MelodicSequencerManager.getInstance().getSequencerCount()]),
                 "Sequence Navigation",
                 TitledBorder.LEFT,
                 TitledBorder.TOP

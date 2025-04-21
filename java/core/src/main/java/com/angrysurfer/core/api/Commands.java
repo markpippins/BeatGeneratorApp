@@ -308,4 +308,5 @@ public class Commands {
     public static final String EUCLIDEAN_PATTERN_SELECTED = "EUCLIDEAN_PATTERN_SELECTED";
     public static final String FILL_PATTERN_SELECTED = "FILL_PATTERN_SELECTED";
 
+    public static final String TIMING_DIVISION_CHANGED = "TIMING_DIVISION_CHANGED";
 }

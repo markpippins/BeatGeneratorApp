@@ -123,6 +123,26 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
+     * Get the currently selected drum pad index
+     * 
+     * @return The selected pad index
+     */
+    public int getSelectedPadIndex() {
+        return selectedPadIndex;
+    }
+
+    /**
+     * Set the currently selected drum pad index
+     * 
+     * @param index The new selected pad index
+     */
+    public void setSelectedPadIndex(int index) {
+        if (index >= 0 && index < DRUM_PAD_COUNT) {
+            this.selectedPadIndex = index;
+        }
+    }
+
+    /**
      * Creates a new drum sequencer with per-drum parameters
      */
     public DrumSequencer() {
