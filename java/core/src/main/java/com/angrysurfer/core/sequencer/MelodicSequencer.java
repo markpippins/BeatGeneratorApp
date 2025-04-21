@@ -57,7 +57,7 @@ public class MelodicSequencer implements IBusListener {
 
     // Scale & quantization
     private String selectedRootNote = "C";
-    private String selectedScale = "Chromatic";
+    private String scale = Scale.SCALE_CHROMATIC;
     private Boolean[] scaleNotes;
     private boolean quantizeEnabled = true;
     private Quantizer quantizer;
@@ -961,12 +961,12 @@ public class MelodicSequencer implements IBusListener {
      */
     public void updateQuantizer() {
         // Create Boolean array representing which notes are in the scale
-        scaleNotes = createScaleArray(selectedRootNote, selectedScale);
+        scaleNotes = createScaleArray(selectedRootNote, scale);
 
         // Create new quantizer with the scale
         quantizer = new Quantizer(scaleNotes);
 
-        logger.info("Quantizer updated with root note {} and scale {}", selectedRootNote, selectedScale);
+        logger.info("Quantizer updated with root note {} and scale {}", selectedRootNote, scale);
     }
 
     /**
@@ -1022,7 +1022,7 @@ public class MelodicSequencer implements IBusListener {
      * @param scale Scale name
      */
     public void setScale(String scale) {
-        this.selectedScale = scale;
+        this.scale = scale;
         updateQuantizer();
 
         // IMPORTANT: Re-quantize all notes in the pattern when scale changes
@@ -1251,6 +1251,19 @@ public class MelodicSequencer implements IBusListener {
 
     public List<Integer> getGateValues() {
         return new ArrayList<>(gateValues);
+    }
+
+    /**
+     * Check if a specific step is active in the sequence
+     *
+     * @param stepIndex The index of the step to check
+     * @return true if the step is active, false otherwise
+     */
+    public boolean isStepActive(int stepIndex) {
+        if (stepIndex >= 0 && stepIndex < activeSteps.size()) {
+            return activeSteps.get(stepIndex);
+        }
+        return false;
     }
 
     /**
