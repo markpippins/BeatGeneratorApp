@@ -48,7 +48,7 @@ import com.angrysurfer.core.service.DrumSequencerManager;
 /**
  * A sequencer panel with X0X-style step sequencing capabilities
  */
-public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
+public class DrumParamsPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = Logger.getLogger(DrumSequencerPanel.class.getName());
 
@@ -72,7 +72,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
     // Add these fields to match DrumSequencerPanel
     private DrumSequenceNavigationPanel navigationPanel;
     private DrumParamsSequencerParametersPanel sequenceParamsPanel;
-    private DrumSequencerSwingPanel swingPanel;
+    private DrumSwingPanel swingPanel;
 
     // Add as a class field
     private boolean updatingControls = false;
@@ -82,7 +82,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
      *
      * @param noteEventConsumer Callback for when a note should be played
      */
-    public DrumParamsSequencerPanel(Consumer<NoteEvent> noteEventConsumer) {
+    public DrumParamsPanel(Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
         this.noteEventConsumer = noteEventConsumer;
 
@@ -176,7 +176,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         rightPanel.add(generatePanel);
 
         // Add swing panel using the custom component
-        swingPanel = new DrumSequencerSwingPanel(sequencer);
+        swingPanel = new DrumSwingPanel(sequencer);
         rightPanel.add(swingPanel);
 
         // Add the right panel container to the east position

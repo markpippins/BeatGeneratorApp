@@ -9,9 +9,9 @@ import com.angrysurfer.core.sequencer.TimingDivision;
  */
 public class DrumSequencerAdapter extends DrumSequencerPanel {
     
-    private final DrumParamsSequencerPanel adaptee;
+    private final DrumParamsPanel adaptee;
     
-    public DrumSequencerAdapter(DrumParamsSequencerPanel panel) {
+    public DrumSequencerAdapter(DrumParamsPanel panel) {
         super(null); // Not actually used
         this.adaptee = panel;
     }

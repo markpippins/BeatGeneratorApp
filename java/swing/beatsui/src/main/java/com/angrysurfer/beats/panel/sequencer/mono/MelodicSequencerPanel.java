@@ -26,6 +26,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
+import com.angrysurfer.core.redis.MelodicSequencerHelper;
+import com.angrysurfer.core.redis.RedisService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,9 +84,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private boolean listenersEnabled = true;
     private boolean updatingUI = false;
 
+    private MelodicSequenceNavigationPanel navigationPanel;
+
     /**
      * Modify constructor to use only one step update mechanism (direct
-     * listener)
+     * listener) and load the first sequence if available
      */
     public MelodicSequencerPanel(Integer channel, Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
@@ -102,9 +106,66 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Initialize the UI
         initialize();
+        
+        // Try to load the first sequence for this sequencer
+        loadFirstSequenceIfExists();
 
         // Register with command bus for other UI updates (not step highlighting)
         CommandBus.getInstance().register(this);
+    }
+
+    /**
+     * Attempts to load the first sequence for this sequencer if any exist
+     */
+    private void loadFirstSequenceIfExists() {
+        // Check if the sequencer has an ID (it should, but verify)
+        if (sequencer.getId() == null) {
+            logger.warn("Cannot load first sequence - sequencer has no ID");
+            return;
+        }
+        
+        // Get the manager reference
+        MelodicSequencerManager manager = MelodicSequencerManager.getInstance();
+        
+        // Check if this sequencer has any sequences
+        if (manager.hasSequences(sequencer.getId())) {
+            Long firstId = manager.getFirstSequenceId(sequencer.getId());
+            
+            if (firstId != null) {
+                logger.info("Loading first sequence {} for sequencer {}", firstId, sequencer.getId());
+                
+                // Load the sequence
+                RedisService redisService = RedisService.getInstance();
+                redisService.applyMelodicSequenceToSequencer(
+                    redisService.findMelodicSequenceById(firstId, sequencer.getId()),
+                    sequencer
+                );
+                
+                // Reset the sequencer to ensure proper step indicator state
+                sequencer.reset();
+                
+                // Update the UI to reflect loaded sequence
+                syncUIWithSequencer();
+                
+                // Notify that a pattern was loaded
+                CommandBus.getInstance().publish(
+                    Commands.MELODIC_SEQUENCE_LOADED,
+                    this,
+                    new MelodicSequencerHelper.MelodicSequencerEvent(
+                        sequencer.getId(), 
+                        sequencer.getMelodicSequenceId()
+                    )
+                );
+                
+                // If we have a navigation panel, update its display
+                if (navigationPanel != null) {
+                    navigationPanel.updateSequenceIdDisplay();
+                }
+            }
+        } else {
+            logger.info("No saved sequences found for sequencer {}, using default empty pattern", 
+                       sequencer.getId());
+        }
     }
 
     private void initialize() {
@@ -125,7 +186,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel topPanel = new JPanel(new BorderLayout(5, 5));
 
         // Create sequence navigation panel
-        MelodicSequenceNavigationPanel navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
+        navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
 
 
         // Create sequence parameters panel
