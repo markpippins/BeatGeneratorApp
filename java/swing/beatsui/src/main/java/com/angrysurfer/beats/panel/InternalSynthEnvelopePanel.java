@@ -16,9 +16,15 @@ import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Panel for controlling ADSR envelope parameters of a synthesizer
  */
+@Getter
+@Setter
+
 public class InternalSynthEnvelopePanel extends JPanel {
     
     // Envelope control constants
@@ -28,7 +34,7 @@ public class InternalSynthEnvelopePanel extends JPanel {
     public static final int CC_RELEASE = 72;
     
     private final Synthesizer synthesizer;
-    private final int midiChannel;
+    private int midiChannel;
     
     // UI components
     private JSlider attackSlider;

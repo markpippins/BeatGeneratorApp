@@ -359,6 +359,19 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
             drumMuteButtons.add(muteButton);
         }
 
+        JToggleButton muteDrumsButton = createMuteAllButton(true);
+        muteDrumsButton.addActionListener(e -> {
+            boolean isMuted = muteDrumsButton.isSelected();
+            if (isMuted) {
+                muteAllDrums();
+            } else {
+                unmuteAllDrums();
+            }
+        });
+        muteDrumsButton.setToolTipText("Mute All Drums");
+
+        buttonPanel.add(muteDrumsButton);
+
         // Add a more visible separator
         buttonPanel.add(Box.createHorizontalStrut(12));
 
@@ -369,6 +382,18 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
             melodicMuteButtons.add(muteButton);
         }
 
+        JToggleButton muteMelodicsButton = createMuteAllButton(false);
+        muteMelodicsButton.addActionListener(e -> {
+            boolean isMuted = muteMelodicsButton.isSelected();
+            if (isMuted) {
+                muteAllMelodic();
+            } else {
+                unmuteAllMelodic();
+            }
+        });
+        muteMelodicsButton.setToolTipText("Mute All Melodics");
+        buttonPanel.add(muteMelodicsButton);
+        
         buttonPanel.add(Box.createHorizontalStrut(4));
         buttonPanel.add(activityIndicator);
 
@@ -426,6 +451,61 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
             } else {
                 toggleMelodicMute(index, isMuted);
             }
+        });
+
+        return muteButton;
+    }
+
+    private JToggleButton createMuteAllButton(boolean isDrum) {
+        JToggleButton muteButton = new JToggleButton();
+
+        // Increase button size for better visibility
+        Dimension size = new Dimension(28, 28); // Square button
+        muteButton.setPreferredSize(size);
+        muteButton.setMinimumSize(size);
+        muteButton.setMaximumSize(size);
+
+        // Force button properties to ensure visibility
+        muteButton.setOpaque(true);
+        muteButton.setBorderPainted(true);
+        muteButton.setContentAreaFilled(true);
+        muteButton.setFocusPainted(false);
+
+        // Add rounded corners using client properties (works with FlatLaf and some
+        // other L&Fs)
+        muteButton.putClientProperty("JButton.buttonType", "roundRect");
+
+        // More aggressive rounding if needed
+        muteButton.putClientProperty("JButton.arc", 10);
+
+        // Make sure it stays square
+        muteButton.putClientProperty("JButton.squareSize", true);
+
+        // Add a number to each button for easier identification
+        muteButton.setFont(new Font("Arial", Font.BOLD, 9));
+        muteButton.setToolTipText("Mute All" + (isDrum ? "Drums " : "Synths "));
+
+        // Use extremely saturated colors
+        Color defaultColor = isDrum ? new Color(180, 0, 180) : // Very bright purple for drums
+                new Color(0, 0, 220); // Very bright blue for melodic
+
+        // Set initial appearance
+        muteButton.setBackground(defaultColor.brighter().brighter());
+        muteButton.setForeground(Color.WHITE);
+        muteButton.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
+
+        muteButton.addActionListener(e -> {
+            boolean isMuted = muteButton.isSelected();
+
+            // Update color based on mute state - use VERY bright red for muted
+            muteButton.setBackground(isMuted ? MUTED_COLOR : defaultColor);
+            muteButton.setForeground(isMuted ? Color.WHITE : Color.WHITE);
+
+            // if (isDrum) {
+            //     toggleDrumMute(index, isMuted);
+            // } else {
+            //     toggleMelodicMute(index, isMuted);
+            // }
         });
 
         return muteButton;

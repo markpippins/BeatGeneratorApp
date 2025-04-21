@@ -20,12 +20,18 @@ import javax.swing.border.TitledBorder;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.UIHelper;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Specialized panel for a single oscillator in the internal synthesizer
  */
+@Getter
+@Setter
+
 public class InternalSynthOscillatorPanel extends JPanel {
     private final Synthesizer synthesizer;
-    private final int midiChannel;
+    private int midiChannel;
     private final int oscillatorIndex;
     private final int baseCCForOsc;
     
@@ -353,5 +359,9 @@ public class InternalSynthOscillatorPanel extends JPanel {
         dial.setPreferredSize(new Dimension(30, 30));
         
         return dial;
+    }
+
+    public void setMidiChannel(int channel) {
+        this.midiChannel = channel;
     }
 }

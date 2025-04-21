@@ -281,6 +281,9 @@ public class Commands {
     public static final String MELODIC_SEQUENCE_ADDED = "MELODIC_SEQUENCE_ADDED";
     public static final String MELODIC_SEQUENCE_SELECTED = "MELODIC_SEQUENCE_SELECTED";
 
+    public static final String MELODIC_SEQUENCER_ADDED = "MELODIC_SEQUENCER_ADDED";
+    public static final String MELODIC_SEQUENCER_REMOVED = "MELODIC_SEQUENCER_REMOVED";
+
     // Navigation commands
     public static final String MELODIC_SEQUENCE_NEXT = "MELODIC_SEQUENCE_NEXT";
     public static final String MELODIC_SEQUENCE_PREV = "MELODIC_SEQUENCE_PREV";

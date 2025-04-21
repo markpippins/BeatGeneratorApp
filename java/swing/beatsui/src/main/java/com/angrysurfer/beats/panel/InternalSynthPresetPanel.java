@@ -45,11 +45,16 @@ import com.angrysurfer.core.sequencer.PresetItem;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.UserConfigManager;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * A panel containing basic player properties controls including
  * soundbank/preset support for internal synths
  */
 
+@Getter
+@Setter
 public class InternalSynthPresetPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(InternalSynthPresetPanel.class);
     
