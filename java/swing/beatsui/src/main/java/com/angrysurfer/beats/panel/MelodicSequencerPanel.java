@@ -285,7 +285,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         lastStepPanel.add(new JLabel("Last Step:"));
 
         // Create spinner model with range 1-16, default 16
-        SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 16, 1);
+        SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 64, 1);
         lastStepSpinner = new JSpinner(lastStepModel);
         lastStepSpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
         lastStepSpinner.setToolTipText("Set the last step for the pattern (1-16)");
