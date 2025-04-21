@@ -74,6 +74,9 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
     private DrumParamsSequencerParametersPanel sequenceParamsPanel;
     private DrumSequencerSwingPanel swingPanel;
 
+    // Add as a class field
+    private boolean updatingControls = false;
+
     /**
      * Create a new SequencerPanel
      *
@@ -223,7 +226,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
                     // Add change listener
                     dial.addChangeListener(e -> {
-                        if (selectedPadIndex >= 0) {
+                        if (!updatingControls && selectedPadIndex >= 0) {
                             sequencer.setStepVelocity(selectedPadIndex, index, dial.getValue());
                         }
                     });
@@ -438,7 +441,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
             // Update sequencer's selected pad index
             sequencer.setSelectedPadIndex(padIndex);
 
-            // Update drum button visual state
+            // Update drum button visual state using the successful approach from test button
             if (padIndex >= 0 && padIndex < drumButtons.size()) {
                 drumButtons.get(padIndex).setSelected(true);
                 System.out.println(drumButtons.get(padIndex).getText());
@@ -451,20 +454,23 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                 // Notify other components of the selection change
                 CommandBus.getInstance().publish(Commands.DRUM_PAD_SELECTED,
                         this, new DrumPadSelectionEvent(-1, padIndex));
+                        
+                // Refresh trigger buttons to show the pattern for the selected pad
+                refreshTriggerButtonsForPad(padIndex);
+        
+                // Update controls to match the selected pad's settings
+                updateControlsFromSequencer();
+        
+                // Update dial positions for the selected drum
+                updateDialsForSelectedPad();
+        
+                // Update sequence parameter controls to match selected drum
+                if (sequenceParamsPanel != null) {
+                    sequenceParamsPanel.updateControls(padIndex);
+                }
             } else {
                 // No valid selection - disable trigger buttons
                 setTriggerButtonsEnabled(false);
-            }
-
-            // Refresh trigger buttons to show the pattern for the selected pad
-            refreshTriggerButtonsForPad(padIndex);
-
-            // Update controls to match the selected pad's settings
-            updateControlsFromSequencer();
-
-            // Update sequence parameter controls to match selected drum
-            if (sequenceParamsPanel != null) {
-                sequenceParamsPanel.updateControls(padIndex);
             }
         }
     }
@@ -560,6 +566,63 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         }
     }
 
+    /**
+     * Update all dials to reflect the values for the currently selected drum
+     */
+    private void updateDialsForSelectedPad() {
+        if (selectedPadIndex < 0) {
+            return;
+        }
+        
+        // Set the class-level flag
+        updatingControls = true;
+        
+        try {
+            // Ensure we're on the EDT
+            if (!SwingUtilities.isEventDispatchThread()) {
+                SwingUtilities.invokeLater(() -> updateDialsForSelectedPad());
+                return;
+            }
+            
+            // Update all dials for each step
+            for (int step = 0; step < 16; step++) {
+                // Get velocity dial and update its value
+                if (step < velocityDials.size()) {
+                    Dial velocityDial = velocityDials.get(step);
+                    int velocity = sequencer.getStepVelocity(selectedPadIndex, step);
+                    velocityDial.setValue(velocity);
+                    velocityDial.repaint(); // Add explicit repaint
+                }
+                
+                // Get decay dial and update its value
+                if (step < decayDials.size()) {
+                    Dial decayDial = decayDials.get(step);
+                    int decay = sequencer.getStepDecay(selectedPadIndex, step);
+                    decayDial.setValue(decay);
+                    decayDial.repaint(); // Add explicit repaint
+                }
+                
+                // Get probability dial and update its value
+                if (step < probabilityDials.size()) {
+                    Dial probDial = probabilityDials.get(step);
+                    int probability = sequencer.getStepProbability(selectedPadIndex, step);
+                    probDial.setValue(probability);
+                    probDial.repaint(); // Add explicit repaint
+                }
+                
+                // Get nudge dial and update its value
+                if (step < nudgeDials.size()) {
+                    Dial nudgeDial = nudgeDials.get(step);
+                    int nudge = sequencer.getStepNudge(selectedPadIndex, step);
+                    nudgeDial.setValue(nudge);
+                    nudgeDial.repaint(); // Add explicit repaint
+                }
+            }
+        } finally {
+            updatingControls = false;
+        }
+    }
+
     // Add helper method to set enabled state of all trigger buttons
     private void setTriggerButtonsEnabled(boolean enabled) {
         for (TriggerButton button : selectorButtons) {
@@ -631,6 +694,9 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                 if (selectedPadIndex >= 0) {
                     refreshTriggerButtonsForPad(selectedPadIndex);
                     updateControlsFromSequencer();
+                    
+                    // Update dial positions for the loaded drum sequence
+                    updateDialsForSelectedPad();
                 }
             }
 
