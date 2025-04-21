@@ -16,29 +16,34 @@ import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Panel for controlling filter parameters of a synthesizer
  */
+@Getter
+@Setter
 public class InternalSynthFilterPanel extends JPanel {
-    
+
     // Filter control constants
     public static final int CC_FILTER_TYPE = 102;
     public static final int CC_FILTER_CUTOFF = 74;
     public static final int CC_FILTER_RESONANCE = 71;
     public static final int CC_ENV_AMOUNT = 110;
-    
+
     private final Synthesizer synthesizer;
-    private final int midiChannel;
-    
+    private int midiChannel;
+
     // UI components
     private JSlider filterTypeSlider;
     private JSlider cutoffSlider;
     private JSlider resonanceSlider;
     private JSlider envAmountSlider;
-    
+
     /**
      * Create a new Filter control panel
-     * 
+     *
      * @param synthesizer The MIDI synthesizer to control
      * @param midiChannel The MIDI channel to send control changes to
      */
@@ -46,10 +51,10 @@ public class InternalSynthFilterPanel extends JPanel {
         super();
         this.synthesizer = synthesizer;
         this.midiChannel = midiChannel;
-        
+
         initializeUI();
     }
-    
+
     /**
      * Initialize all UI components
      */
@@ -70,7 +75,7 @@ public class InternalSynthFilterPanel extends JPanel {
                 "Filter Type", 0, 3, 0,
                 new String[]{"Low Pass", "High Pass", "Band Pass", "Notch"}
         );
-        
+
         // Create other sliders
         cutoffSlider = createVerticalSlider("Filter Cutoff Frequency", 100);
         resonanceSlider = createVerticalSlider("Resonance/Q", 10);
@@ -91,7 +96,7 @@ public class InternalSynthFilterPanel extends JPanel {
         // Add event listeners
         setupEventHandlers();
     }
-    
+
     /**
      * Add event listeners to all controls
      */
@@ -122,7 +127,7 @@ public class InternalSynthFilterPanel extends JPanel {
             }
         });
     }
-    
+
     /**
      * Reset all controls to their default values
      */
@@ -131,11 +136,11 @@ public class InternalSynthFilterPanel extends JPanel {
         cutoffSlider.setValue(100);      // Fairly open filter
         resonanceSlider.setValue(10);    // Light resonance
         envAmountSlider.setValue(0);     // No envelope modulation
-        
+
         // Send these values to the synth
         updateSynthState();
     }
-    
+
     /**
      * Send the current state of all controls to the synthesizer
      */
@@ -145,12 +150,12 @@ public class InternalSynthFilterPanel extends JPanel {
         setControlChange(CC_FILTER_RESONANCE, resonanceSlider.getValue());
         setControlChange(CC_ENV_AMOUNT, envAmountSlider.getValue());
     }
-    
+
     /**
      * Set a MIDI CC value on the synth
-     * 
+     *
      * @param ccNumber The CC number to set
-     * @param value The value to set (0-127)
+     * @param value    The value to set (0-127)
      */
     private void setControlChange(int ccNumber, int value) {
         if (synthesizer != null && synthesizer.isOpen()) {
@@ -165,7 +170,7 @@ public class InternalSynthFilterPanel extends JPanel {
             }
         }
     }
-    
+
     /**
      * Create a slider with a label underneath
      */
@@ -189,8 +194,8 @@ public class InternalSynthFilterPanel extends JPanel {
 
     /**
      * Create a vertical slider with consistent styling
-     * 
-     * @param tooltip Tooltip text
+     *
+     * @param tooltip      Tooltip text
      * @param initialValue Initial value (0-127)
      * @return Configured JSlider
      */
@@ -226,12 +231,12 @@ public class InternalSynthFilterPanel extends JPanel {
 
     /**
      * Create a vertical slider with labeled tick marks
-     * 
-     * @param tooltip Tooltip text
-     * @param min Minimum value
-     * @param max Maximum value 
+     *
+     * @param tooltip      Tooltip text
+     * @param min          Minimum value
+     * @param max          Maximum value
      * @param initialValue Initial value
-     * @param labels Array of labels for tick marks
+     * @param labels       Array of labels for tick marks
      * @return Configured JSlider with labels
      */
     private JSlider createLabeledVerticalSlider(String tooltip, int min, int max, int initialValue, String[] labels) {
@@ -262,38 +267,39 @@ public class InternalSynthFilterPanel extends JPanel {
 
         return slider;
     }
-    
+
     // Getters and setters for individual control values
-    
+
     public int getFilterType() {
         return filterTypeSlider.getValue();
     }
-    
+
     public void setFilterType(int value) {
         filterTypeSlider.setValue(value);
     }
-    
+
     public int getCutoff() {
         return cutoffSlider.getValue();
     }
-    
+
     public void setCutoff(int value) {
         cutoffSlider.setValue(value);
     }
-    
+
     public int getResonance() {
         return resonanceSlider.getValue();
     }
-    
+
     public void setResonance(int value) {
         resonanceSlider.setValue(value);
     }
-    
+
     public int getEnvAmount() {
         return envAmountSlider.getValue();
     }
-    
+
     public void setEnvAmount(int value) {
         envAmountSlider.setValue(value);
     }
+
 }

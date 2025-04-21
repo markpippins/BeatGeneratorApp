@@ -16,10 +16,15 @@ import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Panel for controlling LFO (Low Frequency Oscillator) parameters of a synthesizer
  */
-public class InternalSynthLFOPanel extends JPanel {
+@Getter
+@Setter
+ public class InternalSynthLFOPanel extends JPanel {
     
     // LFO control constants
     public static final int CC_LFO_WAVEFORM = 12;
@@ -28,7 +33,7 @@ public class InternalSynthLFOPanel extends JPanel {
     public static final int CC_LFO_AMOUNT = 77;
     
     private final Synthesizer synthesizer;
-    private final int midiChannel;
+    private Integer midiChannel;
     
     // UI components
     private JSlider waveformSlider;

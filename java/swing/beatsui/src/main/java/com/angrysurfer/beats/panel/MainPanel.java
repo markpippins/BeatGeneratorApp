@@ -272,7 +272,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createDrumPanel() {
-        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {
+        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {  
             logger.debug("Drum note event received: note={}, velocity={}",
                     noteEvent.getNote(), noteEvent.getVelocity());
 

@@ -7,6 +7,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
@@ -49,6 +51,10 @@ public class MelodicSequencerManager {
         sequencers.add(sequencer);
         logger.info("Created new melodic sequencer with MIDI channel {} (index: {})", 
                 midiChannel, sequencers.size() - 1);
+        
+        // Notify listeners that a sequencer was added
+        CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this, sequencer);
+        
         return sequencer;
     }
     
@@ -92,8 +98,12 @@ public class MelodicSequencerManager {
      */
     public synchronized boolean removeSequencer(int index) {
         if (index >= 0 && index < sequencers.size()) {
-            sequencers.remove(index);
+            MelodicSequencer removed = sequencers.remove(index);
             logger.info("Removed melodic sequencer at index {}", index);
+            
+            // Notify listeners that a sequencer was removed
+            CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_REMOVED, this, removed);
+            
             return true;
         }
         logger.warn("Failed to remove sequencer at index {}: not found", index);

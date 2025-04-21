@@ -47,7 +47,8 @@ public class InternalSynthControlPanel extends JPanel {
 
     // Remove synthesizer field - now managed by InternalSynthManager
     private JComboBox<PresetItem> presetCombo;
-    private final int midiChannel = 15; // Keep for reference in this panel
+    private int midiChannel = 15; // Default to channel 16 (zero-indexed as 15)
+    private JComboBox<String> channelCombo; // Add this field
     private JComboBox<String> soundbankCombo;
     private JComboBox<Integer> bankCombo;
     private InternalSynthOscillatorPanel[] oscillatorPanels;
@@ -178,12 +179,31 @@ public class InternalSynthControlPanel extends JPanel {
 
         // 2. Bank selector section
         JPanel bankSection = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        bankSection.add(new JLabel("Soundbank:"));
+        bankSection.add(new JLabel("Bank:"));
         bankCombo = new JComboBox<>();
         bankCombo.setPreferredSize(new Dimension(60, 25));
         bankSection.add(bankCombo);
 
-        // 3. Preset selector section
+        // 3. MIDI Channel selector section - ADD THIS NEW SECTION
+        JPanel channelSection = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        channelSection.add(new JLabel("MIDI Ch:"));
+        channelCombo = new JComboBox<>();
+        channelCombo.setPreferredSize(new Dimension(60, 25));
+        // Add all 16 MIDI channels (displayed as 1-16 but stored as 0-15)
+        for (int i = 1; i <= 16; i++) {
+            channelCombo.addItem(Integer.toString(i));
+        }
+        // Set default to channel 16
+        channelCombo.setSelectedIndex(15);
+        channelSection.add(channelCombo);
+        
+        // Add listener to update the channel
+        channelCombo.addActionListener(e -> {
+            int selectedIndex = channelCombo.getSelectedIndex();
+            updateMidiChannel(selectedIndex);
+        });
+
+        // 4. Preset selector section
         JPanel presetSection = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         presetSection.add(new JLabel("Preset:"));
         presetCombo = new JComboBox<>();
@@ -193,6 +213,7 @@ public class InternalSynthControlPanel extends JPanel {
         // Add all sections to the row
         controlsRow.add(soundbankSection);
         controlsRow.add(bankSection);
+        controlsRow.add(channelSection); // Add the new channel section
         controlsRow.add(presetSection);
 
         // Add the controls row to the main panel
@@ -225,6 +246,50 @@ public class InternalSynthControlPanel extends JPanel {
         });
 
         return soundPanel;
+    }
+
+    /**
+     * Update the MIDI channel and reinitialize controllers
+     */
+    private void updateMidiChannel(int newChannel) {
+        // Store previous channel to handle cleanup
+        int oldChannel = midiChannel;
+        
+        // Update the channel
+        midiChannel = newChannel;
+        logger.info("Changed MIDI channel to {} (was {})", newChannel + 1, oldChannel + 1);
+        
+        // Send all notes off to the previous channel
+        if (getSynthesizer() != null && getSynthesizer().isOpen()) {
+            try {
+                getSynthesizer().getChannels()[oldChannel].allNotesOff();
+                getSynthesizer().getChannels()[oldChannel].allSoundOff();
+            } catch (Exception ex) {
+                logger.error("Error cleaning up old channel: {}", ex.getMessage());
+            }
+        }
+
+        // Update oscillator panels with new channel
+        for (InternalSynthOscillatorPanel panel : oscillatorPanels) {
+            panel.setMidiChannel(midiChannel);
+        }
+        
+        // Update other panels with new channel
+        if (lfoPanel != null) lfoPanel.setMidiChannel(midiChannel);
+        if (filterPanel != null) filterPanel .setMidiChannel(midiChannel);
+        if (envelopePanel != null) envelopePanel.setMidiChannel(midiChannel);
+        if (effectsPanel != null) effectsPanel.setMidiChannel(midiChannel);
+        if (mixerPanel != null) mixerPanel.setMidiChannel(midiChannel);
+        
+        // Reinitialize controllers on the new channel
+        reinitializeControllers();
+        
+        // If needed, re-select the current program on the new channel
+        if (presetCombo.getSelectedItem() instanceof PresetItem) {
+            PresetItem item = (PresetItem) presetCombo.getSelectedItem();
+            int bank = bankCombo.getSelectedIndex() >= 0 ? (Integer) bankCombo.getSelectedItem() : 0;
+            setProgramChange(bank, item.getNumber());
+        }
     }
 
     /**
