@@ -33,8 +33,17 @@ public class MelodicSequencer implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencer.class);
 
+    // Add these constants at the top of the class with other constants
+    private static final int NO_SWING = 50; // Percentage value for no swing
+    public static final int MAX_SWING = 99; // Maximum swing percentage
+    public static final int MIN_SWING = 25; // Minimum swing percentage
+
+    // Add these instance variables with other properties
+    private int swingPercentage = 50; // Default swing percentage (50 = no swing)
+    private boolean swingEnabled = false; // Swing enabled flag
+
     // Sequencing parameters
-    private int stepCounter = 0; // Current step in the pattern
+    private int currentStep = 0; // Current step in the pattern
     private int patternLength = 16; // Default pattern length
     private Direction direction = Direction.FORWARD; // Default direction
     private boolean looping = true; // Default to looping
@@ -88,6 +97,89 @@ public class MelodicSequencer implements IBusListener {
     // Add field for next pattern ID
     private Long nextPatternId = null;
 
+    // Add these fields and methods to MelodicSequencer class
+    private List<Integer> harmonicTiltValues = new ArrayList<>(16);
+
+    /**
+     * Initialize the harmonic tilt values with defaults (0)
+     */
+    private void initializeHarmonicTiltValues() {
+        harmonicTiltValues.clear();
+        for (int i = 0; i < 16; i++) {
+            harmonicTiltValues.add(0);
+        }
+    }
+
+    /**
+     * Get all harmonic tilt values
+     * @return List of tilt values for each bar
+     */
+    public List<Integer> getHarmonicTiltValues() {
+        return harmonicTiltValues;
+    }
+
+    /**
+     * Set all harmonic tilt values
+     * @param values List of tilt values for each bar
+     */
+    public void setHarmonicTiltValues(List<Integer> values) {
+        // Create a defensive copy to avoid external modification
+        harmonicTiltValues = new ArrayList<>(values);
+        
+        // Make sure we have exactly 16 values
+        while (harmonicTiltValues.size() < 16) {
+            harmonicTiltValues.add(0);
+        }
+        
+        // Truncate if more than 16
+        if (harmonicTiltValues.size() > 16) {
+            harmonicTiltValues = harmonicTiltValues.subList(0, 16);
+        }
+        
+        // If we're tracking the current bar, update the current tilt value
+        int currentBar = getCurrentBar();
+        if (currentBar >= 0 && currentBar < harmonicTiltValues.size()) {
+            setCurrentTilt(harmonicTiltValues.get(currentBar));
+        }
+    }
+
+    /**
+     * Get the tilt value for a specific bar
+     * @param barIndex The bar index (0-15)
+     * @return The tilt value (-7 to 7)
+     */
+    public int getTiltValueForBar(int barIndex) {
+        if (barIndex >= 0 && barIndex < harmonicTiltValues.size()) {
+            return harmonicTiltValues.get(barIndex);
+        }
+        return 0; // Default
+    }
+
+    /**
+     * Set the tilt value for a specific bar
+     * @param barIndex The bar index (0-15)
+     * @param value The tilt value (-7 to 7)
+     */
+    public void setTiltValueForBar(int barIndex, int value) {
+        if (barIndex >= 0 && barIndex < harmonicTiltValues.size()) {
+            harmonicTiltValues.set(barIndex, value);
+            
+            // If this is the current bar, update the current tilt
+            if (barIndex == getCurrentBar()) {
+                setCurrentTilt(value);
+            }
+        }
+    }
+
+    /**
+     * Get the current bar index from the sequencer state
+     */
+    private int getCurrentBar() {
+        // Implementation depends on how you track the current bar
+        // This might come from the TimingBus or other timing mechanism
+        return (int)((getCurrentStep() / 16) % 16);
+    }
+
     public void setNoteEventPublisher(Consumer<NoteEvent> publisher) {
         this.noteEventPublisher = publisher;
     }
@@ -119,6 +211,9 @@ public class MelodicSequencer implements IBusListener {
         // Initialize note properties (NEW)
         initializeNote();
 
+        // Initialize harmonic tilt values
+        initializeHarmonicTiltValues();
+
         // Register with CommandBus
         CommandBus.getInstance().register(this);
 
@@ -147,6 +242,9 @@ public class MelodicSequencer implements IBusListener {
 
         // Initialize note properties
         initializeNote();
+
+        // Initialize harmonic tilt values
+        initializeHarmonicTiltValues();
 
         // Register with CommandBus
         CommandBus.getInstance().register(this);
@@ -320,18 +418,18 @@ public class MelodicSequencer implements IBusListener {
         // Check if it's time for the next step using the timing division
         if (tick % ticksForDivision == 0) {
             // Get previous step for highlighting updates
-            int prevStep = stepCounter;
+            int prevStep = currentStep;
 
             // Calculate the next step based on the current direction
             calculateNextStep();
 
             // Notify listeners of step update
             if (stepUpdateListener != null) {
-                stepUpdateListener.accept(new StepUpdateEvent(prevStep, stepCounter));
+                stepUpdateListener.accept(new StepUpdateEvent(prevStep, currentStep));
             }
 
             // Trigger the note for the current step
-            triggerNote(stepCounter);
+            triggerNote(currentStep);
         }
     }
 
@@ -342,19 +440,19 @@ public class MelodicSequencer implements IBusListener {
     private int getPreviousStep() {
         switch (direction) {
             case FORWARD:
-                return (stepCounter + patternLength - 1) % patternLength;
+                return (currentStep + patternLength - 1) % patternLength;
             case BACKWARD:
-                return (stepCounter + 1) % patternLength;
+                return (currentStep + 1) % patternLength;
             case BOUNCE:
                 // For bounce, it depends on the current bounce direction
                 if (bounceDirection > 0) {
-                    return stepCounter > 0 ? stepCounter - 1 : 0;
+                    return currentStep > 0 ? currentStep - 1 : 0;
                 } else {
-                    return stepCounter < patternLength - 1 ? stepCounter + 1 : patternLength - 1;
+                    return currentStep < patternLength - 1 ? currentStep + 1 : patternLength - 1;
                 }
             case RANDOM:
             default:
-                return stepCounter; // For random, just use current position
+                return currentStep; // For random, just use current position
         }
     }
 
@@ -416,16 +514,16 @@ public class MelodicSequencer implements IBusListener {
      * Calculate the next step based on the current direction
      */
     private void calculateNextStep() {
-        int oldStep = stepCounter;
+        int oldStep = currentStep;
         boolean patternCompleted = false;
 
         switch (direction) {
             case FORWARD -> {
-                stepCounter++;
+                currentStep++;
 
                 // Check if we've reached the end of the pattern
-                if (stepCounter >= patternLength) {
-                    stepCounter = 0;
+                if (currentStep >= patternLength) {
+                    currentStep = 0;
                     patternCompleted = true;
                     
                     // Handle pattern switching if enabled
@@ -482,10 +580,10 @@ public class MelodicSequencer implements IBusListener {
 
             // Handle other direction cases similarly
             case BACKWARD -> {
-                stepCounter--;
+                currentStep--;
 
-                if (stepCounter < 0) {
-                    stepCounter = patternLength - 1;
+                if (currentStep < 0) {
+                    currentStep = patternLength - 1;
                     patternCompleted = true;
 
                     // Handle pattern switching if enabled
@@ -534,14 +632,14 @@ public class MelodicSequencer implements IBusListener {
 
             case BOUNCE -> {
                 // Update step counter according to bounce direction
-                stepCounter += bounceDirection;
+                currentStep += bounceDirection;
 
                 // Check if we need to change bounce direction
-                if (stepCounter <= 0 || stepCounter >= patternLength - 1) {
+                if (currentStep <= 0 || currentStep >= patternLength - 1) {
                     bounceDirection *= -1;
 
                     // At pattern end, generate new pattern if latch enabled
-                    if (stepCounter <= 0 || stepCounter >= patternLength - 1) {
+                    if (currentStep <= 0 || currentStep >= patternLength - 1) {
                         if (latchEnabled) {
                             int octaveRange = 2;
                             int density = 50;
@@ -560,13 +658,13 @@ public class MelodicSequencer implements IBusListener {
             case RANDOM -> {
                 // Random doesn't have a clear cycle end, so we'll consider
                 // hitting step 0 as the "cycle end" for latch purposes
-                int priorStep = stepCounter;
+                int priorStep = currentStep;
 
                 // Generate random step
-                stepCounter = (int) (Math.random() * patternLength);
+                currentStep = (int) (Math.random() * patternLength);
 
                 // If we randomly hit step 0 and we weren't at step 0 before
-                if (stepCounter == 0 && priorStep != 0) {
+                if (currentStep == 0 && priorStep != 0) {
                     if (latchEnabled) {
                         int octaveRange = 2;
                         int density = 50;
@@ -580,7 +678,7 @@ public class MelodicSequencer implements IBusListener {
 
         // Notify step listeners about the step change
         if (stepUpdateListener != null) {
-            stepUpdateListener.accept(new StepUpdateEvent(oldStep, stepCounter));
+            stepUpdateListener.accept(new StepUpdateEvent(oldStep, currentStep));
         }
     }
 
@@ -599,12 +697,19 @@ public class MelodicSequencer implements IBusListener {
             int probability = getProbabilityValue(stepIndex);
             int nudge = getNudgeValue(stepIndex);
 
+            // Apply swing to even-numbered steps (odd indices in 0-indexed array)
+            if (swingEnabled && stepIndex % 2 == 1) {
+                // Calculate swing amount based on percentage
+                int swingAmount = calculateSwingAmount();
+                nudge += swingAmount;
+            }
+
             // Apply scale quantization if enabled
             if (quantizeEnabled) {
                 note[0] = quantizeNote(note[0]);
             }
 
-            // Apply octave shift
+            // Apply octave shift and tilt
             note[0] = applyOctaveShift(note[0]);
             note[0] = applyTilt(note[0]);
 
@@ -634,8 +739,8 @@ public class MelodicSequencer implements IBusListener {
                         playNote(finalNote, velocity, duration);
 
                         // Log the delayed note
-                        logger.debug("Triggered delayed note for step {}: note={}, nudge={}ms, vel={}, gate={}",
-                                finalStepIndex, finalNote, nudge, velocity, gate);
+//                        logger.debug("Triggered delayed note for step {}: note={}, nudge={}ms, vel={}, gate={}",
+//                                finalStepIndex, finalNote, nudge, velocity, gate);
 
                         // Shutdown the scheduler
                         scheduler.shutdown();
@@ -1019,15 +1124,15 @@ public class MelodicSequencer implements IBusListener {
      */
     public void reset() {
         // Initialize step counter based on direction
-        stepCounter = direction == Direction.FORWARD ? 0 : patternLength - 1;
+        currentStep = direction == Direction.FORWARD ? 0 : patternLength - 1;
         tickCounter = 0;
 
         // Notify UI that we've reset
         if (stepUpdateListener != null) {
-            stepUpdateListener.accept(new StepUpdateEvent(-1, stepCounter));
+            stepUpdateListener.accept(new StepUpdateEvent(-1, currentStep));
         }
 
-        logger.debug("Melodic sequencer reset to step {}", stepCounter);
+        logger.debug("Melodic sequencer reset to step {}", currentStep);
     }
 
     /**
@@ -1127,8 +1232,8 @@ public class MelodicSequencer implements IBusListener {
      *
      * @return Current step position
      */
-    public int getStepCounter() {
-        return stepCounter;
+    public int getCurrentStep() {
+        return currentStep;
     }
 
     // Getter methods for sequence data
@@ -1608,5 +1713,85 @@ public class MelodicSequencer implements IBusListener {
         } catch (Exception e) {
             logger.error("Error loading first melodic sequence: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Sets the global swing percentage
+     * 
+     * @param percentage Value from 25 (minimum swing) to 99 (maximum swing), 50 = no swing
+     */
+    public void setSwingPercentage(int percentage) {
+        // Limit to valid range
+        this.swingPercentage = Math.max(MIN_SWING, Math.min(MAX_SWING, percentage));
+        logger.info("Swing percentage set to: {}", swingPercentage);
+    }
+
+    /**
+     * Gets the current swing percentage
+     * 
+     * @return The swing percentage (25-99)
+     */
+    public int getSwingPercentage() {
+        return swingPercentage;
+    }
+
+    /**
+     * Enables or disables swing
+     * 
+     * @param enabled True to enable swing, false to disable
+     */
+    public void setSwingEnabled(boolean enabled) {
+        this.swingEnabled = enabled;
+        logger.info("Swing enabled: {}", enabled);
+    }
+
+    /**
+     * Checks if swing is enabled
+     * 
+     * @return True if swing is enabled
+     */
+    public boolean isSwingEnabled() {
+        return swingEnabled;
+    }
+
+    /**
+     * Calculate swing amount in milliseconds based on current tempo and timing division
+     * 
+     * @return Swing amount in milliseconds
+     */
+    private int calculateSwingAmount() {
+        // Get session BPM
+        float bpm = SessionManager.getInstance().getActiveSession().getTempoInBPM();
+        if (bpm <= 0) {
+            bpm = 120; // Default fallback
+        }
+
+        // Calculate step duration in milliseconds
+        float stepDurationMs = 60000f / bpm; // Duration of quarter note in ms
+
+        // Adjust for timing division based on actual enum values
+        switch (timingDivision) {
+            case NORMAL -> stepDurationMs *= 1; // No change for normal timing
+            case DOUBLE -> stepDurationMs /= 2; // Double time (faster)
+            case HALF -> stepDurationMs *= 2; // Half time (slower)
+            case QUARTER -> stepDurationMs *= 4; // Quarter time (very slow)
+            case TRIPLET -> stepDurationMs *= 2.0f / 3.0f; // Triplet feel
+            case QUARTER_TRIPLET -> stepDurationMs *= 4.0f / 3.0f; // Quarter note triplets
+            case EIGHTH_TRIPLET -> stepDurationMs *= 1.0f / 3.0f; // Eighth note triplets
+            case SIXTEENTH -> stepDurationMs *= 1.0f / 4.0f; // Sixteenth notes
+            case SIXTEENTH_TRIPLET -> stepDurationMs *= 1.0f / 6.0f; // Sixteenth note triplets
+            case BEBOP -> stepDurationMs *= 1; // Same as normal for swing calculations
+            case FIVE_FOUR -> stepDurationMs *= 5.0f / 4.0f; // 5/4 time
+            case SEVEN_EIGHT -> stepDurationMs *= 7.0f / 8.0f; // 7/8 time
+            case NINE_EIGHT -> stepDurationMs *= 9.0f / 8.0f; // 9/8 time
+            case TWELVE_EIGHT -> stepDurationMs *= 12.0f / 8.0f; // 12/8 time
+            case SIX_FOUR -> stepDurationMs *= 6.0f / 4.0f; // 6/4 time
+        }
+
+        // Calculate swing percentage (convert from 50-75% to 0-25%)
+        float swingFactor = (swingPercentage - 50) / 100f;
+
+        // Return swing amount in milliseconds
+        return (int) (stepDurationMs * swingFactor);
     }
 }

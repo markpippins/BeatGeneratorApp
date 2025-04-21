@@ -37,6 +37,9 @@ public class MelodicSequenceData implements Serializable {
     private List<Integer> probabilityValues;
     private List<Integer> nudgeValues;
     
+    // Tilt panel data - store the harmonic tilt values for each bar
+    private List<Integer> harmonicTiltValues;
+    
     // Constructor
     public MelodicSequenceData() {
         // Default constructor

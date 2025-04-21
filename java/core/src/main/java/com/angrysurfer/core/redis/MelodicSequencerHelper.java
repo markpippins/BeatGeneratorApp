@@ -109,6 +109,11 @@ public class MelodicSequencerHelper {
                 }
             }
             
+            // Apply harmonic tilt values if available
+            if (data.getHarmonicTiltValues() != null && !data.getHarmonicTiltValues().isEmpty()) {
+                sequencer.setHarmonicTiltValues(data.getHarmonicTiltValues());
+            }
+            
             // Notify that pattern has updated
             commandBus.publish(
                 Commands.MELODIC_SEQUENCE_LOADED, 
@@ -161,6 +166,19 @@ public class MelodicSequencerHelper {
             data.setNoteValues(sequencer.getNoteValues());
             data.setVelocityValues(sequencer.getVelocityValues());
             data.setGateValues(sequencer.getGateValues());
+            
+            // Copy probability and nudge values if available
+            if (sequencer.getProbabilityValues() != null) {
+                data.setProbabilityValues(sequencer.getProbabilityValues());
+            }
+            if (sequencer.getNudgeValues() != null) {
+                data.setNudgeValues(sequencer.getNudgeValues());
+            }
+            
+            // Copy harmonic tilt values
+            if (sequencer.getHarmonicTiltValues() != null) {
+                data.setHarmonicTiltValues(sequencer.getHarmonicTiltValues());
+            }
             
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);
@@ -272,18 +290,21 @@ public class MelodicSequencerHelper {
             List<Integer> noteValues = new ArrayList<>();
             List<Integer> velocityValues = new ArrayList<>();
             List<Integer> gateValues = new ArrayList<>();
+            List<Integer> harmonicTiltValues = new ArrayList<>();
             
             for (int i = 0; i < 16; i++) {
                 activeSteps.add(false);
                 noteValues.add(60 + (i % 12)); // Default to chromatic scale starting at middle C
                 velocityValues.add(100);
                 gateValues.add(50); // 50% gate time
+                harmonicTiltValues.add(0); // Default tilt value of 0
             }
             
             data.setActiveSteps(activeSteps);
             data.setNoteValues(noteValues);
             data.setVelocityValues(velocityValues);
             data.setGateValues(gateValues);
+            data.setHarmonicTiltValues(harmonicTiltValues);
             
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);

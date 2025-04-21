@@ -96,6 +96,11 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
             int tiltValue = dial.getValue();
             logger.debug("Tilt value changed for bar {}: {} ({})",
                     index + 1, tiltValue, dial.getScaleDegreeLabel());
+            
+            // Store the tilt value in the sequencer
+            if (sequencer != null) {
+                sequencer.setTiltValueForBar(index, tiltValue);
+            }
 
             // If this is the current active bar, apply the tilt immediately
             if (index == (currentBar % DIAL_COUNT)) {
@@ -180,6 +185,27 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
         if (step >= 0 && step < tiltDials.size()) {
             tiltDials.get(step).setValue(Math.max(MIN_VALUE, Math.min(MAX_VALUE, value)), false);
         }
+    }
+
+    /**
+     * Synchronize the dial positions with the sequencer tilt values
+     */
+    public void syncWithSequencer() {
+        if (sequencer == null) return;
+        
+        List<Integer> tiltValues = sequencer.getHarmonicTiltValues();
+        if (tiltValues != null) {
+            for (int i = 0; i < Math.min(tiltDials.size(), tiltValues.size()); i++) {
+                int tiltValue = tiltValues.get(i);
+                tiltDials.get(i).setValue(tiltValue, false);
+            }
+        }
+        
+        // Highlight the current bar
+        highlightCurrentBar();
+        
+        // Force repaint
+        repaint();
     }
 }
 
