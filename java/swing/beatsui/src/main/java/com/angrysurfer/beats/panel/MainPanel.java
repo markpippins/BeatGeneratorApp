@@ -39,6 +39,10 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
+import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsPanel;
+import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -68,7 +72,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private int activeMidiChannel = 15;
 
     private DrumSequencerPanel drumSequencerPanel;
-    private DrumParamsSequencerPanel drumEffectsSequencerPanel;
+    private DrumParamsPanel drumEffectsSequencerPanel;
     private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
     private PopupMixerPanel strikeMixerPanel;
@@ -92,7 +96,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         internalSynthControlPanel = new InternalSynthControlPanel();
 
         for (int i = 0; i < melodicPanels.length; i++) {
-            melodicPanels[i] = createMelodicSequencerPanel(i + 2);
+            melodicPanels[i] = createMelodicSequencerPanel(i + 1);
         }
 
         tabbedPane.addTab("Drum", createDrumPanel());
@@ -272,7 +276,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createDrumPanel() {
-        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {
+        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {  
             logger.debug("Drum note event received: note={}, velocity={}",
                     noteEvent.getNote(), noteEvent.getVelocity());
 
@@ -286,7 +290,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createDrumEffectsPanel() {
-        drumEffectsSequencerPanel = new DrumParamsSequencerPanel(noteEvent -> {
+        drumEffectsSequencerPanel = new DrumParamsPanel(noteEvent -> {
             // No-op for now
         });
         return drumEffectsSequencerPanel;

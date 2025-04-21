@@ -1,6 +1,18 @@
 package com.angrysurfer.beats;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridBagLayout;
+import java.util.function.Consumer;
+
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+
+import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.beats.widget.DoubleDial;
 
 public class UIUtils {
 
@@ -84,6 +96,6 @@ public class UIUtils {
         return new Color[] { agedOffWhite, deepTeal, warmOffWhite };
     }
 
-
     
+
 }

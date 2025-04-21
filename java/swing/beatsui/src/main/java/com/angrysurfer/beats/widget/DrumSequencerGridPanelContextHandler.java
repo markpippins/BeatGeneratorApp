@@ -8,7 +8,7 @@ import javax.swing.JPopupMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.panel.DrumSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.sequencer.DrumSequenceModifier;

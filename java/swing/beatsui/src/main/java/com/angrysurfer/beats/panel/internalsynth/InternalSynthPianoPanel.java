@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.internalsynth;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -45,6 +45,11 @@ import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.service.InternalSynthManager;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class InternalSynthPianoPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(InternalSynthPianoPanel.class);
     private static final int SYNTH_MIDI_CHANNEL = 15; // Internal synth uses channel 15 (16 in human numbering)

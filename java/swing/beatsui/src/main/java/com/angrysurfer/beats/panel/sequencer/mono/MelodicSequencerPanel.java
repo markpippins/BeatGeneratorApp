@@ -1,11 +1,6 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.sequencer.mono;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +21,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
+import com.angrysurfer.core.redis.MelodicSequencerHelper;
+import com.angrysurfer.core.redis.RedisService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,9 +79,15 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private boolean listenersEnabled = true;
     private boolean updatingUI = false;
 
+    private MelodicSequenceNavigationPanel navigationPanel;
+
+    private MelodicSequencerSwingPanel swingPanel;
+
+    private JPanel southPanel;
+
     /**
      * Modify constructor to use only one step update mechanism (direct
-     * listener)
+     * listener) and load the first sequence if available
      */
     public MelodicSequencerPanel(Integer channel, Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
@@ -102,9 +105,66 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Initialize the UI
         initialize();
+        
+        // Try to load the first sequence for this sequencer
+        loadFirstSequenceIfExists();
 
         // Register with command bus for other UI updates (not step highlighting)
         CommandBus.getInstance().register(this);
+    }
+
+    /**
+     * Attempts to load the first sequence for this sequencer if any exist
+     */
+    private void loadFirstSequenceIfExists() {
+        // Check if the sequencer has an ID (it should, but verify)
+        if (sequencer.getId() == null) {
+            logger.warn("Cannot load first sequence - sequencer has no ID");
+            return;
+        }
+        
+        // Get the manager reference
+        MelodicSequencerManager manager = MelodicSequencerManager.getInstance();
+        
+        // Check if this sequencer has any sequences
+        if (manager.hasSequences(sequencer.getId())) {
+            Long firstId = manager.getFirstSequenceId(sequencer.getId());
+            
+            if (firstId != null) {
+                logger.info("Loading first sequence {} for sequencer {}", firstId, sequencer.getId());
+                
+                // Load the sequence
+                RedisService redisService = RedisService.getInstance();
+                redisService.applyMelodicSequenceToSequencer(
+                    redisService.findMelodicSequenceById(firstId, sequencer.getId()),
+                    sequencer
+                );
+                
+                // Reset the sequencer to ensure proper step indicator state
+                sequencer.reset();
+                
+                // Update the UI to reflect loaded sequence
+                syncUIWithSequencer();
+                
+                // Notify that a pattern was loaded
+                CommandBus.getInstance().publish(
+                    Commands.MELODIC_SEQUENCE_LOADED,
+                    this,
+                    new MelodicSequencerHelper.MelodicSequencerEvent(
+                        sequencer.getId(), 
+                        sequencer.getMelodicSequenceId()
+                    )
+                );
+                
+                // If we have a navigation panel, update its display
+                if (navigationPanel != null) {
+                    navigationPanel.updateSequenceIdDisplay();
+                }
+            }
+        } else {
+            logger.info("No saved sequences found for sequencer {}, using default empty pattern", 
+                       sequencer.getId());
+        }
     }
 
     private void initialize() {
@@ -125,7 +185,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel topPanel = new JPanel(new BorderLayout(5, 5));
 
         // Create sequence navigation panel
-        MelodicSequenceNavigationPanel navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
+        navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
 
 
         // Create sequence parameters panel
@@ -164,7 +224,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         add(scrollPane, BorderLayout.CENTER);
 
         // Create a container panel for both southern panels - SWAPPED ORDER
-        JPanel southPanel = new JPanel(new BorderLayout(5, 5));
+        southPanel = new JPanel(new BorderLayout(5, 5));
 
         // Create tilt panel with LIMITED HEIGHT and add it to the TOP of the south
         // panel
@@ -184,9 +244,19 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         sequenceParamsPanel = createSequenceParametersPanel();
         bottomControlsPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
-        // Create and add generate panel to the right of sequence parameters
+        // Create a container for the right-side panels
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+
+        // Create and add generate panel
         JPanel generatePanel = createGeneratePanel();
-        bottomControlsPanel.add(generatePanel, BorderLayout.EAST);
+        rightPanel.add(generatePanel);
+
+        // Create and add swing panel
+        swingPanel = new MelodicSequencerSwingPanel(sequencer);
+        rightPanel.add(swingPanel);
+
+        // Add the right panel container to the east position
+        bottomControlsPanel.add(rightPanel, BorderLayout.EAST);
 
         // Add the bottom controls container to the south panel
         southPanel.add(bottomControlsPanel, BorderLayout.SOUTH);
@@ -285,7 +355,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         lastStepPanel.add(new JLabel("Last Step:"));
 
         // Create spinner model with range 1-16, default 16
-        SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 16, 1);
+        SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 64, 1);
         lastStepSpinner = new JSpinner(lastStepModel);
         lastStepSpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
         lastStepSpinner.setToolTipText("Set the last step for the pattern (1-16)");
@@ -872,6 +942,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             // Force a revalidate and repaint of the entire panel
             revalidate();
             repaint();
+
+            // Also sync any tilt sequencer panels
+            for (Component comp : southPanel.getComponents()) {
+                if (comp instanceof TiltSequencerPanel) {
+                    ((TiltSequencerPanel) comp).syncWithSequencer();
+                }
+            }
 
             logger.debug("UI synchronized with sequencer state");
         } finally {

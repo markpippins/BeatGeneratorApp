@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.internalsynth;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -18,9 +18,15 @@ import javax.swing.border.TitledBorder;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.UIHelper;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Panel for controlling effects parameters of a synthesizer
  */
+@Getter
+@Setter
+
 public class InternalSynthEffectsPanel extends JPanel {
     
     // Effects control constants
@@ -30,7 +36,7 @@ public class InternalSynthEffectsPanel extends JPanel {
     public static final int CC_MIX = 94;
     
     private final Synthesizer synthesizer;
-    private final int midiChannel;
+    private int midiChannel;
     
     // UI components
     private JSlider effectTypeSlider;
