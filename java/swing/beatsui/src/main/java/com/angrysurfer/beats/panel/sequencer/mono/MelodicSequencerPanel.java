@@ -106,7 +106,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Initialize the UI
         initialize();
-        
+
         // Try to load the first sequence for this sequencer
         loadFirstSequenceIfExists();
 
@@ -123,60 +123,58 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             logger.warn("Cannot load first sequence - sequencer has no ID");
             return;
         }
-        
+
         // Get the manager reference
         MelodicSequencerManager manager = MelodicSequencerManager.getInstance();
-        
+
         // Check if this sequencer has any sequences
         if (manager.hasSequences(sequencer.getId())) {
             Long firstId = manager.getFirstSequenceId(sequencer.getId());
-            
+
             if (firstId != null) {
                 logger.info("Loading first sequence {} for sequencer {}", firstId, sequencer.getId());
-                
+
                 // Load the sequence
                 RedisService redisService = RedisService.getInstance();
                 MelodicSequenceData data = redisService.findMelodicSequenceById(firstId, sequencer.getId());
-                
+
                 // Log what we're loading
                 if (data.getHarmonicTiltValues() != null) {
                     logger.info("Loaded sequence has {} tilt values", data.getHarmonicTiltValues().size());
                 } else {
                     logger.warn("Loaded sequence has no tilt values");
                 }
-                
+
                 redisService.applyMelodicSequenceToSequencer(data, sequencer);
-                
+
                 // Reset the sequencer to ensure proper step indicator state
                 sequencer.reset();
-                
+
                 // Update the UI to reflect loaded sequence
                 syncUIWithSequencer();
-                
+
                 // EXPLICIT CALL to update tilt panel
                 if (tiltSequencerPanel != null) {
                     logger.info("Explicitly updating tilt panel after sequence load");
                     tiltSequencerPanel.syncWithSequencer();
                 }
-                
+
                 // Notify that a pattern was loaded
                 CommandBus.getInstance().publish(
-                    Commands.MELODIC_SEQUENCE_LOADED,
-                    this,
-                    new MelodicSequencerHelper.MelodicSequencerEvent(
-                        sequencer.getId(), 
-                        sequencer.getMelodicSequenceId()
-                    )
-                );
-                
+                        Commands.MELODIC_SEQUENCE_LOADED,
+                        this,
+                        new MelodicSequencerHelper.MelodicSequencerEvent(
+                                sequencer.getId(),
+                                sequencer.getMelodicSequenceId()));
+
                 // If we have a navigation panel, update its display
                 if (navigationPanel != null) {
                     navigationPanel.updateSequenceIdDisplay();
                 }
             }
         } else {
-            logger.info("No saved sequences found for sequencer {}, using default empty pattern", 
-                       sequencer.getId());
+            logger.info("No saved sequences found for sequencer {}, using default empty pattern",
+                    sequencer.getId());
         }
     }
 
@@ -199,7 +197,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Create sequence navigation panel
         navigationPanel = new MelodicSequenceNavigationPanel(sequencer, this);
-
 
         // Create sequence parameters panel
         sequenceParamsPanel = new MelodicSequenceParametersPanel(sequencer);
@@ -361,7 +358,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         rangeCombo.setSelectedIndex(1); // Default to 2 octaves
         rangeCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
         rangeCombo.setToolTipText("Set the octave range for pattern generation");
- 
+
         // Generate button with consistent styling
         JButton generateButton = new JButton("🎲");
         generateButton.setToolTipText("Generate a random pattern");
@@ -374,7 +371,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             sequencer.generatePattern(octaveRange, density);
             syncUIWithSequencer();
         });
- 
+
         // Latch toggle button (moved from sequence parameters panel)
         latchToggleButton = new JToggleButton("L", false);
         latchToggleButton.setToolTipText("Generate new pattern each cycle");
@@ -383,7 +380,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             sequencer.setLatchEnabled(latchToggleButton.isSelected());
             logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
         });
- 
+
         panel.add(generateButton);
         panel.add(rangeCombo);
         panel.add(latchToggleButton);
@@ -433,9 +430,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Use BoxLayout for vertical arrangement
         JPanel column = new JPanel();
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
-
-        // Reduce border padding to make columns narrower
-        column.setBorder(BorderFactory.createEmptyBorder(3, 1, 3, 1));
+        column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
 
         // Add 5 knobs
         Dial[] noteDial = { null };
@@ -448,9 +443,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         for (int i = 0; i < 5; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
             // Make label more compact with smaller padding
-            label.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-            label.setForeground(Color.GRAY);
-            label.setFont(label.getFont().deriveFont(10f)); // Smaller font
+            label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+            // label.setForeground(Color.GRAY);
+            label.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             if (i < 4) {
                 JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
@@ -645,27 +640,27 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 triggerButtons.get(i).setSelected(activeSteps.get(i));
                 triggerButtons.get(i).repaint();
             }
-            
+
             // Update other controls like sequence parameters
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateUI(sequencer);
             }
-            
+
             // Update swing panel if available
             if (swingPanel != null) {
                 swingPanel.updateControls();
             }
-            
+
             // Update tilt sequencer panel directly
             if (tiltSequencerPanel != null) {
                 logger.debug("Syncing tilt sequencer panel with sequencer state");
                 tiltSequencerPanel.syncWithSequencer();
             }
-            
+
         } finally {
             updatingUI = false;
         }
-        
+
         // Force revalidate and repaint
         revalidate();
         repaint();
@@ -725,10 +720,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         switch (action.getCommand()) {
             // Arrow syntax for all cases
-            case Commands.MELODIC_SEQUENCE_LOADED, 
-                 Commands.MELODIC_SEQUENCE_CREATED, 
-                 Commands.MELODIC_SEQUENCE_SELECTED,
-                 Commands.MELODIC_SEQUENCE_UPDATED -> {
+            case Commands.MELODIC_SEQUENCE_LOADED,
+                    Commands.MELODIC_SEQUENCE_CREATED,
+                    Commands.MELODIC_SEQUENCE_SELECTED,
+                    Commands.MELODIC_SEQUENCE_UPDATED -> {
                 // Check if this event applies to our sequencer
                 if (action.getData() instanceof MelodicSequencerHelper.MelodicSequencerEvent event) {
                     if (event.getSequencerId().equals(sequencer.getId())) {
@@ -740,7 +735,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     syncUIWithSequencer();
                 }
             }
-            
+
             case Commands.SCALE_SELECTED -> {
                 // Your existing SCALE_SELECTED handler code
                 if (action.getData() instanceof String scale && action.getSender() != this) {
@@ -753,7 +748,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     }
                 }
             }
-            
+
             case Commands.PATTERN_UPDATED -> {
                 // Your existing PATTERN_UPDATED handler code
                 // Only handle events from our sequencer to avoid loops
@@ -761,7 +756,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     syncUIWithSequencer();
                 }
             }
-            
+
             // Add other cases with arrow syntax
             default -> {
                 // Optional default case

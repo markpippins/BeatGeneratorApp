@@ -202,6 +202,10 @@ public class Dial extends JComponent {
         g2d.dispose();
     }
 
+    public void setValue(int newValue) {
+        setValue(newValue, false);
+    }
+
     public void setValue(int newValue, boolean notify) {
         if (value != newValue) {
             value = Math.min(maximum, Math.max(minimum, newValue));
