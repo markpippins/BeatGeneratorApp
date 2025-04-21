@@ -18,8 +18,8 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 /**
  * Panel containing drum pad selectors
  */
-public class DrumSelectorPanel extends JPanel {
-    private static final Logger logger = LoggerFactory.getLogger(DrumSelectorPanel.class);
+public class SelectorPanel extends JPanel {
+    private static final Logger logger = LoggerFactory.getLogger(SelectorPanel.class);
     
     // Reference to the sequencer and parent panel
     private final DrumSequencer sequencer;
@@ -37,7 +37,7 @@ public class DrumSelectorPanel extends JPanel {
      * @param sequencer The drum sequencer
      * @param parentPanel The parent panel for callbacks
      */
-    public DrumSelectorPanel(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
+    public SelectorPanel(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
         this.sequencer = sequencer;
         this.parentPanel = parentPanel;
         

@@ -41,7 +41,7 @@ import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
 import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;
-import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
@@ -72,7 +72,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private int activeMidiChannel = 15;
 
     private DrumSequencerPanel drumSequencerPanel;
-    private DrumParamsSequencerPanel drumEffectsSequencerPanel;
+    private DrumParamsPanel drumEffectsSequencerPanel;
     private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
     private PopupMixerPanel strikeMixerPanel;
@@ -290,7 +290,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createDrumEffectsPanel() {
-        drumEffectsSequencerPanel = new DrumParamsSequencerPanel(noteEvent -> {
+        drumEffectsSequencerPanel = new DrumParamsPanel(noteEvent -> {
             // No-op for now
         });
         return drumEffectsSequencerPanel;
