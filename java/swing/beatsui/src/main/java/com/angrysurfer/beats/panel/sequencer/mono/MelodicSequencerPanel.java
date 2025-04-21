@@ -23,6 +23,7 @@ import javax.swing.border.EmptyBorder;
 
 import com.angrysurfer.core.redis.MelodicSequencerHelper;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +37,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Direction;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.NoteEvent;
-import com.angrysurfer.core.sequencer.Scale;
-import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.MelodicSequencerManager;
 
@@ -86,6 +83,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private MelodicSequenceParametersPanel sequenceParamsPanel;
 
     private JPanel southPanel;
+
+    private TiltSequencerPanel tiltSequencerPanel;
 
     /**
      * Modify constructor to use only one step update mechanism (direct
@@ -137,10 +136,16 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 
                 // Load the sequence
                 RedisService redisService = RedisService.getInstance();
-                redisService.applyMelodicSequenceToSequencer(
-                    redisService.findMelodicSequenceById(firstId, sequencer.getId()),
-                    sequencer
-                );
+                MelodicSequenceData data = redisService.findMelodicSequenceById(firstId, sequencer.getId());
+                
+                // Log what we're loading
+                if (data.getHarmonicTiltValues() != null) {
+                    logger.info("Loaded sequence has {} tilt values", data.getHarmonicTiltValues().size());
+                } else {
+                    logger.warn("Loaded sequence has no tilt values");
+                }
+                
+                redisService.applyMelodicSequenceToSequencer(data, sequencer);
                 
                 // Reset the sequencer to ensure proper step indicator state
                 sequencer.reset();
@@ -148,8 +153,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 // Update the UI to reflect loaded sequence
                 syncUIWithSequencer();
                 
-                // Update the tilt sequencer panel specifically
-                updateTiltSequencerPanel();
+                // EXPLICIT CALL to update tilt panel
+                if (tiltSequencerPanel != null) {
+                    logger.info("Explicitly updating tilt panel after sequence load");
+                    tiltSequencerPanel.syncWithSequencer();
+                }
                 
                 // Notify that a pattern was loaded
                 CommandBus.getInstance().publish(
@@ -190,7 +198,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel topPanel = new JPanel(new BorderLayout(5, 5));
 
         // Create sequence navigation panel
-        navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
+        navigationPanel = new MelodicSequenceNavigationPanel(sequencer, this);
 
 
         // Create sequence parameters panel
@@ -233,14 +241,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Create tilt panel with LIMITED HEIGHT and add it to the TOP of the south
         // panel
-        TiltSequencerPanel tiltPanel = new TiltSequencerPanel(sequencer);
-
-        // Color[] colors = { Color.MAGENTA, new Color(0, 0, 0, 0), Color.BLUE, Color.GREEN, Color.YELLOW };
-
-        // Set a fixed preferred height for the tilt panel to prevent it from taking too
-        // much space
-        tiltPanel.setPreferredSize(new Dimension(tiltPanel.getPreferredSize().width, 100));
-        southPanel.add(tiltPanel, BorderLayout.NORTH);
+        tiltSequencerPanel = new TiltSequencerPanel(sequencer);
+        southPanel.add(tiltSequencerPanel, BorderLayout.NORTH);
 
         // Create a container for the bottom controls (parameters + generate)
         JPanel bottomControlsPanel = new JPanel(new BorderLayout(5, 5));
@@ -632,188 +634,41 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Synchronize UI elements with sequencer state
+     * Synchronize all UI elements with the current sequencer state
      */
     private void syncUIWithSequencer() {
-        // Update sequence parameters first
-        if (sequenceParamsPanel != null) {
-            sequenceParamsPanel.updateUI(sequencer);
+        updatingUI = true;
+        try {
+            // Update trigger buttons
+            List<Boolean> activeSteps = sequencer.getActiveSteps();
+            for (int i = 0; i < Math.min(triggerButtons.size(), activeSteps.size()); i++) {
+                triggerButtons.get(i).setSelected(activeSteps.get(i));
+                triggerButtons.get(i).repaint();
+            }
+            
+            // Update other controls like sequence parameters
+            if (sequenceParamsPanel != null) {
+                sequenceParamsPanel.updateUI(sequencer);
+            }
+            
+            // Update swing panel if available
+            if (swingPanel != null) {
+                swingPanel.updateControls();
+            }
+            
+            // Update tilt sequencer panel directly
+            if (tiltSequencerPanel != null) {
+                logger.debug("Syncing tilt sequencer panel with sequencer state");
+                tiltSequencerPanel.syncWithSequencer();
+            }
+            
+        } finally {
+            updatingUI = false;
         }
-
-        // Update step buttons based on current pattern
-        updateStepButtons();
-
-        // Update swing panel if available
-        if (swingPanel != null) {
-            swingPanel.updateControls();
-        }
-
-        // Update tilt sequencer panel specifically
-        updateTiltSequencerPanel();
         
-        // Force revalidate and repaint of the entire panel
+        // Force revalidate and repaint
         revalidate();
         repaint();
-        
-        logger.debug("UI synchronized with sequencer state");
-    }
-
-    /**
-     * Update step buttons and dials to reflect current sequencer state
-     */
-    private void updateStepButtons() {
-        // Save previous listener state
-        boolean previousListenerState = disableAllListeners();
-        
-        try {
-            // Update all 16 steps
-            for (int i = 0; i < triggerButtons.size(); i++) {
-                // Update trigger button state
-                TriggerButton button = triggerButtons.get(i);
-                boolean active = sequencer.isStepActive(i);
-                button.setSelected(active);
-                
-                // Update note dial
-                if (i < noteDials.size()) {
-                    noteDials.get(i).setValue(sequencer.getNoteValue(i));
-                }
-                
-                // Update velocity dial
-                if (i < velocityDials.size()) {
-                    velocityDials.get(i).setValue(sequencer.getVelocityValue(i));
-                }
-                
-                // Update gate dial
-                if (i < gateDials.size()) {
-                    gateDials.get(i).setValue(sequencer.getGateValue(i));
-                }
-                
-                // Update probability dial
-                if (i < probabilityDials.size()) { // && sequencer.getProbabilityValue(i) != null) {
-                    probabilityDials.get(i).setValue(sequencer.getProbabilityValue(i));
-                }
-                
-                // Update nudge dial
-                if (i < nudgeDials.size()) { // && sequencer.getNudgeValue(i) != null) {
-                    nudgeDials.get(i).setValue(sequencer.getNudgeValue(i));
-                }
-            }
-            
-            // Force repaint of all components
-            for (TriggerButton button : triggerButtons) {
-                button.repaint();
-            }
-        } finally {
-            // Restore previous listener state
-            restoreListeners(previousListenerState);
-        }
-    }
-
-    /**
-     * Disables all change listeners temporarily
-     *
-     * @return Original state of listeners
-     */
-    private boolean disableAllListeners() {
-        boolean original = listenersEnabled;
-        listenersEnabled = false;
-        return original;
-    }
-
-    /**
-     * Restores listeners to their previous state
-     */
-    private void restoreListeners(boolean previousState) {
-        listenersEnabled = previousState;
-    }
-
-    /**
-     * Modify onAction to prevent the infinite scale selection loop
-     */
-    @Override
-    public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) {
-            return;
-        }
-
-        switch (action.getCommand()) {
-            // Add cases for sequence loaded, created and updated events
-            case Commands.MELODIC_SEQUENCE_LOADED, 
-                 Commands.MELODIC_SEQUENCE_CREATED, 
-                 Commands.MELODIC_SEQUENCE_UPDATED -> {
-                // Sync the UI with sequencer state
-                syncUIWithSequencer();
-                
-                // Make sure to update the tilt sequencer panel
-                updateTiltSequencerPanel();
-            }
-            
-            // Other cases remain the same...
-            case Commands.ROOT_NOTE_SELECTED -> {
-                if (action.getData() instanceof String rootNote) {
-                    // Only update if this isn't our own event
-                    if (action.getSender() != this) {
-                        boolean wasUpdating = updatingUI;
-                        updatingUI = true;
-                        try {
-                            // Update root note combo without triggering more events
-                            rootNoteCombo.setSelectedItem(rootNote);
-                            // Update the sequencer
-                            if (sequencer != null) {
-                                sequencer.setRootNote(rootNote);
-                                sequencer.updateQuantizer();
-                            }
-                        } finally {
-                            updatingUI = wasUpdating;
-                        }
-                    }
-                }
-            }
-
-            case Commands.SCALE_SELECTED -> {
-                if (action.getData() instanceof String scaleName) {
-                    // Only update if this isn't our own event
-                    if (action.getSender() != this) {
-                        boolean wasUpdating = updatingUI;
-                        updatingUI = true;
-                        try {
-                            // Update scale combo without triggering more events
-                            scaleCombo.setSelectedItem(scaleName);
-                            // Update the sequencer
-                            if (sequencer != null) {
-                                sequencer.setScale(scaleName);
-                                sequencer.updateQuantizer();
-                            }
-                        } finally {
-                            updatingUI = wasUpdating;
-                        }
-                    }
-                }
-            }
-
-            case Commands.PATTERN_UPDATED -> {
-                // Only handle events from our sequencer to avoid loops
-                if (action.getSender() == sequencer) {
-                    logger.info("Received PATTERN_UPDATED event, refreshing UI");
-
-                    // Update UI on EDT
-                    SwingUtilities.invokeLater(() -> {
-                        // Disable listeners while updating UI
-                        listenersEnabled = false;
-                        try {
-                            // Completely refresh UI from sequencer state
-                            syncUIWithSequencer();
-
-                            // Repaint all components
-                            repaint();
-                        } finally {
-                            // Re-enable listeners
-                            listenersEnabled = true;
-                        }
-                    });
-                }
-            }
-        }
     }
 
     /**
@@ -857,5 +712,60 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // FORCE LAYOUT UPDATE to ensure sizes are applied
         revalidate();
+    }
+
+    /**
+     * Modify onAction to prevent the infinite scale selection loop
+     */
+    @Override
+    public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) {
+            return;
+        }
+
+        switch (action.getCommand()) {
+            // Arrow syntax for all cases
+            case Commands.MELODIC_SEQUENCE_LOADED, 
+                 Commands.MELODIC_SEQUENCE_CREATED, 
+                 Commands.MELODIC_SEQUENCE_SELECTED,
+                 Commands.MELODIC_SEQUENCE_UPDATED -> {
+                // Check if this event applies to our sequencer
+                if (action.getData() instanceof MelodicSequencerHelper.MelodicSequencerEvent event) {
+                    if (event.getSequencerId().equals(sequencer.getId())) {
+                        logger.info("Updating UI for sequence event: {}", action.getCommand());
+                        syncUIWithSequencer();
+                    }
+                } else {
+                    // If no specific sequencer event data, update anyway
+                    syncUIWithSequencer();
+                }
+            }
+            
+            case Commands.SCALE_SELECTED -> {
+                // Your existing SCALE_SELECTED handler code
+                if (action.getData() instanceof String scale && action.getSender() != this) {
+                    // Update the UI without triggering events
+                    updatingUI = true;
+                    try {
+                        scaleCombo.setSelectedItem(scale);
+                    } finally {
+                        updatingUI = false;
+                    }
+                }
+            }
+            
+            case Commands.PATTERN_UPDATED -> {
+                // Your existing PATTERN_UPDATED handler code
+                // Only handle events from our sequencer to avoid loops
+                if (action.getSender() == sequencer) {
+                    syncUIWithSequencer();
+                }
+            }
+            
+            // Add other cases with arrow syntax
+            default -> {
+                // Optional default case
+            }
+        }
     }
 }
