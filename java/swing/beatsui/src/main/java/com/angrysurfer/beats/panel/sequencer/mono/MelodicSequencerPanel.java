@@ -1,11 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +80,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private boolean updatingUI = false;
 
     private MelodicSequenceNavigationPanel navigationPanel;
+
+    private MelodicSequencerSwingPanel swingPanel;
+
+    private JPanel southPanel;
 
     /**
      * Modify constructor to use only one step update mechanism (direct
@@ -225,7 +224,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         add(scrollPane, BorderLayout.CENTER);
 
         // Create a container panel for both southern panels - SWAPPED ORDER
-        JPanel southPanel = new JPanel(new BorderLayout(5, 5));
+        southPanel = new JPanel(new BorderLayout(5, 5));
 
         // Create tilt panel with LIMITED HEIGHT and add it to the TOP of the south
         // panel
@@ -245,9 +244,19 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         sequenceParamsPanel = createSequenceParametersPanel();
         bottomControlsPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
-        // Create and add generate panel to the right of sequence parameters
+        // Create a container for the right-side panels
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+
+        // Create and add generate panel
         JPanel generatePanel = createGeneratePanel();
-        bottomControlsPanel.add(generatePanel, BorderLayout.EAST);
+        rightPanel.add(generatePanel);
+
+        // Create and add swing panel
+        swingPanel = new MelodicSequencerSwingPanel(sequencer);
+        rightPanel.add(swingPanel);
+
+        // Add the right panel container to the east position
+        bottomControlsPanel.add(rightPanel, BorderLayout.EAST);
 
         // Add the bottom controls container to the south panel
         southPanel.add(bottomControlsPanel, BorderLayout.SOUTH);
@@ -933,6 +942,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             // Force a revalidate and repaint of the entire panel
             revalidate();
             repaint();
+
+            // Also sync any tilt sequencer panels
+            for (Component comp : southPanel.getComponents()) {
+                if (comp instanceof TiltSequencerPanel) {
+                    ((TiltSequencerPanel) comp).syncWithSequencer();
+                }
+            }
 
             logger.debug("UI synchronized with sequencer state");
         } finally {
