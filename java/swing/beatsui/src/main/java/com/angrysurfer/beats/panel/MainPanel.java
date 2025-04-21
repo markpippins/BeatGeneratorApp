@@ -68,7 +68,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private int activeMidiChannel = 15;
 
     private DrumSequencerPanel drumSequencerPanel;
-    private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
+    private DrumParamsSequencerPanel drumEffectsSequencerPanel;
     private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
     private PopupMixerPanel strikeMixerPanel;
@@ -286,7 +286,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createDrumEffectsPanel() {
-        drumEffectsSequencerPanel = new DrumEffectsSequencerPanel(noteEvent -> {
+        drumEffectsSequencerPanel = new DrumParamsSequencerPanel(noteEvent -> {
             // No-op for now
         });
         return drumEffectsSequencerPanel;

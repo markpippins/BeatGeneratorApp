@@ -30,6 +30,7 @@ import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
+import com.angrysurfer.core.service.MelodicSequencerManager;
 
 /**
  * Panel that handles all mute buttons for both drum and melodic sequencers
@@ -362,7 +363,7 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
         buttonPanel.add(Box.createHorizontalStrut(12));
 
         // Create melodic sequencer mute buttons
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < MelodicSequencerManager.getInstance().getSequencerCount(); i++) {
             JToggleButton muteButton = createMuteButton(i, false);
             buttonPanel.add(muteButton);
             melodicMuteButtons.add(muteButton);

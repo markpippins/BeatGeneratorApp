@@ -46,7 +46,7 @@ import lombok.Setter;
 @Setter
 public class DrumSequencerPanel extends JPanel implements IBusListener {
 
-    private static final Logger logger = LoggerFactory.getLogger(DrumEffectsSequencerPanel.class);
+    private static final Logger logger = LoggerFactory.getLogger(DrumParamsSequencerPanel.class);
 
     // UI Components
     private DrumSequencerInfoPanel drumInfoPanel;
