@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.internalsynth;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

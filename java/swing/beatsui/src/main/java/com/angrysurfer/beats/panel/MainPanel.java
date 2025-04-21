@@ -39,6 +39,10 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
+import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;

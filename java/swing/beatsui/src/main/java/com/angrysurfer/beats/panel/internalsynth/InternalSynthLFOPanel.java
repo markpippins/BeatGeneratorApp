@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.internalsynth;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -20,48 +20,48 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Panel for controlling filter parameters of a synthesizer
+ * Panel for controlling LFO (Low Frequency Oscillator) parameters of a synthesizer
  */
 @Getter
 @Setter
-public class InternalSynthFilterPanel extends JPanel {
-
-    // Filter control constants
-    public static final int CC_FILTER_TYPE = 102;
-    public static final int CC_FILTER_CUTOFF = 74;
-    public static final int CC_FILTER_RESONANCE = 71;
-    public static final int CC_ENV_AMOUNT = 110;
-
+ public class InternalSynthLFOPanel extends JPanel {
+    
+    // LFO control constants
+    public static final int CC_LFO_WAVEFORM = 12;
+    public static final int CC_LFO_DESTINATION = 13;
+    public static final int CC_LFO_RATE = 76;
+    public static final int CC_LFO_AMOUNT = 77;
+    
     private final Synthesizer synthesizer;
-    private int midiChannel;
-
+    private Integer midiChannel;
+    
     // UI components
-    private JSlider filterTypeSlider;
-    private JSlider cutoffSlider;
-    private JSlider resonanceSlider;
-    private JSlider envAmountSlider;
-
+    private JSlider waveformSlider;
+    private JSlider destinationSlider;
+    private JSlider rateSlider;
+    private JSlider amountSlider;
+    
     /**
-     * Create a new Filter control panel
-     *
+     * Create a new LFO control panel
+     * 
      * @param synthesizer The MIDI synthesizer to control
      * @param midiChannel The MIDI channel to send control changes to
      */
-    public InternalSynthFilterPanel(Synthesizer synthesizer, int midiChannel) {
+    public InternalSynthLFOPanel(Synthesizer synthesizer, int midiChannel) {
         super();
         this.synthesizer = synthesizer;
         this.midiChannel = midiChannel;
-
+        
         initializeUI();
     }
-
+    
     /**
      * Initialize all UI components
      */
     private void initializeUI() {
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(),
-                "Filter",
+                "LFO Controls",
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
                 new Font("Dialog", Font.BOLD, 11)
@@ -70,92 +70,95 @@ public class InternalSynthFilterPanel extends JPanel {
         // Use FlowLayout for sliders in a row
         setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
 
-        // Create filter type slider with labels
-        filterTypeSlider = createLabeledVerticalSlider(
-                "Filter Type", 0, 3, 0,
-                new String[]{"Low Pass", "High Pass", "Band Pass", "Notch"}
+        // Create vertical sliders with labeled ticks
+        waveformSlider = createLabeledVerticalSlider(
+                "LFO Waveform", 0, 3, 0,
+                new String[]{"Sine", "Triangle", "Square", "S&H"}
         );
 
-        // Create other sliders
-        cutoffSlider = createVerticalSlider("Filter Cutoff Frequency", 100);
-        resonanceSlider = createVerticalSlider("Resonance/Q", 10);
-        envAmountSlider = createVerticalSlider("Envelope Amount", 0);
+        destinationSlider = createLabeledVerticalSlider(
+                "LFO Destination", 0, 3, 0,
+                new String[]{"Off", "Pitch", "Filter", "Amp"}
+        );
 
-        // Create slider groups - filter type first
-        JPanel typeGroup = createSliderGroup("Type", filterTypeSlider);
-        JPanel cutoffGroup = createSliderGroup("Cutoff", cutoffSlider);
-        JPanel resonanceGroup = createSliderGroup("Resonance", resonanceSlider);
-        JPanel envAmtGroup = createSliderGroup("Env Amount", envAmountSlider);
+        rateSlider = createVerticalSlider("LFO Rate", 50);
+        amountSlider = createVerticalSlider("LFO Amount", 0);
 
-        // Add to filter params panel - filter type first
-        add(typeGroup);
-        add(cutoffGroup);
-        add(resonanceGroup);
-        add(envAmtGroup);
+        // Create slider groups with labels
+        JPanel waveGroup = createSliderGroup("Waveform", waveformSlider);
+        JPanel destGroup = createSliderGroup("Destination", destinationSlider);
+        JPanel rateGroup = createSliderGroup("Rate", rateSlider);
+        JPanel amountGroup = createSliderGroup("Amount", amountSlider);
+
+        // Add slider groups to panel
+        add(waveGroup);
+        add(destGroup);
+        add(rateGroup);
+        add(amountGroup);
 
         // Add event listeners
         setupEventHandlers();
     }
-
+    
     /**
      * Add event listeners to all controls
      */
     private void setupEventHandlers() {
-        filterTypeSlider.addChangeListener(e -> {
-            if (!filterTypeSlider.getValueIsAdjusting()) {
-                int filterType = filterTypeSlider.getValue();
-                setControlChange(CC_FILTER_TYPE, filterType * 32); // Scale to 0-127 range
-                System.out.println("Filter type: " + filterType + " (CC" + CC_FILTER_TYPE + "=" + (filterType * 32) + ")");
+        waveformSlider.addChangeListener(e -> {
+            if (!waveformSlider.getValueIsAdjusting()) {
+                int value = waveformSlider.getValue();
+                setControlChange(CC_LFO_WAVEFORM, value * 42); // Scale to 0-127 range
             }
         });
 
-        cutoffSlider.addChangeListener(e -> {
-            if (!cutoffSlider.getValueIsAdjusting()) {
-                setControlChange(CC_FILTER_CUTOFF, cutoffSlider.getValue());
+        destinationSlider.addChangeListener(e -> {
+            if (!destinationSlider.getValueIsAdjusting()) {
+                int value = destinationSlider.getValue();
+                setControlChange(CC_LFO_DESTINATION, value * 42); // Scale to 0-127 range
             }
         });
 
-        resonanceSlider.addChangeListener(e -> {
-            if (!resonanceSlider.getValueIsAdjusting()) {
-                setControlChange(CC_FILTER_RESONANCE, resonanceSlider.getValue());
+        rateSlider.addChangeListener(e -> {
+            if (!rateSlider.getValueIsAdjusting()) {
+                setControlChange(CC_LFO_RATE, rateSlider.getValue());
             }
         });
 
-        envAmountSlider.addChangeListener(e -> {
-            if (!envAmountSlider.getValueIsAdjusting()) {
-                setControlChange(CC_ENV_AMOUNT, envAmountSlider.getValue());
+        amountSlider.addChangeListener(e -> {
+            if (!amountSlider.getValueIsAdjusting()) {
+                setControlChange(CC_LFO_AMOUNT, amountSlider.getValue());
             }
         });
     }
-
+    
     /**
      * Reset all controls to their default values
      */
     public void resetToDefaults() {
-        filterTypeSlider.setValue(0);    // Low Pass
-        cutoffSlider.setValue(100);      // Fairly open filter
-        resonanceSlider.setValue(10);    // Light resonance
-        envAmountSlider.setValue(0);     // No envelope modulation
-
+        waveformSlider.setValue(0);    // Sine
+        destinationSlider.setValue(0); // Off
+        rateSlider.setValue(50);       // Mid rate
+        amountSlider.setValue(0);      // No amount
+        
         // Send these values to the synth
         updateSynthState();
     }
-
+    
     /**
      * Send the current state of all controls to the synthesizer
      */
     public void updateSynthState() {
-        setControlChange(CC_FILTER_TYPE, filterTypeSlider.getValue() * 32);
-        setControlChange(CC_FILTER_CUTOFF, cutoffSlider.getValue());
-        setControlChange(CC_FILTER_RESONANCE, resonanceSlider.getValue());
-        setControlChange(CC_ENV_AMOUNT, envAmountSlider.getValue());
+        setControlChange(CC_LFO_WAVEFORM, waveformSlider.getValue() * 42);
+        setControlChange(CC_LFO_DESTINATION, destinationSlider.getValue() * 42);
+        setControlChange(CC_LFO_RATE, rateSlider.getValue());
+        setControlChange(CC_LFO_AMOUNT, amountSlider.getValue());
     }
-
+    
     /**
      * Set a MIDI CC value on the synth
-     *
+     * 
      * @param ccNumber The CC number to set
-     * @param value    The value to set (0-127)
+     * @param value The value to set (0-127)
      */
     private void setControlChange(int ccNumber, int value) {
         if (synthesizer != null && synthesizer.isOpen()) {
@@ -170,7 +173,7 @@ public class InternalSynthFilterPanel extends JPanel {
             }
         }
     }
-
+    
     /**
      * Create a slider with a label underneath
      */
@@ -194,8 +197,8 @@ public class InternalSynthFilterPanel extends JPanel {
 
     /**
      * Create a vertical slider with consistent styling
-     *
-     * @param tooltip      Tooltip text
+     * 
+     * @param tooltip Tooltip text
      * @param initialValue Initial value (0-127)
      * @return Configured JSlider
      */
@@ -231,12 +234,12 @@ public class InternalSynthFilterPanel extends JPanel {
 
     /**
      * Create a vertical slider with labeled tick marks
-     *
-     * @param tooltip      Tooltip text
-     * @param min          Minimum value
-     * @param max          Maximum value
+     * 
+     * @param tooltip Tooltip text
+     * @param min Minimum value
+     * @param max Maximum value 
      * @param initialValue Initial value
-     * @param labels       Array of labels for tick marks
+     * @param labels Array of labels for tick marks
      * @return Configured JSlider with labels
      */
     private JSlider createLabeledVerticalSlider(String tooltip, int min, int max, int initialValue, String[] labels) {
@@ -267,39 +270,38 @@ public class InternalSynthFilterPanel extends JPanel {
 
         return slider;
     }
-
-    // Getters and setters for individual control values
-
-    public int getFilterType() {
-        return filterTypeSlider.getValue();
+    
+    // Getters for individual control values
+    
+    public int getWaveform() {
+        return waveformSlider.getValue();
     }
-
-    public void setFilterType(int value) {
-        filterTypeSlider.setValue(value);
+    
+    public void setWaveform(int value) {
+        waveformSlider.setValue(value);
     }
-
-    public int getCutoff() {
-        return cutoffSlider.getValue();
+    
+    public int getDestination() {
+        return destinationSlider.getValue();
     }
-
-    public void setCutoff(int value) {
-        cutoffSlider.setValue(value);
+    
+    public void setDestination(int value) {
+        destinationSlider.setValue(value);
     }
-
-    public int getResonance() {
-        return resonanceSlider.getValue();
+    
+    public int getRate() {
+        return rateSlider.getValue();
     }
-
-    public void setResonance(int value) {
-        resonanceSlider.setValue(value);
+    
+    public void setRate(int value) {
+        rateSlider.setValue(value);
     }
-
-    public int getEnvAmount() {
-        return envAmountSlider.getValue();
+    
+    public int getAmount() {
+        return amountSlider.getValue();
     }
-
-    public void setEnvAmount(int value) {
-        envAmountSlider.setValue(value);
+    
+    public void setAmount(int value) {
+        amountSlider.setValue(value);
     }
-
 }

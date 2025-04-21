@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.internalsynth;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;

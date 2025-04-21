@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.sequencer.poly;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
