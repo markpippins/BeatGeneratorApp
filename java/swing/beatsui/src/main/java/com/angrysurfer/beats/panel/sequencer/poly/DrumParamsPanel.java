@@ -321,7 +321,6 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
         drumButton.setName("DrumButton-" + index);
         drumButton.setToolTipText("Pad " + (index + 1));
         drumButton.setText(Integer.toString(index + 1));
-        drumButton.setToggle(true);
         drumButton.setExclusive(true);
         // Add action to manually trigger the note when pad button is clicked
         drumButton.addActionListener(e -> selectDrumPad(index));
@@ -426,7 +425,6 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
             // Clear previous selection
             if (selectedPadIndex >= 0 && selectedPadIndex < drumButtons.size()) {
                 drumButtons.get(selectedPadIndex).setSelected(false);
-                drumButtons.get(selectedPadIndex).setToggled(false);
                 drumButtons.get(selectedPadIndex).setText("");
                 drumButtons.get(selectedPadIndex).repaint();
             }
@@ -437,13 +435,11 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
             // Update sequencer's selected pad index
             sequencer.setSelectedPadIndex(padIndex);
 
-            // Update drum button visual state using the successful approach from test button
+            // Update drum button visual state using clearer approach
             if (padIndex >= 0 && padIndex < drumButtons.size()) {
-                drumButtons.get(padIndex).setSelected(true);
-                drumButtons.get(selectedPadIndex).setToggled(true);
-                System.out.println(drumButtons.get(padIndex).getText());
-                drumButtons.get(padIndex).setText("SEL");
-                drumButtons.get(padIndex).repaint();
+                DrumButton button = drumButtons.get(padIndex);
+                button.setSelected(true);
+                button.repaint();
 
                 // Enable trigger buttons
                 setTriggerButtonsEnabled(true);
@@ -788,7 +784,7 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
             button.setPadNumber(i + 1);
 
             // Set main beat flag for pads 1, 5, 9, 13 (zero-indexed as 0, 4, 8, 12)
-            button.setIsMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
+            button.setMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
 
             // Set detailed tooltip
             String drumName = (i < drumNames.length) ? drumNames[i] : "Drum " + (i + 1);

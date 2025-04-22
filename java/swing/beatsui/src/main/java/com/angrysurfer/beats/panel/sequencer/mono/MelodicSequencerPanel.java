@@ -699,7 +699,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             pad.setPadNumber(i + 1);
 
             // Set main beat flag for pads 1, 5, 9, 13 (zero-indexed as 0, 4, 8, 12)
-            pad.setIsMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
+            pad.setMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
 
             // FORCE REPAINT for each pad
             pad.repaint();

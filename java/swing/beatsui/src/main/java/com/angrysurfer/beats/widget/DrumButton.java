@@ -27,71 +27,58 @@ public class DrumButton extends JButton implements IBusListener {
 
     private int padNumber;
     private boolean isMainBeat;
-    private boolean toggle; // Toggle attribute
-    private boolean isToggled; // Current toggle state
-    private boolean exclusive; // Exclusive toggle attribute
-    private Color defaultColor = new Color(50, 130, 200); // Default color
-    private Color highlightColor = new Color(255, 100, 100); // Highlight color
+    
+    // Just one boolean for exclusive group behavior
+    private boolean exclusive; 
+    
+    // Visual state (separate from selection)
+    private boolean highlighted = false;
+    
+    // Animation state
+    private boolean flashing = false;
+    
+    // Colors
+    private Color defaultColor = new Color(50, 130, 200);
+    private Color selectedColor = new Color(255, 100, 100);
+    private Color flashColor = new Color(160, 160, 160);
+    private Color highlightColor = new Color(200, 200, 80);
 
     public DrumButton() {
         super();
-        this.toggle = false; // Default to not toggled
-        this.isToggled = false; // Initial state
-        this.exclusive = false; // Default to not exclusive
-
-        // Register this button to listen for PAD_TOGGLED messages
+        
+        // Register this button to listen for PAD_SELECTED messages
         CommandBus.getInstance().register(this);
 
-        // Add action listener to handle toggle behavior
+        // Add action listener to handle selection behavior
         addActionListener(e -> {
-            if (toggle) {
-                isToggled = !isToggled; // Toggle the state
-                repaint(); // Repaint to reflect the change
-
-                // Publish the PAD_TOGGLED command to the CommandBus
-                CommandBus.getInstance().publish(Commands.PAD_TOGGLED, this);
-                // CommandBus.getInstance().publish(new Command("PAD_TOGGLED", this));
+            if (exclusive) {
+                setSelected(true);
+                // Notify other buttons in group
+                CommandBus.getInstance().publish(Commands.DRUM_BUTTON_SELECTED, this);
+            } else {
+                // Toggle selection if not exclusive
+                setSelected(!isSelected());
             }
         });
+        
         setup();
     }
 
-    public void setPadNumber(int padNumber) {
-        this.padNumber = padNumber;
-        repaint();
-    }
-
-    public int getPadNumber() {
-        return padNumber;
-    }
-
-    public void setIsMainBeat(boolean isMainBeat) {
-        this.isMainBeat = isMainBeat;
-        repaint();
-    }
-
-    public boolean isMainBeat() {
-        return isMainBeat;
-    }
-
-    private void setup() {
-        Color baseColor = new Color(50, 130, 200); // A vibrant, cool blue
-        Color flashColor = new Color(160, 160, 160); // Lighter grey for flash
-        final boolean[] isFlashing = { false };
-
-        addActionListener(e -> {
-            isFlashing[0] = true;
-            repaint();
-
-            Timer timer = new Timer(100, evt -> {
-                isFlashing[0] = false;
+    @Override
+    public void onAction(Command action) {
+        if (Commands.DRUM_BUTTON_SELECTED.equals(action.getCommand())) {
+            // If we're in exclusive mode and not the sender, deselect
+            if (exclusive && action.getData() != this && isSelected()) {
+                setSelected(false);
                 repaint();
-                ((Timer) evt.getSource()).stop();
-            });
-            timer.setRepeats(false);
-            timer.start();
-        });
+            }
+        }
+    }
 
+    /**
+     * Set up the button appearance and behavior
+     */
+    private void setup() {
         setUI(new BasicButtonUI() {
             @Override
             public void paint(Graphics g, JComponent c) {
@@ -102,14 +89,15 @@ public class DrumButton extends JButton implements IBusListener {
                 int w = c.getWidth();
                 int h = c.getHeight();
 
-                if (isFlashing[0]) {
+                // Choose color based on state - with clear priority order
+                if (flashing) {
                     g2d.setColor(flashColor);
+                } else if (isSelected()) {
+                    g2d.setColor(selectedColor);
+                } else if (highlighted) {
+                    g2d.setColor(highlightColor);
                 } else {
-                    if (isToggled) {
-                        g2d.setColor(highlightColor);
-                    } else {
-                        g2d.setColor(defaultColor);
-                    }
+                    g2d.setColor(defaultColor);
                 }
 
                 g2d.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
@@ -122,28 +110,32 @@ public class DrumButton extends JButton implements IBusListener {
                 g2d.setColor(new Color(255, 255, 255, 30));
                 g2d.drawLine(2, 2, w - 3, 2);
 
-                // Draw pad number if set
-                if (padNumber > 0) {
+                // Draw pad number or text
+                String displayText = getText();
+                if (displayText == null || displayText.isEmpty()) {
+                    displayText = (padNumber > 0) ? String.valueOf(padNumber) : "";
+                }
+                
+                if (!displayText.isEmpty()) {
                     // Use white text for better contrast
                     g2d.setColor(Color.WHITE);
 
                     // Use a bold font
                     g2d.setFont(g2d.getFont().deriveFont(Font.BOLD, 14f));
 
-                    String padText = String.valueOf(padNumber);
                     FontMetrics fm = g2d.getFontMetrics();
 
                     // Center the text
-                    int textX = (w - fm.stringWidth(padText)) / 2;
+                    int textX = (w - fm.stringWidth(displayText)) / 2;
                     int textY = (h + fm.getAscent() - fm.getDescent()) / 2;
 
                     // Draw the text
-                    g2d.drawString(padText, textX, textY);
+                    g2d.drawString(displayText, textX, textY);
 
                     // Draw underline for main beats (1, 5, 9, 13)
                     if (isMainBeat) {
-                        int underlineY = textY + 2; // 2 pixels below text baseline
-                        g2d.drawLine(textX, underlineY, textX + fm.stringWidth(padText), underlineY);
+                        int underlineY = textY + 2;
+                        g2d.drawLine(textX, underlineY, textX + fm.stringWidth(displayText), underlineY);
                     }
                 }
 
@@ -157,36 +149,19 @@ public class DrumButton extends JButton implements IBusListener {
         setFocusPainted(false);
     }
 
-    // Method to set the toggle attribute
-    public void setToggle(boolean toggle) {
-        this.toggle = toggle;
-    }
+    /**
+     * Flash the button briefly (for playback indication)
+     */
+    public void flash() {
+        flashing = true;
+        repaint();
 
-    // Method to set the exclusive attribute
-    public void setExclusive(boolean exclusive) {
-        this.exclusive = exclusive;
+        Timer timer = new Timer(100, evt -> {
+            flashing = false;
+            repaint();
+            ((Timer) evt.getSource()).stop();
+        });
+        timer.setRepeats(false);
+        timer.start();
     }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        // Set the color based on the toggle state
-        if (isToggled) {
-            g.setColor(highlightColor); // Use highlight color if toggled
-        } else {
-            g.setColor(defaultColor); // Use default color if not toggled
-        }
-        super.paintComponent(g); // Call the superclass method to paint the button
-    }
-
-    @Override
-    public void onAction(Command action) {
-        if ("PAD_TOGGLED".equals(action.getCommand())) {
-            // Check if the sender is not this button and exclusive is true
-            if (exclusive && action.getData() != this) {
-                isToggled = false; // Toggle off
-                repaint(); // Repaint to reflect the change
-            }
-        }
-    }
-
 }
