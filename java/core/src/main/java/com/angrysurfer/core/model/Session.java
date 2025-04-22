@@ -23,6 +23,7 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.sequencer.LowLatencyMidiClock;
 import com.angrysurfer.core.sequencer.MidiClockSource;
+import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DeviceManager;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -113,6 +114,9 @@ public class Session implements Serializable, IBusListener {
 
     private String name;
     private String notes = "Session Notes";
+
+    private String scale = Scale.SCALE_CHROMATIC;
+    private String rootNote = Scale.SCALE_NOTES[0]; // Default to C
 
     @Transient
     private boolean paused = false;

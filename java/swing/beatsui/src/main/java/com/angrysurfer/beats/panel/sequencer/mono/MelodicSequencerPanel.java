@@ -1,7 +1,12 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import java.awt.*;
-import java.awt.event.ItemEvent;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -10,20 +15,16 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.core.redis.MelodicSequencerHelper;
-import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.sequencer.*;
+import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
+import com.angrysurfer.beats.panel.SessionControlPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,12 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.redis.MelodicSequencerHelper;
+import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.MelodicSequenceData;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.NoteEvent;
+import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.MelodicSequencerManager;
 
@@ -742,15 +748,34 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
 
             case Commands.SCALE_SELECTED -> {
-                // Your existing SCALE_SELECTED handler code
-                if (action.getData() instanceof String scale && action.getSender() != this) {
-                    // Update the UI without triggering events
-                    updatingUI = true;
-                    try {
-                        scaleCombo.setSelectedItem(scale);
-                    } finally {
-                        updatingUI = false;
+                // Only update if this event is for our specific sequencer or from the global controller
+                if (action.getData() instanceof MelodicScaleSelectionEvent event) {
+                    // Check if this event is for our sequencer
+                    if (event.getSequencerId() != null && event.getSequencerId().equals(sequencer.getId())) {
+                        // Update the scale in the sequencer
+                        sequencer.setScale(event.getScale());
+                        
+                        // Update the UI without publishing new events
+                        if (sequenceParamsPanel != null) {
+                            sequenceParamsPanel.setSelectedScale(event.getScale());
+                        }
+                        
+                        // Log the specific change
+                        logger.debug("Set scale to {} for sequencer {}", event.getScale(), sequencer.getId());
                     }
+                } 
+                // Handle global scale changes from session panel (separate implementation)
+                else if (action.getData() instanceof String scale && 
+                         (action.getSender() instanceof SessionControlPanel)) {
+                    // This is a global scale change from the session panel
+                    sequencer.setScale(scale);
+                    
+                    // Update UI without publishing new events
+                    if (sequenceParamsPanel != null) {
+                        sequenceParamsPanel.setSelectedScale(scale);
+                    }
+                    
+                    logger.debug("Set scale to {} from global session change", scale);
                 }
             }
 
