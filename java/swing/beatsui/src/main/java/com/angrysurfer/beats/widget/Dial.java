@@ -40,7 +40,7 @@ public class Dial extends JComponent {
     private String label;
     private List<ChangeListener> changeListeners = new ArrayList<>();
 
-    private int minSize = 50;
+    private int minSize = 40;
     private int maxSize = 70;
 
     private Color gradientStartColor = new Color(60, 130, 255);

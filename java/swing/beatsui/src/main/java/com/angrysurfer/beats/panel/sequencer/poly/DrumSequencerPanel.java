@@ -1,7 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -109,6 +108,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     // Add this field instead:
     private DrumSequencerGridPanel gridPanel;
 
+    private JScrollPane scrollPane;
+
+    private JPanel sequencePanel;
+
     /**
      * Create a new DrumSequencerPanel
      *
@@ -182,11 +185,11 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         add(drumPadsPanel, BorderLayout.WEST);
 
         // Create the center grid panel with sequence buttons
-        JPanel sequencePanel = createSequenceGridPanel();
+        sequencePanel = createSequenceGridPanel();
         // visualizer = new Visualizer(sequencePanel, gridPanel);
 
         // Wrap in scroll pane
-        JScrollPane scrollPane = new JScrollPane(sequencePanel);
+        scrollPane = new JScrollPane(sequencePanel);
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
@@ -195,9 +198,11 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Create a panel for the bottom controls
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
+        bottomPanel.add(new MaxLengthPanel(sequencer, this), BorderLayout.WEST);
 
         // Create and add the sequence parameters panel using our new class
         sequenceParamsPanel = new SequencerParametersPanel(sequencer, this);
+
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
         // Create a container for the right-side panels
@@ -669,7 +674,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             gridPanel.updateStepButtonsForDrum(drumIndex);
         }
     }
- 
+
     /**
      * Refreshes the entire grid UI
      */
@@ -680,7 +685,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Update step highlighting based on current step position - delegates to grid panel
+     * Update step highlighting based on current step position - delegates to grid
+     * panel
      * 
      * @param oldStep The previous step to un-highlight
      * @param newStep The new step to highlight
@@ -690,5 +696,19 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         if (gridPanel != null) {
             gridPanel.updateStepHighlighting(drumIndex, oldStep, newStep);
         }
+    }
+
+    /**
+     * Completely recreate the grid panel to reflect changes in max pattern length
+     */
+    public void recreateGridPanel() {
+
+        // gridPanel.clearGridButtons();
+        // gridPanel.createGridButtons();
+        // gridPanel.refreshGridUI();
+        // gridPanel.updateStepButtonsForDrum(selectedPadIndex);
+        // Refresh layout
+        // revalidate();
+        // repaint();
     }
 }

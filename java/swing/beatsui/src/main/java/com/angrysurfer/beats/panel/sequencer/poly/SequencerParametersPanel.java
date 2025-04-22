@@ -5,6 +5,8 @@ import java.awt.FlowLayout;
 import java.awt.Insets;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -32,7 +34,6 @@ public class SequencerParametersPanel extends JPanel {
     private JComboBox<TimingDivision> timingCombo;
     private JToggleButton loopToggleButton;
     private JButton clearPatternButton;
-    private JComboBox<Integer> maxLengthCombo;
     
     // Reference to the sequencer and parent panel
     private final DrumSequencer sequencer;
@@ -61,11 +62,17 @@ public class SequencerParametersPanel extends JPanel {
      * Initialize all UI components
      */
     private void initializeComponents() {
+        // Change from FlowLayout to BoxLayout for better control
+        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        
+        // Create a panel to hold the main controls with FlowLayout
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        
         // Last Step spinner
         JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         lastStepPanel.add(new JLabel("Last Step:"));
 
-        // Create spinner model with range 1-sequencer.getMaxSteps(), default sequencer.getDefaultPatternLength()
+        // Create spinner model with range 1-sequencer.getMaxSteps()
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(
             sequencer.getDefaultPatternLength(), 1, sequencer.getMaxPatternLength(), 1);
         lastStepSpinner = new JSpinner(lastStepModel);
@@ -83,9 +90,8 @@ public class SequencerParametersPanel extends JPanel {
         });
         lastStepPanel.add(lastStepSpinner);
 
-        // Direction combo - Make label skinnier
+        // Direction combo
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-
         directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
         directionCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
         directionCombo.setToolTipText("Set the playback direction of the pattern");
@@ -107,9 +113,8 @@ public class SequencerParametersPanel extends JPanel {
         });
         directionPanel.add(directionCombo);
 
-        // Timing division combo - Make label skinnier
+        // Timing division combo
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
         timingCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
         timingCombo.addActionListener(e -> {
@@ -123,7 +128,7 @@ public class SequencerParametersPanel extends JPanel {
         });
         timingPanel.add(timingCombo);
 
-        // Loop checkbox - Make skinnier
+        // Loop checkbox
         loopToggleButton = new JToggleButton("🔁", true); // Default to looping enabled
         loopToggleButton.setToolTipText("Loop this pattern");
         loopToggleButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT)); // Reduce width
@@ -134,15 +139,6 @@ public class SequencerParametersPanel extends JPanel {
 
             // Use the selected drum index from the parent panel
             sequencer.setLooping(parentPanel.getSelectedPadIndex(), loop);
-        });
-
-        // Clear pattern button
-        clearPatternButton = new JButton("🗑️");
-        clearPatternButton.setToolTipText("Clear the pattern for this drum");
-        clearPatternButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT)); // Reduce width
-        clearPatternButton.setMargin(new Insets(2, 2, 2, 2));
-        clearPatternButton.addActionListener(e -> {
-            parentPanel.clearRow(parentPanel.getSelectedPadIndex());
         });
 
         // Create rotation panel for push/pull buttons
@@ -172,50 +168,34 @@ public class SequencerParametersPanel extends JPanel {
         rotationPanel.add(pullBackwardButton);
         rotationPanel.add(pushForwardButton);
 
-        // Add Max Pattern Length control
-        JPanel maxLengthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        maxLengthPanel.add(new JLabel("Max:"));
+        // Add components to the controls panel in desired order
+        controlsPanel.add(timingPanel);
+        controlsPanel.add(directionPanel);
+        controlsPanel.add(loopToggleButton);
+        controlsPanel.add(lastStepPanel);
+        controlsPanel.add(rotationPanel);
         
-        // Create combo box with standard pattern lengths
-        Integer[] maxLengths = {16, 32, 64, 128}; 
-        maxLengthCombo = new JComboBox<>(maxLengths);
-        maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
-        maxLengthCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        maxLengthCombo.setToolTipText("Set maximum pattern length");
-        
-        maxLengthCombo.addActionListener(e -> {
-            int newMaxLength = (Integer) maxLengthCombo.getSelectedItem();
-            int currentLength = (Integer) lastStepSpinner.getValue();
-            
-            // Set new max pattern length in sequencer
-            sequencer.setMaxPatternLength(newMaxLength);
-            
-            // Update spinner model's maximum to match new max length
-            SpinnerNumberModel model = (SpinnerNumberModel) lastStepSpinner.getModel();
-            model.setMaximum(newMaxLength);
-            
-            // If current length exceeds new max, adjust it down
-            if (currentLength > newMaxLength) {
-                lastStepSpinner.setValue(newMaxLength);
-                // This will trigger the spinner's change listener
-            }
-            
-            logger.info("Set maximum pattern length to: {}", newMaxLength);
-            
-            // Refresh the grid UI to show/hide steps as needed
-            parentPanel.refreshGridUI();
+        // Create the clear button
+        clearPatternButton = new JButton("🗑️");
+        clearPatternButton.setToolTipText("Clear the pattern for this drum");
+        clearPatternButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        clearPatternButton.setMargin(new Insets(2, 2, 2, 2));
+        clearPatternButton.addActionListener(e -> {
+            parentPanel.clearRow(parentPanel.getSelectedPadIndex());
         });
         
-        maxLengthPanel.add(maxLengthCombo);
-
-        // Add all components to panel in a single row
-        add(timingPanel);
-        add(directionPanel);
-        add(loopToggleButton);
-        add(lastStepPanel);
-        add(maxLengthPanel); // Add the new max length panel
-        add(rotationPanel);
-        add(clearPatternButton);
+        // Add the main controls panel to the left
+        add(controlsPanel);
+        
+        // Add horizontal glue to push clear button to right
+        add(Box.createHorizontalGlue());
+        
+        // Create right-side panel for clear button with some padding
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        rightPanel.add(clearPatternButton);
+        
+        // Add right panel
+        add(rightPanel);
     }
     
     /**
@@ -240,9 +220,6 @@ public class SequencerParametersPanel extends JPanel {
 
         timingCombo.setSelectedItem(timing);
         loopToggleButton.setSelected(isLooping);
-
-        // Update max pattern length combo
-        maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
         
         // Update last step spinner's maximum value
         SpinnerNumberModel model = (SpinnerNumberModel) lastStepSpinner.getModel();
@@ -253,6 +230,20 @@ public class SequencerParametersPanel extends JPanel {
         directionCombo.repaint();
         timingCombo.repaint();
         loopToggleButton.repaint();
-        maxLengthCombo.repaint(); // Add this line
+    }
+    
+    /**
+     * Update the Last Step spinner's maximum value
+     */
+    public void updateMaxPatternLength(int newMaxLength) {
+        // Update last step spinner's maximum value
+        SpinnerNumberModel model = (SpinnerNumberModel) lastStepSpinner.getModel();
+        model.setMaximum(newMaxLength);
+        
+        // If current value exceeds new maximum, adjust it
+        int currentValue = (Integer) lastStepSpinner.getValue();
+        if (currentValue > newMaxLength) {
+            lastStepSpinner.setValue(newMaxLength);
+        }
     }
 }
