@@ -32,6 +32,7 @@ public class SequencerParametersPanel extends JPanel {
     private JComboBox<TimingDivision> timingCombo;
     private JToggleButton loopToggleButton;
     private JButton clearPatternButton;
+    private JComboBox<Integer> maxLengthCombo;
     
     // Reference to the sequencer and parent panel
     private final DrumSequencer sequencer;
@@ -171,11 +172,48 @@ public class SequencerParametersPanel extends JPanel {
         rotationPanel.add(pullBackwardButton);
         rotationPanel.add(pushForwardButton);
 
+        // Add Max Pattern Length control
+        JPanel maxLengthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        maxLengthPanel.add(new JLabel("Max:"));
+        
+        // Create combo box with standard pattern lengths
+        Integer[] maxLengths = {16, 32, 64, 128}; 
+        maxLengthCombo = new JComboBox<>(maxLengths);
+        maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
+        maxLengthCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        maxLengthCombo.setToolTipText("Set maximum pattern length");
+        
+        maxLengthCombo.addActionListener(e -> {
+            int newMaxLength = (Integer) maxLengthCombo.getSelectedItem();
+            int currentLength = (Integer) lastStepSpinner.getValue();
+            
+            // Set new max pattern length in sequencer
+            sequencer.setMaxPatternLength(newMaxLength);
+            
+            // Update spinner model's maximum to match new max length
+            SpinnerNumberModel model = (SpinnerNumberModel) lastStepSpinner.getModel();
+            model.setMaximum(newMaxLength);
+            
+            // If current length exceeds new max, adjust it down
+            if (currentLength > newMaxLength) {
+                lastStepSpinner.setValue(newMaxLength);
+                // This will trigger the spinner's change listener
+            }
+            
+            logger.info("Set maximum pattern length to: {}", newMaxLength);
+            
+            // Refresh the grid UI to show/hide steps as needed
+            parentPanel.refreshGridUI();
+        });
+        
+        maxLengthPanel.add(maxLengthCombo);
+
         // Add all components to panel in a single row
         add(timingPanel);
         add(directionPanel);
         add(loopToggleButton);
         add(lastStepPanel);
+        add(maxLengthPanel); // Add the new max length panel
         add(rotationPanel);
         add(clearPatternButton);
     }
@@ -203,10 +241,18 @@ public class SequencerParametersPanel extends JPanel {
         timingCombo.setSelectedItem(timing);
         loopToggleButton.setSelected(isLooping);
 
+        // Update max pattern length combo
+        maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
+        
+        // Update last step spinner's maximum value
+        SpinnerNumberModel model = (SpinnerNumberModel) lastStepSpinner.getModel();
+        model.setMaximum(sequencer.getMaxPatternLength());
+        
         // Repaint components
         lastStepSpinner.repaint();
         directionCombo.repaint();
         timingCombo.repaint();
         loopToggleButton.repaint();
+        maxLengthCombo.repaint(); // Add this line
     }
 }
