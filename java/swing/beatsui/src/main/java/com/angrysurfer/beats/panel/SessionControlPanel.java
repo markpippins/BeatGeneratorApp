@@ -267,6 +267,15 @@ public class SessionControlPanel extends JPanel {
                 } else if (selectedIndex == combo.getItemCount() - 1) {
                     commandBus.publish(Commands.LAST_SCALE_SELECTED, this, selectedScale);
                 }
+
+                if (currentSession != null) {
+                    currentSession.setScale(selectedScale);
+                    CommandBus.getInstance().publish(
+                        Commands.GLOBAL_SCALE_SELECTED,
+                        this,
+                        selectedScale
+                    );
+                }
             }
         });
 

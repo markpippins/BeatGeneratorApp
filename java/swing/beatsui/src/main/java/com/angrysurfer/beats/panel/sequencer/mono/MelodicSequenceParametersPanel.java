@@ -4,6 +4,7 @@ import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingDivision;
+import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 
@@ -296,14 +297,14 @@ public class MelodicSequenceParametersPanel extends JPanel {
                 String selectedScale = (String) e.getItem();
                 sequencer.setScale(selectedScale);
 
-                // Publish event for other listeners
+                // Publish event with sequencer ID to indicate which sequencer it's for
                 CommandBus.getInstance().publish(
                     Commands.SCALE_SELECTED,
                     this,
-                    selectedScale
+                    new MelodicScaleSelectionEvent(sequencer.getId(), selectedScale)
                 );
 
-                logger.info("Scale selected: {}", selectedScale);
+                logger.info("Scale selected for sequencer {}: {}", sequencer.getId(), selectedScale);
             }
         });
         
@@ -424,6 +425,20 @@ public class MelodicSequenceParametersPanel extends JPanel {
         } finally {
             // Reset flag after updates
             updatingUI = false;
+        }
+    }
+
+    /**
+     * Set the selected scale (without triggering events)
+     */ 
+    public void setSelectedScale(String scale) {
+        if (scale != null && scaleCombo != null) {
+            updatingUI = true;
+            try {
+                scaleCombo.setSelectedItem(scale);
+            } finally {
+                updatingUI = false;
+            }
         }
     }
 }
