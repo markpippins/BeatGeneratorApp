@@ -2,10 +2,17 @@ package com.angrysurfer.beats.panel.sequencer.poly;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -23,6 +30,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
@@ -96,6 +104,40 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
 
         // Initialize UI components
         initialize();
+
+        // Add key listener for Escape key to return to DrumSequencer panel
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    // Navigate to DrumSequencer tab
+                    MainPanel mainPanel = findMainPanel();
+                    if (mainPanel != null) {
+                        // The index 0 is for "Drum" tab (DrumSequencerPanel)
+                        mainPanel.setSelectedTab(0);
+                    }
+                }
+            }
+        });
+
+        // Make the panel focusable to receive key events
+        setFocusable(true);
+
+        // When the panel gains focus or becomes visible, request focus
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                requestFocusInWindow();
+            }
+        });
+
+        // Request focus when the panel becomes visible
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                requestFocusInWindow();
+            }
+        });
 
         // NOTE: Don't select the first drum here, it will be done in
         // initializeDrumPads()
@@ -917,5 +959,17 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
      */
     public DrumSequencer getSequencer() {
         return sequencer;
+    }
+
+    // Helper method to find the MainPanel ancestor
+    private MainPanel findMainPanel() {
+        Container parent = getParent();
+        while (parent != null) {
+            if (parent instanceof MainPanel) {
+                return (MainPanel) parent;
+            }
+            parent = parent.getParent();
+        }
+        return null;
     }
 }

@@ -1,13 +1,17 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import java.awt.Dimension;
-import java.awt.GridLayout;
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
+import com.angrysurfer.beats.panel.MainPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,8 +92,47 @@ public class DrumSelectorPanel extends JPanel {
             drumButton.setText(drumNames[i]);
             drumButton.setToolTipText("Select " + drumNames[i] + " (Note: " + defaultNotes[i] + ")");
 
-            // THIS IS THE KEY PART - Add action listener for drum selection
+            // Add action listener for drum selection
             drumButton.addActionListener(e -> parentPanel.selectDrumPad(drumIndex));
+            
+            // Add double-click support to navigate to params panel
+            drumButton.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getClickCount() == 2) {
+                        // Select this drum first
+                        parentPanel.selectDrumPad(drumIndex);
+                        
+                        // Then find MainPanel and switch to DrumParams tab
+                        MainPanel mainPanel = findMainPanel();
+                        if (mainPanel != null) {
+                            // Index 1 is the "Machine" tab with DrumParamsPanel
+                            mainPanel.setSelectedTab(1);
+                        }
+                    }
+                }
+            });
+            
+            // Add key listener for enter key
+            drumButton.addKeyListener(new KeyAdapter() {
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        // Select this drum first
+                        parentPanel.selectDrumPad(drumIndex);
+                        
+                        // Then find MainPanel and switch to DrumParams tab
+                        MainPanel mainPanel = findMainPanel();
+                        if (mainPanel != null) {
+                            // Index 1 is the "Machine" tab with DrumParamsPanel
+                            mainPanel.setSelectedTab(1);
+                        }
+                    }
+                }
+            });
+            
+            // Make button focusable for key events
+            drumButton.setFocusable(true);
 
             // Add to our tracking list
             drumButtons.add(drumButton);
@@ -97,6 +140,18 @@ public class DrumSelectorPanel extends JPanel {
             // Add to the panel
             add(drumButton);
         }
+    }
+    
+    // Add helper method to find MainPanel ancestor
+    private MainPanel findMainPanel() {
+        Container parent = getParent();
+        while (parent != null) {
+            if (parent instanceof MainPanel) {
+                return (MainPanel) parent;
+            }
+            parent = parent.getParent();
+        }
+        return null;
     }
     
     /**

@@ -18,7 +18,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 
-
 public class MenuBar extends JMenuBar {
 
     private final JFrame parentFrame;
@@ -28,7 +27,7 @@ public class MenuBar extends JMenuBar {
     public MenuBar(JFrame parentFrame) {
         super();
         this.parentFrame = parentFrame;
-        
+
         this.themeManager = ThemeManager.getInstance(parentFrame);
         setup();
     }
@@ -124,7 +123,7 @@ public class MenuBar extends JMenuBar {
             final JMenuItem startVisualizationItem = new JMenuItem("Start Visualization");
             final JMenuItem stopVisualizationItem = new JMenuItem("Stop Visualization");
             final JMenuItem lockVisualizationItem = new JMenuItem("Lock Current Visualization");
-            final JMenuItem unlockVisualizationItem = new JMenuItem("Unlock Visualization");  // Add this
+            final JMenuItem unlockVisualizationItem = new JMenuItem("Unlock Visualization"); // Add this
             final JMenuItem refreshVisualizationItem = new JMenuItem("Refresh");
             final List<CategoryMenuItem> categoryMenus = new ArrayList<>();
             final List<VisualizationMenuItem> defaultItems = new ArrayList<>();
@@ -135,8 +134,8 @@ public class MenuBar extends JMenuBar {
                 // Add control items at the top
                 visualizationMenu.add(startVisualizationItem);
                 visualizationMenu.add(stopVisualizationItem);
-                visualizationMenu.add(lockVisualizationItem);  // Add this line
-                visualizationMenu.add(unlockVisualizationItem);  // Add unlock item
+                visualizationMenu.add(lockVisualizationItem); // Add this line
+                visualizationMenu.add(unlockVisualizationItem); // Add unlock item
                 visualizationMenu.add(refreshVisualizationItem);
                 visualizationMenu.addSeparator();
 
@@ -212,25 +211,30 @@ public class MenuBar extends JMenuBar {
                             visualizationMenu.add(startVisualizationItem);
                             visualizationMenu.add(stopVisualizationItem);
                             visualizationMenu.add(lockVisualizationItem);
-                            visualizationMenu.add(unlockVisualizationItem);  // Add unlock item
+                            visualizationMenu.add(unlockVisualizationItem); // Add unlock item
                             visualizationMenu.add(refreshVisualizationItem);
                             visualizationMenu.addSeparator();
-                            
+
                             // Add action listeners
-                            addMenuItem(visualizationMenu, startVisualizationItem, Commands.START_VISUALIZATION, null, null);
-                            addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null, null);
-                            addMenuItem(visualizationMenu, lockVisualizationItem, Commands.LOCK_CURRENT_VISUALIZATION, null, null);
-                            addMenuItem(visualizationMenu, unlockVisualizationItem, Commands.UNLOCK_CURRENT_VISUALIZATION, null, null);
-                            addMenuItem(visualizationMenu, refreshVisualizationItem, Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED, null, null);
+                            addMenuItem(visualizationMenu, startVisualizationItem, Commands.START_VISUALIZATION, null,
+                                    null);
+                            addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null,
+                                    null);
+                            addMenuItem(visualizationMenu, lockVisualizationItem, Commands.LOCK_CURRENT_VISUALIZATION,
+                                    null, null);
+                            addMenuItem(visualizationMenu, unlockVisualizationItem,
+                                    Commands.UNLOCK_CURRENT_VISUALIZATION, null, null);
+                            addMenuItem(visualizationMenu, refreshVisualizationItem,
+                                    Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED, null, null);
 
                             optionsMenu.add(visualizationMenu);
 
                             // Set initial states
                             startVisualizationItem.setVisible(true);
                             stopVisualizationItem.setVisible(false);
-                            lockVisualizationItem.setVisible(true);  // Make visible but disabled
+                            lockVisualizationItem.setVisible(true); // Make visible but disabled
                             lockVisualizationItem.setEnabled(false);
-                            unlockVisualizationItem.setVisible(false);  // Initially hidden
+                            unlockVisualizationItem.setVisible(false); // Initially hidden
                             refreshVisualizationItem.setVisible(true);
                         }
 
@@ -258,8 +262,8 @@ public class MenuBar extends JMenuBar {
                     case Commands.VISUALIZATION_STARTED:
                         startVisualizationItem.setVisible(false);
                         stopVisualizationItem.setVisible(true);
-                        lockVisualizationItem.setVisible(true);  // Ensure visible
-                        lockVisualizationItem.setEnabled(true);  // Enable when visualization starts
+                        lockVisualizationItem.setVisible(true); // Ensure visible
+                        lockVisualizationItem.setEnabled(true); // Enable when visualization starts
                         unlockVisualizationItem.setVisible(false);
                         break;
 
@@ -308,7 +312,7 @@ public class MenuBar extends JMenuBar {
         add(helpMenu);
     }
 
-    private void addMenuItem(JMenu menu, String name, String command) {
+    public void addMenuItem(JMenu menu, String name, String command) {
         addMenuItem(menu, name, command, null);
     }
 
