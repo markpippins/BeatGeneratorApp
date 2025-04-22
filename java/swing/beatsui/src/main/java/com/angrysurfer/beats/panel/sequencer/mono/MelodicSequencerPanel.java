@@ -83,6 +83,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
     private MelodicSequencerSwingPanel swingPanel;
 
+    private MelodicSequenceParametersPanel sequenceParamsPanel;
+
     private JPanel southPanel;
 
     /**
@@ -146,6 +148,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 // Update the UI to reflect loaded sequence
                 syncUIWithSequencer();
                 
+                // Update the tilt sequencer panel specifically
+                updateTiltSequencerPanel();
+                
                 // Notify that a pattern was loaded
                 CommandBus.getInstance().publish(
                     Commands.MELODIC_SEQUENCE_LOADED,
@@ -189,7 +194,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
 
         // Create sequence parameters panel
-        JPanel sequenceParamsPanel = createSequenceParametersPanel();
+        sequenceParamsPanel = new MelodicSequenceParametersPanel(sequencer);
 
         // Navigation panel goes NORTH-WEST
         westPanel.add(navigationPanel, BorderLayout.NORTH);
@@ -241,7 +246,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel bottomControlsPanel = new JPanel(new BorderLayout(5, 5));
 
         // Add sequence parameters to the center of bottom controls
-        sequenceParamsPanel = createSequenceParametersPanel();
         bottomControlsPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
         // Create a container for the right-side panels
@@ -339,192 +343,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     /**
      * Create panel for sequence parameters (loop, direction, timing, etc.)
      */
-    private JPanel createSequenceParametersPanel() {
-        // Size constants to match DrumSequencerPanel
-        final int SMALL_CONTROL_WIDTH = 40;
-        final int MEDIUM_CONTROL_WIDTH = 60;
-        final int LARGE_CONTROL_WIDTH = 90;
-        final int CONTROL_HEIGHT = 25;
-
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
-
-        // Last Step spinner
-        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        lastStepPanel.add(new JLabel("Last Step:"));
-
-        // Create spinner model with range 1-16, default 16
-        SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 64, 1);
-        lastStepSpinner = new JSpinner(lastStepModel);
-        lastStepSpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        lastStepSpinner.setToolTipText("Set the last step for the pattern (1-16)");
-        lastStepSpinner.addChangeListener(e -> {
-            int lastStep = (Integer) lastStepSpinner.getValue();
-            sequencer.setPatternLength(lastStep);
-        });
-        lastStepPanel.add(lastStepSpinner);
-
-        // Direction combo - remove the label
-        JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-
-        directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
-        directionCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
-        directionCombo.setToolTipText("Set the playback direction of the pattern");
-        directionCombo.addActionListener(e -> {
-            int selectedIndex = directionCombo.getSelectedIndex();
-            Direction direction = switch (selectedIndex) {
-                case 0 -> Direction.FORWARD;
-                case 1 -> Direction.BACKWARD;
-                case 2 -> Direction.BOUNCE;
-                case 3 -> Direction.RANDOM;
-                default -> Direction.FORWARD;
-            };
-            sequencer.setDirection(direction);
-        });
-        directionPanel.add(directionCombo);
-
-        // Timing division combo - remove the label
-        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-
-        timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
-        timingCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
-        timingCombo.setToolTipText("Set the timing division for this pattern");
-        timingCombo.addActionListener(e -> {
-            TimingDivision division = (TimingDivision) timingCombo.getSelectedItem();
-            if (division != null) {
-                logger.info("Setting timing division to {}", division);
-                sequencer.setTimingDivision(division);
-            }
-        });
-        timingPanel.add(timingCombo);
-
-        // Loop checkbox - standardize with emoji
-        loopToggleButton = new JToggleButton("🔁", true); // Default to looping enabled
-        loopToggleButton.setToolTipText("Loop this pattern");
-        loopToggleButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT)); // Reduce width
-        loopToggleButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
-        loopToggleButton.addActionListener(e -> {
-            sequencer.setLooping(loopToggleButton.isSelected());
-        });
-
-        // Create rotation panel
-        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-
-        // Rotate Left button
-        JButton rotateLeftButton = new JButton("⟵");
-        rotateLeftButton.setToolTipText("Rotate pattern one step left");
-        rotateLeftButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        rotateLeftButton.setMargin(new Insets(2, 2, 2, 2));
-        rotateLeftButton.addActionListener(e -> {
-            sequencer.rotatePatternLeft();
-            syncUIWithSequencer();
-        });
-
-        // Rotate Right button
-        JButton rotateRightButton = new JButton("⟶");
-        rotateRightButton.setToolTipText("Rotate pattern one step right");
-        rotateRightButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        rotateRightButton.setMargin(new Insets(2, 2, 2, 2));
-        rotateRightButton.addActionListener(e -> {
-            sequencer.rotatePatternRight();
-            syncUIWithSequencer();
-        });
-
-        // Add buttons to rotation panel
-        rotationPanel.add(rotateLeftButton);
-        rotationPanel.add(rotateRightButton);
-
-        // Clear button
-        JButton clearButton = new JButton("🗑️");
-        clearButton.setToolTipText("Clear pattern");
-        clearButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        clearButton.setMargin(new Insets(2, 2, 2, 2));
-        clearButton.addActionListener(e -> {
-            sequencer.clearPattern();
-            syncUIWithSequencer();
-        });
-
-        // Octave panel
-        JPanel octavePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-        octavePanel.add(new JLabel("Octave:"));
-
-        JButton octaveDownBtn = new JButton("-");
-        octaveDownBtn.setMargin(new java.awt.Insets(1, 5, 1, 5));
-        octaveDownBtn.setFocusable(false);
-        octaveDownBtn.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        octaveDownBtn.addActionListener(e -> {
-            sequencer.decrementOctaveShift();
-            updateOctaveLabel();
-        });
-        octaveDownBtn.setToolTipText("Lower the octave");
-
-        octaveLabel = new JLabel("0");
-        octaveLabel.setPreferredSize(new Dimension(20, 20));
-        octaveLabel.setHorizontalAlignment(JLabel.CENTER);
-
-        JButton octaveUpBtn = new JButton("+");
-        octaveUpBtn.setMargin(new java.awt.Insets(1, 5, 1, 5));
-        octaveUpBtn.setFocusable(false);
-        octaveUpBtn.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        octaveUpBtn.addActionListener(e -> {
-            sequencer.incrementOctaveShift();
-            updateOctaveLabel();
-        });
-        octaveUpBtn.setToolTipText("Raise the octave");
-
-        octavePanel.add(octaveDownBtn);
-        octavePanel.add(octaveLabel);
-        octavePanel.add(octaveUpBtn);
-
-        // Root Note panel
-        JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        rootNotePanel.add(new JLabel("Root:"));
-
-        rootNoteCombo = createRootNoteCombo();
-        rootNoteCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        rootNoteCombo.setToolTipText("Set the root note");
-        rootNotePanel.add(rootNoteCombo);
-
-        // Scale panel
-        JPanel scalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        scalePanel.add(new JLabel("Scale:"));
-
-        scaleCombo = createScaleCombo();
-        scaleCombo.setPreferredSize(new Dimension(120, CONTROL_HEIGHT));
-        scaleCombo.setToolTipText("Set the scale");
-        scalePanel.add(scaleCombo);
-
-        // Quantize checkbox
-        JCheckBox quantizeCheckbox = new JCheckBox("Q", true);
-        quantizeCheckbox.setToolTipText("Quantize notes to scale");
-        quantizeCheckbox.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        quantizeCheckbox.addActionListener(e -> {
-            sequencer.setQuantizeEnabled(quantizeCheckbox.isSelected());
-        });
-
-        // --- Add controls to panel in the desired order ---
-
-        // First, add core controls in the same order as DrumSequencerPanel
-        panel.add(timingPanel);
-        panel.add(directionPanel);
-        panel.add(loopToggleButton);
-        panel.add(lastStepPanel);
-        panel.add(rotationPanel);  // Add the rotation panel here
-        panel.add(clearButton);    // Add the clear button here
-
-        // Then add additional controls specific to MelodicSequencerPanel
-        panel.add(rootNotePanel);
-        panel.add(quantizeCheckbox);
-        panel.add(scalePanel);
-        panel.add(octavePanel);
-
-        return panel;
-    }
-
-    /**
-     * Creates a dedicated panel for generation controls
-     */
     private JPanel createGeneratePanel() {
         // Size constants
         final int SMALL_CONTROL_WIDTH = 40;
@@ -606,62 +424,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             logger.error("Failed to parse preset number from: {}", presetString);
             return -1;
         }
-    }
-
-    /**
-     * Improve the createScaleCombo method to use Scale.getScales()
-     */
-    private JComboBox<String> createScaleCombo() {
-        // Use the Scale class to get scale names instead of accessing SCALE_PATTERNS
-        // directly
-        String[] scaleNames = Scale.getScales();
-
-        JComboBox<String> combo = new JComboBox<>(scaleNames);
-        combo.setSelectedItem("Chromatic"); // Default to Chromatic
-
-        combo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
-                String selectedScale = (String) e.getItem();
-                sequencer.setScale(selectedScale);
-
-                // Publish event for other listeners
-                CommandBus.getInstance().publish(
-                        Commands.SCALE_SELECTED,
-                        this,
-                        selectedScale);
-
-                logger.info("Scale selected: {}", selectedScale);
-            }
-        });
-
-        return combo;
-    }
-
-    /**
-     * Improve the createRootNoteCombo method
-     */
-    private JComboBox<String> createRootNoteCombo() {
-        String[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-
-        JComboBox<String> combo = new JComboBox<>(noteNames);
-        combo.setSelectedItem("C"); // Default to C
-
-        combo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
-                String rootNote = (String) e.getItem();
-                sequencer.setRootNote(rootNote);
-
-                // Publish event for other listeners
-                CommandBus.getInstance().publish(
-                        Commands.ROOT_NOTE_SELECTED,
-                        this,
-                        rootNote);
-
-                logger.info("Root note selected: {}", rootNote);
-            }
-        });
-
-        return combo;
     }
 
     // Update the createSequenceColumn method to make columns more compact
@@ -870,89 +632,80 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Synchronize all UI elements with the current sequencer state
+     * Synchronize UI elements with sequencer state
      */
     private void syncUIWithSequencer() {
-        updatingUI = true;
+        // Update sequence parameters first
+        if (sequenceParamsPanel != null) {
+            sequenceParamsPanel.updateUI(sequencer);
+        }
+
+        // Update step buttons based on current pattern
+        updateStepButtons();
+
+        // Update swing panel if available
+        if (swingPanel != null) {
+            swingPanel.updateControls();
+        }
+
+        // Update tilt sequencer panel specifically
+        updateTiltSequencerPanel();
+        
+        // Force revalidate and repaint of the entire panel
+        revalidate();
+        repaint();
+        
+        logger.debug("UI synchronized with sequencer state");
+    }
+
+    /**
+     * Update step buttons and dials to reflect current sequencer state
+     */
+    private void updateStepButtons() {
+        // Save previous listener state
+        boolean previousListenerState = disableAllListeners();
+        
         try {
-            // Update trigger buttons
-            List<Boolean> activeSteps = sequencer.getActiveSteps();
-            for (int i = 0; i < Math.min(triggerButtons.size(), activeSteps.size()); i++) {
-                triggerButtons.get(i).setSelected(activeSteps.get(i));
-                triggerButtons.get(i).repaint();
-            }
-
-            // Update note dials
-            List<Integer> noteValues = sequencer.getNoteValues();
-            for (int i = 0; i < Math.min(noteDials.size(), noteValues.size()); i++) {
-                noteDials.get(i).setValue(noteValues.get(i));
-                noteDials.get(i).repaint();
-            }
-
-            // Update velocity dials
-            List<Integer> velocityValues = sequencer.getVelocityValues();
-            for (int i = 0; i < Math.min(velocityDials.size(), velocityValues.size()); i++) {
-                velocityDials.get(i).setValue(velocityValues.get(i));
-                velocityDials.get(i).repaint();
-            }
-
-            // Update gate dials
-            List<Integer> gateValues = sequencer.getGateValues();
-            for (int i = 0; i < Math.min(gateDials.size(), gateValues.size()); i++) {
-                gateDials.get(i).setValue(gateValues.get(i));
-                gateDials.get(i).repaint();
-            }
-
-            // Update probability dials
-            List<Integer> probabilityValues = sequencer.getProbabilityValues();
-            for (int i = 0; i < Math.min(probabilityDials.size(), probabilityValues.size()); i++) {
-                probabilityDials.get(i).setValue(probabilityValues.get(i));
-                probabilityDials.get(i).repaint();
-            }
-
-            // Update nudge dials
-            List<Integer> nudgeValues = sequencer.getNudgeValues();
-            for (int i = 0; i < Math.min(nudgeDials.size(), nudgeValues.size()); i++) {
-                nudgeDials.get(i).setValue(nudgeValues.get(i));
-                nudgeDials.get(i).repaint();
-            }
-
-            // Update parameter controls
-            if (loopToggleButton != null) {
-                loopToggleButton.setSelected(sequencer.isLooping());
-            }
-
-            if (lastStepSpinner != null) {
-                lastStepSpinner.setValue(sequencer.getPatternLength());
-            }
-
-            if (directionCombo != null) {
-                switch (sequencer.getDirection()) {
-                    case FORWARD -> directionCombo.setSelectedIndex(0);
-                    case BACKWARD -> directionCombo.setSelectedIndex(1);
-                    case BOUNCE -> directionCombo.setSelectedIndex(2);
-                    case RANDOM -> directionCombo.setSelectedIndex(3);
+            // Update all 16 steps
+            for (int i = 0; i < triggerButtons.size(); i++) {
+                // Update trigger button state
+                TriggerButton button = triggerButtons.get(i);
+                boolean active = sequencer.isStepActive(i);
+                button.setSelected(active);
+                
+                // Update note dial
+                if (i < noteDials.size()) {
+                    noteDials.get(i).setValue(sequencer.getNoteValue(i));
+                }
+                
+                // Update velocity dial
+                if (i < velocityDials.size()) {
+                    velocityDials.get(i).setValue(sequencer.getVelocityValue(i));
+                }
+                
+                // Update gate dial
+                if (i < gateDials.size()) {
+                    gateDials.get(i).setValue(sequencer.getGateValue(i));
+                }
+                
+                // Update probability dial
+                if (i < probabilityDials.size()) { // && sequencer.getProbabilityValue(i) != null) {
+                    probabilityDials.get(i).setValue(sequencer.getProbabilityValue(i));
+                }
+                
+                // Update nudge dial
+                if (i < nudgeDials.size()) { // && sequencer.getNudgeValue(i) != null) {
+                    nudgeDials.get(i).setValue(sequencer.getNudgeValue(i));
                 }
             }
-
-            if (latchToggleButton != null) {
-                latchToggleButton.setSelected(sequencer.isLatchEnabled());
+            
+            // Force repaint of all components
+            for (TriggerButton button : triggerButtons) {
+                button.repaint();
             }
-
-            // Force a revalidate and repaint of the entire panel
-            revalidate();
-            repaint();
-
-            // Also sync any tilt sequencer panels
-            for (Component comp : southPanel.getComponents()) {
-                if (comp instanceof TiltSequencerPanel) {
-                    ((TiltSequencerPanel) comp).syncWithSequencer();
-                }
-            }
-
-            logger.debug("UI synchronized with sequencer state");
         } finally {
-            updatingUI = false;
+            // Restore previous listener state
+            restoreListeners(previousListenerState);
         }
     }
 
@@ -984,6 +737,18 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         }
 
         switch (action.getCommand()) {
+            // Add cases for sequence loaded, created and updated events
+            case Commands.MELODIC_SEQUENCE_LOADED, 
+                 Commands.MELODIC_SEQUENCE_CREATED, 
+                 Commands.MELODIC_SEQUENCE_UPDATED -> {
+                // Sync the UI with sequencer state
+                syncUIWithSequencer();
+                
+                // Make sure to update the tilt sequencer panel
+                updateTiltSequencerPanel();
+            }
+            
+            // Other cases remain the same...
             case Commands.ROOT_NOTE_SELECTED -> {
                 if (action.getData() instanceof String rootNote) {
                     // Only update if this isn't our own event
@@ -1047,6 +812,27 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                         }
                     });
                 }
+            }
+        }
+    }
+
+    /**
+     * Update the TiltSequencerPanel to reflect current sequencer state
+     */
+    private void updateTiltSequencerPanel() {
+        // Find and update any TiltSequencerPanel components
+        for (Component c : southPanel.getComponents()) {
+            if (c instanceof JPanel panel) {
+                for (Component innerComp : panel.getComponents()) {
+                    if (innerComp instanceof TiltSequencerPanel tiltPanel) {
+                        logger.info("Syncing TiltSequencerPanel with sequencer");
+                        tiltPanel.syncWithSequencer();
+                        break;
+                    }
+                }
+            } else if (c instanceof TiltSequencerPanel tiltPanel) {
+                logger.info("Syncing TiltSequencerPanel with sequencer");
+                tiltPanel.syncWithSequencer();
             }
         }
     }
