@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.NumberedTickDial;
 import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.service.DrumSequencerManager;
 
 /**
  * A panel for editing and visualizing Euclidean rhythm patterns
@@ -52,11 +51,12 @@ public class EuclideanPatternPanel extends JPanel {
     
     private DrumSequencer sequencer;
 
-    public EuclideanPatternPanel(DrumSequencer sequencer) {
-        this(sequencer, false);
+    public EuclideanPatternPanel(int steps) {
+        this(steps, false);
     }
     
-    public EuclideanPatternPanel(DrumSequencer sequencer, boolean compact) {
+    public EuclideanPatternPanel(int steps, boolean compact) {
+        this.steps = steps;
         setLayout(new BorderLayout(5, 5));
         isCompact = compact;
         
@@ -114,7 +114,7 @@ public class EuclideanPatternPanel extends JPanel {
         stepsPanel.setOpaque(false);
         stepsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        stepsDial = new NumberedTickDial(1, sequencer.getMaxPatternLength());
+        stepsDial = new NumberedTickDial(1, steps);
         stepsDial.setValue(steps);
         stepsDial.setSize(dialDiameter, dialDiameter);
         stepsDial.setPreferredSize(new Dimension(dialDiameter, dialDiameter));
