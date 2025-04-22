@@ -185,6 +185,23 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             }
         });
 
+        // Add change listener to handle tab selection events
+        tabbedPane.addChangeListener(e -> {
+            Component selectedComponent = tabbedPane.getSelectedComponent();
+            
+            // Request focus on the newly selected tab component
+            if (selectedComponent != null) {
+                SwingUtilities.invokeLater(() -> {
+                    selectedComponent.requestFocusInWindow();
+                    
+                    // If it's the params panel, give it focus
+                    if (selectedComponent instanceof DrumParamsPanel) {
+                        ((DrumParamsPanel) selectedComponent).requestFocusInWindow();
+                    }
+                });
+            }
+        });
+
         // At the end of the method, update the mute buttons with sequencers
         updateMuteButtonSequencers();
     }

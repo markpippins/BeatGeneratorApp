@@ -1,18 +1,22 @@
 package com.angrysurfer.beats.widget;
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 
+import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -107,6 +111,45 @@ public class DrumSequencerButton extends JButton implements IBusListener {
         
         // Add ActionListener for selection
         this.addActionListener(e -> sequencer.selectDrumPad(drumPadIndex));
+
+        // Add mouse listener for double-click
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    // First select the drum
+                    sequencer.selectDrumPad(drumPadIndex);
+                    
+                    // Then navigate to DrumParams tab
+                    MainPanel mainPanel = findMainPanel();
+                    if (mainPanel != null) {
+                        // The index 1 is for "Machine" tab (DrumParamsPanel)
+                        mainPanel.setSelectedTab(1);
+                    }
+                }
+            }
+        });
+
+        // Add key listener for Return key
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    // First select the drum
+                    sequencer.selectDrumPad(drumPadIndex);
+                    
+                    // Then navigate to DrumParams tab
+                    MainPanel mainPanel = findMainPanel();
+                    if (mainPanel != null) {
+                        // The index 1 is for "Machine" tab (DrumParamsPanel)
+                        mainPanel.setSelectedTab(1);
+                    }
+                }
+            }
+        });
+
+        // Make sure the button can receive focus for key events
+        setFocusable(true);
     }
 
     /**
@@ -222,5 +265,19 @@ public class DrumSequencerButton extends JButton implements IBusListener {
                 }
             }
         }
+    }
+
+    /**
+     * Helper method to find the MainPanel ancestor
+     */
+    private MainPanel findMainPanel() {
+        Container parent = getParent();
+        while (parent != null) {
+            if (parent instanceof MainPanel) {
+                return (MainPanel) parent;
+            }
+            parent = parent.getParent();
+        }
+        return null;
     }
 }

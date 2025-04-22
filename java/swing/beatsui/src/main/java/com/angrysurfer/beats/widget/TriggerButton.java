@@ -13,7 +13,9 @@ public class TriggerButton extends JToggleButton {
     private boolean highlighted = false;
     private boolean toggleable = false;
     private static final Dimension BUTTON_SIZE = new Dimension(30, 20);
-    private static final Color highlightColor = Color.YELLOW;
+    private static final Color defaultColor = Color.BLACK;
+    private static final Color selectedColor = Color.GREEN;
+    private Color highlightColor = UIUtils.fadedOrange; // Default highlight color
 
     public TriggerButton(String text) {
         super(text);
@@ -71,6 +73,13 @@ public class TriggerButton extends JToggleButton {
     }
 
     /**
+     * Set custom highlight color
+     */
+    public void setHighlightColor(Color color) {
+        this.highlightColor = color;
+    }
+
+    /**
      * Override paint component to properly show both selected and highlighted states
      */
     @Override
@@ -79,19 +88,6 @@ public class TriggerButton extends JToggleButton {
         super.paintComponent(g);
         
         // Add custom painting based on state
-        if (isHighlighted()) {
-            Graphics2D g2d = (Graphics2D)g.create();
-            g2d.setColor(highlightColor);
-            
-            // Draw highlight indicator (e.g., a border)
-            int thickness = 3;
-            g2d.setStroke(new BasicStroke(thickness));
-            g2d.drawRect(thickness/2, thickness/2, 
-                         getWidth()-thickness, getHeight()-thickness);
-            
-            g2d.dispose();
-        }
-
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -99,15 +95,20 @@ public class TriggerButton extends JToggleButton {
         int height = getHeight();
         
         // Use highlight color if step is active
-        Color currentColor = highlighted ? Color.WHITE : 
-                           isSelected() ? activeColor : baseColor;
+        if (isHighlighted()) {
+            g2d.setColor(highlightColor);
+        } else if (isSelected()) {
+            g2d.setColor(selectedColor);
+        } else {
+            g2d.setColor(defaultColor);
+        }
 
         // Draw main button body
         g2d.setPaint(new GradientPaint(
             0, 0, 
-            currentColor.brighter(), 
+            g2d.getColor().brighter(), 
             0, height, 
-            currentColor.darker()
+            g2d.getColor().darker()
         ));
         g2d.fillRoundRect(0, 0, width, height, 10, 10);
 

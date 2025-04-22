@@ -218,14 +218,9 @@ public class DrumSequencerGridPanel extends JPanel {
     }
     
     /**
-     * Update step highlighting during playback
+     * Update step highlighting during playback with position-based colors
      */
     public void updateStepHighlighting(int drumIndex, int oldStep, int newStep) {
-        // Only update highlighting if we're actually playing
-        if (!isPlaying) {
-            return;
-        }
-
         // Ensure we're on the EDT for UI updates
         if (!SwingUtilities.isEventDispatchThread()) {
             SwingUtilities.invokeLater(() -> updateStepHighlighting(drumIndex, oldStep, newStep));
@@ -236,18 +231,39 @@ public class DrumSequencerGridPanel extends JPanel {
         int oldButtonIndex = drumIndex * sequencer.getDefaultPatternLength() + oldStep;
         int newButtonIndex = drumIndex * sequencer.getDefaultPatternLength() + newStep;
 
-        // Ensure indices are valid
+        // Un-highlight old step
         if (oldButtonIndex >= 0 && oldButtonIndex < triggerButtons.size()) {
             DrumSequencerGridButton oldButton = triggerButtons.get(oldButtonIndex);
             if (oldButton != null) {
                 oldButton.setHighlighted(false);
+                oldButton.repaint();
             }
         }
 
-        if (newButtonIndex >= 0 && newButtonIndex < triggerButtons.size()) {
+        // Highlight new step if valid and we're playing
+        if (isPlaying && newButtonIndex >= 0 && newButtonIndex < triggerButtons.size()) {
             DrumSequencerGridButton newButton = triggerButtons.get(newButtonIndex);
             if (newButton != null) {
+                // Choose color based on step position in the pattern
+                Color highlightColor;
+                
+                if (newStep < 16) {
+                    // First 16 steps - orange
+                    highlightColor = UIUtils.fadedOrange;
+                } else if (newStep < 32) {
+                    // Steps 17-32 - blue
+                    highlightColor = UIUtils.coolBlue;
+                } else if (newStep < 48) {
+                    // Steps 33-48 - navy
+                    highlightColor = UIUtils.deepNavy;
+                } else {
+                    // Steps 49-64 - olive
+                    highlightColor = UIUtils.mutedOlive;
+                }
+                
                 newButton.setHighlighted(true);
+                newButton.setHighlightColor(highlightColor);
+                newButton.repaint();
             }
         }
     }
