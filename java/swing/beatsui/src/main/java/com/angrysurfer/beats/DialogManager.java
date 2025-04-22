@@ -433,7 +433,7 @@ public class DialogManager implements IBusListener {
             SpinnerNumberModel model = new SpinnerNumberModel(
                     sequencer.getDefaultPatternLength(),
                     1,
-                    sequencer.getMaxSteps(),
+                    sequencer.getMaxPatternLength(),
                     1
             );
             JSpinner lengthSpinner = new JSpinner(model);

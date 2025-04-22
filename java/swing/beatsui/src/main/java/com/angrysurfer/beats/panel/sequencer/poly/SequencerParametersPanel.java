@@ -66,10 +66,10 @@ public class SequencerParametersPanel extends JPanel {
 
         // Create spinner model with range 1-sequencer.getMaxSteps(), default sequencer.getDefaultPatternLength()
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(
-            sequencer.getDefaultPatternLength(), 1, sequencer.getMaxSteps(), 1);
+            sequencer.getDefaultPatternLength(), 1, sequencer.getMaxPatternLength(), 1);
         lastStepSpinner = new JSpinner(lastStepModel);
         lastStepSpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        lastStepSpinner.setToolTipText("Set the last step of the pattern (1-" + sequencer.getMaxSteps() + ")");
+        lastStepSpinner.setToolTipText("Set the last step of the pattern (1-" + sequencer.getMaxPatternLength() + ")");
         lastStepSpinner.addChangeListener(e -> {
             int lastStep = (Integer) lastStepSpinner.getValue();
             logger.info("Setting last step to {} for drum {}", lastStep, parentPanel.getSelectedPadIndex());
