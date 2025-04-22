@@ -1,6 +1,7 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -675,6 +676,19 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     public void refreshGridUI() {
         if (gridPanel != null) {
             gridPanel.refreshGridUI();
+        }
+    }
+
+    /**
+     * Update step highlighting based on current step position - delegates to grid panel
+     * 
+     * @param oldStep The previous step to un-highlight
+     * @param newStep The new step to highlight
+     */
+    public void updateStepHighlighting(int drumIndex, int oldStep, int newStep) {
+        // Delegate to the grid panel which has direct access to the buttons
+        if (gridPanel != null) {
+            gridPanel.updateStepHighlighting(drumIndex, oldStep, newStep);
         }
     }
 }

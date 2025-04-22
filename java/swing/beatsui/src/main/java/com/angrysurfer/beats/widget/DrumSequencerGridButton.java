@@ -2,6 +2,8 @@ package com.angrysurfer.beats.widget;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultButtonModel;
@@ -19,6 +21,7 @@ public class DrumSequencerGridButton extends JButton {
     private Color normalColor;
     private Color temporaryColor = new Color(200, 150, 40); // Amber highlight
     private boolean inPattern = true;
+    private Color highlightColor = UIUtils.fadedOrange; // Default highlight color
 
     /**
      * Create a new trigger button with label
@@ -227,5 +230,26 @@ public class DrumSequencerGridButton extends JButton {
             // Update appearance without firing events
             updateAppearance();
         }
+    }
+
+    /**
+     * Set custom highlight color for this step button
+     */
+    public void setHighlightColor(Color color) {
+        this.highlightColor = color;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g;
+        if (isHighlighted()) {
+            g2d.setColor(highlightColor);
+        } else if (isSelected()) {
+            g2d.setColor(getActiveColor());
+        } else {
+            g2d.setColor(getInactiveColor());
+        }
+        g2d.fillRect(0, 0, getWidth(), getHeight());
     }
 }

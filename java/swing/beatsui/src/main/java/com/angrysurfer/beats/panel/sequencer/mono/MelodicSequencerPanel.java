@@ -594,32 +594,37 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Update step highlighting during playback with improved thread safety and
-     * consistency
+     * Update step highlighting based on sequence position
      */
     private void updateStepHighlighting(int oldStep, int newStep) {
-        // Use SwingUtilities to ensure we're on the EDT
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> updateStepHighlighting(oldStep, newStep));
-            return;
-        }
-
-        // Clear previous step highlight
+        // Un-highlight old step
         if (oldStep >= 0 && oldStep < triggerButtons.size()) {
-            TriggerButton oldButton = triggerButtons.get(oldStep);
-            oldButton.setHighlighted(false);
-            oldButton.repaint();
+            triggerButtons.get(oldStep).setHighlighted(false);
+            triggerButtons.get(oldStep).repaint();
         }
-
-        // Highlight current step
+        
+        // Highlight new step with color based on position
         if (newStep >= 0 && newStep < triggerButtons.size()) {
-            TriggerButton newButton = triggerButtons.get(newStep);
-            newButton.setHighlighted(true);
-            newButton.repaint();
+            Color highlightColor;
+            
+            if (newStep < 16) {
+                // First 16 steps - orange highlight
+                highlightColor = UIUtils.fadedOrange;
+            } else if (newStep < 32) {
+                // Steps 17-32
+                highlightColor = UIUtils.coolBlue;
+            } else if (newStep < 48) {
+                // Steps 33-48
+                highlightColor = UIUtils.deepNavy;
+            } else {
+                // Steps 49-64
+                highlightColor = UIUtils.mutedOlive;
+            }
+            
+            triggerButtons.get(newStep).setHighlighted(true);
+            triggerButtons.get(newStep).setHighlightColor(highlightColor);
+            triggerButtons.get(newStep).repaint();
         }
-
-        // Debug log to track step changes
-        logger.debug("Step highlight updated: {} -> {}", oldStep, newStep);
     }
 
     private void updateOctaveLabel() {
