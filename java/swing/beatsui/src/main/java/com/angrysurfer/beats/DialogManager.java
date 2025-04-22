@@ -100,7 +100,8 @@ public class DialogManager implements IBusListener {
                 if (currentSession != null) {
                     // Initialize player
                     Player newPlayer = PlayerManager.getInstance().initializeNewPlayer();
-                    newPlayer.setName(newPlayer.getClass().getSimpleName() + " " + (currentSession.getPlayers().size() + 1));
+                    newPlayer.setName(
+                            newPlayer.getClass().getSimpleName() + " " + (currentSession.getPlayers().size() + 1));
                     logger.info(String.format("Created new player with ID: %d", newPlayer.getId()));
 
                     setNewPlayerInstrument(newPlayer);
@@ -187,16 +188,16 @@ public class DialogManager implements IBusListener {
                     dialog.setTitle("Edit Player: " + player.getName());
 
                     boolean result = dialog.showDialog();
-                    
+
                     if (result) {
                         Player updatedPlayer = panel.getUpdatedPlayer();
-                        
+
                         // First ensure player is still selected in PlayerManager
                         PlayerManager.getInstance().setActivePlayer(updatedPlayer);
-                        
+
                         // Then publish events in correct order
                         commandBus.publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);
-                        
+
                         // Important: This needs to come AFTER other updates
                         SwingUtilities.invokeLater(() -> {
                             // Delay selection event slightly to ensure other updates complete
@@ -434,8 +435,7 @@ public class DialogManager implements IBusListener {
                     sequencer.getDefaultPatternLength(),
                     1,
                     sequencer.getMaxPatternLength(),
-                    1
-            );
+                    1);
             JSpinner lengthSpinner = new JSpinner(model);
             spinnerPanel.add(lengthSpinner);
 
@@ -474,7 +474,7 @@ public class DialogManager implements IBusListener {
             JPanel dialogPanel = new JPanel(new BorderLayout());
             dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-            EuclideanPatternPanel patternPanel = new EuclideanPatternPanel(sequencer, false);
+            EuclideanPatternPanel patternPanel = new EuclideanPatternPanel(sequencer.getMaxPatternLength(), false);
 
             int patternLength = sequencer.getPatternLength(drumIndex);
             patternPanel.getStepsDial().setValue(patternLength);
@@ -544,9 +544,12 @@ public class DialogManager implements IBusListener {
             JButton applyButton = new JButton("Apply");
             applyButton.addActionListener(e -> {
                 String fillType = "all";
-                if (everyOtherButton.isSelected()) fillType = "everyOther";
-                else if (every4thButton.isSelected()) fillType = "every4th";
-                else if (decayButton.isSelected()) fillType = "decay";
+                if (everyOtherButton.isSelected())
+                    fillType = "everyOther";
+                else if (every4thButton.isSelected())
+                    fillType = "every4th";
+                else if (decayButton.isSelected())
+                    fillType = "decay";
 
                 Object[] result = new Object[] { drumIndex, startStep, fillType };
                 commandBus.publish(Commands.FILL_PATTERN_SELECTED, this, result);
