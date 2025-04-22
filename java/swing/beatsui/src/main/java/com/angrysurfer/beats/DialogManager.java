@@ -474,7 +474,7 @@ public class DialogManager implements IBusListener {
             JPanel dialogPanel = new JPanel(new BorderLayout());
             dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-            EuclideanPatternPanel patternPanel = new EuclideanPatternPanel(false);
+            EuclideanPatternPanel patternPanel = new EuclideanPatternPanel(sequencer, false);
 
             int patternLength = sequencer.getPatternLength(drumIndex);
             patternPanel.getStepsDial().setValue(patternLength);
