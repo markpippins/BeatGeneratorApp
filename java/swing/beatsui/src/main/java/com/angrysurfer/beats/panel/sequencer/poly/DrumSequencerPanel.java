@@ -103,7 +103,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private DrumSwingPanel swingPanel;
 
     // Add this field to DrumSequencerPanel:
-    private SelectorPanel drumSelectorPanel;
+    private DrumSelectorPanel drumSelectorPanel;
 
     // Add this field instead:
     private DrumSequencerGridPanel gridPanel;
@@ -267,7 +267,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      */
     private JPanel createDrumPadsPanel() {
         // Create and return the new drum selector panel
-        drumSelectorPanel = new SelectorPanel(sequencer, this);
+        drumSelectorPanel = new DrumSelectorPanel(sequencer, this);
         return drumSelectorPanel;
     }
 
