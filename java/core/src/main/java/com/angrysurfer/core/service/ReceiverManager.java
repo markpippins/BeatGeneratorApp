@@ -42,7 +42,19 @@ public class ReceiverManager {
      * @return A valid receiver or null if unavailable
      */
     public synchronized Receiver getOrCreateReceiver(String deviceName, MidiDevice device) {
-        logger.debug("getOrCreateReceiver for device: {}", deviceName);
+        // Skip validation entirely for Gervill
+        if ("Gervill".equals(deviceName)) {
+            try {
+                // For internal synth, just get fresh receiver each time - it's fast
+                if (device != null && device.isOpen()) {
+                    return device.getReceiver();
+                }
+            } catch (MidiUnavailableException e) {
+                // Fall through to regular handling
+            }
+        }
+        
+        // logger.debug("getOrCreateReceiver for device: {}", deviceName);
         
         // Check if we have a cached receiver that is still valid
         Receiver cachedReceiver = receiverCache.get(deviceName);

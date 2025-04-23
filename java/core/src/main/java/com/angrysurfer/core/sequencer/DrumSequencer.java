@@ -114,6 +114,16 @@ public class DrumSequencer implements IBusListener {
     private int[][] lastSentReverb;
     private int[][] lastSentDecays;  // For delay effect
 
+    // Reusable arrays for effects to avoid constant object creation
+    private final int[] effectControllers = new int[4];
+    private final int[] effectValues = new int[4];
+
+    // These track the last sent values to avoid redundant messages
+    private int[][] lastPanValues;
+    private int[][] lastReverbValues;
+    private int[][] lastChorusValues;
+    private int[][] lastDecayValues;
+
     // Constants for default values
     public static final int DEFAULT_PAN = 64; // Default pan position (center)
     public static final int DEFAULT_CHORUS = 0; // Default chorus effect amount
@@ -242,6 +252,22 @@ public class DrumSequencer implements IBusListener {
         lastSentChorus = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
         lastSentReverb = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
         lastSentDecays = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
+
+        // Initialize effect tracking arrays
+        lastPanValues = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
+        lastReverbValues = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
+        lastChorusValues = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
+        lastDecayValues = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
+
+        // Set initial values to -1 to ensure first message gets sent
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            for (int j = 0; j < getMaxPatternLength(); j++) {
+                lastPanValues[i][j] = -1;
+                lastReverbValues[i][j] = -1;
+                lastChorusValues[i][j] = -1;
+                lastDecayValues[i][j] = -1;
+            }
+        }
 
         // Set default values
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
@@ -618,15 +644,15 @@ public class DrumSequencer implements IBusListener {
      * @param stepIndex The step index
      */
     private void triggerDrumStep(int drumIndex, int stepIndex) {
-        // Skip processing inactive steps immediately
+        // Skip if step is inactive
         if (!patterns[drumIndex][stepIndex]) {
             return;
         }
         
-        // Get parameters
+        // Get all step parameters
         int velocity = stepVelocities[drumIndex][stepIndex];
         int probability = stepProbabilities[drumIndex][stepIndex];
-        int decay = stepDecays[drumIndex][stepIndex];
+        int decay = stepDecays[drumIndex][stepIndex]; 
         int nudge = stepNudges[drumIndex][stepIndex];
         
         // Check probability
@@ -636,50 +662,46 @@ public class DrumSequencer implements IBusListener {
         
         // Apply velocity scaling
         int finalVelocity = (int) (velocity * (velocities[drumIndex] / 127.0));
-        if (finalVelocity <= 0 || drumIndex < 0 || drumIndex >= players.length) {
+        if (finalVelocity <= 0) {
             return;
         }
         
+        // Get player
         Player player = players[drumIndex];
         if (player == null) {
             return;
         }
         
-        // Check if player has valid instrument
+        // Set instrument if needed
         if (player.getInstrument() == null) {
             player.setInstrument(instruments[drumIndex]);
             player.setChannel(9);
         }
         
-        // Detect internal synth for faster path
-        if (!usingInternalSynth && player.getInstrument() != null && 
-            "Gervill".equals(player.getInstrument().getDeviceName())) {
-            internalSynthManager = InternalSynthManager.getInstance();
-            usingInternalSynth = true;
+        // Process and send effects before playing the note
+        processEffects(drumIndex, stepIndex, player);
+        
+        // Apply swing if needed
+        if (swingEnabled && stepIndex % 2 == 1) {
+            nudge += calculateSwingAmount(drumIndex);
         }
         
-        // Fast path for internal synth
-        if (usingInternalSynth && internalSynthManager != null) {
-            int noteNumber = player.getRootNote();
-            
-            // Apply swing if needed
-            if (swingEnabled && stepIndex % 2 == 1) {
-                nudge += calculateSwingAmount(drumIndex);
-            }
-            
-            // Direct triggering for internal synth
-            if (nudge > 0) {
-                SHARED_NOTE_SCHEDULER.schedule(() -> {
-                    internalSynthManager.playNote(noteNumber, finalVelocity, decay, player.getChannel());
-                    publishNoteEvent(drumIndex, finalVelocity, decay);
-                }, nudge, TimeUnit.MILLISECONDS);
-            } else {
-                internalSynthManager.playNote(noteNumber, finalVelocity, decay, player.getChannel());
-                publishNoteEvent(drumIndex, finalVelocity, decay);
-            }
+        // Now trigger the note
+        final int finalNoteNumber = player.getRootNote();
+        final int finalVelocityCopy = finalVelocity;
+        final int finalDecay = decay;
+        final int finalDrumIndex = drumIndex;
+        
+        if (nudge > 0) {
+            // Delayed note
+            SHARED_NOTE_SCHEDULER.schedule(() -> {
+                player.noteOn(finalNoteNumber, finalVelocityCopy, finalDecay);
+                publishNoteEvent(finalDrumIndex, finalVelocityCopy, finalDecay);
+            }, nudge, TimeUnit.MILLISECONDS);
         } else {
-            // Original path for external instruments
-            // ...your existing code...
+            // Immediate note
+            player.noteOn(finalNoteNumber, finalVelocity, decay);
+            publishNoteEvent(drumIndex, finalVelocity, decay);
         }
     }
 
@@ -1751,6 +1773,66 @@ public class DrumSequencer implements IBusListener {
             // sendMidiCC(player, CC_CHORUS, chorus);
             // sendMidiCC(player, CC_REVERB, reverb);
             // sendMidiCC(player, CC_DELAY, decay);
+        }
+    }
+
+    // This method processes effects for a single step
+    private void processEffects(int drumIndex, int stepIndex, Player player) {
+        // Skip if the step is inactive or player has no instrument
+        if (!patterns[drumIndex][stepIndex] || player == null || 
+            player.getInstrument() == null) {
+            return;
+        }
+        
+        try {
+            // Get current effect values
+            int pan = stepPans[drumIndex][stepIndex];
+            int reverb = stepReverb[drumIndex][stepIndex];
+            int chorus = stepChorus[drumIndex][stepIndex];
+            int decay = stepDecays[drumIndex][stepIndex];
+            
+            // Count how many effects need to be sent
+            int effectCount = 0;
+            
+            // Only add effects that have changed
+            if (pan != lastPanValues[drumIndex][stepIndex]) {
+                effectControllers[effectCount] = CC_PAN;
+                effectValues[effectCount] = pan;
+                lastPanValues[drumIndex][stepIndex] = pan;
+                effectCount++;
+            }
+            
+            if (reverb != lastReverbValues[drumIndex][stepIndex]) {
+                effectControllers[effectCount] = CC_REVERB;
+                effectValues[effectCount] = reverb;
+                lastReverbValues[drumIndex][stepIndex] = reverb;
+                effectCount++;
+            }
+            
+            if (chorus != lastChorusValues[drumIndex][stepIndex]) {
+                effectControllers[effectCount] = CC_CHORUS;
+                effectValues[effectCount] = chorus;
+                lastChorusValues[drumIndex][stepIndex] = chorus;
+                effectCount++;
+            }
+            
+            if (decay != lastDecayValues[drumIndex][stepIndex]) {
+                effectControllers[effectCount] = CC_DELAY; // Using delay CC for decay
+                effectValues[effectCount] = decay;
+                lastDecayValues[drumIndex][stepIndex] = decay;
+                effectCount++;
+            }
+            
+            // Send effects only if needed
+            if (effectCount > 0) {
+                int channel = player.getChannel();
+                int[] controllers = Arrays.copyOf(effectControllers, effectCount);
+                int[] values = Arrays.copyOf(effectValues, effectCount);
+                
+                player.getInstrument().sendBulkCC(channel, controllers, values);
+            }
+        } catch (Exception e) {
+            // Just ignore errors to avoid performance impact
         }
     }
 }

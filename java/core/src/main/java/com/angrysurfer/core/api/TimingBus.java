@@ -60,31 +60,39 @@ public class TimingBus extends AbstractBus {
         return instance;
     }
 
-    // Replace the publish method with this high-performance version
     @Override
     public void publish(String commandName, Object source, Object data) {
-        // CRITICAL FIX: We need to properly set up the shared Command
-        sharedCommand.setCommand(commandName);
-        sharedCommand.setSender(source);
-        sharedCommand.setData(data);
-
-        // Increment diagnostic counter
+        // Add immediate diagnostic output
+        System.out.println("TimingBus: Publishing " + commandName + ", listeners: " + timingListeners.size());
+        
         if (Commands.TIMING_UPDATE.equals(commandName)) {
+            // DON'T reuse the shared command for timing - create a new one for thread safety
+            Command cmd = new Command(commandName, source, data);
+            
+            // Fast path for timing updates
+            for (IBusListener listener : timingListeners) {
+                try {
+                    // Simple direct call to onAction
+                    listener.onAction(cmd);
+                } catch (Exception e) {
+                    // Log exceptions but continue with other listeners
+                    System.err.println("Error in timing listener: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
+            // Increment diagnostic counter
             eventCount++;
+            return;
         }
         
-        // Fast direct dispatch - use simple loop for maximum performance
-        for (IBusListener listener : timingListeners) {
-            try {
-                // IMPORTANT: Don't bypass the normal command processing flow!
-                // The specialized onTick method bypasses important logic
-                // Just use the standard onAction method instead
-                listener.onAction(sharedCommand);
-            } catch (Exception e) {
-                // Minimal error handling for performance
-                System.err.println("Timing error: " + e.getMessage());
-            }
-        }
+        // For non-timing events, use parent implementation
+        super.publish(commandName, source, data);
+    }
+
+    // Add a method to check registration
+    public boolean isRegistered(IBusListener listener) {
+        return timingListeners.contains(listener);
     }
 
     // Add method to update shared command without creating new objects
