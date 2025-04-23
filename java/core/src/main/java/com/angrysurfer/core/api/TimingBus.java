@@ -63,7 +63,7 @@ public class TimingBus extends AbstractBus {
     @Override
     public void publish(String commandName, Object source, Object data) {
         // Add immediate diagnostic output
-        System.out.println("TimingBus: Publishing " + commandName + ", listeners: " + timingListeners.size());
+        // System.out.println("TimingBus: Publishing " + commandName + ", listeners: " + timingListeners.size());
         
         if (Commands.TIMING_UPDATE.equals(commandName)) {
             // DON'T reuse the shared command for timing - create a new one for thread safety

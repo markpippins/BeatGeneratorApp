@@ -1,9 +1,6 @@
 package com.angrysurfer.core.model;
 
-import java.io.File;
 import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -19,13 +16,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Soundbank;
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,10 +26,8 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusUpdate;
-import com.angrysurfer.core.model.feature.MidiMessage;
 import com.angrysurfer.core.model.feature.Pad;
 import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.ReceiverManager;
 import com.angrysurfer.core.util.IntegerArrayConverter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
