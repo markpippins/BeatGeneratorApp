@@ -6,7 +6,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusAdapter;
@@ -21,8 +20,6 @@ import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -241,7 +238,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
         column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
             label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
             // label.setForeground(Color.GRAY);
@@ -255,13 +252,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // Create dial - first one is always a NoteSelectionDial
             Dial dial = new Dial();
 
-            // dial.setGradientStartColor(getKnobColor(i).brighter());
-            // dial.setGradientEndColor(getKnobColor(i).darker());
-            // dial.setKnobColor(getKnobColor(i));
-
             // Configure each dial based on its type
             switch (i) {
-                case 0: // Velocity
+                case 0: // Pan
                     dial.setMinimum(0);
                     dial.setMaximum(127);
                     dial.setValue(100); // Default value
@@ -270,13 +263,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     // Add change listener
                     dial.addChangeListener(e -> {
                         if (!updatingControls && selectedPadIndex >= 0) {
-                            sequencer.setStepVelocity(selectedPadIndex, index, dial.getValue());
+                            sequencer.setStepPan(selectedPadIndex, index, dial.getValue());
                         }
                     });
                     panDials.add(dial);
                     break;
 
-                case 1: // Decay
+                case 1: // Delay
                     dial.setMinimum(1);
                     dial.setMaximum(200);
                     dial.setValue(60); // Default value
@@ -291,7 +284,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     delayDials.add(dial);
                     break;
 
-                case 2: // Probability
+                case 2: // Chorus
                     dial.setMinimum(0);
                     dial.setMaximum(100);
                     dial.setValue(100); // Default to 100% (always plays)
@@ -300,18 +293,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     // Add change listener
                     dial.addChangeListener(e -> {
                         if (selectedPadIndex >= 0) {
-                            // Update the sequencer
-                            sequencer.setStepProbability(selectedPadIndex, index, dial.getValue());
-
-                            // Add debug output if needed (uncomment to enable)
-                            // System.out.println("Set chorus for drum " + selectedPadIndex +
-                            // ", step " + index + " to " + dial.getValue() + "%");
+                            sequencer.setStepChorus(selectedPadIndex, index, dial.getValue());
                         }
                     });
                     chorusDials.add(dial);
                     break;
 
-                case 3: // Nudge
+                case 3: // Reverb
                     dial.setMinimum(0);
                     dial.setMaximum(250);
                     dial.setValue(0);
@@ -320,12 +308,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     // Add change listener
                     dial.addChangeListener(e -> {
                         if (selectedPadIndex >= 0) {
-                            sequencer.setStepNudge(selectedPadIndex, index, dial.getValue());
-
-                            // Optional debug output
-                            // System.out.println("Set reverb for drum " + selectedPadIndex +
-                            // ", step " + index + " to " + dial.getValue() + "ms");
-                            setToolTipText("" + dial.getValue() + "ms");
+                            sequencer.setStepReverb(selectedPadIndex, index, dial.getValue());
                         }
                     });
                     reverbDials.add(dial);
@@ -453,7 +436,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             case 5:
                 return "Tone";
             default:
-                return "";
+                return "Unassigned";
         }
 
     }
@@ -555,7 +538,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
             // Update dial values for this step
             if (i < panDials.size()) {
-                panDials.get(i).setValue(sequencer.getStepVelocity(padIndex, i));
+                panDials.get(i).setValue(sequencer.getStepPan(padIndex, i));
             }
 
             if (i < delayDials.size()) {
@@ -563,11 +546,11 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             }
 
             if (i < chorusDials.size()) {
-                chorusDials.get(i).setValue(sequencer.getStepProbability(padIndex, i));
+                chorusDials.get(i).setValue(sequencer.getStepChorus(padIndex, i));
             }
 
             if (i < reverbDials.size()) {
-                reverbDials.get(i).setValue(sequencer.getStepNudge(padIndex, i));
+                reverbDials.get(i).setValue(sequencer.getStepReverb(padIndex, i));
             }
         }
     }
@@ -578,13 +561,12 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             return;
         }
 
-        // Update all dials to match the sequencer's current values for the selected
-        // drum
+        // Update all dials to match the sequencer's current values for the selected drum
         for (int i = 0; i < selectorButtons.size(); i++) {
             // Update pan dials
             if (i < panDials.size()) {
                 Dial dial = panDials.get(i);
-                dial.setValue(sequencer.getStepVelocity(selectedPadIndex, i));
+                dial.setValue(sequencer.getStepPan(selectedPadIndex, i));
             }
 
             // Update delay dials
@@ -596,13 +578,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // Update chorus dials
             if (i < chorusDials.size()) {
                 Dial dial = chorusDials.get(i);
-                dial.setValue(sequencer.getStepProbability(selectedPadIndex, i));
+                dial.setValue(sequencer.getStepChorus(selectedPadIndex, i));
             }
 
             // Update reverb dials
             if (i < reverbDials.size()) {
                 Dial dial = reverbDials.get(i);
-                dial.setValue(sequencer.getStepNudge(selectedPadIndex, i));
+                dial.setValue(sequencer.getStepReverb(selectedPadIndex, i));
             }
         }
     }
@@ -630,9 +612,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 // Get pan dial and update its value
                 if (step < panDials.size()) {
                     Dial panDial = panDials.get(step);
-                    int pan = sequencer.getStepVelocity(selectedPadIndex, step);
+                    int pan = sequencer.getStepPan(selectedPadIndex, step);
                     panDial.setValue(pan);
-                    panDial.repaint(); // Add explicit repaint
+                    panDial.repaint();
                 }
                 
                 // Get delay dial and update its value
@@ -640,23 +622,23 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     Dial delayDial = delayDials.get(step);
                     int delay = sequencer.getStepDecay(selectedPadIndex, step);
                     delayDial.setValue(delay);
-                    delayDial.repaint(); // Add explicit repaint
+                    delayDial.repaint();
                 }
                 
                 // Get chorus dial and update its value
                 if (step < chorusDials.size()) {
-                    Dial probDial = chorusDials.get(step);
-                    int chorus = sequencer.getStepProbability(selectedPadIndex, step);
-                    probDial.setValue(chorus);
-                    probDial.repaint(); // Add explicit repaint
+                    Dial chorusDial = chorusDials.get(step);
+                    int chorus = sequencer.getStepChorus(selectedPadIndex, step);
+                    chorusDial.setValue(chorus);
+                    chorusDial.repaint();
                 }
                 
                 // Get reverb dial and update its value
                 if (step < reverbDials.size()) {
                     Dial reverbDial = reverbDials.get(step);
-                    int reverb = sequencer.getStepNudge(selectedPadIndex, step);
+                    int reverb = sequencer.getStepReverb(selectedPadIndex, step);
                     reverbDial.setValue(reverb);
-                    reverbDial.repaint(); // Add explicit repaint
+                    reverbDial.repaint();
                 }
             }
         } finally {
@@ -777,20 +759,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // Verify the toggle took effect
             boolean isNowActive = sequencer.isStepActive(selectedPadIndex, stepIndex);
 
-            if (wasActive == isNowActive) {
-                System.err.println("WARNING: Toggle step failed for pad " + selectedPadIndex + ", step " + stepIndex);
-            }
-
-            // Update the visual state of the button
-            TriggerButton button = selectorButtons.get(stepIndex);
-            button.setSelected(isNowActive);
-            button.repaint();
+            // Update UI...
 
             // If the step is now active, update the dials to reflect the step parameters
             if (isNowActive) {
                 // Only update specific step's dials
                 if (stepIndex < panDials.size()) {
-                    panDials.get(stepIndex).setValue(sequencer.getStepVelocity(selectedPadIndex, stepIndex));
+                    panDials.get(stepIndex).setValue(sequencer.getStepPan(selectedPadIndex, stepIndex));
                 }
 
                 if (stepIndex < delayDials.size()) {
@@ -798,18 +773,15 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 }
 
                 if (stepIndex < chorusDials.size()) {
-                    chorusDials.get(stepIndex).setValue(sequencer.getStepProbability(selectedPadIndex, stepIndex));
+                    chorusDials.get(stepIndex).setValue(sequencer.getStepChorus(selectedPadIndex, stepIndex));
                 }
 
                 if (stepIndex < reverbDials.size()) {
-                    reverbDials.get(stepIndex).setValue(sequencer.getStepNudge(selectedPadIndex, stepIndex));
+                    reverbDials.get(stepIndex).setValue(sequencer.getStepReverb(selectedPadIndex, stepIndex));
                 }
             }
 
-            // Debug output
-            // System.out.println("Toggled step " + stepIndex + " for drum " +
-            // selectedPadIndex + ": " + isNowActive);
-            // Notify other components of the pattern change
+            // Notify about pattern change
             CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, null, this);
         }
     }

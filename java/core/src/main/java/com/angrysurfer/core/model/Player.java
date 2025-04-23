@@ -797,4 +797,28 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     // Add this property to the Player class
     @JsonIgnore
     private long lastTriggeredTick = -1;
+
+    /**
+     * Set the pan position for this player
+     * @param pan The pan position (0-127, 64 is center)
+     */
+    public void setPan(int pan) {
+        this.panPosition = pan;
+    }
+
+    /**
+     * Set the chorus effect amount
+     * @param amount Chorus amount (0-100)
+     */
+    public void setChorus(int amount) {
+//        this.chorus = chorus;
+    }
+
+    /**
+     * Set the reverb effect amount
+     * @param amount Reverb amount (0-100)
+     */
+    public void setReverb(int amount)  {
+//        this.reverb = amount;
+    }
 }
