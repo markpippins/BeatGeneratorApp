@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.sound.midi.Synthesizer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,6 +119,46 @@ public class UserConfigManager {
                 // Clean up resources
                 // Notify UI of failure
             }
+        }
+
+        // Make sure Gervill is registered
+        try {
+            boolean hasGervill = false;
+            
+            // Check if Gervill is already in the config
+            if (currentConfig.getInstruments() != null) {
+                for (InstrumentWrapper instrument : currentConfig.getInstruments()) {
+                    if (instrument.getDeviceName() != null && 
+                        instrument.getDeviceName().contains("Gervill")) {
+                        hasGervill = true;
+                        break;
+                    }
+                }
+            }
+            
+            // If Gervill is not in config, add it
+            if (!hasGervill) {
+                logger.info("Adding Gervill instrument to configuration");
+                
+                // Get Gervill from InternalSynthManager
+                Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
+                if (synth != null) {
+                    InstrumentWrapper gervillInstrument = new InstrumentWrapper(
+                        "Gervill", 
+                        synth,
+                        InstrumentWrapper.ALL_CHANNELS // Make it available on all channels
+                    );
+                    gervillInstrument.setId(System.currentTimeMillis());
+                    
+                    // Add to config
+                    currentConfig.getInstruments().add(gervillInstrument);
+                    saveConfiguration(currentConfig);
+                    
+                    logger.info("Gervill instrument added to configuration");
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error registering Gervill instrument: {}", e.getMessage());
         }
     }
 

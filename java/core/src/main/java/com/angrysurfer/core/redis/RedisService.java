@@ -3,6 +3,7 @@ package com.angrysurfer.core.redis;
 import java.util.List;
 import java.util.Set;
 
+import com.angrysurfer.core.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,13 +14,6 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Pattern;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.Song;
-import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
@@ -27,6 +21,7 @@ import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import lombok.Getter;
 import redis.clients.jedis.Jedis;
@@ -56,7 +51,7 @@ public class RedisService implements IBusListener {
 
     private RedisService() {
         this.jedisPool = initJedisPool();
-        this.objectMapper = initObjectMapper();
+        this.objectMapper = createObjectMapper();
 
         // Initialize helpers
         this.sessionHelper = new SessionHelper(jedisPool, objectMapper);
@@ -82,12 +77,18 @@ public class RedisService implements IBusListener {
         return new JedisPool(poolConfig, "localhost", 6379);
     }
 
-    private ObjectMapper initObjectMapper() {
+    private ObjectMapper createObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
+        
+        // Configure mapper
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        mapper.configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
-        mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+        
+        // Register module with custom deserializer
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Session.class, new SessionDeserializer());
+        mapper.registerModule(module);
+        
         return mapper;
     }
 

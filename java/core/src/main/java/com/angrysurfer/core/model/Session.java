@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.IntStream;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -151,13 +152,46 @@ public class Session implements Serializable, IBusListener {
     @Transient
     private Set<Player> activePlayers = new HashSet<>();
 
-    // FindAll<ControlCodeCaption> getCaptionFindAll();
+    @JsonIgnore
+    private transient ConcurrentLinkedQueue<IBusListener> timingListeners;
+
+    // Add this method for proper initialization during deserialization
+    @JsonIgnore
+    private ConcurrentLinkedQueue<IBusListener> getTimingListeners() {
+        if (timingListeners == null) {
+            timingListeners = new ConcurrentLinkedQueue<>();
+        }
+        return timingListeners;
+    }
+
+    // Update the register method to use the getter
+    public void register(IBusListener listener) {
+        if (listener != null) {
+            getTimingListeners().add(listener);
+        }
+    }
+
+    // Update the unregister method similarly
+    public void unregister(IBusListener listener) {
+        if (listener != null && timingListeners != null) {
+            getTimingListeners().remove(listener);
+        }
+    }
+
     private LowLatencyMidiClock lowLatencyMidiClock;
 
+    // Add this to Session constructor to ensure proper registration
     public Session() {
         setSongLength(Long.MAX_VALUE);
+        
+        // Initialize timing fields first 
+        if (timingListeners == null) {
+            timingListeners = new ConcurrentLinkedQueue<>();
+        }
+        
+        // Register with buses after fields are initialized
         commandBus.register(this);
-        timingBus.register(this); // Add this registration
+        timingBus.register(this);
     }
 
     public Session(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, int partLength) {
@@ -175,6 +209,17 @@ public class Session implements Serializable, IBusListener {
         part = 1;
         // ... other initialization
     }
+
+    // public Session(Session other) {
+    //     // Copy all fields from other
+    //     this.id = other.id;
+    //     this.name = other.name;
+    //     // Copy all other fields...
+        
+    //     // Initialize transient fields properly
+    //     this.timingListeners = new ConcurrentLinkedQueue<>();
+    //     // Initialize other transient fields...
+    // }
 
     public int getMetronomChannel() {
         return 9;

@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.angrysurfer.core.service.LogManager;
 
-public class AbstractBus implements IBusListener {
+public abstract class AbstractBus implements IBusListener {
 
     private final List<IBusListener> listeners = new CopyOnWriteArrayList<>();
     private final LogManager logManager = LogManager.getInstance();
@@ -19,8 +19,11 @@ public class AbstractBus implements IBusListener {
     private final ExecutorService commandExecutor;
     private final boolean asyncProcessing;
 
-    public AbstractBus() {
+    protected AbstractBus() {
         this(true, Runtime.getRuntime().availableProcessors());
+        // DON'T call register(this) here - it's unsafe during initialization
+        // If subclasses need to register with themselves, they should do it explicitly
+        // after their fields are initialized
     }
 
     public AbstractBus(boolean asyncProcessing, int threadPoolSize) {
