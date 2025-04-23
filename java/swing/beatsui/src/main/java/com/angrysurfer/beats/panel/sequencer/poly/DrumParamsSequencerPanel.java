@@ -51,7 +51,7 @@ import com.angrysurfer.core.service.DrumSequencerManager;
 /**
  * A sequencer panel with X0X-style step sequencing capabilities
  */
-public class DrumParamsPanel extends JPanel implements IBusListener {
+public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = Logger.getLogger(DrumSequencerPanel.class.getName());
 
@@ -72,10 +72,12 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
     // Add reference to the shared sequencer
     private DrumSequencer sequencer;
 
-    // Add these fields to match DrumSequencerPanel
+    // Replace DrumParamsSequencerParametersPanel with SequencerParametersPanel
     private DrumSequenceNavigationPanel navigationPanel;
-    private DrumParamsSequencerParametersPanel sequenceParamsPanel;
-    private DrumSwingPanel swingPanel;
+    private DrumSequencerParametersPanel sequenceParamsPanel; // Changed from DrumParamsSequencerParametersPanel
+    private DrumSequencerMaxLengthPanel maxLengthPanel; // New field
+    private DrumSequenceGeneratorPanel generatorPanel; // New field
+    private DrumSequencerSwingPanel swingPanel;
 
     // Add as a class field
     private boolean updatingControls = false;
@@ -85,7 +87,7 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
      *
      * @param noteEventConsumer Callback for when a note should be played
      */
-    public DrumParamsPanel(Consumer<NoteEvent> noteEventConsumer) {
+    public DrumParamsSequencerPanel(Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
         this.noteEventConsumer = noteEventConsumer;
 
@@ -200,20 +202,24 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
 
         // Create a panel for the bottom controls
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
+        
+        // Add MaxLengthPanel to the WEST position
+        maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
+        bottomPanel.add(maxLengthPanel, BorderLayout.WEST);
 
-        // Add sequence parameters panel using the custom component
-        sequenceParamsPanel = new DrumParamsSequencerParametersPanel(sequencer);
+        // Add sequence parameters panel using the common SequencerParametersPanel
+        sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
         // Create a container for the right-side panels
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
 
-        // Create and add generate panel
-        JPanel generatePanel = createGeneratePanel();
-        rightPanel.add(generatePanel);
+        // Use the new DrumSequenceGeneratorPanel
+        generatorPanel = new DrumSequenceGeneratorPanel(sequencer);
+        rightPanel.add(generatorPanel);
 
         // Add swing panel using the custom component
-        swingPanel = new DrumSwingPanel(sequencer);
+        swingPanel = new DrumSequencerSwingPanel(sequencer);
         rightPanel.add(swingPanel);
 
         // Add the right panel container to the east position
@@ -842,42 +848,6 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
             }
         });
     }
-    /**
-     * Creates a dedicated panel for effects pattern generation controls
-     */
-    private JPanel createGeneratePanel() {
-        // Size constants
-        final int SMALL_CONTROL_WIDTH = 40;
-        final int MEDIUM_CONTROL_WIDTH = 90;
-        final int CONTROL_HEIGHT = 25;
-
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder("Generate"));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-
-        // Create density combo without a label
-        String[] densityOptions = { "25%", "50%", "75%", "100%" };
-        JComboBox<String> densityCombo = new JComboBox<>(densityOptions);
-        densityCombo.setSelectedIndex(1); // Default to 50%
-        densityCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        densityCombo.setToolTipText("Set pattern density");
-
-        // Generate button with dice icon
-        JButton generateButton = new JButton("🎲");
-        generateButton.setToolTipText("Generate a random pattern");
-        generateButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        generateButton.setMargin(new Insets(2, 2, 2, 2));
-        generateButton.addActionListener(e -> {
-            // Get selected density from the combo
-            int density = (densityCombo.getSelectedIndex() + 1) * 25;
-            sequencer.generatePattern(density);
-            refreshGridUI();
-        });
-        panel.add(generateButton);
-        panel.add(densityCombo);
-
-        return panel;
-    }
 
     /**
      * Refresh the entire UI to match the sequencer state
@@ -892,7 +862,9 @@ public class DrumParamsPanel extends JPanel implements IBusListener {
             updateControlsFromSequencer();
 
             // Update sequence parameters in UI
-            updateSequenceParameterControls();
+            if (sequenceParamsPanel != null) {
+                sequenceParamsPanel.updateControls(selectedPadIndex);
+            }
         } else {
             // No drum selected, disable all controls
             setTriggerButtonsEnabled(false);
