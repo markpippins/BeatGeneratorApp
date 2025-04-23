@@ -10,6 +10,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.core.service.DrumSequencerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -322,7 +323,7 @@ public class DrumSequencerGridPanel extends JPanel {
                 }
 
                 // Update the drum row's appearance
-                updateRowAppearance(drumIndex, drumIndex == parentPanel.getSelectedPadIndex());
+                updateRowAppearance(drumIndex, drumIndex == DrumSequencerManager.getInstance().getSelectedPadIndex());
             }
         } finally {
             // Any cleanup code if needed

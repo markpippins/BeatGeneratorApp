@@ -7,8 +7,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +26,6 @@ public class MaxLengthPanel extends JPanel {
     
     // References
     private final DrumSequencer sequencer;
-    private final DrumSequencerPanel parentPanel;
     
     // UI constants
     private static final int CONTROL_HEIGHT = 25;
@@ -38,11 +35,9 @@ public class MaxLengthPanel extends JPanel {
      * Create a new MaxLengthPanel
      * 
      * @param sequencer The drum sequencer
-     * @param parentPanel The parent panel
      */
-    public MaxLengthPanel(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
+    public MaxLengthPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
-        this.parentPanel = parentPanel;
         
         setBorder(BorderFactory.createTitledBorder("Sequencer Parameters"));
         setLayout(new FlowLayout(FlowLayout.CENTER, 5, 2));
@@ -69,19 +64,13 @@ public class MaxLengthPanel extends JPanel {
             // Set new max pattern length in sequencer
             sequencer.setMaxPatternLength(newMaxLength);
             
-            // Update any spinners that might be constrained by this value
-            SwingUtilities.invokeLater(() -> {
-                // Update the parent panel's controls
-                parentPanel.updateUI(); // updateMaxPatternLength(newMaxLength);
-            });
-            
             logger.info("Set maximum pattern length to: {}", newMaxLength);
             
-            // Publish event for other components to react
+            // First publish event for updating spinner constraints
             CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_MAX_LENGTH_CHANGED, this, newMaxLength);
             
-            // Refresh the grid UI to show/hide steps as needed
-            parentPanel.recreateGridPanel();
+            // Then publish a command to recreate the grid
+            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_GRID_RECREATE_REQUESTED, this, newMaxLength);
         });
         
         // Add components to panel

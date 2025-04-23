@@ -15,6 +15,7 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
 
+import com.angrysurfer.core.service.DrumSequencerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,13 +81,13 @@ public class SequencerParametersPanel extends JPanel {
         lastStepSpinner.setToolTipText("Set the last step of the pattern (1-" + sequencer.getMaxPatternLength() + ")");
         lastStepSpinner.addChangeListener(e -> {
             int lastStep = (Integer) lastStepSpinner.getValue();
-            logger.info("Setting last step to {} for drum {}", lastStep, parentPanel.getSelectedPadIndex());
+            logger.info("Setting last step to {} for drum {}", lastStep, DrumSequencerManager.getInstance().getSelectedPadIndex());
 
             // Use the selected drum index from the parent panel
-            sequencer.setPatternLength(parentPanel.getSelectedPadIndex(), lastStep);
+            sequencer.setPatternLength(DrumSequencerManager.getInstance().getSelectedPadIndex(), lastStep);
             
             // Update UI in the parent panel
-            parentPanel.updateStepButtonsForDrum(parentPanel.getSelectedPadIndex());
+            parentPanel.updateStepButtonsForDrum(DrumSequencerManager.getInstance().getSelectedPadIndex());
         });
         lastStepPanel.add(lastStepSpinner);
 
@@ -106,10 +107,10 @@ public class SequencerParametersPanel extends JPanel {
                 case 3 -> direction = Direction.RANDOM;
             }
 
-            logger.info("Setting direction to {} for drum {}", direction, parentPanel.getSelectedPadIndex());
+            logger.info("Setting direction to {} for drum {}", direction, DrumSequencerManager.getInstance().getSelectedPadIndex());
 
             // Use the selected drum index from the parent panel
-            sequencer.setDirection(parentPanel.getSelectedPadIndex(), direction);
+            sequencer.setDirection(DrumSequencerManager.getInstance().getSelectedPadIndex(), direction);
         });
         directionPanel.add(directionCombo);
 
@@ -120,10 +121,10 @@ public class SequencerParametersPanel extends JPanel {
         timingCombo.addActionListener(e -> {
             TimingDivision division = (TimingDivision) timingCombo.getSelectedItem();
             if (division != null) {
-                logger.info("Setting timing to {} for drum {}", division, parentPanel.getSelectedPadIndex());
+                logger.info("Setting timing to {} for drum {}", division, DrumSequencerManager.getInstance().getSelectedPadIndex());
 
                 // Use the selected drum index from the parent panel
-                sequencer.setTimingDivision(parentPanel.getSelectedPadIndex(), division);
+                sequencer.setTimingDivision(DrumSequencerManager.getInstance().getSelectedPadIndex(), division);
             }
         });
         timingPanel.add(timingCombo);
@@ -135,10 +136,10 @@ public class SequencerParametersPanel extends JPanel {
         loopToggleButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
         loopToggleButton.addActionListener(e -> {
             boolean loop = loopToggleButton.isSelected();
-            logger.info("Setting loop to {} for drum {}", loop, parentPanel.getSelectedPadIndex());
+            logger.info("Setting loop to {} for drum {}", loop, DrumSequencerManager.getInstance().getSelectedPadIndex());
 
             // Use the selected drum index from the parent panel
-            sequencer.setLooping(parentPanel.getSelectedPadIndex(), loop);
+            sequencer.setLooping(DrumSequencerManager.getInstance().getSelectedPadIndex(), loop);
         });
 
         // Create rotation panel for push/pull buttons
@@ -181,7 +182,7 @@ public class SequencerParametersPanel extends JPanel {
         clearPatternButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
         clearPatternButton.setMargin(new Insets(2, 2, 2, 2));
         clearPatternButton.addActionListener(e -> {
-            parentPanel.clearRow(parentPanel.getSelectedPadIndex());
+            parentPanel.clearRow(DrumSequencerManager.getInstance().getSelectedPadIndex());
         });
         
         // Add the main controls panel to the left

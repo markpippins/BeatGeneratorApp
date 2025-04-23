@@ -16,7 +16,7 @@ public class DrumSequencerAdapter extends DrumSequencerPanel {
         this.adaptee = panel;
     }
     
-    @Override
+//    @Override
     public int getSelectedPadIndex() {
         return adaptee.getSelectedPadIndex();
     }

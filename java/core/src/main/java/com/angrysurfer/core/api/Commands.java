@@ -315,4 +315,6 @@ public class Commands {
     public static final String MELODIC_SEQUENCE_CREATED = "MELODIC_SEQUENCE_CREATED";
     public static final String DRUM_BUTTON_SELECTED = "DRUM_BUTTON_SELECTED";
     public static final String GLOBAL_SCALE_SELECTED = "GLOBAL_SCALE_SELECTED";
+    public static final String DRUM_SEQUENCE_MAX_LENGTH_CHANGED = "DRUM_SEQUENCE_MAX_LENGTH_CHANGED";
+    public static final String DRUM_SEQUENCE_GRID_RECREATE_REQUESTED = "DRUM_SEQUENCE_GRID_RECREATE_REQUESTED";
 }

@@ -57,7 +57,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private DrumSequencer sequencer;
 
     // UI state
-    private int selectedPadIndex = 0; // Default to first drum
+    // private int selectedPadIndex = 0; // Default to first drum
 
     // Parameters panel components
     private SequencerParametersPanel sequenceParamsPanel;
@@ -198,7 +198,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Create a panel for the bottom controls
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
-        bottomPanel.add(new MaxLengthPanel(sequencer, this), BorderLayout.WEST);
+        bottomPanel.add(new MaxLengthPanel(sequencer), BorderLayout.WEST);
 
         // Create and add the sequence parameters panel using our new class
         sequenceParamsPanel = new SequencerParametersPanel(sequencer, this);
@@ -298,7 +298,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         isSelectingDrumPad = true;
         try {
             // Store the selected pad index
-            selectedPadIndex = padIndex;
+            DrumSequencerManager.getInstance().setSelectedPadIndex(padIndex);
 
             // Tell sequencer about the selection (without sending another event back)
             sequencer.setSelectedPadIndex(padIndex);
@@ -337,13 +337,13 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      */
     private void updateParameterControls() {
         // Check if we have a valid selection before updating
-        if (selectedPadIndex < 0 || selectedPadIndex >= DRUM_PAD_COUNT) {
-            logger.warn("Cannot update parameters - invalid drum index: {}", selectedPadIndex);
+        if (DrumSequencerManager.getInstance().getSelectedPadIndex() < 0 || DrumSequencerManager.getInstance().getSelectedPadIndex() >= DRUM_PAD_COUNT) {
+            // logger.warn("Cannot update parameters - invalid drum index: {}", selectedPadIndex);
             return;
         }
 
         // Use the new panel's method to update controls
-        sequenceParamsPanel.updateControls(selectedPadIndex);
+        sequenceParamsPanel.updateControls(DrumSequencerManager.getInstance().getSelectedPadIndex());
     }
 
     /**
@@ -389,7 +389,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
                     // Update the drum info panel
                     if (drumInfoPanel != null) {
-                        drumInfoPanel.updateInfo(selectedPadIndex);
+                        drumInfoPanel.updateInfo(DrumSequencerManager.getInstance().getSelectedPadIndex());
                     }
 
                     // Reset all step highlighting
@@ -429,7 +429,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                     }
 
                     // Update parameter controls if the selected drum was affected
-                    if (updatedDrums.contains(selectedPadIndex)) {
+                    if (updatedDrums.contains(DrumSequencerManager.getInstance().getSelectedPadIndex())) {
                         updateParameterControls();
                     }
 
@@ -501,7 +501,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             gridPanel.updateStepButtonsForDrum(drumIndex);
 
             // Update parameter controls if clearing the selected drum
-            if (drumIndex == selectedPadIndex) {
+            if (drumIndex == DrumSequencerManager.getInstance().getSelectedPadIndex()) {
                 updateParameterControls();
             }
         }
@@ -536,7 +536,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             logger.info("Selected drum kit index: {}", kitIndex);
 
             // Get the currently selected player from the players array
-            int selectedDrum = getSelectedPadIndex();
+            int selectedDrum = DrumSequencerManager.getInstance().getSelectedPadIndex();
             if (selectedDrum >= 0 && selectedDrum < sequencer.getPlayers().length) {
                 // Update the selected drum's kit/preset
                 sequencer.getPlayers()[selectedDrum].setPreset(kitIndex);
@@ -559,7 +559,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Add listener for edit button
         editButton.addActionListener(e -> {
             // Get the currently selected player
-            int selectedDrum = getSelectedPadIndex();
+            int selectedDrum = DrumSequencerManager.getInstance().getSelectedPadIndex();
             if (selectedDrum >= 0 && selectedDrum < sequencer.getPlayers().length) {
                 logger.info("Opening drum sound editor for: {}", sequencer.getPlayers()[selectedDrum].getName());
 
@@ -590,7 +590,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      */
     private void populateDrumKitCombo(JComboBox<String> combo) {
         updatingUI = true;
-        int selectedDrum = getSelectedPadIndex();
+        int selectedDrum = DrumSequencerManager.getInstance().getSelectedPadIndex();
         if (selectedDrum >= 0 && selectedDrum < sequencer.getPlayers().length)
             try {
                 combo.removeAllItems();
