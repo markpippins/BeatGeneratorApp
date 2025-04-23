@@ -27,8 +27,8 @@ import com.angrysurfer.core.sequencer.TimingDivision;
 /**
  * Panel containing sequence parameters controls for a drum sequencer
  */
-public class SequencerParametersPanel extends JPanel {
-    private static final Logger logger = LoggerFactory.getLogger(SequencerParametersPanel.class);
+public class DrumSequencerParametersPanel extends JPanel {
+    private static final Logger logger = LoggerFactory.getLogger(DrumSequencerParametersPanel.class);
     
     // UI components
     private JSpinner lastStepSpinner;
@@ -52,7 +52,7 @@ public class SequencerParametersPanel extends JPanel {
     /**
      * Creates a new Sequence Parameters panel
      */
-    public SequencerParametersPanel(DrumSequencer sequencer) {
+    public DrumSequencerParametersPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         
         setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));

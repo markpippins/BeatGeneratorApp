@@ -18,8 +18,8 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 /**
  * Panel containing the maximum pattern length control
  */
-public class MaxLengthPanel extends JPanel {
-    private static final Logger logger = LoggerFactory.getLogger(MaxLengthPanel.class);
+public class DrumSequencerMaxLengthPanel extends JPanel {
+    private static final Logger logger = LoggerFactory.getLogger(DrumSequencerMaxLengthPanel.class);
     
     // UI components
     private JComboBox<Integer> maxLengthCombo;
@@ -36,7 +36,7 @@ public class MaxLengthPanel extends JPanel {
      * 
      * @param sequencer The drum sequencer
      */
-    public MaxLengthPanel(DrumSequencer sequencer) {
+    public DrumSequencerMaxLengthPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         
         setBorder(BorderFactory.createTitledBorder("Sequencer Parameters"));

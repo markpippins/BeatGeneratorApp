@@ -46,7 +46,7 @@ import lombok.Setter;
 @Setter
 public class DrumSequencerPanel extends JPanel implements IBusListener {
 
-    private static final Logger logger = LoggerFactory.getLogger(DrumParamsPanel.class);
+    private static final Logger logger = LoggerFactory.getLogger(DrumParamsSequencerPanel.class);
 
     // UI Components
     private DrumSequencerInfoPanel drumInfoPanel;
@@ -60,7 +60,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     // private int selectedPadIndex = 0; // Default to first drum
 
     // Parameters panel components
-    private SequencerParametersPanel sequenceParamsPanel;
+    private DrumSequencerParametersPanel sequenceParamsPanel;
     private JToggleButton loopToggleButton;
     private JComboBox<String> directionCombo;
     private JComboBox<TimingDivision> timingCombo;
@@ -100,7 +100,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private boolean updatingUI = false;
 
     // Add this field to DrumSequencerPanel:
-    private DrumSwingPanel swingPanel;
+    private DrumSequencerSwingPanel swingPanel;
 
     // Add this field to DrumSequencerPanel:
     private DrumSelectorPanel drumSelectorPanel;
@@ -201,10 +201,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Create a panel for the bottom controls
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
-        bottomPanel.add(new MaxLengthPanel(sequencer), BorderLayout.WEST);
+        bottomPanel.add(new DrumSequencerMaxLengthPanel(sequencer), BorderLayout.WEST);
 
         // Create and add the sequence parameters panel using our new class
-        sequenceParamsPanel = new SequencerParametersPanel(sequencer);
+        sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
 
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
@@ -229,7 +229,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     // Replace createSwingControlPanel with this:
     private JPanel createSwingControlPanel() {
         // Create panel with specified dimensions and add to container
-        swingPanel = new DrumSwingPanel(sequencer);
+        swingPanel = new DrumSequencerSwingPanel(sequencer);
         return swingPanel;
     }
 
