@@ -8,6 +8,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.sound.midi.Instrument;
 import javax.sound.midi.MidiDevice;
@@ -48,6 +51,10 @@ public class InternalSynthManager {
 
     // Map to store available banks for each soundbank (by name)
     private Map<String, List<Integer>> availableBanksMap = new HashMap<>();
+
+    // Add these fields for performance
+    private MidiChannel[] cachedChannels;
+    private final ScheduledExecutorService noteOffScheduler = Executors.newScheduledThreadPool(2);
     
     /**
      * Get the singleton instance
@@ -130,27 +137,42 @@ public class InternalSynthManager {
      * @param channel MIDI channel to use
      */
     public void playNote(int note, int velocity, int durationMs, int channel) {
+        if (synthesizer == null) {
+            initializeSynthesizer();
+        }
+        
         if (synthesizer == null || !synthesizer.isOpen()) {
-            logger.warn("Cannot play note - synthesizer is not available");
             return;
         }
         
         try {
-            final MidiChannel midiChannel = synthesizer.getChannels()[channel];
+            // Cache channels for performance
+            if (cachedChannels == null) {
+                cachedChannels = synthesizer.getChannels();
+            }
+            
+            // Safety bounds check
+            if (channel < 0 || channel >= cachedChannels.length) {
+                return;
+            }
+            
+            final MidiChannel midiChannel = cachedChannels[channel];
             if (midiChannel != null) {
+                // Direct method call - much faster than creating threads
                 midiChannel.noteOn(note, velocity);
-
-                java.util.Timer timer = new java.util.Timer(true);
-                timer.schedule(new java.util.TimerTask() {
-                    @Override
-                    public void run() {
+                
+                // Schedule note off with the shared executor
+                noteOffScheduler.schedule(() -> {
+                    try {
                         midiChannel.noteOff(note);
-                        timer.cancel();
+                    } catch (Exception e) {
+                        // Ignore errors in note-off
                     }
-                }, durationMs);
+                }, durationMs, TimeUnit.MILLISECONDS);
             }
         } catch (Exception e) {
-            logger.error("Error playing note: " + e.getMessage(), e);
+            // Just log at trace level - don't slow down playback
+            logger.trace("Error playing note: {}", e.getMessage());
         }
     }
 
@@ -1269,6 +1291,15 @@ public class InternalSynthManager {
         } catch (Exception e) {
             logger.error("Error deleting soundbank {}: {}", name, e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Cleanup resources
+     */
+    public void shutdown() {
+        if (noteOffScheduler != null) {
+            noteOffScheduler.shutdown();
         }
     }
 }

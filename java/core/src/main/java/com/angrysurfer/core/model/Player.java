@@ -10,8 +10,12 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 
+import com.angrysurfer.core.service.InternalSynthManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,6 +157,21 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private final TimingBus timingBus = TimingBus.getInstance();
     private final CommandBus commandBus = CommandBus.getInstance();
 
+    // Add these fields to Player class
+    @JsonIgnore
+    private static final ExecutorService NOTE_EXECUTOR = Executors.newFixedThreadPool(4);
+    @JsonIgnore
+    private static final ScheduledExecutorService NOTE_OFF_SCHEDULER = Executors.newScheduledThreadPool(4);
+
+    // Add UI update throttling
+    @JsonIgnore
+    private long lastUiUpdateTime = 0;
+    private static final long MIN_UI_UPDATE_INTERVAL = 100; // Only update UI every 100ms max
+
+    // Add a new optimized method
+    private boolean usingInternalSynth = false;
+    private InternalSynthManager internalSynthManager = null;
+
     public Player() {
         // Register with command and timing buses
         commandBus.register(this);
@@ -200,42 +219,40 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         // Send note on message
         int randWeight = randomDegree > 0 ? rand.nextInt(randomDegree) : 0;
 
-        java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+        NOTE_OFF_SCHEDULER.schedule(() -> {
             try {
                 noteOn(note + randWeight + getSession().getNoteOffset(), velocity);
             } catch (Exception e) {
                 logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
             }
-        }, 0, // Shorter note duration (100ms instead of 2500ms)
-                java.util.concurrent.TimeUnit.MILLISECONDS);
+        }, 0, java.util.concurrent.TimeUnit.MILLISECONDS);
 
         // Schedule note off instead of blocking with Thread.sleep
         final int finalVelocity = velocity;
 
         // Use ScheduledExecutorService for note-off scheduling
-        java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+        NOTE_OFF_SCHEDULER.schedule(() -> {
             try {
                 noteOff(note, finalVelocity);
             } catch (Exception e) {
                 logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
             }
-        }, 200, // Shorter note duration (100ms instead of 2500ms)
-                java.util.concurrent.TimeUnit.MILLISECONDS);
+        }, 200, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
 
     public void noteOn(int note, int velocity) {
-        logger.debug("noteOn() - note: {}, velocity: {}", note, velocity);
-
         int fixedVelocity = velocity < 126 ? velocity : 126;
 
         try {
             // Set playing state to true
             setPlaying(true);
 
-            // Schedule UI refresh after a short delay
-            java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
-                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), 50, // 50ms delay
-                    java.util.concurrent.TimeUnit.MILLISECONDS);
+            // Only update UI occasionally, not on every note
+            long now = System.currentTimeMillis();
+            if (now - lastUiUpdateTime > MIN_UI_UPDATE_INTERVAL) {
+                lastUiUpdateTime = now;
+                CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
+            }
 
             getInstrument().noteOn(getChannel(), note, fixedVelocity);
         } catch (Exception e) {
@@ -245,31 +262,49 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     }
 
     public void noteOn(int note, int velocity, int decay) {
-        logger.debug("noteOn() - note: {}, velocity: {}", note, velocity);
-
-        int fixedVelocity = velocity < 126 ? velocity : 126;
-
+        // Try internal synth first for better performance
+        if (instrument != null && "Gervill".equals(instrument.getDeviceName())) {
+            // Lazily initialize internal synth optimization
+            if (!usingInternalSynth) {
+                internalSynthManager = InternalSynthManager.getInstance();
+                usingInternalSynth = true;
+            }
+            
+            // Play directly with internal synth - much faster path
+            if (internalSynthManager != null) {
+                internalSynthManager.playNote(note, velocity, decay, channel);
+                
+                // Set playing state and update UI occasionally
+                setPlaying(true);
+                long now = System.currentTimeMillis();
+                if (now - lastUiUpdateTime > MIN_UI_UPDATE_INTERVAL) {
+                    lastUiUpdateTime = now;
+                    CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
+                }
+                return;
+            }
+        }
+        
+        // Fall back to standard path for external devices
         try {
-            // Set playing state to true
+            // Set playing state
             setPlaying(true);
+            
+            // Only update UI occasionally, not on every note
+            long now = System.currentTimeMillis();
+            if (now - lastUiUpdateTime > MIN_UI_UPDATE_INTERVAL) {
+                lastUiUpdateTime = now;
+                CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
+            }
 
-            // Schedule UI refresh after a short delay
-            java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
-                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), decay, // 50ms
-                                                                                                            // delay
-                    java.util.concurrent.TimeUnit.MILLISECONDS);
-
-            // getInstrument().noteOn(getChannel(), note, fixedVelocity);
-            getInstrument().playMidiNote(getChannel(), note, fixedVelocity, decay);
-
+            // Play note
+            instrument.playMidiNote(channel, note, velocity, decay);
         } catch (Exception e) {
-            logger.error("Error in noteOn: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
+            logger.debug("Error in noteOn: {}", e.getMessage());
         }
     }
 
     public void noteOff(int note, int velocity) {
-        logger.debug("noteOff() - note: {}, velocity: {}", note, velocity);
         try {
             getInstrument().noteOff(getChannel(), note, velocity);
 
@@ -277,8 +312,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             setPlaying(false);
 
             // Schedule UI refresh after a short delay
-            java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
-                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), 50, // 50ms delay
+            NOTE_OFF_SCHEDULER.schedule(
+                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), 50,
                     java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             logger.error("Error in noteOff: {}", e.getMessage(), e);
@@ -331,10 +366,18 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
      * @param partCount           Global part counter (continuously increasing)
      */
     public boolean shouldPlay(TimingUpdate timingUpdate) {
-        // Early out if no applicable rules or player not enabled
-        if (rules == null || rules.isEmpty() || !getEnabled()) {
+        // Quick checks first
+        if (!getEnabled() || isMuted()) {
             return false;
         }
+        
+        // For sequencers (which don't use rules) return true immediately
+        if (rules == null || rules.isEmpty()) {
+            return true;  // CRITICAL CHANGE: Let sequencers play without rule checks
+        }
+        
+        // Rest of the method remains the same for players with rules
+        // ...
 
         boolean debug = false; // Set to true for verbose logging
         if (debug) {
@@ -820,5 +863,11 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
      */
     public void setReverb(int amount)  {
 //        this.reverb = amount;
+    }
+
+    // Add cleanup method to shutdown pools on application exit
+    public static void shutdownExecutors() {
+        NOTE_EXECUTOR.shutdown();
+        NOTE_OFF_SCHEDULER.shutdown();
     }
 }

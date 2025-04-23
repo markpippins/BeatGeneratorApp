@@ -37,6 +37,7 @@ import com.angrysurfer.core.model.feature.MidiMessage;
 import com.angrysurfer.core.model.feature.Pad;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.service.ReceiverManager;
 import com.angrysurfer.core.util.IntegerArrayConverter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -112,6 +113,14 @@ public final class InstrumentWrapper implements Serializable {
     private Integer bankIndex;
     private Integer currentPreset;
 
+    // Add these fields:
+    @JsonIgnore
+    private final ShortMessage cachedNoteOn = new ShortMessage();
+    @JsonIgnore
+    private final ShortMessage cachedNoteOff = new ShortMessage();
+    @JsonIgnore
+    private final ShortMessage cachedControlChange = new ShortMessage();
+
     public InstrumentWrapper() {
 
     }
@@ -155,18 +164,26 @@ public final class InstrumentWrapper implements Serializable {
         sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, channel, (int) data1, (int) data2));
     }
 
-    public void controlChange(int channel, int data1, int data2)
+    public void controlChange(int channel, int controller, int value)
             throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, (int) data1, (int) data2));
+        synchronized(cachedControlChange) {
+            cachedControlChange.setMessage(ShortMessage.CONTROL_CHANGE, channel, controller, value);
+            sendToDevice(cachedControlChange);
+        }
     }
 
-    public void noteOn(int channel, int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(data1 == -1 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON, channel, (int) data1,
-                (int) data2));
+    public void noteOn(int channel, int note, int velocity) throws InvalidMidiDataException, MidiUnavailableException {
+        synchronized(cachedNoteOn) {
+            cachedNoteOn.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
+            sendToDevice(cachedNoteOn);
+        }
     }
 
-    public void noteOff(int channel, int data1, int data2) throws InvalidMidiDataException, MidiUnavailableException {
-        sendToDevice(new ShortMessage(ShortMessage.NOTE_OFF, channel, (int) data1, (int) data2));
+    public void noteOff(int channel, int note, int velocity) throws InvalidMidiDataException, MidiUnavailableException {
+        synchronized(cachedNoteOff) {
+            cachedNoteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, velocity);
+            sendToDevice(cachedNoteOff);
+        }
     }
 
     public void polyPressure(int channel, int data1, int data2)
@@ -204,175 +221,19 @@ public final class InstrumentWrapper implements Serializable {
         })).start();
     }
 
-    /**
-     * Get or create a MIDI receiver with improved error handling and recovery
-     */
-    private synchronized Receiver getOrCreateReceiver() throws MidiUnavailableException {
-        Receiver current = receiver.get();
+    public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
+        Receiver currentReceiver = ReceiverManager.getInstance().getOrCreateReceiver(deviceName, device);
         
-        // Debug the current state
-        logger.debug("getOrCreateReceiver for {}: device={}, current receiver={}", 
-                     getName(),
-                     (device != null ? (device.isOpen() ? "open" : "closed") : "null"),
-                     (current != null ? "present" : "null"));
-        
-        // If we have a null receiver but the device is present and open, try to create a new receiver directly
-        if (current == null && device != null && device.isOpen()) {
-            try {
-                // Try to get a receiver directly
-                logger.info("Creating new receiver for {} as current is null", getName());
-                current = device.getReceiver();
-                
-                if (current != null) {
-                    receiver.set(current);
-                    logger.info("Successfully created new receiver for {}", getName());
-                    return current;
-                }
-            } catch (MidiUnavailableException e) {
-                logger.error("Failed to create receiver for {}: {}", getName(), e.getMessage());
-                // Continue to fallback path
-            }
+        if (currentReceiver != null) {
+            currentReceiver.send(message, -1);
+            // Comment out or remove this debug logging - it's in a critical path
+            // logger.debug("Sent message: {} to device: {}", 
+            //            MidiMessage.lookupCommand(message.getCommand()), getName());
+        } else {
+            // Still log errors
+            logger.error("No valid receiver available for device: {}", deviceName);
+            throw new MidiUnavailableException("No valid receiver available for " + deviceName);
         }
-        
-        // If we get here, either the current receiver is valid, or we need more recovery
-        boolean receiverValid = false;
-        
-        // Test if current receiver is still valid
-        if (current != null) {
-            try {
-                // Try a real short message that won't affect anything audible
-                current.send(new ShortMessage(ShortMessage.CONTROL_CHANGE, 0, 120, 0), -1); // All Sound Off
-                receiverValid = true;
-                logger.debug("Existing receiver is valid for {}", getName());
-            } catch (Exception e) {
-                logger.warn("Existing receiver appears invalid for {}: {}", getName(), e.getMessage());
-                receiverValid = false;
-                receiver.set(null); // Clear invalid reference
-                current = null;
-            }
-        }
-        
-        // Create a new receiver if current one is invalid
-        if (!receiverValid) {
-            // Force device reconnection logic
-            MidiDevice dev = null;
-            
-            // First try to use the existing device if available
-            if (device != null) {
-                try {
-                    // Ensure device is open
-                    if (!device.isOpen()) {
-                        device.open();
-                        logger.debug("Reopened existing device for {}", getName());
-                    }
-                    
-                    if (device.isOpen()) {
-                        dev = device; // Use existing device
-                    }
-                } catch (Exception e) {
-                    logger.warn("Error reopening existing device for {}: {}", getName(), e.getMessage());
-                    // Continue to device reconnection
-                }
-            }
-            
-            // If we couldn't use the existing device, try to get a new one by name
-            if (dev == null && deviceName != null && !deviceName.isEmpty()) {
-                try {
-                    logger.info("Trying to reconnect to device {} for {}", deviceName, getName());
-                    dev = DeviceManager.getMidiDevice(deviceName);
-                    
-                    if (dev != null && !dev.isOpen()) {
-                        dev.open();
-                    }
-                    
-                    if (dev != null && dev.isOpen()) {
-                        device = dev; // Update device reference
-                        logger.info("Successfully reconnected to device {} for {}", deviceName, getName());
-                    } else {
-                        logger.warn("Failed to reconnect to {} - device is {} or not open", 
-                                   deviceName, (dev == null ? "null" : "non-null"));
-                    }
-                } catch (Exception e) {
-                    logger.error("Error reconnecting to device {} for {}: {}", 
-                                deviceName, getName(), e.getMessage());
-                }
-            }
-            
-            // Now try to create a receiver from the device we have
-            if (dev != null && dev.isOpen()) {
-                try {
-                    logger.info("Creating receiver from reconnected device for {}", getName());
-                    current = dev.getReceiver();
-                    if (current != null) {
-                        receiver.set(current);
-                        logger.info("Successfully created receiver from reconnected device for {}", getName());
-                        
-                        // Verify the receiver works
-                        try {
-                            current.send(new ShortMessage(ShortMessage.CONTROL_CHANGE, 0, 120, 0), -1);
-                            logger.debug("Verified new receiver is working for {}", getName());
-                        } catch (Exception e) {
-                            logger.error("New receiver verification failed for {}: {}", getName(), e.getMessage());
-                            current = null;
-                            receiver.set(null);
-                        }
-                        logger.info("Receiver created successfully for {}", getName());
-                    } else {
-                        logger.error("Reconnected device returned null receiver for {}", getName());
-                    }
-                } catch (Exception e) {
-                    logger.error("Error creating receiver from reconnected device for {}: {}", 
-                                getName(), e.getMessage());
-                }
-            } else {
-                logger.error("No valid device available for {} (device={}, deviceName={})",
-                            getName(), (dev != null ? "non-null" : "null"), deviceName);
-            }
-        }
-        
-        // One last check for Gervill - try to create a fresh device if all else fails
-        if (current == null && "Gervill".equals(deviceName)) {
-            try {
-                logger.info("Attempting last-resort reconnection for Gervill synth for {}", getName());
-                
-                // Clean up any existing synthesizers first
-                DeviceManager.cleanupMidiDevices();
-                
-                // Get a fresh Gervill device
-                MidiDevice newDevice = null;
-                MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-                for (MidiDevice.Info info : infos) {
-                    if (info.getName().contains("Gervill")) {
-                        try {
-                            newDevice = MidiSystem.getMidiDevice(info);
-                            if (!newDevice.isOpen()) {
-                                newDevice.open();
-                            }
-                            break;
-                        } catch (Exception e) {
-                            logger.warn("Failed to open device {}: {}", info.getName(), e.getMessage());
-                        }
-                    }
-                }
-                
-                if (newDevice != null && newDevice.isOpen()) {
-                    device = newDevice;
-                    current = newDevice.getReceiver();
-                    if (current != null) {
-                        receiver.set(current);
-                        logger.info("Successfully created new Gervill receiver for {}", getName());
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("Last-resort Gervill connection failed for {}: {}", getName(), e.getMessage());
-            }
-        }
-        
-        if (current == null) {
-            logger.error("Failed to get or create receiver for {}", getName());
-        }
-        
-        return current;
     }
 
     public void playMidiNote(int channel, int noteNumber, int velocity, int durationMS) {
@@ -434,83 +295,49 @@ public final class InstrumentWrapper implements Serializable {
             logger.error("Error sending MIDI note", e);
         }
     }
-    
-    public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
-        try {
-            Receiver currentReceiver = getOrCreateReceiver();
-            if (currentReceiver != null) {
-                currentReceiver.send(message, -1);
-                logger.debug("Sent message: {} to device: {}", 
-                           MidiMessage.lookupCommand(message.getCommand()), getName());
-            } else {
-                // Emergency fallback - try to get the default receiver from MidiSystem
-                logger.warn("Primary receiver null for {} - trying MidiSystem.getReceiver()", getName());
-                
-                try {
-                    Receiver fallbackReceiver = MidiSystem.getReceiver();
-                    if (fallbackReceiver != null) {
-                        fallbackReceiver.send(message, -1);
-                        logger.info("Successfully sent message using fallback receiver");
-                        
-                        // Store this receiver for future use
-                        receiver.set(fallbackReceiver);
-                    } else {
-                        logger.error("Failed to get fallback receiver");
-                    }
-                } catch (Exception e) {
-                    logger.error("Failed message to {} - even fallback failed: {}", getName(), e.getMessage());
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Send failed: {} - will attempt recovery", e.getMessage());
-            cleanup();
-            
-            // One retry attempt
-            try {
-                Receiver retryReceiver = getOrCreateReceiver();
-                if (retryReceiver != null) {
-                    retryReceiver.send(message, -1);
-                    logger.info("Retry successful for {}", getName());
-                } else {
-                    logger.error("Failed retry message to {} - receiver still null", getName());
-                }
-            } catch (Exception retryEx) {
-                logger.error("Failed retry for {}: {}", getName(), retryEx.getMessage());
-            }
-        }
-    }
 
     public void cleanup() {
         logger.info("Cleaning up device: {}", getName());
-        try {
-            Receiver oldReceiver = receiver.get();
-            if (oldReceiver != null) {
-                receiver.set(null);
-                oldReceiver.close();
+        
+        // Add null check before calling closeReceiver
+        if (deviceName != null) {
+            ReceiverManager.getInstance().closeReceiver(deviceName);
+        } else {
+            logger.debug("Skipping receiver cleanup: device name is null for {}", getName());
+        }
+        
+        // Close device if we own it
+        if (device != null && device.isOpen()) {
+            try {
+                device.close();
+            } catch (Exception e) {
+                logger.debug("Error closing device: {}", e.getMessage());
             }
-        } catch (Exception e) {
-            logger.debug("Error closing receiver: {}", e.getMessage());
         }
     }
 
     boolean initialized = false;
 
     public void setDevice(MidiDevice device) {
+        // Clean up existing resources
         cleanup();
+        
+        // Update device reference
         this.device = device;
-        try {
-            if (device != null) {
-                setDeviceName(device.getDeviceInfo().getName());
+        
+        if (device != null) {
+            setDeviceName(device.getDeviceInfo().getName());
+            
+            // Open device if needed
+            try {
                 if (!device.isOpen()) {
                     device.open();
                 }
-                receiver.set(device.getReceiver());
                 logger.info("Device {} initialized successfully", getName());
+            } catch (MidiUnavailableException e) {
+                logger.error("Failed to open device: {}", e.getMessage());
             }
-        } catch (MidiUnavailableException e) {
-            logger.error("Failed to initialize device: {}", e.getMessage());
         }
-        initialized = true;
     }
 
     // Add finalizer to ensure cleanup
@@ -609,129 +436,36 @@ public final class InstrumentWrapper implements Serializable {
         }
     }
 
-    /**
-     * Load a soundbank file directly and add it to InternalSynthManager
-     */
-    private void loadSoundbankFile() {
-        try {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Load Soundbank");
-            fileChooser.setFileFilter(new FileNameExtensionFilter("Soundbank Files (*.sf2, *.dls)", "sf2", "dls"));
-            
-            // Show dialog
-            int result = fileChooser.showOpenDialog(null);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                
-                // Log that we're loading the file
-                logger.info("Loading soundbank file: {}", selectedFile.getAbsolutePath());
-                
-                // Load the soundbank directly
-                try {
-                    // Load the soundbank with MidiSystem
-                    Soundbank soundbank = MidiSystem.getSoundbank(selectedFile);
-                    
-                    if (soundbank != null) {
-                        // Get the soundbank name
-                        String name = soundbank.getName();
-                        
-                        // Log success
-                        logger.info("Successfully loaded soundbank: {}", name);
-                        
-                        // Add to InternalSynthManager's collection
-                        InternalSynthManager manager = InternalSynthManager.getInstance();
-                        Map<String, Soundbank> soundbanks = new HashMap<>();
-                        
-                        // Use reflection to access the private soundbanks map
-                        try {
-                            Field soundbanksField = InternalSynthManager.class.getDeclaredField("soundbanks");
-                            soundbanksField.setAccessible(true);
-                            soundbanks = (Map<String, Soundbank>) soundbanksField.get(manager);
-                            
-                            // Add the new soundbank
-                            soundbanks.put(name, soundbank);
-                            
-                            // Update available banks for this soundbank
-                            try {
-                                // Get the availableBanksMap field
-                                Field availableBanksMapField = InternalSynthManager.class.getDeclaredField("availableBanksMap");
-                                availableBanksMapField.setAccessible(true);
-                                Map<String, List<Integer>> availableBanksMap = 
-                                    (Map<String, List<Integer>>) availableBanksMapField.get(manager);
-                                
-                                // Call determineAvailableBanks
-                                Method determineAvailableBanksMethod = 
-                                    InternalSynthManager.class.getDeclaredMethod("determineAvailableBanks", Soundbank.class);
-                                determineAvailableBanksMethod.setAccessible(true);
-                                List<Integer> banks = (List<Integer>) determineAvailableBanksMethod.invoke(manager, soundbank);
-                                
-                                // Store result
-                                availableBanksMap.put(name, banks);
-                                
-                            } catch (Exception e) {
-                                logger.error("Error setting available banks: {}", e.getMessage());
-                                // Default to bank 0 if we can't determine available banks
-                                try {
-                                    Field availableBanksMapField = InternalSynthManager.class.getDeclaredField("availableBanksMap");
-                                    availableBanksMapField.setAccessible(true);
-                                    Map<String, List<Integer>> availableBanksMap = 
-                                        (Map<String, List<Integer>>) availableBanksMapField.get(manager);
-                                    
-                                    List<Integer> defaultBanks = new ArrayList<>();
-                                    defaultBanks.add(0);
-                                    availableBanksMap.put(name, defaultBanks);
-                                } catch (Exception ex) {
-                                    logger.error("Error setting default bank: {}", ex.getMessage());
-                                }
-                            }
-                        } catch (Exception e) {
-                            logger.error("Error adding soundbank: {}", e.getMessage());
-                        }
-                    }
-                } catch (Exception e) {
-                    logger.error("Error loading soundbank file: {}", e.getMessage());
-                }                                  
-            }
-        } catch (Exception e) {
-            logger.error("Error in loadSoundbankFile: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * Load a soundbank file and assign it to this instrument.
-     * This uses the InternalSynthManager's public loadSoundbank(File) method.
-     */
-    public void loadSoundbankFileForInstrument() {
-        try {
-            javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
-            fileChooser.setDialogTitle("Load Soundbank");
-            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Soundbank Files (*.sf2, *.dls)", "sf2", "dls"));
-            
-            // Show the file chooser dialog
-            int result = fileChooser.showOpenDialog(null);
-            if (result == javax.swing.JFileChooser.APPROVE_OPTION) {
-                java.io.File selectedFile = fileChooser.getSelectedFile();
-                logger.info("Attempting to load soundbank file: {}", selectedFile.getAbsolutePath());
-                
-                // Call the public method from InternalSynthManager to load the soundbank
-                String loadedSoundbankName = com.angrysurfer.core.service.InternalSynthManager.getInstance().loadSoundbank(selectedFile);
-                if (loadedSoundbankName != null) {
-                    // Update this instrument with the new soundbank name
-                    setSoundbankName(loadedSoundbankName);
-                    logger.info("Updated instrument {} with soundbank: {}", getName(), loadedSoundbankName);
-                } else {
-                    logger.error("InternalSynthManager failed to load soundbank from: {}", selectedFile.getAbsolutePath());
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Error loading soundbank file for instrument: {}", e.getMessage(), e);
-        }
-    }
-
     public Receiver getReceiver() throws MidiUnavailableException {
         if (device == null || !device.isOpen()) {
             throw new MidiUnavailableException("Device unavailable");
         }
         return device.getReceiver();
+    }
+
+    /**
+     * Send multiple MIDI CC messages efficiently in bulk
+     */
+    public void sendBulkCC(int channel, int[] controllers, int[] values) throws MidiUnavailableException {
+        if (controllers.length != values.length) {
+            throw new IllegalArgumentException("Controller and value arrays must be same length");
+        }
+        
+        Receiver currentReceiver = ReceiverManager.getInstance().getOrCreateReceiver(deviceName, device);
+        if (currentReceiver == null) {
+            throw new MidiUnavailableException("No receiver available");
+        }
+        
+        // Reuse single message for all CC messages
+        ShortMessage msg = new ShortMessage();
+        try {
+            // Send all CC messages with same timestamp for efficiency
+            for (int i = 0; i < controllers.length; i++) {
+                msg.setMessage(ShortMessage.CONTROL_CHANGE, channel, controllers[i], values[i]);
+                currentReceiver.send(msg, -1);
+            }
+        } catch (InvalidMidiDataException e) {
+            logger.error("Invalid MIDI data in bulk CC: {}", e.getMessage());
+        }
     }
 }

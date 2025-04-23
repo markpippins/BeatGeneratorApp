@@ -302,14 +302,14 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             int presetIndex = presetCombo.getSelectedIndex();
             logger.info("Selected preset index: {}", presetIndex);
 
-            if (sequencer.getNotePlayer() != null) {
-                sequencer.getNotePlayer().setPreset(presetIndex);
+            if (sequencer.getPlayer() != null) {
+                sequencer.getPlayer().setPreset(presetIndex);
 
                 // Inform the system about the preset change
                 CommandBus.getInstance().publish(
                         Commands.PLAYER_UPDATED,
                         this,
-                        sequencer.getNotePlayer());
+                        sequencer.getPlayer());
             }
         });
 
@@ -322,17 +322,17 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Add listener for edit button
         editButton.addActionListener(e -> {
-            if (sequencer != null && sequencer.getNotePlayer() != null) {
-                logger.info("Opening player editor for: {}", sequencer.getNotePlayer().getName());
+            if (sequencer != null && sequencer.getPlayer() != null) {
+                logger.info("Opening player editor for: {}", sequencer.getPlayer().getName());
                 CommandBus.getInstance().publish(
                         Commands.PLAYER_SELECTED,
                         this,
-                        sequencer.getNotePlayer());
+                        sequencer.getPlayer());
 
                 CommandBus.getInstance().publish(
                         Commands.PLAYER_EDIT_REQUEST,
                         this,
-                        sequencer.getNotePlayer());
+                        sequencer.getPlayer());
             } else {
                 logger.warn("Cannot edit player - Note player is not initialized");
             }
@@ -411,8 +411,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
 
             // Select current preset if available
-            if (sequencer.getNotePlayer() != null && sequencer.getNotePlayer().getPreset() != null) {
-                int currentPreset = sequencer.getNotePlayer().getPreset();
+            if (sequencer.getPlayer() != null && sequencer.getPlayer().getPreset() != null) {
+                int currentPreset = sequencer.getPlayer().getPreset();
                 if (currentPreset >= 0 && currentPreset < presetNames.size()) {
                     combo.setSelectedItem(currentPreset + ": " + presetNames.get(currentPreset));
                 }

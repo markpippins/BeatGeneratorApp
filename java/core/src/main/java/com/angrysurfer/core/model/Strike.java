@@ -45,11 +45,11 @@ public class Strike extends Player {
     @Override
     public void onTick(TimingUpdate timingUpdate) {
         // Get additional timing values from the session
-        Session session = getSession();
-        if (session == null) {
-            System.err.println("Strike.onTick: No session available");
-            return;
-        }
+//        Session session = getSession();
+//        if (session == null) {
+//            System.err.println("Strike.onTick: No session available");
+//            return;
+//        }
 
         // Check if we should play based on the current timing
         boolean shouldPlayResult = shouldPlay(timingUpdate);

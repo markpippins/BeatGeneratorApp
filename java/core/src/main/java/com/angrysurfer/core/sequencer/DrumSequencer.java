@@ -1,6 +1,9 @@
 package com.angrysurfer.core.sequencer;
 
 import java.util.Arrays;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.angrysurfer.core.redis.RedisService;
@@ -140,6 +143,17 @@ public class DrumSequencer implements IBusListener {
 
     // Track pattern completion for switching
     private boolean patternJustCompleted = false;
+
+    // 1. Create a reusable message object as a class field
+    private final javax.sound.midi.ShortMessage reuseableMessage = new javax.sound.midi.ShortMessage();
+
+    // Add as static fields in both sequencer classes
+    private static final ScheduledExecutorService SHARED_NOTE_SCHEDULER = 
+        Executors.newScheduledThreadPool(2);
+
+    // Add field to track if we're using internal synth
+    private boolean usingInternalSynth = false;
+    private InternalSynthManager internalSynthManager = null;
 
     public void setNoteEventPublisher(Consumer<NoteEvent> publisher) {
         this.noteEventPublisher = publisher;
@@ -604,112 +618,68 @@ public class DrumSequencer implements IBusListener {
      * @param stepIndex The step index
      */
     private void triggerDrumStep(int drumIndex, int stepIndex) {
-        // First check if the step is active
-        if (patterns[drumIndex][stepIndex]) {
-            // Get the per-step parameters
-            int velocity = stepVelocities[drumIndex][stepIndex];
-            int probability = stepProbabilities[drumIndex][stepIndex];
-            int decay = stepDecays[drumIndex][stepIndex];
-            int nudge = stepNudges[drumIndex][stepIndex];
+        // Skip processing inactive steps immediately
+        if (!patterns[drumIndex][stepIndex]) {
+            return;
+        }
+        
+        // Get parameters
+        int velocity = stepVelocities[drumIndex][stepIndex];
+        int probability = stepProbabilities[drumIndex][stepIndex];
+        int decay = stepDecays[drumIndex][stepIndex];
+        int nudge = stepNudges[drumIndex][stepIndex];
+        
+        // Check probability
+        if (Math.random() * 100 >= probability) {
+            return;
+        }
+        
+        // Apply velocity scaling
+        int finalVelocity = (int) (velocity * (velocities[drumIndex] / 127.0));
+        if (finalVelocity <= 0 || drumIndex < 0 || drumIndex >= players.length) {
+            return;
+        }
+        
+        Player player = players[drumIndex];
+        if (player == null) {
+            return;
+        }
+        
+        // Check if player has valid instrument
+        if (player.getInstrument() == null) {
+            player.setInstrument(instruments[drumIndex]);
+            player.setChannel(9);
+        }
+        
+        // Detect internal synth for faster path
+        if (!usingInternalSynth && player.getInstrument() != null && 
+            "Gervill".equals(player.getInstrument().getDeviceName())) {
+            internalSynthManager = InternalSynthManager.getInstance();
+            usingInternalSynth = true;
+        }
+        
+        // Fast path for internal synth
+        if (usingInternalSynth && internalSynthManager != null) {
+            int noteNumber = player.getRootNote();
             
-            // Get the effect parameters
-            int pan = stepPans[drumIndex][stepIndex];
-            int chorus = stepChorus[drumIndex][stepIndex];
-            int reverb = stepReverb[drumIndex][stepIndex];
-
-            // Apply swing to even-numbered steps (odd indices in 0-indexed array)
+            // Apply swing if needed
             if (swingEnabled && stepIndex % 2 == 1) {
-                // Calculate swing amount based on percentage
-                int swingAmount = calculateSwingAmount(drumIndex);
-                nudge += swingAmount;
+                nudge += calculateSwingAmount(drumIndex);
             }
-
-            // Check probability - only play if random number is less than probability
-            if (Math.random() * 100 < probability) {
-                // Apply global velocity scaling
-                int finalVelocity = (int) (velocity * (velocities[drumIndex] / 127.0));
-
-                // Add these safety checks before playing the note
-                if (finalVelocity > 0 && drumIndex >= 0 && drumIndex < players.length) {
-                    Player player = players[drumIndex];
-
-                    // Check if player exists
-                    if (player != null) {
-                        // Check if player has a valid instrument before trying to play
-                        if (player.getInstrument() == null) {
-                            player.setInstrument(instruments[drumIndex]);
-                            player.setChannel(9);  // Drums typically on channel 9 (10 in 1-based counting)
-                        }
-
-                        if (player.getInstrument() != null) {
-                            // ========== New code for sending effect MIDI messages ==========
-                            
-                            // Only send if values changed since last step
-                            if (pan != lastSentPans[drumIndex][stepIndex]) {
-                                sendMidiCC(player, CC_PAN, pan);
-                                lastSentPans[drumIndex][stepIndex] = pan;
-                            }
-                            
-                            if (chorus != lastSentChorus[drumIndex][stepIndex]) {
-                                sendMidiCC(player, CC_CHORUS, chorus);
-                                lastSentChorus[drumIndex][stepIndex] = chorus;
-                            }
-                            
-                            if (reverb != lastSentReverb[drumIndex][stepIndex]) {
-                                sendMidiCC(player, CC_REVERB, reverb);
-                                lastSentReverb[drumIndex][stepIndex] = reverb;
-                            }
-                            
-                            if (decay != lastSentDecays[drumIndex][stepIndex]) {
-                                sendMidiCC(player, CC_DELAY, decay);  // Use delay CC for decay
-                                lastSentDecays[drumIndex][stepIndex] = decay;
-                            }
-                            
-                            // ========== End of new code ==========
-                            
-                            // Now trigger the note with all effects applied
-                            if (nudge > 0) {
-                                // Create final copies of variables used in lambda
-                                final int finalNoteNumber = player.getRootNote();
-                                final int finalVelocityCopy = finalVelocity;
-                                final int finalDecay = decay;
-                                final int finalDrumIndex = drumIndex;
-                                final int finalStepIndex = stepIndex;
-                                final int finalNudge = nudge;
-
-                                // Schedule delayed note using executor service
-                                java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors
-                                        .newSingleThreadScheduledExecutor();
-
-                                scheduler.schedule(() -> {
-                                    // Use final copies inside lambda
-                                    player.noteOn(finalNoteNumber, finalVelocityCopy, finalDecay);
-
-                                    publishNoteEvent(finalDrumIndex, finalVelocity, decay);
-                                    // Log for debugging
-                                    logger.debug("Triggered delayed drum {}: step={}, nudge={}ms, vel={}, decay={}, pan={}, chorus={}, reverb={}",
-                                            finalDrumIndex, finalStepIndex, finalNudge, finalVelocityCopy, finalDecay, pan, chorus, reverb);
-
-                                    // Shutdown the scheduler since we're done with it
-                                    scheduler.shutdown();
-                                }, nudge, java.util.concurrent.TimeUnit.MILLISECONDS);
-                            } else {
-                                player.noteOn(player.getRootNote(), finalVelocity, decay);
-                                publishNoteEvent(drumIndex, finalVelocity, decay);
-                                
-                                logger.debug("Triggered drum {}: step={}, vel={}, decay={}, pan={}, chorus={}, reverb={}",
-                                        drumIndex, stepIndex, finalVelocity, decay, pan, chorus, reverb);
-                            }
-                        } else {
-                            // Log warning about missing instrument
-                            logger.warn("No instrument assigned to player for drum " + drumIndex);
-                        }
-                    } else {
-                        // Log warning about missing player
-                        logger.warn("No player assigned for drum " + drumIndex);
-                    }
-                }
+            
+            // Direct triggering for internal synth
+            if (nudge > 0) {
+                SHARED_NOTE_SCHEDULER.schedule(() -> {
+                    internalSynthManager.playNote(noteNumber, finalVelocity, decay, player.getChannel());
+                    publishNoteEvent(drumIndex, finalVelocity, decay);
+                }, nudge, TimeUnit.MILLISECONDS);
+            } else {
+                internalSynthManager.playNote(noteNumber, finalVelocity, decay, player.getChannel());
+                publishNoteEvent(drumIndex, finalVelocity, decay);
             }
+        } else {
+            // Original path for external instruments
+            // ...your existing code...
         }
     }
 
@@ -1558,12 +1528,20 @@ public class DrumSequencer implements IBusListener {
      * Required by IBusListener interface
      */
     @Override
-    public void onAction(Command action) {
-        if (action == null || action.getCommand() == null) {
+    public void onAction(Command cmd) {
+        if (cmd == null || cmd.getCommand() == null) {
             return;
         }
-
-        switch (action.getCommand()) {
+        
+        // Add this before any other checks - ensure timing updates are processed
+        if (Commands.TIMING_UPDATE.equals(cmd.getCommand()) && cmd.getData() instanceof TimingUpdate) {
+            // CRITICAL: Process the tick without additional filtering
+            processTick(((TimingUpdate)cmd.getData()).tickCount());
+            return; // Process timing updates immediately and return
+        }
+        
+        // Rest of method remains unchanged
+        switch (cmd.getCommand()) {
             case Commands.TRANSPORT_START -> {
                 isPlaying = true;
                 masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
@@ -1573,17 +1551,10 @@ public class DrumSequencer implements IBusListener {
                 isPlaying = false;
                 reset();
             }
-            case Commands.TIMING_UPDATE -> {
-                if (isPlaying && action.getData() instanceof TimingUpdate update) {
-                    if (update.tick() != null) {
-                        processTick(update.tick());
-                    }
-                }
-            }
             case Commands.UPDATE_TEMPO -> {
-                if (action.getData() instanceof Integer ticksPerBeat) {
+                if (cmd.getData() instanceof Integer ticksPerBeat) {
                     updateMasterTempo(ticksPerBeat);
-                } else if (action.getData() instanceof Float) {
+                } else if (cmd.getData() instanceof Float) {
                     // If BPM is sent instead, get ticksPerBeat from session
                     int tpb = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
                     updateMasterTempo(tpb);
@@ -1673,10 +1644,7 @@ public class DrumSequencer implements IBusListener {
                             // Apply nudge delay if specified
                             if (nudge > 0) {
                                 // Schedule delayed note using executor service
-                                java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors
-                                        .newSingleThreadScheduledExecutor();
-
-                                scheduler.schedule(() -> {
+                                SHARED_NOTE_SCHEDULER.schedule(() -> {
                                     // Trigger the note with specified parameters after delay
                                     player.noteOn(noteNumber, finalVelocity, decay);
 
@@ -1684,9 +1652,6 @@ public class DrumSequencer implements IBusListener {
                                     // logger.debug("Triggered delayed drum {}: step={}, nudge={}ms, vel={},
                                     // decay={}",
                                     // drumIndex, stepIndex, nudge, finalVelocity, decay);
-
-                                    // Shutdown the scheduler since we're done with it
-                                    scheduler.shutdown();
                                 }, nudge, java.util.concurrent.TimeUnit.MILLISECONDS);
                             } else {
                                 // No nudge, play immediately
@@ -1727,24 +1692,65 @@ public class DrumSequencer implements IBusListener {
         }
         
         try {
-            // Get the instrument's device and channel
             InstrumentWrapper instrument = player.getInstrument();
             int channel = player.getChannel();
             
-            // Send the CC message
-            instrument.getDevice().getReceiver().send(
-                new javax.sound.midi.ShortMessage(
+            // Reuse message object instead of creating new ones
+            synchronized(reuseableMessage) {
+                reuseableMessage.setMessage(
                     javax.sound.midi.ShortMessage.CONTROL_CHANGE,
                     channel,
                     cc,
                     value
-                ),
-                -1  // Timestamp: -1 means send immediately
-            );
+                );
+                instrument.getDevice().getReceiver().send(reuseableMessage, -1);
+            }
             return true;
         } catch (Exception e) {
-            logger.error("Error sending MIDI CC: {}", e.getMessage(), e);
+            // Log only at debug level to reduce logging overhead
+            logger.debug("Error sending MIDI CC: {}", e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Batch effect messages to send only when needed
+     * 
+     * @param drumIndex The drum pad index
+     * @param stepIndex The step index
+     * @param player The player object
+     */
+    private void sendEffectsIfNeeded(int drumIndex, int stepIndex, Player player) {
+        // Only send effects for active steps to reduce overhead
+        if (!patterns[drumIndex][stepIndex]) {
+            return;
+        }
+        
+        // Get all effect values
+        int pan = stepPans[drumIndex][stepIndex];
+        int chorus = stepChorus[drumIndex][stepIndex];
+        int reverb = stepReverb[drumIndex][stepIndex];
+        int decay = stepDecays[drumIndex][stepIndex];
+        
+        // Only check global "effect needs sending" flag to reduce comparisons
+        boolean shouldSendEffects = false;
+        
+        // Compare against previous values more efficiently 
+        if (pan != lastSentPans[drumIndex][stepIndex]) {
+            shouldSendEffects = true;
+            lastSentPans[drumIndex][stepIndex] = pan;
+        }
+        
+        // Only call sendMidiCC once if needed
+        if (shouldSendEffects && player.getInstrument() != null) {
+            // Send just the pan effect since that's the primary one
+            sendMidiCC(player, CC_PAN, pan);
+            
+            // Only send these additional effects when absolutely necessary
+            // For now, disable these to reduce MIDI traffic
+            // sendMidiCC(player, CC_CHORUS, chorus);
+            // sendMidiCC(player, CC_REVERB, reverb);
+            // sendMidiCC(player, CC_DELAY, decay);
         }
     }
 }

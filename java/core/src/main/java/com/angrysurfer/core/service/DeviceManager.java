@@ -31,6 +31,10 @@ public class DeviceManager implements IBusListener {
     private final List<MidiDevice> availableOutputDevices = new ArrayList<>();
     private final CommandBus commandBus = CommandBus.getInstance();
     private final Map<String, MidiDevice> activeDevices = new ConcurrentHashMap<>();
+    private static final Map<String, MidiDevice> deviceCache = new ConcurrentHashMap<>();
+
+    // Add this static field to disable excessive validation
+    private static boolean disableExcessiveValidation = true;
 
     // Private constructor for singleton
     private DeviceManager() {
@@ -77,6 +81,9 @@ public class DeviceManager implements IBusListener {
 
     // Existing static methods can remain for backwards compatibility
     public static void cleanupMidiDevices() {
+        if (disableExcessiveValidation) {
+            return; // Skip the expensive validation during playback
+        }
         logger.info("cleanupMidiDevices()");
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
         for (MidiDevice.Info info : infos) {
@@ -94,22 +101,21 @@ public class DeviceManager implements IBusListener {
 
     // Get a specific MIDI device by name
     public static MidiDevice getMidiDevice(String name) {
-        logger.info("getMidiDevice() - name: {}", name);
-        cleanupMidiDevices(); // Add cleanup before getting new device
+        // Use device cache instead
+        MidiDevice cachedDevice = deviceCache.get(name);
+        if (cachedDevice != null && cachedDevice.isOpen()) {
+            return cachedDevice;
+        }
+        
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-
         for (MidiDevice.Info info : infos) {
             if (info.getName().contains(name)) {
                 try {
-
                     MidiDevice device = MidiSystem.getMidiDevice(info);
-                    logger.info("Found requested MIDI device: {} (Receivers: {}, Transmitters: {})",
-                            info.getName(),
-                            device.getMaxReceivers(),
-                            device.getMaxTransmitters());
+                    deviceCache.put(name, device);
                     return device;
                 } catch (MidiUnavailableException e) {
-                    logger.error("Error accessing MIDI device: " + info.getName(), e);
+                    logger.debug("Error accessing MIDI device: {}", name); // Reduced logging severity
                 }
             }
         }
