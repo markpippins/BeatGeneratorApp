@@ -727,4 +727,11 @@ public final class InstrumentWrapper implements Serializable {
             logger.error("Error loading soundbank file for instrument: {}", e.getMessage(), e);
         }
     }
+
+    public Receiver getReceiver() throws MidiUnavailableException {
+        if (device == null || !device.isOpen()) {
+            throw new MidiUnavailableException("Device unavailable");
+        }
+        return device.getReceiver();
+    }
 }

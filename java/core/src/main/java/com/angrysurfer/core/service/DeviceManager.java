@@ -3,7 +3,9 @@ package com.angrysurfer.core.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -28,6 +30,7 @@ public class DeviceManager implements IBusListener {
     private static DeviceManager instance;
     private final List<MidiDevice> availableOutputDevices = new ArrayList<>();
     private final CommandBus commandBus = CommandBus.getInstance();
+    private final Map<String, MidiDevice> activeDevices = new ConcurrentHashMap<>();
 
     // Private constructor for singleton
     private DeviceManager() {
@@ -230,4 +233,34 @@ public class DeviceManager implements IBusListener {
         return data;
     }
 
+    // Controlled acquisition and release of devices
+    public synchronized MidiDevice acquireDevice(String name) {
+        if (activeDevices.containsKey(name)) {
+            return activeDevices.get(name);
+        }
+
+        MidiDevice device = getMidiDevice(name);
+        if (device != null) {
+            try {
+                if (!device.isOpen()) {
+                    device.open();
+                }
+                activeDevices.put(name, device);
+                return device;
+            } catch (MidiUnavailableException e) {
+                logger.error("Failed to acquire device: {}", name, e);
+            }
+        }
+        return null;
+    }
+
+    public synchronized void releaseDevice(String name) {
+        if (activeDevices.containsKey(name)) {
+            MidiDevice device = activeDevices.get(name);
+            if (device != null && device.isOpen()) {
+                device.close();
+            }
+            activeDevices.remove(name);
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.angrysurfer.core.config;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,6 +18,8 @@ public class UserConfig {
     private List<InstrumentWrapper> instruments = new ArrayList<>();
     private List<Strike> players = new ArrayList<>();
     private Set<InstrumentConfig> configs = new HashSet<>();
+    private int configVersion = 1;
+    private Date lastUpdated;
 
     @Data
     public static class InstrumentConfig {
@@ -28,3 +31,5 @@ public class UserConfig {
         private int high;
     }
 }
+
+
