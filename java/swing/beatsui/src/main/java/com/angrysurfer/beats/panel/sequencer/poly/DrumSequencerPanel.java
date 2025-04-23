@@ -201,7 +201,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         bottomPanel.add(new MaxLengthPanel(sequencer), BorderLayout.WEST);
 
         // Create and add the sequence parameters panel using our new class
-        sequenceParamsPanel = new SequencerParametersPanel(sequencer, this);
+        sequenceParamsPanel = new SequencerParametersPanel(sequencer);
 
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
@@ -373,7 +373,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      */
     @Override
     public void onAction(Command action) {
-        if (action.getCommand() == null) {
+        if (action == null || action.getCommand() == null) {
             return;
         }
 
@@ -484,6 +484,31 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
                     // Update UI to reflect changes
                     gridPanel.updateStepButtonsForDrum(drumIndex);
+                }
+            }
+
+            case Commands.DRUM_STEP_BUTTONS_UPDATE_REQUESTED -> {
+                if (action.getData() instanceof Integer drumIndex) {
+                    // Update step buttons for the specified drum
+                    SwingUtilities.invokeLater(() -> {
+                        updateStepButtonsForDrum(drumIndex);
+                    });
+                }
+            }
+
+            case Commands.DRUM_GRID_REFRESH_REQUESTED -> {
+                // Refresh the entire grid UI
+                SwingUtilities.invokeLater(() -> {
+                    refreshGridUI();
+                });
+            }
+
+            case Commands.DRUM_PATTERN_CLEAR_REQUESTED -> {
+                if (action.getData() instanceof Integer drumIndex) {
+                    // Clear the pattern for the specified drum
+                    SwingUtilities.invokeLater(() -> {
+                        clearRow(drumIndex);
+                    });
                 }
             }
         }

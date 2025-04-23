@@ -2,6 +2,11 @@ package com.angrysurfer.core.api;
 
 public class Commands {
 
+    // Add new command constants
+    public static final String DRUM_STEP_BUTTONS_UPDATE_REQUESTED = "DRUM_STEP_BUTTONS_UPDATE_REQUESTED";
+    public static final String DRUM_GRID_REFRESH_REQUESTED = "DRUM_GRID_REFRESH_REQUESTED";
+    public static final String DRUM_PATTERN_CLEAR_REQUESTED = "DRUM_PATTERN_CLEAR_REQUESTED";
+
     // Transport Commands
     public static final String REWIND = "REWIND";
     public static final String PAUSE = "PAUSE";
