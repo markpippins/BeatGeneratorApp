@@ -432,4 +432,33 @@ public class DrumSequencerManager implements IBusListener {
             logger.warn("Attempted to set invalid pad index: {}", index);
         }
     }
+
+    /**
+     * Updates tempo settings on all managed sequencers
+     * 
+     * @param tempoInBPM The new tempo in BPM
+     * @param ticksPerBeat The new ticks per beat value
+     */
+    public synchronized void updateTempoSettings(float tempoInBPM, int ticksPerBeat) {
+        for (DrumSequencer sequencer : sequencers) {
+//            sequencer.setTempoInBPM(tempoInBPM);
+//            sequencer.setTicksPerBeat(ticksPerBeat);
+            sequencer.setMasterTempo(ticksPerBeat);
+        }
+        logger.info("Updated tempo settings on {} drum sequencers: {} BPM, {} ticks per beat", 
+                sequencers.size(), tempoInBPM, ticksPerBeat);
+    }
+
+    /**
+     * Get the currently active sequencer
+     * 
+     * @return The active DrumSequencer, or null if none available
+     */
+    public DrumSequencer getActiveSequencer() {
+        // If we have sequencers, return the first one (or implement more sophisticated logic)
+        if (!sequencers.isEmpty()) {
+            return sequencers.get(0);
+        }
+        return null;
+    }
 }

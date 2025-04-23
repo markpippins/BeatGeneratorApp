@@ -67,15 +67,35 @@ public class SessionManager implements IBusListener {
         return activeSession;
     }
 
-    // Direct setter instead of delegating
+    /**
+     * Updates tempo settings in all sequencers to match the active session
+     */
+    private void updateSequencerTempoSettings() {
+        if (activeSession == null) {
+            return;
+        }
+        
+        // Get tempo settings from session
+        float tempoInBPM = activeSession.getTempoInBPM();
+        int ticksPerBeat = activeSession.getTicksPerBeat();
+        
+        // Update all drum sequencers
+        DrumSequencerManager.getInstance().updateTempoSettings(tempoInBPM, ticksPerBeat);
+        
+        // Update all melodic sequencers
+        MelodicSequencerManager.getInstance().updateTempoSettings(tempoInBPM, ticksPerBeat);
+        
+        logger.info("Updated all sequencers with tempo: " + tempoInBPM + " BPM, " + 
+                   ticksPerBeat + " ticks per beat");
+    }
+
+    // Modify setActiveSession method to update sequencer settings
     public void setActiveSession(Session session) {
         if (session != null && !session.equals(this.activeSession)) {
             this.activeSession = session;
-
-            // Make sure the SequencerManager knows about the session
-            // // System.out.println("SessionManager: Setting active session on
-            // SequencerManager");
-            // sequencerManager.setActiveSession(session);
+            
+            // Update sequencers with session tempo settings
+            updateSequencerTempoSettings();
 
             commandBus.publish(Commands.SESSION_SELECTED, this, session);
             logger.info("Session selected: " + session.getId());
@@ -196,6 +216,14 @@ public class SessionManager implements IBusListener {
                             logger.info("Stopping all notes for all players");
                             // Call the stopAllNotes method on the session
                             getActiveSession().stopAllNotes();
+                        }
+                    }
+                    // Add this case to the existing switch statement in SessionManager's command bus listener
+                    case Commands.SESSION_TEMPO_CHANGED -> {
+                        if (getActiveSession() != null) {
+                            // The session tempo was already updated by whoever sent this command
+                            // Now propagate to all sequencers
+                            updateSequencerTempoSettings();
                         }
                     }
                     }

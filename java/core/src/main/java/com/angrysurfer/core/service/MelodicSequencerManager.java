@@ -265,4 +265,29 @@ public class MelodicSequencerManager {
     public List<Long> getAllMelodicSequenceIds(Integer id) {
        return RedisService.getInstance().getAllMelodicSequenceIds(id);
     }
+
+    /**
+     * Updates tempo settings on all managed sequencers
+     * 
+     * @param tempoInBPM The new tempo in BPM
+     * @param ticksPerBeat The new ticks per beat value
+     */
+    public synchronized void updateTempoSettings(float tempoInBPM, int ticksPerBeat) {
+        for (MelodicSequencer sequencer : sequencers) {
+//            sequencer.set setTempoInBPM(tempoInBPM);
+            sequencer.setMasterTempo(ticksPerBeat);
+//            setTicksPerBeat(ticksPerBeat);
+        }
+        logger.info("Updated tempo settings on {} melodic sequencers: {} BPM, {} ticks per beat", 
+                sequencers.size(), tempoInBPM, ticksPerBeat);
+    }
+
+    // Add a method to get the currently active sequencer
+    public MelodicSequencer getActiveSequencer() {
+        // If we have sequencers, return the first one (or implement more sophisticated logic)
+        if (!sequencers.isEmpty()) {
+            return sequencers.get(0);
+        }
+        return null;
+    }
 }

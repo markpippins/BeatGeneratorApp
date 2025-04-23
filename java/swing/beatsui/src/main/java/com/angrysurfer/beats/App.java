@@ -123,11 +123,17 @@ public class App implements IBusListener {
                     frame.saveFrameState();
                     String newLafClass = (String) action.getData();
                     UIManager.setLookAndFeel(newLafClass);
+                    final Frame oldFrame = frame;
 
-                    frame.close();
-                    frame = new Frame();
-                    frame.loadFrameState();
-                    frame.setVisible(true);
+                    Frame newFrame = new Frame();
+                    newFrame.loadFrameState();
+                    newFrame.setVisible(true);
+
+                    oldFrame.close();
+
+                    frame = newFrame;
+                    CommandBus.getInstance().publish(Commands.THEME_CHANGED, App.class, null);
+
                 } catch (Exception e) {
                     logger.error("Error handling theme change: " + e.getMessage());
                 }

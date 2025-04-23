@@ -32,6 +32,8 @@ public class LaunchPanel extends JPanel implements IBusListener {
         1, 2, 3, 4 // inputs 13-16 map to 1,2,3,4
     };
 
+    JPanel gridPanel;
+
     public LaunchPanel() {
         super(new BorderLayout());
         commandBus.register(this);
@@ -41,7 +43,21 @@ public class LaunchPanel extends JPanel implements IBusListener {
     @Override
     public void onAction(Command action) {
         if (Commands.CHANGE_THEME.equals(action.getCommand())) {
-            SwingUtilities.invokeLater(this::repaint);
+            SwingUtilities.invokeLater(() -> {
+                // Remove existing grid panel
+                remove(gridPanel);
+                
+                // Create new grid panel with updated theme colors
+                gridPanel = createGridPanel();
+                add(gridPanel, BorderLayout.CENTER);
+                
+                // Ensure proper layout
+                revalidate();
+                repaint();
+                
+                // Add debug message
+                System.out.println("LaunchPanel: Grid panel recreated after theme change");
+            });
         }
     }
 
@@ -51,7 +67,7 @@ public class LaunchPanel extends JPanel implements IBusListener {
     }
 
     private JPanel createGridPanel() {
-        JPanel gridPanel = new JPanel(new GridLayout(8, 8, 5, 5));
+        gridPanel = new JPanel(new GridLayout(8, 8, 5, 5));
         gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         Color[] quadrantColors = {

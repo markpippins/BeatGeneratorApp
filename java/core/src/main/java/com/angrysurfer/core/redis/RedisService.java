@@ -3,7 +3,6 @@ package com.angrysurfer.core.redis;
 import java.util.List;
 import java.util.Set;
 
-import com.angrysurfer.core.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +13,14 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Pattern;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.model.SessionDeserializer;
+import com.angrysurfer.core.model.Song;
+import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;

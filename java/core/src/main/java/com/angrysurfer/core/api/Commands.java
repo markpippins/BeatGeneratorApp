@@ -323,4 +323,6 @@ public class Commands {
     public static final String DRUM_SEQUENCE_MAX_LENGTH_CHANGED = "DRUM_SEQUENCE_MAX_LENGTH_CHANGED";
     public static final String DRUM_SEQUENCE_GRID_RECREATE_REQUESTED = "DRUM_SEQUENCE_GRID_RECREATE_REQUESTED";
     public static final String USER_CONFIG_UPDATED = "USER_CONFIG_UPDATED";
+    public static final String SESSION_TEMPO_CHANGED = "SESSION_TEMPO_CHANGED";
+    public static final String THEME_CHANGED = "THEME_CHANGED";
 }
