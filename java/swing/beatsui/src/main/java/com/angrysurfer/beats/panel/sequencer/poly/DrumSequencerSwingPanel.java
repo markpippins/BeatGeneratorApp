@@ -18,8 +18,8 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
  * Panel containing swing controls for drum sequencer
  * Copied from DrumEffectsSequencerPanel to maintain consistent layout
  */
-public class DrumSwingPanel extends JPanel {
-    private static final Logger logger = LoggerFactory.getLogger(DrumSwingPanel.class);
+public class DrumSequencerSwingPanel extends JPanel {
+    private static final Logger logger = LoggerFactory.getLogger(DrumSequencerSwingPanel.class);
     
     // UI components
     private JSlider swingSlider;
@@ -32,7 +32,7 @@ public class DrumSwingPanel extends JPanel {
     /**
      * Creates a new swing control panel
      */
-    public DrumSwingPanel(DrumSequencer sequencer) {
+    public DrumSequencerSwingPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         
         setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
