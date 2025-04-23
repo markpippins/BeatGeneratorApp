@@ -40,6 +40,13 @@ public class DrumSequencer implements IBusListener {
     public static final int MIDI_DRUM_NOTE_OFFSET = 36; // First drum pad note number
     private static final int MAX_MIDI_VELOCITY = 127; // Maximum MIDI velocity
 
+    // MIDI CC values
+    private static final int CC_VOLUME = 7;
+    private static final int CC_PAN = 10;
+    private static final int CC_REVERB = 91;
+    private static final int CC_CHORUS = 93;
+    private static final int CC_DELAY = 94;  // Use for decay
+
     // Default values for parameters
     public static final int DEFAULT_VELOCITY = 100; // Default note velocity
     public static final int DEFAULT_DECAY = 60; // Default note decay
@@ -89,7 +96,7 @@ public class DrumSequencer implements IBusListener {
 
     // Per-step parameter values for each drum
     private int[][] stepVelocities; // Velocity for each step of each drum [drumIndex][stepIndex]
-    private int[][] stepDecays; // Decay (gate time) for each step [drumIndex][stepIndex]
+    private int[][] stepDecays; // Decay (gate time) for each step of each drum [drumIndex][stepIndex]
     private int[][] stepProbabilities; // Probability for each step [drumIndex][stepIndex]
     private int[][] stepNudges; // Timing nudge for each step [drumIndex][stepIndex]
 
@@ -97,6 +104,12 @@ public class DrumSequencer implements IBusListener {
     private int[][] stepPans; // Pan position (0-127) for each step [drumIndex][stepIndex]
     private int[][] stepChorus; // Chorus amount (0-100) for each step [drumIndex][stepIndex]
     private int[][] stepReverb; // Reverb amount (0-100) for each step [drumIndex][stepIndex]
+
+    // Track last sent effect values to avoid redundant MIDI messages
+    private int[][] lastSentPans;
+    private int[][] lastSentChorus;
+    private int[][] lastSentReverb;
+    private int[][] lastSentDecays;  // For delay effect
 
     // Constants for default values
     public static final int DEFAULT_PAN = 64; // Default pan position (center)
@@ -210,6 +223,12 @@ public class DrumSequencer implements IBusListener {
         stepChorus = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
         stepReverb = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
 
+        // Initialize last sent effect values
+        lastSentPans = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
+        lastSentChorus = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
+        lastSentReverb = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
+        lastSentDecays = new int[DRUM_PAD_COUNT][getMaxPatternLength()];
+
         // Set default values
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             for (int j = 0; j < getMaxPatternLength(); j++) {
@@ -222,6 +241,12 @@ public class DrumSequencer implements IBusListener {
                 stepPans[i][j] = DEFAULT_PAN;      // Center pan
                 stepChorus[i][j] = DEFAULT_CHORUS; // No chorus by default
                 stepReverb[i][j] = DEFAULT_REVERB; // No reverb by default
+
+                // Initialize last sent values to invalid defaults
+                lastSentPans[i][j] = -1;
+                lastSentChorus[i][j] = -1;
+                lastSentReverb[i][j] = -1;
+                lastSentDecays[i][j] = -1;
             }
         }
 
@@ -587,7 +612,7 @@ public class DrumSequencer implements IBusListener {
             int decay = stepDecays[drumIndex][stepIndex];
             int nudge = stepNudges[drumIndex][stepIndex];
             
-            // Get the new effect parameters
+            // Get the effect parameters
             int pan = stepPans[drumIndex][stepIndex];
             int chorus = stepChorus[drumIndex][stepIndex];
             int reverb = stepReverb[drumIndex][stepIndex];
@@ -613,16 +638,34 @@ public class DrumSequencer implements IBusListener {
                         // Check if player has a valid instrument before trying to play
                         if (player.getInstrument() == null) {
                             player.setInstrument(instruments[drumIndex]);
-                            player.setChannel(9);
+                            player.setChannel(9);  // Drums typically on channel 9 (10 in 1-based counting)
                         }
 
                         if (player.getInstrument() != null) {
-                            // Set pan before triggering
-                            player.setPan(pan);
+                            // ========== New code for sending effect MIDI messages ==========
                             
-                            // Apply effects (implementation depends on your Player class)
-                            player.setChorus(chorus);
-                            player.setReverb(reverb);
+                            // Only send if values changed since last step
+                            if (pan != lastSentPans[drumIndex][stepIndex]) {
+                                sendMidiCC(player, CC_PAN, pan);
+                                lastSentPans[drumIndex][stepIndex] = pan;
+                            }
+                            
+                            if (chorus != lastSentChorus[drumIndex][stepIndex]) {
+                                sendMidiCC(player, CC_CHORUS, chorus);
+                                lastSentChorus[drumIndex][stepIndex] = chorus;
+                            }
+                            
+                            if (reverb != lastSentReverb[drumIndex][stepIndex]) {
+                                sendMidiCC(player, CC_REVERB, reverb);
+                                lastSentReverb[drumIndex][stepIndex] = reverb;
+                            }
+                            
+                            if (decay != lastSentDecays[drumIndex][stepIndex]) {
+                                sendMidiCC(player, CC_DELAY, decay);  // Use delay CC for decay
+                                lastSentDecays[drumIndex][stepIndex] = decay;
+                            }
+                            
+                            // ========== End of new code ==========
                             
                             // Now trigger the note with all effects applied
                             if (nudge > 0) {
@@ -653,6 +696,9 @@ public class DrumSequencer implements IBusListener {
                             } else {
                                 player.noteOn(player.getRootNote(), finalVelocity, decay);
                                 publishNoteEvent(drumIndex, finalVelocity, decay);
+                                
+                                logger.debug("Triggered drum {}: step={}, vel={}, decay={}, pan={}, chorus={}, reverb={}",
+                                        drumIndex, stepIndex, finalVelocity, decay, pan, chorus, reverb);
                             }
                         } else {
                             // Log warning about missing instrument
@@ -1664,6 +1710,41 @@ public class DrumSequencer implements IBusListener {
                 // Calculate next step time
                 calculateNextStepTime(drumIndex);
             }
+        }
+    }
+
+    /**
+     * Send a MIDI CC message to the instrument's device if it exists
+     * 
+     * @param player The player whose instrument will receive the message
+     * @param cc The MIDI CC number
+     * @param value The value to send (0-127)
+     * @return true if successful
+     */
+    private boolean sendMidiCC(Player player, int cc, int value) {
+        if (player == null || player.getInstrument() == null) {
+            return false;
+        }
+        
+        try {
+            // Get the instrument's device and channel
+            InstrumentWrapper instrument = player.getInstrument();
+            int channel = player.getChannel();
+            
+            // Send the CC message
+            instrument.getDevice().getReceiver().send(
+                new javax.sound.midi.ShortMessage(
+                    javax.sound.midi.ShortMessage.CONTROL_CHANGE,
+                    channel,
+                    cc,
+                    value
+                ),
+                -1  // Timestamp: -1 means send immediately
+            );
+            return true;
+        } catch (Exception e) {
+            logger.error("Error sending MIDI CC: {}", e.getMessage(), e);
+            return false;
         }
     }
 }
