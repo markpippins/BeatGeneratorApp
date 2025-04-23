@@ -48,12 +48,14 @@ public class UIUtils {
             case "velocity":
                 return slateGray;
             case "probability":
+            case "reverb":
                 return deepNavy;
             case "random":
                 return mutedOlive;
+            case "pan":
             case "sparse":
                 return fadedLime;
-            case "pan":
+            case "chorus":
                 return dustyAmber;
             case "gate":
             case "decay":
@@ -61,10 +63,13 @@ public class UIUtils {
             case "nudge":
                 return deepOrange;
             case "tilt":
+            case "delay":
                 return mutedRed;
             case "tune":
+            case "drive":
                 return fadedOrange;
             case "bright":
+            case "tone":
                 return darkGray;
             default:
                 return coolBlue; // Default to white if not found
@@ -95,7 +100,5 @@ public class UIUtils {
     public static Color[] getAccentColors() {
         return new Color[] { agedOffWhite, deepTeal, warmOffWhite };
     }
-
-    
 
 }

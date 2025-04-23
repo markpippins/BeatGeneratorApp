@@ -41,6 +41,7 @@ import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
 import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.poly.DrumEffectsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
 import com.angrysurfer.beats.widget.Dial;
@@ -72,7 +73,9 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private int activeMidiChannel = 15;
 
     private DrumSequencerPanel drumSequencerPanel;
-    private DrumParamsSequencerPanel drumEffectsSequencerPanel;
+    private DrumParamsSequencerPanel drumParamsSequencerPanel;
+    private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
+
     private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
     private PopupMixerPanel strikeMixerPanel;
@@ -99,8 +102,9 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             melodicPanels[i] = createMelodicSequencerPanel(i + 1);
         }
 
-        tabbedPane.addTab("Drum", createDrumPanel());
-        tabbedPane.addTab("Machine", createDrumEffectsPanel());
+        tabbedPane.addTab("Drums", createDrumPanel());
+        tabbedPane.addTab("Params", createDrumParamsPanel());
+        tabbedPane.addTab("Effects", createDrumEffectsPanel());
         tabbedPane.addTab("Mono 1", melodicPanels[0]);
         tabbedPane.addTab("Mono 2", melodicPanels[1]);
         tabbedPane.addTab("Mono 3", melodicPanels[2]);
@@ -111,7 +115,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Mono 8", melodicPanels[7]);
         tabbedPane.addTab("Song", createSongPanel());
         tabbedPane.addTab("Synth", internalSynthControlPanel);
-        tabbedPane.addTab("Mod Matrix", createModulationMatrixPanel());
+        tabbedPane.addTab("Modulation", createModulationMatrixPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
 
         tabbedPane.addTab("Players", new SessionPanel());
@@ -197,6 +201,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                     // If it's the params panel, give it focus
                     if (selectedComponent instanceof DrumParamsSequencerPanel) {
                         ((DrumParamsSequencerPanel) selectedComponent).requestFocusInWindow();
+                    }
+
+                    if (selectedComponent instanceof DrumEffectsSequencerPanel) {
+                        ((DrumEffectsSequencerPanel) selectedComponent).requestFocusInWindow();
                     }
                 });
             }
@@ -307,10 +315,17 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createDrumEffectsPanel() {
-        drumEffectsSequencerPanel = new DrumParamsSequencerPanel(noteEvent -> {
+        drumEffectsSequencerPanel = new DrumEffectsSequencerPanel(noteEvent -> {
             // No-op for now
         });
         return drumEffectsSequencerPanel;
+    }
+
+    private Component createDrumParamsPanel() {
+        drumParamsSequencerPanel = new DrumParamsSequencerPanel(noteEvent -> {
+            // No-op for now
+        });
+        return drumParamsSequencerPanel;
     }
 
     private MelodicSequencerPanel createMelodicSequencerPanel(int channel) {
@@ -595,10 +610,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 }
             }
 
-            // Set looping state for drum effects sequencer if present
-            // if (drumEffectsSequencerPanel != null &&
-            // drumEffectsSequencerPanel.getSequencer() != null) {
-            // drumEffectsSequencerPanel.getSequencer().setLooping(isLooping);
+            // Set looping state for drum params sequencer if present
+            // if (drumParamssSequencerPanel != null &&
+            // drumParamsSequencerPanel.getSequencer() != null) {
+            // drumParamsSequencerPanel.getSequencer().setLooping(isLooping);
             // }
 
             // Visual feedback - change button color based on state
