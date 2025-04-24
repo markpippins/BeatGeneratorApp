@@ -12,6 +12,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -20,6 +23,7 @@ import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 
+import com.angrysurfer.core.service.InternalSynthManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +81,11 @@ public final class InstrumentWrapper implements Serializable {
     @Column(name = "name", unique = true)
     private String name;
 
-    private String deviceName;
+    private String deviceName = "Gervill";
+
+    private boolean internalSynth;
+
+    private String description;
 
     @Convert(converter = IntegerArrayConverter.class)
     @Column(name = "channels")
@@ -111,6 +119,9 @@ public final class InstrumentWrapper implements Serializable {
     private final ShortMessage cachedNoteOff = new ShortMessage();
     @JsonIgnore
     private final ShortMessage cachedControlChange = new ShortMessage();
+
+    // Add this static field to the class
+    private static ScheduledExecutorService NOTE_OFF_SCHEDULER;
 
     public InstrumentWrapper() {
 
@@ -227,63 +238,151 @@ public final class InstrumentWrapper implements Serializable {
         }
     }
 
-    public void playMidiNote(int channel, int noteNumber, int velocity, int durationMS) {
+//    public void playMidiNote(int channel, int noteNumber, int velocity, int durationMS) {
+//        try {
+//            // Get selected output device from device selection
+//
+//            if (device == null) {
+//                device = DeviceManager.getInstance().getMidiDevice(deviceName);
+//            }
+//            if (device == null) {
+//                CommandBus.getInstance().publish(
+//                    Commands.STATUS_UPDATE,
+//                    this,
+//                    new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
+//                );
+//                return;
+//            }
+//
+//            // Open device if not already open
+//            if (!device.isOpen()) {
+//                device.open();
+//            }
+//
+//            // Get receiver
+//            Receiver receiver = device.getReceiver();
+//
+//            // Create note on message
+//            ShortMessage noteOn = new ShortMessage();
+//            noteOn.setMessage(ShortMessage.NOTE_ON, channel, noteNumber, velocity);
+//            receiver.send(noteOn, -1);
+//
+//            // Create note off message (to be sent after a delay)
+//            ShortMessage noteOff = new ShortMessage();
+//            noteOff.setMessage(ShortMessage.NOTE_OFF, channel, noteNumber, 0);
+//
+//            // Schedule note off message after 500ms
+//            new Timer().schedule(new TimerTask() {
+//                @Override
+//                public void run() {
+//                    receiver.send(noteOff, -1);
+//                }
+//            }, durationMS);
+//
+//            // Log and update status
+//            CommandBus.getInstance().publish(
+//                Commands.STATUS_UPDATE,
+//                this,
+//                new StatusUpdate("MIDI Test", "Info",
+//                    String.format("Sent note: %d on channel: %d with velocity: %d",
+//                        noteNumber, channel + 1, velocity))
+//            );
+//
+//        } catch (Exception e) {
+//            CommandBus.getInstance().publish(
+//                Commands.STATUS_UPDATE,
+//                this,
+//                new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI note: " + e.getMessage())
+//            );
+//            logger.error("Error sending MIDI note", e);
+//        }
+//    }
+
+    /**
+     * Play a note with specified decay time, using optimized path when possible
+     */
+    public void playMidiNote(int channel, int note, int velocity, int decay) {
+        // Try internal synth optimization first
+        if ("Gervill".equals(deviceName)) {
+            // Use optimized internal synth path
+            InternalSynthManager.getInstance().playNote(note, velocity, decay, channel);
+            return;
+        }
+        
+        // Fall back to standard MIDI path for external devices
         try {
-            // Get selected output device from device selection
-            
-            if (device == null) {
-                device = DeviceManager.getInstance().getMidiDevice(deviceName);
-            }
-            if (device == null) {
-                CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
-                );
-                return;
-            }
-            
-            // Open device if not already open
-            if (!device.isOpen()) {
-                device.open();
-            }
-            
-            // Get receiver
-            Receiver receiver = device.getReceiver();
-            
-            // Create note on message
-            ShortMessage noteOn = new ShortMessage();
-            noteOn.setMessage(ShortMessage.NOTE_ON, channel, noteNumber, velocity);
-            receiver.send(noteOn, -1);
-            
-            // Create note off message (to be sent after a delay)
-            ShortMessage noteOff = new ShortMessage();
-            noteOff.setMessage(ShortMessage.NOTE_OFF, channel, noteNumber, 0);
-            
-            // Schedule note off message after 500ms
-            new Timer().schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    receiver.send(noteOff, -1);
+            noteOn(channel, note, velocity);
+            // Schedule note off
+            scheduleNoteOff(channel, note, velocity, decay);
+        } catch (InvalidMidiDataException e) {
+            throw new RuntimeException(e);
+        } catch (MidiUnavailableException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    /**
+     * Schedule a noteOff command after specified delay
+     * @param channel MIDI channel
+     * @param note Note number to turn off
+     * @param velocity Release velocity (usually 0)
+     * @param delayMs Delay in milliseconds before sending note off
+     */
+    private void scheduleNoteOff(int channel, int note, int velocity, int delayMs) {
+        // Use a shared scheduled executor service for better performance than individual timers
+        if (NOTE_OFF_SCHEDULER == null) {
+            NOTE_OFF_SCHEDULER = Executors.newScheduledThreadPool(1, r -> {
+                Thread t = new Thread(r, "NoteOffScheduler");
+                t.setDaemon(true); // Make sure this doesn't prevent JVM shutdown
+                return t;
+            });
+        }
+        
+        // Schedule the note-off message
+        NOTE_OFF_SCHEDULER.schedule(() -> {
+            try {
+                // Send note-off message using existing method
+                noteOff(channel, note, 0); // Usually 0 velocity for note off
+                
+                // Debug logging if needed (uncomment for debugging)
+                // logger.debug("Note off sent for note {} on channel {}", note, channel);
+            } catch (Exception e) {
+                // Log any errors but don't propagate - this is running asynchronously
+                logger.warn("Failed to send note-off for note {} on channel {}: {}", 
+                    note, channel, e.getMessage());
+                
+                // Try a second time with a direct receiver approach as fallback
+                try {
+                    Receiver receiver = ReceiverManager.getInstance()
+                        .getOrCreateReceiver(deviceName, device);
+                    if (receiver != null) {
+                        ShortMessage noteOff = new ShortMessage();
+                        noteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, 0);
+                        receiver.send(noteOff, -1);
+                        logger.debug("Note off sent via fallback method");
+                    }
+                } catch (Exception ex) {
+                    logger.error("Fallback note-off also failed: {}", ex.getMessage());
                 }
-            }, durationMS);
-            
-            // Log and update status
-            CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Info", 
-                    String.format("Sent note: %d on channel: %d with velocity: %d", 
-                        noteNumber, channel + 1, velocity))
-            );
-            
-        } catch (Exception e) {
-            CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI note: " + e.getMessage())
-            );
-            logger.error("Error sending MIDI note", e);
+            }
+        }, delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Shutdown the scheduler when needed
+     */
+    public static void shutdownScheduler() {
+        if (NOTE_OFF_SCHEDULER != null) {
+            NOTE_OFF_SCHEDULER.shutdown();
+            try {
+                if (!NOTE_OFF_SCHEDULER.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+                    NOTE_OFF_SCHEDULER.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                NOTE_OFF_SCHEDULER.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

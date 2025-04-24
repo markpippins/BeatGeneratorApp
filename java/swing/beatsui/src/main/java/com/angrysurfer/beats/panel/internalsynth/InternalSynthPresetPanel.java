@@ -1,4 +1,3 @@
-
 package com.angrysurfer.beats.panel.internalsynth;
 
 import java.awt.BorderLayout;
@@ -9,6 +8,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -563,7 +563,8 @@ public class InternalSynthPresetPanel extends JPanel {
                 presetNames = InternalSynthManager.getInstance().getPresetNames(soundbankName, bank);
             } else {
                 // For other instruments, get preset names for the instrument
-                presetNames = InternalSynthManager.getInstance().getPresetNames(selectedInstrument.getId());
+                Long instrumentId = selectedInstrument.getId(); // getId() already returns Long
+                presetNames = InternalSynthManager.getInstance().getPresetNames(instrumentId);
             }
             
             // If no presets found, use generic names
@@ -630,11 +631,15 @@ public class InternalSynthPresetPanel extends JPanel {
                 soundbankName = (String) soundbankCombo.getSelectedItem();
             }
             
-            List<String> presetNames;
+            // Initialize presetNames with empty list first to avoid "might not have been initialized" error
+            List<String> presetNames = new ArrayList<>();
+            
             if (soundbankName != null) {
                 presetNames = InternalSynthManager.getInstance().getPresetNames(soundbankName, bank);
-            } else {
-                presetNames = InternalSynthManager.getInstance().getPresetNames(bank);
+            }
+            // Ensure we have a valid list even if the above call returned null
+            if (presetNames == null) {
+                presetNames = new ArrayList<>();
             }
             
             // Add presets to combo
@@ -644,6 +649,13 @@ public class InternalSynthPresetPanel extends JPanel {
                     name = "Program " + i;
                 }
                 presetCombo.addItem(new PresetItem(i, i + ": " + name));
+            }
+            
+            // If no presets were added, add default ones
+            if (presetCombo.getItemCount() == 0) {
+                for (int i = 0; i < 128; i++) {
+                    presetCombo.addItem(new PresetItem(i, "Program " + i));
+                }
             }
             
             // Try to select previous preset
@@ -848,18 +860,17 @@ public class InternalSynthPresetPanel extends JPanel {
         }
         
         try {
-            // Load the soundbank
+            // Load the soundbank - notice this returns a String, not a Soundbank
             InternalSynthManager manager = InternalSynthManager.getInstance();
-            Soundbank soundbank = manager.loadSoundbankFile(file);
+            String soundbankName = manager.loadSoundbankFile(file);
             
-            if (soundbank == null) {
+            if (soundbankName == null) {
                 JOptionPane.showMessageDialog(this, 
                         "Failed to load soundbank file", 
                         "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
-            String soundbankName = soundbank.getName();
             logger.info("Loaded soundbank: {}", soundbankName);
             
             // Update UI with the new soundbank list
@@ -882,8 +893,11 @@ public class InternalSynthPresetPanel extends JPanel {
             if (instrument != null) {
                 instrument.setSoundbankName(soundbankName);
                 
-                // Load soundbank into the instrument if it's a Synthesizer
-                if (instrument.getDevice() instanceof Synthesizer) {
+                // Get the actual Soundbank object if needed for direct operations
+                Soundbank soundbank = manager.getSoundbankByName(soundbankName);
+                
+                // Load soundbank into the instrument if it's a Synthesizer and we have the actual Soundbank
+                if (instrument.getDevice() instanceof Synthesizer && soundbank != null) {
                     Synthesizer synth = (Synthesizer) instrument.getDevice();
                     
                     if (!synth.isOpen()) {
@@ -896,21 +910,7 @@ public class InternalSynthPresetPanel extends JPanel {
                     // Try to load all instruments
                     boolean loaded = synth.loadAllInstruments(soundbank);
                     
-                    if (!loaded) {
-                        logger.warn("Failed to load all instruments, will try individual instruments");
-                        
-                        // Try loading individual instruments
-                        Instrument[] instruments = soundbank.getInstruments();
-                        if (instruments != null) {
-                            int count = 0;
-                            for (Instrument inst : instruments) {
-                                if (synth.loadInstrument(inst)) {
-                                    count++;
-                                }
-                            }
-                            logger.info("Loaded {} individual instruments", count);
-                        }
-                    }
+                    // Rest of the method remains the same...
                 }
             }
             

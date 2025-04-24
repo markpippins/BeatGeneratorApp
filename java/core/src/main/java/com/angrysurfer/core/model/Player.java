@@ -240,84 +240,79 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         }, 200, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Facade method to play a note with standard duration
+     * @param note MIDI note number
+     * @param velocity Note velocity (0-127)
+     */
     public void noteOn(int note, int velocity) {
-        int fixedVelocity = velocity < 126 ? velocity : 126;
-
+        // Update player state
+        setPlaying(true);
+        updateUIIfNeeded();
+        
         try {
-            // Set playing state to true
-            setPlaying(true);
-
-            // Only update UI occasionally, not on every note
-            long now = System.currentTimeMillis();
-            if (now - lastUiUpdateTime > MIN_UI_UPDATE_INTERVAL) {
-                lastUiUpdateTime = now;
-                CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
+            // Delegate to instrument wrapper
+            if (instrument != null) {
+                instrument.noteOn(channel, note, velocity);
             }
-
-            getInstrument().noteOn(getChannel(), note, fixedVelocity);
         } catch (Exception e) {
             logger.error("Error in noteOn: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Facade method to play a note with specified decay time
+     * @param note MIDI note number
+     * @param velocity Note velocity (0-127)
+     * @param decay Note duration in ms
+     */
     public void noteOn(int note, int velocity, int decay) {
-        // Try internal synth first for better performance
-        if (instrument != null && "Gervill".equals(instrument.getDeviceName())) {
-            // Lazily initialize internal synth optimization
-            if (!usingInternalSynth) {
-                internalSynthManager = InternalSynthManager.getInstance();
-                usingInternalSynth = true;
-            }
-            
-            // Play directly with internal synth - much faster path
-            if (internalSynthManager != null) {
-                internalSynthManager.playNote(note, velocity, decay, channel);
-                
-                // Set playing state and update UI occasionally
-                setPlaying(true);
-                long now = System.currentTimeMillis();
-                if (now - lastUiUpdateTime > MIN_UI_UPDATE_INTERVAL) {
-                    lastUiUpdateTime = now;
-                    CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
-                }
-                return;
-            }
-        }
+        // Update player state
+        setPlaying(true);
+        updateUIIfNeeded();
         
-        // Fall back to standard path for external devices
         try {
-            // Set playing state
-            setPlaying(true);
-            
-            // Only update UI occasionally, not on every note
-            long now = System.currentTimeMillis();
-            if (now - lastUiUpdateTime > MIN_UI_UPDATE_INTERVAL) {
-                lastUiUpdateTime = now;
-                CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
+            // Delegate to instrument wrapper
+            if (instrument != null) {
+                instrument.playMidiNote(channel, note, velocity, decay);
             }
-
-            // Play note
-            instrument.playMidiNote(channel, note, velocity, decay);
         } catch (Exception e) {
-            logger.debug("Error in noteOn: {}", e.getMessage());
+            logger.error("Error in noteOn with decay: {}", e.getMessage(), e);
         }
     }
 
+    /**
+     * Facade method to stop a note
+     * @param note MIDI note number
+     * @param velocity Release velocity (usually 0)
+     */
     public void noteOff(int note, int velocity) {
         try {
-            getInstrument().noteOff(getChannel(), note, velocity);
-
-            // Set playing state to false
+            // Delegate to instrument wrapper
+            if (instrument != null) {
+                instrument.noteOff(channel, note, velocity);
+            }
+            
+            // Update player state
             setPlaying(false);
-
-            // Schedule UI refresh after a short delay
+            
+            // Schedule UI update
             NOTE_OFF_SCHEDULER.schedule(
-                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), 50,
-                    java.util.concurrent.TimeUnit.MILLISECONDS);
+                () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), 
+                50, java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             logger.error("Error in noteOff: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Update the UI if sufficient time has passed since last update
+     */
+    private void updateUIIfNeeded() {
+        long now = System.currentTimeMillis();
+        if (now - lastUiUpdateTime > MIN_UI_UPDATE_INTERVAL) {
+            lastUiUpdateTime = now;
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
         }
     }
 
