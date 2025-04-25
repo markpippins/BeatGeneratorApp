@@ -228,6 +228,7 @@ public class SessionManager implements IBusListener {
                     }
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                     // logger. error("Error processing command {}: {}", cmd, e.getMessage());
                 }
             }

@@ -31,6 +31,8 @@ public class App implements IBusListener {
     private static final CommandBus commandBus = CommandBus.getInstance();
     private static final RedisService redisService = RedisService.getInstance();
 
+    private static final boolean showSplash = false;
+
     private Frame frame;
     private static SplashScreen splash;
 
@@ -47,7 +49,7 @@ public class App implements IBusListener {
             
             // Show splash screen using SwingUtilities.invokeLater
             SwingUtilities.invokeLater(() -> {
-                splash.setVisible(true);
+                splash.setVisible(showSplash);
                 splash.setStatus("Initializing application...");
                 
                 // Only start initialization AFTER splash screen is visible

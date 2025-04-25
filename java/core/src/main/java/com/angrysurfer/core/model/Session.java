@@ -559,35 +559,102 @@ public class Session implements Serializable, IBusListener {
             return;
         }
 
-        // System.out.println("Session: Initializing " + getPlayers().size() + "
-        // players");
+         System.out.println("Session: Initializing " + getPlayers().size() + " players");
         getPlayers().forEach(p -> {
-            // System.out.println("Session: Initializing player " + p.getId() + " (" +
-            // p.getName() + ")");
-            initializePlayerDevice(p, devices);
-            initializePlayerPreset(p);
-            p.setSession(this);
-            p.setEnabled(true);
-            // System.out.println("Session: Player " + p.getId() + " initialized and
-            // enabled");
+            try {
+                System.out.println("Session: Initializing player " + p.getId() + " (" + p.getName() + ")");
+                initializePlayerDevice(p, devices);
+                initializePlayerPreset(p);
+                p.setSession(this);
+                p.setEnabled(true);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.out.println("Session: Player " + p.getId() + " initialized and enabled");
         });
-        // System.out.println("Session: Device initialization complete");
+
+         System.out.println("Session: Device initialization complete");
     }
 
-    private void initializePlayerDevice(Player p, List<MidiDevice> devices) {
-        // System.out.println("Session: Initializing device for player " + p.getName());
-
-        if (p.getInstrument() == null) {
-            // System.out.println("WARNING: Player " + p.getName() + " has no instrument!");
+    /**
+     * Initialize a player's MIDI device connection
+     * @param player The player to initialize
+     * @param availableDevices List of available MIDI output devices
+     */
+    private void initializePlayerDevice(Player player, List<MidiDevice> devices) {
+        logger.info("Initializing device for player {}", player.getName());
+        
+        // Verify player has an instrument
+        InstrumentWrapper instrument = player.getInstrument();
+        if (instrument == null) {
+            logger.warn("Player {} has no instrument configured", player.getName());
             return;
         }
 
         try {
-            // System.out.println("Session: Player " + p.getName() + " initialized with
-            // instrument " + p.getInstrument().getName());
+            // Check if device is already connected
+            if (instrument.getDevice() != null && instrument.getDevice().isOpen()) {
+                logger.info("Device for player {} is already open: {}", 
+                          player.getName(), instrument.getDevice().getDeviceInfo().getName());
+                return;
+            }
+            
+            // Get device name from instrument
+            String deviceName = instrument.getDeviceName();
+            if (deviceName == null) {
+                logger.warn("Instrument {} has no device name", instrument.getName());
+                return;
+            }
+            
+            // Find matching device by name
+            MidiDevice device = null;
+            for (MidiDevice availableDevice : devices) {
+                if (availableDevice.getDeviceInfo().getName().equals(deviceName)) {
+                    device = availableDevice;
+                    break;
+                }
+            }
+            
+            // If device not found by exact match, try partial match
+            if (device == null) {
+                for (MidiDevice availableDevice : devices) {
+                    if (availableDevice.getDeviceInfo().getName().contains(deviceName) ||
+                        deviceName.contains(availableDevice.getDeviceInfo().getName())) {
+                        device = availableDevice;
+                        logger.info("Using partial device name match: {} -> {}", 
+                                 deviceName, availableDevice.getDeviceInfo().getName());
+                        break;
+                    }
+                }
+            }
+            
+            // If still no device, get from DeviceManager
+            if (device == null) {
+                device = DeviceManager.getMidiDevice(deviceName);
+            }
+            
+            // Connect and open device if found
+            if (device != null) {
+                // Connect device to instrument
+                instrument.setDevice(device);
+                
+                // Open device if not already open
+                if (!device.isOpen()) {
+                    device.open();
+                }
+                
+                // Mark instrument as available if device is open
+                instrument.setAvailable(device.isOpen());
+                logger.info("Connected player {} to device: {}, available: {}", 
+                         player.getName(), device.getDeviceInfo().getName(), instrument.getAvailable());
+            } else {
+                logger.error("Could not find MIDI device '{}' for player {}", 
+                           deviceName, player.getName());
+            }
         } catch (Exception e) {
-            System.err.println("Error initializing player device: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error initializing device for player {}: {}", 
+                       player.getName(), e.getMessage(), e);
         }
     }
 

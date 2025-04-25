@@ -558,4 +558,8 @@ public final class InstrumentWrapper implements Serializable {
             logger.error("Invalid MIDI data in bulk CC: {}", e.getMessage());
         }
     }
+
+    public boolean isInternalSynth() {
+        return internal;
+    }
 }
