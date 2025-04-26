@@ -48,7 +48,11 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private Long instrumentId;
 
     @JsonIgnore
-    public boolean isSelected = false;
+    public transient boolean isSelected = false;
+
+    private boolean monoPlayer = false;
+
+    private boolean multiPlayer = false;
 
     private String name = "Player";
 
@@ -153,6 +157,9 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     @JsonIgnore
     private Session session;
 
+    @JsonIgnore
+    private transient Object owner;
+
     // Add TimingBus
     private final TimingBus timingBus = TimingBus.getInstance();
     private final CommandBus commandBus = CommandBus.getInstance();
@@ -169,26 +176,25 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private static final long MIN_UI_UPDATE_INTERVAL = 100; // Only update UI every 100ms max
 
     // Add a new optimized method
-    private boolean usingInternalSynth = false;
+    private boolean usingInternalSynth = true;
     private InternalSynthManager internalSynthManager = null;
 
-    public Player() {
+    /**
+     * Simple initialization for minimal player setup
+     */
+    protected void initialize(String name, Session session, InstrumentWrapper instrument,
+            List<Integer> allowedControlMessages) {
         // Register with command and timing buses
+        setName(name);
+        setSession(session);
+        setInstrument(instrument);
+        setAllowedControlMessages(allowedControlMessages);
+
         commandBus.register(this);
         timingBus.register(this);
-        // System.out.println("Player constructor: Registered with buses");
-    }
 
-    public Player(String name, Session session, InstrumentWrapper instrument) {
-        this(); // Call default constructor to ensure registration
-        setName(name);
-        setInstrument(instrument);
-        setSession(session);
-    }
-
-    public Player(String name, Session session, InstrumentWrapper instrument, List<Integer> allowedControlMessages) {
-        this(name, session, instrument);
-        setAllowedControlMessages(allowedControlMessages);
+        // Initialize rules collection
+        rules = new HashSet<>();
     }
 
     public void setInstrument(InstrumentWrapper instrument) {
@@ -242,14 +248,15 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Facade method to play a note with standard duration
-     * @param note MIDI note number
+     * 
+     * @param note     MIDI note number
      * @param velocity Note velocity (0-127)
      */
     public void noteOn(int note, int velocity) {
         // Update player state
         setPlaying(true);
         updateUIIfNeeded();
-        
+
         try {
             // Delegate to instrument wrapper
             if (instrument != null) {
@@ -262,15 +269,16 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Facade method to play a note with specified decay time
-     * @param note MIDI note number
+     * 
+     * @param note     MIDI note number
      * @param velocity Note velocity (0-127)
-     * @param decay Note duration in ms
+     * @param decay    Note duration in ms
      */
     public void noteOn(int note, int velocity, int decay) {
         // Update player state
         setPlaying(true);
         updateUIIfNeeded();
-        
+
         try {
             // Delegate to instrument wrapper
             if (instrument != null) {
@@ -283,7 +291,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Facade method to stop a note
-     * @param note MIDI note number
+     * 
+     * @param note     MIDI note number
      * @param velocity Release velocity (usually 0)
      */
     public void noteOff(int note, int velocity) {
@@ -292,14 +301,14 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             if (instrument != null) {
                 instrument.noteOff(channel, note, velocity);
             }
-            
+
             // Update player state
             setPlaying(false);
-            
+
             // Schedule UI update
             NOTE_OFF_SCHEDULER.schedule(
-                () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), 
-                50, java.util.concurrent.TimeUnit.MILLISECONDS);
+                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this),
+                    50, java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             logger.error("Error in noteOff: {}", e.getMessage(), e);
         }
@@ -365,12 +374,12 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         if (!getEnabled() || isMuted()) {
             return false;
         }
-        
+
         // For sequencers (which don't use rules) return true immediately
         if (rules == null || rules.isEmpty()) {
-            return true;  // CRITICAL CHANGE: Let sequencers play without rule checks
+            return true; // CRITICAL CHANGE: Let sequencers play without rule checks
         }
-        
+
         // Rest of the method remains the same for players with rules
         // ...
 
@@ -838,6 +847,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Set the pan position for this player
+     * 
      * @param pan The pan position (0-127, 64 is center)
      */
     public void setPan(int pan) {
@@ -846,18 +856,20 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Set the chorus effect amount
+     * 
      * @param amount Chorus amount (0-100)
      */
     public void setChorus(int amount) {
-//        this.chorus = chorus;
+        // this.chorus = chorus;
     }
 
     /**
      * Set the reverb effect amount
+     * 
      * @param amount Reverb amount (0-100)
      */
-    public void setReverb(int amount)  {
-//        this.reverb = amount;
+    public void setReverb(int amount) {
+        // this.reverb = amount;
     }
 
     // Add cleanup method to shutdown pools on application exit

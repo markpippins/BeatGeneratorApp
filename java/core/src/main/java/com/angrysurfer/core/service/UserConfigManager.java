@@ -33,13 +33,22 @@ public class UserConfigManager {
     private final UserConfigHelper configHelper;
     private final CommandBus commandBus = CommandBus.getInstance();
     private boolean initialized = false;
+    private boolean isInitializing = false;
     private UserConfig currentConfig = new UserConfig();
 
     // Make constructor private for singleton pattern
     private UserConfigManager() {
+        isInitializing = true;
         RedisService redisService = RedisService.getInstance();
         this.configHelper = redisService.getUserConfigHelper();
-        loadConfiguration();
+        try {
+            loadConfiguration();
+        } finally {
+            isInitializing = false;
+        }
+        
+        // Now that initialization is complete, we can safely notify listeners
+        commandBus.publish(Commands.USER_CONFIG_LOADED, this, null);
         initializeInstruments();
     }
 
@@ -58,7 +67,9 @@ public class UserConfigManager {
             initialized = this.currentConfig != null;
             if (initialized) {
                 logger.info("User configuration loaded successfully");
-                commandBus.publish(Commands.USER_CONFIG_LOADED, this, this.currentConfig);
+                if (!isInitializing) {
+                    commandBus.publish(Commands.USER_CONFIG_LOADED, this, this.currentConfig);
+                }
             } else {
                 this.currentConfig = new UserConfig();
                 logger.error("No user configuration found in Redis");

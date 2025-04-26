@@ -35,6 +35,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
@@ -66,8 +67,9 @@ public class PlayerManager {
         return instance;
     }
 
-    public Player initializeNewPlayer() {
-        Player player = new Strike();
+    public Player initializeNewStrike() {
+
+        Player player = new Strike("Strike", SessionManager.getInstance().getActiveSession(), null, 35, null);
         player.setId(redisService.getNextPlayerId());
         player.setRules(new HashSet<>());
         return player;
@@ -295,9 +297,18 @@ public class PlayerManager {
         }
     }
 
-    public Player addPlayer(Session session, InstrumentWrapper instrument, int note) {
+    public Player addStrike(Session session, InstrumentWrapper instrument, int note) {
         String name = instrument.getName() + session.getPlayers().size();
         Player player = new Strike(name, session, instrument, note,
+                instrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
+        player.setSession(session);
+        session.getPlayers().add(player);
+        return player;
+    }
+
+    public Player addNote(Session session, InstrumentWrapper instrument, int note) {
+        String name = instrument.getName() + session.getPlayers().size();
+        Player player = new Note(name, session, instrument, note,
                 instrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
         player.setSession(session);
         session.getPlayers().add(player);

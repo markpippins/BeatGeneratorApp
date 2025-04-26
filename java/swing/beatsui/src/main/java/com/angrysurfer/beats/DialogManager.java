@@ -99,7 +99,7 @@ public class DialogManager implements IBusListener {
 
                 if (currentSession != null) {
                     // Initialize player
-                    Player newPlayer = PlayerManager.getInstance().initializeNewPlayer();
+                    Player newPlayer = PlayerManager.getInstance().initializeNewStrike(); // initializeNewPlayer();
                     newPlayer.setName(
                             newPlayer.getClass().getSimpleName() + " " + (currentSession.getPlayers().size() + 1));
                     logger.info(String.format("Created new player with ID: %d", newPlayer.getId()));

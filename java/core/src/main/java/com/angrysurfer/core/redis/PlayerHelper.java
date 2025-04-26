@@ -5,13 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.angrysurfer.core.model.*;
+import com.angrysurfer.core.service.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.Strike;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
@@ -223,8 +221,19 @@ public class PlayerHelper {
         }
     }
 
-    public Player newPlayer() {
-        Player player = new Strike();
+    public Player newNote() {
+        Player player = new Note("Note", SessionManager.getInstance().getActiveSession(), null, 60, null);
+
+        player.setId(getNextPlayerId());
+        player.setRules(new HashSet<>()); // Ensure rules are initialized
+        savePlayer(player);
+        return player;
+
+    }
+
+    public Player newStrike() {
+        Player player = new Strike("Strike", SessionManager.getInstance().getActiveSession(), null, 36, null);
+
         player.setId(getNextPlayerId());
         player.setRules(new HashSet<>()); // Ensure rules are initialized
         savePlayer(player);

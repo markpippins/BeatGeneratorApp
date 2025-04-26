@@ -33,6 +33,7 @@ public class InstrumentManager implements IBusListener {
     private List<String> devices = new ArrayList<>();
     private boolean needsRefresh = true;
     private final CommandBus commandBus = CommandBus.getInstance();
+    private boolean isInitializing = false;
 
     // Private constructor for singleton pattern
     private InstrumentManager() {
@@ -58,8 +59,12 @@ public class InstrumentManager implements IBusListener {
 
         switch (action.getCommand()) {
             case Commands.USER_CONFIG_LOADED -> {
-                // Refresh instruments when user config changes
-                refreshInstruments();
+                // Check if we're already initializing to prevent recursion
+                if (!isInitializing) {
+                    refreshInstruments();
+                } else {
+                    logger.debug("Skipping refresh during initialization");
+                }
             }
             case Commands.INSTRUMENT_UPDATED -> {
                 // Update single instrument in cache
@@ -77,23 +82,38 @@ public class InstrumentManager implements IBusListener {
 
     public void initializeCache() {
         logger.info("Initializing instrument cache");
-        // Get instruments from UserConfigManager which is the source of truth
-        List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
-        instrumentCache.clear();
+        
+        // Set flag to prevent recursion
+        isInitializing = true;
+        
+        try {
+            // Get instruments from UserConfigManager which is the source of truth
+            List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
+            instrumentCache.clear();
 
-        if (instruments != null) {
-            for (InstrumentWrapper instrument : instruments) {
-                instrumentCache.put(instrument.getId(), instrument);
+            if (instruments != null) {
+                for (InstrumentWrapper instrument : instruments) {
+                    instrumentCache.put(instrument.getId(), instrument);
+                }
+                logger.info("Cached {} instruments", instrumentCache.size());
+            } else {
+                logger.warn("No instruments found in UserConfigManager");
             }
-            logger.info("Cached {} instruments", instrumentCache.size());
-        } else {
-            logger.warn("No instruments found in UserConfigManager");
-        }
 
-        needsRefresh = false;
+            needsRefresh = false;
+        } finally {
+            // Always reset the flag when done
+            isInitializing = false;
+        }
     }
 
     public void refreshInstruments() {
+        // Skip if we're already initializing
+        if (isInitializing) {
+            logger.debug("Skipping recursive refresh call");
+            return;
+        }
+        
         logger.info("Refreshing instruments cache");
         initializeCache();
         needsRefresh = false;
@@ -213,5 +233,41 @@ public class InstrumentManager implements IBusListener {
         UserConfigManager.getInstance().removeInstrument(instrumentId);
         
         logger.info("Instrument removed: {} (ID: {})", name, instrumentId);
+    }
+
+    /**
+     * Find or create an internal instrument for the specified channel
+     * 
+     * @param channel The MIDI channel
+     * @return An InstrumentWrapper for the internal synth
+     */
+    public InstrumentWrapper findOrCreateInternalInstrument(int channel) {
+        // Try to find an existing internal instrument for this channel
+        for (InstrumentWrapper instrument : getCachedInstruments()) {
+            if (Boolean.TRUE.equals(instrument.getInternal()) && 
+                instrument.getChannel() == channel) {
+                return instrument;
+            }
+        }
+        
+        // Create a new internal instrument
+        InstrumentWrapper internalInstrument = new InstrumentWrapper(
+            "Internal Synth", 
+            null,  // Internal synth uses null device
+            channel
+        );
+        
+        // Configure as internal instrument
+        internalInstrument.setInternal(true);
+        internalInstrument.setDeviceName("Gervill");
+        internalInstrument.setSoundbankName("Default");
+        internalInstrument.setBankIndex(0);
+        internalInstrument.setCurrentPreset(0);  // Piano
+        internalInstrument.setId(9985L + channel);
+        
+        // Add to cache and persist
+        updateInstrument(internalInstrument);
+        
+        return internalInstrument;
     }
 }

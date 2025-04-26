@@ -13,6 +13,8 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
+import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.PlayerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -658,19 +660,71 @@ public class Session implements Serializable, IBusListener {
         }
     }
 
+    /**
+     * Initialize a player's preset by sending appropriate MIDI commands
+     */
     private void initializePlayerPreset(Player player) {
-        // System.out.println("Session: Setting preset for player " + player.getId());
-        try {
-            if (player.getPreset() > -1) {
-                // System.out.println( "Session: Setting preset " + player.getPreset() + " on
-                // channel " + player.getChannel());
-                player.getInstrument().programChange(player.getChannel(), player.getPreset(), 0);
-                // System.out.println("Session: Preset set successfully");
-            } else {
-                // System.out.println("Session: No preset configured for player");
+        if (player == null) {
+            logger.warn("Cannot initialize null player");
+            return;
+        }
+        
+        // Check if instrument is null and try to assign a default one if needed
+        if (player.getInstrument() == null) {
+            logger.warn("Player {} has null instrument, attempting to assign default", player.getId());
+            try {
+                // Try to find or create an internal instrument
+                InstrumentWrapper defaultInstrument = InstrumentManager.getInstance()
+                    .findOrCreateInternalInstrument(player.getChannel());
+                    
+                if (defaultInstrument != null) {
+                    // Assign default instrument
+                    player.setInstrument(defaultInstrument);
+                    player.setUsingInternalSynth(true);
+                    
+                    // Save the player to persist this change
+                    PlayerManager.getInstance().savePlayerProperties(player);
+                    
+                    logger.info("Assigned default internal instrument to player {}", player.getId());
+                } else {
+                    logger.error("Could not create default instrument for player {}", player.getId());
+                    return; // Skip this player
+                }
+            } catch (Exception e) {
+                logger.error("Failed to create default instrument: {}", e.getMessage());
+                return; // Skip this player
             }
-        } catch (InvalidMidiDataException | MidiUnavailableException e) {
-            System.err.println("Session: Failed to set preset: " + e.getMessage());
+        }
+        
+        // Now check again before proceeding
+        if (player.getInstrument() == null) {
+            logger.error("Player {} still has null instrument after recovery attempt", player.getId());
+            return; // Skip this player
+        }
+
+        try {
+            // Get current instrument settings
+            InstrumentWrapper instrument = player.getInstrument();
+            int channel = player.getChannel();
+            Integer preset = player.getPreset();
+            
+            if (preset != null) {
+                // Apply bank select if needed
+                if (instrument.getBankMSB() != 0 || instrument.getBankLSB() != 0) {
+                    instrument.controlChange(channel, 0, instrument.getBankMSB());
+                    instrument.controlChange(channel, 32, instrument.getBankLSB());
+                    logger.debug("Sent bank select MSB: {}, LSB: {} for player {}",
+                        instrument.getBankMSB(), instrument.getBankLSB(), player.getId());
+                }
+
+                // Send program change
+                instrument.programChange(channel, preset, 0);
+                logger.info("Initialized player {} with instrument {} preset {} on channel {}",
+                    player.getId(), instrument.getName(), preset, channel);
+            }
+        } catch (Exception e) {
+            logger.error("Error initializing preset for player {}: {}", 
+                player.getId(), e.getMessage());
         }
     }
 

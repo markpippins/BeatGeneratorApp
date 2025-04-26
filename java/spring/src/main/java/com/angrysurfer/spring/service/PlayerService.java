@@ -57,8 +57,7 @@ public class PlayerService {
     }
 
     public Player addPlayer(InstrumentWrapper instrument, int note) {
-        Player player = playerManager.addPlayer(getSession(), instrument, note);
-        redisService.savePlayer(player);
+        Player player = redisService.newStrike();
         return player;
     }
 

@@ -325,4 +325,6 @@ public class Commands {
     public static final String USER_CONFIG_UPDATED = "USER_CONFIG_UPDATED";
     public static final String SESSION_TEMPO_CHANGED = "SESSION_TEMPO_CHANGED";
     public static final String THEME_CHANGED = "THEME_CHANGED";
+    public static final String REQUEST_ONE_TIME_NOTIFICATION = "REQUEST_ONE_TIME_NOTIFICATION";
+    public static final String SEQUENCER_STATE_CHANGED = "SEQUENCER_STATE_CHANGED";
 }

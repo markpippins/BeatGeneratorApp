@@ -48,6 +48,7 @@ public class MelodicSequencerManager {
     public synchronized MelodicSequencer newSequencer(int midiChannel) {
         MelodicSequencer sequencer = new MelodicSequencer(midiChannel);
         sequencer.setId(sequencers.size() + 1); // Set a unique ID for the sequencer
+        sequencer.setChannel(midiChannel);
         sequencers.add(sequencer);
         logger.info("Created new melodic sequencer with MIDI channel {} (index: {})", 
                 midiChannel, sequencers.size() - 1);

@@ -3,12 +3,11 @@ package com.angrysurfer.core.sequencer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import javax.sound.midi.MidiDevice;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +16,15 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.feature.Note;
+import com.angrysurfer.core.model.Note;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
@@ -78,7 +78,7 @@ public class MelodicSequencer implements IBusListener {
     private List<Integer> nudgeValues = new ArrayList<>();
 
     // Note object for storing melodic properties (NEW)
-    private Note player;
+    private Player player;
 
     // Event handling
     private Consumer<StepUpdateEvent> stepUpdateListener;
@@ -279,137 +279,215 @@ public class MelodicSequencer implements IBusListener {
 
         // Initialize pattern data with default values
         initializePatternData();
-
-        // Initialize note properties
-        initializeNote();
-
+        
         // Initialize harmonic tilt values
         initializeHarmonicTiltValues();
-
+        
         // Register with CommandBus
         CommandBus.getInstance().register(this);
         TimingBus.getInstance().register(this);
-
+        
         // Initialize the quantizer with default settings
         updateQuantizer();
+        
+        // Wait for session to be available before initializing player
+        CommandBus.getInstance().publish(
+            Commands.REQUEST_ONE_TIME_NOTIFICATION,
+            this,
+            new RequestForOneTimeNotification(Commands.SYSTEM_READY, () -> {
+                // Initialize n------ote properties after system is ready
+                initializeNote();
+                
+                // Load first sequence if available (or create new one)
+                if (id != null) {
+                    loadFirstSequence();
+                }
+                
+                logger.info("MelodicSequencer {} fully initialized after system ready", id);
+            })
+        );
 
-        // Load first sequence if available (or create new one)
-        if (id != null) {
-            loadFirstSequence();
-        }
-
-        logger.info("MelodicSequencer {} initialized and registered with CommandBus", id);
+        logger.info("MelodicSequencer {} registered with CommandBus, waiting for system ready", id);
     }
 
     /**
-     * Initialize the Note object with proper InstrumentWrapper and connected
-     * MidiDevice
+     * Initialize the Note object with proper InstrumentWrapper and Session integration
      */
     private void initializeNote() {
-        player = new Note();
-        player.setName("Melody");
-        player.setRootNote(60); // Middle C
-        player.setMinVelocity(60);
-        player.setMaxVelocity(127);
-        player.setLevel(100);
-        player.setChannel(channel); // Use the sequencer's channel setting
+        // Don't directly create with RedisService.getInstance().newNote()
+        
+        // Get the current session from SessionManager
+        Session session = SessionManager.getInstance().getActiveSession();
+        if (session == null) {
+            logger.error("Cannot initialize player - no active session");
+            return;
+        }
+        
+        // Check if a player already exists for this sequencer in the session
+        Player existingPlayer = findExistingPlayerForSequencer(session);
+        
+        if (existingPlayer != null) {
+            // Use existing player
+            logger.info("Using existing player {} for sequencer {}", existingPlayer.getId(), id);
+            player = existingPlayer;
+            
+            // Update channel if needed
+            if (player.getChannel() != channel) {
+                player.setChannel(channel);
+                // Save the player through PlayerManager
+                PlayerManager.getInstance().savePlayerProperties(player);
+            }
+        } else {
+            // Create new player through PlayerManager
+            logger.info("Creating new player for sequencer {}", id);
+            
+            // Get an instrument from InstrumentManager
+            InstrumentWrapper instrument = getDefaultInstrument();
+            
+            // Create a Note player with proper name
+            String playerName = "Melody " + (id != null ? id : "");
+            player = new Note(playerName, session, instrument, 60, null);
+            
+            // Configure base properties
+            player.setMinVelocity(60);
+            player.setMaxVelocity(127);
+            player.setLevel(100);
+            player.setChannel(channel);
+            
+            // Associate player with this sequencer
+            player.setOwner(this);
+            
+            // Generate an ID for the player if needed
+            if (player.getId() == null) {
+                player.setId(RedisService.getInstance().getNextPlayerId());
+            }
+            
+            // Add to session
+            session.getPlayers().add(player);
+            
+            // Save through PlayerManager
+            PlayerManager.getInstance().savePlayerProperties(player);
+            
+            logger.info("Created new player {} for melodic sequencer {}", player.getId(), id);
+        }
+        
+        // Always initialize the instrument once player is set up
+        if (player.getInstrument() == null || player.isUsingInternalSynth()) {
+            initializeInternalInstrument(player);
+        }
+    }
+
+    /**
+     * Initialize an internal synthesizer instrument for a player
+     * Used when a player doesn't have an instrument or is using internal synth
+     *
+     * @param player The player to initialize with internal instrument
+     */
+    private void initializeInternalInstrument(Player player) {
+        if (player == null) {
+            logger.warn("Cannot initialize internal instrument for null player");
+            return;
+        }
 
         try {
-            // Get the InstrumentManager instance
-            InstrumentManager instrumentManager = InstrumentManager.getInstance();
-
-            // Look for an internal synth instrument first
+            // Try to get an internal instrument from the manager
+            InstrumentManager manager = InstrumentManager.getInstance();
             InstrumentWrapper internalInstrument = null;
-            String deviceName = "Gervill"; // Default Java synth name
-
-            // Try to find existing internal instrument
-            List<InstrumentWrapper> instruments = instrumentManager.getCachedInstruments();
-            for (InstrumentWrapper instrument : instruments) {
-                if (Boolean.TRUE.equals(instrument.getInternal())) {
+            
+            // First try to find an existing internal instrument for this channel
+            for (InstrumentWrapper instrument : manager.getCachedInstruments()) {
+                if (Boolean.TRUE.equals(instrument.getInternal()) && 
+                    instrument.getChannel() != null && 
+                    instrument.getChannel() == player.getChannel()) {
                     internalInstrument = instrument;
-                    internalInstrument.setInternal(true);
-                    internalInstrument.setDeviceName("Gervill");
-                    internalInstrument.setSoundbankName("Default");
-                    internalInstrument.setBankIndex(0);
-                    internalInstrument.setCurrentPreset(0); // Piano
+                    logger.info("Found existing internal instrument for channel {}", player.getChannel());
                     break;
                 }
             }
-
-            // If no internal instrument found, create one
+            
+            // If no instrument found, create a new one
             if (internalInstrument == null) {
-                // Create a new internal instrument - but don't set the device yet!
-                internalInstrument = new InstrumentWrapper("Internal Synth", null, channel);
+                internalInstrument = new InstrumentWrapper(
+                    "Internal Synth", 
+                    null, 
+                    player.getChannel()
+                );
                 internalInstrument.setInternal(true);
-                internalInstrument.setDeviceName(deviceName);
-
-                // Set default soundbank parameters
+                internalInstrument.setDeviceName("Gervill");
                 internalInstrument.setSoundbankName("Default");
                 internalInstrument.setBankIndex(0);
-                internalInstrument.setCurrentPreset(0); // Piano
-
-                // Give it a unique ID
-                // note.setPreset(internalInstrument.getCurrentPreset());
+                internalInstrument.setCurrentPreset(player.getPreset() != null ? player.getPreset() : player.getChannel());  // Default to piano
+                internalInstrument.setId(9985L + player.getChannel());
+                
+                // Register with instrument manager
+                manager.updateInstrument(internalInstrument);
+                logger.info("Created new internal instrument for channel {}", player.getChannel());
             }
-
-            internalInstrument.setId(9985L + getPlayer().getChannel()); // Unique ID for internal synth
+            
+            // Assign instrument to player
             player.setInstrument(internalInstrument);
-
-            // Now properly connect the device using DeviceManager
-            // Check if device is available
-            List<String> availableDevices = DeviceManager.getInstance().getAvailableOutputDeviceNames();
-            if (!availableDevices.contains(deviceName)) {
-                CommandBus.getInstance().publish(
-                        Commands.STATUS_UPDATE,
-                        this,
-                        new StatusUpdate("Device not available: " + deviceName));
-
-                logger.error("Device not available: {}", deviceName);
-            } else {
-                // Try to reinitialize the device connection
-                MidiDevice device = DeviceManager.getMidiDevice(deviceName);
-                if (device != null) {
-                    if (!device.isOpen()) {
-                        device.open();
-                    }
-
-                    boolean connected = device.isOpen();
-                    if (connected) {
-                        internalInstrument.setDevice(device);
-                        internalInstrument.setAvailable(true);
-
-                        // Update in cache/config
-                        instrumentManager.updateInstrument(internalInstrument);
-                        logger.info("Successfully connected to device: {}", deviceName);
-                    } else {
-                        logger.error("Failed to open device: {}", deviceName);
-                    }
-                }
-            }
-
-            // Set the instrument on the note
-            player.setInstrument(internalInstrument);
-
-            // Configure the note's channel
-            player.setChannel(channel);
-
-            logger.info("Initialized Note with InstrumentWrapper: {}", internalInstrument.getName());
-
-            // Test the connection
-            try {
-                if (internalInstrument.getAvailable()) {
-                    internalInstrument.noteOn(9, 36, 100);
-                    Thread.sleep(100);
-                    internalInstrument.noteOff(9, 36, 0);
-                    logger.info("Test note played successfully");
-
-                }
-            } catch (Exception e) {
-                logger.warn("Test note failed: {}", e.getMessage());
-            }
+            player.setUsingInternalSynth(true);
+            player.setPreset(0); // Piano
+            
+            // Save the player
+            PlayerManager.getInstance().savePlayerProperties(player);
+            
+            logger.info("Player {} initialized with internal instrument", player.getId());
+            
+            // Send program change to actually set the instrument sound
+            initializeInstrument();
+            
         } catch (Exception e) {
-            logger.error("Failed to initialize Note with InstrumentWrapper: {}", e.getMessage(), e);
+            logger.error("Failed to initialize internal instrument: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Find a player in the session that belongs to this sequencer
+     */
+    private Player findExistingPlayerForSequencer(Session session) {
+        if (session == null || id == null) {
+            return null;
+        }
+        
+        // Look for a player that's associated with this sequencer
+        for (Player p : session.getPlayers()) {
+            if (p instanceof Note && 
+                p.getOwner() != null && 
+                p.getOwner() instanceof MelodicSequencer && 
+                ((MelodicSequencer) p.getOwner()).getId() != null &&
+                ((MelodicSequencer) p.getOwner()).getId().equals(id)) {
+                
+                return p;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get a default instrument for melodic sequencing
+     */
+    private InstrumentWrapper getDefaultInstrument() {
+        // Create with null device (indicates internal synth)
+        InstrumentWrapper internalInstrument = new InstrumentWrapper(
+            "Internal Synth", 
+            null,  // Explicitly pass null for device
+            channel
+        );
+        
+        // Configure as internal instrument
+        internalInstrument.setInternal(true);
+        internalInstrument.setDeviceName("Gervill");
+        internalInstrument.setSoundbankName("Default");
+        internalInstrument.setBankIndex(0);
+        internalInstrument.setCurrentPreset(0);  // Default to piano
+        internalInstrument.setId(9985L + channel);
+        
+        // Register with manager
+        InstrumentManager.getInstance().updateInstrument(internalInstrument);
+        
+        return internalInstrument;
     }
 
     /**
@@ -1146,17 +1224,31 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Start playback
+     * Start playback of the sequencer
      */
-    public void play() {
-        if (!isPlaying) {
-            isPlaying = true;
-            // Get current master tempo from session
-            masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
-            reset();
-
-            logger.info("Melodic sequencer playback started with master tempo: {}", masterTempo);
+    public void start() {
+        if (isPlaying) {
+            return;
         }
+        
+        // Make sure player has instrument before starting
+        ensurePlayerHasInstrument();
+        
+        // Then initialize MIDI instrument
+        initializeInstrument();
+        
+        isPlaying = true;
+        
+        // Reset position if needed
+        if (currentStep >= patternLength) {
+            reset();
+        }
+        
+        logger.info("Melodic sequencer {} started playback", id);
+        
+        // Notify listeners
+        CommandBus.getInstance().publish(Commands.SEQUENCER_STATE_CHANGED, this, 
+            Map.of("sequencerId", id, "state", "started"));
     }
 
     /**
@@ -1225,7 +1317,7 @@ public class MelodicSequencer implements IBusListener {
                 // Sync with master tempo when starting
                 masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
                 logger.info("Master tempo set to {} ticks per beat", masterTempo);
-                play();
+                start();
             }
 
             case Commands.TRANSPORT_STOP -> {
@@ -1836,14 +1928,13 @@ public class MelodicSequencer implements IBusListener {
         return (int) (stepDurationMs * swingFactor);
     }
 
-    // Add this method to the MelodicSequencer class
-
     /**
      * Initialize the MIDI device with the current instrument settings
      * Call this before starting playback
      */
     public void initializeInstrument() {
         if (player == null || player.getInstrument() == null) {
+            logger.warn("Cannot initialize MIDI instrument: Player or instrument is null");
             return;
         }
 
@@ -1852,23 +1943,51 @@ public class MelodicSequencer implements IBusListener {
             InstrumentWrapper instrument = player.getInstrument();
             int channel = player.getChannel();
             Integer preset = player.getPreset();
+            
+            // Make sure the channel matches our expected channel
+            if (channel != this.channel) {
+                player.setChannel(this.channel);
+                channel = this.channel;
+            }
+
+            // Mark instrument as assigned to player
+            instrument.setAssignedToPlayer(true);
+
+            // Update the instrument in the cache
+            InstrumentManager.getInstance().updateInstrument(instrument);
 
             if (preset != null) {
                 // Apply bank select if needed
-                if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
+                if (instrument.getBankMSB() != 0 || instrument.getBankLSB() != 0) {
                     // Bank MSB (CC#0)
-                    instrument.controlChange(channel, 0, 0);
+                    instrument.controlChange(channel, 0, instrument.getBankMSB());
                     // Bank LSB (CC#32)
-                    instrument.controlChange(channel, 32, instrument.getBankIndex());
+                    instrument.controlChange(channel, 32, instrument.getBankLSB());
+                    
+                    logger.info("Sent bank select MSB: {}, LSB: {} on channel {}",
+                        instrument.getBankMSB(), instrument.getBankLSB(), channel);
                 }
 
                 // Send program change
                 instrument.programChange(channel, preset, 0);
                 logger.info("Initialized instrument {} with preset {} on channel {}",
                         instrument.getName(), preset, channel);
+                        
+                // Save player using PlayerManager to ensure persistence
+                PlayerManager.getInstance().savePlayerProperties(player);
             }
         } catch (Exception e) {
-            logger.error("Error initializing instrument: {}", e.getMessage());
+            logger.error("Error initializing instrument: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Initialize the player if it doesn't already have a valid instrument
+     */
+    public void ensurePlayerHasInstrument() {
+        if (player != null && player.getInstrument() == null) {
+            logger.warn("Player {} has no instrument, initializing default", player.getId());
+            initializeInternalInstrument(player);
         }
     }
 }

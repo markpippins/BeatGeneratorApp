@@ -176,12 +176,6 @@ public class App implements IBusListener {
             logger.info("Redis service initialized");
             splash.completeTask("Connected to database");
             
-            // Initialize SessionManager
-            SessionManager sessionManager = SessionManager.getInstance();
-            sessionManager.initialize();
-            logger.info("Session manager initialized");
-            splash.completeTask("Initialized session manager");
-
             // Initialize MIDI device manager
             DeviceManager deviceManager = DeviceManager.getInstance();
             deviceManager.refreshDeviceList();
@@ -191,7 +185,7 @@ public class App implements IBusListener {
             InternalSynthManager.getInstance().initializeSynthesizer();
             InternalSynthManager.getInstance().initializeSoundbanks();
             splash.completeTask("Loaded internal synthesizer");
-
+            
             // Initialize instrument management
             InstrumentHelper instrumentHelper = redisService.getInstrumentHelper();
             List<InstrumentWrapper> instruments = instrumentHelper.findAllInstruments();
@@ -200,8 +194,14 @@ public class App implements IBusListener {
             // Initialize InstrumentManager (if not already)
             InstrumentManager.getInstance().refreshInstruments();
             splash.completeTask("Loaded instrument configurations");
-
-            // Signal system ready
+            
+            // Initialize SessionManager AFTER instruments are loaded
+            SessionManager sessionManager = SessionManager.getInstance();
+            sessionManager.initialize();
+            logger.info("Session manager initialized");
+            splash.completeTask("Initialized session manager");
+            
+            // Signal system ready - this will trigger waiting sequencers to initialize
             CommandBus.getInstance().publish(Commands.SYSTEM_READY, App.class, null);
             logger.info("System initialization complete");
 

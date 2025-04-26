@@ -418,8 +418,12 @@ public class RedisService implements IBusListener {
         return playerHelper.findPlayersForSession(sessionId, Player.class.getSimpleName().toLowerCase());
     }
 
-    public Player newPlayer() {
-        return playerHelper.newPlayer();
+    public Player newNote() {
+        return playerHelper.newNote();
+    }
+
+    public Player newStrike() {
+        return playerHelper.newStrike();
     }
 
     public void deletePlayer(Player player) {

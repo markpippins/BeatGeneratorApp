@@ -57,7 +57,18 @@ public final class InstrumentWrapper implements Serializable {
 
     private Long id;
 
+    @JsonIgnore
+    private transient MidiDevice.Info deviceInfo = null;
+
     private Boolean internal;
+
+    // Add these fields to InstrumentWrapper
+    private int bankMSB = 0; // Default to bank 0
+    private int bankLSB = 0; // Default to bank 0
+
+    private int program = 0; // Default to program 0
+    
+    private Boolean assignedToPlayer = false;
 
     private List<ControlCode> controlCodes = new ArrayList<>();
 
@@ -88,8 +99,9 @@ public final class InstrumentWrapper implements Serializable {
     private String description;
 
     @Convert(converter = IntegerArrayConverter.class)
-    @Column(name = "channels")
     private Integer[] channels;
+
+    private Integer channel;
 
     private Integer lowestNote = 0;
 
@@ -131,8 +143,25 @@ public final class InstrumentWrapper implements Serializable {
         this(name, device, DEFAULT_CHANNELS);
     }
 
+    /**
+     * Constructor for creating an instrument wrapper
+     */
     public InstrumentWrapper(String name, MidiDevice device, int channel) {
-        this(name, device, new Integer[] { channel });
+        this.name = name;
+        this.device = device;
+        this.channel = channel;
+        
+        // Safely get device info if device is not null
+        if (device != null) {
+            this.deviceInfo = device.getDeviceInfo();
+            this.deviceName = deviceInfo.getName();
+        } else {
+            // Set default values for null device
+            this.deviceName = "Internal";
+        }
+        
+        // Set default values
+        this.internal = (device == null);  // Assume internal if device is null
     }
 
     public InstrumentWrapper(String name, MidiDevice device, Integer[] channels) {
@@ -444,22 +473,39 @@ public final class InstrumentWrapper implements Serializable {
     }
 
     /**
-     * Get the currently selected bank index
+     * Get the currently selected bank index, calculated from MSB/LSB if available
      * 
      * @return The bank index
      */
     public Integer getBankIndex() {
+        // If we have MSB/LSB values set, calculate the combined index
+        if (bankMSB != 0 || bankLSB != 0) {
+            return (bankMSB << 7) | bankLSB;
+        }
+        // Otherwise return the stored bankIndex field
         return bankIndex;
     }
 
     /**
      * Set the currently selected bank index
+     * Updates both the bankIndex field and the MSB/LSB values
      * 
      * @param bankIndex The bank index
      */
     public void setBankIndex(Integer bankIndex) {
         this.bankIndex = bankIndex;
-        logger.info("Set bank index to: {}", bankIndex);
+        
+        if (bankIndex == null) {
+            this.bankMSB = 0;
+            this.bankLSB = 0;
+        } else {
+            // Use upper/lower bytes of the integer for MSB/LSB
+            this.bankMSB = (bankIndex >> 7) & 0x7F;  // Upper 7 bits
+            this.bankLSB = bankIndex & 0x7F;         // Lower 7 bits
+        }
+        
+        logger.info("Set bank index to: {} (MSB: {}, LSB: {})", 
+                    bankIndex, bankMSB, bankLSB);
     }
 
     /**
@@ -539,5 +585,41 @@ public final class InstrumentWrapper implements Serializable {
 
     public boolean isInternalSynth() {
         return internal;
+    }
+
+    /**
+     * Gets the Bank Select MSB (CC #0) value
+     * @return MSB value (0-127)
+     */
+    public int getBankMSB() {
+        return bankMSB;
+    }
+
+    /**
+     * Sets the Bank Select MSB (CC #0) value
+     * @param msb MSB value (0-127)
+     */
+    public void setBankMSB(int msb) {
+        this.bankMSB = Math.max(0, Math.min(127, msb));
+        // Update the combined index
+        this.bankIndex = (bankMSB << 7) | bankLSB;
+    }
+
+    /**
+     * Gets the Bank Select LSB (CC #32) value
+     * @return LSB value (0-127)
+     */
+    public int getBankLSB() {
+        return bankLSB;
+    }
+
+    /**
+     * Sets the Bank Select LSB (CC #32) value
+     * @param lsb LSB value (0-127)
+     */
+    public void setBankLSB(int lsb) {
+        this.bankLSB = Math.max(0, Math.min(127, lsb));
+        // Update the combined index
+        this.bankIndex = (bankMSB << 7) | bankLSB;
     }
 }
