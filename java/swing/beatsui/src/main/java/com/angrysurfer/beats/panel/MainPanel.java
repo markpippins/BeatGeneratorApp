@@ -97,9 +97,9 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane = new JTabbedPane();
 
         internalSynthControlPanel = new InternalSynthControlPanel();
-        tabbedPane.addTab("PolySequencer", createDrumSequencersPanel());
+        tabbedPane.addTab("Multi", createDrumSequencersPanel());
 
-        tabbedPane.addTab("Melodic", createMelodicSequencersPanel());
+        tabbedPane.addTab("Mono", createMelodicSequencersPanel());
 
         tabbedPane.addTab("Song", createSongPanel());
         tabbedPane.addTab("Synth", internalSynthControlPanel);
@@ -210,7 +210,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         drumsTabbedPane.addTab("Sequencer", createDrumPanel());
         drumsTabbedPane.addTab("Parameters", createDrumParamsPanel());
-        drumsTabbedPane.addTab("Effects", createDrumEffectsPanel());
+        drumsTabbedPane.addTab("Mix", createDrumEffectsPanel());
 
         return drumsTabbedPane;
     }

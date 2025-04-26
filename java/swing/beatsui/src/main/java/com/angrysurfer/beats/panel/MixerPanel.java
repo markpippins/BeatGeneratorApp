@@ -106,6 +106,15 @@ public class MixerPanel extends JPanel implements IBusListener {
      * Set up the mixer UI components with vertical channel strips
      */
     private void setupUI() {
+        // Clear all collections before rebuilding UI
+        volumeDials.clear();
+        panDials.clear();
+        muteButtons.clear();
+        soloButtons.clear();
+        reverbDials.clear();
+        chorusDials.clear();
+        delayDials.clear();
+        
         // Create main container with horizontal layout for channel strips
         JPanel mixerPanel = new JPanel();
         mixerPanel.setLayout(new BoxLayout(mixerPanel, BoxLayout.X_AXIS));
@@ -120,8 +129,9 @@ public class MixerPanel extends JPanel implements IBusListener {
             mixerPanel.add(channelStrip);
 
             // Add separator except after the last channel
+            // REDUCED: from 5 to 2
             if (i < trackNames.length - 1) {
-                mixerPanel.add(Box.createHorizontalStrut(5));
+                mixerPanel.add(Box.createHorizontalStrut(2));
             }
         }
 
@@ -145,8 +155,8 @@ public class MixerPanel extends JPanel implements IBusListener {
      * Create track labels panel (left side)
      */
     private JPanel createTrackLabelsPanel() {
-        JPanel labelsPanel = new JPanel(new GridLayout(7, 1, 0, 5));
-        labelsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        JPanel labelsPanel = new JPanel(new GridLayout(7, 1, 0, 2));
+        labelsPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Add section labels
         JLabel controlLabel = new JLabel("Control", JLabel.LEFT);
@@ -184,19 +194,19 @@ public class MixerPanel extends JPanel implements IBusListener {
      * Create a vertical channel strip for a specific track
      */
     private JPanel createVerticalChannelStrip(int index, String name, int midiChannel) {
-        JPanel panel = new JPanel(new GridLayout(7, 1, 0, 5));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        JPanel panel = new JPanel(new GridLayout(7, 1, 0, 2));
+        panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         boolean isMaster = midiChannel == -1;
 
         // Track name with stylized border
         JPanel namePanel = new JPanel(new BorderLayout());
         namePanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(UIUtils.deepNavy),
-                BorderFactory.createEmptyBorder(2, 5, 2, 5)));
+                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
 
         JLabel nameLabel = new JLabel(name, JLabel.CENTER);
-        nameLabel.setPreferredSize(new Dimension(100, 25));
-        nameLabel.setFont(new Font("Arial", Font.BOLD, isMaster ? 13 : 12));
+        nameLabel.setPreferredSize(new Dimension(80, 20));
+        nameLabel.setFont(new Font("Arial", Font.BOLD, isMaster ? 12 : 11));
         if (isMaster) {
             nameLabel.setForeground(UIUtils.mutedRed);
         }
@@ -226,13 +236,11 @@ public class MixerPanel extends JPanel implements IBusListener {
 
         // Volume dial
         Dial volumeDial = new Dial();
-        volumeDial.setPreferredSize(new Dimension(75, 75));
+        volumeDial.setPreferredSize(new Dimension(50, 50));
         volumeDial.setValue(100); // Default volume
         volumeDial.setToolTipText("Volume");
-        volumeDial.setPreferredSize(new Dimension(75, 75));
-        volumeDials.add(volumeDial);
         volumeDial.setKnobColor(UIUtils.getDialColor("volume"));
-
+        volumeDials.add(volumeDial);
         panel.add(wrapInCenteredPanel(volumeDial));
 
         // Pan dial
@@ -240,7 +248,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         panDial.setValue(64); // Center
         panDial.setEnabled(!isMaster); // Master has no pan
         panDial.setToolTipText("Pan");
-        panDial.setPreferredSize(new Dimension(75, 75));
+        panDial.setPreferredSize(new Dimension(50, 50));
         panDial.setKnobColor(UIUtils.getDialColor("pan"));
         panDials.add(panDial);
         panel.add(wrapInCenteredPanel(panDial));
@@ -249,7 +257,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         Dial reverbDial = new Dial();
         reverbDial.setValue(0);
         reverbDial.setToolTipText("Reverb Send");
-        reverbDial.setPreferredSize(new Dimension(75, 75));
+        reverbDial.setPreferredSize(new Dimension(50, 50));
         reverbDial.setKnobColor(UIUtils.getDialColor("reverb"));
         reverbDials.add(reverbDial);
         panel.add(wrapInCenteredPanel(reverbDial));
@@ -258,9 +266,8 @@ public class MixerPanel extends JPanel implements IBusListener {
         Dial chorusDial = new Dial();
         chorusDial.setValue(0);
         chorusDial.setToolTipText("Chorus Send");
-        chorusDial.setPreferredSize(new Dimension(75, 75));
+        chorusDial.setPreferredSize(new Dimension(50, 50));
         chorusDial.setKnobColor(UIUtils.getDialColor("chorus"));
-
         chorusDials.add(chorusDial);
         panel.add(wrapInCenteredPanel(chorusDial));
 
@@ -268,7 +275,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         Dial delayDial = new Dial();
         delayDial.setValue(0);
         delayDial.setToolTipText("Delay Send");
-        delayDial.setPreferredSize(new Dimension(75, 75));
+        delayDial.setPreferredSize(new Dimension(50, 50));
         delayDial.setKnobColor(UIUtils.getDialColor("delay"));
         delayDials.add(delayDial);
         panel.add(wrapInCenteredPanel(delayDial));
@@ -299,13 +306,13 @@ public class MixerPanel extends JPanel implements IBusListener {
                         TitledBorder.TOP,
                         new Font("Arial", Font.BOLD, 12),
                         UIUtils.deepNavy),
-                BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+                BorderFactory.createEmptyBorder(2, 5, 2, 5)));
 
         // Add global effect dials: reverb time, delay time, delay feedback
         panel.add(createGlobalEffectControl("Reverb Decay", 103));
-        panel.add(Box.createHorizontalStrut(20));
+        panel.add(Box.createHorizontalStrut(5));
         panel.add(createGlobalEffectControl("Delay Time", 102));
-        panel.add(Box.createHorizontalStrut(20));
+        panel.add(Box.createHorizontalStrut(5));
         panel.add(createGlobalEffectControl("Delay Feedback", 104));
 
         // Add reset button at the end
@@ -327,11 +334,12 @@ public class MixerPanel extends JPanel implements IBusListener {
         // Create label
         JLabel label = new JLabel(name, SwingConstants.CENTER);
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        label.setFont(new Font("Arial", Font.PLAIN, 11));
 
         // Create dial
         Dial dial = new Dial();
         dial.setValue(0);
-        dial.setPreferredSize(new Dimension(50, 50));
+        dial.setPreferredSize(new Dimension(40, 40));
         dial.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Add listener to send MIDI CC
@@ -542,23 +550,37 @@ public class MixerPanel extends JPanel implements IBusListener {
                 if (channel < 0)
                     continue;
 
-                // Set initial values
-                volumeDials.get(i).setValue(100);
-                panDials.get(i).setValue(64);
-                reverbDials.get(i).setValue(0);
-                chorusDials.get(i).setValue(0);
-                delayDials.get(i).setValue(0);
-
-                // Send initial values to device
-                sendMidiCC(channel, CC_VOLUME, 100);
-                sendMidiCC(channel, CC_PAN, 64);
-                sendMidiCC(channel, CC_REVERB, 0);
-                sendMidiCC(channel, CC_CHORUS, 0);
-                sendMidiCC(channel, CC_DELAY, 0);
+                // Add defensive checks to ensure collections are properly populated
+                if (i < volumeDials.size()) {
+                    volumeDials.get(i).setValue(100);
+                    sendMidiCC(channel, CC_VOLUME, 100);
+                }
+                
+                if (i < panDials.size()) {
+                    panDials.get(i).setValue(64);
+                    sendMidiCC(channel, CC_PAN, 64);
+                }
+                
+                if (i < reverbDials.size()) {
+                    reverbDials.get(i).setValue(0);
+                    sendMidiCC(channel, CC_REVERB, 0);
+                }
+                
+                if (i < chorusDials.size()) {
+                    chorusDials.get(i).setValue(0);
+                    sendMidiCC(channel, CC_CHORUS, 0);
+                }
+                
+                if (i < delayDials.size()) {
+                    delayDials.get(i).setValue(0);
+                    sendMidiCC(channel, CC_DELAY, 0);
+                }
             }
 
-            // Set master to default
-            volumeDials.get(volumeDials.size() - 1).setValue(100);
+            // Set master to default (with defensive check)
+            if (volumeDials.size() > trackChannels.length - 1) {
+                volumeDials.get(volumeDials.size() - 1).setValue(100);
+            }
 
         } finally {
             updatingUI = false;

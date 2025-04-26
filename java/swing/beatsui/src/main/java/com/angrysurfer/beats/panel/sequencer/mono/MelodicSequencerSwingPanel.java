@@ -34,26 +34,31 @@ public class MelodicSequencerSwingPanel extends JPanel {
     public MelodicSequencerSwingPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
         
-        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        // REDUCED: from 5,5 to 2,1
+        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
         setBorder(BorderFactory.createTitledBorder("Swing"));
 
         // Swing on/off toggle
         swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());
-        swingToggle.setPreferredSize(new Dimension(50, 25)); // Slightly wider for text "On"
-        swingToggle.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
+        // REDUCED: from 50,25 to 45,22
+        swingToggle.setPreferredSize(new Dimension(45, 22));
+        swingToggle.setMargin(new Insets(2, 2, 2, 2)); // Already compact
         swingToggle.addActionListener(e -> {
             sequencer.setSwingEnabled(swingToggle.isSelected());
         });
         add(swingToggle);
 
-        // Swing amount slider - use MelodicSequencer.MIN_SWING and MAX_SWING
+        // Swing amount slider
         swingSlider = new JSlider(JSlider.HORIZONTAL, 
             MelodicSequencer.MIN_SWING, MelodicSequencer.MAX_SWING, sequencer.getSwingPercentage());
         swingSlider.setMajorTickSpacing(5);
         swingSlider.setPaintTicks(true);
-        swingSlider.setPreferredSize(new Dimension(100, 30));
+        // REDUCED: from 100,30 to 90,25
+        swingSlider.setPreferredSize(new Dimension(90, 25));
 
         valueLabel = new JLabel(sequencer.getSwingPercentage() + "%");
+        // ADDED: Smaller font for more compact display
+        valueLabel.setFont(valueLabel.getFont().deriveFont(11f));
 
         swingSlider.addChangeListener(e -> {
             int value = swingSlider.getValue();

@@ -56,7 +56,8 @@ public class DrumSequencerParametersPanel extends JPanel {
         this.sequencer = sequencer;
         
         setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
-        setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        // REDUCED: from 10,5 to 2,1 for more compact appearance
+        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
         
         initializeComponents();
     }
@@ -69,10 +70,12 @@ public class DrumSequencerParametersPanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         
         // Create a panel to hold the main controls with FlowLayout
-        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        // REDUCED: from 10,5 to 2,1
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 1));
         
         // Last Step spinner
-        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         lastStepPanel.add(new JLabel("Last Step:"));
 
         // Create spinner model with range 1-sequencer.getMaxSteps()
@@ -102,7 +105,8 @@ public class DrumSequencerParametersPanel extends JPanel {
         lastStepPanel.add(lastStepSpinner);
 
         // Direction combo
-        JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
         directionCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
         directionCombo.setToolTipText("Set the playback direction of the pattern");
@@ -128,7 +132,8 @@ public class DrumSequencerParametersPanel extends JPanel {
         directionPanel.add(directionCombo);
 
         // Timing division combo
-        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
         timingCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
         timingCombo.addActionListener(e -> {
@@ -162,7 +167,8 @@ public class DrumSequencerParametersPanel extends JPanel {
         });
 
         // Create rotation panel for push/pull buttons
-        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
 
         // Push forward button
         JButton pushForwardButton = new JButton("⟶");
@@ -230,7 +236,8 @@ public class DrumSequencerParametersPanel extends JPanel {
         add(Box.createHorizontalGlue());
         
         // Create right-side panel for clear button with some padding
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        // REDUCED: from 10,5 to 2,1
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
         rightPanel.add(clearPatternButton);
         
         // Add right panel

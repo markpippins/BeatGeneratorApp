@@ -144,31 +144,32 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Initialize the UI components - revised to fix duplication and layout
-     * issues
+     * Initialize the panel
      */
     private void initialize() {
         // Clear any existing components first to prevent duplication
         removeAll();
 
         // Use a consistent BorderLayout
-        setLayout(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // REDUCED: from 5,5 to 2,2
+        setLayout(new BorderLayout(2, 2));
+        // REDUCED: from 5,5,5,5 to 2,2,2,2
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Create west panel to hold navigation
-        JPanel westPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel westPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create east panel for sound parameters
-        JPanel eastPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create top panel to hold west and east panels
-        JPanel topPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create sequence navigation panel
         DrumSequenceNavigationPanel navigationPanel = new DrumSequenceNavigationPanel(sequencer);
-
-        // Create swing control panel
-        JPanel swingPanel = createSwingControlPanel();
 
         // Navigation panel goes NORTH-WEST
         westPanel.add(navigationPanel, BorderLayout.NORTH);
@@ -200,7 +201,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         add(scrollPane, BorderLayout.CENTER);
 
         // Create a panel for the bottom controls
-        JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
         bottomPanel.add(new DrumSequencerMaxLengthPanel(sequencer), BorderLayout.WEST);
 
         // Create and add the sequence parameters panel using our new class
@@ -209,14 +211,17 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
         // Create a container for the right-side panels
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
 
         // Create and add generate panel
         generatorPanel = new DrumSequenceGeneratorPanel(sequencer);
         rightPanel.add(generatorPanel);
 
-        // Use the new swing panel
-        swingPanel = createSwingControlPanel();
+        // Use the existing DrumSequencerSwingPanel class instead
+        DrumSequencerSwingPanel swingPanel = new DrumSequencerSwingPanel(sequencer);
+        // Apply consistent reduced spacing to the swing panel
+        swingPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
         rightPanel.add(swingPanel);
 
         // Add the right panel container to the east position
@@ -224,13 +229,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Add the bottom panel to the main panel
         add(bottomPanel, BorderLayout.SOUTH);
-    }
-
-    // Replace createSwingControlPanel with this:
-    private JPanel createSwingControlPanel() {
-        // Create panel with specified dimensions and add to container
-        swingPanel = new DrumSequencerSwingPanel(sequencer);
-        return swingPanel;
     }
 
     /**
@@ -509,7 +507,8 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Create the panel with a titled border
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Sound Parameters"));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        // REDUCED: from 5,2 to 2,1
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
 
         // Create kit/preset combo
         JComboBox<String> kitCombo = new JComboBox<>();

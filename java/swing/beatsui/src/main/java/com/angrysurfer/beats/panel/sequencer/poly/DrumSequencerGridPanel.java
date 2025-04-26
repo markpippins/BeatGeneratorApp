@@ -53,8 +53,10 @@ public class DrumSequencerGridPanel extends JPanel {
         this.contextMenuHandler = new DrumSequencerGridPanelContextHandler(sequencer, parentPanel);
         
         // Use GridLayout for perfect grid alignment
-        setLayout(new GridLayout(DRUM_PAD_COUNT, sequencer.getDefaultPatternLength(), 2, 2));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // REDUCED: from 2,2 to 1,1 - tighter grid spacing for more compact appearance
+        setLayout(new GridLayout(DRUM_PAD_COUNT, sequencer.getDefaultPatternLength(), 1, 1));
+        // REDUCED: from 5,5,5,5 to 2,2,2,2 - consistent with other panels
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         
         // Initialize grid buttons array
         gridButtons = new DrumSequencerGridButton[DRUM_PAD_COUNT][sequencer.getDefaultPatternLength()];

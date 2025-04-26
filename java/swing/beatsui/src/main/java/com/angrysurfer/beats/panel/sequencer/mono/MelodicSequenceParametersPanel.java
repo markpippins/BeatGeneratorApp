@@ -23,10 +23,10 @@ public class MelodicSequenceParametersPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceParametersPanel.class);
     
     // Size constants
-    private static final int SMALL_CONTROL_WIDTH = 40;
-    private static final int MEDIUM_CONTROL_WIDTH = 60;
-    private static final int LARGE_CONTROL_WIDTH = 90;
-    private static final int CONTROL_HEIGHT = 25;
+    private static final int SMALL_CONTROL_WIDTH = 35;   // REDUCED: from 40 to 35
+    private static final int MEDIUM_CONTROL_WIDTH = 55;  // REDUCED: from 60 to 55
+    private static final int LARGE_CONTROL_WIDTH = 85;   // REDUCED: from 90 to 85
+    private static final int CONTROL_HEIGHT = 22;        // REDUCED: from 25 to 22
     
     // UI Controls
     private JComboBox<String> directionCombo;
@@ -61,7 +61,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      */
     private void initialize() {
         setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
-        setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1)); // REDUCED: from 10,5 to 2,1
         
         // Create all the panels and controls
         createLastStepControls();
@@ -80,7 +80,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Create last step spinner control
      */
     private void createLastStepControls() {
-        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
         lastStepPanel.add(new JLabel("Last Step:"));
 
         // Create spinner model with range 1-16, default 16
@@ -103,7 +103,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Create direction combo control
      */
     private void createDirectionControls() {
-        JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
         directionCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
@@ -130,7 +130,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Create timing division combo control
      */
     private void createTimingControls() {
-        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
         timingCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
@@ -170,7 +170,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Create rotation controls
      */
     private void createRotationControls() {
-        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         // Rotate Left button
         JButton rotateLeftButton = new JButton("⟵");
@@ -237,7 +237,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Create root note controls
      */
     private void createRootNoteControls() {
-        JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
         rootNotePanel.add(new JLabel("Root:"));
 
         String[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
@@ -285,7 +285,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Create scale combo control
      */
     private void createScaleControls() {
-        JPanel scalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JPanel scalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
         scalePanel.add(new JLabel("Scale:"));
 
         String[] scaleNames = Scale.getScales();

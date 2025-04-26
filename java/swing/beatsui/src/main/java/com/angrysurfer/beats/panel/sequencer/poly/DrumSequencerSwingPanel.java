@@ -35,13 +35,16 @@ public class DrumSequencerSwingPanel extends JPanel {
     public DrumSequencerSwingPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         
-        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        // REDUCED: from 5,5 to 2,1
+        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
         setBorder(BorderFactory.createTitledBorder("Swing"));
 
         // Swing on/off toggle
         swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());
-        swingToggle.setPreferredSize(new Dimension(50, 25)); // Slightly wider for text "On"
-        swingToggle.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
+        // REDUCED: from 50,25 to 45,22
+        swingToggle.setPreferredSize(new Dimension(45, 22));
+        // Already small margins (2,2,2,2)
+        swingToggle.setMargin(new Insets(2, 2, 2, 2));
         swingToggle.addActionListener(e -> {
             sequencer.setSwingEnabled(swingToggle.isSelected());
         });
@@ -51,9 +54,12 @@ public class DrumSequencerSwingPanel extends JPanel {
         swingSlider = new JSlider(JSlider.HORIZONTAL, 50, 75, sequencer.getSwingPercentage());
         swingSlider.setMajorTickSpacing(5);
         swingSlider.setPaintTicks(true);
-        swingSlider.setPreferredSize(new Dimension(100, 30));
+        // REDUCED: from 100,30 to 90,25
+        swingSlider.setPreferredSize(new Dimension(90, 25));
 
         valueLabel = new JLabel(sequencer.getSwingPercentage() + "%");
+        // ADDED: Set smaller font size for consistency
+        valueLabel.setFont(valueLabel.getFont().deriveFont(11f));
 
         swingSlider.addChangeListener(e -> {
             int value = swingSlider.getValue();
