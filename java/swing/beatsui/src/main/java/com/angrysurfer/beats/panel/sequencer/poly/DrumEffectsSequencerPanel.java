@@ -28,6 +28,7 @@ import javax.swing.border.EmptyBorder;
 
 import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.panel.MainPanel;
+import com.angrysurfer.beats.panel.SoundParametersPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
@@ -37,6 +38,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.DrumStepUpdateEvent;
@@ -80,7 +82,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
     private boolean updatingControls = false;
 
     // Add this field to DrumEffectsSequencerPanel
-    private DrumPadButtonPanel drumPadPanel;
+    private DrumButtonsPanel drumPadPanel;
 
     /**
      * Create a new SequencerPanel
@@ -157,7 +159,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
     private void initialize() {
         // Clear any existing components first to prevent duplication
         removeAll();
-        
+
         // Clear collections before rebuilding
         selectorButtons.clear();
         panDials.clear();
@@ -177,6 +179,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Create east panel for sound parameters
         // REDUCED: from 5,5 to 2,2
         JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
+        eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
 
         // Create top panel to hold west and east panels
         // REDUCED: from 5,5 to 2,2
@@ -214,9 +217,10 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         centerPanel.add(sequencePanel, BorderLayout.CENTER);
 
         // Create drum pad panel with callback
-        drumPadPanel = new DrumPadButtonPanel(sequencer, this::handleDrumPadSelected);
+        drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
 
-        // IMPORTANT: Add drum pad panel DIRECTLY to the border layout, no wrapping panels
+        // IMPORTANT: Add drum pad panel DIRECTLY to the border layout, no wrapping
+        // panels
         centerPanel.add(drumPadPanel, BorderLayout.SOUTH);
 
         // Add the center panel to the main layout
@@ -225,7 +229,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Create a panel for the bottom controls
         // REDUCED: from 5,5 to 2,2
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
-        
+
         // Add MaxLengthPanel to the WEST position
         maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
         bottomPanel.add(maxLengthPanel, BorderLayout.WEST);
@@ -361,7 +365,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         });
 
         selectorButtons.add(triggerButton);
-        
+
         // Center the button horizontally
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         buttonPanel.add(triggerButton);
@@ -469,7 +473,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
             // Set new selection
             selectedPadIndex = padIndex;
-            
+
             // Update sequencer's selected pad index
             sequencer.setSelectedPadIndex(padIndex);
 
@@ -485,20 +489,23 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 // Notify other components of the selection change
                 CommandBus.getInstance().publish(Commands.DRUM_PAD_SELECTED,
                         this, new DrumPadSelectionEvent(-1, padIndex));
-                        
+
                 // Refresh trigger buttons to show the pattern for the selected pad
                 refreshTriggerButtonsForPad(padIndex);
-        
+
                 // Update controls to match the selected pad's settings
                 updateControlsFromSequencer();
-        
+
                 // Update dial positions for the selected drum
                 updateDialsForSelectedPad();
-        
+
                 // Update sequence parameter controls to match selected drum
                 if (sequenceParamsPanel != null) {
                     sequenceParamsPanel.updateControls(padIndex);
                 }
+
+                // Add after other UI updates:
+                updateSoundParametersPanel(padIndex);
             } else {
                 // No valid selection - disable trigger buttons
                 setTriggerButtonsEnabled(false);
@@ -511,9 +518,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         if (padIndex == selectedPadIndex) {
             return;
         }
-        
+
         System.out.println("DrumEffectsSequencerPanel: Drum pad selected: " + padIndex);
-        
+
         // Store the selection locally
         selectedPadIndex = padIndex;
 
@@ -537,6 +544,12 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         if (sequenceParamsPanel != null) {
             sequenceParamsPanel.updateControls(padIndex);
         }
+
+        // Add after other UI updates:
+        updateSoundParametersPanel(padIndex);
+
+        // Update sound parameters panel with the selected drum's player
+        updateSoundParametersPanel();
     }
 
     // Update refresh method to get data from sequencer
@@ -601,7 +614,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             return;
         }
 
-        // Update all dials to match the sequencer's current values for the selected drum
+        // Update all dials to match the sequencer's current values for the selected
+        // drum
         for (int i = 0; i < selectorButtons.size(); i++) {
             // Update pan dials
             if (i < panDials.size()) {
@@ -636,17 +650,17 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         if (selectedPadIndex < 0) {
             return;
         }
-        
+
         // Set the class-level flag
         updatingControls = true;
-        
+
         try {
             // Ensure we're on the EDT
             if (!SwingUtilities.isEventDispatchThread()) {
                 SwingUtilities.invokeLater(() -> updateDialsForSelectedPad());
                 return;
             }
-            
+
             // Update all dials for each step
             for (int step = 0; step < 16; step++) {
                 // Get pan dial and update its value
@@ -656,7 +670,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     panDial.setValue(pan);
                     panDial.repaint();
                 }
-                
+
                 // Get delay dial and update its value
                 if (step < delayDials.size()) {
                     Dial delayDial = delayDials.get(step);
@@ -664,7 +678,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     delayDial.setValue(delay);
                     delayDial.repaint();
                 }
-                
+
                 // Get chorus dial and update its value
                 if (step < chorusDials.size()) {
                     Dial chorusDial = chorusDials.get(step);
@@ -672,7 +686,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     chorusDial.setValue(chorus);
                     chorusDial.repaint();
                 }
-                
+
                 // Get reverb dial and update its value
                 if (step < reverbDials.size()) {
                     Dial reverbDial = reverbDials.get(step);
@@ -712,34 +726,34 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 SwingUtilities.invokeLater(() -> {
                     // Remember which pad was selected
                     int currentSelection = selectedPadIndex;
-                    
+
                     // Find the parent container that contains our drumPadPanel
                     Container parent = drumPadPanel.getParent();
-                    
+
                     if (parent != null) {
                         // Remove the old panel
                         parent.remove(drumPadPanel);
-                        
+
                         // Create a new drum pad panel with updated theme colors
-                        drumPadPanel = new DrumPadButtonPanel(sequencer, this::handleDrumPadSelected);
-                        
+                        drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
+
                         // Add it back to the layout
                         parent.add(drumPadPanel, BorderLayout.SOUTH);
-                        
+
                         // Update UI
                         parent.revalidate();
                         parent.repaint();
-                        
+
                         // Restore selection state
                         if (currentSelection >= 0) {
                             drumPadPanel.selectDrumPad(currentSelection);
                         }
-                        
+
                         System.out.println("DrumEffectsSequencerPanel: Recreated drum pad panel after theme change");
                     }
                 });
             }
-            
+
             case Commands.TIMING_UPDATE -> {
                 // Only update if we have a drum selected and are playing
                 if (selectedPadIndex >= 0 && sequencer.isPlaying() && action.getData() instanceof TimingUpdate) {
@@ -790,7 +804,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 if (selectedPadIndex >= 0) {
                     refreshTriggerButtonsForPad(selectedPadIndex);
                     updateControlsFromSequencer();
-                    
+
                     // Update dial positions for the loaded drum sequence
                     updateDialsForSelectedPad();
                 }
@@ -899,7 +913,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         if (selectedPadIndex < 0) {
             return;
         }
-        
+
         // Use the custom panel's method to update controls
         sequenceParamsPanel.updateControls(selectedPadIndex);
     }
@@ -928,5 +942,93 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             parent = parent.getParent();
         }
         return null;
+    }
+
+    /**
+     * Creates the sound parameters panel
+     */
+    private JPanel createSoundParametersPanel() {
+        // Get the currently selected player
+        int selectedPadIndex = getSelectedPadIndex();
+        Player player = null;
+        
+        // Get the selected drum's Player object if available
+        if (selectedPadIndex >= 0 && selectedPadIndex < sequencer.getPlayers().length) {
+            player = sequencer.getPlayers()[selectedPadIndex];
+        }
+        
+        // Create the standardized SoundParametersPanel
+        SoundParametersPanel panel = new SoundParametersPanel(player);
+        
+        // Return the panel
+        return panel;
+    }
+
+    /**
+     * Updates the sound parameters panel with the selected drum's player
+     */
+    private void updateSoundParametersPanel(int padIndex) {
+        if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
+            Player player = sequencer.getPlayers()[padIndex];
+
+            // Find and update the SoundParametersPanel
+            findAndUpdateSoundPanel(this, player);
+        }
+    }
+
+    /**
+     * Helper method to find and update SoundParametersPanel recursively
+     */
+    private void findAndUpdateSoundPanel(JPanel panel, Player player) {
+        if (panel instanceof SoundParametersPanel) {
+            ((SoundParametersPanel) panel).setPlayer(player);
+            return;
+        }
+
+        // Search children
+        Component[] components = panel.getComponents();
+        for (Component component : components) {
+            if (component instanceof JPanel) {
+                findAndUpdateSoundPanel((JPanel) component, player);
+            }
+        }
+    }
+
+    /**
+     * Updates the sound parameters panel when a drum is selected
+     */
+    private void updateSoundParametersPanel() {
+        // Find the SoundParametersPanel and update its player
+        Component[] components = getComponents();
+        for (Component component : components) {
+            if (component instanceof JPanel) {
+                findAndUpdateSoundPanel((JPanel) component);
+            }
+        }
+    }
+
+    /**
+     * Helper method to find and update SoundParametersPanel recursively
+     */
+    private void findAndUpdateSoundPanel(JPanel panel) {
+        if (panel instanceof SoundParametersPanel) {
+            // Get the selected drum's Player object
+            if (selectedPadIndex >= 0 && selectedPadIndex < sequencer.getPlayers().length) {
+                Player player = sequencer.getPlayers()[selectedPadIndex];
+                ((SoundParametersPanel) panel).setPlayer(player);
+            } else {
+                // No selection, clear the panel
+                ((SoundParametersPanel) panel).setPlayer(null);
+            }
+            return;
+        }
+        
+        // Search children
+        Component[] components = panel.getComponents();
+        for (Component component : components) {
+            if (component instanceof JPanel) {
+                findAndUpdateSoundPanel((JPanel) component);
+            }
+        }
     }
 }

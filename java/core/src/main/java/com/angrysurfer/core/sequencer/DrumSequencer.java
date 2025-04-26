@@ -306,11 +306,11 @@ public class DrumSequencer implements IBusListener {
             players[i].setChannel(MIDI_DRUM_CHANNEL);
 
             // Create an InstrumentWrapper for the internal synth
-            instruments[i] = new InstrumentWrapper(players[i].getName(), synth);
+            instruments[i] = new InstrumentWrapper(synth.getDeviceInfo().getName(), synth);
             instruments[i].setDeviceName(synth.getDeviceInfo().getName());
             instruments[i].setChannels(new Integer[] { MIDI_DRUM_CHANNEL }); // Drum channel
             instruments[i].setInternal(true);
-
+            instruments[i].setChannel(players[i].getChannel());
             logger.info("Created internal synth instrument for drum sequencer: {}", instruments[i].getName());
 
             // Assign the internal synth instrument

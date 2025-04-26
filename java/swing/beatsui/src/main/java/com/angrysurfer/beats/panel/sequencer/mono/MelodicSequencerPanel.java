@@ -1,11 +1,9 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,14 +19,14 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
-import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
-import com.angrysurfer.beats.panel.SessionControlPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
+import com.angrysurfer.beats.panel.SessionControlPanel;
+import com.angrysurfer.beats.panel.SoundParametersPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
@@ -43,7 +41,6 @@ import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
-import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.MelodicSequencerManager;
 
 import lombok.Getter;
@@ -266,69 +263,15 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         CommandBus.getInstance().register(this);
     }
 
+    /**
+     * Creates the sound parameters panel for instrument selection and editing
+     */
     private JPanel createSoundParametersPanel() {
-
-
-        // Create the panel with a titled border
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder("Sound Parameters"));
-        // REDUCED: from 5,2 to 2,1
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1)); 
-
-        // Create preset combo
-        JComboBox<String> presetCombo = new JComboBox<>();
-        presetCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH * 2, UIUtils.CONTROL_HEIGHT));
-        presetCombo.setToolTipText("Select instrument preset");
-//        populatePresetCombo(presetCombo);
-
-        // Add listener for preset changes
-        presetCombo.addActionListener(e -> {
-            if (updatingUI || presetCombo.getSelectedIndex() < 0)
-                return;
-
-            int presetIndex = presetCombo.getSelectedIndex();
-            logger.info("Selected preset index: {}", presetIndex);
-
-            if (sequencer.getPlayer() != null) {
-                sequencer.getPlayer().setPreset(presetIndex);
-
-                // Inform the system about the preset change
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_UPDATED,
-                        this,
-                        sequencer.getPlayer());
-            }
-        });
-
-        // Create edit button with pencil icon and skinny width
-        JButton editButton = new JButton("✎");
-        editButton.setToolTipText("Edit sound for this sequencer");
-        editButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
-        editButton.setMargin(new Insets(1, 1, 1, 1));
-        editButton.setFocusable(false);
-
-        // Add listener for edit button
-        editButton.addActionListener(e -> {
-            if (sequencer != null && sequencer.getPlayer() != null) {
-                logger.info("Opening player editor for: {}", sequencer.getPlayer().getName());
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTED,
-                        this,
-                        sequencer.getPlayer());
-
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_EDIT_REQUEST,
-                        this,
-                        sequencer.getPlayer());
-            } else {
-                logger.warn("Cannot edit player - Note player is not initialized");
-            }
-        });
-
-        // Add components to panel
-        panel.add(presetCombo);
-        panel.add(editButton);
-
+        // Create the standardized SoundParametersPanel with the current player
+        // Player is null-safe in SoundParametersPanel constructor
+        SoundParametersPanel panel = new SoundParametersPanel(sequencer.getPlayer());
+        
+        // Return the panel
         return panel;
     }
 

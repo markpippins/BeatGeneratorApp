@@ -172,6 +172,25 @@ public final class InstrumentWrapper implements Serializable {
         logger.info("Created instrument {} with channels: {}", getName(), Arrays.toString(channels));
     }
 
+    public void setName(String name) {
+        this.name = name;
+        if (name != null) {
+ 
+            if (name.toLowerCase().contains("gervill")) {
+                this.internal = true;
+            }
+            if (name.toLowerCase().contains("synth")) {
+                this.internal = true;
+            }
+
+            if (name.toLowerCase().contains("drum")) {
+                this.internal = true;
+            }
+ 
+            this.name = name.replaceAll("[^a-zA-Z0-9]", "_");
+        }
+    }
+
     // Helper method to determine if device is likely multi-timbral
     public boolean isMultiTimbral() {
         return channels != null && channels.length > 1;

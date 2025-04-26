@@ -16,7 +16,7 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 /**
  * Panel containing drum pad buttons for drum sequencer
  */
-public class DrumPadButtonPanel extends JPanel {
+public class DrumButtonsPanel extends JPanel {
     private final List<DrumButton> drumButtons = new ArrayList<>();
     private final DrumSequencer sequencer;
     private Consumer<Integer> drumSelectedCallback;
@@ -28,7 +28,7 @@ public class DrumPadButtonPanel extends JPanel {
      * @param sequencer The drum sequencer to control
      * @param drumSelectedCallback Callback for when a drum is selected
      */
-    public DrumPadButtonPanel(DrumSequencer sequencer, Consumer<Integer> drumSelectedCallback) {
+    public DrumButtonsPanel(DrumSequencer sequencer, Consumer<Integer> drumSelectedCallback) {
         this.sequencer = sequencer;
         this.drumSelectedCallback = drumSelectedCallback;
         initialize();

@@ -426,6 +426,7 @@ public class MelodicSequencer implements IBusListener {
                 internalInstrument.setDeviceName("Gervill");
                 internalInstrument.setSoundbankName("Default");
                 internalInstrument.setBankIndex(0);
+                internalInstrument.setChannel(player.getChannel());
                 // Use channel as preset if none defined, ensuring different sounds per channel
                 internalInstrument.setCurrentPreset(player.getPreset() != null ? 
                     player.getPreset() : player.getChannel());

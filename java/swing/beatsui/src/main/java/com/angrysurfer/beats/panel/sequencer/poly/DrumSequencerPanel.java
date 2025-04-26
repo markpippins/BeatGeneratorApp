@@ -1,9 +1,8 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
+import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.Insets;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -17,16 +16,15 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.UIUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.panel.SoundParametersPanel;
 import com.angrysurfer.beats.visualization.Visualizer;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequenceModifier;
@@ -34,7 +32,6 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.DrumSequencerManager;
-import com.angrysurfer.core.service.InternalSynthManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -281,6 +278,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 drumInfoPanel.updateInfo(padIndex);
             }
 
+            // Update sound parameters panel
+            updateSoundParametersPanel(padIndex);
+
             // IMPORTANT: Notify other panels through the command bus
             CommandBus.getInstance().publish(
                     Commands.DRUM_PAD_SELECTED,
@@ -297,8 +297,10 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      */
     private void updateParameterControls() {
         // Check if we have a valid selection before updating
-        if (DrumSequencerManager.getInstance().getSelectedPadIndex() < 0 || DrumSequencerManager.getInstance().getSelectedPadIndex() >= DRUM_PAD_COUNT) {
-            // logger.warn("Cannot update parameters - invalid drum index: {}", selectedPadIndex);
+        if (DrumSequencerManager.getInstance().getSelectedPadIndex() < 0
+                || DrumSequencerManager.getInstance().getSelectedPadIndex() >= DRUM_PAD_COUNT) {
+            // logger.warn("Cannot update parameters - invalid drum index: {}",
+            // selectedPadIndex);
             return;
         }
 
@@ -496,124 +498,68 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Creates the sound parameters panel with drum kit selection and sound editing
      */
     private JPanel createSoundParametersPanel() {
+        // Get the currently selected player
+        int selectedDrum = DrumSequencerManager.getInstance().getSelectedPadIndex();
+        Player player = null;
 
-        // Create the panel with a titled border
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder("Sound Parameters"));
-        // REDUCED: from 5,2 to 2,1
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
+        // Get the selected drum's Player object if available
+        if (selectedDrum >= 0 && selectedDrum < sequencer.getPlayers().length) {
+            player = sequencer.getPlayers()[selectedDrum];
+        }
 
-        // Create kit/preset combo
-        JComboBox<String> kitCombo = new JComboBox<>();
-        kitCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH * 2, UIUtils.CONTROL_HEIGHT));
-        kitCombo.setToolTipText("Select drum kit");
-        populateDrumKitCombo(kitCombo);
+        // Create the standardized SoundParametersPanel
+        SoundParametersPanel panel = new SoundParametersPanel(player);
 
-        // Add listener for kit changes
-        kitCombo.addActionListener(e -> {
-            if (updatingUI || kitCombo.getSelectedIndex() < 0)
-                return;
-
-            int kitIndex = kitCombo.getSelectedIndex();
-            logger.info("Selected drum kit index: {}", kitIndex);
-
-            // Get the currently selected player from the players array
-            int selectedDrum = DrumSequencerManager.getInstance().getSelectedPadIndex();
-            if (selectedDrum >= 0 && selectedDrum < sequencer.getPlayers().length) {
-                // Update the selected drum's kit/preset
-                sequencer.getPlayers()[selectedDrum].setPreset(kitIndex);
-
-                // Inform the system about the kit change
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_UPDATED,
-                        this,
-                        sequencer.getPlayers()[selectedDrum]);
-            }
-        });
-
-        // Create edit button with pencil icon and skinny width
-        JButton editButton = new JButton("✎");
-        editButton.setToolTipText("Edit drum sound");
-        editButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
-        editButton.setMargin(new Insets(1, 1, 1, 1));
-        editButton.setFocusable(false);
-
-        // Add listener for edit button
-        editButton.addActionListener(e -> {
-            // Get the currently selected player
-            int selectedDrum = DrumSequencerManager.getInstance().getSelectedPadIndex();
-            if (selectedDrum >= 0 && selectedDrum < sequencer.getPlayers().length) {
-                logger.info("Opening drum sound editor for: {}", sequencer.getPlayers()[selectedDrum].getName());
-
-                // Send the selected player to the editor
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTED,
-                        this,
-                        sequencer.getPlayers()[selectedDrum]);
-
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_EDIT_REQUEST,
-                        this,
-                        sequencer.getPlayers()[selectedDrum]);
-            } else {
-                logger.warn("Cannot edit player - No drum selected or player not initialized");
-            }
-        });
-
-        // Add components to panel
-        panel.add(kitCombo);
-        panel.add(editButton);
-
+        // Return the panel
         return panel;
     }
 
     /**
-     * Populate the drum kit combo with available drum kits
+     * Update sound parameters panel when a different drum pad is selected
      */
-    private void populateDrumKitCombo(JComboBox<String> combo) {
-        updatingUI = true;
-        int selectedDrum = DrumSequencerManager.getInstance().getSelectedPadIndex();
-        if (selectedDrum >= 0 && selectedDrum < sequencer.getPlayers().length)
-            try {
-                combo.removeAllItems();
+    // public void updateSoundParametersForSelectedDrum() {
+    // int selectedDrum = DrumSequencerManager.getInstance().getSelectedPadIndex();
+    // if (selectedDrum >= 0 && selectedDrum < sequencer.getPlayers().length) {
+    // Player player = sequencer.getPlayers()[selectedDrum];
 
-                Player player = sequencer.getPlayers()[selectedDrum];
-                if (player == null) {
-                    logger.warn("No player found for selected drum index: {}", selectedDrum);
-                    return;
-                }
-                InstrumentWrapper instrument = player.getInstrument();
-                if (instrument == null) {
-                    logger.warn("No instrument found for selected drum index: {}", selectedDrum);
-                    return;
-                }
+    // // Find the SoundParametersPanel and update its player
+    // Component[] components = getComponents();
+    // for (Component component : components) {
+    // if (component instanceof JPanel) {
+    // findAndUpdateSoundPanel((JPanel)component, player);
+    // }
+    // }
+    // }
+    // }
 
-                Long id = instrument.getId();
-                if (id == null) {
-                    logger.warn("No instrument ID found for selected drum index: {}", selectedDrum);
-                    return;
-                }
+    /**
+     * Helper method to find and update SoundParametersPanel recursively
+     */
+    private void findAndUpdateSoundPanel(JPanel panel, Player player) {
+        if (panel instanceof SoundParametersPanel) {
+            ((SoundParametersPanel) panel).setPlayer(player);
+            return;
+        }
 
-                // Get the list of drum kit names
-                List<String> presets = InternalSynthManager.getInstance().getPresetNames(id);
-
-                // Add each kit with its index
-                for (int i = 0; i < presets.size(); i++) {
-                    combo.addItem(i + ": " + presets.get(i));
-                }
-
-                // Select current kit if available for the selected drum
-                if (sequencer.getPlayers()[selectedDrum] != null &&
-                        sequencer.getPlayers()[selectedDrum].getPreset() != null) {
-
-                    int currentKit = sequencer.getPlayers()[selectedDrum].getPreset();
-                    if (currentKit >= 0 && currentKit < presets.size()) {
-                        combo.setSelectedItem(currentKit + ": " + presets.get(currentKit));
-                    }
-                }
-            } finally {
-                updatingUI = false;
+        // Search children
+        Component[] components = panel.getComponents();
+        for (Component component : components) {
+            if (component instanceof JPanel) {
+                findAndUpdateSoundPanel((JPanel) component, player);
             }
+        }
+    }
+
+    /**
+     * Updates the sound parameters panel with the selected drum's player
+     */
+    private void updateSoundParametersPanel(int padIndex) {
+        if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
+            Player player = sequencer.getPlayers()[padIndex];
+
+            // Find and update the SoundParametersPanel
+            findAndUpdateSoundPanel(this, player);
+        }
     }
 
     /**
