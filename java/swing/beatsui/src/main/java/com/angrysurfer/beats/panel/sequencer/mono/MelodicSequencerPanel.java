@@ -220,9 +220,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
 
-        // Create panel for the 16 columns
-        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0));
-        sequencePanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        // Create panel for the 16 columns - UPDATED spacing from 2 to 5
+        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 5, 0));
+        // UPDATED padding from 5,5,5,5 to 10,10,10,10
+        sequencePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         // Create 16 columns
         for (int i = 0; i < 16; i++) {
@@ -438,20 +439,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
         column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
 
-        // Add 5 knobs
-        Dial[] noteDial = { null };
-        Dial[] velocityDial = { null };
-        Dial[] gateDial = { null };
-        Dial[] probabilityDial = { null };
-        Dial[] nudgeDial = { null };
-        TriggerButton[] triggerButton = { null };
-
         for (int i = 0; i < 5; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
-            // Make label more compact with smaller padding
+            // Make label more compact with smaller padding - KEEPING this the same
             label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-            // label.setForeground(Color.GRAY);
             label.setAlignmentX(Component.CENTER_ALIGNMENT);
+            // ADDED: Set consistent font size to match DrumEffectsSequencerPanel
+            label.setFont(label.getFont().deriveFont(11f));
 
             if (i < 4) {
                 JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
@@ -465,18 +459,18 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             // Store the dial in the appropriate collection based on its type
             switch (i) {
                 case 0 -> {
-                    velocityDial[0] = dial;
+//                    velocityDials[0] = dial;
                     velocityDials.add(dial);
                     dial.setKnobColor(UIUtils.getDialColor("velocity"));
                 }
                 case 1 -> {
-                    gateDial[0] = dial;
+//                    gateDial[0] = dial;
                     gateDials.add(dial);
                     dial.setKnobColor(UIUtils.getDialColor("gate"));
                 }
                 case 4 -> {
                     dial.setPreferredSize(new Dimension(75, 75)); // Reduced from 75x75
-                    noteDial[0] = dial;
+//                    noteDial[0] = dial;
                     noteDials.add(dial);
                 }
                 case 2 -> {
@@ -489,7 +483,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                             return;
                         sequencer.setProbabilityValue(index, dial.getValue());
                     });
-                    probabilityDial[0] = dial;
+//                    probabilityDial[0] = dial;
                     probabilityDials.add(dial);
                 }
                 case 3 -> {
@@ -502,7 +496,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                             return;
                         sequencer.setNudgeValue(index, dial.getValue());
                     });
-                    nudgeDial[0] = dial;
+//                    nudgeDial[0] = dial;
                     nudgeDials.add(dial);
                 }
             }
@@ -517,18 +511,18 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             column.add(dialPanel);
         }
 
-        // Add minimal spacing between knobs
-        column.add(Box.createRigidArea(new Dimension(0, 2)));
+        // UPDATED: Add spacing between knobs from 2 to 5 pixels
+        column.add(Box.createRigidArea(new Dimension(0, 5)));
 
         // Make trigger button more compact
-        triggerButton[0] = new TriggerButton("");
-        triggerButton[0].setName("TriggerButton-" + index);
-        triggerButton[0].setToolTipText("Step " + (index + 1));
-        triggerButton[0].setPreferredSize(new Dimension(20, 20)); // Smaller size
-        triggerButton[0].setToggleable(true);
+        TriggerButton triggerButton = new TriggerButton("");
+        triggerButton.setName("TriggerButton-" + index);
+        triggerButton.setToolTipText("Step " + (index + 1));
+        triggerButton.setPreferredSize(new Dimension(20, 20)); // Smaller size
+        triggerButton.setToggleable(true);
 
-        triggerButton[0].addActionListener(e -> {
-            boolean isSelected = triggerButton[0].isSelected();
+        triggerButton.addActionListener(e -> {
+            boolean isSelected = triggerButton.isSelected();
             // Get existing step data
             int note = noteDials.get(index).getValue();
             int velocity = velocityDials.get(index).getValue();
@@ -539,13 +533,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             sequencer.setStepData(index, isSelected, note, velocity, gate, probability, nudge);
         });
 
-        triggerButtons.add(triggerButton[0]);
+        triggerButtons.add(triggerButton);
         // Compact panel for trigger button
         JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        buttonPanel1.add(triggerButton[0]);
+        buttonPanel1.add(triggerButton);
         column.add(buttonPanel1);
 
-        noteDial[0].addChangeListener(e -> {
+        noteDials.get(index).addChangeListener(e -> {
             if (!listenersEnabled) {
                 return;
             }
@@ -563,32 +557,32 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
 
             // Update sequencer with all step data
-            sequencer.setStepData(index, triggerButton[0].isSelected(),
-                    noteDial[0].getValue(), velocityDial[0].getValue(),
-                    gateDial[0].getValue(), probability, nudge);
+            sequencer.setStepData(index, triggerButton.isSelected(),
+                    noteDials.get(index).getValue(), velocityDials.get(index).getValue(),
+                    gateDials.get(index).getValue(), probability, nudge);
         });
 
-        velocityDial[0].addChangeListener(e -> {
+        velocityDials.get(index).addChangeListener(e -> {
             if (!listenersEnabled) {
                 return;
             }
 
             // Update sequencer pattern data
-            sequencer.setStepData(index, triggerButton[0].isSelected(),
-                    noteDial[0].getValue(), velocityDial[0].getValue(),
-                    gateDial[0].getValue(), probabilityDials.get(index).getValue(),
+            sequencer.setStepData(index, triggerButton.isSelected(),
+                    noteDials.get(index).getValue(), velocityDials.get(index).getValue(),
+                    gateDials.get(index).getValue(), probabilityDials.get(index).getValue(),
                     nudgeDials.get(index).getValue());
         });
 
-        gateDial[0].addChangeListener(e -> {
+        gateDials.get(index).addChangeListener(e -> {
             if (!listenersEnabled) {
                 return;
             }
 
             // Update sequencer pattern data
-            sequencer.setStepData(index, triggerButton[0].isSelected(),
-                    noteDial[0].getValue(), velocityDial[0].getValue(),
-                    gateDial[0].getValue(), probabilityDials.get(index).getValue(),
+            sequencer.setStepData(index, triggerButton.isSelected(),
+                    noteDials.get(index).getValue(), velocityDials.get(index).getValue(),
+                    gateDials.get(index).getValue(), probabilityDials.get(index).getValue(),
                     nudgeDials.get(index).getValue());
         });
 
