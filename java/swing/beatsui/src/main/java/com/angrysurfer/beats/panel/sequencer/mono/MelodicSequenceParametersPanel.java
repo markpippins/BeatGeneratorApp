@@ -60,26 +60,43 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Initialize the panel with all controls
      */
     private void initialize() {
+        // Keep the titled border
         setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
-        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1)); // REDUCED: from 10,5 to 2,1
         
-        // Create all the panels and controls
-        createLastStepControls();
-        createDirectionControls();
-        createTimingControls();
-        createLoopButton();
-        createRotationControls();
-        createClearButton();
-        createRootNoteControls();
-        createQuantizeControls();
-        createScaleControls();
-        createOctaveControls();
+        // Use BorderLayout for the main panel instead of FlowLayout
+        setLayout(new BorderLayout(0, 0));
+        
+        // Create a container panel for all the controls except clear button
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 1));
+        
+        // Add all controls to the left panel except clear button
+        createLastStepControls(controlsPanel);
+        createDirectionControls(controlsPanel);
+        createTimingControls(controlsPanel);
+        createLoopButton(controlsPanel);
+        createRotationControls(controlsPanel);
+        // Don't add clear button here
+        createRootNoteControls(controlsPanel);
+        createQuantizeControls(controlsPanel);
+        createScaleControls(controlsPanel);
+        createOctaveControls(controlsPanel);
+        
+        // Add the controls panel to the CENTER of the BorderLayout
+        add(controlsPanel, BorderLayout.CENTER);
+        
+        // Create a panel for the clear button with right alignment
+        JPanel clearPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
+        JButton clearButton = createClearButton();
+        clearPanel.add(clearButton);
+        
+        // Add the clear panel to the EAST position
+        add(clearPanel, BorderLayout.EAST);
     }
     
     /**
      * Create last step spinner control
      */
-    private void createLastStepControls() {
+    private void createLastStepControls(JPanel parentPanel) {
         JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
         lastStepPanel.add(new JLabel("Last Step:"));
 
@@ -96,13 +113,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
         });
         lastStepPanel.add(lastStepSpinner);
         
-        add(lastStepPanel);
+        parentPanel.add(lastStepPanel);
     }
     
     /**
      * Create direction combo control
      */
-    private void createDirectionControls() {
+    private void createDirectionControls(JPanel parentPanel) {
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
@@ -123,13 +140,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
         });
         directionPanel.add(directionCombo);
         
-        add(directionPanel);
+        parentPanel.add(directionPanel);
     }
     
     /**
      * Create timing division combo control
      */
-    private void createTimingControls() {
+    private void createTimingControls(JPanel parentPanel) {
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
@@ -146,13 +163,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
         });
         timingPanel.add(timingCombo);
         
-        add(timingPanel);
+        parentPanel.add(timingPanel);
     }
     
     /**
      * Create loop toggle button
      */
-    private void createLoopButton() {
+    private void createLoopButton(JPanel parentPanel) {
         loopToggleButton = new JToggleButton("🔁", true); // Default to looping enabled
         loopToggleButton.setToolTipText("Loop this pattern");
         loopToggleButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
@@ -163,13 +180,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
             }
         });
         
-        add(loopToggleButton);
+        parentPanel.add(loopToggleButton);
     }
     
     /**
      * Create rotation controls
      */
-    private void createRotationControls() {
+    private void createRotationControls(JPanel parentPanel) {
         JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         // Rotate Left button
@@ -208,13 +225,14 @@ public class MelodicSequenceParametersPanel extends JPanel {
         rotationPanel.add(rotateLeftButton);
         rotationPanel.add(rotateRightButton);
         
-        add(rotationPanel);
+        parentPanel.add(rotationPanel);
     }
     
     /**
      * Create clear button
+     * @return The created button
      */
-    private void createClearButton() {
+    private JButton createClearButton() {
         JButton clearButton = new JButton("🗑️");
         clearButton.setToolTipText("Clear pattern");
         clearButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
@@ -230,13 +248,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
             );
         });
         
-        add(clearButton);
+        return clearButton;
     }
     
     /**
      * Create root note controls
      */
-    private void createRootNoteControls() {
+    private void createRootNoteControls(JPanel parentPanel) {
         JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
         rootNotePanel.add(new JLabel("Root:"));
 
@@ -262,13 +280,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
         
         rootNotePanel.add(rootNoteCombo);
         
-        add(rootNotePanel);
+        parentPanel.add(rootNotePanel);
     }
     
     /**
      * Create quantize checkbox
      */
-    private void createQuantizeControls() {
+    private void createQuantizeControls(JPanel parentPanel) {
         quantizeCheckbox = new JCheckBox("Q", true);
         quantizeCheckbox.setToolTipText("Quantize notes to scale");
         quantizeCheckbox.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
@@ -278,13 +296,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
             }
         });
         
-        add(quantizeCheckbox);
+        parentPanel.add(quantizeCheckbox);
     }
     
     /**
      * Create scale combo control
      */
-    private void createScaleControls() {
+    private void createScaleControls(JPanel parentPanel) {
         JPanel scalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
         scalePanel.add(new JLabel("Scale:"));
 
@@ -310,13 +328,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
         
         scalePanel.add(scaleCombo);
         
-        add(scalePanel);
+        parentPanel.add(scalePanel);
     }
     
     /**
      * Create octave controls
      */
-    private void createOctaveControls() {
+    private void createOctaveControls(JPanel parentPanel) {
         JPanel octavePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         octavePanel.add(new JLabel("Octave:"));
 
@@ -352,7 +370,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         octavePanel.add(octaveLabel);
         octavePanel.add(octaveUpBtn);
         
-        add(octavePanel);
+        parentPanel.add(octavePanel);
     }
     
     /**

@@ -270,4 +270,31 @@ public class InstrumentManager implements IBusListener {
         
         return internalInstrument;
     }
+
+    /**
+     * Get the default internal instrument for the sequencer's channel
+     * 
+     * @return An InstrumentWrapper for the internal synth
+     */
+    private InstrumentWrapper getDefaultInstrument(int channel) {
+        // Create with null device (indicates internal synth)
+        InstrumentWrapper internalInstrument = new InstrumentWrapper(
+            "Internal Synth", 
+            null,
+            channel  // Use the sequencer's channel
+        );
+        
+        // Configure as internal instrument
+        internalInstrument.setInternal(true);
+        internalInstrument.setDeviceName("Gervill");
+        internalInstrument.setSoundbankName("Default");
+        internalInstrument.setBankIndex(0);
+        internalInstrument.setCurrentPreset(0);  // Default to piano
+        internalInstrument.setId(9985L + channel);  // Use channel for unique ID
+        
+        // Register with manager
+        InstrumentManager.getInstance().updateInstrument(internalInstrument);
+        
+        return internalInstrument;
+    }
 }

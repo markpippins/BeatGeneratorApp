@@ -295,7 +295,7 @@ public class MelodicSequencer implements IBusListener {
             Commands.REQUEST_ONE_TIME_NOTIFICATION,
             this,
             new RequestForOneTimeNotification(Commands.SYSTEM_READY, () -> {
-                // Initialize n------ote properties after system is ready
+                // Initialize note properties after system is ready
                 initializeNote();
                 
                 // Load first sequence if available (or create new one)
@@ -408,15 +408,18 @@ public class MelodicSequencer implements IBusListener {
             // If no instrument found, create a new one
             if (internalInstrument == null) {
                 internalInstrument = new InstrumentWrapper(
-                    "Internal Synth", 
+                    "Internal Synth " + player.getChannel(),  // Add channel to name for clarity
                     null, 
-                    player.getChannel()
+                    player.getChannel()  // Use player's channel
                 );
                 internalInstrument.setInternal(true);
                 internalInstrument.setDeviceName("Gervill");
                 internalInstrument.setSoundbankName("Default");
                 internalInstrument.setBankIndex(0);
-                internalInstrument.setCurrentPreset(player.getPreset() != null ? player.getPreset() : player.getChannel());  // Default to piano
+                // Use channel as preset if none defined, ensuring different sounds per channel
+                internalInstrument.setCurrentPreset(player.getPreset() != null ? 
+                    player.getPreset() : player.getChannel());
+                // Make sure ID is unique per channel
                 internalInstrument.setId(9985L + player.getChannel());
                 
                 // Register with instrument manager
@@ -450,18 +453,20 @@ public class MelodicSequencer implements IBusListener {
             return null;
         }
         
-        // Look for a player that's associated with this sequencer
+        // Look for a player that's associated with this sequencer AND has the correct channel
         for (Player p : session.getPlayers()) {
             if (p instanceof Note && 
                 p.getOwner() != null && 
                 p.getOwner() instanceof MelodicSequencer && 
                 ((MelodicSequencer) p.getOwner()).getId() != null &&
-                ((MelodicSequencer) p.getOwner()).getId().equals(id)) {
+                ((MelodicSequencer) p.getOwner()).getId().equals(id) &&
+                p.getChannel() == this.channel) {  // Added channel check
                 
                 return p;
             }
         }
         
+        logger.info("No player found for sequencer {} and channel {}", id, channel);
         return null;
     }
 
@@ -473,7 +478,7 @@ public class MelodicSequencer implements IBusListener {
         InstrumentWrapper internalInstrument = new InstrumentWrapper(
             "Internal Synth", 
             null,  // Explicitly pass null for device
-            channel
+            getChannel()
         );
         
         // Configure as internal instrument
