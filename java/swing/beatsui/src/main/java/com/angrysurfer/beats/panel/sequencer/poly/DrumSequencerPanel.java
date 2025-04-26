@@ -17,6 +17,7 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.UIUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,10 +83,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     // UI constants
     private static final int DRUM_BUTTON_SIZE = 28;
     private static final int GRID_BUTTON_SIZE = 24;
-    private static final int CONTROL_HEIGHT = 25;
-    private static final int SMALL_CONTROL_WIDTH = 40;
-    private static final int MEDIUM_CONTROL_WIDTH = 60;
-    private static final int LARGE_CONTROL_WIDTH = 90;
 
     // Debug mode flag
     private boolean debugMode = false;
@@ -499,10 +496,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
      * Creates the sound parameters panel with drum kit selection and sound editing
      */
     private JPanel createSoundParametersPanel() {
-        // Size constants
-        final int SMALL_CONTROL_WIDTH = 30;
-        final int LARGE_CONTROL_WIDTH = 90;
-        final int CONTROL_HEIGHT = 25;
 
         // Create the panel with a titled border
         JPanel panel = new JPanel();
@@ -512,7 +505,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Create kit/preset combo
         JComboBox<String> kitCombo = new JComboBox<>();
-        kitCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH * 2, CONTROL_HEIGHT));
+        kitCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH * 2, UIUtils.CONTROL_HEIGHT));
         kitCombo.setToolTipText("Select drum kit");
         populateDrumKitCombo(kitCombo);
 
@@ -541,7 +534,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         // Create edit button with pencil icon and skinny width
         JButton editButton = new JButton("✎");
         editButton.setToolTipText("Edit drum sound");
-        editButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        editButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         editButton.setMargin(new Insets(1, 1, 1, 1));
         editButton.setFocusable(false);
 

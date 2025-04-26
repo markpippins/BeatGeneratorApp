@@ -11,6 +11,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
+import com.angrysurfer.beats.UIUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,12 +26,7 @@ import com.angrysurfer.core.service.InternalSynthManager;
 public class SoundParametersPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(SoundParametersPanel.class);
     
-    // Size constants
-    private static final int SMALL_CONTROL_WIDTH = 30;
-    private static final int MEDIUM_CONTROL_WIDTH = 100;
-    private static final int LARGE_CONTROL_WIDTH = 150;
-    private static final int CONTROL_HEIGHT = 25;
-    
+
     // UI Components
     private JComboBox<String> presetCombo;
     private JComboBox<String> soundbankCombo;
@@ -97,18 +93,18 @@ public class SoundParametersPanel extends JPanel {
         
         // Create soundbank combo
         soundbankCombo = new JComboBox<>();
-        soundbankCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
+        soundbankCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         soundbankCombo.setToolTipText("Select soundbank");
         
         // Create preset combo
         presetCombo = new JComboBox<>();
-        presetCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
+        presetCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         presetCombo.setToolTipText("Select instrument preset");
         
         // Create edit button with pencil icon and skinny width
         editButton = new JButton("✎");
         editButton.setToolTipText("Edit sound for this player");
-        editButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        editButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         editButton.setMargin(new Insets(1, 1, 1, 1));
         editButton.setFocusable(false);
         

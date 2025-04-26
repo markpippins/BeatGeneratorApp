@@ -281,10 +281,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     private JPanel createSoundParametersPanel() {
-        // Size constants
-        final int SMALL_CONTROL_WIDTH = 30;
-        final int LARGE_CONTROL_WIDTH = 90;
-        final int CONTROL_HEIGHT = 25;
+
 
         // Create the panel with a titled border
         JPanel panel = new JPanel();
@@ -294,7 +291,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Create preset combo
         JComboBox<String> presetCombo = new JComboBox<>();
-        presetCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH * 2, CONTROL_HEIGHT));
+        presetCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH * 2, UIUtils.CONTROL_HEIGHT));
         presetCombo.setToolTipText("Select instrument preset");
 //        populatePresetCombo(presetCombo);
 
@@ -320,7 +317,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Create edit button with pencil icon and skinny width
         JButton editButton = new JButton("✎");
         editButton.setToolTipText("Edit sound for this sequencer");
-        editButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        editButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         editButton.setMargin(new Insets(1, 1, 1, 1));
         editButton.setFocusable(false);
 
@@ -350,10 +347,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     private JPanel createGeneratePanel() {
-        // Size constants
-        final int SMALL_CONTROL_WIDTH = 40;
-        final int MEDIUM_CONTROL_WIDTH = 90;
-        final int CONTROL_HEIGHT = 25;
 
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Generate"));
@@ -364,13 +357,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         String[] rangeOptions = { "1 Octave", "2 Octaves", "3 Octaves", "4 Octaves" };
         rangeCombo = new JComboBox<>(rangeOptions);
         rangeCombo.setSelectedIndex(1); // Default to 2 octaves
-        rangeCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        rangeCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         rangeCombo.setToolTipText("Set the octave range for pattern generation");
 
         // Generate button with consistent styling
         JButton generateButton = new JButton("🎲");
         generateButton.setToolTipText("Generate a random pattern");
-        generateButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        generateButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         generateButton.setMargin(new Insets(2, 2, 2, 2));
         generateButton.addActionListener(e -> {
             // Get selected octave range from the combo
@@ -383,7 +376,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Latch toggle button (moved from sequence parameters panel)
         latchToggleButton = new JToggleButton("L", false);
         latchToggleButton.setToolTipText("Generate new pattern each cycle");
-        latchToggleButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        latchToggleButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         latchToggleButton.addActionListener(e -> {
             sequencer.setLatchEnabled(latchToggleButton.isSelected());
             logger.info("Latch mode set to: {}", latchToggleButton.isSelected());

@@ -8,6 +8,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import com.angrysurfer.beats.UIUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,10 +28,7 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
     // References
     private final DrumSequencer sequencer;
     
-    // UI constants
-    private static final int CONTROL_HEIGHT = 25;
-    private static final int MEDIUM_CONTROL_WIDTH = 60;
-    
+
     /**
      * Create a new MaxLengthPanel
      * 
@@ -55,7 +53,7 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
         Integer[] maxLengths = {16, 32, 64, 128}; 
         maxLengthCombo = new JComboBox<>(maxLengths);
         maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
-        maxLengthCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        maxLengthCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         maxLengthCombo.setToolTipText("Set maximum pattern length");
         
         maxLengthCombo.addActionListener(e -> {

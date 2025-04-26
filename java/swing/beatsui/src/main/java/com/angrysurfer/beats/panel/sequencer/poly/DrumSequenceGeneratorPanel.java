@@ -9,6 +9,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
+import com.angrysurfer.beats.UIUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,11 +30,7 @@ public class DrumSequenceGeneratorPanel extends JPanel {
     // Reference to the sequencer
     private final DrumSequencer sequencer;
     
-    // UI constants
-    private static final int CONTROL_HEIGHT = 25;
-    private static final int SMALL_CONTROL_WIDTH = 40;
-    private static final int MEDIUM_CONTROL_WIDTH = 90;
-    
+
     /**
      * Create a new DrumSequenceGeneratorPanel
      * 
@@ -56,13 +53,13 @@ public class DrumSequenceGeneratorPanel extends JPanel {
         String[] densityOptions = { "25%", "50%", "75%", "100%" };
         densityCombo = new JComboBox<>(densityOptions);
         densityCombo.setSelectedIndex(1); // Default to 50%
-        densityCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        densityCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         densityCombo.setToolTipText("Set pattern density");
 
         // Generate button with dice icon
         generateButton = new JButton("🎲");
         generateButton.setToolTipText("Generate a random pattern");
-        generateButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        generateButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         generateButton.setMargin(new Insets(2, 2, 2, 2));
         generateButton.addActionListener(e -> {
             // Get selected density from the combo

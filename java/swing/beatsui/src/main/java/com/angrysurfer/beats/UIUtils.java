@@ -24,6 +24,7 @@ public class UIUtils {
     public static final int SMALL_CONTROL_WIDTH = 35;  // REDUCED from 40 to 35
     public static final int MEDIUM_CONTROL_WIDTH = 55;  // REDUCED from 60 to 55
     public static final int LARGE_CONTROL_WIDTH = 85;  // REDUCED from 90 to 85
+    public static final int ID_LABEL_WIDTH = 85;
 
     // Greys & Dark Blues
     public static Color charcoalGray = new Color(40, 40, 40); // Deep console casing

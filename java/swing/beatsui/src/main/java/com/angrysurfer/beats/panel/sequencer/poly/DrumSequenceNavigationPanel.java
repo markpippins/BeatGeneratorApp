@@ -29,10 +29,6 @@ public class DrumSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumSequenceNavigationPanel.class);
 
-    private static final int SMALL_CONTROL_WIDTH = 40;
-    private static final int MEDIUM_CONTROL_WIDTH = 60;
-    private static final int LABEL_WIDTH = 85;
-    private static final int CONTROL_HEIGHT = 25;
 
     private JLabel sequenceIdLabel;
     private JButton firstButton;
@@ -64,7 +60,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
 
 
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
-        sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, CONTROL_HEIGHT));
+        sequenceIdLabel.setPreferredSize(new Dimension(UIUtils.ID_LABEL_WIDTH, UIUtils.CONTROL_HEIGHT));
         sequenceIdLabel.setOpaque(true);
         sequenceIdLabel.setBackground(UIUtils.darkGray);
         sequenceIdLabel.setForeground(UIUtils.coolBlue);
@@ -101,7 +97,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
         button.setFocusable(false);
         
         // Set consistent size and margins to match other panels
-        button.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        button.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         button.setMargin(new Insets(2, 2, 2, 2));
         
         return button;
