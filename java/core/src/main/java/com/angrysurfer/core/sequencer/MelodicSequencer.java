@@ -9,6 +9,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import com.angrysurfer.core.model.*;
+import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.service.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,11 +20,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.model.Direction;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
@@ -43,6 +42,17 @@ public class MelodicSequencer implements IBusListener {
     private static final int NO_SWING = 50; // Percentage value for no swing
     public static final int MAX_SWING = 99; // Maximum swing percentage
     public static final int MIN_SWING = 25; // Minimum swing percentage
+
+    // Add this with the other constants at the top of the class
+    private static final int MAX_PATTERN_STEPS = 64; // Maximum number of steps in a pattern
+
+    // Define indices for pattern data array elements
+    private static final int ACTIVE_VALUE_INDEX = 0;
+    private static final int NOTE_VALUE_INDEX = 1;
+    private static final int VELOCITY_VALUE_INDEX = 2;
+    private static final int GATE_VALUE_INDEX = 3;
+    private static final int PROBABILITY_VALUE_INDEX = 4;
+    private static final int NUDGE_VALUE_INDEX = 5;
 
     // Add these instance variables with other properties
     private int swingPercentage = 50; // Default swing percentage (50 = no swing)
@@ -1343,11 +1353,55 @@ public class MelodicSequencer implements IBusListener {
         return currentStep;
     }
 
-    // Getter methods for sequence data
+    /**
+     * Get the list of notes for all steps in the pattern
+     * @return List of note values
+     */
+    public List<Integer> getNotes() {
+        return new ArrayList<>(noteValues);
+    }
+ 
+    /**
+     * Get the list of velocity values for all steps in the pattern
+     * @return List of velocity values
+     */
+    public List<Integer> getVelocities() {
+        return new ArrayList<>(velocityValues);
+    }
+
+    /**
+     * Get the list of gate values for all steps in the pattern
+     * @return List of gate values
+     */
+    public List<Integer> getGates() {
+        return new ArrayList<>(gateValues);
+    }
+
+    /**
+     * Get the list of probability values for all steps in the pattern
+     * @return List of probability values
+     */
+    public List<Integer> getProbabilities() {
+        return new ArrayList<>(probabilityValues);
+    }
+
+    /**
+     * Get the list of timing nudge values for all steps in the pattern
+     * @return List of nudge values
+     */
+    public List<Integer> getNudges() {
+        return new ArrayList<>(nudgeValues);
+    }
+
+    /**
+     * Get the list of active steps in the pattern
+     * @return List of boolean values indicating which steps are active
+     */
     public List<Boolean> getActiveSteps() {
         return new ArrayList<>(activeSteps);
     }
 
+    // Getter methods for sequence data
     public List<Integer> getNoteValues() {
         return new ArrayList<>(noteValues);
     }
@@ -1933,6 +1987,8 @@ public class MelodicSequencer implements IBusListener {
         return (int) (stepDurationMs * swingFactor);
     }
 
+    // Add this method to the MelodicSequencer class
+
     /**
      * Initialize the MIDI device with the current instrument settings
      * Call this before starting playback
@@ -1995,4 +2051,35 @@ public class MelodicSequencer implements IBusListener {
             initializeInternalInstrument(player);
         }
     }
+
+    // public void initializeInstrument() {
+    // if (player == null || player.getInstrument() == null) {
+    // return;
+    // }
+
+    // try {
+    // // Get current instrument settings
+    // InstrumentWrapper instrument = player.getInstrument();
+    // int channel = player.getChannel();
+    // Integer preset = player.getPreset();
+
+    // if (preset != null) {
+    // // Apply bank select if needed
+    // if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
+    // // Bank MSB (CC#0)
+    // instrument.controlChange(channel, 0, 0);
+    // // Bank LSB (CC#32)
+    // instrument.controlChange(channel, 32, instrument.getBankIndex());
+    // }
+
+    // // Send program change
+    // instrument.programChange(channel, preset, 0);
+    // logger.info("Initialized instrument {} with preset {} on channel {}",
+    // instrument.getName(), preset, channel);
+    // }
+    // } catch (Exception e) {
+    // logger.error("Error initializing instrument: {}", e.getMessage());
+    // }
+    // }
+    // }
 }

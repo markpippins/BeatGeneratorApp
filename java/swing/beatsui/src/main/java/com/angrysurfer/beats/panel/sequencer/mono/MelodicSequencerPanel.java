@@ -92,6 +92,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
     private TiltSequencerPanel tiltSequencerPanel;
 
+    private MelodicSequencerGridPanel gridPanel;
+
+    private MelodicSequencerScalePanel scalePanel;
+
     /**
      * Modify constructor to use only one step update mechanism (direct
      * listener) and load the first sequence if available
@@ -184,6 +188,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         }
     }
 
+    /**
+     * Initialize the panel
+     */
     private void initialize() {
         // Clear any existing components first to prevent duplication
         removeAll();
@@ -224,60 +231,39 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
 
-        // Create panel for the 16 columns
-        // REDUCED: from 5,0 to 2,0
-        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0));
-        // REDUCED: from 10,10,10,10 to 5,5,5,5
-        sequencePanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-
-        // Create 16 columns
-        for (int i = 0; i < 16; i++) {
-            JPanel columnPanel = createSequenceColumn(i);
-            sequencePanel.add(columnPanel);
-        }
-
-        // Wrap in scroll pane in case window gets too small
-        JScrollPane scrollPane = new JScrollPane(sequencePanel);
+        // Create the grid panel and add to center
+        gridPanel = new MelodicSequencerGridPanel(sequencer);
+        JScrollPane scrollPane = new JScrollPane(gridPanel);
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-
-        // Add sequence grid to center
         add(scrollPane, BorderLayout.CENTER);
-
-        // Create a container panel for both southern panels - SWAPPED ORDER
-        southPanel = new JPanel(new BorderLayout(5, 5));
-
-        // Create tilt panel with LIMITED HEIGHT and add it to the TOP of the south
-        // panel
-        tiltSequencerPanel = new TiltSequencerPanel(sequencer);
-        southPanel.add(tiltSequencerPanel, BorderLayout.NORTH);
-
-        // Create a container for the bottom controls (parameters + generate)
-        JPanel bottomControlsPanel = new JPanel(new BorderLayout(5, 5));
-
-        // Add sequence parameters to the center of bottom controls
-        bottomControlsPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
-
-        // Create a container for the right-side panels
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-
-        // Create and add generate panel
-        JPanel generatePanel = createGeneratePanel();
-        rightPanel.add(generatePanel);
-
-        // Create and add swing panel
+        
+        // Create bottom panel with BorderLayout for proper positioning
+        JPanel bottomPanel = new JPanel(new BorderLayout(2, 1));
+        
+        // Add the parameters panel to the left side of the bottom panel
+        bottomPanel.add(sequenceParamsPanel, BorderLayout.WEST);
+        
+        // Create and add the scale panel to the center of the bottom panel
+        scalePanel = new MelodicSequencerScalePanel(sequencer);
+        bottomPanel.add(scalePanel, BorderLayout.CENTER);
+        
+        // Create right panel for additional controls
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
+        
+        // Add swing panel to the right panel
         swingPanel = new MelodicSequencerSwingPanel(sequencer);
         rightPanel.add(swingPanel);
-
-        // Add the right panel container to the east position
-        bottomControlsPanel.add(rightPanel, BorderLayout.EAST);
-
-        // Add the bottom controls container to the south panel
-        southPanel.add(bottomControlsPanel, BorderLayout.SOUTH);
-
-        // Add the south panel to the main layout
-        add(southPanel, BorderLayout.SOUTH);
+        
+        // Add the right panel to the bottom panel's EAST region
+        bottomPanel.add(rightPanel, BorderLayout.EAST);
+        
+        // Add the bottom panel to the SOUTH region of the main panel
+        add(bottomPanel, BorderLayout.SOUTH);
+        
+        // Register for command updates
+        CommandBus.getInstance().register(this);
     }
 
     private JPanel createSoundParametersPanel() {
@@ -551,36 +537,12 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Update step highlighting based on sequence position
+     * Update step highlighting in the grid panel
      */
     private void updateStepHighlighting(int oldStep, int newStep) {
-        // Un-highlight old step
-        if (oldStep >= 0 && oldStep < triggerButtons.size()) {
-            triggerButtons.get(oldStep).setHighlighted(false);
-            triggerButtons.get(oldStep).repaint();
-        }
-        
-        // Highlight new step with color based on position
-        if (newStep >= 0 && newStep < triggerButtons.size()) {
-            Color highlightColor;
-            
-            if (newStep < 16) {
-                // First 16 steps - orange highlight
-                highlightColor = UIUtils.fadedOrange;
-            } else if (newStep < 32) {
-                // Steps 17-32
-                highlightColor = UIUtils.coolBlue;
-            } else if (newStep < 48) {
-                // Steps 33-48
-                highlightColor = UIUtils.deepNavy;
-            } else {
-                // Steps 49-64
-                highlightColor = UIUtils.mutedOlive;
-            }
-            
-            triggerButtons.get(newStep).setHighlighted(true);
-            triggerButtons.get(newStep).setHighlightColor(highlightColor);
-            triggerButtons.get(newStep).repaint();
+        // Delegate to grid panel
+        if (gridPanel != null) {
+            gridPanel.updateStepHighlighting(oldStep, newStep);
         }
     }
 
@@ -596,28 +558,23 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private void syncUIWithSequencer() {
         updatingUI = true;
         try {
-            // Update trigger buttons
-            List<Boolean> activeSteps = sequencer.getActiveSteps();
-            for (int i = 0; i < Math.min(triggerButtons.size(), activeSteps.size()); i++) {
-                triggerButtons.get(i).setSelected(activeSteps.get(i));
-                triggerButtons.get(i).repaint();
-            }
-
-            // Update other controls like sequence parameters
+            // Update sequence parameters panel
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateUI(sequencer);
             }
-
-            // Update swing panel if available
-            if (swingPanel != null) {
-                swingPanel.updateControls();
+            
+            // Update scale panel
+            if (scalePanel != null) {
+                scalePanel.updateUI(sequencer);
             }
 
-            // Update tilt sequencer panel directly
-            if (tiltSequencerPanel != null) {
-                logger.debug("Syncing tilt sequencer panel with sequencer state");
-                tiltSequencerPanel.syncWithSequencer();
+            // Update grid panel
+            if (gridPanel != null) {
+                gridPanel.syncWithSequencer();
             }
+            
+            // Update other panels
+            // ...
 
         } finally {
             updatingUI = false;
@@ -707,8 +664,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                         sequencer.setScale(event.getScale());
                         
                         // Update the UI without publishing new events
-                        if (sequenceParamsPanel != null) {
-                            sequenceParamsPanel.setSelectedScale(event.getScale());
+                        if (scalePanel != null) {
+                            scalePanel.setSelectedScale(event.getScale());
                         }
                         
                         // Log the specific change
@@ -722,8 +679,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     sequencer.setScale(scale);
                     
                     // Update UI without publishing new events
-                    if (sequenceParamsPanel != null) {
-                        sequenceParamsPanel.setSelectedScale(scale);
+                    if (scalePanel != null) {
+                        scalePanel.setSelectedScale(scale);
                     }
                     
                     logger.debug("Set scale to {} from global session change", scale);
