@@ -79,6 +79,44 @@ public class DeviceManager implements IBusListener {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Get all available MIDI output devices
+     * @return List of available MIDI output devices
+     * @throws MidiUnavailableException if the MIDI system is unavailable
+     */
+    public List<MidiDevice> getAvailableOutputDevices() throws MidiUnavailableException {
+        List<MidiDevice> outputDevices = new ArrayList<>();
+        
+        // Get all MIDI device info objects
+        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+        
+        // Log found devices
+        logger.debug("Found {} MIDI devices", infos.length);
+        
+        // Try to open each device and check if it's an output device
+        for (MidiDevice.Info info : infos) {
+            try {
+                MidiDevice device = MidiSystem.getMidiDevice(info);
+                
+                // Check if device has transmitter ports (is an output device)
+                if (device.getMaxReceivers() != 0) {
+                    // This is an output device
+                    outputDevices.add(device);
+                    logger.debug("Found output device: {}", info.getName());
+                }
+            } catch (MidiUnavailableException e) {
+                logger.warn("Could not open MIDI device {}: {}", 
+                    info.getName(), e.getMessage());
+                // Continue to next device
+            }
+        }
+        
+        // Log summary
+        logger.info("Found {} available output devices", outputDevices.size());
+        
+        return outputDevices;
+    }
+
     // Existing static methods can remain for backwards compatibility
     public static void cleanupMidiDevices() {
         if (disableExcessiveValidation) {

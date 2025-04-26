@@ -78,8 +78,13 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
-    private PopupMixerPanel strikeMixerPanel;
+
     private MuteButtonsPanel muteButtonsPanel;
+
+    private JTabbedPane drumsTabbedPane;
+
+    private JTabbedPane melodicTabbedPane;
+
 
     private Point dragStartPoint;
 
@@ -115,7 +120,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         // Remove the separate Systems tab
         // tabbedPane.addTab("System", new SystemsPanel());
         // Add new Sample Browser tab
-        tabbedPane.addTab("Sample Browser", createSampleBrowserPanel());
+        tabbedPane.addTab("Samples", createSampleBrowserPanel());
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
 
@@ -206,7 +211,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JTabbedPane createDrumSequencersPanel() {
 
-        JTabbedPane drumsTabbedPane = new JTabbedPane();
+        drumsTabbedPane = new JTabbedPane();
 
         drumsTabbedPane.addTab("Sequencer", createDrumPanel());
         drumsTabbedPane.addTab("Parameters", createDrumParamsPanel());
@@ -217,7 +222,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JTabbedPane createMelodicSequencersPanel() {
 
-        JTabbedPane melodicTabbedPane = new JTabbedPane();
+        melodicTabbedPane = new JTabbedPane();
 
         // melodicTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         // melodicTabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));

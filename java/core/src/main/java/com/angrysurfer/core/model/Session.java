@@ -1,9 +1,11 @@
 package com.angrysurfer.core.model;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -550,33 +552,35 @@ public class Session implements Serializable, IBusListener {
         sequencerManager.startSequence();
     }
 
+    /**
+     * Initialize devices for all players
+     */
     public void initializeDevices() {
-        // System.out.println("Session: Initializing devices for session " + getId());
-        List<MidiDevice> devices = DeviceManager.getMidiOutDevices();
-        // System.out.println("Session: Found " + devices.size() + " MIDI output
-        // devices");
-
-        if (getPlayers() == null || getPlayers().isEmpty()) {
-            // System.out.println("Session: No players to initialize!");
+        // Get available devices once to avoid repeated queries
+        List<MidiDevice> availableDevices;
+        try {
+            availableDevices = DeviceManager.getInstance().getAvailableOutputDevices();
+        } catch (MidiUnavailableException e) {
+            logger.error("Failed to get available devices: {}", e.getMessage());
             return;
         }
-
-         System.out.println("Session: Initializing " + getPlayers().size() + " players");
-        getPlayers().forEach(p -> {
+        
+        // Make a defensive copy of players to avoid concurrent modification
+        Set<Player> playersCopy = new HashSet<>(players);
+        
+        // Initialize each player's device
+        for (Player player : playersCopy) {
             try {
-                System.out.println("Session: Initializing player " + p.getId() + " (" + p.getName() + ")");
-                initializePlayerDevice(p, devices);
-                initializePlayerPreset(p);
-                p.setSession(this);
-                p.setEnabled(true);
+                // Only initialize enabled players
+                if (player.getEnabled()) {
+                    initializePlayerDevice(player, availableDevices);
+                    initializePlayerPreset(player);
+                }
+            } catch (Exception e) {
+                logger.error("Error initializing player {}: {}", 
+                    player.getName(), e.getMessage(), e);
             }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-            System.out.println("Session: Player " + p.getId() + " initialized and enabled");
-        });
-
-         System.out.println("Session: Device initialization complete");
+        }
     }
 
     /**
