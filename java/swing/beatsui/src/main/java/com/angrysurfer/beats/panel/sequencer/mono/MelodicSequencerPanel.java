@@ -188,18 +188,22 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Clear any existing components first to prevent duplication
         removeAll();
 
-        // Use a consistent BorderLayout
-        setLayout(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // REDUCED: from 5,5 to 2,2
+        setLayout(new BorderLayout(2, 2));
+        // REDUCED: from 5,5,5,5 to 2,2,2,2
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Create west panel to hold navigation
-        JPanel westPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel westPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create east panel for sound parameters
-        JPanel eastPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create top panel to hold west and east panels
-        JPanel topPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create sequence navigation panel
         navigationPanel = new MelodicSequenceNavigationPanel(sequencer, this);
@@ -220,10 +224,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
 
-        // Create panel for the 16 columns - UPDATED spacing from 2 to 5
-        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 5, 0));
-        // UPDATED padding from 5,5,5,5 to 10,10,10,10
-        sequencePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        // Create panel for the 16 columns
+        // REDUCED: from 5,0 to 2,0
+        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0));
+        // REDUCED: from 10,10,10,10 to 5,5,5,5
+        sequencePanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         // Create 16 columns
         for (int i = 0; i < 16; i++) {
@@ -275,9 +280,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         add(southPanel, BorderLayout.SOUTH);
     }
 
-    /**
-     * Creates the sound parameters panel with preset selection and sound editing
-     */
     private JPanel createSoundParametersPanel() {
         // Size constants
         final int SMALL_CONTROL_WIDTH = 30;
@@ -287,13 +289,14 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Create the panel with a titled border
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Sound Parameters"));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        // REDUCED: from 5,2 to 2,1
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1)); 
 
         // Create preset combo
         JComboBox<String> presetCombo = new JComboBox<>();
         presetCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH * 2, CONTROL_HEIGHT));
         presetCombo.setToolTipText("Select instrument preset");
-        populatePresetCombo(presetCombo);
+//        populatePresetCombo(presetCombo);
 
         // Add listener for preset changes
         presetCombo.addActionListener(e -> {
@@ -346,9 +349,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         return panel;
     }
 
-    /**
-     * Create panel for sequence parameters (loop, direction, timing, etc.)
-     */
     private JPanel createGeneratePanel() {
         // Size constants
         final int SMALL_CONTROL_WIDTH = 40;
@@ -357,7 +357,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Generate"));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        // REDUCED: from 5,2 to 2,1
+        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
 
         // Range combo (moved from sequence parameters panel)
         String[] rangeOptions = { "1 Octave", "2 Octaves", "3 Octaves", "4 Octaves" };
@@ -395,49 +396,12 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         return panel;
     }
 
-    /**
-     * Populate the preset combo with General MIDI instrument names
-     */
-    private void populatePresetCombo(JComboBox<String> combo) {
-        updatingUI = true;
-        try {
-            combo.removeAllItems();
-
-            // Get the list of GM preset names from InternalSynthManager
-            List<String> presetNames = InternalSynthManager.getInstance().getGeneralMIDIPresetNames();
-
-            // Add each preset with its index
-            for (int i = 0; i < presetNames.size(); i++) {
-                combo.addItem(i + ": " + presetNames.get(i));
-            }
-
-            // Select current preset if available
-            if (sequencer.getPlayer() != null && sequencer.getPlayer().getPreset() != null) {
-                int currentPreset = sequencer.getPlayer().getPreset();
-                if (currentPreset >= 0 && currentPreset < presetNames.size()) {
-                    combo.setSelectedItem(currentPreset + ": " + presetNames.get(currentPreset));
-                }
-            }
-        } finally {
-            updatingUI = false;
-        }
-    }
-
-    private int parsePresetNumber(String presetString) {
-        try {
-            return Integer.parseInt(presetString.split(":")[0].trim());
-        } catch (NumberFormatException e) {
-            logger.error("Failed to parse preset number from: {}", presetString);
-            return -1;
-        }
-    }
-
-    // Update the createSequenceColumn method to make columns more compact
     private JPanel createSequenceColumn(int index) {
         // Use BoxLayout for vertical arrangement
         JPanel column = new JPanel();
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
-        column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
+        // REDUCED: from 5,2,5,2 to 2,1,2,1
+        column.setBorder(BorderFactory.createEmptyBorder(2, 1, 2, 1));
 
         for (int i = 0; i < 5; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
@@ -511,8 +475,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             column.add(dialPanel);
         }
 
-        // UPDATED: Add spacing between knobs from 2 to 5 pixels
-        column.add(Box.createRigidArea(new Dimension(0, 5)));
+        // REDUCED: from 0,5 to 0,2
+        column.add(Box.createRigidArea(new Dimension(0, 2)));
 
         // Make trigger button more compact
         TriggerButton triggerButton = new TriggerButton("");

@@ -86,23 +86,32 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
     public DrumParamsSequencerPanel(Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
         this.noteEventConsumer = noteEventConsumer;
-
+        
         // Get the shared sequencer instance from DrumSequencerManager
         sequencer = DrumSequencerManager.getInstance().getSequencer(0);
-
+        
         // If no sequencer exists yet, create one
         if (sequencer == null) {
             logger.info("Creating new drum sequencer through manager");
             sequencer = DrumSequencerManager.getInstance().newSequencer(noteEventConsumer);
+            
+            // Double check we got a sequencer
+            if (sequencer == null) {
+                throw new IllegalStateException("Failed to create sequencer");
+            }
         }
-
+        
+        // Create required panels BEFORE initialize() is called
+        navigationPanel = new DrumSequenceNavigationPanel(sequencer);
+        drumPadPanel = new DrumPadButtonPanel(sequencer, this::handleDrumPadSelected);
+        
         // Register with CommandBus for updates
         CommandBus.getInstance().register(this);
         TimingBus.getInstance().register(this);
-
+        
         // Initialize UI components
         initialize();
-
+        
         // Add key listener for Escape key to return to DrumSequencer panel
         addKeyListener(new KeyAdapter() {
             @Override
@@ -156,60 +165,63 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         probabilityDials.clear();
         nudgeDials.clear();
 
-        // Use a consistent BorderLayout
-        setLayout(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // REDUCED: from 5,5 to 2,2
+        setLayout(new BorderLayout(2, 2));
+        // REDUCED: from 5,5,5,5 to 2,2,2,2
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Create west panel to hold navigation
-        JPanel westPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel westPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create east panel for sound parameters
-        JPanel eastPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create top panel to hold west and east panels
-        JPanel topPanel = new JPanel(new BorderLayout(5, 5));
-
-        // Create sequence navigation panel using the custom component
-        navigationPanel = new DrumSequenceNavigationPanel(sequencer);
+        // REDUCED: from 5,5 to 2,2
+        JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         // Navigation panel goes NORTH-WEST
-        westPanel.add(navigationPanel, BorderLayout.NORTH);
+        UIUtils.addSafely(westPanel, navigationPanel, BorderLayout.NORTH);
 
         // Add panels to the top panel
-        topPanel.add(westPanel, BorderLayout.WEST);
-        topPanel.add(eastPanel, BorderLayout.EAST);
+        UIUtils.addSafely(topPanel, westPanel, BorderLayout.WEST);
+        UIUtils.addSafely(topPanel, eastPanel, BorderLayout.EAST);
 
         // Add top panel to main layout
-        add(topPanel, BorderLayout.NORTH);
+        UIUtils.addSafely(this, topPanel, BorderLayout.NORTH);
 
-        // Create panel for the 16 columns with IDENTICAL layout and border
-        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 5, 0));
-        sequencePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        // Create panel for the 16 columns
+        // REDUCED: from 5,0 to 2,0
+        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0));
+        // REDUCED: from 10,10,10,10 to 5,5,5,5
+        sequencePanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         // Create 16 columns
         for (int i = 0; i < 16; i++) {
             JPanel columnPanel = createSequenceColumn(i);
-            sequencePanel.add(columnPanel);
+            UIUtils.addSafely(sequencePanel, columnPanel);
         }
 
         // Create a panel to hold both the sequence panel and drum buttons
         JPanel centerPanel = new JPanel(new BorderLayout());
 
         // Add sequence panel directly to CENTER
-        centerPanel.add(sequencePanel, BorderLayout.CENTER);
+        UIUtils.addSafely(centerPanel, sequencePanel, BorderLayout.CENTER);
 
         // Create drum pad panel with callback
         drumPadPanel = new DrumPadButtonPanel(sequencer, this::handleDrumPadSelected);
 
-        // IMPORTANT: Add drum pad panel DIRECTLY to the border layout, no wrapping
-        // panels
-        centerPanel.add(drumPadPanel, BorderLayout.SOUTH);
+        // IMPORTANT: Add drum pad panel DIRECTLY to the border layout with safe add
+        UIUtils.addSafely(centerPanel, drumPadPanel, BorderLayout.SOUTH);
 
         // Add the center panel to the main layout
-        add(centerPanel, BorderLayout.CENTER);
+        UIUtils.addSafely(this, centerPanel, BorderLayout.CENTER);
 
         // Create a panel for the bottom controls
-        JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
 
         // Add MaxLengthPanel to the WEST position
         maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
@@ -220,7 +232,8 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
         // Create a container for the right-side panels
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
 
         generatorPanel = new DrumSequenceGeneratorPanel(sequencer);
         rightPanel.add(generatorPanel);
@@ -240,7 +253,8 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         // Use BoxLayout for vertical arrangement
         JPanel column = new JPanel();
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
-        column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
+        // REDUCED: from 5,2,5,2 to 2,1,2,1
+        column.setBorder(BorderFactory.createEmptyBorder(2, 1, 2, 1));
 
         for (int i = 0; i < 4; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
@@ -322,8 +336,8 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
             column.add(dialPanel);
         }
 
-        // Add spacing between knobs
-        column.add(Box.createRigidArea(new Dimension(0, 5)));
+        // REDUCED: from 0,5 to 0,2
+        column.add(Box.createRigidArea(new Dimension(0, 2)));
 
         // Add only the trigger button - not the drum button
         TriggerButton triggerButton = new TriggerButton("");

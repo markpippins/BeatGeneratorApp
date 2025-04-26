@@ -165,18 +165,22 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         chorusDials.clear();
         reverbDials.clear();
 
-        // Use a consistent BorderLayout
-        setLayout(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // REDUCED: from 5,5 to 2,2
+        setLayout(new BorderLayout(2, 2));
+        // REDUCED: from 5,5,5,5 to 2,2,2,2
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Create west panel to hold navigation
-        JPanel westPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel westPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create east panel for sound parameters
-        JPanel eastPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create top panel to hold west and east panels
-        JPanel topPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create sequence navigation panel using the custom component
         navigationPanel = new DrumSequenceNavigationPanel(sequencer);
@@ -191,9 +195,11 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
 
-        // Create panel for the 16 columns with IDENTICAL layout and border
-        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 5, 0));
-        sequencePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        // Create panel for the 16 columns
+        // REDUCED: from 5,0 to 2,0
+        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0));
+        // REDUCED: from 10,10,10,10 to 5,5,5,5
+        sequencePanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         // Create 16 columns
         for (int i = 0; i < 16; i++) {
@@ -217,7 +223,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         add(centerPanel, BorderLayout.CENTER);
 
         // Create a panel for the bottom controls
-        JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
         
         // Add MaxLengthPanel to the WEST position
         maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
@@ -228,7 +235,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
         // Create a container for the right-side panels
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
 
         // Use the new DrumSequenceGeneratorPanel
         generatorPanel = new DrumSequenceGeneratorPanel(sequencer);
@@ -252,7 +260,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Use BoxLayout for vertical arrangement
         JPanel column = new JPanel();
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
-        column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
+        // REDUCED: from 5,2,5,2 to 2,1,2,1
+        column.setBorder(BorderFactory.createEmptyBorder(2, 1, 2, 1));
 
         for (int i = 0; i < 4; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
@@ -339,8 +348,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             column.add(dialPanel);
         }
 
-        // Add spacing between knobs
-        column.add(Box.createRigidArea(new Dimension(0, 5)));
+        // REDUCED: from 0,5 to 0,2
+        column.add(Box.createRigidArea(new Dimension(0, 2)));
 
         // Add only the trigger button - not the drum button
         TriggerButton triggerButton = new TriggerButton("");

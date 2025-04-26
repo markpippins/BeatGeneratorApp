@@ -4,7 +4,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridBagLayout;
+import java.awt.Component;
+import java.awt.Container;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -101,4 +104,42 @@ public class UIUtils {
         return new Color[] { agedOffWhite, deepTeal, warmOffWhite };
     }
 
+    /**
+     * Safely adds a component to a container with error handling
+     * @param container The container to add the component to
+     * @param component The component to add
+     * @param constraints Layout constraints (if applicable)
+     * @return true if addition was successful, false otherwise
+     */
+    public static boolean addSafely(Container container, Component component, Object constraints) {
+        if (component == null) {
+            Logger.getLogger(UIUtils.class.getName()).warning(
+                "Attempted to add null component to " + 
+                (container != null ? container.getClass().getSimpleName() : "null container"));
+            return false;
+        }
+        
+        if (container == null) {
+            Logger.getLogger(UIUtils.class.getName()).warning(
+                "Attempted to add component to null container");
+            return false;
+        }
+        
+        try {
+            container.add(component, constraints);
+            return true;
+        } catch (Exception e) {
+            Logger.getLogger(UIUtils.class.getName()).warning(
+                "Error adding component: " + e.getMessage());
+            e.printStackTrace(); // More detailed stack trace for debugging
+            return false;
+        }
+    }
+
+    /**
+     * Overloaded version without constraints for simpler layouts
+     */
+    public static boolean addSafely(Container container, Component component) {
+        return addSafely(container, component, null);
+    }
 }
