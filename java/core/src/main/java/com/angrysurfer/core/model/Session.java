@@ -53,6 +53,10 @@ public class Session implements Serializable, IBusListener {
 
     @JsonIgnore
     @Transient
+    public boolean modified = false;
+
+    @JsonIgnore
+    @Transient
     private Set<Player> addList = new HashSet<>();
 
     @JsonIgnore
@@ -602,7 +606,7 @@ public class Session implements Serializable, IBusListener {
             // Check if device is already connected
             if (instrument.getDevice() != null && instrument.getDevice().isOpen()) {
                 logger.info("Device for player {} is already open: {}", 
-                          player.getName(), instrument.getDevice().getDeviceInfo().getName());
+                          player.getName(), instrument.getDeviceInfo().getName());
                 return;
             }
             
@@ -947,5 +951,52 @@ public class Session implements Serializable, IBusListener {
             lowLatencyMidiClock.stop();
         }
         // ...other stop cleanup code...
+    }
+
+    /**
+     * Add or update a player in the session
+     * @param player The player to add or update
+     */
+    public void addOrUpdatePlayer(Player player) {
+        if (player == null || player.getId() == null) {
+            logger.warn("Cannot add null player or player without ID");
+            return;
+        }
+        
+        // Store in players collection
+        players.add(player);
+        
+        // Also store the player's instrument if it exists
+        if (player.getInstrument() != null) {
+            InstrumentManager.getInstance().updateInstrument(player.getInstrument());
+        }
+        
+        // Flag session as modified
+        setModified(true);
+    }
+
+    /**
+     * Get a player by ID
+     * @param playerId The player ID
+     * @return The player, or null if not found
+     */
+    public Player getPlayerById(String playerId) {
+        if (playerId == null) return null;
+        
+        for (Player player : players) {
+            if (playerId.equals(player.getId())) {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Save all players to persistence
+     */
+    public void saveAllPlayers() {
+        for (Player player : players) {
+            PlayerManager.getInstance().savePlayerProperties(player);
+        }
     }
 }

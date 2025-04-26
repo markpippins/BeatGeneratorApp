@@ -1,14 +1,12 @@
 package com.angrysurfer.core.sequencer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import com.angrysurfer.core.service.InternalSynthManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +27,9 @@ import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiUnavailableException;
 
 @Getter
 @Setter
@@ -418,21 +419,34 @@ public class MelodicSequencer implements IBusListener {
             
             // If no instrument found, create a new one
             if (internalInstrument == null) {
+                // Get a reference to the internal synthesizer device
+                MidiDevice internalSynthDevice;
+                try {
+                    internalSynthDevice = InternalSynthManager.getInstance().getInternalSynthDevice();
+                } catch (MidiUnavailableException e) {
+                    logger.error("Failed to get internal synth device: {}", e.getMessage());
+                    return;
+                }
+                
+                // Generate a numeric ID for the instrument
+                long numericId = 9985L + player.getChannel();
+                
+                // Create the instrument with proper constructor parameters
                 internalInstrument = new InstrumentWrapper(
-                    "Internal Synth " + player.getChannel(),  // Add channel to name for clarity
-                    null, 
-                    player.getChannel()  // Use player's channel
+                    "Internal Synth " + player.getChannel(),  // Name
+                    internalSynthDevice,                      // Device (not a String)
+                    player.getChannel()                       // Channel
                 );
+                
+                // Set the rest of the properties
                 internalInstrument.setInternal(true);
                 internalInstrument.setDeviceName("Gervill");
                 internalInstrument.setSoundbankName("Default");
                 internalInstrument.setBankIndex(0);
+                internalInstrument.setId(numericId);  // Set ID separately
                 internalInstrument.setChannel(player.getChannel());
-                // Use channel as preset if none defined, ensuring different sounds per channel
                 internalInstrument.setCurrentPreset(player.getPreset() != null ? 
                     player.getPreset() : player.getChannel());
-                // Make sure ID is unique per channel
-                internalInstrument.setId(9985L + player.getChannel());
                 
                 // Register with instrument manager
                 manager.updateInstrument(internalInstrument);
@@ -1989,55 +2003,35 @@ public class MelodicSequencer implements IBusListener {
         return (int) (stepDurationMs * swingFactor);
     }
 
-    // Add this method to the MelodicSequencer class
-
     /**
-     * Initialize the MIDI device with the current instrument settings
-     * Call this before starting playback
+     * Initialize the instrument for this sequencer's player
      */
     public void initializeInstrument() {
-        if (player == null || player.getInstrument() == null) {
-            logger.warn("Cannot initialize MIDI instrument: Player or instrument is null");
+        if (player == null) {
+            logger.warn("Cannot initialize instrument: no player available");
             return;
         }
-
+        
         try {
-            // Get current instrument settings
-            InstrumentWrapper instrument = player.getInstrument();
-            int channel = player.getChannel();
-            Integer preset = player.getPreset();
+            // Use the manager's method to get or create the instrument
+            InstrumentWrapper internalInstrument = 
+                InstrumentManager.getInstance().getOrCreateInternalSynthInstrument(player.getChannel());
             
-            // Make sure the channel matches our expected channel
-            if (channel != this.channel) {
-                player.setChannel(this.channel);
-                channel = this.channel;
-            }
-
-            // Mark instrument as assigned to player
-            instrument.setAssignedToPlayer(true);
-
-            // Update the instrument in the cache
-            InstrumentManager.getInstance().updateInstrument(instrument);
-
-            if (preset != null) {
-                // Apply bank select if needed
-                if (instrument.getBankMSB() != 0 || instrument.getBankLSB() != 0) {
-                    // Bank MSB (CC#0)
-                    instrument.controlChange(channel, 0, instrument.getBankMSB());
-                    // Bank LSB (CC#32)
-                    instrument.controlChange(channel, 32, instrument.getBankLSB());
-                    
-                    logger.info("Sent bank select MSB: {}, LSB: {} on channel {}",
-                        instrument.getBankMSB(), instrument.getBankLSB(), channel);
+            if (internalInstrument != null) {
+                // Assign to player
+                player.setInstrument(internalInstrument);
+                player.setInstrumentId(internalInstrument.getId());
+                
+                // Update preset if needed
+                if (player.getPreset() != null) {
+                    internalInstrument.setCurrentPreset(player.getPreset());
                 }
-
-                // Send program change
-                instrument.programChange(channel, preset, 0);
-                logger.info("Initialized instrument {} with preset {} on channel {}",
-                        instrument.getName(), preset, channel);
-                        
-                // Save player using PlayerManager to ensure persistence
+                
+                // Save player to persist changes
                 PlayerManager.getInstance().savePlayerProperties(player);
+                
+                logger.info("Initialized instrument for player {}: {} (ID: {})", 
+                    player.getName(), internalInstrument.getName(), internalInstrument.getId());
             }
         } catch (Exception e) {
             logger.error("Error initializing instrument: {}", e.getMessage(), e);
@@ -2053,35 +2047,4 @@ public class MelodicSequencer implements IBusListener {
             initializeInternalInstrument(player);
         }
     }
-
-    // public void initializeInstrument() {
-    // if (player == null || player.getInstrument() == null) {
-    // return;
-    // }
-
-    // try {
-    // // Get current instrument settings
-    // InstrumentWrapper instrument = player.getInstrument();
-    // int channel = player.getChannel();
-    // Integer preset = player.getPreset();
-
-    // if (preset != null) {
-    // // Apply bank select if needed
-    // if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
-    // // Bank MSB (CC#0)
-    // instrument.controlChange(channel, 0, 0);
-    // // Bank LSB (CC#32)
-    // instrument.controlChange(channel, 32, instrument.getBankIndex());
-    // }
-
-    // // Send program change
-    // instrument.programChange(channel, preset, 0);
-    // logger.info("Initialized instrument {} with preset {} on channel {}",
-    // instrument.getName(), preset, channel);
-    // }
-    // } catch (Exception e) {
-    // logger.error("Error initializing instrument: {}", e.getMessage());
-    // }
-    // }
-    // }
 }

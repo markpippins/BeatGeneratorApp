@@ -169,42 +169,68 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
      * Set up the instrument combo box with improved handling
      */
     private void setupInstrumentCombo() {
-        instrumentCombo = new JComboBox<>();
-
-        // Custom renderer to show instrument names
+        // Log initial state
+        if (player.getInstrument() != null) {
+            logger.debug("Player instrument before setup: {} (ID: {})", 
+                player.getInstrument().getName(), 
+                player.getInstrument().getId());
+        } else {
+            logger.debug("Player has no instrument before setup");
+        }
+        
+        // Clear any previous selections
+        if (instrumentCombo != null) {
+            instrumentCombo.removeAllItems();
+        } else {
+            instrumentCombo = new JComboBox<>();
+        }
+        
+        // Custom renderer to show better debug info
         instrumentCombo.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value,
                     int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof InstrumentWrapper) {
-                    setText(((InstrumentWrapper) value).getName());
+                    InstrumentWrapper instrument = (InstrumentWrapper) value;
+                    setText(String.format("%s [ID:%s, Ch:%s]", 
+                        instrument.getName(),
+                        instrument.getId(),
+                        instrument.getChannel()));
                 }
                 return this;
             }
         });
-
-        // Get instruments from InstrumentManager to ensure consistency
+        
+        // Get ALL instruments from InstrumentManager for debugging
         List<InstrumentWrapper> instruments = instrumentManager.getCachedInstruments();
         
-        // Sort instruments alphabetically by name
-        instruments.sort((a, b) -> {
-            String nameA = a.getName() != null ? a.getName() : "";
-            String nameB = b.getName() != null ? b.getName() : "";
-            return nameA.compareToIgnoreCase(nameB);
-        });
+        // DEBUGGING: Print all instruments
+        logger.debug("=== ALL CACHED INSTRUMENTS ===");
+        for (InstrumentWrapper instrument : instruments) {
+            logger.debug("Instrument: {} (ID: {}, Channel: {}, Internal: {})",
+                instrument.getName(),
+                instrument.getId(),
+                instrument.getChannel(),
+                instrument.getInternal());
+        }
         
         // Add instruments to combo box
         for (InstrumentWrapper instrument : instruments) {
             instrumentCombo.addItem(instrument);
         }
-
-        // Select player's current instrument by ID for reliability
+        
+        // Select correct instrument - try multiple approaches
         boolean selected = false;
-        if (selectedInstrumentId != null) {
+        
+        // Try by ID if we have one
+        if (player.getInstrumentId() != null) {
+            logger.debug("Attempting to select by ID: {}", player.getInstrumentId());
+            
             for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
                 InstrumentWrapper item = instrumentCombo.getItemAt(i);
-                if (item.getId().equals(selectedInstrumentId)) {
+                if (item.getId() != null && item.getId().equals(player.getInstrumentId())) {
+                    logger.debug("Found match by ID at index {}", i);
                     instrumentCombo.setSelectedIndex(i);
                     selected = true;
                     break;
@@ -212,16 +238,43 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             }
         }
         
-        // Default selection if needed
-        if (!selected && instrumentCombo.getItemCount() > 0) {
-            instrumentCombo.setSelectedIndex(0);
-            InstrumentWrapper selectedInstrument = (InstrumentWrapper)instrumentCombo.getSelectedItem();
-            if (selectedInstrument != null) {
-                selectedInstrumentId = selectedInstrument.getId();
-                player.setInstrument(selectedInstrument);
-                player.setInstrumentId(selectedInstrument.getId());
-                isInternalSynth = synthManager.isInternalSynth(selectedInstrument);
+        // If ID didn't work, try by player's instrument reference
+        if (!selected && player.getInstrument() != null) {
+            logger.debug("Attempting to select by instrument reference");
+            
+            for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
+                InstrumentWrapper item = instrumentCombo.getItemAt(i);
+                if (item == player.getInstrument()) {
+                    logger.debug("Found match by reference at index {}", i);
+                    instrumentCombo.setSelectedIndex(i);
+                    selected = true;
+                    break;
+                }
             }
+        }
+        
+        // Last resort: try by name and channel
+        if (!selected && player.getInstrument() != null && player.getInstrument().getName() != null) {
+            String name = player.getInstrument().getName();
+            Integer channel = player.getChannel();
+            
+            logger.debug("Attempting to select by name ({}) and channel ({})", name, channel);
+            
+            for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
+                InstrumentWrapper item = instrumentCombo.getItemAt(i);
+                if (name.equals(item.getName()) && 
+                    (channel == null || channel.equals(item.getChannel()))) {
+                    logger.debug("Found match by name/channel at index {}", i);
+                    instrumentCombo.setSelectedIndex(i);
+                    selected = true;
+                    break;
+                }
+            }
+        }
+        
+        // If still not found, log the issue
+        if (!selected) {
+            logger.warn("Could not find matching instrument for player");
         }
     }
 

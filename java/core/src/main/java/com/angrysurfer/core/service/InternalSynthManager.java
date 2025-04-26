@@ -19,6 +19,7 @@ import javax.sound.midi.Patch;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 import javax.sound.midi.MidiChannel;
+import javax.sound.midi.MidiUnavailableException;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 
@@ -175,6 +176,21 @@ public class InternalSynthManager {
         if (synthesizer == null || !synthesizer.isOpen()) {
             initializeSynthesizer();
         }
+        return synthesizer;
+    }
+
+    /**
+     * Get the internal synthesizer device
+     * @return The internal synthesizer device
+     * @throws MidiUnavailableException if the synthesizer is unavailable
+     */
+    public MidiDevice getInternalSynthDevice() throws MidiUnavailableException {
+        if (synthesizer == null) {
+            synthesizer = MidiSystem.getSynthesizer();
+            synthesizer.open();
+            cachedChannels = synthesizer.getChannels();
+        }
+        
         return synthesizer;
     }
 

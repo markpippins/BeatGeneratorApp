@@ -1,9 +1,6 @@
 package com.angrysurfer.core.service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Logger;
 
 import com.angrysurfer.core.api.Command;
@@ -340,6 +337,51 @@ public class SessionManager implements IBusListener {
         }
 
         setActiveSession(session);
+    }
+
+    /**
+     * Load the session including all players and instruments
+     */
+    private void loadSession() {
+        try {
+            // Load session from persistence using existing session loading logic
+            Session session = redisService.findSessionById(redisService.getMinimumSessionId());
+            if (session == null) {
+                session = redisService.newSession();
+            }
+            
+            // Load all instruments using InstrumentManager
+            InstrumentManager instrumentManager = InstrumentManager.getInstance();
+            List<InstrumentWrapper> instruments = instrumentManager.getCachedInstruments();
+            
+            // No need to manually update each instrument in InstrumentManager
+            // since getAllInstruments() should already have populated the cache
+            
+            // Load all players using PlayerManager
+            PlayerManager playerManager = PlayerManager.getInstance();
+            Set<Player> players = SessionManager.getInstance().getActiveSession().getPlayers();
+            
+            // Link players to their instruments and add to session
+            for (Player player : players) {
+                // Link player to its instrument if available
+                if (player.getInstrumentId() != null) {
+                    InstrumentWrapper instrument = 
+                        instrumentManager.getInstrumentById(player.getInstrumentId());
+                    if (instrument != null) {
+                        player.setInstrument(instrument);
+                    }
+                }
+                
+                // Add player to session
+                session.addOrUpdatePlayer(player);
+            }
+            
+            // Set the active session
+            this.activeSession = session;
+        } catch (Exception e) {
+            logger.severe("Failed to load session: " + e.getMessage());
+            this.activeSession = new Session();
+        }
     }
 
     // Moved from SessionManager

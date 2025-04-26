@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiUnavailableException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,10 +130,13 @@ public class InstrumentManager implements IBusListener {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Get instrument by ID
+     * @param id The instrument ID
+     * @return The instrument, or null if not found
+     */
     public InstrumentWrapper getInstrumentById(Long id) {
-        if (needsRefresh) {
-            refreshInstruments();
-        }
+        if (id == null) return null;
         return instrumentCache.get(id);
     }
 
@@ -189,21 +193,25 @@ public class InstrumentManager implements IBusListener {
     }
 
     /**
-     * Update an instrument in the cache and persistence
+     * Update instrument in cache and persist it
      */
     public void updateInstrument(InstrumentWrapper instrument) {
         if (instrument == null || instrument.getId() == null) {
-            logger.warn("Cannot update null instrument or instrument without ID");
+            logger.warn("Cannot update instrument: null or missing ID");
             return;
         }
         
-        // Update the instrument in the cache
+        // Store in cache
         instrumentCache.put(instrument.getId(), instrument);
         
-        // Persist the instrument
-        RedisService.getInstance().saveInstrument(instrument);
-        
-        logger.debug("Updated instrument: {}", instrument.getName());
+        // Persist to storage using RedisService instead of persistenceService
+        try {
+            RedisService.getInstance().saveInstrument(instrument);
+            logger.debug("Saved instrument: {} (ID: {})", 
+                instrument.getName(), instrument.getId());
+        } catch (Exception e) {
+            logger.error("Failed to persist instrument: {}", e.getMessage());
+        }
     }
 
     /**
@@ -291,5 +299,51 @@ public class InstrumentManager implements IBusListener {
         InstrumentManager.getInstance().updateInstrument(internalInstrument);
         
         return internalInstrument;
+    }
+
+    /**
+     * Get instrument for internal synthesizer on a specific channel
+     * @param channel MIDI channel
+     * @return The instrument, creating it if necessary
+     */
+    public InstrumentWrapper getOrCreateInternalSynthInstrument(int channel) {
+        // Generate the ID using the same formula as MelodicSequencer
+        Long id = 9985L + channel;
+        
+        // Try to find by ID first
+        InstrumentWrapper instrument = instrumentCache.get(id);
+        if (instrument != null) {
+            return instrument;
+        }
+        
+        // Next try by name and channel
+        for (InstrumentWrapper cached : instrumentCache.values()) {
+            if (Boolean.TRUE.equals(cached.getInternal()) && 
+                cached.getChannel() != null && 
+                cached.getChannel() == channel) {
+                return cached;
+            }
+        }
+        
+        // No instrument found, create a new one
+        try {
+            MidiDevice synthDevice = InternalSynthManager.getInstance().getInternalSynthDevice();
+            instrument = new InstrumentWrapper(
+                "Internal Synth " + channel,
+                synthDevice,
+                channel
+            );
+            instrument.setId(id);
+            instrument.setInternal(true);
+            instrument.setDeviceName("Gervill");
+            instrument.setSoundbankName("Default");
+            instrument.setBankIndex(0);
+            updateInstrument(instrument);
+            
+            return instrument;
+        } catch (MidiUnavailableException e) {
+            logger.error("Failed to create internal instrument: {}", e.getMessage());
+            return null;
+        }
     }
 }
