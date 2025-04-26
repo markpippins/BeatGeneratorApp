@@ -21,6 +21,7 @@ public class Ratchet extends Strike {
     private double targetTick;
 
     public Ratchet(Player parent, double offset, long interval, int part) {
+        super(parent.getName() + " Ratchet", parent.getSession(), parent.getInstrument(), parent.getRootNote(), parent.getAllowedControlMessages());
         logger.info("Creating new Ratchet - parent: {}, offset: {}, interval: {}, part: {}", parent.getName(), offset,
                 interval, part);
 

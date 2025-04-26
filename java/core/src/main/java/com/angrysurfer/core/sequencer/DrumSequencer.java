@@ -298,7 +298,7 @@ public class DrumSequencer implements IBusListener {
         players = new Player[DRUM_PAD_COUNT];
 
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
-            players[i] = RedisService.getInstance().newPlayer();
+            players[i] = RedisService.getInstance().newStrike();
             players[i].setName("Drum " + (i + 1));
             // Set default root notes - standard GM drum map starting points
             players[i].setRootNote(MIDI_DRUM_NOTE_OFFSET + i); // Start from MIDI note 36 (C1)

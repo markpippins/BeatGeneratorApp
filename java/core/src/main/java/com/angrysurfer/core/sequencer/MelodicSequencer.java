@@ -10,6 +10,8 @@ import java.util.function.Consumer;
 
 import javax.sound.midi.MidiDevice;
 
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.service.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,11 +23,10 @@ import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.feature.Note;
+import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -78,7 +79,7 @@ public class MelodicSequencer implements IBusListener {
     private List<Integer> nudgeValues = new ArrayList<>();
 
     // Note object for storing melodic properties (NEW)
-    private Note player;
+    private Player player;
 
     // Event handling
     private Consumer<StepUpdateEvent> stepUpdateListener;
@@ -306,14 +307,18 @@ public class MelodicSequencer implements IBusListener {
      * MidiDevice
      */
     private void initializeNote() {
-        player = new Note();
-        player.setName("Melody");
-        player.setRootNote(60); // Middle C
+
+        player =  RedisService.getInstance().newNote();
         player.setMinVelocity(60);
         player.setMaxVelocity(127);
         player.setLevel(100);
         player.setChannel(channel); // Use the sequencer's channel setting
 
+        if (player.isUsingInternalSynth())
+            initializeInternalInstrument(player);
+    }
+
+    private void initializeInternalInstrument(Player player) {
         try {
             // Get the InstrumentManager instance
             InstrumentManager instrumentManager = InstrumentManager.getInstance();
@@ -353,7 +358,6 @@ public class MelodicSequencer implements IBusListener {
             }
 
             internalInstrument.setId(9985L + getPlayer().getChannel()); // Unique ID for internal synth
-            player.setInstrument(internalInstrument);
 
             // Now properly connect the device using DeviceManager
             // Check if device is available
@@ -390,9 +394,6 @@ public class MelodicSequencer implements IBusListener {
             // Set the instrument on the note
             player.setInstrument(internalInstrument);
 
-            // Configure the note's channel
-            player.setChannel(channel);
-
             logger.info("Initialized Note with InstrumentWrapper: {}", internalInstrument.getName());
 
             // Test the connection
@@ -410,6 +411,7 @@ public class MelodicSequencer implements IBusListener {
         } catch (Exception e) {
             logger.error("Failed to initialize Note with InstrumentWrapper: {}", e.getMessage(), e);
         }
+
     }
 
     /**
@@ -1146,17 +1148,19 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Start playback
+     * Start playback of the sequencer
      */
-    public void play() {
-        if (!isPlaying) {
-            isPlaying = true;
-            // Get current master tempo from session
-            masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
-            reset();
-
-            logger.info("Melodic sequencer playback started with master tempo: {}", masterTempo);
+    public void start() {
+        if (isPlaying) {
+            return;
         }
+
+        // Initialize MIDI instrument before starting playback
+        initializeInstrument();
+
+        // Rest of start() method
+        isPlaying = true;
+        // ...existing code...
     }
 
     /**
@@ -1225,7 +1229,7 @@ public class MelodicSequencer implements IBusListener {
                 // Sync with master tempo when starting
                 masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
                 logger.info("Master tempo set to {} ticks per beat", masterTempo);
-                play();
+                start();
             }
 
             case Commands.TRANSPORT_STOP -> {
@@ -1836,6 +1840,52 @@ public class MelodicSequencer implements IBusListener {
         return (int) (stepDurationMs * swingFactor);
     }
 
+    /**
+     * Initialize the MIDI device with the current instrument settings
+     * from the player's InstrumentWrapper.
+     * Should be called when playback starts.
+     */
+    // private void initializeMidiInstrument() {
+    // if (player == null || player.getInstrument() == null) {
+    // logger.warning("Cannot initialize MIDI instrument: Player or
+    // InstrumentWrapper is null");
+    // return;
+    // }
+
+    // InstrumentWrapper wrapper = player.getInstrument();
+    // int channel = player.getChannel();
+
+    // // Get the bank and program information
+    // int bankMSB = wrapper.getBankMSB();
+    // int bankLSB = wrapper.getBankLSB();
+    // int program = wrapper.getProgram();
+
+    // logger.info("Initializing MIDI instrument - Channel: {}, Bank MSB: {}, Bank
+    // LSB: {}, Program: {}",
+    // channel, bankMSB, bankLSB, program);
+
+    // try {
+    // // Send Bank Select messages
+    // player.sendControlChange(0, bankMSB); // Bank Select MSB (CC#0)
+    // player.sendControlChange(32, bankLSB); // Bank Select LSB (CC#32)
+
+    // // Send Program Change message
+    // player.sendProgramChange(program);
+
+    // // Register with InstrumentManager to ensure consistent selection
+    // InstrumentManager.getInstance().registerInstrument(
+    // player.getId(),
+    // wrapper.getId(),
+    // bankMSB,
+    // bankLSB,
+    // program,
+    // channel
+    // );
+    // } catch (Exception e) {
+    // logger.error("Failed to initialize MIDI instrument", e);
+    // }
+    // }
+
     // Add this method to the MelodicSequencer class
 
     /**
@@ -1852,6 +1902,12 @@ public class MelodicSequencer implements IBusListener {
             InstrumentWrapper instrument = player.getInstrument();
             int channel = player.getChannel();
             Integer preset = player.getPreset();
+
+            // Mark instrument as assigned to player
+            instrument.setAssignedToPlayer(true);
+
+            // Update the instrument in the cache
+            InstrumentManager.getInstance().updateInstrument(instrument);
 
             if (preset != null) {
                 // Apply bank select if needed
@@ -1871,4 +1927,34 @@ public class MelodicSequencer implements IBusListener {
             logger.error("Error initializing instrument: {}", e.getMessage());
         }
     }
+
+    // public void initializeInstrument() {
+    // if (player == null || player.getInstrument() == null) {
+    // return;
+    // }
+
+    // try {
+    // // Get current instrument settings
+    // InstrumentWrapper instrument = player.getInstrument();
+    // int channel = player.getChannel();
+    // Integer preset = player.getPreset();
+
+    // if (preset != null) {
+    // // Apply bank select if needed
+    // if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
+    // // Bank MSB (CC#0)
+    // instrument.controlChange(channel, 0, 0);
+    // // Bank LSB (CC#32)
+    // instrument.controlChange(channel, 32, instrument.getBankIndex());
+    // }
+
+    // // Send program change
+    // instrument.programChange(channel, preset, 0);
+    // logger.info("Initialized instrument {} with preset {} on channel {}",
+    // instrument.getName(), preset, channel);
+    // }
+    // } catch (Exception e) {
+    // logger.error("Error initializing instrument: {}", e.getMessage());
+    // }
+    // }
 }

@@ -59,6 +59,8 @@ public final class InstrumentWrapper implements Serializable {
 
     private Boolean internal;
 
+    private Boolean assignedToPlayer = false;
+
     private List<ControlCode> controlCodes = new ArrayList<>();
 
     private Set<Pad> pads = new HashSet<>();
