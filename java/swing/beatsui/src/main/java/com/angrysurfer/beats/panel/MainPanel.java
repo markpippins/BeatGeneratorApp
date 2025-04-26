@@ -97,22 +97,11 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane = new JTabbedPane();
 
         internalSynthControlPanel = new InternalSynthControlPanel();
+        tabbedPane.addTab("PolySequencer", createDrumSequencersPanel());
 
-        for (int i = 0; i < melodicPanels.length; i++) {
-            melodicPanels[i] = createMelodicSequencerPanel(i + 1);
-        }
+        tabbedPane.addTab("Melodic", createMelodicSequencersPanel());
 
-        tabbedPane.addTab("Drums", createDrumPanel());
-        tabbedPane.addTab("Params", createDrumParamsPanel());
-        tabbedPane.addTab("Effects", createDrumEffectsPanel());
-        tabbedPane.addTab("Mono 1", melodicPanels[0]);
-        tabbedPane.addTab("Mono 2", melodicPanels[1]);
-        tabbedPane.addTab("Mono 3", melodicPanels[2]);
-        tabbedPane.addTab("Mono 4", melodicPanels[3]);
-        tabbedPane.addTab("Mono 5", melodicPanels[4]);
-        tabbedPane.addTab("Mono 6", melodicPanels[5]);
-        tabbedPane.addTab("Mono 7", melodicPanels[6]);
-        tabbedPane.addTab("Mono 8", melodicPanels[7]);
+
         tabbedPane.addTab("Song", createSongPanel());
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Modulation", createModulationMatrixPanel());
@@ -192,12 +181,12 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         // Add change listener to handle tab selection events
         tabbedPane.addChangeListener(e -> {
             Component selectedComponent = tabbedPane.getSelectedComponent();
-            
+
             // Request focus on the newly selected tab component
             if (selectedComponent != null) {
                 SwingUtilities.invokeLater(() -> {
                     selectedComponent.requestFocusInWindow();
-                    
+
                     // If it's the params panel, give it focus
                     if (selectedComponent instanceof DrumParamsSequencerPanel) {
                         ((DrumParamsSequencerPanel) selectedComponent).requestFocusInWindow();
@@ -212,6 +201,49 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // At the end of the method, update the mute buttons with sequencers
         updateMuteButtonSequencers();
+    }
+
+    private JTabbedPane createDrumSequencersPanel() {
+
+        JTabbedPane drumsTabbedPane = new JTabbedPane();
+
+        drumsTabbedPane.addTab("Sequencer", createDrumPanel());
+        drumsTabbedPane.addTab("Parameters", createDrumParamsPanel());
+        drumsTabbedPane.addTab("Effects", createDrumEffectsPanel());
+
+        return drumsTabbedPane;
+    }
+
+    private JTabbedPane createMelodicSequencersPanel() {
+
+        JTabbedPane melodicTabbedPane = new JTabbedPane();
+
+        // melodicTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        // melodicTabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+        // melodicTabbedPane.setOpaque(false);
+        // melodicTabbedPane.setBackground(new Color(0, 0, 0, 0));
+        // melodicTabbedPane.setForeground(Color.WHITE);
+        // melodicTabbedPane.setFont(new Font("Dialog", Font.PLAIN, 12));
+
+        for (int i = 0; i < melodicPanels.length; i++)
+            melodicTabbedPane.addTab("Mono " + Integer.toString(i + 1), createMelodicSequencerPanel(i + 1));
+
+        // melodicTabbedPane.addChangeListener(e -> {
+
+        //     // Get the selected tab index
+        //     int selectedIndex = melodicTabbedPane.getSelectedIndex();
+        //     if (selectedIndex >= 0 && selectedIndex < melodicPanels.length) {
+        //         MelodicSequencerPanel selectedPanel = melodicPanels[selectedIndex];
+        //         if (selectedPanel != null) {
+        //             // Request focus on the newly selected panel
+        //             SwingUtilities.invokeLater(() -> {
+        //                 selectedPanel.requestFocusInWindow();
+        //             });
+        //         }
+        //     }
+        // });
+
+        return melodicTabbedPane;
     }
 
     private boolean isDraggedFarEnough(Point currentPoint, Point startPoint) {
@@ -301,7 +333,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createDrumPanel() {
-        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {  
+        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {
             logger.debug("Drum note event received: note={}, velocity={}",
                     noteEvent.getNote(), noteEvent.getVelocity());
 

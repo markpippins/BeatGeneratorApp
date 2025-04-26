@@ -168,21 +168,21 @@ public final class InstrumentWrapper implements Serializable {
 
     public void controlChange(int channel, int controller, int value)
             throws InvalidMidiDataException, MidiUnavailableException {
-        synchronized(cachedControlChange) {
+        synchronized (cachedControlChange) {
             cachedControlChange.setMessage(ShortMessage.CONTROL_CHANGE, channel, controller, value);
             sendToDevice(cachedControlChange);
         }
     }
 
     public void noteOn(int channel, int note, int velocity) throws InvalidMidiDataException, MidiUnavailableException {
-        synchronized(cachedNoteOn) {
+        synchronized (cachedNoteOn) {
             cachedNoteOn.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
             sendToDevice(cachedNoteOn);
         }
     }
 
     public void noteOff(int channel, int note, int velocity) throws InvalidMidiDataException, MidiUnavailableException {
-        synchronized(cachedNoteOff) {
+        synchronized (cachedNoteOff) {
             cachedNoteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, velocity);
             sendToDevice(cachedNoteOff);
         }
@@ -225,12 +225,12 @@ public final class InstrumentWrapper implements Serializable {
 
     public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
         Receiver currentReceiver = ReceiverManager.getInstance().getOrCreateReceiver(deviceName, device);
-        
+
         if (currentReceiver != null) {
             currentReceiver.send(message, -1);
             // Comment out or remove this debug logging - it's in a critical path
-            // logger.debug("Sent message: {} to device: {}", 
-            //            MidiMessage.lookupCommand(message.getCommand()), getName());
+            // logger.debug("Sent message: {} to device: {}",
+            // MidiMessage.lookupCommand(message.getCommand()), getName());
         } else {
             // Still log errors
             logger.error("No valid receiver available for device: {}", deviceName);
@@ -238,65 +238,34 @@ public final class InstrumentWrapper implements Serializable {
         }
     }
 
-//    public void playMidiNote(int channel, int noteNumber, int velocity, int durationMS) {
-//        try {
-//            // Get selected output device from device selection
-//
-//            if (device == null) {
-//                device = DeviceManager.getInstance().getMidiDevice(deviceName);
-//            }
-//            if (device == null) {
-//                CommandBus.getInstance().publish(
-//                    Commands.STATUS_UPDATE,
-//                    this,
-//                    new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
-//                );
-//                return;
-//            }
-//
-//            // Open device if not already open
-//            if (!device.isOpen()) {
-//                device.open();
-//            }
-//
-//            // Get receiver
-//            Receiver receiver = device.getReceiver();
-//
-//            // Create note on message
-//            ShortMessage noteOn = new ShortMessage();
-//            noteOn.setMessage(ShortMessage.NOTE_ON, channel, noteNumber, velocity);
-//            receiver.send(noteOn, -1);
-//
-//            // Create note off message (to be sent after a delay)
-//            ShortMessage noteOff = new ShortMessage();
-//            noteOff.setMessage(ShortMessage.NOTE_OFF, channel, noteNumber, 0);
-//
-//            // Schedule note off message after 500ms
-//            new Timer().schedule(new TimerTask() {
-//                @Override
-//                public void run() {
-//                    receiver.send(noteOff, -1);
-//                }
-//            }, durationMS);
-//
-//            // Log and update status
-//            CommandBus.getInstance().publish(
-//                Commands.STATUS_UPDATE,
-//                this,
-//                new StatusUpdate("MIDI Test", "Info",
-//                    String.format("Sent note: %d on channel: %d with velocity: %d",
-//                        noteNumber, channel + 1, velocity))
-//            );
-//
-//        } catch (Exception e) {
-//            CommandBus.getInstance().publish(
-//                Commands.STATUS_UPDATE,
-//                this,
-//                new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI note: " + e.getMessage())
-//            );
-//            logger.error("Error sending MIDI note", e);
-//        }
-//    }
+    /**
+     * Helper method to initialize an instrument with its stored preset
+     * 
+     * @param instrument The instrument to initialize
+     */
+    public void initializeInstrument(InstrumentWrapper instrument) {
+        if (instrument == null || instrument.getCurrentPreset() == null) {
+            return;
+        }
+
+        try {
+            int channel = 0; // Default channel
+            int preset = instrument.getCurrentPreset();
+
+            // Apply bank if specified
+            if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
+                instrument.controlChange(channel, 0, 0); // Bank MSB
+                instrument.controlChange(channel, 32, instrument.getBankIndex()); // Bank LSB
+            }
+
+            // Apply program change
+            instrument.programChange(channel, preset, 0);
+            logger.debug("Initialized instrument {} with preset {}",
+                    instrument.getName(), preset);
+        } catch (Exception e) {
+            logger.warn("Failed to initialize instrument: {}", e.getMessage());
+        }
+    }
 
     /**
      * Play a note with specified decay time, using optimized path when possible
@@ -308,7 +277,7 @@ public final class InstrumentWrapper implements Serializable {
             InternalSynthManager.getInstance().playNote(note, velocity, decay, channel);
             return;
         }
-        
+
         // Fall back to standard MIDI path for external devices
         try {
             noteOn(channel, note, velocity);
@@ -324,13 +293,15 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Schedule a noteOff command after specified delay
-     * @param channel MIDI channel
-     * @param note Note number to turn off
+     * 
+     * @param channel  MIDI channel
+     * @param note     Note number to turn off
      * @param velocity Release velocity (usually 0)
-     * @param delayMs Delay in milliseconds before sending note off
+     * @param delayMs  Delay in milliseconds before sending note off
      */
     private void scheduleNoteOff(int channel, int note, int velocity, int delayMs) {
-        // Use a shared scheduled executor service for better performance than individual timers
+        // Use a shared scheduled executor service for better performance than
+        // individual timers
         if (NOTE_OFF_SCHEDULER == null) {
             NOTE_OFF_SCHEDULER = Executors.newScheduledThreadPool(1, r -> {
                 Thread t = new Thread(r, "NoteOffScheduler");
@@ -338,24 +309,24 @@ public final class InstrumentWrapper implements Serializable {
                 return t;
             });
         }
-        
+
         // Schedule the note-off message
         NOTE_OFF_SCHEDULER.schedule(() -> {
             try {
                 // Send note-off message using existing method
                 noteOff(channel, note, 0); // Usually 0 velocity for note off
-                
+
                 // Debug logging if needed (uncomment for debugging)
                 // logger.debug("Note off sent for note {} on channel {}", note, channel);
             } catch (Exception e) {
                 // Log any errors but don't propagate - this is running asynchronously
-                logger.warn("Failed to send note-off for note {} on channel {}: {}", 
-                    note, channel, e.getMessage());
-                
+                logger.warn("Failed to send note-off for note {} on channel {}: {}",
+                        note, channel, e.getMessage());
+
                 // Try a second time with a direct receiver approach as fallback
                 try {
                     Receiver receiver = ReceiverManager.getInstance()
-                        .getOrCreateReceiver(deviceName, device);
+                            .getOrCreateReceiver(deviceName, device);
                     if (receiver != null) {
                         ShortMessage noteOff = new ShortMessage();
                         noteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, 0);
@@ -388,14 +359,14 @@ public final class InstrumentWrapper implements Serializable {
 
     public void cleanup() {
         logger.info("Cleaning up device: {}", getName());
-        
+
         // Add null check before calling closeReceiver
         if (deviceName != null) {
             ReceiverManager.getInstance().closeReceiver(deviceName);
         } else {
             logger.debug("Skipping receiver cleanup: device name is null for {}", getName());
         }
-        
+
         // Close device if we own it
         if (device != null && device.isOpen()) {
             try {
@@ -411,13 +382,13 @@ public final class InstrumentWrapper implements Serializable {
     public void setDevice(MidiDevice device) {
         // Clean up existing resources
         cleanup();
-        
+
         // Update device reference
         this.device = device;
-        
+
         if (device != null) {
             setDeviceName(device.getDeviceInfo().getName());
-            
+
             // Open device if needed
             try {
                 if (!device.isOpen()) {
@@ -455,6 +426,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Get the name of the currently selected soundbank
+     * 
      * @return The soundbank name
      */
     public String getSoundbankName() {
@@ -463,6 +435,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Set the currently selected soundbank name
+     * 
      * @param soundbankName The soundbank name
      */
     public void setSoundbankName(String soundbankName) {
@@ -472,6 +445,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Get the currently selected bank index
+     * 
      * @return The bank index
      */
     public Integer getBankIndex() {
@@ -480,6 +454,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Set the currently selected bank index
+     * 
      * @param bankIndex The bank index
      */
     public void setBankIndex(Integer bankIndex) {
@@ -489,6 +464,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Get the currently selected preset
+     * 
      * @return The preset number
      */
     public Integer getCurrentPreset() {
@@ -497,6 +473,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Set the currently selected preset
+     * 
      * @param preset The preset number
      */
     public void setCurrentPreset(int preset) {
@@ -506,6 +483,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Apply the current bank and program settings to the specified channel
+     * 
      * @param channel The MIDI channel to apply settings to
      * @throws InvalidMidiDataException If the MIDI data is invalid
      * @throws MidiUnavailableException If the MIDI device is unavailable
@@ -540,12 +518,12 @@ public final class InstrumentWrapper implements Serializable {
         if (controllers.length != values.length) {
             throw new IllegalArgumentException("Controller and value arrays must be same length");
         }
-        
+
         Receiver currentReceiver = ReceiverManager.getInstance().getOrCreateReceiver(deviceName, device);
         if (currentReceiver == null) {
             throw new MidiUnavailableException("No receiver available");
         }
-        
+
         // Reuse single message for all CC messages
         ShortMessage msg = new ShortMessage();
         try {

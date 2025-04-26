@@ -70,7 +70,6 @@ public class TimingBus extends AbstractBus {
             Command cmd = new Command(commandName, source, data);
             
             // Fast path for timing updates
-            System.err.println("Timing listener");
             for (IBusListener listener : timingListeners) {
                 try {
                     // Simple direct call to onAction

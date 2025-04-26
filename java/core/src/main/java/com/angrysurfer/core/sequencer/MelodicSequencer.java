@@ -37,8 +37,7 @@ public class MelodicSequencer implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencer.class);
 
     // Add as static fields in both sequencer classes
-    private static final ScheduledExecutorService SHARED_NOTE_SCHEDULER = 
-        Executors.newScheduledThreadPool(2);
+    private static final ScheduledExecutorService SHARED_NOTE_SCHEDULER = Executors.newScheduledThreadPool(2);
 
     // Add these constants at the top of the class with other constants
     private static final int NO_SWING = 50; // Percentage value for no swing
@@ -137,6 +136,7 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Get all harmonic tilt values
+     * 
      * @return List of tilt values for each bar
      */
     public List<Integer> getHarmonicTiltValues() {
@@ -149,22 +149,23 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Set all harmonic tilt values
+     * 
      * @param values List of tilt values for each bar
      */
     public void setHarmonicTiltValues(List<Integer> values) {
         // Create a defensive copy to avoid external modification
         harmonicTiltValues = new ArrayList<>(values);
-        
+
         // Make sure we have exactly 16 values
         while (harmonicTiltValues.size() < 16) {
             harmonicTiltValues.add(0);
         }
-        
+
         // Truncate if more than 16
         if (harmonicTiltValues.size() > 16) {
             harmonicTiltValues = harmonicTiltValues.subList(0, 16);
         }
-        
+
         // If we're tracking the current bar, update the current tilt value
         int currentBar = getCurrentBar();
         if (currentBar >= 0 && currentBar < harmonicTiltValues.size()) {
@@ -174,6 +175,7 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Get the tilt value for a specific bar
+     * 
      * @param barIndex The bar index (0-15)
      * @return The tilt value (-7 to 7)
      */
@@ -186,13 +188,14 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Set the tilt value for a specific bar
+     * 
      * @param barIndex The bar index (0-15)
-     * @param value The tilt value (-7 to 7)
+     * @param value    The tilt value (-7 to 7)
      */
     public void setTiltValueForBar(int barIndex, int value) {
         if (barIndex >= 0 && barIndex < harmonicTiltValues.size()) {
             harmonicTiltValues.set(barIndex, value);
-            
+
             // If this is the current bar, update the current tilt
             if (barIndex == getCurrentBar()) {
                 setCurrentTilt(value);
@@ -206,7 +209,7 @@ public class MelodicSequencer implements IBusListener {
     private int getCurrentBar() {
         // Implementation depends on how you track the current bar
         // This might come from the TimingBus or other timing mechanism
-        return (int)((getCurrentStep() / 16) % 16);
+        return (int) ((getCurrentStep() / 16) % 16);
     }
 
     public void setNoteEventPublisher(Consumer<NoteEvent> publisher) {
@@ -214,8 +217,11 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Set the next pattern to automatically switch to when the current pattern completes
-     * @param patternId The ID of the next pattern, or null to disable automatic switching
+     * Set the next pattern to automatically switch to when the current pattern
+     * completes
+     * 
+     * @param patternId The ID of the next pattern, or null to disable automatic
+     *                  switching
      */
     public void setNextPatternId(Long patternId) {
         this.nextPatternId = patternId;
@@ -223,7 +229,9 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Get the next pattern ID that will be loaded when the current pattern completes
+     * Get the next pattern ID that will be loaded when the current pattern
+     * completes
+     * 
      * @return The next pattern ID or null if no pattern is queued
      */
     public Long getNextPatternId() {
@@ -268,7 +276,7 @@ public class MelodicSequencer implements IBusListener {
     public MelodicSequencer(Integer id, Integer channel) {
         this.id = id;
         this.channel = channel;
-        
+
         // Initialize pattern data with default values
         initializePatternData();
 
@@ -284,12 +292,12 @@ public class MelodicSequencer implements IBusListener {
 
         // Initialize the quantizer with default settings
         updateQuantizer();
-        
+
         // Load first sequence if available (or create new one)
         if (id != null) {
             loadFirstSequence();
         }
-        
+
         logger.info("MelodicSequencer {} initialized and registered with CommandBus", id);
     }
 
@@ -413,16 +421,16 @@ public class MelodicSequencer implements IBusListener {
         velocityValues = new ArrayList<>(patternLength);
         gateValues = new ArrayList<>(patternLength);
         probabilityValues = new ArrayList<>(patternLength); // Add this
-        nudgeValues = new ArrayList<>(patternLength);       // Add this
+        nudgeValues = new ArrayList<>(patternLength); // Add this
 
         // Fill with default values
         for (int i = 0; i < patternLength; i++) {
             activeSteps.add(false); // All steps off by default
-            noteValues.add(60);     // Middle C
+            noteValues.add(60); // Middle C
             velocityValues.add(100); // Medium-high velocity
-            gateValues.add(50);     // 50% gate time
+            gateValues.add(50); // 50% gate time
             probabilityValues.add(100); // 100% probability by default
-            nudgeValues.add(0);     // No timing nudge by default
+            nudgeValues.add(0); // No timing nudge by default
         }
     }
 
@@ -557,7 +565,7 @@ public class MelodicSequencer implements IBusListener {
                 if (currentStep >= patternLength) {
                     currentStep = 0;
                     patternCompleted = true;
-                    
+
                     // Handle pattern switching if enabled
                     if (nextPatternId != null) {
                         Long currentId = melodicSequenceId;
@@ -565,23 +573,21 @@ public class MelodicSequencer implements IBusListener {
                         if (RedisService.getInstance().findMelodicSequenceById(nextPatternId, id) != null) {
                             // Store current playback state
                             boolean wasPlaying = isPlaying;
-                            
+
                             // Load new pattern
                             RedisService.getInstance().applyMelodicSequenceToSequencer(
-                                RedisService.getInstance().findMelodicSequenceById(nextPatternId, id), 
-                                this
-                            );
-                            
+                                    RedisService.getInstance().findMelodicSequenceById(nextPatternId, id),
+                                    this);
+
                             // Restore playback state
                             isPlaying = wasPlaying;
-                            
+
                             // Notify about pattern switch
                             CommandBus.getInstance().publish(
-                                Commands.MELODIC_PATTERN_SWITCHED, 
-                                this,
-                                new PatternSwitchEvent(currentId, nextPatternId)
-                            );
-                            
+                                    Commands.MELODIC_PATTERN_SWITCHED,
+                                    this,
+                                    new PatternSwitchEvent(currentId, nextPatternId));
+
                             // Clear the next pattern ID (one-shot behavior)
                             nextPatternId = null;
                         }
@@ -625,23 +631,21 @@ public class MelodicSequencer implements IBusListener {
                         if (RedisService.getInstance().findMelodicSequenceById(nextPatternId, id) != null) {
                             // Store current playback state
                             boolean wasPlaying = isPlaying;
-                            
+
                             // Load new pattern
                             RedisService.getInstance().applyMelodicSequenceToSequencer(
-                                RedisService.getInstance().findMelodicSequenceById(nextPatternId, id), 
-                                this
-                            );
-                            
+                                    RedisService.getInstance().findMelodicSequenceById(nextPatternId, id),
+                                    this);
+
                             // Restore playback state
                             isPlaying = wasPlaying;
-                            
+
                             // Notify about pattern switch
                             CommandBus.getInstance().publish(
-                                Commands.MELODIC_PATTERN_SWITCHED, 
-                                this,
-                                new PatternSwitchEvent(currentId, nextPatternId)
-                            );
-                            
+                                    Commands.MELODIC_PATTERN_SWITCHED,
+                                    this,
+                                    new PatternSwitchEvent(currentId, nextPatternId));
+
                             // Clear the next pattern ID (one-shot behavior)
                             nextPatternId = null;
                         }
@@ -1564,16 +1568,23 @@ public class MelodicSequencer implements IBusListener {
      * Rotates the pattern one step to the left (backward)
      */
     public void rotatePatternLeft() {
-        if (patternLength <= 1) return;
-        
+        if (patternLength <= 1)
+            return;
+
         // Ensure all lists have adequate size
-        while (activeSteps.size() < patternLength) activeSteps.add(false);
-        while (noteValues.size() < patternLength) noteValues.add(60);
-        while (velocityValues.size() < patternLength) velocityValues.add(100);
-        while (gateValues.size() < patternLength) gateValues.add(50);
-        while (probabilityValues.size() < patternLength) probabilityValues.add(100);
-        while (nudgeValues.size() < patternLength) nudgeValues.add(0);
-        
+        while (activeSteps.size() < patternLength)
+            activeSteps.add(false);
+        while (noteValues.size() < patternLength)
+            noteValues.add(60);
+        while (velocityValues.size() < patternLength)
+            velocityValues.add(100);
+        while (gateValues.size() < patternLength)
+            gateValues.add(50);
+        while (probabilityValues.size() < patternLength)
+            probabilityValues.add(100);
+        while (nudgeValues.size() < patternLength)
+            nudgeValues.add(0);
+
         // Store the first step's values
         boolean firstActive = activeSteps.get(0);
         int firstNote = noteValues.get(0);
@@ -1581,7 +1592,7 @@ public class MelodicSequencer implements IBusListener {
         int firstGate = gateValues.get(0);
         int firstProbability = probabilityValues.get(0);
         int firstNudge = nudgeValues.get(0);
-        
+
         // Shift all steps left by one position
         for (int i = 0; i < patternLength - 1; i++) {
             activeSteps.set(i, activeSteps.get(i + 1));
@@ -1591,7 +1602,7 @@ public class MelodicSequencer implements IBusListener {
             probabilityValues.set(i, probabilityValues.get(i + 1));
             nudgeValues.set(i, nudgeValues.get(i + 1));
         }
-        
+
         // Place the saved first step values at the last position
         activeSteps.set(patternLength - 1, firstActive);
         noteValues.set(patternLength - 1, firstNote);
@@ -1599,7 +1610,7 @@ public class MelodicSequencer implements IBusListener {
         gateValues.set(patternLength - 1, firstGate);
         probabilityValues.set(patternLength - 1, firstProbability);
         nudgeValues.set(patternLength - 1, firstNudge);
-        
+
         // Notify listeners about the pattern update
         notifyPatternUpdated();
     }
@@ -1608,16 +1619,23 @@ public class MelodicSequencer implements IBusListener {
      * Rotates the pattern one step to the right (forward)
      */
     public void rotatePatternRight() {
-        if (patternLength <= 1) return;
-        
+        if (patternLength <= 1)
+            return;
+
         // Ensure all lists have adequate size
-        while (activeSteps.size() < patternLength) activeSteps.add(false);
-        while (noteValues.size() < patternLength) noteValues.add(60);
-        while (velocityValues.size() < patternLength) velocityValues.add(100);
-        while (gateValues.size() < patternLength) gateValues.add(50);
-        while (probabilityValues.size() < patternLength) probabilityValues.add(100);
-        while (nudgeValues.size() < patternLength) nudgeValues.add(0);
-        
+        while (activeSteps.size() < patternLength)
+            activeSteps.add(false);
+        while (noteValues.size() < patternLength)
+            noteValues.add(60);
+        while (velocityValues.size() < patternLength)
+            velocityValues.add(100);
+        while (gateValues.size() < patternLength)
+            gateValues.add(50);
+        while (probabilityValues.size() < patternLength)
+            probabilityValues.add(100);
+        while (nudgeValues.size() < patternLength)
+            nudgeValues.add(0);
+
         // Store the last step's values
         boolean lastActive = activeSteps.get(patternLength - 1);
         int lastNote = noteValues.get(patternLength - 1);
@@ -1625,7 +1643,7 @@ public class MelodicSequencer implements IBusListener {
         int lastGate = gateValues.get(patternLength - 1);
         int lastProbability = probabilityValues.get(patternLength - 1);
         int lastNudge = nudgeValues.get(patternLength - 1);
-        
+
         // Shift all steps right by one position
         for (int i = patternLength - 1; i > 0; i--) {
             activeSteps.set(i, activeSteps.get(i - 1));
@@ -1635,7 +1653,7 @@ public class MelodicSequencer implements IBusListener {
             probabilityValues.set(i, probabilityValues.get(i - 1));
             nudgeValues.set(i, nudgeValues.get(i - 1));
         }
-        
+
         // Place the saved last step values at the first position
         activeSteps.set(0, lastActive);
         noteValues.set(0, lastNote);
@@ -1643,7 +1661,7 @@ public class MelodicSequencer implements IBusListener {
         gateValues.set(0, lastGate);
         probabilityValues.set(0, lastProbability);
         nudgeValues.set(0, lastNudge);
-        
+
         // Notify listeners about the pattern update
         notifyPatternUpdated();
     }
@@ -1709,26 +1727,28 @@ public class MelodicSequencer implements IBusListener {
     public void loadFirstSequence() {
         try {
             RedisService redis = RedisService.getInstance();
-            
+
             // Get the first sequence ID for this sequencer
             Long firstId = redis.getMinimumMelodicSequenceId(this.id);
-            
+
             if (firstId != null) {
                 // Load existing sequence
                 MelodicSequenceData data = redis.findMelodicSequenceById(firstId, this.id);
                 if (data != null) {
                     redis.applyMelodicSequenceToSequencer(data, this);
-                    logger.info("Loaded first melodic sequence (ID: {}) for sequencer {}", 
-                        firstId, this.id);
+                    logger.info("Loaded first melodic sequence (ID: {}) for sequencer {}",
+                            firstId, this.id);
                     return;
                 }
             }
-            
+
             // No sequence exists, create a new one
             logger.info("No melodic sequences found for sequencer {}, creating default", this.id);
             MelodicSequenceData newData = redis.newMelodicSequence(this.id);
             redis.applyMelodicSequenceToSequencer(newData, this);
-            
+
+            initializeInstrument();
+
         } catch (Exception e) {
             logger.error("Error loading first melodic sequence: {}", e.getMessage(), e);
         }
@@ -1737,7 +1757,8 @@ public class MelodicSequencer implements IBusListener {
     /**
      * Sets the global swing percentage
      * 
-     * @param percentage Value from 25 (minimum swing) to 99 (maximum swing), 50 = no swing
+     * @param percentage Value from 25 (minimum swing) to 99 (maximum swing), 50 =
+     *                   no swing
      */
     public void setSwingPercentage(int percentage) {
         // Limit to valid range
@@ -1774,7 +1795,8 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Calculate swing amount in milliseconds based on current tempo and timing division
+     * Calculate swing amount in milliseconds based on current tempo and timing
+     * division
      * 
      * @return Swing amount in milliseconds
      */
@@ -1812,5 +1834,41 @@ public class MelodicSequencer implements IBusListener {
 
         // Return swing amount in milliseconds
         return (int) (stepDurationMs * swingFactor);
+    }
+
+    // Add this method to the MelodicSequencer class
+
+    /**
+     * Initialize the MIDI device with the current instrument settings
+     * Call this before starting playback
+     */
+    public void initializeInstrument() {
+        if (player == null || player.getInstrument() == null) {
+            return;
+        }
+
+        try {
+            // Get current instrument settings
+            InstrumentWrapper instrument = player.getInstrument();
+            int channel = player.getChannel();
+            Integer preset = player.getPreset();
+
+            if (preset != null) {
+                // Apply bank select if needed
+                if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
+                    // Bank MSB (CC#0)
+                    instrument.controlChange(channel, 0, 0);
+                    // Bank LSB (CC#32)
+                    instrument.controlChange(channel, 32, instrument.getBankIndex());
+                }
+
+                // Send program change
+                instrument.programChange(channel, preset, 0);
+                logger.info("Initialized instrument {} with preset {} on channel {}",
+                        instrument.getName(), preset, channel);
+            }
+        } catch (Exception e) {
+            logger.error("Error initializing instrument: {}", e.getMessage());
+        }
     }
 }

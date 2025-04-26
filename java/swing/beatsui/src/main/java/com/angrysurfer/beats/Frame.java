@@ -66,7 +66,13 @@ public class Frame extends JFrame implements AutoCloseable {
         if (state != null) {
             setSize(state.getFrameSizeX(), state.getFrameSizeY());
             setLocation(state.getFramePosX(), state.getFramePosY());
-            setSelectedTab(state.getSelectedTab());
+            
+            try {
+                setSelectedTab(state.getSelectedTab());
+            }  
+            catch (Exception e) {
+                logger.warn("Error setting selected tab: " + e.getMessage());
+            }
 
             // Restore window state
             if (state.isMaximized()) {
