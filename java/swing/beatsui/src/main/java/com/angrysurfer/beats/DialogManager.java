@@ -39,6 +39,7 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
@@ -194,6 +195,15 @@ public class DialogManager implements IBusListener {
 
                         // First ensure player is still selected in PlayerManager
                         PlayerManager.getInstance().setActivePlayer(updatedPlayer);
+
+                        // Save the player to persistence
+                        PlayerManager.getInstance().savePlayerProperties(player);
+                        
+                        // Initialize the instrument if this is a melodic sequencer player
+                        if (player.getOwner() instanceof MelodicSequencer sequencer) {
+                            sequencer.initializeInstrument();
+                        }
+
 
                         // Then publish events in correct order
                         commandBus.publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);

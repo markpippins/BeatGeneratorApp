@@ -32,6 +32,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +43,6 @@ import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumItem;
 import com.angrysurfer.core.sequencer.PresetItem;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.InternalSynthManager;
-import com.angrysurfer.core.service.ReceiverManager;
 
 /**
  * Panel for editing basic player properties with improved state management.
@@ -82,6 +80,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     private boolean isDrumChannel = false;
     private final AtomicBoolean initializing = new AtomicBoolean(false);
     private Long selectedInstrumentId;
+    private boolean updating = false;
 
     /**
      * Create a new basic properties panel for a player
@@ -243,36 +242,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
      */
     private void addListeners() {
         // Instrument selection listener
-        instrumentCombo.addActionListener(e -> {
-            if (initializing.get()) return;
-            
-            InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
-            if (selectedInstrument != null) {
-                // Update player instrument through instrumentManager to ensure consistency
-                player.setInstrument(selectedInstrument);
-                player.setInstrumentId(selectedInstrument.getId());
-                selectedInstrumentId = selectedInstrument.getId();
-
-                // Fast check for internal synth - much quicker than the full check
-                boolean isInternal = selectedInstrument.getDeviceName() != null && 
-                                   (selectedInstrument.getDeviceName().equals("Gervill") ||
-                                    selectedInstrument.getDeviceName().contains("Java Sound Synthesizer"));
-                                    
-                // Only use full check if needed
-                if (!isInternal && selectedInstrument.getDevice() != null) {
-                    isInternal = synthManager.isInternalSynth(selectedInstrument);
-                }
-
-                // Update UI if instrument type changed
-                if (isInternal != isInternalSynth) {
-                    isInternalSynth = isInternal;
-                    updatePresetControls(); // Just updates UI, doesn't load soundbanks automatically
-                }
-                
-                // Update instrument through manager to ensure it's registered
-                instrumentManager.updateInstrument(selectedInstrument);
-            }
-        });
+        instrumentCombo.addActionListener(e -> handleInstrumentSelection());
 
         // Channel change listener
         channelSpinner.addChangeListener(e -> {
@@ -1243,6 +1213,89 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             
             // Update instrument through manager to persist changes
             instrumentManager.updateInstrument(player.getInstrument());
+        }
+    }
+
+    /**
+     * Load instrument data for the player
+     */
+    private void loadInstrumentData() {
+        if (player == null) {
+            return;
+        }
+        
+        // Clear current selections
+        instrumentCombo.removeAllItems();
+        
+        // Get all available instruments
+        List<InstrumentWrapper> instruments = InstrumentManager.getInstance().getCachedInstruments();
+        
+        // Add all instruments to combo box
+        for (InstrumentWrapper instrument : instruments) {
+            instrumentCombo.addItem(instrument);
+        }
+        
+        // Select the current instrument if it exists
+        if (player.getInstrument() != null) {
+            for (int i = 0; i < instrumentCombo.getItemCount(); i++) {
+                InstrumentWrapper item = instrumentCombo.getItemAt(i);
+                // Match by ID for precise selection
+                if (item.getId() != null && item.getId().equals(player.getInstrument().getId())) {
+                    instrumentCombo.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Handle instrument selection change
+     */
+    private void handleInstrumentSelection() {
+        if (player == null || updating) {
+            return;
+        }
+        
+        updating = true;
+        try {
+            InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
+            if (selectedInstrument != null) {
+                // Store previous instrument for logging
+                InstrumentWrapper previousInstrument = player.getInstrument();
+                
+                // Update player's instrument
+                player.setInstrument(selectedInstrument);
+                
+                // Configure channel if needed
+                if (selectedInstrument.getChannel() == null) {
+                    selectedInstrument.setChannel(player.getChannel());
+                }
+                
+                // Save the player to persist changes
+                PlayerManager.getInstance().savePlayerProperties(player);
+                
+                // Update instrument in manager (in case channel changed)
+                InstrumentManager.getInstance().updateInstrument(selectedInstrument);
+                
+                logger.info("Changed player {} instrument from {} to {}", 
+                    player.getId(),
+                    (previousInstrument != null ? previousInstrument.getName() : "none"),
+                    selectedInstrument.getName());
+                
+                // Notify system of instrument change
+                CommandBus.getInstance().publish(
+                    Commands.INSTRUMENT_UPDATED,
+                    this,
+                    selectedInstrument
+                );
+                
+                // Initialize the instrument
+                if (player.getOwner() instanceof MelodicSequencer sequencer) {
+                    sequencer.initializeInstrument();
+                }
+            }
+        } finally {
+            updating = false;
         }
     }
 }

@@ -187,7 +187,7 @@ public final class InstrumentWrapper implements Serializable {
                 this.internal = true;
             }
  
-            this.name = name.replaceAll("[^a-zA-Z0-9]", "_");
+            // this.name = name.replaceAll("[^a-zA-Z0-9]", "_");
         }
     }
 

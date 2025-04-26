@@ -9,9 +9,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import com.angrysurfer.core.model.*;
-import com.angrysurfer.core.model.Direction;
-import com.angrysurfer.core.service.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +17,11 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;

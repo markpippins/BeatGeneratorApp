@@ -189,26 +189,21 @@ public class InstrumentManager implements IBusListener {
     }
 
     /**
-     * Updates an instrument in the cache and in the UserConfigManager
-     * 
-     * @param instrument The instrument to update
+     * Update an instrument in the cache and persistence
      */
     public void updateInstrument(InstrumentWrapper instrument) {
-        if (instrument == null) {
-            logger.warn("Attempt to update null instrument");
+        if (instrument == null || instrument.getId() == null) {
+            logger.warn("Cannot update null instrument or instrument without ID");
             return;
         }
         
-        // Update in local cache
+        // Update the instrument in the cache
         instrumentCache.put(instrument.getId(), instrument);
         
-        // Update in UserConfigManager
-        UserConfigManager.getInstance().updateInstrument(instrument);
+        // Persist the instrument
+        RedisService.getInstance().saveInstrument(instrument);
         
-        // Publish event for listeners
-        commandBus.publish(Commands.INSTRUMENT_UPDATED, this, instrument);
-        
-        logger.info("Instrument updated: {} (ID: {})", instrument.getName(), instrument.getId());
+        logger.debug("Updated instrument: {}", instrument.getName());
     }
 
     /**

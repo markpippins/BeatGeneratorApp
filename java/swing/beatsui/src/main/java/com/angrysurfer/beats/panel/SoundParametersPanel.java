@@ -35,8 +35,7 @@ public class SoundParametersPanel extends JPanel {
     private JComboBox<String> soundbankCombo;
     private JComboBox<String> bankCombo;
     private JComboBox<String> presetCombo;
-    private JButton editButton; // Add this field
-    
+
     /**
      * Constructor for SoundParametersPanel
      * 
@@ -47,7 +46,7 @@ public class SoundParametersPanel extends JPanel {
         
         // Set layout
         setLayout(new BorderLayout(3, 3));
-        setBorder(BorderFactory.createTitledBorder("Sound"));
+        setBorder(BorderFactory.createTitledBorder("Sound Parameters"));
         
         // Create UI components
         initialize();
@@ -62,7 +61,6 @@ public class SoundParametersPanel extends JPanel {
         
         // Create soundbank selector
         JPanel soundbankPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-        // soundbankPanel.add(new JLabel("Soundbank:"));
         soundbankCombo = new JComboBox<>();
         soundbankCombo.setPreferredSize(new Dimension(150, 25));
         soundbankCombo.addActionListener(e -> {
@@ -76,9 +74,8 @@ public class SoundParametersPanel extends JPanel {
         
         // Create bank selector
         JPanel bankPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-        // bankPanel.add(new JLabel("Bank:"));
         bankCombo = new JComboBox<>();
-        bankCombo.setPreferredSize(new Dimension(100, 25));
+        bankCombo.setPreferredSize(new Dimension(60, 25));
         bankCombo.addActionListener(e -> {
             if (bankCombo.getSelectedItem() != null && player != null && player.getInstrument() != null) {
                 int bankIndex = bankCombo.getSelectedIndex();
@@ -90,9 +87,8 @@ public class SoundParametersPanel extends JPanel {
         
         // Create preset selector
         JPanel presetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-        // presetPanel.add(new JLabel("Preset:"));
         presetCombo = new JComboBox<>();
-        presetCombo.setPreferredSize(new Dimension(200, 25));
+        presetCombo.setPreferredSize(new Dimension(150, 25));
         presetCombo.addActionListener(e -> {
             if (presetCombo.getSelectedItem() != null && player != null && player.getInstrument() != null) {
                 int presetIndex = presetCombo.getSelectedIndex();
@@ -108,14 +104,13 @@ public class SoundParametersPanel extends JPanel {
         });
         presetPanel.add(presetCombo);
         
-        // Create edit button panel
-        JPanel editPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-        editButton = new JButton(Symbols.getSymbol(Symbols.MIDI));
+        // Create edit button
+        JButton editButton = new JButton(Symbols.getSymbol(Symbols.MIDI));
+        editButton.setToolTipText("Edit player settings");
         editButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, 25));
-        editButton.setToolTipText("Edit player parameters");
         editButton.addActionListener(e -> {
             if (player != null) {
-                // Send command to open player editor dialog
+                // Send command to DialogManager to open player editor
                 CommandBus.getInstance().publish(
                     Commands.PLAYER_EDIT_REQUEST, 
                     this, 
@@ -123,13 +118,12 @@ public class SoundParametersPanel extends JPanel {
                 );
             }
         });
-        editPanel.add(editButton);
         
         // Add components to main panel
         controlsPanel.add(soundbankPanel);
         controlsPanel.add(bankPanel);
         controlsPanel.add(presetPanel);
-        controlsPanel.add(editPanel);
+        controlsPanel.add(editButton);
         
         // Add to main layout
         add(controlsPanel, BorderLayout.CENTER);
@@ -170,7 +164,6 @@ public class SoundParametersPanel extends JPanel {
             soundbankCombo.setEnabled(false);
             bankCombo.setEnabled(false);
             presetCombo.setEnabled(false);
-            editButton.setEnabled(false); // Disable edit button as well
             return;
         }
         
@@ -178,7 +171,6 @@ public class SoundParametersPanel extends JPanel {
         soundbankCombo.setEnabled(true);
         bankCombo.setEnabled(true);
         presetCombo.setEnabled(true);
-        editButton.setEnabled(true); // Enable edit button
         
         // Populate soundbank combo
         List<String> soundbanks = InternalSynthManager.getInstance().getSoundbankNames();
