@@ -101,7 +101,6 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         tabbedPane.addTab("Melodic", createMelodicSequencersPanel());
 
-
         tabbedPane.addTab("Song", createSongPanel());
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Modulation", createModulationMatrixPanel());
@@ -115,6 +114,8 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addTab("Launch", new LaunchPanel());
         // Remove the separate Systems tab
         // tabbedPane.addTab("System", new SystemsPanel());
+        // Add new Sample Browser tab
+        tabbedPane.addTab("Sample Browser", createSampleBrowserPanel());
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
 
@@ -230,17 +231,17 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // melodicTabbedPane.addChangeListener(e -> {
 
-        //     // Get the selected tab index
-        //     int selectedIndex = melodicTabbedPane.getSelectedIndex();
-        //     if (selectedIndex >= 0 && selectedIndex < melodicPanels.length) {
-        //         MelodicSequencerPanel selectedPanel = melodicPanels[selectedIndex];
-        //         if (selectedPanel != null) {
-        //             // Request focus on the newly selected panel
-        //             SwingUtilities.invokeLater(() -> {
-        //                 selectedPanel.requestFocusInWindow();
-        //             });
-        //         }
-        //     }
+        // // Get the selected tab index
+        // int selectedIndex = melodicTabbedPane.getSelectedIndex();
+        // if (selectedIndex >= 0 && selectedIndex < melodicPanels.length) {
+        // MelodicSequencerPanel selectedPanel = melodicPanels[selectedIndex];
+        // if (selectedPanel != null) {
+        // // Request focus on the newly selected panel
+        // SwingUtilities.invokeLater(() -> {
+        // selectedPanel.requestFocusInWindow();
+        // });
+        // }
+        // }
         // });
 
         return melodicTabbedPane;
@@ -721,6 +722,13 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             }
         });
         return restartButton;
+    }
+
+    /**
+     * Create the sample browser panel
+     */
+    private JPanel createSampleBrowserPanel() {
+        return new SampleBrowserPanel();
     }
 
     private JButton createMixButton() {
