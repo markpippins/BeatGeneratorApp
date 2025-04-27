@@ -80,6 +80,9 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
     // Add this field:
     private DrumButtonsPanel drumPadPanel;
 
+    // Add this field:
+    private JLabel instrumentInfoLabel;
+
     /**
      * Create a new SequencerPanel
      *
@@ -218,6 +221,24 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
         // IMPORTANT: Add drum pad panel DIRECTLY to the border layout with safe add
         UIUtils.addSafely(centerPanel, drumPadPanel, BorderLayout.SOUTH);
+
+        // Create center panel for the info label
+        JPanel infoLabelPanel = new JPanel(new GridBagLayout());  // Use GridBagLayout for true centering
+    
+        // Create and add the instrument info label
+        instrumentInfoLabel = new JLabel("No drum selected");
+        instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+
+        // Add constraints to center vertically and horizontally
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
+        infoLabelPanel.add(instrumentInfoLabel, gbc);
+
+        // Add the info label panel to the center panel
+        UIUtils.addSafely(centerPanel, infoLabelPanel, BorderLayout.NORTH);
 
         // Add the center panel to the main layout
         UIUtils.addSafely(this, centerPanel, BorderLayout.CENTER);

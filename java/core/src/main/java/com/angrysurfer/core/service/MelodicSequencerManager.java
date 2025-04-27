@@ -70,9 +70,9 @@ public class MelodicSequencerManager {
         // Create a new sequencer with the specified ID and channel
         MelodicSequencer sequencer = new MelodicSequencer(id);
         
-        // Set the channel after creation
+        // Set id and channel after creation
+        sequencer.setId(id);
         sequencer.setChannel(channel);
-        
         // Register with the manager
         sequencers.add(sequencer);
 

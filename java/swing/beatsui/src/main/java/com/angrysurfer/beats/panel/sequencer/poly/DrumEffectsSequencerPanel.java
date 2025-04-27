@@ -6,6 +6,8 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -195,12 +197,19 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         westPanel.add(navigationPanel, BorderLayout.NORTH);
 
         // Create center panel for the info label
-        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-
+        JPanel centerPanel = new JPanel(new GridBagLayout());  // Use GridBagLayout for true centering
+    
         // Create and add the instrument info label
         instrumentInfoLabel = new JLabel("No drum selected");
         instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
-        centerPanel.add(instrumentInfoLabel);
+
+        // Add constraints to center vertically and horizontally
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
+        centerPanel.add(instrumentInfoLabel, gbc);
 
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
