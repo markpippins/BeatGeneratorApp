@@ -67,8 +67,8 @@ public class LaunchPanel extends JPanel implements IBusListener {
     }
 
     private JPanel createGridPanel() {
-        gridPanel = new JPanel(new GridLayout(8, 8, 5, 5));
-        gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        gridPanel = new JPanel(new GridLayout(8, 8, 2, 2));
+        // gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         Color[] quadrantColors = {
             UIUtils.mutedRed, // Top-left

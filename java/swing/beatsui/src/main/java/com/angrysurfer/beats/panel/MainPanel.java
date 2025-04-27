@@ -213,7 +213,6 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private JTabbedPane createDrumSequencersPanel() {
 
         drumsTabbedPane = new JTabbedPane();
-
         drumsTabbedPane.addTab("Sequencer", createDrumPanel());
         drumsTabbedPane.addTab("Parameters", createDrumParamsPanel());
         drumsTabbedPane.addTab("Mix", createDrumEffectsPanel());

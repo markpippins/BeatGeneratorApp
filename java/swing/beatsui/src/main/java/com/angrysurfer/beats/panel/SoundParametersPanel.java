@@ -124,9 +124,7 @@ public class SoundParametersPanel extends JPanel {
                         updatePresets();
                     } catch (NumberFormatException ex) {
                         logger.warn("Invalid bank format: {}", bankItem);
-                    } catch (InvalidMidiDataException ex) {
-                        throw new RuntimeException(ex);
-                    } catch (MidiUnavailableException ex) {
+                    } catch (InvalidMidiDataException | MidiUnavailableException ex) {
                         throw new RuntimeException(ex);
                     }
                 }
