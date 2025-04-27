@@ -45,18 +45,56 @@ public class MelodicSequencerManager {
      * @param midiChannel The MIDI channel for the new sequencer
      * @return The newly created MelodicSequencer
      */
-    public synchronized MelodicSequencer newSequencer(int midiChannel) {
-        MelodicSequencer sequencer = new MelodicSequencer(midiChannel);
-        sequencer.setId(sequencers.size() + 1); // Set a unique ID for the sequencer
-        sequencer.setChannel(midiChannel);
+//    public synchronized MelodicSequencer newSequencer(int midiChannel) {
+//        MelodicSequencer sequencer = new MelodicSequencer(midiChannel);
+//        sequencer.setId(sequencers.size() + 1); // Set a unique ID for the sequencer
+//        sequencer.setChannel(midiChannel);
+//        sequencers.add(sequencer);
+//        logger.info("Created new melodic sequencer with MIDI channel {} (index: {})",
+//                midiChannel, sequencers.size() - 1);
+//
+//        // Notify listeners that a sequencer was added
+//        CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this, sequencer);
+//
+//        return sequencer;
+//    }
+
+    /**
+     * Create a new sequencer with specified ID and channel
+     * 
+     * @param id The sequencer ID
+     * @param channel The MIDI channel to use
+     * @return A new MelodicSequencer instance
+     */
+    public MelodicSequencer newSequencer(Integer id, Integer channel) {
+        // Create a new sequencer with the specified ID and channel
+        MelodicSequencer sequencer = new MelodicSequencer(id);
+        
+        // Set the channel after creation
+        sequencer.setChannel(channel);
+        
+        // Register with the manager
         sequencers.add(sequencer);
-        logger.info("Created new melodic sequencer with MIDI channel {} (index: {})", 
-                midiChannel, sequencers.size() - 1);
-        
-        // Notify listeners that a sequencer was added
+
         CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this, sequencer);
-        
+
+        logger.info("Created new melodic sequencer with ID {} on channel {}", id, channel);
         return sequencer;
+    }
+
+    /**
+     * Create a new sequencer with specified ID only (for backward compatibility)
+     * 
+     * @param id The sequencer ID
+     * @return A new MelodicSequencer instance
+     */
+    public MelodicSequencer newSequencer(int id) {
+        // Use the new method, with a default channel based on ID
+        // Avoid channel 9 (drums)
+        int channel = id % 16;
+        if (channel == 9) channel = 15;
+        
+        return newSequencer(id, channel);
     }
     
     /**

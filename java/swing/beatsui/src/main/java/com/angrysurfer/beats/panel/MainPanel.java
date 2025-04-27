@@ -52,6 +52,7 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
+import com.angrysurfer.core.service.ChannelManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
 
@@ -221,33 +222,19 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private JTabbedPane createMelodicSequencersPanel() {
-
         melodicTabbedPane = new JTabbedPane();
 
-        // melodicTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        // melodicTabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
-        // melodicTabbedPane.setOpaque(false);
-        // melodicTabbedPane.setBackground(new Color(0, 0, 0, 0));
-        // melodicTabbedPane.setForeground(Color.WHITE);
-        // melodicTabbedPane.setFont(new Font("Dialog", Font.PLAIN, 12));
-
-        for (int i = 0; i < melodicPanels.length; i++)
-            melodicTabbedPane.addTab("Mono " + Integer.toString(i + 1), createMelodicSequencerPanel(i + 1));
-
-        // melodicTabbedPane.addChangeListener(e -> {
-
-        // // Get the selected tab index
-        // int selectedIndex = melodicTabbedPane.getSelectedIndex();
-        // if (selectedIndex >= 0 && selectedIndex < melodicPanels.length) {
-        // MelodicSequencerPanel selectedPanel = melodicPanels[selectedIndex];
-        // if (selectedPanel != null) {
-        // // Request focus on the newly selected panel
-        // SwingUtilities.invokeLater(() -> {
-        // selectedPanel.requestFocusInWindow();
-        // });
-        // }
-        // }
-        // });
+        // Initialize all melodic sequencer panels with proper channel distribution
+        for (int i = 0; i < melodicPanels.length; i++) {
+            // Get channel from ChannelManager based on sequencer index
+            int channel = ChannelManager.getInstance().getChannelForSequencerIndex(i);
+            
+            // Create panel with proper channel assignment
+            melodicPanels[i] = createMelodicSequencerPanel(i, channel);
+            
+            // Use channel number (1-based for display) in tab title
+            melodicTabbedPane.addTab("Mono " + (channel + 1), melodicPanels[i]);
+        }
 
         return melodicTabbedPane;
     }
@@ -366,18 +353,15 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         return drumParamsSequencerPanel;
     }
 
-    private MelodicSequencerPanel createMelodicSequencerPanel(int channel) {
-        return new MelodicSequencerPanel(channel, noteEvent -> {
-            logger.debug("Note event received from sequencer: note={}, velocity={}, duration={}",
-                    noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
+    private MelodicSequencerPanel createMelodicSequencerPanel(int index, int channel) {
+        return new MelodicSequencerPanel(index, channel, noteEvent -> {
+            logger.debug("Note event received from sequencer {}: note={}, velocity={}, duration={}",
+                    index, noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
 
             // Get the panel's sequencer to use as the event source
             MelodicSequencer sequencer = null;
-            for (MelodicSequencerPanel panel : melodicPanels) {
-                if (panel != null && panel.getSequencer().getChannel() == channel) {
-                    sequencer = panel.getSequencer();
-                    break;
-                }
+            if (index >= 0 && index < melodicPanels.length && melodicPanels[index] != null) {
+                sequencer = melodicPanels[index].getSequencer();
             }
 
             // Publish to CommandBus so MuteButtonsPanel can respond
@@ -826,6 +810,15 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                         logger.error("Error closing component: " + e.getMessage());
                     }
                 }
+            }
+        }
+        
+        // Release channels used by melodic panels
+        for (MelodicSequencerPanel panel : melodicPanels) {
+            if (panel != null && panel.getSequencer() != null) {
+                int channel = panel.getSequencer().getChannel();
+                ChannelManager.getInstance().releaseChannel(channel);
+                logger.info("Released channel {} on application close", channel);
             }
         }
     }

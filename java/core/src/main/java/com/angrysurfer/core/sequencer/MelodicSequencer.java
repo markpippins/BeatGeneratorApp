@@ -2047,4 +2047,32 @@ public class MelodicSequencer implements IBusListener {
             initializeInternalInstrument(player);
         }
     }
+
+    /**
+     * Set the MIDI channel for this sequencer
+     * @param channel The MIDI channel (0-15)
+     */
+    public void setChannel(int channel) {
+        this.channel = channel;
+        
+        // Update the player's channel too
+        if (player != null) {
+            player.setChannel(channel);
+            
+            // If the player has an instrument, update it too
+            if (player.getInstrument() != null) {
+                player.getInstrument().setChannel(channel);
+                
+                // Update the instrument in the manager to persist the change
+                InstrumentManager.getInstance().updateInstrument(player.getInstrument());
+            }
+        }
+        
+        // Save the player to persist changes
+        if (player != null) {
+            PlayerManager.getInstance().savePlayerProperties(player);
+        }
+        
+        logger.info("Set channel {} for melodic sequencer {}", channel, id);
+    }
 }

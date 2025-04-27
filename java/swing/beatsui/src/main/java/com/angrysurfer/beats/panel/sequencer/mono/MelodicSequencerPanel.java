@@ -97,11 +97,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
      * Modify constructor to use only one step update mechanism (direct
      * listener) and load the first sequence if available
      */
-    public MelodicSequencerPanel(Integer channel, Consumer<NoteEvent> noteEventConsumer) {
+    public MelodicSequencerPanel(Integer index, Integer channel, Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
 
-        // Create the sequencer
-        sequencer = MelodicSequencerManager.getInstance().newSequencer(channel);
+        // Create the sequencer with properly assigned channel
+        sequencer = MelodicSequencerManager.getInstance().newSequencer(index, channel);
 
         // Set up the note event listener
         sequencer.setNoteEventListener(noteEventConsumer);
@@ -119,6 +119,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Register with command bus for other UI updates (not step highlighting)
         CommandBus.getInstance().register(this);
+        
+        logger.info("Created MelodicSequencerPanel with index {} on channel {}", index, channel);
     }
 
     /**

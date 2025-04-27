@@ -752,4 +752,40 @@ public class PlayerManager {
         }
         logger.info("=========================");
     }
+
+    /**
+     * Ensure all player channels match their instrument channels
+     * This should be called at startup to fix any inconsistencies
+     */
+    public void ensureChannelConsistency() {
+        for (Player player : SessionManager.getInstance().getActiveSession().getPlayers()) {
+            // Skip null players
+            if (player == null) continue;
+            
+            // Check if player has an instrument
+            if (player.getInstrument() != null) {
+                // Check if channels don't match
+                if (!Objects.equals(player.getChannel(), player.getInstrument().getChannel())) {
+                    logger.warn("Channel mismatch for player {}: player channel={}, instrument channel={}",
+                        player.getName(),
+                        player.getChannel(),
+                        player.getInstrument().getChannel());
+                    
+                    // Update instrument channel to match player
+                    player.getInstrument().setChannel(player.getChannel());
+                    
+                    // Save the updated instrument
+                    InstrumentManager.getInstance().updateInstrument(player.getInstrument());
+                    
+                    // Save the player
+                    savePlayerProperties(player);
+                    
+                    logger.info("Fixed channel for player {} and instrument {}, now using channel {}",
+                        player.getName(),
+                        player.getInstrument().getName(),
+                        player.getChannel());
+                }
+            }
+        }
+    }
 }

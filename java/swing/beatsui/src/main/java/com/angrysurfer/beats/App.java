@@ -22,6 +22,7 @@ import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.service.PlayerManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public class App implements IBusListener {
@@ -200,6 +201,9 @@ public class App implements IBusListener {
             sessionManager.initialize();
             logger.info("Session manager initialized");
             splash.completeTask("Initialized session manager");
+            
+            // Ensure channel consistency in PlayerManager
+            PlayerManager.getInstance().ensureChannelConsistency();
             
             // Signal system ready - this will trigger waiting sequencers to initialize
             CommandBus.getInstance().publish(Commands.SYSTEM_READY, App.class, null);
