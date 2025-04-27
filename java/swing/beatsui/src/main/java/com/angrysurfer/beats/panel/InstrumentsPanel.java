@@ -511,8 +511,8 @@ class InstrumentsPanel extends JPanel {
     }
 
     private JTable createInstrumentsTable() {
-        // Update the columns array to include Channel
-        String[] columns = {"Name", "Device Name", "Channel", "Available", "Low", "High", "Initialized"};
+        // Update the columns array to include ID
+        String[] columns = {"ID", "Name", "Device Name", "Channel", "Available", "Low", "High", "Initialized"};
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -523,13 +523,15 @@ class InstrumentsPanel extends JPanel {
             @Override
             public Class<?> getColumnClass(int column) {
                 switch (column) {
-                    case 2: // Channel - numeric
+                    case 0: // ID - numeric
+                        return Long.class;
+                    case 3: // Channel - numeric
                         return Integer.class;
-                    case 3: // Available
-                    case 6: // Initialized
+                    case 4: // Available
+                    case 7: // Initialized
                         return Boolean.class;
-                    case 4: // Lowest Note
-                    case 5: // Highest Note
+                    case 5: // Lowest Note
+                    case 6: // Highest Note
                         return Integer.class;
                     default:
                         return String.class;
@@ -541,6 +543,7 @@ class InstrumentsPanel extends JPanel {
         List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
         for (InstrumentWrapper instrument : instruments) {
             model.addRow(new Object[]{
+                instrument.getId(),
                 instrument.getName(), 
                 instrument.getDeviceName(), 
                 instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
@@ -556,10 +559,10 @@ class InstrumentsPanel extends JPanel {
         // Enable auto-sorting
         table.setAutoCreateRowSorter(true);
         
-        // Add default sorting by name (column 0)
+        // Add default sorting by name (column 1)
         RowSorter<? extends TableModel> sorter = table.getRowSorter();
         ArrayList<RowSorter.SortKey> sortKeys = new ArrayList<>();
-        sortKeys.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
+        sortKeys.add(new RowSorter.SortKey(1, SortOrder.ASCENDING));
         sorter.setSortKeys(sortKeys);
         
         // Add double-click handler for instrument editing
@@ -575,14 +578,18 @@ class InstrumentsPanel extends JPanel {
         // Center-align numeric columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer); // Channel
-        for (int i = 4; i <= 5; i++) { // Center-align note columns
+        
+        table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // ID
+        table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer); // Channel
+        for (int i = 5; i <= 6; i++) { // Center-align note columns
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
         
-        // Set column widths for channel column
-        table.getColumnModel().getColumn(2).setMaxWidth(60);  // Channel
-        table.getColumnModel().getColumn(2).setPreferredWidth(60);
+        // Set column widths
+        table.getColumnModel().getColumn(0).setMaxWidth(70);  // ID
+        table.getColumnModel().getColumn(0).setPreferredWidth(70);
+        table.getColumnModel().getColumn(3).setMaxWidth(60);  // Channel
+        table.getColumnModel().getColumn(3).setPreferredWidth(60);
         
         return table;
     }
@@ -1015,6 +1022,7 @@ class InstrumentsPanel extends JPanel {
         for (InstrumentWrapper instrument : instruments) {
             logger.info("Adding instrument to table: " + instrument.getName());
             model.addRow(new Object[]{
+                instrument.getId(),
                 instrument.getName(), 
                 instrument.getDeviceName(), 
                 instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
@@ -1024,8 +1032,6 @@ class InstrumentsPanel extends JPanel {
                 instrument.isInitialized()
             });
         }
-
-        // Rest of the method...
     }
 
     private void setupContextMenus() {

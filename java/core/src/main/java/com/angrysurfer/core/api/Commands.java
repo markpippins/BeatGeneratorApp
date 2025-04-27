@@ -327,4 +327,6 @@ public class Commands {
     public static final String THEME_CHANGED = "THEME_CHANGED";
     public static final String REQUEST_ONE_TIME_NOTIFICATION = "REQUEST_ONE_TIME_NOTIFICATION";
     public static final String SEQUENCER_STATE_CHANGED = "SEQUENCER_STATE_CHANGED";
+    public static final String INSTRUMENT_CHANGED = "INSTRUMENT_CHANGED";
+    public static final String DRUM_STEP_UPDATED = "DRUM_STEP_UPDATED";
 }

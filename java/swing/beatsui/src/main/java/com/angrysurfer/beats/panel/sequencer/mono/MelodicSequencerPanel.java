@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.MelodicSequencerHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
@@ -92,6 +95,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private MelodicSequencerGridPanel gridPanel;
 
     private MelodicSequencerScalePanel scalePanel;
+
+    private JLabel instrumentInfoLabel;
 
     /**
      * Constructor for MelodicSequencerPanel
@@ -225,8 +230,20 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Sound parameters go NORTH-EAST
         eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
 
+        // Create and add the center info panel with instrument info
+        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0)); // Add top padding
+        
+        // Create the instrument info label
+        instrumentInfoLabel = new JLabel();
+        instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        updateInstrumentInfoLabel(); // Initialize with current values
+        
+        centerPanel.add(instrumentInfoLabel);
+        
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
+        topPanel.add(centerPanel, BorderLayout.CENTER);
         topPanel.add(eastPanel, BorderLayout.EAST);
 
         // Add top panel to main layout
@@ -243,12 +260,16 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Create bottom panel with BorderLayout for proper positioning
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 1));
         
-        // Add the parameters panel to the left side of the bottom panel
-        bottomPanel.add(sequenceParamsPanel, BorderLayout.WEST);
+        // Create the tilt panel and add it to the NORTH of bottom panel
+        tiltSequencerPanel = new TiltSequencerPanel(sequencer);
+        bottomPanel.add(tiltSequencerPanel, BorderLayout.NORTH);
         
-        // Create and add the scale panel to the center of the bottom panel
+        // Add the parameters panel to the CENTER of the bottom panel
+        bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+        
+        // Create and add the scale panel to the RIGHT of the bottom panel
         scalePanel = new MelodicSequencerScalePanel(sequencer);
-        bottomPanel.add(scalePanel, BorderLayout.CENTER);
+        bottomPanel.add(scalePanel, BorderLayout.EAST);
         
         // Create right panel for additional controls
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
@@ -261,11 +282,37 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add the right panel to the bottom panel's EAST region
         bottomPanel.add(rightPanel, BorderLayout.EAST);
         
+        // Store reference to southPanel for use in updateTiltSequencerPanel()
+        this.southPanel = bottomPanel;
+        
         // Add the bottom panel to the SOUTH region of the main panel
         add(bottomPanel, BorderLayout.SOUTH);
         
         // Register for command updates
         CommandBus.getInstance().register(this);
+    }
+
+    /**
+     * Update the instrument info label with current player and instrument information
+     */
+    private void updateInstrumentInfoLabel() {
+        if (sequencer == null || sequencer.getPlayer() == null) {
+            instrumentInfoLabel.setText("No Player");
+            return;
+        }
+        
+        Player player = sequencer.getPlayer();
+        String playerName = player.getName();
+        String instrumentName = "No Instrument";
+        String channelInfo = "";
+        
+        if (player.getInstrument() != null) {
+            instrumentName = player.getInstrument().getName();
+            int channel = player.getChannel() != null ? player.getChannel() : 0;
+            channelInfo = " (Ch " + (channel + 1) + ")";
+        }
+        
+        instrumentInfoLabel.setText(playerName + " - " + instrumentName + channelInfo);
     }
 
     /**
@@ -640,6 +687,17 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 // Only handle events from our sequencer to avoid loops
                 if (action.getSender() == sequencer) {
                     syncUIWithSequencer();
+                }
+            }
+
+            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
+                // Check if this update is for our sequencer's player
+                if (action.getData() instanceof Player && 
+                    sequencer != null && 
+                    sequencer.getPlayer() != null && 
+                    sequencer.getPlayer().getId().equals(((Player)action.getData()).getId())) {
+                    
+                    SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
                 }
             }
 

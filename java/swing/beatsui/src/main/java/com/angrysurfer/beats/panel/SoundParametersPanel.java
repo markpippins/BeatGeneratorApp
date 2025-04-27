@@ -66,7 +66,7 @@ public class SoundParametersPanel extends JPanel {
         // Create soundbank selector
         JPanel soundbankPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         soundbankCombo = new JComboBox<>();
-        soundbankCombo.setPreferredSize(new Dimension(150, 25));
+        soundbankCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH  * 3, 25));
         soundbankCombo.addActionListener(e -> {
             if (soundbankCombo.getSelectedItem() != null && player != null && player.getInstrument() != null) {
                 String soundbank = soundbankCombo.getSelectedItem().toString();
@@ -79,7 +79,7 @@ public class SoundParametersPanel extends JPanel {
         // Create bank selector
         JPanel bankPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         bankCombo = new JComboBox<>();
-        bankCombo.setPreferredSize(new Dimension(60, 25));
+        bankCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, 25));
         bankCombo.addActionListener(e -> {
             if (bankCombo.getSelectedItem() != null && player != null && player.getInstrument() != null) {
                 int bankIndex = bankCombo.getSelectedIndex();

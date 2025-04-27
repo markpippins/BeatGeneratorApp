@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -83,6 +84,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     // Add this field to DrumEffectsSequencerPanel
     private DrumButtonsPanel drumPadPanel;
+
+    private JLabel instrumentInfoLabel;
 
     /**
      * Create a new SequencerPanel
@@ -191,8 +194,17 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Navigation panel goes NORTH-WEST
         westPanel.add(navigationPanel, BorderLayout.NORTH);
 
+        // Create center panel for the info label
+        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+
+        // Create and add the instrument info label
+        instrumentInfoLabel = new JLabel("No drum selected");
+        instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        centerPanel.add(instrumentInfoLabel);
+
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
+        topPanel.add(centerPanel, BorderLayout.CENTER); // Add center panel with label
         topPanel.add(eastPanel, BorderLayout.EAST);
 
         // Add top panel to main layout
@@ -211,20 +223,20 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         }
 
         // Create a panel to hold both the sequence panel and drum buttons
-        JPanel centerPanel = new JPanel(new BorderLayout());
+        JPanel centerPanelMain = new JPanel(new BorderLayout());
 
         // Add sequence panel directly to CENTER
-        centerPanel.add(sequencePanel, BorderLayout.CENTER);
+        centerPanelMain.add(sequencePanel, BorderLayout.CENTER);
 
         // Create drum pad panel with callback
         drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
 
         // IMPORTANT: Add drum pad panel DIRECTLY to the border layout, no wrapping
         // panels
-        centerPanel.add(drumPadPanel, BorderLayout.SOUTH);
+        centerPanelMain.add(drumPadPanel, BorderLayout.SOUTH);
 
         // Add the center panel to the main layout
-        add(centerPanel, BorderLayout.CENTER);
+        add(centerPanelMain, BorderLayout.CENTER);
 
         // Create a panel for the bottom controls
         // REDUCED: from 5,5 to 2,2
@@ -523,6 +535,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Store the selection locally
         selectedPadIndex = padIndex;
+
+        // Update the info label
+        updateInstrumentInfoLabel();
 
         // Update sequencer's selected pad index
         sequencer.setSelectedPadIndex(padIndex);
@@ -823,8 +838,17 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                             drumPadPanel.selectDrumPad(newSelection);
                             // Then process our own logic
                             handleDrumPadSelected(newSelection);
+                            // Update the info label
+                            updateInstrumentInfoLabel();
                         });
                     }
+                }
+            }
+
+            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
+                // Update the info label if this affects our selected pad
+                if (selectedPadIndex >= 0) {
+                    SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
                 }
             }
         }
@@ -951,15 +975,15 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Get the currently selected player
         int selectedPadIndex = getSelectedPadIndex();
         Player player = null;
-        
+
         // Get the selected drum's Player object if available
         if (selectedPadIndex >= 0 && selectedPadIndex < sequencer.getPlayers().length) {
             player = sequencer.getPlayers()[selectedPadIndex];
         }
-        
+
         // Create the standardized SoundParametersPanel
         SoundParametersPanel panel = new SoundParametersPanel(player);
-        
+
         // Return the panel
         return panel;
     }
@@ -1022,7 +1046,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             }
             return;
         }
-        
+
         // Search children
         Component[] components = panel.getComponents();
         for (Component component : components) {
@@ -1030,5 +1054,28 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 findAndUpdateSoundPanel((JPanel) component);
             }
         }
+    }
+
+    /**
+     * Update the instrument info label with current player and instrument information
+     */
+    private void updateInstrumentInfoLabel() {
+        if (selectedPadIndex < 0 || selectedPadIndex >= sequencer.getPlayers().length) {
+            instrumentInfoLabel.setText("No drum selected");
+            return;
+        }
+
+        Player player = sequencer.getPlayers()[selectedPadIndex];
+        String playerName = player != null ? player.getName() : "Unknown";
+        String instrumentName = "No Instrument";
+        String channelInfo = "";
+
+        if (player != null && player.getInstrument() != null) {
+            instrumentName = player.getInstrument().getName();
+            int channel = player.getChannel() != null ? player.getChannel() : 9; // Default to 10 for display
+            channelInfo = " (Ch " + (channel + 1) + ")";
+        }
+
+        instrumentInfoLabel.setText(playerName + " - " + instrumentName + channelInfo);
     }
 }
