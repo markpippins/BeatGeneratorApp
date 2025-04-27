@@ -542,36 +542,35 @@ public class PlayerManager {
     }
 
     /**
-     * Saves player properties and ensures persistence
-     * 
+     * Save player properties including instrument
      * @param player The player to save
      */
     public void savePlayerProperties(Player player) {
         if (player == null) {
-            logger.error("Cannot save null player");
+            logger.warn("Cannot save null player");
             return;
         }
-
+        
         try {
-            // Save to Redis without expecting boolean return
-            redisService.savePlayer(player);
-            logger.info("Saved player properties: " + player.getName());
-
-            // Also update in session to ensure consistency
-            Session session = SessionManager.getInstance().getActiveSession();
-            if (session != null) {
-                // Find and update player in session
-                Set<Player> players = session.getPlayers();
-
-                // Remove existing player with same ID and add updated one
-                players.removeIf(p -> p.getId().equals(player.getId()));
-                players.add(player);
-
-                // Update session in Redis if needed
-                redisService.saveSession(session);
+            // Ensure instrument is properly linked
+            if (player.getInstrument() != null && player.getInstrumentId() == null) {
+                player.setInstrumentId(player.getInstrument().getId());
             }
+            
+            // Save player to Redis
+            RedisService.getInstance().savePlayer(player);
+            
+            // If player has an instrument, ensure it's updated in the instrument manager
+            if (player.getInstrument() != null) {
+                InstrumentManager.getInstance().updateInstrument(player.getInstrument());
+            }
+            
+            logger.debug("Saved player properties for {}, instrument: {} (ID: {})",
+                player.getName(),
+                player.getInstrument() != null ? player.getInstrument().getName() : "none",
+                player.getInstrumentId());
         } catch (Exception e) {
-            logger.error("Error saving player properties: " + e.getMessage());
+            logger.error("Error saving player properties: {}", e.getMessage(), e);
         }
     }
 

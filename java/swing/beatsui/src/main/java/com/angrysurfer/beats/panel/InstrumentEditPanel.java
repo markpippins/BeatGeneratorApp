@@ -24,15 +24,16 @@ import java.util.List;
 import lombok.Getter;
 
 @Getter
-class InstrumentEditPanel extends JPanel {
+public class InstrumentEditPanel extends JPanel {
     private final InstrumentWrapper instrument;
     private final JTextField nameField;
-    private final JComboBox<String> deviceCombo; // Changed from JTextField
+    private final JComboBox<String> deviceCombo;
+    private final JComboBox<String> channelCombo; // Add channel combobox
     private final JSpinner lowestNoteSpinner;
     private final JSpinner highestNoteSpinner;
     private final JCheckBox availableCheckBox;
     private final JCheckBox initializedCheckBox;
-    private final List<MidiDevice.Info> deviceInfos; // Store device info objects
+    private final List<MidiDevice.Info> deviceInfos;
 
     public InstrumentEditPanel(InstrumentWrapper instrument) {
         super(new GridBagLayout());
@@ -59,6 +60,19 @@ class InstrumentEditPanel extends JPanel {
             }
         }
 
+        // Create channel selection
+        channelCombo = new JComboBox<>();
+        for (int i = 1; i <= 16; i++) {
+            channelCombo.addItem(i + (i == 10 ? " (Drums)" : ""));
+        }
+
+        // Set current channel if available
+        if (instrument.getChannel() != null) {
+            channelCombo.setSelectedIndex(instrument.getChannel());
+        } else {
+            channelCombo.setSelectedIndex(0);
+        }
+
         // Fix spinner initialization with default values
         lowestNoteSpinner = new JSpinner(new SpinnerNumberModel(
                 instrument.getLowestNote() != null ? instrument.getLowestNote() : 0,
@@ -68,7 +82,7 @@ class InstrumentEditPanel extends JPanel {
                 instrument.getHighestNote() != null ? instrument.getHighestNote() : 127,
                 0, 127, 1));
 
-        availableCheckBox = new JCheckBox("Available", false); // instrument.isAvailable());
+        availableCheckBox = new JCheckBox("Available", false);
         initializedCheckBox = new JCheckBox("Initialized", instrument.isInitialized());
 
         setupLayout();
@@ -79,7 +93,6 @@ class InstrumentEditPanel extends JPanel {
             MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
             for (MidiDevice.Info info : infos) {
                 MidiDevice device = MidiSystem.getMidiDevice(info);
-                // Only add devices that can receive MIDI (have receivers)
                 if (device.getMaxReceivers() != 0) {
                     deviceInfos.add(info);
                     deviceCombo.addItem(info.getName());
@@ -97,10 +110,11 @@ class InstrumentEditPanel extends JPanel {
 
         addFormField("Name:", nameField, gbc, 0);
         addFormField("Device Name:", deviceCombo, gbc, 1);
-        addFormField("Lowest Note:", lowestNoteSpinner, gbc, 2);
-        addFormField("Highest Note:", highestNoteSpinner, gbc, 3);
-        addFormField("", availableCheckBox, gbc, 4);
-        addFormField("", initializedCheckBox, gbc, 5);
+        addFormField("Channel:", channelCombo, gbc, 2);
+        addFormField("Lowest Note:", lowestNoteSpinner, gbc, 3);
+        addFormField("Highest Note:", highestNoteSpinner, gbc, 4);
+        addFormField("", availableCheckBox, gbc, 5);
+        addFormField("", initializedCheckBox, gbc, 6);
     }
 
     private void addFormField(String label, JComponent field, GridBagConstraints gbc, int row) {
@@ -116,16 +130,31 @@ class InstrumentEditPanel extends JPanel {
     }
 
     public InstrumentWrapper getUpdatedInstrument() {
-        instrument.setName(nameField.getText());
-        // Get the selected device name from combo
-        int selectedIndex = deviceCombo.getSelectedIndex();
-        if (selectedIndex >= 0) {
-            instrument.setDeviceName(deviceInfos.get(selectedIndex).getName());
-        }
-        instrument.setLowestNote((Integer) lowestNoteSpinner.getValue());
-        instrument.setHighestNote((Integer) highestNoteSpinner.getValue());
-        instrument.setAvailable(availableCheckBox.isSelected());
-        instrument.setInitialized(initializedCheckBox.isSelected());
-        return instrument;
+        // Either create a new instrument or use the original as a base
+        InstrumentWrapper updatedInstrument = new InstrumentWrapper();
+        updatedInstrument.setId(instrument.getId());
+        
+        // Set properties from UI components
+        updatedInstrument.setName(nameField.getText().trim());
+        
+        // Fix: Use deviceCombo instead of device/deviceField
+        updatedInstrument.setDeviceName((String) deviceCombo.getSelectedItem());
+        
+        // Set channel (convert from 1-based UI to 0-based model)
+        int selectedIndex = channelCombo.getSelectedIndex();
+        updatedInstrument.setChannel(selectedIndex);
+        
+        // Copy other properties that aren't editable in this dialog
+        updatedInstrument.setControlCodes(instrument.getControlCodes());
+        updatedInstrument.setAvailable(instrument.getAvailable());
+        updatedInstrument.setInternal(instrument.getInternal());
+        updatedInstrument.setInitialized(instrument.isInitialized());
+        updatedInstrument.setHighestNote(instrument.getHighestNote());
+        updatedInstrument.setLowestNote(instrument.getLowestNote());
+        updatedInstrument.setSoundbankName(instrument.getSoundbankName());
+        updatedInstrument.setBankIndex(instrument.getBankIndex());
+        updatedInstrument.setCurrentPreset(instrument.getCurrentPreset());
+        
+        return updatedInstrument;
     }
 }

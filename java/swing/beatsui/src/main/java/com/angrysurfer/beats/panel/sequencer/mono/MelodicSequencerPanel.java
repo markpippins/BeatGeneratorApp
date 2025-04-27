@@ -94,8 +94,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private MelodicSequencerScalePanel scalePanel;
 
     /**
-     * Modify constructor to use only one step update mechanism (direct
-     * listener) and load the first sequence if available
+     * Constructor for MelodicSequencerPanel
      */
     public MelodicSequencerPanel(Integer index, Integer channel, Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
@@ -110,6 +109,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         sequencer.setStepUpdateListener(event -> {
             updateStepHighlighting(event.getOldStep(), event.getNewStep());
         });
+
+        // Apply instrument preset immediately to ensure correct sound
+        sequencer.applyInstrumentPreset();
 
         // Initialize the UI
         initialize();
@@ -251,6 +253,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Create right panel for additional controls
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
         
+        rightPanel.add(createGeneratePanel());
         // Add swing panel to the right panel
         swingPanel = new MelodicSequencerSwingPanel(sequencer);
         rightPanel.add(swingPanel);

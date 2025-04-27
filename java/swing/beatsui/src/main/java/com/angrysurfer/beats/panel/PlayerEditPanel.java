@@ -21,6 +21,7 @@ import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.SpinnerNumberModel;
 
+import com.angrysurfer.core.service.PlayerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -174,6 +175,24 @@ public class PlayerEditPanel extends JPanel {
         }
         
         return player;
+    }
+
+    /**
+     * Apply all changes from sub-panels to the player
+     */
+    public void applyChanges() {
+        // Apply changes from basic properties panel
+        basicPropertiesPanel.applyChanges();
+        
+        // Apply changes from other panels
+        // ...
+        
+        // Save player with the latest changes
+        PlayerManager.getInstance().savePlayerProperties(player);
+        
+        logger.debug("Applied all changes to player, instrument is now: {} (ID: {})",
+            player.getInstrument() != null ? player.getInstrument().getName() : "none",
+            player.getInstrumentId());
     }
 
     private void layoutComponents() {

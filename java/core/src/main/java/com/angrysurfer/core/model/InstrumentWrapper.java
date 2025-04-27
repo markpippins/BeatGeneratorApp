@@ -105,7 +105,7 @@ public final class InstrumentWrapper implements Serializable {
 
     private Integer lowestNote = 0;
 
-    private Integer highestNote = 126;
+    private Integer highestNote = 127;
 
     private Integer highestPreset;
 
@@ -135,8 +135,14 @@ public final class InstrumentWrapper implements Serializable {
     // Add this static field to the class
     private static ScheduledExecutorService NOTE_OFF_SCHEDULER;
 
+    /**
+     * Default constructor with safe boolean initialization
+     */
     public InstrumentWrapper() {
-
+        // Initialize boolean fields to prevent NPE
+        this.internal = Boolean.FALSE;
+        this.available = Boolean.FALSE;
+        this.initialized = Boolean.FALSE;
     }
 
     public InstrumentWrapper(String name, MidiDevice device) {
@@ -261,7 +267,7 @@ public final class InstrumentWrapper implements Serializable {
                 int value = getBoundaries().containsKey(cc) ? rand.nextInt(getBoundaries().get(cc)[0],
                         getBoundaries().get(cc)[0] >= getBoundaries().get(cc)[1] ? getBoundaries().get(cc)[0] + 1
                                 : getBoundaries().get(cc)[1])
-                        : rand.nextInt(0, 126);
+                        : rand.nextInt(0, 127);
 
                 sendToDevice(new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, cc, value));
             } catch (IllegalArgumentException | MidiUnavailableException | InvalidMidiDataException e) {
@@ -602,8 +608,22 @@ public final class InstrumentWrapper implements Serializable {
         }
     }
 
+    /**
+     * Checks if this is an internal synth instrument
+     * @return true if this is an internal synth
+     */
     public boolean isInternalSynth() {
-        return internal;
+        // Safely handle null values to prevent NPE
+        return Boolean.TRUE.equals(internal);
+    }
+
+    /**
+     * Getter for the internal flag
+     * @return the internal flag value, never null
+     */
+    public Boolean getInternal() {
+        // Make sure we never return null
+        return internal != null ? internal : Boolean.FALSE;
     }
 
     /**

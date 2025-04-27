@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import com.angrysurfer.core.service.InternalSynthManager;
@@ -92,6 +93,9 @@ public class MelodicSequencer implements IBusListener {
     // Note object for storing melodic properties (NEW)
     private Player player;
 
+    private AtomicBoolean playing = new AtomicBoolean(false);
+    private boolean initialized = false; // Flag to track if initialized
+
     // Event handling
     private Consumer<StepUpdateEvent> stepUpdateListener;
     private Consumer<NoteEvent> noteEventListener;
@@ -133,6 +137,73 @@ public class MelodicSequencer implements IBusListener {
         } else {
             // Queue or skip if too many notes trigger at once
         }
+    }
+
+    /**
+     * Start playback
+     */
+    public void play() {
+        playing.set(true);
+        
+        // Apply program change when starting playback
+        applyInstrumentPreset();
+        
+        logger.debug("Started sequencer {}", id);
+    }
+
+    /**
+     * Apply the current instrument preset
+     */
+    public void applyInstrumentPreset() {
+        if (player == null || player.getInstrument() == null) {
+            logger.debug("Cannot apply preset - player or instrument is null");
+            return;
+        }
+        
+        // Get channel and preset
+        Integer channel = player.getChannel();
+        Integer preset = player.getPreset();
+        
+        if (channel == null || preset == null) {
+            logger.debug("Cannot apply preset - missing channel or preset value");
+            return;
+        }
+        
+        try {
+            InstrumentWrapper instrument = player.getInstrument();
+            
+            // Get bank index from instrument if available
+            Integer bankIndex = instrument.getBankIndex();
+            
+            if (bankIndex != null && bankIndex > 0) {
+                // Calculate MSB and LSB from bankIndex as in the example
+                int bankMSB = (bankIndex >> 7) & 0x7F;  // Controller 0
+                int bankLSB = bankIndex & 0x7F;         // Controller 32
+                
+                // Send bank select messages
+                instrument.controlChange(channel, 0, bankMSB);   // Bank MSB
+                instrument.controlChange(channel, 32, bankLSB);  // Bank LSB
+                
+                logger.debug("Sent bank select MSB={}, LSB={} for bank={}", 
+                    bankMSB, bankLSB, bankIndex);
+            }
+            
+            // Send program change
+            instrument.programChange(channel, preset, 0);
+            
+            logger.info("Applied program change {} on channel {} for player {}", 
+                preset, channel, player.getName());
+        } catch (Exception e) {
+            logger.error("Failed to apply instrument preset: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Called when the sequencer resumes after being paused
+     */
+    public void onResume() {
+        // Apply program change when resuming
+        applyInstrumentPreset();
     }
 
     /**

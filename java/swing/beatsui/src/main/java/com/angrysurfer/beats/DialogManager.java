@@ -184,6 +184,14 @@ public class DialogManager implements IBusListener {
         if (player != null) {
             SwingUtilities.invokeLater(() -> {
                 try {
+                    // Keep a copy of the original instrument for debugging
+                    InstrumentWrapper originalInstrument = player.getInstrument();
+                    Long originalInstrumentId = player.getInstrumentId();
+                    
+                    logger.debug("Opening editor for player with instrument: {} (ID: {})",
+                        originalInstrument != null ? originalInstrument.getName() : "none",
+                        originalInstrumentId);
+                    
                     PlayerEditPanel panel = new PlayerEditPanel(player);
                     Dialog<Player> dialog = frame.createDialog(player, panel);
                     dialog.setTitle("Edit Player: " + player.getName());
@@ -199,24 +207,24 @@ public class DialogManager implements IBusListener {
                         // Save the player to persistence
                         PlayerManager.getInstance().savePlayerProperties(player);
                         
+                        // Log changes for debugging
+                        logger.debug("After editing, player has instrument: {} (ID: {})",
+                            updatedPlayer.getInstrument() != null ? updatedPlayer.getInstrument().getName() : "none",
+                            updatedPlayer.getInstrumentId());
+                        
                         // Initialize the instrument if this is a melodic sequencer player
                         if (player.getOwner() instanceof MelodicSequencer sequencer) {
                             sequencer.initializeInstrument();
                         }
 
-
                         // Then publish events in correct order
                         commandBus.publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);
 
                         // Important: This needs to come AFTER other updates
-                        SwingUtilities.invokeLater(() -> {
-                            // Delay selection event slightly to ensure other updates complete
-                            commandBus.publish(Commands.PLAYER_SELECTED, this, updatedPlayer);
-                        });
+                        commandBus.publish(Commands.PLAYER_UPDATED, this, updatedPlayer);
                     }
                 } catch (Exception e) {
-                    logger.error("Error in handleEditPlayer: " + e);
-                    e.printStackTrace();
+                    logger.error("Error editing player: " + e.getMessage());
                 }
             });
         }

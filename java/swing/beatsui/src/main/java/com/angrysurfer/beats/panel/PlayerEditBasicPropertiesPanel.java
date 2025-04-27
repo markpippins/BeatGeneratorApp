@@ -205,6 +205,13 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         // Get ALL instruments from InstrumentManager for debugging
         List<InstrumentWrapper> instruments = instrumentManager.getCachedInstruments();
         
+        // Sort alphabetically by name
+        instruments.sort((a, b) -> {
+            String nameA = a.getName() != null ? a.getName() : "";
+            String nameB = b.getName() != null ? b.getName() : "";
+            return nameA.compareToIgnoreCase(nameB);
+        });
+        
         // DEBUGGING: Print all instruments
         logger.debug("=== ALL CACHED INSTRUMENTS ===");
         for (InstrumentWrapper instrument : instruments) {
@@ -291,11 +298,46 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     }
 
     /**
-     * Add listeners to UI components with improved synchronization
+     * Add listeners for UI components
      */
     private void addListeners() {
-        // Instrument selection listener
-        instrumentCombo.addActionListener(e -> handleInstrumentSelection());
+        // Add listener to instrument combo box
+        instrumentCombo.addActionListener(e -> {
+            if (initializing.get()) return;
+            
+            InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
+            if (selectedInstrument != null) {
+                // Log before change
+                logger.debug("Changing player instrument from {} (ID:{}) to {} (ID:{})", 
+                    player.getInstrument() != null ? player.getInstrument().getName() : "none",
+                    player.getInstrument() != null ? player.getInstrument().getId() : "none",
+                    selectedInstrument.getName(), 
+                    selectedInstrument.getId());
+                
+                // Store the selected instrument
+                selectedInstrumentId = selectedInstrument.getId();
+                
+                // Update player with the selected instrument
+                player.setInstrument(selectedInstrument);
+                player.setInstrumentId(selectedInstrument.getId());
+                
+                // Check if this is an internal synth
+                isInternalSynth = synthManager.isInternalSynth(selectedInstrument);
+                
+                // Immediately save the player to persist changes
+                PlayerManager.getInstance().savePlayerProperties(player);
+                
+                // Update drum instrument dropdown if this is channel 9
+                if (player.getChannel() == 9) {
+                    updateDrumInstrumentCombo();
+                }
+                
+                // Update soundbank, bank and preset dropdowns
+                updatePresetControls();
+                
+                logger.debug("Player instrument updated and saved");
+            }
+        });
 
         // Channel change listener
         channelSpinner.addChangeListener(e -> {
@@ -659,6 +701,73 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     }
 
     /**
+     * Update the drum instrument combo when switching to drum channel
+     * or when changing instruments on drum channel
+     */
+    private void updateDrumInstrumentCombo() {
+        if (!isDrumChannel) {
+            return; // Only apply for drum channel
+        }
+        
+        initializing.set(true);
+        try {
+            logger.debug("Updating drum instruments for channel 9");
+
+            // Clear existing items
+            drumCombo.removeAllItems();
+
+            // Get drum items from InternalSynthManager
+            List<DrumItem> drumItems = synthManager.getDrumItems();
+
+            // Add to combo
+            for (DrumItem item : drumItems) {
+                drumCombo.addItem(item);
+            }
+
+            // Select drum sound from player's root note if available
+            boolean selected = false;
+            if (player.getRootNote() != null) {
+                int desiredNote = player.getRootNote();
+                
+                for (int i = 0; i < drumCombo.getItemCount(); i++) {
+                    DrumItem item = drumCombo.getItemAt(i);
+                    if (item.getNoteNumber() == desiredNote) {
+                        drumCombo.setSelectedIndex(i);
+                        selected = true;
+                        break;
+                    }
+                }
+            }
+
+            // Default to first drum sound if none selected
+            if (!selected && drumCombo.getItemCount() > 0) {
+                drumCombo.setSelectedIndex(0);
+                
+                // Update player's root note with default drum
+                DrumItem item = (DrumItem)drumCombo.getSelectedItem();
+                if (item != null) {
+                    player.setRootNote(item.getNoteNumber());
+                    
+                    // Apply the drum selection immediately
+                    if (player.getInstrument() != null) {
+                        // Set standard drum kit
+                        player.getInstrument().controlChange(9, 0, 0);   // Bank MSB
+                        player.getInstrument().controlChange(9, 32, 0);  // Bank LSB
+                        player.getInstrument().programChange(9, 0, 0);  // Standard kit
+                    }
+                }
+            }
+            
+            // Ensure drum control panel is visible
+            updatePresetControls();
+        } catch (Exception e) {
+            logger.error("Error updating drum instruments: {}", e.getMessage(), e);
+        } finally {
+            initializing.set(false);
+        }
+    }
+
+    /**
      * Register for instrument update notifications with improved handling
      */
     private void registerForInstrumentUpdates() {
@@ -728,7 +837,8 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             // Update combo
             instrumentCombo.removeAllItems();
             for (InstrumentWrapper instrument : instruments) {
-                instrumentCombo.addItem(instrument);
+                if (instrument.getAvailable())
+                    instrumentCombo.addItem(instrument);
             }
             
             // Restore selection
@@ -1270,6 +1380,31 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     }
 
     /**
+     * Apply changes from UI controls to the player object
+     */
+    public void applyChanges() {
+        if (initializing.get()) return;
+        
+        try {
+            // Capture instrument selection
+            InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
+            if (selectedInstrument != null) {
+                player.setInstrument(selectedInstrument);
+                player.setInstrumentId(selectedInstrument.getId());
+                
+                logger.debug("Applied instrument change: {} (ID: {})",
+                    selectedInstrument.getName(), selectedInstrument.getId());
+            }
+            
+            // Apply other changes from UI components
+            // ...
+            
+        } catch (Exception e) {
+            logger.error("Error applying changes: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
      * Load instrument data for the player
      */
     private void loadInstrumentData() {
@@ -1283,9 +1418,17 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         // Get all available instruments
         List<InstrumentWrapper> instruments = InstrumentManager.getInstance().getCachedInstruments();
         
+        // Sort alphabetically by name
+        instruments.sort((a, b) -> {
+            String nameA = a.getName() != null ? a.getName() : "";
+            String nameB = b.getName() != null ? b.getName() : "";
+            return nameA.compareToIgnoreCase(nameB);
+        });
+        
         // Add all instruments to combo box
         for (InstrumentWrapper instrument : instruments) {
-            instrumentCombo.addItem(instrument);
+            if (instrument.getAvailable())
+                instrumentCombo.addItem(instrument);
         }
         
         // Select the current instrument if it exists
@@ -1304,51 +1447,28 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     /**
      * Handle instrument selection change
      */
-    private void handleInstrumentSelection() {
-        if (player == null || updating) {
-            return;
-        }
+    private void handleInstrumentChange(InstrumentWrapper instrument) {
+        if (initializing.get() || player == null || instrument == null) return;
         
-        updating = true;
         try {
-            InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
-            if (selectedInstrument != null) {
-                // Store previous instrument for logging
-                InstrumentWrapper previousInstrument = player.getInstrument();
-                
-                // Update player's instrument
-                player.setInstrument(selectedInstrument);
-                
-                // Configure channel if needed
-                if (selectedInstrument.getChannel() == null) {
-                    selectedInstrument.setChannel(player.getChannel());
-                }
-                
-                // Save the player to persist changes
-                PlayerManager.getInstance().savePlayerProperties(player);
-                
-                // Update instrument in manager (in case channel changed)
-                InstrumentManager.getInstance().updateInstrument(selectedInstrument);
-                
-                logger.info("Changed player {} instrument from {} to {}", 
-                    player.getId(),
-                    (previousInstrument != null ? previousInstrument.getName() : "none"),
-                    selectedInstrument.getName());
-                
-                // Notify system of instrument change
-                CommandBus.getInstance().publish(
-                    Commands.INSTRUMENT_UPDATED,
-                    this,
-                    selectedInstrument
-                );
-                
-                // Initialize the instrument
-                if (player.getOwner() instanceof MelodicSequencer sequencer) {
-                    sequencer.initializeInstrument();
-                }
+            // Update player with the selected instrument
+            player.setInstrument(instrument);
+            player.setInstrumentId(instrument.getId());
+            
+            // Apply the instrument preset immediately if player has a sequencer
+            if (player.getOwner() instanceof MelodicSequencer sequencer) {
+                sequencer.applyInstrumentPreset();
             }
-        } finally {
-            updating = false;
+            
+            // Save player to persist changes
+            PlayerManager.getInstance().savePlayerProperties(player);
+            
+            logger.debug("Applied instrument {} for player {}", instrument.getName(), player.getName());
+            
+            // Update other UI components
+            updatePresetControls();
+        } catch (Exception e) {
+            logger.error("Error changing instrument: {}", e.getMessage(), e);
         }
     }
 }

@@ -10,10 +10,10 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.angrysurfer.core.model.InstrumentPreset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +22,9 @@ import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.service.PlayerManager;
 
 public class SoundParametersPanel extends JPanel {
 
@@ -30,7 +32,9 @@ public class SoundParametersPanel extends JPanel {
 
     // The player whose instrument we're configuring
     private Player player;
-    
+
+    private boolean initializing = false;
+
     // UI components
     private JComboBox<String> soundbankCombo;
     private JComboBox<String> bankCombo;
@@ -298,6 +302,30 @@ public class SoundParametersPanel extends JPanel {
             } catch (Exception e) {
                 logger.error("Failed to load soundbank: {}", e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Handle preset selection change
+     */
+    private void handlePresetChange(InstrumentPreset preset) {
+        if (initializing || player == null || preset == null) return;
+        
+        try {
+            // Update player with the selected preset
+            player.setPreset(preset.getPresetNumber());
+            
+            // Apply the preset immediately if player has a sequencer
+            if (player.getOwner() instanceof MelodicSequencer sequencer) {
+                sequencer.applyInstrumentPreset();
+            }
+            
+            // Save player to persist changes
+            PlayerManager.getInstance().savePlayerProperties(player);
+            
+            logger.debug("Applied preset {} for player {}", preset.getPresetNumber(), player.getName());
+        } catch (Exception e) {
+            logger.error("Error changing preset: {}", e.getMessage(), e);
         }
     }
 }
