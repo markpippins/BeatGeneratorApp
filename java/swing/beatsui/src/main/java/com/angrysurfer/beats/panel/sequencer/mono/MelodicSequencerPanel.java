@@ -126,7 +126,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Register with command bus for other UI updates (not step highlighting)
         CommandBus.getInstance().register(this);
-        
+
         logger.info("Created MelodicSequencerPanel with index {} on channel {}", index, channel);
     }
 
@@ -233,14 +233,14 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Create and add the center info panel with instrument info
         JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0)); // Add top padding
-        
+
         // Create the instrument info label
         instrumentInfoLabel = new JLabel();
         instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
         updateInstrumentInfoLabel(); // Initialize with current values
-        
+
         centerPanel.add(instrumentInfoLabel);
-        
+
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
         topPanel.add(centerPanel, BorderLayout.CENTER);
@@ -256,62 +256,63 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         add(scrollPane, BorderLayout.CENTER);
-        
+
         // Create bottom panel with BorderLayout for proper positioning
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 1));
-        
+
         // Create the tilt panel and add it to the NORTH of bottom panel
         tiltSequencerPanel = new TiltSequencerPanel(sequencer);
         bottomPanel.add(tiltSequencerPanel, BorderLayout.NORTH);
-        
+
         // Add the parameters panel to the CENTER of the bottom panel
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
-        
-        // Create and add the scale panel to the RIGHT of the bottom panel
-        scalePanel = new MelodicSequencerScalePanel(sequencer);
-        bottomPanel.add(scalePanel, BorderLayout.EAST);
-        
+
         // Create right panel for additional controls
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
-        
+
+        // Create and add the scale panel to the RIGHT of the bottom panel
+        scalePanel = new MelodicSequencerScalePanel(sequencer);
+        rightPanel.add(scalePanel);
+
         rightPanel.add(createGeneratePanel());
         // Add swing panel to the right panel
         swingPanel = new MelodicSequencerSwingPanel(sequencer);
         rightPanel.add(swingPanel);
-        
+
         // Add the right panel to the bottom panel's EAST region
         bottomPanel.add(rightPanel, BorderLayout.EAST);
-        
+
         // Store reference to southPanel for use in updateTiltSequencerPanel()
         this.southPanel = bottomPanel;
-        
+
         // Add the bottom panel to the SOUTH region of the main panel
         add(bottomPanel, BorderLayout.SOUTH);
-        
+
         // Register for command updates
         CommandBus.getInstance().register(this);
     }
 
     /**
-     * Update the instrument info label with current player and instrument information
+     * Update the instrument info label with current player and instrument
+     * information
      */
     private void updateInstrumentInfoLabel() {
         if (sequencer == null || sequencer.getPlayer() == null) {
             instrumentInfoLabel.setText("No Player");
             return;
         }
-        
+
         Player player = sequencer.getPlayer();
         String playerName = player.getName();
         String instrumentName = "No Instrument";
         String channelInfo = "";
-        
+
         if (player.getInstrument() != null) {
             instrumentName = player.getInstrument().getName();
             int channel = player.getChannel() != null ? player.getChannel() : 0;
             channelInfo = " (Ch " + (channel + 1) + ")";
         }
-        
+
         instrumentInfoLabel.setText(playerName + " - " + instrumentName + channelInfo);
     }
 
@@ -322,7 +323,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Create the standardized SoundParametersPanel with the current player
         // Player is null-safe in SoundParametersPanel constructor
         SoundParametersPanel panel = new SoundParametersPanel(sequencer.getPlayer());
-        
+
         // Return the panel
         return panel;
     }
@@ -338,7 +339,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         String[] rangeOptions = { "1 Octave", "2 Octaves", "3 Octaves", "4 Octaves" };
         rangeCombo = new JComboBox<>(rangeOptions);
         rangeCombo.setSelectedIndex(1); // Default to 2 octaves
-        rangeCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        rangeCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         rangeCombo.setToolTipText("Set the octave range for pattern generation");
 
         // Generate button with consistent styling
@@ -397,18 +398,18 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             // Store the dial in the appropriate collection based on its type
             switch (i) {
                 case 0 -> {
-//                    velocityDials[0] = dial;
+                    // velocityDials[0] = dial;
                     velocityDials.add(dial);
                     dial.setKnobColor(UIUtils.getDialColor("velocity"));
                 }
                 case 1 -> {
-//                    gateDial[0] = dial;
+                    // gateDial[0] = dial;
                     gateDials.add(dial);
                     dial.setKnobColor(UIUtils.getDialColor("gate"));
                 }
                 case 4 -> {
                     dial.setPreferredSize(new Dimension(75, 75)); // Reduced from 75x75
-//                    noteDial[0] = dial;
+                    // noteDial[0] = dial;
                     noteDials.add(dial);
                 }
                 case 2 -> {
@@ -421,7 +422,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                             return;
                         sequencer.setProbabilityValue(index, dial.getValue());
                     });
-//                    probabilityDial[0] = dial;
+                    // probabilityDial[0] = dial;
                     probabilityDials.add(dial);
                 }
                 case 3 -> {
@@ -434,7 +435,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                             return;
                         sequencer.setNudgeValue(index, dial.getValue());
                     });
-//                    nudgeDial[0] = dial;
+                    // nudgeDial[0] = dial;
                     nudgeDials.add(dial);
                 }
             }
@@ -557,7 +558,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateUI(sequencer);
             }
-            
+
             // Update scale panel
             if (scalePanel != null) {
                 scalePanel.updateUI(sequencer);
@@ -567,7 +568,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             if (gridPanel != null) {
                 gridPanel.syncWithSequencer();
             }
-            
+
             // Update other panels
             // ...
 
@@ -651,33 +652,34 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
 
             case Commands.SCALE_SELECTED -> {
-                // Only update if this event is for our specific sequencer or from the global controller
+                // Only update if this event is for our specific sequencer or from the global
+                // controller
                 if (action.getData() instanceof MelodicScaleSelectionEvent event) {
                     // Check if this event is for our sequencer
                     if (event.getSequencerId() != null && event.getSequencerId().equals(sequencer.getId())) {
                         // Update the scale in the sequencer
                         sequencer.setScale(event.getScale());
-                        
+
                         // Update the UI without publishing new events
                         if (scalePanel != null) {
                             scalePanel.setSelectedScale(event.getScale());
                         }
-                        
+
                         // Log the specific change
                         logger.debug("Set scale to {} for sequencer {}", event.getScale(), sequencer.getId());
                     }
-                } 
+                }
                 // Handle global scale changes from session panel (separate implementation)
-                else if (action.getData() instanceof String scale && 
-                         (action.getSender() instanceof SessionControlPanel)) {
+                else if (action.getData() instanceof String scale &&
+                        (action.getSender() instanceof SessionControlPanel)) {
                     // This is a global scale change from the session panel
                     sequencer.setScale(scale);
-                    
+
                     // Update UI without publishing new events
                     if (scalePanel != null) {
                         scalePanel.setSelectedScale(scale);
                     }
-                    
+
                     logger.debug("Set scale to {} from global session change", scale);
                 }
             }
@@ -692,11 +694,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
             case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
                 // Check if this update is for our sequencer's player
-                if (action.getData() instanceof Player && 
-                    sequencer != null && 
-                    sequencer.getPlayer() != null && 
-                    sequencer.getPlayer().getId().equals(((Player)action.getData()).getId())) {
-                    
+                if (action.getData() instanceof Player &&
+                        sequencer != null &&
+                        sequencer.getPlayer() != null &&
+                        sequencer.getPlayer().getId().equals(((Player) action.getData()).getId())) {
+
                     SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
                 }
             }

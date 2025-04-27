@@ -1,6 +1,8 @@
 package com.angrysurfer.core.model;
 
 import java.io.Serializable;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +34,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.ShortMessage;
 
 @Getter
 @Setter
@@ -179,6 +185,27 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private boolean usingInternalSynth = true;
     private InternalSynthManager internalSynthManager = null;
 
+    // Update these fields
+    @JsonIgnore
+    private transient final ShortMessage reuseableMessage = new ShortMessage();
+
+    @JsonIgnore
+    private transient final Object messageLock = new Object();
+
+    private long lastNoteTime = 0;
+    private static final long NOTE_THROTTLE_THRESHOLD = 1; // 1ms minimum between notes
+
+    // Add initialization method
+    @JsonIgnore
+    private void initializeTransientFields() {
+        // No longer needed as reuseableMessage and messageLock are final
+    }
+
+    // Call this in noteOn, triggerNoteWithThrottle, etc.
+    private void ensureInitialized() {
+        // No longer needed as reuseableMessage and messageLock are final
+    }
+
     /**
      * Simple initialization for minimal player setup
      */
@@ -227,7 +254,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
         NOTE_OFF_SCHEDULER.schedule(() -> {
             try {
-                noteOn(note + randWeight + getSession().getNoteOffset(), velocity);
+                triggerNoteWithThrottle(note + randWeight + getSession().getNoteOffset(), velocity);
             } catch (Exception e) {
                 logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
             }
@@ -247,6 +274,66 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     }
 
     /**
+     * Trigger a note with throttling to prevent MIDI buffer overflows
+     * @param note MIDI note number to play
+     * @param velocity Note velocity (0-127)
+     */
+    public void triggerNoteWithThrottle(int note, int velocity) {
+        // First check if we have an instrument to play through
+        if (instrument == null) {
+            return;
+        }
+        
+        // Update player state
+        setPlaying(true);
+        
+        // Throttle rapid note triggering
+        long now = System.nanoTime() / 1_000_000; // Current time in ms
+        long timeSinceLastNote = now - lastNoteTime;
+        
+        if (timeSinceLastNote < NOTE_THROTTLE_THRESHOLD) {
+            // Use the executor to slightly delay the note if we're sending too many
+            NOTE_EXECUTOR.submit(() -> {
+                try {
+                    // Small sleep to prevent overwhelming the MIDI system
+                    Thread.sleep(NOTE_THROTTLE_THRESHOLD - timeSinceLastNote + 1);
+                    sendNoteOnMessage(note, velocity);
+                } catch (Exception e) {
+                    logger.error("Error in throttled note trigger: {}", e.getMessage(), e);
+                }
+            });
+        } else {
+            // Send note immediately if we're not throttling
+            sendNoteOnMessage(note, velocity);
+        }
+        
+        // Always update the last note time
+        lastNoteTime = now;
+        
+        // Update UI only if needed (throttled)
+        updateUIIfNeeded();
+    }
+
+    /**
+     * Helper method to send the actual MIDI note-on message
+     */
+    private void sendNoteOnMessage(int note, int velocity) {
+        try {
+            // Use synchronized block to prevent concurrent modification of the reusable message
+            synchronized (messageLock) {
+                reuseableMessage.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
+                // Replace sendMessage with sendToDevice
+                instrument.sendToDevice(reuseableMessage);
+            }
+        } catch (InvalidMidiDataException e) {
+            logger.error("Error sending note-on message: {}", e.getMessage(), e);
+        } catch (MidiUnavailableException e) {
+            // Add handling for MidiUnavailableException since sendToDevice throws it
+            logger.error("MIDI device unavailable: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
      * Facade method to play a note with standard duration
      * 
      * @param note     MIDI note number
@@ -260,10 +347,15 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         try {
             // Delegate to instrument wrapper
             if (instrument != null) {
-                instrument.noteOn(channel, note, velocity);
+                synchronized (messageLock) {
+                    reuseableMessage.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
+                    instrument.sendToDevice(reuseableMessage);  // Changed from sendMessage to sendToDevice
+                }
             }
-        } catch (Exception e) {
+        } catch (InvalidMidiDataException e) {
             logger.error("Error in noteOn: {}", e.getMessage(), e);
+        } catch (MidiUnavailableException e) {  // Add this catch block
+            logger.error("MIDI device unavailable: {}", e.getMessage(), e);
         }
     }
 
@@ -876,5 +968,17 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     public static void shutdownExecutors() {
         NOTE_EXECUTOR.shutdown();
         NOTE_OFF_SCHEDULER.shutdown();
+    }
+
+    // Add this method to handle proper deserialization
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        // Reinitialize transient fields
+        try {
+            initializeTransientFields();
+        } catch (Exception e) {
+            // Log but continue - we can create a new one each time if needed
+            System.err.println("Error reinitializing MIDI message: " + e.getMessage());
+        }
     }
 }

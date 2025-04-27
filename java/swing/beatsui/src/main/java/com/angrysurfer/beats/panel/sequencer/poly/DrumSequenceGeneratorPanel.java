@@ -8,11 +8,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 
-import com.angrysurfer.beats.UIUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -22,14 +23,13 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
  */
 public class DrumSequenceGeneratorPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(DrumSequenceGeneratorPanel.class);
-    
+
     // UI components
     private JComboBox<String> densityCombo;
     private JButton generateButton;
-    
+
     // Reference to the sequencer
     private final DrumSequencer sequencer;
-    
 
     /**
      * Create a new DrumSequenceGeneratorPanel
@@ -38,13 +38,13 @@ public class DrumSequenceGeneratorPanel extends JPanel {
      */
     public DrumSequenceGeneratorPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
-        
+
         setBorder(BorderFactory.createTitledBorder("Generate"));
         setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-        
+
         initializeComponents();
     }
-    
+
     /**
      * Initialize UI components
      */
@@ -53,7 +53,7 @@ public class DrumSequenceGeneratorPanel extends JPanel {
         String[] densityOptions = { "25%", "50%", "75%", "100%" };
         densityCombo = new JComboBox<>(densityOptions);
         densityCombo.setSelectedIndex(1); // Default to 50%
-        densityCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        densityCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         densityCombo.setToolTipText("Set pattern density");
 
         // Generate button with dice icon
@@ -65,23 +65,33 @@ public class DrumSequenceGeneratorPanel extends JPanel {
             // Get selected density from the combo
             int density = (densityCombo.getSelectedIndex() + 1) * 25;
             logger.info("Generating pattern with density: {}%", density);
-            
+
             // Generate pattern in the sequencer
             sequencer.generatePattern(density);
-            
+
             // Publish event to refresh UI
             CommandBus.getInstance().publish(
-                Commands.DRUM_GRID_REFRESH_REQUESTED,
-                this,
-                null
-            );
+                    Commands.DRUM_GRID_REFRESH_REQUESTED,
+                    this,
+                    null);
         });
+
+        // Latch toggle button (moved from sequence parameters panel)
+        JToggleButton latchToggleButton = new JToggleButton("L", false);
+        latchToggleButton.setToolTipText("Generate new pattern each cycle");
+        latchToggleButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        latchToggleButton.addActionListener(e -> {
+            // sequencer.setLatchEnabled(latchToggleButton.isSelected());
+            logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
+        });
+        latchToggleButton.setEnabled(false);
 
         // Add components to panel
         add(generateButton);
         add(densityCombo);
+        add(latchToggleButton);
     }
-    
+
     /**
      * Set the density value
      * 
@@ -90,13 +100,13 @@ public class DrumSequenceGeneratorPanel extends JPanel {
     public void setDensity(int densityPercent) {
         // Convert percentage to index (0-3)
         int index = (densityPercent / 25) - 1;
-        
+
         // Ensure index is within bounds
         if (index >= 0 && index < densityCombo.getItemCount()) {
             densityCombo.setSelectedIndex(index);
         }
     }
-    
+
     /**
      * Get the current density percentage value
      * 
