@@ -579,7 +579,14 @@ class InstrumentsPanel extends JPanel {
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         
-        table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // ID
+        // Create a left-aligned renderer for the ID column
+        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+        leftRenderer.setHorizontalAlignment(JLabel.LEFT);
+        
+        // Apply left alignment to ID column (column 0)
+        table.getColumnModel().getColumn(0).setCellRenderer(leftRenderer); 
+        
+        // Apply center alignment to other numeric columns
         table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer); // Channel
         for (int i = 5; i <= 6; i++) { // Center-align note columns
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);

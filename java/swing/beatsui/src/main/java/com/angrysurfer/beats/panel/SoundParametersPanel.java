@@ -6,6 +6,8 @@ import java.awt.FlowLayout;
 import java.io.File;
 import java.util.List;
 
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiUnavailableException;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -71,6 +73,17 @@ public class SoundParametersPanel extends JPanel {
             if (soundbankCombo.getSelectedItem() != null && player != null && player.getInstrument() != null) {
                 String soundbank = soundbankCombo.getSelectedItem().toString();
                 player.getInstrument().setSoundbankName(soundbank);
+                
+                // Apply the soundbank change immediately
+                if (player.getInstrument().getInternal()) {
+                    InternalSynthManager.getInstance().applySoundbank(player.getInstrument(), soundbank);
+                }
+                
+                // Save changes and notify the system
+                PlayerManager.getInstance().savePlayerProperties(player);
+                CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, player.getInstrument());
+                
+                // THEN update banks and presets UI
                 updateBanksAndPresets();
             }
         });
@@ -82,9 +95,41 @@ public class SoundParametersPanel extends JPanel {
         bankCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, 25));
         bankCombo.addActionListener(e -> {
             if (bankCombo.getSelectedItem() != null && player != null && player.getInstrument() != null) {
-                int bankIndex = bankCombo.getSelectedIndex();
-                player.getInstrument().setBankIndex(bankIndex);
-                updatePresets();
+                // Extract bank number from selection
+                String bankItem = (String) bankCombo.getSelectedItem();
+                int bankIndex = 0;
+                
+                if (bankItem != null && bankItem.startsWith("Bank ")) {
+                    try {
+                        bankIndex = Integer.parseInt(bankItem.substring(5));
+                        
+                        // Set bank index on instrument
+                        player.getInstrument().setBankIndex(bankIndex);
+                        
+                        // Apply bank selection immediately
+                        if (player.getInstrument().getInternal()) {
+                            int channel = player.getChannel() != null ? player.getChannel() : 0;
+                            int bankMSB = (bankIndex >> 7) & 0x7F;
+                            int bankLSB = bankIndex & 0x7F;
+                            
+                            player.getInstrument().controlChange(channel, 0, bankMSB);
+                            player.getInstrument().controlChange(channel, 32, bankLSB);
+                        }
+                        
+                        // Save changes and notify the system
+                        PlayerManager.getInstance().savePlayerProperties(player);
+                        CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, player.getInstrument());
+                        
+                        // THEN update presets UI
+                        updatePresets();
+                    } catch (NumberFormatException ex) {
+                        logger.warn("Invalid bank format: {}", bankItem);
+                    } catch (InvalidMidiDataException ex) {
+                        throw new RuntimeException(ex);
+                    } catch (MidiUnavailableException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
             }
         });
         bankPanel.add(bankCombo);
@@ -95,15 +140,30 @@ public class SoundParametersPanel extends JPanel {
         presetCombo.setPreferredSize(new Dimension(150, 25));
         presetCombo.addActionListener(e -> {
             if (presetCombo.getSelectedItem() != null && player != null && player.getInstrument() != null) {
-                int presetIndex = presetCombo.getSelectedIndex();
-                player.getInstrument().setCurrentPreset(presetIndex);
-                
-                // Notify system of instrument update
-                CommandBus.getInstance().publish(
-                    Commands.INSTRUMENT_UPDATED, 
-                    this, 
-                    player.getInstrument()
-                );
+                String presetItem = (String) presetCombo.getSelectedItem();
+                try {
+                    // Extract preset number from selection (format: "0: Preset Name")
+                    if (presetItem != null && presetItem.contains(":")) {
+                        int presetIndex = Integer.parseInt(presetItem.substring(0, presetItem.indexOf(":")));
+                        
+                        // Set preset on both instrument and player
+                        player.getInstrument().setCurrentPreset(presetIndex);
+                        player.setPreset(presetIndex);
+                        
+                        // Apply preset change immediately
+                        if (player.getInstrument().getInternal()) {
+                            int channel = player.getChannel() != null ? player.getChannel() : 0;
+                            player.getInstrument().programChange(channel, presetIndex, 0);
+                        }
+                        
+                        // Save changes and notify the system
+                        PlayerManager.getInstance().savePlayerProperties(player);
+                        CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, player.getInstrument());
+                        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+                    }
+                } catch (Exception ex) {
+                    logger.warn("Error parsing preset: {}", ex.getMessage());
+                }
             }
         });
         presetPanel.add(presetCombo);
@@ -114,6 +174,9 @@ public class SoundParametersPanel extends JPanel {
         editButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, 25));
         editButton.addActionListener(e -> {
             if (player != null) {
+                // Apply any pending changes first
+                applySettings();
+                
                 // Send command to DialogManager to open player editor
                 CommandBus.getInstance().publish(
                     Commands.PLAYER_EDIT_REQUEST, 
@@ -327,5 +390,68 @@ public class SoundParametersPanel extends JPanel {
         } catch (Exception e) {
             logger.error("Error changing preset: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Apply all current instrument settings immediately
+     */
+    private void applyInstrumentSettings() {
+        if (player == null || player.getInstrument() == null || !player.getInstrument().getInternal()) {
+            return;
+        }
+        
+        try {
+            // Get current settings
+            String soundbank = (String) soundbankCombo.getSelectedItem();
+            int bankIndex = 0;
+            int presetIndex = 0;
+            int channel = player.getChannel() != null ? player.getChannel() : 0;
+            
+            // Parse bank from selection
+            String bankItem = (String) bankCombo.getSelectedItem();
+            if (bankItem != null && bankItem.startsWith("Bank ")) {
+                bankIndex = Integer.parseInt(bankItem.substring(5));
+            }
+            
+            // Parse preset from selection
+            String presetItem = (String) presetCombo.getSelectedItem();
+            if (presetItem != null && presetItem.contains(":")) {
+                presetIndex = Integer.parseInt(presetItem.substring(0, presetItem.indexOf(":")));
+            }
+            
+            // Apply settings to the instrument
+            InternalSynthManager.getInstance().applySoundbank(player.getInstrument(), soundbank);
+            
+            // Apply bank and program changes
+            int bankMSB = (bankIndex >> 7) & 0x7F;
+            int bankLSB = bankIndex & 0x7F;
+            player.getInstrument().controlChange(channel, 0, bankMSB);
+            player.getInstrument().controlChange(channel, 32, bankLSB);
+            player.getInstrument().programChange(channel, presetIndex, 0);
+            
+            logger.info("Applied instrument settings: soundbank={}, bank={}, preset={}, channel={}",
+                soundbank, bankIndex, presetIndex, channel);
+        } catch (Exception e) {
+            logger.error("Error applying instrument settings: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Apply current UI settings to the player
+     */
+    public void applySettings() {
+        if (player == null || player.getInstrument() == null) {
+            return;
+        }
+        
+        // Apply all settings from UI components
+        applyInstrumentSettings();
+        
+        // Save player properties through PlayerManager
+        PlayerManager.getInstance().savePlayerProperties(player);
+        
+        // Publish events to notify the system
+        CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, player.getInstrument());
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
     }
 }

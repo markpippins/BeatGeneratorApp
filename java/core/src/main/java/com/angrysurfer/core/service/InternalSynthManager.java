@@ -1076,6 +1076,64 @@ public class InternalSynthManager {
     }
 
     /**
+     * Apply a soundbank to an instrument
+     * 
+     * @param instrument The instrument to apply the soundbank to
+     * @param soundbankName The name of the soundbank to apply
+     * @return true if successful, false otherwise
+     */
+    public boolean applySoundbank(InstrumentWrapper instrument, String soundbankName) {
+        if (instrument == null || soundbankName == null || soundbankName.isEmpty()) {
+            logger.warn("Cannot apply soundbank: Invalid parameters");
+            return false;
+        }
+        
+        try {
+            // Get the actual Soundbank object by name
+            Soundbank soundbank = soundbanks.get(soundbankName);
+            if (soundbank == null) {
+                logger.warn("Soundbank not found: {}", soundbankName);
+                return false;
+            }
+            
+            // Get the MIDI device
+            MidiDevice device = instrument.getDevice();
+            if (device == null || !(device instanceof Synthesizer)) {
+                logger.warn("Cannot apply soundbank: Device is not a synthesizer");
+                return false;
+            }
+            
+            // Cast to synthesizer and apply soundbank
+            Synthesizer synth = (Synthesizer) device;
+            if (!synth.isSoundbankSupported(soundbank)) {
+                logger.warn("Soundbank not supported by synthesizer: {}", soundbankName);
+                return false;
+            }
+            
+            // Unload any existing instruments first
+            synth.unloadAllInstruments(synth.getDefaultSoundbank());
+            
+            // Load the new soundbank
+            boolean success = synth.loadAllInstruments(soundbank);
+            
+            // Store the soundbank name in the instrument
+            if (success) {
+                instrument.setSoundbankName(soundbankName);
+                logger.info("Successfully applied soundbank {} to instrument {}", 
+                          soundbankName, instrument.getName());
+            } else {
+                logger.warn("Failed to load instruments from soundbank {}", soundbankName);
+            }
+            
+            return success;
+            
+        } catch (Exception e) {
+            logger.error("Error applying soundbank: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
      * Inner class to store synthesizer data
      */
     private static class SynthData {
