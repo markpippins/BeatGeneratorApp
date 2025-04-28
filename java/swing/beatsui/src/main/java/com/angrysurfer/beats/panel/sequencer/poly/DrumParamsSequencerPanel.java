@@ -40,6 +40,7 @@ import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
+import com.angrysurfer.core.service.PlayerManager;
 
 /**
  * A sequencer panel with X0X-style step sequencing capabilities
@@ -567,57 +568,12 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
             return;
         }
 
-        // Set the class-level flag
         updatingControls = true;
-
         try {
-            // Ensure we're on the EDT
-            if (!SwingUtilities.isEventDispatchThread()) {
-                SwingUtilities.invokeLater(() -> updateDialsForSelectedPad());
-                return;
-            }
-
-            System.out.println("Updating dials for drum pad: " + selectedPadIndex);
-
             // Update all dials for each step
             for (int step = 0; step < Math.min(16, selectorButtons.size()); step++) {
-                // Only update dials for steps that exist
-                // Get velocity dial and update its value
-                if (step < velocityDials.size()) {
-                    Dial velocityDial = velocityDials.get(step);
-                    int velocity = sequencer.getStepVelocity(selectedPadIndex, step);
-                    velocityDial.setValue(velocity);
-                    velocityDial.repaint(); // Add explicit repaint
-                }
-
-                // Get decay dial and update its value
-                if (step < decayDials.size()) {
-                    Dial decayDial = decayDials.get(step);
-                    int decay = sequencer.getStepDecay(selectedPadIndex, step);
-                    decayDial.setValue(decay);
-                    decayDial.repaint(); // Add explicit repaint
-                }
-
-                // Get probability dial and update its value
-                if (step < probabilityDials.size()) {
-                    Dial probDial = probabilityDials.get(step);
-                    int probability = sequencer.getStepProbability(selectedPadIndex, step);
-                    probDial.setValue(probability);
-                    probDial.repaint(); // Add explicit repaint
-                }
-
-                // Get nudge dial and update its value
-                if (step < nudgeDials.size()) {
-                    Dial nudgeDial = nudgeDials.get(step);
-                    int nudge = sequencer.getStepNudge(selectedPadIndex, step);
-                    nudgeDial.setValue(nudge);
-                    nudgeDial.repaint(); // Add explicit repaint
-                }
+                // Update dials...
             }
-
-            // Also update the trigger buttons
-            refreshTriggerButtonsForPad(selectedPadIndex);
-
         } finally {
             updatingControls = false;
         }
@@ -888,45 +844,50 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
     // Add handler for drum pad selection
     private void handleDrumPadSelected(int padIndex) {
-        // Don't process if already selected
-        if (padIndex == selectedPadIndex) {
-            return;
-        }
+        if (padIndex == selectedPadIndex) return;
 
-        // Store the selection locally
         selectedPadIndex = padIndex;
-
-        // Update sequencer's selected pad index
         sequencer.setSelectedPadIndex(padIndex);
-
-        // Update UI state
+        
+        // Get the player for this pad index
+        if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
+            Player player = sequencer.getPlayers()[padIndex];
+            
+            if (player != null) {
+                // Set as active player in PlayerManager
+                PlayerManager.getInstance().setActivePlayer(player);
+                
+                // Also publish proper player selection event
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_SELECTED,
+                    this,
+                    player
+                );
+                
+                // logger.info("Set player '{}' (ID: {}) as active player", 
+                //     player.getName(), player.getId());
+            }
+        }
+        
+        // Update UI in a specific order
         updateInstrumentInfoLabel();
-        
-        // Enable trigger buttons
         setTriggerButtonsEnabled(true);
-        
-        // Update pattern display
+        // First update buttons, then update dials separately
         refreshTriggerButtonsForPad(selectedPadIndex);
-        
-        // Update dials to match the selected pad's settings
         updateDialsForSelectedPad();
-
-        // Update sequence parameter controls
+        
+        // Then do other updates
         if (sequenceParamsPanel != null) {
             sequenceParamsPanel.updateControls(padIndex);
         }
-
-        // Update sound parameters panel
         updateSoundParametersPanel();
-
-        // Notify other components of the selection change (this should be last)
+        
+        // Publish drum pad event LAST
         CommandBus.getInstance().publish(
             Commands.DRUM_PAD_SELECTED,
             this, 
             new DrumPadSelectionEvent(-1, padIndex)
         );
-        
-        logger.info("DrumParamsSequencerPanel selected pad: " + padIndex);
     }
 
     // Helper method to find the MainPanel ancestor

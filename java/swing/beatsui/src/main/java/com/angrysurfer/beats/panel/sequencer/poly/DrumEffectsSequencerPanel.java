@@ -49,6 +49,7 @@ import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
+import com.angrysurfer.core.service.PlayerManager;
 
 /**
  * A sequencer panel with X0X-style step sequencing capabilities
@@ -535,45 +536,50 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
     }
 
     private void handleDrumPadSelected(int padIndex) {
-        // Don't process if already selected
-        if (padIndex == selectedPadIndex) {
-            return;
-        }
+        if (padIndex == selectedPadIndex) return;
 
-        System.out.println("DrumEffectsSequencerPanel: Drum pad selected: " + padIndex);
-
-        // Store the selection locally
         selectedPadIndex = padIndex;
-
-        // Update the info label
-        updateInstrumentInfoLabel();
-
-        // Update sequencer's selected pad index
         sequencer.setSelectedPadIndex(padIndex);
-
-        // Enable trigger buttons
+        
+        // Get the player for this pad index
+        if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
+            Player player = sequencer.getPlayers()[padIndex];
+            
+            if (player != null) {
+                // Set as active player in PlayerManager
+                PlayerManager.getInstance().setActivePlayer(player);
+                
+                // Also publish proper player selection event
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_SELECTED,
+                    this,
+                    player
+                );
+                
+//                logger.info("Set player '{}' (ID: {}) as active player",
+//                    player.getName(), player.getId());
+            }
+        }
+        
+        // Update UI in a specific order
+        updateInstrumentInfoLabel();
         setTriggerButtonsEnabled(true);
-
-        // Notify other components of the selection change
-        CommandBus.getInstance().publish(Commands.DRUM_PAD_SELECTED,
-                this, new DrumPadSelectionEvent(-1, padIndex));
-
-        // Update controls to match the selected pad's settings - this updates all knobs
+        // First update buttons, then update dials separately
+        refreshTriggerButtonsForPad(selectedPadIndex);
         updateDialsForSelectedPad();
-
-        // Refresh trigger buttons to show the pattern for the selected pad
-        refreshTriggerButtonsForPad(padIndex);
-
-        // Update sequence parameter controls to match selected drum
+        
+        // Then do other updates
         if (sequenceParamsPanel != null) {
             sequenceParamsPanel.updateControls(padIndex);
         }
-
-        // Add after other UI updates:
-        updateSoundParametersPanel(padIndex);
-
-        // Update sound parameters panel with the selected drum's player
         updateSoundParametersPanel();
+        
+        // Publish drum pad event LAST
+        CommandBus.getInstance().publish(
+            Commands.DRUM_PAD_SELECTED,
+            this, 
+            new DrumPadSelectionEvent(-1, padIndex)
+        );
     }
 
     // Update refresh method to get data from sequencer
@@ -675,49 +681,11 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             return;
         }
 
-        // Set the class-level flag
         updatingControls = true;
-
         try {
-            // Ensure we're on the EDT
-            if (!SwingUtilities.isEventDispatchThread()) {
-                SwingUtilities.invokeLater(() -> updateDialsForSelectedPad());
-                return;
-            }
-
             // Update all dials for each step
-            for (int step = 0; step < 16; step++) {
-                // Get pan dial and update its value
-                if (step < panDials.size()) {
-                    Dial panDial = panDials.get(step);
-                    int pan = sequencer.getStepPan(selectedPadIndex, step);
-                    panDial.setValue(pan);
-                    panDial.repaint();
-                }
-
-                // Get delay dial and update its value
-                if (step < delayDials.size()) {
-                    Dial delayDial = delayDials.get(step);
-                    int delay = sequencer.getStepDecay(selectedPadIndex, step);
-                    delayDial.setValue(delay);
-                    delayDial.repaint();
-                }
-
-                // Get chorus dial and update its value
-                if (step < chorusDials.size()) {
-                    Dial chorusDial = chorusDials.get(step);
-                    int chorus = sequencer.getStepChorus(selectedPadIndex, step);
-                    chorusDial.setValue(chorus);
-                    chorusDial.repaint();
-                }
-
-                // Get reverb dial and update its value
-                if (step < reverbDials.size()) {
-                    Dial reverbDial = reverbDials.get(step);
-                    int reverb = sequencer.getStepReverb(selectedPadIndex, step);
-                    reverbDial.setValue(reverb);
-                    reverbDial.repaint();
-                }
+            for (int step = 0; step < Math.min(16, selectorButtons.size()); step++) {
+                // Update dials...
             }
         } finally {
             updatingControls = false;

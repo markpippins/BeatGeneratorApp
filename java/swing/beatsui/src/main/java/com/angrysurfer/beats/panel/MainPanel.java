@@ -105,11 +105,11 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         internalSynthControlPanel = new InternalSynthControlPanel();
         tabbedPane.addTab("Multi", createDrumSequencersPanel());
 
-        tabbedPane.addTab("Mono", createMelodicSequencersPanel());
+        tabbedPane.addTab("Melo", createMelodicSequencersPanel());
 
         tabbedPane.addTab("Song", createSongPanel());
         tabbedPane.addTab("Synth", internalSynthControlPanel);
-        tabbedPane.addTab("Modulation", createModulationMatrixPanel());
+        tabbedPane.addTab("Matrix", createModulationMatrixPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
 
         tabbedPane.addTab("Players", new SessionPanel());
