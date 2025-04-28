@@ -1,15 +1,6 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -54,7 +45,9 @@ import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
 import com.angrysurfer.core.service.ChannelManager;
 import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.model.Player;
 
 public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MainPanel.class.getName());
@@ -203,6 +196,64 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                         ((DrumEffectsSequencerPanel) selectedComponent).requestFocusInWindow();
                     }
                 });
+            }
+        });
+
+        melodicTabbedPane.addChangeListener(e -> {
+            // Get the selected component
+            Component selectedComponent = melodicTabbedPane.getSelectedComponent();
+            
+            // Find the MelodicSequencerPanel within the selected tab
+            MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedComponent);
+            
+            if (melodicPanel != null && melodicPanel.getSequencer() != null) {
+                // Get the player from the sequencer
+                Player player = melodicPanel.getSequencer().getPlayer();
+                
+                // Set as active player if available
+                if (player != null) {
+                    PlayerManager.getInstance().setActivePlayer(player);
+                    
+                    // Also publish a PLAYER_SELECTED event
+                    CommandBus.getInstance().publish(
+                        Commands.PLAYER_SELECTED,
+                        this,
+                        player
+                    );
+                    
+                    logger.debug("Tab selected - set melodic player '{}' (ID: {}) as active player", 
+                        player.getName(), player.getId());
+                }
+            }
+        });
+
+        tabbedPane.addChangeListener(e -> {
+            // Get the selected component
+            Component selectedComponent = tabbedPane.getSelectedComponent();
+            
+            // If selected component is the melodic tab pane
+            if (selectedComponent == melodicTabbedPane) {
+                // Get the currently selected melodic tab
+                Component selectedMelodicTab = melodicTabbedPane.getSelectedComponent();
+                
+                // Find the MelodicSequencerPanel within the selected tab
+                MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedMelodicTab);
+                
+                if (melodicPanel != null && melodicPanel.getSequencer() != null) {
+                    // Set the player as active
+                    Player player = melodicPanel.getSequencer().getPlayer();
+                    if (player != null) {
+                        PlayerManager.getInstance().setActivePlayer(player);
+                        
+                        CommandBus.getInstance().publish(
+                            Commands.PLAYER_SELECTED,
+                            this,
+                            player
+                        );
+                        
+                        logger.debug("Main tab switched to melodic - set player '{}' as active", player.getName());
+                    }
+                }
             }
         });
 
@@ -822,5 +873,24 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 logger.info("Released channel {} on application close", channel);
             }
         }
+    }
+
+    /**
+     * Helper method to find MelodicSequencerPanel in component hierarchy
+     */
+    private MelodicSequencerPanel findMelodicSequencerPanel(Component component) {
+        if (component instanceof MelodicSequencerPanel) {
+            return (MelodicSequencerPanel) component;
+        } else if (component instanceof Container) {
+            // Search through container's children recursively
+            Container container = (Container) component;
+            for (Component child : container.getComponents()) {
+                MelodicSequencerPanel panel = findMelodicSequencerPanel(child);
+                if (panel != null) {
+                    return panel;
+                }
+            }
+        }
+        return null;
     }
 }

@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.core.model.Player;
@@ -125,24 +126,52 @@ public class DrumSelectorPanel extends JPanel {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if (e.getClickCount() == 2) {
+                        // Select the drum pad first
                         parentPanel.selectDrumPad(drumIndex);
+                        
+                        // Find the MainPanel ancestor
                         MainPanel mainPanel = findMainPanel();
                         if (mainPanel != null) {
-                            mainPanel.setSelectedTab(1);
+                            // Get the currently selected component from the main tabbed pane
+                            Component selectedComponent = mainPanel.getSelectedComponent();
+                            
+                            // If it's a JTabbedPane and likely our drumsTabbedPane
+                            if (selectedComponent instanceof JTabbedPane) {
+                                JTabbedPane drumsTabbedPane = (JTabbedPane) selectedComponent;
+                                
+                                // Switch to the "Parameters" tab (index 1)
+                                drumsTabbedPane.setSelectedIndex(1);
+                                
+                                logger.debug("Double-clicked drum pad {} - switched to Parameters tab", drumIndex);
+                            }
                         }
                     }
                 }
             });
             
-            // Add key listener for enter key (same as before)
+            // Update key listener as well for consistency
             drumButton.addKeyListener(new KeyAdapter() {
                 @Override
                 public void keyPressed(KeyEvent e) {
                     if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        // Select the drum pad first
                         parentPanel.selectDrumPad(drumIndex);
+                        
+                        // Find the MainPanel ancestor
                         MainPanel mainPanel = findMainPanel();
                         if (mainPanel != null) {
-                            mainPanel.setSelectedTab(1);
+                            // Get the currently selected component from the main tabbed pane
+                            Component selectedComponent = mainPanel.getSelectedComponent();
+                            
+                            // If it's a JTabbedPane and likely our drumsTabbedPane
+                            if (selectedComponent instanceof JTabbedPane) {
+                                JTabbedPane drumsTabbedPane = (JTabbedPane) selectedComponent;
+                                
+                                // Switch to the "Parameters" tab (index 1)
+                                drumsTabbedPane.setSelectedIndex(1);
+                                
+                                logger.debug("Enter pressed on drum pad {} - switched to Parameters tab", drumIndex);
+                            }
                         }
                     }
                 }
