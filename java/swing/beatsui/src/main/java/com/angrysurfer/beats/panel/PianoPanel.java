@@ -324,23 +324,23 @@ public class PianoPanel extends JPanel {
         }
 
         // Send MIDI note to active player
-        boolean notePlayed = PlayerManager.getInstance().sendNoteToActivePlayer(note);
-
-        // Visual feedback based on success
-        if (!notePlayed) {
-            // Flash the key briefly with red to indicate failure
-            JButton key = noteToKeyMap.get(note);
-            if (key != null) {
-                Color originalBackground = key.getBackground();
-                key.setBackground(new Color(255, 100, 100));
-
-                // Reset after brief delay
-                new Timer(150, e -> {
-                    key.setBackground(originalBackground);
-                    ((Timer) e.getSource()).stop();
-                }).start();
-            }
-        }
+//        boolean notePlayed = activePlayer.noteOn(note, activePlayer.getLevel());
+//
+//        // Visual feedback based on success
+//        if (!notePlayed) {
+//            // Flash the key briefly with red to indicate failure
+//            JButton key = noteToKeyMap.get(note);
+//            if (key != null) {
+//                Color originalBackground = key.getBackground();
+//                key.setBackground(new Color(255, 100, 100));
+//
+//                // Reset after brief delay
+//                new Timer(150, e -> {
+//                    key.setBackground(originalBackground);
+//                    ((Timer) e.getSource()).stop();
+//                }).start();
+//            }
+//        }
     }
 
     private void stopNote(int note) {

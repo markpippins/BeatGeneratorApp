@@ -235,8 +235,48 @@ public class RedisService implements IBusListener {
         return playerHelper.findPlayerById(id, Player.class.getSimpleName().toLowerCase());
     }
 
+    /**
+     * Save player to Redis
+     */
     public void savePlayer(Player player) {
-        playerHelper.savePlayer(player);
+        try {
+            if (player == null) {
+                logger.warn("Cannot save null player");
+                return;
+            }
+            
+            logger.debug("Saving player ID: {} with name: {}", player.getId(), player.getName());
+            
+            // Save the instrument first if it exists
+            if (player.getInstrument() != null) {
+                saveInstrument(player.getInstrument());
+                
+                // Ensure the player's instrumentId is set correctly
+                player.setInstrumentId(player.getInstrument().getId());
+                
+                logger.debug("Associated instrument ID: {} with name: {}", 
+                    player.getInstrumentId(), player.getInstrument().getName());
+            }
+            
+            // Save the player
+            playerHelper.savePlayer(player);
+            
+            // If the player belongs to a session, update the session as well
+            Session session = sessionHelper.findSessionForPlayer(player); // Pass player, not player.getId()
+            if (session != null) {
+                // Sets don't have index-based access, so we need to:
+                // 1. Remove the existing player with the same ID
+                session.getPlayers().removeIf(p -> p.getId().equals(player.getId()));
+                
+                // 2. Add the updated player
+                session.getPlayers().add(player);
+                
+                // Save the updated session
+                sessionHelper.saveSession(session);
+            }
+        } catch (Exception e) {
+            logger.error("Error saving player: {}", e.getMessage(), e);
+        }
     }
 
     public Long getNextPlayerId() {

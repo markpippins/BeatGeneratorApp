@@ -43,7 +43,7 @@ public class PlayerEditDetailPanel extends JPanel {
     private static final int PANEL_HEIGHT = 125;
 
     // Reference to player being edited
-    private final Player player;
+    private Player player;
 
     // Performance controls
     private final JSlider levelSlider;
@@ -64,6 +64,8 @@ public class PlayerEditDetailPanel extends JPanel {
     // Replace the existing slider components with NumberedTickDials
     private NumberedTickDial countDial;
     private NumberedTickDial intervalDial;
+
+    private boolean changing = false;
 
     /**
      * Creates a new PlayerEditDetailPanel for the given player
@@ -408,7 +410,7 @@ public class PlayerEditDetailPanel extends JPanel {
     /**
      * Updates the player object with current control values
      */
-    public void updatePlayer() {
+    public void applyChanges() {
         player.setLevel(levelSlider.getValue());
         player.setRootNote(noteDial.getValue());
         player.setMinVelocity(velocityMinSlider.getValue());
@@ -425,6 +427,82 @@ public class PlayerEditDetailPanel extends JPanel {
 
         logger.debug("Updated player parameters: level={}, note={}, swing={}",
                 player.getLevel(), player.getRootNote(), player.getSwing());
+    }
+
+    /**
+     * Update this panel from the player object
+     */
+    public void updateFromPlayer(Player newPlayer) {
+        if (newPlayer == null) {
+            return;
+        }
+        
+        // Store reference to the new player
+        this.player = newPlayer;
+        
+        // Temporarily disable listeners to prevent feedback loops
+        boolean wasChanging = changing;
+        changing = true;
+        
+        try {
+            // Update level slider
+            if (levelSlider != null && player.getLevel() != null) {
+                levelSlider.setValue(player.getLevel());
+            }
+            
+            // Update note dial
+            if (noteDial != null && player.getRootNote() != null) {
+                noteDial.setValue(player.getRootNote());
+            }
+            
+            // Update velocity sliders
+            if (velocityMinSlider != null && player.getMinVelocity() != null) {
+                velocityMinSlider.setValue(player.getMinVelocity());
+            }
+            
+            if (velocityMaxSlider != null && player.getMaxVelocity() != null) {
+                velocityMaxSlider.setValue(player.getMaxVelocity());
+            }
+            
+            // Update pan dial
+            if (panDial != null && player.getPanPosition() != null) {
+                panDial.setValue(player.getPanPosition());
+            }
+            
+            // Update swing slider
+            if (swingSlider != null && player.getSwing() != null) {
+                swingSlider.setValue(player.getSwing());
+            }
+            
+            // Update probability slider
+            if (probabilitySlider != null && player.getProbability() != null) {
+                probabilitySlider.setValue(player.getProbability());
+            }
+            
+            // Update random slider
+            if (randomSlider != null && player.getRandomDegree() != null) {
+                randomSlider.setValue(player.getRandomDegree());
+            }
+            
+            // Update sparse slider
+            if (sparseSlider != null && player.getSparse() > -1) {
+                sparseSlider.setValue((int)(player.getSparse() * 100.0));
+            }
+            
+            // Update ratchet dials
+            if (countDial != null && player.getRatchetCount() != null) {
+                countDial.setValue(player.getRatchetCount());
+            }
+            
+            if (intervalDial != null && player.getRatchetInterval() != null) {
+                intervalDial.setValue(player.getRatchetInterval());
+            }
+            
+            logger.debug("Updated PlayerEditDetailPanel from player: {}", player.getName());
+        } finally {
+            // Re-enable listeners
+            changing = wasChanging;
+        }
     }
 
     /**

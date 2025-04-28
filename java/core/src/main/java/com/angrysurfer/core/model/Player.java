@@ -56,9 +56,9 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     @JsonIgnore
     public transient boolean isSelected = false;
 
-    private boolean monoPlayer = false;
+    private boolean melodicPlayer = false;
 
-    private boolean multiPlayer = false;
+    private boolean drumPlayer = false;
 
     private String name = "Player";
 

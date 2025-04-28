@@ -329,4 +329,23 @@ public class Commands {
     public static final String SEQUENCER_STATE_CHANGED = "SEQUENCER_STATE_CHANGED";
     public static final String INSTRUMENT_CHANGED = "INSTRUMENT_CHANGED";
     public static final String DRUM_STEP_UPDATED = "DRUM_STEP_UPDATED";
+
+    // Player activation commands
+    public static final String PLAYER_ACTIVATE_REQUEST = "PLAYER_ACTIVATE_REQUEST";
+    public static final String PLAYER_ACTIVATED = "PLAYER_ACTIVATED";
+    
+    // Player update commands
+    public static final String PLAYER_UPDATE_REQUEST = "PLAYER_UPDATE_REQUEST";
+    
+    // Player preset commands
+    public static final String PLAYER_PRESET_CHANGE_REQUEST = "PLAYER_PRESET_CHANGE_REQUEST";
+    public static final String PLAYER_PRESET_CHANGED = "PLAYER_PRESET_CHANGED";
+    
+    // Player instrument commands
+    public static final String PLAYER_INSTRUMENT_CHANGE_REQUEST = "PLAYER_INSTRUMENT_CHANGE_REQUEST";
+    public static final String PLAYER_INSTRUMENT_CHANGED = "PLAYER_INSTRUMENT_CHANGED";
+    public static final String TRANSPORT_STATE_REQUEST = "TRANSPORT_STATE_REQUEST";
+    public static final String TEMPO_CHANGE = "TEMPO_CHANGE";
+    public static final String TIME_SIGNATURE_CHANGE = "TIME_SIGNATURE_CHANGE";
+    public static final String ACTIVE_PLAYER_REQUEST = "ACTIVE_PLAYER_REQUEST";
 }

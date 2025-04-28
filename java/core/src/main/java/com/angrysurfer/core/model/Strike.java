@@ -28,6 +28,7 @@ public class Strike extends Player {
      */
     public Strike() {
         setRules(new HashSet<>()); // Initialize rules set
+        setDrumPlayer(true);
     }
 
     /**
@@ -37,6 +38,8 @@ public class Strike extends Player {
             List<Integer> allowedControlMessages) {
         initialize(name, session, instrument, allowedControlMessages);
         setRootNote(note);
+        setDrumPlayer(true);
+        setDrumPlayer(true);
     }
 
     /**
@@ -48,6 +51,7 @@ public class Strike extends Player {
         setRootNote(note);
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
+        setDrumPlayer(true);
     }
 
     @Override

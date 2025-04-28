@@ -977,7 +977,8 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                 Integer desiredBank = player.getInstrument().getBankIndex();
                 
                 for (int i = 0; i < bankCombo.getItemCount(); i++) {
-                    if (bankCombo.getItemAt(i).equals(desiredBank)) {
+                    Integer item = bankCombo.getItemAt(i);
+                    if (item != null && item.equals(desiredBank)) {
                         bankCombo.setSelectedIndex(i);
                         selected = true;
                         break;
@@ -1386,22 +1387,69 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         if (initializing.get()) return;
         
         try {
-            // Capture instrument selection
+            // 1. Update player name from field
+            player.setName(nameField.getText().trim());
+            
+            // 2. Update instrument selection
             InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
             if (selectedInstrument != null) {
+                // Set both references to ensure consistency
                 player.setInstrument(selectedInstrument);
                 player.setInstrumentId(selectedInstrument.getId());
                 
-                logger.debug("Applied instrument change: {} (ID: {})",
+                logger.debug("Updated instrument: {} (ID: {})", 
                     selectedInstrument.getName(), selectedInstrument.getId());
             }
             
-            // Apply other changes from UI components
-            // ...
+            // 3. Update channel
+            int channel = ((Number) channelSpinner.getValue()).intValue();
+            player.setChannel(channel);
             
+            // 4. Update soundbank/bank/preset depending on context
+            applyInstrumentSettings();
+            
+            // 5. Force immediate save to persistent storage
+            PlayerManager.getInstance().savePlayerProperties(player);
+            
+            // 6. Notify the system
+            CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+            if (player.getInstrument() != null) {
+                CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, player.getInstrument());
+            }
+            
+            logger.info("Applied all changes to player {}", player.getName());
         } catch (Exception e) {
             logger.error("Error applying changes: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Apply all changes to player and ensure they propagate
+     */
+    public void applyAllChanges() {
+        // Apply UI values to player
+        if (nameField != null && player != null) {
+            player.setName(nameField.getText());
+        }
+        
+        // Apply other UI component values...
+        
+        // CRITICAL: Save to PlayerManager to ensure changes persist
+        PlayerManager.getInstance().savePlayerProperties(player);
+        
+        // Force sequencer update if player is owned by one
+        if (player.getOwner() instanceof MelodicSequencer sequencer) {
+            sequencer.initializeInstrument();
+            sequencer.applyInstrumentPreset();
+        }
+        
+        // Publish events to update other components
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+        if (player.getInstrument() != null) {
+            CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, player.getInstrument());
+        }
+        
+        logger.info("Applied and propagated changes to player: {}", player.getName());
     }
 
     /**
@@ -1469,6 +1517,149 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             updatePresetControls();
         } catch (Exception e) {
             logger.error("Error changing instrument: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Apply all current instrument settings immediately
+     */
+    private void applyInstrumentSettings() {
+        if (player == null || player.getInstrument() == null || !player.getInstrument().getInternal()) {
+            return;
+        }
+        
+        try {
+            // Get current settings from UI components
+            String soundbank = getCurrentSoundbankSelection();
+            int bankIndex = getCurrentBankIndex();
+            int presetIndex = getCurrentPresetIndex();
+            int channel = player.getChannel() != null ? player.getChannel() : 0;
+            
+            // Apply settings to the instrument
+            InternalSynthManager.getInstance().applySoundbank(player.getInstrument(), soundbank);
+            
+            // Apply bank and program changes
+            int bankMSB = (bankIndex >> 7) & 0x7F;
+            int bankLSB = bankIndex & 0x7F;
+            player.getInstrument().controlChange(channel, 0, bankMSB);
+            player.getInstrument().controlChange(channel, 32, bankLSB);
+            player.getInstrument().programChange(channel, presetIndex, 0);
+            
+            logger.info("Applied instrument settings: soundbank={}, bank={}, preset={}, channel={}",
+                soundbank, bankIndex, presetIndex, channel);
+        } catch (Exception e) {
+            logger.error("Error applying instrument settings: {}", e.getMessage());
+        }
+    }
+
+    // Helper methods to get current selections
+    private String getCurrentSoundbankSelection() {
+        Object selectedItem = soundbankCombo.getSelectedItem();
+        return selectedItem != null ? selectedItem.toString() : null;
+    }
+
+    private int getCurrentBankIndex() {
+        String bankItem = (String) bankCombo.getSelectedItem();
+        if (bankItem != null && bankItem.startsWith("Bank ")) {
+            try {
+                return Integer.parseInt(bankItem.substring(5));
+            } catch (NumberFormatException e) {
+                logger.warn("Invalid bank format: {}", bankItem);
+            }
+        }
+        return 0;
+    }
+
+    private int getCurrentPresetIndex() {
+        String presetItem = (String) presetCombo.getSelectedItem();
+        if (presetItem != null && presetItem.contains(":")) {
+            try {
+                return Integer.parseInt(presetItem.substring(0, presetItem.indexOf(":")));
+            } catch (NumberFormatException e) {
+                logger.warn("Invalid preset format: {}", presetItem);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Update this panel from the player object (when player changes externally)
+     */
+    public void updateFromPlayer(Player newPlayer) {
+        if (newPlayer == null) {
+            return;
+        }
+        
+        boolean wasInitializing = initializing.get();
+        initializing.set(true);
+        try {
+            // Update player reference
+            this.player = newPlayer;
+            
+            // Update name field
+            if (nameField != null && player.getName() != null) {
+                nameField.setText(player.getName());
+            }
+            
+            // Update channel spinner
+            if (channelSpinner != null && player.getChannel() != null) {
+                channelSpinner.setValue(player.getChannel());
+            }
+            
+            // Update instrument-related UI components
+            if (player.getInstrument() != null) {
+                // Update soundbank combo if it exists
+                if (soundbankCombo != null) {
+                    // Fix type conversion - use the string name, not the index
+                    soundbankCombo.setSelectedItem(player.getInstrument().getSoundbankName());
+                }
+                
+                // Update bank combo if it exists
+                if (bankCombo != null) {
+                    // Fix type conversion - directly check the Integer value, not string format
+                    Integer bankIndex = player.getInstrument().getBankIndex();
+                    if (bankIndex != null) {
+                        for (int i = 0; i < bankCombo.getItemCount(); i++) {
+                            Integer item = bankCombo.getItemAt(i);
+                            if (item != null && item.equals(bankIndex)) {
+                                bankCombo.setSelectedIndex(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Update preset combo if it exists
+                if (presetCombo != null) {
+                    // Fix type conversion - find the preset item by preset number
+                    int currentPreset = player.getInstrument().getCurrentPreset();
+                    for (int i = 0; i < presetCombo.getItemCount(); i++) {
+                        // Get the actual object from the combo box, which might be a PresetItem
+                        Object item = presetCombo.getItemAt(i);
+                        
+                        // If it's a string formatted like "0: Piano", parse the number
+                        if (item instanceof String) {
+                            String preset = (String) item;
+                            if (preset.startsWith(currentPreset + ":")) {
+                                presetCombo.setSelectedIndex(i);
+                                break;
+                            }
+                        }
+                        // If it's a PresetItem object, check its preset number
+                        else if (item instanceof PresetItem) {
+                            PresetItem presetItem = (PresetItem) item;
+                            if (presetItem.getNumber() == currentPreset) { // Changed from getPresetNumber() to getNumber()
+                                presetCombo.setSelectedIndex(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            logger.debug("PlayerEditBasicPropertiesPanel updated from player {}", player.getName());
+        } finally {
+            initializing.set(wasInitializing);
         }
     }
 }

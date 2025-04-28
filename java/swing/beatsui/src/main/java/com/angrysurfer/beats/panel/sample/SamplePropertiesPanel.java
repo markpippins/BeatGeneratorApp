@@ -31,7 +31,7 @@ public class SamplePropertiesPanel extends JPanel {
         // Set up the panel
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Sample Properties"));
-        setPreferredSize(new Dimension(220, 400));
+        setPreferredSize(new Dimension(180, 400));
         
         // Create and add the property table
         add(createPropertyTable(), BorderLayout.CENTER);
@@ -76,6 +76,9 @@ public class SamplePropertiesPanel extends JPanel {
             c.weightx = 0.6;
             
             JComponent control = createControlForProperty(propertyName);
+            control.setPreferredSize(new Dimension(80, 20));
+            control.setMaximumSize(new Dimension(80, 20));
+            control.setMinimumSize(new Dimension(80, 20));
             panel.add(control, c);
             propertyControls.put(propertyName, control);
             

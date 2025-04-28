@@ -39,6 +39,10 @@ public class UIHelper {
     // Add standard dial size constants
     public static final int STANDARD_DIAL_SIZE = 40;
 
+    // Add these constants to the UIHelper class
+    public static final Color FIELD_BACKGROUND = new Color(240, 240, 240);
+    public static final Color FIELD_FOREGROUND = new Color(20, 20, 20);
+
     /**
      * Saves the column order of a table
      */

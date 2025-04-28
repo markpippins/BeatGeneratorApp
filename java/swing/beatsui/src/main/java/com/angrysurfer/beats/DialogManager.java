@@ -100,7 +100,7 @@ public class DialogManager implements IBusListener {
 
                 if (currentSession != null) {
                     // Initialize player
-                    Player newPlayer = PlayerManager.getInstance().initializeNewStrike(); // initializeNewPlayer();
+                    Player newPlayer = RedisService.getInstance().newStrike(); // initializeNewPlayer();
                     newPlayer.setName(
                             newPlayer.getClass().getSimpleName() + " " + (currentSession.getPlayers().size() + 1));
                     logger.info(String.format("Created new player with ID: %d", newPlayer.getId()));
@@ -180,18 +180,17 @@ public class DialogManager implements IBusListener {
         }
     }
 
+    /**
+     * Handle player edit request
+     */
     private void handleEditPlayer(Player player) {
         if (player != null) {
             SwingUtilities.invokeLater(() -> {
                 try {
-                    // Keep a copy of the original instrument for debugging
-                    InstrumentWrapper originalInstrument = player.getInstrument();
-                    Long originalInstrumentId = player.getInstrumentId();
+                    // Log original player state
+                    logger.debug("Opening editor for player: {} (ID: {})", player.getName(), player.getId());
                     
-                    logger.debug("Opening editor for player with instrument: {} (ID: {})",
-                        originalInstrument != null ? originalInstrument.getName() : "none",
-                        originalInstrumentId);
-                    
+                    // Create panel with the player
                     PlayerEditPanel panel = new PlayerEditPanel(player);
                     Dialog<Player> dialog = frame.createDialog(player, panel);
                     dialog.setTitle("Edit Player: " + player.getName());
@@ -199,32 +198,18 @@ public class DialogManager implements IBusListener {
                     boolean result = dialog.showDialog();
 
                     if (result) {
+                        // Get the updated player with all changes applied
                         Player updatedPlayer = panel.getUpdatedPlayer();
 
-                        // First ensure player is still selected in PlayerManager
-                        PlayerManager.getInstance().setActivePlayer(updatedPlayer);
-
-                        // Save the player to persistence
-                        PlayerManager.getInstance().savePlayerProperties(player);
+                        // CRITICAL STEP: Activate player and request update through command bus
+                        commandBus.publish(Commands.PLAYER_ACTIVATE_REQUEST, this, updatedPlayer);
+                        commandBus.publish(Commands.PLAYER_UPDATE_REQUEST, this, updatedPlayer);
                         
-                        // Log changes for debugging
-                        logger.debug("After editing, player has instrument: {} (ID: {})",
-                            updatedPlayer.getInstrument() != null ? updatedPlayer.getInstrument().getName() : "none",
-                            updatedPlayer.getInstrumentId());
-                        
-                        // Initialize the instrument if this is a melodic sequencer player
-                        if (player.getOwner() instanceof MelodicSequencer sequencer) {
-                            sequencer.initializeInstrument();
-                        }
-
-                        // Then publish events in correct order
+                        // Publish dialog-specific completion event
                         commandBus.publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);
-
-                        // Important: This needs to come AFTER other updates
-                        commandBus.publish(Commands.PLAYER_UPDATED, this, updatedPlayer);
                     }
                 } catch (Exception e) {
-                    logger.error("Error editing player: " + e.getMessage());
+                    logger.error("Error editing player: " + e.getMessage(), e);
                 }
             });
         }

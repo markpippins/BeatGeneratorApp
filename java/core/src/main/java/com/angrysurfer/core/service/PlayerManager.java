@@ -19,531 +19,203 @@ import static com.angrysurfer.core.util.update.PlayerUpdateType.SOLO;
 import static com.angrysurfer.core.util.update.PlayerUpdateType.SUBDIVISIONS;
 import static com.angrysurfer.core.util.update.PlayerUpdateType.SWING;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
 
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.redis.RedisService;
 
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * The central source of truth for all player-related operations.
+ */
 @Getter
 @Setter
-public class PlayerManager {
+public class PlayerManager implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(PlayerManager.class);
     private static PlayerManager instance;
-    private CommandBus commandBus = CommandBus.getInstance();
+    private final Map<Long, Player> playerCache = new HashMap<>();
     private Player activePlayer;
     private final RedisService redisService;
-    private java.util.Timer saveTimer;
+    private final CommandBus commandBus;
 
     private PlayerManager() {
-        setupCommandBusListener();
-        redisService = RedisService.getInstance();
+        this.redisService = RedisService.getInstance();
+        this.commandBus = CommandBus.getInstance();
+        registerForEvents();
     }
 
-    public static PlayerManager getInstance() {
+    public static synchronized PlayerManager getInstance() {
         if (instance == null) {
             instance = new PlayerManager();
         }
         return instance;
     }
 
-    public Player initializeNewStrike() {
-
-        Player player = new Strike("Strike", SessionManager.getInstance().getActiveSession(), null, 35, null);
-        player.setId(redisService.getNextPlayerId());
-        player.setRules(new HashSet<>());
-        return player;
-    }
-
-    private void setupCommandBusListener() {
-        commandBus.register(new IBusListener() {
-            @Override
-            public void onAction(Command action) {
-                if (action.getCommand() == null)
-                    return;
-
-                switch (action.getCommand()) {
-                    case Commands.PLAYER_SELECTED -> {
-                        if (action.getData() instanceof Player) {
-                            playerSelected((Player) action.getData());
-                        }
-                    }
-
-                    case Commands.PLAYER_UNSELECTED -> {
-                        logger.info("Player unselected");
-                        activePlayer = null;
-                    }
-
-                    case Commands.PLAYER_UPDATED -> {
-                        if (action.getData() instanceof Player && !action.getSender().equals(this)) {
-                            playerUpdated((Player) action.getData());
-                        }
-                    }
-
-                    case Commands.MINI_NOTE_SELECTED -> {
-                        if (action.getData() instanceof Number) {
-                            int midiNote = ((Number) action.getData()).intValue();
-                            sendNoteToActivePlayer(midiNote);
-                        }
-                    }
-
-                    // Add preset change handlers with preview - replace existing implementation
-                    case Commands.PRESET_UP -> {
-                        if (activePlayer != null) {
-                            // Increment preset value (with upper bound of 127)
-                            int currentPreset = activePlayer.getPreset() != null ? activePlayer.getPreset() : 0;
-                            int newPreset = Math.min(127, currentPreset + 1);
-
-                            // Update the preset
-                            activePlayer.setPreset(newPreset);
-
-                            // First publish lightweight update for immediate UI feedback
-                            commandBus.publish(Commands.PRESET_CHANGED, this,
-                                    Map.of("playerId", activePlayer.getId(),
-                                            "preset", newPreset,
-                                            "playerName", activePlayer.getName()));
-
-                            // Then publish full player update for complete UI refresh
-                            commandBus.publish(Commands.PLAYER_UPDATED, activePlayer);
-
-                            // Play a preview note immediately
-                            sendNoteToActivePlayer(60);
-
-                            // Schedule saving to Redis after a delay to avoid rapid successive saves
-                            schedulePlayerSave(activePlayer);
-                        }
-                    }
-
-                    case Commands.PRESET_DOWN -> {
-                        if (activePlayer != null) {
-                            // Decrement preset value (with lower bound of 0)
-                            int currentPreset = activePlayer.getPreset() != null ? activePlayer.getPreset().intValue()
-                                    : 0;
-                            int newPreset = Math.max(0, currentPreset - 1);
-
-                            // Update the preset
-                            activePlayer.setPreset(newPreset);
-
-                            // First publish lightweight update for immediate UI feedback
-                            commandBus.publish(Commands.PRESET_CHANGED, this,
-                                    Map.of("playerId", activePlayer.getId(),
-                                            "preset", newPreset,
-                                            "playerName", activePlayer.getName()));
-
-                            // Then publish full player update for complete UI refresh
-                            commandBus.publish(Commands.PLAYER_UPDATED, activePlayer);
-
-                            // Play a preview note immediately
-                            sendNoteToActivePlayer(60);
-
-                            // Schedule saving to Redis after a delay to avoid rapid successive saves
-                            schedulePlayerSave(activePlayer);
-                        }
-                    }
-
-                    case Commands.RULE_DELETE_REQUEST -> {
-                        if (action.getData() instanceof Rule[] rules) {
-                            logger.info("Processing rule delete request for {} rules", rules.length);
-
-                            // Get player for first rule (all rules should be from same player)
-                            Player player = getActivePlayer();
-                            if (player != null) {
-                                // Get a fresh copy of the player to ensure we have current state
-                                // Player freshPlayer = redisService.findPlayerById(player.getId());
-                                // if (freshPlayer == null) {
-                                // logger.error("Could not find player with ID: {}", player.getId());
-                                // return;
-                                // }
-
-                                // Track if we deleted any rules
-                                boolean deletedRules = false;
-
-                                // Remove rules from player and Redis
-                                for (Rule rule : rules) {
-                                    Long ruleId = rule.getId();
-
-                                    // First remove from Redis directly
-                                    redisService.deleteRule(ruleId);
-                                    logger.info("Attempted to delete rule from Redis: {}", ruleId);
-
-                                    // Then remove from player's collection
-                                    if (player.getRules() != null) {
-                                        boolean removed = player.getRules().removeIf(r -> r.getId().equals(ruleId));
-                                        if (removed) {
-                                            deletedRules = true;
-                                            logger.info("Removed rule {} from player's collection", ruleId);
-                                        } else {
-                                            logger.warn("Rule {} not found in player's collection", ruleId);
-                                        }
-                                    }
-                                }
-
-                                if (deletedRules) {
-                                    // Save updated player - Don't assign to boolean since method returns void
-                                    redisService.savePlayer(player);
-                                    logger.info("Player {} saved after rule deletion", player.getId());
-
-                                    // Get another fresh copy after saving
-                                    // Player refreshedPlayer = redisService.findPlayerById(freshPlayer.getId());
-
-                                    // Notify UI
-                                    commandBus.publish(Commands.RULE_DELETED, this, player);
-                                    commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-                                    commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-
-                                    // Log rules count after operation
-                                    int rulesCount = player.getRules() != null ? player.getRules().size() : 0;
-                                    logger.info("Player {} now has {} rules after deletion", player.getId(),
-                                            rulesCount);
-
-                                    debugPlayerRules(player);
-                                }
-                            }
-                        }
-                    }
-
-                    case Commands.NEW_VALUE_VELOCITY_MIN -> {
-                        if (action.getData() instanceof Object[] data && data.length >= 2) {
-                            if (data[0] instanceof Long playerId && data[1] instanceof Integer value) {
-                                Session currentSession = SessionManager.getInstance().getActiveSession();
-                                if (currentSession != null) {
-                                    Player player = currentSession.getPlayer(playerId);
-                                    if (player != null) {
-                                        // Set new min velocity
-                                        player.setMinVelocity(value);
-
-                                        // Ensure max velocity is at least min velocity
-                                        if (player.getMaxVelocity() < value) {
-                                            player.setMaxVelocity(value);
-                                        }
-
-                                        // Save player
-                                        savePlayerProperties(player);
-
-                                        // Publish player update
-                                        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-                                        commandBus.publish(Commands.PLAYER_ROW_REFRESH, this, player);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    case Commands.NEW_VALUE_VELOCITY_MAX -> {
-                        if (action.getData() instanceof Object[] data && data.length >= 2) {
-                            if (data[0] instanceof Long playerId && data[1] instanceof Integer value) {
-                                Session currentSession = SessionManager.getInstance().getActiveSession();
-                                if (currentSession != null) {
-                                    Player player = currentSession.getPlayer(playerId);
-                                    if (player != null) {
-                                        // Set new max velocity
-                                        player.setMaxVelocity(value);
-
-                                        // Ensure min velocity doesn't exceed max velocity
-                                        if (player.getMinVelocity() > value) {
-                                            player.setMinVelocity(value);
-                                        }
-
-                                        // Save player
-                                        savePlayerProperties(player);
-
-                                        // Publish player update
-                                        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-                                        commandBus.publish(Commands.PLAYER_ROW_REFRESH, this, player);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // Fix the playerSelected method
-    public void playerSelected(Player player) {
-        // DON'T publish another event here - this method should just update state
-        if (!Objects.equals(activePlayer, player)) {
-            this.activePlayer = player;
-            // Remove this line to prevent event loop
-            // commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-        }
-    }
-
-    public void playerUpdated(Player player) {
-        if (Objects.nonNull(player.getId()) && Objects.equals(activePlayer.getId(), player.getId())) {
-            this.activePlayer = player;
-            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-        }
-    }
-
-    public Player addStrike(Session session, InstrumentWrapper instrument, int note) {
-        String name = instrument.getName() + session.getPlayers().size();
-        Player player = new Strike(name, session, instrument, note,
-                instrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
-        player.setSession(session);
-        session.getPlayers().add(player);
-        return player;
-    }
-
-    public Player addNote(Session session, InstrumentWrapper instrument, int note) {
-        String name = instrument.getName() + session.getPlayers().size();
-        Player player = new Note(name, session, instrument, note,
-                instrument.getControlCodes().stream().map(cc -> cc.getCode()).toList());
-        player.setSession(session);
-        session.getPlayers().add(player);
-        return player;
-    }
-
-    public Rule addRule(Player player, int operator, int comparison, double value, int part) {
-        Rule rule = new Rule(operator, comparison, value, part, true);
-
-        // Set bidirectional relationship
-        rule.setPlayer(player);
-
-        // Initialize rules collection if needed
-        if (player.getRules() == null) {
-            player.setRules(new HashSet<>());
-        }
-
-        // Don't add duplicate rules
-        if (player.getRules().stream().noneMatch(r -> r.isEqualTo(rule))) {
-            player.getRules().add(rule);
-
-            // IMPORTANT: Save the player to persist the rule relationship
-            savePlayerWithRules(player);
-
-            // Publish events
-            commandBus.publish(Commands.RULE_ADDED, this, player);
-            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-
-            return rule;
-        }
-        return null;
-    }
-
     /**
-     * Saves a player and ensures rules are properly persisted
-     * 
-     * @param player The player to save
+     * Register for all player-related events
      */
-    private void savePlayerWithRules(Player player) {
-        try {
-            // Save to Redis without expecting boolean return
-            redisService.savePlayer(player);
-
-            // Also update in session to ensure consistency
-            Session session = SessionManager.getInstance().getActiveSession();
-            if (session != null) {
-                // Find and update player in session
-                Set<Player> players = session.getPlayers();
-
-                // Remove existing player with same ID
-                players.removeIf(p -> p.getId().equals(player.getId()));
-
-                // Add updated player
-                players.add(player);
-
-                // Save session to persist changes without expecting boolean return
-                redisService.saveSession(session);
-
-                logger.info("Saved player " + player.getName() + " with " +
-                        (player.getRules() != null ? player.getRules().size() : 0) + " rules");
-            }
-        } catch (Exception e) {
-            logger.error("Error saving player: " + e.getMessage());
-        }
+    private void registerForEvents() {
+        commandBus.register(this);
     }
 
-    public void removeRule(Player player, Long ruleId) {
-        if (player == null || ruleId == null) {
-            logger.error("Cannot remove rule: player or ruleId is null");
+    @Override
+    public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) {
             return;
         }
 
-        // Get the rule from player's rules collection
-        Rule ruleToRemove = null;
-        if (player.getRules() != null) {
-            for (Rule r : player.getRules()) {
-                if (r.getId().equals(ruleId)) {
-                    ruleToRemove = r;
-                    break;
-                }
-            }
-        }
-
-        if (ruleToRemove != null) {
-            // Remove from player's collection
-            boolean removed = player.getRules().remove(ruleToRemove);
-            if (!removed) {
-                logger.warn("Failed to remove rule from player's collection: {}", ruleId);
-            }
-
-            // Delete from Redis directly without expecting boolean return
-            redisService.deleteRule(ruleId);
-            logger.info("Attempted to delete rule from Redis: {}", ruleId);
-
-            // Save the updated player (without the rule)
-            savePlayerWithRules(player);
-
-            // Debug the state after removal
-            debugPlayerRules(player);
-
-            // Notify listeners about the change
-            commandBus.publish(Commands.RULE_DELETED, this, player);
-            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-
-            logger.info("Removed rule {} from player {}", ruleId, player.getName());
-        } else {
-            logger.warn("Rule {} not found in player {}", ruleId, player.getName());
-        }
-    }
-
-    public Set<Player> removePlayer(Session session, Long playerId) {
-        Player player = session.getPlayer(playerId);
-        session.getPlayers().remove(player);
-        return session.getPlayers();
-    }
-
-    public void clearPlayers(Session session) {
-        Set<Player> players = session.getPlayers();
-        players.stream()
-                .filter(p -> p.getRules().isEmpty())
-                .forEach(p -> {
-                    session.getPlayers().remove(p);
-                    p.setSession(null);
-                });
-    }
-
-    public Player updatePlayer(Session session, Long playerId, int updateType, int updateValue) {
-        Player player = session.getPlayer(playerId);
-        if (player == null)
-            return null;
-
-        switch (updateType) {
-            case CHANNEL -> {
-                player.noteOff(0, 0);
-                player.setChannel((int) updateValue);
-            }
-            case NOTE -> player.setRootNote((int) updateValue);
-            case PRESET -> handlePresetChange(player, updateValue);
-            case PROBABILITY -> player.setProbability(updateValue);
-            case MIN_VELOCITY -> player.setMinVelocity(updateValue);
-            case MAX_VELOCITY -> player.setMaxVelocity(updateValue);
-            case RATCHET_COUNT -> player.setRatchetCount(updateValue);
-            case RATCHET_INTERVAL -> player.setRatchetInterval(updateValue);
-            case MUTE -> player.setMuted(updateValue > 0);
-            case SOLO -> player.setSolo(updateValue > 0);
-            case SKIPS -> {
-                player.setSkips(updateValue);
-                player.getSkipCycler().setLength(updateValue);
-                player.getSkipCycler().reset();
-            }
-            case RANDOM_DEGREE -> player.setRandomDegree(updateValue);
-            case BEAT_FRACTION -> player.setBeatFraction(updateValue);
-            case SUBDIVISIONS -> {
-                player.setSubDivisions(updateValue);
-                player.getSubCycler().setLength(updateValue);
-                player.getSubCycler().reset();
-            }
-            case SWING -> player.setSwing(updateValue);
-            case LEVEL -> player.setLevel(updateValue);
-            case FADE_IN -> player.setFadeIn(updateValue);
-            case FADE_OUT -> player.setFadeOut(updateValue);
-        }
-
-        return player;
-    }
-
-    private void handlePresetChange(Player player, int updateValue) {
         try {
-            player.noteOff(0, 0);
-            player.setPreset(updateValue);
-            player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
-            player.getInstrument().programChange(player.getChannel(), updateValue, 0);
-        } catch (InvalidMidiDataException | MidiUnavailableException e) {
-            logger.error(e.getMessage(), e);
+            switch (action.getCommand()) {
+                case Commands.PLAYER_ACTIVATE_REQUEST -> handleActivatePlayerRequest(action);
+                case Commands.PLAYER_UPDATE_REQUEST -> handleUpdatePlayerRequest(action);
+                case Commands.PLAYER_PRESET_CHANGE_REQUEST -> handlePresetChangeRequest(action);
+                case Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST -> handleInstrumentChangeRequest(action);
+                // Handle other player-related commands
+            }
+        } catch (Exception e) {
+            logger.error("Error processing player action: {}", e.getMessage(), e);
         }
-    }
-
-    public Player mutePlayer(Session session, Long playerId) {
-        Player player = session.getPlayer(playerId);
-        if (player != null) {
-            player.setMuted(!player.isMuted());
-        }
-        return player;
-    }
-
-    public void clearPlayersWithNoRules(Session session) {
-        session.getPlayers().stream()
-                .filter(p -> p.getRules().isEmpty())
-                .forEach(p -> {
-                    session.getPlayers().remove(p);
-                    p.setSession(null);
-                });
-    }
-
-    // Player property update methods
-    public void updatePlayerLevel(Player player, int level) {
-        player.setLevel(level);
-    }
-
-    public void updatePlayerSparse(Player player, int sparse) {
-        player.setSparse(sparse / 100.0);
-    }
-
-    public void updatePlayerPan(Player player, int pan) {
-        player.setPanPosition(pan);
-    }
-
-    public void updatePlayerRandom(Player player, int random) {
-        player.setRandomDegree(random);
-    }
-
-    public void updatePlayerVelocityMax(Player player, int velocityMax) {
-        player.setMaxVelocity(velocityMax);
-    }
-
-    public void updatePlayerVelocityMin(Player player, int velocityMin) {
-        player.setMinVelocity(velocityMin);
-    }
-
-    public void updatePlayerProbability(Player player, int probability) {
-        player.setProbability(probability);
-    }
-
-    public void updatePlayerSwing(Player player, int swing) {
-        player.setSwing(swing);
-    }
-
-    public void updatePlayerNote(Player player, int note) {
-        player.setRootNote(note);
     }
 
     /**
-     * Save player properties including instrument
-     * @param player The player to save
+     * Handle request to activate a player
+     */
+    private void handleActivatePlayerRequest(Command action) {
+        if (action.getData() instanceof Player player) {
+            setActivePlayer(player);
+        } else if (action.getData() instanceof Long playerId) {
+            Player player = getPlayerById(playerId);
+            if (player != null) {
+                setActivePlayer(player);
+            }
+        }
+    }
+
+    /**
+     * Handle request to update a player
+     */
+    private void handleUpdatePlayerRequest(Command action) {
+        if (action.getData() instanceof Player player) {
+            savePlayerProperties(player);
+            
+            // If this is the active player, keep that status
+            if (activePlayer != null && activePlayer.getId().equals(player.getId())) {
+                activePlayer = player;
+            }
+            
+            // Broadcast successful update
+            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+        }
+    }
+
+    /**
+     * Handle request to change a player's preset
+     */
+    private void handlePresetChangeRequest(Command action) {
+        if (action.getData() instanceof Object[] data && data.length >= 2) {
+            Long playerId = (Long) data[0];
+            Integer presetNumber = (Integer) data[1];
+            
+            Player player = getPlayerById(playerId);
+            if (player != null && player.getInstrument() != null) {
+                player.setPreset(presetNumber);
+                player.getInstrument().setCurrentPreset(presetNumber);
+                
+                savePlayerProperties(player);
+                
+                // Apply MIDI changes if needed
+                applyPlayerPreset(player);
+                
+                // Broadcast successful update
+                commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                commandBus.publish(Commands.PLAYER_PRESET_CHANGED, this, 
+                    new Object[]{playerId, presetNumber});
+            }
+        }
+    }
+    
+    /**
+     * Handle request to change a player's instrument
+     */
+    private void handleInstrumentChangeRequest(Command action) {
+        if (action.getData() instanceof Object[] data && data.length >= 2) {
+            Long playerId = (Long) data[0];
+            InstrumentWrapper instrument = (InstrumentWrapper) data[1];
+            
+            Player player = getPlayerById(playerId);
+            if (player != null && instrument != null) {
+                player.setInstrument(instrument);
+                player.setInstrumentId(instrument.getId());
+                
+                savePlayerProperties(player);
+                
+                // Apply MIDI changes if needed
+                applyPlayerInstrument(player);
+                
+                // Broadcast successful update
+                commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                commandBus.publish(Commands.PLAYER_INSTRUMENT_CHANGED, this, 
+                    new Object[]{playerId, instrument.getId()});
+            }
+        }
+    }
+
+    /**
+     * Set the currently active player and notify the system
+     */
+    public void setActivePlayer(Player player) {
+        if (player == null) return;
+        
+        // Always get a fresh copy from the cache/storage
+        Player freshPlayer = getPlayerById(player.getId());
+        if (freshPlayer == null) return;
+        
+        activePlayer = freshPlayer;
+        logger.info("Active player set to: {} (ID: {})", activePlayer.getName(), activePlayer.getId());
+        
+        // Notify the system about active player change
+        commandBus.publish(Commands.PLAYER_ACTIVATED, this, activePlayer);
+    }
+
+    /**
+     * Get a player by ID with guaranteed fresh data
+     */
+    public Player getPlayerById(Long id) {
+        if (id == null) return null;
+        
+        // First try cache
+        Player player = playerCache.get(id);
+        
+        // If not in cache or we want fresh data, load from Redis
+        if (player == null) {
+            player = redisService.findPlayerById(id);
+            if (player != null) {
+                // Update cache
+                playerCache.put(id, player);
+            }
+        }
+        
+        return player;
+    }
+
+    /**
+     * Save player properties to persistent storage with complete consistency
      */
     public void savePlayerProperties(Player player) {
         if (player == null) {
@@ -552,239 +224,186 @@ public class PlayerManager {
         }
         
         try {
-            // Ensure instrument is properly linked
-            if (player.getInstrument() != null && player.getInstrumentId() == null) {
-                player.setInstrumentId(player.getInstrument().getId());
-            }
+            logger.info("Saving player: {} (ID: {})", player.getName(), player.getId());
             
-            // Save player to Redis
-            RedisService.getInstance().savePlayer(player);
-            
-            // If player has an instrument, ensure it's updated in the instrument manager
+            // Ensure instrument consistency
             if (player.getInstrument() != null) {
-                InstrumentManager.getInstance().updateInstrument(player.getInstrument());
+                // Save instrument first
+                redisService.saveInstrument(player.getInstrument());
+                
+                // Ensure the reference is maintained
+                player.setInstrumentId(player.getInstrument().getId());
+                
+                logger.debug("Saved instrument: {} (ID: {}) with preset {}",
+                    player.getInstrument().getName(),
+                    player.getInstrument().getId(),
+                    player.getInstrument().getCurrentPreset());
             }
             
-            logger.debug("Saved player properties for {}, instrument: {} (ID: {})",
-                player.getName(),
-                player.getInstrument() != null ? player.getInstrument().getName() : "none",
-                player.getInstrumentId());
+            // Save the player
+            redisService.savePlayer(player);
+            
+            // Update cache
+            playerCache.put(player.getId(), player);
+            
+            // If this is the active player, update the reference
+            if (activePlayer != null && activePlayer.getId().equals(player.getId())) {
+                activePlayer = player;
+            }
+            
+            logger.debug("Player saved successfully");
         } catch (Exception e) {
-            logger.error("Error saving player properties: {}", e.getMessage(), e);
+            logger.error("Error saving player: {}", e.getMessage(), e);
         }
     }
-
-    // Rule management methods
-    public void clearRules(Player player) {
-        player.getRules().clear();
-        commandBus.publish(Commands.RULES_CLEARED, this, player);
-    }
-
-    public void deleteRule(Rule rule) {
-        if (rule == null || rule.getId() == null) {
-            logger.error("Cannot delete null rule");
-            return;
-        }
-
-        Player player = rule.getPlayer();
-        if (player == null) {
-            logger.error("Rule {} has no associated player", rule.getId());
-            return;
-        }
-
-        // Delete from Redis first without expecting boolean return
-        redisService.deleteRule(rule.getId());
-        logger.info("Attempted to delete rule from Redis: {}", rule.getId());
-
-        // Remove from player
-        if (player.getRules() != null) {
-            boolean removed = player.getRules().remove(rule);
-            logger.info("Rule {} removed from player's collection: {}", rule.getId(), removed);
-        }
-
-        // Save updated player
-        savePlayerWithRules(player);
-
-        // Notify listeners
-        commandBus.publish(Commands.RULE_DELETED, this, player);
-        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-        commandBus.publish(Commands.PLAYER_SELECTED, this, player);
-    }
-
-    public void updatePlayer(Player player) {
-        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-    }
-
-    public void addPlayer(Player player) {
-        commandBus.publish(Commands.PLAYER_ADDED, this, player);
-    }
-
-    public void removeAllPlayers(Session session) {
-        logger.info("Removing all players from session: {}", session.getId());
-
-        Set<Player> players = session.getPlayers();
-
-        session.setPlayers(new HashSet<>());
-        redisService.saveSession(session);
-
-        for (Player player : players)
-            redisService.deletePlayer(player);
-    }
-
-    public void setActivePlayer(Player player) {
-        if (!Objects.equals(this.activePlayer, player)) {
-            logger.info("PlayerManager.setActivePlayer: " +
-                    (player != null ? player.getName() + " (ID: " + player.getId() + ")" : "null"));
-            this.activePlayer = player;
-        }
-    }
-
+    
     /**
-     * Sends a MIDI note to the active player without triggering heavy updates
-     * 
-     * @param midiNote The MIDI note to send
-     * @return true if note was successfully sent, false otherwise
+     * Apply a player's preset to MIDI system
      */
-    public boolean sendNoteToActivePlayer(int midiNote) {
-        if (activePlayer == null) {
-            logger.debug("No active player to receive MIDI note: {}", midiNote);
-            return false;
-        }
-
+    private void applyPlayerPreset(Player player) {
+        if (player == null || player.getInstrument() == null) return;
+        
         try {
-            // Use the player's instrument, channel, and a reasonable velocity
-            InstrumentWrapper instrument = activePlayer.getInstrument();
-            if (instrument == null) {
-                logger.debug("Active player has no instrument");
-                return false;
+            InstrumentWrapper instrument = player.getInstrument();
+            int channel = player.getChannel() != null ? player.getChannel() : 0;
+            int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+            int presetIndex = instrument.getCurrentPreset() != null ? instrument.getCurrentPreset() : 0;
+            
+            // Apply bank and program changes
+            int bankMSB = (bankIndex >> 7) & 0x7F;
+            int bankLSB = bankIndex & 0x7F;
+            instrument.controlChange(channel, 0, bankMSB);
+            instrument.controlChange(channel, 32, bankLSB);
+            instrument.programChange(channel, presetIndex, 0);
+            
+            logger.debug("Applied MIDI changes for player: {} (preset: {})", 
+                player.getName(), presetIndex);
+                
+            // Also update sequencer if player belongs to one
+            if (player.getOwner() instanceof MelodicSequencer sequencer) {
+                sequencer.initializeInstrument();
             }
-
-            int channel = activePlayer.getChannel();
-
-            // CRITICAL FIX: Send program change before playing the note
-            if (activePlayer.getPreset() != null) {
-                try {
-                    logger.debug("Sending program change: channel={}, preset={}",
-                            channel, activePlayer.getPreset());
-                    instrument.programChange(channel, activePlayer.getPreset(), 0);
-                } catch (Exception e) {
-                    logger.warn("Failed to send program change: {}", e.getMessage());
-                    // Continue anyway to play the note
-                }
-            }
-
-            // Calculate velocity from player settings
-            int velocity = (int) Math.round((activePlayer.getMinVelocity() + activePlayer.getMaxVelocity()) / 2.0);
-
-            // Just update the note in memory temporarily - don't save to Redis
-            activePlayer.setRootNote(midiNote);
-
-            // Send the note to the device
-            logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);
-            instrument.noteOn(channel, midiNote, velocity);
-
-            // Schedule note-off after a reasonable duration
-            long duration = 250; // milliseconds
-            new java.util.Timer(true).schedule( // Use daemon timer
-                    new java.util.TimerTask() {
-                        @Override
-                        public void run() {
-                            try {
-                                instrument.noteOff(channel, midiNote, 0);
-                            } catch (Exception e) {
-                                // Just log at debug level - not a critical error
-                                logger.debug("Error sending note-off: {}", e.getMessage());
-                            }
-                        }
-                    },
-                    duration);
-
-            return true;
-
         } catch (Exception e) {
-            logger.warn("Error sending MIDI note: {}", e.getMessage());
-            return false;
+            logger.error("Error applying player preset: {}", e.getMessage(), e);
         }
     }
-
-    private void schedulePlayerSave(Player player) {
-        // Cancel any pending save
-        if (saveTimer != null) {
-            saveTimer.cancel();
-        }
-
-        // Create new timer
-        saveTimer = new java.util.Timer(true);
-
-        // Schedule save after a short delay (500ms)
-        saveTimer.schedule(new java.util.TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    // Save to Redis
-                    redisService.savePlayer(player);
-                    logger.debug("Saved player {} after preset change", player.getName());
-                } catch (Exception e) {
-                    logger.warn("Error saving player after preset change: {}", e.getMessage());
-                }
+    
+    /**
+     * Apply a player's instrument settings to MIDI system
+     */
+    private void applyPlayerInstrument(Player player) {
+        if (player == null || player.getInstrument() == null) return;
+        
+        try {
+            // If player belongs to a sequencer, refresh its instrument
+            if (player.getOwner() instanceof MelodicSequencer sequencer) {
+                sequencer.initializeInstrument();
             }
-        }, 500);
-    }
-
-    // Add a utility method to help debug rule-player associations
-    public void debugPlayerRules(Player player) {
-        logger.info("=== DEBUG PLAYER RULES ===");
-        logger.info("Player: " + player.getName() + " (ID: " + player.getId() + ")");
-
-        if (player.getRules() == null) {
-            logger.info("Rules collection is NULL");
-            return;
+            
+            // Also apply the preset
+            applyPlayerPreset(player);
+            
+            logger.debug("Applied instrument for player: {}", player.getName());
+        } catch (Exception e) {
+            logger.error("Error applying player instrument: {}", e.getMessage(), e);
         }
-
-        logger.info("Rules count: " + player.getRules().size());
-
-        for (Rule rule : player.getRules()) {
-            logger.info("Rule ID: " + rule.getId() +
-                    " - Player ID: " + (rule.getPlayer() != null ? rule.getPlayer().getId() : "NULL") +
-                    " - " + rule.getOperatorText() + " " +
-                    rule.getComparisonText() + " " + rule.getValue());
-        }
-        logger.info("=========================");
     }
 
     /**
-     * Ensure all player channels match their instrument channels
-     * This should be called at startup to fix any inconsistencies
+     * Ensures that all players have consistent channel assignments
+     * and resolves any potential channel conflicts
      */
     public void ensureChannelConsistency() {
-        for (Player player : SessionManager.getInstance().getActiveSession().getPlayers()) {
-            // Skip null players
-            if (player == null) continue;
-            
-            // Check if player has an instrument
-            if (player.getInstrument() != null) {
-                // Check if channels don't match
-                if (!Objects.equals(player.getChannel(), player.getInstrument().getChannel())) {
-                    logger.warn("Channel mismatch for player {}: player channel={}, instrument channel={}",
-                        player.getName(),
-                        player.getChannel(),
-                        player.getInstrument().getChannel());
+        logger.info("Ensuring channel consistency across all players");
+        
+        // Reset the channel manager's state
+        ChannelManager channelManager = ChannelManager.getInstance();
+        
+        // First pass: collect all channel assignments
+        Map<Integer, Long> channelToPlayerId = new HashMap<>();
+        Map<Integer, Integer> channelConflicts = new HashMap<>();
+        
+        // Check for conflicts
+        for (Player player : playerCache.values()) {
+            if (player != null && player.getChannel() != null) {
+                Integer channel = player.getChannel();
+                
+                // Skip drum channel 9 which can have multiple assignments
+                if (channel == 9) continue;
+                
+                if (channelToPlayerId.containsKey(channel)) {
+                    // Conflict detected - track it
+                    channelConflicts.put(channel, channelConflicts.getOrDefault(channel, 1) + 1);
+                    logger.warn("Channel conflict detected for channel {}: players {} and {}", 
+                        channel, channelToPlayerId.get(channel), player.getId());
+                } else {
+                    // First player using this channel
+                    channelToPlayerId.put(channel, player.getId());
                     
-                    // Update instrument channel to match player
-                    player.getInstrument().setChannel(player.getChannel());
-                    
-                    // Save the updated instrument
-                    InstrumentManager.getInstance().updateInstrument(player.getInstrument());
-                    
-                    // Save the player
-                    savePlayerProperties(player);
-                    
-                    logger.info("Fixed channel for player {} and instrument {}, now using channel {}",
-                        player.getName(),
-                        player.getInstrument().getName(),
-                        player.getChannel());
+                    // Reserve this channel
+                    channelManager.reserveChannel(channel);
                 }
             }
         }
+        
+        // Second pass: resolve conflicts if any
+        if (!channelConflicts.isEmpty()) {
+            logger.info("Resolving {} channel conflicts", channelConflicts.size());
+            
+            for (Player player : playerCache.values()) {
+                if (player != null && player.getChannel() != null) {
+                    Integer channel = player.getChannel();
+                    
+                    // Skip drum channel
+                    if (channel == 9) continue;
+                    
+                    // If this player's channel has a conflict
+                    if (channelConflicts.containsKey(channel)) {
+                        // Only reassign if this isn't the first player that claimed the channel
+                        if (!player.getId().equals(channelToPlayerId.get(channel))) {
+                            // Assign a new channel
+                            int newChannel = channelManager.getNextAvailableMelodicChannel();
+                            
+                            logger.info("Reassigning player {} from channel {} to channel {}", 
+                                player.getId(), channel, newChannel);
+                            
+                            player.setChannel(newChannel);
+                            
+                            // Save the updated player
+                            savePlayerProperties(player);
+                            
+                            // Update any associated instruments
+                            if (player.getInstrument() != null) {
+                                applyPlayerInstrument(player);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Final pass: ensure all players have valid channels
+        for (Player player : playerCache.values()) {
+            if (player != null && (player.getChannel() == null || 
+                                  (!player.isDrumPlayer() && player.getChannel() == 9))) {
+                // Assign an appropriate channel
+                int newChannel = player.isDrumPlayer() ? 9 : channelManager.getNextAvailableMelodicChannel();
+                
+                logger.info("Assigning channel {} to player {} with missing/invalid channel", 
+                    newChannel, player.getId());
+                
+                player.setChannel(newChannel);
+                
+                // Save the updated player
+                savePlayerProperties(player);
+                
+                // Update any associated instruments
+                if (player.getInstrument() != null) {
+                    applyPlayerInstrument(player);
+                }
+            }
+        }
+        
+        logger.info("Channel consistency check completed");
     }
 }

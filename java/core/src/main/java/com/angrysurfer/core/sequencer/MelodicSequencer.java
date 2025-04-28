@@ -2086,37 +2086,44 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Initialize the instrument for this sequencer's player
+     * Initialize or refresh the sequencer's instrument
      */
     public void initializeInstrument() {
-        if (player == null) {
-            logger.warn("Cannot initialize instrument: no player available");
-            return;
-        }
-        
-        try {
-            // Use the manager's method to get or create the instrument
-            InstrumentWrapper internalInstrument = 
-                InstrumentManager.getInstance().getOrCreateInternalSynthInstrument(player.getChannel());
-            
-            if (internalInstrument != null) {
-                // Assign to player
-                player.setInstrument(internalInstrument);
-                player.setInstrumentId(internalInstrument.getId());
+        if (getPlayer() != null && getPlayer().getInstrument() != null) {
+            try {
+                // Always get fresh player settings from manager
+                Player freshPlayer = PlayerManager.getInstance().getPlayerById(getPlayer().getId());
                 
-                // Update preset if needed
-                if (player.getPreset() != null) {
-                    internalInstrument.setCurrentPreset(player.getPreset());
+                if (freshPlayer != null && freshPlayer.getInstrument() != null) {
+                    // Sync essential instrument properties
+                    getPlayer().getInstrument().setSoundbankName(freshPlayer.getInstrument().getSoundbankName());
+                    getPlayer().getInstrument().setBankIndex(freshPlayer.getInstrument().getBankIndex());
+                    getPlayer().getInstrument().setCurrentPreset(freshPlayer.getInstrument().getCurrentPreset());
+                    
+                    // Apply MIDI changes directly
+                    int channel = getPlayer().getChannel() != null ? getPlayer().getChannel() : 0;
+                    int bankIndex = getPlayer().getInstrument().getBankIndex();
+                    int presetIndex = getPlayer().getInstrument().getCurrentPreset();
+                    
+                    // Apply soundbank
+                    InternalSynthManager.getInstance().applySoundbank(
+                        getPlayer().getInstrument(),
+                        getPlayer().getInstrument().getSoundbankName()
+                    );
+                    
+                    // Apply bank and program changes
+                    int bankMSB = (bankIndex >> 7) & 0x7F;
+                    int bankLSB = bankIndex & 0x7F;
+                    getPlayer().getInstrument().controlChange(channel, 0, bankMSB);
+                    getPlayer().getInstrument().controlChange(channel, 32, bankLSB);
+                    getPlayer().getInstrument().programChange(channel, presetIndex, 0);
+                    
+                    logger.info("Initialized instrument: soundbank={}, bank={}, preset={}", 
+                        getPlayer().getInstrument().getSoundbankName(), bankIndex, presetIndex);
                 }
-                
-                // Save player to persist changes
-                PlayerManager.getInstance().savePlayerProperties(player);
-                
-                logger.info("Initialized instrument for player {}: {} (ID: {})", 
-                    player.getName(), internalInstrument.getName(), internalInstrument.getId());
+            } catch (Exception e) {
+                logger.error("Error initializing instrument: {}", e.getMessage());
             }
-        } catch (Exception e) {
-            logger.error("Error initializing instrument: {}", e.getMessage(), e);
         }
     }
 

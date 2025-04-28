@@ -18,6 +18,7 @@ public class Note extends Player {
      */
     public Note() {
         // initialize(); // Call initialize to set up basic properties
+        setMelodicPlayer(true);
     }
 
     /**
@@ -27,6 +28,7 @@ public class Note extends Player {
             List<Integer> allowedControlMessages) {
         initialize(name, session, instrument, allowedControlMessages);
         setRootNote(note);
+        setMelodicPlayer(true);
     }
 
     /**
@@ -38,6 +40,7 @@ public class Note extends Player {
         setRootNote(note);
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
+        setMelodicPlayer(true);
     }
 
     /**

@@ -24,8 +24,6 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
-import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +31,8 @@ import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
 import com.angrysurfer.beats.panel.SessionControlPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
+import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
@@ -48,7 +48,9 @@ import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
+import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.MelodicSequencerManager;
+import com.angrysurfer.core.service.PlayerManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -152,11 +154,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             Long firstId = manager.getFirstSequenceId(sequencer.getId());
 
             if (firstId != null) {
-                logger.info("Loading first sequence {} for sequencer {}", firstId, sequencer.getId());
-
-                // Load the sequence
-                RedisService redisService = RedisService.getInstance();
-                MelodicSequenceData data = redisService.findMelodicSequenceById(firstId, sequencer.getId());
+                MelodicSequenceData data = RedisService.getInstance().findMelodicSequenceById(firstId, sequencer.getId());
 
                 // Log what we're loading
                 if (data.getHarmonicTiltValues() != null) {
@@ -165,7 +163,50 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     logger.warn("Loaded sequence has no tilt values");
                 }
 
-                redisService.applyMelodicSequenceToSequencer(data, sequencer);
+                // Apply the sequence data
+                RedisService.getInstance().applyMelodicSequenceToSequencer(data, sequencer);
+
+                // Make sure player settings are properly applied
+                Player player = sequencer.getPlayer();
+                if (player != null && player.getInstrument() != null) {
+                    try {
+                        // Reload the player from PlayerManager to ensure we have latest settings
+                        Player freshPlayer = PlayerManager.getInstance().getPlayerById(player.getId());
+                        if (freshPlayer != null) {
+                            // Apply the instrument settings from the fresh player
+                            player.setPreset(freshPlayer.getPreset());
+
+                            if (player.getInstrument() != null && freshPlayer.getInstrument() != null) {
+                                player.getInstrument().setSoundbankName(freshPlayer.getInstrument().getSoundbankName());
+                                player.getInstrument().setBankIndex(freshPlayer.getInstrument().getBankIndex());
+                                player.getInstrument().setCurrentPreset(freshPlayer.getInstrument().getCurrentPreset());
+
+                                // Apply MIDI changes directly
+                                int channel = player.getChannel() != null ? player.getChannel() : 0;
+                                int bankIndex = player.getInstrument().getBankIndex();
+                                int presetIndex = player.getInstrument().getCurrentPreset();
+
+                                // Apply soundbank
+                                InternalSynthManager.getInstance().applySoundbank(
+                                    player.getInstrument(), 
+                                    player.getInstrument().getSoundbankName()
+                                );
+
+                                // Apply bank and program changes
+                                int bankMSB = (bankIndex >> 7) & 0x7F;
+                                int bankLSB = bankIndex & 0x7F;
+                                player.getInstrument().controlChange(channel, 0, bankMSB);
+                                player.getInstrument().controlChange(channel, 32, bankLSB);
+                                player.getInstrument().programChange(channel, presetIndex, 0);
+
+                                logger.info("Applied instrument settings during sequence load: soundbank={}, bank={}, preset={}", 
+                                    player.getInstrument().getSoundbankName(), bankIndex, presetIndex);
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.error("Error applying player settings during sequence load: {}", e.getMessage(), e);
+                    }
+                }
 
                 // Reset the sequencer to ensure proper step indicator state
                 sequencer.reset();
@@ -180,7 +221,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 }
 
                 // Notify that a pattern was loaded
-                CommandBus.getInstance().publish(
+                CommandBus.getInstance().publish( 
                         Commands.MELODIC_SEQUENCE_LOADED,
                         this,
                         new MelodicSequencerHelper.MelodicSequencerEvent(
