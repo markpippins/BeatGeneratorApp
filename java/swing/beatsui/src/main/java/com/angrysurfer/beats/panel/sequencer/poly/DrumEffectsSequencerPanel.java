@@ -843,12 +843,23 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     if (newSelection >= 0 && newSelection < drumPadPanel.getButtonCount()) {
                         // Update the selection on the EDT to avoid UI threading issues
                         SwingUtilities.invokeLater(() -> {
-                            // Let the drumPadPanel handle selection
+                            // JUST update the visual selection - don't call handleDrumPadSelected
                             drumPadPanel.selectDrumPad(newSelection);
-                            // Then process our own logic
-                            handleDrumPadSelected(newSelection);
-                            // Update the info label
+                            
+                            // DO NOT call handleDrumPadSelected - this is causing the loop
+                            // Just update relevant UI state directly
+                            selectedPadIndex = newSelection;
                             updateInstrumentInfoLabel();
+                            refreshTriggerButtonsForPad(newSelection);
+                            updateDialsForSelectedPad();
+                            
+                            // Update sequence parameter controls
+                            if (sequenceParamsPanel != null) {
+                                sequenceParamsPanel.updateControls(newSelection);
+                            }
+                            
+                            // Update sound parameters panel
+                            updateSoundParametersPanel();
                         });
                     }
                 }

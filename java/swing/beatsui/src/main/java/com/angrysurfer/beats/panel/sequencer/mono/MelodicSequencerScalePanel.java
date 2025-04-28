@@ -1,21 +1,27 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import com.angrysurfer.beats.UIUtils;
-import com.angrysurfer.core.model.Direction;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.Scale;
-import com.angrysurfer.core.sequencer.TimingDivision;
-import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
+
+import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
+import javax.swing.SpinnerNumberModel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.Scale;
 
 /**
  * Panel containing sequence parameters for melodic sequencers
@@ -150,7 +156,7 @@ public class MelodicSequencerScalePanel extends JPanel {
         octavePanel.add(new JLabel("Octave:"));
 
         // Create spinner for octave selection
-        SpinnerNumberModel octaveModel = new SpinnerNumberModel(4, 0, 8, 1);
+        SpinnerNumberModel octaveModel = new SpinnerNumberModel(4, -6, 6, 1);
         octaveSpinner = new JSpinner(octaveModel);
         octaveSpinner.setPreferredSize(new Dimension(50, 25));
         

@@ -213,6 +213,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private JTabbedPane createDrumSequencersPanel() {
 
         drumsTabbedPane = new JTabbedPane();
+        drumsTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
         drumsTabbedPane.addTab("Sequencer", createDrumPanel());
         drumsTabbedPane.addTab("Parameters", createDrumParamsPanel());
         drumsTabbedPane.addTab("Mix", createDrumEffectsPanel());
@@ -222,6 +223,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JTabbedPane createMelodicSequencersPanel() {
         melodicTabbedPane = new JTabbedPane();
+        melodicTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
 
         // Initialize all melodic sequencer panels with proper channel distribution
         for (int i = 0; i < melodicPanels.length; i++) {
