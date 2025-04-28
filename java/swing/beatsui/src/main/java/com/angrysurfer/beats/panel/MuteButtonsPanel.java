@@ -329,7 +329,7 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
     private void initializeUI() {
         // Initialize activityIndicator FIRST
         activityIndicator = new JPanel();
-        activityIndicator.setPreferredSize(new Dimension(10, 10));
+        activityIndicator.setPreferredSize(buttonSize);
         activityIndicator.setBackground(Color.DARK_GRAY);
         activityIndicator.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
@@ -342,8 +342,8 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
         add(createButtonsPanel());
         add(Box.createVerticalGlue());
 
-        setPreferredSize(new Dimension(800, 60)); // Set preferred size for the panel
-        setMaximumSize(new Dimension(800, 60)); // Set preferred size for the panel
+        setPreferredSize(new Dimension(800, 24)); // Set preferred size for the panel
+        setMaximumSize(new Dimension(800, 24)); // Set preferred size for the panel
     }
 
     private JPanel createButtonsPanel() {
@@ -400,14 +400,15 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
         return buttonPanel;
     }
 
+    private static Dimension buttonSize = new Dimension(16, 16); // Square button
+
     private JToggleButton createMuteButton(int index, boolean isDrum) {
         JToggleButton muteButton = new JToggleButton();
 
         // Increase button size for better visibility
-        Dimension size = new Dimension(28, 28); // Square button
-        muteButton.setPreferredSize(size);
-        muteButton.setMinimumSize(size);
-        muteButton.setMaximumSize(size);
+        muteButton.setPreferredSize(buttonSize);
+        muteButton.setMinimumSize(buttonSize);
+        muteButton.setMaximumSize(buttonSize);
 
         // Force button properties to ensure visibility
         muteButton.setOpaque(true);
@@ -460,10 +461,9 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
         JToggleButton muteButton = new JToggleButton();
 
         // Increase button size for better visibility
-        Dimension size = new Dimension(28, 28); // Square button
-        muteButton.setPreferredSize(size);
-        muteButton.setMinimumSize(size);
-        muteButton.setMaximumSize(size);
+        muteButton.setPreferredSize(buttonSize);
+        muteButton.setMinimumSize(buttonSize);
+        muteButton.setMaximumSize(buttonSize);
 
         // Force button properties to ensure visibility
         muteButton.setOpaque(true);

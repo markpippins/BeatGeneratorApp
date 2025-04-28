@@ -373,7 +373,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         });
 
         selectorButtons.add(triggerButton);
-
+        
         // Center the button horizontally
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         buttonPanel.add(triggerButton);

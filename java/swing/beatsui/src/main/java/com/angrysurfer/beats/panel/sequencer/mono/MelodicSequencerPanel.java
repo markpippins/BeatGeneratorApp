@@ -5,6 +5,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
@@ -231,19 +233,28 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
 
         // Create and add the center info panel with instrument info
-        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0)); // Add top padding
-
+        JPanel centerPanel = new JPanel(new GridBagLayout());  // Use GridBagLayout for true vertical centering
+        
         // Create the instrument info label
         instrumentInfoLabel = new JLabel();
         instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
         updateInstrumentInfoLabel(); // Initialize with current values
 
-        centerPanel.add(instrumentInfoLabel);
+        // Add constraints to center vertically and horizontally
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weightx = 1.0;  // Give horizontal weight
+        gbc.weighty = 1.0;  // Give vertical weight - this is key for vertical centering
+        centerPanel.add(instrumentInfoLabel, gbc);
+
+        // Add centerPanel to the top panel
+        UIUtils.addSafely(topPanel, centerPanel, BorderLayout.CENTER);
 
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
-        topPanel.add(centerPanel, BorderLayout.CENTER);
         topPanel.add(eastPanel, BorderLayout.EAST);
 
         // Add top panel to main layout

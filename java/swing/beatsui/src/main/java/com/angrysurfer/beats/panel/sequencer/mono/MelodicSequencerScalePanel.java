@@ -127,7 +127,7 @@ public class MelodicSequencerScalePanel extends JPanel {
     private void createScaleControls(JPanel parentPanel) {
         String[] scaleNames = Scale.getScales();
         scaleCombo = new JComboBox<>(scaleNames);
-        scaleCombo.setPreferredSize(new Dimension(120, UIUtils.CONTROL_HEIGHT));
+        scaleCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH * 2, UIUtils.CONTROL_HEIGHT));
         scaleCombo.setToolTipText("Set the scale");
         scaleCombo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
