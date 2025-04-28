@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel.sequencer.mono;
+package com.angrysurfer.beats.panel.sequencer;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ScaleDegreeSelectionDial;
 import com.angrysurfer.core.api.Command;
@@ -42,14 +43,14 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
         this.sequencer = sequencer;
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Harmonic Tilt"));
-        setPreferredSize(new Dimension(getPreferredSize().width, 110));
+        setPreferredSize(new Dimension(getPreferredSize().width, 100));
 
         JPanel dialsPanel = new JPanel(new GridLayout(1, DIAL_COUNT, 2, 0));
         JPanel labelsPanel = new JPanel(new GridLayout(1, DIAL_COUNT, 2, 0));
-        
+
         dialsPanel.setBackground(getBackground());
         labelsPanel.setBackground(getBackground());
-        
+
         // Create the dials and labels
         for (int i = 0; i < DIAL_COUNT; i++) {
             // Create a dial
@@ -97,7 +98,7 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
             int tiltValue = dial.getValue();
             logger.debug("Tilt value changed for bar {}: {} ({})",
                     index + 1, tiltValue, dial.getScaleDegreeLabel());
-            
+
             // Store the tilt value in the sequencer
             if (sequencer != null) {
                 sequencer.setTiltValueForBar(index, tiltValue);
@@ -159,7 +160,8 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
 
             if (i == dialToHighlight) {
                 // Highlight the current step
-                container.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+                // container.setBorder(BorderFactory.createLoweredSoftBevelBorder()); //
+                container.setBorder(BorderFactory.createLineBorder(UIUtils.coolBlue, 1));
             } else {
                 // Reset highlighting
                 container.setBorder(null);
@@ -196,41 +198,41 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
             logger.warn("Cannot sync TiltSequencerPanel - sequencer is null");
             return;
         }
-        
+
         logger.debug("Syncing tilt panel with sequencer values");
-        
+
         // Get values directly from sequencer
         List<Integer> tiltValues = sequencer.getHarmonicTiltValues();
         if (tiltValues != null && !tiltValues.isEmpty()) {
             logger.info("Received {} tilt values from sequencer", tiltValues.size());
-            
+
             // Loop through and update dial values
             for (int i = 0; i < Math.min(tiltDials.size(), tiltValues.size()); i++) {
                 int tiltValue = tiltValues.get(i);
                 logger.debug("Setting dial {} to value {}", i, tiltValue);
-                
+
                 // Ensure the value is in range
                 int safeValue = Math.max(MIN_VALUE, Math.min(MAX_VALUE, tiltValue));
                 if (safeValue != tiltValue) {
                     logger.warn("Tilt value {} out of range, clamping to {}", tiltValue, safeValue);
                     tiltValue = safeValue;
                 }
-                
+
                 // Set the value without triggering change listeners
                 tiltDials.get(i).setValue(tiltValue, false);
             }
         } else {
             logger.warn("No harmonic tilt values available from sequencer");
         }
-        
+
         // Highlight the current bar
         highlightCurrentBar();
-        
+
         // Force repaint to ensure visual updates
         for (Dial dial : tiltDials) {
             dial.repaint();
         }
-        
+
         // Force complete panel repaint
         revalidate();
         repaint();

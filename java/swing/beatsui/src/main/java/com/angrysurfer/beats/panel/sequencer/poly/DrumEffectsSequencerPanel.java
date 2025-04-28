@@ -32,6 +32,7 @@ import javax.swing.border.EmptyBorder;
 import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.SoundParametersPanel;
+import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
@@ -89,6 +90,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
     private DrumButtonsPanel drumPadPanel;
 
     private JLabel instrumentInfoLabel;
+
+    // Add this field to the class
+    private boolean isHandlingSelection = false;
 
     /**
      * Create a new SequencerPanel
@@ -239,11 +243,17 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         centerPanelMain.add(sequencePanel, BorderLayout.CENTER);
 
         // Create drum pad panel with callback
+        JPanel drumSection = new JPanel(new BorderLayout());
+        drumSection.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); 
+        
+        
+        drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
         drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
+        drumSection.add(drumPadPanel, BorderLayout.CENTER);
 
         // IMPORTANT: Add drum pad panel DIRECTLY to the border layout, no wrapping
         // panels
-        centerPanelMain.add(drumPadPanel, BorderLayout.SOUTH);
+        centerPanelMain.add(drumSection, BorderLayout.SOUTH);
 
         // Add the center panel to the main layout
         add(centerPanelMain, BorderLayout.CENTER);
@@ -535,51 +545,50 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         }
     }
 
+    // Replace the handleDrumPadSelected method with this version
     private void handleDrumPadSelected(int padIndex) {
-        if (padIndex == selectedPadIndex) return;
+        // Don't process if already selected or we're in the middle of handling a selection
+        if (padIndex == selectedPadIndex || isHandlingSelection) return;
 
-        selectedPadIndex = padIndex;
-        sequencer.setSelectedPadIndex(padIndex);
-        
-        // Get the player for this pad index
-        if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
-            Player player = sequencer.getPlayers()[padIndex];
+        try {
+            // Set flag to prevent recursive calls
+            isHandlingSelection = true;
             
-            if (player != null) {
-                // Set as active player in PlayerManager
-                PlayerManager.getInstance().setActivePlayer(player);
+            selectedPadIndex = padIndex;
+            sequencer.setSelectedPadIndex(padIndex);
+            
+            // Get the player for this pad index
+            if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
+                Player player = sequencer.getPlayers()[padIndex];
                 
-                // Also publish proper player selection event
-                CommandBus.getInstance().publish(
-                    Commands.PLAYER_SELECTED,
-                    this,
-                    player
-                );
-                
-//                logger.info("Set player '{}' (ID: {}) as active player",
-//                    player.getName(), player.getId());
+                if (player != null) {
+                    // Just set active player without triggering events
+                    PlayerManager.getInstance().setActivePlayer(player);
+                }
             }
+            
+            // Update UI in a specific order
+            updateInstrumentInfoLabel();
+            setTriggerButtonsEnabled(true);
+            refreshTriggerButtonsForPad(selectedPadIndex);
+            updateDialsForSelectedPad();
+            
+            // Then do other updates
+            if (sequenceParamsPanel != null) {
+                sequenceParamsPanel.updateControls(padIndex);
+            }
+            updateSoundParametersPanel();
+            
+            // Publish drum pad event LAST and only if we're handling a direct user selection
+            CommandBus.getInstance().publish(
+                Commands.DRUM_PAD_SELECTED,
+                this, 
+                new DrumPadSelectionEvent(-1, padIndex)
+            );
+        } finally {
+            // Always clear the flag when done
+            isHandlingSelection = false;
         }
-        
-        // Update UI in a specific order
-        updateInstrumentInfoLabel();
-        setTriggerButtonsEnabled(true);
-        // First update buttons, then update dials separately
-        refreshTriggerButtonsForPad(selectedPadIndex);
-        updateDialsForSelectedPad();
-        
-        // Then do other updates
-        if (sequenceParamsPanel != null) {
-            sequenceParamsPanel.updateControls(padIndex);
-        }
-        updateSoundParametersPanel();
-        
-        // Publish drum pad event LAST
-        CommandBus.getInstance().publish(
-            Commands.DRUM_PAD_SELECTED,
-            this, 
-            new DrumPadSelectionEvent(-1, padIndex)
-        );
     }
 
     // Update refresh method to get data from sequencer
@@ -803,31 +812,26 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             }
 
             case Commands.DRUM_PAD_SELECTED -> {
-                // Only respond to events from other panels to avoid feedback loops
+                // Only respond to events from other panels to avoid loops
                 if (action.getData() instanceof DrumPadSelectionEvent event && action.getSender() != this) {
                     int newSelection = event.getNewSelection();
-
-                    // Check if index is valid
-                    if (newSelection >= 0 && newSelection < drumPadPanel.getButtonCount()) {
-                        // Update the selection on the EDT to avoid UI threading issues
+                    
+                    // Check if index is valid and different
+                    if (newSelection != selectedPadIndex && 
+                        newSelection >= 0 && 
+                        newSelection < drumPadPanel.getButtonCount()) {
+                        
+                        // Skip heavy operations - just update necessary state
+                        selectedPadIndex = newSelection;
+                        
+                        // Update UI without triggering further events
                         SwingUtilities.invokeLater(() -> {
-                            // JUST update the visual selection - don't call handleDrumPadSelected
-                            drumPadPanel.selectDrumPad(newSelection);
+                            // Just visually select without callbacks
+                            drumPadPanel.selectDrumPadNoCallback(newSelection);
                             
-                            // DO NOT call handleDrumPadSelected - this is causing the loop
-                            // Just update relevant UI state directly
-                            selectedPadIndex = newSelection;
+                            // Update minimal UI elements
                             updateInstrumentInfoLabel();
                             refreshTriggerButtonsForPad(newSelection);
-                            updateDialsForSelectedPad();
-                            
-                            // Update sequence parameter controls
-                            if (sequenceParamsPanel != null) {
-                                sequenceParamsPanel.updateControls(newSelection);
-                            }
-                            
-                            // Update sound parameters panel
-                            updateSoundParametersPanel();
                         });
                     }
                 }

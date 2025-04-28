@@ -101,6 +101,27 @@ public class DrumButtonsPanel extends JPanel {
             }
         }
     }
+
+    /**
+     * Visually select a pad without triggering callbacks
+     */
+    public void selectDrumPadNoCallback(int padIndex) {
+        // Clear previous selection
+        if (selectedPadIndex >= 0 && selectedPadIndex < drumButtons.size()) {
+            drumButtons.get(selectedPadIndex).setSelected(false);
+            drumButtons.get(selectedPadIndex).repaint();
+        }
+
+        // Set new selection
+        selectedPadIndex = padIndex;
+        
+        // Update drum button visual state
+        if (padIndex >= 0 && padIndex < drumButtons.size()) {
+            DrumButton button = drumButtons.get(padIndex);
+            button.setSelected(true);
+            button.repaint();
+        }
+    }
     
     /**
      * Initialize drum pads with labels and tooltips

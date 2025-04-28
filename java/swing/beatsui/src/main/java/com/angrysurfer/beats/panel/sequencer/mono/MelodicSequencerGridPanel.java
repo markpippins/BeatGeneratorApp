@@ -54,7 +54,9 @@ public class MelodicSequencerGridPanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         // REDUCED: from 10,10,10,10 to 5,5,5,5
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        
+        setPreferredSize(new Dimension(getPreferredSize().width, 400));
+        setMinimumSize(new Dimension(800, 700));
+
         // Create panel for the 16 columns (fix the initialization)
         JPanel sequencePanel = new JPanel();
         sequencePanel.setLayout(new BoxLayout(sequencePanel, BoxLayout.X_AXIS));

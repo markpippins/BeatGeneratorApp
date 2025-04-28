@@ -24,6 +24,8 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -268,12 +270,20 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         add(scrollPane, BorderLayout.CENTER);
 
+
+
+        JPanel sequencersPanel = new JPanel(new BorderLayout(2, 1));
+    
+        // Create the tilt panel and add it to the NORTH of bottom panel
+
+
+        tiltSequencerPanel = new TiltSequencerPanel(sequencer);
+        sequencersPanel.add(tiltSequencerPanel, BorderLayout.NORTH);
+        sequencersPanel.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
         // Create bottom panel with BorderLayout for proper positioning
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 1));
 
-        // Create the tilt panel and add it to the NORTH of bottom panel
-        tiltSequencerPanel = new TiltSequencerPanel(sequencer);
-        bottomPanel.add(tiltSequencerPanel, BorderLayout.NORTH);
+        bottomPanel.add(sequencersPanel, BorderLayout.NORTH);
 
         // Add the parameters panel to the CENTER of the bottom panel
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
