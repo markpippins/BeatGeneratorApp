@@ -43,8 +43,8 @@ public class Sample extends Player {
     private boolean fadeInEnabled = false;
     private boolean fadeOutEnabled = false;
     private boolean normalizeEnabled = false;
-    private boolean autoTrimEnabled = false;
-    
+ 
+    private boolean autoTrimEnabled = false;  
     private boolean autoGainEnabled = false;
     private boolean autoPitchEnabled = false;
     private boolean autoTempoEnabled = false;

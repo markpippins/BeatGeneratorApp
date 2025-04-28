@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
 import com.angrysurfer.beats.panel.SessionControlPanel;
-import com.angrysurfer.beats.panel.SoundParametersPanel;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.NoteSelectionDial;

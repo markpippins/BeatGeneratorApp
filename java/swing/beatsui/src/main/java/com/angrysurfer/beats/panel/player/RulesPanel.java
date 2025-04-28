@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.player;
 
 import java.awt.BorderLayout;
 import java.awt.event.KeyAdapter;
@@ -23,6 +23,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.panel.ButtonPanel;
+import com.angrysurfer.beats.panel.ContextMenuHelper;
 import com.angrysurfer.beats.widget.RuleTableModel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;

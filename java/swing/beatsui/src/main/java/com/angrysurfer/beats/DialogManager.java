@@ -23,10 +23,10 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.panel.CustomControlsPanel;
 import com.angrysurfer.beats.panel.EuclideanPatternPanel;
-import com.angrysurfer.beats.panel.PlayerEditPanel;
-import com.angrysurfer.beats.panel.RuleEditPanel;
+import com.angrysurfer.beats.panel.instrument.CustomControlsPanel;
+import com.angrysurfer.beats.panel.player.PlayerEditPanel;
+import com.angrysurfer.beats.panel.player.RuleEditPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;

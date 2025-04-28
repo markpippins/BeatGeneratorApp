@@ -12,10 +12,10 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.panel.MuteButtonsPanel;
 import com.angrysurfer.beats.panel.SessionControlPanel;
 import com.angrysurfer.beats.panel.SessionDisplayPanel;
 import com.angrysurfer.beats.panel.TransportPanel;
+import com.angrysurfer.beats.panel.sequencer.MuteButtonsPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;

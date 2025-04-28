@@ -19,7 +19,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.panel.SoundParametersPanel;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.visualization.Visualizer;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;

@@ -23,7 +23,7 @@ import javax.swing.border.EmptyBorder;
 
 import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.panel.MainPanel;
-import com.angrysurfer.beats.panel.SoundParametersPanel;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.TriggerButton;

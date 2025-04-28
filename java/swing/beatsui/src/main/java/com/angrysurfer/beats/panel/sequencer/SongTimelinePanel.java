@@ -1,3 +1,4 @@
+package com.angrysurfer.beats.panel.sequencer;
 // package com.angrysurfer.beats.panel;
 
 // import java.awt.Color;

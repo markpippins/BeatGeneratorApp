@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.player;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -8,13 +8,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.Receiver;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
@@ -32,8 +29,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +37,12 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumItem;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.PresetItem;
+import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.ReceiverManager;
 
 /**
  * Panel for editing basic player properties with improved state management.

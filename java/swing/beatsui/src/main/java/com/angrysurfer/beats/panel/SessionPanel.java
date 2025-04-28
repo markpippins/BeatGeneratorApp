@@ -13,6 +13,9 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.panel.player.PlayerTimelinePanel;
+import com.angrysurfer.beats.panel.player.PlayersPanel;
+import com.angrysurfer.beats.panel.player.RulesPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;

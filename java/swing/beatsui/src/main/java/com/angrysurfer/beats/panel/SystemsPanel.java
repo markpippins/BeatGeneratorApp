@@ -30,6 +30,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import com.angrysurfer.beats.panel.instrument.InstrumentEditPanel;
 import com.angrysurfer.core.service.InstrumentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

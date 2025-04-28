@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.player;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;

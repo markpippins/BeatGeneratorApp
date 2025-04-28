@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.instrument;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.Dialog;
+import com.angrysurfer.beats.panel.ContextMenuHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusUpdate;
@@ -59,7 +60,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-class InstrumentsPanel extends JPanel {
+public class InstrumentsPanel extends JPanel {
 
     private final CommandBus commandBus = CommandBus.getInstance();
     private JTable instrumentsTable;

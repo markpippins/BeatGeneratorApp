@@ -25,12 +25,16 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
+import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
+import com.angrysurfer.beats.panel.sample.SampleBrowserPanel;
+import com.angrysurfer.beats.panel.sequencer.MuteButtonsPanel;
+import com.angrysurfer.beats.panel.sequencer.SongPanel;
 import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumEffectsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsSequencerPanel;
