@@ -95,38 +95,42 @@ public class SoundParametersPanel extends JPanel {
         bankCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, 25));
         bankCombo.addActionListener(e -> {
             if (bankCombo.getSelectedItem() != null && player != null && player.getInstrument() != null) {
-                // Extract bank number from selection
-                String bankItem = (String) bankCombo.getSelectedItem();
-                int bankIndex = 0;
-                
-                if (bankItem != null && bankItem.startsWith("Bank ")) {
-                    try {
+                try {
+                    // Extract bank number from selection
+                    String bankItem = (String) bankCombo.getSelectedItem();
+                    int bankIndex = 0;
+                    
+                    if (bankItem != null && bankItem.startsWith("Bank ")) {
                         bankIndex = Integer.parseInt(bankItem.substring(5));
                         
                         // Set bank index on instrument
                         player.getInstrument().setBankIndex(bankIndex);
                         
-                        // Apply bank selection immediately
+                        // Apply bank selection immediately but don't let errors propagate
                         if (player.getInstrument().getInternal()) {
-                            int channel = player.getChannel() != null ? player.getChannel() : 0;
-                            int bankMSB = (bankIndex >> 7) & 0x7F;
-                            int bankLSB = bankIndex & 0x7F;
-                            
-                            player.getInstrument().controlChange(channel, 0, bankMSB);
-                            player.getInstrument().controlChange(channel, 32, bankLSB);
+                            try {
+                                int channel = player.getChannel() != null ? player.getChannel() : 0;
+                                int bankMSB = (bankIndex >> 7) & 0x7F;
+                                int bankLSB = bankIndex & 0x7F;
+                                
+                                player.getInstrument().controlChange(channel, 0, bankMSB);
+                                player.getInstrument().controlChange(channel, 32, bankLSB);
+                            } catch (Exception midiEx) {
+                                // Log but continue - don't break the UI
+                                logger.warn("Could not apply bank selection: {}", midiEx.getMessage());
+                            }
                         }
                         
-                        // Save changes and notify the system
+                        // Always save and notify regardless of MIDI operations
                         PlayerManager.getInstance().savePlayerProperties(player);
                         CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, player.getInstrument());
                         
-                        // THEN update presets UI
+                        // Update presets UI
                         updatePresets();
-                    } catch (NumberFormatException ex) {
-                        logger.warn("Invalid bank format: {}", bankItem);
-                    } catch (InvalidMidiDataException | MidiUnavailableException ex) {
-                        throw new RuntimeException(ex);
                     }
+                } catch (Exception ex) {
+                    // Safety net for all other errors
+                    logger.error("Error handling bank selection: {}", ex.getMessage());
                 }
             }
         });

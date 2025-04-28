@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiMessage;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
@@ -220,11 +221,21 @@ public final class InstrumentWrapper implements Serializable {
         sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, channel, (int) data1, (int) data2));
     }
 
-    public void controlChange(int channel, int controller, int value)
-            throws InvalidMidiDataException, MidiUnavailableException {
-        synchronized (cachedControlChange) {
-            cachedControlChange.setMessage(ShortMessage.CONTROL_CHANGE, channel, controller, value);
-            sendToDevice(cachedControlChange);
+    public void controlChange(int channel, int controller, int value) {
+        if (device == null) {
+            logger.warn("Cannot send control change - device is null");
+            return;
+        }
+        
+        try {
+            ShortMessage message = new ShortMessage();
+            message.setMessage(ShortMessage.CONTROL_CHANGE, channel, controller, value);
+            sendToDevice(message);
+        } catch (InvalidMidiDataException e) {
+            logger.error("Invalid MIDI data for control change: {}", e.getMessage());
+        } catch (Exception e) {
+            // Catch all other exceptions to prevent UI disruption
+            logger.error("Error sending control change: {}", e.getMessage());
         }
     }
 
@@ -277,18 +288,40 @@ public final class InstrumentWrapper implements Serializable {
         })).start();
     }
 
-    public void sendToDevice(ShortMessage message) throws MidiUnavailableException {
-        Receiver currentReceiver = ReceiverManager.getInstance().getOrCreateReceiver(deviceName, device);
-
-        if (currentReceiver != null) {
-            currentReceiver.send(message, -1);
-            // Comment out or remove this debug logging - it's in a critical path
-            // logger.debug("Sent message: {} to device: {}",
-            // MidiMessage.lookupCommand(message.getCommand()), getName());
-        } else {
-            // Still log errors
-            logger.error("No valid receiver available for device: {}", deviceName);
-            throw new MidiUnavailableException("No valid receiver available for " + deviceName);
+    public void sendToDevice(MidiMessage message) throws MidiUnavailableException {
+        if (device == null) {
+            logger.warn("Cannot send MIDI message - device is null");
+            return; // Just return instead of throwing exception
+        }
+        
+        try {
+            // Get receiver but handle null case gracefully
+            Receiver receiver = device.getReceiver();
+            if (receiver != null) {
+                receiver.send(message, -1); // -1 means process immediately
+            } else {
+                logger.warn("No receiver available for device: {}", 
+                          device.getDeviceInfo().getName());
+                // Don't throw, just return
+            }
+        } catch (MidiUnavailableException e) {
+            // Log but don't rethrow - prevent cascading errors
+            logger.error("MIDI device unavailable: {}", e.getMessage());
+            
+            // Try to recover the device if it's closed
+            if (device != null && !device.isOpen()) {
+                try {
+                    device.open();
+                    logger.info("Successfully reopened MIDI device");
+                    // Try again with newly opened device
+                    Receiver receiver = device.getReceiver();
+                    if (receiver != null) {
+                        receiver.send(message, -1);
+                    }
+                } catch (Exception reopenEx) {
+                    logger.error("Failed to reopen MIDI device: {}", reopenEx.getMessage());
+                }
+            }
         }
     }
 

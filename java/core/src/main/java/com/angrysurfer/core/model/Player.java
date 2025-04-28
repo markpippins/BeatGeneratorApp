@@ -382,6 +382,36 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     }
 
     /**
+     * Facade method to play a note with specified gate time
+     * 
+     * @param note     MIDI note number
+     * @param velocity Note velocity (0-127)
+     * @param gate     Note gate time in ms
+     */
+//    public void noteOn(int note, int velocity, int gate) {
+//        // Update player state
+//        setPlaying(true);
+//        updateUIIfNeeded();
+//
+//        // Skip note if player is muted
+//        if (level <= 0) {
+//            return;
+//        }
+//
+//        try {
+//            // Delegate to instrument wrapper
+//            if (instrument != null) {
+//                synchronized (messageLock) {
+//                    reuseableMessage.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
+//                    instrument.sendToDevice(reuseableMessage);
+//                }
+//            }
+//        } catch (Exception e) {
+//            logger.error("Error in noteOn: {}", e.getMessage(), e);
+//        }
+//    }
+
+    /**
      * Facade method to stop a note
      * 
      * @param note     MIDI note number

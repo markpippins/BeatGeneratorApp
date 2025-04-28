@@ -913,6 +913,17 @@ public class MelodicSequencer implements IBusListener {
             int probability = getProbabilityValue(stepIndex);
             int nudge = getNudgeValue(stepIndex);
 
+            // IMPORTANT: Check if player is muted (level = 0)
+            if (player != null && player.getLevel() <= 0) {
+                // Player is muted, don't trigger any notes
+                return;
+            }
+            
+            // Scale velocity by player level if needed
+            if (player != null && player.getLevel() < 100) {
+                velocity = (int)(velocity * player.getLevel() / 100.0);
+            }
+
             // Apply swing to even-numbered steps (odd indices in 0-indexed array)
             if (swingEnabled && stepIndex % 2 == 1) {
                 // Calculate swing amount based on percentage
