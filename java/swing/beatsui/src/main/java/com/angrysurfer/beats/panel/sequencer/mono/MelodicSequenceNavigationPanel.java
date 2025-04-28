@@ -63,7 +63,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(UIUtils.getColors()[MelodicSequencerManager.getInstance().getSequencerCount()]),
-                "Sequence Navigation",
+                "Sequence",
                 TitledBorder.LEFT,
                 TitledBorder.TOP
         ));

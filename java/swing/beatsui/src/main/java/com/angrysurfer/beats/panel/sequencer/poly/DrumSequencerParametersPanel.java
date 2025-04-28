@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -14,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.border.TitledBorder;
 
 import com.angrysurfer.beats.UIUtils;
 import org.slf4j.Logger;
@@ -51,9 +53,15 @@ public class DrumSequencerParametersPanel extends JPanel {
     public DrumSequencerParametersPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         
-        setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
-        // REDUCED: from 10,5 to 2,1 for more compact appearance
-        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
+        // Use compact titled border
+        setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.GRAY),
+            "Sequence Parameters",
+            TitledBorder.DEFAULT_JUSTIFICATION,
+            TitledBorder.DEFAULT_POSITION,
+            null,
+            null
+        ));
         
         initializeComponents();
     }
@@ -104,7 +112,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // REDUCED: from 5,0 to 2,0
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
-        directionCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        directionCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH + 15, UIUtils.CONTROL_HEIGHT));
         directionCombo.setToolTipText("Set the playback direction of the pattern");
         directionCombo.addActionListener(e -> {
             if (updatingControls) return;
@@ -131,7 +139,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // REDUCED: from 5,0 to 2,0
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
-        timingCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        timingCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH + 15, UIUtils.CONTROL_HEIGHT));
         timingCombo.addActionListener(e -> {
             if (updatingControls) return;
             

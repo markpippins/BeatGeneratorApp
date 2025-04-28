@@ -1,6 +1,7 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
@@ -12,6 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,14 +57,21 @@ public class MelodicSequencerScalePanel extends JPanel {
      * Initialize the panel with all controls
      */
     private void initialize() {
-        // Keep the titled border
-        setBorder(BorderFactory.createTitledBorder("Scale Parameters"));
+        // Use compact titled border
+        setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.GRAY),
+            "Scale Parameters",
+            TitledBorder.DEFAULT_JUSTIFICATION,
+            TitledBorder.DEFAULT_POSITION,
+            null,
+            null
+        ));
         
         // Use BorderLayout for the main panel instead of FlowLayout
         setLayout(new BorderLayout(0, 0));
         
-        // Create a container panel for all the controls
-        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 1));
+        // Reduce spacing in the controls panel
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
         
         createQuantizeControls(controlsPanel);
         createRootNoteControls(controlsPanel);
@@ -77,7 +86,7 @@ public class MelodicSequencerScalePanel extends JPanel {
      * Create root note controls
      */
     private void createRootNoteControls(JPanel parentPanel) {
-        JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
         rootNotePanel.add(new JLabel("Root:"));
 
         String[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
@@ -111,7 +120,7 @@ public class MelodicSequencerScalePanel extends JPanel {
     private void createQuantizeControls(JPanel parentPanel) {
         quantizeToggle = new JToggleButton("Q", true);
         quantizeToggle.setToolTipText("Quantize notes to scale");
-        quantizeToggle.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        quantizeToggle.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH - 2, UIUtils.CONTROL_HEIGHT));
         quantizeToggle.addActionListener(e -> {
             if (!updatingUI) {
                 sequencer.setQuantizeEnabled(quantizeToggle.isSelected());
@@ -127,7 +136,7 @@ public class MelodicSequencerScalePanel extends JPanel {
     private void createScaleControls(JPanel parentPanel) {
         String[] scaleNames = Scale.getScales();
         scaleCombo = new JComboBox<>(scaleNames);
-        scaleCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH * 2, UIUtils.CONTROL_HEIGHT));
+        scaleCombo.setPreferredSize(new Dimension((UIUtils.LARGE_CONTROL_WIDTH * 2) - 10, UIUtils.CONTROL_HEIGHT));
         scaleCombo.setToolTipText("Set the scale");
         scaleCombo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {

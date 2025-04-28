@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 
@@ -7,6 +8,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
 
 import com.angrysurfer.beats.UIUtils;
 import org.slf4j.Logger;
@@ -37,8 +39,18 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
     public DrumSequencerMaxLengthPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         
-        setBorder(BorderFactory.createTitledBorder("Sequencer Parameters"));
-        setLayout(new FlowLayout(FlowLayout.CENTER, 5, 2));
+        // Use compact titled border with lighter border
+        setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.GRAY),
+            "Sequencer Parameters",
+            TitledBorder.DEFAULT_JUSTIFICATION, 
+            TitledBorder.DEFAULT_POSITION,
+            null, 
+            null
+        ));
+        
+        // REDUCED: from 5,2 to 2,1
+        setLayout(new FlowLayout(FlowLayout.CENTER, 2, 1));
         
         initializeComponents();
     }
@@ -47,13 +59,18 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
      * Initialize UI components
      */
     private void initializeComponents() {
-        add(new JLabel("Max Length:"));
+        // Create a label with minimum width
+        JLabel label = new JLabel("Max Length:");
+        label.setFont(label.getFont().deriveFont(11f)); // Smaller font
+        add(label);
 
         // Create combo box with standard pattern lengths
         Integer[] maxLengths = {16, 32, 64, 128}; 
         maxLengthCombo = new JComboBox<>(maxLengths);
         maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
-        maxLengthCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        
+        // REDUCED: width from MEDIUM_CONTROL_WIDTH to SMALL_CONTROL_WIDTH + 10
+        maxLengthCombo.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH + 10, UIUtils.CONTROL_HEIGHT));
         maxLengthCombo.setToolTipText("Set maximum pattern length");
         
         maxLengthCombo.addActionListener(e -> {

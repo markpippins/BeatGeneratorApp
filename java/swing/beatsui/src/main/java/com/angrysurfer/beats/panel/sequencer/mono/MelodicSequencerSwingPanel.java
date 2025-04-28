@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -8,6 +9,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
+import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,14 +36,23 @@ public class MelodicSequencerSwingPanel extends JPanel {
     public MelodicSequencerSwingPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
         
-        // REDUCED: from 5,5 to 2,1
-        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
-        setBorder(BorderFactory.createTitledBorder("Swing"));
+        // Reduce layout spacing
+        setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
+
+        // Use compact titled border
+        setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.GRAY),
+            "Swing",
+            TitledBorder.DEFAULT_JUSTIFICATION,
+            TitledBorder.DEFAULT_POSITION,
+            null, 
+            null
+        ));
 
         // Swing on/off toggle
         swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());
-        // REDUCED: from 50,25 to 45,22
-        swingToggle.setPreferredSize(new Dimension(45, 22));
+        // Further reduce toggle button size
+        swingToggle.setPreferredSize(new Dimension(40, 22));
         swingToggle.setMargin(new Insets(2, 2, 2, 2)); // Already compact
         swingToggle.addActionListener(e -> {
             sequencer.setSwingEnabled(swingToggle.isSelected());
@@ -53,12 +64,14 @@ public class MelodicSequencerSwingPanel extends JPanel {
             MelodicSequencer.MIN_SWING, MelodicSequencer.MAX_SWING, sequencer.getSwingPercentage());
         swingSlider.setMajorTickSpacing(5);
         swingSlider.setPaintTicks(true);
-        // REDUCED: from 100,30 to 90,25
-        swingSlider.setPreferredSize(new Dimension(90, 25));
+        // Reduce slider size
+        swingSlider.setPreferredSize(new Dimension(85, 22));
 
         valueLabel = new JLabel(sequencer.getSwingPercentage() + "%");
         // ADDED: Smaller font for more compact display
         valueLabel.setFont(valueLabel.getFont().deriveFont(11f));
+        // Make value label more compact
+        valueLabel.setPreferredSize(new Dimension(25, 22));
 
         swingSlider.addChangeListener(e -> {
             int value = swingSlider.getValue();

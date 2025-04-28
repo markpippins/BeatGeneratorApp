@@ -49,14 +49,21 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Initialize the panel with all controls
      */
     private void initialize() {
-        // Keep the titled border
-        setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
+        // Use a more compact titled border with smaller insets
+        setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.GRAY), 
+            "Sequence Parameters",
+            TitledBorder.DEFAULT_JUSTIFICATION, 
+            TitledBorder.DEFAULT_POSITION,
+            null,
+            null
+        ));
         
         // Use BorderLayout for the main panel instead of FlowLayout
         setLayout(new BorderLayout(0, 0));
         
-        // Create a container panel for all the controls except clear button
-        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 1));
+        // Reduce spacing in the controls panel
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
         
         // Add all controls to the left panel EXCEPT those now in the scale panel
         createLastStepControls(controlsPanel);
@@ -74,8 +81,8 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Add the controls panel to the CENTER of the BorderLayout
         add(controlsPanel, BorderLayout.CENTER);
         
-        // Create a panel for the clear button with right alignment
-        JPanel clearPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
+        // Reduce spacing in the clear button panel
+        JPanel clearPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 0));
         JButton clearButton = createClearButton();
         clearPanel.add(clearButton);
         
@@ -87,13 +94,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Create last step spinner control
      */
     private void createLastStepControls(JPanel parentPanel) {
-        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
+        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0)); // Changed from 2,0 to 1,0
         lastStepPanel.add(new JLabel("Last Step:"));
 
         // Create spinner model with range 1-16, default 16
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 64, 1);
         lastStepSpinner = new JSpinner(lastStepModel);
-        lastStepSpinner.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        lastStepSpinner.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH - 5, UIUtils.CONTROL_HEIGHT)); // Reduced width
         lastStepSpinner.setToolTipText("Set the last step for the pattern (1-16)");
         lastStepSpinner.addChangeListener(e -> {
             if (!updatingUI) {

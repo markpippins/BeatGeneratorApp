@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -9,6 +10,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
+import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +41,18 @@ public class DrumSequenceGeneratorPanel extends JPanel {
     public DrumSequenceGeneratorPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
 
-        setBorder(BorderFactory.createTitledBorder("Generate"));
-        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        // Use compact titled border
+        setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.GRAY),
+            "Generate",
+            TitledBorder.DEFAULT_JUSTIFICATION,
+            TitledBorder.DEFAULT_POSITION,
+            null, 
+            null
+        ));
+        
+        // REDUCED: from 5,2 to 2,1
+        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
 
         initializeComponents();
     }
@@ -53,7 +65,9 @@ public class DrumSequenceGeneratorPanel extends JPanel {
         String[] densityOptions = { "25%", "50%", "75%", "100%" };
         densityCombo = new JComboBox<>(densityOptions);
         densityCombo.setSelectedIndex(1); // Default to 50%
-        densityCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        
+        // REDUCED: from LARGE_CONTROL_WIDTH to MEDIUM_CONTROL_WIDTH + 10
+        densityCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH + 10, UIUtils.CONTROL_HEIGHT));
         densityCombo.setToolTipText("Set pattern density");
 
         // Generate button with dice icon

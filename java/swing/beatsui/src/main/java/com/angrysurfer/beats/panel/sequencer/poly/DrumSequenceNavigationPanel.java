@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -49,18 +50,23 @@ public class DrumSequenceNavigationPanel extends JPanel {
     }
 
     private void initializeUI() {
-
-        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        // REDUCED: from 5,2 to 2,1
+        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
+        
+        // Use compact titled border with lighter border
         setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(UIUtils.deepNavy),
-                "Sequence Navigation",
-                TitledBorder.LEFT,
-                TitledBorder.TOP
+            BorderFactory.createLineBorder(Color.GRAY),
+            "Sequence Navigation",
+            TitledBorder.LEFT,
+            TitledBorder.TOP,
+            null,
+            null
         ));
 
-
+        // Make ID label slightly smaller
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
-        sequenceIdLabel.setPreferredSize(new Dimension(UIUtils.ID_LABEL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        // REDUCED: from ID_LABEL_WIDTH to ID_LABEL_WIDTH - 10 
+        sequenceIdLabel.setPreferredSize(new Dimension(UIUtils.ID_LABEL_WIDTH - 5, UIUtils.CONTROL_HEIGHT));
         sequenceIdLabel.setOpaque(true);
         sequenceIdLabel.setBackground(UIUtils.darkGray);
         sequenceIdLabel.setForeground(UIUtils.coolBlue);
